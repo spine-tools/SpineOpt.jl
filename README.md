@@ -1,6 +1,7 @@
-# SpineData
+# SpineModel
 
 A Julia Module to perform multiple data operations for the Spine project. It provides:
+- Functions to read data in the Spine format from an ODBC Database.
 - Functions to convert data from the Spine format into algorithmic, [JuMP](https://github.com/JuliaOpt/JuMP.jl)-friendly format.
 
 
