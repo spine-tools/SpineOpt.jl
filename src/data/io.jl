@@ -81,7 +81,7 @@ function build_JuMP_object(sdo::SDO)
         datatype = sdo.parameter_definitions[i, :DataType]
         jfo[par] = @from k in sdo.parameters begin
             @where k.Parameter == par
-            @select k.Child => get(k.Value)
+            @select get(k.Child) => get(k.Value)
             @collect Dict{String,spine2julia[datatype]}
         end
     end

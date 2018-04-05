@@ -5,10 +5,9 @@ export read_Spine_object, build_JuMP_object
 export @unpack, @unpack_with_suffix, @unpack_with_backup, @pack, extend_parameter!
 
 using SpineData
+using Missings
 using JuMP
 using Ipopt
-using SCIP
-using CPLEX
 using DataFrames
 using Query
 using Clustering
