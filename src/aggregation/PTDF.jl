@@ -61,8 +61,8 @@ function PTDF_aggregate_branches!(dst::Dict, src::Dict)
     t_bus = Dict{String,String}()
     flowdir0 = Dict{String,Any}()
     k = 1
-    @unpack(dst, bus, bus0_bus)
-    @unpack_with_suffix(src, 0, branch, f_bus, t_bus)
+    @JuMPout(dst, bus, bus0_bus)
+    @JuMPout_suffix(src, 0, branch, f_bus, t_bus)
     for a in eachindex(bus), b in eachindex(bus)
         if b > a
             bus_a = bus[a]
@@ -93,20 +93,20 @@ function PTDF_aggregate_branches!(dst::Dict, src::Dict)
             end
         end
     end
-    @pack(dst, branch, branch0_branch, f_bus, t_bus, flowdir0)
+    @JuMPin(dst, branch, branch0_branch, f_bus, t_bus, flowdir0)
 end
 
 function PTDF_aggregate_basic_bus_params!(dst::Dict, src::Dict)
-    @unpack_with_suffix(src, 0, bus_type, pd, qd, vm, vmax, vmin, gen_bus)
-    @unpack(dst, bus0_bus, bus0_weight)
+    @JuMPout_suffix(src, 0, bus_type, pd, qd, vm, vmax, vmin, gen_bus)
+    @JuMPout(dst, bus0_bus, bus0_weight)
     pd = aggregate_parameter(pd0, bus0_bus, sum)
     qd = aggregate_parameter(qd0, bus0_bus, sum)
     gen_bus = extend_relationship(gen_bus0, bus0_bus)
-    @pack(dst, pd, qd, gen_bus)
+    @JuMPin(dst, pd, qd, gen_bus)
 end
 
 function PTDF_compute_dc_aggregated_branch_params!(dst::Dict; solver = SCIPSolver())
-    @unpack(dst, bus, bus_type, branch, f_bus, t_bus, pf_sp)
+    @JuMPout(dst, bus, bus_type, branch, f_bus, t_bus, pf_sp)
     m = Model(solver = solver)
     @variable(m, x[branch])
     @variable(m, va[bus])
@@ -118,7 +118,7 @@ function PTDF_compute_dc_aggregated_branch_params!(dst::Dict; solver = SCIPSolve
     #println(m)
     status = solve(m)
     br_x = Dict(l => getvalue(x[l]) for l in branch)
-    @pack(dst, br_x)
+    @JuMPin(dst, br_x)
 end
 
 
@@ -138,7 +138,7 @@ function PTDF_dc_aggregate!(dst::Dict, src::Dict, m::Int = 4)
 end
 
 function PTDF_compute_ac_aggregated_bus_branch_params!(dst::Dict, src::Dict; solver = IpoptSolver(print_level = 0, linear_solver = "ma97"))
-    @unpack_with_backup(dst, src,
+    @JuMPout_with_backup(dst, src,
         bus, branch, gen, f_bus, t_bus, gen_bus, pf_fr_sp, qf_fr_sp, pf_to_sp, qf_to_sp,
         vm, vmax, vmin, bus_type, pd, qd, pg, qg, qmax, qmin)
     m = Model(solver = solver)
@@ -182,7 +182,7 @@ function PTDF_compute_ac_aggregated_bus_branch_params!(dst::Dict, src::Dict; sol
     bs = Dict(n => getvalue(bs[n]) for n in bus)
     vmag_start = Dict(n => getvalue(vmag[n]) for n in bus)
     va_start = Dict(n => getvalue(va[n]) for n in bus)
-    @pack(dst, br_r, br_x, br_b, tap, shift, gs, bs)
+    @JuMPin(dst, br_r, br_x, br_b, tap, shift, gs, bs)
     print_with_color(:green, "Equivalent ac bus and branch parameters determined successfully\n")
     true
 end

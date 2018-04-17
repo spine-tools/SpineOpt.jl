@@ -4,7 +4,7 @@ function run_dc_pf!(
         bck = Dict()
         )
 
-    @unpack_with_backup(ref, bck, bus, branch, gen, rate_a, bus_type, gen_bus, f_bus, t_bus, br_x, pd, pg)
+    @JuMPout_with_backup(ref, bck, bus, branch, gen, rate_a, bus_type, gen_bus, f_bus, t_bus, br_x, pd, pg)
 
     m = Model(solver = solver)
 
@@ -32,7 +32,7 @@ function run_dc_pf!(
     va = Dict(n => getvalue(va[n]) for n in bus)
     pg = Dict(g => getvalue(pgen[g]) for g in gen)
     pf = Dict(l => getvalue(pf[l]) for l in branch)
-    @pack(ref, va, pg, pf)
+    @JuMPin(ref, va, pg, pf)
 end
 
 function constraint_ac_kcl_p(m, bus, branch, gen, f_bus, t_bus, gen_bus, vmag, gs, pd, pf_fr, pf_to, pgen)
@@ -143,7 +143,7 @@ function run_ac_pf!(ref::Dict;
         )
     print_with_color(:yellow, "\nRunning ac powerflow...\n")
 
-    @unpack_with_backup(ref, bck, bus, branch, gen, bus_type, vm, vmax, vmin, gs, bs, rate_a,
+    @JuMPout_with_backup(ref, bck, bus, branch, gen, bus_type, vm, vmax, vmin, gs, bs, rate_a,
         qmax, qmin, gen_bus, f_bus, t_bus, br_r, br_x, br_b, tap, shift, pd, qd, pg)
 
     g = Dict(l => br_r[l] / (br_r[l]^2 + br_x[l]^2) for l in branch)
@@ -189,7 +189,7 @@ function run_ac_pf!(ref::Dict;
     pf_to = Dict(l => getvalue(pf_to[l]) for l in branch)
     qf_to = Dict(l => getvalue(qf_to[l]) for l in branch)
 
-    @pack(ref, va, vm, pg, qg, pf_fr, qf_fr, pf_to, qf_to)
+    @JuMPin(ref, va, vm, pg, qg, pf_fr, qf_fr, pf_to, qf_to)
     print_with_color(:green, "ac power flow solved successfully\n")
     true
 end
@@ -201,7 +201,7 @@ function test_ac_rect_pf!(ref::Dict;
         rout = Dict{String,String}()
         )
 
-    @unpack(ref, rin, bus, branch, gen, bus_type, vm, va_start, vmax, vmin, gs, bs, rate_a,
+    @JuMPout(ref, rin, bus, branch, gen, bus_type, vm, va_start, vmax, vmin, gs, bs, rate_a,
         qmax, qmin, gen_bus, f_bus, t_bus, br_r, br_x, br_b, tap, shift, pd, qd, pg)
 
     g = Dict(l => br_r[l] / (br_r[l]^2 + br_x[l]^2) for l in branch)
@@ -248,12 +248,12 @@ function test_ac_rect_pf!(ref::Dict;
     pf_to = Dict(l => getvalue(pf_to[l]) for l in branch)
     qf_to = Dict(l => getvalue(qf_to[l]) for l in branch)
 
-    @pack(ref, rout, va, vm, pg, qg, pf_fr, qf_fr, pf_to, qf_to)
+    @JuMPin(ref, rout, va, vm, pg, qg, pf_fr, qf_fr, pf_to, qf_to)
 end
 
 #TODO: check if correct with small system
 function compute_admittance_matrix(ref::Dict)
-    @unpack(ref, bus, gs, bs, branch, f_bus, t_bus, br_r, br_x, br_b, tap, shift)
+    @JuMPout(ref, bus, gs, bs, branch, f_bus, t_bus, br_r, br_x, br_b, tap, shift)
     n = length(bus)
     Y = spzeros(Complex{Float64}, n, n)
     for l in branch
@@ -279,7 +279,7 @@ function compute_admittance_matrix(ref::Dict)
 end
 
 function compute_current_vectors(ref::Dict)
-    @unpack(ref, bus, gen, gen_bus, pg, qg, pmax, qmax, pmin, qmin, pd, qd, vm, va)
+    @JuMPout(ref, bus, gen, gen_bus, pg, qg, pmax, qmax, pmin, qmin, pd, qd, vm, va)
     pg_vec = [reduce(+, 0, [pg[g] for g in gen if gen_bus[g] == n]) for n in bus]
     qg_vec = [reduce(+, 0, [qg[g] for g in gen if gen_bus[g] == n]) for n in bus]
     pmin_vec = [reduce(+, 0, [pmin[g] for g in gen if gen_bus[g] == n]) for n in bus]
@@ -300,7 +300,7 @@ function compute_current_vectors(ref::Dict)
 end
 
 function compute_incidence_matrix(ref::Dict)
-    @unpack(ref, bus, branch, f_bus, t_bus)
+    @JuMPout(ref, bus, branch, f_bus, t_bus)
     C = spzeros(Int, length(branch), length(bus))
     for (i, l) in enumerate(branch)
         fr = findfirst(bus .== f_bus[l])

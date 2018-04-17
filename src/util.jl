@@ -1,31 +1,71 @@
 """
-    unpack(dict, keys...)
+    JuMPout(dict, keys...)
 
-Unpack keys from dict into variables
+Assign the value within `dict` of each key in `keys` to a variable named after that key.
+
+# Example
+```julia
+julia> @JuMPout(jfo, pmax, pmin);
+julia> pmax == jfo["pmax"]
+true
+julia> pmin == jfo["pmin"]
+true
+```
 """
-macro unpack(dict, keys...)
+macro JuMPout(dict, keys...)
     kd = [:($key = $dict[$(string(key))]) for key in keys]
     expr = Expr(:block, kd...)
     esc(expr)
 end
 
-macro unpack_with_suffix(ref, suffix, keynames...)
-    kd = [:($(Symbol(key, suffix)) = $ref[$(string(key))]) for key in keynames]
+"""
+    JuMPout_suffix(dict, suffix, keys...)
+
+Like [`@JuMPout(dict, keys...)`](@ref) but appending `suffix` to the variable name.
+
+# Example
+```julia
+julia> @JuMPout_suffix(jfo, _new, pmax, pmin);
+julia> pmax_new == jfo["pmax"]
+true
+julia> pmin_new == jfo["pmin"]
+true
+```
+"""
+macro JuMPout_suffix(dict, suffix, keys...)
+    kd = [:($(Symbol(key, suffix)) = $dict[$(string(key))]) for key in keys]
     expr = Expr(:block, kd...)
     esc(expr)
 end
 
-macro unpack_with_backup(ref, bck, keynames...)
-    kd = [:($key = haskey($ref, $(string(key)))?$ref[$(string(key))]:$bck[$(string(key))]) for key in keynames]
+
+"""
+    JuMPout_with_backup(dict, backup, keys...)
+
+Like [`@JuMPout(dict, keys...)`](@ref) but also looking into `backup` if the key is not in `dict`.
+"""
+macro JuMPout_with_backup(dict, backup, keys...)
+    kd = [:($key = haskey($dict, $(string(key)))?$dict[$(string(key))]:$backup[$(string(key))]) for key in keys]
     expr = Expr(:block, kd...)
     esc(expr)
 end
 
 """
-pack variables into dictionary
+    JuMPin(dict, vars...)
+
+Assign the value of each variable in `vars` to a key in `dict` named after that variable.
+
+# Example
+```julia
+julia> @JuMPin(jfo, pgen, vmag);
+julia> jfo["pgen"] == pgen
+true
+julia> jfo["vmag"] == vmag
+true
+```
 """
-macro pack(ref, keynames...)
-    kd = [:($ref[$(string(key))] = $key) for key in keynames]
+macro JuMPin(dict, vars...)
+    kd = [:($dict[$(string(var))] = $var) for var in vars]
     expr = Expr(:block, kd...)
     esc(expr)
 end

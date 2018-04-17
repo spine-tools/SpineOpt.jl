@@ -1,34 +1,4 @@
-"""
-    read_Spine_object(dsn)
-
-Build a Spine Data Object from a Database specified by a Data Source Name
-"""
-function read_Spine_object(dsn::ODBC.DSN; database::String = "")
-    !isempty(database) && ODBC.execute!(dsn, string("USE ", database))
-    data = Array{DataFrame, 1}()
-    tables = [
-        "object_classes"
-        "objects"
-        "relationship_classes"
-        "relationships"
-        "parameter_definitions"
-        "parameters"
-    ]
-    for table in tables
-        qry = string("SELECT * FROM ", compose_table_name(dsn, table))
-        push!(data, ODBC.query(dsn, qry))
-    end
-    SpineDataObject(data...)
-end
-
-read_Spine_object(dsn_str::AbstractString; kwargs...) = read_Spine_object(ODBC.DSN(dsn_str); kwargs...)
-
-"""
-    build_JuMP_object(dsn)
-
-Build a JuMP Friendly Object from a Database specified by a Data Source Name
-"""
-function build_JuMP_object(dsn::ODBC.DSN; database::String = "")
+function JuMP_object(dsn::ODBC.DSN; database::String = "")
     !isempty(database) && ODBC.execute!(dsn, string("USE ", database))
     jfo = Dict{String,Any}()
     table = compose_table_name(dsn, "object_classes")
@@ -58,21 +28,82 @@ function build_JuMP_object(dsn::ODBC.DSN; database::String = "")
     jfo
 end
 
-build_JuMP_object(dsn_str::AbstractString; kwargs...) = build_JuMP_object(ODBC.DSN(dsn_str); kwargs...)
+"""
+    JuMP_object(dsn)
 
-function build_JuMP_object(sdo::SDO)
+A JuMP-friendly julia `Dict` translated from the database specified by `dsn`.
+The database should be in the Spine format. The argument `dsn`
+can either be an `AbstractString` or an `ODBC.DSN` object. See
+[`JuMP_object(sdo::SpineDataObject)`](@ref) for translation rules.
+"""
+JuMP_object(dsn_str::AbstractString; kwargs...) = JuMP_object(ODBC.DSN(dsn_str); kwargs...)
+
+"""
+    JuMP_object(sdo::SpineDataObject)
+
+A JuMP-friendly julia `Dict` translated from `sdo`. Translation rules are
+outlined in the table below:
+
+<table>
+  <tr>
+    <th rowspan=2>Spine object</th>
+    <th colspan=2>JuMP object</th>
+  </tr>
+  <tr>
+    <td><i>Key</i></td>
+    <td><i>Value</i></td>
+  </tr>
+  <tr>
+    <td>objects</td>
+    <td>Object_class</td>
+    <td>Array(Object, ...)</td>
+  </tr>
+  <tr>
+    <td>relationships</td>
+    <td>Relationship_class</td>
+    <td>Dict(Child_object => Parent_object, ...)</td>
+  </tr>
+  <tr>
+    <td>parameters</td>
+    <td>Parameter</td>
+    <td>Dict(Child => Value, ...)</td>
+  </tr>
+</table>
+
+# Example
+```julia
+julia> jfo = JuMP_object(sdo);
+julia> jfo["gen"]
+33-element Array{String,1}:
+ "gen1"
+ "gen2"
+...
+julia> jfo["pmax"]
+Dict{String,Int64} with 33 entries:
+  "gen24" => 197
+  "gen4"  => 0
+  "gen7"  => 400
+...
+julia> jfo["gen_bus"]
+Dict{String,String} with 33 entries:
+  "gen24" => "bus21"
+  "gen4"  => "bus1"
+...
+```
+"""
+function JuMP_object(sdo::SpineDataObject)
     jfo = Dict{String,Any}()
     for obj_class in sdo.object_classes[:Object_class]
         jfo[obj_class] = @from k in sdo.objects begin
             @where k.Object_class == obj_class
-            @select k.Object
+            @select get(k.Object)
             @collect
         end
     end
     for rel_class in sdo.relationship_classes[:Relationship_class]
         jfo[rel_class] = @from k in sdo.relationships begin
             @where k.Relationship_class == rel_class
-            @select k.Child_object => k.Parent_object
+            @select get(k.Child_object) => get(k.Parent_object)
             @collect Dict{String,String}
         end
     end

@@ -1,15 +1,15 @@
-# SpineModel
+# SpineModel.jl
 
-A Julia Module to perform multiple data operations for the Spine project. It provides:
-- Functions to read data in the Spine format from an ODBC Database.
-- Functions to convert data from the Spine format into algorithmic, [JuMP](https://github.com/JuliaOpt/JuMP.jl)-friendly format.
+A Julia Module to run simulations using data in the Spine format. It provides:
+- Functions to convert data Spine data objects into  [JuMP](https://github.com/JuliaOpt/JuMP.jl)-friendly objects.
+- Functions and macros to manipulate JuMP-friendly objects.
 
 
 ## Getting started
 
 ### Pre-requisites
 
-- Julia 6.0+
+- Julia 0.6+
 
 ### Installation
 
@@ -38,12 +38,21 @@ julia> using SpineModel
 
 ### Read data in the Spine format from an Excel database
 
-This example assumes that an ODBC Data Source called "FirstTestData" has been configured using the `FirstTestDataNew.xlsx` file in the `examples` folder ([instructions for Windows](https://msdn.microsoft.com/en-us/library/2x0tte0f.aspx#Anchor_0)).
 
-The program below builds a Spine data object (sdo) and a JuMP-friendly object (jfo) from the above database:
+The example below builds a JuMP-friendly object (jfo) from an ODBC database given by "FirstTestData":
 
+```julia
+# load the module
+using SpineModel
+
+#  build a JuMP-friendly object
+jfo = JuMP_object("FirstTestData")
+
+# Create variables from relevant keys
+@JuMPout(jfo, bus, gen, pmax, pmin, gen_bus)
 ```
-using SpineData
-sdo = read_sdo_from_database("FirstTestData")
-jfo = build_jfo_from_database("FirstTestData")
-```
+
+
+## Documentation
+
+Documentation is available [here](index.md).

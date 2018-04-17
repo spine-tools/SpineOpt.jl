@@ -39,8 +39,8 @@ function Ward_extract_addmitance_matrix_parameters!(
         Ybus;
         solver = IpoptSolver()
     )
-    @unpack_with_suffix(src, 0, bus)
-    @unpack(dst, branch, bus, f_bus, t_bus, bus0_bus, bus_internalbus0)
+    @JuMPout_suffix(src, 0, bus)
+    @JuMPout(dst, branch, bus, f_bus, t_bus, bus0_bus, bus_internalbus0)
     br_r = Dict{String, Float64}()
     br_x = Dict{String, Float64}()
     br_b = Dict{String, Float64}(l => 0 for l in branch)
@@ -83,7 +83,7 @@ function Ward_extract_addmitance_matrix_parameters!(
         gs[z] = real(Ybus[i,i] - diagYtmp[i])
         bs[z] = imag(Ybus[i,i] - diagYtmp[i])
     end
-    @pack(dst, br_r, br_x, br_b, tap, shift, gs, bs)
+    @JuMPin(dst, br_r, br_x, br_b, tap, shift, gs, bs)
 end
 
 function Ward_extract_current_vectors_parameters!(
@@ -92,8 +92,8 @@ function Ward_extract_current_vectors_parameters!(
         ig_vec,
         id_vec
     )
-    @unpack_with_suffix(src, 0, bus, vm, va)
-    @unpack(dst, bus, bus0_bus, bus_internalbus0)
+    @JuMPout_suffix(src, 0, bus, vm, va)
+    @JuMPout(dst, bus, bus0_bus, bus_internalbus0)
     pg = Dict{String, Float64}()
     qg = Dict{String, Float64}()
     pmin = Dict{String, Float64}()
@@ -116,7 +116,7 @@ function Ward_extract_current_vectors_parameters!(
     end
     gen = bus
     gen_bus = Dict(z => z for z in bus)
-    @pack(dst, pg, qg, pd, pmin, qmin, pmax, qmax, qd, gen, gen_bus)
+    @JuMPin(dst, pg, qg, pd, pmin, qmin, pmax, qmax, qd, gen, gen_bus)
 end
 
 function Ward_aggregate_branches!(dst::Dict, src::Dict, Ybus)
@@ -126,8 +126,8 @@ function Ward_aggregate_branches!(dst::Dict, src::Dict, Ybus)
     t_bus = Dict{String,String}()
     flowdir0 = Dict{String,Any}()
     k = 1
-    @unpack_with_suffix(src, 0, branch, bus, f_bus, t_bus)
-    @unpack(dst, bus, bus0_bus)
+    @JuMPout_suffix(src, 0, branch, bus, f_bus, t_bus)
+    @JuMPout(dst, bus, bus0_bus)
     for j = 1:size(Ybus, 2), i = 1:size(Ybus, 1)
         if i < j && Ybus[i,j] != 0  #reduced Ybus keeps the symmetric pattern, so 'i < j' is good enough
             bus_a = bus0_bus[bus0[i]]
@@ -156,12 +156,12 @@ function Ward_aggregate_branches!(dst::Dict, src::Dict, Ybus)
             k += 1
         end
     end
-    @pack(dst, branch, branch0_branch, f_bus, t_bus, flowdir0)
+    @JuMPin(dst, branch, branch0_branch, f_bus, t_bus, flowdir0)
 end
 
 function Ward_compute_reduced_network(dst::Dict, src::Dict)
-    @unpack_with_suffix(src, 0, bus)
-    @unpack(dst, bus, bus0_bus, bus0_weight, bus_internalbus0)
+    @JuMPout_suffix(src, 0, bus)
+    @JuMPout(dst, bus, bus0_bus, bus0_weight, bus_internalbus0)
     int_bus_id = findin(bus0, values(bus_internalbus0))
     Ybus = compute_admittance_matrix(src)
     ig_vec, id_vec = compute_current_vectors(src)

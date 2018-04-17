@@ -1,3 +1,9 @@
+"""
+    DictSink
+
+A custom `Dict`-`Sink` to work with `JuMP_object`. Enables sinking two-column
+results of an ODBC query into a Julia `Dict`.
+"""
 struct DictSink
     dict::Dict
     keys::Dict
@@ -37,6 +43,13 @@ end
 
 Data.close!(sink::DictSink) = sink.dict
 
+
+"""
+    ArraySink
+
+A custom `Array`-`Sink` to work with `JuMP_object`. Enables sinking one-column
+results of an ODBC query into a Julia `Array`. 
+"""
 abstract type ArraySink end
 
 function ArraySink(sch::Data.Schema, ::Type{Data.Column}, ::Bool, args...; reference::Vector{UInt8}=UInt8[], kwargs...)
@@ -62,10 +75,3 @@ function Data.streamto!(sink::Array, S::Type{Data.Column}, val, row, col)
 end
 
 Data.close!(sink::ArraySink) = sink
-
-#Fix ODBC.Sink
-ODBC.Sink(sch::Data.Schema, S::Type{Data.Column}, append::Bool, dsn::ODBC.DSN, table::AbstractString) = ODBC.Sink(sch, S, dsn, table; append=append)
-ODBC.getptrlen(x::AbstractString) = pointer(Vector{UInt8}(x)), length(x), UInt8[]
-
-#Extend ODBC.Sink to handle Any as String
-Data.streamto!(sink::ODBC.Sink, S::Type{Data.Column}, column::Array{Any,1}, col) = Data.streamto!(sink, S, String.(column), col)

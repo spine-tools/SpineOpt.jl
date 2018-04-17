@@ -28,7 +28,7 @@ adds equivalent buses to `system` according to `assignments`
 and creates relationships between these equivalent and the original buses
 """
 function aggregate_buses!(dst::Dict, src::Dict, assignments::Vector{Int}, costs::Vector{Float64})
-    @unpack_with_suffix(src, 0, bus)
+    @JuMPout_suffix(src, 0, bus)
     bus = [string(z) for z in unique(assignments)]
     bus0_bus = Dict(bus0[n] => string(z) for (n, z) in enumerate(assignments))
     counts = Dict(z => count(assignments .== z) for z in unique(assignments))
@@ -45,34 +45,34 @@ function aggregate_buses!(dst::Dict, src::Dict, assignments::Vector{Int}, costs:
     #    string(z) => bus0[findfirst(assignments .== z)]    #the internal bus is the first one for that zone in the vector
     #    for z in unique(assignments)
     #)
-    @pack(dst, bus, bus0_bus, bus0_weight, bus_internalbus0)
+    @JuMPin(dst, bus, bus0_bus, bus0_weight, bus_internalbus0)
 end
 
 function aggregate_basic_bus_params!(dst::Dict, src::Dict)
-    @unpack_with_suffix(src, 0, bus_type, vm, va, vmax, vmin)
-    @unpack(dst, bus0_bus, bus0_weight)
+    @JuMPout_suffix(src, 0, bus_type, vm, va, vmax, vmin)
+    @JuMPout(dst, bus0_bus, bus0_weight)
     bus_type = aggregate_parameter(bus_type0, bus0_bus, maximum)
     vm = aggregate_parameter(prod(vm0, bus0_weight), bus0_bus, sum)
     va = aggregate_parameter(prod(va0, bus0_weight), bus0_bus, sum)
     vmax = aggregate_parameter(vmax0, bus0_bus, minimum)
     vmin = aggregate_parameter(vmin0, bus0_bus, maximum)
-    @pack(dst, bus_type, vm, va, vmax, vmin)
+    @JuMPin(dst, bus_type, vm, va, vmax, vmin)
 end
 
 #function aggregate_basic_bus_params!(dst::Dict, src::Dict)
-#    @unpack_with_suffix(src, 0, bus_type, vm, va, vmax, vmin)
-#    @unpack(dst, bus0_bus, bus_internalbus0)
+#    @JuMPout_suffix(src, 0, bus_type, vm, va, vmax, vmin)
+#    @JuMPout(dst, bus0_bus, bus_internalbus0)
 #    bus_type = aggregate_parameter(bus_type0, bus0_bus, maximum)
 #    vm = extend_parameter(vm0, bus_internalbus0)
 #    va = extend_parameter(va0, bus_internalbus0)
 #    vmax = extend_parameter(vmax0, bus_internalbus0)
 #    vmin = extend_parameter(vmin0, bus_internalbus0)
-#    @pack(dst, bus_type, vm, va, vmax, vmin)
+#    @JuMPin(dst, bus_type, vm, va, vmax, vmin)
 #end
 
 function aggregate_basic_dc_branch_params!(dst::Dict, src::Dict)
-    @unpack_with_suffix(src, 0, rate_a, pf)
-    @unpack(dst, flowdir0, branch0_branch, branch)
+    @JuMPout_suffix(src, 0, rate_a, pf)
+    @JuMPout(dst, flowdir0, branch0_branch, branch)
     rate_a = aggregate_parameter(rate_a0, branch0_branch, sum)
     pf_sp = aggregate_parameter(prod(pf0, flowdir0), branch0_branch, sum)
     for l in branch
@@ -81,12 +81,12 @@ function aggregate_basic_dc_branch_params!(dst::Dict, src::Dict)
             pf_sp[l] = 0
         end
     end
-    @pack(dst, rate_a, pf_sp)
+    @JuMPin(dst, rate_a, pf_sp)
 end
 
 function aggregate_basic_ac_branch_params!(dst::Dict, src::Dict)
-    @unpack_with_suffix(src, 0, rate_a, pf_fr, qf_fr, pf_to, qf_to)
-    @unpack(dst, flowdir0, branch0_branch, branch)
+    @JuMPout_suffix(src, 0, rate_a, pf_fr, qf_fr, pf_to, qf_to)
+    @JuMPout(dst, flowdir0, branch0_branch, branch)
     rate_a = aggregate_parameter(rate_a0, branch0_branch, sum)
     pf_fr_sp = aggregate_parameter(prod(pf_fr0, flowdir0), branch0_branch, sum)
     qf_fr_sp = aggregate_parameter(prod(qf_fr0, flowdir0), branch0_branch, sum)
@@ -101,5 +101,5 @@ function aggregate_basic_ac_branch_params!(dst::Dict, src::Dict)
             qf_to_sp[l] = 0
         end
     end
-    @pack(dst, rate_a, pf_fr_sp, qf_fr_sp, pf_to_sp, qf_to_sp)
+    @JuMPin(dst, rate_a, pf_fr_sp, qf_fr_sp, pf_to_sp, qf_to_sp)
 end
