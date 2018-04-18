@@ -41,34 +41,20 @@ JuMP_object(dsn_str::AbstractString; kwargs...) = JuMP_object(ODBC.DSN(dsn_str);
 """
     JuMP_object(sdo::SpineDataObject)
 
-A JuMP-friendly julia `Dict` translated from `sdo`. Translation rules are
-outlined in the table below:
+A JuMP-friendly object translated from `sdo`.
+A JuMP-friendly object is a Jula `Dict` of `Array`s and `Dict`s, as follows:
 
-<table>
-  <tr>
-    <th rowspan=2>Spine object</th>
-    <th colspan=2>JuMP object</th>
-  </tr>
-  <tr>
-    <td><i>Key</i></td>
-    <td><i>Value</i></td>
-  </tr>
-  <tr>
-    <td>objects</td>
-    <td>Object_class</td>
-    <td>Array(Object, ...)</td>
-  </tr>
-  <tr>
-    <td>relationships</td>
-    <td>Relationship_class</td>
-    <td>Dict(Child_object => Parent_object, ...)</td>
-  </tr>
-  <tr>
-    <td>parameters</td>
-    <td>Parameter</td>
-    <td>Dict(Child => Value, ...)</td>
-  </tr>
-</table>
+ - For each object class in `sdo`
+   there is a key-value pair where the key is the class name (i.e. `Object_class`),
+   and the value is an `Array` of object names (i.e. `Object`).
+
+ - For each parameter definition in `sdo`
+   there is a key-value pair where the key is the parameter name (i.e. `Parameter`),
+   and the value is another `Dict` of child names and their values (i.e. `Child => Value`).
+
+ - For each relationship class in `sdo`
+   there is a key-value pair where the key is the relationship class name (i.e. `Relationship_class`),
+   and the value is another `Dict` of child names and parent names (i.e. `Child_object => Parent_object`).
 
 # Example
 ```julia
@@ -118,3 +104,35 @@ function JuMP_object(sdo::SpineDataObject)
     end
     jfo
 end
+
+
+#=
+Translation rules are
+outlined in the table below:
+
+<table>
+  <tr>
+    <th rowspan=2>Spine object</th>
+    <th colspan=2>JuMP object</th>
+  </tr>
+  <tr>
+    <td><i>Key</i></td>
+    <td><i>Value</i></td>
+  </tr>
+  <tr>
+    <td>objects</td>
+    <td>Object_class</td>
+    <td>Array(Object, ...)</td>
+  </tr>
+  <tr>
+    <td>relationships</td>
+    <td>Relationship_class</td>
+    <td>Dict(Child_object => Parent_object, ...)</td>
+  </tr>
+  <tr>
+    <td>parameters</td>
+    <td>Parameter</td>
+    <td>Dict(Child => Value, ...)</td>
+  </tr>
+</table>
+=#
