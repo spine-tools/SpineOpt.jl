@@ -1,7 +1,7 @@
 # SpineModel.jl
 
 A Julia Module to run simulations using data in the Spine format. It provides:
-- Functions to convert data Spine data objects into  [JuMP](https://github.com/JuliaOpt/JuMP.jl)-friendly objects.
+- Functions to translate Spine data objects into  [JuMP](https://github.com/JuliaOpt/JuMP.jl)-friendly objects.
 - Functions and macros to manipulate JuMP-friendly objects.
 
 

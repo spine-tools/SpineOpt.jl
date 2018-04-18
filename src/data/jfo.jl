@@ -104,7 +104,7 @@ function JuMP_object(sdo::SpineDataObject)
         jfo[rel_class] = @from k in sdo.relationships begin
             @where k.Relationship_class == rel_class
             @select get(k.Child_object) => get(k.Parent_object)
-            @collect Dict{String,String}
+            @collect Dict{Any,Any}
         end
     end
     for i=1:size(sdo.parameter_definitions,1)
@@ -113,7 +113,7 @@ function JuMP_object(sdo::SpineDataObject)
         jfo[par] = @from k in sdo.parameters begin
             @where k.Parameter == par
             @select get(k.Child) => get(k.Value)
-            @collect Dict{String,spine2julia[datatype]}
+            @collect Dict{Any,spine2julia[datatype]}
         end
     end
     jfo
