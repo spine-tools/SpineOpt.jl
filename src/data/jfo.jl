@@ -6,23 +6,23 @@ function JuMP_object(dsn::ODBC.DSN; database::String = "")
     for obj_class in ODBC.query(dsn, qry, ArraySink)
         table = compose_table_name(dsn, "objects")
         qry = string("SELECT Object FROM ", table,
-            " WHERE Object_class = '", obj_class, "'")
+            " WHERE object_class_id = '", obj_class, "'")
         jfo[obj_class] = ODBC.query(dsn, qry, ArraySink)
     end
     table = compose_table_name(dsn, "relationship_classes")
-    qry = string("SELECT Relationship_class FROM ", table)
+    qry = string("SELECT relationship_class_id FROM ", table)
     for rel_class in ODBC.query(dsn, qry, ArraySink)
         table = compose_table_name(dsn, "relationships")
-        qry = string("SELECT Child_object, Parent_object FROM ", table,
-            " WHERE Relationship_class = '", rel_class, "'")
+        qry = string("SELECT child_object_id, parent_object_id FROM ", table,
+            " WHERE relationship_class_id = '", rel_class, "'")
         jfo[rel_class] = ODBC.query(dsn, qry, DictSink)
     end
-    table = compose_table_name(dsn, "parameter_definitions")
-    qry = string("SELECT Parameter, DataType FROM ", table)
+    table = compose_table_name(dsn, "parameter_definition")
+    qry = string("SELECT parameter_id, data_type FROM ", table)
     for (par, datatype) in ODBC.query(dsn, qry, DictSink)
         table = compose_table_name(dsn, "parameters")
-        qry = string("SELECT Child, Value FROM ", table,
-            " WHERE Parameter = '", par, "'")
+        qry = string("SELECT entity_id, parameter_value FROM ", table,
+            " WHERE parameter_id = '", par, "'")
         jfo[par] = ODBC.query(dsn, qry, DictSink, datatype)
     end
     jfo
@@ -79,26 +79,26 @@ Dict{String,String} with 33 entries:
 """
 function JuMP_object(sdo::SpineDataObject)
     jfo = Dict{String,Any}()
-    for obj_class in sdo.object_classes[:Object_class]
+    for obj_class in sdo.object_classes[:object_class_id]
         jfo[obj_class] = @from k in sdo.objects begin
-            @where k.Object_class == obj_class
+            @where k.object_class_id == obj_class
             @select get(k.Object)
             @collect
         end
     end
-    for rel_class in sdo.relationship_classes[:Relationship_class]
+    for rel_class in sdo.relationship_classes[:relationship_class_id]
         jfo[rel_class] = @from k in sdo.relationships begin
-            @where k.Relationship_class == rel_class
-            @select get(k.Child_object) => get(k.Parent_object)
+            @where k.relationship_class_id == rel_class
+            @select get(k.child_object_id) => get(k.parent_object_id)
             @collect Dict{Any,Any}
         end
     end
-    for i=1:size(sdo.parameter_definitions,1)
-        par = sdo.parameter_definitions[i, :Parameter]
-        datatype = sdo.parameter_definitions[i, :DataType]
+    for i=1:size(sdo.parameter_definition,1)
+        par = sdo.parameter_definition[i, :parameter_id]
+        datatype = sdo.parameter_definition[i, :data_type]
         jfo[par] = @from k in sdo.parameters begin
-            @where k.Parameter == par
-            @select get(k.Child) => get(k.Value)
+            @where k.parameter == par
+            @select get(k.entity_id) => get(k.parameter_value)
             @collect Dict{Any,spine2julia[datatype]}
         end
     end
