@@ -2,7 +2,7 @@
 Aggregates the values of parameter `par` into one single value for each parent
  in relationship `rel`, by applying function `func` on the values of the childs.
 """
-function aggregate_parameter(par::Dict, rel::Dict{String,String}, func)
+function aggregate_parameter(par::Dict, rel::Dict, func)
     Dict(
         e1 => func([par[e2] for e2 in keys(filter((k, v) -> v == e1, rel))])
         for e1 in unique(values(rel))
@@ -19,7 +19,7 @@ end
 Takes two relationships, one from `a` to `b` and the other from `b` to `c`,
 and returns a new equivalent relationship from `a` to `c`.
 """
-function extend_relationship(rel1::Dict{String,String}, rel2::Dict{String,String})
+function extend_relationship(rel1::Dict, rel2::Dict)
     Dict(e => rel2[rel1[e]] for e in keys(rel1))
 end
 
@@ -102,4 +102,9 @@ function aggregate_basic_ac_branch_params!(dst::Dict, src::Dict)
         end
     end
     @JuMPin(dst, rate_a, pf_fr_sp, qf_fr_sp, pf_to_sp, qf_to_sp)
+end
+
+"product of dictionaries"
+function prod(x::Dict, y::Dict)
+    Dict(k => x[k] * y[k] for k in keys(x) if haskey(y, k))
 end
