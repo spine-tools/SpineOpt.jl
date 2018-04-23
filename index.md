@@ -41,9 +41,9 @@ JuMP_object(sdo::SpineDataObject)
 
 A JuMP-friendly object translated from `sdo`. A JuMP-friendly object is a Jula `Dict` of `Array`s and `Dict`s, as follows:
 
-  * For each object class in `sdo` there is a key-value pair where the key is the class name (i.e. `Object_class`), and the value is an `Array` of object names (i.e. `Object`).
-  * For each parameter definition in `sdo` there is a key-value pair where the key is the parameter name (i.e. `Parameter`), and the value is another `Dict` of child names and their values (i.e. `Child => Value`).
-  * For each relationship class in `sdo` there is a key-value pair where the key is the relationship class name (i.e. `Relationship_class`), and the value is another `Dict` of child names and parent names (i.e. `Child_object => Parent_object`).
+  * For each object class in `sdo` there is a key-value pair where the key is the class name, and the value is an `Array` of object names.
+  * For each parameter definition in `sdo` there is a key-value pair where the key is the parameter name, and the value is another `Dict` of object names and their values.
+  * For each relationship class in `sdo` there is a key-value pair where the key is the relationship class name, and the value is another `Dict` of child and parent object names.
 
 **Example**
 
@@ -151,8 +151,8 @@ true
 
 ## Index
 
-- [`SpineModel.JuMP_object`](index.md#SpineModel.JuMP_object-Tuple{AbstractString})
 - [`SpineModel.JuMP_object`](index.md#SpineModel.JuMP_object-Tuple{SpineData.SpineDataObject})
+- [`SpineModel.JuMP_object`](index.md#SpineModel.JuMP_object-Tuple{AbstractString})
 - [`SpineModel.@JuMPin`](index.md#SpineModel.@JuMPin-Tuple{Any,Vararg{Any,N} where N})
 - [`SpineModel.@JuMPout`](index.md#SpineModel.@JuMPout-Tuple{Any,Vararg{Any,N} where N})
 - [`SpineModel.@JuMPout_suffix`](index.md#SpineModel.@JuMPout_suffix-Tuple{Any,Any,Vararg{Any,N} where N})
