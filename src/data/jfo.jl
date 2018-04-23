@@ -82,7 +82,7 @@ function JuMP_object(sdo::SpineDataObject)
     for obj_class in sdo.object_classes[:object_class_id]
         jfo[obj_class] = @from k in sdo.objects begin
             @where k.object_class_id == obj_class
-            @select get(k.Object)
+            @select get(k.object_id)
             @collect
         end
     end
@@ -97,7 +97,7 @@ function JuMP_object(sdo::SpineDataObject)
         par = sdo.parameter_definition[i, :parameter_id]
         datatype = sdo.parameter_definition[i, :data_type]
         jfo[par] = @from k in sdo.parameters begin
-            @where k.parameter == par
+            @where k.parameter_id == par
             @select get(k.entity_id) => get(k.parameter_value)
             @collect Dict{Any,spine2julia[datatype]}
         end
