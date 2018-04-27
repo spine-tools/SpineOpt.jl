@@ -2,6 +2,9 @@ image: julia:0.6                # image comes from Docker hub
 
 before_script:
   - apt-get update -qq && apt-get install -y git # needed by Documenter
+  - apt-get install xclip
+  - ssh-keygen -t rsa -C "manuelma@kth.se" -b 4096
+  - xclip -sel clip < ~/.ssh/id_rsa.pub
   - julia build_script.jl              # make sure package is available
 
 default:
