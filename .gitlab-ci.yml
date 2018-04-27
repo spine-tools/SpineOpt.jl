@@ -1,0 +1,23 @@
+image: julia:0.6                # image comes from Docker hub
+
+before_script:
+  - apt-get update -qq && apt-get install -y git # needed by Documenter
+  - julia build_script.jl              # make sure package is available
+
+default:
+  script:
+    - julia -e "Pkg.test(\"SpineModel\"; coverage = true)"
+    - julia coverage_script.jl
+
+pages:
+  stage: deploy
+  script:
+    - julia -e "Pkg.add(\"Documenter\")" # install Documenter
+    - julia -e "Pkg.checkout(\"Documenter\"); Pkg.checkout(\"Documenter\", \"mp/fix-url-lines\")"
+    - julia --color=yes docs/make.jl # make documentation
+    - mv docs/build public # move to the directory picked up by Gitlab pages
+  artifacts:
+    paths:
+      - public
+  only:
+  - manuelma
