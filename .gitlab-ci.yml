@@ -2,8 +2,11 @@ image: julia:0.6                # image comes from Docker hub
 
 before_script:
   - apt-get update -qq && apt-get install -y git # needed by Documenter
-  - echo -e  'y\n'|ssh-keygen -q ssh-keygen -t rsa -C "manuelma@kth.se" -b 4096 -N "" -f ~/.ssh/id_rsa
-  - xclip -sel clip < ~/.ssh/id_rsa.pub
+  - BASE_URL=`echo $CI_REPOSITORY_URL | sed "s;\/*$CI_PROJECT_PATH.*;;"`
+  - REPO_URL="$BASE_URL/data.git"
+  - REPO_DIR=data
+  - rm -fr $REPO_DIR
+  - git clone $REPO_URL $REPO_DIR
   - julia build_script.jl              # make sure package is available
 
 default:
