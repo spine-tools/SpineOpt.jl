@@ -12,6 +12,9 @@ before_script:
   - rm -fr $REPO_DIR
   - apt-get update -qq && apt-get install -y git # needed by Documenter
   - git clone $REPO_URL $REPO_DIR
+  - cd $REPO_DIR
+  - git checkout manuelma
+  - cd ..
   - julia build_script.jl              # make sure package is available
 
 default:
