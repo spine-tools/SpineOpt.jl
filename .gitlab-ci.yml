@@ -19,8 +19,9 @@ before_script:
 
 default:
   script:
-    - julia -e "Pkg.test(\"SpineModel\"; coverage = true)"
-    - julia coverage_script.jl
+    #- julia -e "Pkg.test(\"SpineModel\"; coverage = true)"
+    #- julia coverage_script.jl
+    - echo "hello"
 
 pages:
   stage: deploy
