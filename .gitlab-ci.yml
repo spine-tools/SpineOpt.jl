@@ -2,17 +2,17 @@ image: julia:0.6                # image comes from Docker hub
 
 before_script:
   - echo $CI_REPOSITORY_URL
-  - echo $CI_PROJECT_PATH
-  - BASE_URL=`echo $CI_REPOSITORY_URL | sed "s;\/*$CI_PROJECT_PATH.*;;"`
+  - echo $CI_PROJECT_NAME
+  - BASE_URL=`echo $CI_REPOSITORY_URL | sed "s;\/*$CI_PROJECT_NAME.*;;"`
   - REPO_URL="$BASE_URL/data.git"
   - REPO_DIR=data
   - echo $BASE_URL
   - echo $REPO_URL
   - echo $REPO_DIR
   - rm -fr $REPO_DIR
+  - apt-get update -qq && apt-get install -y git # needed by Documenter
   - git clone $REPO_URL $REPO_DIR
   - julia build_script.jl              # make sure package is available
-  - apt-get update -qq && apt-get install -y git # needed by Documenter
 
 default:
   script:
