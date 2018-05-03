@@ -12,7 +12,7 @@ end
 function DictSink(sch::Data.Schema, ::Type{Data.Column}, ::Bool, args...; reference::Vector{UInt8}=UInt8[], kwargs...)
     sch.cols != 2 && error("Dict sink only accepts two column tables as input or something like that")
     T1, T2 = Data.types(sch)
-    !isempty(args) && (T2 = Union{Missing,spine2julia[args[1][1]]})
+    !isempty(args) && (T2 = Union{Missing,get(spine2julia, args[1][1], Any)})
     return DictSink(Dict{T1,T2}(), Dict{Int,T1}())
 end
 
@@ -48,7 +48,7 @@ Data.close!(sink::DictSink) = sink.dict
     ArraySink
 
 A custom `Array`-`Sink` to work with `JuMP_object`. Enables sinking one-column
-results of an ODBC query into a Julia `Array`. 
+results of an ODBC query into a Julia `Array`.
 """
 abstract type ArraySink end
 
