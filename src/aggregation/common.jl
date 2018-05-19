@@ -1,26 +1,17 @@
 """
-Aggregates the values of parameter `par` into one single value for each parent
+Aggregates the values of `parameter` into one single value for each `object`
+by
  in relationship `rel`, by applying function `func` on the values of the childs.
 """
-function aggregate_parameter(par::Dict, rel::Dict, func)
-    Dict(
-        e1 => func([par[e2] for e2 in keys(filter((k, v) -> v == e1, rel))])
-        for e1 in unique(values(rel))
+function aggregate_parameter(parameter::Dict;
+        object=Array(),
+        relationship=Dict(),
+        func=x->nothing
     )
-end
-
-"""
-"""
-function convert_parameter(par::Dict, par2::Dict, func)
-    Dict(k => func(par[k], par2[k]) for k in keys(par) if haskey(par2, k))
-end
-
-"""
-Takes two relationships, one from `a` to `b` and the other from `b` to `c`,
-and returns a new equivalent relationship from `a` to `c`.
-"""
-function extend_relationship(rel1::Dict, rel2::Dict)
-    Dict(e => rel2[rel1[e]] for e in keys(rel1))
+    Dict(
+        parent => func([parameter[child] for child in relationship[parent]])
+        for parent in object
+    )
 end
 
 """
@@ -29,8 +20,10 @@ and creates relationships between these equivalent and the original buses
 """
 function aggregate_buses!(dst::Dict, src::Dict, assignments::Vector{Int}, costs::Vector{Float64})
     @JuMPout_suffix(src, 0, bus)
-    bus = [string(z) for z in unique(assignments)]
-    bus0_bus = Dict(bus0[n] => string(z) for (n, z) in enumerate(assignments))
+    bus = [string("eqbus", z) for z in unique(assignments)]
+    bus_bus0 = Dict(string("eqbus", z) => [bus0[n] for n in findin(assignments, z)] for z in unique(assignments))
+    bus0_bus = Dict(bus0[n] => string("eqbus", z) for (n, z) in enumerate(assignments))
+    bus0_bus = merge(bus0_bus, bus_bus0)
     counts = Dict(z => count(assignments .== z) for z in unique(assignments))
     totalcosts = Dict(z => sum(costs[assignments .== z]) for z in unique(assignments))
     bus0_weight = Dict(
@@ -38,7 +31,7 @@ function aggregate_buses!(dst::Dict, src::Dict, assignments::Vector{Int}, costs:
         for (n,z) in enumerate(assignments)
     )
     bus_internalbus0 = Dict(
-        string(z) => bus0[indmin(costs + (assignments .!= z) * Inf)]    #the internal bus is the one with the minimum cost among the ones in the zone
+        string("eqbus", z) => bus0[indmin(costs + (assignments .!= z) * Inf)]    #the internal bus is the one with the minimum cost among the ones in the zone
         for z in unique(assignments)
     )
     #bus_internalbus0 = Dict(
@@ -46,17 +39,19 @@ function aggregate_buses!(dst::Dict, src::Dict, assignments::Vector{Int}, costs:
     #    for z in unique(assignments)
     #)
     @JuMPin(dst, bus, bus0_bus, bus0_weight, bus_internalbus0)
+    push!(dst[".METADATA"]["object_class"], "bus")
 end
 
 function aggregate_basic_bus_params!(dst::Dict, src::Dict)
     @JuMPout_suffix(src, 0, bus_type, vm, va, vmax, vmin)
-    @JuMPout(dst, bus0_bus, bus0_weight)
-    bus_type = aggregate_parameter(bus_type0, bus0_bus, maximum)
-    vm = aggregate_parameter(prod(vm0, bus0_weight), bus0_bus, sum)
-    va = aggregate_parameter(prod(va0, bus0_weight), bus0_bus, sum)
-    vmax = aggregate_parameter(vmax0, bus0_bus, minimum)
-    vmin = aggregate_parameter(vmin0, bus0_bus, maximum)
+    @JuMPout(dst, bus, bus0_bus, bus0_weight)
+    bus_type = aggregate_parameter(bus_type0, object=bus, relationship=bus0_bus, func=maximum)
+    vm = aggregate_parameter(prod(vm0, bus0_weight), object=bus, relationship=bus0_bus, func=sum)
+    va = aggregate_parameter(prod(va0, bus0_weight), object=bus, relationship=bus0_bus, func=sum)
+    vmax = aggregate_parameter(vmax0, object=bus, relationship=bus0_bus, func=minimum)
+    vmin = aggregate_parameter(vmin0, object=bus, relationship=bus0_bus, func=maximum)
     @JuMPin(dst, bus_type, vm, va, vmax, vmin)
+    append!(dst[".METADATA"]["parameter"], ["bus_type", "vm", "va", "vmax", "vmin"])
 end
 
 #function aggregate_basic_bus_params!(dst::Dict, src::Dict)
@@ -87,11 +82,11 @@ end
 function aggregate_basic_ac_branch_params!(dst::Dict, src::Dict)
     @JuMPout_suffix(src, 0, rate_a, pf_fr, qf_fr, pf_to, qf_to)
     @JuMPout(dst, flowdir0, branch0_branch, branch)
-    rate_a = aggregate_parameter(rate_a0, branch0_branch, sum)
-    pf_fr_sp = aggregate_parameter(prod(pf_fr0, flowdir0), branch0_branch, sum)
-    qf_fr_sp = aggregate_parameter(prod(qf_fr0, flowdir0), branch0_branch, sum)
-    pf_to_sp = aggregate_parameter(prod(pf_to0, flowdir0), branch0_branch, sum)
-    qf_to_sp = aggregate_parameter(prod(qf_to0, flowdir0), branch0_branch, sum)
+    rate_a = aggregate_parameter(rate_a0, object=branch, relationship=branch0_branch, func=sum)
+    pf_fr_sp = aggregate_parameter(prod(pf_fr0, flowdir0), object=branch, relationship=branch0_branch, func=sum)
+    qf_fr_sp = aggregate_parameter(prod(qf_fr0, flowdir0), object=branch, relationship=branch0_branch, func=sum)
+    pf_to_sp = aggregate_parameter(prod(pf_to0, flowdir0), object=branch, relationship=branch0_branch, func=sum)
+    qf_to_sp = aggregate_parameter(prod(qf_to0, flowdir0), object=branch, relationship=branch0_branch, func=sum)
     for l in branch
         if !in(l, values(branch0_branch))
             rate_a[l] =  Inf
@@ -102,6 +97,7 @@ function aggregate_basic_ac_branch_params!(dst::Dict, src::Dict)
         end
     end
     @JuMPin(dst, rate_a, pf_fr_sp, qf_fr_sp, pf_to_sp, qf_to_sp)
+    push!(dst[".METADATA"]["parameter"], "rate_a")
 end
 
 "product of dictionaries"

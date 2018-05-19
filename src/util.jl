@@ -32,12 +32,17 @@ julia> pmin_new == jfo["pmin"]
 true
 ```
 """
+#macro JuMPout_suffix(dict, suffix, keys...)
+#    kd = [:($(Symbol(key, suffix)) = [string(value, $suffix) for value in $dict[$(string(key))]]) for key in keys]
+#    expr = Expr(:block, kd...)
+#    esc(expr)
+#end
+
 macro JuMPout_suffix(dict, suffix, keys...)
     kd = [:($(Symbol(key, suffix)) = $dict[$(string(key))]) for key in keys]
     expr = Expr(:block, kd...)
     esc(expr)
 end
-
 
 """
     JuMPout_with_backup(dict, backup, keys...)
@@ -70,10 +75,43 @@ macro JuMPin(dict, vars...)
     esc(expr)
 end
 
-function extend_parameter(par::Dict, rel::Dict)
-    Dict(k => par[v] for (k,v) in rel)
+function extend_parameter!(reference::Dict;
+        parameter::String="",
+        object::String="",
+        relationship::String="")
+    for to_object in reference[object]
+        from_object = reference[relationship][to_object]
+        isa(from_object, Array) && error(
+            to_object,
+            " is related to more than one object via relationship ",
+            relationship
+        )
+        reference[parameter][to_object] = reference[parameter][from_object]
+    end
 end
 
-function extend_parameter!(ref::Dict, par::String, rel::String)
-    ref[par] = extend_parameter(ref[par], ref[rel])
+function extend_relationship(relationship::Dict;
+        object=Array(),
+        with_relationship=Dict()
+    )
+    new_relationship = Dict()
+    for o in object
+        new_relationship[o] = Array{Any,1}()
+        !haskey(with_relationship, o) && continue
+        with_object = with_relationship[o]
+        for wo in with_object
+            !haskey(relationship, wo) && continue
+            relationship_object = relationship[wo]
+            if isa(relationship_object, Array)
+                for ro in relationship_object
+                    push!(new_relationship[o], ro)
+                    new_relationship[ro] = o
+                end
+            else
+                push!(new_relationship[o], relationship_object)
+                new_relationship[relationship_object] = o
+            end
+        end
+    end
+    new_relationship
 end

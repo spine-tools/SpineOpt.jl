@@ -56,7 +56,7 @@ that already has equivalent buses defined
 """
 function PTDF_aggregate_branches!(dst::Dict, src::Dict)
     branch = Array{String,1}()
-    branch0_branch = Dict{String,String}()
+    branch0_branch = Dict{String,Any}()
     f_bus = Dict{String,String}()
     t_bus = Dict{String,String}()
     flowdir0 = Dict{String,Any}()
@@ -78,31 +78,41 @@ function PTDF_aggregate_branches!(dst::Dict, src::Dict)
                 branch0
             )
             if !isempty(union(branch0_ab, branch0_ba))
-                push!(branch, string(k))
-                push!(f_bus, string(k) => bus_a)
-                push!(t_bus, string(k) => bus_b)
+                eqbranch = string("eqbranch", k)
+                push!(branch, eqbranch)
+                push!(f_bus, eqbranch => bus_a)
+                push!(t_bus, eqbranch => bus_b)
+                branch0_branch[eqbranch] = Array{Any,1}()
                 for l in branch0_ab
-                    push!(branch0_branch, l => string(k))
-                    push!(flowdir0, l => 1)
+                    branch0_branch[l] = eqbranch
+                    push!(branch0_branch[eqbranch], l)
+                    flowdir0[l] = 1
                 end
                 for l in branch0_ba
-                    push!(branch0_branch, l => string(k))
-                    push!(flowdir0, l => -1)
+                    branch0_branch[l] = eqbranch
+                    push!(branch0_branch[eqbranch], l)
+                    flowdir0[l] = -1
                 end
                 k += 1
             end
         end
     end
     @JuMPin(dst, branch, branch0_branch, f_bus, t_bus, flowdir0)
+    push!(dst[".METADATA"]["object_class"], "branch")
+    append!(dst[".METADATA"]["relationship_class"], ["f_bus", "t_bus"])
 end
 
 function PTDF_aggregate_basic_bus_params!(dst::Dict, src::Dict)
     @JuMPout_suffix(src, 0, bus_type, pd, qd, vm, vmax, vmin, gen_bus)
-    @JuMPout(dst, bus0_bus, bus0_weight)
-    pd = aggregate_parameter(pd0, bus0_bus, sum)
-    qd = aggregate_parameter(qd0, bus0_bus, sum)
-    gen_bus = extend_relationship(gen_bus0, bus0_bus)
-    @JuMPin(dst, pd, qd, gen_bus)
+    @JuMPout(src, gen, gengroup, gen_group)
+    @JuMPout(dst, bus, bus0_bus, bus0_weight)
+    pd = aggregate_parameter(pd0, object=bus, relationship=bus0_bus, func=sum)
+    qd = aggregate_parameter(qd0, object=bus, relationship=bus0_bus, func=sum)
+    gen_bus = extend_relationship(gen_bus0, object=bus, with_relationship=bus0_bus)
+    @JuMPin(dst, pd, qd, gen_bus, gen, gengroup, gen_group)
+    append!(dst[".METADATA"]["parameter"], ["pd", "qd"])
+    append!(dst[".METADATA"]["relationship_class"], ["gen_bus", "gen_group"])
+    append!(dst[".METADATA"]["object_class"], ["gen", "gengroup"])
 end
 
 function PTDF_compute_dc_aggregated_branch_params!(dst::Dict; solver = SCIPSolver())
@@ -183,6 +193,7 @@ function PTDF_compute_ac_aggregated_bus_branch_params!(dst::Dict, src::Dict; sol
     vmag_start = Dict(n => getvalue(vmag[n]) for n in bus)
     va_start = Dict(n => getvalue(va[n]) for n in bus)
     @JuMPin(dst, br_r, br_x, br_b, tap, shift, gs, bs)
+    append!(dst[".METADATA"]["parameter"], ["br_r", "br_x", "br_b", "tap", "shift", "gs", "bs"])
     print_with_color(:green, "Equivalent ac bus and branch parameters determined successfully\n")
     true
 end
@@ -191,10 +202,10 @@ end
 Aggregate a `system` into `m` zones while preserving inter-zonal flows
 internal branches in the system are preserved in the aggregate
 """
-function PTDF_ac_aggregate!(dst::Dict, src::Dict, m::Int = 4; max_iters::Int = 20 )
+function PTDF_ac_aggregate!(dst::Dict, src::Dict, m::Int=4; max_iters::Int=20)
     run_ac_pf!(src)
     for iter = 1:max_iters
-        assignments, costs = PTDF_bus_clustering(src, m; first_seed = x -> iter)
+        assignments, costs = PTDF_bus_clustering(src, m, first_seed=x->iter)
         aggregate_buses!(dst, src, assignments, costs)
         PTDF_aggregate_branches!(dst, src)
         aggregate_basic_bus_params!(dst, src)
@@ -205,4 +216,14 @@ function PTDF_ac_aggregate!(dst::Dict, src::Dict, m::Int = 4; max_iters::Int = 2
     end
     print_with_color(:red, "PTDF_ac_aggregate: Maximum number of iterations reached")
     false
+end
+
+function PTDF_ac_aggregate(src::Dict, m::Int=4; max_iters::Int=20 )
+    dst = Dict()
+    dst[".METADATA"] = Dict{String,Array}()
+    dst[".METADATA"]["object_class"] = Array{String,1}()
+    dst[".METADATA"]["relationship_class"] = Array{String,1}()
+    dst[".METADATA"]["parameter"] = Array{String,1}()
+    PTDF_ac_aggregate!(dst, src, m, max_iters=max_iters)
+    dst
 end

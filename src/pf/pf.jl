@@ -86,10 +86,17 @@ function constraint_ac_ohms_q_to(m, branch, f_bus, t_bus, qf_to, g, b, c, t, s, 
     )
 end
 
+
+```
+    bus:
+    f_bus: from bus
+```
 ##RECT COORDS
 function constraint_ac_rect_kcl_p(m, bus, branch, gen, f_bus, t_bus, gen_bus, vr, vi, gs, pd, pf_fr, pf_to, pgen)
     @NLconstraint(m, kcl_p[n in bus],
-        sum(pgen[g] for g in gen if gen_bus[g] == n)
+        + sum(
+            + pgen[g] for g in gen if gen_bus[g] == n
+          )
         - pd[n] - gs[n] * (vr[n]^2 + vi[n]^2)
         == - sum(pf_fr[l] for l in branch if f_bus[l] == n)
         + sum(pf_to[l] for l in branch if t_bus[l] == n)
@@ -107,7 +114,7 @@ end
 
 function constraint_ac_rect_ohms_p_fr(m, branch, f_bus, t_bus, pf_fr, g, b, tr, ti, vr, vi)
     @NLconstraint(m, ohms_p_fr[l in branch],
-        -pf_fr[l] == g[l] * (vr[f_bus[l]]^2 + vi[f_bus[l]]^2) / (tr[l]^2 + ti[l]^2)
+        - pf_fr[l] == g[l] * (vr[f_bus[l]]^2 + vi[f_bus[l]]^2) / (tr[l]^2 + ti[l]^2)
         + (-g[l] * tr[l] + b[l] * ti[l]) * (vr[f_bus[l]] * vr[t_bus[l]] + vi[f_bus[l]] * vi[t_bus[l]]) / (tr[l]^2 + ti[l]^2)
         + (-b[l] * tr[l] - g[l] * ti[l]) * (vi[f_bus[l]] * vr[t_bus[l]] - vr[f_bus[l]] * vi[t_bus[l]]) / (tr[l]^2 + ti[l]^2)
     )
@@ -123,7 +130,7 @@ end
 
 function constraint_ac_rect_ohms_p_to(m, branch, f_bus, t_bus, pf_to, g, b, tr, ti, vr, vi)
     @NLconstraint(m, ohms_p_to[l in branch],
-        pf_to[l] == g[l] * (vr[t_bus[l]]^2 + vi[t_bus[l]]^2)
+        + pf_to[l] == g[l] * (vr[t_bus[l]]^2 + vi[t_bus[l]]^2)
         - (g[l] * tr[l] + b[l] * ti[l]) * (vr[f_bus[l]] * vr[t_bus[l]] + vi[f_bus[l]] * vi[t_bus[l]]) / (tr[l]^2 + ti[l]^2)
         + (b[l] * tr[l] - g[l] * ti[l]) * (vi[f_bus[l]] * vr[t_bus[l]] - vr[f_bus[l]] * vi[t_bus[l]]) / (tr[l]^2 + ti[l]^2)
     )

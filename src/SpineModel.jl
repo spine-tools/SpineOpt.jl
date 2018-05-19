@@ -12,6 +12,7 @@ using DataFrames
 using Query
 using Clustering
 using ODBC
+using SQLite
 
 include("util.jl")
 include("data/jfo.jl")
