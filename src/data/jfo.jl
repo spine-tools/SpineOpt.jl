@@ -147,8 +147,9 @@ function SpineData.Spine_object(jfo::Dict)
         for (parent_object_name, child_object_name) in jfo[relationship_class_name]
             isa(child_object_name, Array) && continue
             parent_object = filter(x -> x[:class_id] == parent_object_class_id, sdo.object)
-            parent_object_id = findfirst(parent_object[:name], parent_object_name)
-            parent_object_id == 0 && continue
+            i = findfirst(parent_object[:name], parent_object_name)
+            i == 0 && continue
+            parent_object_id = parent_object[i, :id]
             child_object_id = findfirst(sdo.object[:name], child_object_name)
             relationship_name = string(parent_object_name, "_", child_object_name)
             push!(sdo.relationship, [
