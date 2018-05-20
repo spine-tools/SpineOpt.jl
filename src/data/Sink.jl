@@ -2,7 +2,7 @@
     DictSink
 
 A custom `Dict`-`Sink` to work with `JuMP_object`. Enables sinking two-column
-results of an ODBC query into a Julia `Dict`.
+results of a query into a Julia `Dict`.
 """
 struct DictSink
     dict::Dict
@@ -48,7 +48,7 @@ Data.close!(sink::DictSink) = sink.dict
     ArraySink
 
 A custom `Array`-`Sink` to work with `JuMP_object`. Enables sinking one-column
-results of an ODBC query into a Julia `Array`.
+results of a query into a Julia `Array`.
 """
 abstract type ArraySink end
 

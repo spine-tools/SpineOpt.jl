@@ -16,7 +16,6 @@ function initseeds(k::Int, X::RealMatrix, metric::PreMetric = SqEuclidean(); fir
     if k > 1
         mincosts = Distances.colwise(metric, X, view(X,:,p))
         mincosts[p] = 0
-
         # pick remaining (with a chance proportional to mincosts)
         tmpcosts = zeros(n)
         for j = 2:k
@@ -30,12 +29,8 @@ function initseeds(k::Int, X::RealMatrix, metric::PreMetric = SqEuclidean(); fir
             mincosts[p] = 0
         end
     end
-
     return iseeds
 end
-
-
-
 
 """
 Computes an array of bus to zone assignments based on PTDF matrix
@@ -98,8 +93,8 @@ function PTDF_aggregate_branches!(dst::Dict, src::Dict)
         end
     end
     @JuMPin(dst, branch, branch0_branch, f_bus, t_bus, flowdir0)
-    push!(dst[".METADATA"]["object_class"], "branch")
-    append!(dst[".METADATA"]["relationship_class"], ["f_bus", "t_bus"])
+    add_object_class_metadata!(dst, "branch")
+    add_relationship_class_metadata!(dst, "f_bus", "t_bus")
 end
 
 function PTDF_aggregate_basic_bus_params!(dst::Dict, src::Dict)
@@ -110,25 +105,28 @@ function PTDF_aggregate_basic_bus_params!(dst::Dict, src::Dict)
     qd = aggregate_parameter(qd0, object=bus, relationship=bus0_bus, func=sum)
     gen_bus = extend_relationship(gen_bus0, object=bus, with_relationship=bus0_bus)
     @JuMPin(dst, pd, qd, gen_bus, gen, gengroup, gen_group)
-    append!(dst[".METADATA"]["parameter"], ["pd", "qd"])
-    append!(dst[".METADATA"]["relationship_class"], ["gen_bus", "gen_group"])
-    append!(dst[".METADATA"]["object_class"], ["gen", "gengroup"])
+    add_object_class_metadata!(dst, "gen", "gengroup")
+    add_relationship_class_metadata!(dst, "gen_bus", "gen_group")
+    add_parameter_metadata!(dst, "pd", "qd")
 end
 
-function PTDF_compute_dc_aggregated_branch_params!(dst::Dict; solver = SCIPSolver())
+function PTDF_compute_dc_aggregated_branch_params!(dst::Dict;
+        solver=IpoptSolver()
+    )
     @JuMPout(dst, bus, bus_type, branch, f_bus, t_bus, pf_sp)
     m = Model(solver = solver)
-    @variable(m, x[branch])
+    @variable(m, x[branch], lowerbound = 0, start=1.0)
     @variable(m, va[bus])
     @constraint(m, [n in bus; bus_type[n] == 3], va[n] == 0)
     @constraint(m, ohms[l in branch],
         pf_sp[l] * x[l] == va[f_bus[l]] - va[t_bus[l]]
     )
-    @constraint(m, [l in branch], x[l]^2 >= 1e-3)
+    #@constraint(m, [l in branch], x[l]^2 >= 1e-3)
     #println(m)
     status = solve(m)
     br_x = Dict(l => getvalue(x[l]) for l in branch)
     @JuMPin(dst, br_x)
+    add_parameter_metadata!(dst, "br_x")
 end
 
 
@@ -145,6 +143,13 @@ function PTDF_dc_aggregate!(dst::Dict, src::Dict, m::Int = 4)
     PTDF_aggregate_basic_bus_params!(dst, src)
     aggregate_basic_dc_branch_params!(dst, src)
     PTDF_compute_dc_aggregated_branch_params!(dst)
+end
+
+function PTDF_dc_aggregate(src::Dict, m::Int=4)
+    dst = Dict()
+    init_metadata!(dst)
+    PTDF_dc_aggregate!(dst, src, m)
+    dst
 end
 
 function PTDF_compute_ac_aggregated_bus_branch_params!(dst::Dict, src::Dict; solver = IpoptSolver(print_level = 0, linear_solver = "ma97"))
@@ -193,7 +198,7 @@ function PTDF_compute_ac_aggregated_bus_branch_params!(dst::Dict, src::Dict; sol
     vmag_start = Dict(n => getvalue(vmag[n]) for n in bus)
     va_start = Dict(n => getvalue(va[n]) for n in bus)
     @JuMPin(dst, br_r, br_x, br_b, tap, shift, gs, bs)
-    append!(dst[".METADATA"]["parameter"], ["br_r", "br_x", "br_b", "tap", "shift", "gs", "bs"])
+    add_parameter_metadata!(dst, "br_r", "br_x", "br_b", "tap", "shift", "gs", "bs")
     print_with_color(:green, "Equivalent ac bus and branch parameters determined successfully\n")
     true
 end
@@ -220,10 +225,7 @@ end
 
 function PTDF_ac_aggregate(src::Dict, m::Int=4; max_iters::Int=20 )
     dst = Dict()
-    dst[".METADATA"] = Dict{String,Array}()
-    dst[".METADATA"]["object_class"] = Array{String,1}()
-    dst[".METADATA"]["relationship_class"] = Array{String,1}()
-    dst[".METADATA"]["parameter"] = Array{String,1}()
+    init_metadata!(dst)
     PTDF_ac_aggregate!(dst, src, m, max_iters=max_iters)
     dst
 end

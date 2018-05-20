@@ -8,6 +8,7 @@ using SpineData
 using Missings
 using JuMP
 using Ipopt
+using Clp
 using DataFrames
 using Query
 using Clustering

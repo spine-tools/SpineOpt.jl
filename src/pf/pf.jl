@@ -1,6 +1,7 @@
 function run_dc_pf!(
         ref::Dict;
-        solver = CplexSolver(),
+        #solver = CplexSolver(),
+        solver = IpoptSolver(),
         bck = Dict()
         )
 
@@ -44,7 +45,6 @@ function constraint_ac_kcl_p(m, bus, branch, gen, f_bus, t_bus, gen_bus, vmag, g
     )
 end
 
-
 function constraint_ac_kcl_q(m, bus, branch, gen, f_bus, t_bus, gen_bus, vmag, bs, qd, qf_fr, qf_to, qgen)
     @NLconstraint(m, kcl_q[n in bus],
         sum(qgen[g] for g in gen if gen_bus[g] == n)
@@ -65,7 +65,7 @@ end
 function constraint_ac_ohms_q_fr(m, branch, f_bus, t_bus, qf_fr, g, b, c, t, s, vmag, va)
     @NLexpression(m, ang[l in branch], va[f_bus[l]] - va[t_bus[l]] - s[l])
     @NLconstraint(m, ohms_q_fr[l in branch],
-        -qf_fr[l] == -(b[l] + c[l] / 2) * (vmag[f_bus[l]] / t[l])^2
+        - qf_fr[l] == - (b[l] + c[l] / 2) * (vmag[f_bus[l]] / t[l])^2
         + (b[l] * cos(ang[l]) - g[l] * sin(ang[l])) * vmag[f_bus[l]] * vmag[t_bus[l]] / t[l]
     )
 end
@@ -81,16 +81,11 @@ end
 function constraint_ac_ohms_q_to(m, branch, f_bus, t_bus, qf_to, g, b, c, t, s, vmag, va)
     @NLexpression(m, ang[l in branch], va[t_bus[l]] - va[f_bus[l]] - s[l])
     @NLconstraint(m, ohms_q_to[l in branch],
-        qf_to[l] == -(b[l] + c[l] / 2) * vmag[t_bus[l]]^2
+        qf_to[l] == - (b[l] + c[l] / 2) * vmag[t_bus[l]]^2
         + (b[l] * cos(ang[l]) - g[l] * sin(ang[l])) * vmag[t_bus[l]] * vmag[f_bus[l]] / t[l]
     )
 end
 
-
-```
-    bus:
-    f_bus: from bus
-```
 ##RECT COORDS
 function constraint_ac_rect_kcl_p(m, bus, branch, gen, f_bus, t_bus, gen_bus, vr, vi, gs, pd, pf_fr, pf_to, pgen)
     @NLconstraint(m, kcl_p[n in bus],
@@ -122,7 +117,7 @@ end
 
 function constraint_ac_rect_ohms_q_fr(m, branch, f_bus, t_bus, qf_fr, g, b, c, tr, ti, vr, vi)
     @NLconstraint(m, ohms_q_fr[l in branch],
-        -qf_fr[l] == -(b[l] + c[l] / 2) * (vr[f_bus[l]]^2 + vi[f_bus[l]]^2) / (tr[l]^2 + ti[l]^2)
+        - qf_fr[l] == -(b[l] + c[l] / 2) * (vr[f_bus[l]]^2 + vi[f_bus[l]]^2) / (tr[l]^2 + ti[l]^2)
         + (b[l] * tr[l] + g[l] * ti[l]) * (vr[f_bus[l]] * vr[t_bus[l]] + vi[f_bus[l]] * vi[t_bus[l]]) / (tr[l]^2 + ti[l]^2)
         + (-g[l] * tr[l] + b[l] * ti[l]) * (vi[f_bus[l]] * vr[t_bus[l]] - vr[f_bus[l]] * vi[t_bus[l]]) / (tr[l]^2 + ti[l]^2)
     )
@@ -147,7 +142,7 @@ end
 function run_ac_pf!(ref::Dict;
         solver = IpoptSolver(print_level = 0, linear_solver = "ma97"),
         bck = Dict()
-        )
+    )
     print_with_color(:yellow, "\nRunning ac powerflow...\n")
 
     @JuMPout_with_backup(ref, bck, bus, branch, gen, bus_type, vm, vmax, vmin, gs, bs, rate_a,
@@ -202,7 +197,7 @@ function run_ac_pf!(ref::Dict;
 end
 
 
-function test_ac_rect_pf!(ref::Dict;
+function run_ac_rect_pf!(ref::Dict;
         solver = IpoptSolver(),
         rin = Dict{String,String}(),
         rout = Dict{String,String}()
@@ -258,7 +253,7 @@ function test_ac_rect_pf!(ref::Dict;
     @JuMPin(ref, rout, va, vm, pg, qg, pf_fr, qf_fr, pf_to, qf_to)
 end
 
-#TODO: check if correct with small system
+#TODO: check correctness by using small system
 function compute_admittance_matrix(ref::Dict)
     @JuMPout(ref, bus, gs, bs, branch, f_bus, t_bus, br_r, br_x, br_b, tap, shift)
     n = length(bus)

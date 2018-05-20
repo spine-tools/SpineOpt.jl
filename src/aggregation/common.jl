@@ -1,7 +1,7 @@
 """
-Aggregates the values of `parameter` into one single value for each `object`
-by
- in relationship `rel`, by applying function `func` on the values of the childs.
+Aggregates the values of `parameter` into one single value for each `object`.
+Child objects are determined via `relationship`, and `func` is applied to compute
+the value for the parent.
 """
 function aggregate_parameter(parameter::Dict;
         object=Array(),
@@ -39,7 +39,7 @@ function aggregate_buses!(dst::Dict, src::Dict, assignments::Vector{Int}, costs:
     #    for z in unique(assignments)
     #)
     @JuMPin(dst, bus, bus0_bus, bus0_weight, bus_internalbus0)
-    push!(dst[".METADATA"]["object_class"], "bus")
+    add_object_class_metadata!(dst, "bus")
 end
 
 function aggregate_basic_bus_params!(dst::Dict, src::Dict)
@@ -51,7 +51,7 @@ function aggregate_basic_bus_params!(dst::Dict, src::Dict)
     vmax = aggregate_parameter(vmax0, object=bus, relationship=bus0_bus, func=minimum)
     vmin = aggregate_parameter(vmin0, object=bus, relationship=bus0_bus, func=maximum)
     @JuMPin(dst, bus_type, vm, va, vmax, vmin)
-    append!(dst[".METADATA"]["parameter"], ["bus_type", "vm", "va", "vmax", "vmin"])
+    add_parameter_metadata!(dst, "bus_type", "vm", "va", "vmax", "vmin")
 end
 
 #function aggregate_basic_bus_params!(dst::Dict, src::Dict)
@@ -68,8 +68,8 @@ end
 function aggregate_basic_dc_branch_params!(dst::Dict, src::Dict)
     @JuMPout_suffix(src, 0, rate_a, pf)
     @JuMPout(dst, flowdir0, branch0_branch, branch)
-    rate_a = aggregate_parameter(rate_a0, branch0_branch, sum)
-    pf_sp = aggregate_parameter(prod(pf0, flowdir0), branch0_branch, sum)
+    rate_a = aggregate_parameter(rate_a0, object=branch, relationship=branch0_branch, func=sum)
+    pf_sp = aggregate_parameter(prod(pf0, flowdir0), object=branch, relationship=branch0_branch, func=sum)
     for l in branch
         if !in(l, values(branch0_branch))
             rate_a[l] =  Inf
@@ -77,6 +77,7 @@ function aggregate_basic_dc_branch_params!(dst::Dict, src::Dict)
         end
     end
     @JuMPin(dst, rate_a, pf_sp)
+    add_parameter_metadata!(dst, "rate_a")
 end
 
 function aggregate_basic_ac_branch_params!(dst::Dict, src::Dict)
@@ -97,7 +98,7 @@ function aggregate_basic_ac_branch_params!(dst::Dict, src::Dict)
         end
     end
     @JuMPin(dst, rate_a, pf_fr_sp, qf_fr_sp, pf_to_sp, qf_to_sp)
-    push!(dst[".METADATA"]["parameter"], "rate_a")
+    add_parameter_metadata!(dst, "rate_a")
 end
 
 "product of dictionaries"
