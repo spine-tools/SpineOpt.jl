@@ -104,9 +104,9 @@ function PTDF_aggregate_basic_bus_params!(dst::Dict, src::Dict)
     pd = aggregate_parameter(pd0, object=bus, relationship=bus0_bus, func=sum)
     qd = aggregate_parameter(qd0, object=bus, relationship=bus0_bus, func=sum)
     gen_bus = extend_relationship(gen_bus0, object=bus, with_relationship=bus0_bus)
-    @JuMPin(dst, pd, qd, gen_bus, gen, gengroup, gen_group)
-    add_object_class_metadata!(dst, "gen", "gengroup")
-    add_relationship_class_metadata!(dst, "gen_bus", "gen_group")
+    @JuMPin(dst, pd, qd, gen_bus, gen)
+    add_object_class_metadata!(dst, "gen")
+    add_relationship_class_metadata!(dst, "gen_bus")
     add_parameter_metadata!(dst, "pd", "qd")
 end
 
@@ -152,7 +152,10 @@ function PTDF_dc_aggregate(src::Dict, m::Int=4)
     dst
 end
 
-function PTDF_compute_ac_aggregated_bus_branch_params!(dst::Dict, src::Dict; solver = IpoptSolver(print_level = 0, linear_solver = "ma97"))
+function PTDF_compute_ac_aggregated_bus_branch_params!(
+            dst::Dict, src::Dict;
+            solver = IpoptSolver(print_level = 0, linear_solver = "ma97")
+        )
     @JuMPout_with_backup(dst, src,
         bus, branch, gen, f_bus, t_bus, gen_bus, pf_fr_sp, qf_fr_sp, pf_to_sp, qf_to_sp,
         vm, vmax, vmin, bus_type, pd, qd, pg, qg, qmax, qmin)
@@ -185,7 +188,10 @@ function PTDF_compute_ac_aggregated_bus_branch_params!(dst::Dict, src::Dict; sol
 
     #println(m)
     status = solve(m)
-    status != :Optimal && (print_with_color(:red, "Failed to determine equivalent ac bus and branch parameters\n"); return false)
+    if status != :Optimal
+        print_with_color(:red, "Failed to determine equivalent ac bus and branch parameters\n")
+        return false
+    end
     g = Dict(l => getvalue(g[l]) for l in branch)
     b = Dict(l => getvalue(b[l]) for l in branch)
     br_r = Dict(l => g[l] / (g[l]^2 + b[l]^2) for l in branch)
@@ -204,8 +210,8 @@ function PTDF_compute_ac_aggregated_bus_branch_params!(dst::Dict, src::Dict; sol
 end
 
 """
-Aggregate a `system` into `m` zones while preserving inter-zonal flows
-internal branches in the system are preserved in the aggregate
+Aggregate a `system` into `m` zones while preserving inter-zonal flows.
+Try to preserve branches marked as 'internal'.
 """
 function PTDF_ac_aggregate!(dst::Dict, src::Dict, m::Int=4; max_iters::Int=20)
     run_ac_pf!(src)

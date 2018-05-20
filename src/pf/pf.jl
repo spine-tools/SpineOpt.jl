@@ -2,10 +2,10 @@ function run_dc_pf!(
         ref::Dict;
         #solver = CplexSolver(),
         solver = IpoptSolver(),
-        bck = Dict()
+        backup = Dict()
         )
 
-    @JuMPout_with_backup(ref, bck, bus, branch, gen, rate_a, bus_type, gen_bus, f_bus, t_bus, br_x, pd, pg)
+    @JuMPout_with_backup(ref, backup, bus, branch, gen, rate_a, bus_type, gen_bus, f_bus, t_bus, br_x, pd, pg)
 
     m = Model(solver = solver)
 
@@ -141,11 +141,11 @@ end
 
 function run_ac_pf!(ref::Dict;
         solver = IpoptSolver(print_level = 0, linear_solver = "ma97"),
-        bck = Dict()
+        backup = Dict()
     )
     print_with_color(:yellow, "\nRunning ac powerflow...\n")
 
-    @JuMPout_with_backup(ref, bck, bus, branch, gen, bus_type, vm, vmax, vmin, gs, bs, rate_a,
+    @JuMPout_with_backup(ref, backup, bus, branch, gen, bus_type, vm, vmax, vmin, gs, bs, rate_a,
         qmax, qmin, gen_bus, f_bus, t_bus, br_r, br_x, br_b, tap, shift, pd, qd, pg)
 
     g = Dict(l => br_r[l] / (br_r[l]^2 + br_x[l]^2) for l in branch)

@@ -100,8 +100,3 @@ function aggregate_basic_ac_branch_params!(dst::Dict, src::Dict)
     @JuMPin(dst, rate_a, pf_fr_sp, qf_fr_sp, pf_to_sp, qf_to_sp)
     add_parameter_metadata!(dst, "rate_a")
 end
-
-"product of dictionaries"
-function prod(x::Dict, y::Dict)
-    Dict(k => x[k] * y[k] for k in keys(x) if haskey(y, k))
-end
