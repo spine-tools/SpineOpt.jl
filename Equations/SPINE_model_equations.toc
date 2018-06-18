@@ -1,0 +1,29 @@
+\contentsline {section}{\numberline {1}Model formulation}{5}{section.1}
+\contentsline {subsection}{\numberline {1.1}Objective function}{5}{subsection.1.1}
+\contentsline {subsection}{\numberline {1.2}Technological constraints}{5}{subsection.1.2}
+\contentsline {subsubsection}{\numberline {1.2.1}Define unit/technology capacity}{5}{subsubsection.1.2.1}
+\contentsline {subsubsection}{\numberline {1.2.2}Static relationships between input and output commodity flows}{6}{subsubsection.1.2.2}
+\contentsline {paragraph}{Relationship between output and input flows}{6}{section*.6}
+\contentsline {paragraph}{Relationship between multiple input flows}{6}{section*.7}
+\contentsline {paragraph}{Relationship between multiple output flows}{6}{section*.8}
+\contentsline {subsubsection}{\numberline {1.2.3}Bounds on input and output commodity flows}{6}{subsubsection.1.2.3}
+\contentsline {subsubsection}{\numberline {1.2.4}Dynamic constraints on input and output commodity flows}{7}{subsubsection.1.2.4}
+\contentsline {paragraph}{Ramping constraints}{7}{section*.9}
+\contentsline {subsubsection}{\numberline {1.2.5}Commitment-related constraints}{7}{subsubsection.1.2.5}
+\contentsline {paragraph}{Minimum operating point}{8}{section*.10}
+\contentsline {paragraph}{Minimum up time}{8}{section*.11}
+\contentsline {paragraph}{Minimum down time}{8}{section*.12}
+\contentsline {subsection}{\numberline {1.3}System constraints}{9}{subsection.1.3}
+\contentsline {subsubsection}{\numberline {1.3.1}On treatment of exogenous commodities}{9}{subsubsection.1.3.1}
+\contentsline {paragraph}{Option 1:}{9}{section*.13}
+\contentsline {paragraph}{Option 2:}{9}{section*.14}
+\contentsline {section}{\numberline {2}Examples}{10}{section.2}
+\contentsline {subsection}{\numberline {2.1}Thermal power plant}{10}{subsection.2.1}
+\contentsline {subsubsection}{\numberline {2.1.1}Maximum power}{10}{subsubsection.2.1.1}
+\contentsline {subsubsection}{\numberline {2.1.2}Fuel consumption}{11}{subsubsection.2.1.2}
+\contentsline {subsubsection}{\numberline {2.1.3}GHG emissions}{11}{subsubsection.2.1.3}
+\contentsline {subsubsection}{\numberline {2.1.4}Minimum operating point}{11}{subsubsection.2.1.4}
+\contentsline {subsubsection}{\numberline {2.1.5}Minimum up and down times}{11}{subsubsection.2.1.5}
+\contentsline {subsubsection}{\numberline {2.1.6}Ramping constraints}{12}{subsubsection.2.1.6}
+\contentsline {subsection}{\numberline {2.2}Back-pressure CHP CCGT}{12}{subsection.2.2}
+\contentsline {subsection}{\numberline {2.3}Extraction-condensing CHP CCGT}{12}{subsection.2.3}

@@ -1,0 +1,5 @@
+/Equations/00_nomenclature.aux
+/Equations/*.aux
+/Equations/*.fdb_latexmk
+/Equations/*.fls
+/Equations/*.gz

@@ -1,0 +1,79 @@
+%!TEX root = SPINE_model_equations.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Nomenclature
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Nomenclature}
+\newcount\totalcol
+\totalcol = 3
+\newdimen\cola
+\cola = 6cm
+\newdimen\colb
+\colb = 0cm
+\newdimen\colc
+\colc =\dimexpr\textwidth -\tabcolsep *\totalcol * 2 -\arrayrulewidth * (1 +\totalcol)-\cola -\colb\relax
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Sets
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Sets}
+\vspace{-1em}
+	\begin{longtable}{p{\cola} p{\colc} >{\small\raggedleft\arraybackslash\itshape}p{\colb}}
+		$\ExogenousCommodities$	& Set of exogenous commodities (i.e., not requiring a balance constraint)	&                \\
+		$\EndogenousCommodities$	& Set of endogenous commodities (i.e., requiring a balance constraint)	&                \\
+		$\commodities   $	& Set of commodities                                          	&                \\
+		$\ImportSegments$	& Set of import segments \segment for commodity \commodity    	&                \\
+		$\segments      $	& Set of piecewise linear segments                            	&                \\
+		$\timesteps     $	& Set of timesteps                                            	&                \\
+		$\InputCommodities$	& Set of units \unit having input commodity  \commodity       	&                \\
+		$\OutputCommodities$	& Set of units \unit having output commodity \commodity       	&                \\
+		$\units         $	& Set of units/technologies                                   	&                \\
+	\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Parameters
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Parameters}
+\vspace{-1em}
+	\begin{longtable}{p{\cola} p{\colc} >{\small\raggedleft\arraybackslash\itshape}p{\colb}}
+
+		$\pUnitConvCapToFlow$	& Converting capacity to flow units of the capacity defining commodity group	&                \\[0.5em]
+
+		$\pImportCost   $	& Cost related to the import of a commodity $\commodity$ within segment $\segment$ 	&                \\[0.5em]
+
+		$\pConversionCost$	& Cost attached to the outflow of commodity $\commodity$ from the unit	&                \\[0.5em]
+
+		$\pDeltaT       $	& Duration of time step t                                     	&                \\[0.5em]
+
+		$\pDemand       $	& Demand for commodity \commodity in timestep \timestep       	&                \\[0.5em]
+
+		$\pMinimumDownTime$	& Minimum time a unit is required to remain offline after shutting down	&                \\
+		$\pMinimumUpTime$	& Minimum time a unit is required to remain online after starting up	&                \\
+		$\pUnitCapacity $	& Capacity of a single unit                                   	&                \\
+		$\pMinimumOperatingPoint$	& Minimum operating point of the unit                         	&                \\
+		$\pRatioOutputInputFlow$	& Ratio between output commodity group cg2 and input commodity group cg1	&                \\
+		$\pRatioInputInputFlow$	& Ratio between input commodity group cg2 and input commodity group cg1	&                \\
+		$\pRatioOutputOutputFlow$	& Ratio between output commodity group cg2 and output commodity group cg1	&                \\
+		$\pMaxShutDownPower$	& Maximum power in the last time step before a shutdown       	&                \\
+		$\pRampRateUp   $	& Maximum upward ramp rate                                    	&                \\
+		$\pRampRateDown $	& Maximum downward ramp rate                                  	&                \\
+		$\pMaxStartUpPower$	& Maximum power in first time step after a start-up           	&                \\
+		$\pAF           $	& Availability factor                                         	&                \\
+	\end{longtable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Variables
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Decision Variables}
+\vspace{-1em}
+	\begin{longtable}{p{\cola} p{\colc} >{\small\raggedleft\arraybackslash\itshape}p{\colb}}
+		$\vImportCosts  $	& Costs related to the import of a commodity in a certain time step	&                \\[0.5em]
+
+		$\vCapacity     $	& Installed capacity of a certain unit                        	&                \\[0.5em]
+
+		$\vFlow         $	& Commodity flow in/out a certain unit in a given time step   	&                \\
+		$\vUnitsStartingUp$	& Number of units starting up in time step $\timestep$ (coming online in time step $\timestep +1$)	&                \\
+		$\vUnitsShuttingDown$	& Number of units shutting down in time step $\timestep$ (going offline in time step $\timestep +1$)	&                \\
+		$\vUnitsOnline  $	& Number of online units                                      	&                \\
+		$\vUnitsAvailable$	& Number of available units                                   	&                \\
+		$\vImport       $	& Import of commodity $\commodity$ in segment $\segment$      	&                \\
+	\end{longtable}
+

@@ -1,0 +1,511 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"weight",
+				"weight_time_series"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/Paper.tex",
+			"settings":
+			{
+				"buffer_size": 3162,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "Packages/LaTeXTools/LaTeX.sublime-build",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 269.0,
+		"last_filter": "latextools: re",
+		"selected_items":
+		[
+			[
+				"latextools: re",
+				"LaTeXTools: Reset user settings to default"
+			],
+			[
+				"package control",
+				"Package Control: Install Package"
+			],
+			[
+				"latex",
+				"Set Syntax: LaTeX"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 412.0
+	},
+	"console":
+	{
+		"height": 196.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '6f4c264a24d933ce70df5dedcf1dcaee' + 'ebe013ee18cced0ef93d5f746d80ef60'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/Selecting_repr_days/days_finder_tool/sensitivity_days_finder_tool.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/Selecting_repr_days/days_finder_tool/days_finder_tool_time_series.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/99- PhD Thesis/PhD thesis/adsphd-master/thesis.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/sections/abstract_keywords.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/sections/introduction.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Working_paper/titelblad2.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Working_paper/title.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/97_Models/Invest_v4/Latex/Working Paper/allpapers.bib",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/97_Models/Invest_v4/Latex/Working Paper/WP_LUSYM_INVEST.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/97_Models/Invest_v4/Latex/Working Paper/titelblad2.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Working_paper/WP_Integrating_flex_constraints_v2.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/97_Models/Invest_v4/Latex/Working Paper/WP_LUSYM_INVEST.bbl",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/Selecting_repr_days/days_finder_tool/days_finder_tool.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/Selecting_repr_days/Input data/method_set_up_time_series.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/Selecting_repr_days/Input data/input_data/csv_delimiter_converter.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/Selecting_repr_days/Input data/scenarios/Kenneth_EU2.yaml",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Working_paper/WP_Integrating_flex_constraints.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/allpapers.bib",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/Selecting_repr_days/days_finder_tool/csv_delimiter_converter.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/Post-doc/SysFlex/Planning task 4.1/Long-term/Long-term investment research proposal.docx",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/Selecting_repr_days/days_finder_tool/log_file_plot.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/Post-doc/Spine/WP3/Equations/Working_Document/SPINE_model_equations.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/gams_addon/gdx_to_df.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/Post-doc/Spine/WP3/Equations/Working_Document/00_nomenclature_create_latex.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/figures_capacity_mix.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/97_Models/Invest_v4/gams_addon/gdx_to_df.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/Post-doc/Spine/WP3/Equations/Working_Document/00_nomenclature.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/Post-doc/Spine/WP3/Equations/Working_Document/00_math_symbols.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/Post-doc/Spine/WP3/Equations/Working_Document/sec_conclusions.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/Post-doc/Spine/WP3/Equations/Working_Document/sec_impact_individual_constraints.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/Post-doc/Spine/WP3/Equations/Working_Document/mybibfile.bib",
+		"/C/Users/u0093836/Box Sync/My Webspace/Post-doc/Spine/WP3/Equations/Working_Document/sec_impact_tech_detail.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/Post-doc/Spine/WP3/Equations/Working_Document/sec_improved_modeling_technical.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/sections/frontmatter.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/Paper.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/97_Models/Invest_v4/Latex/Working Paper/00_nomenclature.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/sections/preamble.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/sections/nomenclature.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/figures_costs.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/99- PhD Thesis/PhD thesis/adsphd-master/chapters/improved_technical/improved_technical.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/97_Models/Invest_v4/Latex/Working Paper/00_nomenclature_create_latex.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/97_Models/Invest_v4/Latex/Working Paper/00_acronyms.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/run.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/99- PhD Thesis/PhD thesis/adsphd-master/chapters/improved_temporal/improved_temporal.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/97_Models/Invest_v4/Latex/Working Paper/figure_DC_OPT_all_days.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/99- PhD Thesis/PhD thesis/adsphd-master/chapters/improved_temporal/image/figure_DC_OPT_all_days.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/99- PhD Thesis/PhD thesis/adsphd-master/chapters/improved_temporal/image/approximated_profiles.tex",
+		"/C/Users/u0093836/AppData/Local/Sublime Text 3/Cache/LaTeXTools/internal/preview_math/7e1683f10149cd81dfee3badb6a35ab1.png.err",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/99- PhD Thesis/PhD thesis/adsphd-master/chapters/improved_technical/results.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/99- PhD Thesis/PhD thesis/adsphd-master/00_nomenclature.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/97_Models/Invest_v4/Latex/Working Paper/WP_LUSYM_INVEST.log",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/Paper.log",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/99- PhD Thesis/PhD thesis/adsphd-master/chapters/improved_technical/tab_reviewed_models.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/99- PhD Thesis/PhD thesis/adsphd-master/00_math_symbols.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/99- PhD Thesis/PhD thesis/adsphd-master/chapters/improved_technical/sec_impact_individual_constraints.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/97_Models/Invest_v4/Latex/Working Paper/00_math_symbols.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/2_Selecting_representative_periods/latex/Working Paper/WP post print Impact paper.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/97_Models/Invest_v4/Latex/Working Paper/WP_selecting_representative_days.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/Paper.bbl",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/main.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/99- PhD Thesis/PhD thesis/adsphd-master/chapters/improved_technical/sec_impact_tech_detail.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/figures_RES_IRES.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/99- PhD Thesis/PhD thesis/adsphd-master/chapters/improved_technical/tab_reserve_characterization.tex",
+		"/C/Users/u0093836/Downloads/S0378779616300177.bib",
+		"/C/Users/u0093836/Box Sync/My Webspace/Onderwijs/Thesis/2016- Jelle- Clustered UC/Paper IEEE/Revision 1/Latex/Paper.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/2_Selecting_representative_periods/latex/IEEE/Second_review/Final submission/methodology_rev2.tex",
+		"/C/Users/u0093836/AppData/Roaming/Sublime Text 3/Packages/User/LaTeXTools.sublime-settings",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/Paper_all.log",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/mybibfile.bib",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/IEEE_Selecting_representative_days_all.dvi",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/tmp$.@@@",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/tmp$$.ps",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/Paper_all.auxlock",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/Paper_all.pdf",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/Paper_all.out",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/Paper_all.aux",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/IEEE_Selecting_representative_days_all.log",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/IEEE_Selecting_representative_days_rev1.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/IEEE_Selecting_representative_days_all.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Working_Document/results.tex",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/output.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/gams_addon/domain_info.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/97_Models/Invest_v4/main.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/97_Models/Invest_v4/gams_addon/domain_info.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/Selecting_repr_days/Result_processing/process_set_of_days.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/Selecting_repr_days/Input data/scenarios/Kenneth_EU.yaml",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/Selecting_repr_days/Input data/scenarios/investment_model_GER_test.yaml",
+		"/D/Model/run.py",
+		"/D/Model/init_db.py",
+		"/D/Model/main.py",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/Selecting_repr_days/Input data/scenarios/investment_model_GER.yaml",
+		"/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Model/Invest_v4/figures_calc_time.py",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Working_Document/sec_impact_individual_constraints.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Working_Document/mybibfile.bib",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Working_Document/sec_improved_modeling_technical.tex",
+		"/C/Users/poncelek/Downloads/science (7).bib",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Working_Document/results.toc",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Working_Document/sec_impact_tech_detail.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Working_Document/sec_conclusions.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Working_Document/results.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/ICT/Licenses/gamslice_2017.txt",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Administration/Template PhD thesis/adsphd-master/thesis.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/6- Review investment planning models/Paper/latex/paper_v1.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/6- Review investment planning models/Paper/latex/Sections/3_equivalence_optimization_mcp.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/6- Review investment planning models/Paper/latex/Sections/5_illustrations.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/6- Review investment planning models/Paper/latex/Sections/6_conclusion.tex",
+		"/C/Users/poncelek/Downloads/S0306261910005660.bib",
+		"/C/Users/poncelek/Downloads/S0306261914008836.bib",
+		"/C/Users/poncelek/Downloads/S0301421511009864.bib",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Working_Document/sec_improved_modeling_technical.aux",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Working_Document/results.aux",
+		"/C/Users/poncelek/Box Sync/My Webspace/Onderwijs/Thesis/2016- Jelle- Clustered UC/Paper IEEE/Revision 1/Final source files/Paper.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/2_Selecting_representative_periods/latex/IEEE/Second_review/Final submission/introduction_rev2.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/2_Selecting_representative_periods/latex/IEEE/Second_review/Final submission/IEEE_Selecting_representative_days_rev2.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Administration/Doctoral diary/latex/doctoral_diary_total.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/2_Selecting_representative_periods/latex/IEEE/Second_review/Final submission/tables/testcase_costs.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/2_Selecting_representative_periods/latex/IEEE/Second_review/Final submission/preamble.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/2_Selecting_representative_periods/latex/IEEE/Second_review/Final submission/tables/heuristics.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/2_Selecting_representative_periods/latex/IEEE/Second_review/Final submission/IEEE_Selecting_representative_days_all.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Administration/Doctoral diary/latex/doctoral_diary_KP.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/2_Selecting_representative_periods/latex/IEEE/Second_review/Final submission/figures/boxplot_figures_tikz_NRMSE_DC.tex",
+		"/C/Users/poncelek/Downloads/S1364032117304264.txt",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Working_Document/results.bbl",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/2_Selecting_representative_periods/latex/IEEE/Second_review/IEEE_Selecting_representative_days_rev1.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/6- Review investment planning models/Equilibrium and optimization equivalence_v2/sections/Ilustration_of_equivalence.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/6- Review investment planning models/Equilibrium and optimization equivalence_v2/optimization_vs_equilibrium.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/Onderwijs/Thesis/2016- Jelle- Clustered UC/Paper IEEE/submission 1/Paper.tex",
+		"/C/Users/poncelek/Box Sync/My Webspace/My Phd/Own_Work/2_Selecting_representative_periods/latex/IEEE/Second_review/Final submission/biographies.tex"
+	],
+	"find":
+	{
+		"height": 60.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"LUSYM",
+			"Exception 1",
+			"Indeed",
+			"Cases",
+			"number of cases are",
+			"ramp",
+			"Kenneth",
+			"%s",
+			"to_csv",
+			"print",
+			"df_basic_time_seriesµ",
+			"df_basic_time_series",
+			"Setting up",
+			"Setting",
+			"Setting up",
+			"setting up",
+			"profile",
+			"error for profile",
+			"total",
+			"total duration",
+			"total_duration",
+			"print",
+			"error",
+			"error in total duration",
+			"print",
+			"error in total duration",
+			"longtable",
+			"cost_MO",
+			"RES_IRES",
+			"Galla",
+			"Gallachoir",
+			"insit",
+			"insitut",
+			"decomission",
+			"set of technologies",
+			"FRAC",
+			"7521261",
+			"myopic",
+			"whereas",
+			"capacity_mix_MO",
+			"cost_MO",
+			"Ther",
+			"implications",
+			"working",
+			"tikz",
+			"period",
+			"1.6",
+			"life time",
+			"include",
+			"D_OY",
+			"EOH",
+			"SALV_FRAC",
+			"life time",
+			"MARK_UP_LT",
+			"period",
+			"myparagraph",
+			"acro",
+			"acronyms",
+			"control",
+			"undefined",
+			"amssymb",
+			"mathcal",
+			"input",
+			"ltx",
+			"longtable",
+			"LTX",
+			"input",
+			"longtable",
+			"stable",
+			"clustered",
+			"while",
+			"costs_sufficient_accuracy",
+			"capacity_mix_sufficient_accuracy",
+			"IMRES",
+			"capacity_mix_MO",
+			"capacity_mix_sufficient_accuracy",
+			"plt.rc('text', usetex=True)",
+			"capacity_mix_MO",
+			"delta_x_label",
+			"sufficie",
+			"sufficiency",
+			"r\"",
+			"r'",
+			"orientation",
+			"rotate",
+			"cost_MO",
+			"capacity_mix_sufficient_accuracy",
+			"cost_MO",
+			"GEP",
+			"\\cline{2-3}",
+			"line",
+			"cline",
+			"caption",
+			"table",
+			"}\n",
+			"table",
+			"tabular",
+			"multirow",
+			"tabularx",
+			"subsec:general_methodology",
+			"phd",
+			"shutdownunits",
+			"Poncelet2016631",
+			"bib",
+			"error",
+			"io.",
+			"job.run",
+			"to_csv",
+			"name",
+			"rea_total",
+			"param_AREA_TOTAL",
+			"result_summary",
+			"period_definitions",
+			"plots",
+			"sort",
+			"PhD",
+			"Palmintier",
+			"paragraph",
+			"multicolumn",
+			"Mai",
+			"Hale",
+			"working paper",
+			"IMRES",
+			"PhD",
+			"thesis",
+			"subfig",
+			"ratio",
+			"wrt_no_RES"
+		],
+		"highlight": false,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"lifetime",
+			"interval",
+			"%\\cline{2-3}",
+			"\\end{tabular}",
+			"\\begin{tabular}",
+			""
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": false
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "/C/Users/u0093836/Box Sync/My Webspace/My Phd/Own_Work/7 - Technical representation/Latex/Paper Relevance/Latex/Paper.tex",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3162,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								363,
+								363
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/LaTeX/LaTeX.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 34.0
+	},
+	"input":
+	{
+		"height": 39.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 345.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.latextools":
+	{
+		"height": 341.0
+	},
+	"pinned_build_system": "Packages/LaTeXTools/LaTeX.sublime-build",
+	"project": "SPINE_model_equations.sublime-project",
+	"replace":
+	{
+		"height": 64.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"",
+				"C:\\Users\\u0093836\\Box Sync\\My Webspace\\My Phd\\Own_Work\\7 - Technical representation\\Latex\\Working_Document\\results.tex"
+			],
+			[
+				"concl",
+				"sections/conclusions.tex"
+			],
+			[
+				"data",
+				"sections/data_assumptions.tex"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 444.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
