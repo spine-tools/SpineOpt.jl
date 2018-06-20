@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/W32TeX) (preloaded format=pdflatex 2018.3.29)  20 JUN 2018 14:03
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/W32TeX) (preloaded format=pdflatex 2018.3.29)  20 JUN 2018 14:42
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -904,24 +904,13 @@ LaTeX Font Info:    Try loading font information for U+msb on input line 84.
 (c:/texlive/2017/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 89.
-
-(c:/texlive/2017/texmf-dist/tex/latex/base/omscmr.fd
-File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
-)
-LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 89.
- [1
-
-{c:/texlive/2017/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (./SPINE_model_
-description.toc)
+(./SPINE_model_description.toc)
 \tf@toc=\write5
 \openout5 = `SPINE_model_description.toc'.
 
+ [1
 
-[2
-
-]
+{c:/texlive/2017/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 \openout2 = `00_nomenclature.aux'.
 
  (./00_nomenclature.tex
@@ -929,13 +918,21 @@ description.toc)
 \cola=\dimen265
 \colb=\dimen266
 \colc=\dimen267
- [3
+ [2
 
 
-]) [4] (./Sections/Spine_model_formulation.tex
-[5
+]) [3]
+(./Sections/Spine_model_formulation.tex
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 19.
 
-] [6]
+(c:/texlive/2017/texmf-dist/tex/latex/base/omscmr.fd
+File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 19.
+ [4
+
+] [5]
 Overfull \hbox (42.69196pt too wide) detected at line 138
 []
  []
@@ -952,12 +949,12 @@ e ($\OML/cmm/m/it/10 p[]$\OT1/cmr/m/n/10 , $\OML/cmm/m/it/10 p[]$\OT1/cmr/m/n/1
 0 ) 
  []
 
-[7] [8]) (./Sections/Open_issues.tex [9]
-(./Sections/Open_issues/exogenous_commodities.tex) [10
+[6] [7]) (./Sections/Open_issues.tex [8]
+(./Sections/Open_issues/exogenous_commodities.tex) [9
 
 ]
-(./Sections/Open_issues/reserve_commodities.tex [11])) (./Sections/Examples.tex
-[12] [13
+(./Sections/Open_issues/reserve_commodities.tex [10])) (./Sections/Examples.tex
+[11] [12
 
 ]
 Overfull \hbox (14.63167pt too wide) in paragraph at lines 62--63
@@ -971,20 +968,20 @@ Overfull \hbox (8.85828pt too wide) in paragraph at lines 62--63
 d for a spe-cific com-mod-ity/commodity
  []
 
-) [14]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 177.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 177.
+) [13]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 122.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 122.
  (./SPINE_model_description.aux (./00_nomenclature.aux))
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 177.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 177.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 122.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 122.
 Package rerunfilecheck Info: File `SPINE_model_description.out' has not changed
 .
 (rerunfilecheck)             Checksum: D15F18C3A079422FFA031FE94BA4176D;1724.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 177.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 122.
  ) 
 Here is how much of TeX's memory you used:
- 28420 strings out of 492982
- 679778 string characters out of 6136225
+ 28419 strings out of 492982
+ 679771 string characters out of 6136225
  906094 words of memory out of 5000000
  31381 multiletter control sequences out of 15000+600000
  13393 words of font info for 52 fonts, out of 8000000 for 9000
@@ -1005,10 +1002,10 @@ exlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb><c:/texlive/2017
 sfonts/cm/cmsy10.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm
 /cmsy5.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb
 >
-Output written on SPINE_model_description.pdf (14 pages, 232138 bytes).
+Output written on SPINE_model_description.pdf (13 pages, 229464 bytes).
 PDF statistics:
- 337 PDF objects out of 1000 (max. 8388607)
- 301 compressed objects within 4 object streams
- 85 named destinations out of 1000 (max. 500000)
+ 331 PDF objects out of 1000 (max. 8388607)
+ 297 compressed objects within 3 object streams
+ 84 named destinations out of 1000 (max. 500000)
  189 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -84,48 +84,6 @@
 \maketitle{}
 
 
-\textbf{Included in this document version:}
-\begin{itemize}
-\item Basic definition of variables, parameters and equations in order to:
-\begin{itemize}
-\item Establish a set of commodity flow(s) which define the capacity of the unit/technology 
-\item A constraint restriciting the commodity flow(s) to the installed capacity of the unit/technology
-\item Establisch a linear relationship between different commodity flows entering and leaving a specific unit/technology (in part)
-\item Detailed technical constraints (UC type of constraints)
-\item A commodity balance constraint
-\end{itemize} 
-\end{itemize} 
-
-
-\textbf{Not included:}
-\begin{itemize}
-\item Geographical regions (treatment of nodes) and network related constraints (Maren, Jody)
-\item Storage technologies
-\item Temporal model structure (Juha? + Kris)
-\item Objective function + flexibility
-\item Bounds on absolute or total commodity flows
-\item Stochastics (Juha?)
-\end{itemize} 
-
-\textbf{Open issues}: 
-\begin{itemize}
-\item Exogenous commodities: commodity input units or not?
-\item What needs to be adapted if different commodity flows are tracked at a different level of temporal granularity?
-\item Linking of different equations 'selected" by the archetype (Kris)
-\item Feasible to treat reserve capacity as a commodity? -> Different types of reserves and constraints for reserve capacity dependent on type (e.g., spinning, non-spinning, upward, downward, ...) (Kris)
-\item Dealing with the ability to have operational and investment planning problems. Many equations contain capacity-related terms. However, depending on the problem, these can be variables or parameters. Need duplicates of equations for both or does Julia/Jump has features to deal with this? (Kris)
-\end{itemize}
-
-\textbf{Next steps}:
-\begin{itemize}
-\item Compare to Backbone implementation + discuss!
-\item Experiment with different archetypes for the coal-fired power plant example
-\item Introduce the CHP example
-\end{itemize}
-
-
-
-\clearpage
 \tableofcontents
 
 
@@ -143,19 +101,6 @@
 \input{Sections/Open_issues}
 
 \input{Sections/Examples}
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
