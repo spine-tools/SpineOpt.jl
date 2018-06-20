@@ -8,13 +8,15 @@
 \BOOKMARK [3][-]{subsubsection.1.2.5}{Commitment-related constraints}{subsection.1.2}% 8
 \BOOKMARK [2][-]{subsection.1.3}{System constraints}{section.1}% 9
 \BOOKMARK [3][-]{subsubsection.1.3.1}{On treatment of exogenous commodities}{subsection.1.3}% 10
-\BOOKMARK [1][-]{section.2}{Examples}{}% 11
-\BOOKMARK [2][-]{subsection.2.1}{Thermal power plant}{section.2}% 12
-\BOOKMARK [3][-]{subsubsection.2.1.1}{Maximum power}{subsection.2.1}% 13
-\BOOKMARK [3][-]{subsubsection.2.1.2}{Fuel consumption}{subsection.2.1}% 14
-\BOOKMARK [3][-]{subsubsection.2.1.3}{GHG emissions}{subsection.2.1}% 15
-\BOOKMARK [3][-]{subsubsection.2.1.4}{Minimum operating point}{subsection.2.1}% 16
-\BOOKMARK [3][-]{subsubsection.2.1.5}{Minimum up and down times}{subsection.2.1}% 17
-\BOOKMARK [3][-]{subsubsection.2.1.6}{Ramping constraints}{subsection.2.1}% 18
-\BOOKMARK [2][-]{subsection.2.2}{Back-pressure CHP CCGT}{section.2}% 19
-\BOOKMARK [2][-]{subsection.2.3}{Extraction-condensing CHP CCGT}{section.2}% 20
+\BOOKMARK [1][-]{section.2}{Open issues}{}% 11
+\BOOKMARK [2][-]{subsection.2.1}{Treatment of reserve commodities}{section.2}% 12
+\BOOKMARK [1][-]{section.3}{Examples}{}% 13
+\BOOKMARK [2][-]{subsection.3.1}{Thermal power plant}{section.3}% 14
+\BOOKMARK [3][-]{subsubsection.3.1.1}{Maximum power}{subsection.3.1}% 15
+\BOOKMARK [3][-]{subsubsection.3.1.2}{Fuel consumption}{subsection.3.1}% 16
+\BOOKMARK [3][-]{subsubsection.3.1.3}{GHG emissions}{subsection.3.1}% 17
+\BOOKMARK [3][-]{subsubsection.3.1.4}{Minimum operating point}{subsection.3.1}% 18
+\BOOKMARK [3][-]{subsubsection.3.1.5}{Minimum up and down times}{subsection.3.1}% 19
+\BOOKMARK [3][-]{subsubsection.3.1.6}{Ramping constraints}{subsection.3.1}% 20
+\BOOKMARK [2][-]{subsection.3.2}{Back-pressure CHP CCGT}{section.3}% 21
+\BOOKMARK [2][-]{subsection.3.3}{Extraction-condensing CHP CCGT}{section.3}% 22
