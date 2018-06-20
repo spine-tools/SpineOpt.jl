@@ -1,0 +1,50 @@
+%!TEX root = ../../SPINE_model_description.tex
+
+\subsection{Treatment of reserve commodities} \label{subsec:reserve_commodities}
+
+\paragraph{Description of the issue:} For generality, reserves can be modeled as commodities which are not different from any other commodity. However, the provision of reserves is constrained by highly specific constraints, which are different from most other commodities. Fitting the reserve-related constraints to a generic format might complicate things making the model less transparent and user friendly. Another option would therefore be to have commodity attributes to indicate whether a certain commodity is a reserve commodity (and even more so, whether it is an upward/downward and spinning/non-spinning reserve commodity). While this is easier from a user perspective, it also implies that the terminology is not generic, and that there can/will be optional and non-generic terms in some of the equations.
+
+
+\paragraph{Option 1: Reserve commodities as a generic commodity}
+Reserve-related variables ($\vFlow[ReserveCommodity,\unit,out,\timestep]$) should be considered in many of the very basic constraints. This makes that these correctly defining these basic constraints can become quite complex. 
+
+To illustrate the complexity, consider the case where downward spinning reserves are considered. 
+
+Whenever spinning downward reserves are procured, this impacts the instanteous electricity generation via the minimum operating point constraint (Eq.~\eqref{eq:minimumoperatingpoint}), i.e., the equation should read:
+\begin{align} 
+& \vFlow[Electricity,\unit,out,\timestep] - \vFlow[DownSpinRes,\unit,out,\timestep] \ge \pMinimumOperatingPoint \vUnitsOnline \pUnitCapacity \nonumber \\
+& \forall \units, \timesteps
+\end{align}
+The general minimum operating point equation (Eq.~\eqref{eq:minimumoperatingpoint}) does currently not support this modification\footnote{It does support the summation over multiple commodity flows, but the flow variable of the downward spinning reserves commodity has a negative sign which is not supported).}. I guess there will always be a way to define a generic way of introducing a generic constraint which allows to generically implement this constraint (and it should be able to do so even with the user constraints). However, from a user perspective, this might be very cumbersome... 
+
+
+
+\paragraph{Option 2: reserve commodities as a special type of commodity}
+Whenever commodities are defined as being upward/downward and spinning/non-spinning reserve commodities, the model can directly integrate the variables in the required equations. The user should not worry about this and only needs to identify which commodities are reserve commodities. 
+
+For instance, the minimum operating point constraint (Eq.~\eqref{eq:minimumoperatingpoint}) can be modified to be as follows:
+\begin{align}
+&\sum_{\commodity \in cg} \vFlow - \sum_{\substack{\commodity :  \\
+													\commodity \in DownSpinResCommodities \\
+													\commodity \in \OutputCommodities}}
+										&\vFlow \nonumber \\
+										&\ge \nonumber \\
+& \pMinimumOperatingPoint \vUnitsOnline \pUnitCapacity \nonumber \\
+& \forall \units, \timesteps
+\end{align}
+
+The user should in this case thus simply define the parameter $\pMinimumOperatingPoint$ for the commodity group cg being electricity in this case, and define the reserve commodity as a downward spinning reserve commodity.
+
+To sum up,
+Advantages Option 2:
+\begin{itemize}
+\item Defining the equations is easy once it is known whether a commodity is a spinning/non-spinning upward/downward reserve commodity.
+\item The task for the user is restricted. The user only needs to indicate whether a commodity is a reserve commodity (and what type of reserve), and provide the basic plant parameters and the reserve-related variables will appear correctly in all constraints. In contrast, in Option 1, the constraints will have to be defined so generically that the user will have to carefully handle for instance the commodity groups and coefficients for each commodity in the commodity group to which the constraint applies.
+\end{itemize}
+Disadvantages Option 2:
+\begin{itemize}
+\item Non-generic terms appearing in generic constraints
+\item Certain constraints can only be applied to the flow of reserve commodities (e.g., ramping constraint restricting the provision of reserves. In contrast to the regular ramping constraint, this ramping constraint takes place within a single time step.)
+\end{itemize}
+
+My preference goes to option 2.

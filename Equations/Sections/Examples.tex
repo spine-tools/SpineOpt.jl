@@ -1,0 +1,89 @@
+%!TEX root = ../SPINE_model_description.tex
+
+
+\clearpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Examples}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Thermal power plant}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+As a first example, let's consider the DA scheduling of a simple dispatchable coal power plant. In this example, the power plant is assumed to have a single input commodity, namely coal, and three output commodities: electricity, upward spinning reserve capacity and greenhouse gas emissions. The operations of the power plant are assumed to be characterized by the following equations:
+\begin{itemize}
+\item maximum power + availability factor 
+\item fuel consumption
+\item greenhouse gas emissions
+\item minimum operating point
+\item minimum up time
+\item minimum down time
+\item ramp rate restrictions for energy provision
+\item ramp rate restrictions for reserve capacity provision
+\end{itemize}
+
+The following sections elaborate on how each of these constraints is/can be implemented in the generic model formulation.
+
+\subsubsection{Maximum power}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The output of the coal-fired power plant (power and upward reserve capacity) is restricted by Eq.~\eqref{eq:max_capacity}. For this unit, the capacity defining commodity group (Cdcg) consists of the commodities electrical power and reserve capacity. Furthermore, both capacity and flow variables are in the same units ([MW]) and hence the parameter $\pUnitConvCapToFlow$ equals 1. The equations hence becomes:
+\begin{align}
+\vFlow[ElectricalPower,u,out,t] + \vFlow[UpwardReserves,u,out,t] \le \pAF \vCapacity \quad \forall \units, \timesteps \nonumber
+\end{align}
+
+\subsubsection{Fuel consumption}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The fuel consumption can be defined by establishing a relationship between the flow variable for electrical power, and the flow variable for coal. Here, a linear relationship between these flows is assumed (corresponding to a constant efficiency). This relationship can be imposed by Eq.~\eqref{eq:ratiooutputinputflow}. Here, cg2 refers to the electrical power and cg1 refers to coal. The parameter $\pRatioOutputInputFlow[u,ElectricalPower,Coal]$ thus corresponds to the efficiency $\eta$ of the coal-fired power plant. The equation becomes
+\begin{align}
+\vFlow[ElectricalPower,u,out,t] = \eta \vFlow[Coal,u,in,t] \quad \forall \units, \timesteps
+\end{align}
+
+\subsubsection{GHG emissions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The emissions of greenhouse gases can be defined by establishing a relationship between the flow variable for greenhouse gas emissions, and the flow variable for coal\footnote{Note that an alternative option would be to establish a relationship between the flow variable of greenhouse gas emissions and the flow variable for electrical power (via Eq.~\eqref{eq:ratiooutputoutputflow}).}. This relationship can again be imposed by Eq.~\eqref{eq:ratiooutputinputflow}. Here, cg2 refers to the greenhouse gas emissions and cg1 refers to coal. The parameter $\pRatioOutputInputFlow[u,GreenhouseGas,Coal]$ thus corresponds to the emission factor/emission intensity $EF$ of the coal commodity. 
+\begin{align}
+\vFlow[GreenhouseGas,u,out,t] =  EF \vFlow[Coal,u,in,t] \quad \forall \units, \timesteps
+\end{align}
+
+{\color{red} An alternative option would be to link emissions directly to the commodity flows themselves. This would mean that the same equations are in the end generated, but that the parameter representing the emission factor would be indepdendent of the unit. THat is, there would be a parameter $p^{EmissionFactor}_{GreenhouseGas,Coal}$ representing the emission factor, which is independent of the unit. In that case, the units should only specify a capture rate parameter if needed for a specific type of emission (default 0\%).
+
+The generic equation would then become:
+\begin{align}
+&\vFlow[\commodity,\unit,out,\timestep] = \sum_{InputCommodity \in InputCommodities} p^{EmissionFactor}_{\commodity,InputCommodity} p^{CaptureRate}_{\unit,\commodity} \vFlow[InputCommodity,\unit,in,\timestep] \nonumber \\
+&  \forall \commodity \in EmissionCommodities, \units, \timesteps
+\end{align}
+
+The advantage is that the user does not need to define the relationship between an input commodity and an emission commodity for every unit and that EmissionFactor is more easy to interpret than RatioOutputInputFlow. Instead, the user only needs to specify an emission factor for each commodity. At this point, I don't think there are disadvantages to this approach?}
+
+
+\subsubsection{Minimum operating point}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Minimum operating point constraints can be introduced via the parameter $\pMinimumOperatingPoint$, which induces Eq.~\eqref{eq:minimumoperatingpoint}. This parameter needs to be specified for a specific commodity/commodity group. This specification is needed since it can be different than the capacity definining commodity group (Cdcg). For instance, for the coal-fired power plant considered here, the minimum operating point should be based on the ElectricalPower commodity and not on the sum of the ElectricalPower and the UpwardReserves commodity.
+
+
+\subsubsection{Minimum up and down times}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Minimum up and down time constraints are induced by specifying the corresponding parameters ($\pMinimumUpTime$ and $\pMinimumDownTime$).
+
+
+\subsubsection{Ramping constraints}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+In this example, we assume a ramp rate which is constant for a given online unit, regardless of its current operating point. Depending on the stereotype, Eqs.~\eqref{eq:updwardrampingconstraintwithoutcommitmentvariables}-\eqref{eq:downdwardrampingconstraintwithoutcommitmentvariables} or Eqs.~\eqref{eq:updwardrampingconstraintwithcommitmentvariables}-\eqref{eq:downdwardrampingconstraintwithcommitmentvariables} will be generated.
+
+Note that the ramping parameter again needs to be defined for a certain unit and commodity groups!
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Back-pressure CHP CCGT}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+TO DO
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Extraction-condensing CHP CCGT}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+TO DO

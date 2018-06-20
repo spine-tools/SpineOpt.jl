@@ -1,0 +1,39 @@
+%!TEX root = ../../SPINE_model_description.tex
+
+
+\subsection{On treatment of exogenous commodities} \label{subsec:exogenous_commodities}
+
+
+
+\paragraph{Description of the issue:}
+Certain commodities are only used as inputs in the model but there are no conversion process creating these commodities in the model. These are called exogenous commodities. Regarding the interpretation, exogenous commodities can be assumed to be imported or produced by certain processes which are not considered explicitly in the model. Such commodities typically have a cost or emissions attached to their use, but are not constrained typically. The issue here is how to deal with such commodities (or in the first place, whether there should be a separate treatment for such commodities in the first place).
+
+Below, two options are presented. One where exogenous commodities are treated differently, and one where exogenous commodities are treated identical to other commodities.  In the description below, we assumed that the costs related to importing a single unit of certain commodity can either be constant but can also vary with the total imported amount. 
+
+\paragraph{Option 1: Separate treatment of exogenous commodities}
+Import variables ($\vImport$) are created (one variable per commodity, timestep on which the commodity is traced, and segment in the piecewise linear cost curve). An equation is added to ensure that the total import (sum of the different import segments) equals the net flow of that commodity. No balance constraint on the flow variables of this commodity should be induced (the constraint below replaces this). 
+\begin{align}
+&\sum_{\segment \in \ImportSegments} \vImport =  \sum_{\unit \in \InputCommodities} \vFlow[\commodity,\unit,in,\timestep]  - \sum_{\unit \in \OutputCommodities} \vFlow[\commodity,\unit,out,\timestep]  \nonumber \\
+& \forall \commodities, \timesteps
+\end{align}
+
+\paragraph{Option 2: No separate treatment of exogenous commodities}
+An 'import unit' is created which has no input commodities but has the specific commoditiy as an output commodity. A cost is attached to the 'generation' of the commodity. In this option, there must be a commodity balance (Eq.~\eqref{eq:commodity_balance}) equation to make sure that the output flows of the import unit are sufficient (and hence, the correct cost can be attached). In addition, when piecewise segments are being used (non-constant import costs), additional import variables ($\vImport$) need to be created and the sum of the different segments should be equated to the output flow of that process
+\begin{align}
+&\sum_{\segment \in \ImportSegments} \vImport =  \vFlow[\commodity,ImportUnit,out,\timestep] \nonumber \\
+& \forall \commodities, \timesteps
+\end{align}
+
+Drawbacks of option 2:
+\begin{itemize} 
+	\item In comparison to option 1, there is one more constraint per commodity, and timestep on which the commodity is traced.
+	\item In comparison to option 1, there is an additional variable per commodity and timestep ($\vFlow[\commodity,ImportUnit,out,\timestep]$)
+\end{itemize}
+Advantages of option 2:
+\begin{itemize}
+	\item There is a flow variable related to the import of that commodity -> one variable $\vFlow$ now describes all the flows (whereas if you want to say something about the 'import flows' in option 1, you would need to go look at the $\vImport$ variables). This can be easyer for post-processing.
+	\item Using a unit for importing might provide more flexibility as all the generic unit parameters are available to model specific constraints related to the imports. For instance, a cost can be placed on the capacity for importing, etc. 
+\end{itemize}
+
+
+Note that all commodities defined in the data will be treated explicitly (so also the exogenous commodities)! For example, in a UC model, there will be flow variables for, for instance, coal consumed by a coal-fired power plant. This might not be efficient for all cases. If the user wants to overcome this issue, the user is free to not define the coal commodity in the model but rather define a generation cost of the coal-fired power plant (parameter $\pConversionCost$).\footnote{I don't see any other option. Ofcourse, it should be possible to start from a datasource where fuel commodities are specified, then make a simple conversion tool to adapt the parameters of the plants involved based on this price, and subsequently run the Spine model.} 

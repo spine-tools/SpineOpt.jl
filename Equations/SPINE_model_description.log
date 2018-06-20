@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/W32TeX) (preloaded format=pdflatex 2018.3.29)  20 JUN 2018 13:34
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/W32TeX) (preloaded format=pdflatex 2018.3.29)  20 JUN 2018 14:03
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**./SPINE_model_equations.tex
-(./SPINE_model_equations.tex
+**./SPINE_model_description.tex
+(./SPINE_model_description.tex
 LaTeX2e <2017-04-15>
 Babel <3.18> and hyphenation patterns for 84 language(s) loaded.
 (c:/texlive/2017/texmf-dist/tex/latex/base/article.cls
@@ -799,8 +799,8 @@ File: pgfcoreexternal.code.tex 2015/08/29  (rcs-revision 1.22)
 upp_tikzlibraryexternal.code.tex
 (c:/texlive/2017/texmf-dist/tex/generic/pgfplots/oldpgfcompatib/pgfplotsoldpgfs
 upp_tikzexternalshared.code.tex))) (./00_math_symbols.tex)
-(./SPINE_model_equations.aux (./00_nomenclature.aux))
-\openout1 = `SPINE_model_equations.aux'.
+(./SPINE_model_description.aux (./00_nomenclature.aux))
+\openout1 = `SPINE_model_description.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 80.
 LaTeX Font Info:    ... okay on input line 80.
@@ -865,9 +865,9 @@ LaTeX Info: Redefining \ref on input line 80.
 LaTeX Info: Redefining \pageref on input line 80.
 LaTeX Info: Redefining \nameref on input line 80.
 
-(./SPINE_model_equations.out) (./SPINE_model_equations.out)
+(./SPINE_model_description.out) (./SPINE_model_description.out)
 \@outlinefile=\write4
-\openout4 = `SPINE_model_equations.out'.
+\openout4 = `SPINE_model_description.out'.
 
 Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: subfig package v1.3 is loaded.
@@ -914,17 +914,17 @@ LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
  [1
 
 {c:/texlive/2017/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (./SPINE_model_
-equations.toc)
+description.toc)
 \tf@toc=\write5
-\openout5 = `SPINE_model_equations.toc'.
+\openout5 = `SPINE_model_description.toc'.
 
- [2
+
+[2
 
 ]
 \openout2 = `00_nomenclature.aux'.
 
-
-(./00_nomenclature.tex
+ (./00_nomenclature.tex
 \totalcol=\count167
 \cola=\dimen265
 \colb=\dimen266
@@ -934,7 +934,6 @@ equations.toc)
 
 ]) [4] (./Sections/Spine_model_formulation.tex
 [5
-
 
 ] [6]
 Overfull \hbox (42.69196pt too wide) detected at line 138
@@ -953,40 +952,44 @@ e ($\OML/cmm/m/it/10 p[]$\OT1/cmr/m/n/10 , $\OML/cmm/m/it/10 p[]$\OT1/cmr/m/n/1
 0 ) 
  []
 
-[7] [8] [9]) [10] (./Open_issues/reserve_commodities.tex [11
-
-]) [12] [13
+[7] [8]) (./Sections/Open_issues.tex [9]
+(./Sections/Open_issues/exogenous_commodities.tex) [10
 
 ]
-Overfull \hbox (14.63167pt too wide) in paragraph at lines 228--229
+(./Sections/Open_issues/reserve_commodities.tex [11])) (./Sections/Examples.tex
+[12] [13
+
+]
+Overfull \hbox (14.63167pt too wide) in paragraph at lines 62--63
 \OT1/cmr/m/n/10 Minimum op-er-at-ing point con-straints can be in-tro-duced via
  the pa-ram-e-ter $\OML/cmm/m/it/10 p[]$\OT1/cmr/m/n/10 ,
  []
 
 
-Overfull \hbox (8.85828pt too wide) in paragraph at lines 228--229
+Overfull \hbox (8.85828pt too wide) in paragraph at lines 62--63
 \OT1/cmr/m/n/10 which in-duces Eq. []. This pa-ram-e-ter needs to be spec-i-fie
 d for a spe-cific com-mod-ity/commodity
  []
 
-[14]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 271.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 271.
- (./SPINE_model_equations.aux (./00_nomenclature.aux))
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 271.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 271.
-Package rerunfilecheck Info: File `SPINE_model_equations.out' has not changed.
-(rerunfilecheck)             Checksum: EF9DB24A32181AA8DB6349D861BDFE84;1734.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 271.
+) [14]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 177.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 177.
+ (./SPINE_model_description.aux (./00_nomenclature.aux))
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 177.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 177.
+Package rerunfilecheck Info: File `SPINE_model_description.out' has not changed
+.
+(rerunfilecheck)             Checksum: D15F18C3A079422FFA031FE94BA4176D;1724.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 177.
  ) 
 Here is how much of TeX's memory you used:
- 28408 strings out of 492982
- 679434 string characters out of 6136225
+ 28420 strings out of 492982
+ 679778 string characters out of 6136225
  906094 words of memory out of 5000000
- 31379 multiletter control sequences out of 15000+600000
+ 31381 multiletter control sequences out of 15000+600000
  13393 words of font info for 52 fonts, out of 8000000 for 9000
  1144 hyphenation exceptions out of 8191
- 74i,14n,128p,1098b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 74i,14n,128p,1100b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
 <c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/tex
 live/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><c:/texlive/2017
 /texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2017/texmf-di
@@ -1002,10 +1005,10 @@ exlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb><c:/texlive/2017
 sfonts/cm/cmsy10.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm
 /cmsy5.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb
 >
-Output written on SPINE_model_equations.pdf (14 pages, 231223 bytes).
+Output written on SPINE_model_description.pdf (14 pages, 232138 bytes).
 PDF statistics:
- 334 PDF objects out of 1000 (max. 8388607)
- 299 compressed objects within 3 object streams
- 84 named destinations out of 1000 (max. 500000)
+ 337 PDF objects out of 1000 (max. 8388607)
+ 301 compressed objects within 4 object streams
+ 85 named destinations out of 1000 (max. 500000)
  189 words of extra memory for PDF output out of 10000 (max. 10000000)
 

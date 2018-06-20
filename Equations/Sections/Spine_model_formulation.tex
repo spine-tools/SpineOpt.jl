@@ -1,0 +1,220 @@
+%!TEX root = ../SPINE_model_description.tex
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Model formulation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Objective function}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The basic objective function of the Spine Model is to minimize the total discounted costs. 
+
+
+The total costs will in the end comprise the following elements:
+\begin{itemize}
+	\item Costs:
+	\begin{itemize}
+		\item investment costs
+		\item dismantling costs
+		\item fixed O\&M costs
+		\item variable O\&M costs
+		\item import costs (exogenous commodity flows with a cost attached)
+		\item production costs (related to domestic resource production, e.g., extracting oil from oil fields)
+		\item taxes and subsidies associated with commodity flows
+		\item taxes and subsidies associated with investments
+		\item Utility loss following reduced end-use demands
+		\item utility losses related to reduced reliability
+	\end{itemize}
+	\item Revenues:
+	\begin{itemize}
+		\item Salvage value (value of investments beyond the considered model horizon)
+		\item export revenues
+	\end{itemize}
+\end{itemize}
+
+
+
+
+\begin{align}
+\vImportCosts = \sum_{\segments} \vImport \pImportCost \quad \forall \commodities, \timesteps
+\end{align}
+
+{\color{red} TO EXPAND}
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Technological constraints}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Define unit/technology capacity}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+In a multi-commodity setting, there can be different commodities entering/leaving a certain technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.), emissions, or other commodities (e.g., water, steel). The capacity of the unit must be unambiguously defined based on certain commodity flows (e.g., the capacity of a CHP could be based on the output electricity, the output heat, the sum of both or the input natural gas). Therefore, a group of commodities need to be defined which define the capacity of the unit/technology. This is the so-called 'Capacity defining commodity group' (cdcg)\footnote{In TIMES, this is called the 'Primary commodity group'}, and should be defined by the users (defaults can apply). This capacity thus restricts the flows of the commodities in the Cdcg (similar to TIMES EQ CAPACT).
+
+% (TIMES EQ ACTFLO).
+% \begin{equation}
+% \act = \sum_{\commodity : \commodity \in Pcg_{\unit}} \flow \UNITCONVFLOWTOACT \quad \forall \quad \units, \timesteps
+% \end{equation}
+
+% \subsubsection{Restrict activity to the available capacity}
+\begin{equation} \label{eq:max_capacity}
+\sum_{\commodity : \commodity \in Cdcg_{\unit}} \vFlow \le \pAF \pUnitConvCapToFlow \vCapacity \quad \forall \quad \units, \timesteps
+\end{equation}
+
+
+
+\subsubsection{Static relationships between input and output commodity flows}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Between the different flows, relationships can be imposed. The most simple relationship is a linear relationship between input and output commodities/commodity groups (TIMES EQ PTRANS). Whenever there is only a single input commodity and a single output commodity, this relationship relates to the notion of an efficiency. This equation can however also be used for instance to relate emissions to input primary fuel flows. In the most general form of the equation, two commodity groups are defined (an input commodity group cg1 and an output commodity group cg2), and an equality relationship is expressed between both commodity groups. Note that whenever the relationship is specfied between groups of multiple commodities, there remains a degree of freedom regarding the composition of the input commodity flows within group cg1 and the output commodity flows within group cg2. Note further that the sign ($\le;=;\ge$) of the constraint should be selected by the user (attribute of the parameter instance)- TIMES EQ PTRANS. 
+
+\paragraph{Relationship between output and input flows}
+\begin{align} \label{eq:ratiooutputinputflow}
+&\sum_{\commodity \in cg2} \vFlow[\commodity,\unit,out,\timestep] \{\le;=;\ge\} \nonumber \\
+&\pRatioOutputInputFlow \sum_{\commodity \in cg1} \vFlow[\commodity,\unit,in,\timestep] \quad \forall \units, \timesteps
+\end{align}
+
+Additional relationships can further be imposed. Two basic constraints impose a linear relationship between multiple input commodities/commodity groups (Eq.~\eqref{eq:ratioinputinputflow} - similar to (TIMES EQ INSHR)), and a linear relationship between multiple output commodities/commodity groups (Eq.~\eqref{eq:ratiooutputoutputflow} - similar to TIMES EQ OUTSHR). These relationships reduce the degrees of freedom. The relationship between different input flows can for instance be used to define a fixed or maximal share of bio-mass in a coal-fired power plant. The relationship between different output flows can for instance be used to define a relationship between the heat and electrical power outputs of a CHP plant, or to establish relationships between different outputs in an distillery. 
+
+\paragraph{Relationship between multiple input flows}
+\begin{align} \label{eq:ratioinputinputflow}
+&\sum_{\commodity \in cg2} \vFlow[\commodity,\unit,in,\timestep] \{\le;=;\ge\} \nonumber \\
+&\pRatioInputInputFlow \sum_{\commodity \in cg1} \vFlow[\commodity,\unit,in,\timestep] \quad \forall \units, \timesteps
+\end{align}
+
+\paragraph{Relationship between multiple output flows}
+\begin{align} \label{eq:ratiooutputoutputflow}
+&\sum_{\commodity \in cg2} \vFlow[\commodity,\unit,outn,\timestep] \{\le;=;\ge\} \nonumber \\
+&\pRatioOutputOutputFlow \sum_{\commodity \in cg1} \vFlow[\commodity,\unit,out,\timestep] \quad \forall \units, \timesteps
+\end{align}
+
+{\color{red}
+The above equations indicate that it might not be so simple as simply defining the value of a number of parameters which either belong to a unit or commodity. The user might also need to specify to which commodity groups different parameters relate and which bound is applied on the induced constraint (equality, lower bound, upper bound) - see e.g., parameter $\pRatioOutputInputFlow$. Also, this parameter can be defined multiple times for different input and output commodity groups. 
+}
+
+\subsubsection{Bounds on input and output commodity flows}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+{\color{red} TO ELABORATE}
+
+The above static relationships represent constraints on the ratios between different commodity flows per unit. Additionally, bounds can be put on the instantaneous or total absolute flows generated by each unit, or even on the instantaneous or total flows from all units together (the latter are no longer technological constraints though).
+
+Note that for the commodities correspondong to the units' capacity defining commodity group, a bound on the commodity flows is already generated (restricting flows to the installed capacity) - see Eq.~\eqref{eq:max_capacity} or Eq.~\eqref{eq:maximumoperatingpoint}.
+
+
+
+
+\subsubsection{Dynamic constraints on input and output commodity flows}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Ramping constraints} These constraints induce a bound on the rate of change of a flow of certain commodities/commodity groups. The commodity group cg to which the ramping constraint applies needs to be specified.
+
+There are many different possible formulations of ramping constraints. Hence, the equation is dependent on the archetype selected. Below is are two ramping equation versions represented: one for archetypes which do not have commitment variables, and one for archetypes which do have commitment variables
+
+Without commitment variables ({\color{red} Should in principle be based on available rather than total capacity}):
+\begin{align} \label{eq:updwardrampingconstraintwithoutcommitmentvariables}
+&\sum_{\commodity \in cg} \Big( \vFlow[\commodity,\unit,in/out,\timestep+1] - \vFlow \Big) \le \pRampRateUp \vCapacity \pDeltaT \nonumber \\
+&\forall \units, \timesteps
+\end{align}
+
+\begin{align} \label{eq:downdwardrampingconstraintwithoutcommitmentvariables}
+&\sum_{\commodity \in cg} \Big( \vFlow[\commodity,\unit,in/out,\timestep+1] - \vFlow \Big) \le \pRampRateDown \vCapacity \pDeltaT\nonumber \\
+& \forall \units, \timesteps
+\end{align}
+
+
+
+With commitment variables:
+\begin{align} \label{eq:updwardrampingconstraintwithcommitmentvariables}
+\sum_{\commodity \in cg} \Big( \vFlow[\commodity,\unit,in/out,\timestep+1] - \vFlow \Big) \le & (\vUnitsOnline-\vUnitsShuttingDown) \pRampRateUp \pUnitCapacity \pDeltaT \nonumber \\
+& - \vUnitsShuttingDown \pMinimumOperatingPoint \nonumber \\
+& +\vUnitsStartingUp \pMaxStartUpPower \nonumber \\
+& \forall \units, \timesteps
+\end{align}
+
+\begin{align} \label{eq:downdwardrampingconstraintwithcommitmentvariables}
+\sum_{\commodity \in cg} \Big( \vFlow - \vFlow[\commodity,\unit,in/out,\timestep+1] \Big) \le &(\vUnitsOnline-\vUnitsShuttingDown) \pRampRateDown \pUnitCapacity \pDeltaT \nonumber \\
+& - \vUnitsStartingUp \pMinimumOperatingPoint \nonumber \\
+& + \vUnitsShuttingDown \pMaxShutDownPower \nonumber \\
+& \forall \units, \timesteps
+\end{align}
+
+
+
+
+
+
+\subsubsection{Commitment-related constraints}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+For modeling certain technologies/units, it is important to not only have flow variables of different commodities, but also model the on/off ("commitment") status of the unit/technology at every time step. Therefore, an additional variable $\vUnitsOnline$ is introduced. This variable represents the number of online units of that technology (for a normal unit commitment model, this variable might be a binary, for investment planning purposes, this might also be an integer or even a continuous variable - this will depend on the archetype of the unit.)
+
+Commitment variables will be introduced by the following constraints (with corresponding parameters):
+\begin{itemize}
+	\item Minimum operating point ($\pMinimumOperatingPoint$)
+	\item Minimum up time ($\pMinimumUpTime$)
+	\item Minimum down time ($\pMinimumDownTime$)
+	\item Certain ramp-rate formulations depending on the archetype ($\pRampRateUp$, $\pRampRateDown$)
+\end{itemize}
+
+Additionally, start-up and shut-down variables might need to be introduced for modeling start-up costs, minimum up time and minimum down-time constraints.
+
+Whenever commitment variables are introduced, the capacity constraint (Eq.~\eqref{eq:max_capacity}) needs to be redefined:
+\begin{equation} \label{eq:maximumoperatingpoint}
+\sum_{\commodity : \commodity \in Cdcg_{\unit}} \vFlow \le \vUnitsOnline \pUnitCapacity \quad \forall \quad \units, \timesteps
+\end{equation}
+
+Additionally, the number of online units need to be restricted to the installed and available capacity:
+\begin{equation} \label{eq:maximumonlineunits}
+\vUnitsOnline \le \vUnitsAvailable \quad \forall \quad \units, \timesteps
+\end{equation}
+\begin{equation} \label{eq:availableunits}
+\vUnitsAvailable \pUnitCapacity \le \pAF \vCapacity \quad \forall \quad \units, \timesteps
+\end{equation}
+
+\paragraph{Minimum operating point}
+A first commitment-related constraint is the minimal operating point of an online unit. The minimum operating point can be based on the flows of input or output commodities/commodity groups cg ({\color{red}
+Is this always for the capacity defining commodity group, or are there instances where a minimum operating point is defined for other commodities/commodity groups?} See example below, if reserve capacity and electrical power together form the Cdcg of a coal-fired power plant, than the Cdcg should not be used here):
+\begin{align} \label{eq:minimumoperatingpoint}
+&\sum_{\commodity \in cg} \vFlow \ge \pMinimumOperatingPoint \vUnitsOnline \pUnitCapacity \nonumber \\
+& \forall \units, \timesteps
+\end{align}
+
+{\color{red} To check: how to approach the installed capacity - this can be a parameter or a variable (or both) dependending on the problem?}
+
+
+\paragraph{Minimum up time}
+\begin{align} \label{eq:minimumuptime}
+&\vUnitsShuttingDown \le \vUnitsOnline - \sum_{\timestep'=1}^{\pMinimumUpTime - 1} \vUnitsStartingUp[\unit,\timestep-\timestep'] \nonumber \\
+& \forall \units, \timesteps
+\end{align}
+{\color{red} This is the basic constraint. However, whenever non-spinning downward reserves are considered, an additional term which represents 'the units available to shut down in order to provide downward reserves' needs to be added to the left-hand side of the equation. How to deal with this in a generic way?}
+
+\paragraph{Minimum down time}
+\begin{align} \label{eq:minimumdowntime}
+&\vUnitsStartingUp \le \vUnitsAvailable - \vUnitsOnline - \sum_{\timestep'=1}^{\pMinimumDownTime - 1} \vUnitsShuttingDown[\unit,\timestep-\timestep'] \nonumber \\
+& \forall \units, \timesteps
+\end{align}
+{\color{red} This is the basic constraint. However, whenever non-spinning upward reserves are considered, an additional term which represents 'the units available to start up in order to provide upward reserves' needs to be added to the left-hand side of the equation. How to deal with this in a generic way?}
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{System constraints}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+For each endogenous commodity, a commodity balance constraint is induced. The user is free to define whether an inequality or equality sign is used for the balance - TIMES EQ COMBAL
+\begin{align} \label{eq:commodity_balance}
+&\sum_{\unit : \commodity \in \OutputCommodities} \vFlow[\commodity,\unit,out,\timestep] \{\ge;=\} \nonumber \\ 
+&\pDemand + \sum_{\unit: \commodity \in \InputCommodities} \vFlow[\commodity,\unit,in,\timestep] \nonumber \\ 
+& \forall \EndogenousCommodities, \timesteps 
+\end{align}
+
+
