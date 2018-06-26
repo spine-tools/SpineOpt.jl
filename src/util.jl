@@ -1,7 +1,7 @@
 """
     JuMPout(dict, keys...)
 
-Assign the value within `dict` of each key in `keys` to a variable named after that key.
+Copy the value in `dict` of each one of `keys...` into a variable named after it.
 
 # Example
 ```julia
@@ -32,14 +32,34 @@ julia> pmin_new == jfo["pmin"]
 true
 ```
 """
-#macro JuMPout_suffix(dict, suffix, keys...)
-#    kd = [:($(Symbol(key, suffix)) = [string(value, $suffix) for value in $dict[$(string(key))]]) for key in keys]
-#    expr = Expr(:block, kd...)
-#    esc(expr)
-#end
-
 macro JuMPout_suffix(dict, suffix, keys...)
     kd = [:($(Symbol(key, suffix)) = $dict[$(string(key))]) for key in keys]
+    expr = Expr(:block, kd...)
+    esc(expr)
+end
+
+macro JuMPout_prefix(dict, prefix, keys...)
+    kd = [:($(Symbol(prefix, key)) = $dict[$(string(key))]) for key in keys]
+    expr = Expr(:block, kd...)
+    esc(expr)
+end
+
+macro JuMPout_all_suffix(dict, suffix, keys...)
+    kd = [:($(Symbol(key, suffix)) =
+        isa($dict[$(string(key))], Dict)?
+        Dict(string(k, $suffix) => isa(v, Array)?[string(i, $suffix) for i in v]:string(v, $suffix) for (k,v) in $dict[$(string(key))]):
+        isa($dict[$(string(key))], Array)?[string(item, $suffix) for item in $dict[$(string(key))]]:nothing
+    ) for key in keys]
+    expr = Expr(:block, kd...)
+    esc(expr)
+end
+
+macro JuMPout_key_suffix(dict, suffix, keys...)
+    kd = [:($(Symbol(key, suffix)) =
+        isa($dict[$(string(key))], Dict)?
+        Dict(string(k, $suffix) => v for (k,v) in $dict[$(string(key))]):
+        isa($dict[$(string(key))], Array)?[string(item, $suffix) for item in $dict[$(string(key))]]:nothing
+    ) for key in keys]
     expr = Expr(:block, kd...)
     esc(expr)
 end
@@ -58,7 +78,7 @@ end
 """
     JuMPin(dict, vars...)
 
-Assign the value of each variable in `vars` to a key in `dict` named after that variable.
+Copy the value of each one of `vars` into a key in `dict` named after it.
 
 # Example
 ```julia
@@ -75,43 +95,75 @@ macro JuMPin(dict, vars...)
     esc(expr)
 end
 
-function extend_parameter!(reference::Dict;
-        parameter::String="",
-        object::String="",
-        relationship::String="")
-    for to_object in reference[object]
-        from_object = reference[relationship][to_object]
-        isa(from_object, Array) && error(
-            to_object,
-            " is related to more than one object via relationship ",
+
+"""
+    pass_parameter!(parameter::Dict{String,Any}, to_object::Array{String,1}, by_relationship::Dict{String,Any})
+
+Update `parameter` with values for all objects in `to_object`. Values are 'passed' from the related objects in
+`by_relationships`.
+"""
+function pass_parameter!(
+        parameter::Dict{String,T},
+        to_object::Array{String,1},
+        by_relationship::Dict{String,Any}) where T
+    for object in to_object
+        related_object = by_relationship[object]
+        isa(related_object, Array) && error(
+            object,
+            " is related to more than one object via ",
             relationship
         )
-        reference[parameter][to_object] = reference[parameter][from_object]
+        parameter[object] = parameter[related_object]
     end
 end
 
-function extend_relationship(relationship::Dict;
-        object=Array(),
-        with_relationship=Dict()
+function extended_relationship(
+        to_object::Array{String,1},
+        by_relationship::Dict{String,<:Any},
+        relationship::Dict{String,<:Any}
     )
-    new_relationship = Dict()
-    for o in object
-        new_relationship[o] = Array{Any,1}()
-        !haskey(with_relationship, o) && continue
-        with_object = with_relationship[o]
-        for wo in with_object
-            !haskey(relationship, wo) && continue
-            relationship_object = relationship[wo]
-            if isa(relationship_object, Array)
-                for ro in relationship_object
-                    push!(new_relationship[o], ro)
-                    new_relationship[ro] = o
-                end
-            else
-                push!(new_relationship[o], relationship_object)
-                new_relationship[relationship_object] = o
+    extended = Dict{String,Any}()
+    for object in to_object
+        haskey(by_relationship, object) || continue
+        related_object = by_relationship[object]
+        if isa(related_object, Array)
+            extended[object] = vcat([relationship[o] for o in related_object if haskey(relationship, o)]...)
+        elseif haskey(relationship, related_object)
+            extended[object] = relationship[related_object]
+        end
+    end
+    extended
+end
+
+function scale_parameter!(jfo::Dict, factor, parameters::String...)
+    for parameter in parameters
+        for (key,value) in jfo[parameter]
+            jfo[parameter][key] = factor * value
+        end
+    end
+end
+
+# Borrowd from Suppressor.jl
+
+"""
+    @suppress_err expr
+Suppress the STDERR stream for the given expression.
+"""
+macro suppress_err(block)
+    quote
+        if ccall(:jl_generating_output, Cint, ()) == 0
+            ORIGINAL_STDERR = STDERR
+            err_rd, err_wr = redirect_stderr()
+            err_reader = @schedule read(err_rd, String)
+        end
+
+        try
+            $(esc(block))
+        finally
+            if ccall(:jl_generating_output, Cint, ()) == 0
+                redirect_stderr(ORIGINAL_STDERR)
+                close(err_wr)
             end
         end
     end
-    new_relationship
 end

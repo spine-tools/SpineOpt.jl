@@ -1,53 +1,53 @@
 """
-    JuMP_object(dsn)
+    JuMP_object(source)
 
-A JuMP-friendly julia `Dict` translated from the database specified by `source`.
-The database should be in the Spine format. The argument `source`
-can by anything that can be converted to a `SpineDataObject`. See
-[`JuMP_object(sdo::SpineDataObject)`](@ref) for translation rules.
+A JuMP-friendly object from `source`. The argument `source`
+is anything that can be converted to a `SpineDataObject` using `SpineData.jl`. See details of conversion in
+[`JuMP_object(sdo::SpineDataObject)`](@ref).
 """
-JuMP_object(source) = JuMP_object(Spine_object(source))
+function JuMP_object(source, update_all_datatypes=true, JuMP_all_out=true)
+    sdo = Spine_object(source)
+    update_all_datatypes && update_all_datatypes!(sdo)
+    JuMP_object(sdo, JuMP_all_out)
+end
 
 """
-    JuMP_object(sdo::SpineDataObject)
+    JuMP_object(sdo::SpineDataObject, JuMP_all_out=true)
 
-A JuMP-friendly object translated from `sdo`.
-A JuMP-friendly object is a Jula `Dict` of `Array`s and `Dict`s, as follows:
+A JuMP-friendly object from `sdo`.
+A JuMP-friendly object is simply a Julia `Dict`.
+The following 'translation' rules apply:
 
- - For each object class in `sdo`
-   there is a key-value pair where the key is the class name,
-   and the value is an `Array` of object names.
+ - An object class in `sdo` is a pair `object_class_name=>Array of object_name`.
 
- - For each parameter definition in `sdo`
-   there is a key-value pair where the key is the parameter name,
-   and the value is another `Dict` of object names and their values.
+ - A parameter in `sdo` is a pair `parameter_name=>Dict of object_name=>parameter_value`
 
- - For each relationship class in `sdo`
-   there is a key-value pair where the key is the relationship class name,
-   and the value is another `Dict` of child and parent object names.
+ - A relationship class in `sdo` is a pair `relationship_class_name=>Dict of parent_object_name=>(Array of) child_object_name`.
 
 # Example
 ```julia
 julia> jfo = JuMP_object(sdo);
-julia> jfo["gen"]
+julia> jfo["unit"]
 33-element Array{String,1}:
- "gen1"
- "gen2"
+ "unit1"
+ "unit2"
 ...
 julia> jfo["pmax"]
 Dict{String,Int64} with 33 entries:
-  "gen24" => 197
-  "gen4"  => 0
-  "gen7"  => 400
+  "unit24" => 197
+  "unit4"  => 0
+  "unit7"  => 400
 ...
-julia> jfo["gen_bus"]
+julia> jfo["unit_node"]
 Dict{String,String} with 33 entries:
-  "gen24" => "bus21"
-  "gen4"  => "bus1"
+  "unit24" => "node21"
+  "unit4"  => "node1"
+  ...
+  "node1" => ["unit4", "unit5", "unit7"]
 ...
 ```
 """
-function JuMP_object(sdo::SpineDataObject)
+function JuMP_object(sdo::SpineDataObject, JuMP_all_out=true)
     jfo = Dict{String,Any}()
     init_metadata!(jfo)
     for i=1:size(sdo.object_class, 1)
@@ -59,6 +59,13 @@ function JuMP_object(sdo::SpineDataObject)
             @collect
         end
         add_object_class_metadata!(jfo, object_class_name)
+        JuMP_all_out || continue
+        @suppress_err begin
+            @eval begin
+                $(Symbol(object_class_name))() = $(jfo[object_class_name])
+                export $(Symbol(object_class_name))
+            end
+        end
     end
     for i=1:size(sdo.relationship_class, 1)
         relationship_class_id = sdo.relationship_class[i, :id]
@@ -74,33 +81,69 @@ function JuMP_object(sdo::SpineDataObject)
             @group relationship by relationship.child_object_name into group
             @let group_arr = [get(x) for x in group..parent_object_name]
             @select get(group.key) => all_or_one(group_arr)
-            @collect Dict{Any,Any}
+            @collect Dict{String,Any}
         end
         parent_to_child = @from relationship in relationship_df begin
             @group relationship by relationship.parent_object_name into group
             @let group_arr = [get(x) for x in group..child_object_name]
             @select get(group.key) => all_or_one(group_arr)
-            @collect Dict{Any,Any}
+            @collect Dict{String,Any}
         end
         jfo[relationship_class_name] = merge(child_to_parent, parent_to_child)
         add_relationship_class_metadata!(jfo, relationship_class_name)
+        JuMP_all_out || continue
+        @eval begin
+            function $(Symbol(relationship_class_name))(x::String)
+                relationship_class_name = $(jfo[relationship_class_name])
+                try
+                    relationship_class_name[x]
+                catch KeyError
+                    error($relationship_class_name, " is not defined for object ", x)
+                end
+            end
+            export $(Symbol(relationship_class_name))
+        end
     end
     for i=1:size(sdo.parameter,1)
         parameter_id = sdo.parameter[i, :id]
         parameter_name = sdo.parameter[i, :name]
         data_type = sdo.parameter[i, :data_type]
-        jfo[parameter_name] = @from parameter in sdo.parameter_value begin
+        value = @from parameter in sdo.parameter_value begin
             @where parameter.parameter_id == parameter_id
             @join object in sdo.object on parameter.object_id equals object.id
             @select get(object.name) => get(parameter.value)
-            @collect Dict{Any,get(spine2julia, data_type, Any)}
+            @collect Dict{String,get(spine2julia, data_type, Any)}
         end
+        json = @from parameter in sdo.parameter_value begin
+            @where parameter.parameter_id == parameter_id
+            @join object in sdo.object on parameter.object_id equals object.id
+            @let json_value = isnull(parameter.json)?missing:JSON.parse(get(parameter.json))
+            @select get(object.name) => json_value
+            @collect Dict{String,Any}
+        end
+        # NOTE: this prioritizes json over value if json not missing
+        jfo[parameter_name] = Dict{String,Any}(
+            k => ismissing(json[k])?v:json[k] for (k,v) in value
+        )
         add_parameter_metadata!(jfo, parameter_name)
+        JuMP_all_out || continue
+        @eval begin
+            function $(Symbol(parameter_name))(x::String, t::Int64=1)
+                if t > 1
+                    json = $(json)
+                    return json[x][t]
+                end
+                value = $(value)
+                value[x]
+            end
+            export $(Symbol(parameter_name))
+        end
     end
+    logging()
     jfo
 end
 
-function all_or_one(arr::Array)
+function all_or_one(arr::Array{T,1}) where T
     length(arr) == 1 && return arr[]
     arr
 end
@@ -134,7 +177,8 @@ end
 """
     SpineData.Spine_object(jfo::Dict)
 
-A `SpineDataObject` equivalent to `jfo`.
+A `SpineDataObject` from `jfo`. See details of conversion in
+[`JuMP_object(sdo::SpineDataObject)`](@ref).
 """
 function SpineData.Spine_object(jfo::Dict)
     sdo = MinimalSDO()
@@ -175,6 +219,7 @@ function SpineData.Spine_object(jfo::Dict)
         # Add relationship
         for (parent_object_name, child_object_name) in jfo[relationship_class_name]
             isa(child_object_name, Array) && continue
+            @show relationship_class_name
             parent_object = filter(x -> x[:class_id] == parent_object_class_id, sdo.object)
             i = findfirst(parent_object[:name], parent_object_name)
             i == 0 && continue
@@ -222,9 +267,6 @@ function SpineData.Spine_object(jfo::Dict)
     end
     sdo
 end
-
-
-
 
 #=
 Translation rules are
