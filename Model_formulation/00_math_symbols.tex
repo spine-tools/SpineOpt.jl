@@ -4,26 +4,27 @@
 \newcommand{\pConversionCost}[1][\unit,\commodity]{p^{ConversionCost}_{#1}}
 \newcommand{\pDeltaT}[1][\timestep]{p^{DeltaT}_{#1}}
 \newcommand{\pDemand}[1][\commodity,\timestep]{p^{Demand}_{#1}}
+\newcommand{\pMinimumOperatingPoint}[1][\unit,cg,\timestep]{p^{MinimumOperatingPoint}_{#1}}
 \newcommand{\pMinimumDownTime}[1][\unit]{p^{MinimumDownTime}_{#1}}
 \newcommand{\pMinimumUpTime}[1][\unit]{p^{MinimumUpTime}_{#1}}
-\newcommand{\pUnitCapacity}[1][\unit,Cdcg]{p^{UnitCapacity}_{#1}}
-\newcommand{\pMinimumOperatingPoint}[1][\unit,cg,\timestep]{p^{MinimumOperatingPoint}_{#1}}
-\newcommand{\pRatioOutputInputFlow}[1][\unit,cg21,cg1]{p^{RatioOutputInputFlow}_{#1}}
-\newcommand{\pRatioInputInputFlow}[1][\unit,cg21,cg1]{p^{RatioInputInputFlow}_{#1}}
+\newcommand{\pUnitCapacity}[1][\unit]{p^{UnitCapacity}_{#1}}
 \newcommand{\pRatioOutputOutputFlow}[1][\unit,cg21,cg1]{p^{RatioOutputOutputFlow}_{#1}}
+\newcommand{\pRatioInputInputFlow}[1][\unit,cg21,cg1]{p^{RatioInputInputFlow}_{#1}}
+\newcommand{\pRatioOutputInputFlow}[1][\unit,cg21,cg1]{p^{RatioOutputInputFlow}_{#1}}
 \newcommand{\pMaxShutDownPower}[1][\unit,cg]{p^{MaxShutDownPower}_{#1}}
 \newcommand{\pRampRateUp}[1][\unit,cg]{p^{RampRateUp}_{#1}}
 \newcommand{\pRampRateDown}[1][\unit,cg]{p^{RampRateDown}_{#1}}
 \newcommand{\pMaxStartUpPower}[1][\unit,cg]{p^{MaxStartUpPower}_{#1}}
 \newcommand{\pAF}[1][\unit,\timestep]{p^{AF}_{#1}}
-\newcommand{\ExogenousCommodities}{\commodity \in ExogenousCommodities}
 \newcommand{\EndogenousCommodities}{\commodity \in EndogenousCommodities}
 \newcommand{\commodities}{\commodity \in Commodities}
+\newcommand{\ExogenousCommodities}{\commodity \in ExogenousCommodities}
 \newcommand{\ImportSegments}[1][\commodity,\segment]{ImportSegments_{#1}}
 \newcommand{\segments}{\segment \in Segments}
 \newcommand{\timesteps}{\timestep \in Timesteps}
 \newcommand{\InputCommodities}[1][\commodity,\unit]{InputCommodities_{#1}}
 \newcommand{\OutputCommodities}[1][\commodity,\unit]{OutputCommodities_{#1}}
+\newcommand{\Cdcg}[1][\commodity,\unit]{Cdcg_{#1}}
 \newcommand{\units}{\unit \in Units}
 \newcommand{\vImportCosts}[1][\commodity,\timestep]{v^{ImportCosts}_{#1}}
 \newcommand{\vCapacity}[1][\unit]{v^{Capacity}_{#1}}

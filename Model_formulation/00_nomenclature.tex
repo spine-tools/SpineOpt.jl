@@ -17,14 +17,15 @@
 \subsection*{Sets}
 \vspace{-1em}
 	\begin{longtable}{p{\cola} p{\colc} >{\small\raggedleft\arraybackslash\itshape}p{\colb}}
-		$\ExogenousCommodities$	& Set of exogenous commodities (i.e., not requiring a balance constraint)	&                \\
 		$\EndogenousCommodities$	& Set of endogenous commodities (i.e., requiring a balance constraint)	&                \\
 		$\commodities   $	& Set of commodities                                          	&                \\
+		$\ExogenousCommodities$	& Set of exogenous commodities (i.e., not requiring a balance constraint)	&                \\
 		$\ImportSegments$	& Set of import segments \segment for commodity \commodity    	&                \\
 		$\segments      $	& Set of piecewise linear segments                            	&                \\
 		$\timesteps     $	& Set of timesteps                                            	&                \\
 		$\InputCommodities$	& Set of units \unit having input commodity  \commodity       	&                \\
 		$\OutputCommodities$	& Set of units \unit having output commodity \commodity       	&                \\
+		$\Cdcg          $	& Set of commodities of which the sum of the flows are restricted by the capacity of the unit	&                \\
 		$\units         $	& Set of units/technologies                                   	&                \\
 	\end{longtable}
 
@@ -45,13 +46,13 @@
 
 		$\pDemand       $	& Demand for commodity \commodity in timestep \timestep       	&                \\[0.5em]
 
+		$\pMinimumOperatingPoint$	& Minimum operating point of the unit                         	&                \\
 		$\pMinimumDownTime$	& Minimum time a unit is required to remain offline after shutting down	&                \\
 		$\pMinimumUpTime$	& Minimum time a unit is required to remain online after starting up	&                \\
 		$\pUnitCapacity $	& Capacity of a single unit                                   	&                \\
-		$\pMinimumOperatingPoint$	& Minimum operating point of the unit                         	&                \\
-		$\pRatioOutputInputFlow$	& Ratio between output commodity group cg2 and input commodity group cg1	&                \\
-		$\pRatioInputInputFlow$	& Ratio between input commodity group cg2 and input commodity group cg1	&                \\
 		$\pRatioOutputOutputFlow$	& Ratio between output commodity group cg2 and output commodity group cg1	&                \\
+		$\pRatioInputInputFlow$	& Ratio between input commodity group cg2 and input commodity group cg1	&                \\
+		$\pRatioOutputInputFlow$	& Ratio between output commodity group cg2 and input commodity group cg1	&                \\
 		$\pMaxShutDownPower$	& Maximum power in the last time step before a shutdown       	&                \\
 		$\pRampRateUp   $	& Maximum upward ramp rate                                    	&                \\
 		$\pRampRateDown $	& Maximum downward ramp rate                                  	&                \\
