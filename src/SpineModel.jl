@@ -12,7 +12,7 @@ using Ipopt
 using Clp
 using DataFrames
 using Query
-using Clustering
+# using Clustering
 using ODBC
 using SQLite
 using JSON

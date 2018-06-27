@@ -1,9 +1,6 @@
 # SpineModel.jl
 
-A Julia Module to run simulations using data in the Spine format. It provides:
-- Functions to translate Spine data objects into  [JuMP](https://github.com/JuliaOpt/JuMP.jl)-friendly objects.
-- Functions and macros to manipulate JuMP-friendly objects.
-
+A Julia Module for defining and running energy models using the  [Spine](http://www.spine-model.org/) framework.
 
 ## Getting started
 
@@ -13,21 +10,21 @@ A Julia Module to run simulations using data in the Spine format. It provides:
 
 ### Installation
 
-In the Julia REPL, use the package manager to clone this repo into your Julia library as a package named `SpineModel`:
+In the Julia REPL, issue the following command to clone this repo into a package named `SpineModel`:
 
-```
+```julia
 julia> Pkg.clone("https://gitlab.vtt.fi/spine/model.git", "SpineModel")
 ```
 
-Checkout the current branch:
+Checkout the current branch (`manuelma`):
 
-```
+```julia
 julia> Pkg.checkout("SpineModel", "manuelma")
 ```
 
 ### Usage
 
-Include the module in your Julia REPL session or program:
+Include the module in your Julia session or program:
 
 ```
 julia> using SpineModel
@@ -55,4 +52,4 @@ jfo = JuMP_object("FirstTestData")
 
 ## Documentation
 
-Documentation is available [here](index.md).
+Documentation is available [here](docs/build/index.md).

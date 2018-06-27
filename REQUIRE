@@ -5,7 +5,6 @@ JuMP
 Ipopt
 DataFrames
 Query
-Clustering
 ODBC
 SQLite
 JSON
