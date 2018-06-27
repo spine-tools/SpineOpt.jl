@@ -2,8 +2,13 @@
     JuMP_object(source)
 
 A JuMP-friendly object from `source`. The argument `source`
-is anything that can be converted to a `SpineDataObject` using `SpineData.jl`. See details of conversion in
-[`JuMP_object(sdo::SpineDataObject)`](@ref).
+can be anything that can be converted to a `SpineDataObject` using `SpineData.jl`.
+A JuMP-friendly object is simply a Julia `Dict`. (See details in [`JuMP_object(sdo::SpineDataObject)`](@ref).)
+
+If `update_all_datatypes` is `true`, then the method tries to find out the julia `Type` that best fits
+all values for every parameter, and convert all values to that `Type`. (See `SpineData.update_all_datatypes`.)
+
+
 """
 function JuMP_object(source, update_all_datatypes=true, JuMP_all_out=true)
     sdo = Spine_object(source)
@@ -15,35 +20,52 @@ end
     JuMP_object(sdo::SpineDataObject, JuMP_all_out=true)
 
 A JuMP-friendly object from `sdo`.
-A JuMP-friendly object is simply a Julia `Dict`.
-The following 'translation' rules apply:
+A JuMP-friendly object is simply a Julia `Dict`, constructed as follows:
 
- - An object class in `sdo` is a pair `object_class_name=>Array of object_name`.
+ - For each object class, relationship class, and parameter in `sdo`, there is a key named after it in `jfo`.
+ - The value of an 'object class key' is an `Array` of names of objects of that class.
+ - The value of a 'relationship class key' is another `Dict`. The keys in this new `Dict` are the names of all objects
+   this relationship is defined for.
+   The value of each 'object key' is an `Array` of object names that are related to it.
+ - The value of a 'parameter key' is another `Dict`. The keys in this new `Dict` are the names of all objects
+   this parameter is defined for.
+   The value of each 'object key' is the actual value of the parameter for that object.
+   Data from the `json` field (if any) superseeds the data from the `value` field.
 
- - A parameter in `sdo` is a pair `parameter_name=>Dict of object_name=>parameter_value`
-
- - A relationship class in `sdo` is a pair `relationship_class_name=>Dict of parent_object_name=>(Array of) child_object_name`.
+If `JuMP_all_out` is `true`, then the method also creates and exports convenience `functions`
+named after each key in `jfo`, that return the value of that key. See examples below.
 
 # Example
 ```julia
 julia> jfo = JuMP_object(sdo);
 julia> jfo["unit"]
-33-element Array{String,1}:
- "unit1"
- "unit2"
+4-element Array{String,1}:
+ "coal_import"
+ "gas_fired_power_plant"
 ...
-julia> jfo["pmax"]
-Dict{String,Int64} with 33 entries:
-  "unit24" => 197
-  "unit4"  => 0
-  "unit7"  => 400
+julia> jfo["conversion_cost"]
+Dict{String,Int64} with 4 entries:
+  "gas_import" => 12
+  "coal_fired_power_plant"  => 0
 ...
 julia> jfo["unit_node"]
-Dict{String,String} with 33 entries:
-  "unit24" => "node21"
-  "unit4"  => "node1"
+Dict{String,String} with 5 entries:
+  "coal_fired_power_plant" => ["Leuven"]
+  "coal_import"  => ["Leuven"]
   ...
-  "node1" => ["unit4", "unit5", "unit7"]
+  "Leuven" => ["coal_fired_power_plant", "coal_import", ...]
+...
+julia> unit()
+4-element Array{String,1}:
+ "coal_import"
+ "gas_fired_power_plant"
+...
+julia> conversion_cost("gas_import")
+12
+julia> unit_node("Leuven")
+4-element Array{String,1}:
+ "coal_import"
+ "gas_fired_power_plant"
 ...
 ```
 """
