@@ -1,4 +1,4 @@
-julia 0.6.3
+julia 0.6.1+
 SpineData
 Missings
 JuMP
@@ -9,3 +9,4 @@ Clustering
 ODBC
 SQLite
 JSON
+Clp

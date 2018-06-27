@@ -16,6 +16,7 @@ using Clustering
 using ODBC
 using SQLite
 using JSON
+using Clp
 
 include("util.jl")
 include("data/jfo.jl")
