@@ -1,14 +1,14 @@
 """
     JuMPout(dict, keys...)
 
-Copy the value in `dict` of each one of `keys...` into a variable named after it.
+Create a variable named after each one of `keys`, by taking its value from `dict`.
 
 # Example
 ```julia
-julia> @JuMPout(jfo, pmax, pmin);
-julia> pmax == jfo["pmax"]
+julia> @JuMPout(jfo, capacity, node);
+julia> node == jfo["node"]
 true
-julia> pmin == jfo["pmin"]
+julia> capacity == jfo["capacity"]
 true
 ```
 """
@@ -25,10 +25,10 @@ Like [`@JuMPout(dict, keys...)`](@ref) but appending `suffix` to the variable na
 
 # Example
 ```julia
-julia> @JuMPout_suffix(jfo, _new, pmax, pmin);
-julia> pmax_new == jfo["pmax"]
+julia> @JuMPout_suffix(jfo, _new, capacity, node);
+julia> capacity_new == jfo["capacity"]
 true
-julia> pmin_new == jfo["pmin"]
+julia> node_new == jfo["node"]
 true
 ```
 """
@@ -78,7 +78,7 @@ end
 """
     JuMPin(dict, vars...)
 
-Copy the value of each one of `vars` into a key in `dict` named after it.
+Create one key in `dict` named after each one of `vars`, by taking the value from that variable.
 
 # Example
 ```julia

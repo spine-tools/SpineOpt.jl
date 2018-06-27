@@ -1,28 +1,30 @@
 """
-    JuMP_object(source)
+    JuMP_object(source, update_all_datatypes=true, JuMP_all_out=true)
 
-A JuMP-friendly object from `source`. The argument `source`
-can be anything that can be converted to a `SpineDataObject` using `SpineData.jl`.
-A JuMP-friendly object is simply a Julia `Dict`. (See details in [`JuMP_object(sdo::SpineDataObject)`](@ref).)
+A JuMP-friendly object from `source`, where `source`
+is anything that can be converted into a `SpineDataObject` by the `SpineData.jl` package.
 
 If `update_all_datatypes` is `true`, then the method tries to find out the julia `Type` that best fits
-all values for every parameter, and convert all values to that `Type`. (See `SpineData.update_all_datatypes`.)
+all values for every parameter, and converts all values to that `Type`. (See `SpineData.update_all_datatypes!`.)
 
+If `JuMP_all_out` is `true`, then the method also creates and exports convenience `functions`
+named after each key in `jfo`, that return the value of that key.
+
+See also: [`JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_out=true)`](@ref).
 
 """
 function JuMP_object(source, update_all_datatypes=true, JuMP_all_out=true)
     sdo = Spine_object(source)
-    update_all_datatypes && update_all_datatypes!(sdo)
-    JuMP_object(sdo, JuMP_all_out)
+    JuMP_object(sdo, update_all_datatypes, JuMP_all_out)
 end
 
 """
-    JuMP_object(sdo::SpineDataObject, JuMP_all_out=true)
+    JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_out=true)
 
 A JuMP-friendly object from `sdo`.
 A JuMP-friendly object is simply a Julia `Dict`, constructed as follows:
 
- - For each object class, relationship class, and parameter in `sdo`, there is a key named after it in `jfo`.
+ - For each object class, relationship class, and parameter in `sdo`, there is a key with its name in `jfo`.
  - The value of an 'object class key' is an `Array` of names of objects of that class.
  - The value of a 'relationship class key' is another `Dict`. The keys in this new `Dict` are the names of all objects
    this relationship is defined for.
@@ -31,6 +33,9 @@ A JuMP-friendly object is simply a Julia `Dict`, constructed as follows:
    this parameter is defined for.
    The value of each 'object key' is the actual value of the parameter for that object.
    Data from the `json` field (if any) superseeds the data from the `value` field.
+
+If `update_all_datatypes` is `true`, then the method tries to find out the julia `Type` that best fits
+all values for every parameter, and converts all values to that `Type`. (See `SpineData.update_all_datatypes!`.)
 
 If `JuMP_all_out` is `true`, then the method also creates and exports convenience `functions`
 named after each key in `jfo`, that return the value of that key. See examples below.
@@ -69,7 +74,8 @@ julia> unit_node("Leuven")
 ...
 ```
 """
-function JuMP_object(sdo::SpineDataObject, JuMP_all_out=true)
+function JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_out=true)
+    update_all_datatypes && update_all_datatypes!(sdo)
     jfo = Dict{String,Any}()
     init_metadata!(jfo)
     for i=1:size(sdo.object_class, 1)
@@ -199,8 +205,8 @@ end
 """
     SpineData.Spine_object(jfo::Dict)
 
-A `SpineDataObject` from `jfo`. See details of conversion in
-[`JuMP_object(sdo::SpineDataObject)`](@ref).
+A `SpineDataObject` from `jfo`, constructed by inverting the procedure described in
+[`JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_out=true)`](@ref).
 """
 function SpineData.Spine_object(jfo::Dict)
     sdo = MinimalSDO()
