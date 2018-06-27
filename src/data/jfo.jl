@@ -80,13 +80,13 @@ function JuMP_object(sdo::SpineDataObject, JuMP_all_out=true)
         child_to_parent = @from relationship in relationship_df begin
             @group relationship by relationship.child_object_name into group
             @let group_arr = [get(x) for x in group..parent_object_name]
-            @select get(group.key) => all_or_one(group_arr)
+            @select get(group.key) => group_arr
             @collect Dict{String,Any}
         end
         parent_to_child = @from relationship in relationship_df begin
             @group relationship by relationship.parent_object_name into group
             @let group_arr = [get(x) for x in group..child_object_name]
-            @select get(group.key) => all_or_one(group_arr)
+            @select get(group.key) => group_arr
             @collect Dict{String,Any}
         end
         jfo[relationship_class_name] = merge(child_to_parent, parent_to_child)
@@ -95,11 +95,7 @@ function JuMP_object(sdo::SpineDataObject, JuMP_all_out=true)
         @eval begin
             function $(Symbol(relationship_class_name))(x::String)
                 relationship_class_name = $(jfo[relationship_class_name])
-                try
-                    relationship_class_name[x]
-                catch KeyError
-                    error($relationship_class_name, " is not defined for object ", x)
-                end
+                get(relationship_class_name, x, [])
             end
             export $(Symbol(relationship_class_name))
         end
@@ -121,7 +117,7 @@ function JuMP_object(sdo::SpineDataObject, JuMP_all_out=true)
             @select get(object.name) => json_value
             @collect Dict{String,Any}
         end
-        # NOTE: this prioritizes json over value if json not missing
+        # NOTE: this prioritizes json over value if json is not missing
         jfo[parameter_name] = Dict{String,Any}(
             k => ismissing(json[k])?v:json[k] for (k,v) in value
         )
@@ -129,17 +125,21 @@ function JuMP_object(sdo::SpineDataObject, JuMP_all_out=true)
         JuMP_all_out || continue
         @eval begin
             function $(Symbol(parameter_name))(x::String, t::Int64=1)
-                if t > 1
-                    json = $(json)
-                    return json[x][t]
-                end
+                json = $(json)
                 value = $(value)
-                value[x]
+                if haskey(json, x)
+                    if isa(json[x], Array) && t in indices(json[x])
+                        return json[x][t]
+                    end
+                end
+                if haskey(value, x)
+                    return value[x]
+                end
+                Nullable()
             end
             export $(Symbol(parameter_name))
         end
     end
-    logging()
     jfo
 end
 
