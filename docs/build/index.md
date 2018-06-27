@@ -75,7 +75,7 @@ julia> unit_node("Leuven")
 ```
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/abc0d3d3fc22df0fcd4f45a8bbfd52edc2c2e501/src/data/jfo.jl#L21-76' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/c96b15d69147470c2ffc4c2358ddb60c2f7d96e6/src/data/jfo.jl#L21-76' class='documenter-source'>source</a><br>
 
 <a id='SpineModel.JuMP_object' href='#SpineModel.JuMP_object'>#</a>
 **`SpineModel.JuMP_object`** &mdash; *Function*.
@@ -95,7 +95,7 @@ If `JuMP_all_out` is `true`, then the method also creates and exports convenienc
 See also: [`JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_out=true)`](index.md#SpineModel.JuMP_object).
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/abc0d3d3fc22df0fcd4f45a8bbfd52edc2c2e501/src/data/jfo.jl#L1-15' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/c96b15d69147470c2ffc4c2358ddb60c2f7d96e6/src/data/jfo.jl#L1-15' class='documenter-source'>source</a><br>
 
 <a id='SpineData.Spine_object-Tuple{Dict}' href='#SpineData.Spine_object-Tuple{Dict}'>#</a>
 **`SpineData.Spine_object`** &mdash; *Method*.
@@ -109,7 +109,7 @@ SpineData.Spine_object(jfo::Dict)
 A `SpineDataObject` from `jfo`, constructed by inverting the procedure described in [`JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_out=true)`](index.md#SpineModel.JuMP_object).
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/abc0d3d3fc22df0fcd4f45a8bbfd52edc2c2e501/src/data/jfo.jl#L205-210' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/c96b15d69147470c2ffc4c2358ddb60c2f7d96e6/src/data/jfo.jl#L205-210' class='documenter-source'>source</a><br>
 
 
 <a id='Macros-1'></a>
@@ -125,20 +125,20 @@ A `SpineDataObject` from `jfo`, constructed by inverting the procedure described
 JuMPout(dict, keys...)
 ```
 
-Copy the value in `dict` of each one of `keys...` into a variable named after it.
+Create a variable named after each one of `keys`, by taking its value from `dict`.
 
 **Example**
 
 ```julia
-julia> @JuMPout(jfo, pmax, pmin);
-julia> pmax == jfo["pmax"]
+julia> @JuMPout(jfo, capacity, node);
+julia> node == jfo["node"]
 true
-julia> pmin == jfo["pmin"]
+julia> capacity == jfo["capacity"]
 true
 ```
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/abc0d3d3fc22df0fcd4f45a8bbfd52edc2c2e501/src/util.jl#L1-14' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/c96b15d69147470c2ffc4c2358ddb60c2f7d96e6/src/util.jl#L1-14' class='documenter-source'>source</a><br>
 
 <a id='SpineModel.@JuMPout_suffix-Tuple{Any,Any,Vararg{Any,N} where N}' href='#SpineModel.@JuMPout_suffix-Tuple{Any,Any,Vararg{Any,N} where N}'>#</a>
 **`SpineModel.@JuMPout_suffix`** &mdash; *Macro*.
@@ -154,15 +154,15 @@ Like [`@JuMPout(dict, keys...)`](index.md#SpineModel.@JuMPout-Tuple{Any,Vararg{A
 **Example**
 
 ```julia
-julia> @JuMPout_suffix(jfo, _new, pmax, pmin);
-julia> pmax_new == jfo["pmax"]
+julia> @JuMPout_suffix(jfo, _new, capacity, node);
+julia> capacity_new == jfo["capacity"]
 true
-julia> pmin_new == jfo["pmin"]
+julia> node_new == jfo["node"]
 true
 ```
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/abc0d3d3fc22df0fcd4f45a8bbfd52edc2c2e501/src/util.jl#L21-34' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/c96b15d69147470c2ffc4c2358ddb60c2f7d96e6/src/util.jl#L21-34' class='documenter-source'>source</a><br>
 
 <a id='SpineModel.@JuMPout_with_backup-Tuple{Any,Any,Vararg{Any,N} where N}' href='#SpineModel.@JuMPout_with_backup-Tuple{Any,Any,Vararg{Any,N} where N}'>#</a>
 **`SpineModel.@JuMPout_with_backup`** &mdash; *Macro*.
@@ -176,7 +176,7 @@ JuMPout_with_backup(dict, backup, keys...)
 Like [`@JuMPout(dict, keys...)`](index.md#SpineModel.@JuMPout-Tuple{Any,Vararg{Any,N} where N}) but also looking into `backup` if the key is not in `dict`.
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/abc0d3d3fc22df0fcd4f45a8bbfd52edc2c2e501/src/util.jl#L67-71' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/c96b15d69147470c2ffc4c2358ddb60c2f7d96e6/src/util.jl#L67-71' class='documenter-source'>source</a><br>
 
 <a id='SpineModel.@JuMPin-Tuple{Any,Vararg{Any,N} where N}' href='#SpineModel.@JuMPin-Tuple{Any,Vararg{Any,N} where N}'>#</a>
 **`SpineModel.@JuMPin`** &mdash; *Macro*.
@@ -187,7 +187,7 @@ Like [`@JuMPout(dict, keys...)`](index.md#SpineModel.@JuMPout-Tuple{Any,Vararg{A
 JuMPin(dict, vars...)
 ```
 
-Copy the value of each one of `vars` into a key in `dict` named after it.
+Create one key in `dict` named after each one of `vars`, by taking the value from that variable.
 
 **Example**
 
@@ -200,7 +200,7 @@ true
 ```
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/abc0d3d3fc22df0fcd4f45a8bbfd52edc2c2e501/src/util.jl#L78-91' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/c96b15d69147470c2ffc4c2358ddb60c2f7d96e6/src/util.jl#L78-91' class='documenter-source'>source</a><br>
 
 
 <a id='Index-1'></a>
