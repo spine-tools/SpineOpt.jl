@@ -30,26 +30,6 @@ Include the module in your Julia session or program:
 julia> using SpineModel
 ```
 
-
-## Examples
-
-### Read data in the Spine format from an Excel database
-
-
-The example below builds a JuMP-friendly object (jfo) from an ODBC database given by "FirstTestData":
-
-```julia
-# load the module
-using SpineModel
-
-#  build a JuMP-friendly object
-jfo = JuMP_object("FirstTestData")
-
-# Create variables from relevant keys
-@JuMPout(jfo, bus, gen, pmax, pmin, gen_bus)
-```
-
-
 ## Documentation
 
 Documentation is available [here](docs/build/index.md).
