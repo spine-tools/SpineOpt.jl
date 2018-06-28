@@ -120,12 +120,14 @@ function JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_o
         jfo[relationship_class_name] = merge(child_to_parent, parent_to_child)
         add_relationship_class_metadata!(jfo, relationship_class_name)
         JuMP_all_out || continue
-        @eval begin
-            function $(Symbol(relationship_class_name))(x::String)
-                relationship_class_name = $(jfo[relationship_class_name])
-                get(relationship_class_name, x, [])
+        @suppress_err begin
+            @eval begin
+                function $(Symbol(relationship_class_name))(x::String)
+                    relationship_class_name = $(jfo[relationship_class_name])
+                    get(relationship_class_name, x, [])
+                end
+                export $(Symbol(relationship_class_name))
             end
-            export $(Symbol(relationship_class_name))
         end
     end
     for i=1:size(sdo.parameter,1)
@@ -141,31 +143,33 @@ function JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_o
         json = @from parameter in sdo.parameter_value begin
             @where parameter.parameter_id == parameter_id
             @join object in sdo.object on parameter.object_id equals object.id
-            @let json_value = isnull(parameter.json)?missing:JSON.parse(get(parameter.json))
+            @let json_value = isna(parameter.json)?Nullable():JSON.parse(get(parameter.json))
             @select get(object.name) => json_value
             @collect Dict{String,Any}
         end
         # NOTE: this prioritizes json over value if json is not missing
         jfo[parameter_name] = Dict{String,Any}(
-            k => ismissing(json[k])?v:json[k] for (k,v) in value
+            k => isnull(json[k])?v:json[k] for (k,v) in value
         )
         add_parameter_metadata!(jfo, parameter_name)
         JuMP_all_out || continue
-        @eval begin
-            function $(Symbol(parameter_name))(x::String, t::Int64=1)
-                json = $(json)
-                value = $(value)
-                if haskey(json, x)
-                    if isa(json[x], Array) && t in indices(json[x])
-                        return json[x][t]
+        @suppress_err begin
+            @eval begin
+                function $(Symbol(parameter_name))(x::String, t::Int64=1)
+                    json = $(json)
+                    value = $(value)
+                    if haskey(json, x)
+                        if isa(json[x], Array) && t in indices(json[x])
+                            return json[x][t]
+                        end
                     end
+                    if haskey(value, x)
+                        return value[x]
+                    end
+                    Nullable()
                 end
-                if haskey(value, x)
-                    return value[x]
-                end
-                Nullable()
+                export $(Symbol(parameter_name))
             end
-            export $(Symbol(parameter_name))
         end
     end
     jfo

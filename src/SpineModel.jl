@@ -17,6 +17,7 @@ using ODBC
 using SQLite
 using JSON
 using Clp
+import DataValues: isna
 
 include("util.jl")
 include("data/jfo.jl")
