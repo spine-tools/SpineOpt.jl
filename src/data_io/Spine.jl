@@ -175,11 +175,6 @@ function JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_o
     jfo
 end
 
-function all_or_one(arr::Array{T,1}) where T
-    length(arr) == 1 && return arr[]
-    arr
-end
-
 # metadata convenience functions
 function init_metadata!(jfo::Dict)
     jfo[".METADATA"] = Dict{String,Array}()
@@ -299,34 +294,3 @@ function SpineData.Spine_object(jfo::Dict)
     end
     sdo
 end
-
-#=
-Translation rules are
-outlined in the table below:
-
-<table>
-  <tr>
-    <th rowspan=2>Spine object</th>
-    <th colspan=2>JuMP object</th>
-  </tr>
-  <tr>
-    <td><i>Key</i></td>
-    <td><i>Value</i></td>
-  </tr>
-  <tr>
-    <td>objects</td>
-    <td>Object_class</td>
-    <td>Array(Object, ...)</td>
-  </tr>
-  <tr>
-    <td>relationships</td>
-    <td>Relationship_class</td>
-    <td>Dict(Child_object => Parent_object, ...)</td>
-  </tr>
-  <tr>
-    <td>parameters</td>
-    <td>Parameter</td>
-    <td>Dict(Child => Value, ...)</td>
-  </tr>
-</table>
-=#
