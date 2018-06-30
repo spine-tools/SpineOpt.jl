@@ -5,7 +5,7 @@
 
 - [SpineModel.jl Documentation](index.md#SpineModel.jl-Documentation-1)
     - [Functions](index.md#Functions-1)
-        - [JuMP-friendly object](index.md#JuMP-friendly-object-1)
+        - [Data input/output](index.md#Data-input/output-1)
     - [Macros](index.md#Macros-1)
     - [Index](index.md#Index-1)
 
@@ -15,9 +15,65 @@
 ## Functions
 
 
-<a id='JuMP-friendly-object-1'></a>
+<a id='Data-input/output-1'></a>
 
-### JuMP-friendly object
+### Data input/output
+
+<a id='SpineModel.JuMP_all_out' href='#SpineModel.JuMP_all_out'>#</a>
+**`SpineModel.JuMP_all_out`** &mdash; *Function*.
+
+
+
+```
+JuMP_all_out(sdo::SpineDataObject, update_all_datatypes=true)
+```
+
+Generate and export convenience functions named after each object class, relationship class, and parameter in `sdo`, providing compact access to its contents. These functions are intended to be called in JuMP programs, as follows:
+
+  * **object class**: call `x()` to get the set of names of objects of the class named `"x"`.
+  * **relationship class**: call `y("k")` to get the set of names of objects related to the object named `"k"`, by a relationship of class named `"y"`, or an empty set if no such relationship exists.
+  * **parameter**: call `z("k", t)` to get the value of the parameter named `"z"` for the object named `"k"`, or `Nullable()` if the parameter is not defined. If this value is an array in the Spine object, then `z("k", t)` returns position `t` in that array.
+
+If `update_all_datatypes` is `true`, then the method tries to find the julia `Type` that best fits all values for every parameter in `sdo`, and converts all values to that `Type`. (See `SpineData.update_all_datatypes!`.)
+
+**Example**
+
+```julia
+julia> JuMP_all_out(sdo)
+julia> commodity()
+3-element Array{String,1}:
+ "coal"
+ "gas"
+...
+julia> unit_node("Leuven")
+4-element Array{String,1}:
+ "coal_import"
+ "gas_fired_power_plant"
+...
+julia> conversion_cost("gas_import")
+12
+```
+
+
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/Spine.jl#L20-56' class='documenter-source'>source</a><br>
+
+<a id='SpineModel.JuMP_all_out' href='#SpineModel.JuMP_all_out'>#</a>
+**`SpineModel.JuMP_all_out`** &mdash; *Function*.
+
+
+
+```
+JuMP_all_out(source, update_all_datatypes=true)
+```
+
+Generate and export convenience functions named after each object class, relationship class, and parameter in `source`, providing compact access to its contents, where `source` is anything convertible to a `SpineDataObject` by the `SpineData.jl` package.
+
+If `update_all_datatypes` is `true`, then the method tries to find out the julia `Type` that best fits all values for every parameter in `sdo`, and converts all values to that `Type`. (See `SpineData.update_all_datatypes!`.)
+
+See also: [`JuMP_all_out(sdo::SpineDataObject, update_all_datatypes=true)`](index.md#SpineModel.JuMP_all_out).
+
+
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/Spine.jl#L1-14' class='documenter-source'>source</a><br>
 
 <a id='SpineModel.JuMP_object' href='#SpineModel.JuMP_object'>#</a>
 **`SpineModel.JuMP_object`** &mdash; *Function*.
@@ -25,19 +81,14 @@
 
 
 ```
-JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_out=true)
+JuMP_object(sdo::SpineDataObject, update_all_datatypes=true)
 ```
 
-A JuMP-friendly object from `sdo`. A JuMP-friendly object is simply a Julia `Dict`, constructed as follows:
+A julia `Dict` providing custom maps of the contents of `sdo`. In what follows, `jfo` designs this `Dict`. The specific roles of these maps are described below:
 
-  * For each object class, relationship class, and parameter in `sdo`, there is a key with its name in `jfo`.
-  * The value of an 'object class key' is an `Array` of names of objects of that class.
-  * The value of a 'relationship class key' is another `Dict`. The keys in this new `Dict` are the names of all objects this relationship is defined for. The value of each 'object key' is an `Array` of object names that are related to it.
-  * The value of a 'parameter key' is another `Dict`. The keys in this new `Dict` are the names of all objects this parameter is defined for. The value of each 'object key' is the actual value of the parameter for that object. Data from the `json` field (if any) superseeds the data from the `value` field.
-
-If `update_all_datatypes` is `true`, then the method tries to find out the julia `Type` that best fits all values for every parameter, and converts all values to that `Type`. (See `SpineData.update_all_datatypes!`.)
-
-If `JuMP_all_out` is `true`, then the method also creates and exports convenience `functions` named after each key in `jfo`, that return the value of that key. See examples below.
+  * **object class map**: `object_class_name::String` ⟶ `object_names::Array{String,1}`. This map assigns an object class's name to a list of names of objects of that class. You can refer to the set of objects of the class named `"x"` as `jfo["x"]`.
+  * **relationship class map**: `relationship_class_name::String` ⟶ `object_name::String` ⟶ `related_object_names::Array{String,1}`. This multilevel map assigns, for each relationship class name, a map from an object's name to a list of related object names. You can use this map to get the set of names of objects related to the object called `"k"` by a relationship of the class named `"y"` as `jfo["y"]["k"]`.
+  * **parameter map**: `parameter_name::String` ⟶ `object_name::String` ⟶ `parameter_value::T`. This multilevel map assigns, for each parameter name, a map from an object's name to the value of the parameter for that object. You can use this map to access the value of the parameter called `"z"` for the object called `"k"` as `jfo["z"]["k"]`. If the value for this parameter in `sdo` is an array, you can access position `t` in that array as `jfo["z"]["k"][t]`
 
 **Example**
 
@@ -48,11 +99,6 @@ julia> jfo["unit"]
  "coal_import"
  "gas_fired_power_plant"
 ...
-julia> jfo["conversion_cost"]
-Dict{String,Int64} with 4 entries:
-  "gas_import" => 12
-  "coal_fired_power_plant"  => 0
-...
 julia> jfo["unit_node"]
 Dict{String,String} with 5 entries:
   "coal_fired_power_plant" => ["Leuven"]
@@ -60,42 +106,15 @@ Dict{String,String} with 5 entries:
   ...
   "Leuven" => ["coal_fired_power_plant", "coal_import", ...]
 ...
-julia> unit()
-4-element Array{String,1}:
- "coal_import"
- "gas_fired_power_plant"
-...
-julia> conversion_cost("gas_import")
-12
-julia> unit_node("Leuven")
-4-element Array{String,1}:
- "coal_import"
- "gas_fired_power_plant"
+julia> jfo["conversion_cost"]
+Dict{String,Int64} with 4 entries:
+  "gas_import" => 12
+  "coal_fired_power_plant"  => 0
 ...
 ```
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/c96b15d69147470c2ffc4c2358ddb60c2f7d96e6/src/data/jfo.jl#L21-76' class='documenter-source'>source</a><br>
-
-<a id='SpineModel.JuMP_object' href='#SpineModel.JuMP_object'>#</a>
-**`SpineModel.JuMP_object`** &mdash; *Function*.
-
-
-
-```
-JuMP_object(source, update_all_datatypes=true, JuMP_all_out=true)
-```
-
-A JuMP-friendly object from `source`, where `source` is anything that can be converted into a `SpineDataObject` by the `SpineData.jl` package.
-
-If `update_all_datatypes` is `true`, then the method tries to find out the julia `Type` that best fits all values for every parameter, and converts all values to that `Type`. (See `SpineData.update_all_datatypes!`.)
-
-If `JuMP_all_out` is `true`, then the method also creates and exports convenience `functions` named after each key in `jfo`, that return the value of that key.
-
-See also: [`JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_out=true)`](index.md#SpineModel.JuMP_object).
-
-
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/c96b15d69147470c2ffc4c2358ddb60c2f7d96e6/src/data/jfo.jl#L1-15' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/Spine.jl#L104-149' class='documenter-source'>source</a><br>
 
 <a id='SpineData.Spine_object-Tuple{Dict}' href='#SpineData.Spine_object-Tuple{Dict}'>#</a>
 **`SpineData.Spine_object`** &mdash; *Method*.
@@ -106,10 +125,12 @@ See also: [`JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_al
 SpineData.Spine_object(jfo::Dict)
 ```
 
-A `SpineDataObject` from `jfo`, constructed by inverting the procedure described in [`JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_out=true)`](index.md#SpineModel.JuMP_object).
+A `SpineDataObject` from `jfo`.
+
+See also [`JuMP_object(sdo::SpineDataObject, update_all_datatypes=true)`](index.md#SpineModel.JuMP_object).
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/c96b15d69147470c2ffc4c2358ddb60c2f7d96e6/src/data/jfo.jl#L205-210' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/Spine.jl#L241-247' class='documenter-source'>source</a><br>
 
 
 <a id='Macros-1'></a>
@@ -138,7 +159,7 @@ true
 ```
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/c96b15d69147470c2ffc4c2358ddb60c2f7d96e6/src/util.jl#L1-14' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/util.jl#L1-14' class='documenter-source'>source</a><br>
 
 <a id='SpineModel.@JuMPout_suffix-Tuple{Any,Any,Vararg{Any,N} where N}' href='#SpineModel.@JuMPout_suffix-Tuple{Any,Any,Vararg{Any,N} where N}'>#</a>
 **`SpineModel.@JuMPout_suffix`** &mdash; *Macro*.
@@ -149,7 +170,7 @@ true
 JuMPout_suffix(dict, suffix, keys...)
 ```
 
-Like [`@JuMPout(dict, keys...)`](index.md#SpineModel.@JuMPout-Tuple{Any,Vararg{Any,N} where N}) but appending `suffix` to the variable name.
+Like [`@JuMPout(dict, keys...)`](index.md#SpineModel.@JuMPout-Tuple{Any,Vararg{Any,N} where N}) but appending `suffix` to the variable name. Useful when working with several systems at a time.
 
 **Example**
 
@@ -162,7 +183,7 @@ true
 ```
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/c96b15d69147470c2ffc4c2358ddb60c2f7d96e6/src/util.jl#L21-34' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/util.jl#L21-35' class='documenter-source'>source</a><br>
 
 <a id='SpineModel.@JuMPout_with_backup-Tuple{Any,Any,Vararg{Any,N} where N}' href='#SpineModel.@JuMPout_with_backup-Tuple{Any,Any,Vararg{Any,N} where N}'>#</a>
 **`SpineModel.@JuMPout_with_backup`** &mdash; *Macro*.
@@ -176,7 +197,7 @@ JuMPout_with_backup(dict, backup, keys...)
 Like [`@JuMPout(dict, keys...)`](index.md#SpineModel.@JuMPout-Tuple{Any,Vararg{Any,N} where N}) but also looking into `backup` if the key is not in `dict`.
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/c96b15d69147470c2ffc4c2358ddb60c2f7d96e6/src/util.jl#L67-71' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/util.jl#L42-46' class='documenter-source'>source</a><br>
 
 <a id='SpineModel.@JuMPin-Tuple{Any,Vararg{Any,N} where N}' href='#SpineModel.@JuMPin-Tuple{Any,Vararg{Any,N} where N}'>#</a>
 **`SpineModel.@JuMPin`** &mdash; *Macro*.
@@ -200,7 +221,7 @@ true
 ```
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/c96b15d69147470c2ffc4c2358ddb60c2f7d96e6/src/util.jl#L78-91' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/util.jl#L53-66' class='documenter-source'>source</a><br>
 
 
 <a id='Index-1'></a>
@@ -208,7 +229,8 @@ true
 ## Index
 
 - [`SpineData.Spine_object`](index.md#SpineData.Spine_object-Tuple{Dict})
-- [`SpineModel.JuMP_object`](index.md#SpineModel.JuMP_object)
+- [`SpineModel.JuMP_all_out`](index.md#SpineModel.JuMP_all_out)
+- [`SpineModel.JuMP_all_out`](index.md#SpineModel.JuMP_all_out)
 - [`SpineModel.JuMP_object`](index.md#SpineModel.JuMP_object)
 - [`SpineModel.@JuMPin`](index.md#SpineModel.@JuMPin-Tuple{Any,Vararg{Any,N} where N})
 - [`SpineModel.@JuMPout`](index.md#SpineModel.@JuMPout-Tuple{Any,Vararg{Any,N} where N})

@@ -1,7 +1,7 @@
 module SpineModel
 
 # data_io exports
-export JuMP_object
+export JuMP_all_out, JuMP_object
 export @JuMPout, @JuMPout_suffix, @JuMPout_with_backup, @JuMPin
 
 # equations export

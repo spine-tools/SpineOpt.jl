@@ -1,44 +1,127 @@
 """
-    JuMP_object(source, update_all_datatypes=true, JuMP_all_out=true)
+    JuMP_all_out(source, update_all_datatypes=true)
 
-A JuMP-friendly object from `source`, where `source`
-is anything that can be converted into a `SpineDataObject` by the `SpineData.jl` package.
+Generate and export convenience functions
+named after each object class, relationship class, and parameter in `source`,
+providing compact access to its contents, where `source`
+is anything convertible to a `SpineDataObject` by the `SpineData.jl` package.
 
 If `update_all_datatypes` is `true`, then the method tries to find out the julia `Type` that best fits
-all values for every parameter, and converts all values to that `Type`. (See `SpineData.update_all_datatypes!`.)
+all values for every parameter in `sdo`, and converts all values to that `Type`. (See `SpineData.update_all_datatypes!`.)
 
-If `JuMP_all_out` is `true`, then the method also creates and exports convenience `functions`
-named after each key in `jfo`, that return the value of that key.
-
-See also: [`JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_out=true)`](@ref).
+See also: [`JuMP_all_out(sdo::SpineDataObject, update_all_datatypes=true)`](@ref).
 
 """
-function JuMP_object(source, update_all_datatypes=true, JuMP_all_out=true)
+function JuMP_all_out(source, update_all_datatypes=true)
     sdo = Spine_object(source)
-    JuMP_object(sdo, update_all_datatypes, JuMP_all_out)
+    JuMP_all_out(sdo, update_all_datatypes)
 end
 
 """
-    JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_out=true)
+    JuMP_all_out(sdo::SpineDataObject, update_all_datatypes=true)
 
-A JuMP-friendly object from `sdo`.
-A JuMP-friendly object is simply a Julia `Dict`, constructed as follows:
+Generate and export convenience functions
+named after each object class, relationship class, and parameter in `sdo`,
+providing compact access to its contents.
+These functions are intended to be called in JuMP programs, as follows:
 
- - For each object class, relationship class, and parameter in `sdo`, there is a key with its name in `jfo`.
- - The value of an 'object class key' is an `Array` of names of objects of that class.
- - The value of a 'relationship class key' is another `Dict`. The keys in this new `Dict` are the names of all objects
-   this relationship is defined for.
-   The value of each 'object key' is an `Array` of object names that are related to it.
- - The value of a 'parameter key' is another `Dict`. The keys in this new `Dict` are the names of all objects
-   this parameter is defined for.
-   The value of each 'object key' is the actual value of the parameter for that object.
-   Data from the `json` field (if any) superseeds the data from the `value` field.
+  - **object class**: call `x()` to get the set of names of objects of the class named `"x"`.
+  - **relationship class**: call `y("k")` to get the set of names of objects
+    related to the object named `"k"`, by a relationship of class named `"y"`,
+    or an empty set if no such relationship exists.
+  - **parameter**: call `z("k", t)` to get the value of the parameter named `"z"` for the object
+    named `"k"`, or `Nullable()` if the parameter is not defined.
+    If this value is an array in the Spine object, then `z("k", t)` returns position `t` in that array.
 
-If `update_all_datatypes` is `true`, then the method tries to find out the julia `Type` that best fits
-all values for every parameter, and converts all values to that `Type`. (See `SpineData.update_all_datatypes!`.)
+If `update_all_datatypes` is `true`, then the method tries to find the julia `Type` that best fits
+all values for every parameter in `sdo`, and converts all values to that `Type`.
+(See `SpineData.update_all_datatypes!`.)
 
-If `JuMP_all_out` is `true`, then the method also creates and exports convenience `functions`
-named after each key in `jfo`, that return the value of that key. See examples below.
+# Example
+```julia
+julia> JuMP_all_out(sdo)
+julia> commodity()
+3-element Array{String,1}:
+ "coal"
+ "gas"
+...
+julia> unit_node("Leuven")
+4-element Array{String,1}:
+ "coal_import"
+ "gas_fired_power_plant"
+...
+julia> conversion_cost("gas_import")
+12
+```
+"""
+function JuMP_all_out(sdo::SpineDataObject, update_all_datatypes=true)
+    jfo = JuMP_object(sdo, update_all_datatypes)
+    for object_class_name in jfo[".METADATA"]["object_class"]
+        object_names = jfo[object_class_name]
+        @suppress_err begin
+            @eval begin
+                $(Symbol(object_class_name))() = $(object_names)
+                export $(Symbol(object_class_name))
+            end
+        end
+    end
+    for relationship_class_name in jfo[".METADATA"]["relationship_class"]
+        related_object_names = jfo[relationship_class_name]
+        @suppress_err begin
+            @eval begin
+                function $(Symbol(relationship_class_name))(x::String)
+                    relationship_class_name = $(related_object_names)
+                    get(relationship_class_name, x, [])
+                end
+                export $(Symbol(relationship_class_name))
+            end
+        end
+    end
+    for parameter_name in jfo[".METADATA"]["parameter"]
+        value = jfo[parameter_name]
+        @suppress_err begin
+            @eval begin
+                function $(Symbol(parameter_name))(x::String, t::Int64=1)
+                    value = $(value)
+                    if haskey(value, x)
+                        if isa(value[x], Array)
+                            if t in linearindices(value[x])
+                                return value[x][t]
+                            end
+                        end
+                        return value[x]
+                    end
+                    Nullable()
+                end
+                export $(Symbol(parameter_name))
+            end
+        end
+    end
+end
+
+"""
+    JuMP_object(sdo::SpineDataObject, update_all_datatypes=true)
+
+A julia `Dict` providing
+custom maps of the contents of `sdo`. In what follows, `jfo` designs this `Dict`.
+The specific roles of these maps are described below:
+
+  - **object class map**: `object_class_name::String` ⟶ `object_names::Array{String,1}`.
+    This map assigns an object class's name to a list of names of objects of that class.
+    You can refer to the set of objects of the class named `"x"` as `jfo["x"]`.
+  - **relationship class map**: `relationship_class_name::String` ⟶ `object_name::String` ⟶
+    `related_object_names::Array{String,1}`.
+    This multilevel map assigns, for each relationship class name, a map from an object's name
+    to a list of related
+    object names. You can use this map to get the set of names of objects related to the object called `"k"`
+    by a relationship of the class named `"y"` as
+    `jfo["y"]["k"]`.
+  - **parameter map**: `parameter_name::String` ⟶ `object_name::String` ⟶ `parameter_value::T`.
+    This multilevel map assigns, for each parameter name, a map from an object's name
+    to the value of the parameter for that object.
+    You can use this map to access the value of the parameter called `"z"` for the object called `"k"` as
+    `jfo["z"]["k"]`. If the value for this parameter in `sdo` is an array, you can access position `t` in that array
+    as `jfo["z"]["k"][t]`
 
 # Example
 ```julia
@@ -48,11 +131,6 @@ julia> jfo["unit"]
  "coal_import"
  "gas_fired_power_plant"
 ...
-julia> jfo["conversion_cost"]
-Dict{String,Int64} with 4 entries:
-  "gas_import" => 12
-  "coal_fired_power_plant"  => 0
-...
 julia> jfo["unit_node"]
 Dict{String,String} with 5 entries:
   "coal_fired_power_plant" => ["Leuven"]
@@ -60,21 +138,14 @@ Dict{String,String} with 5 entries:
   ...
   "Leuven" => ["coal_fired_power_plant", "coal_import", ...]
 ...
-julia> unit()
-4-element Array{String,1}:
- "coal_import"
- "gas_fired_power_plant"
-...
-julia> conversion_cost("gas_import")
-12
-julia> unit_node("Leuven")
-4-element Array{String,1}:
- "coal_import"
- "gas_fired_power_plant"
+julia> jfo["conversion_cost"]
+Dict{String,Int64} with 4 entries:
+  "gas_import" => 12
+  "coal_fired_power_plant"  => 0
 ...
 ```
 """
-function JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_out=true)
+function JuMP_object(sdo::SpineDataObject, update_all_datatypes=true)
     update_all_datatypes && update_all_datatypes!(sdo)
     jfo = Dict{String,Any}()
     init_metadata!(jfo)
@@ -87,13 +158,6 @@ function JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_o
             @collect
         end
         add_object_class_metadata!(jfo, object_class_name)
-        JuMP_all_out || continue
-        @suppress_err begin
-            @eval begin
-                $(Symbol(object_class_name))() = $(jfo[object_class_name])
-                export $(Symbol(object_class_name))
-            end
-        end
     end
     for i=1:size(sdo.relationship_class, 1)
         relationship_class_id = sdo.relationship_class[i, :id]
@@ -105,30 +169,20 @@ function JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_o
             @select {child_object_name=child_object.name, parent_object_name=parent_object.name}
             @collect DataFrame
         end
-        child_to_parent = @from relationship in relationship_df begin
+        child_to_parent_object_names = @from relationship in relationship_df begin
             @group relationship by relationship.child_object_name into group
             @let group_arr = [get(x) for x in group..parent_object_name]
             @select get(group.key) => group_arr
             @collect Dict{String,Any}
         end
-        parent_to_child = @from relationship in relationship_df begin
+        parent_to_child_object_names = @from relationship in relationship_df begin
             @group relationship by relationship.parent_object_name into group
             @let group_arr = [get(x) for x in group..child_object_name]
             @select get(group.key) => group_arr
             @collect Dict{String,Any}
         end
-        jfo[relationship_class_name] = merge(child_to_parent, parent_to_child)
+        jfo[relationship_class_name] = merge(child_to_parent_object_names, parent_to_child_object_names)
         add_relationship_class_metadata!(jfo, relationship_class_name)
-        JuMP_all_out || continue
-        @suppress_err begin
-            @eval begin
-                function $(Symbol(relationship_class_name))(x::String)
-                    relationship_class_name = $(jfo[relationship_class_name])
-                    get(relationship_class_name, x, [])
-                end
-                export $(Symbol(relationship_class_name))
-            end
-        end
     end
     for i=1:size(sdo.parameter,1)
         parameter_id = sdo.parameter[i, :id]
@@ -152,25 +206,6 @@ function JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_o
             k => isnull(json[k])?v:json[k] for (k,v) in value
         )
         add_parameter_metadata!(jfo, parameter_name)
-        JuMP_all_out || continue
-        @suppress_err begin
-            @eval begin
-                function $(Symbol(parameter_name))(x::String, t::Int64=1)
-                    json = $(json)
-                    value = $(value)
-                    if haskey(json, x)
-                        if isa(json[x], Array) && t in indices(json[x])
-                            return json[x][t]
-                        end
-                    end
-                    if haskey(value, x)
-                        return value[x]
-                    end
-                    Nullable()
-                end
-                export $(Symbol(parameter_name))
-            end
-        end
     end
     jfo
 end
@@ -204,8 +239,9 @@ end
 """
     SpineData.Spine_object(jfo::Dict)
 
-A `SpineDataObject` from `jfo`, constructed by inverting the procedure described in
-[`JuMP_object(sdo::SpineDataObject, update_all_datatypes=true, JuMP_all_out=true)`](@ref).
+A `SpineDataObject` from `jfo`.
+
+See also [`JuMP_object(sdo::SpineDataObject, update_all_datatypes=true)`](@ref).
 """
 function SpineData.Spine_object(jfo::Dict)
     sdo = MinimalSDO()

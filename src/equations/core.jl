@@ -1,5 +1,3 @@
-linear_JuMP_model() = Model(solver = ClpSolver())
-
 function variable_flow(m::Model)
     @variable(m, flow[commodity(), unit(), ["in", "out"], t=1:24] >= 0)
 end

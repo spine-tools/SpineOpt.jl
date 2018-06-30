@@ -5,9 +5,9 @@ using Clp
 
 
 db = SQLite.DB("simple_test_system.sqlite")
-jfo = JuMP_object(db)
+JuMP_all_out(db)
 
-m = linear_JuMP_model()
+m = Model(solver = ClpSolver())
 flow = variable_flow(m)
 objective_minimize_production_cost(m, flow)
 constraint_use_of_capacity(m, flow)
