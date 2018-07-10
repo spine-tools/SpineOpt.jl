@@ -4,7 +4,7 @@ using JuMP
 using Clp
 
 
-db = SQLite.DB("simple_test_system.sqlite")
+db = SQLite.DB("simple.sqlite")
 JuMP_all_out(db)
 
 m = Model(solver = ClpSolver())

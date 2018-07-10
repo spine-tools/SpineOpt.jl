@@ -52,10 +52,12 @@ julia> unit_node("Leuven")
 ...
 julia> conversion_cost("gas_import")
 12
+julia> demand("Leuven", 17)
+700
 ```
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/Spine.jl#L20-56' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/ff46dedbc561f1497e958095143986eefc03bce5/src/data_io/Spine.jl#L19-57' class='documenter-source'>source</a><br>
 
 <a id='SpineModel.JuMP_all_out' href='#SpineModel.JuMP_all_out'>#</a>
 **`SpineModel.JuMP_all_out`** &mdash; *Function*.
@@ -66,14 +68,12 @@ julia> conversion_cost("gas_import")
 JuMP_all_out(source, update_all_datatypes=true)
 ```
 
-Generate and export convenience functions named after each object class, relationship class, and parameter in `source`, providing compact access to its contents, where `source` is anything convertible to a `SpineDataObject` by the `SpineData.jl` package.
+Generate and export convenience functions named after each object class, relationship class, and parameter in `source`, providing compact access to its contents, where `source` is anything convertible to a `SpineDataObject` by the `SpineData.jl` package. See also: [`JuMP_all_out(sdo::SpineDataObject, update_all_datatypes=true)`](index.md#SpineModel.JuMP_all_out) for details about the generated convenience functions.
 
 If `update_all_datatypes` is `true`, then the method tries to find out the julia `Type` that best fits all values for every parameter in `sdo`, and converts all values to that `Type`. (See `SpineData.update_all_datatypes!`.)
 
-See also: [`JuMP_all_out(sdo::SpineDataObject, update_all_datatypes=true)`](index.md#SpineModel.JuMP_all_out).
 
-
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/Spine.jl#L1-14' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/ff46dedbc561f1497e958095143986eefc03bce5/src/data_io/Spine.jl#L1-13' class='documenter-source'>source</a><br>
 
 <a id='SpineModel.JuMP_object' href='#SpineModel.JuMP_object'>#</a>
 **`SpineModel.JuMP_object`** &mdash; *Function*.
@@ -114,7 +114,7 @@ Dict{String,Int64} with 4 entries:
 ```
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/Spine.jl#L104-149' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/ff46dedbc561f1497e958095143986eefc03bce5/src/data_io/Spine.jl#L103-148' class='documenter-source'>source</a><br>
 
 <a id='SpineData.Spine_object-Tuple{Dict}' href='#SpineData.Spine_object-Tuple{Dict}'>#</a>
 **`SpineData.Spine_object`** &mdash; *Method*.
@@ -130,7 +130,7 @@ A `SpineDataObject` from `jfo`.
 See also [`JuMP_object(sdo::SpineDataObject, update_all_datatypes=true)`](index.md#SpineModel.JuMP_object).
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/Spine.jl#L241-247' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/ff46dedbc561f1497e958095143986eefc03bce5/src/data_io/Spine.jl#L240-246' class='documenter-source'>source</a><br>
 
 
 <a id='Macros-1'></a>
@@ -159,7 +159,7 @@ true
 ```
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/util.jl#L1-14' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/ff46dedbc561f1497e958095143986eefc03bce5/src/data_io/util.jl#L1-14' class='documenter-source'>source</a><br>
 
 <a id='SpineModel.@JuMPout_suffix-Tuple{Any,Any,Vararg{Any,N} where N}' href='#SpineModel.@JuMPout_suffix-Tuple{Any,Any,Vararg{Any,N} where N}'>#</a>
 **`SpineModel.@JuMPout_suffix`** &mdash; *Macro*.
@@ -183,7 +183,7 @@ true
 ```
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/util.jl#L21-35' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/ff46dedbc561f1497e958095143986eefc03bce5/src/data_io/util.jl#L21-35' class='documenter-source'>source</a><br>
 
 <a id='SpineModel.@JuMPout_with_backup-Tuple{Any,Any,Vararg{Any,N} where N}' href='#SpineModel.@JuMPout_with_backup-Tuple{Any,Any,Vararg{Any,N} where N}'>#</a>
 **`SpineModel.@JuMPout_with_backup`** &mdash; *Macro*.
@@ -197,7 +197,7 @@ JuMPout_with_backup(dict, backup, keys...)
 Like [`@JuMPout(dict, keys...)`](index.md#SpineModel.@JuMPout-Tuple{Any,Vararg{Any,N} where N}) but also looking into `backup` if the key is not in `dict`.
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/util.jl#L42-46' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/ff46dedbc561f1497e958095143986eefc03bce5/src/data_io/util.jl#L42-46' class='documenter-source'>source</a><br>
 
 <a id='SpineModel.@JuMPin-Tuple{Any,Vararg{Any,N} where N}' href='#SpineModel.@JuMPin-Tuple{Any,Vararg{Any,N} where N}'>#</a>
 **`SpineModel.@JuMPin`** &mdash; *Macro*.
@@ -221,7 +221,7 @@ true
 ```
 
 
-<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/670775a8be6cfb62e33601da7f30afe786a5595a/src/data_io/util.jl#L53-66' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://gitlab.vtt.fi/spine/model/blob/ff46dedbc561f1497e958095143986eefc03bce5/src/data_io/util.jl#L53-66' class='documenter-source'>source</a><br>
 
 
 <a id='Index-1'></a>

@@ -5,12 +5,11 @@ Generate and export convenience functions
 named after each object class, relationship class, and parameter in `source`,
 providing compact access to its contents, where `source`
 is anything convertible to a `SpineDataObject` by the `SpineData.jl` package.
+See also: [`JuMP_all_out(sdo::SpineDataObject, update_all_datatypes=true)`](@ref) for details
+about the generated convenience functions.
 
 If `update_all_datatypes` is `true`, then the method tries to find out the julia `Type` that best fits
 all values for every parameter in `sdo`, and converts all values to that `Type`. (See `SpineData.update_all_datatypes!`.)
-
-See also: [`JuMP_all_out(sdo::SpineDataObject, update_all_datatypes=true)`](@ref).
-
 """
 function JuMP_all_out(source, update_all_datatypes=true)
     sdo = Spine_object(source)
@@ -52,6 +51,8 @@ julia> unit_node("Leuven")
 ...
 julia> conversion_cost("gas_import")
 12
+julia> demand("Leuven", 17)
+700
 ```
 """
 function JuMP_all_out(sdo::SpineDataObject, update_all_datatypes=true)
