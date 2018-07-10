@@ -15,4 +15,4 @@ constraint_efficiency_definition(m, flow)
 constraint_commodity_balance(m, flow)
 status = solve(m)
 status == :Optimal && (flow_value = getvalue(flow))
-println(m)
+@show flow
