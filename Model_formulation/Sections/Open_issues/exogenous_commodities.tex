@@ -13,7 +13,7 @@ Below, two options are presented. One where exogenous commodities are treated di
 \paragraph{Option 1: Separate treatment of exogenous commodities}
 Import variables ($\vImport$) are created (one variable per commodity, timestep on which the commodity is traced, and segment in the piecewise linear cost curve). An equation is added to ensure that the total import (sum of the different import segments) equals the net flow of that commodity. No balance constraint on the flow variables of this commodity should be induced (the constraint below replaces this). 
 \begin{align}
-&\sum_{\segment \in \ImportSegments} \vImport =  \sum_{\unit \in \InputCommodities} \vFlow[\commodity,\unit,in,\timestep]  - \sum_{\unit \in \OutputCommodities} \vFlow[\commodity,\unit,out,\timestep]  \nonumber \\
+&\sum_{\segment \in \ImportSegments} \vImport =  \sum_{\unit: (\commodity,\unit) \in \InputCommoditiesUnits} \vFlow[\commodity,\node, \unit,in,\timestep]  - \sum_{\unit: (\commodity,\unit) \in \OutputCommoditiesUnits} \vFlow[\commodity,\node,\unit,out,\timestep]  \nonumber \\
 & \forall \commodities, \timesteps
 \end{align}
 

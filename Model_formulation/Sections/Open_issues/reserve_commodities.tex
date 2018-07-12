@@ -26,7 +26,7 @@ For instance, the minimum operating point constraint (Eq.~\eqref{eq:minimumopera
 \begin{align}
 &\sum_{\commodity \in cg} \vFlow - \sum_{\substack{\commodity :  \\
 													\commodity \in DownSpinResCommodities \\
-													\commodity \in \OutputCommodities}}
+													(\commodity,\unit) \in \OutputCommoditiesUnits}}
 										&\vFlow \nonumber \\
 										&\ge \nonumber \\
 & \pMinimumOperatingPoint \vUnitsOnline \pUnitCapacity \nonumber \\
