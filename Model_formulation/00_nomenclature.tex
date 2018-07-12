@@ -17,14 +17,15 @@
 \subsection*{Sets}
 \vspace{-1em}
 	\begin{longtable}{p{\cola} p{\colc} >{\small\raggedleft\arraybackslash\itshape}p{\colb}}
+		$\CommoditiesNodes$	& Set of tuples of commodity and node                         	&                \\
 		$\commodities   $	& Set of commodities                                          	&                \\
 		$\ExogenousCommodities$	& Set of exogenous commodities (i.e., not requiring a balance constraint)	&                \\
 		$\EndogenousCommodities$	& Set of endogenous commodities (i.e., requiring a balance constraint)	&                \\
 		$\nodes         $	& Set of nodes                                                	&                \\
-		$\CommoditiesNodes$	& Set of tuples of commodity and node                         	&                \\
 		$\ImportSegments$	& Set of import segments \segment for commodity \commodity    	&                \\
 		$\segments      $	& Set of piecewise linear segments                            	&                \\
 		$\timesteps     $	& Set of timesteps                                            	&                \\
+		$\connections   $	& Set of connections                                          	&                \\
 		$\InputCommoditiesUnitsNodes$	& Set of tuples of unit and input commodity and node          	&                \\
 		$\OutputCommoditiesUnitsNodes$	& Set of tuples of unit, output commodity and node            	&                \\
 		$\InputCommoditiesUnits$	& Set of tuples of unit and input commodity                   	&                \\
@@ -50,21 +51,24 @@
 
 		$\pDemand       $	& Demand for commodity \commodity in timestep \timestep       	&                \\[0.5em]
 
+		$\pMinimumOperatingPoint$	& Minimum operating point of the unit                         	&                \\
 		$\pMinimumDownTime$	& Minimum time a unit is required to remain offline after shutting down	&                \\
 		$\pMinimumUpTime$	& Minimum time a unit is required to remain online after starting up	&                \\
 		$\pUnitCapacity $	& Capacity of a single unit                                   	&                \\
-		$\pMinimumOperatingPoint$	& Minimum operating point of the unit                         	&                \\
-		$\pRatioOutputOutputFlow$	& Ratio between output commodity group cg2 and output commodity group cg1	&                \\
 		$\pConsumptionShare$	& Bound on the share of the consumption of the commodities within commodity group cg entering or leaving unit u with respect to the total consumption of those commodities	&                \\
 		$\pProductionShare$	& Bound on the share of the production of the commodities within commodity group cg entering or leaving unit u with respect to the total production of those commodities	&                \\
 		$\pFlowBound    $	& Bound on (sum of) the absolute flows of commodities within commodity group cg entering or leaving unit u 	&                \\
+		$\pRatioOutputOutputFlow$	& Ratio between output commodity group cg2 and output commodity group cg1	&                \\
 		$\pRatioInputInputFlow$	& Ratio between input commodity group cg2 and input commodity group cg1	&                \\
 		$\pRatioOutputInputFlow$	& Ratio between output commodity group cg2 and input commodity group cg1	&                \\
+		$\pMaxShutDownPower$	& Maximum power in the last time step before a shutdown       	&                \\
 		$\pMaxStartUpPower$	& Maximum power in first time step after a start-up           	&                \\
 		$\pRampRateDown $	& Maximum downward ramp rate                                  	&                \\
 		$\pRampRateUp   $	& Maximum upward ramp rate                                    	&                \\
-		$\pMaxShutDownPower$	& Maximum power in the last time step before a shutdown       	&                \\
-		$\pAF           $	& Availability factor                                         	&                \\
+		$\pAF           $	& Availability factor                                         	&                \\[0.5em]
+
+		$\pMaxTransCapa $	& max. possible transmission Capacity                         	&                \\
+		$\ptransloss    $	& losses through transmission $n_i$ to $n_j$                  	&                \\
 	\end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -73,6 +77,13 @@
 \subsection*{Decision Variables}
 \vspace{-1em}
 	\begin{longtable}{p{\cola} p{\colc} >{\small\raggedleft\arraybackslash\itshape}p{\colb}}
+		$\vTrans        $	& Import by $n_i$ from $n_j$                                  	&                \\
+		$\vTranCapa     $	& Capacity from $n_j$ to $n_i$                                	&                \\
+		$\be            $	& decision                                                    	&                \\
+		$\al            $	& decision                                                    	&                \\
+		$\de            $	& decision                                                    	&                \\
+		$\ga            $	& decision                                                    	&                \\[0.5em]
+
 		$\vImportCosts  $	& Costs related to the import of a commodity in a certain time step	&                \\[0.5em]
 
 		$\vCapacity     $	& Installed capacity of a certain unit                        	&                \\[0.5em]

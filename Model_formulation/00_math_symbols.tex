@@ -4,34 +4,43 @@
 \newcommand{\pConversionCost}[1][\unit,\commodity]{p^{ConversionCost}_{#1}}
 \newcommand{\pDeltaT}[1][\timestep]{p^{DeltaT}_{#1}}
 \newcommand{\pDemand}[1][\commodity,\timestep]{p^{Demand}_{#1}}
+\newcommand{\pMinimumOperatingPoint}[1][\unit,cg,\timestep]{p^{MinimumOperatingPoint}_{#1}}
 \newcommand{\pMinimumDownTime}[1][\unit]{p^{MinimumDownTime}_{#1}}
 \newcommand{\pMinimumUpTime}[1][\unit]{p^{MinimumUpTime}_{#1}}
 \newcommand{\pUnitCapacity}[1][\unit]{p^{UnitCapacity}_{#1}}
-\newcommand{\pMinimumOperatingPoint}[1][\unit,cg,\timestep]{p^{MinimumOperatingPoint}_{#1}}
-\newcommand{\pRatioOutputOutputFlow}[1][\unit,cg21,cg1]{p^{RatioOutputOutputFlow}_{#1}}
 \newcommand{\pConsumptionShare}[1][\unit,cg,\timestep]{p^{ConsumptionShare}_{#1}}
 \newcommand{\pProductionShare}[1][\unit,cg,\timestep]{p^{ProductionShare}_{#1}}
 \newcommand{\pFlowBound}[1][\unit,cg,\timestep]{p^{FlowBound}_{#1}}
+\newcommand{\pRatioOutputOutputFlow}[1][\unit,cg21,cg1]{p^{RatioOutputOutputFlow}_{#1}}
 \newcommand{\pRatioInputInputFlow}[1][\unit,cg21,cg1]{p^{RatioInputInputFlow}_{#1}}
 \newcommand{\pRatioOutputInputFlow}[1][\unit,cg21,cg1]{p^{RatioOutputInputFlow}_{#1}}
+\newcommand{\pMaxShutDownPower}[1][\unit,cg]{p^{MaxShutDownPower}_{#1}}
 \newcommand{\pMaxStartUpPower}[1][\unit,cg]{p^{MaxStartUpPower}_{#1}}
 \newcommand{\pRampRateDown}[1][\unit,cg]{p^{RampRateDown}_{#1}}
 \newcommand{\pRampRateUp}[1][\unit,cg]{p^{RampRateUp}_{#1}}
-\newcommand{\pMaxShutDownPower}[1][\unit,cg]{p^{MaxShutDownPower}_{#1}}
 \newcommand{\pAF}[1][\unit,\timestep]{p^{AF}_{#1}}
+\newcommand{\CommoditiesNodes}{(\commodity, \node) \in CommoditiesNodes}
 \newcommand{\commodities}{\commodity \in Commodities}
 \newcommand{\ExogenousCommodities}{\commodity \in ExogenousCommodities}
 \newcommand{\EndogenousCommodities}{\commodity \in EndogenousCommodities}
 \newcommand{\nodes}{\node \in Nodes}
-\newcommand{\CommoditiesNodes}{(\commodity, \node) \in CommoditiesNodes}
 \newcommand{\ImportSegments}[1][\commodity,\segment]{ImportSegments_{#1}}
 \newcommand{\segments}{\segment \in Segments}
 \newcommand{\timesteps}{\timestep \in Timesteps}
+\newcommand{\pMaxTransCapa}[1][\connection]{p^{max.TransCapa}_{#1}}
+\newcommand{\ptransloss}[1][\connection,\node_i,\node_j]{p^{loss}_{#1}}
+\newcommand{\vTrans}[1][\connection,\node_i,\node_j,\timestep]{v^{Trans}_{#1}}
+\newcommand{\vTranCapa}[1][\connection,\node_i,\node_j,\timestep]{v^{TransCapa}_{#1}}
+\newcommand{\be}[1][\connection,\node_i,\node_j,\timestep]{\beta^{Trans}_{#1}}
+\newcommand{\al}[1][\connection,\node_i,\node_j,\timestep]{\alpha^{Trans}_{#1}}
+\newcommand{\de}[1][\connection,\node_i,\node_j,\timestep]{\delta^{Trans}_{#1}}
+\newcommand{\connections}{\connection \in Connections}
 \newcommand{\InputCommoditiesUnitsNodes}{(\commodity, \unit, \node) \in InputCommoditiesUnitsNodes}
 \newcommand{\OutputCommoditiesUnitsNodes}{(\commodity, \unit, \node) \in OutputCommoditiesUnitsNodes}
 \newcommand{\InputCommoditiesUnits}{(\commodity, \unit) \in InputCommoditiesUnits}
 \newcommand{\OutputCommoditiesUnits}{(\commodity, \unit) \in OutputCommoditiesUnits}
 \newcommand{\Cdcg}{(\commodity, \unit) \in Cdcg}
+\newcommand{\ga}[1][\connection,\node_i,\node_j,\timestep]{\gamma^{Trans}_{#1}}
 \newcommand{\units}{\unit \in Units}
 \newcommand{\vImportCosts}[1][\commodity,\timestep]{v^{ImportCosts}_{#1}}
 \newcommand{\vCapacity}[1][\unit]{v^{Capacity}_{#1}}
@@ -47,3 +56,4 @@
 \newcommand{\commodityendo}{c}
 \newcommand{\timestep}{t}
 \newcommand{\segment}{s}
+\newcommand{\connection}{{con}}

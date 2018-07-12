@@ -11,7 +11,7 @@
 \subsection{Objective function}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The basic objective function of the Spine Model is to minimize the total discounted costs. 
+The basic objective function of the Spine Model is to minimize the total discounted costs.
 
 
 The total costs will in the end comprise the following elements:
@@ -91,7 +91,7 @@ In a multi-commodity setting, there can be different commodities entering/leavin
 
 \subsubsection{Static and linear relationships between input and output commodity flows}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-Between the different flows, relationships can be imposed. The most simple relationship is a linear relationship between input and output commodities/commodity groups (TIMES EQ PTRANS). Whenever there is only a single input commodity and a single output commodity, this relationship relates to the notion of an efficiency. This equation can however also be used for instance to relate emissions to input primary fuel flows. In the most general form of the equation, two commodity groups are defined (an input commodity group cg1 and an output commodity group cg2), and an equality relationship is expressed between both commodity groups. Note that whenever the relationship is specfied between groups of multiple commodities, there remains a degree of freedom regarding the composition of the input commodity flows within group cg1 and the output commodity flows within group cg2. Note further that the sign ($\le;=;\ge$) of the constraint should be selected by the user (attribute of the parameter instance)- TIMES EQ PTRANS. 
+Between the different flows, relationships can be imposed. The most simple relationship is a linear relationship between input and output commodities/commodity groups (TIMES EQ PTRANS). Whenever there is only a single input commodity and a single output commodity, this relationship relates to the notion of an efficiency. This equation can however also be used for instance to relate emissions to input primary fuel flows. In the most general form of the equation, two commodity groups are defined (an input commodity group cg1 and an output commodity group cg2), and an equality relationship is expressed between both commodity groups. Note that whenever the relationship is specfied between groups of multiple commodities, there remains a degree of freedom regarding the composition of the input commodity flows within group cg1 and the output commodity flows within group cg2. Note further that the sign ($\le;=;\ge$) of the constraint should be selected by the user (attribute of the parameter instance)- TIMES EQ PTRANS.
 
 \paragraph{Relationship between output and input flows}
 \begin{align} \label{eq:ratiooutputinputflow}
@@ -99,7 +99,7 @@ Between the different flows, relationships can be imposed. The most simple relat
 &\pRatioOutputInputFlow \sum_{\commodity \in cg1} \vFlow[\commodity,\unit,in,\timestep] \quad \forall \units, \timesteps
 \end{align}
 
-Additional relationships can further be imposed. Two basic constraints impose a linear relationship between multiple input commodities/commodity groups (Eq.~\eqref{eq:ratioinputinputflow} - similar to (TIMES EQ INSHR)), and a linear relationship between multiple output commodities/commodity groups (Eq.~\eqref{eq:ratiooutputoutputflow} - similar to TIMES EQ OUTSHR). These relationships reduce the degrees of freedom. The relationship between different input flows can for instance be used to define a fixed or maximal share of bio-mass in a coal-fired power plant. The relationship between different output flows can for instance be used to define a relationship between the heat and electrical power outputs of a CHP plant, or to establish relationships between different outputs in an distillery. 
+Additional relationships can further be imposed. Two basic constraints impose a linear relationship between multiple input commodities/commodity groups (Eq.~\eqref{eq:ratioinputinputflow} - similar to (TIMES EQ INSHR)), and a linear relationship between multiple output commodities/commodity groups (Eq.~\eqref{eq:ratiooutputoutputflow} - similar to TIMES EQ OUTSHR). These relationships reduce the degrees of freedom. The relationship between different input flows can for instance be used to define a fixed or maximal share of bio-mass in a coal-fired power plant. The relationship between different output flows can for instance be used to define a relationship between the heat and electrical power outputs of a CHP plant, or to establish relationships between different outputs in an distillery.
 
 \paragraph{Relationship between multiple input flows}
 \begin{align} \label{eq:ratioinputinputflow}
@@ -114,7 +114,7 @@ Additional relationships can further be imposed. Two basic constraints impose a 
 \end{align}
 
 {\color{red}
-The above equations indicate that it might not be so simple as simply defining the value of a number of parameters which either belong to a unit or commodity. The user might also need to specify to which commodity groups different parameters relate and which bound is applied on the induced constraint (equality, lower bound, upper bound) - see e.g., parameter $\pRatioOutputInputFlow$. Also, this parameter can be defined multiple times for different input and output commodity groups. 
+The above equations indicate that it might not be so simple as simply defining the value of a number of parameters which either belong to a unit or commodity. The user might also need to specify to which commodity groups different parameters relate and which bound is applied on the induced constraint (equality, lower bound, upper bound) - see e.g., parameter $\pRatioOutputInputFlow$. Also, this parameter can be defined multiple times for different input and output commodity groups.
 }
 
 
@@ -138,7 +138,7 @@ Different absolute bounds on the flows of a commodity/the commodities within a c
 
 Each combination would possible require a different parameter and equation (here only for absolute bounds already 18 in total). This could be strongly reduced if we would have default groups (all time steps, all nodes of a certain commodity).
 
-The generic equation could look as follows: 
+The generic equation could look as follows:
 
 \begin{align} \label{eq:flowbound}
 &\sum_{\substack{\commodity \in cg, \unit \in ug, \node \in ng: \\ \OutputCommoditiesUnitsNodes}} \vFlow[\commodity,\node,\unit,out,\timestep]  \{\le;=;\ge\} \pFlowBound \quad \forall \commodities, \units, \timesteps
@@ -306,9 +306,62 @@ Is this always for the capacity defining commodity group, or are there instances
 
 For each endogenous commodity, a commodity balance constraint is induced. The user is free to define whether an inequality or equality sign is used for the balance - TIMES EQ COMBAL
 \begin{align} \label{eq:commodity_balance}
-&\sum_{\unit : (\commodity,\unit) \in \OutputCommoditiesUnits} \vFlow[\commodity,\node,\unit,out,\timestep] \{\ge;=\} \nonumber \\ 
-&\pDemand + \sum_{\unit: (\commodity\unit) \in \InputCommoditiesUnits} \vFlow[\commodity,\node,\unit,in,\timestep] \nonumber \\ 
-& \forall \EndogenousCommodities, \timesteps 
+&\sum_{\unit : (\commodity,\unit) \in \OutputCommoditiesUnits} \vFlow[\commodity,\node,\unit,out,\timestep] \{\ge;=\} \nonumber \\
+&\pDemand + \sum_{\unit: (\commodity\unit) \in \InputCommoditiesUnits} \vFlow[\commodity,\node,\unit,in,\timestep] \nonumber \\
+& \forall \EndogenousCommodities, \timesteps
 \end{align}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Geographical constraints}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Base case}
+\begin{itemize}
+	\item one connector, two nodes connected
+\end{itemize}
+	\begin{figure}[h!]
+		\centering
+		\input{Geographical_strucutre.pdf_tex}
+		\caption{}
+		\label{}
+	\end{figure}
 
+\begin{align} \label{eq:transconstraints1}
+	&\vTrans \cdot \ptransloss \geq (-\vTrans[\connection,\node_j,\node_i,t])\\
+	&\vTrans  \geq  \ptransloss[\connection,\node_j,\node_i] \cdot (-\vTrans[\connection,\node_j,\node_i,t])\\
+	&\vTrans \leq \vTranCapa \leq \pMaxTransCapa \\
+	&\vTrans[\connection,\node_j,\node_i,t] \leq \vTranCapa[\connection,\node_j,\node_i,t] \leq \pMaxTransCapa\\
+	&\pDemand[\node_i,t] = \sum \vTrans + \sum \vFlow [\node_i,u,in/out,t]
+\end{align}
+\subsubsection{One connector with more than two nodes connected}
+\begin{figure}[h!]
+			\centering
+	\input{Geographical_strucutre2.pdf_tex}
+	\caption{}
+	\label{}
+\end{figure}
+\begin{itemize}
+	\item shared capacity and unidirectional flow:
+\end{itemize}
+\begin{align} \label{eq:transconstraints1}
+	&\vTranCapa + \vTranCapa[con,n_k,n_l,t] \leq \al \cdot (\pMaxTransCapa + \pMaxTransCapa[con,n_k,n_l,t])\\
+	&\vTranCapa[con,n_j,n_i,t] + \vTranCapa[con,n_l,n_k,t]  \leq \be \cdot (\pMaxTransCapa[con,n_j,n_i,t]  + \pMaxTransCapa[con,n_l,n_k,t] )\\
+	&\al + \be \leq 1
+\end{align}
+\begin{itemize}
+	\item only one commodity at a time
+\end{itemize}
+\begin{align} \label{eq:transconstraints1}
+	&\vTranCapa + \vTranCapa[con,n_j,n_i,t] \leq \al \cdot (\pMaxTransCapa + \pMaxTransCapa[con,n_j,n_i,t])\\
+	&\vTranCapa[con,n_k,n_l,t] + \vTranCapa[con,n_l,n_k,t] \leq \be \cdot (\pMaxTransCapa[con,n_k,n_l,t]  + \pMaxTransCapa[con,n_l,n_k,t])\\
+	&\al + \be \leq 1
+\end{align}
+\begin{itemize}
+	\item the same commodity but possible counterflow
+	\begin{align} \label{eq:transconstraints1}
+		&\vTranCapa + \vTranCapa[con,n_j,n_i,t] \leq \pMaxTransCapa + \pMaxTransCapa[con,n_j,n_i,t]\\
+		&\vTranCapa[con,n_k,n_l,t] + \vTranCapa[con,n_l,n_k,t] \leq \pMaxTransCapa[con,n_k,n_l,t]  + \pMaxTransCapa[con,n_l,n_k,t]
+	\end{align}
+\end{itemize}
+
+
+capacity conversion factor
