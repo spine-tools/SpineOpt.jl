@@ -338,6 +338,8 @@ INPUT Sections/Spine_model_formulation.tex
 INPUT Sections/Spine_model_formulation.tex
 INPUT c:/texlive/2017/texmf-dist/tex/latex/base/omscmr.fd
 INPUT c:/texlive/2017/texmf-dist/tex/latex/base/omscmr.fd
+INPUT c:/texlive/2017/texmf-dist/fonts/tfm/public/cm/cmbx7.tfm
+INPUT c:/texlive/2017/texmf-dist/fonts/tfm/public/cm/cmbx5.tfm
 INPUT Sections/Open_issues.tex
 INPUT Sections/Open_issues.tex
 INPUT Sections/Open_issues/exogenous_commodities.tex
@@ -346,6 +348,7 @@ INPUT Sections/Open_issues/reserve_commodities.tex
 INPUT Sections/Open_issues/reserve_commodities.tex
 INPUT Sections/Examples.tex
 INPUT Sections/Examples.tex
+INPUT c:/texlive/2017/texmf-dist/fonts/tfm/public/cm/cmbx8.tfm
 INPUT SPINE_model_description.aux
 INPUT 00_nomenclature.aux
 INPUT 00_nomenclature.aux
@@ -353,6 +356,7 @@ INPUT ./SPINE_model_description.out
 INPUT ./SPINE_model_description.out
 INPUT c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 INPUT c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb
+INPUT c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb
 INPUT c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb
 INPUT c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb
 INPUT c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb

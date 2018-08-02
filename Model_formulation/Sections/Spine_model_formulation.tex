@@ -82,7 +82,7 @@ In a multi-commodity setting, there can be different commodities entering/leavin
 
 % \subsubsection{Restrict activity to the available capacity}
 \begin{align} \label{eq:max_capacity}
-&\sum_{\substack{\commodity :  \\ \commodity \in \Cdcg \\ (\commodity,\unit) \in \OutputCommoditiesUnits}} \vFlow[\commodity, \node, \unit, out, \timestep] + \sum_{\substack{\commodity :  \\ \commodity \in \Cdcg \\ (\commodity,\unit) \in \InputCommoditiesUnits}} \vFlow[\commodity, \node, \unit, in, \timestep] \nonumber \\
+&\sum_{\substack{\commodity :  \\ \Cdcg \\ \OutputCommoditiesUnits}} \vFlow[\commodity, \node, \unit, out, \timestep] + \sum_{\substack{\commodity :  \\  \Cdcg \\ \InputCommoditiesUnits}} \vFlow[\commodity, \node, \unit, in, \timestep] \nonumber \\
 &  \le \nonumber \\
 &\pAF \pUnitConvCapToFlow \{\vCapacity or \quad \pUnitCapacity\} \quad \forall \quad \units, \timesteps
 \end{align}
@@ -91,39 +91,60 @@ In a multi-commodity setting, there can be different commodities entering/leavin
 
 \subsubsection{Static and linear relationships between input and output commodity flows}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-Between the different flows, relationships can be imposed. The most simple relationship is a linear relationship between input and output commodities/commodity groups (TIMES EQ PTRANS). Whenever there is only a single input commodity and a single output commodity, this relationship relates to the notion of an efficiency. This equation can however also be used for instance to relate emissions to input primary fuel flows. In the most general form of the equation, two commodity groups are defined (an input commodity group cg1 and an output commodity group cg2), and an equality relationship is expressed between both commodity groups. Note that whenever the relationship is specfied between groups of multiple commodities, there remains a degree of freedom regarding the composition of the input commodity flows within group cg1 and the output commodity flows within group cg2. Note further that the sign ($\le;=;\ge$) of the constraint should be selected by the user (attribute of the parameter instance)- TIMES EQ PTRANS. 
+Between the different flows, relationships can be imposed. The most simple relationship is a linear relationship between input and output commodities/commodity groups (TIMES EQ PTRANS). Whenever there is only a single input commodity and a single output commodity, this relationship relates to the notion of an efficiency. This equation can however also be used for instance to relate emissions to input primary fuel flows. In the most general form of the equation, two commodity groups are defined (an input commodity group $cg\_in$ and an output commodity group $cg\_out$)\footnote{The above equations indicate that it might not be so simple as simply defining the value of a number of parameters which either belong to a unit or commodity. The user might also need to specify to which commodity groups different parameters relate.}, and a linear relationship is expressed between both commodity groups. Note that whenever the relationship is specfied between groups of multiple commodities, there remains a degree of freedom regarding the composition of the input commodity flows within group cg1 and the output commodity flows within group cg2. 
 
-\paragraph{Relationship between output and input flows}
-\begin{align} \label{eq:ratiooutputinputflow}
-&\sum_{\commodity \in cg2} \vFlow[\commodity,\unit,out,\timestep] \{\le;=;\ge\} \nonumber \\
-&\pRatioOutputInputFlow \sum_{\commodity \in cg1} \vFlow[\commodity,\unit,in,\timestep] \quad \forall \units, \timesteps
+\paragraph{Parameter $\pFixRatioOutputInputFlow$: Fixed relationships between output and input flows}
+\begin{align} \label{eq:fixratiooutputinputflow}
+&\sum_{\commodity \in cg\_out} \vFlow[\commodity,\unit,out,\timestep] = \pFixRatioOutputInputFlow \sum_{\commodity \in cg\_in} \vFlow[\commodity,\unit,in,\timestep] \nonumber \\
+&\forall \units, \timesteps, cg\_out, cg\_in : \pFixRatioOutputInputFlow is defined
 \end{align}
 
-Additional relationships can further be imposed. Two basic constraints impose a linear relationship between multiple input commodities/commodity groups (Eq.~\eqref{eq:ratioinputinputflow} - similar to (TIMES EQ INSHR)), and a linear relationship between multiple output commodities/commodity groups (Eq.~\eqref{eq:ratiooutputoutputflow} - similar to TIMES EQ OUTSHR). These relationships reduce the degrees of freedom. The relationship between different input flows can for instance be used to define a fixed or maximal share of bio-mass in a coal-fired power plant. The relationship between different output flows can for instance be used to define a relationship between the heat and electrical power outputs of a CHP plant, or to establish relationships between different outputs in an distillery. 
-
-\paragraph{Relationship between multiple input flows}
-\begin{align} \label{eq:ratioinputinputflow}
-&\sum_{\commodity \in cg2} \vFlow[\commodity,\unit,in,\timestep] \{\le;=;\ge\} \nonumber \\
-&\pRatioInputInputFlow \sum_{\commodity \in cg1} \vFlow[\commodity,\unit,in,\timestep] \quad \forall \units, \timesteps
+\paragraph{Parameter $\pMaxRatioOutputInputFlow$: Maximal output flows relative to input flows:}
+\begin{align} \label{eq:maxratiooutputinputflow}
+&\sum_{\commodity \in cg\_out} \vFlow[\commodity,\unit,out,\timestep] \le \pMaxRatioOutputInputFlow \sum_{\commodity \in cg\_in} \vFlow[\commodity,\unit,in,\timestep] \nonumber \\
+&\forall \units, \timesteps, cg\_out, cg\_in : \pMaxRatioOutputInputFlow is defined
 \end{align}
 
-\paragraph{Relationship between multiple output flows}
-\begin{align} \label{eq:ratiooutputoutputflow}
-&\sum_{\commodity \in cg2} \vFlow[\commodity,\unit,outn,\timestep] \{\le;=;\ge\} \nonumber \\
-&\pRatioOutputOutputFlow \sum_{\commodity \in cg1} \vFlow[\commodity,\unit,out,\timestep] \quad \forall \units, \timesteps
+\paragraph{Parameter $\pMinRatioOutputInputFlow$: Minimal output flows relative to input flows:}
+\begin{align} \label{eq:minratiooutputinputflow}
+&\sum_{\commodity \in cg\_out} \vFlow[\commodity,\unit,out,\timestep] \ge \pMinRatioOutputInputFlow \sum_{\commodity \in cg\_in} \vFlow[\commodity,\unit,in,\timestep] \nonumber \\
+&\forall \units, \timesteps, cg\_out, cg\_in : \pMinRatioOutputInputFlow is defined
 \end{align}
 
-{\color{red}
-The above equations indicate that it might not be so simple as simply defining the value of a number of parameters which either belong to a unit or commodity. The user might also need to specify to which commodity groups different parameters relate and which bound is applied on the induced constraint (equality, lower bound, upper bound) - see e.g., parameter $\pRatioOutputInputFlow$. Also, this parameter can be defined multiple times for different input and output commodity groups. 
-}
+Additional relationships can further be imposed. Two basic constraints impose a linear relationship between multiple input commodities/commodity groups (Eq.~\eqref{eq:fixratioinputinputflow}-\eqref{eq:maxratioinputinputflow} - similar to (TIMES EQ INSHR)), and a linear relationship between multiple output commodities/commodity groups (Eq.~\eqref{eq:fixratiooutputoutputflow}-\eqref{eq:maxratiooutputoutputflow} - similar to TIMES EQ OUTSHR). These relationships reduce the degrees of freedom. The relationship between different input flows can for instance be used to define a fixed or maximal share of biomass in a coal-fired power plant. The relationship between different output flows can for instance be used to define a relationship between the heat and electrical power outputs of a CHP plant, or to establish relationships between different outputs in an distillery. 
+
+\paragraph{Parameter $\pFixRatioInputInputFlow$: Fixed relationship between multiple input flows}
+\begin{align} \label{eq:fixratioinputinputflow}
+&\sum_{\commodity \in cg2} \vFlow[\commodity,\unit,in,\timestep] = \pFixRatioInputInputFlow \sum_{\commodity \in cg1} \vFlow[\commodity,\unit,in,\timestep] \nonumber \\
+&\forall \units, \timesteps, cg1, cg2: \pFixRatioInputInputFlow is defined
+\end{align}
+
+\paragraph{Parameter $\pMaxRatioInputInputFlow$: Maximal ratio between multiple input flows}
+\begin{align} \label{eq:maxratioinputinputflow}
+&\sum_{\commodity \in cg2} \vFlow[\commodity,\unit,in,\timestep] \le \pMaxRatioInputInputFlow \sum_{\commodity \in cg1} \vFlow[\commodity,\unit,in,\timestep] \nonumber \\
+&\forall \units, \timesteps, cg1, cg2: \pMaxRatioInputInputFlow is defined
+\end{align}
+
+\paragraph{Parameter $\pFixRatioOutputOutputFlow$: Fixed relationship between multiple output flows}
+\begin{align} \label{eq:fixratiooutputoutputflow}
+&\sum_{\commodity \in cg2} \vFlow[\commodity,\unit,outn,\timestep] = \pFixRatioOutputOutputFlow \sum_{\commodity \in cg1} \vFlow[\commodity,\unit,out,\timestep] \nonumber \\
+&\forall \units, \timesteps, cg1, cg2: \pFixRatioOutputOutputFlow is defined
+\end{align}
+
+\paragraph{Parameter $\pMaxRatioOutputOutputFlow$: Maximal ratio between multiple output flows}
+\begin{align} \label{eq:maxratiooutputoutputflow}
+&\sum_{\commodity \in cg2} \vFlow[\commodity,\unit,outn,\timestep] \le \pMaxRatioOutputOutputFlow \sum_{\commodity \in cg1} \vFlow[\commodity,\unit,out,\timestep] \nonumber \\
+&\forall \units, \timesteps, cg1, cg2: \pMaxRatioOutputOutputFlow is defined
+\end{align}
+
 
 
 The above static relationships represent constraints on the ratios between different commodity flows per unit. Additionally, bounds can be put on the instantaneous or total absolute flows generated by each unit, or even on the instantaneous or total flows from all units together (the latter are no longer technological constraints though).
 
-\subsubsection{Absolute bounds on input and output commodity flows}
+\subsubsection{Absolute bounds on commodity flows}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Different absolute bounds on the flows of a commodity/the commodities within a commodity group can be generated. These bounds can be on the total production (output) of a certain commodity, or on the net production of a certain commodity. In addition, the bounds can be generated for the following dimensions:
+Different absolute bounds on the flows of a commodity/the commodities within a commodity group can be generated. These bounds can be on the total production (output), consumption or on the net production of a certain commodities. In addition, the bounds can be generated for different dimensions:
 \begin{enumerate}
 	\item for a specific unit at a certain moment
 	\item for a specific unit over all time steps
@@ -135,37 +156,89 @@ Different absolute bounds on the flows of a commodity/the commodities within a c
 	\item for all units (accross all regions) over all time steps
 	\item for all units (across all regions), cumulative over different years
 \end{enumerate}
+Each combination would possible require a different parameter and equation (here only for absolute bounds already 27 in total). This could be strongly reduced by using unit groups and commodity groups (preferably facilitated by having default groups such as for all units, for all timesteps, etc.). {\color{red} Temporal emements still need to be included. I think that the bounds could be specified for timestep groups within a year. For multi-year models, cumulative bounds over different years could be imposed as well.}
 
-Each combination would possible require a different parameter and equation (here only for absolute bounds already 18 in total). This could be strongly reduced if we would have default groups (all time steps, all nodes of a certain commodity).
 
-The generic equation could look as follows: 
+ The generic equations constraining the instantaneous production, consumption and net production of commodities respectively then look as follows: 
 
-\begin{align} \label{eq:flowbound}
-&\sum_{\substack{\commodity \in cg, \unit \in ug, \node \in ng: \\ \OutputCommoditiesUnitsNodes}} \vFlow[\commodity,\node,\unit,out,\timestep]  \{\le;=;\ge\} \pFlowBound \quad \forall \commodities, \units, \timesteps
+\paragraph{Parameters $\pFixOutFlowBound$, $\pMaxOutFlowBound$, $\pMinOutFlowBound$: Bound on the instantaneous production:}
+\begin{align} \label{eq:outflowbound}
+&\sum_{\substack{\commodity \in \commoditygroup, \unit \in \unitgroup, \node \in \nodegroup: \\ \OutputCommoditiesUnitsNodes}} \vFlow[\commodity,\node,\unit,out,\timestep]  \{=;\le;\ge\} \{\pFixOutFlowBound;\pMaxOutFlowBound;\pMinOutFlowBound\} \nonumber \\
+&\forall \commoditygroups, \unitgroups, \timesteps : \nonumber \\
+&\{\pFixOutFlowBound;\pMaxOutFlowBound;\pMinOutFlowBound\} specified
+\end{align}
+
+\paragraph{Parameters $\pFixInFlowBound$, $\pMaxInFlowBound$, $\pMinInFlowBound$: Bound on the instantaneous consumption:}
+\begin{align} \label{eq:inflowbound}
+&\sum_{\substack{\commodity \in \commoditygroup, \unit \in \unitgroup, \node \in \nodegroup: \\ \InputCommoditiesUnitsNodes}} \vFlow[\commodity,\node,\unit,in,\timestep]  \{=;\le;\ge\} \{\pFixInFlowBound ; \pMaxInFlowBound ; \pMinInFlowBound\} \nonumber \\
+&\forall \commoditygroups, \unitgroups, \timesteps : \{\pFixInFlowBound ; \pMaxInFlowBound ; \pMinInFlowBound\} specified
+\end{align}
+
+\paragraph{Parameters $\pFixNetFlowBound$, $\pMaxNetFlowBound$, $\pMinNetFlowBound$: Bound on the instantaneous net production:}
+\begin{align} \label{eq:netflowbound}
+&\sum_{\substack{\commodity \in \commoditygroup, \unit \in \unitgroup, \node \in \nodegroup: \\ \OutputCommoditiesUnitsNodes}} \vFlow[\commodity,\node,\unit,out,\timestep] - \sum_{\substack{\commodity \in \commoditygroup, \unit \in \unitgroup, \node \in \nodegroup: \\ \InputCommoditiesUnitsNodes}} \vFlow[\commodity,\node,\unit,in,\timestep]  \nonumber \\
+&\{=;\le;\ge\} \{\pFixNetFlowBound;\pMaxNetFlowBound;\pMinNetFlowBound\} \nonumber \\
+&\forall \commoditygroups, \unitgroups, \timesteps : \{\pFixNetFlowBound;\pMaxNetFlowBound;\pMinNetFlowBound \} specified
+\end{align}
+
+ The generic equations constraining the cumulative production, consumption and net production of commodities respectively then look as follows {\color{red} To be refined once the temporal representation is fixed}: 
+
+\paragraph{Parameters $\pFixCumOutFlowBound$, $\pMaxCumOutFlowBound$, $\pMinCumOutFlowBound$: Bound on the cumulative production:}
+\begin{align} \label{eq:cumoutflowbound}
+&\sum_{\timesteps} \sum_{\substack{\commodity \in \commoditygroup, \unit \in \unitgroup, \node \in \nodegroup: \\ \OutputCommoditiesUnitsNodes}} \vFlow[\commodity,\node,\unit,out,\timestep]  \{=;\le;\ge\} \{\pFixCumOutFlowBound ; \pMaxCumOutFlowBound , \pMinCumOutFlowBound \} \nonumber \\
+&\forall \commoditygroups, \unitgroups: \{\pFixCumOutFlowBound ; \pMaxCumOutFlowBound , \pMinCumOutFlowBound \} specified
+\end{align}
+
+\paragraph{Parameters $\pFixCumInFlowBound$, $\pMaxCumInFlowBound$, $\pMinCumInFlowBound$: Bound on the cumulative consumption:}
+\begin{align} \label{eq:cuminflowbound}
+&\sum_{\timesteps} \sum_{\substack{\commodity \in \commoditygroup, \unit \in \unitgroup, \node \in \nodegroup: \\ \InputCommoditiesUnitsNodes}} \vFlow[\commodity,\node,\unit,in,\timestep]  \{=;\le;\ge\} \{\pFixCumInFlowBound ; \pMaxCumInFlowBound ; \pMinCumInFlowBound \} \nonumber \\
+&\forall \commoditygroups, \unitgroups : \{\pFixCumInFlowBound ; \pMaxCumInFlowBound ; \pMinCumInFlowBound \} specified
+\end{align}
+
+\paragraph{Parameters $\pFixCumNetFlowBound$, $\pMaxCumNetFlowBound$, $\pMinCumNetFlowBound$: Bound on the cumulative net production:}
+\begin{align} \label{eq:cumnetflowbound}
+&\sum_{\timesteps} \sum_{\substack{\commodity \in \commoditygroup, \unit \in \unitgroup, \node \in \nodegroup: \\ \OutputCommoditiesUnitsNodes}} \vFlow[\commodity,\node,\unit,out,\timestep] - \sum_{\timesteps} \sum_{\substack{\commodity \in \commoditygroup, \unit \in \unitgroup, \node \in \nodegroup: \\ \InputCommoditiesUnitsNodes}} \vFlow[\commodity,\node,\unit,in,\timestep]  \nonumber \\
+&\{=;\le;\ge\} \{\pFixCumNetFlowBound; \pMaxCumNetFlowBound; \pMinCumNetFlowBound \} \nonumber \\
+&\forall \commoditygroups, \unitgroups: \{\pFixCumNetFlowBound; \pMaxCumNetFlowBound; \pMinCumNetFlowBound \} specified
 \end{align}
 
 
-\paragraph{Bound on the absolute flows within a commodity group for a specific unit and time step}:
-(Similar to EQ FLOBND in TIMES)
-\begin{align} \label{eq:flowboundgeneric}
-&\sum_{\commodity \in cg} \vFlow[\commodity,\node,\unit,out,\timestep] + \vFlow[\commodity,\node,\unit,in,\timestep]  \{\le;=;\ge\} \pFlowBound \quad \forall \commodities, \units, \timesteps
-\end{align}
 
-\paragraph{Bound on the total (for all units) production/net production of the flows within a commodity group for for a specific unit/time step}:
+\subsubsection{Relative bounds on commodity flows}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-\paragraph{Bound on the share of a certain unit in the total production of a certain commodity}
+\paragraph{Parameters $\pFixProductionShare$, $\pMaxProductionShare$, $\pMinProductionShare$: Bound on the instantaneous production share:}
 (Similar to EQ FLMRK in TIMES)
 \begin{align} \label{eq:productionshare}
-&\sum_{\substack{\commodity \in cg \\ (\commodity,\unit) \in \OutputCommoditiesUnits}} \vFlow[cg,\node,\unit,out,\timestep] \{\le;=;\ge\} \pProductionShare \sum_{\substack{\commodity \in cg \\ (\commodity,\unit) \in \OutputCommoditiesUnits}} \vFlow[\commodity,\node, \unit,out,\timestep] \nonumber \\
-&\quad \forall \commodities, \units : \pProductionShare not null, \forall \timesteps
+&\sum_{\commodity \in \commoditygroup} \sum_{\substack{\unit: \\ \unit \in \unitgroup \\ \OutputCommoditiesUnits}} \vFlow[\commodity,\node,\unit,out,\timestep]
+ \{=;\le;\ge\} \nonumber \\
+&\{\pFixProductionShare ; \pMaxProductionShare ; \pMinProductionShare \} \sum_{\commodity \in \commoditygroup} \sum_{\substack{\units: \\ \OutputCommoditiesUnits}} \vFlow[\commodity,\node, \unit,out,\timestep] \nonumber \\
+&\quad \forall \commoditygroups, \unitgroups, \timesteps : \{\pFixProductionShare ; \pMaxProductionShare ; \pMinProductionShare \} defined
 \end{align}
 
-\paragraph{Bound on the share of a certain unit in the total consumption of a certain commodity}
+\paragraph{Parameters $\pFixConsumptionShare$, $\pMaxConsumptionShare$, $\pMinConsumptionShare$: Bound on the instantaneous consumption share:}
 (Similar to EQ FLMRK in TIMES)
 \begin{align} \label{eq:consumptionshare}
-&\sum_{\substack{\commodity \in cg \\ (\commodity,\unit) \in \InputCommoditiesUnits}} \vFlow[cg,\node,\unit,in,\timestep] \{\le;=;\ge\} \pConsumptionShare \sum_{\substack{\commodity \in cg \\ (\commodity,\unit) \in \InputCommoditiesUnits}} \vFlow[\commodity,\unit,in,\timestep] \nonumber \\
-&\quad \forall \commodities, \units : \pConsumptionShare not null, \forall \timesteps
+&\sum_{\commodity \in \commoditygroup} \sum_{\substack{\unit: \\ \unit \in \unitgroup \\ \InputCommoditiesUnits}} \vFlow[\commodity,\node,\unit,in,\timestep]
+ \{=;\le;\ge\} \nonumber \\
+&\{ \pFixConsumptionShare ; \pMaxConsumptionShare ; \pMinConsumptionShare \} \sum_{\commodity \in \commoditygroup} \sum_{\substack{\units: \\ \InputCommoditiesUnits}} \vFlow[\commodity,\node, \unit,in,\timestep] \nonumber \\
+&\quad \forall \commoditygroups, \unitgroups, \timesteps : \{ \pFixConsumptionShare ; \pMaxConsumptionShare ; \pMinConsumptionShare \} defined
+\end{align}
+
+
+{\color{red}From here: cumulative bounds - to be refined when temporal structure is fixed!}
+\paragraph{Parameters $\pFixCumProductionShare$, $\pMaxCumProductionShare$, $\pMinCumProductionShare$: Bound on the cumulative production share:}
+\begin{align} \label{eq:cumproductionshare}
+&\sum_{\timesteps} \sum_{\commodity \in \commoditygroup} \sum_{\substack{\unit: \\ \unit \in \unitgroup \\ \OutputCommoditiesUnits}} \vFlow[\commodity,\node,\unit,out,\timestep]  \{=;\le;\ge\}  \nonumber \\
+&\{ \pFixCumProductionShare ; \pMaxCumProductionShare ; \pMinCumProductionShare \} \sum_{\timesteps} \sum_{\commodity \in \commoditygroup} \sum_{\substack{\units: \\ \OutputCommoditiesUnits}} \vFlow[\commodity,\node, \unit,out,\timestep] \nonumber \\
+&\quad \forall \commoditygroups, \unitgroups: \{ \pFixCumProductionShare ; \pMaxCumProductionShare ; \pMinCumProductionShare \} defined
+\end{align}
+
+\paragraph{Parameters $\pFixCumConsumptionShare$, $\pMaxCumConsumptionShare$, $\pMinCumConsumptionShare$: Bound on the cumulative consumption share:}
+\begin{align} \label{eq:cumconsumptionshare}
+&\sum_{\timesteps} \sum_{\commodity \in \commoditygroup} \sum_{\substack{\unit: \\ \unit \in \unitgroup \\ \InputCommoditiesUnits}} \vFlow[\commodity,\node,\unit,in,\timestep] \{=;\le;\ge\} \nonumber \\
+&\{ \pFixCumConsumptionShare ; \pMaxCumConsumptionShare ; \pMinCumConsumptionShare \} \sum_{\timesteps} \sum_{\commodity \in \commoditygroup} \sum_{\substack{\units: \\ \InputCommoditiesUnits}} \vFlow[\commodity,\node, \unit,in,\timestep] \nonumber \\
+&\quad \forall \commoditygroups, \unitgroups: \{ \pFixCumConsumptionShare ; \pMaxCumConsumptionShare ; \pMinCumConsumptionShare \} defined
 \end{align}
 
 

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/W32TeX) (preloaded format=pdflatex 2018.3.29)  3 JUL 2018 12:12
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/W32TeX) (preloaded format=pdflatex 2018.3.29)  1 AUG 2018 16:16
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -919,21 +919,56 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 \colb=\dimen266
 \colc=\dimen267
 
-Underfull \hbox (badness 10000) in paragraph at lines 28--28
+Underfull \hbox (badness 10000) in paragraph at lines 30--30
 []|$\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 c; u; n\OT1/cmr/m/n/10 ) \OMS/cmsy/m/n/10
  2
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 29--29
+Underfull \hbox (badness 10000) in paragraph at lines 31--31
 []|$\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 c; u; n\OT1/cmr/m/n/10 ) \OMS/cmsy/m/n/10
  2
+ []
+
+
+Underfull \hbox (badness 1009) in paragraph at lines 64--64
+[]|\OT1/cmr/m/n/10 Equality bound on (sum of) the ab-so-lute
+ []
+
+
+Underfull \hbox (badness 1127) in paragraph at lines 71--71
+\OT1/cmr/m/n/10 the pro-duc-tion of the com-modi-ties within
+ []
+
+
+Underfull \hbox (badness 1127) in paragraph at lines 72--72
+\OT1/cmr/m/n/10 the pro-duc-tion of the com-modi-ties within
+ []
+
+
+Underfull \hbox (badness 1303) in paragraph at lines 89--89
+[]|\OT1/cmr/m/n/10 Maximal ra-tio be-tween out-put com-mod-ity
  []
 
 [2
 
 
-]) [3] (./Sections/Spine_model_formulation.tex
+]
+Underfull \hbox (badness 3492) in paragraph at lines 91--91
+[]|\OT1/cmr/m/n/10 Maximal ra-tio be-tween in-put com-mod-ity
+ []
+
+
+Underfull \hbox (badness 1852) in paragraph at lines 93--93
+[]|\OT1/cmr/m/n/10 Minimal ra-tio be-tween out-put com-mod-ity
+ []
+
+
+Underfull \hbox (badness 1303) in paragraph at lines 94--94
+[]|\OT1/cmr/m/n/10 Maximal ra-tio be-tween out-put com-mod-ity
+ []
+
+[3] [4]) [5] (./Sections/Spine_model_formulation.tex
 LaTeX Font Info:    Try loading font information for OMS+cmr on input line 19.
 
 (c:/texlive/2017/texmf-dist/tex/latex/base/omscmr.fd
@@ -946,46 +981,88 @@ Overfull \hbox (29.86896pt too wide) detected at line 57
 []
  []
 
-[4
+[6
 
-] [5]
-Overfull \hbox (82.29088pt too wide) detected at line 145
+] [7] [8]
+Overfull \hbox (79.50385pt too wide) detected at line 169
 []
  []
 
 
-Overfull \hbox (2.2831pt too wide) detected at line 152
+Overfull \hbox (139.36858pt too wide) detected at line 175
 []
  []
 
 
-Overfull \hbox (77.9465pt too wide) detected at line 162
-[]
- []
-
-[6]
-Overfull \hbox (61.08043pt too wide) detected at line 169
-[]
- []
-
-[7]
-Overfull \hbox (50.01028pt too wide) detected at line 232
+Overfull \hbox (153.97302pt too wide) detected at line 182
 []
  []
 
 
-Overfull \hbox (61.30746pt too wide) detected at line 239
+Overfull \hbox (181.7358pt too wide) detected at line 190
 []
  []
 
 
-Overfull \hbox (6.7481pt too wide) in paragraph at lines 255--256
+Overfull \hbox (157.7518pt too wide) detected at line 196
+[]
+ []
+
+
+Overfull \hbox (141.05804pt too wide) detected at line 203
+[]
+ []
+
+[9]
+Overfull \hbox (177.43234pt too wide) detected at line 217
+[]
+ []
+
+
+Overfull \hbox (202.42088pt too wide) detected at line 226
+[]
+ []
+
+
+Overfull \hbox (10.55637pt too wide) in paragraph at lines 231--231
+ []\OT1/cmr/bx/n/10 Parameters $\OML/cmm/m/it/10 p[]$\OT1/cmr/bx/n/10 , $\OML/c
+mm/m/it/10 p[]$\OT1/cmr/bx/n/10 , $\OML/cmm/m/it/10 p[]$\OT1/cmr/bx/n/10 : Boun
+d
+ []
+
+
+Overfull \hbox (164.51736pt too wide) detected at line 235
+[]
+ []
+
+
+Overfull \hbox (189.5059pt too wide) detected at line 242
+[]
+ []
+
+[10]
+
+LaTeX Warning: Reference `eq:flowbound' on page 11 undefined on input line 254.
+
+
+[11]
+Overfull \hbox (50.01028pt too wide) detected at line 305
+[]
+ []
+
+
+Overfull \hbox (61.30746pt too wide) detected at line 312
+[]
+ []
+
+
+Overfull \hbox (6.7481pt too wide) in paragraph at lines 328--329
 []\OT1/cmr/m/n/10 Certain ramp-rate for-mu-la-tions de-pend-ing on the archetyp
 e ($\OML/cmm/m/it/10 p[]$\OT1/cmr/m/n/10 , $\OML/cmm/m/it/10 p[]$\OT1/cmr/m/n/1
 0 ) 
  []
 
-[8] [9]) (./Sections/Open_issues.tex [10]
+[12] [13]) (./Sections/Open_issues.tex [14]
 (./Sections/Open_issues/exogenous_commodities.tex
 Overfull \hbox (105.89093pt too wide) detected at line 18
 []
@@ -997,10 +1074,19 @@ Overfull \hbox (7.21324pt too wide) in paragraph at lines 34--35
 -mod-ity -> one vari-able $\OML/cmm/m/it/10 v[]$
  []
 
-) [11
+) [15
 
-] (./Sections/Open_issues/reserve_commodities.tex [12]))
-(./Sections/Examples.tex [13] [14
+] (./Sections/Open_issues/reserve_commodities.tex [16]))
+(./Sections/Examples.tex [17]
+
+LaTeX Warning: Reference `eq:ratiooutputoutputflow' on page 18 undefined on inp
+ut line 44.
+
+
+LaTeX Warning: Reference `eq:ratiooutputinputflow' on page 18 undefined on inpu
+t line 44.
+
+[18
 
 ]
 Overfull \hbox (14.63167pt too wide) in paragraph at lines 62--63
@@ -1014,7 +1100,7 @@ Overfull \hbox (8.85828pt too wide) in paragraph at lines 62--63
 d for a spe-cific com-mod-ity/commodity
  []
 
-) [15]
+) [19]
 Package atveryend Info: Empty hook `BeforeClearDocument' on input line 122.
 Package atveryend Info: Empty hook `AfterLastShipout' on input line 122.
  (./SPINE_model_description.aux (./00_nomenclature.aux))
@@ -1022,36 +1108,40 @@ Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 122.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 122.
 Package rerunfilecheck Info: File `SPINE_model_description.out' has not changed
 .
-(rerunfilecheck)             Checksum: 5ED1C93A83D29E0B2AFE567E1EB3DF8A;1744.
+(rerunfilecheck)             Checksum: AB0DB092921C49EAFF5E9777B2A1D117;1821.
+
+
+LaTeX Warning: There were undefined references.
+
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 122.
  ) 
 Here is how much of TeX's memory you used:
- 28457 strings out of 492982
- 680248 string characters out of 6136225
- 912094 words of memory out of 5000000
- 31398 multiletter control sequences out of 15000+600000
- 13393 words of font info for 52 fonts, out of 8000000 for 9000
+ 28572 strings out of 492982
+ 682293 string characters out of 6136225
+ 919094 words of memory out of 5000000
+ 31484 multiletter control sequences out of 15000+600000
+ 14321 words of font info for 55 fonts, out of 8000000 for 9000
  1144 hyphenation exceptions out of 8191
- 74i,13n,128p,1100b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 74i,13n,128p,1240b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
 <c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/tex
 live/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><c:/texlive/2017
-/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2017/texmf-di
-st/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2017/texmf-dist/fonts/
-type1/public/amsfonts/cm/cmmi5.pfb><c:/texlive/2017/texmf-dist/fonts/type1/publ
-ic/amsfonts/cm/cmmi7.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfont
-s/cm/cmr10.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12
-.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb><c:/t
-exlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb><c:/texlive/2017
-/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb><c:/texlive/2017/texmf-dist
-/fonts/type1/public/amsfonts/cm/cmr8.pfb><c:/texlive/2017/texmf-dist/fonts/type
-1/public/amsfonts/cm/cmr9.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/am
-sfonts/cm/cmsy10.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm
-/cmsy5.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb
->
-Output written on SPINE_model_description.pdf (15 pages, 239327 bytes).
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb><c:/texlive/2017/texmf-dis
+t/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2017/texmf-dist/fonts/t
+ype1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2017/texmf-dist/fonts/type1/publ
+ic/amsfonts/cm/cmmi5.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfont
+s/cm/cmmi7.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10
+.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/t
+exlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb><c:/texlive/201
+7/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb><c:/texlive/2017/texmf-dis
+t/fonts/type1/public/amsfonts/cm/cmr7.pfb><c:/texlive/2017/texmf-dist/fonts/typ
+e1/public/amsfonts/cm/cmr8.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmr9.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/
+cmsy10.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb
+><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb>
+Output written on SPINE_model_description.pdf (19 pages, 258060 bytes).
 PDF statistics:
- 364 PDF objects out of 1000 (max. 8388607)
- 327 compressed objects within 4 object streams
- 105 named destinations out of 1000 (max. 500000)
- 189 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 416 PDF objects out of 1000 (max. 8388607)
+ 374 compressed objects within 4 object streams
+ 131 named destinations out of 1000 (max. 500000)
+ 197 words of extra memory for PDF output out of 10000 (max. 10000000)
 

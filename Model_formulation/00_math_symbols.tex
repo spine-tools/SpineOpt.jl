@@ -7,23 +7,56 @@
 \newcommand{\pMinimumDownTime}[1][\unit]{p^{MinimumDownTime}_{#1}}
 \newcommand{\pMinimumUpTime}[1][\unit]{p^{MinimumUpTime}_{#1}}
 \newcommand{\pUnitCapacity}[1][\unit]{p^{UnitCapacity}_{#1}}
-\newcommand{\pMinimumOperatingPoint}[1][\unit,cg,\timestep]{p^{MinimumOperatingPoint}_{#1}}
-\newcommand{\pRatioOutputOutputFlow}[1][\unit,cg21,cg1]{p^{RatioOutputOutputFlow}_{#1}}
-\newcommand{\pConsumptionShare}[1][\unit,cg,\timestep]{p^{ConsumptionShare}_{#1}}
-\newcommand{\pProductionShare}[1][\unit,cg,\timestep]{p^{ProductionShare}_{#1}}
-\newcommand{\pFlowBound}[1][\unit,cg,\timestep]{p^{FlowBound}_{#1}}
-\newcommand{\pRatioInputInputFlow}[1][\unit,cg21,cg1]{p^{RatioInputInputFlow}_{#1}}
-\newcommand{\pRatioOutputInputFlow}[1][\unit,cg21,cg1]{p^{RatioOutputInputFlow}_{#1}}
-\newcommand{\pMaxStartUpPower}[1][\unit,cg]{p^{MaxStartUpPower}_{#1}}
-\newcommand{\pRampRateDown}[1][\unit,cg]{p^{RampRateDown}_{#1}}
-\newcommand{\pRampRateUp}[1][\unit,cg]{p^{RampRateUp}_{#1}}
-\newcommand{\pMaxShutDownPower}[1][\unit,cg]{p^{MaxShutDownPower}_{#1}}
+\newcommand{\pMinimumOperatingPoint}[1][\unit,\commoditygroup,\timestep]{p^{MinimumOperatingPoint}_{#1}}
+\newcommand{\pFixProductionShare}[1][\unitgroup,\commoditygroup,\timestep]{p^{FixProductionShare}_{#1}}
+\newcommand{\pMinCumNetFlowBound}[1][\unitgroup,\commoditygroup]{p^{MinCumNetFlowBound}_{#1}}
+\newcommand{\pMaxCumNetFlowBound}[1][\unitgroup,\commoditygroup]{p^{MaxCumNetFlowBound}_{#1}}
+\newcommand{\pFixCumNetFlowBound}[1][\unitgroup,\commoditygroup]{p^{FixCumNetFlowBound}_{#1}}
+\newcommand{\pFixCumOutFlowBound}[1][\unitgroup,\commoditygroup]{p^{FixCumOutFlowBound}_{#1}}
+\newcommand{\pMaxCumInFlowBound}[1][\unitgroup,\commoditygroup]{p^{MaxCumInFlowBound}_{#1}}
+\newcommand{\pFixCumInFlowBound}[1][\unitgroup,\commoditygroup]{p^{FixCumInFlowBound}_{#1}}
+\newcommand{\pMaxCumOutFlowBound}[1][\unitgroup,\commoditygroup]{p^{MaxCumOutFlowBound}_{#1}}
+\newcommand{\pMinNetFlowBound}[1][\unitgroup,\commoditygroup,\timestep]{p^{MinNetFlowBound}_{#1}}
+\newcommand{\pMinCumInFlowBound}[1][\unitgroup,\commoditygroup]{p^{MinCumInFlowBound}_{#1}}
+\newcommand{\pMinCumOutFlowBound}[1][\unitgroup,\commoditygroup]{p^{MinCumOutFlowBound}_{#1}}
+\newcommand{\pMaxProductionShare}[1][\unitgroup,\commoditygroup,\timestep]{p^{MaxProductionShare}_{#1}}
+\newcommand{\pMinProductionShare}[1][\unitgroup,\commoditygroup,\timestep]{p^{MinProductionShare}_{#1}}
+\newcommand{\pFixConsumptionShare}[1][\unitgroup,\commoditygroup,\timestep]{p^{FixConsumptionShare}_{#1}}
+\newcommand{\pMaxConsumptionShare}[1][\unitgroup,\commoditygroup,\timestep]{p^{MaxConsumptionShare}_{#1}}
+\newcommand{\pMinConsumptionShare}[1][\unitgroup,\commoditygroup,\timestep]{p^{MinConsumptionShare}_{#1}}
+\newcommand{\pFixCumProductionShare}[1][\unitgroup,\commoditygroup]{p^{FixCumProductionShare}_{#1}}
+\newcommand{\pMaxCumProductionShare}[1][\unitgroup,\commoditygroup]{p^{MaxCumProductionShare}_{#1}}
+\newcommand{\pMinCumProductionShare}[1][\unitgroup,\commoditygroup]{p^{MinCumProductionShare}_{#1}}
+\newcommand{\pFixCumConsumptionShare}[1][\unitgroup,\commoditygroup]{p^{FixCumConsumptionShare}_{#1}}
+\newcommand{\pMaxCumConsumptionShare}[1][\unitgroup,\commoditygroup]{p^{MaxCumConsumptionShare}_{#1}}
+\newcommand{\pMinCumConsumptionShare}[1][\unitgroup,\commoditygroup]{p^{MinCumConsumptionShare}_{#1}}
+\newcommand{\pMaxNetFlowBound}[1][\unitgroup,\commoditygroup,\timestep]{p^{MaxNetFlowBound}_{#1}}
+\newcommand{\pFixNetFlowBound}[1][\unitgroup,\commoditygroup,\timestep]{p^{FixNetFlowBound}_{#1}}
+\newcommand{\pMaxInFlowBound}[1][\unitgroup,\commoditygroup,\timestep]{p^{MaxInFlowBound}_{#1}}
+\newcommand{\pFixInFlowBound}[1][\unitgroup,\commoditygroup,\timestep]{p^{FixInFlowBound}_{#1}}
+\newcommand{\pMinOutFlowBound}[1][\unitgroup,\commoditygroup,\timestep]{p^{MinOutFlowBound}_{#1}}
+\newcommand{\pMaxOutFlowBound}[1][\unitgroup,\commoditygroup,\timestep]{p^{MaxOutFlowBound}_{#1}}
+\newcommand{\pFixOutFlowBound}[1][\unitgroup,\commoditygroup,\timestep]{p^{FixOutFlowBound}_{#1}}
+\newcommand{\pMaxRatioOutputOutputFlow}[1][\unit,cg2,cg1]{p^{MaxRatioOutputOutputFlow}_{#1}}
+\newcommand{\pFixRatioOutputOutputFlow}[1][\unit,cg2,cg1]{p^{FixRatioOutputOutputFlow}_{#1}}
+\newcommand{\pMaxRatioInputInputFlow}[1][\unit,cg2,cg1]{p^{MaxRatioInputInputFlow}_{#1}}
+\newcommand{\pFixRatioInputInputFlow}[1][\unit,cg2,cg1]{p^{FixRatioInputInputFlow}_{#1}}
+\newcommand{\pMinRatioOutputInputFlow}[1][\unit,cg\_out,cg\_in]{p^{MinRatioOutputInputFlow}_{#1}}
+\newcommand{\pMaxRatioOutputInputFlow}[1][\unit,cg\_out,cg\_in]{p^{MaxRatioOutputInputFlow}_{#1}}
+\newcommand{\pFixRatioOutputInputFlow}[1][\unit,cg\_out,cg\_in]{p^{FixRatioOutputInputFlow}_{#1}}
+\newcommand{\pMinInFlowBound}[1][\unitgroup,\commoditygroup,\timestep]{p^{MinInFlowBound}_{#1}}
+\newcommand{\pMaxStartUpPower}[1][\unit,\commoditygroup]{p^{MaxStartUpPower}_{#1}}
+\newcommand{\pRampRateDown}[1][\unit,\commoditygroup]{p^{RampRateDown}_{#1}}
+\newcommand{\pRampRateUp}[1][\unit,\commoditygroup]{p^{RampRateUp}_{#1}}
+\newcommand{\pMaxShutDownPower}[1][\unit,\commoditygroup]{p^{MaxShutDownPower}_{#1}}
 \newcommand{\pAF}[1][\unit,\timestep]{p^{AF}_{#1}}
-\newcommand{\commodities}{\commodity \in Commodities}
 \newcommand{\ExogenousCommodities}{\commodity \in ExogenousCommodities}
 \newcommand{\EndogenousCommodities}{\commodity \in EndogenousCommodities}
-\newcommand{\nodes}{\node \in Nodes}
 \newcommand{\CommoditiesNodes}{(\commodity, \node) \in CommoditiesNodes}
+\newcommand{\nodegroups}{\nodegroup \in NodeGroups}
+\newcommand{\nodes}{\node \in Nodes}
+\newcommand{\commoditygroups}{\commoditygroup \in CommodityGroups}
+\newcommand{\commodities}{\commodity \in Commodities}
 \newcommand{\ImportSegments}[1][\commodity,\segment]{ImportSegments_{#1}}
 \newcommand{\segments}{\segment \in Segments}
 \newcommand{\timesteps}{\timestep \in Timesteps}
@@ -33,6 +66,7 @@
 \newcommand{\OutputCommoditiesUnits}{(\commodity, \unit) \in OutputCommoditiesUnits}
 \newcommand{\Cdcg}{(\commodity, \unit) \in Cdcg}
 \newcommand{\units}{\unit \in Units}
+\newcommand{\unitgroups}{\unitgroup \in UnitGroups}
 \newcommand{\vImportCosts}[1][\commodity,\timestep]{v^{ImportCosts}_{#1}}
 \newcommand{\vCapacity}[1][\unit]{v^{Capacity}_{#1}}
 \newcommand{\vFlow}[1][\commodity,\node, \unit,in/out,\timestep]{v^{Flow}_{#1}}
@@ -42,8 +76,11 @@
 \newcommand{\vUnitsAvailable}[1][\unit,\timestep]{v^{UnitsAvailable}_{#1}}
 \newcommand{\vImport}[1][\commodity,\timestep,\segment]{v^{Import}_{#1}}
 \newcommand{\unit}{u}
+\newcommand{\unitgroup}{ug}
 \newcommand{\commodity}{c}
+\newcommand{\commoditygroup}{cg}
 \newcommand{\node}{n}
+\newcommand{\nodegroup}{ng}
 \newcommand{\commodityendo}{c}
 \newcommand{\timestep}{t}
 \newcommand{\segment}{s}

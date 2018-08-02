@@ -34,14 +34,14 @@ The output of the coal-fired power plant (power and upward reserve capacity) is 
 
 \subsubsection{Fuel consumption}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-The fuel consumption can be defined by establishing a relationship between the flow variable for electrical power, and the flow variable for coal. Here, a linear relationship between these flows is assumed (corresponding to a constant efficiency). This relationship can be imposed by Eq.~\eqref{eq:ratiooutputinputflow}. Here, cg2 refers to the electrical power and cg1 refers to coal. The parameter $\pRatioOutputInputFlow[u,ElectricalPower,Coal]$ thus corresponds to the efficiency $\eta$ of the coal-fired power plant. The equation becomes
+The fuel consumption can be defined by establishing a relationship between the flow variable for electrical power, and the flow variable for coal. Here, a linear relationship between these flows is assumed (corresponding to a constant efficiency). This relationship can be imposed by Eq.~\eqref{eq:fixratiooutputinputflow}. Here, cg2 refers to the electrical power and cg1 refers to coal. The parameter $\pFixRatioOutputInputFlow[u,ElectricalPower,Coal]$ thus corresponds to the efficiency $\eta$ of the coal-fired power plant. The equation becomes
 \begin{align}
 \vFlow[ElectricalPower,u,out,t] = \eta \vFlow[Coal,u,in,t] \quad \forall \units, \timesteps
 \end{align}
 
 \subsubsection{GHG emissions}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-The emissions of greenhouse gases can be defined by establishing a relationship between the flow variable for greenhouse gas emissions, and the flow variable for coal\footnote{Note that an alternative option would be to establish a relationship between the flow variable of greenhouse gas emissions and the flow variable for electrical power (via Eq.~\eqref{eq:ratiooutputoutputflow}).}. This relationship can again be imposed by Eq.~\eqref{eq:ratiooutputinputflow}. Here, cg2 refers to the greenhouse gas emissions and cg1 refers to coal. The parameter $\pRatioOutputInputFlow[u,GreenhouseGas,Coal]$ thus corresponds to the emission factor/emission intensity $EF$ of the coal commodity. 
+The emissions of greenhouse gases can be defined by establishing a relationship between the flow variable for greenhouse gas emissions, and the flow variable for coal\footnote{Note that an alternative option would be to establish a relationship between the flow variable of greenhouse gas emissions and the flow variable for electrical power (via Eq.~\eqref{eq:ratiooutputoutputflow}).}. This relationship can again be imposed by Eq.~\eqref{eq:ratiooutputinputflow}. Here, cg2 refers to the greenhouse gas emissions and cg1 refers to coal. The parameter $\pFixRatioOutputInputFlow[u,GreenhouseGas,Coal]$ thus corresponds to the emission factor/emission intensity $EF$ of the coal commodity. 
 \begin{align}
 \vFlow[GreenhouseGas,u,out,t] =  EF \vFlow[Coal,u,in,t] \quad \forall \units, \timesteps
 \end{align}
