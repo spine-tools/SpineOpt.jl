@@ -17,20 +17,23 @@
 \subsection*{Sets}
 \vspace{-1em}
 	\begin{longtable}{p{\cola} p{\colc} >{\small\raggedleft\arraybackslash\itshape}p{\colb}}
-		$\CommoditiesNodes$	& Set of tuples of commodity and node                         	&                \\
 		$\commodities   $	& Set of commodities                                          	&                \\
 		$\ExogenousCommodities$	& Set of exogenous commodities (i.e., not requiring a balance constraint)	&                \\
 		$\EndogenousCommodities$	& Set of endogenous commodities (i.e., requiring a balance constraint)	&                \\
 		$\nodes         $	& Set of nodes                                                	&                \\
+		$\CommoditiesNodes$	& Set of tuples of commodity and node                         	&                \\
 		$\ImportSegments$	& Set of import segments \segment for commodity \commodity    	&                \\
 		$\segments      $	& Set of piecewise linear segments                            	&                \\
 		$\timesteps     $	& Set of timesteps                                            	&                \\
+		$\conbeta       $	& Set of nodes and corresponding binary                       	&                \\
+		$\conalpha      $	& Set of nodes and corresponding binary                       	&                \\
+		$\nodesconnection$	& Set of nodes tuples and corresponding connection            	&                \\
 		$\connections   $	& Set of connections                                          	&                \\
 		$\InputCommoditiesUnitsNodes$	& Set of tuples of unit and input commodity and node          	&                \\
-		$\OutputCommoditiesUnitsNodes$	& Set of tuples of unit, output commodity and node            	&                \\
-		$\InputCommoditiesUnits$	& Set of tuples of unit and input commodity                   	&                \\
-		$\OutputCommoditiesUnits$	& Set of tuples of unit and output commodity                  	&                \\
 		$\Cdcg          $	& Set of commodities of which the sum of the flows are restricted by the capacity of the unit	&                \\
+		$\OutputCommoditiesUnits$	& Set of tuples of unit and output commodity                  	&                \\
+		$\InputCommoditiesUnits$	& Set of tuples of unit and input commodity                   	&                \\
+		$\OutputCommoditiesUnitsNodes$	& Set of tuples of unit, output commodity and node            	&                \\
 		$\units         $	& Set of units/technologies                                   	&                \\
 	\end{longtable}
 
@@ -51,20 +54,21 @@
 
 		$\pDemand       $	& Demand for commodity \commodity in timestep \timestep       	&                \\[0.5em]
 
-		$\pMinimumOperatingPoint$	& Minimum operating point of the unit                         	&                \\
 		$\pMinimumDownTime$	& Minimum time a unit is required to remain offline after shutting down	&                \\
 		$\pMinimumUpTime$	& Minimum time a unit is required to remain online after starting up	&                \\
 		$\pUnitCapacity $	& Capacity of a single unit                                   	&                \\
-		$\pConsumptionShare$	& Bound on the share of the consumption of the commodities within commodity group cg entering or leaving unit u with respect to the total consumption of those commodities	&                \\
+		$\pMinimumOperatingPoint$	& Minimum operating point of the unit                         	&                \\
 		$\pProductionShare$	& Bound on the share of the production of the commodities within commodity group cg entering or leaving unit u with respect to the total production of those commodities	&                \\
 		$\pFlowBound    $	& Bound on (sum of) the absolute flows of commodities within commodity group cg entering or leaving unit u 	&                \\
 		$\pRatioOutputOutputFlow$	& Ratio between output commodity group cg2 and output commodity group cg1	&                \\
 		$\pRatioInputInputFlow$	& Ratio between input commodity group cg2 and input commodity group cg1	&                \\
 		$\pRatioOutputInputFlow$	& Ratio between output commodity group cg2 and input commodity group cg1	&                \\
-		$\pMaxShutDownPower$	& Maximum power in the last time step before a shutdown       	&                \\
+		$\pConsumptionShare$	& Bound on the share of the consumption of the commodities within commodity group cg entering or leaving unit u with respect to the total consumption of those commodities	&                \\
 		$\pMaxStartUpPower$	& Maximum power in first time step after a start-up           	&                \\
+		$\ptranstocap   $	& Conversion factor from transmitted flow to unit of capacity 	&                \\
 		$\pRampRateDown $	& Maximum downward ramp rate                                  	&                \\
 		$\pRampRateUp   $	& Maximum upward ramp rate                                    	&                \\
+		$\pMaxShutDownPower$	& Maximum power in the last time step before a shutdown       	&                \\
 		$\pAF           $	& Availability factor                                         	&                \\[0.5em]
 
 		$\pMaxTransCapa $	& max. possible transmission Capacity                         	&                \\
@@ -77,10 +81,10 @@
 \subsection*{Decision Variables}
 \vspace{-1em}
 	\begin{longtable}{p{\cola} p{\colc} >{\small\raggedleft\arraybackslash\itshape}p{\colb}}
-		$\vTrans        $	& Import by $n_i$ from $n_j$                                  	&                \\
-		$\vTranCapa     $	& Capacity from $n_j$ to $n_i$                                	&                \\
+		$\vTranCapa     $	& Capacity from $n_j$ to $n_i$  ($\geq 0$)                              	&                \\
 		$\be            $	& decision                                                    	&                \\
 		$\al            $	& decision                                                    	&                \\
+		$\vTrans        $	& Import by $n_i$ from $n_j$                                  	&                \\
 		$\de            $	& decision                                                    	&                \\
 		$\ga            $	& decision                                                    	&                \\[0.5em]
 
@@ -89,10 +93,9 @@
 		$\vCapacity     $	& Installed capacity of a certain unit                        	&                \\[0.5em]
 
 		$\vFlow         $	& Commodity flow in/out a certain unit in a given time step   	&                \\
-		$\vUnitsStartingUp$	& Number of units starting up in time step $\timestep$ (coming online in time step $\timestep +1$)	&                \\
 		$\vUnitsShuttingDown$	& Number of units shutting down in time step $\timestep$ (going offline in time step $\timestep +1$)	&                \\
-		$\vUnitsOnline  $	& Number of online units                                      	&                \\
+		$\vUnitsStartingUp$	& Number of units starting up in time step $\timestep$ (coming online in time step $\timestep +1$)	&                \\
 		$\vUnitsAvailable$	& Number of available units                                   	&                \\
+		$\vUnitsOnline  $	& Number of online units                                      	&                \\
 		$\vImport       $	& Import of commodity $\commodity$ in segment $\segment$      	&                \\
 	\end{longtable}
-

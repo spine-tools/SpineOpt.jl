@@ -315,9 +315,10 @@ For each endogenous commodity, a commodity balance constraint is induced. The us
 \subsection{Geographical constraints}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Base case}
-\begin{itemize}
-	\item one connector, two nodes connected
-\end{itemize}
+%\textbf{N}: Network Matrix
+%\textbf{L}: Loss-transfer Matrix
+%\textbf{$v^{Trans}$}: stream of transfers
+
 	\begin{figure}[h!]
 		\centering
 		\input{Geographical_strucutre.pdf_tex}
@@ -325,43 +326,159 @@ For each endogenous commodity, a commodity balance constraint is induced. The us
 		\label{}
 	\end{figure}
 
-\begin{align} \label{eq:transconstraints1}
-	&\vTrans \cdot \ptransloss \geq (-\vTrans[\connection,\node_j,\node_i,t])\\
-	&\vTrans  \geq  \ptransloss[\connection,\node_j,\node_i] \cdot (-\vTrans[\connection,\node_j,\node_i,t])\\
-	&\vTrans \leq \vTranCapa \leq \pMaxTransCapa \\
-	&\vTrans[\connection,\node_j,\node_i,t] \leq \vTranCapa[\connection,\node_j,\node_i,t] \leq \pMaxTransCapa\\
-	&\pDemand[\node_i,t] = \sum \vTrans + \sum \vFlow [\node_i,u,in/out,t]
+\begin{align} \label{eq:transcons}
+	&\vTrans \cdot \ptransloss \geq (-\vTrans[con,\node_j,\node_i,t]) \; \forall (con,n_i,n_j) \\% \; \forall (n_i,n_j) \in N_{pair}\\
+	% &\vTrans  \geq  \ptransloss[\connection,\node_j,\node_i] \cdot (-\vTrans[\connection,\node_j,\node_i,t])\; \forall (n_i,n_j) \;  con \;  to \;  con_i\\
+	&\vTrans \cdot \ptranstocap
+ \leq \vTranCapa \leq \pMaxTransCapa  \; \forall (con,n_i,n_j) \\
+	% &\vTrans[\connection,\node_j,\node_i,t] \leq \vTranCapa[\connection,\node_j,\node_i,t] \leq \pMaxTransCapa\\
+	&\pDemand[\node_i,t] + \sum_{n_j \in (con,n_i,n_j)} \vTrans  = + \sum_{u} \vFlow [\node_i,u,in/out,t]  \; \forall \node_{i}
 \end{align}
+\begin{itemize}
+	\item note that this formulation allows for negativ flows
+	\item However, in a programmatic sense it will probably be usefull to use a Network Matrix \textbf{N} representation to introduce equation 23
+	\item note that $\ptranstocap$ can also be used as a conversion to e.g. a flow rate and therefore limit the commodity flow by its volume flow
+	\item note that equation 25 does not hold for the electrical net (PTDFs are required here)
+\end{itemize}
 \subsubsection{One connector with more than two nodes connected}
 \begin{figure}[h!]
 			\centering
 	\input{Geographical_strucutre2.pdf_tex}
-	\caption{}
+	%\caption{}
 	\label{}
 \end{figure}
-\begin{itemize}
-	\item shared capacity and unidirectional flow:
-\end{itemize}
+
 \begin{align} \label{eq:transconstraints1}
-	&\vTranCapa + \vTranCapa[con,n_k,n_l,t] \leq \al \cdot (\pMaxTransCapa + \pMaxTransCapa[con,n_k,n_l,t])\\
-	&\vTranCapa[con,n_j,n_i,t] + \vTranCapa[con,n_l,n_k,t]  \leq \be \cdot (\pMaxTransCapa[con,n_j,n_i,t]  + \pMaxTransCapa[con,n_l,n_k,t] )\\
+	& \sum_{\conalpha} \vTranCapa \leq \al \cdot \sum_{\conalpha} \pMaxTransCapa  \\
+	& \sum_{\conbeta}  \vTranCapa \leq \be \cdot \sum_{\conbeta}  \pMaxTransCapa\\
 	&\al + \be \leq 1
 \end{align}
 \begin{itemize}
-	\item only one commodity at a time
+	\item the user will have to choose which flows exclude each other or are linked in terms of flow direction
+	\item $\alpha$ \& $\beta$ can either be used
+		\begin{itemize}
+	\item 	to define an unidirectional flow of certain commodities
+	\item to define the exclusivness of certain commodities by prohibiting other commodity flows
+	\end{itemize}
 \end{itemize}
-\begin{align} \label{eq:transconstraints1}
-	&\vTranCapa + \vTranCapa[con,n_j,n_i,t] \leq \al \cdot (\pMaxTransCapa + \pMaxTransCapa[con,n_j,n_i,t])\\
-	&\vTranCapa[con,n_k,n_l,t] + \vTranCapa[con,n_l,n_k,t] \leq \be \cdot (\pMaxTransCapa[con,n_k,n_l,t]  + \pMaxTransCapa[con,n_l,n_k,t])\\
-	&\al + \be \leq 1
-\end{align}
+% \begin{itemize}
+% 	\item only one commodity at a time ({\color{red} this constraint could be applied for more than two flow connections})
+% \end{itemize}
+% \begin{align} \label{eq:transconstraints1}
+% 	&\vTranCapa + \vTranCapa[con,n_j,n_i,t] \leq \al \cdot (\pMaxTransCapa + \pMaxTransCapa[con,n_j,n_i,t])\\
+% 	&\vTranCapa[con,n_k,n_l,t] + \vTranCapa[con,n_l,n_k,t] \leq \be \cdot (\pMaxTransCapa[con,n_k,n_l,t]  + \pMaxTransCapa[con,n_l,n_k,t])\\
+% 	&\al + \be \leq 1
+% \end{align}
+\subsubsection{One connector with more than two nodes connected - shared capacity with possible counterflow}
 \begin{itemize}
-	\item the same commodity but possible counterflow
+	\item shared capacity but possible counterflow (el. supply \& el. reserve)
+\end{itemize}
 	\begin{align} \label{eq:transconstraints1}
-		&\vTranCapa + \vTranCapa[con,n_j,n_i,t] \leq \pMaxTransCapa + \pMaxTransCapa[con,n_j,n_i,t]\\
-		&\vTranCapa[con,n_k,n_l,t] + \vTranCapa[con,n_l,n_k,t] \leq \pMaxTransCapa[con,n_k,n_l,t]  + \pMaxTransCapa[con,n_l,n_k,t]
+		&\sum_{n_i,n_j \in }\vTranCapa \leq \pMaxTransCapa[con,sum]\\  %+ \pMaxTransCapa[con,n_j,n_i,t]\\
+		% &\vTranCapa[con,n_k,n_l,t] + \vTranCapa[con,n_l,n_k,t] \leq \pMaxTransCapa[con,n_k,n_l,t]  + \pMaxTransCapa[con,n_l,n_k,t]
 	\end{align}
+\subsubsection{User defined dependencies (shares of certain flows to be constrained)}
+
+\begin{align} \label{eq:transconstraints1}
+	&\vTranCapa \leq p^{Share}_{con,n_i,n_j} \pMaxTransCapa[con,sum]\\  %+ \pMaxTransCapa[con,n_j,n_i,t]\\
+	% &\vTranCapa[con,n_k,n_l,t] + \vTranCapa[con,n_l,n_k,t] \leq \pMaxTransCapa[con,n_k,n_l,t]  + \pMaxTransCapa[con,n_l,n_k,t]
+\end{align}
+
+\subsection{Network constraints - el. flows}
+\subsubsection{DC formulation}
+%\begin{align}
+%	& v_{n_i} = \mathrm{B}^{bus} \theta\\
+%	& v_{Nodal} = \pDemand + \vFlow [\node_i,u,in/out,t] \\
+%	& \vTrans = \sum_n_{i} \mathrm{PTDF}_{(n_i,n_j),n_i} \cdot v_{n_i}
+%	& FNl,t = ISFl,n PNn,t ∀ l, ∀ t
+%&P T DF N l,n1−n2 = ISFl,n1 − ISFl,n
+%&XnPNn,t = 0 ∀ t \\
+%& FZ = PTDFZ PZ + FZ\\
+%& FZk,t =XzP T DF Zk,z PZz,t + FZ,0z ∀k, ∀ t\\
+%& improved way:\\
+%& ISKY
+%& n,z,t =
+%& P
+%& N,Y
+%& n,t
+%& P
+%& n∈z P
+%& N,Y
+%& n,t
+%& ∀ z, ∀ n ∈ z, ∀ t
+%&
+%\end{align}
+%\begin{itemize}
+%	\item $\mathrm{B}^{bus}$ N-by-N bus admittance matrix
+%	\item $\theta$ N-by-1 vector with nodal voltage angles
+%	\item ISFL: L-by-N matrix with injection shift factors
+%	\item necessary define a reference node
+
+
+%\end{itemize}
+
+\subsection{Open Issues}
+\begin{itemize}
+	\item how would the PTDFs be calculated without having exhaustive data on the network
+	\item as the european union emphasizes the use of a zonal flow-based representation, zonal PTDFs have to be calculated and critical branches are identified. However, this usually depends on historical data which might not be aailable for an artifical energy system
 \end{itemize}
-
-
-capacity conversion factor
+%\begin{itemize}
+%\item {\color{red} issue with current formulation:\\ the formultion doesn't allow simultanously
+%constraining some commodity flows to the same flow direction and
+% at the same time excluding other commodities, as this would result in the multiplication of two decision %variables. }
+% \item {\color{red} REMEMBER THAT capa is a positive (!) variable, is this important? revise equations}%
+  %\end{itemize}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsection{Geographical constraints}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsubsection{Base case}
+% \begin{itemize}
+% 	\item one connector, two nodes connected
+% \end{itemize}
+% 	\begin{figure}[h!]
+% 		\centering
+% 		\input{Geographical_strucutre.pdf_tex}
+% 		\caption{}
+% 		\label{}
+% 	\end{figure}
+%
+% \begin{align} \label{eq:transconstraints1}
+% 	&\vTrans \cdot \ptransloss \geq (-\vTrans[\connection,\node_j,\node_i,t]) \; \forall (n_i,n_j) con to con_i\\
+% 	&\vTrans  \geq  \ptransloss[\connection,\node_j,\node_i] \cdot (-\vTrans[\connection,\node_j,\node_i,t])\\
+% 	&\vTrans \leq \vTranCapa \leq \pMaxTransCapa \\
+% 	&\vTrans[\connection,\node_j,\node_i,t] \leq \vTranCapa[\connection,\node_j,\node_i,t] \leq \pMaxTransCapa\\
+% 	&\pDemand[\node_i,t] = \sum \vTrans + \sum \vFlow [\node_i,u,in/out,t]
+% \end{align}
+% \subsubsection{One connector with more than two nodes connected}
+% \begin{figure}[h!]
+% 			\centering
+% 	\input{Geographical_strucutre2.pdf_tex}
+% 	\caption{}
+% 	\label{}
+% \end{figure}
+% \begin{itemize}
+% 	\item shared capacity and unidirectional flow:
+% \end{itemize}
+% \begin{align} \label{eq:transconstraints1}
+% 	&\vTranCapa + \vTranCapa[con,n_k,n_l,t] \leq \al \cdot (\pMaxTransCapa + \pMaxTransCapa[con,n_k,n_l,t])\\
+% 	&\vTranCapa[con,n_j,n_i,t] + \vTranCapa[con,n_l,n_k,t]  \leq \be \cdot (\pMaxTransCapa[con,n_j,n_i,t]  + \pMaxTransCapa[con,n_l,n_k,t] )\\
+% 	&\al + \be \leq 1
+% \end{align}
+% \begin{itemize}
+% 	\item only one commodity at a time
+% \end{itemize}
+% \begin{align} \label{eq:transconstraints1}
+% 	&\vTranCapa + \vTranCapa[con,n_j,n_i,t] \leq \al \cdot (\pMaxTransCapa + \pMaxTransCapa[con,n_j,n_i,t])\\
+% 	&\vTranCapa[con,n_k,n_l,t] + \vTranCapa[con,n_l,n_k,t] \leq \be \cdot (\pMaxTransCapa[con,n_k,n_l,t]  + \pMaxTransCapa[con,n_l,n_k,t])\\
+% 	&\al + \be \leq 1
+% \end{align}
+% \begin{itemize}
+% 	\item shared capacity but possible counterflow (el. supply \& el. reserve)
+% 	\begin{align} \label{eq:transconstraints1}
+% 		&\vTranCapa + \vTranCapa[con,n_j,n_i,t] \leq \pMaxTransCapa + \pMaxTransCapa[con,n_j,n_i,t]\\
+% 		&\vTranCapa[con,n_k,n_l,t] + \vTranCapa[con,n_l,n_k,t] \leq \pMaxTransCapa[con,n_k,n_l,t]  + \pMaxTransCapa[con,n_l,n_k,t]
+% 	\end{align}
+% \end{itemize}
+%
+%
+% capacity conversion factor

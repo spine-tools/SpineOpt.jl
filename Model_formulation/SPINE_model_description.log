@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6630 64-bit) (preloaded format=pdflatex 2018.6.11)  12 JUL 2018 13:46
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6730 64-bit) (preloaded format=pdflatex 2018.6.11)  2 AUG 2018 08:45
 entering extended mode
 **./SPINE_model_description.tex
 (SPINE_model_description.tex
@@ -26,7 +26,7 @@ File: size10.clo 2014/09/29 v1.4h Standard LaTeX file (size option)
 )
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\latex\geometry\geomet
 ry.sty"
-Package: geometry 2010/09/12 v5.6 Page Geometry
+Package: geometry 2018/04/16 v5.8 Page Geometry
 
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\latex\graphics\keyval
 .sty"
@@ -107,7 +107,7 @@ Package etexcmds Info: Could not find \expanded.
 (etexcmds)             In the latter case, load this package earlier.
 Package: kvsetkeys 2016/05/16 v1.17 Key value parser (HO)
 Package: kvdefinekeys 2016/05/16 v1.4 Define keys (HO)
-Package: pdftexcmds 2018/01/21 v0.26 Utility functions of pdfTeX for LuaTeX (HO
+Package: pdftexcmds 2018/01/30 v0.27 Utility functions of pdfTeX for LuaTeX (HO
 )
 Package pdftexcmds Info: LuaTeX not detected.
 Package pdftexcmds Info: \pdf@primitive is available.
@@ -241,19 +241,21 @@ Package: colortbl 2018/05/02 v1.0c Color table columns (DPC)
 
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\latex\tools\array.sty
 "
-Package: array 2016/10/06 v2.4d Tabular extension package (FMi)
+Package: array 2018/04/30 v2.4h Tabular extension package (FMi)
 \col@sep=\dimen127
+\ar@mcellbox=\box27
 \extrarowheight=\dimen128
 \NC@list=\toks17
 \extratabsurround=\skip44
 \backup@length=\skip45
+\ar@cellbox=\box28
 )
 \everycr=\toks18
 \minrowclearance=\skip46
 )
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\latex\tools\tabularx.
 sty"
-Package: tabularx 2016/02/03 v2.11 `tabularx' package (DPC)
+Package: tabularx 2016/02/03 v2.11b `tabularx' package (DPC)
 \TX@col@width=\dimen129
 \TX@old@table=\dimen130
 \TX@old@col=\dimen131
@@ -338,8 +340,8 @@ LaTeX Info: Redefining \overline on input line 375.
 LaTeX Info: Redefining \ldots on input line 472.
 LaTeX Info: Redefining \dots on input line 475.
 LaTeX Info: Redefining \cdots on input line 596.
-\Mathstrutbox@=\box27
-\strutbox@=\box28
+\Mathstrutbox@=\box29
+\strutbox@=\box30
 \big@size=\dimen138
 LaTeX Font Info:    Redeclaring font encoding OML on input line 712.
 LaTeX Font Info:    Redeclaring font encoding OMS on input line 713.
@@ -408,10 +410,10 @@ Package: longtable 2014/10/28 v4.11 Multi-page Table package (DPC)
 \LTpost=\skip58
 \LTchunksize=\count128
 \LTcapwidth=\dimen146
-\LT@head=\box29
-\LT@firsthead=\box30
-\LT@foot=\box31
-\LT@lastfoot=\box32
+\LT@head=\box31
+\LT@firsthead=\box32
+\LT@foot=\box33
+\LT@lastfoot=\box34
 \LT@cols=\count129
 \LT@rows=\count130
 \c@LT@tables=\count131
@@ -421,7 +423,7 @@ Package: longtable 2014/10/28 v4.11 Multi-page Table package (DPC)
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\latex\eurosym\eurosym
 .sty"
 Package: eurosym 1998/08/06 v1.1 European currency symbol ``Euro''
-\@eurobox=\box33
+\@eurobox=\box35
 )
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\latex\pgf\frontendlay
 er\tikz.sty"
@@ -439,7 +441,7 @@ gfrcs.sty"
 \pgfutil-common-lists.tex"))
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\generic\pgf\utilities
 \pgfutil-latex.def"
-\pgfutil@abb=\box34
+\pgfutil@abb=\box36
 
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\latex\ms\everyshi.sty
 "
@@ -544,7 +546,7 @@ athutil.code.tex")
 athparser.code.tex"
 \pgfmath@dimen=\dimen157
 \pgfmath@count=\count139
-\pgfmath@box=\box35
+\pgfmath@box=\box37
 \pgfmath@toks=\toks33
 \pgfmath@stack@operand=\toks34
 \pgfmath@stack@operation=\toks35
@@ -604,9 +606,9 @@ File: pgfcorepathusage.code.tex 2014/11/02  (rcs-revision 1.24)
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\generic\pgf\basiclaye
 r\pgfcorescopes.code.tex"
 File: pgfcorescopes.code.tex 2015/05/08  (rcs-revision 1.46)
-\pgfpic=\box36
-\pgf@hbox=\box37
-\pgf@layerbox@main=\box38
+\pgfpic=\box38
+\pgf@hbox=\box39
+\pgf@layerbox@main=\box40
 \pgf@picture@serial@count=\count141
 )
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\generic\pgf\basiclaye
@@ -651,7 +653,7 @@ File: pgfcoreimage.code.tex 2013/07/15  (rcs-revision 1.18)
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\generic\pgf\basiclaye
 r\pgfcoreexternal.code.tex"
 File: pgfcoreexternal.code.tex 2014/07/09  (rcs-revision 1.21)
-\pgfexternal@startupbox=\box39
+\pgfexternal@startupbox=\box41
 ))
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\generic\pgf\basiclaye
 r\pgfcorelayers.code.tex"
@@ -668,7 +670,7 @@ File: pgfcorepatterns.code.tex 2013/11/07  (rcs-revision 1.5)
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\generic\pgf\modules\p
 gfmoduleshapes.code.tex"
 File: pgfmoduleshapes.code.tex 2014/03/21  (rcs-revision 1.35)
-\pgfnodeparttextbox=\box40
+\pgfnodeparttextbox=\box42
 )
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\generic\pgf\modules\p
 gfmoduleplot.code.tex"
@@ -721,10 +723,10 @@ File: pgflibraryplothandlers.code.tex 2013/08/31 v3.0.1a (rcs-revision 1.20)
 \tikz@lastysaved=\dimen190
 \tikzleveldistance=\dimen191
 \tikzsiblingdistance=\dimen192
-\tikz@figbox=\box41
-\tikz@figbox@bg=\box42
-\tikz@tempbox=\box43
-\tikz@tempbox@bg=\box44
+\tikz@figbox=\box43
+\tikz@figbox@bg=\box44
+\tikz@tempbox=\box45
+\tikz@tempbox@bg=\box46
 \tikztreelevel=\count144
 \tikznumberofchildren=\count145
 \tikznumberofcurrentchild=\count146
@@ -846,7 +848,7 @@ gfmoduledecorations.code.tex"
 \pgfdecorationsegmentamplitude=\dimen199
 \pgfdecorationsegmentlength=\dimen256
 )
-\tikz@lib@dec@box=\box45
+\tikz@lib@dec@box=\box47
 )
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\generic\pgf\frontendl
 ayer\tikz\libraries\tikzlibrarydecorations.pathmorphing.code.tex"
@@ -875,7 +877,7 @@ File: pgflibraryplotmarks.code.tex 2015/08/03 v3.0.1a (rcs-revision 1.14)
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\generic\pgf\frontendl
 ayer\tikz\libraries\tikzlibraryspy.code.tex"
 File: tikzlibraryspy.code.tex 2011/05/19 v3.0.1a (rcs-revision 1.4)
-\tikz@lib@spybox=\box46
+\tikz@lib@spybox=\box48
 )
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\generic\pgf\frontendl
 ayer\tikz\libraries\tikzlibrarycalc.code.tex"
@@ -905,7 +907,7 @@ Package pgfplots external lib: loading complementary code for your PGF version.
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\generic\pgfplots\oldp
 gfcompatib\pgfplotsoldpgfsupp_pgfcoreexternal.code.tex"
 File: pgfcoreexternal.code.tex 2015/08/29  (rcs-revision 1.22)
-\pgfexternal@startupbox=\box47
+\pgfexternal@startupbox=\box49
 )
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\generic\pgfplots\oldp
 gfcompatib\pgfplotsoldpgfsupp_tikzlibraryexternal.code.tex"
@@ -914,9 +916,6 @@ gfcompatib\pgfplotsoldpgfsupp_tikzexternalshared.code.tex")))
 (00_math_symbols.tex) (SPINE_model_description.aux (00_nomenclature.aux)
 
 LaTeX Warning: Label `' multiply defined.
-
-
-LaTeX Warning: Label `eq:transconstraints1' multiply defined.
 
 
 LaTeX Warning: Label `eq:transconstraints1' multiply defined.
@@ -976,7 +975,7 @@ LaTeX Font Info:    ... okay on input line 80.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-\AtBeginShipoutBox=\box48
+\AtBeginShipoutBox=\box50
 Package hyperref Info: Link coloring OFF on input line 80.
 
 ("C:\Users\u0122387\AppData\Local\Programs\MiKTeX 2.9\tex\latex\hyperref\namere
@@ -1011,7 +1010,7 @@ Package caption Info: End \AtBeginDocument code.
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count161
 \scratchdimen=\dimen263
-\scratchbox=\box49
+\scratchbox=\box51
 \nofMPsegments=\count162
 \nofMParguments=\count163
 \everyMPshowfont=\toks42
@@ -1050,13 +1049,13 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 \colb=\dimen266
 \colc=\dimen267
 
-Underfull \hbox (badness 10000) in paragraph at lines 29--29
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
 []|$\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 c; u; n\OT1/cmr/m/n/10 ) \OMS/cmsy/m/n/10
  2
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 30--30
+Underfull \hbox (badness 10000) in paragraph at lines 36--36
 []|$\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 c; u; n\OT1/cmr/m/n/10 ) \OMS/cmsy/m/n/10
  2
  []
@@ -1117,36 +1116,35 @@ e ($\OML/cmm/m/it/10 p[]$\OT1/cmr/m/n/10 , $\OML/cmm/m/it/10 p[]$\OT1/cmr/m/n/1
  []
 
 [8] [9] (Geographical_strucutre.pdf_tex
-<Geographical_strucutre.pdf, id=242, page=1, 263.43816pt x 58.22536pt>
+<Geographical_strucutre.pdf, id=268, page=1, 263.43816pt x 58.22536pt>
 File: Geographical_strucutre.pdf Graphic file (type pdf)
 <use Geographical_strucutre.pdf, page 1>
 Package pdftex.def Info: Geographical_strucutre.pdf , page1 used on input line 
 56.
 (pdftex.def)             Requested size: 263.43814pt x 58.22519pt.
 ) (Geographical_strucutre2.pdf_tex
-<Geographical_strucutre2.pdf, id=243, page=1, 263.97862pt x 185.43677pt>
+<Geographical_strucutre2.pdf, id=269, page=1, 263.97862pt x 185.43677pt>
 File: Geographical_strucutre2.pdf Graphic file (type pdf)
 <use Geographical_strucutre2.pdf, page 1>
 Package pdftex.def Info: Geographical_strucutre2.pdf , page1 used on input line
  56.
 (pdftex.def)             Requested size: 263.97864pt x 185.44194pt.
-<Geographical_strucutre2.pdf, id=244, page=2, 263.97862pt x 185.43677pt>
+<Geographical_strucutre2.pdf, id=270, page=2, 263.97862pt x 185.43677pt>
 File: Geographical_strucutre2.pdf Graphic file (type pdf)
 <use Geographical_strucutre2.pdf, page 2>
 Package pdftex.def Info: Geographical_strucutre2.pdf , page2 used on input line
  61.
 (pdftex.def)             Requested size: 263.97864pt x 185.44194pt.
 )
-[10 <./Geographical_strucutre.pdf> <./Geographical_strucutre2.pdf
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[10 <./Geographical_strucutre.pdf>]) (Sections/Open_issues.tex [11 <./Geographi
+cal_strucutre2.pdf> <./Geographical_strucutre2.pdf
 
 pdfTeX warning: pdflatex (file ./Geographical_strucutre2.pdf): PDF inclusion: m
 ultiple pdfs with page group included in a single page
-> <./Geographical_strucutre2.pdf
-
-pdfTeX warning: pdflatex (file ./Geographical_strucutre2.pdf): PDF inclusion: m
-ultiple pdfs with page group included in a single page
->]) (Sections/Open_issues.tex [11]
-(Sections/Open_issues/exogenous_commodities.tex
+>] (Sections/Open_issues/exogenous_commodities.tex
 Overfull \hbox (105.89093pt too wide) detected at line 18
 []
  []
@@ -1182,7 +1180,7 @@ Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 122.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 122.
 Package rerunfilecheck Info: File `SPINE_model_description.out' has not changed
 .
-(rerunfilecheck)             Checksum: 92DA42D845DD265966011A96D0974E0D;2020.
+(rerunfilecheck)             Checksum: 410F0C3F468C89A17E60505B349C6042;2524.
 
 
 LaTeX Warning: There were multiply-defined labels.
@@ -1190,10 +1188,10 @@ LaTeX Warning: There were multiply-defined labels.
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 122.
  ) 
 Here is how much of TeX's memory you used:
- 28636 strings out of 493305
- 696324 string characters out of 3128497
- 915938 words of memory out of 3000000
- 31530 multiletter control sequences out of 15000+200000
+ 28667 strings out of 493305
+ 696773 string characters out of 3128497
+ 918381 words of memory out of 3000000
+ 31559 multiletter control sequences out of 15000+200000
  13393 words of font info for 52 fonts, out of 3000000 for 9000
  1144 hyphenation exceptions out of 8191
  78i,17n,136p,1100b,609s stack positions out of 5000i,500n,10000p,200000b,50000s
@@ -1218,9 +1216,9 @@ s/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr9.pfb><C:/Users/u0122387/AppData
 u0122387/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmsy5
 .pfb><C:/Users/u0122387/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/am
 sfonts/cm/cmsy7.pfb>
-Output written on SPINE_model_description.pdf (16 pages, 295986 bytes).
+Output written on SPINE_model_description.pdf (16 pages, 303184 bytes).
 PDF statistics:
- 407 PDF objects out of 1000 (max. 8388607)
- 124 named destinations out of 1000 (max. 500000)
- 228 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 431 PDF objects out of 1000 (max. 8388607)
+ 126 named destinations out of 1000 (max. 500000)
+ 268 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -252,7 +252,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.98994949"
-     inkscape:cx="-102.85382"
+     inkscape:cx="-56.82443"
      inkscape:cy="178.29798"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
@@ -270,7 +270,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -287,12 +287,12 @@
        r="3.037899" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.28600001;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow1Lend-6)"
-       d="M 95.605916,56.986391 H 76.877902"
+       d="M 76.132707,56.986391 H 94.860721"
        id="path4604-3"
        inkscape:connector-curvature="0" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.28577703;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow1Lend-6-4)"
-       d="m 105.14058,57.004135 h 18.72801"
+       d="M 124.23343,57.004135 H 105.50542"
        id="path4604-3-7"
        inkscape:connector-curvature="0" />
     <rect
@@ -351,7 +351,7 @@
          id="tspan1497"
          x="76.154091"
          y="64.931557"
-         style="stroke-width:0.26458332">$\vTranCapa$</tspan></text>
+         style="stroke-width:0.26458332">$\vTrans[con_1,n_i,n_j,t]$</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.05555534px;line-height:1.25;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
@@ -362,7 +362,7 @@
          id="tspan1501"
          x="129.35423"
          y="64.742561"
-         style="stroke-width:0.26458332">$\vTranCapa$</tspan></text>
+         style="stroke-width:0.26458332">$\vTrans[con_1,n_j,n_i,t]$</tspan></text>
     <circle
        style="fill:#face4a;fill-opacity:1;stroke:none;stroke-width:0.45523676;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="path4530-9"
@@ -371,12 +371,12 @@
        r="3.037899" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.28600001;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow1Lend-6-8)"
-       d="M 95.415947,101.6961 H 76.687937"
+       d="m 76.322676,101.6961 h 18.72801"
        id="path4604-3-72"
        inkscape:connector-curvature="0" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.28577703;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow1Lend-6-4-7)"
-       d="m 104.95062,101.71384 h 18.72801"
+       d="M 124.42339,101.71384 H 105.69538"
        id="path4604-3-7-3"
        inkscape:connector-curvature="0" />
     <circle
@@ -395,7 +395,7 @@
          id="tspan1475-75"
          x="72.845818"
          y="95.750633"
-         style="stroke-width:0.26458332">$n_i$</tspan></text>
+         style="stroke-width:0.26458332">$n_k$</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.05555534px;line-height:1.25;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
@@ -406,7 +406,7 @@
          id="tspan1475-7-3"
          x="126.60434"
          y="96.104004"
-         style="stroke-width:0.26458332">$n_j$</tspan></text>
+         style="stroke-width:0.26458332">$n_l$</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.05555534px;line-height:1.25;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
@@ -417,7 +417,7 @@
          id="tspan1497-8"
          x="75.964134"
          y="109.64126"
-         style="stroke-width:0.26458332">$\vTranCapa[n_k,n_l]$</tspan></text>
+         style="stroke-width:0.26458332">$\vTrans[con_1,n_k,n_l,t]$</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.05555534px;line-height:1.25;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
@@ -428,6 +428,17 @@
          id="tspan1501-7"
          x="129.16428"
          y="109.45226"
-         style="stroke-width:0.26458332">$\vTranCapa[n_k,n_l]$</tspan></text>
+         style="stroke-width:0.26458332">$\vTrans[con_1,n_l,n_k,t]$</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.05555534px;line-height:1.25;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="101.18014"
+       y="82.552368"
+       id="text1820"><tspan
+         sodipodi:role="line"
+         id="tspan1818"
+         x="101.18014"
+         y="82.552368"
+         style="stroke-width:0.26458332">$con_1$</tspan></text>
   </g>
 </svg>

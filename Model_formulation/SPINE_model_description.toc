@@ -21,6 +21,11 @@
 \contentsline {subsection}{\numberline {1.4}Geographical constraints}{10}{subsection.1.4}
 \contentsline {subsubsection}{\numberline {1.4.1}Base case}{10}{subsubsection.1.4.1}
 \contentsline {subsubsection}{\numberline {1.4.2}One connector with more than two nodes connected}{10}{subsubsection.1.4.2}
+\contentsline {subsubsection}{\numberline {1.4.3}One connector with more than two nodes connected - shared capacity with possible counterflow}{11}{subsubsection.1.4.3}
+\contentsline {subsubsection}{\numberline {1.4.4}User defined dependencies (shares of certain flows to be constrained)}{11}{subsubsection.1.4.4}
+\contentsline {subsection}{\numberline {1.5}Network constraints - el. flows}{11}{subsection.1.5}
+\contentsline {subsubsection}{\numberline {1.5.1}DC formulation}{11}{subsubsection.1.5.1}
+\contentsline {subsection}{\numberline {1.6}Open Issues}{11}{subsection.1.6}
 \contentsline {section}{\numberline {2}Open issues}{12}{section.2}
 \contentsline {subsection}{\numberline {2.1}On treatment of exogenous commodities}{12}{subsection.2.1}
 \contentsline {paragraph}{Description of the issue:}{12}{section*.19}
