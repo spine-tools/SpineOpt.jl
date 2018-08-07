@@ -198,7 +198,7 @@ function JuMP_object(sdo::SpineDataObject, update_all_datatypes=true)
         json = @from parameter in sdo.parameter_value begin
             @where parameter.parameter_id == parameter_id
             @join object in sdo.object on parameter.object_id equals object.id
-            @let json_value = isna(parameter.json)?Nullable():JSON.parse(get(parameter.json))
+            @let json_value = (isempty(get(parameter.json)) || isna(parameter.json))?Nullable():JSON.parse(get(parameter.json))
             @select get(object.name) => json_value
             @collect Dict{String,Any}
         end
@@ -283,7 +283,6 @@ function SpineData.Spine_object(jfo::Dict)
         # Add relationship
         for (parent_object_name, child_object_name) in jfo[relationship_class_name]
             isa(child_object_name, Array) && continue
-            @show relationship_class_name
             parent_object = filter(x -> x[:class_id] == parent_object_class_id, sdo.object)
             i = findfirst(parent_object[:name], parent_object_name)
             i == 0 && continue
