@@ -43,7 +43,8 @@
 \vspace{-1em}
 	\begin{longtable}{p{\cola} p{\colc} >{\small\raggedleft\arraybackslash\itshape}p{\colb}}
 
-		$\pUnitConvCapToFlow$	& Converting capacity to flow units of the capacity defining commodity group	&                \\[0.5em]
+		$\pUnitConvCapToFlow$	& Converting capacity to flow units of the capacity defining commodity group	&                \\
+		$\pNumberOfUnits$	& Number of Units                                             	&                \\[0.5em]
 
 		$\pImportCost   $	& Cost related to the import of a commodity $\commodity$ within segment $\segment$ 	&                \\[0.5em]
 
@@ -60,14 +61,14 @@
 		$\pFixProductionShare$	& Equality bound on the instantaneous share of the production of the commodities within commodity group \commoditygroup entering or leaving units within unit group \unitgroup with respect to the total production of those commodities	&                \\
 		$\pMinCumNetFlowBound$	& Lower bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
 		$\pMaxCumNetFlowBound$	& Upper bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
-		$\pFixCumNetFlowBound$	& Equality bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
 		$\pFixCumOutFlowBound$	& Equality bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup leaving the units within unit group \unitgroup 	&                \\
+		$\pMinCumInFlowBound$	& Lower bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
 		$\pMaxCumInFlowBound$	& Upper bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
-		$\pFixCumInFlowBound$	& Equality bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
+		$\pMinCumOutFlowBound$	& Lower bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup leaving the units within unit group \unitgroup 	&                \\
 		$\pMaxCumOutFlowBound$	& Upper bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup leaving the units within unit group \unitgroup 	&                \\
 		$\pMinNetFlowBound$	& Lower bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
-		$\pMinCumInFlowBound$	& Lower bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
-		$\pMinCumOutFlowBound$	& Lower bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup leaving the units within unit group \unitgroup 	&                \\
+		$\pFixCumNetFlowBound$	& Equality bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
+		$\pFixCumInFlowBound$	& Equality bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
 		$\pMaxProductionShare$	& Upper bound on the instantaneous share of the production of the commodities within commodity group \commoditygroup entering or leaving units within unit group \unitgroup with respect to the total production of those commodities	&                \\
 		$\pMinProductionShare$	& Lower bound on the instantaneous share of the production of the commodities within commodity group \commoditygroup entering or leaving units within unit group \unitgroup with respect to the total production of those commodities	&                \\
 		$\pFixConsumptionShare$	& Equality bound on the instantaneous share of the consumption of the commodities within commodity group \commoditygroup entering or leaving units within unit group \unitgroup with respect to the total consumption of those commodities	&                \\
@@ -109,7 +110,7 @@
 	\begin{longtable}{p{\cola} p{\colc} >{\small\raggedleft\arraybackslash\itshape}p{\colb}}
 		$\vImportCosts  $	& Costs related to the import of a commodity in a certain time step	&                \\[0.5em]
 
-		$\vCapacity     $	& Installed capacity of a certain unit                        	&                \\[0.5em]
+		$\vNumberOfUnits$	& Number of units                                             	&                \\[0.5em]
 
 		$\vFlow         $	& Commodity flow in/out a certain unit in a given time step   	&                \\
 		$\vUnitsStartingUp$	& Number of units starting up in time step $\timestep$ (coming online in time step $\timestep +1$)	&                \\

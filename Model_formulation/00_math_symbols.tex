@@ -1,24 +1,25 @@
 %!TEX root = SPINE_model_equations.tex
 \newcommand{\pUnitConvCapToFlow}[1][\unit]{p^{UnitConvCapToFlow}_{#1}}
+\newcommand{\pNumberOfUnits}[1][\unit]{p^{NumberOfUnits}_{#1}}
 \newcommand{\pImportCost}[1][\commodity,\segment]{p^{ImportCost}_{#1}}
 \newcommand{\pConversionCost}[1][\unit,\commodity]{p^{ConversionCost}_{#1}}
 \newcommand{\pDeltaT}[1][\timestep]{p^{DeltaT}_{#1}}
 \newcommand{\pDemand}[1][\commodity,\timestep]{p^{Demand}_{#1}}
 \newcommand{\pMinimumDownTime}[1][\unit]{p^{MinimumDownTime}_{#1}}
 \newcommand{\pMinimumUpTime}[1][\unit]{p^{MinimumUpTime}_{#1}}
-\newcommand{\pUnitCapacity}[1][\unit]{p^{UnitCapacity}_{#1}}
+\newcommand{\pUnitCapacity}[1][\unit,\commoditygroup]{p^{UnitCapacity}_{#1}}
 \newcommand{\pMinimumOperatingPoint}[1][\unit,\commoditygroup,\timestep]{p^{MinimumOperatingPoint}_{#1}}
 \newcommand{\pFixProductionShare}[1][\unitgroup,\commoditygroup,\timestep]{p^{FixProductionShare}_{#1}}
 \newcommand{\pMinCumNetFlowBound}[1][\unitgroup,\commoditygroup]{p^{MinCumNetFlowBound}_{#1}}
 \newcommand{\pMaxCumNetFlowBound}[1][\unitgroup,\commoditygroup]{p^{MaxCumNetFlowBound}_{#1}}
-\newcommand{\pFixCumNetFlowBound}[1][\unitgroup,\commoditygroup]{p^{FixCumNetFlowBound}_{#1}}
 \newcommand{\pFixCumOutFlowBound}[1][\unitgroup,\commoditygroup]{p^{FixCumOutFlowBound}_{#1}}
+\newcommand{\pMinCumInFlowBound}[1][\unitgroup,\commoditygroup]{p^{MinCumInFlowBound}_{#1}}
 \newcommand{\pMaxCumInFlowBound}[1][\unitgroup,\commoditygroup]{p^{MaxCumInFlowBound}_{#1}}
-\newcommand{\pFixCumInFlowBound}[1][\unitgroup,\commoditygroup]{p^{FixCumInFlowBound}_{#1}}
+\newcommand{\pMinCumOutFlowBound}[1][\unitgroup,\commoditygroup]{p^{MinCumOutFlowBound}_{#1}}
 \newcommand{\pMaxCumOutFlowBound}[1][\unitgroup,\commoditygroup]{p^{MaxCumOutFlowBound}_{#1}}
 \newcommand{\pMinNetFlowBound}[1][\unitgroup,\commoditygroup,\timestep]{p^{MinNetFlowBound}_{#1}}
-\newcommand{\pMinCumInFlowBound}[1][\unitgroup,\commoditygroup]{p^{MinCumInFlowBound}_{#1}}
-\newcommand{\pMinCumOutFlowBound}[1][\unitgroup,\commoditygroup]{p^{MinCumOutFlowBound}_{#1}}
+\newcommand{\pFixCumNetFlowBound}[1][\unitgroup,\commoditygroup]{p^{FixCumNetFlowBound}_{#1}}
+\newcommand{\pFixCumInFlowBound}[1][\unitgroup,\commoditygroup]{p^{FixCumInFlowBound}_{#1}}
 \newcommand{\pMaxProductionShare}[1][\unitgroup,\commoditygroup,\timestep]{p^{MaxProductionShare}_{#1}}
 \newcommand{\pMinProductionShare}[1][\unitgroup,\commoditygroup,\timestep]{p^{MinProductionShare}_{#1}}
 \newcommand{\pFixConsumptionShare}[1][\unitgroup,\commoditygroup,\timestep]{p^{FixConsumptionShare}_{#1}}
@@ -68,7 +69,7 @@
 \newcommand{\units}{\unit \in Units}
 \newcommand{\unitgroups}{\unitgroup \in UnitGroups}
 \newcommand{\vImportCosts}[1][\commodity,\timestep]{v^{ImportCosts}_{#1}}
-\newcommand{\vCapacity}[1][\unit]{v^{Capacity}_{#1}}
+\newcommand{\vNumberOfUnits}[1][\unit]{v^{NumberOfUnits}_{#1}}
 \newcommand{\vFlow}[1][\commodity,\node, \unit,in/out,\timestep]{v^{Flow}_{#1}}
 \newcommand{\vUnitsStartingUp}[1][\unit,\timestep]{v^{UnitsStartingUp}_{#1}}
 \newcommand{\vUnitsShuttingDown}[1][\unit,\timestep]{v^{UnitsShuttingDown}_{#1}}

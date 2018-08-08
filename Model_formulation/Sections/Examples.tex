@@ -29,7 +29,7 @@ The following sections elaborate on how each of these constraints is/can be impl
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 The output of the coal-fired power plant (power and upward reserve capacity) is restricted by Eq.~\eqref{eq:max_capacity}. For this unit, the capacity defining commodity group (Cdcg) consists of the commodities electrical power and reserve capacity. Furthermore, both capacity and flow variables are in the same units ([MW]) and hence the parameter $\pUnitConvCapToFlow$ equals 1. The equations hence becomes:
 \begin{align}
-\vFlow[ElectricalPower,u,out,t] + \vFlow[UpwardReserves,u,out,t] \le \pAF \vCapacity \quad \forall \units, \timesteps \nonumber
+\vFlow[ElectricalPower,u,out,t] + \vFlow[UpwardReserves,u,out,t] \le \pAF \pUnitCapacity \quad \forall \units, \timesteps \nonumber
 \end{align}
 
 \subsubsection{Fuel consumption}

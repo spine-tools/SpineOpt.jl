@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/W32TeX) (preloaded format=pdflatex 2018.3.29)  1 AUG 2018 16:16
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/W32TeX) (preloaded format=pdflatex 2018.3.29)  6 AUG 2018 16:09
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -936,17 +936,17 @@ Underfull \hbox (badness 1009) in paragraph at lines 64--64
  []
 
 
-Underfull \hbox (badness 1127) in paragraph at lines 71--71
-\OT1/cmr/m/n/10 the pro-duc-tion of the com-modi-ties within
- []
-
-
 Underfull \hbox (badness 1127) in paragraph at lines 72--72
 \OT1/cmr/m/n/10 the pro-duc-tion of the com-modi-ties within
  []
 
 
-Underfull \hbox (badness 1303) in paragraph at lines 89--89
+Underfull \hbox (badness 1127) in paragraph at lines 73--73
+\OT1/cmr/m/n/10 the pro-duc-tion of the com-modi-ties within
+ []
+
+
+Underfull \hbox (badness 1303) in paragraph at lines 90--90
 []|\OT1/cmr/m/n/10 Maximal ra-tio be-tween out-put com-mod-ity
  []
 
@@ -954,17 +954,17 @@ Underfull \hbox (badness 1303) in paragraph at lines 89--89
 
 
 ]
-Underfull \hbox (badness 3492) in paragraph at lines 91--91
+Underfull \hbox (badness 3492) in paragraph at lines 92--92
 []|\OT1/cmr/m/n/10 Maximal ra-tio be-tween in-put com-mod-ity
  []
 
 
-Underfull \hbox (badness 1852) in paragraph at lines 93--93
+Underfull \hbox (badness 1852) in paragraph at lines 94--94
 []|\OT1/cmr/m/n/10 Minimal ra-tio be-tween out-put com-mod-ity
  []
 
 
-Underfull \hbox (badness 1303) in paragraph at lines 94--94
+Underfull \hbox (badness 1303) in paragraph at lines 95--95
 []|\OT1/cmr/m/n/10 Maximal ra-tio be-tween out-put com-mod-ity
  []
 
@@ -984,79 +984,89 @@ Overfull \hbox (29.86896pt too wide) detected at line 57
 [6
 
 ] [7] [8]
-Overfull \hbox (79.50385pt too wide) detected at line 169
+Overfull \hbox (79.50385pt too wide) detected at line 177
 []
  []
 
 
-Overfull \hbox (139.36858pt too wide) detected at line 175
+Overfull \hbox (139.36858pt too wide) detected at line 183
 []
  []
 
 
-Overfull \hbox (153.97302pt too wide) detected at line 182
+Overfull \hbox (153.97302pt too wide) detected at line 190
 []
  []
 
 
-Overfull \hbox (181.7358pt too wide) detected at line 190
+Overfull \hbox (181.7358pt too wide) detected at line 198
 []
  []
 
 
-Overfull \hbox (157.7518pt too wide) detected at line 196
+Overfull \hbox (157.7518pt too wide) detected at line 204
 []
  []
 
 
-Overfull \hbox (141.05804pt too wide) detected at line 203
+Overfull \hbox (141.05804pt too wide) detected at line 211
 []
  []
 
 [9]
-Overfull \hbox (177.43234pt too wide) detected at line 217
+Overfull \hbox (177.43234pt too wide) detected at line 225
 []
  []
 
 
-Overfull \hbox (202.42088pt too wide) detected at line 226
+Overfull \hbox (202.42088pt too wide) detected at line 234
 []
  []
 
 
-Overfull \hbox (10.55637pt too wide) in paragraph at lines 231--231
+Overfull \hbox (10.55637pt too wide) in paragraph at lines 239--239
  []\OT1/cmr/bx/n/10 Parameters $\OML/cmm/m/it/10 p[]$\OT1/cmr/bx/n/10 , $\OML/c
 mm/m/it/10 p[]$\OT1/cmr/bx/n/10 , $\OML/cmm/m/it/10 p[]$\OT1/cmr/bx/n/10 : Boun
 d
  []
 
 
-Overfull \hbox (164.51736pt too wide) detected at line 235
+Overfull \hbox (164.51736pt too wide) detected at line 243
 []
  []
 
 
-Overfull \hbox (189.5059pt too wide) detected at line 242
+Overfull \hbox (189.5059pt too wide) detected at line 250
 []
  []
 
 [10]
 
-LaTeX Warning: Reference `eq:flowbound' on page 11 undefined on input line 254.
+LaTeX Warning: Reference `eq:flowbound' on page 11 undefined on input line 262.
 
 
 [11]
-Overfull \hbox (50.01028pt too wide) detected at line 305
+Overfull \hbox (66.51149pt too wide) detected at line 298
 []
  []
 
 
-Overfull \hbox (61.30746pt too wide) detected at line 312
+Overfull \hbox (77.80867pt too wide) detected at line 303
 []
  []
 
 
-Overfull \hbox (6.7481pt too wide) in paragraph at lines 328--329
+Overfull \hbox (50.01028pt too wide) detected at line 313
+[]
+ []
+
+
+Overfull \hbox (61.30746pt too wide) detected at line 320
+[]
+ []
+
+
+Overfull \hbox (6.7481pt too wide) in paragraph at lines 336--337
 []\OT1/cmr/m/n/10 Certain ramp-rate for-mu-la-tions de-pend-ing on the archetyp
 e ($\OML/cmm/m/it/10 p[]$\OT1/cmr/m/n/10 , $\OML/cmm/m/it/10 p[]$\OT1/cmr/m/n/1
 0 ) 
@@ -1078,6 +1088,10 @@ Overfull \hbox (7.21324pt too wide) in paragraph at lines 34--35
 
 ] (./Sections/Open_issues/reserve_commodities.tex [16]))
 (./Sections/Examples.tex [17]
+Overfull \hbox (0.71202pt too wide) detected at line 33
+[]
+ []
+
 
 LaTeX Warning: Reference `eq:ratiooutputoutputflow' on page 18 undefined on inp
 ut line 44.
@@ -1116,10 +1130,10 @@ LaTeX Warning: There were undefined references.
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 122.
  ) 
 Here is how much of TeX's memory you used:
- 28572 strings out of 492982
- 682293 string characters out of 6136225
+ 28573 strings out of 492982
+ 682321 string characters out of 6136225
  919094 words of memory out of 5000000
- 31484 multiletter control sequences out of 15000+600000
+ 31486 multiletter control sequences out of 15000+600000
  14321 words of font info for 55 fonts, out of 8000000 for 9000
  1144 hyphenation exceptions out of 8191
  74i,13n,128p,1240b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -1138,10 +1152,10 @@ e1/public/amsfonts/cm/cmr8.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/a
 msfonts/cm/cmr9.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/
 cmsy10.pfb><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb
 ><c:/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb>
-Output written on SPINE_model_description.pdf (19 pages, 258060 bytes).
+Output written on SPINE_model_description.pdf (19 pages, 257408 bytes).
 PDF statistics:
- 416 PDF objects out of 1000 (max. 8388607)
- 374 compressed objects within 4 object streams
- 131 named destinations out of 1000 (max. 500000)
+ 414 PDF objects out of 1000 (max. 8388607)
+ 372 compressed objects within 4 object streams
+ 130 named destinations out of 1000 (max. 500000)
  197 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -73,19 +73,27 @@ ProductionCost = \sum_{\timesteps} \Bigg[& \nonumber \\
 \subsubsection{Define unit/technology capacity}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-In a multi-commodity setting, there can be different commodities entering/leaving a certain technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.), emissions, or other commodities (e.g., water, steel). The capacity of the unit must be unambiguously defined based on certain commodity flows (e.g., the capacity of a CHP could be based on the output electricity, the output heat, the sum of both or the input natural gas). Therefore, a group of commodities need to be defined which define the capacity of the unit/technology. This is the so-called 'Capacity defining commodity group' (cdcg)\footnote{In TIMES, this is called the 'Primary commodity group'}, and should be defined by the users (defaults can apply). This capacity thus restricts the flows of the commodities in the Cdcg (similar to TIMES EQ CAPACT).
+In a multi-commodity setting, there can be different commodities entering/leaving a certain technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.), emissions, or other commodities (e.g., water, steel). The capacity of the unit must be unambiguously defined based on certain commodity flows (e.g., the capacity of a CHP could be based on the output electricity, the output heat, the sum of both or the input natural gas). 
 
-% (TIMES EQ ACTFLO).
-% \begin{equation}
-% \act = \sum_{\commodity : \commodity \in Pcg_{\unit}} \flow \UNITCONVFLOWTOACT \quad \forall \quad \units, \timesteps
-% \end{equation}
-
-% \subsubsection{Restrict activity to the available capacity}
 \begin{align} \label{eq:max_capacity}
-&\sum_{\substack{\commodity :  \\ \Cdcg \\ \OutputCommoditiesUnits}} \vFlow[\commodity, \node, \unit, out, \timestep] + \sum_{\substack{\commodity :  \\  \Cdcg \\ \InputCommoditiesUnits}} \vFlow[\commodity, \node, \unit, in, \timestep] \nonumber \\
+&\sum_{\substack{\commodity :  \\ \commodity \in \commoditygroup \\ \OutputCommoditiesUnits}} \vFlow[\commodity, \node, \unit, out, \timestep] + \sum_{\substack{\commodity :  \\  \commodity \in \commoditygroup \\ \InputCommoditiesUnits}} \vFlow[\commodity, \node, \unit, in, \timestep] \nonumber \\
 &  \le \nonumber \\
-&\pAF \pUnitConvCapToFlow \{\vCapacity or \quad \pUnitCapacity\} \quad \forall \quad \units, \timesteps
+&\pAF \pUnitCapacity \{\vNumberOfUnits or \quad \pNumberOfUnits\} \pUnitConvCapToFlow \nonumber \\
+&\forall \quad \timesteps, (\units,\commoditygroups): \pUnitCapacity \text{ is defined}
 \end{align}
+
+
+
+
+
+% {\color{red} DEPRECATED
+% Therefore, a group of commodities need to be defined which define the capacity of the unit/technology. This is the so-called 'Capacity defining commodity group' (cdcg)\footnote{In TIMES, this is called the 'Primary commodity group'}, and should be defined by the users (defaults can apply). This capacity thus restricts the flows of the commodities in the Cdcg (similar to TIMES EQ CAPACT).
+% \begin{align} \label{eq:max_capacity}
+% &\sum_{\substack{\commodity :  \\ \Cdcg \\ \OutputCommoditiesUnits}} \vFlow[\commodity, \node, \unit, out, \timestep] + \sum_{\substack{\commodity :  \\  \Cdcg \\ \InputCommoditiesUnits}} \vFlow[\commodity, \node, \unit, in, \timestep] \nonumber \\
+% &  \le \nonumber \\
+% &\pAF \pUnitConvCapToFlow \{\vCapacity or \quad \pUnitCapacity\} \quad \forall \quad \units, \timesteps
+% \end{align}
+% }
 
 
 
@@ -285,12 +293,12 @@ There are many different possible formulations of ramping constraints. Hence, th
 
 Without commitment variables ({\color{red} Should in principle be based on available rather than total capacity}):
 \begin{align} \label{eq:updwardrampingconstraintwithoutcommitmentvariables}
-&\sum_{\commodity \in cg} \Big( \vFlow[\commodity,\unit,in/out,\timestep+1] - \vFlow \Big) \le \pRampRateUp \vCapacity \pDeltaT \nonumber \\
+&\sum_{\commodity \in \commoditygroup} \Big( \vFlow[\commodity,\unit,in/out,\timestep+1] - \vFlow \Big) \le \pRampRateUp \pUnitCapacity \{\vNumberOfUnits or \quad \pNumberOfUnits\} \pDeltaT \nonumber \\
 &\forall \units, \timesteps
 \end{align}
 
 \begin{align} \label{eq:downdwardrampingconstraintwithoutcommitmentvariables}
-&\sum_{\commodity \in cg} \Big( \vFlow[\commodity,\unit,in/out,\timestep+1] - \vFlow \Big) \le \pRampRateDown \vCapacity \pDeltaT\nonumber \\
+&\sum_{\commodity \in \commoditygroup} \Big( \vFlow[\commodity,\unit,in/out,\timestep+1] - \vFlow \Big) \le \pRampRateDown \pUnitCapacity \{\vNumberOfUnits or \quad \pNumberOfUnits\}\pDeltaT \nonumber \\
 & \forall \units, \timesteps
 \end{align}
 
@@ -331,16 +339,17 @@ Commitment variables will be introduced by the following constraints (with corre
 Additionally, start-up and shut-down variables might need to be introduced for modeling start-up costs, minimum up time and minimum down-time constraints.
 
 Whenever commitment variables are introduced, the capacity constraint (Eq.~\eqref{eq:max_capacity}) needs to be redefined:
-\begin{equation} \label{eq:maximumoperatingpoint}
-\sum_{\commodity : \commodity \in Cdcg_{\unit}} \vFlow \le \vUnitsOnline \pUnitCapacity \quad \forall \quad \units, \timesteps
-\end{equation}
+\begin{align} \label{eq:maximumoperatingpoint}
+&\sum_{\commodity : \commodity \in \commoditygroup} \vFlow \le \vUnitsOnline \pUnitCapacity \nonumber \\
+&\forall \quad \timesteps, (\units, \commoditygroups): \pUnitCapacity \text{ is defined}
+\end{align}
 
 Additionally, the number of online units need to be restricted to the installed and available capacity:
 \begin{equation} \label{eq:maximumonlineunits}
 \vUnitsOnline \le \vUnitsAvailable \quad \forall \quad \units, \timesteps
 \end{equation}
 \begin{equation} \label{eq:availableunits}
-\vUnitsAvailable \pUnitCapacity \le \pAF \vCapacity \quad \forall \quad \units, \timesteps
+\vUnitsAvailable \le \pAF \{\vNumberOfUnits or \quad \pNumberOfUnits\} \quad \forall \quad \units, \timesteps
 \end{equation}
 
 \paragraph{Minimum operating point}
