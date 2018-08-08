@@ -3,3 +3,17 @@
 /Equations/*.fdb_latexmk
 /Equations/*.fls
 /Equations/*.gz
+
+*.aux
+
+*.fdb_latexmk
+
+*.fls
+
+*.log
+
+*.out
+
+*.gz
+
+*.toc

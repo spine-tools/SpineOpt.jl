@@ -4,7 +4,7 @@
 \newcommand{\pImportCost}[1][\commodity,\segment]{p^{ImportCost}_{#1}}
 \newcommand{\pConversionCost}[1][\unit,\commodity]{p^{ConversionCost}_{#1}}
 \newcommand{\pDeltaT}[1][\timestep]{p^{DeltaT}_{#1}}
-\newcommand{\pDemand}[1][\commodity,\timestep]{p^{Demand}_{#1}}
+\newcommand{\pDemand}[1][\node,\timestep]{p^{Demand}_{#1}}
 \newcommand{\pMinimumDownTime}[1][\unit]{p^{MinimumDownTime}_{#1}}
 \newcommand{\pMinimumUpTime}[1][\unit]{p^{MinimumUpTime}_{#1}}
 \newcommand{\pUnitCapacity}[1][\unit,\commoditygroup]{p^{UnitCapacity}_{#1}}
@@ -61,20 +61,32 @@
 \newcommand{\ImportSegments}[1][\commodity,\segment]{ImportSegments_{#1}}
 \newcommand{\segments}{\segment \in Segments}
 \newcommand{\timesteps}{\timestep \in Timesteps}
+\newcommand{\vTranCapa}[1][\connection,\node_i,\node_j,\timestep]{v^{TransCapa}_{#1}}
+\newcommand{\be}[1][\connection,\timestep]{\beta^{Trans}_{#1}}
+\newcommand{\pMaxTransCapa}[1][\connection,\node_i,\node_j]{p^{max.TransCapa}_{#1}}
+\newcommand{\ptransloss}[1][\node_i,\node_j]{p^{loss}_{#1}}
+\newcommand{\al}[1][\connection,\timestep]{\alpha^{Trans}_{#1}}
+\newcommand{\vTrans}[1][\connection,\node_i,\node_j,\timestep]{v^{Trans}_{#1}}
+\newcommand{\de}[1][\connection,\node_i,\node_j,\timestep]{\delta^{Trans}_{#1}}
+\newcommand{\conbeta}{(\node_i,\node_j,\be)}
+\newcommand{\conalpha}{(\node_i,\node_j,\al)}
+\newcommand{\nodesconnection}{(\connection,\node_i,\node_j) \in NodepairConnection}
+\newcommand{\connections}{\connection \in Connections}
 \newcommand{\InputCommoditiesUnitsNodes}{(\commodity, \unit, \node) \in InputCommoditiesUnitsNodes}
-\newcommand{\OutputCommoditiesUnitsNodes}{(\commodity, \unit, \node) \in OutputCommoditiesUnitsNodes}
-\newcommand{\InputCommoditiesUnits}{(\commodity, \unit) \in InputCommoditiesUnits}
-\newcommand{\OutputCommoditiesUnits}{(\commodity, \unit) \in OutputCommoditiesUnits}
 \newcommand{\Cdcg}{(\commodity, \unit) \in Cdcg}
+\newcommand{\OutputCommoditiesUnits}{(\commodity, \unit) \in OutputCommoditiesUnits}
+\newcommand{\InputCommoditiesUnits}{(\commodity, \unit) \in InputCommoditiesUnits}
+\newcommand{\OutputCommoditiesUnitsNodes}{(\commodity, \unit, \node) \in OutputCommoditiesUnitsNodes}
+\newcommand{\ga}[1][\connection,\node_i,\node_j,\timestep]{\gamma^{Trans}_{#1}}
 \newcommand{\units}{\unit \in Units}
 \newcommand{\unitgroups}{\unitgroup \in UnitGroups}
 \newcommand{\vImportCosts}[1][\commodity,\timestep]{v^{ImportCosts}_{#1}}
 \newcommand{\vNumberOfUnits}[1][\unit]{v^{NumberOfUnits}_{#1}}
 \newcommand{\vFlow}[1][\commodity,\node, \unit,in/out,\timestep]{v^{Flow}_{#1}}
-\newcommand{\vUnitsStartingUp}[1][\unit,\timestep]{v^{UnitsStartingUp}_{#1}}
 \newcommand{\vUnitsShuttingDown}[1][\unit,\timestep]{v^{UnitsShuttingDown}_{#1}}
-\newcommand{\vUnitsOnline}[1][\unit,\timestep]{v^{UnitsOnline}_{#1}}
+\newcommand{\vUnitsStartingUp}[1][\unit,\timestep]{v^{UnitsStartingUp}_{#1}}
 \newcommand{\vUnitsAvailable}[1][\unit,\timestep]{v^{UnitsAvailable}_{#1}}
+\newcommand{\vUnitsOnline}[1][\unit,\timestep]{v^{UnitsOnline}_{#1}}
 \newcommand{\vImport}[1][\commodity,\timestep,\segment]{v^{Import}_{#1}}
 \newcommand{\unit}{u}
 \newcommand{\unitgroup}{ug}
@@ -85,3 +97,4 @@
 \newcommand{\commodityendo}{c}
 \newcommand{\timestep}{t}
 \newcommand{\segment}{s}
+\newcommand{\connection}{{con}}
