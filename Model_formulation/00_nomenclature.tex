@@ -18,12 +18,12 @@
 \vspace{-1em}
 	\begin{longtable}{p{\cola} p{\colc} >{\small\raggedleft\arraybackslash\itshape}p{\colb}}
 		$\ExogenousCommodities$	& Set of exogenous commodities (i.e., not requiring a balance constraint)	&                \\
-		$\EndogenousCommodities$	& Set of endogenous commodities (i.e., requiring a balance constraint)	&                \\
-		$\CommoditiesNodes$	& Set of tuples of commodity and node                         	&                \\
-		$\nodegroups    $	& Set of node groups                                          	&                \\
-		$\nodes         $	& Set of nodes                                                	&                \\
-		$\commoditygroups$	& Set of commodity groups                                     	&                \\
 		$\commodities   $	& Set of commodities                                          	&                \\
+		$\EndogenousCommodities$	& Set of endogenous commodities (i.e., requiring a balance constraint)	&                \\
+		$\commoditygroups$	& Set of commodity groups                                     	&                \\
+		$\nodes         $	& Set of nodes                                                	&                \\
+		$\nodegroups    $	& Set of node groups                                          	&                \\
+		$\CommoditiesNodes$	& Set of tuples of commodity and node                         	&                \\
 		$\ImportSegments$	& Set of import segments \segment for commodity \commodity    	&                \\
 		$\segments      $	& Set of piecewise linear segments                            	&                \\
 		$\timesteps     $	& Set of timesteps                                            	&                \\
@@ -32,12 +32,12 @@
 		$\nodesconnection$	& Set of nodes tuples and corresponding connection            	&                \\
 		$\connections   $	& Set of connections                                          	&                \\
 		$\InputCommoditiesUnitsNodes$	& Set of tuples of unit and input commodity and node          	&                \\
+		$\OutputCommoditiesUnitsNodes$	& Set of tuples of unit, output commodity and node            	&                \\
 		$\Cdcg          $	& Set of commodities of which the sum of the flows are restricted by the capacity of the unit	&                \\
 		$\OutputCommoditiesUnits$	& Set of tuples of unit and output commodity                  	&                \\
 		$\InputCommoditiesUnits$	& Set of tuples of unit and input commodity                   	&                \\
-		$\OutputCommoditiesUnitsNodes$	& Set of tuples of unit, output commodity and node            	&                \\
-		$\units         $	& Set of units/technologies                                   	&                \\
 		$\unitgroups    $	& Set of groups of units/technologies                         	&                \\
+		$\units         $	& Set of units/technologies                                   	&                \\
 	\end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -47,8 +47,8 @@
 \vspace{-1em}
 	\begin{longtable}{p{\cola} p{\colc} >{\small\raggedleft\arraybackslash\itshape}p{\colb}}
 
-		$\pUnitConvCapToFlow$	& Converting capacity to flow units of the capacity defining commodity group	&                \\
-		$\pNumberOfUnits$	& Number of Units                                             	&                \\[0.5em]
+		$\pNumberOfUnits$	& Number of Units                                             	&                \\
+		$\pUnitConvCapToFlow$	& Converting capacity to flow units of the capacity defining commodity group	&                \\[0.5em]
 
 		$\pImportCost   $	& Cost related to the import of a commodity $\commodity$ within segment $\segment$ 	&                \\[0.5em]
 
@@ -62,19 +62,20 @@
 		$\pMinimumUpTime$	& Minimum time a unit is required to remain online after starting up	&                \\
 		$\pUnitCapacity $	& Capacity of a single unit                                   	&                \\
 		$\pMinimumOperatingPoint$	& Minimum operating point of the unit                         	&                \\
-<<<<<<< HEAD
-		$\pFixProductionShare$	& Equality bound on the instantaneous share of the production of the commodities within commodity group \commoditygroup entering or leaving units within unit group \unitgroup with respect to the total production of those commodities	&                \\
-		$\pMinCumNetFlowBound$	& Lower bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
-		$\pMaxCumNetFlowBound$	& Upper bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
-		$\pFixCumOutFlowBound$	& Equality bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup leaving the units within unit group \unitgroup 	&                \\
-		$\pMinCumInFlowBound$	& Lower bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
-		$\pMaxCumInFlowBound$	& Upper bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
-		$\pMinCumOutFlowBound$	& Lower bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup leaving the units within unit group \unitgroup 	&                \\
-		$\pMaxCumOutFlowBound$	& Upper bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup leaving the units within unit group \unitgroup 	&                \\
-		$\pMinNetFlowBound$	& Lower bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
 		$\pFixCumNetFlowBound$	& Equality bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
+		$\pMinCumInFlowBound$	& Lower bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
+		$\pMinCumOutFlowBound$	& Lower bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup leaving the units within unit group \unitgroup 	&                \\
 		$\pFixCumInFlowBound$	& Equality bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
+		$\pFixCumOutFlowBound$	& Equality bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup leaving the units within unit group \unitgroup 	&                \\
+		$\pMinNetFlowBound$	& Lower bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
+		$\pMaxNetFlowBound$	& Upper bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
+		$\pFixNetFlowBound$	& Equality bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
+		$\pMaxCumInFlowBound$	& Upper bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
+		$\pMaxCumOutFlowBound$	& Upper bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup leaving the units within unit group \unitgroup 	&                \\
 		$\pMaxProductionShare$	& Upper bound on the instantaneous share of the production of the commodities within commodity group \commoditygroup entering or leaving units within unit group \unitgroup with respect to the total production of those commodities	&                \\
+		$\pMinCumNetFlowBound$	& Lower bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
+		$\pFixProductionShare$	& Equality bound on the instantaneous share of the production of the commodities within commodity group \commoditygroup entering or leaving units within unit group \unitgroup with respect to the total production of those commodities	&                \\
+		$\pMinInFlowBound$	& Lower bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
 		$\pMinProductionShare$	& Lower bound on the instantaneous share of the production of the commodities within commodity group \commoditygroup entering or leaving units within unit group \unitgroup with respect to the total production of those commodities	&                \\
 		$\pFixConsumptionShare$	& Equality bound on the instantaneous share of the consumption of the commodities within commodity group \commoditygroup entering or leaving units within unit group \unitgroup with respect to the total consumption of those commodities	&                \\
 		$\pMaxConsumptionShare$	& Upper bound on the instantaneous share of the consumption of the commodities within commodity group \commoditygroup entering or leaving units within unit group \unitgroup with respect to the total consumption of those commodities	&                \\
@@ -85,12 +86,10 @@
 		$\pFixCumConsumptionShare$	& Equality bound on the overall share of the consumption of the commodities within commodity group \commoditygroup entering or leaving units within unit group \unitgroup with respect to the total consumption of those commodities	&                \\
 		$\pMaxCumConsumptionShare$	& Upper bound on the overall share of the consumption of the commodities within commodity group \commoditygroup entering or leaving units within unit group \unitgroup with respect to the total consumption of those commodities	&                \\
 		$\pMinCumConsumptionShare$	& Lower bound on the overall share of the consumption of the commodities within commodity group \commoditygroup entering or leaving units within unit group \unitgroup with respect to the total consumption of those commodities	&                \\
-		$\pMaxNetFlowBound$	& Upper bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
-		$\pFixNetFlowBound$	& Equality bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
+		$\pMaxCumNetFlowBound$	& Upper bound on (sum of) the net flows of commodities within commodity group \commoditygroup entering and leaving the units within unit group \unitgroup 	&                \\
 		$\pMaxInFlowBound$	& Upper bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
-		$\pFixInFlowBound$	& Equality bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
-		$\pMinOutFlowBound$	& Lower bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup leaving the units within unit group \unitgroup 	&                \\
 		$\pMaxOutFlowBound$	& Upper bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup leaving the units within unit group \unitgroup 	&                \\
+		$\pMinOutFlowBound$	& Lower bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup leaving the units within unit group \unitgroup 	&                \\
 		$\pFixOutFlowBound$	& Fixed bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup leaving the units within unit group \unitgroup 	&                \\
 		$\pMaxRatioOutputOutputFlow$	& Maximal ratio between output commodity group cg2 and output commodity group cg1	&                \\
 		$\pFixRatioOutputOutputFlow$	& Fixed ratio between output commodity group cg2 and output commodity group cg1	&                \\
@@ -99,24 +98,16 @@
 		$\pMinRatioOutputInputFlow$	& Minimal ratio between output commodity group cg2 and input commodity group cg1	&                \\
 		$\pMaxRatioOutputInputFlow$	& Maximal ratio between output commodity group cg2 and input commodity group cg1	&                \\
 		$\pFixRatioOutputInputFlow$	& Fixed ratio between output commodity group cg2 and input commodity group cg1	&                \\
-		$\pMinInFlowBound$	& Lower bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
-=======
-		$\pProductionShare$	& Bound on the share of the production of the commodities within commodity group cg entering or leaving unit u with respect to the total production of those commodities	&                \\
-		$\pFlowBound    $	& Bound on (sum of) the absolute flows of commodities within commodity group cg entering or leaving unit u 	&                \\
-		$\pRatioOutputOutputFlow$	& Ratio between output commodity group cg2 and output commodity group cg1	&                \\
-		$\pRatioInputInputFlow$	& Ratio between input commodity group cg2 and input commodity group cg1	&                \\
-		$\pRatioOutputInputFlow$	& Ratio between output commodity group cg2 and input commodity group cg1	&                \\
-		$\pConsumptionShare$	& Bound on the share of the consumption of the commodities within commodity group cg entering or leaving unit u with respect to the total consumption of those commodities	&                \\
->>>>>>> model_formulation_dev_Maren
-		$\pMaxStartUpPower$	& Maximum power in first time step after a start-up           	&                \\
+		$\pFixInFlowBound$	& Equality bound on (sum of) the absolute flows of commodities within commodity group \commoditygroup entering the units within unit group \unitgroup 	&                \\
 		$\ptranstocap   $	& Conversion factor from transmitted flow to unit of capacity 	&                \\
-		$\pRampRateDown $	& Maximum downward ramp rate                                  	&                \\
-		$\pRampRateUp   $	& Maximum upward ramp rate                                    	&                \\
 		$\pMaxShutDownPower$	& Maximum power in the last time step before a shutdown       	&                \\
+		$\pRampRateDown $	& Maximum downward ramp rate                                  	&                \\
+		$\pMaxStartUpPower$	& Maximum power in first time step after a start-up           	&                \\
+		$\pRampRateUp   $	& Maximum upward ramp rate                                    	&                \\
 		$\pAF           $	& Availability factor                                         	&                \\[0.5em]
 
-		$\pMaxTransCapa $	& max. possible transmission Capacity                         	&                \\
 		$\ptransloss    $	& losses through transmission $n_i$ to $n_j$                  	&                \\
+		$\pMaxTransCapa $	& max. possible transmission Capacity                         	&                \\
 	\end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -125,10 +116,10 @@
 \subsection*{Decision Variables}
 \vspace{-1em}
 	\begin{longtable}{p{\cola} p{\colc} >{\small\raggedleft\arraybackslash\itshape}p{\colb}}
-		$\vTranCapa     $	& Capacity from $n_j$ to $n_i$  ($\geq 0$)                              	&                \\
+		$\vTrans        $	& Import by $n_i$ from $n_j$                                  	&                \\
 		$\be            $	& decision                                                    	&                \\
 		$\al            $	& decision                                                    	&                \\
-		$\vTrans        $	& Import by $n_i$ from $n_j$                                  	&                \\
+		$\vTranCapa     $	& Capacity from $n_j$ to $n_i$                                	&                \\
 		$\de            $	& decision                                                    	&                \\
 		$\ga            $	& decision                                                    	&                \\[0.5em]
 
@@ -137,9 +128,10 @@
 		$\vNumberOfUnits$	& Number of units                                             	&                \\[0.5em]
 
 		$\vFlow         $	& Commodity flow in/out a certain unit in a given time step   	&                \\
-		$\vUnitsShuttingDown$	& Number of units shutting down in time step $\timestep$ (going offline in time step $\timestep +1$)	&                \\
+		$\vUnitsOnline  $	& Number of online units                                      	&                \\
 		$\vUnitsStartingUp$	& Number of units starting up in time step $\timestep$ (coming online in time step $\timestep +1$)	&                \\
 		$\vUnitsAvailable$	& Number of available units                                   	&                \\
-		$\vUnitsOnline  $	& Number of online units                                      	&                \\
+		$\vUnitsShuttingDown$	& Number of units shutting down in time step $\timestep$ (going offline in time step $\timestep +1$)	&                \\
 		$\vImport       $	& Import of commodity $\commodity$ in segment $\segment$      	&                \\
 	\end{longtable}
+
