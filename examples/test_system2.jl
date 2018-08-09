@@ -1,7 +1,8 @@
 #= for now this is the main script from which the archetypes are created and the corresponding variables and constraints are called.
 Moreover, the model is solved =#
-
+using ASTinterpreter2
 #initializing required packages
+push!(LOAD_PATH, joinpath(@__DIR__,"..","src"))
 using SpineModel
 using SQLite
 using JuMP

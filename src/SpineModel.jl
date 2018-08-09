@@ -11,6 +11,8 @@ export objective_minimize_production_cost
 export constraint_use_of_capacity
 export constraint_efficiency_definition
 export constraint_commodity_balance
+export find_nodes
+export get_all_connection_node_pairs
 
 using SpineData
 using Missings
@@ -28,6 +30,6 @@ include("helpers.jl")
 include("data_io/Spine.jl")
 include("data_io/util.jl")
 include("data_io/other_formats.jl")
-include("equations/core.jl")
+include("core.jl")
 
 end
