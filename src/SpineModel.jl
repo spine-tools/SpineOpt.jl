@@ -12,6 +12,7 @@ export constraint_use_of_capacity
 export constraint_efficiency_definition
 export constraint_commodity_balance
 export find_nodes
+export find_connections
 export get_all_connection_node_pairs
 
 using SpineData

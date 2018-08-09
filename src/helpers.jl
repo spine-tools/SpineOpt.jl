@@ -63,6 +63,34 @@ function find_nodes(con, jfo, add_permutation=true,rel_node_connection = "NodeCo
     return nodepairs
 end
 
+function find_connections(node, jfo, add_permutation = false, rel_node_connection = "NodeConnectionRelationship")
+    """
+    find all connection objects connected to the given node "node"
+        node: string
+        jfo:
+        rel_node_connection: string, relationship class name
+        return: list of connections list of connection lists [["con1","n1", "n2"], ["con2","n1", "n4"],...]
+    """
+    rels = jfo[rel_node_connection]
+    nodecons=[p for p in rels if p[1] == node]
+    list_of_pairs=[]
+    if add_permutation
+        for p in nodecons
+            for con in p.second
+                push!(list_of_pairs, [con, rels[con][1],rels[con][2]])
+                push!(list_of_pairs, [con, rels[con][2],rels[con][1]])
+            end
+        end
+    else
+        for p in nodecons
+            for con in p.second
+                push!(list_of_pairs, [con, rels[con][1],rels[con][2]])
+            end
+        end
+    end
+    return list_of_pairs
+end
+
 function get_all_connection_node_pairs(jfo, add_permutation=false)
     """"
     returns all pairs of nodes which are connected through a connections
