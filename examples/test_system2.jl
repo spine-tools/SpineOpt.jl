@@ -22,8 +22,8 @@ time_discretisation = jfo["time_discretisation"]["timer"]
 
 ## model:
 m = Model(solver = ClpSolver())
-flow = variable_flow(m,number_of_timesteps)
-trans = variable_trans(m,number_of_timesteps)
+flow = flow(m)
+trans = trans(m)
 
 ## objective function
 obj_minimizecosts()

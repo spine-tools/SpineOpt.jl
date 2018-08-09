@@ -7,7 +7,7 @@ function constraint_commodity_balance(m::Model, flow)
 end
 
 ## helper to find all connection connected to a node
-for n in node()
-    demand(n) + sum(jfo["NodeConnectionRelationship"][n],trans) = sum(,flow)
-    jfo["NodeConnectionRelationship"][n]
-end
+# for n in node()
+#     demand(n) + sum(jfo["NodeConnectionRelationship"][n],trans) = sum(,flow)
+#     jfo["NodeConnectionRelationship"][n]
+# end

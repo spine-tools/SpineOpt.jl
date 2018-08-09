@@ -100,7 +100,7 @@ function get_all_connection_node_pairs(jfo, add_permutation=false)
     """
     list_of_pairs=[]
     for c in connection()
-        list_of_pairs=vcat(list_of_pairs, [vcat(c,p) for p in find_con_node(c, jfo, add_permutation)])
+        list_of_pairs=vcat(list_of_pairs, [vcat(c,p) for p in find_nodes(c, jfo, add_permutation)])
     end
     return list_of_pairs
 end

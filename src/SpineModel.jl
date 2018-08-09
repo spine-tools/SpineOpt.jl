@@ -31,6 +31,16 @@ include("helpers.jl")
 include("data_io/Spine.jl")
 include("data_io/util.jl")
 include("data_io/other_formats.jl")
-include("core.jl")
+#include("core.jl")
+include("constraints/capacity.jl")
+include("constraints/commodity_balance.jl")
+include("constraints/outinratio")
+include("constraints/transcapa")
+include("constraints/transloss")
+include("objective/minimize_production_cost")
+include("variables/flow")
+include("variables/trans")
+
+
 
 end

@@ -1,4 +1,4 @@
-function objective_minimize_production_cost(m::Model, flow,time)
+function minimize_production_cost(m::Model, flow,time)
     production_cost = zero(AffExpr)
     for t=1:length(time)
         for u in unit()
