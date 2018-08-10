@@ -6,11 +6,12 @@ export @JuMPout, @JuMPout_suffix, @JuMPout_with_backup, @JuMPin
 
 # equations export
 export linear_JuMP_model
-export variable_flow
-export objective_minimize_production_cost
-export constraint_use_of_capacity
+export flow
+export trans
+export minimize_production_cost
+export capacity
 export constraint_efficiency_definition
-export constraint_commodity_balance
+export commodity_balance
 export find_nodes
 export find_connections
 export get_all_connection_node_pairs
@@ -34,12 +35,12 @@ include("data_io/other_formats.jl")
 #include("core.jl")
 include("constraints/capacity.jl")
 include("constraints/commodity_balance.jl")
-include("constraints/outinratio")
-include("constraints/transcapa")
-include("constraints/transloss")
-include("objective/minimize_production_cost")
-include("variables/flow")
-include("variables/trans")
+include("constraints/outinratio.jl")
+#include("constraints/transcapa.jl")
+#include("constraints/transloss.jl")
+include("objective/minimize_production_cost.jl")
+include("variables/flow.jl")
+include("variables/trans.jl")
 
 
 

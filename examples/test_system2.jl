@@ -14,41 +14,44 @@ sdo=SpineData.Spine_object(db)
 jfo = JuMP_object(sdo)
  JuMP_all_out(db)
 
-##
+
+
 
 number_of_timesteps = jfo["number_of_timesteps"]["timer"]
 time_discretisation = jfo["time_discretisation"]["timer"]
 # was macht das?
 
+
 ## model:
 m = Model(solver = ClpSolver())
 flow = flow(m)
-trans = trans(m)
+trans =trans(m,jfo,number_of_timesteps)
 
 ## objective function
-obj_minimizecosts()
+minimize_production_cost(m,flow,number_of_timesteps)
 
 ## Technological constraints
 # unit capacity
-constraint_capacity(m,flow) #define input vars, see how manuek did
+capacity(m,flow,number_of_timesteps) #define input vars, see how manuek did
 # relationship output and input flows
-constraint_outinratio(m,flow)
+##
+outinratio(m,flow)
 # needed: set of "conventional units"
 # possibly split up in conventional and complex power plants (not really needed)
 
 # transmission losses
-constraint_transloss(m,trans)
+transloss(m,trans)
 # transmission capacity
-constraint_transcapa(m,trans)
+transcapa(m,trans)
 # needed: set of transmission units
 
 ## set of transmissions and actual units needed, differentiation "for all ... connected to"
 # energy balance / commodity balance
-constraint_commodity_balance(m,flow,trans)
+commodity_balance(m,flow,trans)
 
 ## absolute bounds on commodities
 # p(maxxuminflowbound)_ug1,Gas = 1e8 (unit group ug1 is chp and gasplant)
-constraint_absolutebounds(m,flow)
+absolutebounds(m,flow)
 # needed: set/group of unitgroup CHP and Gasplant
 
 status = solve(m)
