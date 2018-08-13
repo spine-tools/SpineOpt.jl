@@ -1,6 +1,6 @@
-function constraint_outinratio(m::Model, flow)
-    @constraint(m, [con in connection() t=1:number_of_timestept,  !isnull(ratio_output_input_flow(u))],
-        + trans[u, n, t] *
-        == ratio_output_input_flow(u) * sum(flow[c, u, "in", t] for c in unit_input_commodity(u))
+function transcapa(m::Model,trans,number_of_timesteps,jfo)
+    @constraint(m, trans[c in connection(), i in node(),j in node(), t=1:number_of_timesteps; [c,i,j] in get_all_connection_node_pairs(jfo,true)],
+        + (trans[c,i,j,t])
+        <= TransCapacity_a("ElectricityLine1")
     )
 end
