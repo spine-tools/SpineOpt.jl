@@ -15,44 +15,42 @@ jfo = JuMP_object(sdo)
  JuMP_all_out(db)
 
 
-
-
 number_of_timesteps = jfo["number_of_timesteps"]["timer"]
 time_discretisation = jfo["time_discretisation"]["timer"]
 # was macht das?
 
-
-## model:
+# model:
 m = Model(solver = ClpSolver())
 flow = flow(m)
-trans =trans(m,jfo,number_of_timesteps)
+trans =trans(m,number_of_timesteps,jfo)
 
-## objective function
+# objective function
 minimize_production_cost(m,flow,number_of_timesteps)
 
-## Technological constraints
+# Technological constraints
 # unit capacity
 capacity(m,flow,number_of_timesteps) #define input vars, see how manuek did
 # relationship output and input flows
-##
-outinratio(m,flow)
+#
+outinratio(m,flow,number_of_timesteps)
 # needed: set of "conventional units"
 # possibly split up in conventional and complex power plants (not really needed)
-
+#
 # transmission losses
-transloss(m,trans)
+transloss(m,trans,number_of_timesteps,jfo)
 # transmission capacity
-transcapa(m,trans)
+transcapa(m,trans,number_of_timesteps,jfo)
 # needed: set of transmission units
 
-## set of transmissions and actual units needed, differentiation "for all ... connected to"
+# set of transmissions and actual units needed, differentiation "for all ... connected to"
 # energy balance / commodity balance
-commodity_balance(m,flow,trans)
+commodity_balance(m,flow, trans,number_of_timesteps,jfo)
 
 ## absolute bounds on commodities
 # p(maxxuminflowbound)_ug1,Gas = 1e8 (unit group ug1 is chp and gasplant)
-absolutebounds(m,flow)
+#absolutebounds(m,flow)
 # needed: set/group of unitgroup CHP and Gasplant
+
 
 status = solve(m)
 status == :Optimal && (flow_value = getvalue(flow))
