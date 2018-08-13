@@ -10,17 +10,19 @@ using Clp
 
 p = joinpath(@__DIR__,"data","testsystem2_db.sqlite")
 db = SQLite.DB(AbstractString(p))
-sdo=SpineData.Spine_object(db)
+sdo = SpineData.Spine_object(db)
 jfo = JuMP_object(sdo)
  JuMP_all_out(db)
 
 
 number_of_timesteps = jfo["number_of_timesteps"]["timer"]
 time_discretisation = jfo["time_discretisation"]["timer"]
-# was macht das?
 
+##
 # model:
 m = Model(solver = ClpSolver())
+
+# setup decision variables
 flow = flow(m)
 trans =trans(m,number_of_timesteps,jfo)
 
@@ -48,10 +50,10 @@ commodity_balance(m,flow, trans,number_of_timesteps,jfo)
 
 ## absolute bounds on commodities
 # p(maxxuminflowbound)_ug1,Gas = 1e8 (unit group ug1 is chp and gasplant)
-#absolutebounds(m,flow)
+absolutebounds_UnitGroups(m,flow, jfo, number_of_timesteps)
 # needed: set/group of unitgroup CHP and Gasplant
 
 
 status = solve(m)
 status == :Optimal && (flow_value = getvalue(flow))
-println(m)
+# println(m)

@@ -23,8 +23,6 @@ macro suppress_err(block)
 end
 
 
-
-
 function find_nodes(con, jfo, add_permutation=true,rel_node_connection = "NodeConnectionRelationship", rel_commodity = "CommodityAffiliation")
     """"
     finds pairs of nodes with the same commodity for a given connection "con"
@@ -103,4 +101,8 @@ function get_all_connection_node_pairs(jfo, add_permutation=false)
         list_of_pairs=vcat(list_of_pairs, [vcat(c,p) for p in find_nodes(c, jfo, add_permutation)])
     end
     return list_of_pairs
+end
+
+function get_units_of_unitgroup(jfo, unitgroup,relationship_name="UnitGroup_Unit_rel")
+    jfo[relationship_name][unitgroup]
 end
