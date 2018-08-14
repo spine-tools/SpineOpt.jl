@@ -7,6 +7,7 @@ using SpineModel
 using SQLite
 using JuMP
 using Clp
+using Gadfly
 
 p = joinpath(@__DIR__,"data","testsystem2_db.sqlite")
 db = SQLite.DB(AbstractString(p))
@@ -46,12 +47,33 @@ transcapa(m,trans,number_of_timesteps,jfo)
 # energy balance / commodity balance
 commodity_balance(m,flow, trans,number_of_timesteps,jfo)
 
-## absolute bounds on commodities
+# absolute bounds on commodities
 # p(maxxuminflowbound)_ug1,Gas = 1e8 (unit group ug1 is chp and gasplant)
 #absolutebounds(m,flow)
 # needed: set/group of unitgroup CHP and Gasplant
 
 
+
 status = solve(m)
 status == :Optimal && (flow_value = getvalue(flow))
+##
+trans_value = getvalue(trans)
 println(m)
+##
+m = 1
+# function myelectricitynodes(flow_value,number_of_timesteps)
+# for n in node()
+#     if CommodityAffiliation(n) == "Electricity"
+#      for u in units()
+#          if NodeUnitConnection(n)
+#              for t = 1:number_of_timesteps
+#                  myelectricity_nodes[m,t] = flow_value["Electricity",n,u,t]
+#              end
+#         m = m+1
+#         end
+#     end
+# end
+# end
+# end
+#
+# @enter myelectricitynodes
