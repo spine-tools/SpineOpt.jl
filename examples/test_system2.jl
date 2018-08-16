@@ -19,17 +19,17 @@ jfo = JuMP_object(sdo)
 number_of_timesteps = jfo["number_of_timesteps"]["timer"]
 time_discretisation = jfo["time_discretisation"]["timer"]
 
-##
+
 # model:
 m = Model(solver = ClpSolver())
 
 # setup decision variables
 flow = flow(m)
 trans =trans(m,number_of_timesteps,jfo)
-
+#
 # objective function
 minimize_production_cost(m,flow,number_of_timesteps)
-
+#
 # Technological constraints
 # unit capacity
 capacity(m,flow,number_of_timesteps) #define input vars, see how manuek did
@@ -58,11 +58,11 @@ absolutebounds_UnitGroups(m,flow, jfo, number_of_timesteps)
 
 status = solve(m)
 status == :Optimal && (flow_value = getvalue(flow))
-##
+#
 trans_value = getvalue(trans)
 println(m)
 ##
-m = 1
+
 # function myelectricitynodes(flow_value,number_of_timesteps)
 # for n in node()
 #     if CommodityAffiliation(n) == "Electricity"
