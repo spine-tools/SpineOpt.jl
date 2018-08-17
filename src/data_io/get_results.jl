@@ -84,16 +84,19 @@ using DataFrames
 function var_to_df(var::JuMP.JuMPArray{JuMP.Variable,5,Tuple{Array{String,1},Array{String,1},Array{String,1},Array{String,1},UnitRange{Int64}}})
     idx = var.indexsets
     df = DataFrame(c=String[], n=String[], u=String[], dire=String[], t=Int32[], val=Float32[])
-    for c in idx[1], n in idx[2], u in idx[3], dire in idx[4], t in idx[5]
-        push!(df, [c, n, u, dire, t, getvalue(var[c, n, u, dire, t])])
-    end
+    # for c in idx[1], n in idx[2], u in idx[3], dire in idx[4], t in idx[5]
+    #     push!(df, [c, n, u, dire, t, getvalue(var[c, n, u, dire, t])])
+    # end
     return df
 end
-function var_to_df(var::JuMP.JuMPArray{JuMP.Variable,4,Tuple{Array{String,1},Array{String,1},Array{String,1},UnitRange{Int64}}})
-    idx = var.indexsets
+function var_to_df(var::JuMP.JuMPDict{JuMP.Variable,4})
+    # idx = var.indexsets
     df = DataFrame(c=String[], n1=String[], n2=String[], t=Int32[], val=Float32[])
-    for c in idx[1], n1 in idx[2], n2 in idx[3], t in idx[4]
-        push!(df, [c, n, u, dire, t, getvalue(var[c, n, u, dire, t])])
+    # for c in idx[1], n1 in idx[2], n2 in idx[3], t in idx[4]
+    #     push!(df, [c, n, u, dire, t, getvalue(var[c, n, u, dire, t])])
+    # end
+    for (c,n1,n2) in get_all_connection_node_pairs(true)
+        push!(df, [c, n1, n2,  getvalue(var[c, n1, n2, t])])
     end
     return df
 end

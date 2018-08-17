@@ -1,6 +1,6 @@
-function minimize_production_cost(m::Model, flow,number_of_timesteps)
+function minimize_production_cost(m::Model, flow)
     production_cost = zero(AffExpr)
-    for t = 1:number_of_timesteps
+    for t = 1:number_of_timesteps("timer")
         for c in commodity()
             for n in node()
                 for u in unit()
