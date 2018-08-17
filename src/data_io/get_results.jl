@@ -90,13 +90,9 @@ function var_to_df(var::JuMP.JuMPArray{JuMP.Variable,5,Tuple{Array{String,1},Arr
     return df
 end
 function var_to_df(var::JuMP.JuMPDict{JuMP.Variable,4})
-    # idx = var.indexsets
     df = DataFrame(c=String[], n1=String[], n2=String[], t=Int32[], val=Float32[])
-    # for c in idx[1], n1 in idx[2], n2 in idx[3], t in idx[4]
-    #     push!(df, [c, n, u, dire, t, getvalue(var[c, n, u, dire, t])])
-    # end
-    for (c,n1,n2) in get_all_connection_node_pairs(true)
-        push!(df, [c, n1, n2,  getvalue(var[c, n1, n2, t])])
+    for (c,n1,n2) in get_all_connection_node_pairs(true), t=1:number_of_timesteps("timer")
+        push!(df, [c, n1, n2,t, getvalue(var[c, n1, n2, t])])
     end
     return df
 end

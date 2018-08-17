@@ -27,9 +27,6 @@ function find_nodes(con, add_permutation=true)
     """"
     finds pairs of nodes with the same commodity for a given connection "con"
         con: string
-        jfo:
-        rel_node_connection: string, relationship class name
-        rel_commodity: string, relationship class name
         return: list of connection lists (per commidity) e.g. [[["n1", "n2"], ["n2", "n1"]],[["n3", "n4"], ["n4", "n3"]]]
     """
     rel_node_connection = "NodeConnectionRelationship"
@@ -68,8 +65,6 @@ function find_connections(node, add_permutation = false)
     """
     find all connection objects connected to the given node "node"
         node: string
-        jfo:
-        rel_node_connection: string, relationship class name
         return: list of connections list of connection lists [["con1","n1", "n2"], ["con2","n1", "n4"],...]
     """
     rel_node_connection = "NodeConnectionRelationship"
@@ -97,7 +92,6 @@ end
 function get_all_connection_node_pairs(add_permutation=false)
     """"
     returns all pairs of nodes which are connected through a connections
-        jfo:
         add_permutation: add an additional entry with permuted nodes e.g. ["con1","n1", "n2"], ["con1","n2", "n1"]
         return: list of connection lists [["con1","n1", "n2"], ["con2","n3", "n4"],...]
     """
@@ -108,8 +102,23 @@ function get_all_connection_node_pairs(add_permutation=false)
     return list_of_pairs
 end
 
-function get_units_of_unitgroup(unitgroup)
-    unitgroup_unit_relationship_name="UnitGroup_Unit_rel"
-    # jfo[relationship_name][unitgroup]
-    eval(parse(:($unitgroup_unit_relationship_name)))(unitgroup)
+function get_all_unit_node_pairs()
+    """
+    return: list of all unit node connection lists [["gas","n1","u1", "in"], ["gas","n1","u2", "out"],...] (commidity, node, unit, in/out)
+    """
+    NodeUnitConnection = "NodeUnitConnection"
+    list_of_pairs=[]
+    for u in unit()
+        for n in eval(parse(:($NodeUnitConnection)))(u)
+
+        end
+    end
+
 end
+
+# 
+# function get_units_of_unitgroup(unitgroup)
+#     unitgroup_unit_relationship_name="UnitGroup_Unit_rel"
+#     # jfo[relationship_name][unitgroup]
+#     eval(parse(:($unitgroup_unit_relationship_name)))(unitgroup)
+# end
