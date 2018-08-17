@@ -113,3 +113,20 @@ function get_units_of_unitgroup(unitgroup)
     # jfo[relationship_name][unitgroup]
     eval(parse(:($unitgroup_unit_relationship_name)))(unitgroup)
 end
+
+function get_com_node_unit_in()#unit,NodeUnitConnection,input_com,CommodityAffiliation)
+    list_of_tuples = []
+    for u in unit()
+        for n in NodeUnitConnection(u)
+            for c in CommodityAffiliation(n)
+                if c in input_com(u)
+                    push!(list_of_tuples, [c,n,u,"in"])
+                end
+                if c in output_com(u)
+                    push!(list_of_tuples, [c,n,u,"out"])    
+                end
+            end
+        end
+    end
+    return list_of_tuples
+end
