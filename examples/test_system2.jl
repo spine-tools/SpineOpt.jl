@@ -58,25 +58,8 @@ absolutebounds_UnitGroups(m,var_flow)
 status = solve(m)
 status == :Optimal && (flow_value = getvalue(var_flow))
 trans_value = getvalue(var_trans)
-# println(m)
-##
 
-# function myelectricitynodes(var_flow_value,number_of_timesteps)
-# for n in node()
-#     if CommodityAffiliation(n) == "Electricity"
-#      for u in units()
-#          if NodeUnitConnection(n)
-#              for t = 1:number_of_timesteps
-#                  myelectricity_nodes[m,t] = var_flow_value["Electricity",n,u,t]
-#              end
-#         m = m+1
-#         end
-#     end
-# end
-# end
-# end
-#
-# @enter myelectricitynodes
-
-##
-# @enter create_var_table(m,"LeuvenElectricity",var_flow, var_trans,"Electricity")
+#saving results if wanted
+save=false
+results_filename="opt_results.csv"
+results_df=get_node_streams("LeuvenElectricity", var_flow, var_trans, save,results_filename)
