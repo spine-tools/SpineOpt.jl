@@ -32,6 +32,7 @@ function find_nodes(con, add_permutation=true)
         rel_commodity: string, relationship class name
         return: list of connection lists (per commidity) e.g. [[["n1", "n2"], ["n2", "n1"]],[["n3", "n4"], ["n4", "n3"]]]
     """
+    #giving relationship names as string -> todo: change
     rel_node_connection = "NodeConnectionRelationship"
     rel_commodity = "CommodityAffiliation"
 
@@ -109,24 +110,35 @@ function get_all_connection_node_pairs(add_permutation=false)
 end
 
 function get_units_of_unitgroup(unitgroup)
+    #giving relationship names as string -> todo: change
     unitgroup_unit_relationship_name="UnitGroup_Unit_rel"
     # jfo[relationship_name][unitgroup]
     eval(parse(:($unitgroup_unit_relationship_name)))(unitgroup)
 end
 
-function get_com_node_unit_in()#unit,NodeUnitConnection,input_com,CommodityAffiliation)
-    list_of_tuples = []
+function get_com_node_unit_in()
+    """
+        return list of connection list of all unit node connections [Commodity, Node, Unit, in/out]
+        e.g. [["Coal", "BelgiumCoal", "CoalPlant", "in"], ["Electricity", "LeuvenElectricity", "CoalPlant", "out"],...]
+    """
+    #giving relationship names as string -> todo: change
+    NodeUnitConnection_relationship_name = "NodeUnitConnection"
+    CommodityAffiliation_relationship_name = "CommodityAffiliation"
+    input_com_relationship_name = "input_com"
+    output_com_relationship_name = "output_com"
+    #
+    list_of_connections = []
     for u in unit()
-        for n in NodeUnitConnection(u)
-            for c in CommodityAffiliation(n)
-                if c in input_com(u)
-                    push!(list_of_tuples, [c,n,u,"in"])
+        for n in eval(parse(:($NodeUnitConnection_relationship_name)))(u)
+            for c in eval(parse(:($CommodityAffiliation_relationship_name)))(n)
+                if c in eval(parse(:($input_com_relationship_name)))(u)
+                    push!(list_of_connections, [c,n,u,"in"])
                 end
-                if c in output_com(u)
-                    push!(list_of_tuples, [c,n,u,"out"])    
+                if c in eval(parse(:($output_com_relationship_name)))(u)
+                    push!(list_of_connections, [c,n,u,"out"])
                 end
             end
         end
     end
-    return list_of_tuples
+    return list_of_connections
 end

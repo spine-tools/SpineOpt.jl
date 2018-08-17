@@ -19,7 +19,7 @@ number_of_timesteps = jfo["number_of_timesteps"]["timer"]
 time_discretisation = jfo["time_discretisation"]["timer"]
 
 
-# model:
+## model:
 m = Model(solver = ClpSolver())
 
 # setup decision variables
