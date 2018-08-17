@@ -21,6 +21,7 @@ export get_all_connection_node_pairs
 # export absolutebounds
 export absolutebounds_UnitGroups
 export get_units_of_unitgroup
+export create_var_table
 
 using SpineData
 using Missings
@@ -36,6 +37,7 @@ import DataValues: isna
 
 include("helpers.jl")
 include("data_io/Spine.jl")
+include("data_io/get_results.jl")
 include("data_io/util.jl")
 include("data_io/other_formats.jl")
 include("constraints/absolutebounds.jl")

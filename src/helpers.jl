@@ -23,7 +23,7 @@ macro suppress_err(block)
 end
 
 
-function find_nodes(con, jfo, add_permutation=true,rel_node_connection = "NodeConnectionRelationship", rel_commodity = "CommodityAffiliation")
+function find_nodes(con, add_permutation=true)
     """"
     finds pairs of nodes with the same commodity for a given connection "con"
         con: string
@@ -32,6 +32,9 @@ function find_nodes(con, jfo, add_permutation=true,rel_node_connection = "NodeCo
         rel_commodity: string, relationship class name
         return: list of connection lists (per commidity) e.g. [[["n1", "n2"], ["n2", "n1"]],[["n3", "n4"], ["n4", "n3"]]]
     """
+    rel_node_connection = "NodeConnectionRelationship"
+    rel_commodity = "CommodityAffiliation"
+
     function find_node_com(nodes, com_nodes, com, add_permutation=false)
         """
         helperfunction
@@ -49,8 +52,8 @@ function find_nodes(con, jfo, add_permutation=true,rel_node_connection = "NodeCo
             error("found more than two nodes with the same commodity")
         end
     end
-    nodes = jfo[rel_node_connection][con]
-    com_nodes = [jfo[rel_commodity][n][1] for n in nodes]
+    nodes = eval(parse(:($rel_node_connection)))(con)
+    com_nodes = [eval(parse(:($rel_commodity)))(n)[1] for n in nodes]
     nodepairs=[]
     for c in commodity()
         np = find_node_com(nodes, com_nodes, c, add_permutation)
@@ -61,7 +64,7 @@ function find_nodes(con, jfo, add_permutation=true,rel_node_connection = "NodeCo
     return nodepairs
 end
 
-function find_connections(node, jfo, add_permutation = false, rel_node_connection = "NodeConnectionRelationship")
+function find_connections(node, add_permutation = false)
     """
     find all connection objects connected to the given node "node"
         node: string
@@ -69,7 +72,9 @@ function find_connections(node, jfo, add_permutation = false, rel_node_connectio
         rel_node_connection: string, relationship class name
         return: list of connections list of connection lists [["con1","n1", "n2"], ["con2","n1", "n4"],...]
     """
-    rels = jfo[rel_node_connection]
+    rel_node_connection = "NodeConnectionRelationship"
+    # rels = jfo[rel_node_connection]
+    rels = eval(parse(:($rel_node_connection)))
     nodecons=[p for p in rels if p[1] == node]
     list_of_pairs=[]
     if add_permutation
@@ -89,7 +94,7 @@ function find_connections(node, jfo, add_permutation = false, rel_node_connectio
     return list_of_pairs
 end
 
-function get_all_connection_node_pairs(jfo, add_permutation=false)
+function get_all_connection_node_pairs(add_permutation=false)
     """"
     returns all pairs of nodes which are connected through a connections
         jfo:
@@ -98,11 +103,13 @@ function get_all_connection_node_pairs(jfo, add_permutation=false)
     """
     list_of_pairs=[]
     for c in connection()
-        list_of_pairs=vcat(list_of_pairs, [vcat(c,p) for p in find_nodes(c, jfo, add_permutation)])
+        list_of_pairs=vcat(list_of_pairs, [vcat(c,p) for p in find_nodes(c,add_permutation)])
     end
     return list_of_pairs
 end
 
-function get_units_of_unitgroup(jfo, unitgroup,relationship_name="UnitGroup_Unit_rel")
-    jfo[relationship_name][unitgroup]
+function get_units_of_unitgroup(unitgroup)
+    unitgroup_unit_relationship_name="UnitGroup_Unit_rel"
+    # jfo[relationship_name][unitgroup]
+    eval(parse(:($unitgroup_unit_relationship_name)))(unitgroup)
 end

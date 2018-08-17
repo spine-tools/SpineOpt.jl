@@ -5,16 +5,16 @@
 #      )
 # end
 
-function absolutebounds_UnitGroups(m::Model,flow, jfo, number_of_timesteps)
+function absolutebounds_UnitGroups(m::Model,flow, number_of_timesteps)
 
      for ug in unit_groups() #test if all units of unitgroup have the some input commodity
-          all([input_com(u) == input_com(get_units_of_unitgroup(jfo,ug)[1]) for u in get_units_of_unitgroup(jfo,ug)])?nothing:error("The input commodies within unit group", ug, "are not equal")
+          all([input_com(u) == input_com(get_units_of_unitgroup(ug)[1]) for u in get_units_of_unitgroup(ug)])?nothing:error("The input commodies within unit group", ug, "are not equal")
      end
 
 
      for ug in unit_groups()
           @constraint(m,
-          + sum(flow[c, n, u, "in", t] for u in get_units_of_unitgroup(jfo,ug),c in input_com(u),n in NodeUnitConnection(u), t in 1:number_of_timesteps)
+          + sum(flow[c, n, u, "in", t] for u in get_units_of_unitgroup(ug),c in input_com(u),n in NodeUnitConnection(u), t in 1:number_of_timesteps)
           <= MaxCumInFlowBound(ug)
           )
      end

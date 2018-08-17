@@ -13,7 +13,7 @@ p = joinpath(@__DIR__,"data","testsystem2_db.sqlite")
 db = SQLite.DB(AbstractString(p))
 sdo = SpineData.Spine_object(db)
 jfo = JuMP_object(sdo)
- JuMP_all_out(db)
+JuMP_all_out(db)
 
 
 number_of_timesteps = jfo["number_of_timesteps"]["timer"]
@@ -25,7 +25,7 @@ m = Model(solver = ClpSolver())
 
 # setup decision variables
 flow = flow(m)
-trans =trans(m,number_of_timesteps,jfo)
+trans =trans(m,number_of_timesteps)
 
 # objective function
 minimize_production_cost(m,flow,number_of_timesteps)
@@ -40,29 +40,28 @@ outinratio(m,flow,number_of_timesteps)
 # possibly split up in conventional and complex power plants (not really needed)
 #
 # transmission losses
-transloss(m,trans,number_of_timesteps,jfo)
+transloss(m,trans,number_of_timesteps)
 # transmission capacity
-transcapa(m,trans,number_of_timesteps,jfo)
+transcapa(m,trans,number_of_timesteps)
 # needed: set of transmission units
 
 # set of transmissions and actual units needed, differentiation "for all ... connected to"
 # energy balance / commodity balance
-commodity_balance(m,flow, trans,number_of_timesteps,jfo)
+commodity_balance(m,flow, trans,number_of_timesteps)
 
 # absolute bounds on commodities
 # p(maxxuminflowbound)_ug1,Gas = 1e8 (unit group ug1 is chp and gasplant)
-absolutebounds_UnitGroups(m,flow, jfo, number_of_timesteps)
+absolutebounds_UnitGroups(m,flow, number_of_timesteps)
 # needed: set/group of unitgroup CHP and Gasplant
 
 
 
 status = solve(m)
 status == :Optimal && (flow_value = getvalue(flow))
-##
 trans_value = getvalue(trans)
-println(m)
+# println(m)
 ##
-m = 1
+# m = 1
 # function myelectricitynodes(flow_value,number_of_timesteps)
 # for n in node()
 #     if CommodityAffiliation(n) == "Electricity"
@@ -79,3 +78,6 @@ m = 1
 # end
 #
 # @enter myelectricitynodes
+
+##
+# @enter create_var_table(m,"LeuvenElectricity",flow, trans,"Electricity")
