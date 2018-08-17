@@ -7,7 +7,6 @@ using SpineModel
 using SQLite
 using JuMP
 using Clp
-using Gadfly
 
 p = joinpath(@__DIR__,"data","testsystem2_db.sqlite")
 db = SQLite.DB(AbstractString(p))
@@ -24,51 +23,51 @@ time_discretisation = jfo["time_discretisation"]["timer"]
 m = Model(solver = ClpSolver())
 
 # setup decision variables
-flow = flow(m)
-trans =trans(m,number_of_timesteps)
+var_flow = flow(m)
+var_trans =trans(m,number_of_timesteps)
 
 # objective function
-minimize_production_cost(m,flow,number_of_timesteps)
+minimize_production_cost(m,var_flow,number_of_timesteps)
 #
 # Technological constraints
 # unit capacity
-capacity(m,flow,number_of_timesteps) #define input vars, see how manuek did
-# relationship output and input flows
+capacity(m,var_flow,number_of_timesteps) #define input vars, see how manuek did
+# relationship output and input var_flows
 #
-outinratio(m,flow,number_of_timesteps)
+outinratio(m,var_flow,number_of_timesteps)
 # needed: set of "conventional units"
 # possibly split up in conventional and complex power plants (not really needed)
 #
-# transmission losses
-transloss(m,trans,number_of_timesteps)
-# transmission capacity
-transcapa(m,trans,number_of_timesteps)
-# needed: set of transmission units
+# var_transmission losses
+transloss(m,var_trans,number_of_timesteps)
+# var_transmission capacity
+transcapa(m,var_trans,number_of_timesteps)
+# needed: set of var_transmission units
 
-# set of transmissions and actual units needed, differentiation "for all ... connected to"
+# set of var_transmissions and actual units needed, differentiation "for all ... connected to"
 # energy balance / commodity balance
-commodity_balance(m,flow, trans,number_of_timesteps)
+commodity_balance(m,var_flow, var_trans,number_of_timesteps)
 
 # absolute bounds on commodities
-# p(maxxuminflowbound)_ug1,Gas = 1e8 (unit group ug1 is chp and gasplant)
-absolutebounds_UnitGroups(m,flow, number_of_timesteps)
+# p(maxxuminvar_flowbound)_ug1,Gas = 1e8 (unit group ug1 is chp and gasplant)
+absolutebounds_UnitGroups(m,var_flow, number_of_timesteps)
 # needed: set/group of unitgroup CHP and Gasplant
 
 
 
 status = solve(m)
-status == :Optimal && (flow_value = getvalue(flow))
-trans_value = getvalue(trans)
+status == :Optimal && (flow_value = getvalue(var_flow))
+trans_value = getvalue(var_trans)
 # println(m)
 ##
 
-# function myelectricitynodes(flow_value,number_of_timesteps)
+# function myelectricitynodes(var_flow_value,number_of_timesteps)
 # for n in node()
 #     if CommodityAffiliation(n) == "Electricity"
 #      for u in units()
 #          if NodeUnitConnection(n)
 #              for t = 1:number_of_timesteps
-#                  myelectricity_nodes[m,t] = flow_value["Electricity",n,u,t]
+#                  myelectricity_nodes[m,t] = var_flow_value["Electricity",n,u,t]
 #              end
 #         m = m+1
 #         end
@@ -80,4 +79,4 @@ trans_value = getvalue(trans)
 # @enter myelectricitynodes
 
 ##
-# @enter create_var_table(m,"LeuvenElectricity",flow, trans,"Electricity")
+# @enter create_var_table(m,"LeuvenElectricity",var_flow, var_trans,"Electricity")
