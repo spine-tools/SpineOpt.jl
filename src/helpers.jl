@@ -29,6 +29,7 @@ function find_nodes(con, add_permutation=true)
         con: string
         return: list of connection lists (per commidity) e.g. [[["n1", "n2"], ["n2", "n1"]],[["n3", "n4"], ["n4", "n3"]]]
     """
+    #giving relationship names as string -> todo: change
     rel_node_connection = "NodeConnectionRelationship"
     rel_commodity = "CommodityAffiliation"
 
@@ -102,23 +103,36 @@ function get_all_connection_node_pairs(add_permutation=false)
     return list_of_pairs
 end
 
-function get_all_unit_node_pairs()
-    """
-    return: list of all unit node connection lists [["gas","n1","u1", "in"], ["gas","n1","u2", "out"],...] (commidity, node, unit, in/out)
-    """
-    NodeUnitConnection = "NodeUnitConnection"
-    list_of_pairs=[]
-    for u in unit()
-        for n in eval(parse(:($NodeUnitConnection)))(u)
-
-        end
-    end
-
+function get_units_of_unitgroup(unitgroup)
+    #giving relationship names as string -> todo: change
+    unitgroup_unit_relationship_name="UnitGroup_Unit_rel"
+    # jfo[relationship_name][unitgroup]
+    eval(parse(:($unitgroup_unit_relationship_name)))(unitgroup)
 end
 
-# 
-# function get_units_of_unitgroup(unitgroup)
-#     unitgroup_unit_relationship_name="UnitGroup_Unit_rel"
-#     # jfo[relationship_name][unitgroup]
-#     eval(parse(:($unitgroup_unit_relationship_name)))(unitgroup)
-# end
+function get_com_node_unit_in()
+    """
+        return list of connection list of all unit node connections [Commodity, Node, Unit, in/out]
+        e.g. [["Coal", "BelgiumCoal", "CoalPlant", "in"], ["Electricity", "LeuvenElectricity", "CoalPlant", "out"],...]
+    """
+    #giving relationship names as string -> todo: change
+    NodeUnitConnection_relationship_name = "NodeUnitConnection"
+    CommodityAffiliation_relationship_name = "CommodityAffiliation"
+    input_com_relationship_name = "input_com"
+    output_com_relationship_name = "output_com"
+    #
+    list_of_connections = []
+    for u in unit()
+        for n in eval(parse(:($NodeUnitConnection_relationship_name)))(u)
+            for c in eval(parse(:($CommodityAffiliation_relationship_name)))(n)
+                if c in eval(parse(:($input_com_relationship_name)))(u)
+                    push!(list_of_connections, [c,n,u,"in"])
+                end
+                if c in eval(parse(:($output_com_relationship_name)))(u)
+                    push!(list_of_connections, [c,n,u,"out"])
+                end
+            end
+        end
+    end
+    return list_of_connections
+end

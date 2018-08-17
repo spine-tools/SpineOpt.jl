@@ -22,6 +22,7 @@ export get_all_connection_node_pairs
 export absolutebounds_UnitGroups
 export get_units_of_unitgroup
 export create_var_table
+export get_com_node_unit_in
 
 using SpineData
 using Missings
