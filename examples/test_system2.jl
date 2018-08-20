@@ -19,7 +19,7 @@ number_of_timesteps = jfo["number_of_timesteps"]["timer"]
 time_discretisation = jfo["time_discretisation"]["timer"]
 
 
-## model:
+# model:
 m = Model(solver = ClpSolver())
 
 # setup decision variables
@@ -58,25 +58,4 @@ absolutebounds_UnitGroups(m,var_flow, number_of_timesteps)
 status = solve(m)
 status == :Optimal && (flow_value = getvalue(var_flow))
 trans_value = getvalue(var_trans)
-# println(m)
-##
-
-# function myelectricitynodes(var_flow_value,number_of_timesteps)
-# for n in node()
-#     if CommodityAffiliation(n) == "Electricity"
-#      for u in units()
-#          if NodeUnitConnection(n)
-#              for t = 1:number_of_timesteps
-#                  myelectricity_nodes[m,t] = var_flow_value["Electricity",n,u,t]
-#              end
-#         m = m+1
-#         end
-#     end
-# end
-# end
-# end
-#
-# @enter myelectricitynodes
-
-##
-# @enter create_var_table(m,"LeuvenElectricity",var_flow, var_trans,"Electricity")
+println(m)

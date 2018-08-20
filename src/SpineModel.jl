@@ -18,11 +18,12 @@ export commodity_balance
 export find_nodes
 export find_connections
 export get_all_connection_node_pairs
+#export get_all_connection_node_pairs2
 # export absolutebounds
 export absolutebounds_UnitGroups
 export get_units_of_unitgroup
 export create_var_table
-export get_com_node_unit_in
+export get_com_node_unit
 
 using SpineData
 using Missings
@@ -35,6 +36,14 @@ using SQLite
 using JSON
 using Clp
 import DataValues: isna
+
+NodeUnitConnection_relationship_name = "NodeUnitConnection"
+CommodityAffiliation_relationship_name = "CommodityAffiliation"
+input_com_relationship_name = "input_com"
+output_com_relationship_name = "output_com"
+rel_node_connection = "NodeConnectionRelationship"
+rel_commodity = "CommodityAffiliation"
+unitgroup_unit_relationship_name="UnitGroup_Unit_rel"
 
 include("helpers.jl")
 include("data_io/Spine.jl")
