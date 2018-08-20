@@ -37,13 +37,13 @@ using JSON
 using Clp
 import DataValues: isna
 
-NodeUnitConnection_relationship_name = "NodeUnitConnection"
-CommodityAffiliation_relationship_name = "CommodityAffiliation"
-input_com_relationship_name = "input_com"
-output_com_relationship_name = "output_com"
-rel_node_connection = "NodeConnectionRelationship"
-rel_commodity = "CommodityAffiliation"
-unitgroup_unit_relationship_name="UnitGroup_Unit_rel"
+#defining relationship class names. Todo:adapt according nomencla
+ node_unit_rel= "NodeUnitConnection" #NodeUnitConnection_relationship_name
+ node_commodity_rel= "CommodityAffiliation"
+ unit_commidity_input_rel= "input_com"
+ unit_commidity_output_rel= "output_com"
+ node_connection_rel= "NodeConnectionRelationship"
+ unitgroup_unit_rel="UnitGroup_Unit_rel"
 
 include("helpers.jl")
 include("data_io/Spine.jl")
