@@ -38,12 +38,12 @@ using Clp
 import DataValues: isna
 
 #defining relationship class names. Todo:adapt according nomencla
- node_unit_rel= "NodeUnitConnection" #NodeUnitConnection_relationship_name
- node_commodity_rel= "CommodityAffiliation"
- unit_commidity_input_rel= "input_com"
- unit_commidity_output_rel= "output_com"
- node_connection_rel= "NodeConnectionRelationship"
- unitgroup_unit_rel="UnitGroup_Unit_rel"
+ node_unit_rel= "unit_node" #NodeUnitConnection_relationship_name
+ node_commodity_rel= "node_commodity"
+ unit_commidity_input_rel= "input_commodity"
+ unit_commidity_output_rel= "output_commodity"
+ node_connection_rel= "connection_node"
+ unitgroup_unit_rel="unitgroup_unit"
 
 include("helpers.jl")
 include("data_io/Spine.jl")

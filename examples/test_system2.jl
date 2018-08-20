@@ -8,18 +8,15 @@ using SQLite
 using JuMP
 using Clp
 
-p = joinpath(@__DIR__,"data","testsystem2_db.sqlite")
+p = joinpath(@__DIR__,"data","testsystem2_v2_multiD.sqlite")
 db = SQLite.DB(AbstractString(p))
 sdo = SpineData.Spine_object(db)
 jfo = JuMP_object(sdo)
 JuMP_all_out(db)
 
 
-# number_of_timesteps = jfo["number_of_timesteps"]["timer"]
-# time_discretisation = jfo["time_discretisation"]["timer"]
 
-
-# model:
+## model:
 m = Model(solver = ClpSolver())
 
 # setup decision variables
