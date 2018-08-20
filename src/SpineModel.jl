@@ -18,12 +18,12 @@ export commodity_balance
 export find_nodes
 export find_connections
 export get_all_connection_node_pairs
+#export get_all_connection_node_pairs2
 # export absolutebounds
 export absolutebounds_UnitGroups
 export get_units_of_unitgroup
 export create_var_table
-export get_com_node_unit_in
-export get_node_streams
+export get_com_node_unit
 
 using SpineData
 using Missings
@@ -36,6 +36,14 @@ using SQLite
 using JSON
 using Clp
 import DataValues: isna
+
+#defining relationship class names. Todo:adapt according nomencla
+ node_unit_rel= "NodeUnitConnection" #NodeUnitConnection_relationship_name
+ node_commodity_rel= "CommodityAffiliation"
+ unit_commidity_input_rel= "input_com"
+ unit_commidity_output_rel= "output_com"
+ node_connection_rel= "NodeConnectionRelationship"
+ unitgroup_unit_rel="UnitGroup_Unit_rel"
 
 include("helpers.jl")
 include("data_io/Spine.jl")

@@ -19,7 +19,7 @@ JuMP_all_out(db)
 # time_discretisation = jfo["time_discretisation"]["timer"]
 
 
-## model:
+# model:
 m = Model(solver = ClpSolver())
 
 # setup decision variables
@@ -58,8 +58,4 @@ absolutebounds_UnitGroups(m,var_flow)
 status = solve(m)
 status == :Optimal && (flow_value = getvalue(var_flow))
 trans_value = getvalue(var_trans)
-
-#saving results if wanted
-save=false
-results_filename="opt_results.csv"
-results_df=get_node_streams("LeuvenElectricity", var_flow, var_trans, save,results_filename)
+println(m)

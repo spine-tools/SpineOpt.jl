@@ -14,7 +14,7 @@ function absolutebounds_UnitGroups(m::Model,flow)
 
      for ug in unit_groups()
           @constraint(m,
-          + sum(flow[c, n, u, "in", t] for u in get_units_of_unitgroup(ug),c in input_com(u),n in NodeUnitConnection(u), t in 1:number_of_timesteps("timer") if n in CommodityAffiliation(c))
+          + sum(flow[c, n, u, "in", t] for u in get_units_of_unitgroup(ug), c in commodity(), n in node(), t in 1:number_of_timesteps("timer") if [c,n,u,"in"] in get_com_node_unit())
           <= MaxCumInFlowBound(ug)
           )
      end
