@@ -15,7 +15,8 @@ function constraint_MaxCumOutFlowBound(m::Model,flow)
      for ug in unitgroup()
           @constraint(m,
           + sum(flow[c, n, u, "in", t] for u in generate_UnitGroups(ug), c in commodity(), n in node(), t in 1:number_of_timesteps("timer") if [c,n,u,"in"] in generate_CommoditiesNodesUnits())
-          <= p_MaxCumInFlowBound(ug)
+          <=
+          + p_MaxCumInFlowBound(ug)
           )
      end
 end
