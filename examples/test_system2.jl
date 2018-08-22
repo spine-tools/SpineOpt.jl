@@ -8,7 +8,7 @@ using SQLite
 using JuMP
 using Clp
 
-p = joinpath(@__DIR__,"data","testsystem2_v2_multiD.sqlite")
+p = joinpath(@__DIR__,"data","testsystem2_db.sqlite")
 db = SQLite.DB(AbstractString(p))
 sdo = SpineData.Spine_object(db)
 jfo = JuMP_object(sdo)
@@ -20,39 +20,39 @@ JuMP_all_out(db)
 m = Model(solver = ClpSolver())
 
 # setup decision variables
-var_flow = flow(m)
-var_trans =trans(m)
+v_Flow = generate_v_Flow(m)
+v_Trans =generate_v_Trans(m)
 
 # objective function
-minimize_production_cost(m,var_flow)
+minimize_production_cost(m,v_Flow)
 #
 # Technological constraints
 # unit capacity
-capacity(m,var_flow) #define input vars, see how manuek did
-# relationship output and input var_flows
+capacity(m,v_Flow) #define input vars, see how manuek did
+# relationship output and input v_Flows
 #
-outinratio(m,var_flow)
+outinratio(m,v_Flow)
 # needed: set of "conventional units"
 # possibly split up in conventional and complex power plants (not really needed)
 #
-# var_transmission losses
-transloss(m,var_trans)
-# var_transmission capacity
-transcapa(m,var_trans)
-# needed: set of var_transmission units
+# v_Transmission losses
+transloss(m,v_Trans)
+# v_Transmission capacity
+transcapa(m,v_Trans)
+# needed: set of v_Transmission units
 
-# set of var_transmissions and actual units needed, differentiation "for all ... connected to"
+# set of v_Transmissions and actual units needed, differentiation "for all ... connected to"
 # energy balance / commodity balance
-commodity_balance(m,var_flow, var_trans)
+commodity_balance(m,v_Flow, v_Trans)
 
 # absolute bounds on commodities
-# p(maxxuminvar_flowbound)_ug1,Gas = 1e8 (unit group ug1 is chp and gasplant)
-absolutebounds_UnitGroups(m,var_flow)
+# p(maxxuminv_Flowbound)_ug1,Gas = 1e8 (unit group ug1 is chp and gasplant)
+absolutebounds_UnitGroups(m,v_Flow)
 # needed: set/group of unitgroup CHP and Gasplant
 
 
 
 status = solve(m)
-status == :Optimal && (flow_value = getvalue(var_flow))
-trans_value = getvalue(var_trans)
+status == :Optimal && (flow_value = getvalue(v_Flow))
+trans_value = getvalue(v_Trans)
 println(m)
