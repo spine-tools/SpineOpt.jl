@@ -21,3 +21,23 @@ macro suppress_err(block)
         end
     end
 end
+
+
+"""
+    as_number(str)
+
+An Int64 or Float64 from parsing `str` if possible.
+"""
+function as_number(str)
+    typeof(str) != String && return str
+    type_array = [
+        Int64,
+        Float64,
+    ]
+    for T in type_array
+        try
+            return parse(T, str)
+        end
+    end
+    str
+end

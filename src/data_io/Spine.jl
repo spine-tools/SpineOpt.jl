@@ -111,7 +111,7 @@ function JuMP_all_out(mapping::PyObject, update_all_datatypes=true)
             value = object_parameter_value["value"]
             object_parameter_value_dict[object_name] = Dict{String,Any}(
                 "json" => json,
-                "value" => value
+                "value" => as_number(value)
             )
         end
         relationship_parameter_value_list =
@@ -119,10 +119,20 @@ function JuMP_all_out(mapping::PyObject, update_all_datatypes=true)
         object_class_name_list = nothing
         for relationship_parameter_value in py"[x._asdict() for x in $relationship_parameter_value_list]"
             object_class_name_list = [
-                Symbol(x) for x in split(relationship_parameter_value["object_class_name_list"], ",")
+                String(x) for x in split(relationship_parameter_value["object_class_name_list"], ",")
             ]
             break
         end
+        object_class_name_list == nothing && continue
+        object_class_name_ocurrences = Dict{String,Int64}()
+        for (i, object_class_name) in enumerate(object_class_name_list)
+            n_ocurrences = count(x -> contains(x, object_class_name), object_class_name_list)
+            n_ocurrences == 1 && continue
+            ocurrence = get(object_class_name_ocurrences, object_class_name, 1)
+            object_class_name_list[i] = string(object_class_name, ocurrence)
+            object_class_name_ocurrences[object_class_name] = ocurrence + 1
+        end
+        object_class_name_list
         relationship_parameter_value_dict = Dict{String,Any}()
         for relationship_parameter_value in py"[x._asdict() for x in $relationship_parameter_value_list]"
             object_name_list = relationship_parameter_value["object_name_list"]
@@ -130,7 +140,7 @@ function JuMP_all_out(mapping::PyObject, update_all_datatypes=true)
             value = relationship_parameter_value["value"]
             relationship_parameter_value_dict[object_name_list] = Dict{String,Any}(
                 "json" => json,
-                "value" => value
+                "value" => as_number(value)
             )
         end
         @suppress_err begin
@@ -153,6 +163,7 @@ function JuMP_all_out(mapping::PyObject, update_all_datatypes=true)
                         for object_class_name in object_class_name_list
                             if haskey(kwargs_dict, Symbol(object_class_name))
                                 push!(object_name_list, kwargs_dict[Symbol(object_class_name)])
+                                continue
                             end
                         end
                         object_name_list = join(object_name_list, ",")
