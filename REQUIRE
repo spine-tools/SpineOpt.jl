@@ -1,11 +1,5 @@
 julia 0.6.1+
-SpineData
-Missings
-JuMP
-Ipopt
-DataFrames
-Query
-ODBC
-SQLite
+PyCall
 JSON
+JuMP
 Clp

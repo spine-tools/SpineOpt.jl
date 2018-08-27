@@ -1,40 +1,43 @@
 """
-    JuMP_all_out(source, update_all_datatypes=true)
+    JuMP_all_out(db_url, update_all_datatypes=true)
 
 Generate and export convenience functions
 named after each object class, relationship class, and parameter in `source`,
-providing compact access to its contents, where `source`
-is anything convertible to a `SpineDataObject` by the `SpineData.jl` package.
-See also: [`JuMP_all_out(sdo::SpineDataObject, update_all_datatypes=true)`](@ref) for details
+providing compact access to its contents, where `db_url`
+is a database url composed according to
+[sqlalchemy rules](http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls).
+See also: [`JuMP_all_out(mapping::PyObject, update_all_datatypes=true)`](@ref) for details
 about the generated convenience functions.
 
 If `update_all_datatypes` is `true`, then the method tries to find out the julia `Type` that best fits
-all values for every parameter in `sdo`, and converts all values to that `Type`. (See `SpineData.update_all_datatypes!`.)
+all values for every parameter in the database pointed by `db_url`,
+and converts all values to that `Type`. (See `update_all_datatypes!`.)
 """
-function JuMP_all_out(source, update_all_datatypes=true)
-    sdo = Spine_object(source)
-    JuMP_all_out(sdo, update_all_datatypes)
+function JuMP_all_out(db_url, update_all_datatypes=true)
+    mapping = db_api[:DatabaseMapping](db_url)
+    JuMP_all_out(mapping, update_all_datatypes)
 end
 
 """
-    JuMP_all_out(sdo::SpineDataObject, update_all_datatypes=true)
+    JuMP_all_out(mapping::PyObject, update_all_datatypes=true)
 
 Generate and export convenience functions
-named after each object class, relationship class, and parameter in `sdo`,
+named after each object class, relationship class, and parameter in the
+database mapped by `mapping`,
 providing compact access to its contents.
 These functions are intended to be called in JuMP programs, as follows:
 
   - **object class**: call `x()` to get the set of names of objects of the class named `"x"`.
-  - **relationship class**: call `y("k")` to get the set of names of objects
-    related to the object named `"k"`, by a relationship of class named `"y"`,
-    or an empty set if no such relationship exists.
+  - **relationship class**: call `y()` to get the set of name tuples of objects related by the
+    relationship class named `"y"`; also call `y(object_class_name="object_name")` to get the
+    set of name tuples of objects related to "object_name".
   - **parameter**: call `z("k", t)` to get the value of the parameter named `"z"` for the object
     named `"k"`, or `Nullable()` if the parameter is not defined.
     If this value is an array in the Spine object, then `z("k", t)` returns position `t` in that array.
 
 If `update_all_datatypes` is `true`, then the method tries to find the julia `Type` that best fits
-all values for every parameter in `sdo`, and converts all values to that `Type`.
-(See `SpineData.update_all_datatypes!`.)
+all values for every parameter in the database, and converts all values to that `Type`.
+(See `update_all_datatypes!`.)
 
 # Example
 ```julia
@@ -44,21 +47,24 @@ julia> commodity()
  "coal"
  "gas"
 ...
-julia> unit_node("Leuven")
+julia> unit_node(node="Leuven")
 4-element Array{String,1}:
- "coal_import"
- "gas_fired_power_plant"
+ String["coal_import"]
+ String["gas_fired_power_plant"]
 ...
-julia> conversion_cost("gas_import")
+julia> conversion_cost(unit="gas_import")
 12
-julia> demand("Leuven", 17)
+julia> demand(node="Leuven", t=17)
 700
 ```
 """
-function JuMP_all_out(sdo::SpineDataObject, update_all_datatypes=true)
-    jfo = JuMP_object(sdo, update_all_datatypes)
-    for object_class_name in jfo[".METADATA"]["object_class"]
-        object_names = jfo[object_class_name]
+function JuMP_all_out(mapping::PyObject, update_all_datatypes=true)
+    object_class_list = py"$mapping.object_class_list()"
+    for object_class in py"[x._asdict() for x in $object_class_list]"
+        object_class_id = object_class["id"]
+        object_class_name = object_class["name"]
+        object_list = py"$mapping.object_list(class_id=$object_class_id)"
+        object_names = py"[x.name for x in $object_list]"
         @suppress_err begin
             @eval begin
                 $(Symbol(object_class_name))() = $(object_names)
@@ -66,267 +72,99 @@ function JuMP_all_out(sdo::SpineDataObject, update_all_datatypes=true)
             end
         end
     end
-    for relationship_class_name in jfo[".METADATA"]["relationship_class"]
-        related_object_names = jfo[relationship_class_name]
+    relationship_class_list = py"$mapping.wide_relationship_class_list()"
+    for relationship_class in py"[x._asdict() for x in $relationship_class_list]"
+        relationship_class_id = relationship_class["id"]
+        relationship_class_name = relationship_class["name"]
+        object_class_name_list = [Symbol(x) for x in split(relationship_class["object_class_name_list"], ",")]
+        relationship_list = py"$mapping.wide_relationship_list(class_id=$relationship_class_id)"
+        object_name_lists = Array{Array{String,1},1}()
+        for relationship in py"[x._asdict() for x in $relationship_list]"
+            object_name_list = [String(x) for x in split(relationship["object_name_list"], ",")]
+            push!(object_name_lists, object_name_list)
+        end
         @suppress_err begin
             @eval begin
-                function $(Symbol(relationship_class_name))(x::String)
-                    relationship_class_name = $(related_object_names)
-                    get(relationship_class_name, x, [])
+                function $(Symbol(relationship_class_name))(;kwargs...)
+                    result = $(object_name_lists)
+                    object_class_name_list = $(object_class_name_list)
+                    for (key,value) in kwargs
+                        index = findfirst(x -> x == key, object_class_name_list)
+                        result = filter(x -> x[index] == value, result)
+                        result = [x[1:end .!= index] for x in result]
+                    end
+                    result
                 end
                 export $(Symbol(relationship_class_name))
             end
         end
     end
-    for parameter_name in jfo[".METADATA"]["parameter"]
-        value = jfo[parameter_name]
+    parameter_list = py"$mapping.parameter_list()"
+    for parameter in py"[x._asdict() for x in $parameter_list]"
+        parameter_name = parameter["name"]
+        object_parameter_value_list =
+            py"$mapping.object_parameter_value_list(parameter_name=$parameter_name)"
+        object_parameter_value_dict = Dict{String,Any}()
+        for object_parameter_value in py"[x._asdict() for x in $object_parameter_value_list]"
+            object_name = object_parameter_value["object_name"]
+            json = object_parameter_value["json"]
+            value = object_parameter_value["value"]
+            object_parameter_value_dict[object_name] = Dict{String,Any}(
+                "json" => json,
+                "value" => value
+            )
+        end
+        relationship_parameter_value_list =
+            py"$mapping.relationship_parameter_value_list(parameter_name=$parameter_name)"
+        object_class_name_list = nothing
+        for relationship_parameter_value in py"[x._asdict() for x in $relationship_parameter_value_list]"
+            object_class_name_list = [
+                Symbol(x) for x in split(relationship_parameter_value["object_class_name_list"], ",")
+            ]
+            break
+        end
+        relationship_parameter_value_dict = Dict{String,Any}()
+        for relationship_parameter_value in py"[x._asdict() for x in $relationship_parameter_value_list]"
+            object_name_list = relationship_parameter_value["object_name_list"]
+            json = relationship_parameter_value["json"]
+            value = relationship_parameter_value["value"]
+            relationship_parameter_value_dict[object_name_list] = Dict{String,Any}(
+                "json" => json,
+                "value" => value
+            )
+        end
         @suppress_err begin
             @eval begin
-                function $(Symbol(parameter_name))(x::String, t::Int64=1)
-                    value = $(value)
-                    if haskey(value, x)
-                        if isa(value[x], Array)
-                            if t in linearindices(value[x])
-                                return value[x][t]
+                function $(Symbol(parameter_name))(;t::Int64=1, kwargs...)
+                    if length(kwargs) == 1
+                        object_parameter_value_dict = $(object_parameter_value_dict)
+                        (key, value) = kwargs[1]
+                        object_class_name = string(key)  # NOTE: not in use at the moment
+                        object_name = value
+                        !haskey(object_parameter_value_dict, object_name) && return nothing
+                        result = object_parameter_value_dict[object_name]
+                        result["json"] == nothing && return result["value"]
+                        return result["json"][t]
+                    else
+                        relationship_parameter_value_dict = $(relationship_parameter_value_dict)
+                        object_class_name_list = $(object_class_name_list)
+                        kwargs_dict = Dict(kwargs)
+                        object_name_list = Array{String,1}()
+                        for object_class_name in object_class_name_list
+                            if haskey(kwargs_dict, Symbol(object_class_name))
+                                push!(object_name_list, kwargs_dict[Symbol(object_class_name)])
                             end
                         end
-                        return value[x]
+                        object_name_list = join(object_name_list, ",")
+                        !haskey(relationship_parameter_value_dict, object_name_list) && return nothing
+                        result = relationship_parameter_value_dict[object_name_list]
+                        result["json"] == nothing && return result["value"]
+                        return result["json"][t]
                     end
-                    Nullable()
+                    nothing
                 end
                 export $(Symbol(parameter_name))
             end
         end
     end
-end
-
-"""
-    JuMP_object(sdo::SpineDataObject, update_all_datatypes=true)
-
-A julia `Dict` providing
-custom maps of the contents of `sdo`. In what follows, `jfo` designs this `Dict`.
-The specific roles of these maps are described below:
-
-  - **object class map**: `object_class_name::String` ⟶ `object_names::Array{String,1}`.
-    This map assigns an object class's name to a list of names of objects of that class.
-    You can refer to the set of objects of the class named `"x"` as `jfo["x"]`.
-  - **relationship class map**: `relationship_class_name::String` ⟶ `object_name::String` ⟶
-    `related_object_names::Array{String,1}`.
-    This multilevel map assigns, for each relationship class name, a map from an object's name
-    to a list of related
-    object names. You can use this map to get the set of names of objects related to the object called `"k"`
-    by a relationship of the class named `"y"` as
-    `jfo["y"]["k"]`.
-  - **parameter map**: `parameter_name::String` ⟶ `object_name::String` ⟶ `parameter_value::T`.
-    This multilevel map assigns, for each parameter name, a map from an object's name
-    to the value of the parameter for that object.
-    You can use this map to access the value of the parameter called `"z"` for the object called `"k"` as
-    `jfo["z"]["k"]`. If the value for this parameter in `sdo` is an array, you can access position `t` in that array
-    as `jfo["z"]["k"][t]`
-
-# Example
-```julia
-julia> jfo = JuMP_object(sdo);
-julia> jfo["unit"]
-4-element Array{String,1}:
- "coal_import"
- "gas_fired_power_plant"
-...
-julia> jfo["unit_node"]
-Dict{String,String} with 5 entries:
-  "coal_fired_power_plant" => ["Leuven"]
-  "coal_import"  => ["Leuven"]
-  ...
-  "Leuven" => ["coal_fired_power_plant", "coal_import", ...]
-...
-julia> jfo["conversion_cost"]
-Dict{String,Int64} with 4 entries:
-  "gas_import" => 12
-  "coal_fired_power_plant"  => 0
-...
-```
-"""
-function JuMP_object(sdo::SpineDataObject, update_all_datatypes=true)
-    update_all_datatypes && update_all_datatypes!(sdo)
-    jfo = Dict{String,Any}()
-    init_metadata!(jfo)
-    for i=1:size(sdo.object_class, 1)
-        object_class_id = sdo.object_class[i, :id]
-        object_class_name = sdo.object_class[i, :name]
-        jfo[object_class_name] = @from object in sdo.object begin
-            @where object.class_id == object_class_id
-            @select get(object.name)
-            @collect
-        end
-        add_object_class_metadata!(jfo, object_class_name)
-    end
-    for i=1:size(sdo.relationship_class, 1)
-        relationship_class_id = sdo.relationship_class[i, :id]
-        relationship_class_name = sdo.relationship_class[i, :name]
-        relationship_df = @from relationship in sdo.relationship begin
-            @where relationship.class_id == relationship_class_id
-            @join child_object in sdo.object on relationship.child_object_id equals child_object.id
-            @join parent_object in sdo.object on relationship.parent_object_id equals parent_object.id
-            @select {child_object_name=child_object.name, parent_object_name=parent_object.name}
-            @collect DataFrame
-        end
-        child_to_parent_object_names = @from relationship in relationship_df begin
-            @group relationship by relationship.child_object_name into group
-            @let group_arr = [get(x) for x in group..parent_object_name]
-            @select get(group.key) => group_arr
-            @collect Dict{String,Any}
-        end
-        parent_to_child_object_names = @from relationship in relationship_df begin
-            @group relationship by relationship.parent_object_name into group
-            @let group_arr = [get(x) for x in group..child_object_name]
-            @select get(group.key) => group_arr
-            @collect Dict{String,Any}
-        end
-        jfo[relationship_class_name] = merge(child_to_parent_object_names, parent_to_child_object_names)
-        add_relationship_class_metadata!(jfo, relationship_class_name)
-    end
-    for i=1:size(sdo.parameter,1)
-        parameter_id = sdo.parameter[i, :id]
-        parameter_name = sdo.parameter[i, :name]
-        data_type = sdo.parameter[i, :data_type]
-        value = @from parameter in sdo.parameter_value begin
-            @where parameter.parameter_id == parameter_id
-            @join object in sdo.object on parameter.object_id equals object.id
-            @select get(object.name) => get(parameter.value)
-            @collect Dict{String,get(spine2julia, data_type, Any)}
-        end
-        json = @from parameter in sdo.parameter_value begin
-            @where parameter.parameter_id == parameter_id
-            @join object in sdo.object on parameter.object_id equals object.id
-            @let json_value = (isempty(get(parameter.json)) || isna(parameter.json))?Nullable():JSON.parse(get(parameter.json))
-            @select get(object.name) => json_value
-            @collect Dict{String,Any}
-        end
-        # NOTE: this prioritizes json over value if json is not missing
-        jfo[parameter_name] = Dict{String,Any}(
-            k => isnull(json[k])?v:json[k] for (k,v) in value
-        )
-        add_parameter_metadata!(jfo, parameter_name)
-    end
-    jfo
-end
-
-# metadata convenience functions
-function init_metadata!(jfo::Dict)
-    jfo[".METADATA"] = Dict{String,Array}()
-    jfo[".METADATA"]["object_class"] = Array{String,1}()
-    jfo[".METADATA"]["relationship_class"] = Array{String,1}()
-    jfo[".METADATA"]["parameter"] = Array{String,1}()
-end
-
-function add_object_class_metadata!(jfo::Dict, names...)
-    for name in names
-        push!(jfo[".METADATA"]["object_class"], name)
-    end
-end
-
-function add_relationship_class_metadata!(jfo::Dict, names...)
-    for name in names
-        push!(jfo[".METADATA"]["relationship_class"], name)
-    end
-end
-
-function add_parameter_metadata!(jfo::Dict, names...)
-    for name in names
-        push!(jfo[".METADATA"]["parameter"], name)
-    end
-end
-
-"""
-    SpineData.Spine_object(jfo::Dict)
-
-A `SpineDataObject` from `jfo`.
-
-See also [`JuMP_object(sdo::SpineDataObject, update_all_datatypes=true)`](@ref).
-"""
-function SpineData.Spine_object(jfo::Dict)
-    sdo = MinimalSDO()
-    metadata = jfo[".METADATA"]
-    object_class = metadata["object_class"]
-    object_id = 1
-    for (object_class_id, object_class_name) in enumerate(object_class)
-        display_order = object_class_id
-        push!(sdo.object_class, [object_class_id, object_class_name, display_order])
-        for object_name in jfo[object_class_name]
-            push!(sdo.object, [object_id, object_class_id, object_name])
-            object_id += 1
-        end
-    end
-    relationship_class = metadata["relationship_class"]
-    relationship_id = 1
-    for (relationship_class_id, relationship_class_name) in enumerate(relationship_class)
-        # Add relationship class
-        # Infer parent and child object class from the objects of the first relationship
-        # This is possible since object names are UNIQUE
-        parent_object_class_id = nothing
-        child_object_class_id = nothing
-        for (parent_object_name, child_object_name) in jfo[relationship_class_name]
-            isa(child_object_name, Array) && continue
-            parent_object_id = findfirst(sdo.object[:name], parent_object_name)
-            parent_object_class_id = sdo.object[parent_object_id, :class_id]
-            child_object_id = findfirst(sdo.object[:name], child_object_name)
-            child_object_class_id = sdo.object[child_object_id, :class_id]
-            push!(sdo.relationship_class, [
-                    relationship_class_id,
-                    relationship_class_name,
-                    parent_object_class_id,
-                    child_object_class_id
-                ]
-            )
-            break
-        end
-        # Add relationship
-        for (parent_object_name, child_object_name) in jfo[relationship_class_name]
-            isa(child_object_name, Array) && continue
-            parent_object = filter(x -> x[:class_id] == parent_object_class_id, sdo.object)
-            i = findfirst(parent_object[:name], parent_object_name)
-            i == 0 && continue
-            parent_object_id = parent_object[i, :id]
-            child_object_id = findfirst(sdo.object[:name], child_object_name)
-            relationship_name = string(parent_object_name, "_", child_object_name)
-            push!(sdo.relationship, [
-                    relationship_id,
-                    relationship_class_id,
-                    relationship_name,
-                    parent_object_id,
-                    child_object_id
-                ]
-            )
-            relationship_id += 1
-        end
-    end
-    parameter = metadata["parameter"]
-    parameter_value_id = 1
-    for (parameter_id, parameter_name) in enumerate(parameter)
-        # Add parameter
-        # Infer object class from the object of the first parameter
-        # This is possible since object names are UNIQUE
-        for (object_name, value) in jfo[parameter_name]
-            object_id = findfirst(sdo.object[:name], object_name)
-            object_class_id = sdo.object[object_id, :class_id]
-            data_type = julia2spine(typeof(value))
-            unit = missing
-            push!(sdo.parameter, [
-                    parameter_id,
-                    parameter_name,
-                    data_type,
-                    object_class_id,
-                    unit
-                ]
-            )
-            break
-        end
-        # Add parameter value
-        for (object_name, value) in jfo[parameter_name]
-            object_id = findfirst(sdo.object[:name], object_name)
-            push!(sdo.parameter_value, [parameter_value_id, parameter_id, object_id, value])
-            parameter_value_id += 1
-        end
-    end
-    sdo
 end

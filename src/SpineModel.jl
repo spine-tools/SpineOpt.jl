@@ -12,17 +12,23 @@ export constraint_use_of_capacity
 export constraint_efficiency_definition
 export constraint_commodity_balance
 
-using SpineData
-using Missings
+using PyCall
+using JSON
 using JuMP
 using Clp
-using DataFrames
-using Query
-using ODBC
-using SQLite
-using JSON
-using Clp
-import DataValues: isna
+const db_api = PyNULL()
+
+function __init__()
+    copy!(db_api, pyimport("spinedatabase_api"))
+end
+
+# using SpineData
+# using Missings
+# using DataFrames
+# using Query
+# using ODBC
+# using SQLite
+# import DataValues: isna
 
 include("helpers.jl")
 include("data_io/Spine.jl")
