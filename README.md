@@ -1,12 +1,14 @@
 # SpineModel.jl
 
-A Julia Module for defining and running energy models using the  [Spine](http://www.spine-model.org/) framework.
+A Julia Module to use within the [Spine](http://www.spine-model.org/) software suite, for developing energy system integration models,
 
 ## Getting started
 
 ### Pre-requisites
 
-- Julia 0.6+
+- [Julia 0.6.1+](https://julialang.org/)
+- [PyCall](https://github.com/JuliaPy/PyCall.jl)
+- [spinedatabase_api](https://gitlab.vtt.fi/spine/data/tree/database_api)
 
 ### Installation
 
