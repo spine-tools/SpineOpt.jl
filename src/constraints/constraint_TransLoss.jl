@@ -4,5 +4,5 @@ function constraint_TransLoss(m::Model, trans)
         + (trans[con,i,j,t])
                 * p_TransLoss(con,i,j) ### to have a look at
         >=
-        - (trans[c,j,i ,t]))
+        - (trans[con,j,i ,t]))
 end

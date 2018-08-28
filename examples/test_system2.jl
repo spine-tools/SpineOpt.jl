@@ -2,17 +2,12 @@
 Moreover, the model is solved =#
 using ASTinterpreter2
 #initializing required packages
-push!(LOAD_PATH, joinpath(@__DIR__,"..","src"))
 using SpineModel
-using SQLite
 using JuMP
 using Clp
 
-p = joinpath(@__DIR__,"data","testsystem2_db.sqlite")
-db = SQLite.DB(AbstractString(p))
-sdo = SpineData.Spine_object(db)
-jfo = JuMP_object(sdo)
-JuMP_all_out(db)
+p = "sqlite:///" * "testsystem2_db.sqlite"
+JuMP_all_out(p)
 
 
 
@@ -20,8 +15,8 @@ JuMP_all_out(db)
 m = Model(solver = ClpSolver())
 
 # setup decision variables
-v_Flow = generate_v_Flow(m)
-v_Trans =generate_v_Trans(m)
+v_Flow = generate_variable_v_Flow(m)
+v_Trans =generate_variable_v_Trans(m)
 
 # objective function
 minimize_production_cost(m,v_Flow)
