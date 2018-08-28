@@ -1,3 +1,12 @@
 *.jl.cov
 *.jl.*.cov
 *.jl.mem
+
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.gz
+*.toc
+*.sqlite-journal
