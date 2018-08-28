@@ -14,7 +14,7 @@ export generate_variable_v_Trans
 #generate objecte
 export objective_minimize_production_cost
 
-## generate constraints
+# generate constraints
 export constraint_FlowCapacity
 export constraint_FixRatioOutputInputFlow
 export constraint_MaxCumOutFlowBound
@@ -22,7 +22,12 @@ export constraint_TransLoss
 export constraint_TransCap
 export constraint_commodity_balance
 
-#load packages 
+#helper
+export generate_CommoditiesNodesUnits
+export generate_ConnectionNodePairs
+
+
+#load packages
 using PyCall
 using JSON
 using JuMP
@@ -33,6 +38,9 @@ function __init__()
     copy!(db_api, pyimport("spinedatabase_api"))
 end
 
+include("helpers/helpers.jl")
+include("helpers/generate_CommoditiesNodesUnits.jl")
+include("helpers/generate_ConnectionNodePairs.jl")
 
 include("data_io/Spine.jl")
 include("data_io/util.jl")

@@ -1,31 +1,29 @@
-#= for now this is the main script from which the archetypes are created and the corresponding variables and constraints are called.
-Moreover, the model is solved =#
-using ASTinterpreter2
-#initializing required packages
+# for now this is the main script from which the archetypes are created and the corresponding variables and constraints are called.
+
+# using ASTinterpreter2
 using SpineModel
 using JuMP
 using Clp
-
-p = "sqlite:///" * "testsystem2_db.sqlite"
+#init databsae file from toolbox and create convinient functions
+p = "sqlite:///examples//data//testsystem2_v2_multiD.sqlite"
 JuMP_all_out(p)
 
-
-
-## model:
+# model:
 m = Model(solver = ClpSolver())
 
 # setup decision variables
 v_Flow = generate_variable_v_Flow(m)
+#
 v_Trans =generate_variable_v_Trans(m)
 
 # objective function
-minimize_production_cost(m,v_Flow)
-#
+objective_minimize_production_cost(m, v_Flow)#
+
 # Technological constraints
-# unit capacity
-capacity(m,v_Flow) #define input vars, see how manuek did
-# relationship output and input v_Flows
-#
+## unit capacity
+constraint_FlowCapacity(m, v_Flow)
+
+##
 outinratio(m,v_Flow)
 # needed: set of "conventional units"
 # possibly split up in conventional and complex power plants (not really needed)
