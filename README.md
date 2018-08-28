@@ -16,14 +16,14 @@ In the Julia REPL, issue the following command to clone this repo into your pack
 julia> Pkg.clone("https://gitlab.vtt.fi/spine/model.git", "SpineModel")
 ```
 
-Checkout the current branch (`manuelma`):
+Checkout the current branch (`dev`):
 
 ```julia
-julia> Pkg.checkout("SpineModel", "manuelma")
+julia> Pkg.checkout("SpineModel", "dev")
 ```
 
 In the future, whenever you want to get the latest version of the package
-just run `Pkg.checkout(...)` again.
+just run the `Pkg.checkout(...)` part.
 
 ### Usage
 
