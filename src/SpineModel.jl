@@ -24,7 +24,7 @@ export constraint_commodity_balance
 
 #helper
 export generate_CommoditiesNodesUnits
-export generate_ConnectionNodePairs
+# export generate_ConnectionNodePairs
 
 
 #load packages
@@ -40,7 +40,7 @@ end
 
 include("helpers/helpers.jl")
 include("helpers/generate_CommoditiesNodesUnits.jl")
-include("helpers/generate_ConnectionNodePairs.jl")
+# include("helpers/generate_ConnectionNodePairs.jl")
 
 include("data_io/Spine.jl")
 include("data_io/util.jl")
