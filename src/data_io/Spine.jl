@@ -14,7 +14,6 @@ function JuMP_all_out(db_url)
     JuMP_all_out(mapping)
 end
 
-
 function JuMP_object_out(mapping::PyObject)
     object_class_list = py"$mapping.object_class_list()"
     for object_class in py"[x._asdict() for x in $object_class_list]"
@@ -62,7 +61,7 @@ function JuMP_relationship_out(mapping::PyObject)
                         result = filter(x -> x[index] == value, result)
                         result = [x[1:end .!= index] for x in result]
                     end
-                    result
+                    [size(x, 1) == 1?x[1]:x for x in result]
                 end
                 export $(Symbol(relationship_class_name))
             end
@@ -81,7 +80,11 @@ function JuMP_object_parameter_out(mapping::PyObject)
         object_parameter_value_dict = Dict{String,Any}()
         for object_parameter_value in py"[x._asdict() for x in $object_parameter_value_list]"
             object_name = object_parameter_value["object_name"]
-            json = object_parameter_value["json"]
+            json = try
+                JSON.parse(object_parameter_value["json"])
+            catch LoadError
+                nothing
+            end
             value = object_parameter_value["value"]
             object_parameter_value_dict[object_name] = Dict{String,Any}(
                 "json" => json,
@@ -135,7 +138,11 @@ function JuMP_relationship_parameter_out(mapping::PyObject)
         relationship_parameter_value_dict = Dict{String,Any}()
         for relationship_parameter_value in py"[x._asdict() for x in $relationship_parameter_value_list]"
             object_name_list = relationship_parameter_value["object_name_list"]
-            json = relationship_parameter_value["json"]
+            json = try
+                JSON.parse(relationship_parameter_value["json"])
+            catch LoadError
+                nothing
+            end
             value = relationship_parameter_value["value"]
             relationship_parameter_value_dict[object_name_list] = Dict{String,Any}(
                 "json" => json,
