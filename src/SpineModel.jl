@@ -1,8 +1,7 @@
 module SpineModel
 
 # data_io exports
-export JuMP_all_out, JuMP_object
-export @JuMPout, @JuMPout_suffix, @JuMPout_with_backup, @JuMPin
+export JuMP_all_out
 
 # equations export
 export linear_JuMP_model
@@ -32,7 +31,6 @@ end
 
 include("helpers.jl")
 include("data_io/Spine.jl")
-include("data_io/util.jl")
 include("data_io/other_formats.jl")
 include("equations/core.jl")
 
