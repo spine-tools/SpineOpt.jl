@@ -94,15 +94,22 @@ function JuMP_object_parameter_out(mapping::PyObject)
         @suppress_err begin
             @eval begin
                 function $(Symbol(parameter_name))(;t::Int64=1, kwargs...)
-                    length(kwargs) != 1 && return nothing
-                    key, value = kwargs[1]
-                    object_parameter_value_dict = $(object_parameter_value_dict)
-                    object_class_name = string(key)  # NOTE: not in use at the moment
-                    object_name = value
-                    !haskey(object_parameter_value_dict, object_name) && return nothing
-                    result = object_parameter_value_dict[object_name]
-                    result["json"] == nothing && return result["value"]
-                    return result["json"][t]
+                    # length(kwargs) != 1 && return nothing
+                    if length(kwargs)==0
+                         d = Dict(String(key) => v["json"]==nothing?v["value"]:v["json"] for (key, v) in $(object_parameter_value_dict))
+                         return d
+                    elseif length(kwargs) == 1
+                        key, value = kwargs[1]
+                        object_parameter_value_dict = $(object_parameter_value_dict)
+                        object_class_name = string(key)  # NOTE: not in use at the moment
+                        object_name = value
+                        !haskey(object_parameter_value_dict, object_name) && return nothing
+                        result = object_parameter_value_dict[object_name]
+                        result["json"] == nothing && return result["value"]
+                        return result["json"][t]
+                    else
+                        return nothing
+                    end
                 end
                 export $(Symbol(parameter_name))
             end
@@ -154,6 +161,10 @@ function JuMP_relationship_parameter_out(mapping::PyObject)
                 function $(Symbol(parameter_name))(;t::Int64=1, kwargs...)
                     relationship_parameter_value_dict = $(relationship_parameter_value_dict)
                     object_class_name_list = $(object_class_name_list)
+                    if length(kwargs)==0
+                         d = Dict([String(x) for x in split(key,",")] => v["json"]==nothing?v["value"]:v["json"] for (key, v) in relationship_parameter_value_dict)
+                         return d
+                    end
                     kwargs_dict = Dict(kwargs)
                     object_name_list = Array{String,1}()
                     for object_class_name in object_class_name_list
@@ -210,6 +221,7 @@ julia> demand(node="Leuven", t=17)
 700
 ```
 """
+
 function JuMP_all_out(mapping::PyObject)
     JuMP_object_out(mapping)
     JuMP_relationship_out(mapping)
