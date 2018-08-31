@@ -1,8 +1,7 @@
 module SpineModel
 
 # data_io exports
-export JuMP_all_out, JuMP_object
-export @JuMPout, @JuMPout_suffix, @JuMPout_with_backup, @JuMPin
+export JuMP_all_out
 
 # equations export
 export linear_JuMP_model
@@ -24,7 +23,7 @@ export constraint_commodity_balance
 
 #helper
 export generate_CommoditiesNodesUnits
-export generate_ConnectionNodePairs
+# export generate_ConnectionNodePairs
 
 #export funcitons
 export JuMP_variables_to_spine_db
@@ -43,10 +42,9 @@ end
 
 include("helpers/helpers.jl")
 include("helpers/generate_CommoditiesNodesUnits.jl")
-include("helpers/generate_ConnectionNodePairs.jl")
+# include("helpers/generate_ConnectionNodePairs.jl")
 
 include("data_io/Spine.jl")
-include("data_io/util.jl")
 include("data_io/other_formats.jl")
 include("data_io/get_results.jl")
 include("data_io/result_to_spine.jl")
