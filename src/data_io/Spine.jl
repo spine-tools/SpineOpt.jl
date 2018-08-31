@@ -80,8 +80,8 @@ end
 
 """
 JuMP_relationship_out creates "convenience" functions for accessing relationships
-e.g. realtiosnhips between units and commidities (unit__commodity) or units and
-nodes (unit__node)
+e.g. realtiosnhips between units and commidities (unit_commodity) or units and
+nodes (unit_node)
 
 # Example using a convenience function created by calling JuMP_object_out(mapping::PyObject)
 ```julia
@@ -117,12 +117,14 @@ function JuMP_relationship_out(mapping::PyObject)
                 function $(Symbol(relationship_class_name))(;kwargs...)
                     result = $(object_name_lists)
                     object_class_name_list = $(object_class_name_list)
+                    object_class_name_list_temp = copy(object_class_name_list)
                     for (key,value) in kwargs
-                        index = findfirst(x -> x == string(key), object_class_name_list)
-                        # @show string(key)
-                        # @show object_class_name_list
+                        index = findfirst(x -> x == string(key), object_class_name_list_temp)
                         result = filter(x -> x[index] == value, result)
                         result = [x[1:end .!= index] for x in result]
+                        #update index for next loop
+                        filter!(e->e≠object_class_name_list[index], object_class_name_list_temp)
+                        index = findfirst(x -> x == string(key), object_class_name_list_temp)
                     end
                     [size(x, 1) == 1?x[1]:x for x in result]
                 end

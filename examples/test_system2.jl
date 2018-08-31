@@ -5,10 +5,10 @@ using SpineModel
 using JuMP
 using Clp
 #init databsae file from toolbox and create convinient functions
-p = "sqlite:///examples//data//testsystem2_v2_multiD.sqlite"
-JuMP_all_out(p)
+db_url = "sqlite:///examples//data//testsystem2_v2_multiD.sqlite"
+JuMP_all_out(db_url)
 
-# model:
+## model:
 m = Model(solver = ClpSolver())
 
 # setup decision variables
