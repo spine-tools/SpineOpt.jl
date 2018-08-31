@@ -26,6 +26,9 @@ export constraint_commodity_balance
 export generate_CommoditiesNodesUnits
 export generate_ConnectionNodePairs
 
+#export funcitons
+export JuMP_variables_to_spine_db
+
 
 #load packages
 using PyCall
@@ -46,6 +49,7 @@ include("data_io/Spine.jl")
 include("data_io/util.jl")
 include("data_io/other_formats.jl")
 include("data_io/get_results.jl")
+include("data_io/result_to_spine.jl")
 
 
 #defining relationship class names. Todo:adapt according nomencla
