@@ -60,7 +60,7 @@ function get_or_add_object_class(db::PyObject, name::String)
     if length(result_class) > 0
         result_class = DBObjectClass(result_class[1][2], result_class[1][1])
     else
-        result = db[:add_object_class](name = class_name)
+        result = db[:add_object_class](name = name)
         result_class = DBObjectClass(result[:name], result[:id])
     end
     return result_class
