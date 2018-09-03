@@ -9,14 +9,15 @@ See [`JuMP_all_out(mapping::PyObject)`](@ref) for details
 about the generated convenience functions.
 """
 function JuMP_all_out(db_url)
-    mapping = db_api[:DatabaseMapping](db_url) #creates a DatabaseMapping object using Python spinedatabase_api
+    # Create DatabaseMapping object using Python spinedatabase_api
+    mapping = db_api[:DatabaseMapping](db_url)
     JuMP_all_out(mapping)
 end
 
 
-
+# NOTE: Do we really need to document this one?
 """
-Append an increasing integer to object classes that are repeated
+Append an increasing integer to object classes that are repeated.
 
 # Example
 ```julia
@@ -48,28 +49,32 @@ function fix_name_ambiguity!(object_class_name_list)
 end
 
 """
-JuMP_object_out creates "convenience" functions for accessing database
+    JuMP_object_out(mapping::PyObject)
+
+Create convenience functions for accessing database
 objects e.g. units, nodes or connections
 
 # Example using a convenience function created by calling JuMP_object_out(mapping::PyObject)
 ```julia
-    julia> unit()
-    3-element Array{String,1}:
-     "GasPlant"
-     "CoalPlant"
-     "CHPPlant"
+julia> unit()
+3-element Array{String,1}:
+ "GasPlant"
+ "CoalPlant"
+ "CHPPlant"
 ```
-
 """
 function JuMP_object_out(mapping::PyObject)
-    object_class_list = py"$mapping.object_class_list()" #getting all object class names
+    # Get all object classes
+    object_class_list = py"$mapping.object_class_list()"
     for object_class in py"[x._asdict() for x in $object_class_list]"
         object_class_id = object_class["id"]
         object_class_name = object_class["name"]
-        object_list = py"$mapping.object_list(class_id=$object_class_id)"#getting all objects of object_class
+        # Get all objects of object_class
+        object_list = py"$mapping.object_list(class_id=$object_class_id)"
         object_names = py"[x.name for x in $object_list]"
         @suppress_err begin
-            @eval begin #creating "convenience" funtion named by the object class name
+            @eval begin
+                # Create convenience function named after the object class
                 $(Symbol(object_class_name))() = $(object_names)
                 export $(Symbol(object_class_name))
             end
@@ -79,32 +84,35 @@ end
 
 
 """
-JuMP_relationship_out creates "convenience" functions for accessing relationships
-e.g. realtiosnhips between units and commidities (unit_commodity) or units and
-nodes (unit_node)
+    JuMP_relationship_out(mapping::PyObject)
+
+Create convenience functions for accessing relationships
+e.g. relationships between units and commodities (unit__commodity) or units and
+nodes (unit__node)
 
 # Example using a convenience function created by calling JuMP_object_out(mapping::PyObject)
 ```julia
-    julia> unit_node()
-    9-element Array{Array{String,1},1}:
-    String["CoalPlant", "BelgiumCoal"]
-    String["CoalPlant", "LeuvenElectricity"]
-    String["GasPlant", "BelgiumGas"]
-    ...
+julia> unit_node()
+9-element Array{Array{String,1},1}:
+String["CoalPlant", "BelgiumCoal"]
+String["CoalPlant", "LeuvenElectricity"]
+String["GasPlant", "BelgiumGas"]
+...
 
-    julia> unit_node(node="LeuvenElectricity")
-    1-element Array{String,1}:
-     "CoalPlant"
-
+julia> unit_node(node="LeuvenElectricity")
+1-element Array{String,1}:
+ "CoalPlant"
 ```
-
 """
 function JuMP_relationship_out(mapping::PyObject)
-    relationship_class_list = py"$mapping.wide_relationship_class_list()"  #getting all relationship class names
-    for relationship_class in py"[x._asdict() for x in $relationship_class_list]" #iterating through dict of class names
+    # Get all relationship classes
+    relationship_class_list = py"$mapping.wide_relationship_class_list()"
+    # Iterate through relationship classes as dictionaries
+    for relationship_class in py"[x._asdict() for x in $relationship_class_list]"
         relationship_class_id = relationship_class["id"]
         relationship_class_name = relationship_class["name"]
-        object_class_name_list = [String(x) for x in split(relationship_class["object_class_name_list"], ",")] #generate Array of strings
+        # Generate Array of Strings of object class names in this relationship class
+        object_class_name_list = [String(x) for x in split(relationship_class["object_class_name_list"], ",")]
         fix_name_ambiguity!(object_class_name_list)
         relationship_list = py"$mapping.wide_relationship_list(class_id=$relationship_class_id)"
         object_name_lists = Array{Array{String,1},1}()
@@ -122,8 +130,9 @@ function JuMP_relationship_out(mapping::PyObject)
                         index = findfirst(x -> x == string(key), object_class_name_list_temp)
                         result = filter(x -> x[index] == value, result)
                         result = [x[1:end .!= index] for x in result]
-                        #update index for next loop
-                        filter!(e->e≠object_class_name_list[index], object_class_name_list_temp)
+                        # Update index for next loop
+                        filter!(e -> e ≠ object_class_name_list[index], object_class_name_list_temp)
+                        # FIXME: do we need to compute index here? We do it above...
                         index = findfirst(x -> x == string(key), object_class_name_list_temp)
                     end
                     [size(x, 1) == 1?x[1]:x for x in result]
@@ -136,7 +145,9 @@ end
 
 
 """
-JuMP_object_parameter_out creates "convenience" functions for accessing parameter of objects
+    JuMP_object_parameter_out(mapping::PyObject)
+
+Create convenience functions for accessing parameter of objects
 
 # Example using a convenience function created by calling JuMP_object_out(mapping::PyObject)
 ```julia
@@ -151,47 +162,53 @@ JuMP_object_parameter_out creates "convenience" functions for accessing paramete
     julia> p_UnitCapacity(unit="GasPlant")
     400
 ```
-
 """
 function JuMP_object_parameter_out(mapping::PyObject)
-    parameter_list = py"$mapping.parameter_list()" #export list of all parameter names
-    for parameter in py"[x._asdict() for x in $parameter_list]" #iterate through dict of parameter names
+    # Get list of all parameter
+    parameter_list = py"$mapping.parameter_list()"
+    # Iterate through parameters as dictionaries
+    for parameter in py"[x._asdict() for x in $parameter_list]"
         parameter_name = parameter["name"]
         count_ = py"$mapping.object_parameter_value_list(parameter_name=$parameter_name).count()"
-        count_ == 0 && continue #just export a convinient function if at least one parameter value is set
+        # Only create function if at least one parameter value is set
+        count_ == 0 && continue
         object_parameter_value_list =
             py"$mapping.object_parameter_value_list(parameter_name=$parameter_name)"
         object_parameter_value_dict = Dict{String,Any}()
-        for object_parameter_value in py"[x._asdict() for x in $object_parameter_value_list]" #looping through all object parameter values to create a Dict(objectname => Dict("json"=>..., "value"=>...), ... )
+        # Loop through all object parameter values to create a Dict(object_name => value, ... )
+        # where value is obtained from the json field if possible, else from the value field
+        for object_parameter_value in py"[x._asdict() for x in $object_parameter_value_list]"
             object_name = object_parameter_value["object_name"]
-            json = try
+            value = try
                 JSON.parse(object_parameter_value["json"])
             catch LoadError
-                nothing
+                as_number(object_parameter_value["value"])
             end
-            value = object_parameter_value["value"]
-            object_parameter_value_dict[object_name] = Dict{String,Any}(
-                "json" => json,
-                "value" => as_number(value)
-            )
+            object_parameter_value_dict[object_name] = value
         end
-        @suppress_err begin #creating and exporting convenient functions
+        @suppress_err begin
+            # Create and export convenience functions
             @eval begin
                 function $(Symbol(parameter_name))(;t::Int64=1, kwargs...)
                     # length(kwargs) != 1 && return nothing
-                    if length(kwargs)==0 #return dict if kwargs is empty
-                         d = Dict(String(key) => v["json"]==nothing?v["value"]:v["json"] for (key, v) in $(object_parameter_value_dict))
-                         return d
-                    elseif length(kwargs) == 1 #return json of object defined in kwargs if json exist, elso return value
+                    object_parameter_value_dict = $(object_parameter_value_dict)
+                    if length(kwargs)==0
+                        # Return dict if kwargs is empty
+                        return object_parameter_value_dict
+                    # Return position t of value for object given in kwargs if Array, else return value
+                    elseif length(kwargs) == 1
                         key, value = kwargs[1]
-                        object_parameter_value_dict = $(object_parameter_value_dict)
                         object_class_name = string(key)  # NOTE: not in use at the moment
                         object_name = value
                         !haskey(object_parameter_value_dict, object_name) && return nothing
-                        result = object_parameter_value_dict[object_name]
-                        result["json"] == nothing && return result["value"]
-                        return result["json"][t]
-                    else #if length of kwargs is >1 function call contains an error
+                        value = object_parameter_value_dict[object_name]
+                        if isa(value, Array)
+                            return value[t]
+                        else
+                            return value
+                        end
+                    # If length of kwargs is > 1 function call contains an error
+                    else
                         return nothing
                     end
                 end
@@ -203,26 +220,27 @@ end
 
 
 """
-JuMP_relationship_parameter_out creates "convenience" functions for accessing parameter attached to relationships.
+    JuMP_relationship_parameter_out(mapping::PyObject)
+
+Create convenience functions for accessing parameters attached to relationships.
+Parameter values are accessed using the object names as inputs:
 
 # Example using a convenience function created by calling JuMP_object_out(mapping::PyObject)
 ```julia
-
-    # parameter values are accessed using the object names is inputs:
-    julia> p_TransLoss(connection="EL1", node1="LeuvenElectricity", node2="AntwerpElectricity")
-    0.9
-
-    julia> p_TransLoss(connection="EL1", node1="AntwerpElectricity", node2="LeuvenElectricity")
-    0.88
-
+julia> p_TransLoss(connection="EL1", node1="LeuvenElectricity", node2="AntwerpElectricity")
+0.9
+julia> p_TransLoss(connection="EL1", node1="AntwerpElectricity", node2="LeuvenElectricity")
+0.88
 ```
-
 """
 function JuMP_relationship_parameter_out(mapping::PyObject)
-    parameter_list = py"$mapping.parameter_list()" #getting list of all parameter names via spinedata_api
-    for parameter in py"[x._asdict() for x in $parameter_list]"#iterate through dict of parameter names
+    # Get list of all parameters via spinedata_api
+    parameter_list = py"$mapping.parameter_list()"
+    # Iterate through parameters as dictionaries
+    for parameter in py"[x._asdict() for x in $parameter_list]"
         parameter_name = parameter["name"]
-        count_ = py"$mapping.relationship_parameter_value_list(parameter_name=$parameter_name).count()" #check whether specific parameter is set at least once
+        # Check whether specific parameter is set at least once
+        count_ = py"$mapping.relationship_parameter_value_list(parameter_name=$parameter_name).count()"
         count_ == 0 && continue
         relationship_parameter_value_list =
             py"$mapping.relationship_parameter_value_list(parameter_name=$parameter_name)"
@@ -234,31 +252,31 @@ function JuMP_relationship_parameter_out(mapping::PyObject)
             ]
             break
         end
-        fix_name_ambiguity!(object_class_name_list) #rename entries of this list by appending increasing integer values if entry occures more than one time
+        # Rename entries of this list by appending increasing integer values if entry occurs more than one time
+        fix_name_ambiguity!(object_class_name_list)
         relationship_parameter_value_dict = Dict{String,Any}()
-        for relationship_parameter_value in py"[x._asdict() for x in $relationship_parameter_value_list]" #iterate through list of all values set for this parameter to create a  Dict("obj1,obj2,..." => Dict("json"=>..., "value"=>...), ... )
+        # Loop through all relationship parameter values to create a Dict("obj1,obj2,.." => value, ... )
+        # where value is obtained from the json field if possible, else from the value field
+        for relationship_parameter_value in py"[x._asdict() for x in $relationship_parameter_value_list]"
             object_name_list = relationship_parameter_value["object_name_list"] #"obj1,obj2,..." e.g. "CoalPlant,Electricity,Coal"
-            json = try
+            value = try
                 JSON.parse(relationship_parameter_value["json"])
             catch LoadError
-                nothing
+                as_number(relationship_parameter_value["value"])
             end
-            value = relationship_parameter_value["value"]
-            relationship_parameter_value_dict[object_name_list] = Dict{String,Any}(
-                "json" => json,
-                "value" => as_number(value)
-            )
+            relationship_parameter_value_dict[object_name_list] = value
         end
         @suppress_err begin
-            @eval begin #create and export convenience function named same is the parameter
+            # Create and export convenience function named as the parameter
+            @eval begin
                 function $(Symbol(parameter_name))(;t::Int64=1, kwargs...)
                     relationship_parameter_value_dict = $(relationship_parameter_value_dict)
                     object_class_name_list = $(object_class_name_list)
-                    if length(kwargs)==0 #if no kwargs are provided a dict of all parameter values is returned
-                         d = Dict([String(x) for x in split(key,",")] => v["json"]==nothing?v["value"]:v["json"] for (key, v) in relationship_parameter_value_dict)
-                         return d
+                    # If no kwargs are provided a dict of all parameter values is returned
+                    if length(kwargs) == 0
+                         return relationship_parameter_value_dict
                     end
-                    #create list valid object class names
+                    # Create list of valid object class names
                     kwargs_dict = Dict(kwargs)
                     object_name_list = Array{String,1}()
                     for object_class_name in object_class_name_list
@@ -269,9 +287,12 @@ function JuMP_relationship_parameter_out(mapping::PyObject)
                     end
                     object_name_list = join(object_name_list, ",")
                     !haskey(relationship_parameter_value_dict, object_name_list) && return nothing
-                    result = relationship_parameter_value_dict[object_name_list]
-                    result["json"] == nothing && return result["value"]
-                    return result["json"][t]
+                    value = relationship_parameter_value_dict[object_name_list]
+                    if isa(value, Array)
+                        return value[t]
+                    else
+                        return value
+                    end
                 end
                 export $(Symbol(parameter_name))
             end
