@@ -7,8 +7,8 @@ export JuMP_all_out
 export linear_JuMP_model
 
 #generate variables
-export generate_variable_v_Flow
-export generate_variable_v_Trans
+export generate_variable_flow
+export generate_variable_trans
 
 #generate objecte
 export objective_minimize_production_cost
@@ -44,7 +44,7 @@ function __init__()
 end
 
 include("helpers/helpers.jl")
-include("helpers/generate_CommoditiesNodesUnits.jl")
+# include("helpers/generate_CommoditiesNodesUnits.jl")
 # include("helpers/generate_ConnectionNodePairs.jl")
 
 include("data_io/Spine.jl")
@@ -53,18 +53,16 @@ include("data_io/get_results.jl")
 include("data_io/result_to_spine.jl")
 
 
-#defining relationship class names. Todo:adapt according nomencla
-node_unit_rel= "unit_node"
-node_commodity_rel= "node_commodity"
-unit_commidity_input_rel= "input_commodity"
-unit_commidity_output_rel= "output_commodity"
-node_connection_rel= "connection_node"
-unitgroup_unit_rel="unitgroup_unit"
+# #defining relationship class names. Todo:adapt according nomencla
+# node_unit_rel= "unit_node"
+# node_commodity_rel= "node_commodity"
+# unit_commidity_input_rel= "input_commodity"
+# unit_commidity_output_rel= "output_commodity"
+# node_connection_rel= "connection_node"
+# unitgroup_unit_rel="unitgroup_unit"
 
-
-
-include("variables/generate_variable_v_Flow.jl")
-include("variables/generate_variable_v_Trans.jl")
+include("variables/generate_variable_flow.jl")
+include("variables/generate_variable_trans.jl")
 
 include("objective/objective_minimize_production_cost.jl")
 

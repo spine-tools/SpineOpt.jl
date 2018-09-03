@@ -1,6 +1,7 @@
 # for now this is the main script from which the archetypes are created and the corresponding variables and constraints are called.
 
 # using ASTinterpreter2
+using Revise
 using SpineModel
 using JuMP
 using Clp
@@ -9,42 +10,40 @@ db_url = "sqlite:///data/testsystem2_v2_multiD.sqlite"
 JuMP_all_out(db_url)
 
 ## model:
-m = Model(solver = ClpSolver())
+m = Model(solver=ClpSolver())
 
 # setup decision variables
-v_Flow = generate_variable_v_Flow(m)
+flow = generate_variable_flow(m)
 #
-v_Trans = generate_variable_v_Trans(m)
+trans = generate_variable_trans(m)
 
 # objective function
-objective_minimize_production_cost(m, v_Flow)#
+objective_minimize_production_cost(m, flow)#
 
 # Technological constraints
 # unit capacity
-constraint_FlowCapacity(m, v_Flow)
+constraint_FlowCapacity(m, flow)
 
 ##
-constraint_FixRatioOutputInputFlow(m,v_Flow)
+constraint_FixRatioOutputInputFlow(m, flow)
 # needed: set of "conventional units"
 # possibly split up in conventional and complex power plants (not really needed)
 #
 # v_Transmission losses
-constraint_TransLoss(m,v_Trans)
+constraint_TransLoss(m, trans)
 # v_Transmission capacity
-constraint_TransCap(m,v_Trans)
+constraint_TransCap(m, trans)
 # needed: set of v_Transmission units
 
 # set of v_Transmissions and actual units needed, differentiation "for all ... connected to"
 # energy balance / commodity balance
-constraint_commodity_balance(m,v_Flow, v_Trans)
+constraint_commodity_balance(m, flow, trans)
 
 # absolute bounds on commodities
-constraint_MaxCumOutFlowBound(m,v_Flow)
+constraint_MaxCumOutFlowBound(m, flow)
 # needed: set/group of unitgroup CHP and Gasplant
 
-
-
 status = solve(m)
-status == :Optimal && (flow_value = getvalue(v_Flow))
-trans_value = getvalue(v_Trans)
+status == :Optimal && (flow_value = getvalue(flow))
+trans_value = getvalue(trans)
 println(m)
