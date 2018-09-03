@@ -38,3 +38,7 @@ julia> using SpineModel
 ## Documentation
 
 Documentation is available [here](docs/build/index.md).
+
+## Reporting Issues and Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md)
