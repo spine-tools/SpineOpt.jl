@@ -15,6 +15,9 @@ function var_to_df(var::JuMP.JuMPDict{JuMP.Variable,4})
     end
     return df
 end
+
+# TODO: is this function called from anywhere?
+# If yes, we need to add a docstring 
 function get_node_streams(n::String, var_flow::JuMP.JuMPDict{JuMP.Variable,5}, var_trans::JuMP.JuMPDict{JuMP.Variable,4}, save=false, output = "opt_results.csv")
     """
     creates a data table for one node listing all flows and trans in a dataframe table

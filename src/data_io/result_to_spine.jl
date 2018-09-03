@@ -1,3 +1,9 @@
+# TODO: we need to stick to a single name for the `PyObject` that holds the instance
+# of `DatabaseMapping`. We're using `mapping` and `db`. Maybe we wanna use something like
+# `db_map`?
+# TODO: Move docstrings above the function
+# TODO: remove whitespace inside function bodies
+
 using DataFrames
 using Missings
 import Base.convert
@@ -8,33 +14,41 @@ struct DBObject
     id::Int64
     class_id::Int64
 end
+
 struct DBObjectClass
     name::String
     id::Int64
 end
+
 struct DBRelationshipClass
     name::String
     id::Int64
     object_class_ids::Array{Int64,1}
 end
+
 struct DBRelationship
     id::Int64
     class_id::Int64
     object_ids::Array{Int64,1}
 end
+
 struct DBParameter
     id::Int64
     class::Union{DBRelationshipClass, DBObjectClass}
     name::String
 end
+
+# NOTE: consider renaming this to `RelationshipData`
 struct RelData
     class::DBRelationshipClass
     data::DataFrame
 end
 
-
-function  convert(::Type{DataFrame}, v::JuMP.JuMPDict{Float64, N} where N)
-
+# FIXME: we should avoid extending functions from Base with Types defined in other
+# modules. This means that `using SpineModel` will make all
+# modules in the current session see this `convert` method.
+# See https://docs.julialang.org/en/v1/manual/style-guide/index.html#Avoid-type-piracy-1
+function convert(::Type{DataFrame}, v::JuMP.JuMPDict{Float64, N} where N)
     var_keys = keys(v)
     first_key = first(var_keys)
     col_types = vcat([typeof(x) for x in first_key], typeof(v[first_key...]))
@@ -55,9 +69,12 @@ function new_object(db::PyObject, name::String, class_id::Int64)
     return DBObject(result[:name], result[:id], result[:class_id])
 end
 
+# NOTE: all these `get_or_add` seem like they could be in `DatabaseMapping`?
 function get_or_add_object_class(db::PyObject, name::String)
     result_class = db[:single_object_class](name = name)[:all]()
     if length(result_class) > 0
+        # TODO: we need to find a way to use string or symbol keys rather than integer indices here
+        # See https://gitlab.vtt.fi/spine/model/issues/57
         result_class = DBObjectClass(result_class[1][2], result_class[1][1])
     else
         result = db[:add_object_class](name = name)
@@ -67,13 +84,15 @@ function get_or_add_object_class(db::PyObject, name::String)
 end
 
 function get_or_add_relationship_class(db::PyObject, name::String, object_class_ids::Array{Int64,1})
+    # TODO: this line seems too long.
+    # Maybe create another method in `DatabaseMapping` that does this?
     existing_class = db[:relationship_class_list]()[:filter](db[:RelationshipClass][:name][:in_]([name]))[:order_by](db[:RelationshipClass][:dimension])[:all]()
     if length(existing_class) > 0
         class_id = existing_class[1][1]
         object_classes = [o[3] for o in existing_class]
     else
-        #create new relationship class
-        # getting sql foreign key error when sending integers to python, sending floats seems to work
+        # Create new relationship class
+        # FIXME: Getting sql foreign key error when sending integers to python, sending floats seems to work
         result = db[:add_wide_relationship_class](name = name, object_class_id_list = convert.(Float64, object_class_ids))
         class_id = result[1]
     end
@@ -81,7 +100,7 @@ function get_or_add_relationship_class(db::PyObject, name::String, object_class_
 end
 
 function new_relationship(db::PyObject, name::String, class::DBRelationshipClass, object_ids::Array{Int64,1})
-    # getting sql foreign key error when sending integers to python, sending floats seems to work
+    # FIXME: Getting sql foreign key error when sending integers to python, sending floats seems to work
     object_ids = convert.(Float64, object_ids)
     result = db[:add_wide_relationship](name = name, class_id = class.id, object_id_list = object_ids)
     return DBRelationship(result[1], class.id, object_ids)
@@ -130,7 +149,7 @@ function export_data(db::PyObject, data::DataFrame, class::DBRelationshipClass)
         `class::DBRelationshipClass`: relationship class of data
     """
 
-    # create new relationships
+    # Create new relationships
     unique_object_paths = unique(data[:,[:name, :object_ids]])
     relationships = Dict{String, DBRelationship}()
     for (i, r) in enumerate(eachrow(unique_object_paths))
@@ -139,13 +158,13 @@ function export_data(db::PyObject, data::DataFrame, class::DBRelationshipClass)
     end
     unique_parameters = unique(data[:,:parameter_name])
 
-    # get parameters
+    # Get parameters
     parameters = Dict{String, DBParameter}()
     for (i, p) in enumerate(unique_parameters)
         parameters[p] = get_or_add_parameter(db, p, class)
     end
 
-    # insert parameters
+    # Insert parameters
     for d in eachrow(data)
         relationship = relationships[d[:name]]
         parameter = parameters[d[:parameter_name]]
@@ -153,13 +172,21 @@ function export_data(db::PyObject, data::DataFrame, class::DBRelationshipClass)
     end
 end
 
-function JuMP_var_to_spine_format(JuMP_var::JuMP.JuMPDict{JuMP.Variable,N} where N, name::String, result_object::DBObject, result_class::DBObjectClass, object_dict::Dict{String,DBObject}, object_class_dict::Dict{Int64,DBObjectClass})
+function JuMP_var_to_spine_format(
+        JuMP_var::JuMP.JuMPDict{JuMP.Variable,N} where N,
+        name::String,
+        result_object::DBObject,
+        result_class::DBObjectClass,
+        object_dict::Dict{String,DBObject},
+        object_class_dict::Dict{Int64,DBObjectClass}
+    )
     """Converts a JuMP variable to a dataframe with spine format and interger ids for objects.
     """
     var_values = getvalue(JuMP_var)
     var_keys = keys(JuMP_var)
     first_key = first(var_keys)
 
+    # NOTE: consider renaming `td` to something more explicit
     td = convert(DataFrame, var_values)
 
     # check how many objects are in the key
@@ -174,20 +201,20 @@ function JuMP_var_to_spine_format(JuMP_var::JuMP.JuMPDict{JuMP.Variable,N} where
 
     num_var_index = size(td,2)-2-num_objects
 
-    # get object class of object
+    # Get object class of object
     object_header = [Symbol(string(object_class_dict[object_dict[k].class_id].name, i)) for (i, k) in enumerate(first_key[1:num_objects])]
     var_header = [Symbol("var$i") for i in 1:num_var_index]
     headers = vcat(object_header, var_header ,[Symbol("time"),Symbol("json")])
     num_indexes = size(td,2) - 1
 
     names!(td,headers)
-    # sort and then split by objects.
+    # Sort and then split by objects.
     sort!(td,[1:num_indexes;])
     packed_values = by(td, [1:num_objects+num_var_index;]) do df
         DataFrame(json = JSON.json(df[:json]))
     end
 
-    #create a column with array of ids and string with names separated with "_"
+    # Create a column with array of ids and string with names separated with "_"
     id_col = Array{Array{Int64,1}}(size(packed_values,1))
     name_col = Array{String}(size(packed_values,1))
     for r in 1:size(packed_values,1)
@@ -215,7 +242,7 @@ end
 function JuMP_variables_to_spine_db(JuMP_vars::Dict{String, JuMP.JuMPDict{JuMP.Variable,N} where N}, dbpath::String, result_name::String)
     """Exports a JuMP variable into a spine database.
 
-    Finds object and relationships using JuMP variables keys and searching the database for exact matches. 
+    Finds object and relationships using JuMP variables keys and searching the database for exact matches.
     Creates new relationships and relationship classes if they don't already exists.
     Creates new result object with relationships to keys in JuMP variable
 
