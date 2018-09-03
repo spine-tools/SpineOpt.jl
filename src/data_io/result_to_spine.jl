@@ -33,7 +33,7 @@ struct RelData
 end
 
 
-function  convert(::Type{DataFrame}, v::JuMP.JuMPDict{Float64,N} where N)
+function  convert(::Type{DataFrame}, v::JuMP.JuMPDict{Float64, N} where N)
 
     var_keys = keys(v)
     first_key = first(var_keys)
@@ -118,10 +118,20 @@ function add_parameter_json(db::PyObject, json::String, parameter::DBParameter, 
 end
 
 function export_data(db::PyObject, data::DataFrame, class::DBRelationshipClass)
+    """Exports relationship json data to a spine database file.
 
-    unique_object_paths = unique(data[:,[:name, :object_ids]])
+    Arguments:
+        `db::PyObject`: reference to DatabaseMapping from SpineDatabaseApi package, database to insert into.
+        `data::Dataframe`: Dataframe with 4 columns (:name, :object_ids, :parameter_name ,:json)
+            `:name::String`: name of relationship path
+            `:object_ids::Array{Int64, 1}`: object ids of relationship
+            `:parameter_name::String`: name of parameter
+            `:json::String`: json string with parameter value
+        `class::DBRelationshipClass`: relationship class of data
+    """
 
     # create new relationships
+    unique_object_paths = unique(data[:,[:name, :object_ids]])
     relationships = Dict{String, DBRelationship}()
     for (i, r) in enumerate(eachrow(unique_object_paths))
         rel = new_relationship(db, r[:name], class ,r[:object_ids])
@@ -144,6 +154,8 @@ function export_data(db::PyObject, data::DataFrame, class::DBRelationshipClass)
 end
 
 function JuMP_var_to_spine_format(JuMP_var::JuMP.JuMPDict{JuMP.Variable,N} where N, name::String, result_object::DBObject, result_class::DBObjectClass, object_dict::Dict{String,DBObject}, object_class_dict::Dict{Int64,DBObjectClass})
+    """Converts a JuMP variable to a dataframe with spine format and interger ids for objects.
+    """
     var_values = getvalue(JuMP_var)
     var_keys = keys(JuMP_var)
     first_key = first(var_keys)
@@ -201,7 +213,18 @@ function JuMP_var_to_spine_format(JuMP_var::JuMP.JuMPDict{JuMP.Variable,N} where
 end
 
 function JuMP_variables_to_spine_db(JuMP_vars::Dict{String, JuMP.JuMPDict{JuMP.Variable,N} where N}, dbpath::String, result_name::String)
-    mapping = db_api[:DatabaseMapping](p)
+    """Exports a JuMP variable into a spine database.
+
+    Finds object and relationships using JuMP variables keys and searching the database for exact matches. 
+    Creates new relationships and relationship classes if they don't already exists.
+    Creates new result object with relationships to keys in JuMP variable
+
+    Arguments:
+        `JuMP_vars::Dict{String, JuMP.JuMPDict{JuMP.Variable,N} where N}`: Dict with JuMP variables where the key is the name of the variable inserted into the database.
+        `dbpath::String`: path of dbfile to insert into.
+        `result_name::String`: name of result object
+    """
+    mapping = db_api[:DatabaseMapping](dbpath)
 
     mapping[:new_commit]()
     try
