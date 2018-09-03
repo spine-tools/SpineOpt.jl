@@ -8,6 +8,10 @@ A Julia Module to use within the [Spine](http://www.spine-model.org/) software s
 
 - [Julia 0.6.1+](https://julialang.org/)
 - [PyCall](https://github.com/JuliaPy/PyCall.jl)
+- [CSV](https://github.com/JuliaData/CSV.jl)
+- [JuMP](https://github.com/JuliaOpt/JuMP.jl)
+- [JSON](https://github.com/JuliaIO/JSON.jl)
+- [Clp](https://github.com/JuliaOpt/Clp.jl)
 - [spinedatabase_api](https://gitlab.vtt.fi/spine/data/tree/database_api)
 
 ### Installation
