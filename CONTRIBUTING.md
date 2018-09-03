@@ -11,7 +11,7 @@ Thanks for taking the plunge!
 * Feel free to open, or comment on, an issue and solicit feedback early on, especially if you're unsure about aligning with design goals and direction, or if relevant historical comments are ambiguous
 * Pair new functionality with tests, and bug fixes with tests that fail pre-fix. Increasing test coverage as you go is always nice
 * Aim for atomic commits, if possible, e.g. `change 'foo' behavior like so` & `'bar' handles such and such corner case`, rather than `update 'foo' and 'bar'` & `fix typo` & `fix 'bar' better`
-* Pull requests will ne tested against release and development branches of Julia, so using `Pkg.test("SpineModel")` as you develop will be helpful (we'll let you know when this is available)
+* Pull requests will be tested against release and development branches of Julia, so using `Pkg.test("SpineModel")` as you develop can be helpful
 * The style guidelines outlined below are not the personal style of most contributors, but for consistency throughout the project, we should adopt them
 
 ## Style Guidelines
