@@ -12,6 +12,7 @@ A Julia Module to use within the [Spine](http://www.spine-model.org/) software s
 - [JuMP](https://github.com/JuliaOpt/JuMP.jl)
 - [JSON](https://github.com/JuliaIO/JSON.jl)
 - [Clp](https://github.com/JuliaOpt/Clp.jl)
+- [Missings](https://github.com/JuliaData/Missings.jl)
 - [spinedatabase_api](https://gitlab.vtt.fi/spine/data/tree/database_api)
 
 ### Installation

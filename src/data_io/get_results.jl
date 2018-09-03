@@ -1,6 +1,3 @@
-using DataFrames
-using CSV
-
 function var_to_df(var::JuMP.JuMPDict{JuMP.Variable,5})
     df = DataFrame(c=String[], n=String[], u=String[], dire=String[], t=Int32[], val=Float32[])
     for (c,n,u,dire) in get_com_node_unit_in(), t=1:number_of_timesteps("timer")
@@ -17,7 +14,7 @@ function var_to_df(var::JuMP.JuMPDict{JuMP.Variable,4})
 end
 
 # TODO: is this function called from anywhere?
-# If yes, we need to add a docstring 
+# If yes, we need to add a docstring
 function get_node_streams(n::String, var_flow::JuMP.JuMPDict{JuMP.Variable,5}, var_trans::JuMP.JuMPDict{JuMP.Variable,4}, save=false, output = "opt_results.csv")
     """
     creates a data table for one node listing all flows and trans in a dataframe table
