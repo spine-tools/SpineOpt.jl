@@ -7,13 +7,13 @@ function constraint_commodity_balance(m::Model, v_flow, v_trans)
             p_demand(node=n, t=t)!=nothing
         ],
         + sum(v_flow[c, n, u, "out", t] for u in unit(), c in commodity()
-            if [n, "out"] in commodity__node__unit__direction(unit=u, commodity=c))
+            if [c, n, u] in commodity__node__unit__direction(direction = "out"))
         ==
         + p_demand(node=n, t=t)
         + sum(v_flow[c, n, u, "in", t] for u in unit(), c in commodity()
-            if [n, "in"] in commodity__node__unit__direction(unit=u, commodity=c))
+            if [c, n, u] in commodity__node__unit__direction(direction = "in"))
         + sum(v_trans[k, n, j, t] for k in connection(), j in node()
-            if [n] in connection__node__node(connection=k, node2=j))
+            if [k, n, j] in connection__node__node())
     )
     @constraint(
         m,
@@ -26,8 +26,8 @@ function constraint_commodity_balance(m::Model, v_flow, v_trans)
             if [n, "out"] in commodity__node__unit__direction(unit=u, commodity=c))
         ==
         + sum(v_flow[c, n, u, "in", t] for u in unit(), c in commodity()
-            if [n, "in"] in commodity__node__unit__direction(unit=u, commodity=c))
+            if [c, n, u] in commodity__node__unit__direction(direction = "in"))
         + sum(v_trans[k, n, j, t] for k in connection(), j in node()
-            if [n] in connection__node__node(connection=k, node2=j))
+            if [k, n, j] in connection__node__node())
     )
 end
