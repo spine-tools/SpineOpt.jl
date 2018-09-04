@@ -1,12 +1,4 @@
-# TODO: we need to stick to a single name for the `PyObject` that holds the instance
-# of `DatabaseMapping`. We're using `mapping` and `db`. Maybe we wanna use something like
-# `db_map`?
-# TODO: Move docstrings above the function
 # TODO: remove whitespace inside function bodies
-
-
-import Base.convert
-
 
 struct DBObject
     name::String
@@ -37,17 +29,9 @@ struct DBParameter
     name::String
 end
 
-# NOTE: consider renaming this to `RelationshipData`
-struct RelData
-    class::DBRelationshipClass
-    data::DataFrame
-end
-
-# FIXME: we should avoid extending functions from Base with Types defined in other
-# modules. This means that `using SpineModel` will make all
-# modules in the current session see this `convert` method.
-# See https://docs.julialang.org/en/v1/manual/style-guide/index.html#Avoid-type-piracy-1
-function convert(::Type{DataFrame}, v::JuMP.JuMPDict{Float64, N} where N)
+"""Converts a JuMPDict variable to a dataframe with value of JuMPDict as last column
+"""
+function convert_to_dataframe(::Type{DataFrame}, v::JuMP.JuMPDict{Float64, N} where N)
     var_keys = keys(v)
     first_key = first(var_keys)
     col_types = vcat([typeof(x) for x in first_key], typeof(v[first_key...]))
@@ -63,96 +47,106 @@ function convert(::Type{DataFrame}, v::JuMP.JuMPDict{Float64, N} where N)
     return df
 end
 
-function new_object(db::PyObject, name::String, class_id::Int64)
-    result = db[:add_object](name = name, class_id = class_id)
+function new_object(db_map::PyObject, name::String, class_id::Int64)
+    result = py"$db_map.add_object(name = $name, class_id = $class_id)"
+    #result = db_map[:add_object](name = name, class_id = class_id)
     return DBObject(result[:name], result[:id], result[:class_id])
 end
 
 # NOTE: all these `get_or_add` seem like they could be in `DatabaseMapping`?
-function get_or_add_object_class(db::PyObject, name::String)
-    result_class = db[:single_object_class](name = name)[:all]()
+function get_or_add_object_class(db_map::PyObject, name::String)
+    result_class = py"[x._asdict() for x in $db_map.single_object_class(name = $name).all()]"
+    #result_class = db_map[:single_object_class](name = name)[:all]()
     if length(result_class) > 0
-        # TODO: we need to find a way to use string or symbol keys rather than integer indices here
-        # See https://gitlab.vtt.fi/spine/model/issues/57
-        result_class = DBObjectClass(result_class[1][2], result_class[1][1])
+        result_class = DBObjectClass(result_class[1]["name"], result_class[1]["id"])
     else
-        result = db[:add_object_class](name = name)
+        result = py"$db_map.add_object_class(name = $name)"
+        #result = db_map[:add_object_class](name = name)
         result_class = DBObjectClass(result[:name], result[:id])
     end
     return result_class
 end
 
-function get_or_add_relationship_class(db::PyObject, name::String, object_class_ids::Array{Int64,1})
+function get_or_add_relationship_class(db_map::PyObject, name::String, object_class_ids::Array{Int64,1})
     # TODO: this line seems too long.
     # Maybe create another method in `DatabaseMapping` that does this?
-    existing_class = db[:relationship_class_list]()[:filter](db[:RelationshipClass][:name][:in_]([name]))[:order_by](db[:RelationshipClass][:dimension])[:all]()
+    existing_class = py"[x._asdict() for x in $db_map.relationship_class_list().filter($db_map.RelationshipClass.name == $name).order_by($db_map.RelationshipClass.dimension).all()]"
+    #existing_class = db_map[:relationship_class_list]()[:filter](db_map[:RelationshipClass][:name][:in_]([name]))[:order_by](db_map[:RelationshipClass][:dimension])[:all]()
     if length(existing_class) > 0
-        class_id = existing_class[1][1]
-        object_classes = [o[3] for o in existing_class]
+        class_id = existing_class[1]["id"]
+        object_classes = [o["object_class_id"] for o in existing_class]
     else
         # Create new relationship class
         # FIXME: Getting sql foreign key error when sending integers to python, sending floats seems to work
-        result = db[:add_wide_relationship_class](name = name, object_class_id_list = convert.(Float64, object_class_ids))
-        class_id = result[1]
+        float_ids = convert.(Float64, object_class_ids)
+        result = py"$db_map.add_wide_relationship_class(name = $name, object_class_id_list = $float_ids)._asdict()"
+        #result = db_map[:add_wide_relationship_class](name = name, object_class_id_list = convert.(Float64, object_class_ids))
+        class_id = result["id"]
     end
     return DBRelationshipClass(name, class_id, object_class_ids)
 end
 
-function new_relationship(db::PyObject, name::String, class::DBRelationshipClass, object_ids::Array{Int64,1})
+function new_relationship(db_map::PyObject, name::String, class::DBRelationshipClass, object_ids::Array{Int64,1})
     # FIXME: Getting sql foreign key error when sending integers to python, sending floats seems to work
     object_ids = convert.(Float64, object_ids)
-    result = db[:add_wide_relationship](name = name, class_id = class.id, object_id_list = object_ids)
-    return DBRelationship(result[1], class.id, object_ids)
+    result = py"$db_map.add_wide_relationship(name = $name, class_id = $class.id, object_id_list = $object_ids)._asdict()"
+    #result = db_map[:add_wide_relationship](name = name, class_id = class.id, object_id_list = object_ids)
+    return DBRelationship(result["id"], class.id, object_ids)
 end
 
-function get_or_add_parameter(db::PyObject, name::String, class::DBRelationshipClass)
-    existing_par = db[:relationship_parameter_list]()[:filter](db[:Parameter][:name][:in_]([name]))[:all]()
+function get_or_add_parameter(db_map::PyObject, name::String, class::DBRelationshipClass)
+    existing_par = py"[x._asdict() for x in $db_map.relationship_parameter_list().filter($db_map.Parameter.name == $name).all()]"
+    #existing_par = db_map[:relationship_parameter_list]()[:filter](db_map[:Parameter][:name][:in_]([name]))[:all]()
     if length(existing_par) > 0
-        id = existing_par[1][3]
+        id = existing_par[1]["parameter_id"]
     else
-        par = db[:add_parameter](name = name, relationship_class_id = class.id)
+        par = py"$db_map.add_parameter(name = $name, relationship_class_id = $class.id)"
+        #par = db_map[:add_parameter](name = name, relationship_class_id = class.id)
         id = par[:id]
     end
     return DBParameter(id, class, name)
 end
 
-function get_or_add_parameter(db::PyObject, name::String, class::DBObjectClass)
-    existing_par = db[:object_parameter_list]()[:filter](db[:Parameter][:name][:in_]([name]))[:all]()
+function get_or_add_parameter(db_map::PyObject, name::String, class::DBObjectClass)
+    existing_par = py"[x._asdict() for x in $db_map.object_parameter_list().filter($db_map.Parameter.name == $name).all()]"
+    #existing_par = db_map[:object_parameter_list]()[:filter](db_map[:Parameter][:name][:in_]([name]))[:all]()
     if length(existing_par) > 0
-        id = existing_par[1][3]
+        id = existing_par[1]["id"]
     else
-        par = db[:add_parameter](name = name, object_class_id = class.id)
+        par = py"$db_map.add_parameter(name = $name, relationship_class_id = $class.id)"
+        #par = db_map[:add_parameter](name = name, object_class_id = class.id)
         id = par[:id]
     end
     return DBParameter(id, class, name)
 end
 
-function add_parameter_json(db::PyObject, json::String, parameter::DBParameter, parent::DBRelationship)
-    db[:add_parameter_value](parameter_id = parameter.id, relationship_id = parent.id, json = json)
+function add_parameter_json(db_map::PyObject, json::String, parameter::DBParameter, parent::DBRelationship)
+    py"$db_map.add_parameter_value(parameter_id = $parameter.id, relationship_id = $parent.id, json = $json)"
+    #db_map[:add_parameter_value](parameter_id = parameter.id, relationship_id = parent.id, json = json)
 end
 
-function add_parameter_json(db::PyObject, json::String, parameter::DBParameter, parent::DBObject)
-    db[:add_parameter_value](parameter_id = parameter.id, object_id = parent.id, json = json)
+function add_parameter_json(db_map::PyObject, json::String, parameter::DBParameter, parent::DBObject)
+    py"$db_map.add_parameter_value(parameter_id = $parameter.id, object_id = $parent.id, json = $json)"
+    #db_map[:add_parameter_value](parameter_id = parameter.id, object_id = parent.id, json = json)
 end
 
-function export_data(db::PyObject, data::DataFrame, class::DBRelationshipClass)
-    """Exports relationship json data to a spine database file.
+"""Exports relationship json data to a spine database file.
 
     Arguments:
-        `db::PyObject`: reference to DatabaseMapping from SpineDatabaseApi package, database to insert into.
-        `data::Dataframe`: Dataframe with 4 columns (:name, :object_ids, :parameter_name ,:json)
-            `:name::String`: name of relationship path
-            `:object_ids::Array{Int64, 1}`: object ids of relationship
-            `:parameter_name::String`: name of parameter
-            `:json::String`: json string with parameter value
-        `class::DBRelationshipClass`: relationship class of data
-    """
-
+    `db_map::PyObject`: reference to DatabaseMapping from SpineDatabaseApi package, database to insert into.
+    `data::Dataframe`: Dataframe with 4 columns (:name, :object_ids, :parameter_name ,:json)
+        `:name::String`: name of relationship path
+        `:object_ids::Array{Int64, 1}`: object ids of relationship
+        `:parameter_name::String`: name of parameter
+        `:json::String`: json string with parameter value
+    `class::DBRelationshipClass`: relationship class of data
+"""
+function export_data(db_map::PyObject, data::DataFrame, class::DBRelationshipClass)
     # Create new relationships
     unique_object_paths = unique(data[:,[:name, :object_ids]])
     relationships = Dict{String, DBRelationship}()
     for (i, r) in enumerate(eachrow(unique_object_paths))
-        rel = new_relationship(db, r[:name], class ,r[:object_ids])
+        rel = new_relationship(db_map, r[:name], class ,r[:object_ids])
         relationships[r[:name]] = rel
     end
     unique_parameters = unique(data[:,:parameter_name])
@@ -160,17 +154,19 @@ function export_data(db::PyObject, data::DataFrame, class::DBRelationshipClass)
     # Get parameters
     parameters = Dict{String, DBParameter}()
     for (i, p) in enumerate(unique_parameters)
-        parameters[p] = get_or_add_parameter(db, p, class)
+        parameters[p] = get_or_add_parameter(db_map, p, class)
     end
 
     # Insert parameters
     for d in eachrow(data)
         relationship = relationships[d[:name]]
         parameter = parameters[d[:parameter_name]]
-        add_parameter_json(db, d[:json], parameter, relationship)
+        add_parameter_json(db_map, d[:json], parameter, relationship)
     end
 end
 
+"""Converts a JuMP variable to a dataframe with spine format and interger ids for objects.
+"""
 function JuMP_var_to_spine_format(
         JuMP_var::JuMP.JuMPDict{JuMP.Variable,N} where N,
         name::String,
@@ -179,14 +175,11 @@ function JuMP_var_to_spine_format(
         object_dict::Dict{String,DBObject},
         object_class_dict::Dict{Int64,DBObjectClass}
     )
-    """Converts a JuMP variable to a dataframe with spine format and interger ids for objects.
-    """
+
     var_values = getvalue(JuMP_var)
     var_keys = keys(JuMP_var)
     first_key = first(var_keys)
-
-    # NOTE: consider renaming `td` to something more explicit
-    td = convert(DataFrame, var_values)
+    var_dataframe = convert_to_dataframe(DataFrame, var_values)
 
     # check how many objects are in the key
     num_objects = 0
@@ -198,18 +191,19 @@ function JuMP_var_to_spine_format(
         end
     end
 
-    num_var_index = size(td,2)-2-num_objects
+    # find number of indexes(columns) that was not found as an object in database
+    num_var_index = size(var_dataframe, 2) - 2 - num_objects
 
     # Get object class of object
     object_header = [Symbol(string(object_class_dict[object_dict[k].class_id].name, i)) for (i, k) in enumerate(first_key[1:num_objects])]
     var_header = [Symbol("var$i") for i in 1:num_var_index]
     headers = vcat(object_header, var_header ,[Symbol("time"),Symbol("json")])
-    num_indexes = size(td,2) - 1
+    num_indexes = size(var_dataframe,2) - 1
 
-    names!(td,headers)
+    names!(var_dataframe,headers)
     # Sort and then split by objects.
-    sort!(td,[1:num_indexes;])
-    packed_values = by(td, [1:num_objects+num_var_index;]) do df
+    sort!(var_dataframe,[1:num_indexes;])
+    packed_values = by(var_dataframe, [1:num_objects+num_var_index;]) do df
         DataFrame(json = JSON.json(df[:json]))
     end
 
@@ -223,74 +217,70 @@ function JuMP_var_to_spine_format(
     packed_values[:name] = name_col
     packed_values[:object_ids] = id_col
 
+    # join parameter name with columns that are not found in the database
     if length(var_header) > 0
         packed_values[:parameter_name] = [name*"_"*join(Array(r[var_header])) for r in eachrow(packed_values)]
     else
         packed_values[:parameter_name] = name
     end
 
+    # find object class ids
     object_classes = [object_class_dict[object_dict[k].class_id] for k in first_key[1:num_objects]]
     object_classes = vcat(result_class, object_classes)
     rel_name = join([c.name for c in object_classes],"_")
 
+    # columns to keep
     column_order = vcat(:name, :object_ids, :parameter_name ,:json)
-
     return packed_values[column_order], rel_name, object_classes
 end
 
-function JuMP_variables_to_spine_db(JuMP_vars::Dict{String, JuMP.JuMPDict{JuMP.Variable,N} where N}, dbpath::String, result_name::String)
-    """Exports a JuMP variable into a spine database.
+"""Exports a JuMP variable into a spine database.
 
-    Finds object and relationships using JuMP variables keys and searching the database for exact matches.
-    Creates new relationships and relationship classes if they don't already exists.
-    Creates new result object with relationships to keys in JuMP variable
+Finds object and relationships using JuMP variables keys and searching the database for exact matches.
+Creates new relationships and relationship classes if they don't already exists.
+Creates new result object with relationships to keys in JuMP variable
 
-    Arguments:
-        `JuMP_vars::Dict{String, JuMP.JuMPDict{JuMP.Variable,N} where N}`: Dict with JuMP variables where the key is the name of the variable inserted into the database.
-        `dbpath::String`: path of dbfile to insert into.
-        `result_name::String`: name of result object
-    """
-    mapping = db_api[:DatabaseMapping](dbpath)
-
-    mapping[:new_commit]()
+Arguments:
+    `JuMP_vars::Dict{String, JuMP.JuMPDict{JuMP.Variable,N} where N}`: Dict with JuMP variables where the key is the name of the variable inserted into the database.
+    `db_url::String`: path of dbfile to insert into.
+    `result_name::String`: name of result object
+"""
+function JuMP_variables_to_spine_db(JuMP_vars::Dict{String, JuMP.JuMPDict{JuMP.Variable,N} where N}, db_url::String, result_name::String)
+    # start database connection and add a new commit
+    db_map = db_api[:DatabaseMapping](db_url)
+    db_map[:new_commit]()
     try
+        result_class = get_or_add_object_class(db_map, "result")
+        result_object = new_object(db_map, result_name, result_class.id)
 
-        result_class = get_or_add_object_class(mapping, "result")
-
-        result_object = new_object(mapping, result_name, result_class.id)
-
-        objects = mapping[:object_list]()[:all]()
+        # get objects and object classes for name too id lookup
+        objects = db_map[:object_list]()[:all]()
         object_dict = Dict(i[3]=> DBObject(i[3],i[1],i[2]) for i in objects)
-        object_classes = mapping[:object_class_list]()[:all]()
+        object_classes = db_map[:object_class_list]()[:all]()
         object_class_dict = Dict(i[1]=> DBObjectClass(i[2],i[1]) for i in object_classes)
 
+        # insert each variable into spine database.
         for (var_name, v) in JuMP_vars
             data, rel_name, rel_classes = JuMP_var_to_spine_format(v, var_name, result_object, result_class, object_dict, object_class_dict)
-
             object_class_ids = [rc.id for rc in rel_classes]
-
-            class = get_or_add_relationship_class(mapping, rel_name, object_class_ids)
-
-            export_data(mapping, data, class)
+            class = get_or_add_relationship_class(db_map, rel_name, object_class_ids)
+            export_data(db_map, data, class)
         end
-
-        mapping[:commit_session]("saved from julia")
-        mapping[:session][:close]()
+        db_map[:commit_session]("saved from julia")
+        db_map[:session][:close]()
     catch err
-        mapping[:rollback_session]()
-        mapping[:session][:close]()
+        db_map[:rollback_session]()
+        db_map[:session][:close]()
         throw(err)
     end
-
-
 end
 
-function JuMP_variables_to_spine_db(JuMP_vars::JuMP.JuMPDict{JuMP.Variable}, var_name::String, dbpath::String, result_name::String)
+function JuMP_variables_to_spine_db(JuMP_vars::JuMP.JuMPDict{JuMP.Variable}, var_name::String, db_url::String, result_name::String)
     JuMP_vars_dict = Dict(var_name => JuMP_vars)
-    JuMP_variables_to_spine_db(JuMP_vars_dict, dbpath, result_name)
+    JuMP_variables_to_spine_db(JuMP_vars_dict, db_url, result_name)
 end
 
-function JuMP_variables_to_spine_db(JuMP_vars::Array{JuMP.JuMPDict{JuMP.Variable},1}, var_name::Array{String,1}, dbpath::String, result_name::String)
+function JuMP_variables_to_spine_db(JuMP_vars::Array{JuMP.JuMPDict{JuMP.Variable},1}, var_name::Array{String,1}, db_url::String, result_name::String)
     JuMP_vars_dict = Dict(zip(var_name,JuMP_vars))
-    JuMP_variables_to_spine_db(JuMP_vars_dict, dbpath, result_name)
+    JuMP_variables_to_spine_db(JuMP_vars_dict, db_url, result_name)
 end
