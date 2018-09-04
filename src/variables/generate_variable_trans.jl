@@ -1,7 +1,7 @@
 function generate_variable_trans(m::Model)
     @variable(
         m,
-        trans[
+        v_trans[
             c in connection(),
             i in node(),
             j in node(),

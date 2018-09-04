@@ -1,7 +1,7 @@
 function generate_variable_flow(m::Model)
     @variable(
         m,
-        flow[
+        v_flow[
             c in commodity(),
             n in node(),
             u in unit(),

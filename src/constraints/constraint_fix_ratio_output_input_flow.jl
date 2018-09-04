@@ -1,21 +1,22 @@
 # TODO: check if the constraint does what we want
 # NOTE: This function does not return a value
-function constraint_fix_ratio_output_input_flow(m::Model, flow)
+function constraint_fix_ratio_output_input_flow(m::Model, v_flow)
     @constraint(
         m,
         [
             u in unit(),
-            c_out in commodity(),
-            c_in in commodity(),
+            cg_out in commoditygroup(),
+            cg_in in commoditygroup(),
             t=1:number_of_timesteps(time="timer");
-            fix_ratio_output_input_flow(unit=u, commodity1=c_out, commodity2=c_in) != nothing
+            p_fix_ratio_output_input_flow(unit = u,commoditygroup1 = cg_out,commoditygroup2 = cg_in) != nothing
         ],
-        + sum(flow[c_out, n, u, "out", t] for n in node()
-            if [c_out, u, "out"] in commodity__node__unit__direction(node=n))
+        + sum(v_flow[c_out, n, u, "out", t] for c_out in commoditygroup__commodity(commoditygroup = cg_out), n in node()
+            if [c_out, n, u] in commodity__node__unit__direction(direction = "out"))
+
         ==
-        + fix_ratio_output_input_flow(unit=u, commodity1=c_out, commodity2=c_in)
-            * sum(flow[c_in, n, u, "in", t] for n in node()
-                if [c_in, u, "in"] in commodity__node__unit__direction(node=n))
+        + p_fix_ratio_output_input_flow(unit = u, commoditygroup1 = cg_out, commoditygroup2 = cg_in)
+            * sum(v_flow[c_in, n, u, "in", t] for c_in in commoditygroup__commodity(commoditygroup = cg_in), n in node()
+                if [c_in, n, u] in commodity__node__unit__direction(direction = "in"))
     )
 end
 

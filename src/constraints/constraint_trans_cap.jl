@@ -7,7 +7,11 @@ function constraint_trans_cap(m::Model,v_Trans)
             i in node(),
             j in node(),
             t=1:number_of_timesteps(time="timer");
-            [i,j] in connection__node__node(connection=con)
+            all([
+            [i,j] in connection__node__node(connection=con),
+            p_trans_cap_av_frac(connection=con, node1=i, node2=j, t=t)!=nothing,
+            p_trans_cap(connection=con)!= nothing
+            ])
         ],
         + (v_Trans[con, i, j, t])
         <=
