@@ -15,7 +15,7 @@ function constraint_trans_cap(m::Model,v_Trans)
         ],
         + (v_Trans[con, i, j, t])
         <=
-        + trans_cap_av_frac(connection=con, node1=i, node2=j, t=t)
-            * trans_cap(connection=con)
+        + p_trans_cap_av_frac(connection=con, node1=i, node2=j, t=t)
+            * p_trans_cap(connection=con)
     )
 end
