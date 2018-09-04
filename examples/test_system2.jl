@@ -7,10 +7,10 @@ using Clp
 #init databsae file from toolbox and create convinient functions
 p = "sqlite:///examples//data//testsystem2_v2_multiD.sqlite"
 JuMP_all_out(p)
-
+#
 # model:
 m = Model(solver = ClpSolver())
-
+#
 # setup decision variables
 v_Flow = generate_variable_v_Flow(m)
 #
@@ -23,14 +23,16 @@ objective_minimize_production_cost(m, v_Flow)#
 # unit capacity
 constraint_FlowCapacity(m, v_Flow)
 
-##
+#
 constraint_FixRatioOutputInputFlow(m,v_Flow)
+#
 # needed: set of "conventional units"
 # possibly split up in conventional and complex power plants (not really needed)
 #
 # v_Transmission losses
 constraint_TransLoss(m,v_Trans)
 # v_Transmission capacity
+#
 constraint_TransCap(m,v_Trans)
 # needed: set of v_Transmission units
 
