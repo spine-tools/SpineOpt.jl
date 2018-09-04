@@ -1,4 +1,3 @@
-# FIXME: commodity_node_unit_direction will need to be renamed using double underscores
 function generate_variable_flow(m::Model)
     @variable(
         m,
@@ -8,7 +7,7 @@ function generate_variable_flow(m::Model)
             u in unit(),
             d in direction(),
             t = 1:number_of_timesteps(time="timer");
-            [c, n, u, d] in commodity_node_unit_direction()
+            [c, n, u, d] in commodity__node__unit__direction()
         ] >= 0
     )
 end
