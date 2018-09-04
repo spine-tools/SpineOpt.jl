@@ -22,17 +22,17 @@ objective_minimize_production_cost(m, flow)#
 
 # Technological constraints
 # unit capacity
-constraint_FlowCapacity(m, flow)
+constraint_flow_capacity(m, flow)
 
 ##
-constraint_FixRatioOutputInputFlow(m, flow)
+constraint_fix_ratio_output_input_flow(m, flow)
 # needed: set of "conventional units"
 # possibly split up in conventional and complex power plants (not really needed)
 #
 # v_Transmission losses
-constraint_TransLoss(m, trans)
+constraint_trans_loss(m, trans)
 # v_Transmission capacity
-constraint_TransCap(m, trans)
+constraint_trans_cap(m, trans)
 # needed: set of v_Transmission units
 
 # set of v_Transmissions and actual units needed, differentiation "for all ... connected to"
@@ -40,7 +40,7 @@ constraint_TransCap(m, trans)
 constraint_commodity_balance(m, flow, trans)
 
 # absolute bounds on commodities
-constraint_MaxCumOutFlowBound(m, flow)
+constraint_max_cum_out_flow_bound(m, flow)
 # needed: set/group of unitgroup CHP and Gasplant
 
 status = solve(m)

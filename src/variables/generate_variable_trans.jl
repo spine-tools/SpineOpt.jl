@@ -1,4 +1,3 @@
-# FIXME: connection_node_node will need to be renamed using double underscores
 function generate_variable_trans(m::Model)
     @variable(
         m,
@@ -7,7 +6,7 @@ function generate_variable_trans(m::Model)
             i in node(),
             j in node(),
             t = 1:number_of_timesteps(time="timer");
-            [c,i,j] in connection_node_node()
+            [c,i,j] in connection__node__node()
         ]
     )
 end
