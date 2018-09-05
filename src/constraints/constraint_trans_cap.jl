@@ -1,5 +1,5 @@
 # FIXME: some names here don't respect the lower_case convention
-function constraint_trans_cap(m::Model,v_Trans)
+function constraint_trans_cap(m::Model,trans)
     @constraint(
         m,
         [
@@ -9,13 +9,13 @@ function constraint_trans_cap(m::Model,v_Trans)
             t=1:number_of_timesteps(time="timer");
             all([
             [i,j] in connection__node__node(connection=con),
-            p_trans_cap_av_frac(connection=con, node1=i, node2=j, t=t)!=nothing,
-            p_trans_cap(connection=con)!= nothing
+            trans_cap_av_frac(connection=con, node1=i, node2=j, t=t)!=nothing,
+            trans_cap(connection=con)!= nothing
             ])
         ],
-        + (v_Trans[con, i, j, t])
+        + (trans[con, i, j, t])
         <=
-        + p_trans_cap_av_frac(connection=con, node1=i, node2=j, t=t)
-            * p_trans_cap(connection=con)
+        + trans_cap_av_frac(connection=con, node1=i, node2=j, t=t)
+            * trans_cap(connection=con)
     )
 end

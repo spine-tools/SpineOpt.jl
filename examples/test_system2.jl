@@ -25,7 +25,7 @@ objective_minimize_production_cost(m, flow)#
 constraint_flow_capacity(m, flow)
 
 ##
-constraint_fix_ratio_output_input_flow(m, flow)
+constraint_fix_ratio_out_in_flow(m, flow)
 # needed: set of "conventional units"
 # possibly split up in conventional and complex power plants (not really needed)
 #
