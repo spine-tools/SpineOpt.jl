@@ -1,4 +1,8 @@
-# FIXME: some names here don't respect the lower_case convention
+"""
+constraint_trans_cap:
+Limits the flow capacity of a commodity transfered between to nodes in a
+specific direction
+"""
 function constraint_trans_cap(m::Model, trans)
     @constraint(
         m,

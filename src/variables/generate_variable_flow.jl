@@ -1,3 +1,9 @@
+"""
+generate_variable_flow:
+This function generated flow variables for each existing pair of [c,n,u,d]
+    Note: d is the direction of flow,
+     d=in: commodity flow into the unit (and vise versa)
+"""
 function generate_variable_flow(m::Model)
     @variable(
         m,

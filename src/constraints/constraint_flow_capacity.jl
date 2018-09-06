@@ -1,3 +1,8 @@
+"""
+constraint_flow_capacity:
+This function applies an upperbound to in/out flows of a unit, if specified
+"""
+
 function constraint_flow_capacity(m::Model, flow)
     @constraint(
         m,

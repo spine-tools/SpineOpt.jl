@@ -1,5 +1,9 @@
-# TODO: check if the constraint does what we want
-# NOTE: This function does not return a value
+"""
+constraint_fix_ratio_out_in_flow:
+This function relates and each output commoditygroup cg_out to
+    an input commoditygroup cg_in for each unit if the parameter
+        fix_ratio_out_in_flow is specified
+"""
 function constraint_fix_ratio_out_in_flow(m::Model, v_flow)
     @constraint(
         m,

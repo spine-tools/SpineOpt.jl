@@ -1,5 +1,8 @@
-# TODO: make the comment below more explicit
-### t.b.d.
+"""
+constraint_trans_loss:
+This function enforces losses on transmissions depending on the obeserved direction
+    e.g. trans_loss(con,n_i,n_j) != trans_loss(con,n_j,n_i)
+"""
 function constraint_trans_loss(m::Model, trans)
     @constraint(
         m,

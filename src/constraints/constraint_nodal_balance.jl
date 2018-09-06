@@ -1,3 +1,11 @@
+"""
+constraint_nodal_balance:
+This function ensure that the balance of all commodities flowing in/out a node
+    is ensured.
+TODO: for electrical lines this constraint is obsolete unless
+    a trade based representation is used
+"""
+
 function constraint_nodal_balance(m::Model, flow, trans)
     @constraint(
         m,
