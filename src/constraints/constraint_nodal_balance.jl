@@ -1,4 +1,4 @@
-function constraint_commodity_balance(m::Model, flow, trans)
+function constraint_nodal_balance(m::Model, flow, trans)
     @constraint(
         m,
         [
