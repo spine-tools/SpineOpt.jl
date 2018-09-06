@@ -12,6 +12,8 @@ using Clp
 
 ## init databsae file from toolbox and create convinient functions
 db_url = "sqlite:///examples/data/testsystem2_v2_multiD.sqlite"
+db_url_out = "sqlite:///examples/data/results_testsystem2.sqlite"
+
 JuMP_all_out(db_url)
 
 ## model:
@@ -50,3 +52,4 @@ status = solve(m)
 status == :Optimal && (flow_value = getvalue(flow))
 trans_value = getvalue(trans)
 println(m)
+JuMP_variables_to_spine_db([flow,trans],["flow","trans"],db_url,"results_testsystem_2")
