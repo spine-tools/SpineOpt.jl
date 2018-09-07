@@ -1,12 +1,12 @@
 """
-constraint_max_cum_out_flow_bound:
+constraint_max_cum_in_flow_bound:
 This function limits the total cumulated flow over time of commoditygroup
     for a certain commoditygroup
 
         e.g.: total amount of gas imported over time by a GasPlant
 """
 
-function constraint_max_cum_out_flow_bound(m::Model, flow)
+function constraint_max_cum_in_flow_bound(m::Model, flow)
     @constraint(
     m,
     [

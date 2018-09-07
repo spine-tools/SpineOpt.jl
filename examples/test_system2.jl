@@ -45,7 +45,7 @@ constraint_trans_cap(m, trans)
 constraint_nodal_balance(m, flow, trans)
 
 # absolute bounds on commodities
-constraint_max_cum_out_flow_bound(m, flow)
+constraint_max_cum_in_flow_bound(m, flow)
 # needed: set/group of unitgroup CHP and Gasplant
 
 status = solve(m)

@@ -17,7 +17,7 @@ export objective_minimize_production_cost
 # Export constraints
 export constraint_flow_capacity
 export constraint_fix_ratio_out_in_flow
-export constraint_max_cum_out_flow_bound
+export constraint_max_cum_in_flow_bound
 export constraint_trans_loss
 export constraint_trans_cap
 export constraint_nodal_balance
@@ -48,7 +48,7 @@ include("variables/generate_variable_trans.jl")
 
 include("objective/objective_minimize_production_cost.jl")
 
-include("constraints/constraint_max_cum_out_flow_bound.jl")
+include("constraints/constraint_max_cum_in_flow_bound.jl")
 include("constraints/constraint_flow_capacity.jl")
 include("constraints/constraint_nodal_balance.jl")
 include("constraints/constraint_fix_ratio_out_in_flow.jl")
