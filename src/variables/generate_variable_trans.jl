@@ -1,5 +1,5 @@
 """
-    constraint_max_cum_in_flow_bound(m::Model, flow)
+    generate_variable_trans(m::Model)
 
 Generates transmissions `trans` for each existing tuple of [connection,node_i,node_j].
 For each `connection` between to `nodes`, two `trans` variables exist.

@@ -1,5 +1,5 @@
 """
-    constraint_max_cum_in_flow_bound(m::Model, flow)
+    constraint_nodal_balance(m::Model, flow, trans)
 
 Enforce balance of all commodity flows from and to a node.
 TODO: for electrical lines this constraint is obsolete unless

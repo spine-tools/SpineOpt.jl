@@ -1,5 +1,5 @@
-="""
-    constraint_max_cum_in_flow_bound(m::Model, flow)
+"""
+    constraint_flow_capacity(m::Model, flow)
 
 Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
 number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.

@@ -1,5 +1,5 @@
 """
-    constraint_max_cum_in_flow_bound(m::Model, flow)
+    constraint_trans_loss(m::Model, trans)
 
 Enforce losses on transmissions depending on the obeserved direction if the parameter
 `trans_loss(connection=con, node1=i, node2=j)` is specified.

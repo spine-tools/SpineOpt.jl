@@ -1,5 +1,5 @@
 """
-    constraint_max_cum_in_flow_bound(m::Model, flow)
+    constraint_trans_cap(m::Model, trans)
 
 Limit flow capacity of a commodity transfered between to nodes in a
 specific direction `node1 -> node2`.

@@ -1,5 +1,5 @@
 """
-    constraint_max_cum_in_flow_bound(m::Model, flow)
+    objective_minimize_production_cost(m::Model, flow)
 
 Minimize the `production_cost` correspond to the sum over all
 `conversion_cost` of each `unit`.

@@ -1,5 +1,5 @@
 """
-    constraint_max_cum_in_flow_bound(m::Model, flow)
+    generate_variable_flow(m::Model)
 
 Generated `flow` variables for each existing pair of `[commodity,node,unit,direction]`.
 """
