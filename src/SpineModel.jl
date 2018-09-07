@@ -1,10 +1,10 @@
 module SpineModel
 
-# data_io exports
+# Data_io exports
 export JuMP_all_out
 export JuMP_variables_to_spine_db
 
-# equations export
+# Export model
 export linear_JuMP_model
 
 # Export variables
