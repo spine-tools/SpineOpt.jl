@@ -1,11 +1,10 @@
 """
-constraint_max_cum_in_flow_bound:
-This function limits the total cumulated flow over time of commoditygroup
-    for a certain commoditygroup
+    constraint_max_cum_in_flow_bound(m::Model, flow)
 
-        e.g.: total amount of gas imported over time by a GasPlant
+Set upperbound `max_cum_in_flow_bound `to the cumulated inflow of
+`commoditygroup cg` into a `unitgroup ug`
+if `max_cum_in_flow_bound` exists for the combination of `cg` and `ug`.
 """
-
 function constraint_max_cum_in_flow_bound(m::Model, flow)
     @constraint(
     m,
@@ -18,7 +17,7 @@ function constraint_max_cum_in_flow_bound(m::Model, flow)
             for u in unitgroup__unit(unitgroup=ug),
                 c in commoditygroup__commodity(commoditygroup=cg),
                 n in node(),
-                t = 1:number_of_timesteps(time="timer")
+                t=1:number_of_timesteps(time="timer")
                 if [c, n, u, "in"] in commodity__node__unit__direction()
             )
         <=

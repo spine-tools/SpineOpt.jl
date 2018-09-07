@@ -1,7 +1,8 @@
 """
-constraint_trans_cap:
-Limits the flow capacity of a commodity transfered between to nodes in a
-specific direction
+    constraint_max_cum_in_flow_bound(m::Model, flow)
+
+Limit flow capacity of a commodity transfered between to nodes in a
+specific direction `node1 -> node2`.
 """
 function constraint_trans_cap(m::Model, trans)
     @constraint(
@@ -10,16 +11,16 @@ function constraint_trans_cap(m::Model, trans)
             con in connection(),
             i in node(),
             j in node(),
-            t = 1:number_of_timesteps(time="timer");
+            t=1:number_of_timesteps(time="timer");
             all([
             [i,j] in connection__node__node(connection=con),
             trans_cap_av_frac(connection=con, node1=i, node2=j, t=t) != nothing,
-            trans_cap(connection = con) != nothing
+            trans_cap(connection=con) != nothing
             ])
         ],
         + (trans[con, i, j, t])
         <=
         + trans_cap_av_frac(connection=con, node1=i, node2=j, t=t)
-            * trans_cap(connection = con)
+            * trans_cap(connection=con)
     )
 end

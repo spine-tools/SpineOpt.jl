@@ -1,17 +1,16 @@
 """
-constraint_nodal_balance:
-This function ensure that the balance of all commodities flowing in/out a node
-    is ensured.
-TODO: for electrical lines this constraint is obsolete unless
-    a trade based representation is used
-"""
+    constraint_max_cum_in_flow_bound(m::Model, flow)
 
+Enforce balance of all commodity flows from and to a node.
+TODO: for electrical lines this constraint is obsolete unless
+a trade based representation is used.
+"""
 function constraint_nodal_balance(m::Model, flow, trans)
     @constraint(
         m,
         [
             n in node(),
-            t=1:number_of_timesteps(time = "timer");
+            t=1:number_of_timesteps(time="timer");
             demand(node=n, t=t) != nothing
         ],
         + sum(flow[c, n, u, "out", t] for u in unit(), c in commodity()

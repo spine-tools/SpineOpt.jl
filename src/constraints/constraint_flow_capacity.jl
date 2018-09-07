@@ -1,8 +1,9 @@
-"""
-constraint_flow_capacity:
-This function applies an upperbound to in/out flows of a unit, if specified
-"""
+="""
+    constraint_max_cum_in_flow_bound(m::Model, flow)
 
+Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
+number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
+"""
 function constraint_flow_capacity(m::Model, flow)
     @constraint(
         m,
@@ -11,7 +12,7 @@ function constraint_flow_capacity(m::Model, flow)
             u in unit(),
             n in node(),
             d in direction(),
-            t = 1:number_of_timesteps(time = "timer");
+            t=1:number_of_timesteps(time="timer");
             all([
                         [c, n, u, d] in commodity__node__unit__direction(),
                         unit_capacity(unit=u, commodity=c) != nothing,

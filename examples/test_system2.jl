@@ -1,9 +1,3 @@
-""""
-test_system2.jl is a skript to run the second testsystem
-while including the corresponding database testsystem2_v2_multiD.sqlite and
-    the necessary equations
-"""
-
 ## load required packaes
 using Revise
 using SpineModel
