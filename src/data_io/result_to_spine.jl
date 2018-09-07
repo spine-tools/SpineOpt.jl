@@ -53,6 +53,13 @@ function new_object(db_map::PyObject, name::String, class_id::Int64)
     return DBObject(result[:name], result[:id], result[:class_id])
 end
 
+function check_object_exists(db_map::PyObject, name::String)
+    result_obj = py"[x._asdict() for x in $db_map.single_object(name = $name).all()]"
+    #result_class = db_map[:single_object_class](name = name)[:all]()
+    length(result_obj) > 0 ? exists=true : exists =false
+    return exists
+end
+
 # NOTE: all these `get_or_add` seem like they could be in `DatabaseMapping`?
 function get_or_add_object_class(db_map::PyObject, name::String)
     result_class = py"[x._asdict() for x in $db_map.single_object_class(name = $name).all()]"
@@ -251,8 +258,15 @@ function JuMP_variables_to_spine_db(JuMP_vars::Dict{String, JuMP.JuMPDict{JuMP.V
     db_map[:new_commit]()
     try
         result_class = get_or_add_object_class(db_map, "result")
+        if check_object_exists(db_map, result_name)
+            timenow=Dates.now()
+            timestamp=Dates.format(timenow, "dd_u_yyyy__HH_MM_SS")
+            result_name_new = "result_from_"*timestamp
+            warn("""Object with name "$result_name" does already exists.\
+                        Using $result_name_new as result object name instead.""")
+            result_name=result_name_new
+        end
         result_object = new_object(db_map, result_name, result_class.id)
-
         # get objects and object classes for name too id lookup
         objects = db_map[:object_list]()[:all]()
         object_dict = Dict(i[3]=> DBObject(i[3],i[1],i[2]) for i in objects)
