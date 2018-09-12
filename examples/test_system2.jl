@@ -44,8 +44,6 @@ constraint_max_cum_in_flow_bound(m, flow)
 # Run model
 status = solve(m)
 if status == :Optimal
-    flow_value = getvalue(flow)
-    trans_value = getvalue(trans)
-    db_url_out = "sqlite:///examples/data/testsystem2_v2_results.sqlite"
-    JuMP_variables_to_spine_db([flow, trans], ["flow", "trans"], db_url_out, "results_testsystem_2")
+    db_url_out = "sqlite:///examples/data/testsystem2_v2_multiD.sqlite"
+    JuMP_variables_to_spine_db(db_url_out, "results"; flow=flow, trans=trans)
 end

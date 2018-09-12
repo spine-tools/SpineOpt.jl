@@ -14,40 +14,6 @@ function JuMP_all_out(db_url)
     JuMP_all_out(db_map)
 end
 
-
-# NOTE: Do we really need to document this one?
-"""
-Append an increasing integer to object classes that are repeated.
-
-# Example
-```julia
-julia> s=["connection","node", "node"]
-3-element Array{String,1}:
- "connection"
- "node"
- "node"
-
-julia> SpineModel.fix_name_ambiguity!(s)
-
-julia> s
-3-element Array{String,1}:
- "connection"
- "node1"
- "node2"
-```
-"""
-function fix_name_ambiguity!(object_class_name_list)
-    ref_object_class_name_list = copy(object_class_name_list)
-    object_class_name_ocurrences = Dict{String,Int64}()
-    for (i, object_class_name) in enumerate(object_class_name_list)
-        n_ocurrences = count(x -> x == object_class_name, ref_object_class_name_list)
-        n_ocurrences == 1 && continue
-        ocurrence = get(object_class_name_ocurrences, object_class_name, 1)
-        object_class_name_list[i] = string(object_class_name, ocurrence)
-        object_class_name_ocurrences[object_class_name] = ocurrence + 1
-    end
-end
-
 """
     JuMP_object_out(db_map::PyObject)
 

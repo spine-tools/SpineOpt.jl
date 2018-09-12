@@ -41,3 +41,56 @@ function as_number(str)
     end
     str
 end
+
+"""
+    as_dataframe(v::JuMP.JuMPDict{Float64, N} where N)
+
+A DataFrame from a JuMPDict, with keys in first N columns and value in the last column.
+"""
+function as_dataframe(var::JuMP.JuMPDict{Float64, N} where N)
+    var_keys = keys(var)
+    first_key = first(var_keys)
+    column_types = vcat([typeof(x) for x in first_key], typeof(var[first_key...]))
+    key_count = length(first_key)
+    df = DataFrame(column_types, length(var))
+    for (i, key) in enumerate(var_keys)
+        for k in 1:key_count
+            df[i, k] = key[k]
+        end
+        df[i, end] = var[key...]
+    end
+    return df
+end
+
+"""
+Append an increasing integer to object classes that are repeated.
+
+# Example
+```julia
+julia> s=["connection","node", "node"]
+3-element Array{String,1}:
+ "connection"
+ "node"
+ "node"
+
+julia> SpineModel.fix_name_ambiguity!(s)
+
+julia> s
+3-element Array{String,1}:
+ "connection"
+ "node1"
+ "node2"
+```
+"""
+# NOTE: Do we really need to document this one?
+function fix_name_ambiguity!(object_class_name_list)
+    ref_object_class_name_list = copy(object_class_name_list)
+    object_class_name_ocurrences = Dict{String,Int64}()
+    for (i, object_class_name) in enumerate(object_class_name_list)
+        n_ocurrences = count(x -> x == object_class_name, ref_object_class_name_list)
+        n_ocurrences == 1 && continue
+        ocurrence = get(object_class_name_ocurrences, object_class_name, 1)
+        object_class_name_list[i] = string(object_class_name, ocurrence)
+        object_class_name_ocurrences[object_class_name] = ocurrence + 1
+    end
+end
