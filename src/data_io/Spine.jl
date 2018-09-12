@@ -5,13 +5,13 @@ Generate and export convenience functions
 for each object class, relationship class, and parameter, in the database
 given by `db_url`. `db_url` is a database url composed according to
 [sqlalchemy rules](http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls).
-See [`JuMP_all_out(mapping::PyObject)`](@ref) for details
+See [`JuMP_all_out(db_map::PyObject)`](@ref) for details
 about the generated convenience functions.
 """
 function JuMP_all_out(db_url)
     # Create DatabaseMapping object using Python spinedatabase_api
-    mapping = db_api[:DatabaseMapping](db_url)
-    JuMP_all_out(mapping)
+    db_map = db_api[:DatabaseMapping](db_url)
+    JuMP_all_out(db_map)
 end
 
 
@@ -49,12 +49,12 @@ function fix_name_ambiguity!(object_class_name_list)
 end
 
 """
-    JuMP_object_out(mapping::PyObject)
+    JuMP_object_out(db_map::PyObject)
 
 Create convenience functions for accessing database
 objects e.g. units, nodes or connections
 
-# Example using a convenience function created by calling JuMP_object_out(mapping::PyObject)
+# Example using a convenience function created by calling JuMP_object_out(db_map::PyObject)
 ```julia
 julia> unit()
 3-element Array{String,1}:
@@ -63,14 +63,14 @@ julia> unit()
  "CHPPlant"
 ```
 """
-function JuMP_object_out(mapping::PyObject)
+function JuMP_object_out(db_map::PyObject)
     # Get all object classes
-    object_class_list = py"$mapping.object_class_list()"
+    object_class_list = py"$db_map.object_class_list()"
     for object_class in py"[x._asdict() for x in $object_class_list]"
         object_class_id = object_class["id"]
         object_class_name = object_class["name"]
         # Get all objects of object_class
-        object_list = py"$mapping.object_list(class_id=$object_class_id)"
+        object_list = py"$db_map.object_list(class_id=$object_class_id)"
         object_names = py"[x.name for x in $object_list]"
         @suppress_err begin
             @eval begin
@@ -84,13 +84,13 @@ end
 
 
 """
-    JuMP_relationship_out(mapping::PyObject)
+    JuMP_relationship_out(db_map::PyObject)
 
 Create convenience functions for accessing relationships
 e.g. relationships between units and commodities (unit__commodity) or units and
 nodes (unit__node)
 
-# Example using a convenience function created by calling JuMP_object_out(mapping::PyObject)
+# Example using a convenience function created by calling JuMP_object_out(db_map::PyObject)
 ```julia
 julia> unit_node()
 9-element Array{Array{String,1},1}:
@@ -104,9 +104,9 @@ julia> unit_node(node="LeuvenElectricity")
  "CoalPlant"
 ```
 """
-function JuMP_relationship_out(mapping::PyObject)
+function JuMP_relationship_out(db_map::PyObject)
     # Get all relationship classes
-    relationship_class_list = py"$mapping.wide_relationship_class_list()"
+    relationship_class_list = py"$db_map.wide_relationship_class_list()"
     # Iterate through relationship classes as dictionaries
     for relationship_class in py"[x._asdict() for x in $relationship_class_list]"
         relationship_class_id = relationship_class["id"]
@@ -114,7 +114,7 @@ function JuMP_relationship_out(mapping::PyObject)
         # Generate Array of Strings of object class names in this relationship class
         object_class_name_list = [String(x) for x in split(relationship_class["object_class_name_list"], ",")]
         fix_name_ambiguity!(object_class_name_list)
-        relationship_list = py"$mapping.wide_relationship_list(class_id=$relationship_class_id)"
+        relationship_list = py"$db_map.wide_relationship_list(class_id=$relationship_class_id)"
         object_name_lists = Array{Array{String,1},1}()
         for relationship in py"[x._asdict() for x in $relationship_list]"
             object_name_list = [String(x) for x in split(relationship["object_name_list"], ",")]
@@ -145,11 +145,11 @@ end
 
 
 """
-    JuMP_object_parameter_out(mapping::PyObject)
+    JuMP_object_parameter_out(db_map::PyObject)
 
 Create convenience functions for accessing parameter of objects
 
-# Example using a convenience function created by calling JuMP_object_out(mapping::PyObject)
+# Example using a convenience function created by calling JuMP_object_out(db_map::PyObject)
 ```julia
     julia> p_UnitCapacity()
     Dict{String,Int64} with 5 entries:
@@ -163,17 +163,17 @@ Create convenience functions for accessing parameter of objects
     400
 ```
 """
-function JuMP_object_parameter_out(mapping::PyObject)
+function JuMP_object_parameter_out(db_map::PyObject)
     # Get list of all parameter
-    parameter_list = py"$mapping.parameter_list()"
+    parameter_list = py"$db_map.parameter_list()"
     # Iterate through parameters as dictionaries
     for parameter in py"[x._asdict() for x in $parameter_list]"
         parameter_name = parameter["name"]
-        count_ = py"$mapping.object_parameter_value_list(parameter_name=$parameter_name).count()"
+        count_ = py"$db_map.object_parameter_value_list(parameter_name=$parameter_name).count()"
         # Only create function if at least one parameter value is set
         count_ == 0 && continue
         object_parameter_value_list =
-            py"$mapping.object_parameter_value_list(parameter_name=$parameter_name)"
+            py"$db_map.object_parameter_value_list(parameter_name=$parameter_name)"
         object_parameter_value_dict = Dict{String,Any}()
         # Loop through all object parameter values to create a Dict(object_name => value, ... )
         # where value is obtained from the json field if possible, else from the value field
@@ -220,12 +220,12 @@ end
 
 
 """
-    JuMP_relationship_parameter_out(mapping::PyObject)
+    JuMP_relationship_parameter_out(db_map::PyObject)
 
 Create convenience functions for accessing parameters attached to relationships.
 Parameter values are accessed using the object names as inputs:
 
-# Example using a convenience function created by calling JuMP_object_out(mapping::PyObject)
+# Example using a convenience function created by calling JuMP_object_out(db_map::PyObject)
 ```julia
 julia> p_TransLoss(connection="EL1", node1="LeuvenElectricity", node2="AntwerpElectricity")
 0.9
@@ -233,20 +233,21 @@ julia> p_TransLoss(connection="EL1", node1="AntwerpElectricity", node2="LeuvenEl
 0.88
 ```
 """
-function JuMP_relationship_parameter_out(mapping::PyObject)
+function JuMP_relationship_parameter_out(db_map::PyObject)
     # Get list of all parameters via spinedata_api
-    parameter_list = py"$mapping.parameter_list()"
+    parameter_list = py"$db_map.parameter_list()"
     # Iterate through parameters as dictionaries
     for parameter in py"[x._asdict() for x in $parameter_list]"
         parameter_name = parameter["name"]
+        parameter_id = parameter["id"]
         # Check whether specific parameter is set at least once
-        count_ = py"$mapping.relationship_parameter_value_list(parameter_name=$parameter_name).count()"
+        count_ = py"$db_map.relationship_parameter_value_list(parameter_name=$parameter_name).count()"
         count_ == 0 && continue
-        relationship_parameter_value_list =
-            py"$mapping.relationship_parameter_value_list(parameter_name=$parameter_name)"
+        relationship_parameter_list =
+            py"$db_map.relationship_parameter_list(parameter_id=$parameter_id)"
         # Get object_class_name_list from first row in the result, e.g. ["unit", "node"]
         object_class_name_list = nothing
-        for relationship_parameter_value in py"[x._asdict() for x in $relationship_parameter_value_list]"
+        for relationship_parameter_value in py"[x._asdict() for x in $relationship_parameter_list]"
             object_class_name_list = [
                 String(x) for x in split(relationship_parameter_value["object_class_name_list"], ",")
             ]
@@ -254,6 +255,8 @@ function JuMP_relationship_parameter_out(mapping::PyObject)
         end
         # Rename entries of this list by appending increasing integer values if entry occurs more than one time
         fix_name_ambiguity!(object_class_name_list)
+        relationship_parameter_value_list =
+            py"$db_map.relationship_parameter_value_list(parameter_name=$parameter_name)"
         relationship_parameter_value_dict = Dict{String,Any}()
         # Loop through all relationship parameter values to create a Dict("obj1,obj2,.." => value, ... )
         # where value is obtained from the json field if possible, else from the value field
@@ -301,11 +304,11 @@ function JuMP_relationship_parameter_out(mapping::PyObject)
 end
 
 """
-    JuMP_all_out(mapping::PyObject)
+    JuMP_all_out(db_map::PyObject)
 
 Generate and export convenience functions
 for each object class, relationship class, and parameter, in the
-database given by `mapping`. `mapping` is an instance of `DatabaseMapping`
+database given by `db_map`. `db_map` is an instance of `DatabaseMapping`
 provided by [`spinedatabase_api`](https://gitlab.vtt.fi/spine/data/tree/database_api).
 The convenience functions are called as follows:
 
@@ -343,9 +346,9 @@ julia> p_TransLoss(connection="EL1", node1="LeuvenElectricity", node2="AntwerpEl
 0.9
 ```
 """
-function JuMP_all_out(mapping::PyObject)
-    JuMP_object_out(mapping)
-    JuMP_relationship_out(mapping)
-    JuMP_object_parameter_out(mapping)
-    JuMP_relationship_parameter_out(mapping)
+function JuMP_all_out(db_map::PyObject)
+    JuMP_object_out(db_map)
+    JuMP_relationship_out(db_map)
+    JuMP_object_parameter_out(db_map)
+    JuMP_relationship_parameter_out(db_map)
 end
