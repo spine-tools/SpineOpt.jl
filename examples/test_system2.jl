@@ -4,10 +4,8 @@ using SpineModel
 using JuMP
 using Clp
 
-# Init database file from toolbox
-db_url = "sqlite:///examples/data/testsystem2_v2_multiD.sqlite"
-
 # Export contents of database into the current session
+db_url = "sqlite:///examples/data/testsystem2_v2_multiD.sqlite"
 JuMP_all_out(db_url)
 
 # Init model

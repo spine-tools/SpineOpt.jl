@@ -108,8 +108,7 @@ Arguments:
 """
 function JuMP_results_to_spine_db!(db_url::String; results...)
     # Start database connection and add a new commit
-    db_map = db_api[:DatabaseMapping](db_url)
-    db_map[:new_commit]()
+    db_map = py"""$db_api.DatabaseMapping($db_url)"""
     try
         result_class = py"""$db_map.get_or_add_object_class(name="result")"""
         timestamp = Dates.format(Dates.now(), "yyyymmdd_HH_MM_SS")
@@ -120,11 +119,10 @@ function JuMP_results_to_spine_db!(db_url::String; results...)
             dataframe = packed_var_dataframe(var)
             add_var_to_result!(db_map, name, dataframe, result_class, result_object)
         end
-        db_map[:commit_session]("saved from julia")
-        db_map[:session][:close]()
+        msg = string("Save ", keys(results), " automatically from Spine Model.")
+        py"""$db_map.commit_session($msg)"""
     catch err
-        db_map[:rollback_session]()
-        db_map[:session][:close]()
+        py"""$db_map.rollback_session()"""
         throw(err)
     end
 end
