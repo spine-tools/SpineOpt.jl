@@ -33,9 +33,10 @@ function export_data(
         if py"object_" == nothing
             # Object not found, add object class named after it
             object_class_name = string(object_name, "_class")
-            object_class = py"""$db_map.get_or_add_object_class(name=$object_class_name)"""
+            py"""object_class = $db_map.get_or_add_object_class(name=$object_class_name)
+            """
             push!(object_class_name_list, object_class_name)
-            push!(object_class_id_list, py"""$object_class.id""")
+            push!(object_class_id_list, py"object_class.id")
         else
             py"""object_class = $db_map.single_object_class(id=object_.class_id).one_or_none()
             """
@@ -96,9 +97,9 @@ end
     JuMP_variables_to_spine_db(db_url::String, result_name::String; kwargs...)
 
 Export JuMP variables into a spine database.
-Find object and relationships using JuMP variables keys and searching the database for exact matches.
+Find object and relationships using JuMP variables' keys and searching the database for exact matches.
 Create new relationships and relationship classes if they don't already exists.
-Create new result object with relationships to keys in JuMP variable
+Create new result object with relationships to keys in JuMP variable.
 
 Arguments:
     `db_url::String`: url of target database
