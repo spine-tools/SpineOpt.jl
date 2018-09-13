@@ -94,7 +94,7 @@ function export_data(
 end
 
 """
-    JuMP_variables_to_spine_db(db_url::String, result_name::String; kwargs...)
+    JuMP_variables_to_spine_db(db_url::String; kwargs...)
 
 Export JuMP variables into a spine database.
 Find object and relationships using JuMP variables' keys and searching the database for exact matches.
@@ -103,18 +103,17 @@ Create new result object with relationships to keys in JuMP variable.
 
 Arguments:
     `db_url::String`: url of target database
-    `result_name::String`: name of result object
     `kwargs...`: Pairs of variable name, JuMP variable
 """
-function JuMP_variables_to_spine_db(db_url::String, result_name::String; kwargs...)
+function JuMP_variables_to_spine_db(db_url::String; kwargs...)
     # Start database connection and add a new commit
     db_map = db_api[:DatabaseMapping](db_url)
     db_map[:new_commit]()
     try
         result_class = py"""$db_map.get_or_add_object_class(name="result")"""
-        timestamp = Dates.format(Dates.now(), "yyyy_mm_dd_HH_MM_SS")
-        timestamped_result_name = join([result_name, timestamp], "_")
-        result_object = py"""$db_map.add_object(name=$timestamped_result_name, class_id=$result_class.id)"""
+        timestamp = Dates.format(Dates.now(), "yyyymmdd_HH_MM_SS")
+        result_name = join(["result", timestamp], "_")
+        result_object = py"""$db_map.add_object(name=$result_name, class_id=$result_class.id)"""
         # Insert variable into spine database.
         for (name, var) in kwargs
             dataframe = packed_var_dataframe(var)
