@@ -5,6 +5,7 @@ function var_to_df(var::JuMP.JuMPDict{JuMP.Variable,5})
     end
     return df
 end
+
 function var_to_df(var::JuMP.JuMPDict{JuMP.Variable,4})
     df = DataFrame(c=String[], n1=String[], n2=String[], t=Int32[], val=Float32[])
     for (c,n1,n2) in get_all_connection_node_pairs(true), t=1:number_of_timesteps("timer")
@@ -15,10 +16,10 @@ end
 
 # TODO: is this function called from anywhere?
 # If yes, we need to add a docstring
+"""
+Create a data table for one node listing all flows and trans in a dataframe table.
+"""
 function get_node_streams(n::String, var_flow::JuMP.JuMPDict{JuMP.Variable,5}, var_trans::JuMP.JuMPDict{JuMP.Variable,4}, save=false, output = "opt_results.csv")
-    """
-    creates a data table for one node listing all flows and trans in a dataframe table
-    """
 
     #defining symbols for relationships via stringss
     ncos=Symbol("CommodityAffiliation")

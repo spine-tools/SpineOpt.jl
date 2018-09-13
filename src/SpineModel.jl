@@ -2,7 +2,8 @@ module SpineModel
 
 # Data_io exports
 export JuMP_all_out
-export JuMP_variables_to_spine_db
+export JuMP_results_to_spine_db!
+export copy_structure_and_add_results!
 
 # Export model
 export linear_JuMP_model
@@ -39,10 +40,10 @@ end
 
 include("helpers/helpers.jl")
 
-include("data_io/Spine.jl")
-include("data_io/other_formats.jl")
-include("data_io/get_results.jl")
-include("data_io/result_to_spine.jl")
+include("data_io/from_spine.jl")
+include("data_io/to_spine.jl")
+# include("data_io/other_formats.jl")
+# include("data_io/get_results.jl")
 
 include("variables/generate_variable_flow.jl")
 include("variables/generate_variable_trans.jl")
