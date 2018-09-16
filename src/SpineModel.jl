@@ -3,7 +3,6 @@ module SpineModel
 # Data_io exports
 export JuMP_all_out
 export JuMP_results_to_spine_db!
-export copy_structure_and_add_results!
 
 # Export model
 export linear_JuMP_model

@@ -45,7 +45,7 @@ function add_var_to_result!(
             push!(object_class_id_list, py"object_class.id")
         end
     end
-    # Get or add relationship `result__object_class1__object_class2__...`
+    # Get or add relationship class `result__object_class1__object_class2__...`
     relationship_class_name = join(object_class_name_list, "__")
     # FIXME: Getting sql foreign key error when sending integers to python, sending floats seems to work
     float_object_class_id_list = convert.(Float64, object_class_id_list)
@@ -53,7 +53,6 @@ function add_var_to_result!(
         name=$relationship_class_name,
         object_class_id_list=$float_object_class_id_list)
     """
-    parameter = py"relationship_class"
     # Get or add parameter named after variable
     py"""parameter = $db_map.get_or_add_parameter(
         name=$var_name,
@@ -97,17 +96,16 @@ end
 """
     JuMP_results_to_spine_db!(db_url::String; results...)
 
-Export JuMP variables into a spine database.
-Find object and relationships using JuMP variables' keys and searching the database for exact matches.
-Create new relationships and relationship classes if they don't already exists.
-Create new result object with relationships to keys in JuMP variable.
+Update `dest_url` with new parameters from `results`.
+Find objects and relationships using results' keys and searching the database for exact matches.
+Create new relationships and relationship classes if they don't already exist.
+Create new result object with relationships to keys in results.
 
 Arguments:
     `db_url::String`: url of target database
     `results...`: Pairs of variable name, JuMP variable
 """
 function JuMP_results_to_spine_db!(db_url::String; results...)
-    # Start database connection and add a new commit
     db_map = py"""$db_api.DatabaseMapping($db_url)"""
     try
         result_class = py"""$db_map.get_or_add_object_class(name="result")"""
@@ -119,7 +117,7 @@ function JuMP_results_to_spine_db!(db_url::String; results...)
             dataframe = packed_var_dataframe(var)
             add_var_to_result!(db_map, name, dataframe, result_class, result_object)
         end
-        msg = string("Save ", keys(results), " automatically from Spine Model.")
+        msg = string("Save ", join([string(k) for (k, v) in results], ", "), ", automatically from Spine Model.")
         py"""$db_map.commit_session($msg)"""
     catch err
         py"""$db_map.rollback_session()"""
@@ -128,12 +126,29 @@ function JuMP_results_to_spine_db!(db_url::String; results...)
 end
 
 """
-    copy_structure_and_add_results!(dest_url, source_url; results...)
+    JuMP_results_to_spine_db!(dest_url, source_url; results...)
 
 Update `dest_url` with objects and relationships from `source_url`,
 as well as new parameters from `results`.
 """
-function copy_structure_and_add_results!(dest_url, source_url; results...)
-    py"""$db_api.merge_database($dest_url, $source_url, skip_tables=["parameter", "parameter_value"])"""
-    JuMP_results_to_spine_db!(dest_url; results...)
+function JuMP_results_to_spine_db!(dest_url, source_url; results...)
+    if py"""$db_api.is_unlocked($dest_url)"""
+        py"""$db_api.merge_database($dest_url, $source_url, skip_tables=["parameter", "parameter_value"])"""
+        JuMP_results_to_spine_db!(dest_url; results...)
+    else
+        warn(string("The current operation cannot proceed because the SQLite database '$dest_url' ",
+            "is locked by another process. \nIf you have uncommitted changes ",
+            "in another application (such as Spine Toolbox), please try and commit/rollback them.\n",
+            "The operation will resume automatically if the lock is released within the next 2 minutes."))
+        if py"""$db_api.is_unlocked($dest_url, timeout=120)"""
+            py"""$db_api.merge_database($dest_url, $source_url, skip_tables=["parameter", "parameter_value"])"""
+            JuMP_results_to_spine_db!(dest_url; results...)
+        else
+            timestamp = Dates.format(Dates.now(), "yyyymmdd_HH_MM_SS")
+            alt_dest_url = "sqlite:///result_$timestamp.sqlite"
+            info("The database $dest_url is locked. Saving results to $alt_dest_url instead.")
+            py"""$db_api.merge_database($alt_dest_url, $source_url, skip_tables=["parameter", "parameter_value"])"""
+            JuMP_results_to_spine_db!(alt_dest_url; results...)
+        end
+    end
 end
