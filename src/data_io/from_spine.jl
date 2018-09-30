@@ -135,8 +135,8 @@ function JuMP_object_parameter_out(db_map::PyObject)
     # Iterate through parameters as dictionaries
     for parameter in py"[x._asdict() for x in $parameter_list]"
         parameter_name = parameter["name"]
+        # Check whether parameter value is specified at least once
         count_ = py"$db_map.object_parameter_value_list(parameter_name=$parameter_name).count()"
-        # Only create function if at least one parameter value is set
         count_ == 0 && continue
         object_parameter_value_list =
             py"$db_map.object_parameter_value_list(parameter_name=$parameter_name)"
@@ -206,16 +206,16 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
     for parameter in py"[x._asdict() for x in $parameter_list]"
         parameter_name = parameter["name"]
         parameter_id = parameter["id"]
-        # Check whether specific parameter is set at least once
+        # Check whether parameter value is specified at least once
         count_ = py"$db_map.relationship_parameter_value_list(parameter_name=$parameter_name).count()"
         count_ == 0 && continue
         relationship_parameter_list =
             py"$db_map.relationship_parameter_list(parameter_id=$parameter_id)"
         # Get object_class_name_list from first row in the result, e.g. ["unit", "node"]
         object_class_name_list = nothing
-        for relationship_parameter_value in py"[x._asdict() for x in $relationship_parameter_list]"
+        for relationship_parameter in py"[x._asdict() for x in $relationship_parameter_list]"
             object_class_name_list = [
-                String(x) for x in split(relationship_parameter_value["object_class_name_list"], ",")
+                String(x) for x in split(relationship_parameter["object_class_name_list"], ",")
             ]
             break
         end
