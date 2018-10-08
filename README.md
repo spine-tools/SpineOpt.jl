@@ -13,7 +13,7 @@ A Julia Module for defining and running energy models using the  [Spine](http://
 In the Julia REPL, issue the following command to clone this repo into your package directory:
 
 ```julia
-julia> Pkg.clone("https://gitlab.vtt.fi/spine/model.git", "SpineModel")
+julia> Pkg.clone("<path to the repository>", "SpineModel")
 ```
 
 Checkout the current branch (`dev`):
