@@ -6,6 +6,7 @@ TODO: for electrical lines this constraint is obsolete unless
 a trade based representation is used.
 """
 function constraint_nodal_balance(m::Model, flow, trans)
+    # Nodes with demand
     @constraint(
         m,
         [
@@ -22,6 +23,7 @@ function constraint_nodal_balance(m::Model, flow, trans)
         + sum(trans[k, n, j, t] for k in connection(), j in node()
             if [k, n, j] in connection__node__node())
     )
+    # Nodes without demand
     @constraint(
         m,
         [

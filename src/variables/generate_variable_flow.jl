@@ -1,7 +1,7 @@
 """
     generate_variable_flow(m::Model)
 
-Generated `flow` variables for each existing pair of `[commodity,node,unit,direction]`.
+Generated `flow` variables for each existing tuple of `[commodity, node, unit, direction]`.
 """
 function generate_variable_flow(m::Model)
     @variable(
