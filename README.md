@@ -20,7 +20,7 @@ A Julia Module to use within the [Spine](http://www.spine-model.org/) software s
 In the Julia REPL, issue the following command to clone this repo into your package directory:
 
 ```julia
-julia> Pkg.clone("https://gitlab.vtt.fi/spine/model.git", "SpineModel")
+julia> Pkg.clone("<path to the repository>", "SpineModel")
 ```
 
 Checkout the current branch (`dev`):
@@ -47,3 +47,7 @@ Documentation is available [here](docs/build/index.md).
 ## Reporting Issues and Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## License
+
+Spine Model is licensed under GNU Lesser General Public License version 3.0 or later.
