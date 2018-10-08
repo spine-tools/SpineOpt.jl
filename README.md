@@ -47,3 +47,7 @@ Documentation is available [here](docs/build/index.md).
 ## Reporting Issues and Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## License
+
+Spine Model is licensed under GNU Lesser General Public License version 3.0 or later.
