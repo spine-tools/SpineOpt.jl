@@ -1,3 +1,23 @@
+#############################################################################
+# Copyright (C) 2017 - 2018  Spine Project
+#
+# This file is part of Spine Model.
+#
+# Spine Model is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#############################################################################
+
+
 """
     packed_var_dataframe(var::JuMP.JuMPDict{JuMP.Variable, N} where N)
 
@@ -26,8 +46,8 @@ function add_var_to_result!(
     )
     # Iterate over first row in dataframe to retrieve object classes
     first_row = Array(dataframe[1, collect(1:size(dataframe, 2) - 1)])
-    object_class_name_list = [py"""$result_class['name']"""]
-    object_class_id_list = [py"""$result_class['id']"""]
+    object_class_name_list = PyVector(py"""[$result_class['name']]""")
+    object_class_id_list = PyVector(py"""[$result_class['id']]""")
     for object_name in first_row
         py"""object_ = $db_map.single_object(name=$object_name).one_or_none()
         """
@@ -49,11 +69,9 @@ function add_var_to_result!(
     end
     # Get or add relationship class `result__object_class1__object_class2__...`
     relationship_class_name = join(object_class_name_list, "__")
-    # FIXME: Getting sql foreign key error when sending integers to python, sending floats seems to work
-    float_object_class_id_list = convert.(Float64, object_class_id_list)
     py"""relationship_class = $db_map.get_or_add_wide_relationship_class(
         name=$relationship_class_name,
-        object_class_id_list=$float_object_class_id_list)
+        object_class_id_list=$object_class_id_list)
     """
     # Get or add parameter named after variable
     py"""parameter = $db_map.get_or_add_parameter(
@@ -63,8 +81,8 @@ function add_var_to_result!(
     parameter = py"parameter"
     # Sweep dataframe to add relationships and parameter values
     for row in eachrow(dataframe)
-        object_name_list = [py"""$result_object['name']"""]
-        object_id_list = [py"""$result_object['id']"""]
+        object_name_list = PyVector(py"""[$result_object['name']]""")
+        object_id_list = PyVector(py"""[$result_object['id']]""")
         for (field_name, object_name) in row[1:end-1]  # NOTE: last index contains the json, not needed for the name
             py"""object_ = $db_map.single_object(name=$object_name).one_or_none()
             """
@@ -77,11 +95,9 @@ function add_var_to_result!(
         end
         # Add relationship `result_object__object1__object2__...
         relationship_name = join(object_name_list, "__")
-        # FIXME: Getting sql foreign key error when sending integers to python, sending floats seems to work
-        float_object_id_list = convert.(Float64, object_id_list)
         py"""relationship = $db_map.add_wide_relationship(
             name=$relationship_name,
-            object_id_list=$float_object_id_list,
+            object_id_list=$object_id_list,
             class_id=relationship_class.id)
         """
         # Add parameter value
