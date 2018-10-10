@@ -45,8 +45,8 @@ function constraint_flow_capacity(m::Model, flow)
         <=
         + avail_factor(unit=u, t=t)
             * unit_capacity(unit=u, commodity=c)
-                        * number_of_units(unit=u)
-                                    * unit_conv_cap_to_flow(unit=u, commodity=c)
+                * number_of_units(unit=u)
+                    * unit_conv_cap_to_flow(unit=u, commodity=c)
 
     )
 end
