@@ -35,11 +35,11 @@ function constraint_nodal_balance(m::Model, flow, trans)
             demand(node=n, t=t) != nothing
         ],
         + sum(flow[c, n, u, "out", t] for u in unit(), c in commodity()
-            if [c, n, u] in commodity__node__unit__direction(direction="out"))
+            if [n, "out"] in commodity__node__unit__direction(commodity=c, unit=u))
         ==
         + demand(node=n, t=t)
         + sum(flow[c, n, u, "in", t] for u in unit(), c in commodity()
-            if [c, n, u] in commodity__node__unit__direction(direction="in"))
+            if [n, "in"] in commodity__node__unit__direction(commodity=c, unit=u))
         + sum(trans[k, n, j, t] for k in connection(), j in node()
             if [k, n, j] in connection__node__node())
     )
@@ -52,10 +52,10 @@ function constraint_nodal_balance(m::Model, flow, trans)
             demand(node=n, t=t) == nothing
         ],
         + sum(flow[c, n, u, "out", t] for u in unit(), c in commodity()
-            if [n, "out"] in commodity__node__unit__direction(unit=u, commodity=c))
+            if [n, "out"] in commodity__node__unit__direction(commodity=c, unit=u))
         ==
         + sum(flow[c, n, u, "in", t] for u in unit(), c in commodity()
-            if [c, n, u] in commodity__node__unit__direction(direction="in"))
+            if [n, "in"] in commodity__node__unit__direction(commodity=c, unit=u))
         + sum(trans[k, n, j, t] for k in connection(), j in node()
             if [k, n, j] in connection__node__node())
     )

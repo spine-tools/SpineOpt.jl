@@ -36,10 +36,10 @@ function constraint_fix_ratio_out_in_flow(m::Model, v_flow)
             fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in) != nothing
         ],
         + sum(v_flow[c_out, n, u, "out", t] for c_out in commodity_group__commodity(commodity_group=cg_out), n in node()
-            if [c_out, n, u] in commodity__node__unit__direction(direction="out"))
+            if [c_out, n] in commodity__node__unit__direction(unit=u, direction="out"))
         ==
         + fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)
             * sum(v_flow[c_in, n, u, "in", t] for c_in in commodity_group__commodity(commodity_group=cg_in), n in node()
-                if [c_in, n, u] in commodity__node__unit__direction(direction="in"))
+                if [c_in, n] in commodity__node__unit__direction(unit=u, direction="in"))
     )
 end
