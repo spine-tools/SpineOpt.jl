@@ -26,37 +26,24 @@ TODO: for electrical lines this constraint is obsolete unless
 a trade based representation is used.
 """
 function constraint_nodal_balance(m::Model, flow, trans)
-    # Nodes with demand
-    @constraint(
-        m,
-        [
-            n in node(),
-            t=1:number_of_timesteps(time="timer");
-            demand(node=n, t=t) != nothing
-        ],
-        + sum(flow[c, n, u, "out", t] for u in unit(), c in commodity()
-            if [n, "out"] in commodity__node__unit__direction(commodity=c, unit=u))
-        ==
-        + demand(node=n, t=t)
-        + sum(flow[c, n, u, "in", t] for u in unit(), c in commodity()
-            if [n, "in"] in commodity__node__unit__direction(commodity=c, unit=u))
-        + sum(trans[k, n, j, t] for k in connection(), j in node()
-            if [k, n, j] in connection__node__node())
-    )
-    # Nodes without demand
-    @constraint(
-        m,
-        [
-            n in node(),
-            t=1:number_of_timesteps(time="timer");
-            demand(node=n, t=t) == nothing
-        ],
-        + sum(flow[c, n, u, "out", t] for u in unit(), c in commodity()
-            if [n, "out"] in commodity__node__unit__direction(commodity=c, unit=u))
-        ==
-        + sum(flow[c, n, u, "in", t] for u in unit(), c in commodity()
-            if [n, "in"] in commodity__node__unit__direction(commodity=c, unit=u))
-        + sum(trans[k, n, j, t] for k in connection(), j in node()
-            if [k, n, j] in connection__node__node())
-    )
+    for n in node(), t=1:number_of_timesteps(time="timer")
+        if demand(node=n, t=t) != nothing
+            @constraint(
+                m,
+                + sum(flow[c, n, u, "out", t] for (c, u) in commodity__node__unit__direction(node=n, direction="out"))
+                ==
+                + demand(node=n, t=t)
+                + sum(flow[c, n, u, "in", t] for (c, u) in commodity__node__unit__direction(node=n, direction="in"))
+                + sum(trans[k, n, j, t] for (k, j) in connection__node__node(node1=n))
+            )
+        else
+            @constraint(
+                m,
+                + sum(flow[c, n, u, "out", t] for (c, u) in commodity__node__unit__direction(node=n, direction="out"))
+                ==
+                + sum(flow[c, n, u, "in", t] for (c, u) in commodity__node__unit__direction(node=n, direction="in"))
+                + sum(trans[k, n, j, t] for (k, j) in connection__node__node(node1=n))
+            )
+        end
+    end
 end

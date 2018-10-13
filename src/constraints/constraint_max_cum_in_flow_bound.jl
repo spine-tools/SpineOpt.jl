@@ -34,12 +34,8 @@ function constraint_max_cum_in_flow_bound(m::Model, flow)
             max_cum_in_flow_bound(unit_group=ug, commodity_group=cg) != nothing
         ],
         + sum(flow[c, n, u, "in", t]
-            for u in unit_group__unit(unit_group=ug),
-                c in commodity_group__commodity(commodity_group=cg),
-                n in node(),
-                t=1:number_of_timesteps(time="timer")
-            if [c, n, u, "in"] in commodity__node__unit__direction()
-        )
+            for (c, n, u) in commodity__node__unit__direction(direction="in"), t=1:number_of_timesteps(time="timer")
+                if u in unit_group__unit(unit_group=ug) && c in commodity_group__commodity(commodity_group=cg))
         <=
         + max_cum_in_flow_bound(unit_group=ug, commodity_group=cg)
     )
