@@ -78,8 +78,9 @@ function add_var_to_result!(
         name=$var_name,
         relationship_class_id=relationship_class.id)
     """
-    parameter = py"parameter"
-    # Sweep dataframe to add relationships and parameter values
+    # Sweep dataframe to compute dictionaries of relationship and parameter value args
+    relationship_kwargs_list = []
+    parameter_value_kwargs_list = []
     for row in eachrow(dataframe)
         object_name_list = PyVector(py"""[$result_object['name']]""")
         object_id_list = PyVector(py"""[$result_object['id']]""")
@@ -95,20 +96,33 @@ function add_var_to_result!(
         end
         # Add relationship `result_object__object1__object2__...
         relationship_name = join(object_name_list, "__")
-        py"""relationship = $db_map.add_wide_relationship(
-            name=$relationship_name,
-            object_id_list=$object_id_list,
-            class_id=relationship_class.id)
-        """
+        push!(
+            relationship_kwargs_list,
+            Dict(
+                "name" => relationship_name,
+                "object_id_list" => object_id_list,
+                "class_id" => py"relationship_class.id"
+            )
+        )
         # Add parameter value
         json = row[end]
-        py"""$db_map.add_parameter_value(
-            relationship_id=relationship.id,
-            parameter_id=parameter.id,
-            json=$json
+        push!(
+            parameter_value_kwargs_list,
+            Dict(
+                "parameter_id" => py"parameter.id",
+                "json" => json
+            )
         )
-        """
     end
+    # Add relationships
+    py_relationship_kwargs_list = PyVector(relationship_kwargs_list)
+    relationship_list = py"""$db_map.add_wide_relationships(*$py_relationship_kwargs_list)"""
+    # Complete parameter value args with relationship ids
+    for (i, relationship) in enumerate(py"""[x._asdict() for x in $relationship_list]""")
+        parameter_value_kwargs_list[i]["relationship_id"] = relationship["id"]
+    end
+    py_parameter_value_kwargs_list = PyVector(parameter_value_kwargs_list)
+    py"""$db_map.add_parameter_values(*$py_parameter_value_kwargs_list)"""
 end
 
 """
@@ -153,7 +167,7 @@ as well as new parameters from `results`.
 """
 function JuMP_results_to_spine_db!(dest_url, source_url; results...)
     if py"""$db_api.is_unlocked($dest_url)"""
-        py"""$db_api.merge_database($dest_url, $source_url, skip_tables=["parameter", "parameter_value"])"""
+        py"""$db_api.copy_database($dest_url, $source_url, only_tables=["object_class", "object"])"""
         JuMP_results_to_spine_db!(dest_url; results...)
     else
         warn(string("The current operation cannot proceed because the SQLite database '$dest_url' is locked. \n",
