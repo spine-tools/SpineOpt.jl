@@ -67,7 +67,7 @@ end
 
 A DataFrame from a JuMPDict, with keys in first N columns and value in the last column.
 """
-function as_dataframe(var::JuMP.JuMPDict{Float64, N} where N)
+function as_dataframe(var::Dict{Tuple, Float64})
     var_keys = keys(var)
     first_key = first(var_keys)
     column_types = vcat([typeof(x) for x in first_key], typeof(var[first_key...]))

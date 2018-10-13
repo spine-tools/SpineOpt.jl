@@ -23,8 +23,8 @@
 
 A DataFrame from a JuMP variable, with the last column packed into a JSON.
 """
-function packed_var_dataframe(var::JuMP.JuMPDict{JuMP.Variable, N} where N)
-    var_dataframe = as_dataframe(getvalue(var))
+function packed_var_dataframe(var::Dict{Tuple, JuMP.Variable})
+    var_dataframe = as_dataframe(Dict{Tuple, Float64}(k => getvalue(v) for (k, v) in var))
     sort!(var_dataframe)
     packed_var_dataframe = by(var_dataframe, [1:size(var_dataframe, 2) - 2; ]) do df
         DataFrame(json=JSON.json(df[end]))
