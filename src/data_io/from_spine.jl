@@ -111,17 +111,19 @@ function JuMP_relationship_out(db_map::PyObject)
                 function $(Symbol(relationship_class_name))(;kwargs...)
                     result = $(object_name_lists)
                     object_class_name_list = $(object_class_name_list)
-                    object_class_name_list_temp = copy(object_class_name_list)
-                    for (key,value) in kwargs
-                        index = findfirst(x -> x == string(key), object_class_name_list_temp)
-                        result = filter(x -> x[index] == value, result)
-                        result = [x[1:end .!= index] for x in result]
-                        # Update index for next loop
-                        filter!(e -> e ≠ object_class_name_list[index], object_class_name_list_temp)
-                        # FIXME: do we need to compute index here? We do it above...
-                        index = findfirst(x -> x == string(key), object_class_name_list_temp)
+                    indexes = Array{Int64, 1}()
+                    values = Array{String, 1}()
+                    for (k, v) in kwargs
+                        push!(indexes, findfirst(x -> x == string(k), object_class_name_list))
+                        push!(values, v)
                     end
-                    [size(x, 1) == 1?x[1]:x for x in result]
+                    result = filter(x -> x[indexes] == values, result)
+                    slice = filter(i -> !in(i, indexes), collect(1:length(object_class_name_list)))
+                    if length(slice) == 1
+                        [x[slice[1]] for x in result]
+                    else
+                        [x[slice] for x in result]
+                    end
                 end
                 export $(Symbol(relationship_class_name))
             end
