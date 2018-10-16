@@ -109,16 +109,16 @@ function JuMP_relationship_out(db_map::PyObject)
         @suppress_err begin
             @eval begin
                 function $(Symbol(relationship_class_name))(;kwargs...)
-                    result = $(object_name_lists)
+                    object_name_lists = $(object_name_lists)
                     object_class_name_list = $(object_class_name_list)
                     indexes = Array{Int64, 1}()
-                    values = Array{String, 1}()
+                    object_name_list = Array{String, 1}()
                     for (k, v) in kwargs
                         push!(indexes, findfirst(x -> x == string(k), object_class_name_list))
-                        push!(values, v)
+                        push!(object_name_list, v)
                     end
-                    result = filter(x -> x[indexes] == values, result)
-                    slice = filter(i -> !in(i, indexes), collect(1:length(object_class_name_list)))
+                    result = filter(x -> x[indexes] == object_name_list, object_name_lists)
+                    slice = filter(i -> !(i in indexes), collect(1:length(object_class_name_list)))
                     if length(slice) == 1
                         [x[slice[1]] for x in result]
                     else
@@ -267,16 +267,13 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
                     if length(kwargs) == 0
                          return relationship_parameter_value_dict
                     end
-                    # Create list of valid object class names
-                    kwargs_dict = Dict(kwargs)
-                    object_name_list = Array{String,1}()
-                    for object_class_name in object_class_name_list
-                        if haskey(kwargs_dict, Symbol(object_class_name))
-                            push!(object_name_list, kwargs_dict[Symbol(object_class_name)])
-                            continue
-                        end
+                    indexes = Array{Int64, 1}()
+                    object_name_list = Array{String, 1}()
+                    for (k, v) in kwargs
+                        push!(indexes, findfirst(x -> x == string(k), object_class_name_list))
+                        push!(object_name_list, v)
                     end
-                    object_name_list = join(object_name_list, ",")
+                    object_name_list = join(object_name_list[indexes], ",")
                     !haskey(relationship_parameter_value_dict, object_name_list) && return nothing
                     value = relationship_parameter_value_dict[object_name_list]
                     if isa(value, Array)
