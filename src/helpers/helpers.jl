@@ -120,10 +120,9 @@ end
     @butcher expression
 
 Butcher a expression so that method calls involving one or more arguments
-are performed as soon as those arguments are available. The return value
-is stored in a variable which replaces the original method calls. Needs testing.
+are performed as soon as those arguments are available. Needs testing.
 
-For instance, an expression like:
+For instance, an expression like this:
 
 ```
 x = 5
@@ -132,7 +131,7 @@ for i=1:1e6
 end
 ```
 
-is turned into:
+is turned into something like this:
 
 ```
 x = 5
@@ -143,10 +142,10 @@ end
 ```
 
 This is mainly intended to improve performance in cases where the implementation
-of `f()` is expensive, but for readability reasons, the programmer wants to call it
-in an unconvenient place such as a long `for` loop.
+of `f()` is expensive, but for readability reasons the programmer wants to call it
+in an unconvenient place, such as in a long `for` loop.
 """
-# NOTE: sometimes methods are called with arguments which are themselves method calls,
+# TODO: sometimes methods are called with arguments which are themselves method calls,
 # e.g., f(g(x)). This can be butchered by doing multiple passages, but I wonder if
 # it's possible in a single passage. Anyways, we could have a keyword argument
 # to indicate the number of passages to perform. Also, we can make it so if this
@@ -244,6 +243,7 @@ macro butcher(expression)
                 # keyword argument
                 push!(call_arg_arr, arg.args[end])
             elseif isa(arg, Expr) && arg.head == :parameters
+                # keyword arguments after a semi-colon
                 for kwarg in arg.args
                     if kwarg.head == :kw && isa(kwarg.args[end], Symbol)
                         push!(call_arg_arr, kwarg.args[end])
@@ -282,19 +282,20 @@ macro butcher(expression)
             end
             # Create or retrieve replacement variable
             x = get!(call_location_variable, target_node_id, gensym())
-            # Store replacement variable location
+            # Add new replacement variable location
             push!(replacement_variable_location, (x, location["parent"], location["row"]))
         end
         # Perform the call at a better location, assign result to variable
         for (target_node_id, x) in call_location_variable
             target_parent, target_row = arg_assignment_location[target_node_id]
-            if target_parent.head == :for  # Assignment is in the loop condition
+            if target_parent.head == :for  # Assignment is in the loop condition, e.g., for i=1:100
                 # Better location is at the begining of the loop body
                 target_parent.args[target_row + 1] = Expr(:block, :($x = $call), target_parent.args[target_row + 1])
-            else  # TODO: are there any other cases which need special treatment?
+            else
                 # Better location is right after the assignment
                 target_parent.args[target_row] = Expr(:block, target_parent.args[target_row], :($x = $call))
-            end
+            end  # TODO: are there any other cases which need special treatment?
+                 # What about for loops with more than one iteration spec? eg. for i=1:10, j=1:5
         end
     end
     # Replace calls in original locations with the replacement variable
