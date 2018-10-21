@@ -26,7 +26,7 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 is specified.
 """
 function constraint_fix_ratio_out_in_flow(m::Model, v_flow)
-    @constraint(
+    @butcher @constraint(
         m,
         [
             u in unit(),

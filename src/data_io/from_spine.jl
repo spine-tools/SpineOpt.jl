@@ -119,11 +119,8 @@ function JuMP_relationship_out(db_map::PyObject)
                     end
                     result = filter(x -> x[indexes] == object_name_list, object_name_lists)
                     slice = filter(i -> !(i in indexes), collect(1:length(object_class_name_list)))
-                    if length(slice) == 1
-                        [x[slice[1]] for x in result]
-                    else
-                        [x[slice] for x in result]
-                    end
+                    length(slice) == 1 && (slice = slice[1])
+                    [x[slice] for x in result]
                 end
                 export $(Symbol(relationship_class_name))
             end
