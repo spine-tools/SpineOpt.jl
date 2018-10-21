@@ -152,7 +152,7 @@ in an unconvenient place such as a long `for` loop.
 # to indicate the number of passages to perform. Also, we can make it so if this
 # argument is Inf (or st) we keep going until there's nothing left to butcher.
 macro butcher(expression)
-    @show expression = macroexpand(esc(expression))
+    expression = macroexpand(esc(expression))
     parent = []  # Visited parents
     row = []  # Visited parent rows
     call_location = Dict{Expr,Array{Dict{String,Any},1}}()  # Function calls and their location
@@ -229,13 +229,13 @@ macro butcher(expression)
         end
     end
     # Done visiting, now butcher expression
-    replacement_variable_location = Array{Any,1}()  # Replacement variables and location where to insert them
-    # NOTE: Assume, for now, that each variable is assigned only once
+    replacement_variable_location = Array{Any,1}()  # Replacement variable and location where to insert it
     for (call, call_location_arr) in call_location
-        # Find first node where all arguments have been assigned
+        # Find top-most node where all arguments have been assigned
         call_arg_arr = []  # Array of non-literal arguments
-        local node0_id  # Id of first node where all arguments have been assigned
-        arg_assignment_location = Dict() # Id of node where each argument is assigned, and corresponding parent, row
+        local topmost_node_id  # Id of top-most node where all arguments have been assigned
+        arg_assignment_location = Dict() # Id of node where each argument is assigned, and corresponding parent, and row
+        call_location_variable = Dict()  # Id of node for replacement call and variable to store the return value
         for arg in call.args[2:end]  # First arg is the method name
             if isa(arg, Symbol)
                 # Positional argument
@@ -243,12 +243,16 @@ macro butcher(expression)
             elseif isa(arg, Expr) && arg.head == :kw && isa(arg.args[end], Symbol)
                 # keyword argument
                 push!(call_arg_arr, arg.args[end])
-            elseif isa(arg, Expr)
-
+            elseif isa(arg, Expr) && arg.head == :parameters
+                for kwarg in arg.args
+                    if kwarg.head == :kw && isa(kwarg.args[end], Symbol)
+                        push!(call_arg_arr, kwarg.args[end])
+                    end
+                end
             end
         end
         isempty(call_arg_arr) && continue
-        node0_id = try maximum(
+        topmost_node_id = try maximum(
             minimum(
                 location["node_id"] for location in assignment_location[arg]
             ) for arg in call_arg_arr
@@ -259,40 +263,43 @@ macro butcher(expression)
         end
         for arg in call_arg_arr
             for location in assignment_location[arg]
-                location["node_id"] < node0_id && continue
+                location["node_id"] < topmost_node_id && continue
                 push!(arg_assignment_location, location["node_id"] => (location["parent"], location["row"]))
             end
         end
-        for call_location_ in call_location_arr
-            # Find better place to put the call
+        # Find better place to put the call
+        for location in call_location_arr
             target_node_id = try
-                maximum(x for x in keys(arg_assignment_location) if x < call_location_["node_id"])
+                maximum(x for x in keys(arg_assignment_location) if x < location["node_id"])
             catch ArgumentsError
                 # One or more arguments are not assigned before the call is made, skip
                 continue
             end
-            @show call, target_node_id
+            # Check if recursive assignment, e.g., x = f(x), and skip it
             target_parent, target_row = arg_assignment_location[target_node_id]
             if target_parent.args[target_row].args[end] == call
-                # Recursive assignment, e.g., x = f(x), skip it
                 continue
             end
-            # Perform the call at a better location, assign result to a variable
-            x = gensym()
+            # Create or retrieve replacement variable
+            x = get!(call_location_variable, target_node_id, gensym())
+            # Store replacement variable location
+            push!(replacement_variable_location, (x, location["parent"], location["row"]))
+        end
+        # Perform the call at a better location, assign result to variable
+        for (target_node_id, x) in call_location_variable
+            target_parent, target_row = arg_assignment_location[target_node_id]
             if target_parent.head == :for  # Assignment is in the loop condition
                 # Better location is at the begining of the loop body
                 target_parent.args[target_row + 1] = Expr(:block, :($x = $call), target_parent.args[target_row + 1])
-            else  # TODO: are there any other case which needs special treatment?
+            else  # TODO: are there any other cases which need special treatment?
                 # Better location is right after the assignment
                 target_parent.args[target_row] = Expr(:block, target_parent.args[target_row], :($x = $call))
             end
-            # Store replacement variable location
-            push!(replacement_variable_location, (x, call_location_["parent"], call_location_["row"]))
         end
     end
-    # Replace calls in current locations with the variable
+    # Replace calls in original locations with the replacement variable
     for (x, parent, row) in replacement_variable_location
         parent.args[row] = :($x)
     end
-    @show expression
+    expression
 end
