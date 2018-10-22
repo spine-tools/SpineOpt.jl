@@ -34,7 +34,7 @@ function constraint_nodal_balance(m::Model, flow, trans)
                 ==
                 + demand(node=n, t=t)
                 + sum(flow[c, n, u, "in", t] for (c, u) in commodity__node__unit__direction(node=n, direction="in"))
-                + sum(trans[k, n, j, t] for (k, j) in connection__node__node(node1=n))
+                + sum(trans[conn, n, t] for conn in connection__node(node=n))
             )
         else
             @constraint(
@@ -42,7 +42,7 @@ function constraint_nodal_balance(m::Model, flow, trans)
                 + sum(flow[c, n, u, "out", t] for (c, u) in commodity__node__unit__direction(node=n, direction="out"))
                 ==
                 + sum(flow[c, n, u, "in", t] for (c, u) in commodity__node__unit__direction(node=n, direction="in"))
-                + sum(trans[k, n, j, t] for (k, j) in connection__node__node(node1=n))
+                + sum(trans[conn, n, t] for conn in connection__node(node=n))
             )
         end
     end

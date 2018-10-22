@@ -31,12 +31,19 @@ trans_loss(connection=con, node1=i, node2=j) != trans_loss(connection=con, node2
 """
 function constraint_trans_loss(m::Model, trans)
     for (conn, i, j) in connection__node__node(), t=1:number_of_timesteps(time="timer")
-        (trans_loss(connection=conn, node1=i, node2=j) != nothing) || continue
+        (trans_loss(connection=conn, node=i) != nothing) || continue
         @constraint(
             m,
-            + (trans[conn, i, j, t])
-                * trans_loss(connection=conn, node1=i, node2=j)
+            + (trans[conn, i, t])
+                * trans_loss(connection=conn, node=j)
             >=
-            - (trans[conn, j, i, t]))
+            - (trans[conn, j, t]))
+        (trans_loss(connection=conn, node=j) != nothing) || continue
+        @constraint(
+            m,
+            + (trans[conn, j, t])
+                * trans_loss(connection=conn, node=i)
+            >=
+            - (trans[conn, i, t]))
     end
 end
