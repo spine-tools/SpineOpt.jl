@@ -63,9 +63,9 @@ function as_number(str)
 end
 
 """
-    as_dataframe(v::JuMP.JuMPDict{Float64, N} where N)
+    as_dataframe(var::Dict{Tuple,Float64})
 
-A DataFrame from a JuMPDict, with keys in first N columns and value in the last column.
+A DataFrame from a Dict, with keys in first N columns and value in the last column.
 """
 function as_dataframe(var::Dict{Tuple,Float64})
     var_keys = keys(var)
@@ -83,7 +83,9 @@ function as_dataframe(var::Dict{Tuple,Float64})
 end
 
 """
-Append an increasing integer to object classes that are repeated.
+    fix_name_ambiguity!(object_class_name_list)
+
+Append an increasing integer to repeated object class names.
 
 # Example
 ```julia
@@ -141,8 +143,8 @@ end
 ```
 
 This is mainly intended to improve performance in cases where the implementation
-of `f()` is expensive, but for readability reasons the programmer wants to call it
-in an unconvenient place -such as the body of a long `for` loop.
+of a method is expensive, but for readability reasons the programmer wants to call it
+at unconvenient places -such as the body of a long for loop.
 """
 # TODO: sometimes methods are called with arguments which are themselves method calls,
 # e.g., f(g(x)). This can be butchered by doing multiple passages, but I wonder if
@@ -155,7 +157,7 @@ macro butcher(expression)
     assignment_location = Dict{Symbol,Array{Dict{String,Any},1}}()
     replacement_variable_location = Array{Any,1}()
     # 'Beat' each node in the expression tree (see definition of `beat` below)
-    forward_sweep(expression, beat, call_location, assignment_location)
+    visit_node(expression, 1, nothing, 1, beat, call_location, assignment_location)
     for (call, call_location_arr) in call_location
         # Find top-most node where all arguments have been assigned
         call_arg_arr = []  # Array of non-literal arguments
@@ -210,7 +212,7 @@ macro butcher(expression)
             # Add new replacement variable location
             push!(replacement_variable_location, (x, location["parent"], location["row"]))
         end
-        # Perform the call at a better location, assign result to variable
+        # Perform the call at a better location, assign result to replacement variable
         for (target_node_id, x) in replacement_variable
             target_parent, target_row = arg_assignment_location[target_node_id]
             if target_parent.head in (:for, :while)  # Assignment is in the loop condition, e.g., for i=1:100
@@ -230,15 +232,18 @@ macro butcher(expression)
 end
 
 """
-    beat(...)
+    beat(node::Any, node_id::Int64, parent::Any, row::Int64,
+         call_location::Dict{Expr,Array{Dict{String,Any},1}},
+         assignment_location = Dict{Symbol,Array{Dict{String,Any},1}})
 
 Beat an expression node in preparation for butchering:
  1. Turn for loops with multiple iteration specifications into multiple nested for loops.
+ E.g., `for i=1:10, j=1:5 (body) end` is turned into `for i=1:10 for j=1:5 (body) end end`.
  This is so @butcher can place method calls *in between* iteration specifications.
  2. Register the location of calls and assignments into the supplied dictionaries.
 """
 function beat(
-        node::Any, node_id::Int64, parent::Array{Expr,1}, row::Array{Int64,1},
+        node::Any, node_id::Int64, parent::Any, row::Int64,
         call_location::Dict{Expr,Array{Dict{String,Any},1}},
         assignment_location = Dict{Symbol,Array{Dict{String,Any},1}})
     !isa(node, Expr) && return
@@ -258,34 +263,34 @@ function beat(
             call_location_arr,
             Dict{String,Any}(
                 "node_id" => node_id,
-                "parent" => parent[end],
-                "row" => row[end]
+                "parent" => parent,
+                "row" => row
             )
         )
     # Register assignment location (node_id, parent and row)
     elseif node.head == :(=)
-        var_arr = []  # Array of variables being assigned
-        if isa(node.args[1], Expr)
+        variable_arr = []  # Array of variables being assigned
+        if isa(node.args[1], Symbol)
+            # Single assignment, e.g., a = 1
+            variable_arr = [node.args[1]]
+        elseif isa(node.args[1], Expr)
             # Multiple assignment
             if node.args[1].head == :tuple
                 # Tupled form, all args are assigned, e.g., a, b = 1, "foo"
-                var_arr = node.args[1].args
+                variable_arr = node.args[1].args
             else
                 # Other bracketed form, only first arg is assigned, e.g., v[a, b] = "bar"
-                var_arr = [node.args[1].args[1]]
+                variable_arr = [node.args[1].args[1]]
             end
-        elseif isa(node.args[1], Symbol)
-            # Single assignment, e.g., a = 1
-            var_arr = [node.args[1]]
         end
-        for var in var_arr
+        for var in variable_arr
             assignment_location_arr = get!(assignment_location, var, Array{Dict{String,Any},1}())
             push!(
                 assignment_location_arr,
                 Dict{String,Any}(
                     "node_id" => node_id,
-                    "parent" => parent[end],
-                    "row" => row[end]
+                    "parent" => parent,
+                    "row" => row
                 )
             )
         end
@@ -293,42 +298,18 @@ function beat(
 end
 
 """
-    forward_sweep(expression::Expr, func, func_args...; func_kwargs...)
+    visit_node(node::Any, node_id::Int64, parent::Any, row::Int64, func, func_args...; func_kwargs...)
 
-Sweep the expression tree from root to leaves, applying a function on each node.
+Recursively visit every node in an expression tree while applying a function on it.
 """
-function forward_sweep(expression::Expr, func, func_args...; func_kwargs...)
-    node_id = 0  # Node identifier, autoincremented
-    parent = Array{Expr,1}()  # Visited parents
-    row = Array{Int64,1}()  # Visited rows per parent
-    visited = expression  # Node being visited
-    back_to_parent = false  # `true` when going back from child to parent
-    while true
-        node_id += 1
-        # Apply function, but only when going forward
-        !back_to_parent && func(visited, node_id, parent, row, func_args...; func_kwargs...)
-        # Try and visit first child
-        try
-            @assert !back_to_parent
-            next = visited.args[1]  # This will fail with ErrorException if visited has no children
-            push!(parent, visited)
-            push!(row, 1)
-            back_to_parent = false
-            visited = next
-            continue
-        end
-        # Try and visit next sibling if any; else, go back to parent
-        try
-            row[end] += 1
-            next = parent[end].args[row[end]]
-            back_to_parent = false
-            visited = next
-        catch BoundsError
-            pop!(row)
-            next = pop!(parent)
-            (next == expression) && break
-            back_to_parent = true
-            visited = next
-        end
+function visit_node(node::Any, node_id::Int64, parent::Any, row::Int64, func, func_args...; func_kwargs...)
+    func(node, node_id, parent, row, func_args...; func_kwargs...)
+    try
+        child = node.args[1]
+        visit_node(child, node_id + 1, node, 1, func, func_args...; func_kwargs...)
+    end
+    try
+        sibling = parent.args[row + 1]
+        visit_node(sibling, node_id + 1, parent, row + 1, func, func_args...; func_kwargs...)
     end
 end
