@@ -228,44 +228,11 @@ macro butcher(expression)
 end
 
 """
-    next_node(visited::Any, parent::Array{Any,1}, row::Array{Any,1}, back_to_parent::Bool)
-
-The next node to visit after visiting `visited`.
-"""
-function next_node(
-        visited::Any,
-        parent::Array{Any,1},
-        row::Array{Any,1},
-        back_to_parent::Bool)
-    if !back_to_parent
-        # Try and visit first child
-        if isa(visited, Expr) && !isempty(visited.args)
-            push!(parent, visited)
-            push!(row, 1)
-            next = visited.args[1]
-            back_to_parent = false
-            return next, back_to_parent
-        end
-    end
-    # Try and visit next sibling if any; else, go back to parent
-    try
-        row[end] += 1
-        next = parent[end].args[row[end]]
-        back_to_parent = false
-    catch BoundsError
-        pop!(row)
-        next = pop!(parent)
-        back_to_parent = true
-    finally
-        return next, back_to_parent
-    end
-end
-
-"""
     loopsplit(expression::Expr)
 
 An expression where `for` loops with multiple iteration specifications
-are split into multiple nested `for` loops.
+are split into multiple nested `for` loops. Needed by @butcher,
+so there's room to place method calls *in between* iteration specifications.
 """
 function loopsplit(expression::Expr)
     parent = []  # Visited parents
@@ -297,11 +264,11 @@ end
 """
     call_and_assignment_location(expression::Expr)
 
-Two dictionaries, `call_location`, and `assignment_location`;
-mapping 'call' and 'assignment' expressions, respectively,
+Two dictionaries, `call_location` and `assignment_location`;
+mapping, respectively, 'call' and 'assignment' expressions
 to an array of locations where the expression is found.
 Each location is itself a mapping from a node identifier,
-to a tuple conformed of parent expression, and row.
+to a tuple of parent expression and row.
 """
 function call_and_assignment_location(expression::Expr)
     parent = []  # Visited parents
@@ -310,10 +277,9 @@ function call_and_assignment_location(expression::Expr)
     assignment_location = Dict{Symbol,Array{Dict{String,Any},1}}()  # Assignments and their location
     visited = expression  # Node being visited
     back_to_parent = false  # `true` when going back from child to parent
-    node_id = 0  # Node identifier, autoincremented
+    node_id = 1  # Node identifier, autoincremented
     # Visit the expression tree
     while true
-        node_id += 1
         # Inspect node to retrieve information, but only when going down
         if isa(visited, Expr) && !back_to_parent
             # Store call locations (node_id, parent and row), but only for calls with arguments
@@ -359,6 +325,41 @@ function call_and_assignment_location(expression::Expr)
         next, back_to_parent = next_node(visited, parent, row, back_to_parent)
         (next == expression) && break
         visited = next
+        node_id += 1
     end
     call_location, assignment_location
+end
+
+"""
+    next_node(visited::Any, parent::Array{Any,1}, row::Array{Any,1}, back_to_parent::Bool)
+
+The next node to visit in an expression tree, after visiting `visited`.
+"""
+function next_node(
+        visited::Any,
+        parent::Array{Any,1},
+        row::Array{Any,1},
+        back_to_parent::Bool)
+    if !back_to_parent
+        # Try and visit first child
+        if isa(visited, Expr) && !isempty(visited.args)
+            push!(parent, visited)
+            push!(row, 1)
+            next = visited.args[1]
+            back_to_parent = false
+            return next, back_to_parent
+        end
+    end
+    # Try and visit next sibling if any; else, go back to parent
+    try
+        row[end] += 1
+        next = parent[end].args[row[end]]
+        back_to_parent = false
+    catch BoundsError
+        pop!(row)
+        next = pop!(parent)
+        back_to_parent = true
+    finally
+        return next, back_to_parent
+    end
 end
