@@ -24,7 +24,7 @@
 Generated `flow` variables for each existing tuple of `[commodity, node, unit, direction]`.
 """
 function generate_variable_flow(m::Model)
-    Dict{Tuple, JuMP.Variable}(
+    @butcher Dict{Tuple, JuMP.Variable}(
         (c, n, u, d, t) => @variable(
             m, basename="flow[$c, $n, $u, $d, $t]", lowerbound=0
         ) for (c, n, u, d) in commodity__node__unit__direction(), t=1:number_of_timesteps(time="timer")

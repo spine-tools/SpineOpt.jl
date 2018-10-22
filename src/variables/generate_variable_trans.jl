@@ -25,7 +25,7 @@ Generates transmissions `trans` for each existing tuple of [connection,node_i,no
 For each `connection` between to `nodes`, two `trans` variables exist.
 """
 function generate_variable_trans(m::Model)
-    Dict{Tuple, JuMP.Variable}(
+    @butcher Dict{Tuple, JuMP.Variable}(
         (c, i, j, t) => @variable(
             m, basename="trans[$c, $i, $j, $t]"
         ) for (c, i, j) in connection__node__node(), t=1:number_of_timesteps(time="timer")

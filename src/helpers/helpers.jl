@@ -119,7 +119,7 @@ end
 """
     @butcher expression
 
-Butcher a expression so that method calls involving one or more arguments
+Butcher an expression so that method calls involving one or more arguments
 are performed as soon as those arguments are available. Needs testing.
 
 For instance, an expression like this:
@@ -149,9 +149,9 @@ in an unconvenient place -such as the body of a long `for` loop.
 # e.g., f(g(x)). This can be butchered by doing multiple passages, but I wonder if
 # it's possible in a single passage. Anyways, we could have a keyword argument
 # to indicate the number of passages to perform. Also, we can make it so if this
-# argument is Inf (or st) we keep going until there's nothing left to butcher.
+# argument is Inf (or something) we keep going until there's nothing left to butcher.
 macro butcher(expression)
-    expression = macroexpand(esc(expression))
+    expression = loopsplit(macroexpand(esc(expression)))
     call_location, assignment_location = call_and_assignment_location(expression)
     replacement_variable_location = Array{Any,1}()  # Replacement variable and location where to insert it
     for (call, call_location_arr) in call_location
@@ -218,12 +218,78 @@ macro butcher(expression)
                 # Better location is right after the assignment
                 target_parent.args[target_row] = Expr(:block, target_parent.args[target_row], :($x = $call))
             end  # TODO: are there any other cases which need special treatment?
-                 # What about for loops with more than one iteration spec? e.g., for i=1:10, j=1:5
         end
     end
     # Replace calls in original locations with the replacement variable
     for (x, parent, row) in replacement_variable_location
         parent.args[row] = :($x)
+    end
+    expression
+end
+
+"""
+    next_node(visited::Any, parent::Array{Any,1}, row::Array{Any,1}, back_to_parent::Bool)
+
+The next node to visit after visiting `visited`.
+"""
+function next_node(
+        visited::Any,
+        parent::Array{Any,1},
+        row::Array{Any,1},
+        back_to_parent::Bool)
+    if !back_to_parent
+        # Try and visit first child
+        if isa(visited, Expr) && !isempty(visited.args)
+            push!(parent, visited)
+            push!(row, 1)
+            next = visited.args[1]
+            back_to_parent = false
+            return next, back_to_parent
+        end
+    end
+    # Try and visit next sibling if any; else, go back to parent
+    try
+        row[end] += 1
+        next = parent[end].args[row[end]]
+        back_to_parent = false
+    catch BoundsError
+        pop!(row)
+        next = pop!(parent)
+        back_to_parent = true
+    finally
+        return next, back_to_parent
+    end
+end
+
+"""
+    loopsplit(expression::Expr)
+
+An expression where `for` loops with multiple iteration specifications
+are split into multiple nested `for` loops.
+"""
+function loopsplit(expression::Expr)
+    parent = []  # Visited parents
+    row = []  # Visited rows for each parent
+    visited = expression  # Node being visited
+    back_to_parent = false  # `true` when going back from child to parent
+    # Visit the expression tree
+    while true
+        # Inspect node when going down
+        if isa(visited, Expr) && !back_to_parent
+            if visited.head == :for && visited.args[1].head == :block
+                # For loop with multiple iteration specifications
+                iteration_specs = visited.args[1].args
+                # Turn all specs but first into for loops of their own, and push them to the loop body
+                for spec in iteration_specs[end:-1:2]
+                    visited.args[2] = Expr(:for, spec, visited.args[2])
+                end
+                # Turn first spec into the condition of the outer-most (original) loop
+                visited.args[1] = iteration_specs[1]
+            end
+        end
+        next, back_to_parent = next_node(visited, parent, row, back_to_parent)
+        (next == expression) && break
+        visited = next
     end
     expression
 end
@@ -290,30 +356,9 @@ function call_and_assignment_location(expression::Expr)
                 end
             end
         end
-        # Visit next node in tree
-        if !back_to_parent
-            # Try and visit first child
-            if isa(visited, Expr) && !isempty(visited.args)
-                push!(parent, visited)
-                push!(row, 1)
-                visited = visited.args[1]
-                back_to_parent = false
-                continue
-            end
-        end
-        # Try and visit next sibling if any; else, go back to parent
-        try
-            row[end] += 1
-            visited = parent[end].args[row[end]]
-            back_to_parent = false
-            continue
-        catch BoundsError
-            pop!(row)
-            visited = pop!(parent)
-            (visited == expression) && break
-            back_to_parent = true
-            continue
-        end
+        next, back_to_parent = next_node(visited, parent, row, back_to_parent)
+        (next == expression) && break
+        visited = next
     end
     call_location, assignment_location
 end

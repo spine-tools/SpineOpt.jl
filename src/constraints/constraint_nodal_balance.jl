@@ -26,7 +26,7 @@ TODO: for electrical lines this constraint is obsolete unless
 a trade based representation is used.
 """
 function constraint_nodal_balance(m::Model, flow, trans)
-    for n in node(), t=1:number_of_timesteps(time="timer")
+    @butcher for n in node(), t=1:number_of_timesteps(time="timer")
         if demand(node=n, t=t) != nothing
             @constraint(
                 m,
