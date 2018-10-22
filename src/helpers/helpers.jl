@@ -115,7 +115,6 @@ function fix_name_ambiguity!(object_class_name_list)
     end
 end
 
-
 """
     @butcher expression
 
@@ -151,15 +150,18 @@ in an unconvenient place -such as the body of a long `for` loop.
 # to indicate the number of passages to perform. Also, we can make it so if this
 # argument is Inf (or something) we keep going until there's nothing left to butcher.
 macro butcher(expression)
-    expression = loopsplit(macroexpand(esc(expression)))
-    call_location, assignment_location = call_and_assignment_location(expression)
-    replacement_variable_location = Array{Any,1}()  # Replacement variable and location where to insert it
+    expression = macroexpand(esc(expression))
+    call_location = Dict{Expr,Array{Dict{String,Any},1}}()
+    assignment_location = Dict{Symbol,Array{Dict{String,Any},1}}()
+    replacement_variable_location = Array{Any,1}()
+    # 'Beat' each node in the expression tree (see definition of `beat` below)
+    forward_sweep(expression, beat, call_location, assignment_location)
     for (call, call_location_arr) in call_location
         # Find top-most node where all arguments have been assigned
         call_arg_arr = []  # Array of non-literal arguments
         local topmost_node_id  # Id of top-most node where all arguments have been assigned
-        arg_assignment_location = Dict() # Id of node where each argument is assigned, and corresponding parent, and row
-        call_location_variable = Dict()  # Id of node for replacement call and variable to store the return value
+        arg_assignment_location = Dict() # Location of each argument assignment
+        replacement_variable = Dict()  # Variable to store the return value of each relocated call
         for arg in call.args[2:end]  # First arg is the method name
             if isa(arg, Symbol)
                 # Positional argument
@@ -204,14 +206,14 @@ macro butcher(expression)
             target_parent, target_row = arg_assignment_location[target_node_id]
             target_parent.args[target_row].args[end] == call && continue
             # Create or retrieve replacement variable
-            x = get!(call_location_variable, target_node_id, gensym())
+            x = get!(replacement_variable, target_node_id, gensym())
             # Add new replacement variable location
             push!(replacement_variable_location, (x, location["parent"], location["row"]))
         end
         # Perform the call at a better location, assign result to variable
-        for (target_node_id, x) in call_location_variable
+        for (target_node_id, x) in replacement_variable
             target_parent, target_row = arg_assignment_location[target_node_id]
-            if target_parent.head == :for  # Assignment is in the loop condition, e.g., for i=1:100
+            if target_parent.head in (:for, :while)  # Assignment is in the loop condition, e.g., for i=1:100
                 # Better location is the begining of the loop body
                 target_parent.args[target_row + 1] = Expr(:block, :($x = $call), target_parent.args[target_row + 1])
             else
@@ -228,138 +230,105 @@ macro butcher(expression)
 end
 
 """
-    loopsplit(expression::Expr)
+    beat(...)
 
-An expression where `for` loops with multiple iteration specifications
-are split into multiple nested `for` loops. Needed by @butcher,
-so there's room to place method calls *in between* iteration specifications.
+Beat an expression node in preparation for butchering:
+ 1. Turn for loops with multiple iteration specifications into multiple nested for loops.
+ This is so @butcher can place method calls *in between* iteration specifications.
+ 2. Register the location of calls and assignments into the supplied dictionaries.
 """
-function loopsplit(expression::Expr)
-    parent = []  # Visited parents
-    row = []  # Visited rows for each parent
-    visited = expression  # Node being visited
-    back_to_parent = false  # `true` when going back from child to parent
-    # Visit the expression tree
-    while true
-        # Inspect node when going down
-        if isa(visited, Expr) && !back_to_parent
-            if visited.head == :for && visited.args[1].head == :block
-                # For loop with multiple iteration specifications
-                iteration_specs = visited.args[1].args
-                # Turn all specs but first into for loops of their own, and push them to the loop body
-                for spec in iteration_specs[end:-1:2]
-                    visited.args[2] = Expr(:for, spec, visited.args[2])
-                end
-                # Turn first spec into the condition of the outer-most (original) loop
-                visited.args[1] = iteration_specs[1]
-            end
+function beat(
+        node::Any, node_id::Int64, parent::Array{Expr,1}, row::Array{Int64,1},
+        call_location::Dict{Expr,Array{Dict{String,Any},1}},
+        assignment_location = Dict{Symbol,Array{Dict{String,Any},1}})
+    !isa(node, Expr) && return
+    # 'Splat' for loop
+    if node.head == :for && node.args[1].head == :block
+        iteration_specs = node.args[1].args
+        # Turn all specs but first into for loops of their own
+        for spec in iteration_specs[end:-1:2]
+            node.args[2] = Expr(:for, spec, node.args[2])
         end
-        next, back_to_parent = next_node(visited, parent, row, back_to_parent)
-        (next == expression) && break
-        visited = next
-    end
-    expression
-end
-
-"""
-    call_and_assignment_location(expression::Expr)
-
-Two dictionaries, `call_location` and `assignment_location`;
-mapping, respectively, 'call' and 'assignment' expressions
-to an array of locations where the expression is found.
-Each location is itself a mapping from a node identifier,
-to a tuple of parent expression and row.
-"""
-function call_and_assignment_location(expression::Expr)
-    parent = []  # Visited parents
-    row = []  # Visited rows for each parent
-    call_location = Dict{Expr,Array{Dict{String,Any},1}}()  # Function calls and their location
-    assignment_location = Dict{Symbol,Array{Dict{String,Any},1}}()  # Assignments and their location
-    visited = expression  # Node being visited
-    back_to_parent = false  # `true` when going back from child to parent
-    node_id = 1  # Node identifier, autoincremented
-    # Visit the expression tree
-    while true
-        # Inspect node to retrieve information, but only when going down
-        if isa(visited, Expr) && !back_to_parent
-            # Store call locations (node_id, parent and row), but only for calls with arguments
-            if visited.head == :call && length(visited.args) > 1  # First arg is the method name
-                call_location_arr = get!(call_location, visited, Array{Dict{String,Any},1}())
-                push!(
-                    call_location_arr,
-                    Dict{String,Any}(
-                        "node_id" => node_id,
-                        "parent" => parent[end],
-                        "row" => row[end]
-                    )
+        # Turn first spec into the condition of the outer-most (original) loop
+        node.args[1] = iteration_specs[1]
+    # Register call location (node_id, parent and row), but only if it has arguments
+    elseif node.head == :call && length(node.args) > 1  # First arg is the method name
+        call_location_arr = get!(call_location, node, Array{Dict{String,Any},1}())
+        push!(
+            call_location_arr,
+            Dict{String,Any}(
+                "node_id" => node_id,
+                "parent" => parent[end],
+                "row" => row[end]
+            )
+        )
+    # Register assignment location (node_id, parent and row)
+    elseif node.head == :(=)
+        var_arr = []  # Array of variables being assigned
+        if isa(node.args[1], Expr)
+            # Multiple assignment
+            if node.args[1].head == :tuple
+                # Tupled form, all args are assigned, e.g., a, b = 1, "foo"
+                var_arr = node.args[1].args
+            else
+                # Other bracketed form, only first arg is assigned, e.g., v[a, b] = "bar"
+                var_arr = [node.args[1].args[1]]
+            end
+        elseif isa(node.args[1], Symbol)
+            # Single assignment, e.g., a = 1
+            var_arr = [node.args[1]]
+        end
+        for var in var_arr
+            assignment_location_arr = get!(assignment_location, var, Array{Dict{String,Any},1}())
+            push!(
+                assignment_location_arr,
+                Dict{String,Any}(
+                    "node_id" => node_id,
+                    "parent" => parent[end],
+                    "row" => row[end]
                 )
-            # Store assignment locations (node_id, parent and row)
-            elseif visited.head == :(=)
-                var_arr = []  # Array of variables being assigned
-                if isa(visited.args[1], Expr)
-                    # Multiple assignment
-                    if visited.args[1].head == :tuple
-                        # Tupled form, all args are assigned, e.g., a, b = 1, "foo"
-                        var_arr = visited.args[1].args
-                    else
-                        # Other bracketed form, only first arg is assigned, e.g., v[a, b] = "bar"
-                        var_arr = [visited.args[1].args[1]]
-                    end
-                elseif isa(visited.args[1], Symbol)
-                    # Single assignment, e.g., a = 1
-                    var_arr = [visited.args[1]]
-                end
-                for var in var_arr
-                    assignment_location_arr = get!(assignment_location, var, Array{Dict{String,Any},1}())
-                    push!(
-                        assignment_location_arr,
-                        Dict{String,Any}(
-                            "node_id" => node_id,
-                            "parent" => parent[end],
-                            "row" => row[end]
-                        )
-                    )
-                end
-            end
+            )
         end
-        next, back_to_parent = next_node(visited, parent, row, back_to_parent)
-        (next == expression) && break
-        visited = next
-        node_id += 1
     end
-    call_location, assignment_location
 end
 
 """
-    next_node(visited::Any, parent::Array{Any,1}, row::Array{Any,1}, back_to_parent::Bool)
+    forward_sweep(expression::Expr, func, func_args...; func_kwargs...)
 
-The next node to visit in an expression tree, after visiting `visited`.
+Sweep the expression tree from root to leaves, applying a function on each node.
 """
-function next_node(
-        visited::Any,
-        parent::Array{Any,1},
-        row::Array{Any,1},
-        back_to_parent::Bool)
-    if !back_to_parent
+function forward_sweep(expression::Expr, func, func_args...; func_kwargs...)
+    node_id = 0  # Node identifier, autoincremented
+    parent = Array{Expr,1}()  # Visited parents
+    row = Array{Int64,1}()  # Visited rows per parent
+    visited = expression  # Node being visited
+    back_to_parent = false  # `true` when going back from child to parent
+    while true
+        node_id += 1
+        # Apply function, but only when going forward
+        !back_to_parent && func(visited, node_id, parent, row, func_args...; func_kwargs...)
         # Try and visit first child
-        if isa(visited, Expr) && !isempty(visited.args)
+        try
+            @assert !back_to_parent
+            next = visited.args[1]  # This will fail with ErrorException if visited has no children
             push!(parent, visited)
             push!(row, 1)
-            next = visited.args[1]
             back_to_parent = false
-            return next, back_to_parent
+            visited = next
+            continue
         end
-    end
-    # Try and visit next sibling if any; else, go back to parent
-    try
-        row[end] += 1
-        next = parent[end].args[row[end]]
-        back_to_parent = false
-    catch BoundsError
-        pop!(row)
-        next = pop!(parent)
-        back_to_parent = true
-    finally
-        return next, back_to_parent
+        # Try and visit next sibling if any; else, go back to parent
+        try
+            row[end] += 1
+            next = parent[end].args[row[end]]
+            back_to_parent = false
+            visited = next
+        catch BoundsError
+            pop!(row)
+            next = pop!(parent)
+            (next == expression) && break
+            back_to_parent = true
+            visited = next
+        end
     end
 end
