@@ -243,11 +243,11 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
         fix_name_ambiguity!(object_class_name_list)
         relationship_parameter_value_list =
             py"$db_map.relationship_parameter_value_list(parameter_name=$parameter_name)"
-        relationship_parameter_value_dict = Dict{Symbol,Any}()
+        relationship_parameter_value_dict = Dict{Array{Symbol,1},Any}()
         # Loop through all relationship parameter values to create a Dict("obj1,obj2,.." => value, ... )
         # where value is obtained from the json field if possible, else from the value field
         for relationship_parameter_value in py"[x._asdict() for x in $relationship_parameter_value_list]"
-            object_name_list = Symbol(relationship_parameter_value["object_name_list"]) #"obj1,obj2,..." e.g. "CoalPlant,Electricity,Coal"
+            object_name_list = Symbol.(split(relationship_parameter_value["object_name_list"], ",")) #"obj1,obj2,..." e.g. "CoalPlant,Electricity,Coal"
             value = try
                 JSON.parse(relationship_parameter_value["json"])
             catch LoadError
@@ -265,13 +265,10 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
                     if length(kwargs) == 0
                          return relationship_parameter_value_dict
                     end
-                    indexes = Array{Int64, 1}()
-                    object_name_list = Array{Symbol, 1}()
+                    object_name_list = Array{Symbol, 1}(length(kwargs))
                     for (k, v) in kwargs
-                        push!(indexes, findfirst(x -> x == k, object_class_name_list))
-                        push!(object_name_list, v)
+                        object_name_list[findfirst(x -> x == k, object_class_name_list)] = v
                     end
-                    object_name_list = Symbol(join(object_name_list[indexes], ","))
                     !haskey(relationship_parameter_value_dict, object_name_list) && return nothing
                     value = relationship_parameter_value_dict[object_name_list]
                     if isa(value, Array)
