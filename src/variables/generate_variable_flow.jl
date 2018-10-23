@@ -27,6 +27,6 @@ function generate_variable_flow(m::Model)
     @butcher Dict{Tuple, JuMP.Variable}(
         (c, n, u, d, t) => @variable(
             m, basename="flow[$c, $n, $u, $d, $t]", lowerbound=0
-        ) for (c, n, u, d) in commodity__node__unit__direction(), t=1:number_of_timesteps(time="timer")
+        ) for (c, n, u, d) in commodity__node__unit__direction(), t=1:number_of_timesteps(time=:timer)
     )
 end

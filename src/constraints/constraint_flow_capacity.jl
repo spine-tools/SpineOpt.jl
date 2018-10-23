@@ -25,7 +25,7 @@ Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
 number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 function constraint_flow_capacity(m::Model, flow)
-    @butcher for (c, n, u, d) in commodity__node__unit__direction(), t=1:number_of_timesteps(time="timer")
+    @butcher for (c, n, u, d) in commodity__node__unit__direction(), t=1:number_of_timesteps(time=:timer)
         all([
             unit_capacity(unit=u, commodity=c) != nothing,
             number_of_units(unit=u) != nothing,
