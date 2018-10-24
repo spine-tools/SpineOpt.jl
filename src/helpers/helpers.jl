@@ -160,8 +160,8 @@ macro butcher(expression)
     visit_node(expression, 1, nothing, 1, beat, call_location, assignment_location)
     for (call, call_location_arr) in call_location
         # Find top-most node where all arguments have been assigned
+        local topmost_node_id
         call_arg_arr = []  # Array of non-literal arguments
-        local topmost_node_id  # Id of top-most node where all arguments have been assigned
         arg_assignment_location = Dict() # Location of each argument assignment
         replacement_variable = Dict()  # Variable to store the return value of each relocated call
         for arg in call.args[2:end]  # First arg is the method name
@@ -250,7 +250,7 @@ function beat(
     # 'Splat' for loop
     if node.head == :for && node.args[1].head == :block
         iteration_specs = node.args[1].args
-        # Turn all specs but first into for loops of their own
+        # Turn all specs but first into for loops of their own and prepend them to the body
         for spec in iteration_specs[end:-1:2]
             node.args[2] = Expr(:for, spec, node.args[2])
         end
