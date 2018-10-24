@@ -105,7 +105,7 @@ julia> s
 ```
 """
 # NOTE: Do we really need to document this one?
-function fix_name_ambiguity!(object_class_name_list)
+function fix_name_ambiguity!(object_class_name_list::Array{String,1})
     ref_object_class_name_list = copy(object_class_name_list)
     object_class_name_ocurrences = Dict{String,Int64}()
     for (i, object_class_name) in enumerate(object_class_name_list)
@@ -116,6 +116,19 @@ function fix_name_ambiguity!(object_class_name_list)
         object_class_name_ocurrences[object_class_name] = ocurrence + 1
     end
 end
+
+function fix_name_ambiguity!(object_class_name_list::Array{Symbol,1})
+    ref_object_class_name_list = copy(object_class_name_list)
+    object_class_name_ocurrences = Dict{Symbol,Int64}()
+    for (i, object_class_name) in enumerate(object_class_name_list)
+        n_ocurrences = count(x -> x == object_class_name, ref_object_class_name_list)
+        n_ocurrences == 1 && continue
+        ocurrence = get(object_class_name_ocurrences, object_class_name, 1)
+        object_class_name_list[i] = Symbol(object_class_name, ocurrence)
+        object_class_name_ocurrences[object_class_name] = ocurrence + 1
+    end
+end
+
 
 """
     @butcher expression

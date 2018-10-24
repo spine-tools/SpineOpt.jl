@@ -28,6 +28,6 @@ function generate_variable_trans(m::Model)
     @butcher Dict{Tuple, JuMP.Variable}(
         (c, i, t) => @variable(
             m, basename="trans[$c, $i, $t]"
-        ) for (c, i) in connection__node(), t=1:number_of_timesteps(time="timer")
+        ) for (c, i) in connection__node(), t=1:number_of_timesteps(time=:timer)
     )
 end

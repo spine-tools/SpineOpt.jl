@@ -58,6 +58,7 @@ function JuMP_object_out(db_map::PyObject)
         # Get all objects of object_class
         object_list = py"$db_map.object_list(class_id=$object_class_id)"
         object_names = py"[x.name for x in $object_list]"
+        object_names = Symbol.(object_names)
         @suppress_err begin
             @eval begin
                 # Create convenience function named after the object class
@@ -98,12 +99,12 @@ function JuMP_relationship_out(db_map::PyObject)
         relationship_class_id = relationship_class["id"]
         relationship_class_name = relationship_class["name"]
         # Generate Array of Strings of object class names in this relationship class
-        object_class_name_list = [String(x) for x in split(relationship_class["object_class_name_list"], ",")]
+        object_class_name_list = [Symbol(x) for x in split(relationship_class["object_class_name_list"], ",")]
         fix_name_ambiguity!(object_class_name_list)
         relationship_list = py"$db_map.wide_relationship_list(class_id=$relationship_class_id)"
-        object_name_lists = Array{Array{String,1},1}()
+        object_name_lists = Array{Array{Symbol,1},1}()
         for relationship in py"[x._asdict() for x in $relationship_list]"
-            object_name_list = [String(x) for x in split(relationship["object_name_list"], ",")]
+            object_name_list = [Symbol(x) for x in split(relationship["object_name_list"], ",")]
             push!(object_name_lists, object_name_list)
         end
         @suppress_err begin
@@ -112,9 +113,9 @@ function JuMP_relationship_out(db_map::PyObject)
                     object_name_lists = $(object_name_lists)
                     object_class_name_list = $(object_class_name_list)
                     indexes = Array{Int64, 1}()
-                    object_name_list = Array{String, 1}()
+                    object_name_list = Array{Symbol, 1}()
                     for (k, v) in kwargs
-                        push!(indexes, findfirst(x -> x == string(k), object_class_name_list))
+                        push!(indexes, findfirst(x -> x == k, object_class_name_list))
                         push!(object_name_list, v)
                     end
                     result = filter(x -> x[indexes] == object_name_list, object_name_lists)
@@ -159,11 +160,11 @@ function JuMP_object_parameter_out(db_map::PyObject)
         count_ == 0 && continue
         object_parameter_value_list =
             py"$db_map.object_parameter_value_list(parameter_name=$parameter_name)"
-        object_parameter_value_dict = Dict{String,Any}()
+        object_parameter_value_dict = Dict{Symbol,Any}()
         # Loop through all object parameter values to create a Dict(object_name => value, ... )
         # where value is obtained from the json field if possible, else from the value field
         for object_parameter_value in py"[x._asdict() for x in $object_parameter_value_list]"
-            object_name = object_parameter_value["object_name"]
+            object_name = Symbol(object_parameter_value["object_name"])
             value = try
                 JSON.parse(object_parameter_value["json"])
             catch LoadError
@@ -183,7 +184,7 @@ function JuMP_object_parameter_out(db_map::PyObject)
                     # Return position t of value for object given in kwargs if Array, else return value
                     elseif length(kwargs) == 1
                         key, value = kwargs[1]
-                        object_class_name = string(key)  # NOTE: not in use at the moment
+                        object_class_name = key  # NOTE: not in use at the moment
                         object_name = value
                         !haskey(object_parameter_value_dict, object_name) && return nothing
                         value = object_parameter_value_dict[object_name]
@@ -234,7 +235,7 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
         object_class_name_list = nothing
         for relationship_parameter in py"[x._asdict() for x in $relationship_parameter_list]"
             object_class_name_list = [
-                String(x) for x in split(relationship_parameter["object_class_name_list"], ",")
+                Symbol(x) for x in split(relationship_parameter["object_class_name_list"], ",")
             ]
             break
         end
@@ -242,11 +243,11 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
         fix_name_ambiguity!(object_class_name_list)
         relationship_parameter_value_list =
             py"$db_map.relationship_parameter_value_list(parameter_name=$parameter_name)"
-        relationship_parameter_value_dict = Dict{String,Any}()
+        relationship_parameter_value_dict = Dict{Array{Symbol,1},Any}()
         # Loop through all relationship parameter values to create a Dict("obj1,obj2,.." => value, ... )
         # where value is obtained from the json field if possible, else from the value field
         for relationship_parameter_value in py"[x._asdict() for x in $relationship_parameter_value_list]"
-            object_name_list = relationship_parameter_value["object_name_list"] #"obj1,obj2,..." e.g. "CoalPlant,Electricity,Coal"
+            object_name_list = Symbol.(split(relationship_parameter_value["object_name_list"], ",")) #"obj1,obj2,..." e.g. "CoalPlant,Electricity,Coal"
             value = try
                 JSON.parse(relationship_parameter_value["json"])
             catch LoadError
@@ -264,13 +265,10 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
                     if length(kwargs) == 0
                          return relationship_parameter_value_dict
                     end
-                    indexes = Array{Int64, 1}()
-                    object_name_list = Array{String, 1}()
+                    object_name_list = Array{Symbol, 1}(length(kwargs))
                     for (k, v) in kwargs
-                        push!(indexes, findfirst(x -> x == string(k), object_class_name_list))
-                        push!(object_name_list, v)
+                        object_name_list[findfirst(x -> x == k, object_class_name_list)] = v
                     end
-                    object_name_list = join(object_name_list[indexes], ",")
                     !haskey(relationship_parameter_value_dict, object_name_list) && return nothing
                     value = relationship_parameter_value_dict[object_name_list]
                     if isa(value, Array)
