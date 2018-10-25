@@ -13,24 +13,42 @@ A Julia Module to use within the [Spine](http://www.spine-model.org/) software s
 - [JSON](https://github.com/JuliaIO/JSON.jl)
 - [Clp](https://github.com/JuliaOpt/Clp.jl)
 - [Missings](https://github.com/JuliaData/Missings.jl)
+- [DataFrames]
 - [spinedatabase_api](https://gitlab.vtt.fi/spine/data/tree/database_api)
 
 ### Installation
 
-In the Julia REPL, issue the following command to clone this repo into your package directory:
+`SpineModel.jl` is installed as any Julia package.
+
+#### Julia < 0.7
+
+From the julia REPL, run
 
 ```julia
-julia> Pkg.clone("<path to the repository>", "SpineModel")
+julia> Pkg.clone("https://github.com/Spine-project/Spine-Model.git", "SpineModel")
 ```
 
-Checkout the current branch (`dev`):
+That's it. Later on, to upgrade to the most recent version, run
+
+
+```julia
+julia> Pkg.checkout("SpineModel")
+```
+
+To upgrade to the most recent version from the development branch, run
 
 ```julia
 julia> Pkg.checkout("SpineModel", "dev")
 ```
 
-In the future, whenever you want to get the latest version of the package
-just run the `Pkg.checkout(...)` part.
+#### Julia >= 0.7
+
+From the julia REPL, run
+
+```julia
+Pkg.add(PackageSpec(url="https://github.com/Spine-project/Spine-Model.git", name="SpineModel", rev="dev"))
+```
+
 
 ### Usage
 
