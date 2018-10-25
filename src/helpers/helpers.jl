@@ -57,7 +57,7 @@ function as_number(str)
     for T in type_array
         try
             return parse(T, str)
-        catch:
+        catch
         end
     end
     str
@@ -321,11 +321,11 @@ function visit_node(node::Any, node_id::Int64, parent::Any, row::Int64, func, fu
     try
         child = node.args[1]
         visit_node(child, node_id + 1, node, 1, func, func_args...; func_kwargs...)
-    catch:
+    catch
     end
     try
         sibling = parent.args[row + 1]
         visit_node(sibling, node_id + 1, parent, row + 1, func, func_args...; func_kwargs...)
-    catch:
+    catch
     end
 end
