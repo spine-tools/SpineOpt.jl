@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
+# __precompile__()
 
 module SpineModel
 
@@ -55,8 +55,42 @@ using Dates
 using CSV
 const db_api = PyNULL()
 
+
 function __init__()
-    copy!(db_api, pyimport("spinedatabase_api"))
+    # Check Python version
+    python = PyCall.pyprogramname
+    @pyimport sys
+    if sys.version_info[1] == 2
+        error("""
+Wrong Python version.
+The PyCall module is currently configured to use the Python version at:
+
+$python
+
+which has version $pyversion. However, at least Python version 3.5 is required.
+
+(PyCall is used by SpineModel to call the spinedatabase_api Python package from Julia,
+in order to interact with Spine databases.)
+
+The solution is to re-configure PyCall to use a Python
+version 3.5 or higher: as explained in the PyCall manual,
+set ENV["PYTHON"] to the path/name of the python
+executable you want to use, run Pkg.build("PyCall"), re-launch Julia, and try using SpineModel again.
+""")
+    end
+    try
+        copy!(db_api, pyimport("spinedatabase_api"))
+    catch e
+        if isa(e, PyCall.PyError)
+            repo_url = "https://github.com/Spine-project/Spine-Database-API.git#spinedatabase_api"
+            info("""
+Installing the spinedatabase_api Python package from $repo_url.
+(spinedatabase_api is used by SpineModel to interact with Spine databases.)
+""")
+            run(`$python -m pip install git+$repo_url`)
+            copy!(db_api, pyimport("spinedatabase_api"))
+        end
+    end
 end
 
 include("helpers/helpers.jl")

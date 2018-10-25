@@ -1,26 +1,23 @@
 # SpineModel.jl
 
-A Julia Module to use within the [Spine](http://www.spine-model.org/) software suite, for developing energy system integration models,
+A Julia Module to generate, run, and develop energy system integration models using the Spine framework.
+See [Spine](http://www.spine-model.org/) for more information.
 
 ## Getting started
 
 ### Pre-requisites
 
-- [Julia 0.6.1+](https://julialang.org/)
+- [Julia < 0.7](https://julialang.org/)
 - [PyCall](https://github.com/JuliaPy/PyCall.jl)
 - [CSV](https://github.com/JuliaData/CSV.jl)
 - [JuMP](https://github.com/JuliaOpt/JuMP.jl)
 - [JSON](https://github.com/JuliaIO/JSON.jl)
 - [Clp](https://github.com/JuliaOpt/Clp.jl)
 - [Missings](https://github.com/JuliaData/Missings.jl)
-- [DataFrames]
+- [DataFrames](https://github.com/JuliaData/DataFrames.jl)
 - [spinedatabase_api](https://gitlab.vtt.fi/spine/data/tree/database_api)
 
 ### Installation
-
-`SpineModel.jl` is installed as any Julia package.
-
-#### Julia < 0.7
 
 From the julia REPL, run
 
@@ -28,31 +25,30 @@ From the julia REPL, run
 julia> Pkg.clone("https://github.com/Spine-project/Spine-Model.git", "SpineModel")
 ```
 
-That's it. Later on, to upgrade to the most recent version, run
+This will install `SpineModel.jl` as well as all its dependencies (except for `spinedatabase_api`
+which will be installed the first time you import SpineModel into your Julia session. Note that `spinedatabase_api`
+requires Python version 3.5 to work, so you may need to reconfigure Pycall to use
+an appropriate Python.
+
+### Upgrading
+
+To upgrade to the most recent version of `SpineModel.jl`, run
 
 
 ```julia
 julia> Pkg.checkout("SpineModel")
 ```
 
-To upgrade to the most recent version from the development branch, run
+Alternatively, you can specify a branch, as in
 
 ```julia
 julia> Pkg.checkout("SpineModel", "dev")
 ```
 
-#### Julia >= 0.7
-
-From the julia REPL, run
-
-```julia
-Pkg.add(PackageSpec(url="https://github.com/Spine-project/Spine-Model.git", name="SpineModel", rev="dev"))
-```
-
 
 ### Usage
 
-Include the module in your Julia session or program:
+Run:
 
 ```
 julia> using SpineModel
