@@ -25,10 +25,13 @@ From the julia REPL, run
 julia> Pkg.clone("https://github.com/Spine-project/Spine-Model.git", "SpineModel")
 ```
 
-This will install `SpineModel.jl` as well as all its dependencies (except for `spinedatabase_api`
-which will be installed the first time you import SpineModel into your Julia session. Note that `spinedatabase_api`
-requires Python version 3.5 to work, so you may need to reconfigure Pycall to use
-an appropriate Python.
+This will install `SpineModel.jl` as well as all its Julia dependencies. `spinedatabase_api` (which is more
+like a 'Python dependency') will be automatically installed the first time you load the module,
+in the Python version used by `PyCall.jl`.
+
+Note: you can reconfigure `PyCall.jl` to use any Python version in your system.
+For instance, you can make it use the Python where Spine Toolbox is installed.
+Check out the [PyCall documentation](https://github.com/JuliaPy/PyCall.jl) to learn more.
 
 ### Upgrading
 
