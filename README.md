@@ -25,7 +25,7 @@ Start the julia REPL and run
 Pkg.clone("https://github.com/Spine-project/Spine-Model.git", "SpineModel")
 ```
 
-This will install `SpineModel.jl` as well as all its dependencies, except for `spinedatabase_api` which is
+This will install `SpineModel.jl` and all its dependencies, except for `spinedatabase_api` which is
 a Python package and thus needs to be installed separately.
 
 #### Installing spinedatabase_api
@@ -47,7 +47,6 @@ If you haven't installed `spinedatabase_api` yet or don't want to reconfigure Py
 using PyCall
 PyCall.pyprogramname
 ```
-
 2. Install `spinedatabase_api` in that python. Open a terminal (e.g. command prompt
 on Windows) and run
 
