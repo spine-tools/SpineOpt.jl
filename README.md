@@ -43,17 +43,17 @@ If you haven't installed `spinedatabase_api` yet or don't want to reconfigure Py
 
 1. Find out the path of the python program used by PyCall. In the julia REPL, run
 
-```julia
-using PyCall
-PyCall.pyprogramname
-```
+   ```julia
+   using PyCall
+   PyCall.pyprogramname
+   ```
 2. Install `spinedatabase_api` in that python. Open a terminal (e.g. command prompt
-on Windows) and run
+   on Windows) and run
+   ```
+   python -m pip install git+https://github.com/Spine-project/Spine-Database-API.git
+   ```
 
-```
-python -m pip install --upgrade git+https://github.com/Spine-project/Spine-Database-API.git
-```
-where `python` is the path returned by `PyCall.pyprogramname`.
+   where `python` is the path returned by `PyCall.pyprogramname`.
 
 ### Upgrading
 
