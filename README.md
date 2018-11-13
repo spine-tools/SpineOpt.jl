@@ -49,6 +49,7 @@ If you haven't installed `spinedatabase_api` yet or don't want to reconfigure Py
    ```
 2. Install `spinedatabase_api` in that python. Open a terminal (e.g. command prompt
    on Windows) and run
+   
    ```
    python -m pip install git+https://github.com/Spine-project/Spine-Database-API.git
    ```
