@@ -51,46 +51,60 @@ using JuMP
 using Clp
 using DataFrames
 using Missings
-using Dates
+using Base.Dates
 using CSV
 const db_api = PyNULL()
-
+const required_spinedatabase_api_version = "0.0.8"
 
 function __init__()
-    # Check Python version
-    python = PyCall.pyprogramname
-    @pyimport sys
-    if sys.version_info[1] == 2
-        error("""
-Wrong Python version.
-The PyCall module is currently configured to use the Python version at:
-
-$python
-
-which has version $pyversion. However, at least Python version 3.5 is required.
-
-(PyCall is used by SpineModel to call the spinedatabase_api Python package from Julia,
-in order to interact with Spine databases.)
-
-The solution is to re-configure PyCall to use a Python
-version 3.5 or higher: as explained in the PyCall manual,
-set ENV["PYTHON"] to the path/name of the python
-executable you want to use, run Pkg.build("PyCall"), re-launch Julia, and try using SpineModel again.
-""")
-    end
     try
         copy!(db_api, pyimport("spinedatabase_api"))
     catch e
         if isa(e, PyCall.PyError)
-            repo_url = "https://github.com/Spine-project/Spine-Database-API.git#spinedatabase_api"
-            info("""
-Installing the spinedatabase_api Python package from $repo_url.
-(spinedatabase_api is used by SpineModel to interact with Spine databases.)
-""")
-            run(`$python -m pip install git+$repo_url`)
-            copy!(db_api, pyimport("spinedatabase_api"))
+            error(
+"""
+SpineModel couldn't find the spinedatabase_api python module, needed to interact with Spine databases.
+Please make sure spinedatabase_api is in your python path, restart your julia session, and load SpineModel again.
+
+If you have already installed spinedatabase_api to use it in Spine Toolbox, you can also use it in SpineModel.
+All you need to do is configure PyCall to use the same python Spine Toolbox is used. Run
+
+    ENV["PYTHON"] = "... path of the python program you want ..."
+
+followed by
+
+    Pkg.build("PyCall")
+
+If you haven't installed spinedatabase_api or don't want to reconfigure PyCall, then you need to do the following:
+
+1. Find out the path of the python program used by PyCall. Run
+
+    PyCall.pyprogramname
+
+2. Install spinedatabase_api using that python. Open a terminal (e.g. command prompt on Windows) and run
+
+    python -m pip install git+https://github.com/Spine-project/Spine-Database-API.git
+
+where 'python' is the path returned by `PyCall.pyprogramname`.
+"""
+            )
         end
     end
+    current_version = db_api[:__version__]
+    current_version_split = parse.(Int, split(current_version, "."))
+    required_version_split = parse.(Int, split(required_spinedatabase_api_version, "."))
+    any(current_version_split .< required_version_split) && error(
+"""
+SpineModel couldn't find the required spinedatabase_api version.
+(Required version is $required_spinedatabase_api_version, whereas current is $current_version)
+Please upgrade spinedatabase_api to $required_spinedatabase_api_version, restart your julia session,
+and load SpineModel again.
+
+To upgrade spinedatabase_api, open a terminal (e.g. command prompt on Windows) and run
+
+    pip install --upgrade git+https://github.com/Spine-project/Spine-Database-API.git
+"""
+    )
 end
 
 include("helpers/helpers.jl")

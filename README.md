@@ -15,46 +15,59 @@ See [Spine](http://www.spine-model.org/) for more information.
 - [Clp](https://github.com/JuliaOpt/Clp.jl)
 - [Missings](https://github.com/JuliaData/Missings.jl)
 - [DataFrames](https://github.com/JuliaData/DataFrames.jl)
-- [spinedatabase_api](https://gitlab.vtt.fi/spine/data/tree/database_api)
+- [spinedatabase_api](https://github.com/Spine-project/Spine-Database-API)
 
 ### Installation
 
-From the julia REPL, run
-
+Start the julia REPL and run
 ```julia
-julia> Pkg.clone("https://github.com/Spine-project/Spine-Model.git", "SpineModel")
+Pkg.clone("https://github.com/Spine-project/Spine-Model.git", "SpineModel")
 ```
 
-This will install `SpineModel.jl` as well as all its Julia dependencies. `spinedatabase_api` (which is more
-like a 'Python dependency') will be automatically installed the first time you load the module,
-in the Python version used by `PyCall.jl`.
+This will install `SpineModel.jl` as well as all its dependencies, except for `spinedatabase_api` which is
+a Python package and thus needs to be installed separately.
 
-Note: you can reconfigure `PyCall.jl` to use any Python version in your system.
-For instance, you can make it use the Python where Spine Toolbox is installed.
-Check out the [PyCall documentation](https://github.com/JuliaPy/PyCall.jl) to learn more.
+#### Installing spinedatabase_api
+
+If you have already installed `spinedatabase_api` to use it in [Spine Toolbox](https://github.com/Spine-project/Spine-toolbox), you can also use it in Spine Model.
+All you need to do is configure PyCall to use the same python Spine Toolbox is using. In the Julia REPL, run
+```julia
+using PyCall
+ENV["PYTHON"] = "... path of the python program you want ..."
+Pkg.build("PyCall")
+```
+
+If you haven't installed `spinedatabase_api` yet or don't want to reconfigure PyCall, then you need to do the following:
+
+1. Find out the path of the python program used by PyCall. In the Julia REPL, run
+```julia
+using PyCall
+PyCall.pyprogramname
+```
+2. Install `spinedatabase_api` in that python. Open a terminal (e.g. command prompt
+on Windows) and run
+```
+python -m pip install --upgrade git+https://github.com/Spine-project/Spine-Database-API.git
+```
+where `python` is the path returned by `PyCall.pyprogramname`.
 
 ### Upgrading
 
-To upgrade to the most recent version of `SpineModel.jl`, run
-
-
+In the Julia REPL, run
 ```julia
-julia> Pkg.checkout("SpineModel")
+Pkg.checkout("SpineModel")
 ```
-
-Alternatively, you can specify a branch, as in
-
+This will upgrade `SpineModel.jl` to its most recent version.
+Alternatively, to upgrade to the most recent **development** version, run
 ```julia
-julia> Pkg.checkout("SpineModel", "dev")
+Pkg.checkout("SpineModel", "dev")
 ```
-
 
 ### Usage
 
-Run:
-
+In julia, run
 ```
-julia> using SpineModel
+using SpineModel
 ```
 
 ## Documentation
