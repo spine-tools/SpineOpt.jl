@@ -39,7 +39,7 @@ ENV["PYTHON"] = "... path of the python program you want ..."
 Pkg.build("PyCall")
 ```
 
-and restar julia afterwards.
+and restart julia afterwards.
 
 If you haven't installed `spinedatabase_api` yet or don't want to reconfigure PyCall, then you need to do the following:
 
