@@ -66,7 +66,7 @@ function __init__()
 SpineModel couldn't find the spinedatabase_api python module, needed to interact with Spine databases.
 Please make sure spinedatabase_api is in your python path, restart your julia session, and load SpineModel again.
 
-If you have already installed spinedatabase_api to use it in Spine Toolbox, you can also use it in SpineModel.
+Note that if you have already installed spinedatabase_api to use it in Spine Toolbox, you can also use it in SpineModel.
 All you need to do is configure PyCall to use the same python Spine Toolbox is using. Run
 
     ENV["PYTHON"] = "... path of the python program you want ..."

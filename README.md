@@ -39,6 +39,8 @@ ENV["PYTHON"] = "... path of the python program you want ..."
 Pkg.build("PyCall")
 ```
 
+and restar julia afterwards.
+
 If you haven't installed `spinedatabase_api` yet or don't want to reconfigure PyCall, then you need to do the following:
 
 1. Find out the path of the python program used by PyCall. In the julia REPL, run
@@ -49,7 +51,7 @@ If you haven't installed `spinedatabase_api` yet or don't want to reconfigure Py
    ```
 2. Install `spinedatabase_api` in that python. Open a terminal (e.g. command prompt
    on Windows) and run
-   
+
    ```
    python -m pip install git+https://github.com/Spine-project/Spine-Database-API.git
    ```
