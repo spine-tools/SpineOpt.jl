@@ -61,6 +61,7 @@ function __init__()
         copy!(db_api, pyimport("spinedatabase_api"))
     catch e
         if isa(e, PyCall.PyError)
+            println(e)
             info(
 """
 SpineModel couldn't find the required spinedatabase_api python module.
