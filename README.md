@@ -1,5 +1,7 @@
 # SpineModel.jl
 
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-project.github.io/Spine-Model/latest/index.html)
+
 A julia Module to generate, run, and develop energy system integration models using the Spine framework.
 See [Spine](http://www.spine-model.org/) for more information.
 
@@ -80,10 +82,6 @@ In julia, run
 ```
 using SpineModel
 ```
-
-## Documentation
-
-Documentation is available [here](docs/build/index.md).
 
 ## Reporting Issues and Contributing
 
