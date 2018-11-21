@@ -1,7 +1,6 @@
-using Documenter, Example
+using Documenter, Example, PyCall
 
 include("../src/SpineModel.jl")
 using SpineModel
 
-makedocs(sitename = "SpineModel",
-         repo = "https://gitlab.vtt.fi/spine/model/blob/{commit}{path}#{line}")
+makedocs(sitename = "SpineModel Documentation")
