@@ -33,8 +33,8 @@ script:
   - julia -e 'Pkg.clone(pwd(), "SpineModel"); Pkg.build("SpineModel")' #'; Pkg.test("SpineModel"; coverage=true)'
 after_success:
   # install spinedatabase_api
-  # - PYCALLPYTHON="$(julia -e 'using PyCall; println(PyCall.pyprogramname)')"
-  # - $PYCALLPYTHON -m pip install git+https://github.com/Spine-project/Spine-Database-API.git
+  - PYCALLPYTHON="$(julia -e 'using PyCall; println(PyCall.pyprogramname)')"
+  - $PYCALLPYTHON -m pip install git+https://github.com/Spine-project/Spine-Database-API.git
   # push coverage results to Coveralls
   # - julia -e 'cd(Pkg.dir("SpineModel")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
   # push coverage results to Codecov

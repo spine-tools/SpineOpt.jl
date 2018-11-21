@@ -25,8 +25,7 @@ Generate and export convenience functions
 for each object class, relationship class, and parameter, in the database
 given by `db_url`. `db_url` is a database url composed according to
 [sqlalchemy rules](http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls).
-See [`JuMP_all_out(db_map::PyObject)`](@ref) for details
-about the generated convenience functions.
+See [`JuMP_all_out(db_map::PyObject)`](@ref) for more details.
 """
 function JuMP_all_out(db_url)
     # Create DatabaseMapping object using Python spinedatabase_api
@@ -288,41 +287,39 @@ end
 
 Generate and export convenience functions
 for each object class, relationship class, and parameter, in the
-database given by `db_map`. `db_map` is an instance of `DatabaseMapping`
-provided by [`spinedatabase_api`](https://gitlab.vtt.fi/spine/data/tree/database_api).
-The convenience functions are called as follows:
+database given by `db_map`. `db_map` is an instance of `DiffDatabaseMapping`
+provided by [`spinedatabase_api`](https://github.com/Spine-project/Spine-Database-API).
+The convenience functions are described below:
 
-  - **object class**: call `x()` to get the set of names of objects of the class named `x`.
-  - **relationship class**: call `y()` to get the set of name tuples of objects related by the
-    relationship class named `"y"`; also call `y(object_class_name="object_name")` to get the
-    set of name tuples of objects related to "object_name".
-  - **parameter**: call `z("k", t)` to get the value of the parameter named `"z"` for the object
-    named `"k"`, or `Nullable()` if the parameter is not defined.
-    If this value is an array in the Spine object, then `z("k", t)` returns position `t` in that array.
+  - **object class**: call `object_class_name()` to get the set of objects in the object
+    class `object_class_name`.
+  - **relationship class**: call `relationship_class_name()` to get the set of object-tuples in the
+    relationship class `relationship_class_name`;
+    alternatively, call `relationship_class_name(object_class_name=:object_name)` to get the
+    set of object-tuples related to `object_name`.
+  - **parameter**: call `parameter_name(object_class_name=:object_name)` to get the value of
+    the parameter `parameter_name` for object `object_name`, which is of class `object_class_name`.
+    If value is an `Array`, then call `parameter_name(object_class_name=:object_name, t=t)` to get
+    position `t`.
 
 # Example
 ```julia
-julia> JuMP_all_out(db_url)
-
-#call object class function
+julia> JuMP_all_out("sqlite:///examples/data/testsystem2_v2_multiD_out.sqlite")
 julia> commodity()
 3-element Array{String,1}:
  "coal"
  "gas"
 ...
-#call relationship class function
 julia> unit_node()
 9-element Array{Array{String,1},1}:
 String["CoalPlant", "BelgiumCoal"]
 String["CoalPlant", "LeuvenElectricity"]
 ...
-
-#call parameter class function
 julia> conversion_cost(unit="gas_import")
 12
 julia> demand(node="Leuven", t=17)
 700
-julia> p_TransLoss(connection="EL1", node1="LeuvenElectricity", node2="AntwerpElectricity")
+julia> trans_loss(connection="EL1", node1="LeuvenElectricity", node2="AntwerpElectricity")
 0.9
 ```
 """
