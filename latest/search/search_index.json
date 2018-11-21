@@ -1,0 +1,34 @@
+{
+    "docs": [
+        {
+            "location": "/", 
+            "text": "SpineModel.jl Documentation\n\n\n\n\nSpineModel.jl Documentation\n\n\nFunctions\n\n\nData input/output\n\n\n\n\n\n\nMacros\n\n\nIndex\n\n\n\n\n\n\n\n\n\n\nFunctions\n\n\n\n\nData input/output\n\n\n#\n\n\nSpineModel.JuMP_all_out\n \n \nMethod\n.\n\n\nJuMP_all_out(db_url)\n\n\n\n\nGenerate and export convenience functions for each object class, relationship class, and parameter, in the database given by \ndb_url\n. \ndb_url\n is a database url composed according to \nsqlalchemy rules\n. See \nJuMP_all_out(db_map::PyObject)\n for more details.\n\n\nsource\n\n\n#\n\n\nSpineModel.JuMP_all_out\n \n \nMethod\n.\n\n\nJuMP_all_out(db_map::PyObject)\n\n\n\n\nGenerate and export convenience functions for each object class, relationship class, and parameter, in the database given by \ndb_map\n. \ndb_map\n is an instance of \nDiffDatabaseMapping\n provided by \nspinedatabase_api\n. The convenience functions are described below:\n\n\n\n\nobject class\n: call \nobject_class_name()\n to get the set of objects in the object class \nobject_class_name\n.\n\n\nrelationship class\n: call \nrelationship_class_name()\n to get the set of object-tuples in the relationship class \nrelationship_class_name\n; alternatively, call \nrelationship_class_name(object_class_name=:object_name)\n to get the set of object-tuples related to \nobject_name\n.\n\n\nparameter\n: call \nparameter_name(object_class_name=:object_name)\n to get the value of the parameter \nparameter_name\n for object \nobject_name\n, which is of class \nobject_class_name\n. If value is an \nArray\n, then call \nparameter_name(object_class_name=:object_name, t=t)\n to get position \nt\n.\n\n\n\n\nExample\n\n\njulia\n JuMP_all_out(\nsqlite:///examples/data/testsystem2_v2_multiD_out.sqlite\n)\njulia\n commodity()\n3-element Array{String,1}:\n \ncoal\n\n \ngas\n\n...\njulia\n unit_node()\n9-element Array{Array{String,1},1}:\nString[\nCoalPlant\n, \nBelgiumCoal\n]\nString[\nCoalPlant\n, \nLeuvenElectricity\n]\n...\njulia\n conversion_cost(unit=\ngas_import\n)\n12\njulia\n demand(node=\nLeuven\n, t=17)\n700\njulia\n trans_loss(connection=\nEL1\n, node1=\nLeuvenElectricity\n, node2=\nAntwerpElectricity\n)\n0.9\n\n\n\n\nsource\n\n\n\n\nMacros\n\n\n\n\nIndex\n\n\n\n\nSpineModel.JuMP_all_out\n\n\nSpineModel.JuMP_all_out", 
+            "title": "Home"
+        }, 
+        {
+            "location": "/#spinemodeljl-documentation", 
+            "text": "SpineModel.jl Documentation  Functions  Data input/output    Macros  Index", 
+            "title": "SpineModel.jl Documentation"
+        }, 
+        {
+            "location": "/#functions", 
+            "text": "", 
+            "title": "Functions"
+        }, 
+        {
+            "location": "/#data-inputoutput", 
+            "text": "#  SpineModel.JuMP_all_out     Method .  JuMP_all_out(db_url)  Generate and export convenience functions for each object class, relationship class, and parameter, in the database given by  db_url .  db_url  is a database url composed according to  sqlalchemy rules . See  JuMP_all_out(db_map::PyObject)  for more details.  source  #  SpineModel.JuMP_all_out     Method .  JuMP_all_out(db_map::PyObject)  Generate and export convenience functions for each object class, relationship class, and parameter, in the database given by  db_map .  db_map  is an instance of  DiffDatabaseMapping  provided by  spinedatabase_api . The convenience functions are described below:   object class : call  object_class_name()  to get the set of objects in the object class  object_class_name .  relationship class : call  relationship_class_name()  to get the set of object-tuples in the relationship class  relationship_class_name ; alternatively, call  relationship_class_name(object_class_name=:object_name)  to get the set of object-tuples related to  object_name .  parameter : call  parameter_name(object_class_name=:object_name)  to get the value of the parameter  parameter_name  for object  object_name , which is of class  object_class_name . If value is an  Array , then call  parameter_name(object_class_name=:object_name, t=t)  to get position  t .   Example  julia  JuMP_all_out( sqlite:///examples/data/testsystem2_v2_multiD_out.sqlite )\njulia  commodity()\n3-element Array{String,1}:\n  coal \n  gas \n...\njulia  unit_node()\n9-element Array{Array{String,1},1}:\nString[ CoalPlant ,  BelgiumCoal ]\nString[ CoalPlant ,  LeuvenElectricity ]\n...\njulia  conversion_cost(unit= gas_import )\n12\njulia  demand(node= Leuven , t=17)\n700\njulia  trans_loss(connection= EL1 , node1= LeuvenElectricity , node2= AntwerpElectricity )\n0.9  source", 
+            "title": "Data input/output"
+        }, 
+        {
+            "location": "/#macros", 
+            "text": "", 
+            "title": "Macros"
+        }, 
+        {
+            "location": "/#index", 
+            "text": "SpineModel.JuMP_all_out  SpineModel.JuMP_all_out", 
+            "title": "Index"
+        }
+    ]
+}
