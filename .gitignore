@@ -10,3 +10,6 @@
 *.gz
 *.toc
 *.sqlite-journal
+
+docs/build/
+docs/site/
