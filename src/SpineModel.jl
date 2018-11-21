@@ -62,9 +62,9 @@ function __init__()
     catch e
         if isa(e, PyCall.PyError)
             println(e)
-            info(
+            error(
 """
-SpineModel couldn't find the required spinedatabase_api python module.
+SpineModel couldn't import the required spinedatabase_api python module.
 Please make sure spinedatabase_api is in your python path, restart your julia session, and load SpineModel again.
 
 Note: if you have already installed spinedatabase_api for Spine Toolbox, you can also use it for SpineModel.
@@ -95,7 +95,7 @@ where 'python' is the path returned by `PyCall.pyprogramname`.
     current_version = db_api[:__version__]
     current_version_split = parse.(Int, split(current_version, "."))
     required_version_split = parse.(Int, split(required_spinedatabase_api_version, "."))
-    any(current_version_split .< required_version_split) && info(
+    any(current_version_split .< required_version_split) && error(
 """
 SpineModel couldn't find the required spinedatabase_api version.
 (Required version is $required_spinedatabase_api_version, whereas current is $current_version)

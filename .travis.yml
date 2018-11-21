@@ -32,12 +32,5 @@ before_script: # homebrew for mac
 script:
   - julia --color=yes -e 'Pkg.clone(pwd(), "SpineModel"); Pkg.build("SpineModel")' #'; Pkg.test("SpineModel"; coverage=true)'
 after_success:
-  # install spinedatabase_api
-  # - PYCALLPYTHON="$(julia -e 'using PyCall; println(PyCall.pyprogramname)')"
-  # - $PYCALLPYTHON -m pip install git+https://github.com/Spine-project/Spine-Database-API.git
-  # push coverage results to Coveralls
-  # - julia -e 'cd(Pkg.dir("SpineModel")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
-  # push coverage results to Codecov
-  # - julia -e 'cd(Pkg.dir("SpineModel")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
   - julia --color=yes -e 'Pkg.add("Documenter")'
   - julia --color=yes -e 'cd(Pkg.dir("SpineModel")); include(joinpath("docs", "make.jl"))'
