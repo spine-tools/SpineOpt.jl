@@ -21,7 +21,10 @@
 """
     generate_variable_flow(m::Model)
 
-Generated `flow` variables for each existing tuple of `[commodity, node, unit, direction]`.
+A `flow` variable for each tuple returned by `commodity__node__unit__direction()`,
+attached to model `m`.
+`flow` represents the flow of a 'commodity' between a 'node' and a 'unit'
+in a certain 'direction'.
 """
 function generate_variable_flow(m::Model)
     @butcher Dict{Tuple, JuMP.Variable}(

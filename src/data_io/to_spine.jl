@@ -19,7 +19,7 @@
 
 
 """
-    packed_var_dataframe(var::JuMP.JuMPDict{JuMP.Variable, N} where N)
+    packed_var_dataframe(var::Dict{Tuple,JuMP.Variable})
 
 A DataFrame from a JuMP variable, with the last column packed into a JSON.
 """
@@ -128,14 +128,9 @@ end
 """
     JuMP_results_to_spine_db!(db_url::String; results...)
 
-Update `dest_url` with new parameters from `results`.
-Find objects and relationships using results' keys and searching the database for exact matches.
-Create new relationships and relationship classes if they don't already exist.
-Create new result object with relationships to keys in results.
-
-Arguments:
-    `db_url::String`: url of target database
-    `results...`: Pairs of variable name, JuMP variable
+Update `dest_url` with new parameters given by `results`.
+`db_url` is a database url composed according to
+[sqlalchemy rules](http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls).
 """
 function JuMP_results_to_spine_db!(db_url::String; results...)
     db_map = py"""$db_api.DiffDatabaseMapping($db_url, 'spine_model')"""
@@ -162,8 +157,8 @@ end
 """
     JuMP_results_to_spine_db!(dest_url, source_url; results...)
 
-Update `dest_url` with objects and relationships from `source_url`,
-as well as new parameters from `results`.
+Update `dest_url` with classes and objects from `source_url`,
+as well as new parameters given by `results`.
 """
 function JuMP_results_to_spine_db!(dest_url, source_url; results...)
     if py"""$db_api.is_unlocked($dest_url)"""

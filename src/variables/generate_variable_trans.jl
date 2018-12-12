@@ -21,7 +21,9 @@
 """
     generate_variable_trans(m::Model)
 
-Generates transmissions `trans` for each existing tuple of [connection,node_i,node_j].
+A `trans` variable (short for transfer)
+for each tuple returned by `connection__node()`, attached to model `m`.
+`trans` represents a transfer over a 'connection' from a 'node'.
 For each `connection` between to `nodes`, two `trans` variables exist.
 """
 function generate_variable_trans(m::Model)

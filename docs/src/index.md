@@ -17,6 +17,7 @@ JuMP_all_out(db_map::PyObject)
 ## Macros
 
 ```@docs
+@butcher expression
 ```
 
 ## Index

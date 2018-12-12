@@ -189,12 +189,44 @@ function JuMP_object_parameter_out(db_map::PyObject)
                         value = object_parameter_value_dict[object_name]
                         if isa(value, Array)
                             return value[t]
+                        elseif isa(value, Dict)
+                            !haskey(value, "type") && error("Field 'type' not found in JSON")
+                            parameter_type = value["type"]
+                            if parameter_type == "expression"
+                                !haskey(value, "value") && error("Field 'value' not found in JSON")
+                                value_expression = value["value"]
+                                before_value_expression = get(value, "before_value", [])
+                                for expr in before_value_expression
+                                    eval(parse(replace(expr, "\$t" => "$t")))
+                                end
+                                return eval(parse(replace(value_expression, "\$t" => "$t")))
+                            elseif parameter_type == "time_pattern"
+                                !haskey(value, "data") && error("Field 'data' not found in JSON")
+                                !haskey(value, "key") && error("Field 'key' not found in JSON")
+                                key_expression = value["key"]
+                                before_key_expression = get(value, "before_key", [])
+                                for expr in before_key_expression
+                                    eval(parse(replace(expr, "\$t" => "$t")))
+                                end
+                                key = eval(parse(replace(key_expression, "\$t" => "$t")))
+                                return get(value["data"], key, nothing)
+                            elseif parameter_type == "time_series"
+                                !haskey(value, "data") && error("Field 'data' not found in JSON")
+                                !haskey(value, "index") && error("Field 'index' not found in JSON")
+                                index_expression = value["index"]
+                                before_index_expression = get(value, "before_index", [])
+                                for expr in before_index_expression
+                                    eval(parse(replace(expr, "\$t" => "$t")))
+                                end
+                                index = eval(parse(replace(index_expression, "\$t" => "$t")))
+                                return get(value["data"], index, nothing)
+                            end
                         else
                             return value
                         end
                     # If length of kwargs is > 1 function call contains an error
                     else
-                        return nothing
+                        error("Too many arguments (expected 1, got $(length(kwargs)))")
                     end
                 end
                 export $(Symbol(parameter_name))
@@ -250,7 +282,7 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
             value = try
                 JSON.parse(relationship_parameter_value["json"])
             catch LoadError
-                as_number(relationship_parameter_value["value"])
+                as_number_or_expression(relationship_parameter_value["value"])
             end
             relationship_parameter_value_dict[object_name_list] = value
         end
@@ -287,19 +319,19 @@ end
 
 Generate and export convenience functions
 for each object class, relationship class, and parameter, in the
-database given by `db_map`. `db_map` is an instance of `DiffDatabaseMapping`
+database given by `db_map` (see usage below). `db_map` is an instance of `DiffDatabaseMapping`
 provided by [`spinedatabase_api`](https://github.com/Spine-project/Spine-Database-API).
-The convenience functions are described below:
 
-  - **object class**: call `object_class_name()` to get the set of objects in the object
-    class `object_class_name`.
-  - **relationship class**: call `relationship_class_name()` to get the set of object-tuples in the
-    relationship class `relationship_class_name`;
-    alternatively, call `relationship_class_name(object_class_name=:object_name)` to get the
-    set of object-tuples related to `object_name`.
-  - **parameter**: call `parameter_name(object_class_name=:object_name)` to get the value of
-    the parameter `parameter_name` for object `object_name`, which is of class `object_class_name`.
-    If value is an `Array`, then call `parameter_name(object_class_name=:object_name, t=t)` to get
+Usage:
+
+  - **object class**: call `object_class()` to get the set of objects of class `object_class`.
+  - **relationship class**: call `relationship_class()` to get the set of object-tuples related
+    under `relationship_class`;
+    alternatively, call `relationship_class(object_class=:object)` to get the
+    set of object-tuples related to `object`.
+  - **parameter**: call `parameter(object_class=:object)` to get the value of
+    `parameter` for `object`, which is of class `object_class`.
+    If value is an `Array`, then call `parameter(object_class=:object, t=t)` to get
     position `t`.
 
 # Example
