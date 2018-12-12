@@ -127,17 +127,18 @@
 </code></pre>
 
 <p>Generate and export convenience functions for each object class, relationship class, and parameter, in the database given by <code>db_url</code>. <code>db_url</code> is a database url composed according to <a href="http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls">sqlalchemy rules</a>. See <a href=".#SpineModel.JuMP_all_out-Tuple{PyCall.PyObject}"><code>JuMP_all_out(db_map::PyObject)</code></a> for more details.</p>
-<p><a target='_blank' href='https://github.com/Spine-project/Spine-Model/blob/ff0fb5de9783f39f68a01537bbacf23bbed6c37b/src/data_io/from_spine.jl#L21-L29' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/Spine-project/Spine-Model/blob/99400f7c60245f7d008ace632bb78ab86b06390d/src/data_io/from_spine.jl#L21-L29' class='documenter-source'>source</a><br></p>
 <p><a id='SpineModel.JuMP_all_out-Tuple{PyCall.PyObject}' href='#SpineModel.JuMP_all_out-Tuple{PyCall.PyObject}'>#</a>
 <strong><code>SpineModel.JuMP_all_out</code></strong> &mdash; <em>Method</em>.</p>
 <pre><code>JuMP_all_out(db_map::PyObject)
 </code></pre>
 
-<p>Generate and export convenience functions for each object class, relationship class, and parameter, in the database given by <code>db_map</code>. <code>db_map</code> is an instance of <code>DiffDatabaseMapping</code> provided by <a href="https://github.com/Spine-project/Spine-Database-API"><code>spinedatabase_api</code></a>. The convenience functions are described below:</p>
+<p>Generate and export convenience functions for each object class, relationship class, and parameter, in the database given by <code>db_map</code> (see usage below). <code>db_map</code> is an instance of <code>DiffDatabaseMapping</code> provided by <a href="https://github.com/Spine-project/Spine-Database-API"><code>spinedatabase_api</code></a>.</p>
+<p>Usage:</p>
 <ul>
-<li><strong>object class</strong>: call <code>object_class_name()</code> to get the set of objects in the object class <code>object_class_name</code>.</li>
-<li><strong>relationship class</strong>: call <code>relationship_class_name()</code> to get the set of object-tuples in the relationship class <code>relationship_class_name</code>; alternatively, call <code>relationship_class_name(object_class_name=:object_name)</code> to get the set of object-tuples related to <code>object_name</code>.</li>
-<li><strong>parameter</strong>: call <code>parameter_name(object_class_name=:object_name)</code> to get the value of the parameter <code>parameter_name</code> for object <code>object_name</code>, which is of class <code>object_class_name</code>. If value is an <code>Array</code>, then call <code>parameter_name(object_class_name=:object_name, t=t)</code> to get position <code>t</code>.</li>
+<li><strong>object class</strong>: call <code>object_class()</code> to get the set of objects of class <code>object_class</code>.</li>
+<li><strong>relationship class</strong>: call <code>relationship_class()</code> to get the set of object-tuples related under <code>relationship_class</code>; alternatively, call <code>relationship_class(object_class=:object)</code> to get the set of object-tuples related to <code>object</code>.</li>
+<li><strong>parameter</strong>: call <code>parameter(object_class=:object)</code> to get the value of <code>parameter</code> for <code>object</code>, which is of class <code>object_class</code>. If value is an <code>Array</code>, then call <code>parameter(object_class=:object, t=t)</code> to get position <code>t</code>.</li>
 </ul>
 <p><strong>Example</strong></p>
 <pre><code class="julia">julia&gt; JuMP_all_out(&quot;sqlite:///examples/data/testsystem2_v2_multiD_out.sqlite&quot;)
@@ -159,14 +160,38 @@ julia&gt; trans_loss(connection=&quot;EL1&quot;, node1=&quot;LeuvenElectricity&q
 0.9
 </code></pre>
 
-<p><a target='_blank' href='https://github.com/Spine-project/Spine-Model/blob/ff0fb5de9783f39f68a01537bbacf23bbed6c37b/src/data_io/from_spine.jl#L285-L325' class='documenter-source'>source</a><br></p>
+<p><a target='_blank' href='https://github.com/Spine-project/Spine-Model/blob/99400f7c60245f7d008ace632bb78ab86b06390d/src/data_io/from_spine.jl#L317-L357' class='documenter-source'>source</a><br></p>
 <p><a id='Macros-1'></a></p>
 <h2 id="macros">Macros</h2>
+<p><a id='SpineModel.@butcher-Tuple{Any}' href='#SpineModel.@butcher-Tuple{Any}'>#</a>
+<strong><code>SpineModel.@butcher</code></strong> &mdash; <em>Macro</em>.</p>
+<pre><code>@butcher expression
+</code></pre>
+
+<p>Butcher an expression so that method calls involving one or more arguments are performed as soon as those arguments are available. Needs testing.</p>
+<p>For instance, an expression like this:</p>
+<pre><code>x = 5
+for i=1:1e6
+    y = f(x)
+end
+</code></pre>
+
+<p>is turned into something like this:</p>
+<pre><code>x = 5
+ret = f(x)
+for i=1:1e6
+    y = ret
+end
+</code></pre>
+
+<p>This is mainly intended to improve performance in cases where the implementation of a method is expensive, but for readability reasons the programmer wants to call it at unconvenient places -such as the body of a long for loop.</p>
+<p><a target='_blank' href='https://github.com/Spine-project/Spine-Model/blob/99400f7c60245f7d008ace632bb78ab86b06390d/src/helpers/helpers.jl#L134-L162' class='documenter-source'>source</a><br></p>
 <p><a id='Index-1'></a></p>
 <h2 id="index">Index</h2>
 <ul>
-<li><a href=".#SpineModel.JuMP_all_out-Tuple{Any}"><code>SpineModel.JuMP_all_out</code></a></li>
 <li><a href=".#SpineModel.JuMP_all_out-Tuple{PyCall.PyObject}"><code>SpineModel.JuMP_all_out</code></a></li>
+<li><a href=".#SpineModel.JuMP_all_out-Tuple{Any}"><code>SpineModel.JuMP_all_out</code></a></li>
+<li><a href=".#SpineModel.@butcher-Tuple{Any}"><code>SpineModel.@butcher</code></a></li>
 </ul>
               
             </div>
@@ -212,5 +237,5 @@ julia&gt; trans_loss(connection=&quot;EL1&quot;, node1=&quot;LeuvenElectricity&q
 
 <!--
 MkDocs version : 0.17.5
-Build Date UTC : 2018-11-21 12:03:43
+Build Date UTC : 2018-12-12 02:04:01
 -->
