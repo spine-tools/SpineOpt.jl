@@ -282,7 +282,7 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
             value = try
                 JSON.parse(relationship_parameter_value["json"])
             catch LoadError
-                as_number_or_expression(relationship_parameter_value["value"])
+                as_number(relationship_parameter_value["value"])
             end
             relationship_parameter_value_dict[object_name_list] = value
         end
