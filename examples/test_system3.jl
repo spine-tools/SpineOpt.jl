@@ -5,7 +5,7 @@ using JuMP
 using Clp
 
 # Export contents of database into the current session
-db_url = "sqlite:///examples/data/testsystem2_v2_multiD.sqlite"
+db_url = "sqlite:///examples/data/testsystem3_db.sqlite"
 JuMP_all_out(db_url)
 
 # Init model
@@ -14,6 +14,7 @@ m = Model(solver=ClpSolver())
 # Create decision variables
 flow = generate_variable_flow(m)
 trans = generate_variable_trans(m)
+stor_state = generate_variable_stor_state(m)
 
 # Create objective function
 objective_minimize_production_cost(m, flow)
@@ -37,12 +38,18 @@ constraint_nodal_balance(m, flow, trans)
 # Absolute bounds on commodities
 constraint_max_cum_in_flow_bound(m, flow)
 
+# storage capacity
+constraint_stor_capacity(m,stor_state)
+
+# storage state balance equation
+constraint_stor_state(m, stor_state,trans,flow)
+
 # needed: set/group of unitgroup CHP and Gasplant
 
 # Run model
 status = solve(m)
-if status == :Optimal
-    db_url_out = "sqlite:///examples/data/testsystem2_v2_multiD_out.sqlite"
-    # JuMP_results_to_spine_db!(db_url; flow=flow, trans=trans)
-    JuMP_results_to_spine_db!(db_url_out, db_url; flow=flow, trans=trans)
-end
+# if status == :Optimal
+#     db_url_out = "sqlite:///examples/data/testsystem2_v2_multiD_out.sqlite"
+#     # JuMP_results_to_spine_db!(db_url; flow=flow, trans=trans)
+#     JuMP_results_to_spine_db!(db_url_out, db_url; flow=flow, trans=trans, stor_level=stor_level)
+# end

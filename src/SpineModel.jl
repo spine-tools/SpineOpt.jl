@@ -30,6 +30,7 @@ export linear_JuMP_model
 # Export variables
 export generate_variable_flow
 export generate_variable_trans
+export generate_variable_stor_level
 
 # Export objecte
 export objective_minimize_production_cost
@@ -41,6 +42,8 @@ export constraint_max_cum_in_flow_bound
 export constraint_trans_loss
 export constraint_trans_cap
 export constraint_nodal_balance
+export constraint_stor_state
+export constraint_stor_capacity
 
 export @butcher
 
@@ -118,6 +121,7 @@ include("data_io/to_spine.jl")
 
 include("variables/generate_variable_flow.jl")
 include("variables/generate_variable_trans.jl")
+include("variables/generate_variable_stor_state.jl")
 
 include("objective/objective_minimize_production_cost.jl")
 
@@ -127,5 +131,6 @@ include("constraints/constraint_nodal_balance.jl")
 include("constraints/constraint_fix_ratio_out_in_flow.jl")
 include("constraints/constraint_trans_cap.jl")
 include("constraints/constraint_trans_loss.jl")
+include("constraints/constraint_stor_capacity.jl")
 
 end
