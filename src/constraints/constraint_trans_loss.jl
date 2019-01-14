@@ -35,14 +35,15 @@ function constraint_trans_loss(m::Model, trans)
         @constraint(
             m,
             + (trans[conn, i, t])
-                * trans_loss(connection=conn, node=j)
+                * (1-trans_loss(connection=conn, node=i))
             >=
-            - (trans[conn, j, t]))
+            - (trans[conn, j, t])
+            )
         (trans_loss(connection=conn, node=j) != nothing) || continue
         @constraint(
             m,
             + (trans[conn, j, t])
-                * trans_loss(connection=conn, node=i)
+                * (1-trans_loss(connection=conn, node=j))
             >=
             - (trans[conn, i, t]))
     end

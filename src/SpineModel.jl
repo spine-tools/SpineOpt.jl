@@ -30,7 +30,7 @@ export linear_JuMP_model
 # Export variables
 export generate_variable_flow
 export generate_variable_trans
-export generate_variable_stor_level
+export generate_variable_stor_state
 
 # Export objecte
 export objective_minimize_production_cost
@@ -132,5 +132,6 @@ include("constraints/constraint_fix_ratio_out_in_flow.jl")
 include("constraints/constraint_trans_cap.jl")
 include("constraints/constraint_trans_loss.jl")
 include("constraints/constraint_stor_capacity.jl")
+include("constraints/constraint_stor_state.jl")
 
 end

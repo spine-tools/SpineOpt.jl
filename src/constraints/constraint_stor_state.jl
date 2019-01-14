@@ -24,52 +24,32 @@
 Balance for storage level.
 """
 function constraint_stor_state(m::Model, stor_state,trans,flow)
-    @butcher for (c, stor) in commodity__stor(), t=2:number_of_timesteps(time=:timer)
-        all([
-        ### check if discharge, charge are defined
-        ### for all existing stor__unit, sotr__connection, stor__node
-        ## storage loss
-            frac_state_loss(c,stor) != nothing,
-            number_of_units(unit=u) != nothing,
-            unit_conv_cap_to_flow(unit=u, commodity=c) != nothing,
-            avail_factor(unit=u, t=t) != nothing
-        ]) || continue
-        @constraint(
-            m,
-            + stor_state[c,stor,t]
-            <=
-            + stor_state[c,stor,t-1]
-                *(1-frac_state_loss(c,stor))
-
-            + sum(flow[c, n, u, :out, t-1]*eff_stor_charg(u,stor)
-            for (c, n, u) in commodity__node__unit__direction(direction=:out))
-            - sum(flow[c, n, u, :in, t-1]*eff_stor_discharg(u,stor)
-                for (c, n, u) in commodity__node__unit__direction(direction=:in)
-                     if u in storage__unit(storage=stor))
-                    ### todo: which sets/relationship need to be created?
-
-            + sum(trans[conn, n, t-1]
-            for (conn,n) in connection__node()
-                if conn in storage__connection(storage=stor))
-                ### todo: which sets?
-        )
+    @butcher for (c, stor) in commodity__storage(), t=1
+    @constraint(
+        m,
+        + stor_state[c,stor,t]
+        <=
+        + stor_state_init(commodity=c,storage=stor)
+    )
     end
-
-    @butcher for (c, stor) in commodity__stor(), t=1
+    @butcher for (c, stor) in commodity__storage(), t=2:number_of_timesteps(time=:timer)
         all([
-        ### check if discharge, charge are defined
-        ### for all existing stor__unit, sotr__connection, stor__node
-        ## storage loss
-            frac_state_loss(c,stor) != nothing,
-            number_of_units(unit=u) != nothing,
-            unit_conv_cap_to_flow(unit=u, commodity=c) != nothing,
-            avail_factor(unit=u, t=t) != nothing
+            frac_state_loss(commodity=c,storage=stor) != nothing
+            eff_stor_charg(storage=stor) != nothing
+            eff_stor_discharg(storage=stor) != nothing
         ]) || continue
         @constraint(
             m,
             + stor_state[c,stor,t]
-            =
-            0
+            ==
+            + stor_state[c,stor,t-1]
+                *(1-frac_state_loss(commodity=c,storage=stor))
+            - sum(flow[a,b,d, :out, t-1]*eff_stor_discharg(storage=stor)
+                for (a,b,d) in filter(t -> in(t[3],storage__unit(storage=stor)), commodity__node__unit__direction(direction=:out)))
+            + sum(flow[a,b,d, :in, t-1]*eff_stor_charg(storage=stor)
+                for (a,b,d) in filter(t -> in(t[3],storage__unit(storage=stor)), commodity__node__unit__direction(direction=:in)))
+            + sum(trans[conn,n, t-1]
+                for (conn,n) in filter(f -> in(f[1],storage__connection(storage=stor)), connection__node()))
         )
     end
 end

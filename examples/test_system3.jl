@@ -15,9 +15,8 @@ m = Model(solver=ClpSolver())
 flow = generate_variable_flow(m)
 trans = generate_variable_trans(m)
 stor_state = generate_variable_stor_state(m)
-
-# Create objective function
-objective_minimize_production_cost(m, flow)
+## Create objective function
+production_cost = objective_minimize_production_cost(m, flow)
 
 # Add technological constraints
 # Unit capacity
@@ -48,8 +47,8 @@ constraint_stor_state(m, stor_state,trans,flow)
 
 # Run model
 status = solve(m)
-# if status == :Optimal
-#     db_url_out = "sqlite:///examples/data/testsystem2_v2_multiD_out.sqlite"
-#     # JuMP_results_to_spine_db!(db_url; flow=flow, trans=trans)
-#     JuMP_results_to_spine_db!(db_url_out, db_url; flow=flow, trans=trans, stor_level=stor_level)
-# end
+if status == :Optimal
+    db_url_out = "sqlite:///examples/data/testsystem3_db_out.sqlite"
+    # JuMP_results_to_spine_db!(db_url; flow=flow, trans=trans)
+    JuMP_results_to_spine_db!(db_url_out, db_url; flow=flow, trans=trans, stor_state=stor_state)
+end

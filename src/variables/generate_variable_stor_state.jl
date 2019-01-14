@@ -30,6 +30,6 @@ function generate_variable_stor_state(m::Model)
         (c, stor, t) => @variable(
             m, basename="
             stor_state[$c,$stor,$t]", lowerbound=0
-        ) for (c, stor) in commodity__stor(), t=1:number_of_timesteps(time=:timer)
+        ) for (c, stor) in commodity__storage(), t=1:number_of_timesteps(time=:timer)
     )
 end
