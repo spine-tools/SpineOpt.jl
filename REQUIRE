@@ -5,5 +5,4 @@ JuMP
 Clp
 CSV
 Missings
-IJulia
 DataFrames
