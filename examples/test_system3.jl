@@ -26,10 +26,11 @@ constraint_flow_capacity(m, flow)
 constraint_fix_ratio_out_in_flow(m, flow)
 
 # Transmission losses
-constraint_trans_loss(m, trans)
+#constraint_trans_loss(m, trans)
+constraint_fix_ratio_out_in_trans(m, trans)
 
 # Transmission line capacity
-constraint_trans_cap(m, trans)
+constraint_trans_capacity(m, trans)
 
 # Nodal balance
 constraint_nodal_balance(m, flow, trans)
