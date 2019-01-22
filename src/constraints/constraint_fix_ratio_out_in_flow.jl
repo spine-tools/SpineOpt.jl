@@ -26,6 +26,7 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 is specified.
 """
 function constraint_fix_ratio_out_in_flow(m::Model, flow)
+    if isdefined(:fix_ratio_out_in_flow)
     @butcher @constraint(
         m,
         [
@@ -44,4 +45,5 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
                 for (c_in, n) in commodity__node__unit__direction(unit=u, direction=:in)
                     if c_in in commodity_group__commodity(commodity_group=cg_in))
     )
+end
 end

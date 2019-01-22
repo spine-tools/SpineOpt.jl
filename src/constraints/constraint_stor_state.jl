@@ -41,7 +41,7 @@ function constraint_stor_state(m::Model, stor_state,trans,flow)
         @constraint(
             m,
             + stor_state[c,stor,t]
-            <=
+            ==
             + stor_state[c,stor,t-1]
                 *(1-frac_state_loss(commodity=c,storage=stor))
             - sum(flow[a,b,d, :out, t-1]*eff_stor_discharg(storage=stor)

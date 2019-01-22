@@ -30,14 +30,14 @@ function constraint_trans_capacity(m::Model, trans)
             connection_capacity(connection=conn, commodity=c, node=n, direction=:in) != nothing,
             number_of_connections(connection=conn) != nothing,
             connection_conv_cap_to_trans(connection=conn, commodity=c) != nothing,
-            avail_factor(connection=conn, t=t) != nothing
+            avail_factor_trans(connection=conn, t=t) != nothing
         ]) || continue
         @constraint(
             m,
-            + trans[c, n, conn, d, t]
+            + trans[c, n, conn, :in, t]
             <=
-            + avail_factor(connection=conn, t=t)
-                * connection_capacity(connection=conn, commodity=c, node=n)
+            + avail_factor_trans(connection=conn, t=t)
+                * connection_capacity(connection=conn, commodity=c, node=n, direction=:in)
                     * number_of_connections(connection=conn)
                         * connection_conv_cap_to_trans(connection=conn, commodity=c)
         )

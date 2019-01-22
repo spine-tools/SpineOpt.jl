@@ -51,5 +51,5 @@ status = solve(m)
 if status == :Optimal
     db_url_out = "sqlite:///examples/data/testsystem3_db_out.sqlite"
     # JuMP_results_to_spine_db!(db_url; flow=flow, trans=trans)
-    JuMP_results_to_spine_db!(db_url_out, db_url; flow=flow, trans=trans, stor_state=stor_state)
+    #JuMP_results_to_spine_db!(db_url_out, db_url; flow=flow, trans=trans, stor_state=stor_state)
 end
