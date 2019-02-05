@@ -30,6 +30,7 @@ export linear_JuMP_model
 # Export variables
 export generate_variable_flow
 export generate_variable_trans
+export generate_variable_state
 
 # Export objecte
 export objective_minimize_production_cost
@@ -118,6 +119,7 @@ include("data_io/to_spine.jl")
 
 include("variables/generate_variable_flow.jl")
 include("variables/generate_variable_trans.jl")
+include("variables/generate_variable_state.jl")
 
 include("objective/objective_minimize_production_cost.jl")
 
