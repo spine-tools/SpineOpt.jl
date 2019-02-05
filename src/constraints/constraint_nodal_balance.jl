@@ -27,23 +27,13 @@ a trade based representation is used.
 """
 function constraint_nodal_balance(m::Model, flow, trans)
     @butcher for n in node(), t=1:number_of_timesteps(time=:timer)
-        if demand(node=n, t=t) != nothing
-            @constraint(
-                m,
-                + sum(flow[c, n, u, :out, t] for (c, u) in commodity__node__unit__direction(node=n, direction=:out))
-                ==
-                + demand(node=n, t=t)
-                + sum(flow[c, n, u, :in, t] for (c, u) in commodity__node__unit__direction(node=n, direction=:in))
-                + sum(trans[conn, n, t] for conn in connection__node(node=n))
-            )
-        else
-            @constraint(
-                m,
-                + sum(flow[c, n, u, :out, t] for (c, u) in commodity__node__unit__direction(node=n, direction=:out))
-                ==
-                + sum(flow[c, n, u, :in, t] for (c, u) in commodity__node__unit__direction(node=n, direction=:in))
-                + sum(trans[conn, n, t] for conn in connection__node(node=n))
-            )
-        end
+        @constraint(
+            m,
+            + sum(flow[c, n, u, :out, t] for (c, u) in commodity__node__unit__direction(node=n, direction=:out))
+            ==
+            + (demand(node=n, t=t) != nothing && demand(node=n, t=t))
+            + sum(flow[c, n, u, :in, t] for (c, u) in commodity__node__unit__direction(node=n, direction=:in))
+            + sum(trans[conn, n, t] for conn in connection__node(node=n))
+        )
     end
 end
