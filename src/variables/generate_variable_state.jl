@@ -26,11 +26,11 @@ attached to model `m`.
 `state` represents the 'commodity' stored  inside a 'node'.
 """
 function generate_variable_state(m::Model)
-    @butcher Dict{Tuple, JuMP.Variable}(
+    Dict{Tuple, JuMP.Variable}(
         (c, n, t) => @variable(
             m, basename="state[$c, $n, $t]",
-            lowerbound = state_lower_bound(commodity=c, node=n) != nothing && state_lower_bound(commodity=c, node=n),
-            upperbound = state_upper_bound(commodity=c, node=n) != nothing && state_upper_bound(commodity=c, node=n),
+            lowerbound = (state_lower_bound(commodity=c, node=n) != nothing && state_lower_bound(commodity=c, node=n)),
+            upperbound = (state_upper_bound(commodity=c, node=n) != nothing && state_upper_bound(commodity=c, node=n)),
         ) for (c, n) in commodity__node(), t=1:number_of_timesteps(time=:timer)
     )
 end
