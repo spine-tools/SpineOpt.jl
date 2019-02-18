@@ -30,28 +30,31 @@ function constraint_nodal_balance(m::Model, state, flow, trans)
         @butcher @constraint(
             m,
             # Change in the state commodity content
-            + ( state_commodity_content(node=n, commodity=c) != nothing &&
-                state_commodity_content(node=n, commodity=c)
+            + ( state_commodity_content(commodity=c, node=n) != nothing &&
+                state_commodity_content(commodity=c, node=n)
                     * (state[c, n, t] - state[c, n, t-1])
                 )
             ==
             # Commodity state discharge and diffusion
-            + ( state_commodity_content(node=n, commodity=c) != nothing &&
+            + ( state_commodity_content(commodity=c, node=n) != nothing &&
                 # Commodity self-discharge
-                - ( state_commodity_discharge_rate(node=n, commodity=c) != nothing &&
-                    state_commodity_discharge_rate(node=n, commodity=c)
+                - ( state_commodity_discharge_rate(commodity=c, node=n) != nothing &&
+                    state_commodity_discharge_rate(commodity=c, node=n)
                         * state[c, n, t]
                     )
                 # Commodity diffusion between nodes
-                + sum(  + ( state_commodity_diffusion_rate(node1=nn, node2=n) != nothing &&
-                            state_commodity_diffusion_rate(node1=nn, node2=n)
+                # Diffusion into this node
+                + sum(  + ( state_commodity_diffusion_rate(commodity=c, node1=nn, node2=n) != nothing &&
+                            state_commodity_diffusion_rate(commodity=c, node1=nn, node2=n)
                                 * state[c, nn, t]
                             )
-                        - ( state_commodity_diffusion_rate(node1=n, node2=nn) != nothing &&
-                            state_commodity_diffusion_rate(node1=n, node2=nn)
+                        for nn in commodity__node__node(commodity=c, node1=nn, node2=n)
+                        )
+                - sum(  + ( state_commodity_diffusion_rate(commodity=c, node1=n, node2=nn) != nothing &&
+                            state_commodity_diffusion_rate(commodity=c, node1=n, node2=nn)
                                 * state[c, n ,t]
                             )
-                        for nn in commodity__node(commodity=c)
+                        for nn in commodity__node__node(commodity=c, node1=n, node2=nn)
                         )
                 )
             # Demand for the commodity
