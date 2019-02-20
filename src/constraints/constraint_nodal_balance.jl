@@ -26,7 +26,7 @@ TODO: for electrical lines this constraint is obsolete unless
 a trade based representation is used.
 """
 function constraint_nodal_balance(m::Model, state, flow, trans)
-    for (c,n) in commodity__node(), t=1:number_of_timesteps(time=:timer)
+    for (c,n) in commodity__node(), t=2:number_of_timesteps(time=:timer)
         @butcher @constraint(
             m,
             # Change in the state commodity content
@@ -48,13 +48,14 @@ function constraint_nodal_balance(m::Model, state, flow, trans)
                             state_commodity_diffusion_rate(commodity=c, node1=nn, node2=n)
                                 * state[c, nn, t]
                             )
-                        for nn in commodity__node__node(commodity=c, node1=nn, node2=n)
+                        for nn in commodity__node__node(commodity=c, node2=n)
                         )
+                # Diffusion from this node
                 - sum(  + ( state_commodity_diffusion_rate(commodity=c, node1=n, node2=nn) != nothing &&
                             state_commodity_diffusion_rate(commodity=c, node1=n, node2=nn)
                                 * state[c, n ,t]
                             )
-                        for nn in commodity__node__node(commodity=c, node1=n, node2=nn)
+                        for nn in commodity__node__node(commodity=c, node1=n)
                         )
                 )
             # Demand for the commodity
