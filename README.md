@@ -9,22 +9,20 @@ See [Spine](http://www.spine-model.org/) for more information.
 
 ### Pre-requisites
 
-- [julia < 0.7](https://julialang.org/)
+- [julia 1.0](https://julialang.org/)
 - [PyCall](https://github.com/JuliaPy/PyCall.jl)
-- [CSV](https://github.com/JuliaData/CSV.jl)
 - [JuMP](https://github.com/JuliaOpt/JuMP.jl)
 - [JSON](https://github.com/JuliaIO/JSON.jl)
 - [Clp](https://github.com/JuliaOpt/Clp.jl)
-- [Missings](https://github.com/JuliaData/Missings.jl)
 - [DataFrames](https://github.com/JuliaData/DataFrames.jl)
 - [spinedatabase_api](https://github.com/Spine-project/Spine-Database-API)
 
 ### Installation
 
-Start the julia REPL and run
+From the Julia REPL, press the key `]` to enter the Pkg-REPL mode, then run
 
 ```julia
-Pkg.clone("https://github.com/Spine-project/Spine-Model.git", "SpineModel")
+(v1.0) pkg> add https://github.com/Spine-project/Spine-Model.git
 ```
 
 This will install `SpineModel.jl` and all its dependencies, except for `spinedatabase_api` which is
@@ -62,18 +60,7 @@ If you haven't installed `spinedatabase_api` yet or don't want to reconfigure Py
 
 ### Upgrading
 
-In the julia REPL, run
-
-```julia
-Pkg.checkout("SpineModel")
-```
-
-This will upgrade `SpineModel.jl` to its most recent version.
-Alternatively, to upgrade to the most recent **development** version, run
-
-```julia
-Pkg.checkout("SpineModel", "dev")
-```
+TODO
 
 ### Usage
 
