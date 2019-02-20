@@ -17,32 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
-"""
-    @suppress_err expr
-Suppress the STDERR stream for the given expression.
-"""
-# NOTE: Borrowed from Suppressor.jl
-macro suppress_err(block)
-    quote
-        if ccall(:jl_generating_output, Cint, ()) == 0
-            ORIGINAL_STDERR = STDERR
-            err_rd, err_wr = redirect_stderr()
-            err_reader = @schedule read(err_rd, String)
-        end
-
-        try
-            $(esc(block))
-        finally
-            if ccall(:jl_generating_output, Cint, ()) == 0
-                redirect_stderr(ORIGINAL_STDERR)
-                close(err_wr)
-            end
-        end
-    end
-end
-
-
 """
     as_number(str)
 
@@ -166,7 +140,7 @@ at unconvenient places -such as the body of a long for loop.
 # to indicate the number of passages to perform. Also, we can make it so if this
 # argument is Inf (or something) we keep going until there's nothing left to butcher.
 macro butcher(expression)
-    expression = macroexpand(esc(expression))
+    expression = macroexpand(SpineModel, esc(expression))
     call_location = Dict{Expr,Array{Dict{String,Any},1}}()
     assignment_location = Dict{Symbol,Array{Dict{String,Any},1}}()
     replacement_variable_location = Array{Any,1}()
