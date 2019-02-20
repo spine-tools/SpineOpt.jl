@@ -51,9 +51,6 @@ julia> unit()
 function JuMP_object_out(db_map::PyObject)
     # Get all object classes
     object_class_list = py"$db_map.object_class_list()"
-    object_parameter_list = py"[x._asdict() for x in $db_map.object_parameter_list()]"
-    object_parameter_value_list = py"[x._asdict() for x in $db_map.object_parameter_value_list()]"
-    enum_dict = py"{x.id: x.value_list.split(',') for x in $db_map.wide_parameter_enum_list()}"
     for object_class in py"[x._asdict() for x in $object_class_list]"
         object_class_id = object_class["id"]
         object_class_name = object_class["name"]
@@ -61,42 +58,10 @@ function JuMP_object_out(db_map::PyObject)
         object_list = py"$db_map.object_list(class_id=$object_class_id)"
         object_names = py"[x.name for x in $object_list]"
         object_names = Symbol.(object_names)
-        parameter_value_dict = Dict{Symbol,Any}()
-        for parameter in object_parameter_list
-            object_class_id != parameter["object_class_id"] && continue
-            enum_id = parameter["enum_id"]
-            enum_id == nothing && continue
-            parameter_name = Symbol(parameter["parameter_name"])
-            parameter_id = parameter["id"]
-            parameter_value_dict[parameter_name] = value_object_subset_dict = Dict{Symbol,Any}()
-            for value in enum_dict[enum_id]
-                value_object_subset_dict[Symbol(value)] = object_subset = Array{Symbol,1}()
-                for parameter_value in object_parameter_value_list
-                    object_class_id != parameter_value["object_class_id"] && continue
-                    parameter_id != parameter_value["parameter_id"] && continue
-                    value != parameter_value["value"] && continue
-                    push!(object_subset, Symbol(parameter_value["object_name"]))
-                end
-            end
-        end
         @suppress_err begin
             @eval begin
                 # Create convenience function named after the object class
-                function $(Symbol(object_class_name))(;kwargs...)
-                    if length(kwargs) == 0
-                        return $(object_names)
-                    elseif length(kwargs) == 1
-                        parameter_value_dict = $(parameter_value_dict)
-                        key, value = kwargs[1]
-                        !haskey(parameter_value_dict, key) && return nothing
-                        value_object_subset_dict = parameter_value_dict[key]
-                        !haskey(value_object_subset_dict, value) && return nothing
-                        object_subset = value_object_subset_dict[value]
-                        return object_subset
-                    else # length of kwargs is > 1
-                        error("Too many arguments in function call (expected 1, got $(length(kwargs)))")
-                    end
-                end
+                $(Symbol(object_class_name))() = $(object_names)
                 export $(Symbol(object_class_name))
             end
         end
@@ -209,13 +174,13 @@ function JuMP_object_parameter_out(db_map::PyObject)
         @suppress_err begin
             # Create and export convenience functions
             @eval begin
-                function $(Symbol(parameter_name))(;t::Union{Int64,Void}=nothing, kwargs...)
+                function $(Symbol(parameter_name))(;t::Union{Int64,Nothing}=nothing, kwargs...)
                     object_parameter_value_dict = $(object_parameter_value_dict)
                     if length(kwargs) == 0
                         # Return dict if kwargs is empty
                         return object_parameter_value_dict
                     elseif length(kwargs) == 1
-                        key, value = kwargs[1]
+                        key, value = iterate(kwargs)[1]
                         object_class_name = key  # NOTE: not in use at the moment
                         object_name = value
                         !haskey(object_parameter_value_dict, object_name) && return nothing
@@ -298,14 +263,14 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
         @suppress_err begin
             # Create and export convenience function named as the parameter
             @eval begin
-                function $(Symbol(parameter_name))(;t::Union{Int64,Void}=nothing, kwargs...)
+                function $(Symbol(parameter_name))(;t::Union{Int64,Nothing}=nothing, kwargs...)
                     relationship_parameter_value_dict = $(relationship_parameter_value_dict)
                     object_class_name_list = $(object_class_name_list)
                     # If no kwargs are provided a dict of all parameter values is returned
                     if length(kwargs) == 0
                          return relationship_parameter_value_dict
                     end
-                    object_name_list = Array{Symbol, 1}(length(kwargs))
+                    object_name_list = Array{Symbol}(undef, length(kwargs))
                     for (k, v) in kwargs
                         object_name_list[findfirst(x -> x == k, object_class_name_list)] = v
                     end

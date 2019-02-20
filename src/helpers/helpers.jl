@@ -152,6 +152,7 @@ macro butcher(expression)
         call_arg_arr = []  # Array of non-literal arguments
         arg_assignment_location = Dict() # Location of each argument assignment
         replacement_variable = Dict()  # Variable to store the return value of each relocated call
+        not_handled = false
         for arg in call.args[2:end]  # First arg is the method name
             if isa(arg, Symbol)
                 # Positional argument
@@ -166,8 +167,13 @@ macro butcher(expression)
                         push!(call_arg_arr, kwarg.args[end])
                     end
                 end
+            else
+                # FIXME: too drastic, we need to take more delicate measures
+                not_handled = true
+                break
             end
         end
+        not_handled && continue
         isempty(call_arg_arr) && continue
         topmost_node_id = try maximum(
             minimum(

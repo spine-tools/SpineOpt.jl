@@ -27,9 +27,9 @@ for each tuple returned by `connection__node()`, attached to model `m`.
 For each `connection` between to `nodes`, two `trans` variables exist.
 """
 function generate_variable_trans(m::Model)
-    @butcher Dict{Tuple, JuMP.Variable}(
+    @butcher Dict{Tuple, JuMP.VariableRef}(
         (c, i, t) => @variable(
-            m, basename="trans[$c, $i, $t]"
+            m, base_name="trans[$c, $i, $t]"
         ) for (c, i) in connection__node(), t=1:number_of_timesteps(time=:timer)
     )
 end

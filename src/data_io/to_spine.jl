@@ -24,7 +24,7 @@
 A DataFrame from a JuMP variable, with the last column packed into a JSON.
 """
 function packed_var_dataframe(var::Dict{Tuple,JuMP.VariableRef})
-    var_dataframe = as_dataframe(Dict{Tuple,Float64}(k => getvalue(v) for (k, v) in var))
+    var_dataframe = as_dataframe(Dict{Tuple,Float64}(k => JuMP.value(v) for (k, v) in var))
     sort!(var_dataframe)
     packed_var_dataframe = by(var_dataframe, [1:size(var_dataframe, 2) - 2; ]) do df
         DataFrame(json=JSON.json(df[end]))
@@ -45,7 +45,7 @@ function add_var_to_result!(
         result_object::Dict
     )
     # Iterate over first row in dataframe to retrieve object classes
-    first_row = Array(dataframe[1, collect(1:size(dataframe, 2) - 1)])
+    first_row = [dataframe[1, col] for col in 1:size(dataframe, 2) - 1]
     object_class_name_list = PyVector(py"""[$result_class['name']]""")
     object_class_id_list = PyVector(py"""[$result_class['id']]""")
     for object_name in first_row
@@ -84,7 +84,7 @@ function add_var_to_result!(
     for row in eachrow(dataframe)
         object_name_list = PyVector(py"""[$result_object['name']]""")
         object_id_list = PyVector(py"""[$result_object['id']]""")
-        for (field_name, object_name) in row[1:end-1]  # NOTE: last index contains the json, not needed for the name
+        for (field_name, object_name) in pairs(row[1:end-1])  # NOTE: last index contains the json, not needed for the name
             py"""object_ = $db_map.single_object(name=$object_name).one_or_none()
             """
             if py"object_" == nothing
@@ -126,14 +126,14 @@ function add_var_to_result!(
 end
 
 """
-    JuMP_results_to_spine_db!(db_url::String; results...)
+    JuMP_results_to_spine_db!(dest_url::String; results...)
 
 Update `dest_url` with new parameters given by `results`.
-`db_url` is a database url composed according to
+`dest_url` is a database url composed according to
 [sqlalchemy rules](http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls).
 """
-function JuMP_results_to_spine_db!(db_url::String; results...)
-    db_map = py"""$db_api.DiffDatabaseMapping($db_url, 'spine_model')"""
+function JuMP_results_to_spine_db!(dest_url::String; results...)
+    db_map = py"""$db_api.DiffDatabaseMapping($dest_url, 'spine_model')"""
     try
         result_class = py"""$db_map.get_or_add_object_class(name="result")._asdict()"""
         timestamp = Dates.format(Dates.now(), "yyyymmdd_HH_MM_SS")
@@ -162,7 +162,7 @@ as well as new parameters given by `results`.
 """
 function JuMP_results_to_spine_db!(dest_url, source_url; results...)
     if py"""$db_api.is_unlocked($dest_url)"""
-        py"""$db_api.copy_database($dest_url, $source_url, only_tables=["object_class", "object"])"""
+        py"""$db_api.copy_database($dest_url, $source_url, skip_tables=["parameter", "parameter_value"])"""
         JuMP_results_to_spine_db!(dest_url; results...)
     else
         warn(string("The current operation cannot proceed because the SQLite database '$dest_url' is locked. \n",
