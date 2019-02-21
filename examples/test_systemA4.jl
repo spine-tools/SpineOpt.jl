@@ -42,6 +42,9 @@ constraint_trans_cap(m, trans)
 # Nodal balance
 constraint_nodal_balance(m, state, flow, trans)
 
+# Cyclic node state bounds
+constraint_node_state_cyclic_bound(m, state)
+
 # Absolute bounds on commodities
 constraint_max_cum_in_flow_bound(m, flow)
 

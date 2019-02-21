@@ -42,6 +42,7 @@ export constraint_max_cum_in_flow_bound
 export constraint_trans_loss
 export constraint_trans_cap
 export constraint_nodal_balance
+export constraint_node_state_cyclic_bound
 
 export @butcher
 
@@ -126,6 +127,7 @@ include("objective/objective_minimize_production_cost.jl")
 include("constraints/constraint_max_cum_in_flow_bound.jl")
 include("constraints/constraint_flow_capacity.jl")
 include("constraints/constraint_nodal_balance.jl")
+include("constraints/constraint_node_state_cyclic_bound.jl")
 include("constraints/constraint_fix_ratio_out_in_flow.jl")
 include("constraints/constraint_trans_cap.jl")
 include("constraints/constraint_trans_loss.jl")
