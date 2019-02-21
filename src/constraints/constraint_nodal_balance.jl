@@ -66,7 +66,7 @@ function constraint_nodal_balance(m::Model, state, flow, trans)
             + sum(flow[c, n, u, :out, t] for u in commodity__node__unit__direction(commodity=c, node=n, direction=:out))
             - sum(flow[c, n, u, :in, t] for u in commodity__node__unit__direction(commodity=c, node=n, direction=:in))
             # Transfer of commodities between nodes
-            - sum(trans[c, conn, n, t] for conn in commodity__connection__node(commodity=c, node=n))
+            - sum(trans[conn, n, t] for conn in connection__node(commodity=c, node=n))
         )
     end
 end
