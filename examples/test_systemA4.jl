@@ -18,6 +18,7 @@ trans = generate_variable_trans(m)
 
 # Bounds for state variables
 # These should be integrated into generate_variable_state, if only I knew how
+# Also, the initial value t[0] is not constrained at the moment
 for (c, n) in commodity__node(), t=1:number_of_timesteps(time=:timer)
     state_lower_bound(commodity=c, node=n, t=t) != nothing && setlowerbound(state[c, n, t], state_lower_bound(commodity=c, node=n, t=t))
     state_upper_bound(commodity=c, node=n, t=t) != nothing && setupperbound(state[c, n, t], state_upper_bound(commodity=c, node=n, t=t))

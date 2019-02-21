@@ -29,7 +29,7 @@ function constraint_node_state_cyclic_bound(m::Model, state)
         @butcher @constraint(
         m,
         # Node commodity state on the first time step
-        state[c, n, 1]
+        state[c, n, 0]
         ==
         # Node commodity state on the last time step
         state[c, n, number_of_timesteps(time=:timer)]

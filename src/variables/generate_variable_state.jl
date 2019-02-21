@@ -29,6 +29,6 @@ function generate_variable_state(m::Model)
     Dict{Tuple, JuMP.Variable}(
         (c, n, t) => @variable(
             m, basename="state[$c, $n, $t]"
-        ) for (c, n) in commodity__node(), t=1:number_of_timesteps(time=:timer)
+        ) for (c, n) in commodity__node(), t=0:number_of_timesteps(time=:timer)
     )
 end
