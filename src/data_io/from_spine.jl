@@ -27,10 +27,28 @@ given by `db_url`. `db_url` is a database url composed according to
 [sqlalchemy rules](http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls).
 See [`JuMP_all_out(db_map::PyObject)`](@ref) for more details.
 """
-function JuMP_all_out(db_url)
+function JuMP_all_out(db_url; upgrade=false)
     # Create DatabaseMapping object using Python spinedatabase_api
-    db_map = db_api[:DatabaseMapping](db_url)
-    JuMP_all_out(db_map)
+    try
+        db_map = db_api[:DatabaseMapping](db_url, upgrade=upgrade)
+        JuMP_all_out(db_map)
+    catch e
+        if isa(e, PyCall.PyError) && pyisinstance(e.val, db_api[:exception][:SpineDBVersionError])
+            error(
+"""
+The database at '$db_url' is from an older version of Spine
+and needs to be upgraded in order to be used with the current version.
+
+You can upgrade it by running `JuMP_all_out(db_url; upgrade=true)`.
+
+WARNING: After the upgrade, the database may no longer be used
+with previous versions of Spine.
+"""
+            )
+        else
+            rethrow()
+        end
+    end
 end
 
 """

@@ -162,19 +162,25 @@ as well as new parameters given by `results`.
 """
 function JuMP_results_to_spine_db!(dest_url, source_url; results...)
     if py"""$db_api.is_unlocked($dest_url)"""
-        py"""$db_api.copy_database($dest_url, $source_url, skip_tables=["parameter", "parameter_value"])"""
+        py"""$db_api.copy_database(
+            $dest_url, $source_url, overwrite=False, skip_tables=["parameter", "parameter_value"])
+        """
         JuMP_results_to_spine_db!(dest_url; results...)
     else
         warn(string("The current operation cannot proceed because the SQLite database '$dest_url' is locked. \n",
             "The operation will resume automatically if the lock is released within the next 2 minutes."))
         if py"""$db_api.is_unlocked($dest_url, timeout=120)"""
-            py"""$db_api.merge_database($dest_url, $source_url, skip_tables=["parameter", "parameter_value"])"""
+            py"""$db_api.copy_database(
+                $dest_url, $source_url, overwrite=False, skip_tables=["parameter", "parameter_value"])
+            """
             JuMP_results_to_spine_db!(dest_url; results...)
         else
             timestamp = Dates.format(Dates.now(), "yyyymmdd_HH_MM_SS")
             alt_dest_url = "sqlite:///result_$timestamp.sqlite"
             info("The database $dest_url is locked. Saving results to $alt_dest_url instead.")
-            py"""$db_api.merge_database($alt_dest_url, $source_url, skip_tables=["parameter", "parameter_value"])"""
+            py"""$db_api.copy_database(
+                $alt_dest_url, $source_url, overwrite=False, skip_tables=["parameter", "parameter_value"])
+            """
             JuMP_results_to_spine_db!(alt_dest_url; results...)
         end
     end
