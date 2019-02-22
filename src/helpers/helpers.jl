@@ -17,32 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
-"""
-    @suppress_err expr
-Suppress the STDERR stream for the given expression.
-"""
-# NOTE: Borrowed from Suppressor.jl
-macro suppress_err(block)
-    quote
-        if ccall(:jl_generating_output, Cint, ()) == 0
-            ORIGINAL_STDERR = STDERR
-            err_rd, err_wr = redirect_stderr()
-            err_reader = @schedule read(err_rd, String)
-        end
-
-        try
-            $(esc(block))
-        finally
-            if ccall(:jl_generating_output, Cint, ()) == 0
-                redirect_stderr(ORIGINAL_STDERR)
-                close(err_wr)
-            end
-        end
-    end
-end
-
-
 """
     as_number(str)
 
@@ -166,7 +140,7 @@ at unconvenient places -such as the body of a long for loop.
 # to indicate the number of passages to perform. Also, we can make it so if this
 # argument is Inf (or something) we keep going until there's nothing left to butcher.
 macro butcher(expression)
-    expression = macroexpand(esc(expression))
+    expression = macroexpand(SpineModel, esc(expression))
     call_location = Dict{Expr,Array{Dict{String,Any},1}}()
     assignment_location = Dict{Symbol,Array{Dict{String,Any},1}}()
     replacement_variable_location = Array{Any,1}()
@@ -178,6 +152,7 @@ macro butcher(expression)
         call_arg_arr = []  # Array of non-literal arguments
         arg_assignment_location = Dict() # Location of each argument assignment
         replacement_variable = Dict()  # Variable to store the return value of each relocated call
+        not_handled = false
         for arg in call.args[2:end]  # First arg is the method name
             if isa(arg, Symbol)
                 # Positional argument
@@ -192,8 +167,13 @@ macro butcher(expression)
                         push!(call_arg_arr, kwarg.args[end])
                     end
                 end
+            else
+                # FIXME: too drastic, we need to take more delicate measures
+                not_handled = true
+                break
             end
         end
+        not_handled && continue
         isempty(call_arg_arr) && continue
         topmost_node_id = try maximum(
             minimum(

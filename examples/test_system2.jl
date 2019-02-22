@@ -1,6 +1,7 @@
 # Load required packaes
 using Revise
-using SpineModel
+include("../src/SpineModel.jl")
+using Main.SpineModel
 using JuMP
 using Clp
 
@@ -9,7 +10,7 @@ db_url = "sqlite:///examples/data/testsystem2_v2_multiD.sqlite"
 JuMP_all_out(db_url)
 
 # Init model
-m = Model(solver=ClpSolver())
+m = Model(with_optimizer(Clp.Optimizer))
 
 # Create decision variables
 flow = generate_variable_flow(m)
@@ -41,8 +42,9 @@ constraint_max_cum_in_flow_bound(m, flow)
 # needed: set/group of unitgroup CHP and Gasplant
 
 # Run model
-status = solve(m)
-if status == :Optimal
+optimize!(m)
+status = termination_status(m)
+if status == MOI.OPTIMAL
     db_url_out = db_url
     # JuMP_results_to_spine_db!(db_url; flow=flow, trans=trans)
     JuMP_results_to_spine_db!(db_url_out, db_url; state=state, flow=flow, trans=trans)

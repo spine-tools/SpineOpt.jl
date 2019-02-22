@@ -174,59 +174,33 @@ function JuMP_object_parameter_out(db_map::PyObject)
         @suppress_err begin
             # Create and export convenience functions
             @eval begin
-                function $(Symbol(parameter_name))(;t::Int64=1, kwargs...)
-                    # length(kwargs) != 1 && return nothing
+                function $(Symbol(parameter_name))(;t::Union{Int64,Nothing}=nothing, kwargs...)
                     object_parameter_value_dict = $(object_parameter_value_dict)
-                    if length(kwargs)==0
+                    if length(kwargs) == 0
                         # Return dict if kwargs is empty
                         return object_parameter_value_dict
-                    # Return position t of value for object given in kwargs if Array, else return value
                     elseif length(kwargs) == 1
-                        key, value = kwargs[1]
+                        key, value = iterate(kwargs)[1]
                         object_class_name = key  # NOTE: not in use at the moment
                         object_name = value
                         !haskey(object_parameter_value_dict, object_name) && return nothing
                         value = object_parameter_value_dict[object_name]
                         if isa(value, Array)
+                            t == nothing && return value
                             return value[t]
                         elseif isa(value, Dict)
-                            !haskey(value, "type") && error("Field 'type' not found in JSON")
-                            parameter_type = value["type"]
-                            if parameter_type == "expression"
-                                !haskey(value, "value") && error("Field 'value' not found in JSON")
-                                value_expression = value["value"]
-                                before_value_expression = get(value, "before_value", [])
-                                for expr in before_value_expression
-                                    eval(parse(replace(expr, "\$t" => "$t")))
-                                end
-                                return eval(parse(replace(value_expression, "\$t" => "$t")))
-                            elseif parameter_type == "time_pattern"
-                                !haskey(value, "data") && error("Field 'data' not found in JSON")
-                                !haskey(value, "key") && error("Field 'key' not found in JSON")
-                                key_expression = value["key"]
-                                before_key_expression = get(value, "before_key", [])
-                                for expr in before_key_expression
-                                    eval(parse(replace(expr, "\$t" => "$t")))
-                                end
-                                key = eval(parse(replace(key_expression, "\$t" => "$t")))
-                                return get(value["data"], key, nothing)
-                            elseif parameter_type == "time_series"
-                                !haskey(value, "data") && error("Field 'data' not found in JSON")
-                                !haskey(value, "index") && error("Field 'index' not found in JSON")
-                                index_expression = value["index"]
-                                before_index_expression = get(value, "before_index", [])
-                                for expr in before_index_expression
-                                    eval(parse(replace(expr, "\$t" => "$t")))
-                                end
-                                index = eval(parse(replace(index_expression, "\$t" => "$t")))
-                                return get(value["data"], index, nothing)
+                            !haskey(value, "return_expression") && error("Field 'return_expression' not found")
+                            return_expression = value["return_expression"]
+                            preparation_expressions = get(value, "preparation_expressions", [])
+                            for expr in preparation_expressions
+                                eval(parse(replace(expr, "\$t" => "$t")))
                             end
+                            return eval(parse(replace(return_expression, "\$t" => "$t")))
                         else
                             return value
                         end
-                    # If length of kwargs is > 1 function call contains an error
-                    else
-                        error("Too many arguments (expected 1, got $(length(kwargs)))")
+                    else # length of kwargs is > 1
+                        error("Too many arguments in function call (expected 1, got $(length(kwargs)))")
                     end
                 end
                 export $(Symbol(parameter_name))
@@ -289,21 +263,30 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
         @suppress_err begin
             # Create and export convenience function named as the parameter
             @eval begin
-                function $(Symbol(parameter_name))(;t::Int64=1, kwargs...)
+                function $(Symbol(parameter_name))(;t::Union{Int64,Nothing}=nothing, kwargs...)
                     relationship_parameter_value_dict = $(relationship_parameter_value_dict)
                     object_class_name_list = $(object_class_name_list)
                     # If no kwargs are provided a dict of all parameter values is returned
                     if length(kwargs) == 0
                          return relationship_parameter_value_dict
                     end
-                    object_name_list = Array{Symbol, 1}(length(kwargs))
+                    object_name_list = Array{Symbol}(undef, length(kwargs))
                     for (k, v) in kwargs
                         object_name_list[findfirst(x -> x == k, object_class_name_list)] = v
                     end
                     !haskey(relationship_parameter_value_dict, object_name_list) && return nothing
                     value = relationship_parameter_value_dict[object_name_list]
                     if isa(value, Array)
+                        t == nothing && return value
                         return value[t]
+                    elseif isa(value, Dict)
+                        !haskey(value, "return_expression") && error("Field 'return_expression' not found")
+                        return_expression = value["return_expression"]
+                        preparation_expressions = get(value, "preparation_expressions", [])
+                        for expr in preparation_expressions
+                            eval(parse(replace(expr, "\$t" => "$t")))
+                        end
+                        return eval(parse(replace(return_expression, "\$t" => "$t")))
                     else
                         return value
                     end

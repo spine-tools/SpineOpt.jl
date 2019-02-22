@@ -44,16 +44,18 @@ function constraint_nodal_balance(m::Model, state, flow, trans)
                     )
                 # Commodity diffusion between nodes
                 # Diffusion into this node
-                + reduce(+,0,
+                + reduce(+,
                     state_commodity_diffusion_rate(commodity=c, node1=nn, node2=n)
                     * state[c, nn, t]
-                    for nn in commodity__node__node(commodity=c, node2=n)
+                    for nn in commodity__node__node(commodity=c, node2=n);
+                        init=0
                     )
                     # Diffusion from this node
-                - reduce(+,0,
+                - reduce(+,
                     state_commodity_diffusion_rate(commodity=c, node1=n, node2=nn)
                     * state[c, n ,t]
-                    for nn in commodity__node__node(commodity=c, node1=n)
+                    for nn in commodity__node__node(commodity=c, node1=n);
+                        init=0
                     )
                 )
             # Demand for the commodity
@@ -61,10 +63,22 @@ function constraint_nodal_balance(m::Model, state, flow, trans)
                 demand(commodity=c, node=n, t=t)
                 )
             # Output of units into this node, and their input from this node
-            + reduce(+,0, flow[c, n, u, :out, t] for u in commodity__node__unit__direction(commodity=c, node=n, direction=:out))
-            - reduce(+,0, flow[c, n, u, :in, t] for u in commodity__node__unit__direction(commodity=c, node=n, direction=:in))
+            + reduce(+,
+                flow[c, n, u, :out, t]
+                for u in commodity__node__unit__direction(commodity=c, node=n, direction=:out);
+                    init=0
+                )
+            - reduce(+,
+                flow[c, n, u, :in, t]
+                for u in commodity__node__unit__direction(commodity=c, node=n, direction=:in);
+                    init=0
+                )
             # Transfer of commodities between nodes
-            - reduce(+,0, trans[conn, n, t] for conn in connection__node(node=n))
+            - reduce(+,
+                trans[conn, n, t]
+                for conn in connection__node(node=n);
+                    init=0
+                )
         )
     end
 end

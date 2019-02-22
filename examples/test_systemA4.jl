@@ -1,6 +1,7 @@
 # Load required packaes
 using Revise
-using SpineModel
+include("../src/SpineModel.jl")
+using Main.SpineModel
 using JuMP
 using Clp
 
@@ -9,7 +10,7 @@ db_url = "sqlite:///examples/data/testsystemA4.sqlite"
 JuMP_all_out(db_url)
 
 # Init model
-m = Model(solver=ClpSolver())
+m = Model(with_optimizer(Clp.Optimizer))
 
 # Create decision variables
 state = generate_variable_state(m)
@@ -20,8 +21,8 @@ trans = generate_variable_trans(m)
 # These should be integrated into generate_variable_state, if only I knew how
 # Also, the initial value t[0] is not constrained at the moment
 for (c, n) in commodity__node(), t=1:number_of_timesteps(time=:timer)
-    state_lower_bound(commodity=c, node=n, t=t) != nothing && setlowerbound(state[c, n, t], state_lower_bound(commodity=c, node=n, t=t))
-    state_upper_bound(commodity=c, node=n, t=t) != nothing && setupperbound(state[c, n, t], state_upper_bound(commodity=c, node=n, t=t))
+    state_lower_bound(commodity=c, node=n, t=t) != nothing && set_lower_bound(state[c, n, t], state_lower_bound(commodity=c, node=n, t=t))
+    state_upper_bound(commodity=c, node=n, t=t) != nothing && set_upper_bound(state[c, n, t], state_upper_bound(commodity=c, node=n, t=t))
 end
 
 # Create objective function
@@ -35,10 +36,10 @@ constraint_flow_capacity(m, flow)
 constraint_fix_ratio_out_in_flow(m, flow)
 
 # Transmission losses
-constraint_trans_loss(m, trans)
+#constraint_trans_loss(m, trans)
 
 # Transmission line capacity
-constraint_trans_cap(m, trans)
+#constraint_trans_cap(m, trans)
 
 # Nodal balance
 constraint_nodal_balance(m, state, flow, trans)
@@ -47,13 +48,14 @@ constraint_nodal_balance(m, state, flow, trans)
 constraint_node_state_cyclic_bound(m, state)
 
 # Absolute bounds on commodities
-constraint_max_cum_in_flow_bound(m, flow)
+#constraint_max_cum_in_flow_bound(m, flow)
 
 # needed: set/group of unitgroup CHP and Gasplant
 
 # Run model
-status = solve(m)
-if status == :Optimal
+optimize!(m)
+status = termination_status(m)
+if status == MOI.OPTIMAL
     db_url_out = db_url
     # JuMP_results_to_spine_db!(db_url; flow=flow, trans=trans)
     JuMP_results_to_spine_db!(db_url_out, db_url; state=state, flow=flow)

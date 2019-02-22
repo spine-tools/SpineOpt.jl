@@ -35,13 +35,19 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
             t=1:number_of_timesteps(time=:timer);
             fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in) != nothing
         ],
-        + reduce(+,0,flow[c_out, n, u, :out, t]
+        + reduce(+,
+            flow[c_out, n, u, :out, t]
             for (c_out, n) in commodity__node__unit__direction(unit=u, direction=:out)
-                if c_out in commodity_group__commodity(commodity_group=cg_out))
+            if c_out in commodity_group__commodity(commodity_group=cg_out);
+                init=0
+            )
         ==
         + fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)
-            * reduce(+,0,flow[c_in, n, u, :in, t]
+            * reduce(+,
+                flow[c_in, n, u, :in, t]
                 for (c_in, n) in commodity__node__unit__direction(unit=u, direction=:in)
-                    if c_in in commodity_group__commodity(commodity_group=cg_in))
+                if c_in in commodity_group__commodity(commodity_group=cg_in);
+                    init=0
+                )
     )
 end

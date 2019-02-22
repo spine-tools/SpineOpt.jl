@@ -26,9 +26,9 @@ attached to model `m`.
 `state` represents the 'commodity' stored  inside a 'node'.
 """
 function generate_variable_state(m::Model)
-    Dict{Tuple, JuMP.Variable}(
+    @butcher Dict{Tuple, JuMP.VariableRef}(
         (c, n, t) => @variable(
-            m, basename="state[$c, $n, $t]"
+            m, base_name="state[$c, $n, $t]"
         ) for (c, n) in commodity__node(), t=0:number_of_timesteps(time=:timer)
     )
 end
