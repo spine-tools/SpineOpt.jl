@@ -1,6 +1,7 @@
 # Load required packaes
 using Revise
-using SpineModel
+include("../src/SpineModel.jl")
+using Main.SpineModel
 using JuMP
 using Clp
 
@@ -14,6 +15,7 @@ m = Model(with_optimizer(Clp.Optimizer))
 # Create decision variables
 flow = generate_variable_flow(m)
 trans = generate_variable_trans(m)
+state = generate_variable_state(m)
 
 # Create objective function
 objective_minimize_production_cost(m, flow)
@@ -32,7 +34,7 @@ constraint_trans_loss(m, trans)
 constraint_trans_cap(m, trans)
 
 # Nodal balance
-constraint_nodal_balance(m, flow, trans)
+constraint_nodal_balance(m, state, flow, trans)
 
 # Absolute bounds on commodities
 constraint_max_cum_in_flow_bound(m, flow)
@@ -43,7 +45,7 @@ constraint_max_cum_in_flow_bound(m, flow)
 optimize!(m)
 status = termination_status(m)
 if status == MOI.OPTIMAL
-    db_url_out = "sqlite:///examples/data/testsystem2_v2_multiD_out.sqlite"
+    db_url_out = db_url
     # JuMP_results_to_spine_db!(db_url; flow=flow, trans=trans)
-    JuMP_results_to_spine_db!(db_url_out, db_url; flow=flow, trans=trans)
+    JuMP_results_to_spine_db!(db_url_out, db_url; state=state, flow=flow, trans=trans)
 end
