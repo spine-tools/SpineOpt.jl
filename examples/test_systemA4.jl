@@ -54,7 +54,7 @@ constraint_max_cum_in_flow_bound(m, flow)
 # Run model
 status = solve(m)
 if status == :Optimal
-    db_url_out = "sqlite:///examples/data/testsystemA4.sqlite"
+    db_url_out = db_url
     # JuMP_results_to_spine_db!(db_url; flow=flow, trans=trans)
     JuMP_results_to_spine_db!(db_url_out, db_url; state=state, flow=flow)
 end
