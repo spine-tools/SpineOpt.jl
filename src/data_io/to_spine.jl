@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
 """
     packed_var_dataframe(var::Dict{Tuple,JuMP.VariableRef})
 
@@ -34,8 +33,8 @@ end
 """
     add_var_to_result!(db_map::PyObject, var_name::Symbol, dataframe::DataFrame, result_class::Dict, result_object::Dict)
 
-Update `db_map` with data given for `var_name` in `dataframe`,
-by linking it to a `result_object` of class `result_class`.
+Update `db_map` with data for parameter `var_name` given in `dataframe`.
+Link the parameter to a `result_object` of class `result_class`.
 """
 function add_var_to_result!(
         db_map::PyObject,
@@ -167,8 +166,12 @@ function JuMP_results_to_spine_db!(dest_url, source_url; results...)
         """
         JuMP_results_to_spine_db!(dest_url; results...)
     else
-        warn(string("The current operation cannot proceed because the SQLite database '$dest_url' is locked. \n",
-            "The operation will resume automatically if the lock is released within the next 2 minutes."))
+        warn(
+"""
+The current operation cannot proceed because the SQLite database '$dest_url' is locked.
+The operation will resume automatically if the lock is released within the next 2 minutes.
+"""
+        )
         if py"""$db_api.is_unlocked($dest_url, timeout=120)"""
             py"""$db_api.copy_database(
                 $dest_url, $source_url, overwrite=False, skip_tables=["parameter", "parameter_value"])

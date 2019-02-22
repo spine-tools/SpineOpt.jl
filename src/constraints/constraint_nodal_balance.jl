@@ -26,8 +26,8 @@ TODO: for electrical lines this constraint is obsolete unless
 a trade based representation is used.
 """
 function constraint_nodal_balance(m::Model, state, flow, trans)
-    for (c,n) in commodity__node(), t=1:number_of_timesteps(time=:timer)
-        @butcher @constraint(
+    @butcher for (c,n) in commodity__node(), t=1:number_of_timesteps(time=:timer)
+        @constraint(
             m,
             # Change in the state commodity content
             + ( state_commodity_content(commodity=c, node=n) != nothing &&

@@ -152,14 +152,18 @@ macro butcher(expression)
         call_arg_arr = []  # Array of non-literal arguments
         arg_assignment_location = Dict() # Location of each argument assignment
         replacement_variable = Dict()  # Variable to store the return value of each relocated call
-        not_handled = false
         for arg in call.args[2:end]  # First arg is the method name
             if isa(arg, Symbol)
                 # Positional argument
                 push!(call_arg_arr, arg)
-            elseif isa(arg, Expr) && arg.head == :kw && isa(arg.args[end], Symbol)
-                # keyword argument
-                push!(call_arg_arr, arg.args[end])
+            elseif isa(arg, Expr)
+                if arg.head == :kw
+                    # Keyword argument, push it if Symbol
+                    isa(arg.args[end], Symbol) && push!(call_arg_arr, arg.args[end])
+                elseif arg.head == :tuple
+                    # Tuple argument, append every Symbol
+                    append!(call_arg_arr, [x for x in arg.args if isa(x, Symbol)])
+                end
             elseif isa(arg, Expr) && arg.head == :parameters
                 # keyword arguments after a semi-colon
                 for kwarg in arg.args
@@ -167,13 +171,8 @@ macro butcher(expression)
                         push!(call_arg_arr, kwarg.args[end])
                     end
                 end
-            else
-                # FIXME: too drastic, we need to take more delicate measures
-                not_handled = true
-                break
             end
         end
-        not_handled && continue
         isempty(call_arg_arr) && continue
         topmost_node_id = try maximum(
             minimum(
@@ -198,8 +197,11 @@ macro butcher(expression)
                 # One or more arguments are not assigned before the call is made, skip
                 continue
             end
-            # Check if recursive assignment, e.g., x = f(x), and skip it
             target_parent, target_row = arg_assignment_location[target_node_id]
+            # If target parent's head is not one in the supported list, skip call
+            !in(target_parent.head, (:for, :while, :block)) && continue
+            # TODO: try and support more advanced stuff, such as :filter
+            # Check if recursive assignment, e.g., x = f(x), and skip it
             target_parent.args[target_row].args[end] == call && continue
             # Create or retrieve replacement variable
             x = get!(replacement_variable, target_node_id, gensym())
@@ -212,10 +214,10 @@ macro butcher(expression)
             if target_parent.head in (:for, :while)  # Assignment is in the loop condition, e.g., for i=1:100
                 # Better location is the begining of the loop body
                 target_parent.args[target_row + 1] = Expr(:block, :($x = $call), target_parent.args[target_row + 1])
-            else
+            elseif target_parent.head == :block
                 # Better location is right after the assignment
                 target_parent.args[target_row] = Expr(:block, target_parent.args[target_row], :($x = $call))
-            end  # TODO: are there any other cases which need special treatment?
+            end
         end
     end
     # Replace calls in original locations with the replacement variable
