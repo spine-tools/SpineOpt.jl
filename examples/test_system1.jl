@@ -5,7 +5,7 @@ using JuMP
 using Clp
 
 # Export contents of database into the current session
-db_url = "sqlite:///examples/data/testsystem2_v2_multiD.sqlite"
+db_url = "sqlite:///examples/data/testsystem1.sqlite"
 JuMP_all_out(db_url)
 
 # Init model
@@ -45,5 +45,5 @@ status = solve(m)
 if status == :Optimal
     db_url_out = db_url
     # JuMP_results_to_spine_db!(db_url; flow=flow, trans=trans)
-    JuMP_results_to_spine_db!(db_url_out, db_url; state=state, flow=flow, trans=trans)
+    JuMP_results_to_spine_db!(db_url_out, db_url; flow=flow, trans=trans)
 end
