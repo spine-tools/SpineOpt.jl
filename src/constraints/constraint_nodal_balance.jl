@@ -44,19 +44,23 @@ function constraint_nodal_balance(m::Model, state, flow, trans)
                     )
                 # Commodity diffusion between nodes
                 # Diffusion into this node
-                + sum(  + ( state_commodity_diffusion_rate(commodity=c, node1=nn, node2=n) != nothing &&
-                            state_commodity_diffusion_rate(commodity=c, node1=nn, node2=n)
-                                * state[c, nn, t]
+                + ( !isempty(commodity__node__node(commodity=c, node2=n)) &&
+                    sum(    (   state_commodity_diffusion_rate(commodity=c, node1=nn, node2=n) != nothing &&
+                                state_commodity_diffusion_rate(commodity=c, node1=nn, node2=n)
+                                    * state[c, nn, t]
+                                )
+                            for nn in commodity__node__node(commodity=c, node2=n)
                             )
-                        for nn in commodity__node__node(commodity=c, node2=n)
-                        )
-                # Diffusion from this node
-                - sum(  + ( state_commodity_diffusion_rate(commodity=c, node1=n, node2=nn) != nothing &&
-                            state_commodity_diffusion_rate(commodity=c, node1=n, node2=nn)
-                                * state[c, n ,t]
+                    )
+                    # Diffusion from this node
+                - ( !isempty(commodity__node__node(commodity=c, node1=n)) &&
+                    sum(    (   state_commodity_diffusion_rate(commodity=c, node1=n, node2=nn) != nothing &&
+                                state_commodity_diffusion_rate(commodity=c, node1=n, node2=nn)
+                                    * state[c, n ,t]
+                                )
+                            for nn in commodity__node__node(commodity=c, node1=n)
                             )
-                        for nn in commodity__node__node(commodity=c, node1=n)
-                        )
+                    )
                 )
             # Demand for the commodity
             - ( demand(commodity=c, node=n, t=t) != nothing &&
@@ -66,7 +70,9 @@ function constraint_nodal_balance(m::Model, state, flow, trans)
             + sum(flow[c, n, u, :out, t] for u in commodity__node__unit__direction(commodity=c, node=n, direction=:out))
             - sum(flow[c, n, u, :in, t] for u in commodity__node__unit__direction(commodity=c, node=n, direction=:in))
             # Transfer of commodities between nodes
-            - sum(trans[conn, n, t] for conn in connection__node(commodity=c, node=n))
+            - ( !isempty(connection__node(node=n)) &&
+                sum(trans[conn, n, t] for conn in connection__node(node=n))
+                )
         )
     end
 end
