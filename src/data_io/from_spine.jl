@@ -19,138 +19,10 @@
 
 
 """
-    JuMP_all_out(db_url)
-
-Generate and export convenience functions
-for each object class, relationship class, and parameter, in the database
-given by `db_url`. `db_url` is a database url composed according to
-[sqlalchemy rules](http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls).
-See [`JuMP_all_out(db_map::PyObject)`](@ref) for more details.
-"""
-function JuMP_all_out(db_url; upgrade=false)
-    # Create DatabaseMapping object using Python spinedatabase_api
-    try
-        db_map = db_api[:DatabaseMapping](db_url, upgrade=upgrade)
-        JuMP_all_out(db_map)
-    catch e
-        if isa(e, PyCall.PyError) && pyisinstance(e.val, db_api[:exception][:SpineDBVersionError])
-            error(
-"""
-The database at '$db_url' is from an older version of Spine
-and needs to be upgraded in order to be used with the current version.
-
-You can upgrade it by running `JuMP_all_out(db_url; upgrade=true)`.
-
-WARNING: After the upgrade, the database may no longer be used
-with previous versions of Spine.
-"""
-            )
-        else
-            rethrow()
-        end
-    end
-end
-
-"""
-    JuMP_object_out(db_map::PyObject)
-
-Create convenience functions for accessing database
-objects e.g. units, nodes or connections
-
-# Example using a convenience function created by calling JuMP_object_out(db_map::PyObject)
-```julia
-julia> unit()
-3-element Array{String,1}:
- "GasPlant"
- "CoalPlant"
- "CHPPlant"
-```
-"""
-function JuMP_object_out(db_map::PyObject)
-    # Get all object classes
-    object_class_list = py"$db_map.object_class_list()"
-    for object_class in py"[x._asdict() for x in $object_class_list]"
-        object_class_id = object_class["id"]
-        object_class_name = object_class["name"]
-        # Get all objects of object_class
-        object_list = py"$db_map.object_list(class_id=$object_class_id)"
-        object_names = py"[x.name for x in $object_list]"
-        object_names = Symbol.(object_names)
-        @suppress_err begin
-            @eval begin
-                # Create convenience function named after the object class
-                $(Symbol(object_class_name))() = $(object_names)
-                export $(Symbol(object_class_name))
-            end
-        end
-    end
-end
-
-
-"""
-    JuMP_relationship_out(db_map::PyObject)
-
-Create convenience functions for accessing relationships
-e.g. relationships between units and commodities (unit__commodity) or units and
-nodes (unit__node)
-
-# Example using a convenience function created by calling JuMP_object_out(db_map::PyObject)
-```julia
-julia> unit_node()
-9-element Array{Array{String,1},1}:
-String["CoalPlant", "BelgiumCoal"]
-String["CoalPlant", "LeuvenElectricity"]
-String["GasPlant", "BelgiumGas"]
-...
-
-julia> unit_node(node="LeuvenElectricity")
-1-element Array{String,1}:
- "CoalPlant"
-```
-"""
-function JuMP_relationship_out(db_map::PyObject)
-    # Get all relationship classes
-    relationship_class_list = py"$db_map.wide_relationship_class_list()"
-    # Iterate through relationship classes as dictionaries
-    for relationship_class in py"[x._asdict() for x in $relationship_class_list]"
-        relationship_class_id = relationship_class["id"]
-        relationship_class_name = relationship_class["name"]
-        # Generate Array of Strings of object class names in this relationship class
-        object_class_name_list = [Symbol(x) for x in split(relationship_class["object_class_name_list"], ",")]
-        fix_name_ambiguity!(object_class_name_list)
-        relationship_list = py"$db_map.wide_relationship_list(class_id=$relationship_class_id)"
-        object_name_lists = Array{Array{Symbol,1},1}()
-        for relationship in py"[x._asdict() for x in $relationship_list]"
-            object_name_list = [Symbol(x) for x in split(relationship["object_name_list"], ",")]
-            push!(object_name_lists, object_name_list)
-        end
-        @suppress_err begin
-            @eval begin
-                function $(Symbol(relationship_class_name))(;kwargs...)
-                    object_name_lists = $(object_name_lists)
-                    object_class_name_list = $(object_class_name_list)
-                    indexes = Array{Int64, 1}()
-                    object_name_list = Array{Symbol, 1}()
-                    for (k, v) in kwargs
-                        push!(indexes, findfirst(x -> x == k, object_class_name_list))
-                        push!(object_name_list, v)
-                    end
-                    result = filter(x -> x[indexes] == object_name_list, object_name_lists)
-                    slice = filter(i -> !(i in indexes), collect(1:length(object_class_name_list)))
-                    length(slice) == 1 && (slice = slice[1])
-                    [x[slice] for x in result]
-                end
-                export $(Symbol(relationship_class_name))
-            end
-        end
-    end
-end
-
-
-"""
     JuMP_object_parameter_out(db_map::PyObject)
 
-Create convenience functions for accessing parameter of objects
+Create convenience functions for accessing parameters of objects.
+Return a dictionary of object subsets.
 
 # Example using a convenience function created by calling JuMP_object_out(db_map::PyObject)
 ```julia
@@ -167,20 +39,20 @@ Create convenience functions for accessing parameter of objects
 ```
 """
 function JuMP_object_parameter_out(db_map::PyObject)
-    # Get list of all parameter
-    parameter_list = py"$db_map.parameter_list()"
+    object_subset_dict = Dict{Symbol,Any}()
+    enum_dict = py"{x.id: x.value_list.split(',') for x in $db_map.wide_parameter_enum_list()}"
     # Iterate through parameters as dictionaries
-    for parameter in py"[x._asdict() for x in $parameter_list]"
-        parameter_name = parameter["name"]
-        # Check whether parameter value is specified at least once
-        count_ = py"$db_map.object_parameter_value_list(parameter_name=$parameter_name).count()"
-        count_ == 0 && continue
+    for parameter in py"[x._asdict() for x in $db_map.object_parameter_list()]"
+        parameter_name = parameter["parameter_name"]
+        parameter_name_symbol = Symbol(parameter_name)
         object_parameter_value_list =
-            py"$db_map.object_parameter_value_list(parameter_name=$parameter_name)"
+            py"[x._asdict() for x in $db_map.object_parameter_value_list(parameter_name=$parameter_name)]"
+        # Skip if empty
+        isempty(object_parameter_value_list) && continue
         object_parameter_value_dict = Dict{Symbol,Any}()
         # Loop through all object parameter values to create a Dict(object_name => value, ... )
         # where value is obtained from the json field if possible, else from the value field
-        for object_parameter_value in py"[x._asdict() for x in $object_parameter_value_list]"
+        for object_parameter_value in object_parameter_value_list
             object_name = Symbol(object_parameter_value["object_name"])
             value = try
                 JSON.parse(object_parameter_value["json"])
@@ -189,10 +61,24 @@ function JuMP_object_parameter_out(db_map::PyObject)
             end
             object_parameter_value_dict[object_name] = value
         end
+        enum_id = parameter["enum_id"]
+        enum_id == nothing && continue
+        object_class_name_symbol = Symbol(parameter["object_class_name"])
+        value_list = enum_dict[enum_id]
+        # Loop through all object parameter values again to populate object_subset_dict
+        for object_parameter_value in object_parameter_value_list
+            value = object_parameter_value["value"]
+            object_name = object_parameter_value["object_name"]
+            !(value in value_list) && continue
+            dict1 = get!(object_subset_dict, object_class_name_symbol, Dict{Symbol,Any}())
+            dict2 = get!(dict1, parameter_name_symbol, Dict{Symbol,Any}())
+            arr = get!(dict2, Symbol(value), Array{Symbol,1}())
+            push!(arr, Symbol(object_name))
+        end
         @suppress_err begin
             # Create and export convenience functions
             @eval begin
-                function $(Symbol(parameter_name))(;t::Union{Int64,Nothing}=nothing, kwargs...)
+                function $parameter_name_symbol(;t::Union{Int64,Nothing}=nothing, kwargs...)
                     object_parameter_value_dict = $(object_parameter_value_dict)
                     if length(kwargs) == 0
                         # Return dict if kwargs is empty
@@ -221,7 +107,69 @@ function JuMP_object_parameter_out(db_map::PyObject)
                         error("Too many arguments in function call (expected 1, got $(length(kwargs)))")
                     end
                 end
-                export $(Symbol(parameter_name))
+                export $parameter_name_symbol
+            end
+        end
+    end
+    object_subset_dict
+end
+
+
+"""
+    JuMP_object_out(db_map::PyObject)
+
+Create convenience functions for accessing database
+objects e.g. units, nodes or connections
+
+# Example using a convenience function created by calling JuMP_object_out(db_map::PyObject)
+```julia
+julia> unit()
+3-element Array{String,1}:
+ "GasPlant"
+ "CoalPlant"
+ "CHPPlant"
+```
+"""
+function JuMP_object_out(db_map::PyObject, object_subset_dict::Dict{Symbol,Any})
+    # Get all object classes
+    object_class_list = py"$db_map.object_class_list()"
+    for object_class in py"[x._asdict() for x in $object_class_list]"
+        object_class_id = object_class["id"]
+        object_class_name = object_class["name"]
+        # Get all objects of object_class
+        object_list = py"$db_map.object_list(class_id=$object_class_id)"
+        object_names = py"[x.name for x in $object_list]"
+        object_names = Symbol.(object_names)
+        object_subset_dict1 = get(object_subset_dict, Symbol(object_class_name), Dict())
+        @suppress_err begin
+            @eval begin
+                # Create convenience function named after the object class
+                function $(Symbol(object_class_name))(;kwargs...)
+                    if length(kwargs) == 0
+                        # Return all object names if kwargs is empty
+                        return $(object_names)
+                    else
+                        object_class_name = $(object_class_name)
+                        # Return the object subset at the intersection of all (parameter, value) pairs
+                        # received as arguments
+                        kwargs_arr = [par => val for (par, val) in kwargs]
+                        par, val = kwargs_arr[1]
+                        dict1 = $(object_subset_dict1)
+                        !haskey(dict1, par) && error("$par is not an enumerated parameter for $object_class_name")
+                        dict2 = dict1[par]
+                        !haskey(dict2, val) && error("$val is not an enumerated value for $par")
+                        object_subset = dict2[val]
+                        for (par, val) in kwargs_arr[2:end]
+                            !haskey(dict1, par) && error("$par is not an enumerated parameter for $object_class_name")
+                            dict2 = dict1[par]
+                            !haskey(dict2, val) && error("$val is not an enumerated value for $par")
+                            object_subset_ = dict2[val]
+                            object_subset = [x for x in object_subset if x in object_subset_]
+                        end
+                        return object_subset
+                    end
+                end
+                export $(Symbol(object_class_name))
             end
         end
     end
@@ -315,6 +263,101 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
     end
 end
 
+
+"""
+    JuMP_relationship_out(db_map::PyObject)
+
+Create convenience functions for accessing relationships
+e.g. relationships between units and commodities (unit__commodity) or units and
+nodes (unit__node)
+
+# Example using a convenience function created by calling JuMP_object_out(db_map::PyObject)
+```julia
+julia> unit_node()
+9-element Array{Array{String,1},1}:
+String["CoalPlant", "BelgiumCoal"]
+String["CoalPlant", "LeuvenElectricity"]
+String["GasPlant", "BelgiumGas"]
+...
+
+julia> unit_node(node="LeuvenElectricity")
+1-element Array{String,1}:
+ "CoalPlant"
+```
+"""
+function JuMP_relationship_out(db_map::PyObject)
+    # Get all relationship classes
+    relationship_class_list = py"$db_map.wide_relationship_class_list()"
+    # Iterate through relationship classes as dictionaries
+    for relationship_class in py"[x._asdict() for x in $relationship_class_list]"
+        relationship_class_id = relationship_class["id"]
+        relationship_class_name = relationship_class["name"]
+        # Generate Array of Strings of object class names in this relationship class
+        object_class_name_list = [Symbol(x) for x in split(relationship_class["object_class_name_list"], ",")]
+        fix_name_ambiguity!(object_class_name_list)
+        relationship_list = py"$db_map.wide_relationship_list(class_id=$relationship_class_id)"
+        object_name_lists = Array{Array{Symbol,1},1}()
+        for relationship in py"[x._asdict() for x in $relationship_list]"
+            object_name_list = [Symbol(x) for x in split(relationship["object_name_list"], ",")]
+            push!(object_name_lists, object_name_list)
+        end
+        @suppress_err begin
+            @eval begin
+                function $(Symbol(relationship_class_name))(;kwargs...)
+                    object_name_lists = $(object_name_lists)
+                    object_class_name_list = $(object_class_name_list)
+                    indexes = Array{Int64, 1}()
+                    object_name_list = Array{Symbol, 1}()
+                    for (k, v) in kwargs
+                        push!(indexes, findfirst(x -> x == k, object_class_name_list))
+                        push!(object_name_list, v)
+                    end
+                    result = filter(x -> x[indexes] == object_name_list, object_name_lists)
+                    slice = filter(i -> !(i in indexes), collect(1:length(object_class_name_list)))
+                    length(slice) == 1 && (slice = slice[1])
+                    [x[slice] for x in result]
+                end
+                export $(Symbol(relationship_class_name))
+            end
+        end
+    end
+end
+
+
+"""
+    JuMP_all_out(db_url)
+
+Generate and export convenience functions
+for each object class, relationship class, and parameter, in the database
+given by `db_url`. `db_url` is a database url composed according to
+[sqlalchemy rules](http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls).
+See [`JuMP_all_out(db_map::PyObject)`](@ref) for more details.
+"""
+function JuMP_all_out(db_url; upgrade=false)
+    # Create DatabaseMapping object using Python spinedatabase_api
+    try
+        db_map = db_api[:DatabaseMapping](db_url, upgrade=upgrade)
+        JuMP_all_out(db_map)
+    catch e
+        if isa(e, PyCall.PyError) && pyisinstance(e.val, db_api[:exception][:SpineDBVersionError])
+            error(
+"""
+The database at '$db_url' is from an older version of Spine
+and needs to be upgraded in order to be used with the current version.
+
+You can upgrade it by running `JuMP_all_out(db_url; upgrade=true)`.
+
+WARNING: After the upgrade, the database may no longer be used
+with previous versions of Spine.
+"""
+            )
+        else
+            rethrow()
+        end
+    end
+end
+
+
 """
     JuMP_all_out(db_map::PyObject)
 
@@ -357,8 +400,8 @@ julia> trans_loss(connection="EL1", node1="LeuvenElectricity", node2="AntwerpEle
 ```
 """
 function JuMP_all_out(db_map::PyObject)
-    JuMP_object_out(db_map)
-    JuMP_relationship_out(db_map)
-    JuMP_object_parameter_out(db_map)
+    object_subset_dict = JuMP_object_parameter_out(db_map)
+    JuMP_object_out(db_map, object_subset_dict)
     JuMP_relationship_parameter_out(db_map)
+    JuMP_relationship_out(db_map)
 end

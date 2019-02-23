@@ -55,7 +55,7 @@ using DataFrames
 using Dates
 using Suppressor
 const db_api = PyNULL()
-const required_spinedatabase_api_version = "0.0.8"
+const required_spinedatabase_api_version = "0.0.15"
 
 function __init__()
     try
