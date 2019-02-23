@@ -147,10 +147,7 @@ macro butcher(expression)
     # 'Beat' each node in the expression tree (see definition of `beat` below)
     visit_node(expression, 1, nothing, 1, beat, call_location, assignment_location)
     for (call, call_location_arr) in call_location
-        # Find top-most node where all arguments have been assigned
-        local topmost_node_id
         call_arg_arr = []  # Array of non-literal arguments
-        arg_assignment_location = Dict() # Location of each argument assignment
         replacement_variable = Dict()  # Variable to store the return value of each relocated call
         for arg in call.args[2:end]  # First arg is the method name
             if isa(arg, Symbol)
@@ -163,17 +160,22 @@ macro butcher(expression)
                 elseif arg.head == :tuple
                     # Tuple argument, append every Symbol
                     append!(call_arg_arr, [x for x in arg.args if isa(x, Symbol)])
-                end
-            elseif isa(arg, Expr) && arg.head == :parameters
-                # keyword arguments after a semi-colon
-                for kwarg in arg.args
-                    if kwarg.head == :kw && isa(kwarg.args[end], Symbol)
-                        push!(call_arg_arr, kwarg.args[end])
+                elseif arg.head == :parameters
+                    # keyword arguments after a semi-colon
+                    for kwarg in arg.args
+                        if kwarg.head == :kw
+                            isa(kwarg.args[end], Symbol) && push!(call_arg_arr, kwarg.args[end])
+                        end
                     end
+                else
+                    # TODO: Handle remaining cases
                 end
+            else
+                # TODO: Handle remaining cases
             end
         end
         isempty(call_arg_arr) && continue
+        # Find top-most node where all arguments are assigned
         topmost_node_id = try maximum(
             minimum(
                 location["node_id"] for location in assignment_location[arg]
@@ -183,14 +185,18 @@ macro butcher(expression)
             # One of the arguments is not assigned in this scope, skip the call
             continue
         end
+        # Build dictionary of places where arguments are reassigned
+        # below the top-most node
+        arg_assignment_location = Dict()
         for arg in call_arg_arr
             for location in assignment_location[arg]
                 location["node_id"] < topmost_node_id && continue
                 push!(arg_assignment_location, location["node_id"] => (location["parent"], location["row"]))
             end
         end
-        # Find better place to put the call
+        # Find better place for the call
         for location in call_location_arr
+            # Make sure we use the most recent value of all the arguments (take maximum)
             target_node_id = try
                 maximum(x for x in keys(arg_assignment_location) if x < location["node_id"])
             catch ArgumentsError
@@ -198,24 +204,23 @@ macro butcher(expression)
                 continue
             end
             target_parent, target_row = arg_assignment_location[target_node_id]
-            # If target parent's head is not one in the supported list, skip call
+            # Only relocate if we have a recipe for it (see for loop right below this one)
             !in(target_parent.head, (:for, :while, :block)) && continue
-            # TODO: try and support more advanced stuff, such as :filter
-            # Check if recursive assignment, e.g., x = f(x), and skip it
+            # Don't relocate recursive assignment, e.g., x = f(x)
             target_parent.args[target_row].args[end] == call && continue
             # Create or retrieve replacement variable
             x = get!(replacement_variable, target_node_id, gensym())
-            # Add new replacement variable location
+            # Add new location for the replacement variable
             push!(replacement_variable_location, (x, location["parent"], location["row"]))
         end
-        # Perform the call at a better location, assign result to replacement variable
+        # Put the call at a better location, assign result to replacement variable
         for (target_node_id, x) in replacement_variable
             target_parent, target_row = arg_assignment_location[target_node_id]
             if target_parent.head in (:for, :while)  # Assignment is in the loop condition, e.g., for i=1:100
-                # Better location is the begining of the loop body
+                # Put call at the begining of the loop body
                 target_parent.args[target_row + 1] = Expr(:block, :($x = $call), target_parent.args[target_row + 1])
             elseif target_parent.head == :block
-                # Better location is right after the assignment
+                # Put call right after the assignment
                 target_parent.args[target_row] = Expr(:block, target_parent.args[target_row], :($x = $call))
             end
         end
