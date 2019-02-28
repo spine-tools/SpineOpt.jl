@@ -17,32 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
-"""
-    @suppress_err expr
-Suppress the STDERR stream for the given expression.
-"""
-# NOTE: Borrowed from Suppressor.jl
-macro suppress_err(block)
-    quote
-        if ccall(:jl_generating_output, Cint, ()) == 0
-            ORIGINAL_STDERR = STDERR
-            err_rd, err_wr = redirect_stderr()
-            err_reader = @schedule read(err_rd, String)
-        end
-
-        try
-            $(esc(block))
-        finally
-            if ccall(:jl_generating_output, Cint, ()) == 0
-                redirect_stderr(ORIGINAL_STDERR)
-                close(err_wr)
-            end
-        end
-    end
-end
-
-
 """
     as_number(str)
 
@@ -166,35 +140,42 @@ at unconvenient places -such as the body of a long for loop.
 # to indicate the number of passages to perform. Also, we can make it so if this
 # argument is Inf (or something) we keep going until there's nothing left to butcher.
 macro butcher(expression)
-    expression = macroexpand(esc(expression))
+    expression = macroexpand(SpineModel, esc(expression))
     call_location = Dict{Expr,Array{Dict{String,Any},1}}()
     assignment_location = Dict{Symbol,Array{Dict{String,Any},1}}()
     replacement_variable_location = Array{Any,1}()
     # 'Beat' each node in the expression tree (see definition of `beat` below)
     visit_node(expression, 1, nothing, 1, beat, call_location, assignment_location)
     for (call, call_location_arr) in call_location
-        # Find top-most node where all arguments have been assigned
-        local topmost_node_id
         call_arg_arr = []  # Array of non-literal arguments
-        arg_assignment_location = Dict() # Location of each argument assignment
         replacement_variable = Dict()  # Variable to store the return value of each relocated call
         for arg in call.args[2:end]  # First arg is the method name
             if isa(arg, Symbol)
                 # Positional argument
                 push!(call_arg_arr, arg)
-            elseif isa(arg, Expr) && arg.head == :kw && isa(arg.args[end], Symbol)
-                # keyword argument
-                push!(call_arg_arr, arg.args[end])
-            elseif isa(arg, Expr) && arg.head == :parameters
-                # keyword arguments after a semi-colon
-                for kwarg in arg.args
-                    if kwarg.head == :kw && isa(kwarg.args[end], Symbol)
-                        push!(call_arg_arr, kwarg.args[end])
+            elseif isa(arg, Expr)
+                if arg.head == :kw
+                    # Keyword argument, push it if Symbol
+                    isa(arg.args[end], Symbol) && push!(call_arg_arr, arg.args[end])
+                elseif arg.head == :tuple
+                    # Tuple argument, append every Symbol
+                    append!(call_arg_arr, [x for x in arg.args if isa(x, Symbol)])
+                elseif arg.head == :parameters
+                    # keyword arguments after a semi-colon
+                    for kwarg in arg.args
+                        if kwarg.head == :kw
+                            isa(kwarg.args[end], Symbol) && push!(call_arg_arr, kwarg.args[end])
+                        end
                     end
+                else
+                    # TODO: Handle remaining cases
                 end
+            else
+                # TODO: Handle remaining cases
             end
         end
         isempty(call_arg_arr) && continue
+        # Find top-most node where all arguments are assigned
         topmost_node_id = try maximum(
             minimum(
                 location["node_id"] for location in assignment_location[arg]
@@ -204,38 +185,44 @@ macro butcher(expression)
             # One of the arguments is not assigned in this scope, skip the call
             continue
         end
+        # Build dictionary of places where arguments are reassigned
+        # below the top-most node
+        arg_assignment_location = Dict()
         for arg in call_arg_arr
             for location in assignment_location[arg]
                 location["node_id"] < topmost_node_id && continue
                 push!(arg_assignment_location, location["node_id"] => (location["parent"], location["row"]))
             end
         end
-        # Find better place to put the call
+        # Find better place for the call
         for location in call_location_arr
+            # Make sure we use the most recent value of all the arguments (take maximum)
             target_node_id = try
                 maximum(x for x in keys(arg_assignment_location) if x < location["node_id"])
             catch ArgumentsError
                 # One or more arguments are not assigned before the call is made, skip
                 continue
             end
-            # Check if recursive assignment, e.g., x = f(x), and skip it
             target_parent, target_row = arg_assignment_location[target_node_id]
+            # Only relocate if we have a recipe for it (see for loop right below this one)
+            !in(target_parent.head, (:for, :while, :block)) && continue
+            # Don't relocate recursive assignment, e.g., x = f(x)
             target_parent.args[target_row].args[end] == call && continue
             # Create or retrieve replacement variable
             x = get!(replacement_variable, target_node_id, gensym())
-            # Add new replacement variable location
+            # Add new location for the replacement variable
             push!(replacement_variable_location, (x, location["parent"], location["row"]))
         end
-        # Perform the call at a better location, assign result to replacement variable
+        # Put the call at a better location, assign result to replacement variable
         for (target_node_id, x) in replacement_variable
             target_parent, target_row = arg_assignment_location[target_node_id]
             if target_parent.head in (:for, :while)  # Assignment is in the loop condition, e.g., for i=1:100
-                # Better location is the begining of the loop body
+                # Put call at the begining of the loop body
                 target_parent.args[target_row + 1] = Expr(:block, :($x = $call), target_parent.args[target_row + 1])
-            else
-                # Better location is right after the assignment
+            elseif target_parent.head == :block
+                # Put call right after the assignment
                 target_parent.args[target_row] = Expr(:block, target_parent.args[target_row], :($x = $call))
-            end  # TODO: are there any other cases which need special treatment?
+            end
         end
     end
     # Replace calls in original locations with the replacement variable

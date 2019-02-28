@@ -27,10 +27,28 @@ given by `db_url`. `db_url` is a database url composed according to
 [sqlalchemy rules](http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls).
 See [`JuMP_all_out(db_map::PyObject)`](@ref) for more details.
 """
-function JuMP_all_out(db_url)
+function JuMP_all_out(db_url; upgrade=false)
     # Create DatabaseMapping object using Python spinedatabase_api
-    db_map = db_api[:DatabaseMapping](db_url)
-    JuMP_all_out(db_map)
+    try
+        db_map = db_api[:DatabaseMapping](db_url, upgrade=upgrade)
+        JuMP_all_out(db_map)
+    catch e
+        if isa(e, PyCall.PyError) && pyisinstance(e.val, db_api[:exception][:SpineDBVersionError])
+            error(
+"""
+The database at '$db_url' is from an older version of Spine
+and needs to be upgraded in order to be used with the current version.
+
+You can upgrade it by running `JuMP_all_out(db_url; upgrade=true)`.
+
+WARNING: After the upgrade, the database may no longer be used
+with previous versions of Spine.
+"""
+            )
+        else
+            rethrow()
+        end
+    end
 end
 
 """
@@ -175,13 +193,13 @@ function JuMP_object_parameter_out(db_map::PyObject)
         @suppress_err begin
             # Create and export convenience functions
             @eval begin
-                function $(Symbol(parameter_name))(;t::Union{Int64,Void}=nothing, kwargs...)
+                function $(Symbol(parameter_name))(;t::Union{Int64,Nothing}=nothing, kwargs...)
                     object_parameter_value_dict = $(object_parameter_value_dict)
                     if length(kwargs) == 0
                         # Return dict if kwargs is empty
                         return object_parameter_value_dict
                     elseif length(kwargs) == 1
-                        key, value = kwargs[1]
+                        key, value = iterate(kwargs)[1]
                         object_class_name = key  # NOTE: not in use at the moment
                         object_name = value
                         !haskey(object_parameter_value_dict, object_name) && return nothing
@@ -264,14 +282,14 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
         @suppress_err begin
             # Create and export convenience function named as the parameter
             @eval begin
-                function $(Symbol(parameter_name))(;t::Union{Int64,Void}=nothing, kwargs...)
+                function $(Symbol(parameter_name))(;t::Union{Int64,Nothing}=nothing, kwargs...)
                     relationship_parameter_value_dict = $(relationship_parameter_value_dict)
                     object_class_name_list = $(object_class_name_list)
                     # If no kwargs are provided a dict of all parameter values is returned
                     if length(kwargs) == 0
                          return relationship_parameter_value_dict
                     end
-                    object_name_list = Array{Symbol, 1}(length(kwargs))
+                    object_name_list = Array{Symbol}(undef, length(kwargs))
                     for (k, v) in kwargs
                         object_name_list[findfirst(x -> x == k, object_class_name_list)] = v
                     end

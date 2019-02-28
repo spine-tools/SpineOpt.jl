@@ -30,6 +30,7 @@ export linear_JuMP_model
 # Export variables
 export generate_variable_flow
 export generate_variable_trans
+export generate_variable_state
 
 # Export objecte
 export objective_minimize_production_cost
@@ -41,6 +42,7 @@ export constraint_max_cum_in_flow_bound
 export constraint_trans_loss
 export constraint_trans_cap
 export constraint_nodal_balance
+export constraint_node_state_cyclic_bound
 
 export @butcher
 
@@ -50,9 +52,8 @@ using JSON
 using JuMP
 using Clp
 using DataFrames
-# using Missings
-using Base.Dates
-using CSV
+using Dates
+using Suppressor
 const db_api = PyNULL()
 const required_spinedatabase_api_version = "0.0.8"
 
@@ -60,35 +61,38 @@ function __init__()
     try
         copy!(db_api, pyimport("spinedatabase_api"))
     catch e
-        if isa(e, PyCall.PyError)
-            println(e)
+        if isa(e, PyCall.PyError) && pyisinstance(e.val, py"ModuleNotFoundError")
             error(
 """
-SpineModel couldn't import the required spinedatabase_api python module.
-Please make sure spinedatabase_api is in your python path, restart your julia session, and load SpineModel again.
+SpineModel couldn't find the required Python module `spinedatabase_api`.
+Please make sure `spinedatabase_api` is in your Python path, restart your Julia session,
+and try using SpineModel again.
 
-Note: if you have already installed spinedatabase_api for Spine Toolbox, you can also use it for SpineModel.
-All you need to do is configure PyCall to use the same python Spine Toolbox is using. Run
+NOTE: if you have already installed Spine Toolbox, then you can use the same `spinedatabase_api`
+provided with it in SpineModel.
+All you need to do is configure PyCall to use the same Python program as Spine Toolbox. Run
 
-    ENV["PYTHON"] = "... path of the python program you want ..."
+    ENV["PYTHON"] = "... path of the Python program you want ..."
 
 followed by
 
     Pkg.build("PyCall")
 
-If you haven't installed spinedatabase_api or don't want to reconfigure PyCall, then you need to do the following:
+If you haven't installed Spine Toolbox or don't want to reconfigure PyCall, then you can do the following:
 
-1. Find out the path of the python program used by PyCall. Run
+1. Find out the path of the Python program used by PyCall. Run
 
     PyCall.pyprogramname
 
-2. Install spinedatabase_api using that python. Open a terminal (e.g. command prompt on Windows) and run
+2. Install spinedatabase_api using that Python. Open a terminal (e.g. command prompt on Windows) and run
 
     python -m pip install git+https://github.com/Spine-project/Spine-Database-API.git
 
 where 'python' is the path returned by `PyCall.pyprogramname`.
 """
             )
+        else
+            rethrow()
         end
         return
     end
@@ -97,12 +101,12 @@ where 'python' is the path returned by `PyCall.pyprogramname`.
     required_version_split = parse.(Int, split(required_spinedatabase_api_version, "."))
     any(current_version_split .< required_version_split) && error(
 """
-SpineModel couldn't find the required spinedatabase_api version.
+SpineModel couldn't find the required version of `spinedatabase_api`.
 (Required version is $required_spinedatabase_api_version, whereas current is $current_version)
-Please upgrade spinedatabase_api to $required_spinedatabase_api_version, restart your julia session,
-and load SpineModel again.
+Please upgrade `spinedatabase_api` to $required_spinedatabase_api_version, restart your julia session,
+and try using SpineModel again.
 
-To upgrade spinedatabase_api, open a terminal (e.g. command prompt on Windows) and run
+To upgrade `spinedatabase_api`, open a terminal (e.g. command prompt on Windows) and run
 
     pip install --upgrade git+https://github.com/Spine-project/Spine-Database-API.git
 """
@@ -118,12 +122,14 @@ include("data_io/to_spine.jl")
 
 include("variables/generate_variable_flow.jl")
 include("variables/generate_variable_trans.jl")
+include("variables/generate_variable_state.jl")
 
 include("objective/objective_minimize_production_cost.jl")
 
 include("constraints/constraint_max_cum_in_flow_bound.jl")
 include("constraints/constraint_flow_capacity.jl")
 include("constraints/constraint_nodal_balance.jl")
+include("constraints/constraint_node_state_cyclic_bound.jl")
 include("constraints/constraint_fix_ratio_out_in_flow.jl")
 include("constraints/constraint_trans_cap.jl")
 include("constraints/constraint_trans_loss.jl")
