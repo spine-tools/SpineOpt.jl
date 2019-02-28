@@ -22,7 +22,7 @@ See [Spine](http://www.spine-model.org/) for more information.
 From the Julia REPL, press the key `]` to enter the Pkg-REPL mode, then run
 
 ```julia
-(v1.0) pkg> add https://github.com/Spine-project/Spine-Model.git
+(v1.0) pkg> add https://github.com/Spine-project/Spine-Model.git#dev
 ```
 
 This will install `SpineModel.jl` and all its dependencies, except for `spinedatabase_api` which is
@@ -60,7 +60,11 @@ If you haven't installed `spinedatabase_api` yet or don't want to reconfigure Py
 
 ### Upgrading
 
-TODO
+To upgrade to the most recent version, enter the Pkg-REPL mode and run
+
+```julia
+(v1.0) pkg> up SpineModel
+```
 
 ### Usage
 

@@ -58,6 +58,7 @@ const db_api = PyNULL()
 const required_spinedatabase_api_version = "0.0.8"
 
 function __init__()
+    println("Cheers!")
     try
         copy!(db_api, pyimport("spinedatabase_api"))
     catch e
