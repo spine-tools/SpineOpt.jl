@@ -96,7 +96,7 @@ where 'python' is the path returned by `PyCall.pyprogramname`.
         end
         return
     end
-    current_version = db_api[:__version__]
+    current_version = db_api.__version__
     current_version_split = parse.(Int, split(current_version, "."))
     required_version_split = parse.(Int, split(required_spinedatabase_api_version, "."))
     any(current_version_split .< required_version_split) && error(

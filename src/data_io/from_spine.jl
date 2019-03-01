@@ -40,7 +40,7 @@ Return a dictionary of object subsets.
 """
 function JuMP_object_parameter_out(db_map::PyObject)
     object_subset_dict = Dict{Symbol,Any}()
-    enum_dict = py"{x.id: x.value_list.split(',') for x in $db_map.wide_parameter_enum_list()}"
+    value_list_dict = py"{x.id: x.value_list.split(',') for x in $db_map.wide_parameter_value_list_list()}"
     # Iterate through parameters as dictionaries
     for parameter in py"[x._asdict() for x in $db_map.object_parameter_list()]"
         parameter_name = parameter["parameter_name"]
@@ -61,10 +61,10 @@ function JuMP_object_parameter_out(db_map::PyObject)
             end
             object_parameter_value_dict[object_name] = value
         end
-        enum_id = parameter["enum_id"]
-        enum_id == nothing && continue
+        value_list_id = parameter["value_list_id"]
+        value_list_id == nothing && continue
         object_class_name_symbol = Symbol(parameter["object_class_name"])
-        value_list = enum_dict[enum_id]
+        value_list = value_list_dict[value_list_id]
         # Loop through all object parameter values again to populate object_subset_dict
         for object_parameter_value in object_parameter_value_list
             value = object_parameter_value["value"]
@@ -155,14 +155,14 @@ function JuMP_object_out(db_map::PyObject, object_subset_dict::Dict{Symbol,Any})
                         kwargs_arr = [par => val for (par, val) in kwargs]
                         par, val = kwargs_arr[1]
                         dict1 = $(object_subset_dict1)
-                        !haskey(dict1, par) && error("$par is not an enumerated parameter for $object_class_name")
+                        !haskey(dict1, par) && error("$par is not a list-parameter for $object_class_name")
                         dict2 = dict1[par]
-                        !haskey(dict2, val) && error("$val is not an enumerated value for $par")
+                        !haskey(dict2, val) && error("$val is not a listed value for $par")
                         object_subset = dict2[val]
                         for (par, val) in kwargs_arr[2:end]
-                            !haskey(dict1, par) && error("$par is not an enumerated parameter for $object_class_name")
+                            !haskey(dict1, par) && error("$par is not a list-parameter for $object_class_name")
                             dict2 = dict1[par]
-                            !haskey(dict2, val) && error("$val is not an enumerated value for $par")
+                            !haskey(dict2, val) && error("$val is not a listed value for $par")
                             object_subset_ = dict2[val]
                             object_subset = [x for x in object_subset if x in object_subset_]
                         end
@@ -336,10 +336,10 @@ See [`JuMP_all_out(db_map::PyObject)`](@ref) for more details.
 function JuMP_all_out(db_url; upgrade=false)
     # Create DatabaseMapping object using Python spinedatabase_api
     try
-        db_map = db_api[:DatabaseMapping](db_url, upgrade=upgrade)
+        db_map = db_api.DatabaseMapping(db_url, upgrade=upgrade)
         JuMP_all_out(db_map)
     catch e
-        if isa(e, PyCall.PyError) && pyisinstance(e.val, db_api[:exception][:SpineDBVersionError])
+        if isa(e, PyCall.PyError) && pyisinstance(e.val, db_api.exception.SpineDBVersionError)
             error(
 """
 The database at '$db_url' is from an older version of Spine
