@@ -147,7 +147,7 @@ function JuMP_results_to_spine_db!(dest_url::String; results...)
         py"""$db_map.commit_session($msg)"""
     catch err
         py"""$db_map.rollback_session()"""
-        throw(err)
+        rethrow()
     finally
         py"""$db_map.close()"""
     end
@@ -159,11 +159,9 @@ end
 Update `dest_url` with classes and objects from `source_url`,
 as well as new parameters given by `results`.
 """
-function JuMP_results_to_spine_db!(dest_url, source_url; results...)
+function JuMP_results_to_spine_db!(dest_url, source_url; upgrade=false, results...)
     if py"""$db_api.is_unlocked($dest_url)"""
-        py"""$db_api.copy_database(
-            $dest_url, $source_url, overwrite=False, skip_tables=["parameter", "parameter_value"])
-        """
+        create_results_database(dest_url, source_url; upgrade=upgrade)
         JuMP_results_to_spine_db!(dest_url; results...)
     else
         warn(
@@ -173,18 +171,42 @@ The operation will resume automatically if the lock is released within the next 
 """
         )
         if py"""$db_api.is_unlocked($dest_url, timeout=120)"""
-            py"""$db_api.copy_database(
-                $dest_url, $source_url, overwrite=False, skip_tables=["parameter", "parameter_value"])
-            """
+            create_results_database(dest_url, source_url; upgrade=upgrade)
             JuMP_results_to_spine_db!(dest_url; results...)
         else
             timestamp = Dates.format(Dates.now(), "yyyymmdd_HH_MM_SS")
             alt_dest_url = "sqlite:///result_$timestamp.sqlite"
             info("The database $dest_url is locked. Saving results to $alt_dest_url instead.")
-            py"""$db_api.copy_database(
-                $alt_dest_url, $source_url, overwrite=False, skip_tables=["parameter", "parameter_value"])
-            """
+            create_results_database(alt_dest_url, source_url; upgrade=upgrade)
             JuMP_results_to_spine_db!(alt_dest_url; results...)
         end
     end
+end
+
+
+function create_results_database(dest_url, source_url; upgrade=False)
+    try
+        py"""$db_api.copy_database(
+            $dest_url, $source_url, upgrade=$upgrade, overwrite=False, skip_tables=["parameter", "parameter_value"])
+        """
+    catch e
+        if isa(e, PyCall.PyError) && pyisinstance(e.val, db_api.exception.SpineDBVersionError)
+            error(
+"""
+The database at '$(e.val.url)' is from an older version of Spine
+and needs to be upgraded in order to be used with the current version.
+
+You can upgrade it by passing the keyword argument `upgrade=true` to your function call, e.g.:
+
+    JuMP_results_to_spine_db!(dest_url, source_url; upgrade=true, results...)
+
+WARNING: After the upgrade, the database may no longer be used
+with previous versions of Spine.
+"""
+            )
+        else
+            rethrow()
+        end
+    end
+
 end
