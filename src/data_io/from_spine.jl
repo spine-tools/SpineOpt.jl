@@ -61,20 +61,6 @@ function JuMP_object_parameter_out(db_map::PyObject)
             end
             object_parameter_value_dict[object_name] = value
         end
-        value_list_id = parameter["value_list_id"]
-        value_list_id == nothing && continue
-        object_class_name_symbol = Symbol(parameter["object_class_name"])
-        value_list = value_list_dict[value_list_id]
-        # Loop through all object parameter values again to populate object_subset_dict
-        for object_parameter_value in object_parameter_value_list
-            value = object_parameter_value["value"]
-            object_name = object_parameter_value["object_name"]
-            !(value in value_list) && continue
-            dict1 = get!(object_subset_dict, object_class_name_symbol, Dict{Symbol,Any}())
-            dict2 = get!(dict1, parameter_name_symbol, Dict{Symbol,Any}())
-            arr = get!(dict2, Symbol(value), Array{Symbol,1}())
-            push!(arr, Symbol(object_name))
-        end
         @suppress_err begin
             # Create and export convenience functions
             @eval begin
@@ -109,6 +95,20 @@ function JuMP_object_parameter_out(db_map::PyObject)
                 end
                 export $parameter_name_symbol
             end
+        end
+        value_list_id = parameter["value_list_id"]
+        value_list_id == nothing && continue
+        object_class_name_symbol = Symbol(parameter["object_class_name"])
+        value_list = value_list_dict[value_list_id]
+        # Loop through all object parameter values again to populate object_subset_dict
+        for object_parameter_value in object_parameter_value_list
+            value = object_parameter_value["value"]
+            object_name = object_parameter_value["object_name"]
+            !(value in value_list) && continue
+            dict1 = get!(object_subset_dict, object_class_name_symbol, Dict{Symbol,Any}())
+            dict2 = get!(dict1, parameter_name_symbol, Dict{Symbol,Any}())
+            arr = get!(dict2, Symbol(value), Array{Symbol,1}())
+            push!(arr, Symbol(object_name))
         end
     end
     object_subset_dict
