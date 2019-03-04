@@ -25,60 +25,25 @@ Enforce balance of all commodity flows from and to a node.
 TODO: for electrical lines this constraint is obsolete unless
 a trade based representation is used.
 """
-function constraint_nodal_balance(m::Model, state, flow, trans)
-    @butcher for (c,n) in commodity__node(), t=1:number_of_timesteps(time=:timer)
-        @constraint(
-            m,
-            # Change in the state commodity content
-            + ( state_commodity_content(commodity=c, node=n) != nothing &&
-                state_commodity_content(commodity=c, node=n)
-                    * (state[c, n, t] - state[c, n, t-1])
-                )
-            ==
-            # Commodity state discharge and diffusion
-            + ( state_commodity_content(commodity=c, node=n) != nothing &&
-                # Commodity self-discharge
-                - ( state_commodity_discharge_rate(commodity=c, node=n) != nothing &&
-                    state_commodity_discharge_rate(commodity=c, node=n)
-                        * state[c, n, t]
-                    )
-                # Commodity diffusion between nodes
-                # Diffusion into this node
-                + reduce(+,
-                    state_commodity_diffusion_rate(commodity=c, node1=nn, node2=n)
-                    * state[c, nn, t]
-                    for nn in commodity__node__node(commodity=c, node2=n);
-                        init=0
-                    )
-                    # Diffusion from this node
-                - reduce(+,
-                    state_commodity_diffusion_rate(commodity=c, node1=n, node2=nn)
-                    * state[c, n ,t]
-                    for nn in commodity__node__node(commodity=c, node1=n);
-                        init=0
-                    )
-                )
-            # Demand for the commodity
-            - ( demand(commodity=c, node=n, t=t) != nothing &&
-                demand(commodity=c, node=n, t=t)
-                )
-            # Output of units into this node, and their input from this node
-            + reduce(+,
-                flow[c, n, u, :out, t]
-                for u in commodity__node__unit__direction(commodity=c, node=n, direction=:out);
-                    init=0
-                )
-            - reduce(+,
-                flow[c, n, u, :in, t]
-                for u in commodity__node__unit__direction(commodity=c, node=n, direction=:in);
-                    init=0
-                )
-            # Transfer of commodities between nodes
-            - reduce(+,
-                trans[conn, n, t]
-                for conn in connection__node(node=n);
-                    init=0
-                )
-        )
+function constraint_nodal_balance(m::Model, flow, trans)
+    @butcher for n in node(), t=1:number_of_timesteps(time=:timer)
+        if demand(node=n, t=t) != nothing
+            @constraint(
+                m,
+                + sum(flow[c, n, u, :out, t] for (c, u) in commodity__node__unit__direction(node=n, direction=:out))
+                ==
+                + demand(node=n, t=t)
+                + sum(flow[c, n, u, :in, t] for (c, u) in commodity__node__unit__direction(node=n, direction=:in))
+                + sum(trans[conn, n, t] for conn in connection__node(node=n))
+            )
+        else
+            @constraint(
+                m,
+                + sum(flow[c, n, u, :out, t] for (c, u) in commodity__node__unit__direction(node=n, direction=:out))
+                ==
+                + sum(flow[c, n, u, :in, t] for (c, u) in commodity__node__unit__direction(node=n, direction=:in))
+                + sum(trans[conn, n, t] for conn in connection__node(node=n))
+            )
+        end
     end
 end
