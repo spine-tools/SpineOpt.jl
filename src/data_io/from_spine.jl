@@ -44,11 +44,11 @@ function JuMP_object_parameter_out(db_map::PyObject)
     # Iterate through parameters as dictionaries
     for parameter in py"[x._asdict() for x in $db_map.object_parameter_list()]"
         parameter_name = parameter["parameter_name"]
+        object_class_name = parameter["object_class_name"]
+        default_value = as_number(parameter["default_value"])
         parameter_name_symbol = Symbol(parameter_name)
         object_parameter_value_list =
             py"[x._asdict() for x in $db_map.object_parameter_value_list(parameter_name=$parameter_name)]"
-        # Skip if empty
-        isempty(object_parameter_value_list) && continue
         object_parameter_value_dict = Dict{Symbol,Any}()
         # Loop through all object parameter values to create a Dict(object_name => value, ... )
         # where value is obtained from the json field if possible, else from the value field
@@ -71,10 +71,20 @@ function JuMP_object_parameter_out(db_map::PyObject)
                         return object_parameter_value_dict
                     elseif length(kwargs) == 1
                         key, value = iterate(kwargs)[1]
-                        object_class_name = key  # NOTE: not in use at the moment
-                        object_name = value
-                        !haskey(object_parameter_value_dict, object_name) && return nothing
-                        value = object_parameter_value_dict[object_name]
+                        given_object_class_name = key
+                        object_class_name = Symbol($object_class_name)
+                        given_object_class_name != object_class_name && error(
+                            """Incorrect object class, expected '$(object_class_name)',
+                            got '$given_object_class_name'
+                            """
+                        )
+                        given_object_name = value
+                        object_names = eval(object_class_name)()
+                        if !(given_object_name in object_names)
+                            error("'$given_object_name' is not a valid object of class '$object_class_name'")
+                        end
+                        !haskey(object_parameter_value_dict, given_object_name) && return $default_value
+                        value = object_parameter_value_dict[given_object_name]
                         if isa(value, Array)
                             t == nothing && return value
                             return value[t]
@@ -83,9 +93,9 @@ function JuMP_object_parameter_out(db_map::PyObject)
                             return_expression = value["return_expression"]
                             preparation_expressions = get(value, "preparation_expressions", [])
                             for expr in preparation_expressions
-                                eval(parse(replace(expr, "\$t" => "$t")))
+                                eval(Meta.parse(replace(expr, "\$t" => "$t")))
                             end
-                            return eval(parse(replace(return_expression, "\$t" => "$t")))
+                            return eval(Meta.parse(replace(return_expression, "\$t" => "$t")))
                         else
                             return value
                         end
@@ -191,34 +201,22 @@ julia> p_TransLoss(connection="EL1", node1="AntwerpElectricity", node2="LeuvenEl
 ```
 """
 function JuMP_relationship_parameter_out(db_map::PyObject)
-    # Get list of all parameters via spinedata_api
-    parameter_list = py"$db_map.parameter_list()"
     # Iterate through parameters as dictionaries
-    for parameter in py"[x._asdict() for x in $parameter_list]"
-        parameter_name = parameter["name"]
-        parameter_id = parameter["id"]
-        # Check whether parameter value is specified at least once
-        count_ = py"$db_map.relationship_parameter_value_list(parameter_name=$parameter_name).count()"
-        count_ == 0 && continue
-        relationship_parameter_list =
-            py"$db_map.relationship_parameter_list(parameter_id=$parameter_id)"
-        # Get object_class_name_list from first row in the result, e.g. ["unit", "node"]
-        object_class_name_list = nothing
-        for relationship_parameter in py"[x._asdict() for x in $relationship_parameter_list]"
-            object_class_name_list = [
-                Symbol(x) for x in split(relationship_parameter["object_class_name_list"], ",")
-            ]
-            break
-        end
+    for parameter in py"[x._asdict() for x in $db_map.relationship_parameter_list()]"
+        parameter_name = parameter["parameter_name"]
+        relationship_class_name = parameter["relationship_class_name"]
+        default_value = as_number(parameter["default_value"])
+        object_class_name_list = [Symbol(x) for x in split(parameter["object_class_name_list"], ",")]
+        dimension_count = length(object_class_name_list)
         # Rename entries of this list by appending increasing integer values if entry occurs more than one time
         fix_name_ambiguity!(object_class_name_list)
         relationship_parameter_value_list =
             py"$db_map.relationship_parameter_value_list(parameter_name=$parameter_name)"
-        relationship_parameter_value_dict = Dict{Array{Symbol,1},Any}()
+        relationship_parameter_value_dict = Dict{Tuple{Symbol,Symbol,Vararg{Symbol}},Any}() # At least two Symbols
         # Loop through all relationship parameter values to create a Dict("obj1,obj2,.." => value, ... )
         # where value is obtained from the json field if possible, else from the value field
         for relationship_parameter_value in py"[x._asdict() for x in $relationship_parameter_value_list]"
-            object_name_list = Symbol.(split(relationship_parameter_value["object_name_list"], ",")) #"obj1,obj2,..." e.g. "CoalPlant,Electricity,Coal"
+            object_name_list = Tuple(Symbol.(split(relationship_parameter_value["object_name_list"], ","))) #"obj1,obj2,..." e.g. "CoalPlant,Electricity,Coal"
             value = try
                 JSON.parse(relationship_parameter_value["json"])
             catch LoadError
@@ -233,15 +231,36 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
                     relationship_parameter_value_dict = $(relationship_parameter_value_dict)
                     object_class_name_list = $(object_class_name_list)
                     # If no kwargs are provided a dict of all parameter values is returned
-                    if length(kwargs) == 0
-                         return relationship_parameter_value_dict
+                    kwargs_length = length(kwargs)
+                    kwargs_length == 0 && return relationship_parameter_value_dict
+                    dimension_count = $dimension_count
+                    if kwargs_length != dimension_count
+                        error(
+                            """Incorrect number of (object_class=object) pairs,
+                            expected $dimension_count, got $kwargs_length."""
+                        )
                     end
-                    object_name_list = Array{Symbol}(undef, length(kwargs))
-                    for (k, v) in kwargs
-                        object_name_list[findfirst(x -> x == k, object_class_name_list)] = v
+                    given_object_class_name_list = keys(kwargs)
+                    given_object_name_list = values(values(kwargs))
+                    indexes = indexin(given_object_class_name_list, object_class_name_list)
+                    nothing in indexes && error(
+                        """Incorret object classes, expected '$(join(object_class_name_list, "', '"))',
+                        got '$(join(given_object_class_name_list, "', '"))'
+                        """
+                    )
+                    relationship_class_name = Symbol($relationship_class_name)
+                    try
+                        eval(relationship_class_name)(;kwargs...)
+                    catch e
+                        error(
+                            """Invalid objects '$(join(given_object_name_list, "', '"))'
+                            for relationship class '$relationship_class_name'.
+                            """
+                        )
                     end
-                    !haskey(relationship_parameter_value_dict, object_name_list) && return nothing
-                    value = relationship_parameter_value_dict[object_name_list]
+                    ordered_object_name_list = given_object_name_list[indexes]
+                    !haskey(relationship_parameter_value_dict, ordered_object_name_list) && return $default_value
+                    value = relationship_parameter_value_dict[ordered_object_name_list]
                     if isa(value, Array)
                         t == nothing && return value
                         return value[t]
@@ -250,9 +269,9 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
                         return_expression = value["return_expression"]
                         preparation_expressions = get(value, "preparation_expressions", [])
                         for expr in preparation_expressions
-                            eval(parse(replace(expr, "\$t" => "$t")))
+                            eval(Meta.parse(replace(expr, "\$t" => "$t")))
                         end
-                        return eval(parse(replace(return_expression, "\$t" => "$t")))
+                        return eval(Meta.parse(replace(return_expression, "\$t" => "$t")))
                     else
                         return value
                     end
@@ -308,9 +327,19 @@ function JuMP_relationship_out(db_map::PyObject)
                     object_class_name_list = $(object_class_name_list)
                     indexes = Array{Int64, 1}()
                     object_name_list = Array{Symbol, 1}()
-                    for (k, v) in kwargs
-                        push!(indexes, findfirst(x -> x == k, object_class_name_list))
-                        push!(object_name_list, v)
+                    for (object_class_name, object_name) in kwargs
+                        index = findfirst(x -> x == object_class_name, object_class_name_list)
+                        index == nothing && error(
+                            """Invalid object class '$object_class_name'
+                            for relationship class '$($relationship_class_name)'.
+                            """
+                        )
+                        object_names = eval(object_class_name)()
+                        !(object_name in object_names) && error(
+                            """'$object_name' is not a valid object of class '$object_class_name'"""
+                        )
+                        push!(indexes, index)
+                        push!(object_name_list, object_name)
                     end
                     result = filter(x -> x[indexes] == object_name_list, object_name_lists)
                     slice = filter(i -> !(i in indexes), collect(1:length(object_class_name_list)))
