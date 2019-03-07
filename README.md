@@ -33,11 +33,21 @@ a Python package and thus needs to be installed separately.
 #### Installing spinedatabase_api
 
 If you have already installed `spinedatabase_api` to use it in [Spine Toolbox](https://github.com/Spine-project/Spine-toolbox), you can also use it in Spine Model.
-All you need to do is configure PyCall to use the same python Spine Toolbox is using. In the julia REPL, run
+All you need to do is configure PyCall to use the same python Spine Toolbox is using. To determine the path of the python installation you are using, run the following inside a python shell:
+
+```python
+import sys
+print(sys.executable)
+```
+
+this should return the path of your python executable,
+
+
+In the julia REPL, run
 
 ```julia
 using PyCall
-ENV["PYTHON"] = "... path of the python program you want ..."
+ENV["PYTHON"] = "... path of your python executable ..."
 Pkg.build("PyCall")
 ```
 
