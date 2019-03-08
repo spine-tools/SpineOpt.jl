@@ -74,15 +74,15 @@ function JuMP_object_parameter_out(db_map::PyObject)
                         given_object_class_name = key
                         object_class_name = Symbol($object_class_name)
                         given_object_class_name != object_class_name && error(
-                            """Incorrect object class in call to $($parameter_name_symbol).
-                            Expected '$object_class_name', got '$given_object_class_name'
-                            """
+                            """Wrong object class in call to '$($parameter_name)':
+                            expected '$given_object_class_name', got '$object_class_name'."""
                         )
                         given_object_name = value
                         object_names = eval(object_class_name)()
-                        if !(given_object_name in object_names)
-                            error("'$given_object_name' is not a valid object of class '$object_class_name'")
-                        end
+                        !(given_object_name in object_names) && error(
+                            """Unable to retrieve value of '$($parameter_name)' for '$given_object_name':
+                            not a valid object of class '$object_class_name'."""
+                        )
                         !haskey(object_parameter_value_dict, given_object_name) && return $default_value
                         value = object_parameter_value_dict[given_object_name]
                         if isa(value, Array)
@@ -100,7 +100,10 @@ function JuMP_object_parameter_out(db_map::PyObject)
                             return value
                         end
                     else # length of kwargs is > 1
-                        error("Too many arguments in function call (expected 1, got $(length(kwargs)))")
+                        error(
+                            """Too many arguments in call to '$($parameter_name)':
+                            expected 1, got $(length(kwargs))"""
+                        )
                     end
                 end
                 export $parameter_name_symbol
@@ -165,14 +168,28 @@ function JuMP_object_out(db_map::PyObject, object_subset_dict::Dict{Symbol,Any})
                         kwargs_arr = [par => val for (par, val) in kwargs]
                         par, val = kwargs_arr[1]
                         dict1 = $(object_subset_dict1)
-                        !haskey(dict1, par) && error("'$par' is not a list-parameter for '$object_class_name'")
+                        !haskey(dict1, par) && error(
+                            """Unable to retrieve object subset of class '$object_class_name':
+                            '$par' is not a list-parameter for '$object_class_name'
+                            """
+                        )
                         dict2 = dict1[par]
-                        !haskey(dict2, val) && error("'$val' is not a listed value for '$par'")
+                        !haskey(dict2, val) && error(
+                            """Unable to retrieve object subset of class '$object_class_name':
+                            '$val' is not a listed value for '$par'"""
+                        )
                         object_subset = dict2[val]
                         for (par, val) in kwargs_arr[2:end]
-                            !haskey(dict1, par) && error("'$par' is not a list-parameter for '$object_class_name'")
+                            !haskey(dict1, par) && error(
+                                """Unable to retrieve object subset of class '$object_class_name':
+                                '$par' is not a list-parameter for '$object_class_name'
+                                """
+                            )
                             dict2 = dict1[par]
-                            !haskey(dict2, val) && error("'$val' is not a listed value for '$par'")
+                            !haskey(dict2, val) && error(
+                                """Unable to retrieve object subset of class '$object_class_name':
+                                '$val' is not a listed value for '$par'"""
+                            )
                             object_subset_ = dict2[val]
                             object_subset = [x for x in object_subset if x in object_subset_]
                         end
@@ -236,7 +253,9 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
                     relationship_class_name = Symbol($relationship_class_name)
                     header = eval(relationship_class_name)(;header_only=true, kwargs...)
                     # Check that header is empty
-                    !isempty(header) && error("Arguments missing: '$(join(header, "', '"))'")
+                    !isempty(header) && error(
+                        """Arguments missing in call to $($parameter_name): '$(join(header, "', '"))'"""
+                    )
                     given_object_class_name_list = keys(kwargs)
                     given_object_name_list = values(values(kwargs))
                     indexes = indexin(given_object_class_name_list, object_class_name_list)
@@ -313,14 +332,15 @@ function JuMP_relationship_out(db_map::PyObject)
                     for (object_class_name, object_name) in kwargs
                         index = findfirst(x -> x == object_class_name, object_class_name_list)
                         index == nothing && error(
-                            """Invalid keyword '$object_class_name'.
-                            Valid keywords are '$(join(object_class_name_list, "', '"))'.
+                            """Invalid keyword '$object_class_name' in call to '$($relationship_class_name)':
+                            valid keywords are '$(join(object_class_name_list, "', '"))'.
                             """
                         )
                         orig_object_class_name = orig_object_class_name_list[index]
                         object_names = eval(orig_object_class_name)()
                         !(object_name in object_names) && error(
-                            """'$object_name' is not a valid object of class '$orig_object_class_name'"""
+                            """Unable to retrieve '$($relationship_class_name)' tuples for '$object_name':
+                            not a valid object of class '$orig_object_class_name'"""
                         )
                         push!(indexes, index)
                         push!(object_name_list, object_name)
