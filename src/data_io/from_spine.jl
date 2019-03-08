@@ -74,8 +74,8 @@ function JuMP_object_parameter_out(db_map::PyObject)
                         given_object_class_name = key
                         object_class_name = Symbol($object_class_name)
                         given_object_class_name != object_class_name && error(
-                            """Incorrect object class, expected '$object_class_name',
-                            got '$given_object_class_name'
+                            """Incorrect object class in call to $($parameter_name_symbol).
+                            Expected '$object_class_name', got '$given_object_class_name'
                             """
                         )
                         given_object_name = value
