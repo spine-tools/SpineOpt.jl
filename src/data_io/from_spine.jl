@@ -18,6 +18,26 @@
 #############################################################################
 
 
+function time_pattern_getter(patterns_key_tuples)
+    function f(t::DateTime)
+        @show t == nothing
+        found_key = nothing
+        for (patterns, key) in patterns_key_tuples
+            if any(matches(p, t) for p in patterns)
+                found_key = key
+                break
+            end
+        end
+        found_key
+    end
+end
+
+function arr_getter(json)
+    function f(t)
+        json[t]
+    end
+end
+
 """
     JuMP_object_parameter_out(db_map::PyObject)
 
@@ -45,26 +65,58 @@ function JuMP_object_parameter_out(db_map::PyObject)
     for parameter in py"[x._asdict() for x in $db_map.object_parameter_list()]"
         parameter_name = parameter["parameter_name"]
         object_class_name = parameter["object_class_name"]
-        default_value = as_number(parameter["default_value"])
+        default_value = parameter["default_value"]
         parameter_name_symbol = Symbol(parameter_name)
         object_parameter_value_list =
             py"[x._asdict() for x in $db_map.object_parameter_value_list(parameter_name=$parameter_name)]"
         object_parameter_value_dict = Dict{Symbol,Any}()
-        # Loop through all object parameter values to create a Dict(object_name => value, ... )
-        # where value is obtained from the json field if possible, else from the value field
+        # Loop through all object parameter values to create a Dict(object_name => func)
+        # where func is obtained from the json field if possible, else from the value field
         for object_parameter_value in object_parameter_value_list
             object_name = Symbol(object_parameter_value["object_name"])
-            value = try
-                JSON.parse(object_parameter_value["json"])
-            catch LoadError
-                as_number(object_parameter_value["value"])
+            json_str = object_parameter_value["json"]
+            value = object_parameter_value["value"]
+            if json_str != nothing
+                json = JSON.parse(json_str)  # Let LoadError be raised
+                if isa(json, Number)
+                    object_parameter_value_dict[object_name] = t -> json
+                elseif isa(json, Array)
+                    object_parameter_value_dict[object_name] = arr_getter(json)
+                elseif isa(json, Dict)
+                    # Here is where the fun begins
+                    type_ = json["type"]
+                    if type_ == "time_patterned_data"
+                        !haskey(json, "time_pattern_spec") && error(
+                            """Time pattern specification not found in
+                            JSON of '$parameter_name' for '$object_name'."""
+                        )
+                        time_pattern_spec = json["time_pattern_spec"]
+                        # TODO: Check if dictionary
+                        if haskey(time_pattern_spec, "from")
+                            # TODO
+                        else
+                            patterns_key_tuples = []
+                            for (key, value) in time_pattern_spec
+                                pattern_exprs = split(value, UNION_OP)
+                                patterns = [parse_time_pattern_expr(expr) for expr in pattern_exprs]
+                                push!(patterns_key_tuples, (patterns, key))
+                            end
+                            object_parameter_value_dict[object_name] = time_pattern_getter(patterns_key_tuples)
+                        end
+                    else
+                        error("Unknown JSON type $type_.")
+                    end
+                end
+            elseif value != nothing
+                object_parameter_value_dict[object_name] = t -> as_number(value)
+            else
+                object_parameter_value_dict[object_name] = t -> as_number(default_value)
             end
-            object_parameter_value_dict[object_name] = value
         end
         @suppress_err begin
             # Create and export convenience functions
             @eval begin
-                function $parameter_name_symbol(;t::Union{Int64,Nothing}=nothing, kwargs...)
+                function $parameter_name_symbol(;t::Union{Int64,DateTime,Nothing}=nothing, kwargs...)
                     object_parameter_value_dict = $(object_parameter_value_dict)
                     if length(kwargs) == 0
                         # Return dict if kwargs is empty
@@ -83,22 +135,8 @@ function JuMP_object_parameter_out(db_map::PyObject)
                         if !(given_object_name in object_names)
                             error("'$given_object_name' is not a valid object of class '$object_class_name'")
                         end
-                        !haskey(object_parameter_value_dict, given_object_name) && return $default_value
-                        value = object_parameter_value_dict[given_object_name]
-                        if isa(value, Array)
-                            t == nothing && return value
-                            return value[t]
-                        elseif isa(value, Dict)
-                            !haskey(value, "return_expression") && error("Field 'return_expression' not found")
-                            return_expression = value["return_expression"]
-                            preparation_expressions = get(value, "preparation_expressions", [])
-                            for expr in preparation_expressions
-                                eval(Meta.parse(replace(expr, "\$t" => "$t")))
-                            end
-                            return eval(Meta.parse(replace(return_expression, "\$t" => "$t")))
-                        else
-                            return value
-                        end
+                        func = object_parameter_value_dict[given_object_name]
+                        return func(t)
                     else # length of kwargs is > 1
                         error("Too many arguments in function call (expected 1, got $(length(kwargs)))")
                     end

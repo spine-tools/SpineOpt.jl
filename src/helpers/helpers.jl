@@ -17,6 +17,74 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+
+UNION_OP = ","
+INTERSECTION_OP = ";"
+RANGE_OP = "-"
+
+
+struct TimePattern
+    Y::Union{UnitRange{Int64},Nothing}
+    M::Union{UnitRange{Int64},Nothing}
+    D::Union{UnitRange{Int64},Nothing}
+    WD::Union{UnitRange{Int64},Nothing}
+    h::Union{UnitRange{Int64},Nothing}
+    m::Union{UnitRange{Int64},Nothing}
+    s::Union{UnitRange{Int64},Nothing}
+    TimePattern(;Y=nothing, M=nothing, D=nothing, WD=nothing, h=nothing, m=nothing, s=nothing) = new(Y, M, D, WD, h, m, s)
+end
+
+
+"""
+    matches(time_pattern::TimePattern, t::DateTime)
+
+true if `time_pattern` matches `t`, false otherwise.
+For every range specified in `time_pattern`, `t` has to be in that range.
+If a range is not specified for a given level, then it doesn't matter where
+(or should I say, *when*?) is `t` on that level.
+"""
+function matches(time_pattern::TimePattern, t::DateTime)
+    conds = []
+    time_pattern.Y != nothing && push!(conds, year(t) in time_pattern.Y)
+    time_pattern.M != nothing && push!(conds, month(t) in time_pattern.M)
+    time_pattern.D != nothing && push!(conds, day(t) in time_pattern.D)
+    time_pattern.WD != nothing && push!(conds, dayofweek(t) in time_pattern.WD)
+    time_pattern.h != nothing && push!(conds, hour(t) in time_pattern.h)
+    time_pattern.m != nothing && push!(conds, minute(t) in time_pattern.m)
+    time_pattern.s != nothing && push!(conds, second(t) in time_pattern.s)
+    all(conds)
+end
+
+
+function parse_time_pattern_expr(expr)
+    regexp = r"(Y|M|D|WD|h|m|s)"
+    range_exprs = split(expr, INTERSECTION_OP)
+    ranges = Dict()
+    for range_expr in range_exprs
+        m = match(regexp, range_expr)
+        m === nothing && error("""Invalid interval expression $range_expr""")
+        key = m.match
+        start_stop = range_expr[length(key)+1:end]
+        start_stop = split(start_stop, RANGE_OP)
+        length(start_stop) != 2 && error("""Invalid interval expression $range_expr""")
+        start_str, stop_str = start_stop
+        start = try
+            parse(Int64, start_str)
+        catch ArgumentError
+            error("""Invalid lower bound $start_str""")
+        end
+        stop = try
+            parse(Int64, stop_str)
+        catch ArgumentError
+            error("""Invalid upper bound $stop_str""")
+        end
+        start > stop && error("""Lower bound can't be higher than upper bound""")
+        ranges[Symbol(key)] = range(start, stop=stop)
+    end
+    TimePattern(;ranges...)
+end
+
+
 """
     as_number(str)
 

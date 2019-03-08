@@ -43,6 +43,9 @@ export constraint_trans_cap
 export constraint_nodal_balance
 
 export @butcher
+export TimePattern
+export matches
+export parse_time_pattern_expr
 
 #load packages
 using PyCall
