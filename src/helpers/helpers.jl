@@ -57,51 +57,43 @@ function as_dataframe(var::Dict{Tuple,Float64})
     return df
 end
 
-"""
-    fix_name_ambiguity!(object_class_name_list)
 
-Append an increasing integer to repeated object class names.
+# TODO: Fix docstring
+"""
+    fix_name_ambiguity(object_class_name_list)
+
+A list identical to `object_class_name_list`, except that repeated entries are modified by
+appending an increasing integer.
 
 # Example
 ```julia
-julia> s=["connection","node", "node"]
-3-element Array{String,1}:
- "connection"
- "node"
- "node"
+julia> s=[:connection, :node, :node]
+3-element Array{Symbol,1}:
+ :connection
+ :node
+ :node
 
-julia> SpineModel.fix_name_ambiguity!(s)
-
-julia> s
-3-element Array{String,1}:
- "connection"
- "node1"
- "node2"
+julia> fix_name_ambiguity(s)
+3-element Array{Symbol,1}:
+ :connection
+ :node1
+ :node2
 ```
 """
-# NOTE: Do we really need to document this one?
-function fix_name_ambiguity!(object_class_name_list::Array{String,1})
-    ref_object_class_name_list = copy(object_class_name_list)
-    object_class_name_ocurrences = Dict{String,Int64}()
-    for (i, object_class_name) in enumerate(object_class_name_list)
-        n_ocurrences = count(x -> x == object_class_name, ref_object_class_name_list)
-        n_ocurrences == 1 && continue
-        ocurrence = get(object_class_name_ocurrences, object_class_name, 1)
-        object_class_name_list[i] = string(object_class_name, ocurrence)
-        object_class_name_ocurrences[object_class_name] = ocurrence + 1
-    end
-end
-
-function fix_name_ambiguity!(object_class_name_list::Array{Symbol,1})
-    ref_object_class_name_list = copy(object_class_name_list)
+function fix_name_ambiguity(object_class_name_list::Array{Symbol,1})
+    fixed = Array{Symbol,1}()
     object_class_name_ocurrences = Dict{Symbol,Int64}()
     for (i, object_class_name) in enumerate(object_class_name_list)
-        n_ocurrences = count(x -> x == object_class_name, ref_object_class_name_list)
-        n_ocurrences == 1 && continue
-        ocurrence = get(object_class_name_ocurrences, object_class_name, 1)
-        object_class_name_list[i] = Symbol(object_class_name, ocurrence)
-        object_class_name_ocurrences[object_class_name] = ocurrence + 1
+        n_ocurrences = count(x -> x == object_class_name, object_class_name_list)
+        if n_ocurrences == 1
+            push!(fixed, object_class_name)
+        else
+            ocurrence = get(object_class_name_ocurrences, object_class_name, 1)
+            push!(fixed, Symbol(object_class_name, ocurrence))
+            object_class_name_ocurrences[object_class_name] = ocurrence + 1
+        end
     end
+    fixed
 end
 
 

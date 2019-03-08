@@ -74,7 +74,7 @@ function JuMP_object_parameter_out(db_map::PyObject)
                         given_object_class_name = key
                         object_class_name = Symbol($object_class_name)
                         given_object_class_name != object_class_name && error(
-                            """Incorrect object class, expected '$(object_class_name)',
+                            """Incorrect object class, expected '$object_class_name',
                             got '$given_object_class_name'
                             """
                         )
@@ -165,14 +165,14 @@ function JuMP_object_out(db_map::PyObject, object_subset_dict::Dict{Symbol,Any})
                         kwargs_arr = [par => val for (par, val) in kwargs]
                         par, val = kwargs_arr[1]
                         dict1 = $(object_subset_dict1)
-                        !haskey(dict1, par) && error("$par is not a list-parameter for $object_class_name")
+                        !haskey(dict1, par) && error("'$par' is not a list-parameter for '$object_class_name'")
                         dict2 = dict1[par]
-                        !haskey(dict2, val) && error("$val is not a listed value for $par")
+                        !haskey(dict2, val) && error("'$val' is not a listed value for '$par'")
                         object_subset = dict2[val]
                         for (par, val) in kwargs_arr[2:end]
-                            !haskey(dict1, par) && error("$par is not a list-parameter for $object_class_name")
+                            !haskey(dict1, par) && error("'$par' is not a list-parameter for '$object_class_name'")
                             dict2 = dict1[par]
-                            !haskey(dict2, val) && error("$val is not a listed value for $par")
+                            !haskey(dict2, val) && error("'$val' is not a listed value for '$par'")
                             object_subset_ = dict2[val]
                             object_subset = [x for x in object_subset if x in object_subset_]
                         end
@@ -206,10 +206,9 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
         parameter_name = parameter["parameter_name"]
         relationship_class_name = parameter["relationship_class_name"]
         default_value = as_number(parameter["default_value"])
-        object_class_name_list = [Symbol(x) for x in split(parameter["object_class_name_list"], ",")]
-        dimension_count = length(object_class_name_list)
+        orig_object_class_name_list = [Symbol(x) for x in split(parameter["object_class_name_list"], ",")]
         # Rename entries of this list by appending increasing integer values if entry occurs more than one time
-        fix_name_ambiguity!(object_class_name_list)
+        object_class_name_list = fix_name_ambiguity(orig_object_class_name_list)
         relationship_parameter_value_list =
             py"$db_map.relationship_parameter_value_list(parameter_name=$parameter_name)"
         relationship_parameter_value_dict = Dict{Tuple{Symbol,Symbol,Vararg{Symbol}},Any}() # At least two Symbols
@@ -233,31 +232,14 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
                     # If no kwargs are provided a dict of all parameter values is returned
                     kwargs_length = length(kwargs)
                     kwargs_length == 0 && return relationship_parameter_value_dict
-                    dimension_count = $dimension_count
-                    if kwargs_length != dimension_count
-                        error(
-                            """Incorrect number of (object_class=object) pairs,
-                            expected $dimension_count, got $kwargs_length."""
-                        )
-                    end
+                    # Call the relationship access function to check validity
+                    relationship_class_name = Symbol($relationship_class_name)
+                    header = eval(relationship_class_name)(;header_only=true, kwargs...)
+                    # Check that header is empty
+                    !isempty(header) && error("Arguments missing: '$(join(header, "', '"))'")
                     given_object_class_name_list = keys(kwargs)
                     given_object_name_list = values(values(kwargs))
                     indexes = indexin(given_object_class_name_list, object_class_name_list)
-                    nothing in indexes && error(
-                        """Incorret object classes, expected '$(join(object_class_name_list, "', '"))',
-                        got '$(join(given_object_class_name_list, "', '"))'
-                        """
-                    )
-                    relationship_class_name = Symbol($relationship_class_name)
-                    try
-                        eval(relationship_class_name)(;kwargs...)
-                    catch e
-                        error(
-                            """Invalid objects '$(join(given_object_name_list, "', '"))'
-                            for relationship class '$relationship_class_name'.
-                            """
-                        )
-                    end
                     ordered_object_name_list = given_object_name_list[indexes]
                     !haskey(relationship_parameter_value_dict, ordered_object_name_list) && return $default_value
                     value = relationship_parameter_value_dict[ordered_object_name_list]
@@ -312,8 +294,8 @@ function JuMP_relationship_out(db_map::PyObject)
         relationship_class_id = relationship_class["id"]
         relationship_class_name = relationship_class["name"]
         # Generate Array of Strings of object class names in this relationship class
-        object_class_name_list = [Symbol(x) for x in split(relationship_class["object_class_name_list"], ",")]
-        fix_name_ambiguity!(object_class_name_list)
+        orig_object_class_name_list = [Symbol(x) for x in split(relationship_class["object_class_name_list"], ",")]
+        object_class_name_list = fix_name_ambiguity(orig_object_class_name_list)
         relationship_list = py"$db_map.wide_relationship_list(class_id=$relationship_class_id)"
         object_name_lists = Array{Array{Symbol,1},1}()
         for relationship in py"[x._asdict() for x in $relationship_list]"
@@ -322,27 +304,30 @@ function JuMP_relationship_out(db_map::PyObject)
         end
         @suppress_err begin
             @eval begin
-                function $(Symbol(relationship_class_name))(;kwargs...)
+                function $(Symbol(relationship_class_name))(;header_only=false, kwargs...)
                     object_name_lists = $(object_name_lists)
                     object_class_name_list = $(object_class_name_list)
+                    orig_object_class_name_list = $(orig_object_class_name_list)
                     indexes = Array{Int64, 1}()
                     object_name_list = Array{Symbol, 1}()
                     for (object_class_name, object_name) in kwargs
                         index = findfirst(x -> x == object_class_name, object_class_name_list)
                         index == nothing && error(
-                            """Invalid object class '$object_class_name'
-                            for relationship class '$($relationship_class_name)'.
+                            """Invalid keyword '$object_class_name'.
+                            Valid keywords are '$(join(object_class_name_list, "', '"))'.
                             """
                         )
-                        object_names = eval(object_class_name)()
+                        orig_object_class_name = orig_object_class_name_list[index]
+                        object_names = eval(orig_object_class_name)()
                         !(object_name in object_names) && error(
-                            """'$object_name' is not a valid object of class '$object_class_name'"""
+                            """'$object_name' is not a valid object of class '$orig_object_class_name'"""
                         )
                         push!(indexes, index)
                         push!(object_name_list, object_name)
                     end
-                    result = filter(x -> x[indexes] == object_name_list, object_name_lists)
                     slice = filter(i -> !(i in indexes), collect(1:length(object_class_name_list)))
+                    header_only && return object_class_name_list[slice]
+                    result = filter(x -> x[indexes] == object_name_list, object_name_lists)
                     length(slice) == 1 && (slice = slice[1])
                     [x[slice] for x in result]
                 end
