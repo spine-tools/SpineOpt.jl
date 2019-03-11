@@ -18,7 +18,16 @@
 #############################################################################
 
 
-TimePattern = Dict{Symbol, Array{UnitRange{Int64},1}}
+struct TimePattern
+    y::Union{Array{UnitRange{Int64},1},Nothing}
+    m::Union{Array{UnitRange{Int64},1},Nothing}
+    d::Union{Array{UnitRange{Int64},1},Nothing}
+    wd::Union{Array{UnitRange{Int64},1},Nothing}
+    H::Union{Array{UnitRange{Int64},1},Nothing}
+    M::Union{Array{UnitRange{Int64},1},Nothing}
+    S::Union{Array{UnitRange{Int64},1},Nothing}
+    TimePattern(;y=nothing, m=nothing, d=nothing, wd=nothing, H=nothing, M=nothing, S=nothing) = new(y, m, d, wd, H, M, S)
+end
 
 struct TimePatternError <: Exception
     msg::String
@@ -47,7 +56,7 @@ end
 
 
 function parse_time_pattern_spec(spec)
-    time_pattern = TimePattern()
+    kwargs = Dict()
     regexp = r"(y|m|d|wd|H|M|S)"
     pattern_specs = split(spec, UNION_OP)
     for pattern_spec in pattern_specs
@@ -71,11 +80,11 @@ function parse_time_pattern_spec(spec)
                 throw(TimePatternError("""invalid upper bound $stop_str."""))
             end
             start > stop && throw(TimePatternError("""lower bound can't be higher than upper bound."""))
-            arr = get!(time_pattern, Symbol(key), Array{UnitRange{Int64},1}())
+            arr = get!(kwargs, Symbol(key), Array{UnitRange{Int64},1}())
             push!(arr, range(start, stop=stop))
         end
     end
-    time_pattern
+    TimePattern(;kwargs...)
 end
 
 
@@ -92,13 +101,13 @@ If a range is not specified for a given level, then it doesn't matter where
 """
 function matches(time_pattern::TimePattern, t::DateTime)
     conds = Array{Bool,1}()
-    haskey(time_pattern, :y) && push!(conds, any(year(t) in rng for rng in time_pattern[:y]))
-    haskey(time_pattern, :m) && push!(conds, any(month(t) in rng for rng in time_pattern[:m]))
-    haskey(time_pattern, :d) && push!(conds, any(day(t) in rng for rng in time_pattern[:d]))
-    haskey(time_pattern, :wd) && push!(conds, any(dayofweek(t) in rng for rng in time_pattern[:wd]))
-    haskey(time_pattern, :H) && push!(conds, any(hour(t) in rng for rng in time_pattern[:H]))
-    haskey(time_pattern, :M) && push!(conds, any(minute(t) in rng for rng in time_pattern[:M]))
-    haskey(time_pattern, :S) && push!(conds, any(second(t) in rng for rng in time_pattern[:S]))
+    time_pattern.y != nothing && push!(conds, any(year(t) in rng for rng in time_pattern.y))
+    time_pattern.m != nothing && push!(conds, any(month(t) in rng for rng in time_pattern.m))
+    time_pattern.d != nothing && push!(conds, any(day(t) in rng for rng in time_pattern.d))
+    time_pattern.wd != nothing && push!(conds, any(dayofweek(t) in rng for rng in time_pattern.wd))
+    time_pattern.H != nothing && push!(conds, any(hour(t) in rng for rng in time_pattern.H))
+    time_pattern.M != nothing && push!(conds, any(minute(t) in rng for rng in time_pattern.M))
+    time_pattern.S != nothing && push!(conds, any(second(t) in rng for rng in time_pattern.S))
     all(conds)
 end
 
