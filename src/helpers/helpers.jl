@@ -17,6 +17,92 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+
+TimePattern = Dict{Symbol, Array{UnitRange{Int64},1}}
+
+struct TimePatternError <: Exception
+    msg::String
+end
+
+UNION_OP = ","
+INTERSECTION_OP = ";"
+RANGE_OP = "-"
+
+
+function as_date_time(t_str::String)
+    reg_exp = r"[ymdHMS]"
+    keys = [m.match for m in eachmatch(reg_exp, t_str)]
+    values = split(t_str, reg_exp; keepempty=false)
+    periods = Array{Period,1}()
+    for (k, v) in zip(keys, values)
+        k == "y" && push!(periods, Year(v))
+        k == "m" && push!(periods, Month(v))
+        k == "d" && push!(periods, Day(v))
+        k == "H" && push!(periods, Hour(v))
+        k == "M" && push!(periods, Minute(v))
+        k == "S" && push!(periods, Second(v))
+    end
+    DateTime(periods...)
+end
+
+
+function parse_time_pattern_spec(spec)
+    time_pattern = TimePattern()
+    regexp = r"(y|m|d|wd|H|M|S)"
+    pattern_specs = split(spec, UNION_OP)
+    for pattern_spec in pattern_specs
+        range_specs = split(pattern_spec, INTERSECTION_OP)
+        for range_spec in range_specs
+            m = match(regexp, range_spec)
+            m === nothing && throw(TimePatternError("""invalid interval specification $range_spec."""))
+            key = m.match
+            start_stop = range_spec[length(key)+1:end]
+            start_stop = split(start_stop, RANGE_OP)
+            length(start_stop) != 2 && throw(TimePatternError("""invalid interval specification $range_spec."""))
+            start_str, stop_str = start_stop
+            start = try
+                parse(Int64, start_str)
+            catch ArgumentError
+                throw(TimePatternError("""invalid lower bound $start_str."""))
+            end
+            stop = try
+                parse(Int64, stop_str)
+            catch ArgumentError
+                throw(TimePatternError("""invalid upper bound $stop_str."""))
+            end
+            start > stop && throw(TimePatternError("""lower bound can't be higher than upper bound."""))
+            arr = get!(time_pattern, Symbol(key), Array{UnitRange{Int64},1}())
+            push!(arr, range(start, stop=stop))
+        end
+    end
+    time_pattern
+end
+
+
+matches(time_pattern::TimePattern, t_str::String) = matches(time_pattern, as_date_time(t_str))
+
+
+"""
+    matches(time_pattern::TimePattern, t::DateTime)
+
+true if `time_pattern` matches `t`, false otherwise.
+For every range specified in `time_pattern`, `t` has to be in that range.
+If a range is not specified for a given level, then it doesn't matter where
+(or should I say, *when*?) is `t` on that level.
+"""
+function matches(time_pattern::TimePattern, t::DateTime)
+    conds = Array{Bool,1}()
+    haskey(time_pattern, :y) && push!(conds, any(year(t) in rng for rng in time_pattern[:y]))
+    haskey(time_pattern, :m) && push!(conds, any(month(t) in rng for rng in time_pattern[:m]))
+    haskey(time_pattern, :d) && push!(conds, any(day(t) in rng for rng in time_pattern[:d]))
+    haskey(time_pattern, :wd) && push!(conds, any(dayofweek(t) in rng for rng in time_pattern[:wd]))
+    haskey(time_pattern, :H) && push!(conds, any(hour(t) in rng for rng in time_pattern[:H]))
+    haskey(time_pattern, :M) && push!(conds, any(minute(t) in rng for rng in time_pattern[:M]))
+    haskey(time_pattern, :S) && push!(conds, any(second(t) in rng for rng in time_pattern[:S]))
+    all(conds)
+end
+
+
 """
     as_number(str)
 
