@@ -29,19 +29,66 @@ struct TimePattern
     TimePattern(;y=nothing, m=nothing, d=nothing, wd=nothing, H=nothing, M=nothing, S=nothing) = new(y, m, d, wd, H, M, S)
 end
 
+
+function Base.show(io::IO, time_pattern::TimePattern)
+    d = Dict{Symbol,String}(
+        :y => "year",
+        :m => "month",
+        :d => "day",
+        :wd => "day of the week",
+        :H => "hour",
+        :M => "minute",
+        :S => "second",
+    )
+    ranges = Array{String,1}()
+    for field in fieldnames(TimePattern)
+        value = getfield(time_pattern, field)
+        if value != nothing
+            str = "$(d[field]) from "
+            str *= join(["$(x.start) to $(x.stop)" for x in value], ", or ")
+            push!(ranges, str)
+        end
+    end
+    print(io, join(ranges, ",\nand "))
+end
+
+
 struct TimePatternError <: Exception
     msg::String
 end
 
-UNION_OP = ","
-INTERSECTION_OP = ";"
-RANGE_OP = "-"
+
+function parse_json(json)
+    parsed_json = JSON.parse(json)  # Let LoadError be thrown
+    # Do some validation, to advance work for the convenience function
+    if parsed_json isa Dict
+        haskey(parsed_json, "type") || error("'type' missing")
+        type_ = parsed_json["type"]
+        if type_ == "time_pattern"
+            haskey(parsed_json, "data") || error("'data' missing")
+            parsed_json["data"] isa Dict || error("'data' should be a dictionary (time_pattern: value)")
+            parsed_json["time_pattern_data"] = Dict{Union{TimePattern,String},Any}()
+            # Try and parse String keys as TimePatterns into a new dictionary
+            for (k, v) in pop!(parsed_json, "data")
+                new_k = try
+                    parse_time_pattern(k)
+                catch e
+                    k
+                end
+                parsed_json["time_pattern_data"][new_k] = v
+            end
+        else
+            error("unknown type '$type_'")
+        end
+    end
+    parsed_json
+end
 
 
-function as_date_time(t_str::String)
+function parse_date_time_str(str::String)
     reg_exp = r"[ymdHMS]"
-    keys = [m.match for m in eachmatch(reg_exp, t_str)]
-    values = split(t_str, reg_exp; keepempty=false)
+    keys = [m.match for m in eachmatch(reg_exp, str)]
+    values = split(str, reg_exp; keepempty=false)
     periods = Array{Period,1}()
     for (k, v) in zip(keys, values)
         k == "y" && push!(periods, Year(v))
@@ -55,18 +102,22 @@ function as_date_time(t_str::String)
 end
 
 
-function parse_time_pattern_spec(spec)
+function parse_time_pattern(spec)
+    spec isa String || throw(TimePatternError("""invalid type, expected String, got $(typeof(spec))."""))
+    union_op = ","
+    intersection_op = ";"
+    range_op = "-"
     kwargs = Dict()
     regexp = r"(y|m|d|wd|H|M|S)"
-    pattern_specs = split(spec, UNION_OP)
+    pattern_specs = split(spec, union_op)
     for pattern_spec in pattern_specs
-        range_specs = split(pattern_spec, INTERSECTION_OP)
+        range_specs = split(pattern_spec, intersection_op)
         for range_spec in range_specs
             m = match(regexp, range_spec)
             m === nothing && throw(TimePatternError("""invalid interval specification $range_spec."""))
             key = m.match
             start_stop = range_spec[length(key)+1:end]
-            start_stop = split(start_stop, RANGE_OP)
+            start_stop = split(start_stop, range_op)
             length(start_stop) != 2 && throw(TimePatternError("""invalid interval specification $range_spec."""))
             start_str, stop_str = start_stop
             start = try
@@ -88,7 +139,7 @@ function parse_time_pattern_spec(spec)
 end
 
 
-matches(time_pattern::TimePattern, t_str::String) = matches(time_pattern, as_date_time(t_str))
+matches(time_pattern::TimePattern, str::String) = matches(time_pattern, parse_date_time_str(str))
 
 
 """
@@ -113,11 +164,11 @@ end
 
 
 """
-    as_number(str)
+    parse_value(str)
 
-An Int64 or Float64 from parsing `str` if possible.
+An Int64 or Float64 from `str`, if possible.
 """
-function as_number(str)
+function parse_value(str)
     typeof(str) != String && return str
     type_array = [
         Int64,
@@ -153,7 +204,6 @@ function as_dataframe(var::Dict{Tuple,Float64})
 end
 
 
-# TODO: Fix docstring
 """
     fix_name_ambiguity(object_class_name_list)
 

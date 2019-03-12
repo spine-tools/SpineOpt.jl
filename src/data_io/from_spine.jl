@@ -44,59 +44,51 @@ function JuMP_object_parameter_out(db_map::PyObject)
     for parameter in py"[x._asdict() for x in $db_map.object_parameter_list()]"
         parameter_name = parameter["parameter_name"]
         object_class_name = parameter["object_class_name"]
-        default_value = as_number(parameter["default_value"])
+        default_value = parse_value(parameter["default_value"])
         tag_list_str = parameter["parameter_tag_list"]
         tag_list = if tag_list_str isa String
             split(tag_list_str, ",")
         else
             []
         end
+        # Check if it's constructor, and adjust function name
+        is_constructor = (parameter_name == object_class_name)
+        function_name = if is_constructor
+            Symbol("__" * parameter_name * "__")
+        else
+            Symbol(parameter_name)
+        end
+        object_names = Array{String,1}()  # To be filled with object names if parameter is a constructor
         object_parameter_value_list =
             py"[x._asdict() for x in $db_map.object_parameter_value_list(parameter_name=$parameter_name)]"
         object_parameter_value_dict = Dict{Symbol,Any}()
-        time_patterns = Array{String,1}()
         # Loop through all object parameter values to create a Dict(object_name => func, ... )
         # where func is a function of the form t -> return_value, for getting the parameter value
         for object_parameter_value in object_parameter_value_list
             object_name = object_parameter_value["object_name"]
+            is_constructor && push!(object_names, object_name)
             json = object_parameter_value["json"]
             value = object_parameter_value["value"]
             object_parameter_value_dict[Symbol(object_name)] = if json != nothing
-                parsed_json = JSON.parse(json)  # Let LoadError be thrown
-                if parsed_json isa Dict
-                    # Do some validation
-                    haskey(parsed_json, "type") || error(
-                        """unable to parse '$parameter_name' JSON specification for '$object_name':
-                        'type' missing.
+                try
+                    parse_json(json)
+                catch e
+                    error(
+                        """unable to parse JSON from '$object_name, $parameter_name':
+                        $(sprint(showerror, e))
                         """
                     )
-                    type_ = parsed_json["type"]
-                    if type_ == "time_pattern"
-                        haskey(parsed_json, "data") || error(
-                            """unable to parse '$parameter_name' JSON specification for '$object_name':
-                            'data' missing.
-                            """
-                        )
-                        parsed_json["data"] isa Dict || error(
-                            """unable to parse '$parameter_name' JSON specification for '$object_name':
-                            'data' should be a dictionary (time_pattern object: value).
-                            """
-                        )
-                    else
-                        error(
-                            """unable to parse '$parameter_name' JSON specification for '$object_name':
-                            unknown type '$type_'.
-                            """
-                        )
-                    end
                 end
-                parsed_json
             elseif value != nothing
-                # TODO: Check is_time_pattern_spec from rulebook later
                 try
-                    parse_time_pattern_spec(value)
+                    parse_time_pattern(value)
                 catch e
-                    as_number(value)
+                    "time_pattern_spec" in tag_list && error(
+                        """unable to parse time pattern from '$object_name, $parameter_name':
+                        $(sprint(showerror, e))
+                        """
+                    )
+                    parse_value(value)
                 end
             else
                 default_value
@@ -105,24 +97,31 @@ function JuMP_object_parameter_out(db_map::PyObject)
         @suppress_err begin
             # Create and export convenience functions
             @eval begin
-                function $(Symbol(parameter_name))(;t::Union{Int64,String,Nothing}=nothing, kwargs...)
+                obj_str = $object_class_name * "object"
+                """
+                    $($function_name)(;$($object_class_name)::Symbol=$obj_str, t::Union{Int64,String,Nothing}=nothing)
+
+                The value of the parameter '$($parameter_name)' for `$obj_str`.
+                The argument `t` can be used, e.g., to retrieve a specific position in the returning array.
+                """
+                function $(function_name)(;t::Union{Int64,String,Nothing}=nothing, kwargs...)
                     object_parameter_value_dict = $(object_parameter_value_dict)
                     if length(kwargs) == 0
                         # Return dict if kwargs is empty
-                        return object_parameter_value_dict
+                        object_parameter_value_dict
                     elseif length(kwargs) == 1
                         key, value = iterate(kwargs)[1]
                         given_object_class_name = key
                         object_class_name = Symbol($object_class_name)
                         given_object_class_name != object_class_name && error(
                             """invalid object class in call to '$($parameter_name)':
-                            expected '$object_class_name', got '$given_object_class_name'."""
+                            expected '$object_class_name', got '$given_object_class_name'"""
                         )
                         given_object_name = value
                         object_names = eval(object_class_name)()
                         !(given_object_name in object_names) && error(
                             """unable to retrieve value of '$($parameter_name)' for '$given_object_name':
-                            not a valid object of class '$object_class_name'."""
+                            not a valid object of class '$object_class_name'"""
                         )
                         !haskey(object_parameter_value_dict, given_object_name) && return $default_value
                         value = object_parameter_value_dict[given_object_name]
@@ -131,30 +130,46 @@ function JuMP_object_parameter_out(db_map::PyObject)
                             return value[t]
                         elseif value isa Dict
                             # Fun begins
+                            # NOTE: At this point we shouldn't be afraid of accessing keys or whatever,
+                            # since everything was validated before
                             type_ = value["type"]
                             if type_ == "time_pattern"
-                                spec = get(value, "specification", "time_pattern_spec")
-                                cls = get(value, "class", "time_pattern")
-                                data = value["data"]
-                                for (k, v) in data
-                                    kwargs = Dict(Symbol(cls) => Symbol(k))
-                                    time_pattern = try
-                                        eval(Symbol(spec))(;kwargs...)
-                                    catch e
-                                        e isa UndefVarError && error(
-                                            """unable to retrieve value of '$($parameter_name)' for '$given_object_name':
-                                            unknown time pattern '$k'.
-                                            """
-                                        )
-                                        rethrow()
+                                time_pattern_data = value["time_pattern_data"]
+                                for (k, v) in time_pattern_data
+                                    time_pattern = if k isa TimePattern
+                                        k
+                                    else
+                                        try
+                                            eval(Symbol(k))()
+                                        catch e
+                                            if e isa UndefVarError
+                                                error(
+                                                    """unable to retrieve value of '$($parameter_name)' for '$given_object_name':
+                                                    unknown time pattern '$k'
+                                                    """
+                                                )
+                                            else
+                                                error(
+                                                    """unable to retrieve value of '$($parameter_name)' for '$given_object_name':
+                                                    $(sprint(showerror, e))
+                                                    """
+                                                )
+                                            end
+                                        end
                                     end
                                     matches(time_pattern, t) && return v
                                 end
                                 error(
                                     """unable to retrieve value of '$($parameter_name)' for '$given_object_name'
-                                    at time step '$t': '$t' does not match any time pattern.
+                                    at time step '$t': '$t' does not match any time pattern
                                     """
                                 )
+                            end
+                        elseif value isa TimePattern
+                            if t != nothing
+                                return matches(value, t)
+                            else
+                                return value
                             end
                         else
                             return value
@@ -167,6 +182,14 @@ function JuMP_object_parameter_out(db_map::PyObject)
                     end
                 end
                 export $(Symbol(parameter_name))
+            end
+            # Create constructors
+            for object_name in object_names
+                kw = Symbol(object_class_name)
+                @eval begin
+                    $(Symbol(object_name))(;t=nothing) = $(function_name)(;t=t, $(kw)=Symbol($object_name))
+                    export $(Symbol(object_name))
+                end
             end
         end
         value_list_id = parameter["value_list_id"]
@@ -282,7 +305,7 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
     for parameter in py"[x._asdict() for x in $db_map.relationship_parameter_list()]"
         parameter_name = parameter["parameter_name"]
         relationship_class_name = parameter["relationship_class_name"]
-        default_value = as_number(parameter["default_value"])
+        default_value = parse_value(parameter["default_value"])
         orig_object_class_name_list = [Symbol(x) for x in split(parameter["object_class_name_list"], ",")]
         # Rename entries of this list by appending increasing integer values if entry occurs more than one time
         object_class_name_list = fix_name_ambiguity(orig_object_class_name_list)
@@ -296,7 +319,7 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
             value = try
                 JSON.parse(relationship_parameter_value["json"])
             catch LoadError
-                as_number(relationship_parameter_value["value"])
+                parse_value(relationship_parameter_value["value"])
             end
             relationship_parameter_value_dict[object_name_list] = value
         end
