@@ -74,9 +74,8 @@ function JuMP_object_parameter_out(db_map::PyObject)
                     parse_json(json)
                 catch e
                     error(
-                        """unable to parse JSON from '$object_name, $parameter_name':
-                        $(sprint(showerror, e))
-                        """
+                        "unable to parse JSON from '$object_name, $parameter_name': "
+                        * "$(sprint(showerror, e))"
                     )
                 end
             elseif value != nothing
@@ -84,9 +83,8 @@ function JuMP_object_parameter_out(db_map::PyObject)
                     parse_time_pattern(value)
                 catch e
                     "time_pattern_spec" in tag_list && error(
-                        """unable to parse time pattern from '$object_name, $parameter_name':
-                        $(sprint(showerror, e))
-                        """
+                        "unable to parse time pattern from '$object_name, $parameter_name': "
+                        * "$(sprint(showerror, e))"
                     )
                     parse_value(value)
                 end
@@ -114,14 +112,14 @@ function JuMP_object_parameter_out(db_map::PyObject)
                         given_object_class_name = key
                         object_class_name = Symbol($object_class_name)
                         given_object_class_name != object_class_name && error(
-                            """invalid object class in call to '$($parameter_name)':
-                            expected '$object_class_name', got '$given_object_class_name'"""
+                            "invalid object class in call to '$($parameter_name)': "
+                            * "expected '$object_class_name', got '$given_object_class_name'"
                         )
                         given_object_name = value
                         object_names = eval(object_class_name)()
                         !(given_object_name in object_names) && error(
-                            """unable to retrieve value of '$($parameter_name)' for '$given_object_name':
-                            not a valid object of class '$object_class_name'"""
+                            "unable to retrieve value of '$($parameter_name)' for '$given_object_name': "
+                            * "not a valid object of class '$object_class_name'"
                         )
                         !haskey(object_parameter_value_dict, given_object_name) && return $default_value
                         value = object_parameter_value_dict[given_object_name]
@@ -144,15 +142,13 @@ function JuMP_object_parameter_out(db_map::PyObject)
                                         catch e
                                             if e isa UndefVarError
                                                 error(
-                                                    """unable to retrieve value of '$($parameter_name)' for '$given_object_name':
-                                                    unknown time pattern '$k'
-                                                    """
+                                                    "unable to retrieve value of '$($parameter_name)' "
+                                                    * "for '$given_object_name': unknown time pattern '$k'"
                                                 )
                                             else
                                                 error(
-                                                    """unable to retrieve value of '$($parameter_name)' for '$given_object_name':
-                                                    $(sprint(showerror, e))
-                                                    """
+                                                    "unable to retrieve value of '$($parameter_name)' "
+                                                    * "for '$given_object_name': $(sprint(showerror, e))"
                                                 )
                                             end
                                         end
@@ -160,9 +156,8 @@ function JuMP_object_parameter_out(db_map::PyObject)
                                     matches(time_pattern, t) && return v
                                 end
                                 error(
-                                    """unable to retrieve value of '$($parameter_name)' for '$given_object_name'
-                                    at time step '$t': '$t' does not match any time pattern
-                                    """
+                                    "unable to retrieve value of '$($parameter_name)' for '$given_object_name' "
+                                    * "at time step '$t': '$t' does not match any time pattern"
                                 )
                             end
                         elseif value isa TimePattern
@@ -176,8 +171,8 @@ function JuMP_object_parameter_out(db_map::PyObject)
                         end
                     else # length of kwargs is > 1
                         error(
-                            """too many arguments in call to '$($parameter_name)':
-                            expected 1, got $(length(kwargs))"""
+                            "too many arguments in call to '$($parameter_name)': "
+                            * "expected 1, got $(length(kwargs))"
                         )
                     end
                 end
@@ -252,26 +247,24 @@ function JuMP_object_out(db_map::PyObject, object_subset_dict::Dict{Symbol,Any})
                         par, val = kwargs_arr[1]
                         dict1 = $(object_subset_dict1)
                         !haskey(dict1, par) && error(
-                            """unable to retrieve object subset of class '$object_class_name':
-                            '$par' is not a list-parameter for '$object_class_name'
-                            """
+                            "unable to retrieve object subset of class '$object_class_name': "
+                            * "'$par' is not a list-parameter for '$object_class_name'"
                         )
                         dict2 = dict1[par]
                         !haskey(dict2, val) && error(
-                            """unable to retrieve object subset of class '$object_class_name':
-                            '$val' is not a listed value for '$par'"""
+                            "unable to retrieve object subset of class '$object_class_name': "
+                            * "'$val' is not a listed value for '$par'"
                         )
                         object_subset = dict2[val]
                         for (par, val) in kwargs_arr[2:end]
                             !haskey(dict1, par) && error(
-                                """unable to retrieve object subset of class '$object_class_name':
-                                '$par' is not a list-parameter for '$object_class_name'
-                                """
+                                "unable to retrieve object subset of class '$object_class_name': "
+                                * "'$par' is not a list-parameter for '$object_class_name'"
                             )
                             dict2 = dict1[par]
                             !haskey(dict2, val) && error(
-                                """unable to retrieve object subset of class '$object_class_name':
-                                '$val' is not a listed value for '$par'"""
+                                "unable to retrieve object subset of class '$object_class_name': "
+                                * "'$val' is not a listed value for '$par'"
                             )
                             object_subset_ = dict2[val]
                             object_subset = [x for x in object_subset if x in object_subset_]
@@ -315,7 +308,7 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
         # Loop through all relationship parameter values to create a Dict("obj1,obj2,.." => value, ... )
         # where value is obtained from the json field if possible, else from the value field
         for relationship_parameter_value in py"[x._asdict() for x in $relationship_parameter_value_list]"
-            object_name_list = Tuple(Symbol.(split(relationship_parameter_value["object_name_list"], ","))) #"obj1,obj2,..." e.g. "CoalPlant,Electricity,Coal"
+            object_name_list = Tuple(Symbol.(split(relationship_parameter_value["object_name_list"], ",")))
             value = try
                 JSON.parse(relationship_parameter_value["json"])
             catch LoadError
@@ -415,15 +408,14 @@ function JuMP_relationship_out(db_map::PyObject)
                     for (object_class_name, object_name) in kwargs
                         index = findfirst(x -> x == object_class_name, object_class_name_list)
                         index == nothing && error(
-                            """invalid keyword '$object_class_name' in call to '$($relationship_class_name)':
-                            valid keywords are '$(join(object_class_name_list, "', '"))'.
-                            """
+                            """invalid keyword '$object_class_name' in call to '$($relationship_class_name)': """
+                            * """valid keywords are '$(join(object_class_name_list, "', '"))'"""
                         )
                         orig_object_class_name = orig_object_class_name_list[index]
                         object_names = eval(orig_object_class_name)()
                         !(object_name in object_names) && error(
-                            """unable to retrieve '$($relationship_class_name)' tuples for '$object_name':
-                            not a valid object of class '$orig_object_class_name'"""
+                            "unable to retrieve '$($relationship_class_name)' tuples for '$object_name': "
+                            * "not a valid object of class '$orig_object_class_name'"
                         )
                         push!(indexes, index)
                         push!(object_name_list, object_name)
