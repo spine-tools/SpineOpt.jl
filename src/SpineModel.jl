@@ -19,7 +19,6 @@
 # __precompile__()
 
 module SpineModel
-
 # Data_io exports
 export JuMP_all_out
 export JuMP_results_to_spine_db!

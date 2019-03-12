@@ -1,0 +1,54 @@
+{
+  "patterns" : {
+    "P1" : {
+      "expression" : "(path):(line)"
+      },
+    "P2" : {
+      "expression" : "(path)\\s+(line)",
+      "path" : "(?:\\/[\\w\\.\\-]+)+"
+    }
+  },
+  "commands" : [
+    {
+      "action" : "defaults-example",
+      "command" : "echo 'This command uses all the defaults.'"
+    },
+    {
+      "namespace" : "process-palette",
+      "action" : "echo-example",
+      "command" : "echo",
+      "arguments" : ["Hello", "$CUSTOM_VAR", "from", "{configDirAbsPath}"],
+      "env" : {
+        "CUSTOM_VAR" : "Atom"
+      },
+      "cwd" : "{projectPath}",
+      "keystroke" : "ctrl-alt-e",
+      "stream" : false,
+      "outputTarget" : "panel",
+      "autoShowOutput" : true,
+      "maxCompleted" : 1,
+      "outputBufferSize" : 100,
+      "successOutput" : "{stdout}",
+      "errorOutput" : "{stdout}\n{stderr}",
+      "fatalOutput" : "Failed to execute : {fullCommand}\n{stdout}\n{stderr}",
+      "successMessage" : "Executed : {fullCommand}",
+      "errorMessage" : "Executed : {fullCommand}\nReturned with code {exitStatus}\n{stderr}",
+      "fatalMessage" : "Failed to execute : {fullCommand}\n{stdout}\n{stderr}",
+      "patterns" : ["P1"]
+    },
+    {
+      "namespace" : "process-palette",
+      "action" : "stream-example",
+      "command" : "ping localhost",
+      "stream" : true,
+      "outputTarget" : "panel",
+      "outputBufferSize": null,
+      "successOutput" : "{stdout}",
+      "errorOutput" : "{stdout}\n{stderr}",
+      "fatalOutput" : "Failed to execute : {fullCommand}\n{stdout}\n{stderr}",
+      "successMessage" : "Executed : {fullCommand}",
+      "errorMessage" : "Executed : {fullCommand}\nReturned with code {exitStatus}\n{stderr}",
+      "fatalMessage" : "Failed to execute : {fullCommand}\n{stdout}\n{stderr}"
+    }
+  ]
+}
