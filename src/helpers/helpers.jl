@@ -18,21 +18,77 @@
 #############################################################################
 
 
+struct TimePattern
+    y::Union{Array{UnitRange{Int64},1},Nothing}
+    m::Union{Array{UnitRange{Int64},1},Nothing}
+    d::Union{Array{UnitRange{Int64},1},Nothing}
+    wd::Union{Array{UnitRange{Int64},1},Nothing}
+    H::Union{Array{UnitRange{Int64},1},Nothing}
+    M::Union{Array{UnitRange{Int64},1},Nothing}
+    S::Union{Array{UnitRange{Int64},1},Nothing}
+    TimePattern(;y=nothing, m=nothing, d=nothing, wd=nothing, H=nothing, M=nothing, S=nothing) = new(y, m, d, wd, H, M, S)
+end
+
+struct TimePatternError <: Exception
+    msg::String
+end
+
 UNION_OP = ","
 INTERSECTION_OP = ";"
 RANGE_OP = "-"
 
 
-struct TimePattern
-    Y::Union{UnitRange{Int64},Nothing}
-    M::Union{UnitRange{Int64},Nothing}
-    D::Union{UnitRange{Int64},Nothing}
-    WD::Union{UnitRange{Int64},Nothing}
-    h::Union{UnitRange{Int64},Nothing}
-    m::Union{UnitRange{Int64},Nothing}
-    s::Union{UnitRange{Int64},Nothing}
-    TimePattern(;Y=nothing, M=nothing, D=nothing, WD=nothing, h=nothing, m=nothing, s=nothing) = new(Y, M, D, WD, h, m, s)
+function as_date_time(t_str::String)
+    reg_exp = r"[ymdHMS]"
+    keys = [m.match for m in eachmatch(reg_exp, t_str)]
+    values = split(t_str, reg_exp; keepempty=false)
+    periods = Array{Period,1}()
+    for (k, v) in zip(keys, values)
+        k == "y" && push!(periods, Year(v))
+        k == "m" && push!(periods, Month(v))
+        k == "d" && push!(periods, Day(v))
+        k == "H" && push!(periods, Hour(v))
+        k == "M" && push!(periods, Minute(v))
+        k == "S" && push!(periods, Second(v))
+    end
+    DateTime(periods...)
 end
+
+
+function parse_time_pattern_spec(spec)
+    kwargs = Dict()
+    regexp = r"(y|m|d|wd|H|M|S)"
+    pattern_specs = split(spec, UNION_OP)
+    for pattern_spec in pattern_specs
+        range_specs = split(pattern_spec, INTERSECTION_OP)
+        for range_spec in range_specs
+            m = match(regexp, range_spec)
+            m === nothing && throw(TimePatternError("""invalid interval specification $range_spec."""))
+            key = m.match
+            start_stop = range_spec[length(key)+1:end]
+            start_stop = split(start_stop, RANGE_OP)
+            length(start_stop) != 2 && throw(TimePatternError("""invalid interval specification $range_spec."""))
+            start_str, stop_str = start_stop
+            start = try
+                parse(Int64, start_str)
+            catch ArgumentError
+                throw(TimePatternError("""invalid lower bound $start_str."""))
+            end
+            stop = try
+                parse(Int64, stop_str)
+            catch ArgumentError
+                throw(TimePatternError("""invalid upper bound $stop_str."""))
+            end
+            start > stop && throw(TimePatternError("""lower bound can't be higher than upper bound."""))
+            arr = get!(kwargs, Symbol(key), Array{UnitRange{Int64},1}())
+            push!(arr, range(start, stop=stop))
+        end
+    end
+    TimePattern(;kwargs...)
+end
+
+
+matches(time_pattern::TimePattern, t_str::String) = matches(time_pattern, as_date_time(t_str))
 
 
 """
@@ -44,44 +100,15 @@ If a range is not specified for a given level, then it doesn't matter where
 (or should I say, *when*?) is `t` on that level.
 """
 function matches(time_pattern::TimePattern, t::DateTime)
-    conds = []
-    time_pattern.Y != nothing && push!(conds, year(t) in time_pattern.Y)
-    time_pattern.M != nothing && push!(conds, month(t) in time_pattern.M)
-    time_pattern.D != nothing && push!(conds, day(t) in time_pattern.D)
-    time_pattern.WD != nothing && push!(conds, dayofweek(t) in time_pattern.WD)
-    time_pattern.h != nothing && push!(conds, hour(t) in time_pattern.h)
-    time_pattern.m != nothing && push!(conds, minute(t) in time_pattern.m)
-    time_pattern.s != nothing && push!(conds, second(t) in time_pattern.s)
+    conds = Array{Bool,1}()
+    time_pattern.y != nothing && push!(conds, any(year(t) in rng for rng in time_pattern.y))
+    time_pattern.m != nothing && push!(conds, any(month(t) in rng for rng in time_pattern.m))
+    time_pattern.d != nothing && push!(conds, any(day(t) in rng for rng in time_pattern.d))
+    time_pattern.wd != nothing && push!(conds, any(dayofweek(t) in rng for rng in time_pattern.wd))
+    time_pattern.H != nothing && push!(conds, any(hour(t) in rng for rng in time_pattern.H))
+    time_pattern.M != nothing && push!(conds, any(minute(t) in rng for rng in time_pattern.M))
+    time_pattern.S != nothing && push!(conds, any(second(t) in rng for rng in time_pattern.S))
     all(conds)
-end
-
-
-function parse_time_pattern_expr(expr)
-    regexp = r"(Y|M|D|WD|h|m|s)"
-    range_exprs = split(expr, INTERSECTION_OP)
-    ranges = Dict()
-    for range_expr in range_exprs
-        m = match(regexp, range_expr)
-        m === nothing && error("""Invalid interval expression $range_expr""")
-        key = m.match
-        start_stop = range_expr[length(key)+1:end]
-        start_stop = split(start_stop, RANGE_OP)
-        length(start_stop) != 2 && error("""Invalid interval expression $range_expr""")
-        start_str, stop_str = start_stop
-        start = try
-            parse(Int64, start_str)
-        catch ArgumentError
-            error("""Invalid lower bound $start_str""")
-        end
-        stop = try
-            parse(Int64, stop_str)
-        catch ArgumentError
-            error("""Invalid upper bound $stop_str""")
-        end
-        start > stop && error("""Lower bound can't be higher than upper bound""")
-        ranges[Symbol(key)] = range(start, stop=stop)
-    end
-    TimePattern(;ranges...)
 end
 
 
@@ -125,51 +152,43 @@ function as_dataframe(var::Dict{Tuple,Float64})
     return df
 end
 
-"""
-    fix_name_ambiguity!(object_class_name_list)
 
-Append an increasing integer to repeated object class names.
+# TODO: Fix docstring
+"""
+    fix_name_ambiguity(object_class_name_list)
+
+A list identical to `object_class_name_list`, except that repeated entries are modified by
+appending an increasing integer.
 
 # Example
 ```julia
-julia> s=["connection","node", "node"]
-3-element Array{String,1}:
- "connection"
- "node"
- "node"
+julia> s=[:connection, :node, :node]
+3-element Array{Symbol,1}:
+ :connection
+ :node
+ :node
 
-julia> SpineModel.fix_name_ambiguity!(s)
-
-julia> s
-3-element Array{String,1}:
- "connection"
- "node1"
- "node2"
+julia> fix_name_ambiguity(s)
+3-element Array{Symbol,1}:
+ :connection
+ :node1
+ :node2
 ```
 """
-# NOTE: Do we really need to document this one?
-function fix_name_ambiguity!(object_class_name_list::Array{String,1})
-    ref_object_class_name_list = copy(object_class_name_list)
-    object_class_name_ocurrences = Dict{String,Int64}()
-    for (i, object_class_name) in enumerate(object_class_name_list)
-        n_ocurrences = count(x -> x == object_class_name, ref_object_class_name_list)
-        n_ocurrences == 1 && continue
-        ocurrence = get(object_class_name_ocurrences, object_class_name, 1)
-        object_class_name_list[i] = string(object_class_name, ocurrence)
-        object_class_name_ocurrences[object_class_name] = ocurrence + 1
-    end
-end
-
-function fix_name_ambiguity!(object_class_name_list::Array{Symbol,1})
-    ref_object_class_name_list = copy(object_class_name_list)
+function fix_name_ambiguity(object_class_name_list::Array{Symbol,1})
+    fixed = Array{Symbol,1}()
     object_class_name_ocurrences = Dict{Symbol,Int64}()
     for (i, object_class_name) in enumerate(object_class_name_list)
-        n_ocurrences = count(x -> x == object_class_name, ref_object_class_name_list)
-        n_ocurrences == 1 && continue
-        ocurrence = get(object_class_name_ocurrences, object_class_name, 1)
-        object_class_name_list[i] = Symbol(object_class_name, ocurrence)
-        object_class_name_ocurrences[object_class_name] = ocurrence + 1
+        n_ocurrences = count(x -> x == object_class_name, object_class_name_list)
+        if n_ocurrences == 1
+            push!(fixed, object_class_name)
+        else
+            ocurrence = get(object_class_name_ocurrences, object_class_name, 1)
+            push!(fixed, Symbol(object_class_name, ocurrence))
+            object_class_name_ocurrences[object_class_name] = ocurrence + 1
+        end
     end
+    fixed
 end
 
 

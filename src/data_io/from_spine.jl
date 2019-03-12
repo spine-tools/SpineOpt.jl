@@ -17,27 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
-function time_pattern_getter(patterns_key_tuples)
-    function f(t::DateTime)
-        @show t == nothing
-        found_key = nothing
-        for (patterns, key) in patterns_key_tuples
-            if any(matches(p, t) for p in patterns)
-                found_key = key
-                break
-            end
-        end
-        found_key
-    end
-end
-
-function arr_getter(json)
-    function f(t)
-        json[t]
-    end
-end
-
 """
     JuMP_object_parameter_out(db_map::PyObject)
 
@@ -65,58 +44,68 @@ function JuMP_object_parameter_out(db_map::PyObject)
     for parameter in py"[x._asdict() for x in $db_map.object_parameter_list()]"
         parameter_name = parameter["parameter_name"]
         object_class_name = parameter["object_class_name"]
-        default_value = parameter["default_value"]
-        parameter_name_symbol = Symbol(parameter_name)
+        default_value = as_number(parameter["default_value"])
+        tag_list_str = parameter["parameter_tag_list"]
+        tag_list = if tag_list_str isa String
+            split(tag_list_str, ",")
+        else
+            []
+        end
         object_parameter_value_list =
             py"[x._asdict() for x in $db_map.object_parameter_value_list(parameter_name=$parameter_name)]"
         object_parameter_value_dict = Dict{Symbol,Any}()
-        # Loop through all object parameter values to create a Dict(object_name => func)
-        # where func is obtained from the json field if possible, else from the value field
+        time_patterns = Array{String,1}()
+        # Loop through all object parameter values to create a Dict(object_name => func, ... )
+        # where func is a function of the form t -> return_value, for getting the parameter value
         for object_parameter_value in object_parameter_value_list
-            object_name = Symbol(object_parameter_value["object_name"])
-            json_str = object_parameter_value["json"]
+            object_name = object_parameter_value["object_name"]
+            json = object_parameter_value["json"]
             value = object_parameter_value["value"]
-            if json_str != nothing
-                json = JSON.parse(json_str)  # Let LoadError be raised
-                if isa(json, Number)
-                    object_parameter_value_dict[object_name] = t -> json
-                elseif isa(json, Array)
-                    object_parameter_value_dict[object_name] = arr_getter(json)
-                elseif isa(json, Dict)
-                    # Here is where the fun begins
-                    type_ = json["type"]
-                    if type_ == "time_patterned_data"
-                        !haskey(json, "time_pattern_spec") && error(
-                            """Time pattern specification not found in
-                            JSON of '$parameter_name' for '$object_name'."""
+            object_parameter_value_dict[Symbol(object_name)] = if json != nothing
+                parsed_json = JSON.parse(json)  # Let LoadError be thrown
+                if parsed_json isa Dict
+                    # Do some validation
+                    haskey(parsed_json, "type") || error(
+                        """unable to parse '$parameter_name' JSON specification for '$object_name':
+                        'type' missing.
+                        """
+                    )
+                    type_ = parsed_json["type"]
+                    if type_ == "time_pattern"
+                        haskey(parsed_json, "data") || error(
+                            """unable to parse '$parameter_name' JSON specification for '$object_name':
+                            'data' missing.
+                            """
                         )
-                        time_pattern_spec = json["time_pattern_spec"]
-                        # TODO: Check if dictionary
-                        if haskey(time_pattern_spec, "from")
-                            # TODO
-                        else
-                            patterns_key_tuples = []
-                            for (key, value) in time_pattern_spec
-                                pattern_exprs = split(value, UNION_OP)
-                                patterns = [parse_time_pattern_expr(expr) for expr in pattern_exprs]
-                                push!(patterns_key_tuples, (patterns, key))
-                            end
-                            object_parameter_value_dict[object_name] = time_pattern_getter(patterns_key_tuples)
-                        end
+                        parsed_json["data"] isa Dict || error(
+                            """unable to parse '$parameter_name' JSON specification for '$object_name':
+                            'data' should be a dictionary (time_pattern object: value).
+                            """
+                        )
                     else
-                        error("Unknown JSON type $type_.")
+                        error(
+                            """unable to parse '$parameter_name' JSON specification for '$object_name':
+                            unknown type '$type_'.
+                            """
+                        )
                     end
                 end
+                parsed_json
             elseif value != nothing
-                object_parameter_value_dict[object_name] = t -> as_number(value)
+                # TODO: Check is_time_pattern_spec from rulebook later
+                try
+                    parse_time_pattern_spec(value)
+                catch e
+                    as_number(value)
+                end
             else
-                object_parameter_value_dict[object_name] = t -> as_number(default_value)
+                default_value
             end
         end
         @suppress_err begin
             # Create and export convenience functions
             @eval begin
-                function $parameter_name_symbol(;t::Union{Int64,DateTime,Nothing}=nothing, kwargs...)
+                function $(Symbol(parameter_name))(;t::Union{Int64,String,Nothing}=nothing, kwargs...)
                     object_parameter_value_dict = $(object_parameter_value_dict)
                     if length(kwargs) == 0
                         # Return dict if kwargs is empty
@@ -126,22 +115,58 @@ function JuMP_object_parameter_out(db_map::PyObject)
                         given_object_class_name = key
                         object_class_name = Symbol($object_class_name)
                         given_object_class_name != object_class_name && error(
-                            """Incorrect object class, expected '$(object_class_name)',
-                            got '$given_object_class_name'
-                            """
+                            """invalid object class in call to '$($parameter_name)':
+                            expected '$object_class_name', got '$given_object_class_name'."""
                         )
                         given_object_name = value
                         object_names = eval(object_class_name)()
-                        if !(given_object_name in object_names)
-                            error("'$given_object_name' is not a valid object of class '$object_class_name'")
+                        !(given_object_name in object_names) && error(
+                            """unable to retrieve value of '$($parameter_name)' for '$given_object_name':
+                            not a valid object of class '$object_class_name'."""
+                        )
+                        !haskey(object_parameter_value_dict, given_object_name) && return $default_value
+                        value = object_parameter_value_dict[given_object_name]
+                        if value isa Array
+                            # TODO: handle t === nothing here
+                            return value[t]
+                        elseif value isa Dict
+                            # Fun begins
+                            type_ = value["type"]
+                            if type_ == "time_pattern"
+                                spec = get(value, "specification", "time_pattern_spec")
+                                cls = get(value, "class", "time_pattern")
+                                data = value["data"]
+                                for (k, v) in data
+                                    kwargs = Dict(Symbol(cls) => Symbol(k))
+                                    time_pattern = try
+                                        eval(Symbol(spec))(;kwargs...)
+                                    catch e
+                                        e isa UndefVarError && error(
+                                            """unable to retrieve value of '$($parameter_name)' for '$given_object_name':
+                                            unknown time pattern '$k'.
+                                            """
+                                        )
+                                        rethrow()
+                                    end
+                                    matches(time_pattern, t) && return v
+                                end
+                                error(
+                                    """unable to retrieve value of '$($parameter_name)' for '$given_object_name'
+                                    at time step '$t': '$t' does not match any time pattern.
+                                    """
+                                )
+                            end
+                        else
+                            return value
                         end
-                        func = object_parameter_value_dict[given_object_name]
-                        return func(t)
                     else # length of kwargs is > 1
-                        error("Too many arguments in function call (expected 1, got $(length(kwargs)))")
+                        error(
+                            """too many arguments in call to '$($parameter_name)':
+                            expected 1, got $(length(kwargs))"""
+                        )
                     end
                 end
-                export $parameter_name_symbol
+                export $(Symbol(parameter_name))
             end
         end
         value_list_id = parameter["value_list_id"]
@@ -154,7 +179,7 @@ function JuMP_object_parameter_out(db_map::PyObject)
             object_name = object_parameter_value["object_name"]
             !(value in value_list) && continue
             dict1 = get!(object_subset_dict, object_class_name_symbol, Dict{Symbol,Any}())
-            dict2 = get!(dict1, parameter_name_symbol, Dict{Symbol,Any}())
+            dict2 = get!(dict1, Symbol(parameter_name), Dict{Symbol,Any}())
             arr = get!(dict2, Symbol(value), Array{Symbol,1}())
             push!(arr, Symbol(object_name))
         end
@@ -203,14 +228,28 @@ function JuMP_object_out(db_map::PyObject, object_subset_dict::Dict{Symbol,Any})
                         kwargs_arr = [par => val for (par, val) in kwargs]
                         par, val = kwargs_arr[1]
                         dict1 = $(object_subset_dict1)
-                        !haskey(dict1, par) && error("$par is not a list-parameter for $object_class_name")
+                        !haskey(dict1, par) && error(
+                            """unable to retrieve object subset of class '$object_class_name':
+                            '$par' is not a list-parameter for '$object_class_name'
+                            """
+                        )
                         dict2 = dict1[par]
-                        !haskey(dict2, val) && error("$val is not a listed value for $par")
+                        !haskey(dict2, val) && error(
+                            """unable to retrieve object subset of class '$object_class_name':
+                            '$val' is not a listed value for '$par'"""
+                        )
                         object_subset = dict2[val]
                         for (par, val) in kwargs_arr[2:end]
-                            !haskey(dict1, par) && error("$par is not a list-parameter for $object_class_name")
+                            !haskey(dict1, par) && error(
+                                """unable to retrieve object subset of class '$object_class_name':
+                                '$par' is not a list-parameter for '$object_class_name'
+                                """
+                            )
                             dict2 = dict1[par]
-                            !haskey(dict2, val) && error("$val is not a listed value for $par")
+                            !haskey(dict2, val) && error(
+                                """unable to retrieve object subset of class '$object_class_name':
+                                '$val' is not a listed value for '$par'"""
+                            )
                             object_subset_ = dict2[val]
                             object_subset = [x for x in object_subset if x in object_subset_]
                         end
@@ -244,10 +283,9 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
         parameter_name = parameter["parameter_name"]
         relationship_class_name = parameter["relationship_class_name"]
         default_value = as_number(parameter["default_value"])
-        object_class_name_list = [Symbol(x) for x in split(parameter["object_class_name_list"], ",")]
-        dimension_count = length(object_class_name_list)
+        orig_object_class_name_list = [Symbol(x) for x in split(parameter["object_class_name_list"], ",")]
         # Rename entries of this list by appending increasing integer values if entry occurs more than one time
-        fix_name_ambiguity!(object_class_name_list)
+        object_class_name_list = fix_name_ambiguity(orig_object_class_name_list)
         relationship_parameter_value_list =
             py"$db_map.relationship_parameter_value_list(parameter_name=$parameter_name)"
         relationship_parameter_value_dict = Dict{Tuple{Symbol,Symbol,Vararg{Symbol}},Any}() # At least two Symbols
@@ -271,31 +309,16 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
                     # If no kwargs are provided a dict of all parameter values is returned
                     kwargs_length = length(kwargs)
                     kwargs_length == 0 && return relationship_parameter_value_dict
-                    dimension_count = $dimension_count
-                    if kwargs_length != dimension_count
-                        error(
-                            """Incorrect number of (object_class=object) pairs,
-                            expected $dimension_count, got $kwargs_length."""
-                        )
-                    end
+                    # Call the relationship access function to check validity
+                    relationship_class_name = Symbol($relationship_class_name)
+                    header = eval(relationship_class_name)(;header_only=true, kwargs...)
+                    # Check that header is empty
+                    !isempty(header) && error(
+                        """arguments missing in call to $($parameter_name): '$(join(header, "', '"))'"""
+                    )
                     given_object_class_name_list = keys(kwargs)
                     given_object_name_list = values(values(kwargs))
                     indexes = indexin(given_object_class_name_list, object_class_name_list)
-                    nothing in indexes && error(
-                        """Incorret object classes, expected '$(join(object_class_name_list, "', '"))',
-                        got '$(join(given_object_class_name_list, "', '"))'
-                        """
-                    )
-                    relationship_class_name = Symbol($relationship_class_name)
-                    try
-                        eval(relationship_class_name)(;kwargs...)
-                    catch e
-                        error(
-                            """Invalid objects '$(join(given_object_name_list, "', '"))'
-                            for relationship class '$relationship_class_name'.
-                            """
-                        )
-                    end
                     ordered_object_name_list = given_object_name_list[indexes]
                     !haskey(relationship_parameter_value_dict, ordered_object_name_list) && return $default_value
                     value = relationship_parameter_value_dict[ordered_object_name_list]
@@ -350,8 +373,8 @@ function JuMP_relationship_out(db_map::PyObject)
         relationship_class_id = relationship_class["id"]
         relationship_class_name = relationship_class["name"]
         # Generate Array of Strings of object class names in this relationship class
-        object_class_name_list = [Symbol(x) for x in split(relationship_class["object_class_name_list"], ",")]
-        fix_name_ambiguity!(object_class_name_list)
+        orig_object_class_name_list = [Symbol(x) for x in split(relationship_class["object_class_name_list"], ",")]
+        object_class_name_list = fix_name_ambiguity(orig_object_class_name_list)
         relationship_list = py"$db_map.wide_relationship_list(class_id=$relationship_class_id)"
         object_name_lists = Array{Array{Symbol,1},1}()
         for relationship in py"[x._asdict() for x in $relationship_list]"
@@ -360,27 +383,31 @@ function JuMP_relationship_out(db_map::PyObject)
         end
         @suppress_err begin
             @eval begin
-                function $(Symbol(relationship_class_name))(;kwargs...)
+                function $(Symbol(relationship_class_name))(;header_only=false, kwargs...)
                     object_name_lists = $(object_name_lists)
                     object_class_name_list = $(object_class_name_list)
+                    orig_object_class_name_list = $(orig_object_class_name_list)
                     indexes = Array{Int64, 1}()
                     object_name_list = Array{Symbol, 1}()
                     for (object_class_name, object_name) in kwargs
                         index = findfirst(x -> x == object_class_name, object_class_name_list)
                         index == nothing && error(
-                            """Invalid object class '$object_class_name'
-                            for relationship class '$($relationship_class_name)'.
+                            """invalid keyword '$object_class_name' in call to '$($relationship_class_name)':
+                            valid keywords are '$(join(object_class_name_list, "', '"))'.
                             """
                         )
-                        object_names = eval(object_class_name)()
+                        orig_object_class_name = orig_object_class_name_list[index]
+                        object_names = eval(orig_object_class_name)()
                         !(object_name in object_names) && error(
-                            """'$object_name' is not a valid object of class '$object_class_name'"""
+                            """unable to retrieve '$($relationship_class_name)' tuples for '$object_name':
+                            not a valid object of class '$orig_object_class_name'"""
                         )
                         push!(indexes, index)
                         push!(object_name_list, object_name)
                     end
-                    result = filter(x -> x[indexes] == object_name_list, object_name_lists)
                     slice = filter(i -> !(i in indexes), collect(1:length(object_class_name_list)))
+                    header_only && return object_class_name_list[slice]
+                    result = filter(x -> x[indexes] == object_name_list, object_name_lists)
                     length(slice) == 1 && (slice = slice[1])
                     [x[slice] for x in result]
                 end
