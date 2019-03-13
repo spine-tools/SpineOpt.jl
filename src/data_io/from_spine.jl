@@ -61,7 +61,7 @@ function JuMP_object_parameter_out(db_map::PyObject)
             end
             mini_object_subset_dict
         else
-            Dict()
+            nothing
         end
         # Check if it's constructor, and adjust function name
         is_constructor = (parameter_name == object_class_name)
@@ -105,11 +105,12 @@ function JuMP_object_parameter_out(db_map::PyObject)
             end
             object_parameter_value_dict[Symbol(object_name)] = new_value
             # Add entry to object_subset_dict
-            if haskey(mini_object_subset_dict, Symbol(new_value))                
+            mini_object_subset_dict == nothing && continue
+            if haskey(mini_object_subset_dict, Symbol(new_value))
                 arr = mini_object_subset_dict[Symbol(new_value)]
                 push!(arr, Symbol(object_name))
             else
-                isempty(mini_object_subset_dict) || @warn string(
+                @warn string(
                     "found value $new_value for '$object_name, $parameter_name', ",
                     "which is not a listed value."
                 )
