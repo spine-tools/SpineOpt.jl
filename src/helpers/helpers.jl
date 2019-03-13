@@ -197,6 +197,8 @@ function get_scalar(value::Any, t::Union{Int64,String,Nothing})
                 matches(time_pattern, t) && return v
             end
             error("'$t' does not match any time pattern")
+        else
+            error("unknown type '$type_'")
         end
     elseif value isa TimePattern
         if t != nothing
