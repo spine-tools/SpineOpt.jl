@@ -115,7 +115,7 @@ function add_var_to_result!(
     end
     # Add relationships
     py_relationship_kwargs_list = PyVector(relationship_kwargs_list)
-    relationship_list = py"""$db_map.add_wide_relationships(*$py_relationship_kwargs_list)"""
+    relationship_list, error_log = py"""$db_map.get_or_add_wide_relationships(*$py_relationship_kwargs_list)"""
     # Complete parameter value args with relationship ids
     for (i, relationship) in enumerate(py"""[x._asdict() for x in $relationship_list]""")
         parameter_value_kwargs_list[i]["relationship_id"] = relationship["id"]
