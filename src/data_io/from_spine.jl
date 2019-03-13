@@ -98,22 +98,22 @@ function JuMP_object_parameter_out(db_map::PyObject)
                         "unable to parse time pattern from '$object_name, $parameter_name': "
                         * "$(sprint(showerror, e))"
                     )
-                    parse_value(value)
                 end
+                parse_value(value)
             else
                 parsed_default_value
             end
             object_parameter_value_dict[Symbol(object_name)] = new_value
             # Add entry to object_subset_dict
-            if !haskey(mini_object_subset_dict, Symbol(new_value))
+            if haskey(mini_object_subset_dict, Symbol(new_value))                
+                arr = mini_object_subset_dict[Symbol(new_value)]
+                push!(arr, Symbol(object_name))
+            else
                 isempty(mini_object_subset_dict) || @warn string(
                     "found value $new_value for '$object_name, $parameter_name', ",
                     "which is not a listed value."
                 )
-                continue
             end
-            arr = mini_object_subset_dict[Symbol(new_value)]
-            push!(arr, Symbol(object_name))
         end
         @suppress_err begin
             # Create and export convenience functions
