@@ -134,6 +134,82 @@ function parse_time_pattern(spec)
 end
 
 
+"""
+    parse_value(str)
+
+An Int64 or Float64 from `str`, if possible.
+"""
+function parse_value(str)
+    typeof(str) != String && return str
+    type_array = [
+        Int64,
+        Float64,
+    ]
+    for T in type_array
+        try
+            return parse(T, str)
+        catch
+        end
+    end
+    str
+end
+
+
+"""
+A scalar corresponding to index `t` in `value`.
+Called by convenience functions for returning parameter values.
+
+- If `value` is an `Array`, then the result is position `t` in the `Array`.
+- If `value` is a `Dict`, then:
+  - If `value["type"]` is "time_pattern", then the result is one of the values
+    from `value["time_pattern_data"]` that matches `t`.
+  - More to come...
+- If `value` is a `TimePattern`, then:
+  - If `t` is `nothing`, then the result is `value` itself.
+  - It `t` is not `nothing`, then the result is `true` or `false` depending on whether or not `value` matches `t`.
+- If `value` is a scalar, then the result is `value` itself
+"""
+function get_scalar(value::Any, t::Union{Int64,String,Nothing})
+    if value isa Array
+        t === nothing && error("argument `t` missing")
+        return value[t]
+    elseif value isa Dict
+        # Fun begins
+        # NOTE: At this point we shouldn't be afraid of accessing keys or whatever,
+        # since everything was validated before
+        type_ = value["type"]
+        if type_ == "time_pattern"
+            time_pattern_data = value["time_pattern_data"]
+            for (k, v) in time_pattern_data
+                time_pattern = if k isa TimePattern
+                    k
+                else
+                    try
+                        eval(Symbol(k))()
+                    catch e
+                        if e isa UndefVarError
+                            error("unknown time pattern '$k'")
+                        else
+                            rethrow()
+                        end
+                    end
+                end
+                matches(time_pattern, t) && return v
+            end
+            error("'$t' does not match any time pattern")
+        end
+    elseif value isa TimePattern
+        if t != nothing
+            return matches(value, t)
+        else
+            return value
+        end
+    else
+        return value
+    end
+end
+
+
 matches(time_pattern::TimePattern, str::String) = matches(time_pattern, parse_date_time_str(str))
 
 
@@ -157,26 +233,6 @@ function matches(time_pattern::TimePattern, t::DateTime)
     all(conds)
 end
 
-
-"""
-    parse_value(str)
-
-An Int64 or Float64 from `str`, if possible.
-"""
-function parse_value(str)
-    typeof(str) != String && return str
-    type_array = [
-        Int64,
-        Float64,
-    ]
-    for T in type_array
-        try
-            return parse(T, str)
-        catch
-        end
-    end
-    str
-end
 
 """
     as_dataframe(var::Dict{Tuple,Float64})
