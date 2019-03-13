@@ -52,10 +52,16 @@ function JuMP_object_parameter_out(db_map::PyObject)
             []
         end
         value_list_id = parameter["value_list_id"]
-        value_list = if value_list_id != nothing
-            value_list_dict[value_list_id]
+        mini_object_subset_dict = if value_list_id != nothing
+            d1 = get!(object_subset_dict, Symbol(object_class_name), Dict{Symbol,Any}())
+            mini_object_subset_dict = get!(d1, Symbol(parameter_name), Dict{Symbol,Any}())
+            value_list = value_list_dict[value_list_id]
+            for value in value_list
+                mini_object_subset_dict[Symbol(value)] = Array{Symbol,1}()
+            end
+            mini_object_subset_dict
         else
-            []
+            Dict()
         end
         # Check if it's constructor, and adjust function name
         is_constructor = (parameter_name == object_class_name)
@@ -99,10 +105,14 @@ function JuMP_object_parameter_out(db_map::PyObject)
             end
             object_parameter_value_dict[Symbol(object_name)] = new_value
             # Add entry to object_subset_dict
-            !(new_value in value_list) && continue
-            dict1 = get!(object_subset_dict, Symbol(object_class_name), Dict{Symbol,Any}())
-            dict2 = get!(dict1, Symbol(parameter_name), Dict{Symbol,Any}())
-            arr = get!(dict2, Symbol(new_value), Array{Symbol,1}())
+            if !haskey(mini_object_subset_dict, Symbol(new_value))
+                isempty(mini_object_subset_dict) || @warn string(
+                    "found value $new_value for '$object_name, $parameter_name', ",
+                    "which is not a listed value."
+                )
+                continue
+            end
+            arr = mini_object_subset_dict[Symbol(new_value)]
             push!(arr, Symbol(object_name))
         end
         @suppress_err begin
@@ -471,7 +481,6 @@ julia> trans_loss(connection="EL1", node1="LeuvenElectricity", node2="AntwerpEle
 ```
 """
 function JuMP_all_out(db_map::PyObject)
-    # TODO: generate function that parses JSON here
     object_subset_dict = JuMP_object_parameter_out(db_map)
     JuMP_object_out(db_map, object_subset_dict)
     JuMP_relationship_parameter_out(db_map)
