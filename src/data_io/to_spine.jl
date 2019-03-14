@@ -61,21 +61,26 @@ function add_var_to_result!(
         end
         # Object or class not found, add dummy object class named after the object
         object_class_name = string(object_name, "_class")
-        py"""object_class = $db_map.get_or_add_object_class(name=$object_class_name)
+        py"""object_class = $db_map.add_object_classes(dict(name=$object_class_name), return_dups=True)[0].one()
         """
         push!(object_class_name_list, object_class_name)
         push!(object_class_id_list, py"object_class.id")
     end
     # Get or add relationship class `result__object_class1__object_class2__...`
     relationship_class_name = join(object_class_name_list, "__")
-    py"""relationship_class = $db_map.get_or_add_wide_relationship_class(
-        name=$relationship_class_name,
-        object_class_id_list=$object_class_id_list)
+    wide_relationship_class = Dict(
+        "name" => relationship_class_name,
+        "object_class_id_list" => object_class_id_list
+    )
+    py"""relationship_class = $db_map.add_wide_relationship_classes(
+        $wide_relationship_class, return_dups=True)[0].one()
     """
     # Get or add parameter named after variable
-    py"""parameter = $db_map.get_or_add_parameter(
-        name=$var_name,
-        relationship_class_id=relationship_class.id)
+    parameter = Dict(
+        "name" => var_name,
+        "relationship_class_id" => py"relationship_class.id"
+    )
+    py"""parameter = $db_map.add_parameters($parameter, return_dups=True)[0].one()
     """
     # Sweep dataframe to compute dictionaries of relationship and parameter value args
     relationship_kwargs_list = []
@@ -115,7 +120,7 @@ function add_var_to_result!(
     end
     # Add relationships
     py_relationship_kwargs_list = PyVector(relationship_kwargs_list)
-    relationship_list, error_log = py"""$db_map.get_or_add_wide_relationships(*$py_relationship_kwargs_list)"""
+    relationship_list = py"""$db_map.add_wide_relationships(*$py_relationship_kwargs_list, return_dups=True)[0]"""
     # Complete parameter value args with relationship ids
     for (i, relationship) in enumerate(py"""[x._asdict() for x in $relationship_list]""")
         parameter_value_kwargs_list[i]["relationship_id"] = relationship["id"]
@@ -134,10 +139,14 @@ Update `dest_url` with new parameters given by `results`.
 function JuMP_results_to_spine_db!(dest_url::String; results...)
     db_map = py"""$db_api.DiffDatabaseMapping($dest_url, 'spine_model')"""
     try
-        result_class = py"""$db_map.get_or_add_object_class(name="result")._asdict()"""
+        result_class = py"""$db_map.add_object_classes(dict(name="result"), return_dups=True)[0].one()._asdict()"""
         timestamp = Dates.format(Dates.now(), "yyyymmdd_HH_MM_SS")
         result_name = join(["result", timestamp], "_")
-        result_object = py"""$db_map.add_object(name=$result_name, class_id=$result_class['id'])._asdict()"""
+        object_ = Dict(
+            "name" => result_name,
+            "class_id" => result_class["id"]
+        )
+        result_object = py"""$db_map.add_objects($object_, return_dups=True)[0].one()._asdict()"""
         # Insert variable into spine database.
         for (name, var) in results
             dataframe = packed_var_dataframe(var)
