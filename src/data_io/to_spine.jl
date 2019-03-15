@@ -31,6 +31,15 @@ function packed_var_dataframe(var::Dict{Tuple,JuMP.Variable})
     end
 end
 
+function packed_var_dataframe(var::Dict{Tuple,Float64})
+    var_dataframe = as_dataframe(var)
+    sort!(var_dataframe)
+    packed_var_dataframe = by(var_dataframe, [1:size(var_dataframe, 2) - 2; ]) do df
+        DataFrame(json=JSON.json(df[end]))
+    end
+end
+
+
 """
     add_var_to_result!(db_map::PyObject, var_name::Symbol, dataframe::DataFrame, result_class::Dict, result_object::Dict)
 
