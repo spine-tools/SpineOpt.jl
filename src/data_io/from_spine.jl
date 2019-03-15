@@ -397,7 +397,7 @@ function JuMP_relationship_out(db_map::PyObject)
                     header_only && return object_class_name_list[slice]
                     result = filter(x -> x[indexes] == object_name_list, object_name_lists)
                     length(slice) == 1 && (slice = slice[1])
-                    [x[slice] for x in result]
+                    [Tuple(x[slice]) for x in result]
                 end
                 export $(Symbol(relationship_class_name))
             end
