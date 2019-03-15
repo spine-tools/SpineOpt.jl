@@ -92,7 +92,7 @@ function add_var_to_result!(
             py"""object_ = $db_map.single_object(name=$object_name).one_or_none()
             """
             if py"object_" == nothing
-                warn("Couldn't find object '$object_name', skipping row...")
+                @warn "Couldn't find object '$object_name', skipping row..."
                 break
             end
             push!(object_name_list, object_name)
@@ -173,7 +173,7 @@ function JuMP_results_to_spine_db!(dest_url, source_url; upgrade=false, results.
         create_results_database(dest_url, source_url; upgrade=upgrade)
         JuMP_results_to_spine_db!(dest_url; results...)
     else
-        warn(
+        @warn string(
 """
 The current operation cannot proceed because the SQLite database '$dest_url' is locked.
 The operation will resume automatically if the lock is released within the next 2 minutes.
