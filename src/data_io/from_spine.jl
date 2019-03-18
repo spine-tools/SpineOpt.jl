@@ -311,20 +311,15 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
                     ordered_object_name_list = given_object_name_list[indexes]
                     !haskey(relationship_parameter_value_dict, ordered_object_name_list) && return $default_value
                     value = relationship_parameter_value_dict[ordered_object_name_list]
-                    if isa(value, Array)
-                        t == nothing && return value
-                        return value[t]
-                    elseif isa(value, Dict)
-                        !haskey(value, "return_expression") && error("Field 'return_expression' not found")
-                        return_expression = value["return_expression"]
-                        preparation_expressions = get(value, "preparation_expressions", [])
-                        for expr in preparation_expressions
-                            eval(Meta.parse(replace(expr, "\$t" => "$t")))
-                        end
-                        return eval(Meta.parse(replace(return_expression, "\$t" => "$t")))
-                    else
-                        return value
+                    result = try
+                        SpineModel.get_scalar(value, t)
+                    catch e
+                        error(
+                            "unable to retrieve value of '$($parameter_name)' " *
+                            "for '$given_object_name': $(sprint(showerror, e))"
+                        )
                     end
+                    return result
                 end
                 export $(Symbol(parameter_name))
             end

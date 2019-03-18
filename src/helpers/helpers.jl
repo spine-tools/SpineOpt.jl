@@ -179,6 +179,7 @@ function get_scalar(value::Any, t::Union{Int64,String,Nothing})
         # since everything was validated before
         type_ = value["type"]
         if type_ == "time_pattern"
+            t === nothing && error("argument `t` missing")
             time_pattern_data = value["time_pattern_data"]
             for (k, v) in time_pattern_data
                 time_pattern = if k isa TimePattern
