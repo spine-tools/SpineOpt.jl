@@ -1,10 +1,11 @@
 # Load required packaes
 using Revise
 using SpineModel
-using Dates
+using Base.Dates
+using JuMP
 
 # Export contents of database into the current session
-db_url = "sqlite:///C:/Users/u0122387/Desktop/toolbox/projects/temporal_structure/input_timestorage/input_temporal3.sqlite"
+db_url = "sqlite:///C:/Users/u0122387/Desktop/toolbox/projects/temporal_structure/input_timestorage/new_temporal.sqlite"
 JuMP_all_out(db_url)
 
 ### time_slices (Liste mit allen namen)
@@ -50,8 +51,10 @@ end
 
 
 time_slicemap = Dict()
+time_slices_tempblock = Dict()
 ### time_slice_duration()
 for k in temporal_block()
+    time_slices_tempblock[k] = Dict()
         ## unterscheidung ob duration einzel wert ist oder mehrere
         if length(time_slice_duration()[k])==1
             test = collect(start_date(k):Minute(time_slice_duration()[k][1]):end_date(k))
@@ -59,16 +62,20 @@ for k in temporal_block()
             for i = 1: length(test)
             if i == 1
             time_slicemap["$(k)_t_$(i)"] =  time_slices("$(k)_t_$(i)",start_date(k),start_date(k)+Minute(time_slice_duration()[k][1]),Minute(time_slice_duration()[k][1]))
+            time_slices_tempblock[k]["$(k)_t_$(i)"] = "$(k)_t_$(i)"
             else
             time_slicemap["$(k)_t_$(i)"] =  time_slices("$(k)_t_$(i)",time_slicemap["$(k)_t_$(i-1)"].End_Date,time_slicemap["$(k)_t_$(i-1)"].End_Date+Minute(time_slice_duration()[k][1]),Minute(time_slice_duration()[k][1]))
+            time_slices_tempblock[k]["$(k)_t_$(i)"] = "$(k)_t_$(i)"
             end
             end
         else
             for i = 1: length(time_slice_duration()[k])
                 if i == 1
                 time_slicemap["$(k)_t_$(i)"] =  time_slices("$(k)_t_$(i)",start_date(k),start_date(k)+Minute(time_slice_duration()[k][i]),Minute(time_slice_duration()[k][i]))
+                time_slices_tempblock[k]["$(k)_t_$(i)"] = "$(k)_t_$(i)"
                 else
                 time_slicemap["$(k)_t_$(i)"] =  time_slices("$(k)_t_$(i)",time_slicemap["$(k)_t_$(i-1)"].End_Date,time_slicemap["$(k)_t_$(i-1)"].End_Date+Minute(time_slice_duration()[k][i]),+Minute(time_slice_duration()[k][i]))
+                time_slices_tempblock[k]["$(k)_t_$(i)"]  = "$(k)_t_$(i)"
                 end
             end
         end
@@ -98,7 +105,7 @@ for i in keys(time_slicemap)
     t_t_overlapp[i] = Dict()
     for j in keys(time_slicemap)
         t_t_overlapp[j] = Dict()
-        if time_slicemap[i].Start_Date >= time_slicemap[j].Start_Date && time_slicemap[i].Start_Date < time_slicemap[j].End_Date && i!=j
+        if (time_slicemap[i].Start_Date >= time_slicemap[j].Start_Date) && (time_slicemap[i].Start_Date < time_slicemap[j].End_Date) && (i!=j)
                 t_t_overlapp[i][j] = [time_slicemap[i] , time_slicemap[j]]
                 t_t_overlapp[j][i] = [time_slicemap[j] , time_slicemap[i]]
         end
@@ -109,7 +116,8 @@ end
 
 ### t_before_t (gibt zu jedem Zeitschritt denjendigen raus, der genau davor ist)
 
-
+t_before_t = Dict()
+t_after_t = Dict()
 for i in keys(time_slicemap)
     t_before_t[i] = Dict()
     for j in keys(time_slicemap)
@@ -127,3 +135,11 @@ end
 
 
 filter((x,y)->isequal(x,"half-hour_t_1"), t_in_t)
+function generate_variable_flow_test(m::Model)
+    @butcher Dict{Tuple, JuMP.Variable}(
+        (c, n, u, d, t) => @variable(
+            m, basename="flow[$c, $n, $u, $d, $t]", lowerbound=0
+        ) for (c, n, u, d, block) in commodity__node__unit__direction__temporal_block()
+            for t in keys(time_slices_tempblock[block])
+        )
+end

@@ -2,18 +2,16 @@
 using Revise
 using SpineModel
 using Base.Dates
-using Temporals
+#using Temporals
 using JuMP
 using Clp
 ##
 # Export contents of database into the current session
-db_url = "sqlite:///C:/Users/u0122387/Desktop/toolbox/projects/temporal_structure/input_timestorage/input_temporal2.sqlite"
+db_url = "sqlite:///C:/Users/u0122387/Desktop/toolbox/projects/temporal_structure/input_timestorage/new_temporal.sqlite"
 JuMP_all_out(db_url)
-duration()
-
 # Init model
 m = Model(solver=ClpSolver())
-
+##
 # Create decision variables
 flow = generate_variable_flow(m)
 trans = generate_variable_trans(m)

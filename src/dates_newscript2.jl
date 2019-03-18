@@ -1,7 +1,7 @@
 # Load required packaes
 using Revise
 using SpineModel
-using Dates
+using Base.Dates
 
 # Export contents of database into the current session
 db_url = "sqlite:///C:/Users/u0122387/Desktop/toolbox/projects/temporal_structure/input_timestorage/new_temporal.sqlite"
