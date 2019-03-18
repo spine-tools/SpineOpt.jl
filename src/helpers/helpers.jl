@@ -340,6 +340,7 @@ macro butcher(expression)
     for (call, call_location_arr) in call_location
         call_arg_arr = []  # Array of non-literal arguments
         replacement_variable = Dict()  # Variable to store the return value of each relocated call
+        broken = false
         for arg in call.args[2:end]  # First arg is the method name
             if isa(arg, Symbol)
                 # Positional argument
@@ -347,24 +348,35 @@ macro butcher(expression)
             elseif isa(arg, Expr)
                 if arg.head == :kw
                     # Keyword argument, push it if Symbol
-                    isa(arg.args[end], Symbol) && push!(call_arg_arr, arg.args[end])
+                    if arg.args[end] isa Symbol
+                        push!(call_arg_arr, arg.args[end])
+                    else
+                        broken = true
+                        break
+                    end
                 elseif arg.head == :tuple
-                    # Tuple argument, append every Symbol
-                    append!(call_arg_arr, [x for x in arg.args if isa(x, Symbol)])
+                    # Tuple argument, append if all Symbols
+                    if all([x isa Symbol for x in arg.args])
+                        append!(call_arg_arr, arg.args)
+                    else
+                        broken = true
+                        break
+                    end
                 elseif arg.head == :parameters
                     # keyword arguments after a semi-colon
-                    for kwarg in arg.args
-                        if kwarg.head == :kw
-                            isa(kwarg.args[end], Symbol) && push!(call_arg_arr, kwarg.args[end])
-                        end
+                    if all([(x.head == :kw) && (x.args[end] isa Symbol) for x in arg.args])
+                        append!(call_arg_arr, [x.args[end] for x in arg.args])
+                    else
+                        broken = true
+                        break
                     end
                 else
-                    # TODO: Handle remaining cases
+                    broken = true
+                    break
                 end
-            else
-                # TODO: Handle remaining cases
             end
         end
+        broken && continue
         isempty(call_arg_arr) && continue
         # Find top-most node where all arguments are assigned
         topmost_node_id = try maximum(
@@ -374,6 +386,7 @@ macro butcher(expression)
         )
         catch KeyError
             # One of the arguments is not assigned in this scope, skip the call
+            # Is this too conservative?
             continue
         end
         # Build dictionary of places where arguments are reassigned
@@ -386,10 +399,10 @@ macro butcher(expression)
             end
         end
         # Find better place for the call
-        for location in call_location_arr
+        for call_location in call_location_arr
             # Make sure we use the most recent value of all the arguments (take maximum)
             target_node_id = try
-                maximum(x for x in keys(arg_assignment_location) if x < location["node_id"])
+                maximum(x for x in keys(arg_assignment_location) if x < call_location["node_id"])
             catch ArgumentsError
                 # One or more arguments are not assigned before the call is made, skip
                 continue
@@ -401,8 +414,8 @@ macro butcher(expression)
             target_parent.args[target_row].args[end] == call && continue
             # Create or retrieve replacement variable
             x = get!(replacement_variable, target_node_id, gensym())
-            # Add new location for the replacement variable
-            push!(replacement_variable_location, (x, location["parent"], location["row"]))
+            # Add new call_location for the replacement variable
+            push!(replacement_variable_location, (x, call_location["parent"], call_location["row"]))
         end
         # Put the call at a better location, assign result to replacement variable
         for (target_node_id, x) in replacement_variable
@@ -495,15 +508,17 @@ end
 Recursively visit every node in an expression tree while applying a function on it.
 """
 function visit_node(node::Any, node_id::Int64, parent::Any, row::Int64, func, func_args...; func_kwargs...)
+    node_id += 1
     func(node, node_id, parent, row, func_args...; func_kwargs...)
     try
         child = node.args[1]
-        visit_node(child, node_id + 1, node, 1, func, func_args...; func_kwargs...)
+        node_id = visit_node(child, node_id, node, 1, func, func_args...; func_kwargs...)
     catch
     end
     try
         sibling = parent.args[row + 1]
-        visit_node(sibling, node_id + 1, parent, row + 1, func, func_args...; func_kwargs...)
+        node_id = visit_node(sibling, node_id, parent, row + 1, func, func_args...; func_kwargs...)
     catch
     end
+    return node_id
 end
