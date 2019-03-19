@@ -92,7 +92,7 @@ function JuMP_object_parameter_out(db_map::PyObject)
                 end
             elseif value != nothing
                 try
-                    @show parse_time_pattern(value)
+                    parse_time_pattern(value)
                 catch e
                     "time_pattern_spec" in tag_list && error(
                         "unable to parse time pattern from '$object_name, $parameter_name': "

@@ -339,61 +339,54 @@ macro butcher(expression)
     visit_node(expression, 1, nothing, 1, beat, call_location, assignment_location)
     for (call, call_location_arr) in call_location
         call_arg_arr = []  # Array of non-literal arguments
+        call_dirty_arg_arr = []  # Array of all reasonable arguments
         replacement_variable = Dict()  # Variable to store the return value of each relocated call
         broken = false
+        # Build array of arguments, break if any complex expression as argument
         for arg in call.args[2:end]  # First arg is the method name
-            if isa(arg, Symbol)
-                # Positional argument
-                push!(call_arg_arr, arg)
-            elseif isa(arg, Expr)
+            if arg isa Expr
                 if arg.head == :kw
-                    # Keyword argument, push it if Symbol
-                    if arg.args[end] isa Symbol
-                        push!(call_arg_arr, arg.args[end])
-                    else
-                        broken = true
-                        break
-                    end
+                    push!(call_dirty_arg_arr, arg.args[end])
                 elseif arg.head == :tuple
-                    # Tuple argument, append if all Symbols
-                    if all([x isa Symbol for x in arg.args])
-                        append!(call_arg_arr, arg.args)
-                    else
-                        broken = true
-                        break
-                    end
+                    append!(call_dirty_arg_arr, arg.args)
                 elseif arg.head == :parameters
-                    # keyword arguments after a semi-colon
-                    if all([(x.head == :kw) && (x.args[end] isa Symbol) for x in arg.args])
-                        append!(call_arg_arr, [x.args[end] for x in arg.args])
-                    else
-                        broken = true
-                        break
-                    end
+                    append!(call_dirty_arg_arr, [x.args[end] for x in arg.args])
                 else
                     broken = true
                     break
                 end
+            else
+                push!(call_dirty_arg_arr, arg)
+            end
+        end
+        broken && continue
+        # Get rid of immutable arguments, break if any non Symbol argument left
+        for arg in call_dirty_arg_arr
+            if isimmutable(arg)
+                continue
+            elseif arg isa Symbol
+                push!(call_arg_arr, arg)
+            else
+                broken = true
+                break
             end
         end
         broken && continue
         isempty(call_arg_arr) && continue
         # Find top-most node where all arguments are assigned
-        topmost_node_id = try maximum(
-            minimum(
-                location["node_id"] for location in assignment_location[arg]
-            ) for arg in call_arg_arr
+        topmost_node_id = maximum(
+            if haskey(assignment_location, arg)
+                minimum(location["node_id"] for location in assignment_location[arg])
+            else
+                0
+            end
+            for arg in call_arg_arr
         )
-        catch KeyError
-            # One of the arguments is not assigned in this scope, skip the call
-            # Is this too conservative?
-            continue
-        end
         # Build dictionary of places where arguments are reassigned
         # below the top-most node
         arg_assignment_location = Dict()
         for arg in call_arg_arr
-            for location in assignment_location[arg]
+            for location in get(assignment_location, arg, [])
                 location["node_id"] < topmost_node_id && continue
                 push!(arg_assignment_location, location["node_id"] => (location["parent"], location["row"]))
             end
@@ -404,7 +397,7 @@ macro butcher(expression)
             target_node_id = try
                 maximum(x for x in keys(arg_assignment_location) if x < call_location["node_id"])
             catch ArgumentsError
-                # One or more arguments are not assigned before the call is made, skip
+                # One or more arguments are not assigned before the call is made, not our fault, will blow up
                 continue
             end
             target_parent, target_row = arg_assignment_location[target_node_id]
@@ -445,13 +438,15 @@ Beat an expression node in preparation for butchering:
  1. Turn for loops with multiple iteration specifications into multiple nested for loops.
  E.g., `for i=1:10, j=1:5 (body) end` is turned into `for i=1:10 for j=1:5 (body) end end`.
  This is so @butcher can place method calls *in between* iteration specifications.
- 2. Register the location of calls and assignments into the supplied dictionaries.
+ 2. Register the location of calls and iteration specs into the supplied dictionaries.
 """
 function beat(
         node::Any, node_id::Int64, parent::Any, row::Int64,
         call_location::Dict{Expr,Array{Dict{String,Any},1}},
         assignment_location = Dict{Symbol,Array{Dict{String,Any},1}})
     !isa(node, Expr) && return
+    if node.head == :call
+    end
     # 'Splat' for loop
     if node.head == :for && node.args[1].head == :block
         iteration_specs = node.args[1].args
@@ -472,21 +467,18 @@ function beat(
                 "row" => row
             )
         )
-    # Register assignment location (node_id, parent and row)
-    elseif node.head == :(=)
-        variable_arr = []  # Array of variables being assigned
-        if isa(node.args[1], Symbol)
+    # Register location (node_id, parent and row) of iteration spec
+    elseif node.head == :(=) && parent.head == :for
+        var = node.args[1]
+        variable_arr = if isa(node.args[1], Symbol)
             # Single assignment, e.g., a = 1
-            variable_arr = [node.args[1]]
-        elseif isa(node.args[1], Expr)
-            # Multiple assignment
-            if node.args[1].head == :tuple
-                # Tupled form, all args are assigned, e.g., a, b = 1, "foo"
-                variable_arr = node.args[1].args
-            else
-                # Other bracketed form, only first arg is assigned, e.g., v[a, b] = "bar"
-                variable_arr = [node.args[1].args[1]]
-            end
+            [node.args[1]]
+        elseif isa(node.args[1], Expr) && node.args[1].head == :tuple
+            # Multiple tuple assignment
+            node.args[1].args
+        else
+            # Not handled
+            []
         end
         for var in variable_arr
             assignment_location_arr = get!(assignment_location, var, Array{Dict{String,Any},1}())
@@ -502,23 +494,22 @@ function beat(
     end
 end
 
+
 """
     visit_node(node::Any, node_id::Int64, parent::Any, row::Int64, func, func_args...; func_kwargs...)
 
 Recursively visit every node in an expression tree while applying a function on it.
 """
 function visit_node(node::Any, node_id::Int64, parent::Any, row::Int64, func, func_args...; func_kwargs...)
-    node_id += 1
     func(node, node_id, parent, row, func_args...; func_kwargs...)
-    try
+    node_id += 1
+    if node isa Expr && checkbounds(Bool, node.args, 1)
         child = node.args[1]
         node_id = visit_node(child, node_id, node, 1, func, func_args...; func_kwargs...)
-    catch
     end
-    try
+    if parent isa Expr && checkbounds(Bool, parent.args, row + 1)
         sibling = parent.args[row + 1]
         node_id = visit_node(sibling, node_id, parent, row + 1, func, func_args...; func_kwargs...)
-    catch
     end
-    return node_id
+    node_id
 end
