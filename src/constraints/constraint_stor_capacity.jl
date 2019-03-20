@@ -18,5 +18,22 @@
 #############################################################################
 
 
-# NOTE: Add `JuMP_all_out`-like functions to import/export data from/to other formats than Spine.
-# If it becomes too cluttered, split this file into one file per format.
+"""
+    constraint_stor_capacity(m::Model, stor_state)
+
+Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
+number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
+"""
+function constraint_stor_capacity(m::Model, stor_state)
+    @butcher for (c, stor) in commodity__storage(), t=1:number_of_timesteps(time=:timer)
+        all([
+            stor_capacity(storage=stor, commodity=c) != nothing
+        ]) || continue
+        @constraint(
+            m,
+                stor_state[c,stor,t]
+                 <=
+                      stor_capacity(storage=stor, commodity=c)
+        )
+    end
+end

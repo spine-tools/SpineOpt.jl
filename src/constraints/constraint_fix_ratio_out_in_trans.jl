@@ -19,31 +19,31 @@
 
 
 """
-    constraint_fix_ratio_out_in_flow(m::Model, flow)
+    constraint_fix_ratio_out_in_trans(m::Model, trans)
 
-Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of a
-`commodity_group` for each `unit` for which the parameter `fix_ratio_out_in_flow`
+Fix ratio between the output `trans` of a `commodity_group` to an input `trans` of a
+`commodity_group` for each `connection` for which the parameter `fix_ratio_out_in_trans`
 is specified.
 """
-function constraint_fix_ratio_out_in_flow(m::Model, flow)
-    if isdefined(:fix_ratio_out_in_flow)
+function constraint_fix_ratio_out_in_trans(m::Model, trans)
+    if isdefined(:fix_ratio_out_in_trans)
     @butcher @constraint(
         m,
         [
-            u in unit(),
+            conn in connection(),
             cg_out in commodity_group(),
             cg_in in commodity_group(),
+            node_in in node(),
+            node_out in node(),
             t=1:number_of_timesteps(time=:timer);
-            fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in) != nothing
+            fix_ratio_out_in_trans(connection=conn, node1=node_in, node2=node_out) != nothing
         ],
-        + sum(flow[c_out, n, u, :out, t]
-            for (c_out, n) in commodity__node__unit__direction(unit=u, direction=:out)
-                if c_out in commodity_group__commodity(commodity_group=cg_out))
+        + sum(trans[c_out, node_out, conn, :out, t]
+            for (c_out) in commodity__node__connection__direction(node=node_out,connection=conn, direction=:out))    #    if c_out in commodity_group__commodity(commodity_group=cg_out))
         ==
-        + fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)
-            * sum(flow[c_in, n, u, :in, t]
-                for (c_in, n) in commodity__node__unit__direction(unit=u, direction=:in)
-                    if c_in in commodity_group__commodity(commodity_group=cg_in))
+        + fix_ratio_out_in_trans(connection=conn, node1=node_in, node2=node_out)
+            * sum(trans[c_in, node_in, conn, :in, t]
+                for (c_in) in commodity__node__connection__direction(node=node_in,connection=conn, direction=:in)) #    if c_in in commodity_group__commodity(commodity_group=cg_in))
     )
 end
 end

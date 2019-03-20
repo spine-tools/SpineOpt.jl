@@ -26,23 +26,25 @@ TODO: for electrical lines this constraint is obsolete unless
 a trade based representation is used.
 """
 function constraint_nodal_balance(m::Model, flow, trans)
-    @butcher for n in node(), t=1:number_of_timesteps(time=:timer)
+    @butcher for n in node(), t=1:24#t in keys(time_slicemap())
         if demand(node=n, t=t) != nothing
             @constraint(
                 m,
                 + sum(flow[c, n, u, :out, t] for (c, u) in commodity__node__unit__direction(node=n, direction=:out))
+                + sum(trans[c, n, conn, :out, t] for (c, conn) in commodity__node__connection__direction(node=n, direction=:out))
                 ==
                 + demand(node=n, t=t)
                 + sum(flow[c, n, u, :in, t] for (c, u) in commodity__node__unit__direction(node=n, direction=:in))
-                + sum(trans[conn, n, t] for conn in connection__node(node=n))
+                + sum(trans[c, n, conn, :in, t] for (c, conn) in commodity__node__connection__direction(node=n, direction=:in))
             )
         else
             @constraint(
                 m,
                 + sum(flow[c, n, u, :out, t] for (c, u) in commodity__node__unit__direction(node=n, direction=:out))
+                + sum(trans[c, n, conn, :out, t] for (c, conn) in commodity__node__connection__direction(node=n, direction=:out))
                 ==
                 + sum(flow[c, n, u, :in, t] for (c, u) in commodity__node__unit__direction(node=n, direction=:in))
-                + sum(trans[conn, n, t] for conn in connection__node(node=n))
+                + sum(trans[c, n, conn, :in, t] for (c, conn) in commodity__node__connection__direction(node=n, direction=:in))
             )
         end
     end

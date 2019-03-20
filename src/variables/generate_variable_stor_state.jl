@@ -18,5 +18,18 @@
 #############################################################################
 
 
-# NOTE: Add `JuMP_all_out`-like functions to import/export data from/to other formats than Spine.
-# If it becomes too cluttered, split this file into one file per format.
+"""
+    generate_variable_stor_state(m::Model)
+
+A `stor_level` variable for each tuple returned by `commodity__stor()`,
+attached to model `m`.
+`stor_level` represents the state of the storage level.
+"""
+function generate_variable_stor_state(m::Model)
+    @butcher Dict{Tuple, JuMP.Variable}(
+        (c, stor, t) => @variable(
+            m, basename="
+            stor_state[$c,$stor,$t]", lowerbound=0
+        ) for (c, stor) in commodity__storage(), t=1:number_of_timesteps(time=:timer)
+    )
+end
