@@ -338,41 +338,29 @@ macro butcher(expression)
     # 'Beat' each node in the expression tree (see definition of `beat` below)
     visit_node(expression, 1, nothing, 1, beat, call_location, assignment_location)
     for (call, call_location_arr) in call_location
-        call_arg_arr = []  # Array of non-literal arguments
-        call_dirty_arg_arr = []  # Array of all reasonable arguments
+        call_arg_arr = []  # Array of all arguments
         replacement_variable = Dict()  # Variable to store the return value of each relocated call
-        broken = false
-        # Build array of arguments, break if any complex expression as argument
+        # Build array of arguments without keywords
         for arg in call.args[2:end]  # First arg is the method name
             if arg isa Expr
                 if arg.head == :kw
-                    push!(call_dirty_arg_arr, arg.args[end])
-                elseif arg.head == :tuple
-                    append!(call_dirty_arg_arr, arg.args)
+                    push!(call_arg_arr, arg.args[end])
                 elseif arg.head == :parameters
-                    append!(call_dirty_arg_arr, [x.args[end] for x in arg.args])
+                    append!(call_arg_arr, [x.args[end] for x in arg.args])
+                elseif arg.head == :tuple
+                    append!(call_arg_arr, arg.args)
                 else
-                    broken = true
-                    break
+                    push!(call_arg_arr, arg)
                 end
             else
-                push!(call_dirty_arg_arr, arg)
-            end
-        end
-        broken && continue
-        # Get rid of immutable arguments, break if any non Symbol argument left
-        for arg in call_dirty_arg_arr
-            if isimmutable(arg)
-                continue
-            elseif arg isa Symbol
                 push!(call_arg_arr, arg)
-            else
-                broken = true
-                break
             end
         end
-        broken && continue
+        # Get rid of immutable arguments
+        call_arg_arr = [x for x in call_arg_arr if !isimmutable(x)]
         isempty(call_arg_arr) && continue
+        # Only keep going if all arguments are now Symbols
+        all([x isa Symbol for x in call_arg_arr]) || continue
         # Find top-most node where all arguments are assigned
         topmost_node_id = maximum(
             if haskey(assignment_location, arg)
