@@ -143,7 +143,7 @@ function parse_value(str)
     typeof(str) != String && return str
     type_array = [
         Int64,
-        Float64,
+        Float64
     ]
     for T in type_array
         try
@@ -151,7 +151,7 @@ function parse_value(str)
         catch
         end
     end
-    str
+    Symbol(str)
 end
 
 
