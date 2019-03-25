@@ -25,25 +25,35 @@ Fix ratio between the output `trans` of a `commodity_group` to an input `trans` 
 `commodity_group` for each `connection` for which the parameter `fix_ratio_out_in_trans`
 is specified.
 """
-function constraint_fix_ratio_out_in_trans(m::Model, trans, timeslicemap)
-    #if isdefined(:fix_ratio_out_in_trans)
+function constraint_fix_ratio_out_in_trans(m::Model, trans, timeslicemap, timesliceblocks, t_in_t)
     @butcher @constraint(
         m,
         [
             conn in connection(),
-            cg_out in commodity_group(),
-            cg_in in commodity_group(),
             node_in in node(),
             node_out in node(),
-            t=1:number_of_timesteps(time_stage=:timer);
-            fix_ratio_out_in_trans(connection=conn, node1=node_in, node2=node_out) != nothing
+            tblock = temporal_block(),
+            t in keys(timeslicemap);
+            all([
+                fix_ratio_out_in_trans_t(connection=conn, node1=node_in, node2=node_out, temporal_block=tblock) != nothing,
+                in(t,keys(timesliceblocks[tblock]))
+            ])
         ],
-        + sum(trans[c_out, node_out, conn, :out, t]
-            for (c_out) in commodity__node__connection__direction(node=node_out,connection=conn, direction=:out))    #    if c_out in commodity_group__commodity(commodity_group=cg_out))
+        + reduce(+,
+            trans[c_out, node_out, conn, :out, t2]
+            for (c_out) in commodity__node__connection__direction(node=node_out,connection=conn, direction=:out)
+                for t2 in keys(t_in_t[t])
+                    if haskey(trans,("$c_out,$node_out,$conn,:out,$t2"));
+                        init=0
+            )
         ==
-        + fix_ratio_out_in_trans(connection=conn, node1=node_in, node2=node_out)
-            * sum(trans[c_in, node_in, conn, :in, t]
-                for (c_in) in commodity__node__connection__direction(node=node_in,connection=conn, direction=:in)) #    if c_in in commodity_group__commodity(commodity_group=cg_in))
-    )
+        + fix_ratio_out_in_trans_t(connection=conn, node1=node_in, node2=node_out,temporal_block=tblock)
+            * reduce(+,
+                trans[c_in, node_in, conn, :in, t2]
+                for (c_in) in commodity__node__connection__direction(node=node_in,connection=conn, direction=:in)
+                    for t2 in keys(t_in_t[t])
+                            if haskey(trans,("$c_in,$node_in,$conn,:in,$t2"));
+                            init=0
+                )
+            )
 end
-#end
