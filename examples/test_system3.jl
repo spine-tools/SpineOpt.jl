@@ -17,7 +17,8 @@ m = Model(with_optimizer(Clp.Optimizer))
 timeslicemap = time_slicemap()
 timesliceblocks = time_slices_tempblock()
 t_before_t = generate_t_before_t(timeslicemap)
-t_in_t = generate_t_in_t()
+t_in_t = generate_t_in_t(timeslicemap)
+t_in_t_excl = generate_t_in_t_excl(timeslicemap)
 
 # Create decision variables
 flow = generate_variable_flow(m, timesliceblocks)
@@ -51,7 +52,7 @@ constraint_stor_capacity(m,stor_state, timeslicemap)
 
 # storage state balance equation
 constraint_stor_state_init(m, stor_state, timeslicemap)
-constraint_stor_state(m, stor_state,trans,flow, timeslicemap)
+#constraint_stor_state(m, stor_state,trans,flow, timeslicemap)
 
 # needed: set/group of unitgroup CHP and Gasplant
 

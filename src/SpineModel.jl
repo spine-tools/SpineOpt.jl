@@ -118,8 +118,6 @@ To upgrade `spinedatabase_api`, open a terminal (e.g. command prompt on Windows)
     )
 end
 ###temporals
-#using Base.Dates
-
 ##creating time_slices struct
 struct time_slices
            name::String
@@ -127,29 +125,14 @@ struct time_slices
            End_Date::DateTime
            duration::Minute
 end
-### easy readout of start_end_times
-
-##
-
-###
-
-
-###
-
-###
-#hier2
-
-
-# #hier2
-###
 
 export start_date
 export end_date
 export time_slicemap
 export time_slices_tempblock
-export t_in_t
-export t_in_t_excl
-export t_before_t
+export generate_t_in_t
+export generate_t_in_t_excl
+export generate_t_before_t
 ###
 
 include("helpers/helpers.jl")

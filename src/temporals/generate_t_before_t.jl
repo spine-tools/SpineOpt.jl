@@ -24,7 +24,7 @@
 A tuple returned for a specific timeslice t', returning all timeslices t'' directly before t'.
 """
 function generate_t_before_t(timeslicemap)
-    t_before_t = Dict()
+    @butcher t_before_t = Dict()
     for i in keys(timeslicemap)
         t_before_t[i] = Dict()
         for j in keys(timeslicemap)
