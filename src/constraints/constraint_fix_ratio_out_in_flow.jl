@@ -25,29 +25,37 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 `commodity_group` for each `unit` for which the parameter `fix_ratio_out_in_flow`
 is specified.
 """
-function constraint_fix_ratio_out_in_flow(m::Model, flow, timeslicemap)
+function constraint_fix_ratio_out_in_flow(m::Model, flow, timeslicemap, timesliceblocks, t_in_t)
     @butcher @constraint(
         m,
         [
             u in unit(),
             cg_out in commodity_group(),
             cg_in in commodity_group(),
+            tblock = temporal_block(),
             t in keys(timeslicemap);
-            fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in) != nothing
+            all([
+            fix_ratio_out_in_flow_t(unit=u, commodity_group1=cg_out, commodity_group2=cg_in,temporal_block=tblock) != nothing,
+            in(t,keys(timesliceblocks[tblock]))
+            ])
         ],
         + reduce(+,
-            flow[c_out, n, u, :out, t]
+            flow[c_out, n, u, :out, t2]
             for (c_out, n) in commodity__node__unit__direction(unit=u, direction=:out)
-            if c_out in commodity_group__commodity(commodity_group=cg_out);
-                init=0
+                for t2 in keys(t_in_t[t])
+                    if c_out in commodity_group__commodity(commodity_group=cg_out) &&
+                        haskey(flow,("$c_out,$n,$u,:out,$t2"));
+                        init=0
             )
         ==
-        + fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)
+        + fix_ratio_out_in_flow_t(unit=u, commodity_group1=cg_out, commodity_group2=cg_in,temporal_block=tblock)
             * reduce(+,
-                flow[c_in, n, u, :in, t]
+                flow[c_in, n, u, :in, t2]
                 for (c_in, n) in commodity__node__unit__direction(unit=u, direction=:in)
-                if c_in in commodity_group__commodity(commodity_group=cg_in);
-                    init=0
+                    for t2 in keys(t_in_t[t])
+                        if c_in in commodity_group__commodity(commodity_group=cg_in) &&
+                            haskey(flow,("$c_in,$n,$u,:in,$t2"));
+                            init=0
                 )
     )
 end
