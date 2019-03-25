@@ -316,7 +316,7 @@ function JuMP_relationship_parameter_out(db_map::PyObject)
                     catch e
                         error(
                             "unable to retrieve value of '$($parameter_name)' " *
-                            "for '$given_object_name': $(sprint(showerror, e))"
+                            "for ('$(join(given_object_name_list, "', '"))'): $(sprint(showerror, e))"
                         )
                     end
                     return result
