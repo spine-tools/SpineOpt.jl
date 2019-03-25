@@ -17,18 +17,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    generate_variable_stor_state(m::Model)
 
-A `stor_level` variable for each tuple returned by `commodity__stor()`,
-attached to model `m`.
-`stor_level` represents the state of the storage level.
 """
-function generate_variable_stor_state(m::Model, timesliceblocks)
-    @butcher Dict{Tuple, JuMP.VariableRef}(
-        (c, stor, t) => @variable(
-            m, base_name="stor_state[$c,$stor,$t]", lower_bound=0
-        ) for (c, stor, block) in commodity__storage__temporal_block()
-            for t in keys(timesliceblocks[block])
+    constraint_stor_state_init(m::Model, stor_state)
+
+Balance for storage level.
+"""
+function constraint_stor_state_init(m::Model, stor_state, timeslicemap)
+    @butcher for (c, stor, block) in commodity__storage__temporal_block(),
+        t in keys(timeslicemap) if timeslicemap[t].Start_Date == start_date(block)
+        all([
+        haskey(stor_state,("$c,$stor,$t")),
+        stor_state_init(commodity=c,storage=stor) != nothing
+        ]) || continue
+    @constraint(
+        m,
+        + stor_state[c,stor,t]
+        <=
+        + stor_state_init(commodity=c,storage=stor)
     )
+    end
+end
 end

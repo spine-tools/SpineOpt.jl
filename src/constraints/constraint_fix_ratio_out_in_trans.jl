@@ -25,8 +25,8 @@ Fix ratio between the output `trans` of a `commodity_group` to an input `trans` 
 `commodity_group` for each `connection` for which the parameter `fix_ratio_out_in_trans`
 is specified.
 """
-function constraint_fix_ratio_out_in_trans(m::Model, trans)
-    if isdefined(:fix_ratio_out_in_trans)
+function constraint_fix_ratio_out_in_trans(m::Model, trans, timeslicemap)
+    #if isdefined(:fix_ratio_out_in_trans)
     @butcher @constraint(
         m,
         [
@@ -35,7 +35,7 @@ function constraint_fix_ratio_out_in_trans(m::Model, trans)
             cg_in in commodity_group(),
             node_in in node(),
             node_out in node(),
-            t=1:number_of_timesteps(time=:timer);
+            t=1:number_of_timesteps(time_stage=:timer);
             fix_ratio_out_in_trans(connection=conn, node1=node_in, node2=node_out) != nothing
         ],
         + sum(trans[c_out, node_out, conn, :out, t]
@@ -46,4 +46,4 @@ function constraint_fix_ratio_out_in_trans(m::Model, trans)
                 for (c_in) in commodity__node__connection__direction(node=node_in,connection=conn, direction=:in)) #    if c_in in commodity_group__commodity(commodity_group=cg_in))
     )
 end
-end
+#end

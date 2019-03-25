@@ -17,18 +17,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    generate_variable_stor_state(m::Model)
 
-A `stor_level` variable for each tuple returned by `commodity__stor()`,
-attached to model `m`.
-`stor_level` represents the state of the storage level.
 """
-function generate_variable_stor_state(m::Model, timesliceblocks)
-    @butcher Dict{Tuple, JuMP.VariableRef}(
-        (c, stor, t) => @variable(
-            m, base_name="stor_state[$c,$stor,$t]", lower_bound=0
-        ) for (c, stor, block) in commodity__storage__temporal_block()
-            for t in keys(timesliceblocks[block])
-    )
+    generate_t_before_t(m::Model)
+
+A tuple returned for a specific timeslice t', returning all timeslices t'' directly before t'.
+"""
+function generate_t_before_t(timeslicemap)
+    t_before_t = Dict()
+    for i in keys(timeslicemap)
+        t_before_t[i] = Dict()
+        for j in keys(timeslicemap)
+            if timeslicemap[j].End_Date == timeslicemap[i].Start_Date
+                t_before_t[i][j] = [timeslicemap[i] , timeslicemap[j]]
+            end
+        end
+    end
+    return t_before_t
 end
