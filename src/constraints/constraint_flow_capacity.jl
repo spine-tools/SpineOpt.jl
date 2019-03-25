@@ -31,7 +31,7 @@ function constraint_flow_capacity(m::Model, flow)
             number_of_units(unit=u) != nothing,
             unit_conv_cap_to_flow(unit=u, commodity=c) != nothing,
             avail_factor(unit=u, t=t) != nothing
-        ]) || continue
+        ])
         @constraint(
             m,
             + flow[c, n, u, d, t]

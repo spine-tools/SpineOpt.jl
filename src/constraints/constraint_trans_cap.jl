@@ -29,7 +29,7 @@ function constraint_trans_cap(m::Model, trans)
         all([
             trans_cap_av_frac(connection=conn, node=i, t=t) != nothing,
             trans_cap(connection=conn) != nothing
-        ]) || continue
+        ])
         @constraint(
             m,
             + (trans[conn, i, t])

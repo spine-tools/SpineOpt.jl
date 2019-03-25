@@ -10,6 +10,7 @@ Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+SpineInterface = "0cda1612-498a-11e9-3c92-77fa82595a4f"
 Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
 
 [compat]
