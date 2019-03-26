@@ -27,7 +27,7 @@ function constraint_stor_state(m::Model, stor_state,trans,flow, timeslicemap, t_
     @butcher for (c, stor, block) in commodity__storage__temporal_block(),
         t in keys(timeslicemap) if !(timeslicemap[t].Start_Date == start_date(block))
         all([
-            haskey(stor_state,("$c,$stor,$t"))
+            haskey(stor_state,(c,stor,t))
             frac_state_loss(commodity=c,storage=stor) != nothing
             eff_stor_charg(storage=stor) != nothing
             eff_stor_discharg(storage=stor) != nothing
@@ -38,7 +38,7 @@ function constraint_stor_state(m::Model, stor_state,trans,flow, timeslicemap, t_
             ==
             + reduce(+,
                 stor_state[c,stor, t2]
-                    for t2 in keys(t_before_t[t]) if haskey(stor_state,("$c,$stor,$t2"));init=0)
+                    for t2 in keys(t_before_t[t]) if haskey(stor_state,(c,stor,t2));init=0)
                 *(1-frac_state_loss(commodity=c,storage=stor))
                 #=
             - reduce(+,

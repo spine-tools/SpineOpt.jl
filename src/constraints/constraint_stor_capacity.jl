@@ -28,7 +28,7 @@ function constraint_stor_capacity(m::Model, stor_state, timeslicemap)
     @butcher for (c, stor) in commodity__storage(), t in keys(timeslicemap)
         all([
             stor_capacity(storage=stor, commodity=c) != nothing
-            haskey(stor_state,("$c,$stor,$t"))
+            haskey(stor_state,(c,stor,t))
         ]) || continue
         @constraint(
             m,

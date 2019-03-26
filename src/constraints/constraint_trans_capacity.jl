@@ -27,7 +27,7 @@ number_of_connection, connection_conv_cap_to_trans, avail_factor` exist.
 function constraint_trans_capacity(m::Model, trans, timeslicemap)
     @butcher for (c, n, conn) in commodity__node__connection__direction(direction=:in), t in keys(timeslicemap)
         all([
-            haskey(trans,("$c,$n,$conn,:in,$t")),
+            haskey(trans,(c,n,conn,:in,t)),
             connection_capacity(connection=conn, commodity=c, node=n, direction=:in) != nothing,
             number_of_connections(connection=conn) != nothing,
             connection_conv_cap_to_trans(connection=conn, commodity=c) != nothing,

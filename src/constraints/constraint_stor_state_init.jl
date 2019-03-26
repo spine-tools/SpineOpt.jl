@@ -27,7 +27,7 @@ function constraint_stor_state_init(m::Model, stor_state, timeslicemap)
     @butcher for (c, stor, block) in commodity__storage__temporal_block(),
         t in keys(timeslicemap) if timeslicemap[t].Start_Date == start_date(block)
         all([
-        haskey(stor_state,("$c,$stor,$t")),
+        haskey(stor_state,(c,stor,t)),
         stor_state_init(commodity=c,storage=stor) != nothing
         ]) || continue
     @constraint(
