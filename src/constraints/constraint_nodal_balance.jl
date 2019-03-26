@@ -4,19 +4,17 @@
 Enforce balance of all commodity flows from and to a node.
 """
 function constraint_nodal_balance(m::Model, flow, trans, timeslicemap,timesliceblocks)
-    #@butcher
-	for (n,tblock) in node__temporal_block(), t in keys(timeslicemap);
-		all([
+	for (n,tblock) in node__temporal_block(), t in keys(timeslicemap)
+        all([
 			demand_t(node=n, temporal_block=tblock) !=0,
 			in(t,keys(timesliceblocks[tblock]))
-		])
+        ]) || continue
         @constraint(
             m,
-            # Change in the state commodity content
 			0
             ==
             # Demand for the commodity
-            #- demand_t(node=n, temporal_block=tblock)
+            - demand_t(node=n, temporal_block=tblock)
             # Output of units into this node, and their input from this node
             + reduce(+,
                 flow[c, n, u, :out, t]
