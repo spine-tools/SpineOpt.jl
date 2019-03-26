@@ -26,7 +26,7 @@ Fix ratio between the output `trans` of a `commodity_group` to an input `trans` 
 is specified.
 """
 function constraint_fix_ratio_out_in_trans(m::Model, trans, timeslicemap, timesliceblocks, t_in_t)
-    #@butcher 
+    #@butcher
     @constraint(
         m,
         [
@@ -36,7 +36,7 @@ function constraint_fix_ratio_out_in_trans(m::Model, trans, timeslicemap, timesl
             tblock = temporal_block(),
             t in keys(timeslicemap);
             all([
-                fix_ratio_out_in_trans_t(connection=conn, node1=node_in, node2=node_out, temporal_block=tblock) != nothing,
+                fix_ratio_out_in_trans_t(connection=conn, node1=node_in, node2=node_out, temporal_block=tblock) != 0,
                 in(t,keys(timesliceblocks[tblock]))
             ])
         ],

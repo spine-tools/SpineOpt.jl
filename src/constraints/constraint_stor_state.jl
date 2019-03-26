@@ -28,9 +28,9 @@ function constraint_stor_state(m::Model, stor_state,trans,flow, timeslicemap, t_
         t in keys(timeslicemap) if !(timeslicemap[t].Start_Date == start_date(block))
         all([
             haskey(stor_state,(c,stor,t))
-            frac_state_loss(commodity=c,storage=stor) != nothing
-            eff_stor_charg(storage=stor) != nothing
-            eff_stor_discharg(storage=stor) != nothing
+            frac_state_loss(commodity=c,storage=stor) != 0
+            eff_stor_charg(storage=stor) != 0
+            eff_stor_discharg(storage=stor) != 0
         ]) || continue
         @constraint(
             m,

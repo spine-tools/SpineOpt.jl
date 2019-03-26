@@ -31,7 +31,7 @@ function constraint_max_cum_in_flow_bound(m::Model, flow, timeslicemap)
         [
             ug in unit_group(),
             cg in commodity_group();
-            max_cum_in_flow_bound(unit_group=ug, commodity_group=cg) != nothing
+            max_cum_in_flow_bound(unit_group=ug, commodity_group=cg) != 0
         ],
         + reduce(
             +,

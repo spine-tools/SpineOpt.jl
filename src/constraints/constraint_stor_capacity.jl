@@ -27,7 +27,7 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 function constraint_stor_capacity(m::Model, stor_state, timeslicemap)
     @butcher for (c, stor) in commodity__storage(), t in keys(timeslicemap)
         all([
-            stor_capacity(storage=stor, commodity=c) != nothing
+            stor_capacity(storage=stor, commodity=c) != 0
             haskey(stor_state,(c,stor,t))
         ]) || continue
         @constraint(
