@@ -6,11 +6,14 @@ using JuMP
 using Clp
 ##
 # Export contents of database into the current session
-db_url = "sqlite:///C:/Users/u0122387/Desktop/toolbox/projects/temporal_structure/input_timestorage/new_temporal.sqlite"
+db_url = "sqlite:///C:/Users/u0093836/repos/git/model/examples/data/new_temporal.sqlite"
+#db_url = "sqlite:///C:/Users/u0122387/Desktop/toolbox/projects/temporal_structure/input_timestorage/new_temporal.sqlite"
 JuMP_all_out(db_url)
 # Init model
 m = Model(with_optimizer(Clp.Optimizer))
 ##
+
+println("This is an uncommitted change outside of the module")
 
 # Create temporal_structure
 timeslicemap = time_slicemap()
