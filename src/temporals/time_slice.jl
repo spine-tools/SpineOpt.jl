@@ -19,13 +19,13 @@
 
 
 """
-    time_slice()
+    time_slice(timeslicemap)
 
 Returns an array of time slices
 """
 
 
-function timeslice(timeslicemap=timeslicemap)
+function timeslice(timeslicemap)
     time_slice = []
     for key in keys(timeslicemap)
         push!(time_slice,key)

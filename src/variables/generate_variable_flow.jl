@@ -21,10 +21,10 @@
 """
     generate_variable_flow(m::Model)
 
-A `flow` variable for each tuple returned by `commodity__node__unit__direction()`,
+A `flow` variable for each tuple of `commodity__node__unit__direction__time_slice`,
 attached to model `m`.
-`flow` represents the flow of a 'commodity' between a 'node' and a 'unit'
-in a certain 'direction'.
+`flow` represents the (average) instantaneous flow of a 'commodity' between a 'node' and a 'unit' within a certain 'time_slice'
+in a certain 'direction'. The direction is relative to the unit.
 """
 function generate_variable_flow(m::Model, timesliceblocks)
     @butcher Dict{Tuple, JuMP.VariableRef}(

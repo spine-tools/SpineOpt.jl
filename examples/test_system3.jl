@@ -15,10 +15,9 @@ JuMP_all_out(db_url)
 m = Model(with_optimizer(Clp.Optimizer))
 ##
 # Create temporal_structure
-timeslicemap = time_slicemap() #@Maren: propose to rename to time_slice = get_time_slices()
-# @Maren: do we also need a jump-like version of time_slice(). I have added such a function...
-time_slice = timeslice(timeslicemap)
-timesliceblocks = time_slices_tempblock() #@Maren: propose to rename to temporal_block = get_temporal_block()
+timeslicemap = time_slicemap() #@Maren: propose to rename to time_slice_details = get_time_slice_details_from_temporal_block()
+timesliceblocks = time_slices_tempblock() #@Maren: do we need this?
+time_slice = timeslice(timeslicemap) # @Maren: I have added this "jump-like" version of which returns an array of time slices similar to what unit() would do
 t_before_t = generate_t_before_t(timeslicemap)
 t_in_t = generate_t_in_t(timeslicemap)
 t_in_t_excl = generate_t_in_t_excl(timeslicemap)
