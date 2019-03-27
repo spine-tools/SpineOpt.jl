@@ -39,6 +39,7 @@ export constraint_nodal_balance
 using JuMP
 using Clp
 using Dates
+using SpineInterface
 
 include("variables/generate_variable_flow.jl")
 include("variables/generate_variable_trans.jl")
