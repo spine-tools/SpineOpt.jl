@@ -13,7 +13,6 @@ JuMP_all_out(db_url)
 m = Model(with_optimizer(Clp.Optimizer))
 ##
 
-println("This is an uncommitted change outside of the module")
 
 # Create temporal_structure
 timeslicemap = time_slicemap()
