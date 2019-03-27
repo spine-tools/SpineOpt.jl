@@ -35,14 +35,11 @@ export constraint_trans_loss
 export constraint_trans_cap
 export constraint_nodal_balance
 
-# TODO: check if these are needed
-#load packages
+# Load packages
 using JuMP
 using Clp
 using Dates
-using SpineInterface
 
-include("helpers/butcher.jl")
 include("variables/generate_variable_flow.jl")
 include("variables/generate_variable_trans.jl")
 
