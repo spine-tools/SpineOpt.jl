@@ -130,6 +130,7 @@ export start_date
 export end_date
 export time_slicemap
 export time_slices_tempblock
+export time_slice
 export generate_t_in_t
 export generate_t_in_t_excl
 export generate_t_before_t
@@ -163,6 +164,7 @@ include("temporals/get_startdate.jl")
 include("temporals/get_enddate.jl")
 include("temporals/generate_timeslicemap.jl")
 include("temporals/generate_timesliceblocks.jl")
+include("temporals/time_slice.jl")
 include("temporals/generate_t_in_t.jl")
 include("temporals/generate_t_in_t_excl.jl")
 include("temporals/generate_t_before_t.jl")
