@@ -4,17 +4,20 @@ using SpineModel
 using Dates
 using JuMP
 using Clp
+
 ##
 # Export contents of database into the current session
 db_url = "sqlite:///C:/Users/u0093836/repos/git/model/examples/data/new_temporal.sqlite"
 #db_url = "sqlite:///C:/Users/u0122387/Desktop/toolbox/projects/temporal_structure/input_timestorage/new_temporal.sqlite"
 JuMP_all_out(db_url)
+
 # Init model
 m = Model(with_optimizer(Clp.Optimizer))
 ##
 # Create temporal_structure
 timeslicemap = time_slicemap() #@Maren: propose to rename to time_slice = get_time_slices()
 # @Maren: do we also need a jump-like version of time_slice(). I have added such a function...
+time_slice = timeslice(timeslicemap)
 timesliceblocks = time_slices_tempblock() #@Maren: propose to rename to temporal_block = get_temporal_block()
 t_before_t = generate_t_before_t(timeslicemap)
 t_in_t = generate_t_in_t(timeslicemap)

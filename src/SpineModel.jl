@@ -130,7 +130,7 @@ export start_date
 export end_date
 export time_slicemap
 export time_slices_tempblock
-export time_slice
+export timeslice
 export generate_t_in_t
 export generate_t_in_t_excl
 export generate_t_before_t

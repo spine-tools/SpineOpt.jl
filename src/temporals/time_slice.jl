@@ -25,9 +25,10 @@ Returns an array of time slices
 """
 
 
-function time_slice(timeslicemap=timeslicemap)
-    time_slice_array = Array
-    for i in keys(timeslicemap)
-        push!(time_slice_array,key)
+function timeslice(timeslicemap=timeslicemap)
+    time_slice = []
+    for key in keys(timeslicemap)
+        push!(time_slice,key)
     end
-return time_slice_array
+return time_slice
+end
