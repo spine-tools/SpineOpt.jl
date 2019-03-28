@@ -1,15 +1,16 @@
 # Load required packaes
 using Revise
+using SpineInterface
 using SpineModel
 using JuMP
 using Clp
 
 # Export contents of database into the current session
-db_url = "sqlite:///examples/data/testsystem2_v2_multiD.sqlite"
-JuMP_all_out(db_url)
+db_url = "sqlite:///$(@__DIR__)/data/testsystem2_v2_multiD.sqlite"
+checkout_spinedb(db_url; upgrade=true)
 
 # Init model
-m = Model(solver=ClpSolver())
+m = Model(with_optimizer(Clp.Optimizer))
 
 # Create decision variables
 flow = generate_variable_flow(m)
@@ -32,7 +33,7 @@ constraint_trans_loss(m, trans)
 constraint_trans_cap(m, trans)
 
 # Nodal balance
-constraint_nodal_balance(m, flow, trans)
+# constraint_nodal_balance(m, flow, trans)
 
 # Absolute bounds on commodities
 constraint_max_cum_in_flow_bound(m, flow)
@@ -40,9 +41,14 @@ constraint_max_cum_in_flow_bound(m, flow)
 # needed: set/group of unitgroup CHP and Gasplant
 
 # Run model
-status = solve(m)
-if status == :Optimal
-    db_url_out = "sqlite:///examples/data/testsystem2_v2_multiD_out.sqlite"
-    # JuMP_results_to_spine_db!(db_url; flow=flow, trans=trans)
-    JuMP_results_to_spine_db!(db_url_out, db_url; flow=flow, trans=trans)
+optimize!(m)
+status = termination_status(m)
+if status == MOI.OPTIMAL
+    out_db_url = "sqlite:///$(@__DIR__)/data/testsystem2_v2_multiD_out.sqlite"
+    write_results(
+        out_db_url, db_url;
+        upgrade=true,
+        flow=Dict(k => JuMP.value(v) for (k, v) in flow),
+        trans=Dict(k => JuMP.value(v) for (k, v) in trans)
+    )
 end

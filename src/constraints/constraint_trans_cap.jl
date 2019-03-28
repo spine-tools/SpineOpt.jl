@@ -25,11 +25,11 @@ Limit flow capacity of a commodity transfered between to nodes in a
 specific direction `node1 -> node2`.
 """
 function constraint_trans_cap(m::Model, trans)
-    for (conn, i) in connection__node(), t=1:number_of_timesteps(time=:timer)
+    @butcher for (conn, i) in connection__node(), t=1:number_of_timesteps(time=:timer)
         all([
             trans_cap_av_frac(connection=conn, node=i, t=t) != nothing,
             trans_cap(connection=conn) != nothing
-        ]) || continue
+        ])
         @constraint(
             m,
             + (trans[conn, i, t])

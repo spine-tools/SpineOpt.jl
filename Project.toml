@@ -4,10 +4,7 @@ authors = ["Manuel Marin <manuelma@kth.se>"]
 version = "0.1.0"
 
 [deps]
-CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 Clp = "e2554f3b-3117-50c0-817c-e040a3ddf72d"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
-Missings = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
-PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+SpineInterface = "0cda1612-498a-11e9-3c92-77fa82595a4f"

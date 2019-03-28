@@ -27,9 +27,9 @@ attached to model `m`.
 in a certain 'direction'.
 """
 function generate_variable_flow(m::Model)
-    @butcher Dict{Tuple, JuMP.Variable}(
+    @butcher Dict{Tuple, JuMP.VariableRef}(
         (c, n, u, d, t) => @variable(
-            m, basename="flow[$c, $n, $u, $d, $t]", lowerbound=0
+            m, base_name="flow[$c, $n, $u, $d, $t]", lower_bound=0
         ) for (c, n, u, d) in commodity__node__unit__direction(), t=1:number_of_timesteps(time=:timer)
     )
 end

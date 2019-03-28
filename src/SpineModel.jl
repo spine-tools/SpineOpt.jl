@@ -20,13 +20,6 @@
 
 module SpineModel
 
-# Data_io exports
-export JuMP_all_out
-export JuMP_results_to_spine_db!
-
-# Export model
-export linear_JuMP_model
-
 # Export variables
 export generate_variable_flow
 export generate_variable_trans
@@ -42,79 +35,11 @@ export constraint_trans_loss
 export constraint_trans_cap
 export constraint_nodal_balance
 
-export @butcher
-
-#load packages
-using PyCall
-using JSON
+# Load packages
 using JuMP
 using Clp
-using DataFrames
-# using Missings
-using Base.Dates
-using CSV
-const db_api = PyNULL()
-const required_spinedatabase_api_version = "0.0.8"
-
-function __init__()
-    try
-        copy!(db_api, pyimport("spinedatabase_api"))
-    catch e
-        if isa(e, PyCall.PyError)
-            println(e)
-            error(
-"""
-SpineModel couldn't import the required spinedatabase_api python module.
-Please make sure spinedatabase_api is in your python path, restart your julia session, and load SpineModel again.
-
-Note: if you have already installed spinedatabase_api for Spine Toolbox, you can also use it for SpineModel.
-All you need to do is configure PyCall to use the same python Spine Toolbox is using. Run
-
-    ENV["PYTHON"] = "... path of the python program you want ..."
-
-followed by
-
-    Pkg.build("PyCall")
-
-If you haven't installed spinedatabase_api or don't want to reconfigure PyCall, then you need to do the following:
-
-1. Find out the path of the python program used by PyCall. Run
-
-    PyCall.pyprogramname
-
-2. Install spinedatabase_api using that python. Open a terminal (e.g. command prompt on Windows) and run
-
-    python -m pip install git+https://github.com/Spine-project/Spine-Database-API.git
-
-where 'python' is the path returned by `PyCall.pyprogramname`.
-"""
-            )
-        end
-        return
-    end
-    current_version = db_api[:__version__]
-    current_version_split = parse.(Int, split(current_version, "."))
-    required_version_split = parse.(Int, split(required_spinedatabase_api_version, "."))
-    any(current_version_split .< required_version_split) && error(
-"""
-SpineModel couldn't find the required spinedatabase_api version.
-(Required version is $required_spinedatabase_api_version, whereas current is $current_version)
-Please upgrade spinedatabase_api to $required_spinedatabase_api_version, restart your julia session,
-and load SpineModel again.
-
-To upgrade spinedatabase_api, open a terminal (e.g. command prompt on Windows) and run
-
-    pip install --upgrade git+https://github.com/Spine-project/Spine-Database-API.git
-"""
-    )
-end
-
-include("helpers/helpers.jl")
-
-include("data_io/from_spine.jl")
-include("data_io/to_spine.jl")
-# include("data_io/other_formats.jl")
-# include("data_io/get_results.jl")
+using Dates
+using SpineInterface
 
 include("variables/generate_variable_flow.jl")
 include("variables/generate_variable_trans.jl")
