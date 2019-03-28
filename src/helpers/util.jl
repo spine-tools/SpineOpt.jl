@@ -18,11 +18,11 @@
 #############################################################################
 
 """
-    matrix_value(variable::Dict, n::Int64=1)
+    pack_trailing_dims(variable::Dict, n::Int64=1)
 
-Take `variable` and return a new Dict where the last `n` dimensions are assembled into a matrix
+Take `variable` and return a new Dict where the last `n` dimensions are packed into a matrix
 """
-function matrix_value(variable::Dict{Tuple{Vararg{T,N}},S}, n::Int64=1) where T where N where S
+function pack_trailing_dims(variable::Dict, n::Int64=1)
     left_dict = Dict{Any,Any}()
     for (key, value) in variable
         # TODO: handle length(key) < n and stuff like that?

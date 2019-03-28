@@ -22,7 +22,7 @@ module SpineModel
 
 # Export helpers
 export value
-export matrix_value
+export pack_trailing_dims
 export @butcher
 
 # Export variables

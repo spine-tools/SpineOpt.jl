@@ -31,17 +31,17 @@ function constraint_flow_capacity(m::Model, flow)
             (c, n, u, d) in commodity__node__unit__direction(),
             t = 1:number_of_timesteps(time=:timer);
             all([
-                unit_capacity(unit=u, commodity=c) != nothing,
+                unit_capacity(unit__commodity=(u, c)) != nothing,
                 number_of_units(unit=u) != nothing,
-                unit_conv_cap_to_flow(unit=u, commodity=c) != nothing,
+                unit_conv_cap_to_flow(unit__commodity=(u, c)) != nothing,
                 avail_factor(unit=u, t=t) != nothing
             ])
         ],
         + flow[c, n, u, d, t]
         <=
         + avail_factor(unit=u, t=t)
-            * unit_capacity(unit=u, commodity=c)
+            * unit_capacity(unit__commodity=(u, c))
                 * number_of_units(unit=u)
-                    * unit_conv_cap_to_flow(unit=u, commodity=c)
+                    * unit_conv_cap_to_flow(unit__commodity=(u, c))
     )
 end

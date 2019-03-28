@@ -27,14 +27,14 @@ specific direction `node1 -> node2`.
 function constraint_trans_cap(m::Model, trans)
     @butcher for (conn, i) in connection__node(), t=1:number_of_timesteps(time=:timer)
         all([
-            trans_cap_av_frac(connection=conn, node=i, t=t) != nothing,
+            trans_cap_av_frac(connection__node=(conn, i), t=t) != nothing,
             trans_cap(connection=conn) != nothing
         ])
         @constraint(
             m,
             + (trans[conn, i, t])
             <=
-            + trans_cap_av_frac(connection=conn, node=i, t=t)
+            + trans_cap_av_frac(connection__node=(conn, i), t=t)
                 * trans_cap(connection=conn)
         )
     end

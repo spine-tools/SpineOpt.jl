@@ -48,7 +48,7 @@ if status == MOI.OPTIMAL
     write_results(
         out_db_url, db_url;
         upgrade=true,
-        flow=Dict(k => JuMP.value(v) for (k, v) in flow),
-        trans=Dict(k => JuMP.value(v) for (k, v) in trans)
+        flow=pack_trailing_dims(SpineModel.value(flow), 1),
+        trans=pack_trailing_dims(SpineModel.value(trans), 1)
     )
 end
