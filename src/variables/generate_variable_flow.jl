@@ -26,12 +26,12 @@ attached to model `m`.
 `flow` represents the flow of a 'commodity' between a 'node' and a 'unit'
 in a certain 'direction'.
 """
-function generate_variable_flow(m::Model, timesliceblocks)
+function generate_variable_flow(m::Model, timeslicemap)
     @butcher Dict{Tuple, JuMP.VariableRef}(
         (c, n, u, d, t) => @variable(
             m, base_name="flow[$c, $n, $u, $d, $t]", lower_bound=0
         ) for (c, n, u, d, block) in commodity__node__unit__direction__temporal_block()
-                for t in keys(timesliceblocks[block])
+                for t in timeslicemap(temporal_block=block)
     )
 end
 

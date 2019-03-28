@@ -20,13 +20,12 @@
 
 """
     constraint_stor_state(m::Model, stor_state)
-
 Balance for storage level.
 """
 function constraint_stor_state(m::Model, stor_state,trans,flow, timeslicemap, t_before_t)
-    @butcher for (c, stor, block) in commodity__storage__temporal_block(),
-        t in keys(timeslicemap) if !(timeslicemap[t].Start_Date == start_date(block))
+    for (c, stor, block) in commodity__storage__temporal_block(), t in timeslicemap(temporal_block=block)
         all([
+            t != timeslicemap(temporal_block=block)[1]
             haskey(stor_state,(c,stor,t))
             frac_state_loss(commodity=c,storage=stor) != 0
             eff_stor_charg(storage=stor) != 0
@@ -38,23 +37,47 @@ function constraint_stor_state(m::Model, stor_state,trans,flow, timeslicemap, t_
             ==
             + reduce(+,
                 stor_state[c,stor, t2]
-                    for t2 in keys(t_before_t[t]) if haskey(stor_state,(c,stor,t2));init=0)
+                    for t2 in t_before_t(t_after=t)
+                        if haskey(stor_state,(c,stor,t2));
+                            init=0
+                            )
                 *(1-frac_state_loss(commodity=c,storage=stor))
-                #=
             - reduce(+,
-                flow[a,b,d, :out, keys(t_before_t[t])]*eff_stor_discharg(storage=stor)
-                    for (a,b,d) in filter(t -> in(t[3],storage__unit(storage=stor)), commodity__node__unit__direction(direction=:out)))
+                flow[c, n, u, :out, t2]
+                    for (n, u) in commodity__node__unit__direction(commodity=c, direction=:out)
+                        for t2 in t_before_t(t_after=t)
+                            if u in storage__unit(storage=stor) &&
+                                haskey(flow,(c,n,u,:out,t2));
+                                init=0
+                            )
+                    *eff_stor_discharg(storage=stor)
             + reduce(+,
-                flow[a,b,d, :in, keys(t_before_t[t])]*eff_stor_charg(storage=stor)
-                    for (a,b,d) in filter(t -> in(t[3],storage__unit(storage=stor)), commodity__node__unit__direction(direction=:in)))
+                flow[c, n, u, :in, t2]
+                    for (n, u) in commodity__node__unit__direction(commodity=c, direction=:in)
+                        for t2 in t_before_t(t_after=t)
+                            if u in storage__unit(storage=stor) &&
+                                haskey(flow,(c,n,u,:in,t2));
+                                init=0
+                            )
+                    *eff_stor_charg(storage=stor)
             - reduce(+,
-                trans[a,b,d, :out,t_before_t[t].name]*eff_stor_discharg(storage=stor)
-                    for (a,b,d) in filter(t -> in(t[3],storage__connection(storage=stor)), commodity__node__connection__direction(direction=:out)))
-            - reduce(+,
-                trans[a,b,d, :in,t_before_t[t].name]*eff_stor_charg(storage=stor) #TO DO: EFF STOR ALS FKT von unit
-                    for (a,b,d) in filter(t -> in(t[3],storage__connection(storage=stor)), commodity__node__connection__direction(direction=:in)))
-                    =#
+                trans[c, n, conn, :out, t2]
+                    for (n, conn) in commodity__node__connection__direction(commodity=c, direction=:out)
+                        for t2 in t_before_t(t_after=t)
+                            if conn in storage__connection(storage=stor) &&
+                                haskey(trans,(c,n,conn,:out,t2));
+                                init=0
+                            )
+                    *eff_stor_discharg(storage=stor)
+            + reduce(+,
+                trans[c, n, conn, :in, t2]
+                    for (n, conn) in commodity__node__connection__direction(commodity=c, direction=:in)
+                        for t2 in t_before_t(t_after=t)
+                            if conn in storage__connection(storage=stor) &&
+                                haskey(trans,(c,n,conn,:in,t2));
+                                init=0
+                            )
+                    *eff_stor_charg(storage=stor)
         )
-    end
 end
 end

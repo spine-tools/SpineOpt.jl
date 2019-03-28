@@ -25,7 +25,7 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 `commodity_group` for each `unit` for which the parameter `fix_ratio_out_in_flow`
 is specified.
 """
-function constraint_fix_ratio_out_in_flow(m::Model, flow, timeslicemap, timesliceblocks, t_in_t)
+function constraint_fix_ratio_out_in_flow(m::Model, flow, timeslicemap, t_in_t)
     #@butcher
     @constraint(
         m,
@@ -34,16 +34,15 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow, timeslicemap, timeslic
             cg_out in commodity_group(),
             cg_in in commodity_group(),
             tblock = temporal_block(),
-            t in keys(timeslicemap);
+            t in timeslicemap(temporal_block=tblock);
             all([
-            fix_ratio_out_in_flow_t(unit=u, commodity_group1=cg_out, commodity_group2=cg_in,temporal_block=tblock) != 0,
-            in(t,keys(timesliceblocks[tblock]))
+            fix_ratio_out_in_flow_t(unit=u, commodity_group1=cg_out, commodity_group2=cg_in,temporal_block=tblock) != 0
             ])
         ],
         + reduce(+,
             flow[c_out, n, u, :out, t2]
             for (c_out, n) in commodity__node__unit__direction(unit=u, direction=:out)
-                for t2 in keys(t_in_t[t])
+                for t2 in t_in_t(t_above=t)
                     if c_out in commodity_group__commodity(commodity_group=cg_out) &&
                         haskey(flow,(c_out,n,u,:out,t2));
                         init=0
@@ -53,7 +52,7 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow, timeslicemap, timeslic
             * reduce(+,
                 flow[c_in, n, u, :in, t2]
                 for (c_in, n) in commodity__node__unit__direction(unit=u, direction=:in)
-                    for t2 in keys(t_in_t[t])
+                    for t2 in t_in_t(t_above=t)
                         if c_in in commodity_group__commodity(commodity_group=cg_in) &&
                             haskey(flow,(c_in,n,u,:in,t2));
                             init=0

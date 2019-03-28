@@ -119,21 +119,16 @@ To upgrade `spinedatabase_api`, open a terminal (e.g. command prompt on Windows)
 end
 ###temporals
 ##creating time_slices struct
-struct time_slices
-           name::String
-           Start_Date::DateTime
-           End_Date::DateTime
-           duration::Minute
-end
-
 export start_date
 export end_date
+export generate_timeslicemap
+export generate_hierarchy
 export time_slicemap
-#export time_slicemap2test
-export time_slices_tempblock
-export generate_t_in_t
-export generate_t_in_t_excl
-export generate_t_before_t
+export time_slicemap_detail
+export duration
+export t_in_t
+export t_in_t_excl
+export t_before_t
 ###
 
 include("helpers/helpers.jl")
@@ -162,10 +157,6 @@ include("constraints/constraint_stor_state_init.jl")
 
 include("temporals/get_startdate.jl")
 include("temporals/get_enddate.jl")
-#include("temporals/generate_timeslicemap.jl")
-include("temporals/generate_timeslicemap0.jl")
-include("temporals/generate_timesliceblocks.jl")
-include("temporals/generate_t_in_t.jl")
-include("temporals/generate_t_in_t_excl.jl")
-include("temporals/generate_t_before_t.jl")
+include("temporals/generate_timeslicemap.jl")
+include("temporals/generate_hierarchy.jl")
 end
