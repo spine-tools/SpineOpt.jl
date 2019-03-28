@@ -7,8 +7,7 @@ using Clp
 
 ##
 # Export contents of database into the current session
-db_url = "sqlite:///C:/Users/u0093836/repos/git/model/examples/data/new_temporal.sqlite"
-#db_url = "sqlite:///C:/Users/u0122387/Desktop/toolbox/projects/temporal_structure/input_timestorage/new_temporal.sqlite"
+db_url = "sqlite:///examples/data/new_temporal.sqlite"
 JuMP_all_out(db_url)
 
 # Init model
@@ -44,7 +43,7 @@ constraint_fix_ratio_out_in_trans(m, trans, timeslicemap, timesliceblocks, t_in_
 constraint_trans_capacity(m, trans, timeslicemap)
 
 # Nodal balance
-constraint_nodal_balance(m, flow, trans, timeslicemap)
+constraint_nodal_balance(m, flow, trans, timeslicemap,timesliceblocks)
 
 # Absolute bounds on commodities
 constraint_max_cum_in_flow_bound(m, flow, timeslicemap)
