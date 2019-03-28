@@ -1,4 +1,4 @@
-function generate_t_in_t(timeslicemap)
+function generate_t_in_t(timeslicemap;header_only=false,kwargs...)
 @butcher t_in_t = Dict()
 for i in keys(timeslicemap)
     t_in_t[i] = Dict()
@@ -8,9 +8,16 @@ for i in keys(timeslicemap)
         end
     end
 end
+
+if header_only
+    @show "tiscool"
+end
+for (t_above, t_2018_03_02) in kwargs
+    @show t_above, t_2018_03_02
+end
 return t_in_t
 end
-### TO DO
+### TO DO;
 ## check
 #=
 function t_in_t(j::String)

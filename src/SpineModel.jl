@@ -129,6 +129,7 @@ end
 export start_date
 export end_date
 export time_slicemap
+#export time_slicemap2test
 export time_slices_tempblock
 export generate_t_in_t
 export generate_t_in_t_excl
@@ -161,7 +162,8 @@ include("constraints/constraint_stor_state_init.jl")
 
 include("temporals/get_startdate.jl")
 include("temporals/get_enddate.jl")
-include("temporals/generate_timeslicemap.jl")
+#include("temporals/generate_timeslicemap.jl")
+include("temporals/generate_timeslicemap0.jl")
 include("temporals/generate_timesliceblocks.jl")
 include("temporals/generate_t_in_t.jl")
 include("temporals/generate_t_in_t_excl.jl")

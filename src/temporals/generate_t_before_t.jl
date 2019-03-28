@@ -23,15 +23,15 @@
 
 A tuple returned for a specific timeslice t', returning all timeslices t'' directly before t'.
 """
-function generate_t_before_t(timeslicemap)
+function generate_t_before_t(timeslices,details)
     @butcher t_before_t = Dict()
-    for i in keys(timeslicemap)
+    for i in timeslices
         t_before_t[i] = Dict()
-        for j in keys(timeslicemap)
-            if timeslicemap[j].End_Date == timeslicemap[i].Start_Date
-                t_before_t[i][j] = [timeslicemap[i] , timeslicemap[j]]
+        for j in timeslices
+            if details[j][2] == details[i][1]
+                t_before_t = push!(t_before_t,Tuple([timeslices[i], timeslices[j]]))
             end
         end
     end
-    return t_before_t
+    t_before_t
 end
