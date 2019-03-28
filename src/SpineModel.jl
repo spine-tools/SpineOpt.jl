@@ -20,6 +20,11 @@
 
 module SpineModel
 
+# Export helpers
+export value
+export matrix_value
+export @butcher
+
 # Export variables
 export generate_variable_flow
 export generate_variable_trans
@@ -40,6 +45,9 @@ using JuMP
 using Clp
 using Dates
 using SpineInterface
+
+include("helpers/util.jl")
+include("helpers/butcher.jl")
 
 include("variables/generate_variable_flow.jl")
 include("variables/generate_variable_trans.jl")
