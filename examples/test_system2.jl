@@ -7,7 +7,7 @@ using Clp
 
 # Export contents of database into the current session
 db_url = "sqlite:///$(@__DIR__)/data/testsystem2_v2_multiD.sqlite"
-spine_checkout(db_url; upgrade=true)
+checkout_spinedb(db_url; upgrade=true)
 
 # Init model
 m = Model(with_optimizer(Clp.Optimizer))
