@@ -2,8 +2,7 @@
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-project.github.io/Spine-Model/latest/index.html)
 
-A package to run energy system integration models using the Spine framework.
-See [Spine](http://www.spine-model.org/) for more information.
+A package to run the [Spine](http://www.spine-model.org/) energy system integration model.
 
 ## Getting started
 
