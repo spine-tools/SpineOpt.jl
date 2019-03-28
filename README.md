@@ -16,13 +16,13 @@ See [Spine](http://www.spine-model.org/) for more information.
 
 ### Installation
 
-Julia <= 1.1 does not allow to set unregistered packages as dependency. Until that changes (hopefully pretty soon, see [here](https://github.com/JuliaLang/Pkg.jl/pull/1088)), one needs to install the unregistered dependency, in this case, SpineInterface, by hand.
+Julia <= 1.1 does not allow to set unregistered packages as dependencies. Until that changes (hopefully pretty soon, see [here](https://github.com/JuliaLang/Pkg.jl/pull/1088)), one needs to install the unregistered dependency, in this case SpineInterface, by hand.
 
 From the Julia REPL, press the key `]` to enter the Pkg-REPL mode, then run
 
 ```julia
 (v1.0) pkg> add https://github.com/Spine-project/SpineInterface.jl.git
-(v1.0) pkg> add https://github.com/Spine-project/Spine-Model.git#dev
+(v1.0) pkg> add https://github.com/Spine-project/Spine-Model.git
 ```
 
 ### Upgrading
