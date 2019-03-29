@@ -23,6 +23,8 @@
 
 A tuple returned for a specific timeslice t', returning all timeslices t'' directly before t'.
 """
+
+#@Maren: can we rename generate_hierarchy to generate_time_slice_relationships?
 function generate_hierarchy(time_slicemap_detail)
     @butcher list_t_before_t = []
     list_t_in_t = []
@@ -61,11 +63,11 @@ function generate_hierarchy(time_slicemap_detail)
             list_t_in_t
         elseif length(kwargs) == 1
             key, value = iterate(kwargs)[1]
-            if key == :t_above
+            if key == :t_above #@Maren: Could we rename to something like  t_big or t_long?
                 t_below_tuple = filter(x -> x[1]== value , list_t_in_t)
                 t_below = last.(t_below_tuple)
                 t_below
-            elseif key == :t_below
+            elseif key == :t_below #@Maren: Could we rename to something like t_within, t_small or t_short?
                 t_above_tuple = filter(x -> x[2]== value , list_t_in_t)
                 t_above = first.(t_above_tuple)
                 t_above
@@ -78,11 +80,11 @@ function generate_hierarchy(time_slicemap_detail)
             list_t_in_t_excl
         elseif length(kwargs) == 1
             key, value = iterate(kwargs)[1]
-            if key == :t_above
+            if key == :t_above #@Maren: see naming comments earlier
                 t_below_tuple = filter(x -> x[1]== value , list_t_in_t_excl)
                 t_below = last.(t_below_tuple)
                 t_below
-            elseif key == :t_below
+            elseif key == :t_below #@Maren: see naming comments earlier
                 t_above_tuple = filter(x -> x[2]== value , list_t_in_t_excl)
                 t_above = first.(t_above_tuple)
                 t_above
@@ -91,3 +93,5 @@ function generate_hierarchy(time_slicemap_detail)
     end
     t_before_t,t_in_t,t_in_t_excl
 end
+
+#@Maren: can we add the t_overlaps_t

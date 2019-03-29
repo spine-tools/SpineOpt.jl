@@ -52,10 +52,14 @@ function generate_timeslicemap()
             end
         end
     end
+    # Remove possible duplicates of time slices defined in different temporal blocks
     unique!(list_timeslicemap)
     unique!(list_timeslicemap_detail)
     unique!(list_duration)
-    function timeslicemap(;kwargs...)
+
+    # @Maren: The part about the argument that is passed. So can pass a temporal_block instead of a time_slice here? Something like ts = timeslicemap()[1] followed by timeslicemap(ts) does not work?
+    # @Maren: So how does this work exactly? list_timeslicemap is not stored somewhere?
+    function timeslicemap(;kwargs...) #propose to rename to time_slice
         if length(kwargs) == 0
             list_timeslicemap
         elseif length(kwargs) == 1
@@ -66,7 +70,11 @@ function generate_timeslicemap()
             end
         end
     end
+
+    # @Maren: So this is a shortway to define a function
     timeslicemap_detail() = list_timeslicemap_detail
     duration() = list_duration
     timeslicemap,timeslicemap_detail,duration
 end
+
+#@Maren: Other parameters of time slice are to be added I assume? (similar to duration?)
