@@ -60,6 +60,12 @@ constraint_stor_state(m, stor_state,trans,flow, timeslicemap, t_before_t)
 optimize!(m)
 status = termination_status(m)
 if status == MOI.OPTIMAL
-    db_url_out = db_url
-    JuMP_results_to_spine_db!(db_url_out, db_url; trans=trans, flow=flow, stor_state=stor_state)
+    out_db_url = "sqlite:///$(@__DIR__)/data/new_temporal_out.sqlite"
+    write_results(
+        out_db_url, db_url;
+        upgrade=true,
+        flow=pack_trailing_dims(SpineModel.value(flow), 1),
+        trans=pack_trailing_dims(SpineModel.value(trans), 1),
+        stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
+    )
 end

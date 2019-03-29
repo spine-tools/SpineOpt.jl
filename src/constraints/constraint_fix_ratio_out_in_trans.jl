@@ -35,9 +35,7 @@ function constraint_fix_ratio_out_in_trans(m::Model, trans, timeslicemap, t_in_t
             node_out in node(),
             tblock = temporal_block(),
             t in timeslicemap(temporal_block=tblock);
-            all([
-                fix_ratio_out_in_trans_t(connection=conn, node1=node_in, node2=node_out, temporal_block=tblock) != 0
-            ])
+            fix_ratio_out_in_trans_t(connection__node__node__temporal_block=(conn, node_in, node_out, tblock)) != nothing
         ],
         + reduce(+,
             trans[c_out, node_out, conn, :out, t2]
@@ -47,7 +45,7 @@ function constraint_fix_ratio_out_in_trans(m::Model, trans, timeslicemap, t_in_t
                         init=0
             )
         ==
-        + fix_ratio_out_in_trans_t(connection=conn, node1=node_in, node2=node_out,temporal_block=tblock)
+        + fix_ratio_out_in_trans_t(connection__node__node__temporal_block=(conn, node_in, node_out, tblock))
             * reduce(+,
                 trans[c_in, node_in, conn, :in, t2]
                 for (c_in) in commodity__node__connection__direction(node=node_in,connection=conn, direction=:in)

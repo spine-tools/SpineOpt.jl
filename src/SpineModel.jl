@@ -37,7 +37,6 @@ export objective_minimize_production_cost
 export constraint_flow_capacity
 export constraint_fix_ratio_out_in_flow
 export constraint_max_cum_in_flow_bound
-#export constraint_trans_loss
 export constraint_fix_ratio_out_in_trans
 export constraint_trans_capacity
 export constraint_nodal_balance
@@ -77,7 +76,6 @@ include("constraints/constraint_nodal_balance.jl")
 include("constraints/constraint_fix_ratio_out_in_flow.jl")
 include("constraints/constraint_fix_ratio_out_in_trans.jl")
 include("constraints/constraint_trans_capacity.jl")
-include("constraints/constraint_trans_loss.jl")
 include("constraints/constraint_stor_capacity.jl")
 include("constraints/constraint_stor_state.jl")
 include("constraints/constraint_stor_state_init.jl")

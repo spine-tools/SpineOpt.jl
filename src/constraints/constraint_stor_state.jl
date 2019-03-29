@@ -27,9 +27,9 @@ function constraint_stor_state(m::Model, stor_state,trans,flow, timeslicemap, t_
         all([
             t != timeslicemap(temporal_block=block)[1]
             haskey(stor_state,(c,stor,t))
-            frac_state_loss(commodity=c,storage=stor) != 0
-            eff_stor_charg(storage=stor) != 0
-            eff_stor_discharg(storage=stor) != 0
+            frac_state_loss(commodity__storage=(c,stor)) != nothing
+            eff_stor_charg(storage=stor) != nothing
+            eff_stor_discharg(storage=stor) != nothing
         ]) || continue
         @constraint(
             m,
@@ -41,7 +41,7 @@ function constraint_stor_state(m::Model, stor_state,trans,flow, timeslicemap, t_
                         if haskey(stor_state,(c,stor,t2));
                             init=0
                             )
-                *(1-frac_state_loss(commodity=c,storage=stor))
+                *(1-frac_state_loss(commodity__storage=(c,stor)))
             - reduce(+,
                 flow[c, n, u, :out, t2]
                     for (n, u) in commodity__node__unit__direction(commodity=c, direction=:out)

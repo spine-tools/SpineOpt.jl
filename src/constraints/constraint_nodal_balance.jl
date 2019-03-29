@@ -13,7 +13,9 @@ function constraint_nodal_balance(m::Model, flow, trans, timeslicemap, t_in_t)
 			0
             ==
             # Demand for the commodity
-            - demand_t(node=n, temporal_block=tblock)
+			- ( demand_t(node__temporal_block=(n,tblock)) != nothing &&
+				demand_t(node__temporal_block=(n,tblock))
+				)
             # Output of units into this node, and their input from this node
             + reduce(+,
                 flow[c, n, u, :out, t2]

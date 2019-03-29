@@ -14,3 +14,5 @@
 docs/build/
 docs/site/
 /process-palette.json
+
+model\.so_model
