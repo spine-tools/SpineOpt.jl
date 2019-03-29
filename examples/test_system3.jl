@@ -71,8 +71,11 @@ println("Constraints generated \n --------------------------------------------")
 println("--------------------------------------------\n Solving model")
 @time begin
 optimize!(m)
+end
+println("Model solved \n --------------------------------------------")
 status = termination_status(m)
 if status == MOI.OPTIMAL
+    println("Optimal solution found after")
     out_db_url = "sqlite:///$(@__DIR__)/data/new_temporal_out.sqlite"
     write_results(
         out_db_url, db_url;
@@ -82,18 +85,5 @@ if status == MOI.OPTIMAL
         stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
     )
 end
-println("Model solved \n --------------------------------------------")
-
-
-# Results to spine database
-println("--------------------------------------------\n Writing results to the database")
-@time begin
-    if status == MOI.OPTIMAL
-        db_url_out = db_url
-        JuMP_results_to_spine_db!(db_url_out, db_url; trans=trans, flow=flow)
-        println("Optimal solution found after")
-    end
-end
 println("Results written to the database \n --------------------------------------------")
-
 println("Objective function value: $(objective_value(m))")

@@ -46,7 +46,7 @@ function constraint_nodal_balance(m::Model, flow, trans, timeslicemap, t_in_t)
         )
     end
 end
-
+#=
 # new proposed version (not currently working because we don't yet have the required functionality)
 #@ TO DO: exogeneous supply parameter to be added
 function constraint_nodal_balance(m::Model, flow, trans, timeslicemap,timesliceblocks)
@@ -87,3 +87,4 @@ function constraint_nodal_balance(m::Model, flow, trans, timeslicemap,timesliceb
 	        )
     end
 end
+=#
