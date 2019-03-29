@@ -19,12 +19,11 @@
 # __precompile__()
 
 module SpineModel
-# Data_io exports
-export JuMP_all_out
-export JuMP_results_to_spine_db!
 
-# Export model
-export linear_JuMP_model
+# Export helpers
+export value
+export pack_trailing_dims
+export @butcher
 
 # Export variables
 export generate_variable_flow
@@ -46,78 +45,15 @@ export constraint_stor_state
 export constraint_stor_state_init
 export constraint_stor_capacity
 
-export @butcher
-export TimePattern
-export matches
-export parse_time_pattern_expr
-
-#load packages
-using PyCall
-using JSON
+# Load packages
 using JuMP
 using Clp
-using DataFrames
 using Dates
-using Suppressor
-const db_api = PyNULL()
-const required_spinedatabase_api_version = "0.0.19"
+using SpineInterface
 
-function __init__()
-    try
-        copy!(db_api, pyimport("spinedatabase_api"))
-    catch e
-        if isa(e, PyCall.PyError) && pyisinstance(e.val, py"ModuleNotFoundError")
-            error(
-"""
-SpineModel couldn't find the required Python module `spinedatabase_api`.
-Please make sure `spinedatabase_api` is in your Python path, restart your Julia session,
-and try using SpineModel again.
+include("helpers/util.jl")
+include("helpers/butcher.jl")
 
-NOTE: if you have already installed Spine Toolbox, then you can use the same `spinedatabase_api`
-provided with it in SpineModel.
-All you need to do is configure PyCall to use the same Python program as Spine Toolbox. Run
-
-    ENV["PYTHON"] = "... path of the Python program you want ..."
-
-followed by
-
-    Pkg.build("PyCall")
-
-If you haven't installed Spine Toolbox or don't want to reconfigure PyCall, then you can do the following:
-
-1. Find out the path of the Python program used by PyCall. Run
-
-    PyCall.pyprogramname
-
-2. Install spinedatabase_api using that Python. Open a terminal (e.g. command prompt on Windows) and run
-
-    python -m pip install git+https://github.com/Spine-project/Spine-Database-API.git
-
-where 'python' is the path returned by `PyCall.pyprogramname`.
-"""
-            )
-        else
-            rethrow()
-        end
-        return
-    end
-    current_version = db_api.__version__
-    current_version_split = parse.(Int, split(current_version, "."))
-    required_version_split = parse.(Int, split(required_spinedatabase_api_version, "."))
-    any(current_version_split .< required_version_split) && error(
-"""
-SpineModel couldn't find the required version of `spinedatabase_api`.
-(Required version is $required_spinedatabase_api_version, whereas current is $current_version)
-Please upgrade `spinedatabase_api` to $required_spinedatabase_api_version, restart your julia session,
-and try using SpineModel again.
-
-To upgrade `spinedatabase_api`, open a terminal (e.g. command prompt on Windows) and run
-
-    pip install --upgrade git+https://github.com/Spine-project/Spine-Database-API.git
-"""
-    )
-end
-###temporals
 ##creating time_slices struct
 export start_date
 export end_date
@@ -129,15 +65,6 @@ export duration
 export t_in_t
 export t_in_t_excl
 export t_before_t
-###
-
-include("helpers/helpers.jl")
-
-include("data_io/from_spine.jl")
-include("data_io/to_spine.jl")
-# include("data_io/other_formats.jl")
-# include("data_io/get_results.jl")
-
 include("variables/generate_variable_flow.jl")
 include("variables/generate_variable_trans.jl")
 include("variables/generate_variable_stor_state.jl")
@@ -150,7 +77,7 @@ include("constraints/constraint_nodal_balance.jl")
 include("constraints/constraint_fix_ratio_out_in_flow.jl")
 include("constraints/constraint_fix_ratio_out_in_trans.jl")
 include("constraints/constraint_trans_capacity.jl")
-#include("constraints/constraint_trans_loss.jl")
+include("constraints/constraint_trans_loss.jl")
 include("constraints/constraint_stor_capacity.jl")
 include("constraints/constraint_stor_state.jl")
 include("constraints/constraint_stor_state_init.jl")

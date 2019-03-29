@@ -19,29 +19,23 @@
 
 
 """
-    constraint_flow_capacity(m::Model, flow)
+    constraint_trans_cap(m::Model, trans)
 
-Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
-number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
+Limit flow capacity of a commodity transfered between to nodes in a
+specific direction `node1 -> node2`.
 """
-function constraint_flow_capacity(m::Model, flow, timeslicemap)
-    @butcher for (c, n, u, d) in commodity__node__unit__direction(), t in timeslicemap()
+function constraint_trans_cap(m::Model, trans)
+    @butcher for (conn, i) in connection__node(), t=1:number_of_timesteps(time=:timer)
         all([
-            haskey(flow,(c,n,u,d,t)),
-            unit_capacity(unit__commodity=(u, c)) != nothing,
-            number_of_units(unit=u) != nothing,
-            unit_conv_cap_to_flow(unit__commodity=(u,c)) != nothing,
-            avail_factor(unit=u) != nothing
-        ]) || continue
+            trans_cap_av_frac(connection__node=(conn, i), t=t) != nothing,
+            trans_cap(connection=conn) != nothing
+        ])
         @constraint(
             m,
-            + flow[c, n, u, d, t]
+            + (trans[conn, i, t])
             <=
-            + avail_factor(unit=u)
-                * unit_capacity(unit__commodity=(u,c))
-                    * number_of_units(unit=u)
-                        * unit_conv_cap_to_flow(unit__commodity=(u,c))
+            + trans_cap_av_frac(connection__node=(conn, i), t=t)
+                * trans_cap(connection=conn)
         )
     end
-                
 end

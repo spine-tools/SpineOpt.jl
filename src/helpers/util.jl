@@ -17,23 +17,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
 """
-    objective_minimize_production_cost(m::Model, flow)
+    pack_trailing_dims(variable::Dict, n::Int64=1)
 
-Minimize the `production_cost` correspond to the sum over all
-`conversion_cost` of each `unit`.
+Take `variable` and return a new Dict where the last `n` dimensions are packed into a matrix
 """
-function objective_minimize_production_cost(m::Model, flow, timeslicemap)
-    @butcher begin
-        production_cost=zero(AffExpr)
-        for t in timeslicemap()
-            for (c, n, u, d) in commodity__node__unit__direction()
-                if haskey(flow,(c,n,u,d,t))
-                    production_cost += flow[c, n, u, d, t] * conversion_cost(unit__commodity=(u,c))
-                end
-            end
+function pack_trailing_dims(variable::Dict, n::Int64=1)
+    left_dict = Dict{Any,Any}()
+    for (key, value) in variable
+        # TODO: handle length(key) < n and stuff like that?
+        left_key = key[1:end-n]
+        if length(left_key) == 1
+            left_key = left_key[1]
         end
-        @objective(m, Min, production_cost)
+        right_key = key[end-n+1:end]
+        right_dict = get!(left_dict, left_key, Dict())
+        right_dict[right_key] = value
     end
+    Dict(key => reshape([v for (k, v) in sort(collect(value))], :, n) for (key, value) in left_dict)
 end
+
+
+"""
+    value(variable::Dict)
+"""
+value(variable::Dict) = Dict(k => JuMP.value(v) for (k, v) in variable)
