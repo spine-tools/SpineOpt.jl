@@ -1,14 +1,15 @@
 
 # Load required packaes
 using Revise
+using SpineInterface
 using SpineModel
 using Dates
 using JuMP
 using Clp
 ##
 # Export contents of database into the current session
-db_url = "sqlite:///examples/data/new_temporal.sqlite"
-JuMP_all_out(db_url)
+db_url = "sqlite:///$(@__DIR__)/data/new_temporal.sqlite"
+checkout_spinedb(db_url; upgrade=true)
 
 # Create temporal_structure
 (timeslicemap,timeslicemap_detail,duration) = generate_timeslicemap()

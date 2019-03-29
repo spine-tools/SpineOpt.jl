@@ -25,7 +25,8 @@ Minimize the `production_cost` correspond to the sum over all
 `conversion_cost` of each `unit`.
 """
 function objective_minimize_production_cost(m::Model, flow, timeslicemap)
-    @butcher begin
+    #@butcher 
+    begin
         production_cost=zero(AffExpr)
         for t in timeslicemap()
             for (c, n, u, d) in commodity__node__unit__direction()

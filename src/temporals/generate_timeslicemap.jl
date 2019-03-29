@@ -29,23 +29,23 @@ function generate_timeslicemap()
     list_timesliceblock = Dict()
     for k in temporal_block()
         list_timesliceblock[k]=[]
-        if time_slice_duration()[k][2] == nothing
-            for x in collect(start_date(k):Minute(time_slice_duration()[k][1]):end_date(k)-Minute(time_slice_duration()[k][1]))
-                time_slice_symbol = Symbol("t_$(year(x))_$(month(x))_$(day(x))_$(hour(x))_$(minute(x))__$(year(x+Minute(time_slice_duration()[k][1])))_$(month(x+Minute(time_slice_duration()[k][1])))_$(day(x+Minute(time_slice_duration()[k][1])))_$(hour(x+Minute(time_slice_duration()[k][1])))_$(minute(x+Minute(time_slice_duration()[k][1])))")
+        if time_slice_duration()[:temporal_block][k][2] == nothing
+            for x in collect(start_date(k):Minute(time_slice_duration()[:temporal_block][k][1]):end_date(k)-Minute(time_slice_duration()[:temporal_block][k][1]))
+                time_slice_symbol = Symbol("t_$(year(x))_$(month(x))_$(day(x))_$(hour(x))_$(minute(x))__$(year(x+Minute(time_slice_duration()[:temporal_block][k][1])))_$(month(x+Minute(time_slice_duration()[:temporal_block][k][1])))_$(day(x+Minute(time_slice_duration()[:temporal_block][k][1])))_$(hour(x+Minute(time_slice_duration()[:temporal_block][k][1])))_$(minute(x+Minute(time_slice_duration()[:temporal_block][k][1])))")
                 list_timeslicemap = push!(list_timeslicemap,time_slice_symbol)
                 list_timesliceblock[k] = push!(list_timesliceblock[k],time_slice_symbol)
-                list_duration = push!(list_duration,Tuple([time_slice_symbol, (Minute(time_slice_duration()[k][1]))]))
-                list_timeslicemap_detail = push!(list_timeslicemap_detail,Tuple([time_slice_symbol,x,x+Minute(time_slice_duration()[k][1])]))
+                list_duration = push!(list_duration,Tuple([time_slice_symbol, (Minute(time_slice_duration()[:temporal_block][k][1]))]))
+                list_timeslicemap_detail = push!(list_timeslicemap_detail,Tuple([time_slice_symbol,x,x+Minute(time_slice_duration()[:temporal_block][k][1])]))
             end
         else
             x = start_date(k)
-            for j = 1:(length(time_slice_duration()[k])-1)
-                time_slice_symbol = Symbol("t_$(year(x))_$(month(x))_$(day(x))_$(hour(x))_$(minute(x))__$(year(x+Minute(time_slice_duration()[k][j])))_$(month(x+Minute(time_slice_duration()[k][j])))_$(day(x+Minute(time_slice_duration()[k][j])))_$(hour(x+Minute(time_slice_duration()[k][j])))_$(minute(x+Minute(time_slice_duration()[k][j])))")
+            for j = 1:(length(time_slice_duration()[:temporal_block][k])-1)
+                time_slice_symbol = Symbol("t_$(year(x))_$(month(x))_$(day(x))_$(hour(x))_$(minute(x))__$(year(x+Minute(time_slice_duration()[:temporal_block][k][j])))_$(month(x+Minute(time_slice_duration()[:temporal_block][k][j])))_$(day(x+Minute(time_slice_duration()[:temporal_block][k][j])))_$(hour(x+Minute(time_slice_duration()[:temporal_block][k][j])))_$(minute(x+Minute(time_slice_duration()[:temporal_block][k][j])))")
                 list_timeslicemap = push!(list_timeslicemap,time_slice_symbol)
                 list_timesliceblock[k] = push!(list_timesliceblock[k],time_slice_symbol)
-                list_duration = push!(list_duration,Tuple([time_slice_symbol, (Minute(time_slice_duration()[k][j]))]))
-                list_timeslicemap_detail = push!(list_timeslicemap_detail,Tuple([time_slice_symbol,x,x+Minute(time_slice_duration()[k][1])]))
-                x = x+Minute(time_slice_duration()[k][j])
+                list_duration = push!(list_duration,Tuple([time_slice_symbol, (Minute(time_slice_duration()[:temporal_block][k][j]))]))
+                list_timeslicemap_detail = push!(list_timeslicemap_detail,Tuple([time_slice_symbol,x,x+Minute(time_slice_duration()[:temporal_block][k][1])]))
+                x = x+Minute(time_slice_duration()[:temporal_block][k][j])
             end
             if x != end_date(k)
                 @warn "WARNING: Last timeslice of $k doesn't coinside with defined enddate for temporalblock $k"
