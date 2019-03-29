@@ -25,6 +25,10 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 `commodity_group` for each `unit` for which the parameter `fix_ratio_out_in_flow`
 is specified.
 """
+
+#@Maren:
+# 1) this constraint does not make use of the @butcher. I believe that if it is beneficial to use that in the variable generation, the same applies for constraints. constraint_flow_capacity does currently use @butcher already
+# 2) Since all functions to generate the constraint are in the constraints folder, could we rename the files by removing 'constraint_'?
 function constraint_fix_ratio_out_in_flow(m::Model, flow, timeslicemap, timesliceblocks, t_in_t)
     #@butcher
     @constraint(

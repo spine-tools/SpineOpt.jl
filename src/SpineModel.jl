@@ -169,4 +169,6 @@ include("temporals/generate_t_in_t.jl")
 include("temporals/generate_t_in_t_excl.jl")
 include("temporals/generate_t_before_t.jl")
 
+value(d) = Dict(k => JuMP.value(v) for (k, v) in d)
+
 end

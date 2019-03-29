@@ -105,3 +105,5 @@ println("--------------------------------------------\n Writing results to the d
     end
 end
 println("Results written to the database \n --------------------------------------------")
+
+println("Objective function value: $(objective_value(m))")

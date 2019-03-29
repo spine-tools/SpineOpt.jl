@@ -34,14 +34,4 @@ function generate_variable_flow(m::Model, timesliceblocks)
                 for t in keys(timesliceblocks[block])
     )
 end
-
-#=
-function generate_variable_flow(m::Model)
-    @butcher Dict{Tuple, JuMP.Variable}(
-        (c, n, u, d, t) => @variable(
-            m, basename="flow[$c, $n, $u, $d, $t]", lowerbound=0
-        ) for (c, n, u, d, block) in commodity__node__unit__direction__temporal_block()
-                for t in keys(time_slices_tempblock()[block])
-    )
-end
-=#
+# @Maren: Should we also generate a thing commodity__node__unit__direction__time_slice (what I called flow_tuples in the temporal representation slide)? I think we need it, not sure if this would be the best place to generate it!
