@@ -45,9 +45,9 @@ optimize!(m)
 status = termination_status(m)
 if status == MOI.OPTIMAL
     out_db_url = "sqlite:///$(@__DIR__)/data/testsystem2_v2_multiD_out.sqlite"
+    create_results_db(out_db_url, db_url)
     write_results(
-        out_db_url, db_url;
-        upgrade=true,
+        out_db_url;
         flow=pack_trailing_dims(SpineModel.value(flow), 1),
         trans=pack_trailing_dims(SpineModel.value(trans), 1)
     )
