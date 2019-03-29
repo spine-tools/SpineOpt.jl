@@ -12,9 +12,11 @@ JuMP_all_out(db_url)
 
 # Create temporal_structure
 (timeslicemap,timeslicemap_detail,duration) = generate_timeslicemap()
+#@Maren: duration() returns an array instead of a dict as what JuMP_all_out would return for a parameter convenience function
+#@Maren: can we rename timeslicemap to time_slice() (in line with data conventions); and similarly generate_timeslicemap to generate_time_slice ?
 (t_before_t,t_in_t,t_in_t_excl)=generate_hierarchy(timeslicemap_detail)
-#t_in_t = generate_t_in_t(timeslicemap)
-#t_in_t_excl = generate_t_in_t_excl(timeslicemap)
+#@Maren: can we rename generate_hierarchy to generate_time_slice_relationships?
+
 ####
 # Init model
 m = Model(with_optimizer(Clp.Optimizer))
