@@ -25,7 +25,7 @@ Set upperbound `max_cum_in_flow_bound `to the cumulated inflow of
 `commodity_group cg` into a `unit_group ug`
 if `max_cum_in_flow_bound` exists for the combination of `cg` and `ug`.
 """
-function constraint_max_cum_in_flow_bound(m::Model, flow, timeslicemap)
+function constraint_max_cum_in_flow_bound(m::Model, flow, time_slice)
     @butcher @constraint(
         m,
         [
@@ -36,7 +36,7 @@ function constraint_max_cum_in_flow_bound(m::Model, flow, timeslicemap)
         + reduce(
             +,
             flow[c, n, u, :in, t]
-            for (c, n, u) in commodity__node__unit__direction(direction=:in), t in timeslicemap()
+            for (c, n, u) in commodity__node__unit__direction(direction=:in), t in time_slice()
             if u in unit_group__unit(unit_group=ug) && c in commodity_group__commodity(commodity_group=cg)
                 && haskey(flow,(c,n,u,:in,t));
             init=0

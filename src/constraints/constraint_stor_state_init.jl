@@ -23,10 +23,10 @@
 
 Balance for storage level.
 """
-function constraint_stor_state_init(m::Model, stor_state, timeslicemap)
-    @butcher for (c, stor, block) in commodity__storage__temporal_block(),   t in timeslicemap(temporal_block=block)
+function constraint_stor_state_init(m::Model, stor_state, time_slice)
+    @butcher for (c, stor, block) in commodity__storage__temporal_block(),   t in time_slice(temporal_block=block)
         all([
-        t == timeslicemap(temporal_block=block)[1],
+        t == time_slice(temporal_block=block)[1],
         haskey(stor_state,(c,stor,t)),
         stor_state_init(commodity__storage=(c,stor)) != nothing
         ]) || continue

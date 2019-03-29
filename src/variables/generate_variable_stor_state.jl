@@ -24,11 +24,11 @@ A `stor_level` variable for each tuple returned by `commodity__stor()`,
 attached to model `m`.
 `stor_level` represents the state of the storage level.
 """
-function generate_variable_stor_state(m::Model, timeslicemap)
+function generate_variable_stor_state(m::Model, time_slice)
     @butcher Dict{Tuple, JuMP.VariableRef}(
         (c, stor, t) => @variable(
             m, base_name="stor_state[$c,$stor,$t]", lower_bound=0
         ) for (c, stor, block) in commodity__storage__temporal_block()
-            for t in timeslicemap(temporal_block=block)
+            for t in time_slice(temporal_block=block)
     )
 end

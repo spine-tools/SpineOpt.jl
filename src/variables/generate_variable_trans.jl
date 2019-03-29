@@ -26,12 +26,11 @@ for each tuple of `commodity__node__unit__direction__time_slice`, attached to mo
 `trans` represents the (average) instantaneous flow of a 'commodity' between a 'node' and a 'connection' within a certain 'time_slice'
 in a certain 'direction'. The direction is relative to the connection.
 """
-# @ Maren: I removed this line from the documentation: For each `connection` between to `nodes`, two `trans` variables exist. This is now determined by the user itself by specifying the right commodity__node__unit__direction__temporal_block relationships, right?
-function generate_variable_trans(m::Model, timeslicemap)
+function generate_variable_trans(m::Model, time_slice)
     @butcher Dict{Tuple, JuMP.VariableRef}(
         (c, n, conn, d, t) => @variable(
             m, base_name="trans[$c, $n, $conn, $d, $t]", lower_bound=0
         ) for (c, n, conn, d, block) in commodity__node__connection__direction__temporal_block()
-                for t in timeslicemap(temporal_block=block)
+                for t in time_slice(temporal_block=block)
     )
 end

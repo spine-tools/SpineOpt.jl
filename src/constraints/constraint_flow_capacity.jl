@@ -26,9 +26,9 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 
 # Suggested new version (see comments in version above)
-# @Maren: should the parameter unit_capacity have a direction index? 
-function constraint_flow_capacity(m::Model, flow, timeslicemap)
-    @butcher for (c, n, u, d) in commodity__node__unit__direction(), t in timeslicemap()
+# @Maren: should the parameter unit_capacity have a direction index?
+function constraint_flow_capacity(m::Model, flow, time_slice)
+    @butcher for (c, n, u, d) in commodity__node__unit__direction(), t in time_slice()
         all([
             haskey(flow,(c,n,u,d,t)),
             unit_capacity(unit__commodity=(u, c)) != nothing,
@@ -46,11 +46,11 @@ function constraint_flow_capacity(m::Model, flow, timeslicemap)
                         * unit_conv_cap_to_flow(unit__commodity=(u,c))
         )
     end
-                
+
 end
 
 
-# function constraint_flow_capacity_old(m::Model, flow, timeslicemap)
+# function constraint_flow_capacity_old(m::Model, flow, time_slice)
 #     @butcher for (c, n, u, d, t) in collect(keys(flow))
 #         all([
 #             unit_capacity(unit=u, commodity=c) != 0, # @Maren: I think it would be better to replace this line by: (u,c) in keys(unit_capacity(). Now, if someone sets unit_capacity at zero, no constraint would be generated.

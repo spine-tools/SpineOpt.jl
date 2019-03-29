@@ -29,7 +29,7 @@ is specified.
 #@Maren:
 # 1) this constraint does not make use of the @butcher. I believe that if it is beneficial to use that in the variable generation, the same applies for constraints. constraint_flow_capacity does currently use @butcher already
 # 2) Since all functions to generate the constraint are in the constraints folder, could we rename the files by removing 'constraint_'?
-function constraint_fix_ratio_out_in_flow(m::Model, flow, timeslicemap, t_in_t)
+function constraint_fix_ratio_out_in_flow(m::Model, flow, time_slice, t_in_t)
     #@butcher
     @constraint(
         m,
@@ -38,13 +38,13 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow, timeslicemap, t_in_t)
             cg_out in commodity_group(),
             cg_in in commodity_group(),
             tblock = temporal_block(),
-            t in timeslicemap(temporal_block=tblock);
+            t in time_slice(temporal_block=tblock);
             fix_ratio_out_in_flow_t(unit__commodity_group__commodity_group__temporal_block=(u, cg_out, cg_in, tblock)) != nothing
         ],
         + reduce(+,
             flow[c_out, n, u, :out, t2]
             for (c_out, n) in commodity__node__unit__direction(unit=u, direction=:out)
-                for t2 in t_in_t(t_above=t)
+                for t2 in t_in_t(t_long=t)
                     if c_out in commodity_group__commodity(commodity_group=cg_out) &&
                         haskey(flow,(c_out,n,u,:out,t2));
                         init=0
@@ -54,7 +54,7 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow, timeslicemap, t_in_t)
             * reduce(+,
                 flow[c_in, n, u, :in, t2]
                 for (c_in, n) in commodity__node__unit__direction(unit=u, direction=:in)
-                    for t2 in t_in_t(t_above=t)
+                    for t2 in t_in_t(t_long=t)
                         if c_in in commodity_group__commodity(commodity_group=cg_in) &&
                             haskey(flow,(c_in,n,u,:in,t2));
                             init=0

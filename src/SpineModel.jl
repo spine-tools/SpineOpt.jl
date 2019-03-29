@@ -56,8 +56,8 @@ include("helpers/butcher.jl")
 ##creating time_slices struct
 export start_date
 export end_date
-export generate_timeslicemap
-export generate_hierarchy
+export generate_time_slice
+export generate_time_slice_relationships
 export time_slicemap
 export time_slicemap_detail
 export duration
@@ -82,6 +82,6 @@ include("constraints/constraint_stor_state_init.jl")
 
 include("temporals/get_startdate.jl")
 include("temporals/get_enddate.jl")
-include("temporals/generate_timeslicemap.jl")
-include("temporals/generate_hierarchy.jl")
+include("temporals/generate_time_slice.jl")
+include("temporals/generate_time_slice_relationships.jl")
 end

@@ -19,32 +19,32 @@
 
 
 """
-    generate_timeslicemap()
+    generate_time_slice()
 
 """
-function generate_timeslicemap()
-    @butcher list_timeslicemap = []
+function generate_time_slice()
+    @butcher list_time_slice = []
     list_duration = []
-    list_timeslicemap_detail = []
+    list_time_slice_detail = []
     list_timesliceblock = Dict()
     for k in temporal_block()
         list_timesliceblock[k]=[]
         if time_slice_duration()[:temporal_block][k][2] == nothing
             for x in collect(start_date(k):Minute(time_slice_duration()[:temporal_block][k][1]):end_date(k)-Minute(time_slice_duration()[:temporal_block][k][1]))
                 time_slice_symbol = Symbol("t_$(year(x))_$(month(x))_$(day(x))_$(hour(x))_$(minute(x))__$(year(x+Minute(time_slice_duration()[:temporal_block][k][1])))_$(month(x+Minute(time_slice_duration()[:temporal_block][k][1])))_$(day(x+Minute(time_slice_duration()[:temporal_block][k][1])))_$(hour(x+Minute(time_slice_duration()[:temporal_block][k][1])))_$(minute(x+Minute(time_slice_duration()[:temporal_block][k][1])))")
-                list_timeslicemap = push!(list_timeslicemap,time_slice_symbol)
+                list_time_slice = push!(list_time_slice,time_slice_symbol)
                 list_timesliceblock[k] = push!(list_timesliceblock[k],time_slice_symbol)
                 list_duration = push!(list_duration,Tuple([time_slice_symbol, (Minute(time_slice_duration()[:temporal_block][k][1]))]))
-                list_timeslicemap_detail = push!(list_timeslicemap_detail,Tuple([time_slice_symbol,x,x+Minute(time_slice_duration()[:temporal_block][k][1])]))
+                list_time_slice_detail = push!(list_time_slice_detail,Tuple([time_slice_symbol,x,x+Minute(time_slice_duration()[:temporal_block][k][1])]))
             end
         else
             x = start_date(k)
             for j = 1:(length(time_slice_duration()[:temporal_block][k])-1)
                 time_slice_symbol = Symbol("t_$(year(x))_$(month(x))_$(day(x))_$(hour(x))_$(minute(x))__$(year(x+Minute(time_slice_duration()[:temporal_block][k][j])))_$(month(x+Minute(time_slice_duration()[:temporal_block][k][j])))_$(day(x+Minute(time_slice_duration()[:temporal_block][k][j])))_$(hour(x+Minute(time_slice_duration()[:temporal_block][k][j])))_$(minute(x+Minute(time_slice_duration()[:temporal_block][k][j])))")
-                list_timeslicemap = push!(list_timeslicemap,time_slice_symbol)
+                list_time_slice = push!(list_time_slice,time_slice_symbol)
                 list_timesliceblock[k] = push!(list_timesliceblock[k],time_slice_symbol)
                 list_duration = push!(list_duration,Tuple([time_slice_symbol, (Minute(time_slice_duration()[:temporal_block][k][j]))]))
-                list_timeslicemap_detail = push!(list_timeslicemap_detail,Tuple([time_slice_symbol,x,x+Minute(time_slice_duration()[:temporal_block][k][1])]))
+                list_time_slice_detail = push!(list_time_slice_detail,Tuple([time_slice_symbol,x,x+Minute(time_slice_duration()[:temporal_block][k][1])]))
                 x = x+Minute(time_slice_duration()[:temporal_block][k][j])
             end
             if x != end_date(k)
@@ -53,15 +53,15 @@ function generate_timeslicemap()
         end
     end
     # Remove possible duplicates of time slices defined in different temporal blocks
-    unique!(list_timeslicemap)
-    unique!(list_timeslicemap_detail)
+    unique!(list_time_slice)
+    unique!(list_time_slice_detail)
     unique!(list_duration)
 
-    # @Maren: The part about the argument that is passed. So can pass a temporal_block instead of a time_slice here? Something like ts = timeslicemap()[1] followed by timeslicemap(ts) does not work?
-    # @Maren: So how does this work exactly? list_timeslicemap is not stored somewhere?
-    function timeslicemap(;kwargs...) #propose to rename to time_slice
+    # @Maren: The part about the argument that is passed. So can pass a temporal_block instead of a time_slice here? Something like ts = time_slice()[1] followed by time_slice(ts) does not work?
+    # @Maren: So how does this work exactly? list_time_slice is not stored somewhere?
+    function time_slice(;kwargs...) #propose to rename to time_slice
         if length(kwargs) == 0
-            list_timeslicemap
+            list_time_slice
         elseif length(kwargs) == 1
             key, value = iterate(kwargs)[1]
             if key == :temporal_block
@@ -72,9 +72,9 @@ function generate_timeslicemap()
     end
 
     # @Maren: So this is a shortway to define a function
-    timeslicemap_detail() = list_timeslicemap_detail
+    time_slice_detail() = list_time_slice_detail
     duration() = list_duration
-    timeslicemap,timeslicemap_detail,duration
+    time_slice,time_slice_detail,duration
 end
 
 #@Maren: Other parameters of time slice are to be added I assume? (similar to duration?)

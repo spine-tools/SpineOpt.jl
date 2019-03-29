@@ -16,11 +16,9 @@ println("--------------------------------------------\n Creating convenience fun
 checkout_spinedb(db_url; upgrade=true)
 
 # Create temporal_structure
-(timeslicemap,timeslicemap_detail,duration) = generate_timeslicemap()
+(time_slice,time_slice_detail,duration) = generate_time_slice()
 #@Maren: duration() returns an array instead of a dict as what JuMP_all_out would return for a parameter convenience function
-#@Maren: can we rename timeslicemap to time_slice() (in line with data conventions); and similarly generate_timeslicemap to generate_time_slice ?
-(t_before_t,t_in_t,t_in_t_excl)=generate_hierarchy(timeslicemap_detail)
-#@Maren: can we rename generate_hierarchy to generate_time_slice_relationships?
+(t_before_t,t_in_t,t_in_t_excl)=generate_time_slice_relationships(time_slice_detail)
 println("Convenience functions created \n --------------------------------------------")
 ####
 # Init model
@@ -28,40 +26,40 @@ println("--------------------------------------------\n Initializing model")
 m = Model(with_optimizer(Clp.Optimizer))
 ##
 # Create decision variables
-flow = generate_variable_flow(m, timeslicemap)
-trans = generate_variable_trans(m, timeslicemap)
-stor_state = generate_variable_stor_state(m, timeslicemap)
+flow = generate_variable_flow(m, time_slice)
+trans = generate_variable_trans(m, time_slice)
+stor_state = generate_variable_stor_state(m, time_slice)
 ## Create objective function
-production_cost = objective_minimize_production_cost(m, flow,timeslicemap)
+production_cost = objective_minimize_production_cost(m, flow,time_slice)
 
 # Add constraints
 println("--------------------------------------------\n Generating constraints")
 @time begin
     # Unit capacity
-    constraint_flow_capacity(m, flow, timeslicemap)
+    constraint_flow_capacity(m, flow, time_slice)
 
 # Ratio of in/out flows of a unit
-constraint_fix_ratio_out_in_flow(m, flow, timeslicemap, t_in_t)
+constraint_fix_ratio_out_in_flow(m, flow, time_slice, t_in_t)
 
 # Transmission losses
 #constraint_trans_loss(m, trans)
-constraint_fix_ratio_out_in_trans(m, trans, timeslicemap, t_in_t)
+constraint_fix_ratio_out_in_trans(m, trans, time_slice, t_in_t)
 
     # Transmission line capacity
-    constraint_trans_capacity(m, trans, timeslicemap)
+    constraint_trans_capacity(m, trans, time_slice)
 
 # Nodal balance
-constraint_nodal_balance(m, flow, trans, timeslicemap, t_in_t)
+constraint_nodal_balance(m, flow, trans, time_slice, t_in_t)
 
     # Absolute bounds on commodities
-    constraint_max_cum_in_flow_bound(m, flow, timeslicemap)
+    constraint_max_cum_in_flow_bound(m, flow, time_slice)
 
 # storage capacity
-constraint_stor_capacity(m,stor_state, timeslicemap)
+constraint_stor_capacity(m,stor_state, time_slice)
 
 # storage state balance equation
-constraint_stor_state_init(m, stor_state, timeslicemap)
-constraint_stor_state(m, stor_state,trans,flow, timeslicemap, t_before_t)
+constraint_stor_state_init(m, stor_state, time_slice)
+constraint_stor_state(m, stor_state,trans,flow, time_slice, t_before_t)
 
     # needed: set/group of unitgroup CHP and Gasplant
 end

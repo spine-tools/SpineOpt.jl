@@ -3,8 +3,8 @@
 
 Enforce balance of all commodity flows from and to a node.
 """
-function constraint_nodal_balance(m::Model, flow, trans, timeslicemap, t_in_t)
-	for (n,tblock) in node__temporal_block(), t in timeslicemap(temporal_block=tblock)
+function constraint_nodal_balance(m::Model, flow, trans, time_slice, t_in_t)
+	for (n,tblock) in node__temporal_block(), t in time_slice(temporal_block=tblock)
         @constraint(
             m,
 			0
@@ -17,14 +17,14 @@ function constraint_nodal_balance(m::Model, flow, trans, timeslicemap, t_in_t)
             + reduce(+,
                 flow[c, n, u, :out, t2]
                 for (c, u) in commodity__node__unit__direction(node=n, direction=:out)
-					for t2 in t_in_t(t_above=t)
+					for t2 in t_in_t(t_long=t)
 					if haskey(flow,(c,n,u,:out,t2));
                     init=0
                 )
             - reduce(+,
                 flow[c, n, u, :in, t2]
                 for (c, u) in commodity__node__unit__direction__temporal_block(node=n, direction=:in)
-					for t2 in t_in_t(t_above=t)
+					for t2 in t_in_t(t_long=t)
 					if haskey(flow,(c,n,u,:in,t2));
                     init=0
                 )
@@ -32,14 +32,14 @@ function constraint_nodal_balance(m::Model, flow, trans, timeslicemap, t_in_t)
             + reduce(+,
                 trans[c, n, conn, :out, t]
                 for (c, conn) in commodity__node__connection__direction(node=n, direction=:out)
-					for t2 in t_in_t(t_above=t)
+					for t2 in t_in_t(t_long=t)
 					if haskey(trans,(c,n,conn,:out,t2));
                     init=0
                 )
             - reduce(+,
                 trans[c, n, conn, :in, t]
                 for (c, conn) in commodity__node__connection__direction(node=n, direction=:in)
-					for t2 in t_in_t(t_above=t)
+					for t2 in t_in_t(t_long=t)
 					if haskey(trans,(c,n,conn,:in,t2));
                     init=0
                 )
@@ -49,7 +49,7 @@ end
 #=
 # new proposed version (not currently working because we don't yet have the required functionality)
 #@ TO DO: exogeneous supply parameter to be added
-function constraint_nodal_balance(m::Model, flow, trans, timeslicemap,timesliceblocks)
+function constraint_nodal_balance(m::Model, flow, trans, time_slice,timesliceblocks)
 	for (n,tblock) in node__temporal_block()
 		for t in keys(timesliceblocks[tblock])
 	        @constraint(

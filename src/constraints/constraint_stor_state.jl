@@ -22,10 +22,10 @@
     constraint_stor_state(m::Model, stor_state)
 Balance for storage level.
 """
-function constraint_stor_state(m::Model, stor_state,trans,flow, timeslicemap, t_before_t)
-    for (c, stor, block) in commodity__storage__temporal_block(), t in timeslicemap(temporal_block=block)
+function constraint_stor_state(m::Model, stor_state,trans,flow, time_slice, t_before_t)
+    for (c, stor, block) in commodity__storage__temporal_block(), t in time_slice(temporal_block=block)
         all([
-            t != timeslicemap(temporal_block=block)[1]
+            t != time_slice(temporal_block=block)[1]
             haskey(stor_state,(c,stor,t))
             frac_state_loss(commodity__storage=(c,stor)) != nothing
             eff_stor_charg(storage=stor) != nothing
