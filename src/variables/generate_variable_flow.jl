@@ -21,10 +21,10 @@
 """
     generate_variable_flow(m::Model)
 
-A `flow` variable for each tuple returned by `commodity__node__unit__direction()`,
+A `flow` variable for each tuple of `commodity__node__unit__direction__time_slice`,
 attached to model `m`.
-`flow` represents the flow of a 'commodity' between a 'node' and a 'unit'
-in a certain 'direction'.
+`flow` represents the (average) instantaneous flow of a 'commodity' between a 'node' and a 'unit' within a certain 'time_slice'
+in a certain 'direction'. The direction is relative to the unit.
 """
 function generate_variable_flow(m::Model, timeslicemap)
     @butcher Dict{Tuple, JuMP.VariableRef}(
@@ -34,14 +34,4 @@ function generate_variable_flow(m::Model, timeslicemap)
                 for t in timeslicemap(temporal_block=block)
     )
 end
-
-#=
-function generate_variable_flow(m::Model)
-    @butcher Dict{Tuple, JuMP.Variable}(
-        (c, n, u, d, t) => @variable(
-            m, basename="flow[$c, $n, $u, $d, $t]", lowerbound=0
-        ) for (c, n, u, d, block) in commodity__node__unit__direction__temporal_block()
-                for t in keys(time_slices_tempblock()[block])
-    )
-end
-=#
+# @Maren: Should we also generate a thing commodity__node__unit__direction__time_slice (what I called flow_tuples in the temporal representation slide)? I think we need it, not sure if this would be the best place to generate it!
