@@ -25,23 +25,39 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 `commodity_group` for each `unit` for which the parameter `fix_ratio_out_in_flow`
 is specified.
 """
-function constraint_fix_ratio_out_in_flow(m::Model, flow)
-    @butcher @constraint(
+
+#@Maren:
+# 1) this constraint does not make use of the @butcher. I believe that if it is beneficial to use that in the variable generation, the same applies for constraints. constraint_flow_capacity does currently use @butcher already
+# 2) Since all functions to generate the constraint are in the constraints folder, could we rename the files by removing 'constraint_'?
+function constraint_fix_ratio_out_in_flow(m::Model, flow, timeslicemap, t_in_t)
+    #@butcher
+    @constraint(
         m,
         [
             u in unit(),
             cg_out in commodity_group(),
             cg_in in commodity_group(),
-            t=1:number_of_timesteps(time=:timer);
-            fix_ratio_out_in_flow(unit__commodity_group__commodity_group=(u, cg_out, cg_in)) != nothing
+            tblock = temporal_block(),
+            t in timeslicemap(temporal_block=tblock);
+            fix_ratio_out_in_flow_t(unit__commodity_group__commodity_group__temporal_block=(u, cg_out, cg_in, tblock)) != nothing
         ],
-        + sum(flow[c_out, n, u, :out, t]
+        + reduce(+,
+            flow[c_out, n, u, :out, t2]
             for (c_out, n) in commodity__node__unit__direction(unit=u, direction=:out)
-                if c_out in commodity_group__commodity(commodity_group=cg_out))
+                for t2 in t_in_t(t_above=t)
+                    if c_out in commodity_group__commodity(commodity_group=cg_out) &&
+                        haskey(flow,(c_out,n,u,:out,t2));
+                        init=0
+            )
         ==
-        + fix_ratio_out_in_flow(unit__commodity_group__commodity_group=(u, cg_out, cg_in))
-            * sum(flow[c_in, n, u, :in, t]
+        + fix_ratio_out_in_flow_t(unit__commodity_group__commodity_group__temporal_block=(u, cg_out, cg_in, tblock))
+            * reduce(+,
+                flow[c_in, n, u, :in, t2]
                 for (c_in, n) in commodity__node__unit__direction(unit=u, direction=:in)
-                    if c_in in commodity_group__commodity(commodity_group=cg_in))
+                    for t2 in t_in_t(t_above=t)
+                        if c_in in commodity_group__commodity(commodity_group=cg_in) &&
+                            haskey(flow,(c_in,n,u,:in,t2));
+                            init=0
+                )
     )
 end

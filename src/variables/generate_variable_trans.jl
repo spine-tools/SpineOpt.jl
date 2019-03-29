@@ -22,14 +22,16 @@
     generate_variable_trans(m::Model)
 
 A `trans` variable (short for transfer)
-for each tuple returned by `connection__node()`, attached to model `m`.
-`trans` represents a transfer over a 'connection' from a 'node'.
-For each `connection` between to `nodes`, two `trans` variables exist.
+for each tuple of `commodity__node__unit__direction__time_slice`, attached to model `m`.
+`trans` represents the (average) instantaneous flow of a 'commodity' between a 'node' and a 'connection' within a certain 'time_slice'
+in a certain 'direction'. The direction is relative to the connection.
 """
-function generate_variable_trans(m::Model)
+# @ Maren: I removed this line from the documentation: For each `connection` between to `nodes`, two `trans` variables exist. This is now determined by the user itself by specifying the right commodity__node__unit__direction__temporal_block relationships, right?
+function generate_variable_trans(m::Model, timeslicemap)
     @butcher Dict{Tuple, JuMP.VariableRef}(
-        (c, i, t) => @variable(
-            m, base_name="trans[$c, $i, $t]"
-        ) for (c, i) in connection__node(), t=1:number_of_timesteps(time=:timer)
+        (c, n, conn, d, t) => @variable(
+            m, base_name="trans[$c, $n, $conn, $d, $t]", lower_bound=0
+        ) for (c, n, conn, d, block) in commodity__node__connection__direction__temporal_block()
+                for t in timeslicemap(temporal_block=block)
     )
 end
