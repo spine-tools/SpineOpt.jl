@@ -19,16 +19,8 @@
 
 
 """
-    time_slice(timeslicemap)
+    timeslice(timeslicemap)
 
-Returns an array of time slices
+Return an array of time slices
 """
-
-
-function timeslice(timeslicemap)
-    time_slice = []
-    for key in keys(timeslicemap)
-        push!(time_slice,key)
-    end
-return time_slice
-end
+timeslice(timeslicemap) = collect(keys(timeslicemap))

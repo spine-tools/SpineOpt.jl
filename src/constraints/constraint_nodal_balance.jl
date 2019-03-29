@@ -1,48 +1,71 @@
+#############################################################################
+# Copyright (C) 2017 - 2018  Spine Project
+#
+# This file is part of Spine Model.
+#
+# Spine Model is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Spine Model is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#############################################################################
+
+# TODO: Make @butcher work here
+
 """
-    constraint_nodal_balance(m::Model, flow, trans)
+    constraint_nodal_balance(m::Model, flow, trans, time_slice, t_in_t)
 
 Enforce balance of all commodity flows from and to a node.
 """
 function constraint_nodal_balance(m::Model, flow, trans, time_slice, t_in_t)
-	for (n,tblock) in node__temporal_block(), t in time_slice(temporal_block=tblock)
+	for (n, tblock) in node__temporal_block(), t in time_slice(temporal_block=tblock)
         @constraint(
             m,
 			0
             ==
             # Demand for the commodity
-			- ( demand_t(node__temporal_block=(n,tblock)) != nothing &&
-				demand_t(node__temporal_block=(n,tblock))
-				)
+			- (demand_t(node__temporal_block=(n, tblock)) != nothing && demand_t(node__temporal_block=(n, tblock)))
             # Output of units into this node, and their input from this node
-            + reduce(+,
+            + reduce(
+                +,
                 flow[c, n, u, :out, t2]
                 for (c, u) in commodity__node__unit__direction(node=n, direction=:out)
-					for t2 in t_in_t(t_long=t)
-					if haskey(flow,(c,n,u,:out,t2));
-                    init=0
-                )
-            - reduce(+,
+                    for t2 in t_in_t(t_long=t)
+                        if haskey(flow, (c, n, u, :out, t2));
+                init=0
+            )
+            - reduce(
+                +,
                 flow[c, n, u, :in, t2]
                 for (c, u) in commodity__node__unit__direction__temporal_block(node=n, direction=:in)
-					for t2 in t_in_t(t_long=t)
-					if haskey(flow,(c,n,u,:in,t2));
-                    init=0
-                )
+                    for t2 in t_in_t(t_long=t)
+                        if haskey(flow, (c, n, u, :in, t2));
+                init=0
+            )
             # Transfer of commodities between nodes
-            + reduce(+,
+            + reduce(
+                +,
                 trans[c, n, conn, :out, t]
                 for (c, conn) in commodity__node__connection__direction(node=n, direction=:out)
-					for t2 in t_in_t(t_long=t)
-					if haskey(trans,(c,n,conn,:out,t2));
-                    init=0
-                )
-            - reduce(+,
+                    for t2 in t_in_t(t_long=t)
+                        if haskey(trans, (c, n, conn, :out, t2));
+                init=0
+            )
+            - reduce(
+                +,
                 trans[c, n, conn, :in, t]
                 for (c, conn) in commodity__node__connection__direction(node=n, direction=:in)
-					for t2 in t_in_t(t_long=t)
-					if haskey(trans,(c,n,conn,:in,t2));
-                    init=0
-                )
+                    for t2 in t_in_t(t_long=t)
+                        if haskey(trans, (c, n, conn, :in, t2));
+                init=0
+            )
         )
     end
 end

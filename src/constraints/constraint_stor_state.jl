@@ -17,17 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+# TODO: Make @butcher work here
 
 """
-    constraint_stor_state(m::Model, stor_state)
+    constraint_stor_state(m::Model, stor_state, trans, flow, time_slice, t_before_t)
+
 Balance for storage level.
 """
-function constraint_stor_state(m::Model, stor_state,trans,flow, time_slice, t_before_t)
+function constraint_stor_state(m::Model, stor_state, trans, flow, time_slice, t_before_t)
     for (c, stor, block) in commodity__storage__temporal_block(), t in time_slice(temporal_block=block)
         all([
             t != time_slice(temporal_block=block)[1]
-            haskey(stor_state,(c,stor,t))
-            frac_state_loss(commodity__storage=(c,stor)) != nothing
+            haskey(stor_state, (c, stor, t))
+            frac_state_loss(commodity__storage=(c, stor)) != nothing
             eff_stor_charg(storage=stor) != nothing
             eff_stor_discharg(storage=stor) != nothing
         ]) || continue
@@ -35,49 +37,43 @@ function constraint_stor_state(m::Model, stor_state,trans,flow, time_slice, t_be
             m,
             + stor_state[c,stor,t]
             ==
-            + reduce(+,
-                stor_state[c,stor, t2]
-                    for t2 in t_before_t(t_after=t)
-                        if haskey(stor_state,(c,stor,t2));
-                            init=0
-                            )
-                *(1-frac_state_loss(commodity__storage=(c,stor)))
-            - reduce(+,
+            + reduce(
+                +,
+                stor_state[c,stor, t2] for t2 in t_before_t(t_after=t) if haskey(stor_state, (c, stor, t2));
+                init=0
+            ) * (1 - frac_state_loss(commodity__storage=(c, stor)))
+            - reduce(
+                +,
                 flow[c, n, u, :out, t2]
-                    for (n, u) in commodity__node__unit__direction(commodity=c, direction=:out)
-                        for t2 in t_before_t(t_after=t)
-                            if u in storage__unit(storage=stor) &&
-                                haskey(flow,(c,n,u,:out,t2));
-                                init=0
-                            )
-                    *eff_stor_discharg(storage=stor)
-            + reduce(+,
+                for (n, u) in commodity__node__unit__direction(commodity=c, direction=:out)
+                    for t2 in t_before_t(t_after=t)
+                        if u in storage__unit(storage=stor) && haskey(flow, (c, n, u, :out, t2));
+                init=0
+            ) * eff_stor_discharg(storage=stor)
+            + reduce(
+                +,
                 flow[c, n, u, :in, t2]
-                    for (n, u) in commodity__node__unit__direction(commodity=c, direction=:in)
-                        for t2 in t_before_t(t_after=t)
-                            if u in storage__unit(storage=stor) &&
-                                haskey(flow,(c,n,u,:in,t2));
-                                init=0
-                            )
-                    *eff_stor_charg(storage=stor)
-            - reduce(+,
+                for (n, u) in commodity__node__unit__direction(commodity=c, direction=:in)
+                    for t2 in t_before_t(t_after=t)
+                        if u in storage__unit(storage=stor) && haskey(flow, (c, n, u, :in, t2));
+                init=0
+            ) * eff_stor_charg(storage=stor)
+            - reduce(
+                +,
                 trans[c, n, conn, :out, t2]
-                    for (n, conn) in commodity__node__connection__direction(commodity=c, direction=:out)
-                        for t2 in t_before_t(t_after=t)
-                            if conn in storage__connection(storage=stor) &&
-                                haskey(trans,(c,n,conn,:out,t2));
-                                init=0
-                            )
-                    *eff_stor_discharg(storage=stor)
-            + reduce(+,
+                for (n, conn) in commodity__node__connection__direction(commodity=c, direction=:out)
+                    for t2 in t_before_t(t_after=t)
+                        if conn in storage__connection(storage=stor) && haskey(trans, (c, n, conn, :out, t2));
+                init=0
+            ) * eff_stor_discharg(storage=stor)
+            + reduce(
+                +,
                 trans[c, n, conn, :in, t2]
-                    for (n, conn) in commodity__node__connection__direction(commodity=c, direction=:in)
-                        for t2 in t_before_t(t_after=t)
-                            if conn in storage__connection(storage=stor) &&
-                                haskey(trans,(c,n,conn,:in,t2));
-                                init=0
-                            )
-                    *eff_stor_charg(storage=stor)
+                for (n, conn) in commodity__node__connection__direction(commodity=c, direction=:in)
+                    for t2 in t_before_t(t_after=t)
+                        if conn in storage__connection(storage=stor) && haskey(trans, (c, n, conn, :in, t2));
+                init=0
+            ) * eff_stor_charg(storage=stor)
         )
-end
+    end
 end

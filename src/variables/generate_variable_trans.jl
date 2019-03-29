@@ -19,7 +19,7 @@
 
 
 """
-    generate_variable_trans(m::Model)
+    generate_variable_trans(m::Model, time_slice)
 
 A `trans` variable (short for transfer)
 for each tuple of `commodity__node__unit__direction__time_slice`, attached to model `m`.
@@ -27,7 +27,7 @@ for each tuple of `commodity__node__unit__direction__time_slice`, attached to mo
 in a certain 'direction'. The direction is relative to the connection.
 """
 function generate_variable_trans(m::Model, time_slice)
-    @butcher Dict{Tuple, JuMP.VariableRef}(
+    @butcher Dict{Tuple,JuMP.VariableRef}(
         (c, n, conn, d, t) => @variable(
             m, base_name="trans[$c, $n, $conn, $d, $t]", lower_bound=0
         ) for (c, n, conn, d, block) in commodity__node__connection__direction__temporal_block()

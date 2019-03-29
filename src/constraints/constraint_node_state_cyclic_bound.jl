@@ -1,5 +1,5 @@
 """
-    constraint_node_state_cyclic_bound(m::Model, state)
+    constraint_node_state_cyclic_bound(m::Model, state, time_slice)
 
 Fix the first and last modelled values of node state variables as equal.
 """

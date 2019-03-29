@@ -20,6 +20,12 @@
 
 module SpineModel
 
+# Load packages
+using JuMP
+using Clp
+using Dates
+using SpineInterface
+
 # Export helpers
 export value
 export pack_trailing_dims
@@ -44,16 +50,7 @@ export constraint_stor_state
 export constraint_stor_state_init
 export constraint_stor_capacity
 
-# Load packages
-using JuMP
-using Clp
-using Dates
-using SpineInterface
-
-include("helpers/util.jl")
-include("helpers/butcher.jl")
-
-##creating time_slices struct
+# Creating time_slices struct
 export start_date
 export end_date
 export generate_time_slice
@@ -64,6 +61,10 @@ export duration
 export t_in_t
 export t_in_t_excl
 export t_before_t
+
+include("helpers/util.jl")
+include("helpers/butcher.jl")
+
 include("variables/generate_variable_flow.jl")
 include("variables/generate_variable_trans.jl")
 include("variables/generate_variable_stor_state.jl")
@@ -84,4 +85,5 @@ include("temporals/get_startdate.jl")
 include("temporals/get_enddate.jl")
 include("temporals/generate_time_slice.jl")
 include("temporals/generate_time_slice_relationships.jl")
+
 end
