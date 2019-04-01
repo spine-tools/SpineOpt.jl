@@ -34,8 +34,9 @@ function constraint_fix_ratio_out_in_trans(m::Model, trans, time_slice, t_in_t)
             node_out in node(),
             tblock = temporal_block(),
             t in time_slice(temporal_block=tblock);
-            fix_ratio_out_in_trans_t(
-                connection__node__node__temporal_block=(conn, node_in, node_out, tblock)) != nothing
+            #fix_ratio_out_in_trans_t(
+            #    connection__node__node__temporal_block=(conn, node_in, node_out, tblock)) != nothing
+            (conn, node_in, node_out, tblock) in connection__node__node__temporal_block()
         ],
         + reduce(
             +,

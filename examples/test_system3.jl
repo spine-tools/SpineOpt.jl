@@ -14,9 +14,9 @@ println("--------------------------------------------\n Creating convenience fun
 checkout_spinedb(db_url; upgrade=true)
 
 # Create temporal_structure
-(time_slice, time_slice_detail, duration) = generate_time_slice()
+time_slice, time_slice_detail, duration = generate_time_slice()
 #@Maren: duration() returns an array instead of a dict as what JuMP_all_out would return for a parameter convenience function
-(t_before_t, t_in_t, t_in_t_excl, t_overlaps_t, t_overlaps_t_excl)=generate_time_slice_relationships(time_slice_detail)
+t_before_t, t_in_t, t_in_t_excl, t_overlaps_t, t_overlaps_t_excl = generate_time_slice_relationships(time_slice_detail)
 println("Convenience functions created \n --------------------------------------------")
 ####
 # Init model

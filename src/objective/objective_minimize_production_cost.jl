@@ -27,11 +27,16 @@ Minimize the `production_cost` correspond to the sum over all
 function objective_minimize_production_cost(m::Model, flow, time_slice)
     @butcher begin
         production_cost = zero(AffExpr)
-        for t in time_slice()
-            for (c, n, u, d) in commodity__node__unit__direction()
-                if haskey(flow, (c, n, u, d, t)) && conversion_cost(unit__commodity=(u, c)) != nothing
-                    production_cost += flow[c, n, u, d, t] * conversion_cost(unit__commodity=(u, c))
-                end
+        #for t in time_slice()
+        #    for (c, n, u, d) in commodity__node__unit__direction()
+        #        if haskey(flow, (c, n, u, d, t)) && conversion_cost(unit__commodity=(u, c)) != nothing
+        #            production_cost += flow[c, n, u, d, t] * conversion_cost(unit__commodity=(u, c))
+        #        end
+        #    end
+        #end
+        for (c, n, u, d) in commodity__node__unit__direction(), t in time_slice()
+            if haskey(flow, (c, n, u, d, t)) && (u, c) in unit__commodity()
+                production_cost += flow[c, n, u, d, t] * conversion_cost(unit__commodity=(u, c))
             end
         end
         @objective(m, Min, production_cost)

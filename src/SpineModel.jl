@@ -51,8 +51,6 @@ export constraint_stor_state_init
 export constraint_stor_capacity
 
 # Creating time_slices struct
-export start_date
-export end_date
 export generate_time_slice
 export generate_time_slice_relationships
 export time_slicemap
@@ -83,8 +81,6 @@ include("constraints/constraint_stor_capacity.jl")
 include("constraints/constraint_stor_state.jl")
 include("constraints/constraint_stor_state_init.jl")
 
-include("temporals/get_startdate.jl")
-include("temporals/get_enddate.jl")
 include("temporals/generate_time_slice.jl")
 include("temporals/generate_time_slice_relationships.jl")
 

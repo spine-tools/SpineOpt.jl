@@ -41,8 +41,9 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow, time_slice, t_in_t)
             cg_in in commodity_group(),
             tblock = temporal_block(),
             t in time_slice(temporal_block=tblock);
-            fix_ratio_out_in_flow_t(
-                unit__commodity_group__commodity_group__temporal_block=(u, cg_out, cg_in, tblock)) != nothing
+            #fix_ratio_out_in_flow_t(
+            #    unit__commodity_group__commodity_group__temporal_block=(u, cg_out, cg_in, tblock)) != nothing
+            (u, cg_out, cg_in, tblock) in unit__commodity_group__commodity_group__temporal_block()
         ],
         + reduce(
             +,
