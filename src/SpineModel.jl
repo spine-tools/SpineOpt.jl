@@ -61,6 +61,8 @@ export duration
 export t_in_t
 export t_in_t_excl
 export t_before_t
+export t_overlaps_t
+export t_overlaps_t_excl
 
 include("helpers/util.jl")
 include("helpers/butcher.jl")
