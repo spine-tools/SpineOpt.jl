@@ -19,7 +19,7 @@
 
 
 """
-    constraint_fix_ratio_out_in_flow(m::Model, flow, time_slice, t_in_t)
+    constraint_fix_ratio_out_in_flow(m::Model, flow)
 
 Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of a
 `commodity_group` for each `unit` for which the parameter `fix_ratio_out_in_flow`
@@ -32,7 +32,7 @@ is specified.
 #   now seems to be working again
 # 2) Since all functions to generate the constraint are in the constraints folder, could we rename the files by removing 'constraint_'?
 #   @manuelma: good idea, perhaps we could do the same for objective and variable?
-function constraint_fix_ratio_out_in_flow(m::Model, flow, time_slice, t_in_t)
+function constraint_fix_ratio_out_in_flow(m::Model, flow)
     @butcher @constraint(
         m,
         [

@@ -20,11 +20,11 @@
 # TODO: Make @butcher work here
 
 """
-    constraint_stor_state(m::Model, stor_state, trans, flow, time_slice, t_before_t)
+    constraint_stor_state(m::Model, stor_state, trans, flow)
 
 Balance for storage level.
 """
-function constraint_stor_state(m::Model, stor_state, trans, flow, time_slice, t_before_t)
+function constraint_stor_state(m::Model, stor_state, trans, flow)
     for (c, stor, block) in commodity__storage__temporal_block(), t in time_slice(temporal_block=block)
         all([
             t != time_slice(temporal_block=block)[1]

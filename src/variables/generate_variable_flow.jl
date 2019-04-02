@@ -26,7 +26,7 @@ attached to model `m`.
 `flow` represents the (average) instantaneous flow of a 'commodity' between a 'node' and a 'unit' within a certain 'time_slice'
 in a certain 'direction'. The direction is relative to the unit.
 """
-function generate_variable_flow(m::Model, time_slice)
+function generate_variable_flow(m::Model)
     @butcher Dict{Tuple,JuMP.VariableRef}(
         (c, n, u, d, t) => @variable(
             m, base_name="flow[$c, $n, $u, $d, $t]", lower_bound=0

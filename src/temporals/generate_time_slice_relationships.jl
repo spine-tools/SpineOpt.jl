@@ -23,21 +23,25 @@
 
 A tuple returned for a specific timeslice t', returning all timeslices t'' directly before t'.
 """
-function generate_time_slice_relationships(time_slicemap_detail)
+function generate_time_slice_relationships()
     list_t_before_t = []
     list_t_in_t = []
     list_t_in_t_excl = []
     list_t_overlaps_t = []
     list_t_overlaps_t_excl = []
-    for (i_symbol, i_start, i_end) in time_slicemap_detail()
-        for (j_symbol, j_start, j_end) in time_slicemap_detail()
+    for (i_symbol, i_start, i_end) in time_slice_detail()
+        for (j_symbol, j_start, j_end) in time_slice_detail()
             if i_end == j_start
                 list_t_before_t = push!(list_t_before_t, Tuple([i_symbol, j_symbol]))
             end
             if j_start >= i_start && j_end <= i_end
                 list_t_in_t = push!(list_t_in_t, Tuple([i_symbol, j_symbol]))
+                list_t_overlaps_t = push!(list_t_overlaps_t, Tuple([i_symbol, j_symbol]))
+                list_t_overlaps_t = push!(list_t_overlaps_t, Tuple([j_symbol, i_symbol]))
                 if i_symbol != j_symbol
                     list_t_in_t_excl = push!(list_t_in_t_excl, Tuple([i_symbol, j_symbol]))
+                    list_t_overlaps_t_excl = push!(list_t_overlaps_t_excl, Tuple([i_symbol, j_symbol]))
+                    list_t_overlaps_t_excl = push!(list_t_overlaps_t_excl, Tuple([j_symbol, i_symbol]))
                 end
             end
             if j_start >= i_start && j_end >= i_end && j_start < i_end
@@ -52,59 +56,62 @@ function generate_time_slice_relationships(time_slicemap_detail)
     end
     unique!(list_t_overlaps_t)
 
-    function t_before_t(;t_before=nothing, t_after=nothing)
-        if t_before == t_before == nothing
-            list_t_before_t
-        elseif t_before != nothing && t_after == nothing
-            [t2 for (t1, t2) in list_t_before_t if t1 == t_before]
-        elseif t_before == nothing && t_after != nothing
-            [t1 for (t1, t2) in list_t_before_t if t2 == t_after]
-        else
-            error("please specify just one of t_before and t_after")
+    @suppress_err begin
+        @eval begin
+            function $(Symbol("t_before_t"))(;t_before=nothing, t_after=nothing)
+                if t_before == t_after == nothing
+                    $list_t_before_t
+                elseif t_before != nothing && t_after == nothing
+                    [t2 for (t1, t2) in $list_t_before_t if t1 == t_before]
+                elseif t_before == nothing && t_after != nothing
+                    [t1 for (t1, t2) in $list_t_before_t if t2 == t_after]
+                else
+                    error("please specify just one of t_before and t_after")
+                end
+            end
+            function $(Symbol("t_in_t"))(;t_long=nothing, t_short=nothing)
+                if t_long == t_short == nothing
+                    $list_t_in_t
+                elseif t_long != nothing && t_short == nothing
+                    [t2 for (t1, t2) in $list_t_in_t if t1 == t_long]
+                elseif t_long == nothing && t_short != nothing
+                    [t1 for (t1, t2) in $list_t_in_t if t2 == t_short]
+                else
+                    error("please specify just one of t_long and t_short")
+                end
+            end
+            function $(Symbol("t_in_t_excl"))(;t_long=nothing, t_short=nothing)
+                if t_long == t_short == nothing
+                    $list_t_in_t_excl
+                elseif t_long != nothing && t_short == nothing
+                    [t2 for (t1, t2) in $list_t_in_t_excl if t1 == t_long]
+                elseif t_long == nothing && t_short != nothing
+                    [t1 for (t1, t2) in $list_t_in_t_excl if t2 == t_short]
+                else
+                    error("please specify just one of t_long and t_short")
+                end
+            end
+            function $(Symbol("t_overlaps_t"))(;t_overlap=nothing)
+                if t_overlap == nothing
+                    $list_t_overlaps_t
+                else
+                    [t2 for (t1, t2) in $list_t_overlaps_t if t1 == t_overlap]
+                end
+            end
+            function $(Symbol("t_overlaps_t_excl"))(;t_overlap=nothing)
+                if t_overlap == nothing
+                    $list_t_overlaps_t
+                else
+                    [t2 for (t1, t2) in $list_t_overlaps_t_excl if t1 == t_overlap]
+                end
+            end
+            export $(Symbol("t_before_t"))
+            export $(Symbol("t_in_t"))
+            export $(Symbol("t_in_t_excl"))
+            export $(Symbol("t_overlaps_t"))
+            export $(Symbol("t_overlaps_t_excl"))
         end
     end
-
-    function t_in_t(;t_long=nothing, t_short=nothing)
-        if t_long == t_short == nothing
-            list_t_in_t
-        elseif t_long != nothing && t_short == nothing
-            [t2 for (t1, t2) in list_t_in_t if t1 == t_long]
-        elseif t_long == nothing && t_short != nothing
-            [t1 for (t1, t2) in list_t_in_t if t2 == t_short]
-        else
-            error("please specify just one of t_long and t_short")
-        end
-    end
-
-    function t_in_t_excl(;t_long=nothing, t_short=nothing)
-        if t_long == t_short == nothing
-            list_t_in_t_excl
-        elseif t_long != nothing && t_short == nothing
-            [t2 for (t1, t2) in list_t_in_t_excl if t1 == t_long]
-        elseif t_long == nothing && t_short != nothing
-            [t1 for (t1, t2) in list_t_in_t_excl if t2 == t_short]
-        else
-            error("please specify just one of t_long and t_short")
-        end
-    end
-
-    function t_overlaps_t(;t_overlap=nothing)
-        if t_overlap == nothing
-            list_t_overlaps_t
-        else
-            [t2 for (t1, t2) in list_t_overlaps_t if t1 == t_overlap]
-        end
-    end
-
-    function t_overlaps_t_excl(;t_overlap=nothing)
-        if t_overlap == nothing
-            list_t_overlaps_t
-        else
-            [t2 for (t1, t2) in list_t_overlaps_t_excl if t1 == t_overlap]
-        end
-    end
-
-    t_before_t, t_in_t, t_in_t_excl, t_overlaps_t, t_overlaps_t_excl
 end
 
 #@Maren: can we add the t_overlaps_t

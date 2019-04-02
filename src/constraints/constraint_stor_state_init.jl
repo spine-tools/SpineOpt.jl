@@ -19,11 +19,11 @@
 
 
 """
-    constraint_stor_state_init(m::Model, stor_state, time_slice)
+    constraint_stor_state_init(m::Model, stor_state)
 
 Balance for storage level.
 """
-function constraint_stor_state_init(m::Model, stor_state, time_slice)
+function constraint_stor_state_init(m::Model, stor_state)
     @butcher for (c, stor, block) in commodity__storage__temporal_block(), t in time_slice(temporal_block=block)
         all([
             t == time_slice(temporal_block=block)[1],

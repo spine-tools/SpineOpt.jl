@@ -19,12 +19,12 @@
 
 
 """
-    objective_minimize_production_cost(m::Model, flow, time_slice)
+    objective_minimize_production_cost(m::Model, flow)
 
 Minimize the `production_cost` correspond to the sum over all
 `conversion_cost` of each `unit`.
 """
-function objective_minimize_production_cost(m::Model, flow, time_slice)
+function objective_minimize_production_cost(m::Model, flow)
     @butcher begin
         production_cost = zero(AffExpr)
         #for t in time_slice()

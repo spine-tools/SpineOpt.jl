@@ -19,13 +19,13 @@
 
 
 """
-    constraint_max_cum_in_flow_bound(m::Model, flow, time_slice)
+    constraint_max_cum_in_flow_bound(m::Model, flow)
 
 Set upperbound `max_cum_in_flow_bound `to the cumulated inflow of
 `commodity_group cg` into a `unit_group ug`
 if `max_cum_in_flow_bound` exists for the combination of `cg` and `ug`.
 """
-function constraint_max_cum_in_flow_bound(m::Model, flow, time_slice)
+function constraint_max_cum_in_flow_bound(m::Model, flow)
     @butcher @constraint(
         m,
         [

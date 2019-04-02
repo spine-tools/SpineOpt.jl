@@ -20,11 +20,11 @@
 # TODO: Make @butcher work here
 
 """
-    constraint_nodal_balance(m::Model, flow, trans, time_slice, t_in_t)
+    constraint_nodal_balance(m::Model, flow, trans)
 
 Enforce balance of all commodity flows from and to a node.
 """
-function constraint_nodal_balance(m::Model, flow, trans, time_slice, t_in_t)
+function constraint_nodal_balance(m::Model, flow, trans)
 	for (n, tblock) in node__temporal_block(), t in time_slice(temporal_block=tblock)
         @constraint(
             m,

@@ -19,7 +19,7 @@
 
 
 """
-    constraint_flow_capacity(m::Model, flow, time_slice)
+    constraint_flow_capacity(m::Model, flow)
 
 Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
 number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
@@ -27,14 +27,14 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 
 # Suggested new version (see comments in version above)
 # @Maren: should the parameter unit_capacity have a direction index?
-function constraint_flow_capacity(m::Model, flow, time_slice)
+function constraint_flow_capacity(m::Model, flow)
     @butcher for (c, n, u, d) in commodity__node__unit__direction(), t in time_slice()
         all([
             haskey(flow, (c, n, u, d, t)),
             #unit_capacity(unit__commodity=(u, c)) != nothing,
             #number_of_units(unit=u) != nothing,
             #unit_conv_cap_to_flow(unit__commodity=(u,c)) != nothing,
-            #avail_factor(unit=u) != nothing            
+            #avail_factor(unit=u) != nothing
             (u, c) in unit__commodity()
         ]) || continue
         @constraint(

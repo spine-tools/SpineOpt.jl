@@ -25,6 +25,8 @@ using JuMP
 using Clp
 using Dates
 using SpineInterface
+using Suppressor
+using Revise
 
 # Export helpers
 export value
