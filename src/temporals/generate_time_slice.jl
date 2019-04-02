@@ -23,7 +23,6 @@
 
 """
 function generate_time_slice()
-    # TODO: make @butcher work here
     list_time_slice = []
     list_duration = []
     list_time_slice_detail = []
