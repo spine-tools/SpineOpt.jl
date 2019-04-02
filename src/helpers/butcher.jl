@@ -19,31 +19,35 @@
 """
     @butcher expression
 
-Butcher an expression so that method calls involving one or more arguments
-are performed as soon as those arguments are available. Needs testing.
+Butcher an expression so that method calls involving iteration variables
+are performed as soon as those variables are specified. Needs testing.
 
 For instance, an expression like this:
 
 ```
-x = 5
-for i=1:1e6
-    y = f(x)
+for i=1:10
+    for j=1:1e12
+        y = f(i)
+        ...
+    end
 end
 ```
 
 is turned into something like this:
 
 ```
-x = 5
-ret = f(x)
-for i=1:1e6
-    y = ret
+for i=1:10
+    ret = f(i)
+    for j=1:1e12
+        y = ret
+        ...
+    end
 end
 ```
 
 This is mainly intended to improve performance in cases where the implementation
 of a method is expensive, but for readability reasons the programmer wants to call it
-at unconvenient places -such as the body of a long for loop.
+at unconvenient places -such as the body of a long inner for loop.
 """
 # TODO: sometimes methods are called with arguments which are themselves method calls,
 # e.g., f(g(x)). This can be butchered by doing multiple passages, but I wonder if
@@ -81,38 +85,25 @@ macro butcher(expression)
         isempty(call_arg_arr) && continue
         # Only keep going if all arguments are now Symbols
         all([x isa Symbol for x in call_arg_arr]) || continue
+        # Only keep going if we know where all args are assigned
+        all([haskey(assignment_location, arg) for arg in call_arg_arr]) || continue
         # Find top-most node where all arguments are assigned
         topmost_node_id = maximum(
-            if haskey(assignment_location, arg)
-                minimum(location["node_id"] for location in assignment_location[arg])
-            else
-                0
-            end
-            for arg in call_arg_arr
+            minimum(location["node_id"] for location in assignment_location[arg]) for arg in call_arg_arr
         )
-        # Build dictionary of places where arguments are reassigned
-        # below the top-most node
-        arg_assignment_location = Dict()
-        for arg in call_arg_arr
-            for location in get(assignment_location, arg, [])
-                location["node_id"] < topmost_node_id && continue
-                push!(arg_assignment_location, location["node_id"] => (location["parent"], location["row"]))
-            end
-        end
+        # Build dictionary of places where arguments are reassigned below the top-most node
+        arg_assignment_location = Dict(
+            loc["node_id"] => (loc["parent"], loc["row"])
+            for arg in call_arg_arr for loc in assignment_location[arg] if loc["node_id"] >= topmost_node_id
+        )
         # Find better place for the call
         for call_location in call_location_arr
+            assignment_location_arr = [x for x in keys(arg_assignment_location) if x < call_location["node_id"]]
+            # Only keep going if all args are defined at least once before the call
+            isempty(assignment_location_arr) && continue
             # Make sure we use the most recent value of all the arguments (take maximum)
-            target_node_id = try
-                maximum(x for x in keys(arg_assignment_location) if x < call_location["node_id"])
-            catch ArgumentsError
-                # One or more arguments are not assigned before the call is made, not our fault, will blow up
-                continue
-            end
+            target_node_id = maximum(assignment_location_arr)
             target_parent, target_row = arg_assignment_location[target_node_id]
-            # Only relocate if we have a recipe for it (see for loop right below this one)
-            !in(target_parent.head, (:for, :while, :block)) && continue
-            # Don't relocate recursive assignment, e.g., x = f(x)
-            target_parent.args[target_row].args[end] == call && continue
             # Create or retrieve replacement variable
             x = get!(replacement_variable, target_node_id, gensym())
             # Add new call_location for the replacement variable
@@ -121,13 +112,7 @@ macro butcher(expression)
         # Put the call at a better location, assign result to replacement variable
         for (target_node_id, x) in replacement_variable
             target_parent, target_row = arg_assignment_location[target_node_id]
-            if target_parent.head in (:for, :while)  # Assignment is in the loop condition, e.g., for i=1:100
-                # Put call at the begining of the loop body
-                target_parent.args[target_row + 1] = Expr(:block, :($x = $call), target_parent.args[target_row + 1])
-            elseif target_parent.head == :block
-                # Put call right after the assignment
-                target_parent.args[target_row] = Expr(:block, target_parent.args[target_row], :($x = $call))
-            end
+            target_parent.args[target_row + 1] = Expr(:block, :($x = $call), target_parent.args[target_row + 1])
         end
     end
     # Replace calls in original locations with the replacement variable
@@ -153,8 +138,6 @@ function beat(
         call_location::Dict{Expr,Array{Dict{String,Any},1}},
         assignment_location = Dict{Symbol,Array{Dict{String,Any},1}})
     !isa(node, Expr) && return
-    if node.head == :call
-    end
     # 'Splat' for loop
     if node.head == :for && node.args[1].head == :block
         iteration_specs = node.args[1].args
@@ -178,12 +161,12 @@ function beat(
     # Register location (node_id, parent and row) of iteration spec
     elseif node.head == :(=) && parent.head == :for
         var = node.args[1]
-        variable_arr = if isa(node.args[1], Symbol)
+        variable_arr = if isa(var, Symbol)
             # Single assignment, e.g., a = 1
-            [node.args[1]]
-        elseif isa(node.args[1], Expr) && node.args[1].head == :tuple
+            [var]
+        elseif isa(var, Expr) && var.head == :tuple
             # Multiple tuple assignment
-            node.args[1].args
+            var.args
         else
             # Not handled
             []
