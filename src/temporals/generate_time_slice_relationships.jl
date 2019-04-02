@@ -57,8 +57,29 @@ function generate_time_slice_relationships()
     unique!(list_t_overlaps_t)
 
     @suppress_err begin
+        functionname_t_before_t = "t_before_t"
+        functionname_t_in_t = "t_in_t"
+        functionname_t_in_t_excl = "t_in_t_excl"
+        functionname_t_overlaps_t = "t_overlaps_t"
+        functionname_t_overlaps_t_excl = "t_overlaps_t_excl"
+
         @eval begin
-            function $(Symbol("t_before_t"))(;t_before=nothing, t_after=nothing)
+            """
+                    $($functionname_t_before_t)(;t_before=nothing, t_after=nothing)
+
+            The tuples of the list '$($functionname_t_before_t)'. Return all time_slices which coincide in there start-
+            and enddate, respectively.
+            The argument `t_before` or `t_after` can be used, e.g., to return the corresponding timeslices which
+            are directly after or before, respective to the entered timeslice
+
+            # Examples
+            ```julia
+            julia> t_before_t(t_before = Symbol("2018-02-23T09:00:00__2018-02-23T09:30:00"))
+            1-element Array{Symbol,1}:
+             Symbol("2018-02-23T09:30:00__2018-02-23T10:00:00")
+             ```
+            """
+            function $(Symbol(functionname_t_before_t))(;t_before=nothing, t_after=nothing)
                 if t_before == t_after == nothing
                     $list_t_before_t
                 elseif t_before != nothing && t_after == nothing
@@ -69,7 +90,24 @@ function generate_time_slice_relationships()
                     error("please specify just one of t_before and t_after")
                 end
             end
-            function $(Symbol("t_in_t"))(;t_long=nothing, t_short=nothing)
+            """
+                    $($functionname_t_in_t)(;t_long=nothing, t_short=nothing)
+
+            The tuples of the list '$($functionname_t_in_t)'. Return all time_slices which are either fully
+            above or fully within another timeslice.
+            The argument `t_long` or `t_short` can be used, e.g., to return the corresponding timeslices which
+            are directly below or above, respective to the entered timeslice
+
+            # Examples
+            ```julia
+            julia> t_in_t(t_short=Symbol("2018-02-22T11:00:00__2018-02-22T11:30:00"))
+            3-element Array{Symbol,1}:
+             Symbol("2018-02-22T11:00:00__2018-02-22T11:30:00")
+             Symbol("2018-02-22T10:30:00__2018-02-22T13:30:00")
+             Symbol("2018-02-22T10:30:00__2018-02-23T10:30:00")
+             ```
+            """
+            function $(Symbol(functionname_t_in_t))(;t_long=nothing, t_short=nothing)
                 if t_long == t_short == nothing
                     $list_t_in_t
                 elseif t_long != nothing && t_short == nothing
@@ -80,7 +118,21 @@ function generate_time_slice_relationships()
                     error("please specify just one of t_long and t_short")
                 end
             end
-            function $(Symbol("t_in_t_excl"))(;t_long=nothing, t_short=nothing)
+            """
+                    $($functionname_t_in_t_excl)(;t_long=nothing, t_short=nothing)
+
+            The tuples of the list '$($functionname_t_in_t_excl)'. See '$($functionname_t_in_t)'.
+            Difference: Excludes the timeslice itself
+
+            # Examples
+            ```julia
+            julia> t_in_t_excl(t_short=Symbol("2018-02-22T11:00:00__2018-02-22T11:30:00"))
+            2-element Array{Symbol,1}:
+             Symbol("2018-02-22T10:30:00__2018-02-22T13:30:00")
+             Symbol("2018-02-22T10:30:00__2018-02-23T10:30:00")
+             ```
+            """
+            function $(Symbol(functionname_t_in_t_excl))(;t_long=nothing, t_short=nothing)
                 if t_long == t_short == nothing
                     $list_t_in_t_excl
                 elseif t_long != nothing && t_short == nothing
@@ -91,25 +143,56 @@ function generate_time_slice_relationships()
                     error("please specify just one of t_long and t_short")
                 end
             end
-            function $(Symbol("t_overlaps_t"))(;t_overlap=nothing)
+            """
+                    $($functionname_t_overlaps_t)(;t_overlap=nothing)
+
+            Tuples of the list '$($functionname_t_overlaps_t). Return all timeslice tuples, which
+            have some time in common.
+            The argument `t_overlap` can be used, e.g., to return the corresponding timeslices which
+            are overlapping the entered timeslice.
+
+            # Examples
+            ```julia
+            julia> t_overlaps_t(t_overlap=Symbol("2018-02-22T10:30:00__2018-02-22T11:00:00"))
+            3-element Array{Symbol,1}:
+             Symbol("2018-02-22T10:30:00__2018-02-22T11:00:00")
+             Symbol("2018-02-22T10:30:00__2018-02-22T13:30:00")
+             Symbol("2018-02-22T10:30:00__2018-02-23T10:30:00")
+             ```
+            """
+            function $(Symbol(functionname_t_overlaps_t))(;t_overlap=nothing)
                 if t_overlap == nothing
                     $list_t_overlaps_t
                 else
                     [t2 for (t1, t2) in $list_t_overlaps_t if t1 == t_overlap]
                 end
             end
-            function $(Symbol("t_overlaps_t_excl"))(;t_overlap=nothing)
+            """
+                    $($functionname_t_overlaps_t_excl)'(;class=entity, t::Union{Int64,String,Nothing}=nothing)
+
+            The tuples of the list '$($functionname_t_overlaps_t_excl)'. See '$($functionname_t_overlaps_t)'.
+            Difference: Excludes the timeslice itself
+
+            # Examples
+            ```julia
+            julia> t_overlaps_t_excl(t_overlap=Symbol("2018-02-22T10:30:00__2018-02-22T11:00:00"))
+            2-element Array{Symbol,1}:
+             Symbol("2018-02-22T10:30:00__2018-02-22T13:30:00")
+             Symbol("2018-02-22T10:30:00__2018-02-23T10:30:00")
+             ```
+            """
+            function $(Symbol(functionname_t_overlaps_t_excl))(;t_overlap=nothing)
                 if t_overlap == nothing
                     $list_t_overlaps_t
                 else
                     [t2 for (t1, t2) in $list_t_overlaps_t_excl if t1 == t_overlap]
                 end
             end
-            export $(Symbol("t_before_t"))
-            export $(Symbol("t_in_t"))
-            export $(Symbol("t_in_t_excl"))
-            export $(Symbol("t_overlaps_t"))
-            export $(Symbol("t_overlaps_t_excl"))
+            export $(Symbol(functionname_t_before_t))
+            export $(Symbol(functionname_t_in_t))
+            export $(Symbol(functionname_t_in_t_excl))
+            export $(Symbol(functionname_t_overlaps_t))
+            export $(Symbol(functionname_t_overlaps_t_excl))
         end
     end
 end
