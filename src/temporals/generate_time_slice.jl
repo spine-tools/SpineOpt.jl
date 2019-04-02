@@ -44,10 +44,10 @@ function generate_time_slice()
                 break
             end
             time_slice_symbol = Symbol(current, "__", next)
-            list_time_slice = push!(list_time_slice, time_slice_symbol)
-            list_timesliceblock[k] = push!(list_timesliceblock[k], time_slice_symbol)
-            list_duration = push!(list_duration, Tuple([time_slice_symbol, duration]))
-            list_time_slice_detail = push!(list_time_slice_detail, Tuple([time_slice_symbol, current, next]))
+            push!(list_time_slice, time_slice_symbol)
+            push!(list_timesliceblock[k], time_slice_symbol)
+            push!(list_duration, Tuple([time_slice_symbol, duration]))
+            push!(list_time_slice_detail, Tuple([time_slice_symbol, current, next]))
             # Prepare for next iter
             current = next
             i += 1
@@ -67,7 +67,7 @@ function generate_time_slice()
 
         @eval begin
             """
-                    $($functionname_time_slice)(;t_before=nothing, t_after=nothing)
+                $($functionname_time_slice)(;t_before=nothing, t_after=nothing)
 
             The tuples of the list '$($functionname_time_slice)'. Returns all timeslices.
             Argument 'temporal_block' can be used to return the list of all timeslices for that temporal_block
@@ -92,7 +92,7 @@ function generate_time_slice()
                 end
             end
             """
-                    $($functionname_time_slice_detail)(;t_before=nothing, t_after=nothing)
+                $($functionname_time_slice_detail)(;t_before=nothing, t_after=nothing)
 
             The tuples of the list '$($functionname_time_slice_detail)'. Returns all timeslices and their start & enddates.
             Argument 'time_slice' can be used to return start & enddate for specific timeslice.
@@ -112,13 +112,13 @@ function generate_time_slice()
                 end
             end
             """
-                    $($functionname_duration)(;t_before=nothing, t_after=nothing)
+                $($functionname_duration)(;t_before=nothing, t_after=nothing)
 
             The tuples of the list '$($functionname_duration)'. Returns all timeslices and their durations in Minutes.
             Argument 'time_slice' can be used to return the duration for specific timeslice.
 
             # Examples
-            ```julia  
+            ```julia
             julia> duration(time_slice=Symbol("2018-02-22T10:30:00__2018-02-23T10:30:00"))
             1-element Array{Minute,1}:
              1440 minutes

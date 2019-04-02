@@ -32,24 +32,24 @@ function generate_time_slice_relationships()
     for (i_symbol, i_start, i_end) in time_slice_detail()
         for (j_symbol, j_start, j_end) in time_slice_detail()
             if i_end == j_start
-                list_t_before_t = push!(list_t_before_t, Tuple([i_symbol, j_symbol]))
+                push!(list_t_before_t, Tuple([i_symbol, j_symbol]))
             end
             if j_start >= i_start && j_end <= i_end
-                list_t_in_t = push!(list_t_in_t, Tuple([i_symbol, j_symbol]))
-                list_t_overlaps_t = push!(list_t_overlaps_t, Tuple([i_symbol, j_symbol]))
-                list_t_overlaps_t = push!(list_t_overlaps_t, Tuple([j_symbol, i_symbol]))
+                push!(list_t_in_t, Tuple([i_symbol, j_symbol]))
+                push!(list_t_overlaps_t, Tuple([i_symbol, j_symbol]))
+                push!(list_t_overlaps_t, Tuple([j_symbol, i_symbol]))
                 if i_symbol != j_symbol
-                    list_t_in_t_excl = push!(list_t_in_t_excl, Tuple([i_symbol, j_symbol]))
-                    list_t_overlaps_t_excl = push!(list_t_overlaps_t_excl, Tuple([i_symbol, j_symbol]))
-                    list_t_overlaps_t_excl = push!(list_t_overlaps_t_excl, Tuple([j_symbol, i_symbol]))
+                    push!(list_t_in_t_excl, Tuple([i_symbol, j_symbol]))
+                    push!(list_t_overlaps_t_excl, Tuple([i_symbol, j_symbol]))
+                    push!(list_t_overlaps_t_excl, Tuple([j_symbol, i_symbol]))
                 end
             end
             if j_start >= i_start && j_end >= i_end && j_start < i_end
-                list_t_overlaps_t = push!(list_t_overlaps_t, Tuple([i_symbol, j_symbol]))
-                list_t_overlaps_t = push!(list_t_overlaps_t, Tuple([j_symbol, i_symbol]))
+                push!(list_t_overlaps_t, Tuple([i_symbol, j_symbol]))
+                push!(list_t_overlaps_t, Tuple([j_symbol, i_symbol]))
                 if i_symbol != j_symbol
-                    list_t_overlaps_t_excl = push!(list_t_overlaps_t_excl, Tuple([i_symbol, j_symbol]))
-                    list_t_overlaps_t_excl = push!(list_t_overlaps_t_excl, Tuple([j_symbol, i_symbol]))
+                    push!(list_t_overlaps_t_excl, Tuple([i_symbol, j_symbol]))
+                    push!(list_t_overlaps_t_excl, Tuple([j_symbol, i_symbol]))
                 end
             end
         end
@@ -65,7 +65,7 @@ function generate_time_slice_relationships()
 
         @eval begin
             """
-                    $($functionname_t_before_t)(;t_before=nothing, t_after=nothing)
+                $($functionname_t_before_t)(;t_before=nothing, t_after=nothing)
 
             The tuples of the list '$($functionname_t_before_t)'. Return all time_slices which coincide in there start-
             and enddate, respectively.
@@ -91,7 +91,7 @@ function generate_time_slice_relationships()
                 end
             end
             """
-                    $($functionname_t_in_t)(;t_long=nothing, t_short=nothing)
+                $($functionname_t_in_t)(;t_long=nothing, t_short=nothing)
 
             The tuples of the list '$($functionname_t_in_t)'. Return all time_slices which are either fully
             above or fully within another timeslice.
@@ -119,7 +119,7 @@ function generate_time_slice_relationships()
                 end
             end
             """
-                    $($functionname_t_in_t_excl)(;t_long=nothing, t_short=nothing)
+                $($functionname_t_in_t_excl)(;t_long=nothing, t_short=nothing)
 
             The tuples of the list '$($functionname_t_in_t_excl)'. See '$($functionname_t_in_t)'.
             Difference: Excludes the timeslice itself
@@ -144,7 +144,7 @@ function generate_time_slice_relationships()
                 end
             end
             """
-                    $($functionname_t_overlaps_t)(;t_overlap=nothing)
+                $($functionname_t_overlaps_t)(;t_overlap=nothing)
 
             Tuples of the list '$($functionname_t_overlaps_t). Return all timeslice tuples, which
             have some time in common.
@@ -168,7 +168,7 @@ function generate_time_slice_relationships()
                 end
             end
             """
-                    $($functionname_t_overlaps_t_excl)'(;class=entity, t::Union{Int64,String,Nothing}=nothing)
+                $($functionname_t_overlaps_t_excl)'(;class=entity, t::Union{Int64,String,Nothing}=nothing)
 
             The tuples of the list '$($functionname_t_overlaps_t_excl)'. See '$($functionname_t_overlaps_t)'.
             Difference: Excludes the timeslice itself
