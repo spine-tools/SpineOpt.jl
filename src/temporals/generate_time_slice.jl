@@ -42,7 +42,7 @@ function generate_time_slice()
                 )
                 break
             end
-            time_slice_symbol = Symbol(current, "__", next)
+            time_slice_symbol = Tuple([current, next])
             push!(list_time_slice, time_slice_symbol)
             push!(list_timesliceblock[k], time_slice_symbol)
             push!(list_duration, Tuple([time_slice_symbol, duration]))
