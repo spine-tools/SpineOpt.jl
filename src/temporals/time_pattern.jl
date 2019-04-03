@@ -55,25 +55,22 @@ function Base.show(io::IO, time_pattern::TimePattern)
 end
 
 
-matches(time_pattern::TimePattern, str::String) = matches(time_pattern, parse_date_time_str(str))
-
-
 """
-    matches(time_pattern::TimePattern, t::DateTime)
+    matches(tp::TimePattern, ts::TimeSlice)
 
-Return `true` iff the given time pattern matches the given `t`.
-This means that for every range specified in the time pattern, `t` is well in that range.
+Return `true` iff the given time pattern matches the given time slice.
+This means that for every range specified in the time pattern, `ts` is well within that range.
 Note that if a range is not specified for a given level, then it doesn't matter where
 (or should I say, *when*?) is `t` on that level.
 """
-function matches(time_pattern::TimePattern, t::DateTime)
+function matches(tp::TimePattern, ts::TimeSlice)
     conds = Array{Bool,1}()
-    time_pattern.y != nothing && push!(conds, any(year(t) in rng for rng in time_pattern.y))
-    time_pattern.m != nothing && push!(conds, any(month(t) in rng for rng in time_pattern.m))
-    time_pattern.d != nothing && push!(conds, any(day(t) in rng for rng in time_pattern.d))
-    time_pattern.wd != nothing && push!(conds, any(dayofweek(t) in rng for rng in time_pattern.wd))
-    time_pattern.H != nothing && push!(conds, any(hour(t) in rng for rng in time_pattern.H))
-    time_pattern.M != nothing && push!(conds, any(minute(t) in rng for rng in time_pattern.M))
-    time_pattern.S != nothing && push!(conds, any(second(t) in rng for rng in time_pattern.S))
+    tp.y != nothing && push!(conds, any(year(ts.start) in rng && year(ts.end_) in rng for rng in tp.y))
+    tp.m != nothing && push!(conds, any(month(ts.start) in rng && month(ts.end_) in rng for rng in tp.m))
+    tp.d != nothing && push!(conds, any(day(ts.start) in rng && day(ts.end_) in rng for rng in tp.d))
+    tp.wd != nothing && push!(conds, any(dayofweek(ts.start) in rng && dayofweek(ts.end_) in rng for rng in tp.wd))
+    tp.H != nothing && push!(conds, any(hour(ts.start) in rng && hour(ts.end_) in rng for rng in tp.H))
+    tp.M != nothing && push!(conds, any(minute(ts.start) in rng && minute(ts.end_) in rng for rng in tp.M))
+    tp.S != nothing && push!(conds, any(second(ts.start) in rng && second(ts.end_) in rng for rng in tp.S))
     all(conds)
 end

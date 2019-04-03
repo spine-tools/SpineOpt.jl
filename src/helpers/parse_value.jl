@@ -62,7 +62,7 @@ end
 """
     parse_value(db_value::String, tag_list)
 
-An equivalent value, parsed according to given tags.
+Parse a string according to given tags.
 """
 function parse_value(db_value::String, tag_list)
     format = dateformat"y-m-dTH:M:S"  # Let's use this, ISO 8601 I guess...
@@ -79,7 +79,7 @@ end
 """
     parse_value(db_value::Dict, tag_list)
 
-An equivalent value, parsed according to given tags.
+Parse a `Dict` according to given tags.
 """
 function parse_value(db_value::Dict, tag_list)
     # TODO: finalize JSON specification and update this
@@ -108,6 +108,6 @@ end
 """
     parse_value(db_value, tag_list)
 
-An equivalent value, parsed according to given tags.
+Parse any value according to given tags.
 """
 parse_value(db_value, tag_list) = SpineInterface.parse_value(db_value, tag_list)

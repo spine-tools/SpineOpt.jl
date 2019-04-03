@@ -46,6 +46,12 @@ An equivalent dictionary where values are gathered using `JuMP.value`.
 value(dictionary::Dict) = Dict(k => JuMP.value(v) for (k, v) in dictionary)
 
 
+"""
+    checkout_spinemodeldb(db_url)
+
+Generate and export convenience functions for accessing the database at the given url.
+Use custom `parse_value` and `get_value`.
+"""
 function checkout_spinemodeldb(db_url; upgrade=false)
     checkout_spinedb(db_url; parse_value=parse_value, get_value=get_value, upgrade=upgrade)
 end

@@ -29,27 +29,23 @@ function generate_time_slice_relationships()
     list_t_in_t_excl = []
     list_t_overlaps_t = []
     list_t_overlaps_t_excl = []
-    for (i_symbol, i_start, i_end) in time_slice_detail()
-        for (j_symbol, j_start, j_end) in time_slice_detail()
-            if i_end == j_start
-                push!(list_t_before_t, Tuple([i_symbol, j_symbol]))
+    for i in time_slice()
+        for j in time_slice()
+            if before(i, j)
+                push!(list_t_before_t, Tuple([i, j]))
             end
-            if j_start >= i_start && j_end <= i_end
-                push!(list_t_in_t, Tuple([i_symbol, j_symbol]))
-                push!(list_t_overlaps_t, Tuple([i_symbol, j_symbol]))
-                push!(list_t_overlaps_t, Tuple([j_symbol, i_symbol]))
-                if i_symbol != j_symbol
-                    push!(list_t_in_t_excl, Tuple([i_symbol, j_symbol]))
-                    push!(list_t_overlaps_t_excl, Tuple([i_symbol, j_symbol]))
-                    push!(list_t_overlaps_t_excl, Tuple([j_symbol, i_symbol]))
+            if in(j, i)
+                push!(list_t_in_t, Tuple([i, j]))
+                if i != j
+                    push!(list_t_in_t_excl, Tuple([i, j]))
                 end
             end
-            if j_start >= i_start && j_end >= i_end && j_start < i_end
-                push!(list_t_overlaps_t, Tuple([i_symbol, j_symbol]))
-                push!(list_t_overlaps_t, Tuple([j_symbol, i_symbol]))
-                if i_symbol != j_symbol
-                    push!(list_t_overlaps_t_excl, Tuple([i_symbol, j_symbol]))
-                    push!(list_t_overlaps_t_excl, Tuple([j_symbol, i_symbol]))
+            if overlaps(i, j)
+                push!(list_t_overlaps_t, Tuple([i, j]))
+                push!(list_t_overlaps_t, Tuple([j, i]))
+                if i != j
+                    push!(list_t_overlaps_t_excl, Tuple([i, j]))
+                    push!(list_t_overlaps_t_excl, Tuple([j, i]))
                 end
             end
         end

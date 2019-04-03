@@ -25,7 +25,6 @@
 function generate_time_slice()
     list_time_slice = []
     list_duration = []
-    list_time_slice_detail = []
     list_timesliceblock = Dict()
     for k in temporal_block()
         list_timesliceblock[k] = []
@@ -42,11 +41,10 @@ function generate_time_slice()
                 )
                 break
             end
-            time_slice_symbol = Tuple([current, next])
-            push!(list_time_slice, time_slice_symbol)
-            push!(list_timesliceblock[k], time_slice_symbol)
-            push!(list_duration, Tuple([time_slice_symbol, duration]))
-            push!(list_time_slice_detail, Tuple([time_slice_symbol, current, next]))
+            time_slice = TimeSlice(current, next)
+            push!(list_time_slice, time_slice)
+            push!(list_timesliceblock[k], time_slice)
+            push!(list_duration, Tuple([time_slice, duration]))
             # Prepare for next iter
             current = next
             i += 1
@@ -54,14 +52,12 @@ function generate_time_slice()
     end
     # Remove possible duplicates of time slices defined in different temporal blocks
     unique!(list_time_slice)
-    unique!(list_time_slice_detail)
     unique!(list_duration)
 
     # @Maren: The part about the argument that is passed. So can pass a temporal_block instead of a time_slice here? Something like ts = time_slice()[1] followed by time_slice(ts) does not work?
     # @Maren: So how does this work exactly? list_time_slice is not stored somewhere?
     @suppress_err begin
         functionname_time_slice = "time_slice"
-        functionname_time_slice_detail = "time_slice_detail"
         functionname_duration = "duration"
 
         @eval begin
@@ -90,26 +86,7 @@ function generate_time_slice()
                     error("temporal block '$temporal_block' not defined")
                 end
             end
-            """
-                $($functionname_time_slice_detail)(;t_before=nothing, t_after=nothing)
 
-            The tuples of the list '$($functionname_time_slice_detail)'. Returns all timeslices and their start & enddates.
-            Argument 'time_slice' can be used to return start & enddate for specific timeslice.
-
-            # Examples
-            ```julia
-            julia> time_slice_detail(time_slice=Symbol("2018-02-22T10:30:00__2018-02-23T10:30:00"))
-            1-element Array{Tuple{DateTime,DateTime},1}:
-             (2018-02-22T10:30:00, 2018-02-23T10:30:00)
-             ```
-            """
-            function $(Symbol(functionname_time_slice_detail))(;time_slice=nothing)
-                if  time_slice==nothing
-                    $list_time_slice_detail
-                else
-                    [(t2,t3) for (t1,t2,t3) in $list_time_slice_detail if t1 == time_slice]
-                end
-            end
             """
                 $($functionname_duration)(;t_before=nothing, t_after=nothing)
 
@@ -124,13 +101,12 @@ function generate_time_slice()
              ```
             """
             function $(Symbol(functionname_duration))(;time_slice=nothing)
-                if  time_slice==nothing
+                if  time_slice == nothing
                     $list_duration
                 else
                     [t2 for (t1, t2) in $list_duration if t1 == time_slice]
                 end
             end
-            export $(Symbol(functionname_time_slice_detail))
             export $(Symbol(functionname_duration))
             export $(Symbol(functionname_time_slice))
         end

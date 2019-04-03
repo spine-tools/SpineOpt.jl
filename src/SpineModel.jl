@@ -53,9 +53,14 @@ export constraint_stor_state
 export constraint_stor_state_init
 export constraint_stor_capacity
 
-# Creating time_slices struct
+# Creating time_slices
 export generate_time_slice
 export generate_time_slice_relationships
+
+include("temporals/time_slice.jl")
+include("temporals/generate_time_slice.jl")
+include("temporals/generate_time_slice_relationships.jl")
+include("temporals/time_pattern.jl")
 
 include("helpers/util.jl")
 include("helpers/butcher.jl")
@@ -77,9 +82,5 @@ include("constraints/constraint_trans_capacity.jl")
 include("constraints/constraint_stor_capacity.jl")
 include("constraints/constraint_stor_state.jl")
 include("constraints/constraint_stor_state_init.jl")
-
-include("temporals/generate_time_slice.jl")
-include("temporals/generate_time_slice_relationships.jl")
-include("temporals/time_pattern.jl")
 
 end

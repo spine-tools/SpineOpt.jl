@@ -18,9 +18,37 @@
 #############################################################################
 
 
-"""
-    timeslice(timeslicemap)
+struct TimeSlice
+    start::DateTime
+    end_::DateTime
+end
 
-Return an array of time slices
+function Base.show(io::IO, time_slice::TimeSlice)
+    print(io, "(start: $(time_slice.start), end: $(time_slice.end_))")
+end
+
+Base.isless(a::TimeSlice, b::TimeSlice) = Tuple([a.start, a.end_]) < Tuple([b.start, b.end_])
+
+
 """
-timeslice(timeslicemap) = collect(keys(timeslicemap))
+    before(a::TimeSlice, b::TimeSlice)
+
+Determine whether the end point of `a` is exactly then start point of `b`.
+"""
+before(a::TimeSlice, b::TimeSlice) = a.end_ == b.start
+
+
+"""
+    in(b::TimeSlice, a::TimeSlice)
+
+Determine whether `b` is contained in `a`
+"""
+Base.in(b::TimeSlice, a::TimeSlice) = b.start >= a.start && b.end_ <= a.end_
+
+
+"""
+    overlaps(a::TimeSlice, b::TimeSlice)
+
+Determine whether `a` and `b` overlap.
+"""
+overlaps(a::TimeSlice, b::TimeSlice) = a.start <= b.start < a.end_ || b.start <= a.start < b.end_

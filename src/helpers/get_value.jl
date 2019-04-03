@@ -18,30 +18,38 @@
 #############################################################################
 
 """
-A scalar corresponding to index `t` in `value`.
-Called by convenience functions for returning parameter values.
+    get_value(value, t::Union{Int64,TimeSlice,Nothing})
 
-- If `value` is an `Array`, then the result is position `t` in the `Array`.
-- If `value` is a `Dict`, then:
-  - If `value["type"]` is "time_pattern", then the result is one of the values
-    from `value["time_pattern_data"]` that matches `t`.
-  - More to come...
+A value corresponding to index `t` in `value`.
+Called internally by convenience functions to retrieve parameter values.
+
+- If `value` is an `Array`, then:
+    - if `t` is not `nothing`, return index `t` in `value`, otherwise return `value`.
 - If `value` is a `TimePattern`, then:
-  - If `t` is `nothing`, then the result is `value` itself.
-  - It `t` is not `nothing`, then the result is `true` or `false` depending on whether or not `value` matches `t`.
-- If `value` is a scalar, then the result is `value` itself
+    - it `t` is not `nothing`, return `true` or `false` depending on whether or not `value` matches `t`;
+    - otherwise return `value`.
+- If `value` is a `Dict`, then:
+  - If `value["type"]` is "time_pattern", then return thet first value from `value["time_pattern_data"]`
+  that matches `t`.
+  - More to come...
+- If `value` is a scalar, then return `value`.
 """
-function get_value(value::Any, t::Union{Int64,String,Nothing})
+function get_value(value::Any, t::Union{Int64,TimeSlice,Nothing})
     if value isa Array
         if t === nothing
             value
         else
             value[t]
         end
+    elseif value isa TimePattern
+        if t === nothing
+            value
+        else
+            matches(value, t)
+        end
     elseif value isa Dict
         # Fun begins
-        # NOTE: At this point we shouldn't be afraid of accessing keys or whatever,
-        # since everything was validated before
+        # TODO: Finalize JSON spec and update this
         type_ = value["type"]
         if type_ == "time_pattern"
             t === nothing && error("argument `t` missing")
@@ -65,12 +73,6 @@ function get_value(value::Any, t::Union{Int64,String,Nothing})
             error("'$t' does not match any time pattern")
         else
             error("unknown type '$type_'")
-        end
-    elseif value isa TimePattern
-        if t === nothing
-            value
-        else
-            matches(value, t)
         end
     else
         value
