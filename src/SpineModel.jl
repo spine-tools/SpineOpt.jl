@@ -56,14 +56,6 @@ export constraint_stor_capacity
 # Creating time_slices struct
 export generate_time_slice
 export generate_time_slice_relationships
-export time_slicemap
-export time_slicemap_detail
-export duration
-export t_in_t
-export t_in_t_excl
-export t_before_t
-export t_overlaps_t
-export t_overlaps_t_excl
 
 include("helpers/util.jl")
 include("helpers/butcher.jl")
