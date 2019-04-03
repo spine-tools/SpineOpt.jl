@@ -81,10 +81,10 @@ macro butcher(expression)
             end
         end
         # Get rid of immutable arguments
-        call_arg_arr = [x for x in call_arg_arr if !isimmutable(x)]
+        call_arg_arr = [arg for arg in call_arg_arr if !isimmutable(arg)]
         isempty(call_arg_arr) && continue
         # Only keep going if all arguments are now Symbols
-        all([x isa Symbol for x in call_arg_arr]) || continue
+        all([arg isa Symbol for arg in call_arg_arr]) || continue
         # Only keep going if we know where all args are assigned
         all([haskey(assignment_location, arg) for arg in call_arg_arr]) || continue
         # Find top-most node where all arguments are assigned
@@ -98,8 +98,8 @@ macro butcher(expression)
         )
         # Find better place for the call
         for call_location in call_location_arr
+            # Check that all args are defined at least once before the call
             assignment_location_arr = [x for x in keys(arg_assignment_location) if x < call_location["node_id"]]
-            # Only keep going if all args are defined at least once before the call
             isempty(assignment_location_arr) && continue
             # Make sure we use the most recent value of all the arguments (take maximum)
             target_node_id = maximum(assignment_location_arr)
@@ -162,10 +162,10 @@ function beat(
     elseif node.head == :(=) && parent.head == :for
         var = node.args[1]
         variable_arr = if isa(var, Symbol)
-            # Single assignment, e.g., a = 1
+            # Single assignment, e.g., for a = 1:10
             [var]
         elseif isa(var, Expr) && var.head == :tuple
-            # Multiple tuple assignment
+            # Multiple tuple assignment, e.g, for (k, v) in pairs
             var.args
         else
             # Not handled

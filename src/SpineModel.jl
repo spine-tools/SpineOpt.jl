@@ -29,6 +29,7 @@ using Suppressor
 using Revise
 
 # Export helpers
+export checkout_spinemodeldb
 export value
 export pack_trailing_dims
 export @butcher
@@ -66,6 +67,8 @@ export t_overlaps_t_excl
 
 include("helpers/util.jl")
 include("helpers/butcher.jl")
+include("helpers/parse_value.jl")
+include("helpers/get_value.jl")
 
 include("variables/generate_variable_flow.jl")
 include("variables/generate_variable_trans.jl")
@@ -85,5 +88,6 @@ include("constraints/constraint_stor_state_init.jl")
 
 include("temporals/generate_time_slice.jl")
 include("temporals/generate_time_slice_relationships.jl")
+include("temporals/time_pattern.jl")
 
 end

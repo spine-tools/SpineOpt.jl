@@ -18,13 +18,13 @@
 #############################################################################
 
 """
-    pack_trailing_dims(variable::Dict, n::Int64=1)
+    pack_trailing_dims(dictionary::Dict, n::Int64=1)
 
-Take `variable` and return a new Dict where the last `n` dimensions are packed into a matrix
+An equivalent dictionary where the last `n` dimensions are packed into a matrix
 """
-function pack_trailing_dims(variable::Dict, n::Int64=1)
+function pack_trailing_dims(dictionary::Dict, n::Int64=1)
     left_dict = Dict{Any,Any}()
-    for (key, value) in variable
+    for (key, value) in dictionary
         # TODO: handle length(key) < n and stuff like that?
         left_key = key[1:end-n]
         if length(left_key) == 1
@@ -39,6 +39,13 @@ end
 
 
 """
-    value(variable::Dict)
+    value(dictionary::Dict)
+
+An equivalent dictionary where values are gathered using `JuMP.value`.
 """
-value(variable::Dict) = Dict(k => JuMP.value(v) for (k, v) in variable)
+value(dictionary::Dict) = Dict(k => JuMP.value(v) for (k, v) in dictionary)
+
+
+function checkout_spinemodeldb(db_url; upgrade=false)
+    checkout_spinedb(db_url; parse_value=parse_value, get_value=get_value, upgrade=upgrade)
+end
