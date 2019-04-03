@@ -31,6 +31,46 @@ struct TimePattern
     TimePattern(;y=nothing, m=nothing, d=nothing, wd=nothing, H=nothing, M=nothing, S=nothing) = new(y, m, d, wd, H, M, S)
 end
 
+"""
+    TimePattern(spec::String)
+
+A `TimePattern` value parsed from the given string specification.
+"""
+function TimePattern(spec::String)
+    union_op = ","
+    intersection_op = ";"
+    range_op = "-"
+    kwargs = Dict()
+    regexp = r"(y|m|d|wd|H|M|S)"
+    pattern_specs = split(spec, union_op)
+    for pattern_spec in pattern_specs
+        range_specs = split(pattern_spec, intersection_op)
+        for range_spec in range_specs
+            m = match(regexp, range_spec)
+            m === nothing && error("""invalid interval specification $range_spec.""")
+            key = m.match
+            start_stop = range_spec[length(key)+1:end]
+            start_stop = split(start_stop, range_op)
+            length(start_stop) != 2 && error("""invalid interval specification $range_spec.""")
+            start_str, stop_str = start_stop
+            start = try
+                parse(Int64, start_str)
+            catch ArgumentError
+                error("""invalid lower bound $start_str.""")
+            end
+            stop = try
+                parse(Int64, stop_str)
+            catch ArgumentError
+                error("""invalid upper bound $stop_str.""")
+            end
+            start > stop && error("""lower bound can't be higher than upper bound.""")
+            arr = get!(kwargs, Symbol(key), Array{UnitRange{Int64},1}())
+            push!(arr, range(start, stop=stop))
+        end
+    end
+    TimePattern(;kwargs...)
+end
+
 
 function Base.show(io::IO, time_pattern::TimePattern)
     d = Dict{Symbol,String}(

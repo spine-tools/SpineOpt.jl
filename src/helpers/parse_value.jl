@@ -17,90 +17,42 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
-"""
-    parse_time_pattern(spec::String)
-
-Parse the given time pattern specification as a `TimePattern` value.
-"""
-function parse_time_pattern(spec::String)
-    union_op = ","
-    intersection_op = ";"
-    range_op = "-"
-    kwargs = Dict()
-    regexp = r"(y|m|d|wd|H|M|S)"
-    pattern_specs = split(spec, union_op)
-    for pattern_spec in pattern_specs
-        range_specs = split(pattern_spec, intersection_op)
-        for range_spec in range_specs
-            m = match(regexp, range_spec)
-            m === nothing && error("""invalid interval specification $range_spec.""")
-            key = m.match
-            start_stop = range_spec[length(key)+1:end]
-            start_stop = split(start_stop, range_op)
-            length(start_stop) != 2 && error("""invalid interval specification $range_spec.""")
-            start_str, stop_str = start_stop
-            start = try
-                parse(Int64, start_str)
-            catch ArgumentError
-                error("""invalid lower bound $start_str.""")
-            end
-            stop = try
-                parse(Int64, stop_str)
-            catch ArgumentError
-                error("""invalid upper bound $stop_str.""")
-            end
-            start > stop && error("""lower bound can't be higher than upper bound.""")
-            arr = get!(kwargs, Symbol(key), Array{UnitRange{Int64},1}())
-            push!(arr, range(start, stop=stop))
-        end
-    end
-    TimePattern(;kwargs...)
-end
-
-
 """
     parse_value(db_value::String, tag_list)
 
 Parse a string according to given tags.
 """
 function parse_value(db_value::String, tag_list)
-    format = dateformat"y-m-dTH:M:S"  # Let's use this, ISO 8601 I guess...
-    if "date_time" in tag_list
-        DateTime(db_value, format)
-    elseif "time_pattern" in tag_list
-        parse_time_pattern(db_value)
-    else
-        SpineInterface.parse_value(db_value)
+    error_log = []
+    for tag in tag_list
+        if tag == "date_time"
+            try
+                return DateTime(db_value, iso8601dateformat)
+            catch e
+                push!(error_log, e)
+            end
+        elseif tag == "time_pattern"
+            try
+                return TimePattern(db_value)
+            catch e
+                push!(error_log, e)
+            end
+        end
     end
+    SpineInterface.parse_value(db_value, tag_list)
 end
 
 
-"""
-    parse_value(db_value::Dict, tag_list)
-
-Parse a `Dict` according to given tags.
-"""
 function parse_value(db_value::Dict, tag_list)
-    # TODO: finalize JSON specification and update this
-    haskey(db_value, "type") || error("'type' missing")
-    type_ = db_value["type"]
-    if type_ == "time_pattern"
-        haskey(db_value, "data") || error("'data' missing")
-        db_value["data"] isa Dict || error("'data' should be a dictionary (time_pattern: value)")
-        db_value["time_pattern_data"] = Dict{Union{TimePattern,String},Any}()
-        # Try and parse String keys as TimePatterns into a new dictionary
-        for (k, v) in pop!(db_value, "data")
-            new_k = try
-                parse_time_pattern(k)
-            catch e
-                k
-            end
-            db_value["time_pattern_data"][new_k] = v
+    if "time_series" in tag_list
+        if haskey(db_value, "spec")
+            # TODO: return a compact time series somehow
+        else
+            d = sort(Dict(DateTime(k) => v for (k, v) in db_value))
+            TimeSeries(collect(keys(d)), collect(values(d)))
         end
-        db_value
     else
-        error("unknown type '$type_'")
+        SpineInterface.parse_value(db_value, tag_list)
     end
 end
 

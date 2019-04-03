@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+const iso8601dateformat = dateformat"y-m-dTH:M:S" 
+
 """
     pack_trailing_dims(dictionary::Dict, n::Int64=1)
 

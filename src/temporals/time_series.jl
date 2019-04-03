@@ -18,38 +18,14 @@
 #############################################################################
 
 
-struct TimeSlice
-    start::DateTime
-    end_::DateTime
-    TimeSlice(x,y) = x > y ? error("out of order") : new(x,y)
+struct TimeSeries
+    keys::Array{DateTime,1}
+    values::Array{N,1} where N
+    TimeSeries(k,v) = length(k) != length(v) ? error("lengths don't match") : new(k,v)
 end
 
-function Base.show(io::IO, time_slice::TimeSlice)
-    print(io, "(start: $(time_slice.start), end: $(time_slice.end_))")
+
+function Base.show(io::IO, ts::TimeSeries)
+    # TODO: this needs more work
+    Base.show(id, Dict(zip(ts.keys, ts.values)))
 end
-
-Base.isless(a::TimeSlice, b::TimeSlice) = Tuple([a.start, a.end_]) < Tuple([b.start, b.end_])
-
-
-"""
-    before(a::TimeSlice, b::TimeSlice)
-
-Determine whether the end point of `a` is exactly the start point of `b`.
-"""
-before(a::TimeSlice, b::TimeSlice) = a.end_ == b.start
-
-
-"""
-    in(b::TimeSlice, a::TimeSlice)
-
-Determine whether `b` is contained in `a`.
-"""
-Base.in(b::TimeSlice, a::TimeSlice) = b.start >= a.start && b.end_ <= a.end_
-
-
-"""
-    overlaps(a::TimeSlice, b::TimeSlice)
-
-Determine whether `a` and `b` overlap.
-"""
-overlaps(a::TimeSlice, b::TimeSlice) = a.start <= b.start < a.end_ || b.start <= a.start < b.end_

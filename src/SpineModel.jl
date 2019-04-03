@@ -24,6 +24,7 @@ module SpineModel
 using JuMP
 using Clp
 using Dates
+using Statistics
 using SpineInterface
 using Suppressor
 using Revise
@@ -61,6 +62,7 @@ include("temporals/time_slice.jl")
 include("temporals/generate_time_slice.jl")
 include("temporals/generate_time_slice_relationships.jl")
 include("temporals/time_pattern.jl")
+include("temporals/time_series.jl")
 
 include("helpers/util.jl")
 include("helpers/butcher.jl")
