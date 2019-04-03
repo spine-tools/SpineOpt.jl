@@ -10,7 +10,7 @@ using Clp
 # Export contents of database into the current session
 db_url = "sqlite:///$(@__DIR__)/data/new_temporal.sqlite"
 println("--------------------------------------------\n Creating convenience functions ")
-checkout_spinedb(db_url; upgrade=true)
+checkout_spinemodeldb(db_url; upgrade=true)
 
 # Create temporal_structure
 generate_time_slice()
