@@ -29,14 +29,9 @@ function constraint_fix_ratio_out_in_trans(m::Model, trans)
     @butcher @constraint(
         m,
         [
-            conn in connection(),
-            node_in in node(),
-            node_out in node(),
-            tblock = temporal_block(),
-            t in time_slice(temporal_block=tblock);
-            #fix_ratio_out_in_trans_t(
-            #    connection__node__node__temporal_block=(conn, node_in, node_out, tblock)) != nothing
-            (conn, node_in, node_out, tblock) in connection__node__node__temporal_block()
+            (conn, node_in, node_out, tblock) in connection__node__node__temporal_block();
+            fix_ratio_out_in_trans_t(
+               connection__node__node__temporal_block=(conn, node_in, node_out, tblock)) != nothing
         ],
         + reduce(
             +,
