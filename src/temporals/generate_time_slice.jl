@@ -22,31 +22,38 @@
     generate_time_slice()
 
 """
+# a = TimeSlice(DateTime(2019,4,4,9,0,0),DateTime(2019,4,4,9,0,0))
+# @show a
+
 function generate_time_slice()
     list_time_slice = []
     list_duration = []
     list_timesliceblock = Dict()
     for k in temporal_block()
         list_timesliceblock[k] = []
-        start = start_datetime(temporal_block=k)  # DateTime value
-        stop = end_datetime(temporal_block=k)  # DateTime value
-        current = start
+        temp_block_start = start_datetime(temporal_block=k)  # DateTime value
+        temp_block_end = end_datetime(temporal_block=k)  # DateTime value
+        time_slice_start = temp_block_start
         i = 1
         while true
             duration = Minute(time_slice_duration(temporal_block=k, t=i))
-            next = current + duration
-            if next > stop
-                current == stop || @warn(
-                    "last timeslice of $k doesn't match with defined end date."
-                )
-                break
+            time_slice_end = time_slice_start + duration
+            if time_slice_end >= temp_block_end
+                if time_slice_start == temp_block_end
+                    break
+                else
+                    time_slice_end = temp_block_end
+                    @warn(
+                    "The specified time slice durations of temporal block $k do not correspond to the defined start and end date of the temporal block $k. The number of time slices and/or the duration of the last time slice might have been adjusted to be in line with the specified start and end of the temporal block."
+                    )
+                end
             end
-            time_slice = TimeSlice(current, next)
+            time_slice = TimeSlice(time_slice_start, time_slice_end)
             push!(list_time_slice, time_slice)
             push!(list_timesliceblock[k], time_slice)
             push!(list_duration, Tuple([time_slice, duration]))
             # Prepare for next iter
-            current = next
+            time_slice_start = time_slice_end
             i += 1
         end
     end
