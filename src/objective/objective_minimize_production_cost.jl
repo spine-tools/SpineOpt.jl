@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
 """
     objective_minimize_production_cost(m::Model, flow)
 
@@ -25,12 +24,12 @@ Minimize the `production_cost` correspond to the sum over all
 `conversion_cost` of each `unit`.
 """
 function objective_minimize_production_cost(m::Model, flow)
-    @butcher begin
+    # TODO: make @butcher work here
+    begin
         production_cost = zero(AffExpr)
-        for (u, c) in unit__commodity(), (n, d) in commodity__node__unit__direction(commodity=c, unit=u),
-                t in time_slice()
-            if haskey(flow, (c, n, u, d, t)) && conversion_cost(unit__commodity=(u, c)) != nothing
-                production_cost += flow[c, n, u, d, t] * conversion_cost(unit__commodity=(u, c))(t=t)
+        for (c, n, u, d) in commodity__node__unit__direction(), t in time_slice()
+            if haskey(flow, (c, n, u, d, t)) && (u, c) in unit__commodity()
+                production_cost += flow[c, n, u, d, t] * conversion_cost(unit__commodity=(u, c))
             end
         end
         @objective(m, Min, production_cost)
