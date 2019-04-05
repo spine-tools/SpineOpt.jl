@@ -26,7 +26,7 @@ function generate_time_slice()
     list_time_slice = []
     list_duration = []
     list_time_slice_temporal_block = Dict()
-    for (it,k) in enumerate(temporal_block())
+    for (it, k) in enumerate(temporal_block())
         list_time_slice_temporal_block[k] = []
         temp_block_start = start_datetime(temporal_block=k)  # DateTime value
         temp_block_end = end_datetime(temporal_block=k)  # DateTime value
@@ -36,35 +36,34 @@ function generate_time_slice()
             time_slice_start == temp_block_end && break
             duration = Minute(time_slice_duration(temporal_block=k)(t=i))
             time_slice_end = time_slice_start + duration
-            JuMP_name = "tb$(@sprintf "%02d" it)__t$(@sprintf "%03d" i)"
             if time_slice_end > temp_block_end
                 time_slice_end = temp_block_end
                 @warn(
                     "the duration of the last time slice of temporal block $k has been reduced "
-                    * "to fit within the block's end"
+                    * "to respect the specified end date-time"
                 )
             end
-            new_time_slice_period = TimeSlicePeriod(time_slice_start, time_slice_end)
-            new_time_slice = TimeSlice(new_time_slice_period,JuMP_name)
-
-            if !(new_time_slice_period in [ts.period for ts in list_time_slice]) # if that period is not yet represented by a different timeslice
+            index = findfirst(
+                x -> tuple(x.start, x.end_) == tuple(time_slice_start, time_slice_end),
+                list_time_slice
+            )
+            if index != nothing
+                existing_time_slice = list_time_slice[index]
+                push!(list_time_slice_temporal_block[k], existing_time_slice)
+            else
+                JuMP_name = "tb$(@sprintf "%02d" it)__t$(@sprintf "%03d" i)"
+                new_time_slice = TimeSlice(time_slice_start, time_slice_end, JuMP_name)
                 push!(list_time_slice, new_time_slice)
                 push!(list_time_slice_temporal_block[k], new_time_slice)
-                push!(list_duration, Tuple([new_time_slice, duration]))
-            else #if that period is already represented by a different time slice - SHOULD BE TESTED
-                # look for that already defined time slice
-                existing_time_slice = [ts for ts in list_time_slice if ts.period == new_time_slice_period][1]
-                # add that earlier defined time slice to the current temporal block in list_time_slice_temporal_block
-                push!(list_time_slice_temporal_block[k], existing_time_slice)
+                push!(list_duration, tuple(new_time_slice, duration))
             end
             # Prepare for next iter
             time_slice_start = time_slice_end
             i += 1
         end
     end
-
     # Remove possible duplicates of time slices defined in different temporal blocks
-    # NEEDS TESTING: unique functions should not have an impact
+    # TODO: Check if unique is actually needed here
     unique!(list_time_slice)
     unique!(list_duration)
 

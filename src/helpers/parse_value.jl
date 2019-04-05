@@ -71,7 +71,7 @@ function parse_value(db_value::Dict, a::Tag{:time_series}, b::Tag{:time_pattern}
     end
 end
 
-function parse_value(db_value::Dict, a::Tag{:time_series}, b::Tag{:time_pattern}; default=nothing)
+function parse_value(db_value::Dict, a::Tag{:time_pattern}, b::Tag{:time_series}; default=nothing)
     parse_value(db_value, b, a; default=default)
 end
 
