@@ -32,20 +32,20 @@ function generate_time_slice_relationships()
     for i in time_slice()
         for j in time_slice()
             if before(i, j)
-                push!(list_t_before_t, Tuple([i, j]))
+                push!(list_t_before_t, tuple(i, j))
             end
             if in(j, i)
-                push!(list_t_in_t, Tuple([i, j]))
+                push!(list_t_in_t, tuple(i, j))
                 if i != j
-                    push!(list_t_in_t_excl, Tuple([i, j]))
+                    push!(list_t_in_t_excl, tuple(i, j))
                 end
             end
             if overlaps(i, j)
-                push!(list_t_overlaps_t, Tuple([i, j]))
-                push!(list_t_overlaps_t, Tuple([j, i]))
+                push!(list_t_overlaps_t, tuple(i, j))
+                push!(list_t_overlaps_t, tuple(j, i))
                 if i != j
-                    push!(list_t_overlaps_t_excl, Tuple([i, j]))
-                    push!(list_t_overlaps_t_excl, Tuple([j, i]))
+                    push!(list_t_overlaps_t_excl, tuple(i, j))
+                    push!(list_t_overlaps_t_excl, tuple(j, i))
                 end
             end
         end

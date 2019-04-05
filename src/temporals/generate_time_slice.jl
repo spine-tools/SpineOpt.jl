@@ -36,22 +36,20 @@ function generate_time_slice()
         time_slice_start = temp_block_start
         i = 1
         while true
-            duration = Minute(time_slice_duration(temporal_block=k, t=i))
+            time_slice_start == temp_block_end && break
+            duration = Minute(time_slice_duration(temporal_block=k)(t=i))
             time_slice_end = time_slice_start + duration
-            if time_slice_end >= temp_block_end
-                if time_slice_start == temp_block_end
-                    break
-                else
-                    time_slice_end = temp_block_end
-                    @warn(
-                    "The specified time slice durations of temporal block $k do not correspond to the defined start and end date of the temporal block $k. The number of time slices and/or the duration of the last time slice might have been adjusted to be in line with the specified start and end of the temporal block."
-                    )
-                end
+            if time_slice_end > temp_block_end
+                time_slice_end = temp_block_end
+                @warn(
+                    "the duration of the last time slice of temporal block $k has been reduced "
+                    * "to fit within the block's end"
+                )
             end
             time_slice = TimeSlice(time_slice_start, time_slice_end)
             push!(list_time_slice, time_slice)
             push!(list_timesliceblock[k], time_slice)
-            push!(list_duration, Tuple([time_slice, duration]))
+            push!(list_duration, tuple(time_slice, duration))
             # Prepare for next iter
             time_slice_start = time_slice_end
             i += 1

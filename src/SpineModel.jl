@@ -62,12 +62,11 @@ include("temporals/time_slice.jl")
 include("temporals/generate_time_slice.jl")
 include("temporals/generate_time_slice_relationships.jl")
 include("temporals/time_pattern.jl")
-include("temporals/time_series.jl")
 
 include("helpers/util.jl")
 include("helpers/butcher.jl")
 include("helpers/parse_value.jl")
-include("helpers/get_value.jl")
+include("helpers/parameter_types.jl")
 
 include("variables/generate_variable_flow.jl")
 include("variables/generate_variable_trans.jl")

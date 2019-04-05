@@ -18,48 +18,69 @@
 #############################################################################
 
 """
-    parse_value(db_value::String, tag_list)
+    parse_value(db_value::String, ::Tag{:date_time})
 
 Parse a string according to given tags.
 """
-function parse_value(db_value::String, tag_list)
-    error_log = []
-    for tag in tag_list
-        if tag == "date_time"
-            try
-                return DateTime(db_value, iso8601dateformat)
-            catch e
-                push!(error_log, e)
-            end
-        elseif tag == "time_pattern"
-            try
-                return TimePattern(db_value)
-            catch e
-                push!(error_log, e)
-            end
-        end
-    end
-    SpineInterface.parse_value(db_value, tag_list)
+function parse_value(db_value::String, ::Tag{:date_time}; default=nothing)
+    DateTimeParameter(db_value, iso8601dateformat)
 end
 
-
-function parse_value(db_value::Dict, tag_list)
-    if "time_series" in tag_list
-        if haskey(db_value, "spec")
-            # TODO: return a compact time series somehow
-        else
-            d = sort(Dict(DateTime(k) => v for (k, v) in db_value))
-            TimeSeries(collect(keys(d)), collect(values(d)))
+function parse_value(db_value::String; default=nothing)
+    try
+        parse(Int64Parameter, db_value)
+    catch
+        try
+            parse(Float64Parameter, db_value)
+        catch
+            SymbolParameter(db_value)
         end
+    end
+end
+
+parse_value(db_value::Int64, tags...; default=nothing) = Int64Parameter(db_value)
+parse_value(db_value::Float64, tags...; default=nothing) = Float64Parameter(db_value)
+parse_value(db_value::Array, tags...; default=nothing) = ArrayParameter(db_value)
+
+function parse_value(db_value::Nothing, tags...; default=nothing)
+    if default === nothing
+        NothingParameter()
     else
-        SpineInterface.parse_value(db_value, tag_list)
+        parse_value(default, tags...; default=nothing)
     end
 end
 
+function parse_value(db_value::Dict, ::Tag{:time_series}; default=nothing)
+    d = sort(Dict(DateTime(k) => v for (k, v) in db_value))
+    TimeSeriesParameter(collect(keys(d)), collect(values(d)), default)
+end
+
+function parse_value(db_value::Dict, ::Tag{:time_pattern}; default=nothing)
+    TimePatternParameter(Dict(TimePattern(k) => v for (k, v) in db_value), default)
+end
+
+function parse_value(db_value::Dict, a::Tag{:time_series}, b::Tag{:time_pattern}; default=nothing)
+    try
+        parse_value(db_value, a; default=default)
+    catch e
+        try
+            parse_value(db_value, b; default=default)
+        catch e
+            parse_value(nothing; default=default)
+        end
+    end
+end
+
+function parse_value(db_value::Dict, a::Tag{:time_series}, b::Tag{:time_pattern}; default=nothing)
+    parse_value(db_value, b, a; default=default)
+end
 
 """
-    parse_value(db_value, tag_list)
+    checkout_spinemodeldb(db_url)
 
-Parse any value according to given tags.
+Generate and export convenience functions for accessing the database at the given url.
+Use custom `parse_value` and `get_value`.
 """
-parse_value(db_value, tag_list) = SpineInterface.parse_value(db_value, tag_list)
+function checkout_spinemodeldb(db_url; upgrade=false)
+    checkout_spinedb(db_url; parse_value=parse_value, upgrade=upgrade)
+end

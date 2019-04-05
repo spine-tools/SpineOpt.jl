@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-const iso8601dateformat = dateformat"y-m-dTH:M:S" 
+const iso8601dateformat = dateformat"y-m-dTH:M:S"
 
 """
     pack_trailing_dims(dictionary::Dict, n::Int64=1)
@@ -46,14 +46,3 @@ end
 An equivalent dictionary where values are gathered using `JuMP.value`.
 """
 value(dictionary::Dict) = Dict(k => JuMP.value(v) for (k, v) in dictionary)
-
-
-"""
-    checkout_spinemodeldb(db_url)
-
-Generate and export convenience functions for accessing the database at the given url.
-Use custom `parse_value` and `get_value`.
-"""
-function checkout_spinemodeldb(db_url; upgrade=false)
-    checkout_spinedb(db_url; parse_value=parse_value, get_value=get_value, upgrade=upgrade)
-end

@@ -16,6 +16,23 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
+function push_recursive!(arr, expr)
+    if expr isa Expr
+        if expr.head == :kw
+            push_recursive!(arr, expr.args[end])
+        elseif expr.head in (:parameters, :tuple)
+            for x in expr.args
+                push_recursive!(arr, x)
+            end
+        else
+            push!(arr, expr)
+        end
+    else
+        push!(arr, expr)
+    end
+end
+
 """
     @butcher expression
 
@@ -54,8 +71,10 @@ at unconvenient places -such as the body of a long inner for loop.
 # it's possible in a single passage. Anyways, we could have a keyword argument
 # to indicate the number of passages to perform. Also, we can make it so if this
 # argument is Inf (or something) we keep going until there's nothing left to butcher.
+# TODO: handle stuff like this: for u=1:10 ... u = 5; x = f(u); end
+# or for u=1:10 for u=1:10 ... end end
 macro butcher(expression)
-    expression = esc(expression)
+    expression = macroexpand(@__MODULE__, esc(expression))
     call_location = Dict{Expr,Array{Dict{String,Any},1}}()
     assignment_location = Dict{Symbol,Array{Dict{String,Any},1}}()
     replacement_variable_location = Array{Any,1}()
@@ -66,19 +85,7 @@ macro butcher(expression)
         replacement_variable = Dict()  # Variable to store the return value of each relocated call
         # Build array of arguments without keywords
         for arg in call.args[2:end]  # First arg is the method name
-            if arg isa Expr
-                if arg.head == :kw
-                    push!(call_arg_arr, arg.args[end])
-                elseif arg.head == :parameters
-                    append!(call_arg_arr, [x.args[end] for x in arg.args])
-                elseif arg.head == :tuple
-                    append!(call_arg_arr, arg.args)
-                else
-                    push!(call_arg_arr, arg)
-                end
-            else
-                push!(call_arg_arr, arg)
-            end
+            push_recursive!(call_arg_arr, arg)
         end
         # Get rid of immutable arguments
         call_arg_arr = [arg for arg in call_arg_arr if !isimmutable(arg)]
