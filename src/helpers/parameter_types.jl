@@ -17,27 +17,54 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    get_value(value::Dict{TimePattern,N}, ts::TimeSlice) where N
+Int64Parameter = Int64
+Float64Parameter = Float64
+SymbolParameter = Symbol
+DateTimeParameter = DateTime
+NothingParameter = Nothing
+ArrayParameter = Array
+DictParameter = Dict
 
-The value of the first key in the given dictionary that matches the given time slice.
-"""
-function get_value(value::Dict{TimePattern,N}, ts::TimeSlice) where N
-    for (tp, val) in value
-        matches(tp, ts) && return val
+struct TimePatternParameter
+    dict::Dict{TimePattern,T} where T
+    default
+end
+
+struct TimeSeriesParameter
+    keys::Array{DateTime,1}
+    values::Array{T,1} where T
+    default
+    TimeSeriesParameter(k, v, d) = length(k) != length(v) ? error("lengths don't match") : new(k, v, d)
+end
+
+(p::Int64Parameter)(;t=nothing) = p
+(p::Float64Parameter)(;t=nothing) = p
+(p::SymbolParameter)(;t=nothing) = p
+(p::DateTimeParameter)(;t=nothing) = p
+(p::NothingParameter)(;t=nothing) = p
+
+function (p::ArrayParameter)(;t::Union{Int64,Nothing}=nothing)
+    t === nothing && error("`t` argument missing")
+    p[t]
+end
+
+function (p::DictParameter)(;t::Union{T,Nothing}=nothing) where T
+    t === nothing && error("`t` argument missing")
+    p[t]
+end
+
+function (p::TimePatternParameter)(;t::Union{TimeSlice,Nothing}=nothing)
+    t === nothing && error("`t` argument missing")
+    for (tp, val) in p
+        matches(tp, t) && return val
     end
-    error("'$tp' does not match any time pattern")
+    p.default
 end
 
-"""
-    get_value(value::TimeSeries, ts::TimeSlice) where N
-
-The value of the given time series for the given time slice.
-"""
-function get_value(value::TimeSeries, ts::TimeSlice)
-    # TODO: improve this
-    a, b = indexin([ts.start, ts.end_], value.keys)
-    mean(value.values[a:b])
+function (p::TimeSeriesParameter)(;t::Union{TimeSlice,Nothing}=nothing)
+    t === nothing && error("`t` argument missing")
+    a = findfirst(x -> x >= t.start, p.keys)
+    a === nothing && return p.default
+    b = findlast(x -> x < t.end_, p.keys)  # NOTE: `b` can't be `nothing` if a != `nothing` and `t` is well defined
+    mean(p.values[a:b])
 end
-
-get_value(value, t) = SpineInterface.get_value(value, t)
