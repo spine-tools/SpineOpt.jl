@@ -28,6 +28,7 @@ using Statistics
 using SpineInterface
 using Suppressor
 using Revise
+using Printf
 
 # Export helpers
 export checkout_spinemodeldb

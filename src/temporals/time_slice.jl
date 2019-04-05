@@ -18,17 +18,26 @@
 #############################################################################
 
 
-struct TimeSlice
+struct TimeSlicePeriod
     start::DateTime
     end_::DateTime
-    TimeSlice(x, y) = x > y ? error("out of order") : new(x, y)
+    TimeSlicePeriod(x, y) = x > y ? error("out of order") : new(x, y)
+end
+
+mutable struct TimeSlice
+    period::TimeSlicePeriod
+    JuMP_name::String
+end
+
+function Base.show(io::IO, time_slice_period::TimeSlicePeriod)
+    print(io, "(start: $(time_slice_period.start), end: $(time_slice_period.end_))")
 end
 
 function Base.show(io::IO, time_slice::TimeSlice)
-    print(io, "(start: $(time_slice.start), end: $(time_slice.end_))")
+    print(io, "(period: $(time_slice.period), JuMP_name: $(time_slice.JuMP_name))")
 end
 
-Base.isless(a::TimeSlice, b::TimeSlice) = tuple(a.start, a.end_) < tuple(b.start, b.end_)
+Base.isless(a::TimeSlice, b::TimeSlice) = Tuple([a.period.start, a.period.end_]) < tuple(b.period.start, b.period.end_)
 
 
 """
@@ -36,7 +45,7 @@ Base.isless(a::TimeSlice, b::TimeSlice) = tuple(a.start, a.end_) < tuple(b.start
 
 Determine whether the end point of `a` is exactly the start point of `b`.
 """
-before(a::TimeSlice, b::TimeSlice) = a.end_ == b.start
+before(a::TimeSlice, b::TimeSlice) = a.period.end_ == b.period.start
 
 
 """
@@ -44,7 +53,7 @@ before(a::TimeSlice, b::TimeSlice) = a.end_ == b.start
 
 Determine whether `b` is contained in `a`.
 """
-Base.in(b::TimeSlice, a::TimeSlice) = b.start >= a.start && b.end_ <= a.end_
+Base.in(b::TimeSlice, a::TimeSlice) = b.period.start >= a.period.start && b.period.end_ <= a.period.end_
 
 
 """
@@ -52,4 +61,4 @@ Base.in(b::TimeSlice, a::TimeSlice) = b.start >= a.start && b.end_ <= a.end_
 
 Determine whether `a` and `b` overlap.
 """
-overlaps(a::TimeSlice, b::TimeSlice) = a.start <= b.start < a.end_ || b.start <= a.start < b.end_
+overlaps(a::TimeSlice, b::TimeSlice) = a.period.start <= b.period.start < a.period.end_ || b.period.start <= a.period.start < b.period.end_

@@ -42,15 +42,13 @@ function generate_time_slice_relationships()
             end
             if overlaps(i, j)
                 push!(list_t_overlaps_t, tuple(i, j))
-                push!(list_t_overlaps_t, tuple(j, i))
                 if i != j
                     push!(list_t_overlaps_t_excl, tuple(i, j))
-                    push!(list_t_overlaps_t_excl, tuple(j, i))
                 end
             end
         end
     end
-    unique!(list_t_overlaps_t)
+
 
     @suppress_err begin
         functionname_t_before_t = "t_before_t"
