@@ -27,7 +27,7 @@ attached to model `m`.
 function generate_variable_stor_state(m::Model)
     @butcher Dict{Tuple,JuMP.VariableRef}(
         (c, stor, t) => @variable(
-            m, base_name="stor_state[$c, $stor, $t]", lower_bound=0
+            m, base_name="stor_state[$c, $stor, $(t.JuMP_name)]", lower_bound=0
         ) for (c, stor, block) in commodity__storage__temporal_block()
             for t in time_slice(temporal_block=block)
     )

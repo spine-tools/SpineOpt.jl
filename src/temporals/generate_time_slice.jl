@@ -22,15 +22,12 @@
     generate_time_slice()
 
 """
-# a = TimeSlice(DateTime(2019,4,4,9,0,0),DateTime(2019,4,4,9,0,0))
-# @show a
-
 function generate_time_slice()
     list_time_slice = []
     list_duration = []
-    list_timesliceblock = Dict()
-    for k in temporal_block()
-        list_timesliceblock[k] = []
+    list_time_slice_temporal_block = Dict()
+    for (it,k) in enumerate(temporal_block())
+        list_time_slice_temporal_block[k] = []
         temp_block_start = start_datetime(temporal_block=k)  # DateTime value
         temp_block_end = end_datetime(temporal_block=k)  # DateTime value
         time_slice_start = temp_block_start
@@ -38,7 +35,8 @@ function generate_time_slice()
         while true
             duration = Minute(time_slice_duration(temporal_block=k, t=i))
             time_slice_end = time_slice_start + duration
-            if time_slice_end >= temp_block_end
+            JuMP_name = "tb$(@sprintf "%02d" it)__t$(@sprintf "%03d" i)"
+            if time_slice_end > temp_block_end
                 if time_slice_start == temp_block_end
                     break
                 else
@@ -48,16 +46,27 @@ function generate_time_slice()
                     )
                 end
             end
-            time_slice = TimeSlice(time_slice_start, time_slice_end)
-            push!(list_time_slice, time_slice)
-            push!(list_timesliceblock[k], time_slice)
-            push!(list_duration, Tuple([time_slice, duration]))
+            new_time_slice_period = TimeSlicePeriod(time_slice_start, time_slice_end)
+            new_time_slice = TimeSlice(new_time_slice_period,JuMP_name)
+
+            if !(new_time_slice_period in [ts.period for ts in list_time_slice]) # if that period is not yet represented by a different timeslice
+                push!(list_time_slice, new_time_slice)
+                push!(list_time_slice_temporal_block[k], new_time_slice)
+                push!(list_duration, Tuple([new_time_slice, duration]))
+            else #if that period is already represented by a different time slice - SHOULD BE TESTED
+                # look for that already defined time slice
+                existing_time_slice = [ts for ts in list_time_slice if ts.period == new_time_slice_period][1]
+                # add that earlier defined time slice to the current temporal block in list_time_slice_temporal_block
+                push!(list_time_slice_temporal_block[k], existing_time_slice)
+            end
             # Prepare for next iter
             time_slice_start = time_slice_end
             i += 1
         end
     end
+
     # Remove possible duplicates of time slices defined in different temporal blocks
+    # NEEDS TESTING: unique functions should not have an impact
     unique!(list_time_slice)
     unique!(list_duration)
 
@@ -68,6 +77,7 @@ function generate_time_slice()
         functionname_duration = "duration"
 
         @eval begin
+            # Documentation needs to be updated
             """
                 $($functionname_time_slice)(;t_before=nothing, t_after=nothing)
 
@@ -87,8 +97,8 @@ function generate_time_slice()
             function $(Symbol(functionname_time_slice))(;temporal_block=nothing) # propose to rename to time_slice
                 if temporal_block == nothing
                     $list_time_slice
-                elseif haskey($list_timesliceblock, temporal_block)
-                    $list_timesliceblock[temporal_block]
+                elseif haskey($list_time_slice_temporal_block, temporal_block)
+                    $list_time_slice_temporal_block[temporal_block]
                 else
                     error("temporal block '$temporal_block' not defined")
                 end

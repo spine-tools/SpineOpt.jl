@@ -29,7 +29,7 @@ in a certain 'direction'. The direction is relative to the unit.
 function generate_variable_flow(m::Model)
     @butcher Dict{Tuple,JuMP.VariableRef}(
         (c, n, u, d, t) => @variable(
-            m, base_name="flow[$c, $n, $u, $d, $t]", lower_bound=0
+            m, base_name="flow[$c, $n, $u, $d, $(t.JuMP_name)]", lower_bound=0
         ) for (c, n, u, d, block) in commodity__node__unit__direction__temporal_block()
             for t in time_slice(temporal_block=block)
     )
