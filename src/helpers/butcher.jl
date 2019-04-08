@@ -123,15 +123,16 @@ macro butcher(expression)
         end
         # Put the call at a better location, assign result to replacement variable
         for (node_id, x) in replacement_variable
+            y = gensym()
             ex = quote
                 # Catch exceptions, so we can throw them when the variable gets actually used
-                $x = try
+                $y = try
                     $call
                 catch err
                     err
                 end
                 # Store the result together with the argument values in a Replacement object
-                $x = SpineModel.Replacement($x, [$(call_arg_arr...)])
+                $x = SpineModel.Replacement($y, [$(call_arg_arr...)])
             end
             parent, row = arg_assignment_location[node_id]
             parent.args[row + 1] = Expr(:block, ex, parent.args[row + 1])

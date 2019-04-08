@@ -50,7 +50,7 @@ function constraint_nodal_balance(m::Model, flow, trans)
             # Transfer of commodities between nodes
             + reduce(
                 +,
-                trans[c, n, conn, :out, t]
+                trans[c, n, conn, :out, t2]
                 for (c, conn) in commodity__node__connection__direction(node=n, direction=:out)
                     for t2 in t_in_t(t_long=t)
                         if haskey(trans, (c, n, conn, :out, t2));
@@ -58,7 +58,7 @@ function constraint_nodal_balance(m::Model, flow, trans)
             )
             - reduce(
                 +,
-                trans[c, n, conn, :in, t]
+                trans[c, n, conn, :in, t2]
                 for (c, conn) in commodity__node__connection__direction(node=n, direction=:in)
                     for t2 in t_in_t(t_long=t)
                         if haskey(trans, (c, n, conn, :in, t2));

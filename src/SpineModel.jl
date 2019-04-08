@@ -41,7 +41,7 @@ export generate_variable_flow
 export generate_variable_trans
 export generate_variable_stor_state
 
-# Export objecte
+# Export objective
 export objective_minimize_production_cost
 
 # Export constraints

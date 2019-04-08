@@ -17,37 +17,93 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    parse_value(db_value::String, ::Tag{:date_time})
-
-Parse a string according to given tags.
-"""
-function parse_value(db_value::String, ::Tag{:date_time}; default=nothing)
-    DateTimeParameter(db_value, iso8601dateformat)
+function parse_value(db_value::Nothing, tags...; default=nothing)
+    if default === nothing
+        UnvaluedParameter()
+    else
+        parse_value(default, tags...; default=nothing)
+    end
 end
 
-function parse_value(db_value::String; default=nothing)
+parse_value(db_value::Union{Int64,Float64}, tags...; default=nothing) = ScalarParameter(db_value)
+
+function parse_value(db_value::String, tags...; default=nothing)
     try
-        parse(Int64Parameter, db_value)
+        ScalarParameter(parse(Int64, db_value))
     catch
         try
-            parse(Float64Parameter, db_value)
+            ScalarParameter(parse(Float64, db_value))
         catch
-            SymbolParameter(db_value)
+            ScalarParameter(Symbol(db_value))
         end
     end
 end
 
-parse_value(db_value::Int64, tags...; default=nothing) = Int64Parameter(db_value)
-parse_value(db_value::Float64, tags...; default=nothing) = Float64Parameter(db_value)
 parse_value(db_value::Array, tags...; default=nothing) = ArrayParameter(db_value)
+parse_value(db_value::Dict, tags...; default=nothing) = DictParameter(db_value)
 
-function parse_value(db_value::Nothing, tags...; default=nothing)
-    if default === nothing
-        NothingParameter()
+function parse_value(db_value::String, ::Tag{:date_time}; default=nothing)
+    ScalarParameter(DateTime(db_value, iso8601dateformat))
+end
+
+function parse_value(db_value::String, ::Tag{:duration}; default=nothing)
+    split_value = split(db_value, " ")
+    if length(split_value) == 1
+        # Compact form, eg. "1D"
+        number = db_value[1:end-1]
+        time_unit = db_value[end]
+        duration = if lowercase(time_unit) == "y"
+            Year(number)
+        elseif time_unit == "m"
+            Month(number)
+        elseif time_unit == "d"
+            Day(number)
+        elseif time_unit == "H"
+            Hour(number)
+        elseif time_unit == "M"
+            Minute(number)
+        elseif time_unit == "S"
+            Second(number)
+        else
+            error("invalid duration specification '$db_value'")
+        end
+        ScalarParameter(duration)
+    elseif length(split_value) == 2
+        # Verbose form, eg. "1 day"
+        number, time_unit = split_value
+        time_unit = lowercase(time_unit)
+        time_unit = endswith(time_unit, "s") ? time_unit[1:end-1] : time_unit
+        duration = if time_unit == "year"
+            Year(number)
+        elseif time_unit == "month"
+            Month(number)
+        elseif time_unit == "day"
+            Day(number)
+        elseif time_unit == "hour"
+            Hour(number)
+        elseif time_unit == "minute"
+            Minute(number)
+        elseif time_unit == "second"
+            Second(number)
+        else
+            error("invalid duration specification '$db_value'")
+        end
+        ScalarParameter(duration)
     else
-        parse_value(default, tags...; default=nothing)
+        error("invalid duration specification '$db_value'")
     end
+end
+
+function parse_value(db_value::Int64, ::Tag{:duration}; default=nothing)
+    ScalarParameter(Minute(db_value))
+end
+
+function parse_value(db_value::Array, a::Tag{:duration}; default=nothing)
+    ArrayParameter([parse_value(x, a) for x in db_value])
+end
+
+function parse_value(db_value::Array, a::Tag{:time_series}; default=nothing)
+    parse_value(Dict(k => v for (k, v) in db_value), a; default=default)
 end
 
 function parse_value(db_value::Dict, ::Tag{:time_series}; default=nothing)

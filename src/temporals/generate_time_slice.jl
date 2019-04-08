@@ -34,7 +34,7 @@ function generate_time_slice()
         i = 1
         while true
             time_slice_start == temp_block_end && break
-            duration = Minute(time_slice_duration(temporal_block=k)(t=i))
+            duration = time_slice_duration(temporal_block=k)(t=i)
             time_slice_end = time_slice_start + duration
             if time_slice_end > temp_block_end
                 time_slice_end = temp_block_end

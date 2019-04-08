@@ -16,14 +16,20 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+struct UnvaluedParameter
+end
 
-Int64Parameter = Int64
-Float64Parameter = Float64
-SymbolParameter = Symbol
-DateTimeParameter = DateTime
-NothingParameter = Nothing
-ArrayParameter = Array
-DictParameter = Dict
+struct ScalarParameter{T}
+    value::T
+end
+
+struct ArrayParameter
+    value::Array
+end
+
+struct DictParameter
+    value::Dict
+end
 
 struct TimePatternParameter
     dict::Dict{TimePattern,T} where T
@@ -37,25 +43,22 @@ struct TimeSeriesParameter
     TimeSeriesParameter(k, v, d) = length(k) != length(v) ? error("lengths don't match") : new(k, v, d)
 end
 
-(p::Int64Parameter)(;t=nothing) = p
-(p::Float64Parameter)(;t=nothing) = p
-(p::SymbolParameter)(;t=nothing) = p
-(p::DateTimeParameter)(;t=nothing) = p
-(p::NothingParameter)(;t=nothing) = p
+(p::UnvaluedParameter)(;t=nothing) = nothing
+(p::ScalarParameter)(;t=nothing) = p.value
 
 function (p::ArrayParameter)(;t::Union{Int64,Nothing}=nothing)
     t === nothing && error("`t` argument missing")
-    p[t]
+    p.value[t]
 end
 
 function (p::DictParameter)(;t::Union{T,Nothing}=nothing) where T
     t === nothing && error("`t` argument missing")
-    p[t]
+    p.value[t]
 end
 
 function (p::TimePatternParameter)(;t::Union{TimeSlice,Nothing}=nothing)
     t === nothing && error("`t` argument missing")
-    for (tp, val) in p
+    for (tp, val) in p.dict
         matches(tp, t) && return val
     end
     p.default
@@ -65,6 +68,28 @@ function (p::TimeSeriesParameter)(;t::Union{TimeSlice,Nothing}=nothing)
     t === nothing && error("`t` argument missing")
     a = findfirst(x -> x >= t.start, p.keys)
     a === nothing && return p.default
-    b = findlast(x -> x < t.end_, p.keys)  # NOTE: `b` can't be `nothing` if a != `nothing` and `t` is well defined
+    b = findlast(x -> x < t.end_, p.keys)  # NOTE: `b` can't be `nothing` since a != `nothing` and `t` is well defined
     mean(p.values[a:b])
 end
+
+# Support basic operations with ScalarParameter
+# This is so one can write `parameter(class=object)` instead of `parameter(class=object)()`
+import Base: convert, +, -, *, /, isless
+
+convert(::Type{T}, x::ScalarParameter{T}) where {T} = x.value
+
++(x::ScalarParameter{T}, y::N) where {T,N} = x.value + y
+-(x::ScalarParameter{T}, y::N) where {T,N} = x.value - y
+*(x::ScalarParameter{T}, y::N) where {T,N} = x.value * y
+/(x::ScalarParameter{T}, y::N) where {T,N} = x.value / y
++(x::N, y::ScalarParameter{T}) where {T,N} = x + y.value
+-(x::N, y::ScalarParameter{T}) where {T,N} = x - y.value
+*(x::N, y::ScalarParameter{T}) where {T,N} = x * y.value
+/(x::N, y::ScalarParameter{T}) where {T,N} = x / y.value
++(x::ScalarParameter{T}, y::ScalarParameter{N}) where {T,N} = x.value + y.value
+-(x::ScalarParameter{T}, y::ScalarParameter{N}) where {T,N} = x.value - y.value
+*(x::ScalarParameter{T}, y::ScalarParameter{N}) where {T,N} = x.value * y.value
+/(x::ScalarParameter{T}, y::ScalarParameter{N}) where {T,N} = x.value / y.value
+
+isless(x::ScalarParameter{T}, y::N) where {T,N} = isless(x.value, y)
+isless(y::N, x::ScalarParameter{T}) where {T,N} = isless(y, x.value)
