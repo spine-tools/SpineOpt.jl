@@ -17,6 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+struct Replacement
+    val
+    args::Array
+end
+
+
 function push_recursive!(arr, expr)
     if expr isa Expr
         if expr.head == :kw
@@ -66,13 +72,6 @@ This is mainly intended to improve performance in cases where the implementation
 of a method is expensive, but for readability reasons the programmer wants to call it
 at unconvenient places -such as the body of a long inner for loop.
 """
-# TODO: sometimes methods are called with arguments which are themselves method calls,
-# e.g., f(g(x)). This can be butchered by doing multiple passages, but I wonder if
-# it's possible in a single passage. Anyways, we could have a keyword argument
-# to indicate the number of passages to perform. Also, we can make it so if this
-# argument is Inf (or something) we keep going until there's nothing left to butcher.
-# TODO: handle stuff like this: for u=1:10 ... u = 5; x = f(u); end
-# or for u=1:10 for u=1:10 ... end end
 macro butcher(expression)
     expression = macroexpand(@__MODULE__, esc(expression))
     call_location = Dict{Expr,Array{Dict{String,Any},1}}()
@@ -109,22 +108,45 @@ macro butcher(expression)
             assignment_location_arr = [x for x in keys(arg_assignment_location) if x < call_location["node_id"]]
             isempty(assignment_location_arr) && continue
             # Make sure we use the most recent value of all the arguments (take maximum)
-            target_node_id = maximum(assignment_location_arr)
-            target_parent, target_row = arg_assignment_location[target_node_id]
+            node_id = maximum(assignment_location_arr)
+            # parent, row = arg_assignment_location[node_id]
             # Create or retrieve replacement variable
-            x = get!(replacement_variable, target_node_id, gensym())
+            x = get!(replacement_variable, node_id, gensym())
             # Add new call_location for the replacement variable
-            push!(replacement_variable_location, (x, call_location["parent"], call_location["row"]))
+            push!(replacement_variable_location, (x, call, call_arg_arr, call_location["parent"], call_location["row"]))
         end
         # Put the call at a better location, assign result to replacement variable
-        for (target_node_id, x) in replacement_variable
-            target_parent, target_row = arg_assignment_location[target_node_id]
-            target_parent.args[target_row + 1] = Expr(:block, :($x = $call), target_parent.args[target_row + 1])
+        for (node_id, x) in replacement_variable
+            ex = quote
+                # Catch exceptions, so we can throw them when the variable gets actually instantiated
+                $x = try
+                    $call
+                catch err
+                    err
+                end
+                # Store the result together with the argument values in a Replacement object
+                $x = SpineModel.Replacement($x, [$(call_arg_arr...)])
+            end
+            parent, row = arg_assignment_location[node_id]
+            parent.args[row + 1] = Expr(:block, ex, parent.args[row + 1])
         end
     end
     # Replace calls in original locations with the replacement variable
-    for (x, parent, row) in replacement_variable_location
-        parent.args[row] = :($x)
+    for (x, call, call_arg_arr, parent, row) in replacement_variable_location
+        parent.args[row] = quote
+            # Check if the argument values are the same as we stored in the Replacement
+            if $(x).args == [$(call_arg_arr...)]
+                # Throw exception or return actual value
+                if $(x).val isa Exception
+                    throw($(x).val)
+                else
+                    $(x).val
+                end
+            else
+                # Call the function again
+                $call
+            end
+        end
     end
     expression
 end
