@@ -23,6 +23,11 @@ struct Replacement
 end
 
 
+"""
+    push_recursive!(arr, expr)
+
+Visit the given expression and add all symbols to the end of the array.
+"""
 function push_recursive!(arr, expr)
     if expr isa Expr
         if expr.head == :kw
@@ -109,16 +114,17 @@ macro butcher(expression)
             isempty(assignment_location_arr) && continue
             # Make sure we use the most recent value of all the arguments (take maximum)
             node_id = maximum(assignment_location_arr)
-            # parent, row = arg_assignment_location[node_id]
             # Create or retrieve replacement variable
             x = get!(replacement_variable, node_id, gensym())
             # Add new call_location for the replacement variable
-            push!(replacement_variable_location, (x, call, call_arg_arr, call_location["parent"], call_location["row"]))
+            push!(
+                replacement_variable_location,
+                (x, call, call_arg_arr, call_location["parent"], call_location["row"]))
         end
         # Put the call at a better location, assign result to replacement variable
         for (node_id, x) in replacement_variable
             ex = quote
-                # Catch exceptions, so we can throw them when the variable gets actually instantiated
+                # Catch exceptions, so we can throw them when the variable gets actually used
                 $x = try
                     $call
                 catch err
@@ -134,7 +140,7 @@ macro butcher(expression)
     # Replace calls in original locations with the replacement variable
     for (x, call, call_arg_arr, parent, row) in replacement_variable_location
         parent.args[row] = quote
-            # Check if the argument values are the same as we stored in the Replacement
+            # Check if the argument values are the same as stored in the Replacement
             if $(x).args == [$(call_arg_arr...)]
                 # Throw exception or return actual value
                 if $(x).val isa Exception
@@ -143,7 +149,7 @@ macro butcher(expression)
                     $(x).val
                 end
             else
-                # Call the function again
+                # Argument values don't match, call the function again
                 $call
             end
         end
