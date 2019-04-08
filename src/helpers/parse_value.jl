@@ -17,6 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+"""
+    parse_value(db_value, tags...; default)
+
+Parse a database value into a function-like object to be returned by the parameter access function.
+Tags associated with the parameter are passed as 'value types' in the `tags` argument,
+and the default value is passed in the `default` argument.
+The resulting function-like object is ment to be called with an argument such as `(t=t)`
+to retrieve a value from the parameter.
+"""
 function parse_value(db_value::Nothing, tags...; default=nothing)
     if default === nothing
         UnvaluedParameter()
@@ -135,7 +144,6 @@ end
     checkout_spinemodeldb(db_url)
 
 Generate and export convenience functions for accessing the database at the given url.
-Use custom `parse_value` and `get_value`.
 """
 function checkout_spinemodeldb(db_url; upgrade=false)
     checkout_spinedb(db_url; parse_value=parse_value, upgrade=upgrade)
