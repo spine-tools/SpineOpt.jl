@@ -55,13 +55,13 @@ function parse_value(db_value::String, ::Tag{:date_time}; default=nothing)
     ScalarParameter(DateTime(db_value, iso8601dateformat))
 end
 
-function parse_value(db_value::String, ::Tag{:duration}; default=nothing)
-    split_value = split(db_value, " ")
-    if length(split_value) == 1
+function duration(str::String)
+    split_str = split(str, " ")
+    if length(split_str) == 1
         # Compact form, eg. "1D"
-        number = db_value[1:end-1]
-        time_unit = db_value[end]
-        duration = if lowercase(time_unit) == "y"
+        number = str[1:end-1]
+        time_unit = str[end]
+        if lowercase(time_unit) == "y"
             Year(number)
         elseif time_unit == "m"
             Month(number)
@@ -74,15 +74,14 @@ function parse_value(db_value::String, ::Tag{:duration}; default=nothing)
         elseif time_unit == "S"
             Second(number)
         else
-            error("invalid duration specification '$db_value'")
+            error("invalid duration specification '$str'")
         end
-        ScalarParameter(duration)
-    elseif length(split_value) == 2
+    elseif length(split_str) == 2
         # Verbose form, eg. "1 day"
-        number, time_unit = split_value
+        number, time_unit = split_str
         time_unit = lowercase(time_unit)
         time_unit = endswith(time_unit, "s") ? time_unit[1:end-1] : time_unit
-        duration = if time_unit == "year"
+        if time_unit == "year"
             Year(number)
         elseif time_unit == "month"
             Month(number)
@@ -95,28 +94,45 @@ function parse_value(db_value::String, ::Tag{:duration}; default=nothing)
         elseif time_unit == "second"
             Second(number)
         else
-            error("invalid duration specification '$db_value'")
+            error("invalid duration specification '$str'")
         end
-        ScalarParameter(duration)
     else
-        error("invalid duration specification '$db_value'")
+        error("invalid duration specification '$str'")
     end
 end
 
-function parse_value(db_value::Int64, ::Tag{:duration}; default=nothing)
-    ScalarParameter(Minute(db_value))
+duration(int::Int64) = Minute(int)
+
+function parse_value(db_value::Union{Int64,String}, ::Tag{:duration}; default=nothing)
+    ScalarParameter(duration(db_value))
 end
 
 function parse_value(db_value::Array, a::Tag{:duration}; default=nothing)
-    ArrayParameter([parse_value(x, a) for x in db_value])
+    ArrayParameter(duration.(db_value))
 end
 
 function parse_value(db_value::Array, a::Tag{:time_series}; default=nothing)
-    parse_value(Dict(k => v for (k, v) in db_value), a; default=default)
+    parse_value(Dict(k => v for (k, v) in db_value), a; default=default)  # Let BoundsError be thrown
 end
 
 function parse_value(db_value::Dict, ::Tag{:time_series}; default=nothing)
-    d = sort(Dict(DateTime(k) => v for (k, v) in db_value))
+    if haskey(db_value, "indexes")
+        indexes = db_value["indexes"]
+        values = db_value["values"]
+        start = DateTime(indexes["start"], iso8601dateformat)
+        duration_ = indexes["duration"]
+        if duration_ isa Array
+            duration_arr = duration.(duration_)
+            keys = cumsum(vcat(start, duration_arr))
+            TimeSeriesParameter(keys, values, default)
+        else
+            duration = duration(duration_)
+            end_ = DateTime(indexes["end"], iso8601dateformat)
+            TimeSeriesParameter(start:duration:end_, values, default)
+        end
+    else
+        d = sort(Dict(DateTime(k) => v for (k, v) in db_value))
+    end
     TimeSeriesParameter(collect(keys(d)), collect(values(d)), default)
 end
 
