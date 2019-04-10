@@ -112,28 +112,47 @@ function parse_value(db_value::Array, a::Tag{:duration}; default=nothing)
 end
 
 function parse_value(db_value::Array, a::Tag{:time_series}; default=nothing)
+    # Two column array format
     parse_value(Dict(k => v for (k, v) in db_value), a; default=default)  # Let BoundsError be thrown
 end
 
 function parse_value(db_value::Dict, ::Tag{:time_series}; default=nothing)
-    if haskey(db_value, "indexes")
-        indexes = db_value["indexes"]
-        values = db_value["values"]
-        start = DateTime(indexes["start"], iso8601dateformat)
-        duration_ = indexes["duration"]
-        if duration_ isa Array
-            duration_arr = duration.(duration_)
-            keys = cumsum(vcat(start, duration_arr))
-            TimeSeriesParameter(keys, values, default)
+    if haskey(db_value, "values")
+        # Compact format
+        if !haskey(db_value, indexes)
+            # Assume it's a generic year
+            start = GenericYear()
+            resolution = "1 hour"
         else
-            duration = duration(duration_)
-            end_ = DateTime(indexes["end"], iso8601dateformat)
-            TimeSeriesParameter(start:duration:end_, values, default)
+            indexes = db_value["indexes"]
+            start = DateTime(indexes["start"], iso8601dateformat)
+            resolution = indexes["resolution"]
+        end
+        values = db_value["values"]
+        len = length(values) - 1
+        if resolution isa Array
+            rlen = length(resolution)
+            if rlen > len
+                resolution = resolution[1:len]
+            elseif rlen < len
+                times = div(len, rlen)
+                tail_len = len - times * rlen
+                tail = resolution[1:tail_len]
+                resolution = vcat(repeat(resolution, times), tail)
+            end
+            res = duration.(resolution)
+            inds = cumsum(vcat(start, res))
+            TimeSeriesParameter(inds, values, default)
+        else
+            res = duration(resolution)
+            end_ = start + len * res
+            TimeSeriesParameter(start:res:end_, values, default)
         end
     else
+        # Dictionary format
         d = sort(Dict(DateTime(k) => v for (k, v) in db_value))
+        TimeSeriesParameter(collect(keys(d)), collect(values(d)), default)
     end
-    TimeSeriesParameter(collect(keys(d)), collect(values(d)), default)
 end
 
 function parse_value(db_value::Dict, ::Tag{:time_pattern}; default=nothing)

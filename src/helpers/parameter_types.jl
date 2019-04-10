@@ -37,10 +37,10 @@ struct TimePatternParameter
 end
 
 struct TimeSeriesParameter
-    keys::Array{DateTime,1}
+    indexes::Array{DateTime,1}
     values::Array{T,1} where T
     default
-    TimeSeriesParameter(k, v, d) = length(k) != length(v) ? error("lengths don't match") : new(k, v, d)
+    TimeSeriesParameter(i, v, d) = length(i) != length(v) ? error("lengths don't match") : new(i, v, d)
 end
 
 (p::UnvaluedParameter)(;t=nothing) = nothing
@@ -58,24 +58,28 @@ end
 
 function (p::TimePatternParameter)(;t::Union{TimeSlice,Nothing}=nothing)
     t === nothing && error("`t` argument missing")
-    for (tp, val) in p.dict
-        matches(tp, t) && return val
+    values = [val for (tp, val) in p.dict if matches(tp, t)]
+    if isempty(values)
+        p.default
+    else
+        mean(values)
     end
-    p.default
 end
 
 function (p::TimeSeriesParameter)(;t::Union{TimeSlice,Nothing}=nothing)
     t === nothing && error("`t` argument missing")
-    a = findfirst(x -> x >= t.start, p.keys)
-    a === nothing && return p.default
-    b = findlast(x -> x < t.end_, p.keys)  # NOTE: `b` can't be `nothing` since a != `nothing` and `t` is well defined
-    mean(p.values[a:b])
+    a = findfirst(x -> x >= t.start, p.indexes)
+    if a === nothing
+        # The time series ends before the time slice starts
+        p.default
+    else
+        b = findlast(x -> x < t.end_, p.indexes)  # NOTE: `b` can't be `nothing` since a is not `nothing`
+        mean(p.values[a:b])
+    end
 end
 
 # Support basic operations with ScalarParameter
 # This is so one can write `parameter(class=object)` instead of `parameter(class=object)()`
-import Base: convert, +, -, *, /, <
-
 convert(::Type{T}, x::ScalarParameter{T}) where {T} = x.value
 
 +(x::ScalarParameter{T}, y::N) where {T,N} = x.value + y

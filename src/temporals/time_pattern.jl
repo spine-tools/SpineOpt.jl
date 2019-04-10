@@ -98,19 +98,21 @@ end
 """
     matches(tp::TimePattern, ts::TimeSlice)
 
-Return `true` iff the given time pattern matches the given time slice.
-This means that for every range specified in the time pattern, `ts` is well within that range.
-Note that if a range is not specified for a given level, then it doesn't matter where
-(or should I say, *when*?) is `t` on that level.
+Determine whether a time pattern and a time slice match.
+A time pattern and a time series match iff, for every time level (year, month, and so on),
+the time slice fully contains at least one of the ranges specified in the time pattern for that level.
 """
 function matches(tp::TimePattern, ts::TimeSlice)
     conds = Array{Bool,1}()
-    tp.y != nothing && push!(conds, any(year(ts.start) in rng && year(ts.end_) in rng for rng in tp.y))
-    tp.m != nothing && push!(conds, any(month(ts.start) in rng && month(ts.end_) in rng for rng in tp.m))
-    tp.d != nothing && push!(conds, any(day(ts.start) in rng && day(ts.end_) in rng for rng in tp.d))
-    tp.wd != nothing && push!(conds, any(dayofweek(ts.start) in rng && dayofweek(ts.end_) in rng for rng in tp.wd))
-    tp.H != nothing && push!(conds, any(hour(ts.start) in rng && hour(ts.end_) in rng for rng in tp.H))
-    tp.M != nothing && push!(conds, any(minute(ts.start) in rng && minute(ts.end_) in rng for rng in tp.M))
-    tp.S != nothing && push!(conds, any(second(ts.start) in rng && second(ts.end_) in rng for rng in tp.S))
+    tp.y != nothing && push!(conds, any(range_in(rng, year(ts.start):year(ts.end_)) for rng in tp.y))
+    tp.m != nothing && push!(conds, any(range_in(rng, month(ts.start):month(ts.end_)) for rng in tp.m))
+    tp.d != nothing && push!(conds, any(range_in(rng, day(ts.start):day(ts.end_)) for rng in tp.d))
+    tp.wd != nothing && push!(conds, any(range_in(rng, dayofweek(ts.start):dayofweek(ts.end_)) for rng in tp.wd))
+    tp.H != nothing && push!(conds, any(range_in(rng, hour(ts.start):hour(ts.end_)) for rng in tp.H))
+    tp.M != nothing && push!(conds, any(range_in(rng, minute(ts.start):minute(ts.end_)) for rng in tp.M))
+    tp.S != nothing && push!(conds, any(range_in(rng, second(ts.start):second(ts.end_)) for rng in tp.S))
     all(conds)
 end
+
+
+range_in(b::UnitRange{Int64}, a::UnitRange{Int64}) = b.start >= a.start && b.stop <= a.stop

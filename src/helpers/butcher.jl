@@ -47,8 +47,8 @@ end
 """
     @butcher expression
 
-Butcher an expression so that method calls involving iteration variables
-are performed as soon as those variables are specified. Needs testing.
+An equivalent expression where method calls involving iteration variables
+are performed as soon as those variables are specified. Use with care.
 
 For instance, an expression like this:
 
@@ -85,9 +85,9 @@ macro butcher(expression)
     # 'Beat' each node in the expression tree (see definition of `beat` below)
     visit_node(expression, 1, nothing, 1, beat, call_location, assignment_location)
     for (call, call_location_arr) in call_location
-        call_arg_arr = []  # Array of all arguments
-        replacement_variable = Dict()  # Variable to store the return value of each relocated call
+        replacement_variable = Dict()  # node_id => Replacement object
         # Build array of arguments without keywords
+        call_arg_arr = []
         for arg in call.args[2:end]  # First arg is the method name
             push_recursive!(call_arg_arr, arg)
         end
@@ -98,21 +98,21 @@ macro butcher(expression)
         all([arg isa Symbol for arg in call_arg_arr]) || continue
         # Only keep going if we know where all args are assigned
         all([haskey(assignment_location, arg) for arg in call_arg_arr]) || continue
-        # Find top-most node where all arguments are assigned
-        topmost_node_id = maximum(
+        # Find first node where all arguments are assigned
+        base_node_id = maximum(
             minimum(location["node_id"] for location in assignment_location[arg]) for arg in call_arg_arr
         )
-        # Build dictionary of places where arguments are reassigned below the top-most node
+        # Build dictionary of places where any arguments are reassigned after the base node
         arg_assignment_location = Dict(
             loc["node_id"] => (loc["parent"], loc["row"])
-            for arg in call_arg_arr for loc in assignment_location[arg] if loc["node_id"] >= topmost_node_id
+            for arg in call_arg_arr for loc in assignment_location[arg] if loc["node_id"] >= base_node_id
         )
-        # Find better place for the call
         for call_location in call_location_arr
-            # Check that all args are defined at least once before the call
+            # Build array of nodes where all arguments are assigned before the call
             assignment_location_arr = [x for x in keys(arg_assignment_location) if x < call_location["node_id"]]
+            # Only keep going if at least one of such nodes exists
             isempty(assignment_location_arr) && continue
-            # Make sure we use the most recent value of all the arguments (take maximum)
+            # Use the most recent value of all the arguments
             node_id = maximum(assignment_location_arr)
             # Create or retrieve replacement variable
             x = get!(replacement_variable, node_id, gensym())
@@ -121,11 +121,11 @@ macro butcher(expression)
                 replacement_variable_location,
                 (x, call, call_arg_arr, call_location["parent"], call_location["row"]))
         end
-        # Put the call at a better location, assign result to replacement variable
         for (node_id, x) in replacement_variable
+            # Create replacement expression
             y = gensym()
             ex = quote
-                # Catch exceptions, so we can throw them when the variable gets actually used
+                # Catch exceptions, so we can throw them when the variable gets actually instantiated
                 $y = try
                     $call
                 catch err
@@ -134,19 +134,21 @@ macro butcher(expression)
                 # Store the result together with the argument values in a Replacement object
                 $x = SpineModel.Replacement($y, [$(call_arg_arr...)])
             end
+            # Put the above expression at the desired location
             parent, row = arg_assignment_location[node_id]
             parent.args[row + 1] = Expr(:block, ex, parent.args[row + 1])
         end
     end
-    # Replace calls in original locations with the replacement variable
     for (x, call, call_arg_arr, parent, row) in replacement_variable_location
+        # Replace calls in original locations with the replacement expression
         parent.args[row] = quote
-            # Check if the argument values are the same as stored in the Replacement
+            # Check if the argument values are the same as the ones stored in the Replacement object
             if $(x).args == [$(call_arg_arr...)]
-                # Throw exception or return actual value
                 if $(x).val isa Exception
+                    # Throw stored exception
                     throw($(x).val)
                 else
+                    # Return stored value
                     $(x).val
                 end
             else

@@ -26,21 +26,21 @@ function generate_time_slice()
     list_time_slice = []
     list_duration = []
     list_time_slice_temporal_block = Dict()
-    for (it, k) in enumerate(temporal_block())
-        list_time_slice_temporal_block[k] = []
-        temp_block_start = start_datetime(temporal_block=k)  # DateTime value
-        temp_block_end = end_datetime(temporal_block=k)  # DateTime value
+    for (k, blk) in enumerate(temporal_block())
+        list_time_slice_temporal_block[blk] = []
+        temp_block_start = start_datetime(temporal_block=blk)  # DateTime value
+        temp_block_end = end_datetime(temporal_block=blk)  # DateTime value
         time_slice_start = temp_block_start
         i = 1
         while true
             time_slice_start == temp_block_end && break
-            duration = time_slice_duration(temporal_block=k)(t=i)
+            duration = time_slice_duration(temporal_block=blk)(t=i)
             time_slice_end = time_slice_start + duration
             if time_slice_end > temp_block_end
                 time_slice_end = temp_block_end
                 @warn(
-                    "the duration of the last time slice of temporal block $k has been reduced "
-                    * "to respect the specified end date-time"
+                    "the duration of the last time slice of temporal block $blk has been reduced "
+                    * "to respect the specified end time"
                 )
             end
             index = findfirst(
@@ -49,12 +49,12 @@ function generate_time_slice()
             )
             if index != nothing
                 existing_time_slice = list_time_slice[index]
-                push!(list_time_slice_temporal_block[k], existing_time_slice)
+                push!(list_time_slice_temporal_block[blk], existing_time_slice)
             else
-                JuMP_name = "tb$(@sprintf "%02d" it)__t$(@sprintf "%03d" i)"
+                JuMP_name = "tb$(k)__t$(i)"
                 new_time_slice = TimeSlice(time_slice_start, time_slice_end, JuMP_name)
                 push!(list_time_slice, new_time_slice)
-                push!(list_time_slice_temporal_block[k], new_time_slice)
+                push!(list_time_slice_temporal_block[blk], new_time_slice)
                 push!(list_duration, tuple(new_time_slice, duration))
             end
             # Prepare for next iter
@@ -67,7 +67,8 @@ function generate_time_slice()
     unique!(list_time_slice)
     unique!(list_duration)
 
-    # @Maren: The part about the argument that is passed. So can pass a temporal_block instead of a time_slice here? Something like ts = time_slice()[1] followed by time_slice(ts) does not work?
+    # @Maren: The part about the argument that is passed. So can pass a temporal_block instead of a time_slice here?
+    # Something like ts = time_slice()[1] followed by time_slice(ts) does not work?
     # @Maren: So how does this work exactly? list_time_slice is not stored somewhere?
     @suppress_err begin
         functionname_time_slice = "time_slice"

@@ -24,11 +24,11 @@ module SpineModel
 using JuMP
 using Clp
 using Dates
+using TimeZones
 using Statistics
 using SpineInterface
 using Suppressor
-using Revise
-using Printf
+import Base: convert, +, -, *, /, <
 
 # Export helpers
 export checkout_spinemodeldb
@@ -63,6 +63,7 @@ include("temporals/time_slice.jl")
 include("temporals/generate_time_slice.jl")
 include("temporals/generate_time_slice_relationships.jl")
 include("temporals/time_pattern.jl")
+include("temporals/generic_year.jl")
 
 include("helpers/util.jl")
 include("helpers/butcher.jl")
