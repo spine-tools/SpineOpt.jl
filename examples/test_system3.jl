@@ -1,5 +1,5 @@
-
 # Load required packaes
+using Revise
 using SpineInterface
 using SpineModel
 using Dates

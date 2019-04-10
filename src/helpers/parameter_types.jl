@@ -36,23 +36,30 @@ struct TimePatternParameter
     default
 end
 
-struct TimeSeriesParameter
-    indexes::Array{DateTime,1}
-    values::Array{T,1} where T
-    default
-    TimeSeriesParameter(i, v, d) = length(i) != length(v) ? error("lengths don't match") : new(i, v, d)
+struct TimeSeriesParameter{I,V}
+    indexes::I
+    values::Array{V,1}
+    default::V
+    adjuster
+    function TimeSeriesParameter(i::I, v::Array{V,1}, d, a=x->x) where {I,V}
+        if length(i) != length(v)
+            error("lengths don't match")
+        else
+            new{I,V}(i, v, d, a)
+        end
+    end
 end
 
-(p::UnvaluedParameter)(;t=nothing) = nothing
-(p::ScalarParameter)(;t=nothing) = p.value
+(p::UnvaluedParameter)(;kwargs...) = nothing
+(p::ScalarParameter)(;kwargs...) = p.value
 
-function (p::ArrayParameter)(;t::Union{Int64,Nothing}=nothing)
-    t === nothing && error("`t` argument missing")
-    p.value[t]
+function (p::ArrayParameter)(;i::Union{Int64,Nothing}=nothing)
+    i === nothing && error("`i` argument missing")
+    p.value[i]
 end
 
-function (p::DictParameter)(;t::Union{T,Nothing}=nothing) where T
-    t === nothing && error("`t` argument missing")
+function (p::DictParameter)(;k::Union{T,Nothing}=nothing) where T
+    k === nothing && error("`k` argument missing")
     p.value[t]
 end
 
@@ -68,12 +75,12 @@ end
 
 function (p::TimeSeriesParameter)(;t::Union{TimeSlice,Nothing}=nothing)
     t === nothing && error("`t` argument missing")
-    a = findfirst(x -> x >= t.start, p.indexes)
+    a = findfirst(x -> x >= p.adjuster(t.start), p.indexes)
     if a === nothing
         # The time series ends before the time slice starts
         p.default
     else
-        b = findlast(x -> x < t.end_, p.indexes)  # NOTE: `b` can't be `nothing` since a is not `nothing`
+        b = findlast(x -> x < p.adjuster(t.end_), p.indexes)  # NOTE: `b` can't be `nothing` since a is not `nothing`
         mean(p.values[a:b])
     end
 end

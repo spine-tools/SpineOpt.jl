@@ -34,7 +34,8 @@ function parse_value(db_value::Nothing, tags...; default=nothing)
     end
 end
 
-parse_value(db_value::Union{Int64,Float64}, tags...; default=nothing) = ScalarParameter(db_value)
+parse_value(db_value::Int64, tags...; default=nothing) = ScalarParameter(db_value)
+parse_value(db_value::Float64, tags...; default=nothing) = ScalarParameter(db_value)
 
 function parse_value(db_value::String, tags...; default=nothing)
     try
@@ -103,9 +104,8 @@ end
 
 duration(int::Int64) = Minute(int)
 
-function parse_value(db_value::Union{Int64,String}, ::Tag{:duration}; default=nothing)
-    ScalarParameter(duration(db_value))
-end
+parse_value(db_value::Int64, ::Tag{:duration}; default=nothing) = ScalarParameter(duration(db_value))
+parse_value(db_value::String, ::Tag{:duration}; default=nothing) = ScalarParameter(duration(db_value))
 
 function parse_value(db_value::Array, a::Tag{:duration}; default=nothing)
     ArrayParameter(duration.(db_value))
@@ -116,20 +116,31 @@ function parse_value(db_value::Array, a::Tag{:time_series}; default=nothing)
     parse_value(Dict(k => v for (k, v) in db_value), a; default=default)  # Let BoundsError be thrown
 end
 
+function generic_year_adjuster(dt::DateTime)
+    m = month(dt)
+    d = day(dt)
+    H = hour(dt)
+    M = minute(dt)
+    S = second(dt)
+    DateTime(0, m, d, H, M, S)
+end
+
 function parse_value(db_value::Dict, ::Tag{:time_series}; default=nothing)
     if haskey(db_value, "values")
         # Compact format
-        if !haskey(db_value, indexes)
+        if !haskey(db_value, "indexes")
             # Assume it's a generic year
-            start = GenericYear()
+            start = DateTime(0)
             resolution = "1 hour"
+            adjuster = generic_year_adjuster
         else
             indexes = db_value["indexes"]
             start = DateTime(indexes["start"], iso8601dateformat)
             resolution = indexes["resolution"]
+            adjuster = x-> x
         end
-        values = db_value["values"]
-        len = length(values) - 1
+        vals = db_value["values"]
+        len = length(vals) - 1
         if resolution isa Array
             rlen = length(resolution)
             if rlen > len
@@ -142,11 +153,11 @@ function parse_value(db_value::Dict, ::Tag{:time_series}; default=nothing)
             end
             res = duration.(resolution)
             inds = cumsum(vcat(start, res))
-            TimeSeriesParameter(inds, values, default)
+            TimeSeriesParameter(inds, vals, default, adjuster)
         else
             res = duration(resolution)
             end_ = start + len * res
-            TimeSeriesParameter(start:res:end_, values, default)
+            TimeSeriesParameter(start:res:end_, vals, default, adjuster)
         end
     else
         # Dictionary format
