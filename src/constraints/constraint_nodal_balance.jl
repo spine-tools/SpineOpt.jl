@@ -29,7 +29,7 @@ function constraint_nodal_balance(m::Model, flow, trans)
 			0
             ==
             # Demand for the commodity
-			- (demand_t(node__temporal_block=(n, tblock))(t=t) != nothing && demand_t(node__temporal_block=(n, tblock))(t=t))
+			- (demand(node=n)(t=t) != nothing && demand(node=n)(t=t))
             # Output of units into this node, and their input from this node
             + reduce(
                 +,
