@@ -37,9 +37,9 @@ export pack_trailing_dims
 export @butcher
 
 # Export variables
-export generate_variable_flow
-export generate_variable_trans
-export generate_variable_stor_state
+export variable_flow
+export variable_trans
+export variable_stor_state
 
 # Export objective
 export objective_minimize_production_cost
@@ -69,9 +69,9 @@ include("helpers/parse_value.jl")
 include("helpers/parameter_types.jl")
 include("helpers/util.jl")
 
-include("variables/generate_variable_flow.jl")
-include("variables/generate_variable_trans.jl")
-include("variables/generate_variable_stor_state.jl")
+include("variables/variable_flow.jl")
+include("variables/variable_trans.jl")
+include("variables/variable_stor_state.jl")
 
 include("objective/objective_minimize_production_cost.jl")
 

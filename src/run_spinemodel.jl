@@ -1,5 +1,4 @@
 # Load required packaes
-using Revise
 using SpineInterface
 using SpineModel
 using Dates
@@ -8,7 +7,6 @@ using Gurobi
 
 ##
 # Export contents of database into the current session
-db_url = "sqlite:///$(@__DIR__)/data/new_temporal.sqlite"
 println("--------------------------------------------\n Creating convenience functions ")
 checkout_spinemodeldb(db_url; upgrade=true)
 
@@ -24,9 +22,9 @@ println("--------------------------------------------\n Initializing model")
 m = Model(with_optimizer(Gurobi.Optimizer))
 ##
 # Create decision variables
-flow = generate_variable_flow(m)
-trans = generate_variable_trans(m)
-stor_state = generate_variable_stor_state(m)
+flow = variable_flow(m)
+trans = variable_trans(m)
+stor_state = variable_stor_state(m)
 ## Create objective function
 production_cost = objective_minimize_production_cost(m, flow)
 
@@ -72,7 +70,6 @@ println("Model solved \n --------------------------------------------")
 status = termination_status(m)
 if status == MOI.OPTIMAL
     println("Optimal solution found after")
-    out_file = "$(@__DIR__)/data/new_temporal_out.sqlite"
     out_db_url = "sqlite:///$out_file"
     isfile(out_file) || create_results_db(out_db_url, db_url)
     write_results(

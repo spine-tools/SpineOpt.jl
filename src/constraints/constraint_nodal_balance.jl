@@ -29,12 +29,12 @@ function constraint_nodal_balance(m::Model, flow, trans)
 			0
             ==
             # Demand for the commodity
-			- (demand_t(node__temporal_block=(n, tblock))(t=t) != nothing && demand_t(node__temporal_block=(n, tblock))(t=t))
+			- (demand(node=n)(t=t) != nothing && demand(node=n)(t=t))
             # Output of units into this node, and their input from this node
             + reduce(
                 +,
                 flow[c, n, u, :out, t2]
-                for (c, u) in commodity__node__unit__direction(node=n, direction=:out)
+                for (c, u, trashblock) in commodity__node__unit__direction__temporal_block(node=n, direction=:out)
                     for t2 in t_in_t(t_long=t)
                         if haskey(flow, (c, n, u, :out, t2));
                 init=0
@@ -42,7 +42,7 @@ function constraint_nodal_balance(m::Model, flow, trans)
             - reduce(
                 +,
                 flow[c, n, u, :in, t2]
-                for (c, u) in commodity__node__unit__direction__temporal_block(node=n, direction=:in)
+                for (c, u, trashblock) in commodity__node__unit__direction__temporal_block(node=n, direction=:in)
                     for t2 in t_in_t(t_long=t)
                         if haskey(flow, (c, n, u, :in, t2));
                 init=0
@@ -51,7 +51,7 @@ function constraint_nodal_balance(m::Model, flow, trans)
             + reduce(
                 +,
                 trans[c, n, conn, :out, t2]
-                for (c, conn) in commodity__node__connection__direction(node=n, direction=:out)
+                for (c, conn, trashblock) in commodity__node__connection__direction__temporal_block(node=n, direction=:out)
                     for t2 in t_in_t(t_long=t)
                         if haskey(trans, (c, n, conn, :out, t2));
                 init=0
@@ -59,7 +59,7 @@ function constraint_nodal_balance(m::Model, flow, trans)
             - reduce(
                 +,
                 trans[c, n, conn, :in, t2]
-                for (c, conn) in commodity__node__connection__direction(node=n, direction=:in)
+                for (c, conn, trashblock) in commodity__node__connection__direction__temporal_block(node=n, direction=:in)
                     for t2 in t_in_t(t_long=t)
                         if haskey(trans, (c, n, conn, :in, t2));
                 init=0
