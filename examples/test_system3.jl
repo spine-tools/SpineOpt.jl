@@ -4,7 +4,7 @@ using SpineInterface
 using SpineModel
 using Dates
 using JuMP
-using Clp
+using Gurobi
 
 ##
 # Export contents of database into the current session
@@ -21,7 +21,7 @@ println("Convenience functions created \n --------------------------------------
 ####
 # Init model
 println("--------------------------------------------\n Initializing model")
-m = Model(with_optimizer(Clp.Optimizer))
+m = Model(with_optimizer(Gurobi.Optimizer))
 ##
 # Create decision variables
 flow = generate_variable_flow(m)
@@ -78,8 +78,8 @@ if status == MOI.OPTIMAL
     write_results(
         out_db_url;
         flow=pack_trailing_dims(SpineModel.value(flow), 1),
-        trans=pack_trailing_dims(SpineModel.value(trans), 1),
-        stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
+        #trans=pack_trailing_dims(SpineModel.value(trans), 1),
+        #stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
     )
 end
 println("Results written to the database \n --------------------------------------------")

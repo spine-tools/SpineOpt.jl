@@ -32,8 +32,7 @@ function generate_time_slice()
         temp_block_end = end_datetime(temporal_block=k)  # DateTime value
         time_slice_start = temp_block_start
         i = 1
-        while true
-            time_slice_start == temp_block_end && break
+        while time_slice_start <  temp_block_end
             duration = time_slice_duration(temporal_block=k)(t=i)
             time_slice_end = time_slice_start + duration
             if time_slice_end > temp_block_end

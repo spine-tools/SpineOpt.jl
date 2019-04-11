@@ -25,7 +25,7 @@ Fix ratio between the output `trans` of a `commodity_group` to an input `trans` 
 `commodity_group` for each `connection` for which the parameter `fix_ratio_out_in_trans`
 is specified.
 """
-function constraint_fix_ratio_out_in_trans(m::Model, trans)
+function fix_ratio_out_in_trans(m::Model, trans)
     @butcher @constraint(
         m,
         [
