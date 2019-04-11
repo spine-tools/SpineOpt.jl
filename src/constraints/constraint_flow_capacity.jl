@@ -27,7 +27,7 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 
 # Suggested new version (see comments in version above)
 # @Maren: should the parameter unit_capacity have a direction index?
-function flow_capacity(m::Model, flow)
+function constraint_flow_capacity(m::Model, flow)
     @butcher for (u, c) in unit__commodity(), (n,d) in commodity__node__unit__direction(unit=u, commodity=c), t in time_slice()
         all([
             haskey(flow, (c, n, u, d, t)),

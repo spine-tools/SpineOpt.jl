@@ -19,22 +19,22 @@
 
 
 """
-    constraint_stor_capacity(m::Model, stor_state)
+    constraint_stor_state_init(m::Model, stor_state)
 
-Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
-number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
+Balance for storage level.
 """
-function stor_capacity(m::Model, stor_state)
-    @butcher for (c, stor) in commodity__storage(), t in time_slice()
+function constraint_stor_state_init(m::Model, stor_state)
+    @butcher for (c, stor, block) in commodity__storage__temporal_block(), t in time_slice(temporal_block=block)
         all([
-            stor_capacity(commodity__storage=(c,stor)) != nothing
-            haskey(stor_state, (c, stor, t))
+            t == time_slice(temporal_block=block)[1],
+            haskey(stor_state, (c, stor, t)),
+            stor_state_init(commodity__storage=(c, stor)) != nothing
         ]) || continue
-        @constraint(
-            m,
-            stor_state[c, stor, t]
-            <=
-            stor_capacity(commodity__storage=(c, stor))
-        )
-    end
+    @constraint(
+        m,
+        + stor_state[c, stor, t]
+        <=
+        + stor_state_init(commodity__storage=(c, stor))
+    )
+end
 end

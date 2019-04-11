@@ -22,7 +22,7 @@
 
 Enforce balance of all commodity flows from and to a node.
 """
-function nodal_balance(m::Model, flow, trans)
+function constraint_nodal_balance(m::Model, flow, trans)
 	@butcher for (n, tblock) in node__temporal_block(), t in time_slice(temporal_block=tblock)
         @constraint(
             m,

@@ -28,7 +28,7 @@ is specified.
 
 # 2) Since all functions to generate the constraint are in the constraints folder, could we rename the files by removing 'constraint_'?
 #   @manuelma: good idea, perhaps we could do the same for objective and variable?
-function fix_ratio_out_in_flow(m::Model, flow)
+function constraint_fix_ratio_out_in_flow(m::Model, flow)
     @butcher for (u, cg_out, cg_in) in unit__out_commodity_group__in_commodity_group()
         time_slices_constraint_out = []
         time_slices_constraint_in = []
