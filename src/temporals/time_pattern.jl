@@ -93,26 +93,3 @@ function Base.show(io::IO, time_pattern::TimePattern)
     end
     print(io, join(ranges, ",\nand "))
 end
-
-
-"""
-    matches(tp::TimePattern, ts::TimeSlice)
-
-Determine whether a time pattern and a time slice match.
-A time pattern and a time series match iff, for every time level (year, month, and so on),
-the time slice fully contains at least one of the ranges specified in the time pattern for that level.
-"""
-function matches(tp::TimePattern, ts::TimeSlice)
-    conds = Array{Bool,1}()
-    tp.y != nothing && push!(conds, any(range_in(rng, year(ts.start):year(ts.end_)) for rng in tp.y))
-    tp.m != nothing && push!(conds, any(range_in(rng, month(ts.start):month(ts.end_)) for rng in tp.m))
-    tp.d != nothing && push!(conds, any(range_in(rng, day(ts.start):day(ts.end_)) for rng in tp.d))
-    tp.wd != nothing && push!(conds, any(range_in(rng, dayofweek(ts.start):dayofweek(ts.end_)) for rng in tp.wd))
-    tp.H != nothing && push!(conds, any(range_in(rng, hour(ts.start):hour(ts.end_)) for rng in tp.H))
-    tp.M != nothing && push!(conds, any(range_in(rng, minute(ts.start):minute(ts.end_)) for rng in tp.M))
-    tp.S != nothing && push!(conds, any(range_in(rng, second(ts.start):second(ts.end_)) for rng in tp.S))
-    all(conds)
-end
-
-
-range_in(b::UnitRange{Int64}, a::UnitRange{Int64}) = b.start >= a.start && b.stop <= a.stop

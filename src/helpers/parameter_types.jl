@@ -140,7 +140,7 @@ end
 
 function (p::TimePatternParameter)(;t::Union{TimeSlice,Nothing}=nothing)
     t === nothing && error("argument `t` missing")
-    values = [val for (tp, val) in p.dict if matches(tp, t)]
+    values = [val for (tp, val) in p.dict if match(t, tp)]
     if isempty(values)
         @warn("$t does not match $p, using default value...")
         p.default
@@ -151,9 +151,9 @@ end
 
 function (p::TimeSeriesParameter)(;t::Union{TimeSlice,Nothing}=nothing)
     t === nothing && error("argument `t` missing")
-    a, b = match(t, p)
+    a, b = indexin(t, p)
     if a === nothing || b === nothing || b < a
-        @warn("$t does not match $p, using default value...")
+        @warn("$p is not defined on $t, using default value...")
         p.default
     else
         mean(p.values[a:b])

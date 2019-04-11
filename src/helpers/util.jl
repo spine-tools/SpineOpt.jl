@@ -102,36 +102,68 @@ end
 parse_duration(int::Int64) = Minute(int)
 
 """
-    match(t::TimeSlice, p::TimeSeriesParameter)
+    indexin(t::TimeSlice, p::TimeSeriesParameter)
 
-A pair of indexes in the time series that best correspond to the start and end of the time slice.
+A pair of indexes in the time series corresponding to the start and end of the time slice.
 """
-function match(t::TimeSlice, p::TimeSeriesParameter)
-    match(t.start, t.end_, p, p.ignore_year, p.repeat)
+function indexin(t::TimeSlice, p::TimeSeriesParameter)
+    indexin(t.start, t.end_, p.indexes, p.span, p.ignore_year, p.repeat)
 end
 
-function match(start::DateTime, end_::DateTime, p::TimeSeriesParameter, ignore_year::Bool, repeat::Bool)
-    start, end_, p.indexes, repeat, ignore_year
-    if repeat
-        if start > p.indexes[end]
-            # Rewind start and end_ so the former falls within the time series
-            # better than advancing all indexes in the time series
-            mismatch = start - p.indexes[1]
-            repetitions = div(mismatch, p.span)
-            start -= repetitions * p.span
-            end_ -= repetitions * p.span
+function indexin(
+        start::DateTime,
+        end_::DateTime,
+        indexes::Union{Array{DateTime,1},StepRange{DateTime,T} where T <: Period},
+        span::Period,
+        ignore_year::Bool,
+        repeat::Bool
+    )
+    if ignore_year
+        start -= Year(start)
+        end_ -= Year(end_)
+        indexes = [i - Year(i) for i in indexes]
+        indexin(start, end_, indexes, span, false, repeat)
+    elseif repeat
+        if start > indexes[end]
+            # Move start and end_ back to indexes range, rather than the other way around
+            mismatch = start - indexes[1]
+            repetitions = div(mismatch, span)
+            start -= repetitions * span
+            end_ -= repetitions * span
         end
-        match(start, end_, p, ignore_year, false)
-    elseif ignore_year
-        a = findfirst(i -> i - Year(i) >= start - Year(start), p.indexes)
-        b = findlast(i -> i - Year(i) < end_ - Year(end_), p.indexes)
-        a, b
+        indexin(start, end_, indexes, span, ignore_year, false)
     else
-        a = findfirst(i -> i >= start, p.indexes)
-        b = findlast(i -> i < end_, p.indexes)
+        a = findfirst(i -> i >= start, indexes)
+        b = findlast(i -> i < end_, indexes)
         a, b
     end
 end
+
+"""
+    match(ts::TimeSlice, tp::TimePattern)
+
+Test whether a time slice matches a time pattern.
+A time pattern and a time series match iff, for every time level (year, month, and so on),
+the time slice fully contains at least one of the ranges specified in the time pattern for that level.
+"""
+function match(ts::TimeSlice, tp::TimePattern)
+    conds = Array{Bool,1}()
+    tp.y != nothing && push!(conds, any(range_in(rng, year(ts.start):year(ts.end_)) for rng in tp.y))
+    tp.m != nothing && push!(conds, any(range_in(rng, month(ts.start):month(ts.end_)) for rng in tp.m))
+    tp.d != nothing && push!(conds, any(range_in(rng, day(ts.start):day(ts.end_)) for rng in tp.d))
+    tp.wd != nothing && push!(conds, any(range_in(rng, dayofweek(ts.start):dayofweek(ts.end_)) for rng in tp.wd))
+    tp.H != nothing && push!(conds, any(range_in(rng, hour(ts.start):hour(ts.end_)) for rng in tp.H))
+    tp.M != nothing && push!(conds, any(range_in(rng, minute(ts.start):minute(ts.end_)) for rng in tp.M))
+    tp.S != nothing && push!(conds, any(range_in(rng, second(ts.start):second(ts.end_)) for rng in tp.S))
+    all(conds)
+end
+
+"""
+    range_in(b::UnitRange{Int64}, a::UnitRange{Int64})
+
+Test whether `b` is fully contained in `a`.
+"""
+range_in(b::UnitRange{Int64}, a::UnitRange{Int64}) = b.start >= a.start && b.stop <= a.stop
 
 """
     checkout_spinemodeldb(db_url)
