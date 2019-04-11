@@ -30,11 +30,11 @@ function constraint_stor_state_init(m::Model, stor_state)
             haskey(stor_state, (c, stor, t)),
             stor_state_init(commodity__storage=(c, stor)) != nothing
         ]) || continue
-    @constraint(
-        m,
-        + stor_state[c, stor, t]
-        <=
-        + stor_state_init(commodity__storage=(c, stor))
-    )
-end
+        @constraint(
+            m,
+            + stor_state[c, stor, t]
+            <=
+            + stor_state_init(commodity__storage=(c, stor))
+        )
+    end
 end

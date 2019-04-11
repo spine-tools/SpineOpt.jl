@@ -4,7 +4,11 @@ using SpineInterface
 using SpineModel
 using Dates
 using JuMP
-using Gurobi
+try
+    using Gurobi
+catch
+    using Clp
+end
 
 ##
 # Export contents of database into the current session
@@ -21,12 +25,16 @@ println("Convenience functions created \n --------------------------------------
 ####
 # Init model
 println("--------------------------------------------\n Initializing model")
-m = Model(with_optimizer(Gurobi.Optimizer))
+m = try
+    Model(with_optimizer(Gurobi.Optimizer))
+catch
+    Model(with_optimizer(Clp.Optimizer))
+end
 ##
 # Create decision variables
-flow = generate_variable_flow(m)
-trans = generate_variable_trans(m)
-stor_state = generate_variable_stor_state(m)
+flow = variable_flow(m)
+trans = variable_trans(m)
+stor_state = variable_stor_state(m)
 ## Create objective function
 production_cost = objective_minimize_production_cost(m, flow)
 
