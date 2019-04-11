@@ -85,10 +85,10 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
         + reduce(
             +,
             flow[c_out, n, u, :out, t1]*duration(time_slice=t1)[1].value
-            for (c_out, n, tblock) in commodity__node__unit__direction__temporal_block(unit=u, direction=:out)
-                for t1 in t_in_t(t_long=t)
-                    if c_out in commodity_group__commodity(commodity_group=cg_out)
-                        && haskey(flow,(c_out,n,u,:out,t1));
+            for c_out in commodity_group__commodity(commodity_group=cg_out)
+                for (n, tblock) in commodity__node__unit__direction__temporal_block(unit=u, direction=:out, commodity = c_out)
+                    for t1 in t_in_t(t_long=t)
+                        if haskey(flow,(c_out,n,u,:out,t1));
                         init= 0
         )
         ==
@@ -96,10 +96,10 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
             * reduce(
                 +,
                 flow[c_in, n, u, :in, t2]*duration(time_slice=t2)[1].value
-                for (c_in, n, tblock) in commodity__node__unit__direction__temporal_block(unit=u, direction=:in)
-                    for t2 in t_in_t(t_long=t)
-                        if c_in in commodity_group__commodity(commodity_group=cg_in)
-                            && haskey(flow,(c_in,n,u,:in,t2));
+                for c_in in commodity_group__commodity(commodity_group=cg_in)
+                    for (n, tblock) in commodity__node__unit__direction__temporal_block(unit=u, direction=:in, commodity = c_in)
+                        for t2 in t_in_t(t_long=t)
+                        if haskey(flow,(c_in,n,u,:in,t2));
                             init = 0
             )
         )

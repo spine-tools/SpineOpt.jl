@@ -33,7 +33,7 @@ function generate_time_slice()
         time_slice_start = temp_block_start
         i = 1
         while time_slice_start <  temp_block_end
-            duration = time_slice_duration(temporal_block=k)(t=i)
+            duration = time_slice_duration(temporal_block=blk)(t=i)
             time_slice_end = time_slice_start + duration
             if time_slice_end > temp_block_end
                 time_slice_end = temp_block_end
