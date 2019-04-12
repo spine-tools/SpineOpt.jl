@@ -171,14 +171,14 @@ function (p::TimeSeriesParameter)(;t::Union{TimeSlice,Nothing}=nothing)
     end
     if p.repeat
         if start > p.indexes[end]
-            # Move start back to indexes range
+            # Move start back within indexes range
             mismatch = start - p.indexes[1]
             repetitions = div(mismatch, p.span)
             start -= repetitions * p.span
             end_ = start + duration
         end
         if end_ > p.indexes[end]
-            # Move end_ back to indexes range
+            # Move end_ back within indexes range
             mismatch = end_ - p.indexes[1]
             repetitions = div(mismatch, p.span)
             end_ -= repetitions * p.span
@@ -194,7 +194,7 @@ function (p::TimeSeriesParameter)(;t::Union{TimeSlice,Nothing}=nothing)
             else
                 value = -mean(p.values[b:a])
             end
-            value + repetitions * p.mean_value  # repetitions holds the number of times we rolled back the end
+            value + repetitions * p.mean_value  # repetitions holds the number of rolls we move back the end
         end
     else
         a = findfirst(i -> i >= start, p.indexes)
