@@ -164,7 +164,7 @@ function (p::TimeSeriesParameter)(;t::Union{TimeSlice,Nothing}=nothing)
     t === nothing && error("argument `t` missing")
     start = t.start
     end_ = t.end_
-    duration = end_ - start  # TODO: maybe store duration in time slice struct?
+    duration = t.duration
     if p.ignore_year
         start -= Year(start)
         end_ = start + duration

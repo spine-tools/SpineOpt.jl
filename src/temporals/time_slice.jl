@@ -20,8 +20,9 @@
 mutable struct TimeSlice
     start::DateTime
     end_::DateTime
+    duration::Period
     JuMP_name::Union{String,Nothing}
-    TimeSlice(x, y, n) = x > y ? error("out of order") : new(x, y, n)
+    TimeSlice(x, y, n) = x > y ? error("out of order") : new(x, y, Minute(y - x), n)
 end
 
 TimeSlice(start::DateTime, end_::DateTime) = TimeSlice(start, end_, nothing)

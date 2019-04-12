@@ -114,6 +114,8 @@ function generate_time_slice()
              1440 minutes
              ```
             """
+            # NOTE: we are saving the duration in the TimeSlice struct, is this still needed?
+            # It involves some lookup that may become expensive
             function $(Symbol(functionname_duration))(;time_slice=nothing)
                 if  time_slice == nothing
                     $list_duration
