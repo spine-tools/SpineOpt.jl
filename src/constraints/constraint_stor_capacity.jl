@@ -27,14 +27,14 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 function constraint_stor_capacity(m::Model, stor_state)
     @butcher for (c, stor) in commodity__storage(), t in time_slice()
         all([
-            stor_capacity(commodity__storage=(c,stor)) != nothing
+            stor_capacity(commodity=c, storage=stor) != nothing
             haskey(stor_state, (c, stor, t))
         ]) || continue
         @constraint(
             m,
             stor_state[c, stor, t]
             <=
-            stor_capacity(commodity__storage=(c, stor))
+            stor_capacity(commodity=c, storage=stor)
         )
     end
 end

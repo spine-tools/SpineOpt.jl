@@ -31,9 +31,9 @@ function constraint_flow_capacity(m::Model, flow)
     @butcher for (u, c) in unit__commodity(), (n,d) in commodity__node__unit__direction(unit=u, commodity=c), t in time_slice()
         all([
             haskey(flow, (c, n, u, d, t)),
-            unit_capacity(unit__commodity=(u, c)) != nothing,
+            unit_capacity(unit=u, commodity=c) != nothing,
             number_of_units(unit=u) != nothing,
-            unit_conv_cap_to_flow(unit__commodity=(u,c)) != nothing,
+            unit_conv_cap_to_flow(unit=u, commodity=c) != nothing,
             avail_factor(unit=u) != nothing
         ]) || continue
         @constraint(
@@ -41,9 +41,9 @@ function constraint_flow_capacity(m::Model, flow)
             + flow[c, n, u, d, t]
             <=
             + avail_factor(unit=u)
-                * unit_capacity(unit__commodity=(u,c))
+                * unit_capacity(unit=u, commodity=c)
                     * number_of_units(unit=u)
-                        * unit_conv_cap_to_flow(unit__commodity=(u,c))
+                        * unit_conv_cap_to_flow(unit=u, commodity=c)
         )
     end
 end
