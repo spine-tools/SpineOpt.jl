@@ -158,7 +158,7 @@ function generate_time_slice_relationships()
                 if t_overlap == nothing
                     $list_t_overlaps_t
                 else
-                    [t2 for (t1, t2) in $list_t_overlaps_t if t1 == t_overlap]
+                    [t2 for (t1, t2) in $list_t_overlaps_t if t1 in t_overlap]
                 end
             end
             """
