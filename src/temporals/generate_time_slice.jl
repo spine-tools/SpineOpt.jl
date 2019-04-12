@@ -118,8 +118,9 @@ function generate_time_slice()
                 if  time_slice == nothing
                     $list_duration
                 else
-                    t_duration = [t2 for (t1, t2) in $list_duration if t1 == time_slice]
-                    t_duration[1].value
+                    i = findfirst(t -> t[1] == time_slice, $list_duration)
+                    t_duration = $list_duration[i][2]
+                    t_duration.value
                 end
             end
             export $(Symbol(functionname_duration))
