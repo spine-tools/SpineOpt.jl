@@ -29,6 +29,7 @@ function generate_time_slice_relationships()
     list_t_in_t_excl = []
     list_t_overlaps_t = []
     list_t_overlaps_t_excl = []
+    top_list = []
     for i in time_slice()
         for j in time_slice()
             if before(i, j)
@@ -56,6 +57,7 @@ function generate_time_slice_relationships()
         functionname_t_in_t_excl = "t_in_t_excl"
         functionname_t_overlaps_t = "t_overlaps_t"
         functionname_t_overlaps_t_excl = "t_overlaps_t_excl"
+        functionname_t_top_level = "t_top_level"
 
         @eval begin
             """
@@ -77,9 +79,9 @@ function generate_time_slice_relationships()
                 if t_before == t_after == nothing
                     $list_t_before_t
                 elseif t_before != nothing && t_after == nothing
-                    [t2 for (t1, t2) in $list_t_before_t if t1 == t_before]
+                    [t2 for (t1, t2) in $list_t_before_t if t1 in t_before]
                 elseif t_before == nothing && t_after != nothing
-                    [t1 for (t1, t2) in $list_t_before_t if t2 == t_after]
+                    [t1 for (t1, t2) in $list_t_before_t if t2 in t_after]
                 else
                     error("please specify just one of t_before and t_after")
                 end
@@ -105,9 +107,9 @@ function generate_time_slice_relationships()
                 if t_long == t_short == nothing
                     $list_t_in_t
                 elseif t_long != nothing && t_short == nothing
-                    [t2 for (t1, t2) in $list_t_in_t if t1 == t_long]
+                    [t2 for (t1, t2) in $list_t_in_t if t1 in t_long]
                 elseif t_long == nothing && t_short != nothing
-                    [t1 for (t1, t2) in $list_t_in_t if t2 == t_short]
+                    [t1 for (t1, t2) in $list_t_in_t if t2 in t_short]
                 else
                     error("please specify just one of t_long and t_short")
                 end
@@ -130,9 +132,9 @@ function generate_time_slice_relationships()
                 if t_long == t_short == nothing
                     $list_t_in_t_excl
                 elseif t_long != nothing && t_short == nothing
-                    [t2 for (t1, t2) in $list_t_in_t_excl if t1 == t_long]
+                    [t2 for (t1, t2) in $list_t_in_t_excl if t1 in t_long]
                 elseif t_long == nothing && t_short != nothing
-                    [t1 for (t1, t2) in $list_t_in_t_excl if t2 == t_short]
+                    [t1 for (t1, t2) in $list_t_in_t_excl if t2 in t_short]
                 else
                     error("please specify just one of t_long and t_short")
                 end
@@ -154,11 +156,15 @@ function generate_time_slice_relationships()
              Symbol("2018-02-22T10:30:00__2018-02-23T10:30:00")
              ```
             """
-            function $(Symbol(functionname_t_overlaps_t))(;t_overlap=nothing)
-                if t_overlap == nothing
+            function $(Symbol(functionname_t_overlaps_t))(;t_overlap=nothing,t_overlap1=nothing,t_overlap2=nothing)
+                if t_overlap == t_overlap1 == t_overlap2 == nothing
                     $list_t_overlaps_t
-                else
+                elseif t_overlap != nothing && t_overlap1 == t_overlap2 == nothing
                     [t2 for (t1, t2) in $list_t_overlaps_t if t1 in t_overlap]
+                elseif t_overlap == nothing && t_overlap1 != nothing && t_overlap2 != nothing
+                     overlap_list = [(t1,t2) for (t1, t2) in $list_t_overlaps_t if t1 in t_overlap1 && t2 in t_overlap2]
+                     t_list = vcat(first.(overlap_list),last.(overlap_list))
+                     t_list
                 end
             end
             """
@@ -179,7 +185,43 @@ function generate_time_slice_relationships()
                 if t_overlap == nothing
                     $list_t_overlaps_t
                 else
-                    [t2 for (t1, t2) in $list_t_overlaps_t_excl if t1 == t_overlap]
+                    [t2 for (t1, t2) in $list_t_overlaps_t_excl if t1 in t_overlap]
+                end
+            end
+
+            """
+                $($functionname_t_top_level)'(;class=entity, t::Union{Int64,String,Nothing}=nothing)
+
+            For a set of overlapping timeslices, the top most timeslices are returned.
+
+            # Examples
+            ```julia
+            julia> t_top_level(t_list=time_slice())
+            3-element Array{Any,1}:
+             (start: 2018-02-22T10:30:00, end: 2018-02-22T11:30:00) (JuMP_name: tb2__t1)
+             (start: 2018-02-22T11:30:00, end: 2018-02-22T12:30:00) (JuMP_name: tb2__t2)
+             (start: 2018-02-22T12:30:00, end: 2018-02-22T13:30:00) (JuMP_name: tb2__t3)
+             ```
+            """
+            function $(Symbol(functionname_t_top_level))(;t_list=nothing)
+                if t_list != nothing
+                    sort!(t_list)
+                    i=1
+                    j=1
+                    while i < length(t_list)
+                        while j <= length(t_list) && (t_list[i].start == t_list[j].start || t_list[i].end_ >= t_list[j].end_) ##NOTE: sufficient?
+                            if t_list[i].end_ < t_list[j].end_
+                                i = j
+                                j +=1
+                            else #go to next [j]
+                                j += 1
+                            end
+                        end
+                        push!($top_list, t_list[i])
+                        i = j
+                    end
+                    unique!($top_list)
+                    $top_list
                 end
             end
             export $(Symbol(functionname_t_before_t))
@@ -187,6 +229,7 @@ function generate_time_slice_relationships()
             export $(Symbol(functionname_t_in_t_excl))
             export $(Symbol(functionname_t_overlaps_t))
             export $(Symbol(functionname_t_overlaps_t_excl))
+            export $(Symbol(functionname_t_top_level))
         end
     end
 end
