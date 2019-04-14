@@ -32,8 +32,8 @@ function generate_time_slice()
         temp_block_end = end_datetime(temporal_block=blk)  # DateTime value
         time_slice_start = temp_block_start
         i = 1
-        while time_slice_start <  temp_block_end
-            duration = time_slice_duration(temporal_block=blk)(t=i)
+        while time_slice_start < temp_block_end
+            duration = time_slice_duration(temporal_block=blk)(i=i)
             time_slice_end = time_slice_start + duration
             if time_slice_end > temp_block_end
                 time_slice_end = temp_block_end
@@ -114,12 +114,15 @@ function generate_time_slice()
              1440 minutes
              ```
             """
+            # NOTE: we are saving the duration in the TimeSlice struct, is this still needed?
+            # It involves some lookup that may become expensive
             function $(Symbol(functionname_duration))(;time_slice=nothing)
                 if  time_slice == nothing
                     $list_duration
                 else
-                    t_duration = [t2 for (t1, t2) in $list_duration if t1 == time_slice]
-                    t_duration[1].value
+                    i = findfirst(t -> t[1] == time_slice, $list_duration)
+                    t_duration = $list_duration[i][2]
+                    t_duration.value
                 end
             end
             export $(Symbol(functionname_duration))

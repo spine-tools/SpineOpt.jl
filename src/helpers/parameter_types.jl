@@ -43,12 +43,20 @@ struct TimeSeriesParameter{I,V}
     ignore_year::Bool
     repeat::Bool
     span::Period
+    mean_value::V
     function TimeSeriesParameter(i::I, v::Array{V,1}, d, iy=false, r=false) where {I,V}
         if length(i) != length(v)
             error("lengths don't match")
         else
-            s = r ? i[end] - i[1] : Hour(0)
-            new{I,V}(i, v, d, iy, r, s)
+            if r
+                # Compute span and mean value to save work when accessing repeating time series
+                s = i[end] - i[1]
+                mv = mean(v)
+            else
+                s = zero(Hour)
+                mv = zero(V)
+            end
+            new{I,V}(i, v, d, iy, r, s, mv)
         end
     end
 end
@@ -73,10 +81,12 @@ end
 
 function TimeSeriesParameter(data::Dict, metadata::Dict, default)
     # Indexes come with data, so just look for "repeat" and "ignore_year" in metadata
-    d = sort(Dict(DateTime(k) => v for (k, v) in data))
     repeat = get(metadata, "repeat", false)
     ignore_year = get(metadata, "ignore_year", false)
-    TimeSeriesParameter(collect(keys(d)), collect(values(d)), default, ignore_year, repeat)
+    data = Dict(DateTime(k) => v for (k, v) in data)
+    ignore_year && (data = Dict(k - Year(k) => v for (k, v) in data))
+    data = sort(data)
+    TimeSeriesParameter(collect(keys(data)), collect(values(data)), default, ignore_year, repeat)
 end
 
 function TimeSeriesParameter(data::Array, metadata::Dict, default)
@@ -85,15 +95,16 @@ function TimeSeriesParameter(data::Array, metadata::Dict, default)
         TimeSeriesParameter(Dict(k => v for (k, v) in data), metadata, default)
     else
         # Assume one column array format
-        ignore_year = get(metadata, "ignore_year", false)
-        repeat = get(metadata, "repeat", false)
         if haskey(metadata, "start")
             start = DateTime(metadata["start"], iso8601dateformat)
+            ignore_year = get(metadata, "ignore_year", false)
+            repeat = get(metadata, "repeat", false)
         else
             start = DateTime(1)
-            ignore_year = true
-            repeat = true
+            ignore_year = get(metadata, "ignore_year", true)
+            repeat = get(metadata, "repeat", true)
         end
+        ignore_year && (start -= Year(start))
         len = length(data) - 1
         if haskey(metadata, "resolution")
             resolution = metadata["resolution"]
@@ -151,12 +162,49 @@ end
 
 function (p::TimeSeriesParameter)(;t::Union{TimeSlice,Nothing}=nothing)
     t === nothing && error("argument `t` missing")
-    a, b = indexin(t, p)
-    if a === nothing || b === nothing || b < a
-        @warn("$p is not defined on $t, using default value...")
-        p.default
+    start = t.start
+    end_ = t.end_
+    duration = t.duration
+    if p.ignore_year
+        start -= Year(start)
+        end_ = start + duration
+    end
+    if p.repeat
+        if start > p.indexes[end]
+            # Move start back within indexes range
+            mismatch = start - p.indexes[1]
+            repetitions = div(mismatch, p.span)
+            start -= repetitions * p.span
+            end_ = start + duration
+        end
+        if end_ > p.indexes[end]
+            # Move end_ back within indexes range
+            mismatch = end_ - p.indexes[1]
+            repetitions = div(mismatch, p.span)
+            end_ -= repetitions * p.span
+        end
+        a = findfirst(i -> i >= start, p.indexes)
+        b = findlast(i -> i < end_, p.indexes)
+        if a === nothing || b === nothing
+            @warn("$p is not defined on $t, using default value...")
+            p.default
+        else
+            if a <= b
+                value = mean(p.values[a:b])
+            else
+                value = -mean(p.values[b:a])
+            end
+            value + repetitions * p.mean_value  # repetitions holds the number of rolls we move back the end
+        end
     else
-        mean(p.values[a:b])
+        a = findfirst(i -> i >= start, p.indexes)
+        b = findlast(i -> i < end_, p.indexes)
+        if a === nothing || b === nothing
+            @warn("$p is not defined on $t, using default value...")
+            p.default
+        else
+            mean(p.values[a:b])
+        end
     end
 end
 

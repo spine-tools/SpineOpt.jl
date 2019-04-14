@@ -26,8 +26,8 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 is specified.
 """
 
-# 2) Since all functions to generate the constraint are in the constraints folder, could we rename the files by removing 'constraint_'?
-#   @manuelma: good idea, perhaps we could do the same for objective and variable?
+# Since all functions to generate the constraint are in the constraints folder, could we rename the files by removing 'constraint_'?
+# good idea, but it looks like doesn't work?
 function constraint_fix_ratio_out_in_flow(m::Model, flow)
     @butcher for (u, cg_out, cg_in) in unit__out_commodity_group__in_commodity_group(), t in time_slice()
         all([
@@ -36,28 +36,28 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
             (any(haskey(flow,(c_in,n,u,:in,t)) for c_in in commodity_group__commodity(commodity_group=cg_in) for (n, tblock) in commodity__node__unit__direction__temporal_block(unit=u, direction=:in, commodity = c_in)) && any(haskey(flow,(c_out,n,u,:out,t1)) for c_out in commodity_group__commodity(commodity_group=cg_out) for (n, tblock) in commodity__node__unit__direction__temporal_block(unit=u, direction=:out, commodity = c_out) for t1 in t_in_t(t_long=t)))
             ])
             fix_ratio_out_in_flow(unit__out_commodity_group__in_commodity_group=(u, cg_out, cg_in))(t=t) != nothing
-       ])   || continue
+       ]) || continue
         @constraint(
         m,
         + reduce(
             +,
-            flow[c_out, n, u, :out, t1]*duration(time_slice=t1)[1].value
+            flow[c_out, n, u, :out, t1] * t1.duration.value
             for c_out in commodity_group__commodity(commodity_group=cg_out)
                 for (n, tblock) in commodity__node__unit__direction__temporal_block(unit=u, direction=:out, commodity = c_out)
                     for t1 in t_in_t(t_long=t)
                         if haskey(flow,(c_out,n,u,:out,t1));
-                        init= 0
+            init= 0
         )
         ==
         + fix_ratio_out_in_flow(unit__out_commodity_group__in_commodity_group=(u, cg_out, cg_in))(t=t)
             * reduce(
                 +,
-                flow[c_in, n, u, :in, t2]*duration(time_slice=t2)[1].value
+                flow[c_in, n, u, :in, t2] * t2.duration.value
                 for c_in in commodity_group__commodity(commodity_group=cg_in)
                     for (n, tblock) in commodity__node__unit__direction__temporal_block(unit=u, direction=:in, commodity = c_in)
                         for t2 in t_in_t(t_long=t)
-                        if haskey(flow,(c_in,n,u,:in,t2));
-                            init = 0
+                            if haskey(flow,(c_in,n,u,:in,t2));
+                init = 0
             )
         )
     end

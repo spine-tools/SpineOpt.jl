@@ -20,16 +20,17 @@
 mutable struct TimeSlice
     start::DateTime
     end_::DateTime
+    duration::Period
     JuMP_name::Union{String,Nothing}
-    TimeSlice(x, y, n) = x > y ? error("out of order") : new(x, y, n)
+    TimeSlice(x, y, n) = x > y ? error("out of order") : new(x, y, Minute(y - x), n)
 end
 
 TimeSlice(start::DateTime, end_::DateTime) = TimeSlice(start, end_, nothing)
 
 function Base.show(io::IO, time_slice::TimeSlice)
-    str = "(start: $(time_slice.start), end: $(time_slice.end_))"
+    str = "$(time_slice.start)...$(time_slice.end_)"
     if time_slice.JuMP_name != nothing
-        str = "$str (JuMP_name: $(time_slice.JuMP_name))"
+        str = "$str ($(time_slice.JuMP_name))"
     end
     print(io, str)
 end

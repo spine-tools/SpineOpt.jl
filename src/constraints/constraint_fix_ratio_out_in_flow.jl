@@ -26,7 +26,8 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 is specified.
 """
 
-# 2) Since all functions to generate the constraint are in the constraints folder, could we rename the files by removing 'constraint_'?
+# Since all functions to generate the constraint are in the constraints folder, could we rename the files by removing 'constraint_'?
+# good idea, but it looks like doesn't work?
 function constraint_fix_ratio_out_in_flow(m::Model, flow)
     for (u, cg_out, cg_in) in unit__out_commodity_group__in_commodity_group()
         time_slices_constraint_out = []
@@ -58,14 +59,14 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
 
 ######## give flow keys? e.g. for flow in flowkeys ...
         @butcher for t in t_top_level(t_list = overlaps)
-            if fix_ratio_out_in_flow(unit__out_commodity_group__in_commodity_group=(u, cg_out, cg_in))(t=t) == nothing
+            if fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)(t=t) == nothing
                 continue
             end
             @constraint(
                 m,
                 + reduce(
                     +,
-                    flow[c_out, n, u, :out, t1]*duration(time_slice=t1)
+                    flow[c_out, n, u, :out, t1] * t1.duration.value
                     for c_out in commodity_group__commodity(commodity_group=cg_out)
                         for (n, tblock) in commodity__node__unit__direction__temporal_block(
                                 unit=u, direction=:out, commodity=c_out)
@@ -74,10 +75,10 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
                     init= 0
                 )
                 ==
-                + fix_ratio_out_in_flow(unit__out_commodity_group__in_commodity_group=(u, cg_out, cg_in))(t=t)
+                + fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)(t=t)
                     * reduce(
                         +,
-                        flow[c_in, n, u, :in, t2]*duration(time_slice=t2)
+                        flow[c_in, n, u, :in, t2] * t2.duration.value
                         for c_in in commodity_group__commodity(commodity_group=cg_in)
                             for (n, tblock) in commodity__node__unit__direction__temporal_block(
                                     unit=u, direction=:in, commodity=c_in)

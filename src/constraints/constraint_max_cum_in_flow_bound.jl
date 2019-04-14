@@ -30,9 +30,6 @@ function constraint_max_cum_in_flow_bound(m::Model, flow)
         m,
         [
             (ug, cg) in unit_group__commodity_group()
-            #ug in unit_group(),
-            #cg in commodity_group();
-            #max_cum_in_flow_bound(unit_group__commodity_group=(ug, cg)) != nothing
         ],
         + reduce(
             +,
@@ -43,6 +40,6 @@ function constraint_max_cum_in_flow_bound(m::Model, flow)
             init=0
         )
         <=
-        + max_cum_in_flow_bound(unit_group__commodity_group=(ug, cg))
+        + max_cum_in_flow_bound(unit_group=ug, commodity_group=cg)
     )
 end

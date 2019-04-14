@@ -102,44 +102,6 @@ end
 parse_duration(int::Int64) = Minute(int)
 
 """
-    indexin(t::TimeSlice, p::TimeSeriesParameter)
-
-A pair of indexes in the time series corresponding to the start and end of the time slice.
-"""
-function indexin(t::TimeSlice, p::TimeSeriesParameter)
-    indexin(t.start, t.end_, p.indexes, p.span, p.ignore_year, p.repeat)
-end
-
-function indexin(
-        start::DateTime,
-        end_::DateTime,
-        indexes::Union{Array{DateTime,1},StepRange{DateTime,T} where T <: Period},
-        span::Period,
-        ignore_year::Bool,
-        repeat::Bool
-    )
-    if ignore_year
-        start -= Year(start)
-        end_ -= Year(end_)
-        indexes = [i - Year(i) for i in indexes]
-        indexin(start, end_, indexes, span, false, repeat)
-    elseif repeat
-        if start > indexes[end]
-            # Move start and end_ back to indexes range, rather than the other way around
-            mismatch = start - indexes[1]
-            repetitions = div(mismatch, span)
-            start -= repetitions * span
-            end_ -= repetitions * span
-        end
-        indexin(start, end_, indexes, span, ignore_year, false)
-    else
-        a = findfirst(i -> i >= start, indexes)
-        b = findlast(i -> i < end_, indexes)
-        a, b
-    end
-end
-
-"""
     match(ts::TimeSlice, tp::TimePattern)
 
 Test whether a time slice matches a time pattern.
