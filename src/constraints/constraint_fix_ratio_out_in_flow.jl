@@ -30,33 +30,15 @@ is specified.
 # good idea, but it looks like doesn't work?
 function constraint_fix_ratio_out_in_flow(m::Model, flow)
     for (u, cg_out, cg_in) in unit__out_commodity_group__in_commodity_group()
-        time_slices_constraint_out = []
-        time_slices_constraint_in = []
         ## get all time_slices for which the flow variables are defined (direction = :out)
-        for c_out in commodity_group__commodity(commodity_group=cg_out)
-            for (n, tblock) in commodity__node__unit__direction__temporal_block(unit=u, direction=:out, commodity=c_out)
-                for t in time_slice(temporal_block=tblock)
-                    push!(time_slices_constraint_out ,t)
-                end
-            end
-        end
+        time_slices_out = vcat([t for (c_out,n,u_out,d,t) in keys(flow) if c_out in commodity_group__commodity(commodity_group=cg_out) && d == :out && u_out==u])
+        time_slices_in = vcat([t for (c_in,n,u_in,d,t) in keys(flow) if c_in in commodity_group__commodity(commodity_group=cg_in) && d == :in && u_in==u])
         ## get all time_slices for which the flow variables are defined (direction = :in)
-        for c_in in commodity_group__commodity(commodity_group=cg_in)
-            for (n, tblock) in commodity__node__unit__direction__temporal_block(unit=u, direction=:in, commodity=c_in)
-                for t in time_slice(temporal_block=tblock)
-                    push!(time_slices_constraint_in, t)
-                end
-            end
-        end
         ## remove duplicates (e.g. if two flows of the same direction are defined on the same temp level)
-        unique!(time_slices_constraint_out)
-        unique!(time_slices_constraint_in)
+        unique!(time_slices_out)
+        unique!(time_slices_in)
         ## look for overlapping timeslice -> only timeslices which actually have an overlap should be considered
-        overlaps = t_overlaps_t(t_overlap1 = time_slices_constraint_in,t_overlap2 = time_slices_constraint_out)
-
-        ## within overlapping timeslices -> get the ones with highest resolution
-        # TODO: how to handle if timeslices are not ordered, include ordering (-> is this always the case anyways)
-
+        overlaps = t_overlaps_t(t_overlap1 = time_slices_in,t_overlap2 = time_slices_out)
 ######## give flow keys? e.g. for flow in flowkeys ...
         @butcher for t in t_top_level(t_list = overlaps)
             if fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)(t=t) == nothing
@@ -67,25 +49,17 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
                 + reduce(
                     +,
                     flow[c_out, n, u, :out, t1] * t1.duration.value
-                    for c_out in commodity_group__commodity(commodity_group=cg_out)
-                        for (n, tblock) in commodity__node__unit__direction__temporal_block(
-                                unit=u, direction=:out, commodity=c_out)
-                            for t1 in t_in_t(t_long=t)
-                                if haskey(flow,(c_out,n,u,:out,t1));
+                    for (c_out,n,u_out,d,t1) in keys(flow) if c_out in commodity_group__commodity(commodity_group=cg_out) && d == :out && u_out==u && t1 in t_in_t(t_long=t);
                     init= 0
                 )
                 ==
                 + fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)(t=t)
-                    * reduce(
-                        +,
-                        flow[c_in, n, u, :in, t2] * t2.duration.value
-                        for c_in in commodity_group__commodity(commodity_group=cg_in)
-                            for (n, tblock) in commodity__node__unit__direction__temporal_block(
-                                    unit=u, direction=:in, commodity=c_in)
-                                for t2 in t_in_t(t_long=t)
-                                    if haskey(flow,(c_in,n,u,:in,t2));
-                        init = 0
-                    )
+                + reduce(
+                    +,
+                    flow[c_in, n, u, :in, t1] * t1.duration.value
+                    for (c_in,n,u_in,d,t1) in keys(flow) if c_in in commodity_group__commodity(commodity_group=cg_in) && d == :in && u_in==u && t1 in t_in_t(t_long=t);
+                    init= 0
+                )
             )
         end
     end
