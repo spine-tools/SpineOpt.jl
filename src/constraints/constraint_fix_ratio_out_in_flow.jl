@@ -31,8 +31,8 @@ is specified.
 function constraint_fix_ratio_out_in_flow(m::Model, flow)
     for (u, cg_out, cg_in) in unit__out_commodity_group__in_commodity_group()
         ## get all time_slices for which the flow variables are defined (direction = :out)
-        time_slices_out = vcat([t for (c_out,n,u_out,d,t) in keys(flow) if c_out in commodity_group__commodity(commodity_group=cg_out) && d == :out && u_out==u])
-        time_slices_in = vcat([t for (c_in,n,u_in,d,t) in keys(flow) if c_in in commodity_group__commodity(commodity_group=cg_in) && d == :in && u_in==u])
+        time_slices_out = [t for (c_out,n,u_out,d,t) in keys(flow) if c_out in commodity_group__commodity(commodity_group=cg_out) && d == :out && u_out==u]
+        time_slices_in = [t for (c_in,n,u_in,d,t) in keys(flow) if c_in in commodity_group__commodity(commodity_group=cg_in) && d == :in && u_in==u]
         ## get all time_slices for which the flow variables are defined (direction = :in)
         ## remove duplicates (e.g. if two flows of the same direction are defined on the same temp level)
         unique!(time_slices_out)
@@ -54,7 +54,7 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
                 )
                 ==
                 + fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)(t=t)
-                + reduce(
+                * reduce(
                     +,
                     flow[c_in, n, u, :in, t1] * t1.duration.value
                     for (c_in,n,u_in,d,t1) in keys(flow) if c_in in commodity_group__commodity(commodity_group=cg_in) && d == :in && u_in==u && t1 in t_in_t(t_long=t);
