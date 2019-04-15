@@ -196,7 +196,8 @@ function generate_time_slice_relationships()
             """
             function $(Symbol(functionname_t_top_level))(t_list::Union{TimeSlice,Array{TimeSlice,1}})
                 t_list isa Array || (t_list = [t_list])
-                sort!(t_list)
+                # NOTE: sorting enables looking for top-level items by comparing the start of succesive items
+                sort!(t_list)  # e.g.: [(1, 2), (1, 3), (1, 4), (2, 4), (5, 6), (5, 7), ...]
                 top_list = []
                 i = 1
                 while i <= length(t_list)
