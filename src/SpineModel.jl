@@ -32,6 +32,7 @@ import Base: convert, +, -, *, /, <
 
 # Export helpers
 export checkout_spinemodeldb
+export run_spinemodel
 export value
 export pack_trailing_dims
 export @butcher
@@ -68,6 +69,7 @@ include("helpers/butcher.jl")
 include("helpers/parse_value.jl")
 include("helpers/parameter_types.jl")
 include("helpers/util.jl")
+include("helpers/run_spinemodel.jl")
 
 include("variables/variable_flow.jl")
 include("variables/variable_trans.jl")

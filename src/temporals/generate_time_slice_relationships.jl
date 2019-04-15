@@ -198,7 +198,7 @@ function generate_time_slice_relationships()
             end
 
             """
-                $($functionname_t_top_level)'(;t_overlap=nothing)
+                $($functionname_t_top_level)'(;t_list=nothing)
 
             For a set of overlapping timeslices, the top most timeslices are returned.
 
