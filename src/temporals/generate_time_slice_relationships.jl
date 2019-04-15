@@ -28,26 +28,17 @@ Create and export convenience functions to access time slice relationships:
 function generate_time_slice_relationships()
     list_t_succeeds_t = []
     list_t_in_t = []
-    list_t_in_t_excl = []
     list_t_overlaps_t = []
-    list_t_overlaps_t_excl = []
-    top_list = []
     for i in time_slice()
         for j in time_slice()
-            if before(i, j)
+            if suceeds(j, i)
                 push!(list_t_succeeds_t, tuple(i, j))
             end
             if in(j, i)
                 push!(list_t_in_t, tuple(i, j))
-                if i != j
-                    push!(list_t_in_t_excl, tuple(i, j))
-                end
             end
             if overlaps(i, j)
                 push!(list_t_overlaps_t, tuple(i, j))
-                if i != j
-                    push!(list_t_overlaps_t_excl, tuple(i, j))
-                end
             end
         end
     end
@@ -56,9 +47,9 @@ function generate_time_slice_relationships()
     # An alternative is to use `Set()` instead of `[]` to warranty uniqueness,
     # but then we lose the order - do we care about order?
     unique!(list_t_in_t)
-    unique!(list_t_in_t_excl)
     unique!(list_t_overlaps_t)
-    unique!(list_t_overlaps_t_excl)
+    list_t_in_t_excl = [(t1, t2) for (t1, t2) in list_t_in_t if t1 != t2]
+    list_t_overlaps_t_excl = [(t1, t2) for (t1, t2) in list_t_overlaps_t if t1 != t2]
 
     @suppress_err begin
         functionname_t_succeeds_t = "t_succeeds_t"
@@ -84,9 +75,9 @@ function generate_time_slice_relationships()
                 if t_before == t_after == nothing
                     $list_t_succeeds_t
                 elseif t_before != nothing && t_after == nothing
-                    unique!([t2 for (t1, t2) in $list_t_succeeds_t if t1 in t_before])
+                    unique(t2 for (t1, t2) in $list_t_succeeds_t if t1 in t_before)
                 elseif t_before == nothing && t_after != nothing
-                    unique!([t1 for (t1, t2) in $list_t_succeeds_t if t2 in t_after])
+                    unique(t1 for (t1, t2) in $list_t_succeeds_t if t2 in t_after)
                 else
                     error("please specify just one of `t_before` and `t_after`")
                 end
@@ -105,9 +96,9 @@ function generate_time_slice_relationships()
                 if t_long == t_short == nothing
                     $list_t_in_t
                 elseif t_long != nothing && t_short == nothing
-                    unique!([t2 for (t1, t2) in $list_t_in_t if t1 in t_long])
+                    unique(t2 for (t1, t2) in $list_t_in_t if t1 in t_long)
                 elseif t_long == nothing && t_short != nothing
-                    unique!([t1 for (t1, t2) in $list_t_in_t if t2 in t_short])
+                    unique(t1 for (t1, t2) in $list_t_in_t if t2 in t_short)
                 else
                     error("please specify just one of `t_long` and `t_short`")
                 end
@@ -123,9 +114,9 @@ function generate_time_slice_relationships()
                 if t_long == t_short == nothing
                     $list_t_in_t_excl
                 elseif t_long != nothing && t_short == nothing
-                    unique!([t2 for (t1, t2) in $list_t_in_t_excl if t1 in t_long])
+                    unique(t2 for (t1, t2) in $list_t_in_t_excl if t1 in t_long)
                 elseif t_long == nothing && t_short != nothing
-                    unique!([t1 for (t1, t2) in $list_t_in_t_excl if t2 in t_short])
+                    unique(t1 for (t1, t2) in $list_t_in_t_excl if t2 in t_short)
                 else
                     error("please specify just one of t_long and t_short")
                 end
@@ -141,28 +132,30 @@ function generate_time_slice_relationships()
             """
                 $($functionname_t_overlaps_t)(t_overlap::Union{TimeSlice,Array{TimeSlice,1}})
 
-            Return the list of time slices that have some time in common with `t_overlap`.
+            Return the list of time slices that have some time in common with `t_overlap`
+            (or any element in `t_overlap` if it's a list).
              ```
             """
             function $(Symbol(functionname_t_overlaps_t))(t_overlap::Union{TimeSlice,Array{TimeSlice,1}})
-                unique!([t2 for (t1, t2) in $list_t_overlaps_t if t1 in t_overlap])
+                unique(t2 for (t1, t2) in $list_t_overlaps_t if t1 in t_overlap)
             end
             """
-                $($functionname_t_overlaps_t)(t_overlap1::Union{TimeSlice,Array{TimeSlice,1}}, t_overlap2::Union{TimeSlice,Array{TimeSlice,1}})
+                $($functionname_t_overlaps_t)(t_list1::Union{TimeSlice,Array{TimeSlice,1}}, t_list2::Union{TimeSlice,Array{TimeSlice,1}})
 
-            Return the lisf of time slices in `t_overlap1` and `t_overlap2`.
+            Return a single lisf including all time slices from `t_list1` that overlap with any time slice in `t_list2`,
+            and all time slices from `t_list2` that overlap with any time slice in `t_list1`.
             """
             function $(Symbol(functionname_t_overlaps_t))(
-                    t_overlap1::Union{TimeSlice,Array{TimeSlice,1}},
-                    t_overlap2::Union{TimeSlice,Array{TimeSlice,1}}
+                    t_list1::Union{TimeSlice,Array{TimeSlice,1}},
+                    t_list2::Union{TimeSlice,Array{TimeSlice,1}}
                 )
-                overlap_list = [(t1, t2) for (t1, t2) in $list_t_overlaps_t if t1 in t_overlap1 && t2 in t_overlap2]
-                t_list = vcat(first.(overlap_list),last.(overlap_list))
-                unique!(t_list)
+                overlap_list = [(t1, t2) for (t1, t2) in $list_t_overlaps_t if t1 in t_list1 && t2 in t_list2]
+                t_list = vcat(first.(overlap_list), last.(overlap_list))
+                unique(t_list)
             end
 
             """
-                $($functionname_t_overlaps_t_excl)'()
+                $($functionname_t_overlaps_t_excl)()
 
             Return the list of tuples `(t1, t2)` where `t1` and `t2` are different and have some time in common.
              ```
@@ -172,62 +165,58 @@ function generate_time_slice_relationships()
             end
 
             """
-                $($functionname_t_overlaps_t_excl)'(t_overlap)
+                $($functionname_t_overlaps_t_excl)(t_overlap)
 
             Return the list of time slices that have some time in common with `t_overlap` excluding `t_overlap` itself.
             """
             function $(Symbol(functionname_t_overlaps_t_excl))(t_overlap::Union{TimeSlice,Array{TimeSlice,1}})
-                unique!([t2 for (t1, t2) in $list_t_overlaps_t_excl if t1 in t_overlap])
+                unique(t2 for (t1, t2) in $list_t_overlaps_t_excl if t1 in t_overlap)
             end
 
             """
-                $($functionname_t_overlaps_t_excl)'(t_overlap1, t_overlap2)
+                $($functionname_t_overlaps_t_excl)(t_list1, t_list2)
 
-            The tuples of the list '$($functionname_t_overlaps_t_excl)'. See '$($functionname_t_overlaps_t)'.
-            Difference: Excludes the timeslice itself
+            Return a single list including all time slices from `t_list1` that overlap with
+            (but are different from) any time slice in `t_list2`,
+            and all time slices from `t_list2` that overlap with
+            (but are different from) any time slice in `t_list1`.
             """
             function $(Symbol(functionname_t_overlaps_t_excl))(
-                    t_overlap1::Union{TimeSlice,Array{TimeSlice,1}},
-                    t_overlap2::Union{TimeSlice,Array{TimeSlice,1}})
-                overlap_list = [(t1, t2) for (t1, t2) in $list_t_overlaps_t_excl if t1 in t_overlap1 && t2 in t_overlap2]
+                    t_list1::Union{TimeSlice,Array{TimeSlice,1}},
+                    t_list2::Union{TimeSlice,Array{TimeSlice,1}})
+                overlap_list = [(t1, t2) for (t1, t2) in $list_t_overlaps_t_excl if t1 in t_list1 && t2 in t_list2]
                 t_list = vcat(first.(overlap_list), last.(overlap_list))
-                unique!(t_list)
+                unique(t_list)
             end
 
             """
-                $($functionname_t_top_level)'(t_list::Union{TimeSlice,Array{TimeSlice,1}})
+                $($functionname_t_top_level)(t_list::Union{TimeSlice,Array{TimeSlice,1}})
 
-            For a set of overlapping timeslices, the top most timeslices are returned.
-
-            # Examples
-            ```julia
-            julia> t_top_level(time_slice())
-            3-element Array{Any,1}:
-             (start: 2018-02-22T10:30:00, end: 2018-02-22T11:30:00) (JuMP_name: tb2__t1)
-             (start: 2018-02-22T11:30:00, end: 2018-02-22T12:30:00) (JuMP_name: tb2__t2)
-             (start: 2018-02-22T12:30:00, end: 2018-02-22T13:30:00) (JuMP_name: tb2__t3)
-             ```
+            Return the list of top-level time slices from `t_list` (those that aren't contained in any other).
             """
             function $(Symbol(functionname_t_top_level))(t_list::Union{TimeSlice,Array{TimeSlice,1}})
                 t_list isa Array || (t_list = [t_list])
-                    sort!(t_list)
-                    i=1
-                    j=1
-                    while i < length(t_list)
-                        while j <= length(t_list) && (t_list[i].start == t_list[j].start || t_list[i].end_ >= t_list[j].end_) ##NOTE: sufficient?
-                            if t_list[i].end_ < t_list[j].end_
-                                i = j
-                                j +=1
-                            else #go to next [j]
-                                j += 1
-                            end
+                sort!(t_list)
+                top_list = []
+                i = 1
+                while i <= length(t_list)
+                    if i != length(t_list) && t_list[i].start == t_list[i + 1].start
+                        # Keep going, we haven't reached top-level
+                        i += 1
+                    else
+                        # Top-level reached: either we're at the end, or the next item has a different start
+                        push!(top_list, t_list[i])
+                        # Advance i to the beginning of the next 'section'
+                        end_ = t_list[i].end_  # This marks the end of the current section
+                        i += 1
+                        while i <= length(t_list) && t_list[i].start < end_
+                            i += 1
                         end
-                        push!($top_list, t_list[i])
-                        i = j
                     end
-                    unique!($top_list)
-                    $top_list
+                end
+                unique(top_list)
             end
+
             export $(Symbol(functionname_t_succeeds_t))
             export $(Symbol(functionname_t_in_t))
             export $(Symbol(functionname_t_in_t_excl))
