@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
+##TODO:
+# have an eye on where unique! is necessary for speedup
 
 """
     generate_time_slice_relationships(detailed_timeslicemap)
@@ -49,7 +50,11 @@ function generate_time_slice_relationships()
             end
         end
     end
-
+    #TODO: instead of unique -> check beforehand whether timeslice tuple is already added
+    unique!(list_t_in_t)
+    unique!(list_t_in_t_excl)
+    unique!(list_t_overlaps_t)
+    unique!(list_t_overlaps_t_excl)
 
     @suppress_err begin
         functionname_t_before_t = "t_before_t"
@@ -79,9 +84,9 @@ function generate_time_slice_relationships()
                 if t_before == t_after == nothing
                     $list_t_before_t
                 elseif t_before != nothing && t_after == nothing
-                    [t2 for (t1, t2) in $list_t_before_t if t1 in t_before]
+                    unique!([t2 for (t1, t2) in $list_t_before_t if t1 in t_before])
                 elseif t_before == nothing && t_after != nothing
-                    [t1 for (t1, t2) in $list_t_before_t if t2 in t_after]
+                    unique!([t1 for (t1, t2) in $list_t_before_t if t2 in t_after])
                 else
                     error("please specify just one of t_before and t_after")
                 end
@@ -107,9 +112,9 @@ function generate_time_slice_relationships()
                 if t_long == t_short == nothing
                     $list_t_in_t
                 elseif t_long != nothing && t_short == nothing
-                    [t2 for (t1, t2) in $list_t_in_t if t1 in t_long]
+                    unique!([t2 for (t1, t2) in $list_t_in_t if t1 in t_long])
                 elseif t_long == nothing && t_short != nothing
-                    [t1 for (t1, t2) in $list_t_in_t if t2 in t_short]
+                    unique!([t1 for (t1, t2) in $list_t_in_t if t2 in t_short])
                 else
                     error("please specify just one of t_long and t_short")
                 end
@@ -132,9 +137,9 @@ function generate_time_slice_relationships()
                 if t_long == t_short == nothing
                     $list_t_in_t_excl
                 elseif t_long != nothing && t_short == nothing
-                    [t2 for (t1, t2) in $list_t_in_t_excl if t1 in t_long]
+                    unique!([t2 for (t1, t2) in $list_t_in_t_excl if t1 in t_long])
                 elseif t_long == nothing && t_short != nothing
-                    [t1 for (t1, t2) in $list_t_in_t_excl if t2 in t_short]
+                    unique!([t1 for (t1, t2) in $list_t_in_t_excl if t2 in t_short])
                 else
                     error("please specify just one of t_long and t_short")
                 end
@@ -160,11 +165,11 @@ function generate_time_slice_relationships()
                 if t_overlap == t_overlap1 == t_overlap2 == nothing
                     $list_t_overlaps_t
                 elseif t_overlap != nothing && t_overlap1 == t_overlap2 == nothing
-                    [t2 for (t1, t2) in $list_t_overlaps_t if t1 in t_overlap]
+                    unique!([t2 for (t1, t2) in $list_t_overlaps_t if t1 in t_overlap])
                 elseif t_overlap == nothing && t_overlap1 != nothing && t_overlap2 != nothing
                      overlap_list = [(t1,t2) for (t1, t2) in $list_t_overlaps_t if t1 in t_overlap1 && t2 in t_overlap2]
                      t_list = vcat(first.(overlap_list),last.(overlap_list))
-                     t_list
+                     unique!(t_list)
                 end
             end
             """
@@ -185,7 +190,7 @@ function generate_time_slice_relationships()
                 if t_overlap == nothing
                     $list_t_overlaps_t
                 else
-                    [t2 for (t1, t2) in $list_t_overlaps_t_excl if t1 in t_overlap]
+                    unique!([t2 for (t1, t2) in $list_t_overlaps_t_excl if t1 in t_overlap])
                 end
             end
 
