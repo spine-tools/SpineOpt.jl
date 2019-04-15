@@ -25,7 +25,7 @@
 A tuple returned for a specific timeslice t', returning all timeslices t'' directly before t'.
 """
 function generate_time_slice_relationships()
-    list_t_before_t = []
+    list_t_succeeds_t = []
     list_t_in_t = []
     list_t_in_t_excl = []
     list_t_overlaps_t = []
@@ -34,7 +34,7 @@ function generate_time_slice_relationships()
     for i in time_slice()
         for j in time_slice()
             if before(i, j)
-                push!(list_t_before_t, tuple(i, j))
+                push!(list_t_succeeds_t, tuple(i, j))
             end
             if in(j, i)
                 push!(list_t_in_t, tuple(i, j))
@@ -60,7 +60,7 @@ function generate_time_slice_relationships()
     unique!(list_t_overlaps_t_excl)
 
     @suppress_err begin
-        functionname_t_before_t = "t_before_t"
+        functionname_t_succeeds_t = "t_succeeds_t"
         functionname_t_in_t = "t_in_t"
         functionname_t_in_t_excl = "t_in_t_excl"
         functionname_t_overlaps_t = "t_overlaps_t"
@@ -69,27 +69,27 @@ function generate_time_slice_relationships()
 
         @eval begin
             """
-                $($functionname_t_before_t)(;t_before=nothing, t_after=nothing)
+                $($functionname_t_succeeds_t)(;t_before=nothing, t_after=nothing)
 
-            The tuples of the list '$($functionname_t_before_t)'. Return all time_slices which coincide in there start-
+            The tuples of the list '$($functionname_t_succeeds_t)'. Return all time_slices which coincide in there start-
             and enddate, respectively.
             The argument `t_before` or `t_after` can be used, e.g., to return the corresponding timeslices which
             are directly after or before, respective to the entered timeslice
 
             # Examples
             ```julia
-            julia> t_before_t(t_before = Symbol("2018-02-23T09:00:00__2018-02-23T09:30:00"))
+            julia> t_succeeds_t(t_before = Symbol("2018-02-23T09:00:00__2018-02-23T09:30:00"))
             1-element Array{Symbol,1}:
              Symbol("2018-02-23T09:30:00__2018-02-23T10:00:00")
              ```
             """
-            function $(Symbol(functionname_t_before_t))(;t_before=nothing, t_after=nothing)
+            function $(Symbol(functionname_t_succeeds_t))(;t_before=nothing, t_after=nothing)
                 if t_before == t_after == nothing
-                    $list_t_before_t
+                    $list_t_succeeds_t
                 elseif t_before != nothing && t_after == nothing
-                    unique!([t2 for (t1, t2) in $list_t_before_t if t1 in t_before])
+                    unique!([t2 for (t1, t2) in $list_t_succeeds_t if t1 in t_before])
                 elseif t_before == nothing && t_after != nothing
-                    unique!([t1 for (t1, t2) in $list_t_before_t if t2 in t_after])
+                    unique!([t1 for (t1, t2) in $list_t_succeeds_t if t2 in t_after])
                 else
                     error("please specify just one of t_before and t_after")
                 end
@@ -148,7 +148,7 @@ function generate_time_slice_relationships()
                 end
             end
             """
-                $($functionname_t_overlaps_t)(;t_overlap=nothing)
+                $($functionname_t_overlaps_t)()
 
             Tuples of the list '$($functionname_t_overlaps_t). Return all timeslice tuples, which
             have some time in common.
@@ -157,24 +157,61 @@ function generate_time_slice_relationships()
 
             # Examples
             ```julia
-            julia> t_overlaps_t(t_overlap=Symbol("2018-02-22T10:30:00__2018-02-22T11:00:00"))
-            3-element Array{Symbol,1}:
-             Symbol("2018-02-22T10:30:00__2018-02-22T11:00:00")
-             Symbol("2018-02-22T10:30:00__2018-02-22T13:30:00")
-             Symbol("2018-02-22T10:30:00__2018-02-23T10:30:00")
+            julia> t_overlaps_t()
+            21-element Array{Any,1}:
+             (2018-02-22T10:30:00...2018-02-22T11:00:00 (tb1__t1), 2018-02-22T10:30:00...2018-02-22T11:00:00 (tb1__t1))
+             (2018-02-22T10:30:00...2018-02-22T11:00:00 (tb1__t1), 2018-02-22T10:30:00...2018-02-22T11:30:00 (tb2__t1))
+             (2018-02-22T11:00:00...2018-02-22T11:30:00 (tb1__t2), 2018-02-22T11:00:00...2018-02-22T11:30:00 (tb1__t2))
+             ....
              ```
             """
-            function $(Symbol(functionname_t_overlaps_t))(;t_overlap=nothing, t_overlap1=nothing, t_overlap2=nothing)
-                if t_overlap == t_overlap1 == t_overlap2 == nothing
+            function $(Symbol(functionname_t_overlaps_t))()
                     $list_t_overlaps_t
-                elseif t_overlap != nothing && t_overlap1 == t_overlap2 == nothing
+            end
+            """
+                $($functionname_t_overlaps_t)(t_overlap::Union{TimeSlice,Array{TimeSlice,1}})
+
+            Tuples of the list '$($functionname_t_overlaps_t). Return all timeslice tuples, which
+            have some time in common.
+            The argument can be used, e.g., to return the corresponding timeslices which
+            are overlapping the entered timeslice(s).
+
+            # Examples
+            ```julia
+            julia> t_overlaps_t(time_slice()[1])
+            2-element Array{SpineModel.TimeSlice,1}:
+             2018-02-22T10:30:00...2018-02-22T11:00:00 (tb1__t1)
+             2018-02-22T10:30:00...2018-02-22T11:30:00 (tb2__t1)
+             ```
+            """
+            function $(Symbol(functionname_t_overlaps_t))(t_overlap::Union{TimeSlice,Array{TimeSlice,1}})
+                    t_overlap isa Array || (t_overlap = [t_overlap])
                     unique!([t2 for (t1, t2) in $list_t_overlaps_t if t1 in t_overlap])
-                elseif t_overlap == nothing && t_overlap1 != nothing && t_overlap2 != nothing
+            end
+            """
+                $($functionname_t_overlaps_t)(t_overlap1::Union{TimeSlice,Array{TimeSlice,1}}, t_overlap2::Union{TimeSlice,Array{TimeSlice,1}})
+
+            Tuples of the list '$($functionname_t_overlaps_t). Return all timeslice tuples, which
+            have some time in common.
+            The arguments can be used, e.g., to return the corresponding timeslices which
+            are overlapping from both lists of timeslices.
+
+            # Examples
+            ```julia
+            julia> t_overlaps_t(time_slice()[1],time_slice()[7])
+            2-element Array{SpineModel.TimeSlice,1}:
+             2018-02-22T10:30:00...2018-02-22T11:00:00 (tb1__t1)
+             2018-02-22T10:30:00...2018-02-22T11:30:00 (tb2__t1)
+             ```
+            """
+            function $(Symbol(functionname_t_overlaps_t))(t_overlap1::Union{TimeSlice,Array{TimeSlice,1}}, t_overlap2::Union{TimeSlice,Array{TimeSlice,1}})
+                    t_overlap1 isa Array || (t_overlap1 = [t_overlap1])
+                    t_overlap2 isa Array || (t_overlap2 = [t_overlap2])
                     overlap_list = [(t1, t2) for (t1, t2) in $list_t_overlaps_t if t1 in t_overlap1 && t2 in t_overlap2]
                     t_list = vcat(first.(overlap_list),last.(overlap_list))
                     unique!(t_list)
-                end
             end
+
             """
                 $($functionname_t_overlaps_t_excl)'(;t_overlap=nothing)
 
@@ -189,30 +226,65 @@ function generate_time_slice_relationships()
              Symbol("2018-02-22T10:30:00__2018-02-23T10:30:00")
              ```
             """
+            function $(Symbol(functionname_t_overlaps_t_excl))()
+                    $list_t_overlaps_t_excl
+            end
+            """
+                $($functionname_t_overlaps_t_excl)'(;t_overlap=nothing)
+
+            The tuples of the list '$($functionname_t_overlaps_t_excl)'. See '$($functionname_t_overlaps_t)'.
+            Difference: Excludes the timeslice itself
+            """
+            function $(Symbol(functionname_t_overlaps_t_excl))(t_overlap::Union{TimeSlice,Array{TimeSlice,1}})
+                    t_overlap isa Array || (t_overlap = [t_overlap])
+                    unique!([t2 for (t1, t2) in $list_t_overlaps_t_excl if t1 in t_overlap])
+            end
+            """
+                $($functionname_t_overlaps_t_excl)'(;t_overlap=nothing)
+
+            The tuples of the list '$($functionname_t_overlaps_t_excl)'. See '$($functionname_t_overlaps_t)'.
+            Difference: Excludes the timeslice itself
+            """
+            function $(Symbol(functionname_t_overlaps_t_excl))(t_overlap1::Union{TimeSlice,Array{TimeSlice,1}}, t_overlap2::Union{TimeSlice,Array{TimeSlice,1}})
+                    t_overlap1 isa Array || (t_overlap1 = [t_overlap1])
+                    t_overlap2 isa Array || (t_overlap2 = [t_overlap2])
+                    overlap_list = [(t1, t2) for (t1, t2) in $list_t_overlaps_t_excl if t1 in t_overlap1 && t2 in t_overlap2]
+                    t_list = vcat(first.(overlap_list),last.(overlap_list))
+                    unique!(t_list)
+            end
+
+
+
+            """
+                $($functionname_t_overlaps_t_excl)'(;t_overlap=nothing)
+
+            The tuples of the list '$($functionname_t_overlaps_t_excl)'. See '$($functionname_t_overlaps_t)'.
+            Difference: Excludes the timeslice itself
+            """
             function $(Symbol(functionname_t_overlaps_t_excl))(;t_overlap=nothing)
                 if t_overlap == nothing
-                    $list_t_overlaps_t
+                    $list_t_overlaps_t_excl
                 else
                     unique!([t2 for (t1, t2) in $list_t_overlaps_t_excl if t1 in t_overlap])
                 end
             end
 
             """
-                $($functionname_t_top_level)'(;t_list=nothing)
+                $($functionname_t_top_level)'(t_list::Union{TimeSlice,Array{TimeSlice,1}})
 
             For a set of overlapping timeslices, the top most timeslices are returned.
 
             # Examples
             ```julia
-            julia> t_top_level(t_list=time_slice())
+            julia> t_top_level(time_slice())
             3-element Array{Any,1}:
              (start: 2018-02-22T10:30:00, end: 2018-02-22T11:30:00) (JuMP_name: tb2__t1)
              (start: 2018-02-22T11:30:00, end: 2018-02-22T12:30:00) (JuMP_name: tb2__t2)
              (start: 2018-02-22T12:30:00, end: 2018-02-22T13:30:00) (JuMP_name: tb2__t3)
              ```
             """
-            function $(Symbol(functionname_t_top_level))(;t_list=nothing)
-                if t_list != nothing
+            function $(Symbol(functionname_t_top_level))(t_list::Union{TimeSlice,Array{TimeSlice,1}})
+                t_list isa Array || (t_list = [t_list])
                     sort!(t_list)
                     i=1
                     j=1
@@ -230,9 +302,8 @@ function generate_time_slice_relationships()
                     end
                     unique!($top_list)
                     $top_list
-                end
             end
-            export $(Symbol(functionname_t_before_t))
+            export $(Symbol(functionname_t_succeeds_t))
             export $(Symbol(functionname_t_in_t))
             export $(Symbol(functionname_t_in_t_excl))
             export $(Symbol(functionname_t_overlaps_t))
