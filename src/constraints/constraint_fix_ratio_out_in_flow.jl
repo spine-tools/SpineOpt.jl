@@ -52,7 +52,7 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
                 m,
                 + reduce(
                     +,
-                    flow[c_out, n, u, :out, t1] * duration(t=t1)
+                    flow[c_out, n, u, :out, t1] * duration(t1)
                     for (c_out, n, u_out, d, t1) in keys(flow)
                         if c_out in commodity_group__commodity(commodity_group=cg_out)
                             && d == :out && u_out==u && t1 in t_in_t(t_long=t);
@@ -62,7 +62,7 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
                 + fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)(t=t)
                 * reduce(
                     +,
-                    flow[c_in, n, u, :in, t1] * duration(t=t1)
+                    flow[c_in, n, u, :in, t1] * duration(t1)
                     for (c_in, n, u_in, d, t1) in keys(flow)
                         if c_in in commodity_group__commodity(commodity_group=cg_in)
                             && d == :in && u_in==u && t1 in t_in_t(t_long=t);

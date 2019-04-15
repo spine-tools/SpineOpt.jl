@@ -32,7 +32,7 @@ printstyled("Creating temporal structure...\n"; bold=true)
     generate_time_slice()
     generate_time_slice_relationships()
 end
-printstyled("Running Spine Model...\n"; bold=true)
+printstyled("Running Spine model...\n"; bold=true)
 
 try
     using Gurobi

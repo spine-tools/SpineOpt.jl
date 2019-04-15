@@ -35,6 +35,13 @@ function Base.show(io::IO, time_slice::TimeSlice)
     print(io, str)
 end
 
+"""
+    duration(t::TimeSlice)
+
+The duration of time slice `t` (in minutes).
+"""
+duration(t::TimeSlice) = t.duration.value
+
 Base.isless(a::TimeSlice, b::TimeSlice) = tuple(a.start, a.end_) < tuple(b.start, b.end_)
 
 
@@ -60,3 +67,6 @@ Base.in(b::TimeSlice, a::TimeSlice) = b.start >= a.start && b.end_ <= a.end_
 Determine whether `a` and `b` overlap.
 """
 overlaps(a::TimeSlice, b::TimeSlice) = a.start <= b.start < a.end_ || b.start <= a.start < b.end_
+
+Base.iterate(t::TimeSlice) = iterate((t,))
+Base.iterate(t::TimeSlice, state::T) where T = iterate((t,), state)

@@ -60,7 +60,7 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
         printstyled("Writing results to the database...\n"; bold=true)
-        write_results(
+        @time write_results(
             db_url_out;
             flow=pack_trailing_dims(SpineModel.value(flow), 1),
             #trans=pack_trailing_dims(SpineModel.value(trans), 1),
