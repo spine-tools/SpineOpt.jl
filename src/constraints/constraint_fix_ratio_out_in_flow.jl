@@ -44,9 +44,9 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
         unique!(time_slices_out)
         unique!(time_slices_in)
         ## look for overlapping timeslice -> only timeslices which actually have an overlap should be considered
-        overlaps = t_overlaps_t(t_overlap1=time_slices_in, t_overlap2=time_slices_out)
+        overlaps = t_overlaps_t(time_slices_in, time_slices_out)
 ######## give flow keys? e.g. for flow in flowkeys ...
-        @butcher for t in t_top_level(t_list=overlaps)
+        @butcher for t in t_top_level(overlaps)
             fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)(t=t) == nothing && continue
             @constraint(
                 m,
