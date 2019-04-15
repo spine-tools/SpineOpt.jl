@@ -50,7 +50,10 @@ function generate_time_slice_relationships()
             end
         end
     end
-    #TODO: instead of unique -> check beforehand whether timeslice tuple is already added
+    # TODO: instead of unique -> check beforehand whether timeslice tuple is already added
+    # Is `unique!()` slow? I fear the above check can be a bit slow.
+    # An alternative is to use `Set()` instead of `[]` to warranty uniqueness,
+    # but then we lose the order - do we care about order?
     unique!(list_t_in_t)
     unique!(list_t_in_t_excl)
     unique!(list_t_overlaps_t)
@@ -161,19 +164,19 @@ function generate_time_slice_relationships()
              Symbol("2018-02-22T10:30:00__2018-02-23T10:30:00")
              ```
             """
-            function $(Symbol(functionname_t_overlaps_t))(;t_overlap=nothing,t_overlap1=nothing,t_overlap2=nothing)
+            function $(Symbol(functionname_t_overlaps_t))(;t_overlap=nothing, t_overlap1=nothing, t_overlap2=nothing)
                 if t_overlap == t_overlap1 == t_overlap2 == nothing
                     $list_t_overlaps_t
                 elseif t_overlap != nothing && t_overlap1 == t_overlap2 == nothing
                     unique!([t2 for (t1, t2) in $list_t_overlaps_t if t1 in t_overlap])
                 elseif t_overlap == nothing && t_overlap1 != nothing && t_overlap2 != nothing
-                     overlap_list = [(t1,t2) for (t1, t2) in $list_t_overlaps_t if t1 in t_overlap1 && t2 in t_overlap2]
-                     t_list = vcat(first.(overlap_list),last.(overlap_list))
-                     unique!(t_list)
+                    overlap_list = [(t1, t2) for (t1, t2) in $list_t_overlaps_t if t1 in t_overlap1 && t2 in t_overlap2]
+                    t_list = vcat(first.(overlap_list),last.(overlap_list))
+                    unique!(t_list)
                 end
             end
             """
-                $($functionname_t_overlaps_t_excl)'(;class=entity, t::Union{Int64,String,Nothing}=nothing)
+                $($functionname_t_overlaps_t_excl)'(;t_overlap=nothing)
 
             The tuples of the list '$($functionname_t_overlaps_t_excl)'. See '$($functionname_t_overlaps_t)'.
             Difference: Excludes the timeslice itself
@@ -195,7 +198,7 @@ function generate_time_slice_relationships()
             end
 
             """
-                $($functionname_t_top_level)'(;class=entity, t::Union{Int64,String,Nothing}=nothing)
+                $($functionname_t_top_level)'(;t_overlap=nothing)
 
             For a set of overlapping timeslices, the top most timeslices are returned.
 

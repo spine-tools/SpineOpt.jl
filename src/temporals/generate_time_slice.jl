@@ -116,13 +116,11 @@ function generate_time_slice()
             """
             # NOTE: we are saving the duration in the TimeSlice struct, is this still needed?
             # It involves some lookup that may become expensive
-            function $(Symbol(functionname_duration))(;time_slice=nothing)
-                if  time_slice == nothing
+            function $(Symbol(functionname_duration))(;t=nothing)
+                if  t == nothing
                     $list_duration
                 else
-                    i = findfirst(t -> t[1] == time_slice, $list_duration)
-                    t_duration = $list_duration[i][2]
-                    t_duration.value
+                    t.duration.value
                 end
             end
             export $(Symbol(functionname_duration))

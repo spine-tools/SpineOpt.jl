@@ -29,11 +29,11 @@ function constraint_nodal_balance(m::Model, flow, trans)
 			0
             ==
             # Demand for the commodity
-			- (demand(node=n)(t=t) != nothing && demand(node=n)(t=t) *t.duration.value)
+			- (demand(node=n)(t=t) != nothing && demand(node=n)(t=t) * duration(t=t))
             # Output of units into this node, and their input from this node
             + reduce(
                 +,
-                flow[c, n, u, :out, t1] * t1.duration.value
+                flow[c, n, u, :out, t1] * duration(t=t1)
                 for (c, u, trashblock) in commodity__node__unit__direction__temporal_block(node=n, direction=:out)
                     for t1 in t_in_t(t_long=t)
                         if haskey(flow, (c, n, u, :out, t1));
@@ -41,7 +41,7 @@ function constraint_nodal_balance(m::Model, flow, trans)
             )
             - reduce(
                 +,
-                flow[c, n, u, :in, t2] * t2.duration.value
+                flow[c, n, u, :in, t2] * duration(t=t2)
                 for (c, u, trashblock) in commodity__node__unit__direction__temporal_block(node=n, direction=:in)
                     for t2 in t_in_t(t_long=t)
                         if haskey(flow, (c, n, u, :in, t2));
