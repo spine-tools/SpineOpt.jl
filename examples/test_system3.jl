@@ -19,6 +19,7 @@
 # Export contents of database into the current session
 using Revise
 using SpineModel
+using SpineInterface
 
 db_url_in = "sqlite:///$(@__DIR__)/data/new_temporal.sqlite"
 file_out = "$(@__DIR__)/data/new_temporal_out.sqlite"
@@ -34,10 +35,5 @@ printstyled("Creating temporal structure...\n"; bold=true)
 end
 printstyled("Running Spine model...\n"; bold=true)
 
-try
-    using Gurobi
-    run_spinemodel(db_url_in, db_url_out; optimizer=Gurobi.Optimizer)
-catch
-    using Clp
-    run_spinemodel(db_url_in, db_url_out; optimizer=Clp.Optimizer)
-end
+using Clp
+(m, flow, trans, stor_state) = run_spinemodel(db_url_in, db_url_out; optimizer=Clp.Optimizer)
