@@ -23,10 +23,10 @@
 
 """
 function generate_time_slice()
-    list_time_slice = []
+    list_time_slice = Array{TimeSlice,1}()
     list_time_slice_temporal_block = Dict()
     for (k, blk) in enumerate(temporal_block())
-        list_time_slice_temporal_block[blk] = []
+        list_time_slice_temporal_block[blk] = Array{TimeSlice,1}()
         temp_block_start = start_datetime(temporal_block=blk)  # DateTime value
         temp_block_end = end_datetime(temporal_block=blk)  # DateTime value
         time_slice_start = temp_block_start

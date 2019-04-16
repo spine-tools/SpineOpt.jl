@@ -54,11 +54,11 @@ suceeds(b::TimeSlice, a::TimeSlice) = b.end_ == a.start
 
 
 """
-    inTimeSlice(b::TimeSlice, a::TimeSlice)
+    in(b::TimeSlice, a::TimeSlice)
 
 Determine whether `b` is contained in `a`.
 """
-inTimeSlice(b::TimeSlice, a::TimeSlice) = b.start >= a.start && b.end_ <= a.end_
+Base.in(b::TimeSlice, a::TimeSlice) = b.start >= a.start && b.end_ <= a.end_
 
 
 """
