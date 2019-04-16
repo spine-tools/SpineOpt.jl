@@ -26,13 +26,13 @@ Create and export convenience functions to access time slice relationships:
 `t_in_t`, `t_preceeds_t`, `t_overlaps_t`...
 """
 function generate_time_slice_relationships()
-    list_t_succeeds_t = []
+    list_t_before__t_after = []
     list_t_in_t = []
     list_t_overlaps_t = []
     for i in time_slice()
         for j in time_slice()
             if suceeds(j, i)
-                push!(list_t_succeeds_t, tuple(i, j))
+                push!(list_t_before__t_after, tuple(i, j))
             end
             if in(i, j)
                 push!(list_t_in_t, tuple(i, j))
@@ -52,7 +52,7 @@ function generate_time_slice_relationships()
     list_t_overlaps_t_excl = [(t1, t2) for (t1, t2) in list_t_overlaps_t if t1 != t2]
 
     @suppress_err begin
-        functionname_t_succeeds_t = "t_succeeds_t"
+        functionname_t_before__t_after = "t_before__t_after"
         functionname_t_in_t = "t_in_t"
         functionname_t_in_t_excl = "t_in_t_excl"
         functionname_t_overlaps_t = "t_overlaps_t"
@@ -61,7 +61,7 @@ function generate_time_slice_relationships()
 
         @eval begin
             """
-                $($functionname_t_succeeds_t)(;t_before=nothing, t_after=nothing)
+                $($functionname_t_before__t_after)(;t_before=nothing, t_after=nothing)
 
             Return the list of tuples `(t1, t2)` where `t2` *succeeds* `t1` in the sense that it
             starts right after `t1` ends, i.e. `t2.start == t1.end_`.
@@ -71,13 +71,13 @@ function generate_time_slice_relationships()
             (or any element in `t_after` if it's a list).
             Only one of `t_before` and `t_after` can be not `nothing` at a time.
             """
-            function $(Symbol(functionname_t_succeeds_t))(;t_before=nothing, t_after=nothing)
+            function $(Symbol(functionname_t_before__t_after))(;t_before=nothing, t_after=nothing)
                 if t_before == t_after == nothing
-                    $list_t_succeeds_t
+                    $list_t_before__t_after
                 elseif t_before != nothing && t_after == nothing
-                    unique(t2 for (t1, t2) in $list_t_succeeds_t if t1 in tuple(t_before...))
+                    unique(t2 for (t1, t2) in $list_t_before__t_after if t1 in tuple(t_before...))
                 elseif t_before == nothing && t_after != nothing
-                    unique(t1 for (t1, t2) in $list_t_succeeds_t if t2 in tuple(t_after...))
+                    unique(t1 for (t1, t2) in $list_t_before__t_after if t2 in tuple(t_after...))
                 else
                     error("please specify just one of `t_before` and `t_after`")
                 end
@@ -99,6 +99,8 @@ function generate_time_slice_relationships()
                     unique(t1 for (t1, t2) in $list_t_in_t if t2 in tuple(t_long...))
                 elseif t_long == nothing && t_short != nothing
                     unique(t2 for (t1, t2) in $list_t_in_t if t1 in tuple(t_short...))
+                elseif t_long != nothing && t_short != nothing
+                    unique(t2 for (t1, t2) in $list_t_in_t if t1 in tuple(t_short...) && t2 in tuple(t_long...))
                 else
                     error("please specify just one of `t_long` and `t_short`")
                 end
@@ -117,6 +119,8 @@ function generate_time_slice_relationships()
                     unique(t1 for (t1, t2) in $list_t_in_t_excl if t2 in tuple(t_long...))
                 elseif t_long == nothing && t_short != nothing
                     unique(t2 for (t1, t2) in $list_t_in_t_excl if t1 in tuple(t_short...))
+                elseif t_long != nothing && t_short != nothing
+                    unique(t2 for (t1, t2) in $list_t_in_t_excl if t1 in tuple(t_short...) && t2 in tuple(t_long...))
                 else
                     error("please specify just one of t_long and t_short")
                 end
@@ -222,7 +226,7 @@ function generate_time_slice_relationships()
                 unique(top_list)
             end
 
-            export $(Symbol(functionname_t_succeeds_t))
+            export $(Symbol(functionname_t_before__t_after))
             export $(Symbol(functionname_t_in_t))
             export $(Symbol(functionname_t_in_t_excl))
             export $(Symbol(functionname_t_overlaps_t))
