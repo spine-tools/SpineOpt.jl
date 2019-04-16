@@ -35,7 +35,7 @@ function generate_time_slice_relationships()
                 push!(list_t_succeeds_t, tuple(i, j))
             end
             if in(j, i)
-                push!(list_t_in_t, tuple(i, j))
+                push!(list_t_in_t, tuple(j, i))
             end
             if overlaps(i, j)
                 push!(list_t_overlaps_t, tuple(i, j))
@@ -96,9 +96,9 @@ function generate_time_slice_relationships()
                 if t_long == t_short == nothing
                     $list_t_in_t
                 elseif t_long != nothing && t_short == nothing
-                    unique(t2 for (t1, t2) in $list_t_in_t if t1 in t_long)
+                    unique(t1 for (t1, t2) in $list_t_in_t if t2 in t_long)
                 elseif t_long == nothing && t_short != nothing
-                    unique(t1 for (t1, t2) in $list_t_in_t if t2 in t_short)
+                    unique(t2 for (t1, t2) in $list_t_in_t if t1 in t_short)
                 else
                     error("please specify just one of `t_long` and `t_short`")
                 end
@@ -114,9 +114,9 @@ function generate_time_slice_relationships()
                 if t_long == t_short == nothing
                     $list_t_in_t_excl
                 elseif t_long != nothing && t_short == nothing
-                    unique(t2 for (t1, t2) in $list_t_in_t_excl if t1 in t_long)
+                    unique(t1 for (t1, t2) in $list_t_in_t_excl if t2 in t_long)
                 elseif t_long == nothing && t_short != nothing
-                    unique(t1 for (t1, t2) in $list_t_in_t_excl if t2 in t_short)
+                    unique(t2 for (t1, t2) in $list_t_in_t_excl if t1 in t_short)
                 else
                     error("please specify just one of t_long and t_short")
                 end
