@@ -34,7 +34,7 @@ function generate_time_slice_relationships()
             if suceeds(j, i)
                 push!(list_t_succeeds_t, tuple(i, j))
             end
-            if in(j, i)
+            if inTimeSlice(j, i)
                 push!(list_t_in_t, tuple(j, i))
             end
             if overlaps(i, j)
