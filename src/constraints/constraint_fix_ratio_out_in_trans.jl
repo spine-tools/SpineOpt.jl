@@ -29,14 +29,14 @@ function constraint_fix_ratio_out_in_trans(m::Model, trans)
     @butcher @constraint(
         m,
         [
-            (conn, node_in, node_out, tblock) in connection__node__node__temporal_block(),
-            t in time_slice(temporal_block=tblock);
-            fix_ratio_out_in_trans_t(connection=conn, node1=node_in, node2=node_out, temporal_block=tblock) != nothing
+            (conn, node_in, node_out) in connection__node__node(),
+            t in time_slice();
+            fix_ratio_out_in_trans_t(connection=conn, node1=node_in, node2=node_out)(t=t) != nothing
         ],
         + reduce(
             +,
             trans[c_out, node_out, conn, :out, t2]
-            for (c_out) in commodity__node__connection__direction(node=node_out, connection=conn, direction=:out)
+            for (c_out) in commodity__node__connection__direction__temporal_block(node=node_out, connection=conn, direction=:out,temporal_block=:any)
                 for t2 in t_in_t(t_long=t)
                     if haskey(trans, (c_out, node_out, conn, :out, t2));
             init=0
@@ -46,7 +46,7 @@ function constraint_fix_ratio_out_in_trans(m::Model, trans)
             * reduce(
                 +,
                 trans[c_in, node_in, conn, :in, t2]
-                for (c_in) in commodity__node__connection__direction(node=node_in, connection=conn, direction=:in)
+                for (c_in) in commodity__node__connection__direction__temporal_block(node=node_in, connection=conn, direction=:in,temporal_block=:any)
                     for t2 in t_in_t(t_long=t)
                         if haskey(trans, (c_in, node_in, conn, :in, t2));
                 init=0
