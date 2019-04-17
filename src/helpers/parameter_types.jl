@@ -80,8 +80,8 @@ function TimeSeriesParameter(db_value::Array, default)
 end
 
 function TimeSeriesParameter(data::Dict, metadata::Dict, default)
-    # Indexes come with data, so just look for "repeat" and "ignore_year" in metadata
-    repeat = get(metadata, "repeat", false)
+    # Indexes come with data, so just look for "ignore_year" in metadata
+    repeat = false
     ignore_year = get(metadata, "ignore_year", false)
     data = Dict(DateTime(k) => v for (k, v) in data)
     ignore_year && (data = Dict(k - Year(k) => v for (k, v) in data))
