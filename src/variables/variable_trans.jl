@@ -28,9 +28,9 @@ in a certain 'direction'. The direction is relative to the connection.
 """
 function variable_trans(m::Model)
     @butcher Dict{Tuple,JuMP.VariableRef}(
-        (c, n, conn, d, t) => @variable(
-            m, base_name="trans[$c, $n, $conn, $d, $(t.JuMP_name)]", lower_bound=0
-        ) for (c, n, conn, d, block) in commodity__node__connection__direction__temporal_block()
+        (conn, n, c, d, t) => @variable(
+            m, base_name="trans[$conn, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
+        ) for (conn, n, d, block) in connection__node__direction__temporal_block() for c in node__commodity(node=n)
                 for t in time_slice(temporal_block=block)
     )
 end

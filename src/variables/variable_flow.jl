@@ -28,9 +28,9 @@ in a certain 'direction'. The direction is relative to the unit.
 """
 function variable_flow(m::Model)
     @butcher Dict{Tuple,JuMP.VariableRef}(
-        (c, n, u, d, t) => @variable(
-            m, base_name="flow[$c, $n, $u, $d, $(t.JuMP_name)]", lower_bound=0
-        ) for (c, n, u, d, block) in commodity__node__unit__direction__temporal_block()
+        (u, n, c, d, t) => @variable(
+            m, base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
+        ) for (u, n, d, block) in unit__node__direction__temporal_block() for (c) in node__commodity(node=n)
             for t in time_slice(temporal_block=block)
     )
 end

@@ -42,6 +42,11 @@ export variable_flow
 export variable_trans
 export variable_stor_state
 
+# Export filter functions
+export flow_keys
+export trans_keys
+export param_keys
+
 # Export objective
 export objective_minimize_production_cost
 

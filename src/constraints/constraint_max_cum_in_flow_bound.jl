@@ -33,10 +33,8 @@ function constraint_max_cum_in_flow_bound(m::Model, flow)
         ],
         + reduce(
             +,
-            flow[c, n, u, :in, t]
-            for (c, n, u) in commodity__node__unit__direction(direction=:in), t in time_slice()
-                if u in unit_group__unit(unit_group=ug) && c in commodity_group__commodity(commodity_group=cg)
-                    && haskey(flow, (c, n, u, :in, t));
+            flow[u, n, c, :in, t]
+            for (u, n, c, d, t) in flow_keys(direction=:in,unit=unit_group__unit(unit_group=ug),commodity=commodity_group__commodity(commodity_group=cg));
             init=0
         )
         <=

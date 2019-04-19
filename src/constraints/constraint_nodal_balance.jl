@@ -33,35 +33,27 @@ function constraint_nodal_balance(m::Model, flow, trans)
             # Output of units into this node, and their input from this node
             + reduce(
                 +,
-                flow[c, n, u, :out, t1] * duration(t1)
-                for (c, u, trashblock) in commodity__node__unit__direction__temporal_block(node=n, direction=:out)
-                    for t1 in t_in_t(t_long=t)
-                        if haskey(flow, (c, n, u, :out, t1));
+                flow[u, n, c, :out, t1] * duration(t1)
+                	for (u, n, c, d, t1) in flow_keys(node=n,t=t_in_t(t_long=t), direction=:out);
                 init=0
             )
-            - reduce(
+			- reduce(
                 +,
-                flow[c, n, u, :in, t2] * duration(t2)
-                for (c, u, trashblock) in commodity__node__unit__direction__temporal_block(node=n, direction=:in)
-                    for t2 in t_in_t(t_long=t)
-                        if haskey(flow, (c, n, u, :in, t2));
+                flow[u, n, c, :in, t1] * duration(t1)
+				for (u, n, c, d, t1) in flow_keys(node=n,t=t_in_t(t_long=t), direction=:in);
                 init=0
             )
             # Transfer of commodities between nodes
-            + reduce(
+			+ reduce(
                 +,
-                trans[c, n, conn, :out, t2]
-                for (c, conn, trashblock) in commodity__node__connection__direction__temporal_block(node=n, direction=:out)
-                    for t2 in t_in_t(t_long=t)
-                        if haskey(trans, (c, n, conn, :out, t2));
+                trans[conn, n, c, :out, t1] * duration(t1)
+                	for (conn, n, c,d,t1) in trans_keys(node=n,t=t_in_t(t_long=t), direction=:out);
                 init=0
             )
-            - reduce(
+			- reduce(
                 +,
-                trans[c, n, conn, :in, t2]
-                for (c, conn, trashblock) in commodity__node__connection__direction__temporal_block(node=n, direction=:in)
-                    for t2 in t_in_t(t_long=t)
-                        if haskey(trans, (c, n, conn, :in, t2));
+                trans[conn, n, c, :in, t1] * duration(t1)
+                	for (conn, n, c,d,t1) in trans_keys(node=n,t=t_in_t(t_long=t), direction=:out);
                 init=0
             )
         )

@@ -28,17 +28,16 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 # Suggested new version (see comments in version above)
 # @Maren: should the parameter unit_capacity have a direction index?
 function constraint_flow_capacity(m::Model, flow)
-    @butcher for (u, c) in unit__commodity(), (n,d) in commodity__node__unit__direction__temporal_block(unit=u, commodity=c,temporal_block=:any), t in time_slice()
+    #@butcher
+    for (u, c) in param_keys(unit_capacity()),(u,n,c,d,t) in flow_keys(unit=u,commodity=c)
         all([
-            haskey(flow, (c, n, u, d, t)),
-            unit_capacity(unit=u, commodity=c) != nothing,
             number_of_units(unit=u) != nothing,
             unit_conv_cap_to_flow(unit=u, commodity=c) != nothing,
             avail_factor(unit=u) != nothing
         ]) || continue
         @constraint(
             m,
-            + flow[c, n, u, d, t]
+            + flow[u, n, c, d, t]
             <=
             + avail_factor(unit=u)
                 * unit_capacity(unit=u, commodity=c)
@@ -47,24 +46,3 @@ function constraint_flow_capacity(m::Model, flow)
         )
     end
 end
-
-
-# function constraint_flow_capacity_old(m::Model, flow, time_slice)
-#     @butcher for (c, n, u, d, t) in collect(keys(flow))
-#         all([
-#             unit_capacity(unit=u, commodity=c) != 0, # @Maren: I think it would be better to replace this line by: (u,c) in keys(unit_capacity(). Now, if someone sets unit_capacity at zero, no constraint would be generated.
-#             number_of_units(unit=u) != 0, #@Maren: This condition should be removed. If number_of_unit = 0, flow would be unconstrained because no constraint would be generated currently
-#             unit_conv_cap_to_flow(unit=u, commodity=c) != 0, #@Maren: same as for the above line, rather an error than no constraint beig generated.
-#             avail_factor(unit=u, t=1) != 0 #@Maren: again, same problem
-#         ]) || continue
-#         @constraint(
-#             m,
-#             + flow[c, n, u, d, t]
-#             <=
-#             + avail_factor(unit=u, t=1) #@Maren: what is this t=1 thing here?
-#                 * unit_capacity(unit=u, commodity=c)
-#                     * number_of_units(unit=u)
-#                         * unit_conv_cap_to_flow(unit=u, commodity=c)
-#         )
-#     end
-# end

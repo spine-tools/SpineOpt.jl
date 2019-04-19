@@ -148,8 +148,8 @@ for `commodity`, `node`, `unit`, `direction`, and `t`.
 """
 function flow_keys(;commodity=:any, node=:any, unit=:any, direction=:any, t=:any)
     [
-        (c, n, u, d, t1) for (c, n, u, d, blk) in commodity__node__unit__direction__temporal_block(
-            commodity=commodity, node=node, unit=unit, direction=direction, _compact=false
+        (u, n, c, d, t1) for (n,c) in node__commodity(commodity=commodity,node=node,_compact=false) for (u, n_, d, blk) in unit__node__direction__temporal_block(
+            node=n, unit=unit, direction=direction, _compact=false
         ) for t1 in time_slice(temporal_block=blk) if t_in_t_list(t1, t)
     ]
 end
@@ -162,8 +162,22 @@ for `commodity`, `node`, `connection`, `direction`, and `t`.
 """
 function trans_keys(;commodity=:any, node=:any, connection=:any, direction=:any, t=:any)
     [
-        (c, n, conn, d, t1) for (c, n, conn, d, blk) in commodity__node__connection__direction__temporal_block(
-            commodity=commodity, node=node, connection=connection, direction=direction, _compact=false
+        (conn, n, c, d, t1) for (n, c) in node__commodity(commodity=commodity,node=node,_compact=false)  for (conn, n_, d, blk) in connection__node__direction__temporal_block(
+            node=n, connection=connection, direction=direction, _compact=false
         ) for t1 in time_slice(temporal_block=blk) if t_in_t_list(t1, t)
     ]
+end
+
+"""
+    param_keys(filtering_options...)
+
+WIP: functionality needs to be exteneded
+"""
+
+function param_keys(param) #TODO: one method for params one relationship/ one method for params with multiple relationships: these will need the specified relationship
+    parameter_keys = [parameter_keys for parameter_keys  in keys(param[keys(param)...]) if param[keys(param)...][parameter_keys] != SpineModel.UnvaluedParameter()]
+end
+
+function param_keys(param,class) #TODO: one method for params one relationship/ one method for params with multiple relationships: these will need the specified relationship
+    keys(fix_ratio_out_in_flow()[class])
 end

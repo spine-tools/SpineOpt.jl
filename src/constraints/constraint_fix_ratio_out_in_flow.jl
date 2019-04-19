@@ -29,16 +29,14 @@ is specified.
 # Since all functions to generate the constraint are in the constraints folder, could we rename the files by removing 'constraint_'?
 # good idea, but it looks like doesn't work?
 function constraint_fix_ratio_out_in_flow(m::Model, flow)
-    for (u, cg_out, cg_in) in unit__out_commodity_group__in_commodity_group()
+    for (u, cg_out, cg_in) in param_keys(fix_ratio_out_in_flow(),(:unit, :commodity_group1, :commodity_group2))
         ## get all time_slices for which the flow variables are defined (direction = :out)
         time_slices_out = [
-            t for (c_out, n, u_out, d, t) in keys(flow)
-                if c_out in commodity_group__commodity(commodity_group=cg_out) && d == :out && u_out == u
-        ]
+            t for (u, n, c_out, d, t) in flow_keys(unit=u,commodity=commodity_group__commodity(commodity_group=cg_out),direction=:out)
+                ]
         time_slices_in = [
-            t for (c_in, n, u_in, d, t) in keys(flow)
-                if c_in in commodity_group__commodity(commodity_group=cg_in) && d == :in && u_in == u
-        ]
+            t for (u, n, c_in, d, t) in flow_keys(unit=u,commodity=commodity_group__commodity(commodity_group=cg_in),direction=:in)
+                ]
         ## get all time_slices for which the flow variables are defined (direction = :in)
         ## remove duplicates (e.g. if two flows of the same direction are defined on the same temp level)
         unique!(time_slices_out)
@@ -57,20 +55,18 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
                 m,
                 + reduce(
                     +,
-                    flow[c_out, n, u, :out, t1] * duration(t1)
-                    for (c_out, n, u_out, d, t1) in keys(flow)
-                        if c_out in commodity_group__commodity(commodity_group=cg_out)
-                            && d == :out && u_out==u && t1 in t_in_t(t_long=t);
+                    flow[u, n, c_out, :out, t1] * duration(t1)
+                    for (u, n, c_out, d, t1) in flow_keys(commodity = commodity_group__commodity(commodity_group=cg_out),direction=:out,t=t_in_t(t_long=t))
+                        ;
                     init= 0
                 )
                 ==
                 + fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)(t=t)
                 * reduce(
                     +,
-                    flow[c_in, n, u, :in, t1] * duration(t1)
-                    for (c_in, n, u_in, d, t1) in keys(flow)
-                        if c_in in commodity_group__commodity(commodity_group=cg_in)
-                            && d == :in && u_in==u && t1 in t_in_t(t_long=t);
+                    flow[u, n, c_in, :in, t1] * duration(t1)
+                    for (u, n, c_in, d, t1) in flow_keys(commodity = commodity_group__commodity(commodity_group=cg_in),direction=:in,t=t_in_t(t_long=t))
+                        ;
                     init= 0
                 )
             )
