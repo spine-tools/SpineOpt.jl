@@ -25,49 +25,37 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 `commodity_group` for each `unit` for which the parameter `fix_ratio_out_in_flow`
 is specified.
 """
-
-# Since all functions to generate the constraint are in the constraints folder, could we rename the files by removing 'constraint_'?
-# good idea, but it looks like doesn't work?
 function constraint_fix_ratio_out_in_flow(m::Model, flow)
     for (u, cg_out, cg_in) in param_keys(fix_ratio_out_in_flow(),(:unit, :commodity_group1, :commodity_group2))
-        ## get all time_slices for which the flow variables are defined (direction = :out)
-        time_slices_out = [
+        time_slices_out = unique!([
             t for (u, n, c_out, d, t) in flow_keys(unit=u,commodity=commodity_group__commodity(commodity_group=cg_out),direction=:out)
-                ]
-        time_slices_in = [
+                ])
+        time_slices_in = unique!([
             t for (u, n, c_in, d, t) in flow_keys(unit=u,commodity=commodity_group__commodity(commodity_group=cg_in),direction=:in)
-                ]
-        ## get all time_slices for which the flow variables are defined (direction = :in)
-        ## remove duplicates (e.g. if two flows of the same direction are defined on the same temp level)
-        unique!(time_slices_out)
-        unique!(time_slices_in)
-        ## look for overlapping timeslice -> only timeslices which actually have an overlap should be considered
-        involved_timeslices = sort!(vcat(time_slices_out,time_slices_in))
+                ])
+        #NOTE: the unique is not really necessary but reduces the timeslices for the next steps
+        involved_timeslices = sort!([time_slices_out;time_slices_in])
         overlaps = sort!(t_overlaps_t(time_slices_in, time_slices_out))
         if involved_timeslices != overlaps
             @warn "Not all involved timeslices are overlapping, check your temporal_blocks"
+            #NOTE: this is a check for plausibility. If the user e.g. wants to oconstrain one commodity of a unit for a certain amount of time,
+            # while the other commodity is constraint for a longer period, "overlaps" becomes active
             involved_timeslices = overlaps
         end
-######## give flow keys? e.g. for flow in flowkeys ...
         @butcher for t in t_top_level(involved_timeslices)
-            fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)(t=t) == nothing && continue
             @constraint(
                 m,
-                + reduce(
+                + sum(
                     +,
                     flow[u, n, c_out, :out, t1] * duration(t1)
                     for (u, n, c_out, d, t1) in flow_keys(commodity = commodity_group__commodity(commodity_group=cg_out),direction=:out,t=t_in_t(t_long=t))
-                        ;
-                    init= 0
                 )
                 ==
                 + fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)(t=t)
-                * reduce(
+                * sum(
                     +,
                     flow[u, n, c_in, :in, t1] * duration(t1)
                     for (u, n, c_in, d, t1) in flow_keys(commodity = commodity_group__commodity(commodity_group=cg_in),direction=:in,t=t_in_t(t_long=t))
-                        ;
-                    init= 0
                 )
             )
         end
