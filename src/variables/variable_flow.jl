@@ -43,7 +43,7 @@ for `commodity`, `node`, `unit`, `direction`, and `t`.
 """
 function flow_indices(;commodity=:any, node=:any, unit=:any, direction=:any, t=:any)
     [
-        (u, n, c, d, t1) for (n, c) in node__commodity(
+        (unit=u, node=n, commodity=c, direction=d, t=t1) for (n, c) in node__commodity(
             commodity=commodity, node=node, _compact=false
         ) for (u, n_, d, blk) in unit__node__direction__temporal_block(
             node=n, unit=unit, direction=direction, _compact=false

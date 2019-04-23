@@ -50,7 +50,7 @@ end
 Sweep the given array of call argument expressions and add all symbols to the end of the array.
 """
 function append_recursive!(arr, arg_arr)
-    if arg_arr[1] isa Expr && expr_arr[1].head == :call
+    if arg_arr[1] isa Expr && arg_arr[1].head == :call
         append_recursive!(arr, arg_arr[1].args)
     end
     for arg in arg_arr[2:end]
