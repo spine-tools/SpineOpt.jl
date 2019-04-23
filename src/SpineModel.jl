@@ -28,7 +28,7 @@ using TimeZones
 using Statistics
 using SpineInterface
 using Suppressor
-import Base: convert, +, -, *, /, <
+import Base: convert, +, -, *, /, <, ==
 
 # Export helpers
 export checkout_spinemodeldb
