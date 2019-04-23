@@ -27,12 +27,16 @@ is specified.
 """
 function constraint_fix_ratio_out_in_flow(m::Model, flow)
     for (u, cg_out, cg_in) in param_keys(fix_ratio_out_in_flow(),(:unit, :commodity_group1, :commodity_group2))
-        time_slices_out = unique!([
-            t for (u, n, c_out, d, t) in flow_indices(unit=u,commodity=commodity_group__commodity(commodity_group=cg_out),direction=:out)
-                ])
-        time_slices_in = unique!([
-            t for (u, n, c_in, d, t) in flow_indices(unit=u,commodity=commodity_group__commodity(commodity_group=cg_in),direction=:in)
-                ])
+        time_slices_out = unique(
+            t for (u, n, c_out, d, t) in flow_indices(
+                unit=u, commodity=commodity_group__commodity(commodity_group=cg_out), direction=:out
+            )
+        )
+        time_slices_in = unique(
+            t for (u, n, c_in, d, t) in flow_indices(
+                unit=u, commodity=commodity_group__commodity(commodity_group=cg_in), direction=:in
+            )
+        )
         #NOTE: the unique is not really necessary but reduces the timeslices for the next steps
         involved_timeslices = sort!([time_slices_out;time_slices_in])
         overlaps = sort!(t_overlaps_t(time_slices_in, time_slices_out))
