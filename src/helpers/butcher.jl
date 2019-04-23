@@ -81,11 +81,12 @@ macro butcher(expression)
     expression = macroexpand(@__MODULE__, esc(expression))
     call_location = Dict{Expr,Array{Dict{String,Any},1}}()
     assignment_location = Dict{Symbol,Array{Dict{String,Any},1}}()
+    replacement_variable = Dict{Int64,Array{Any,1}}()
     replacement_variable_location = Array{Any,1}()
     # 'Beat' each node in the expression tree (see definition of `beat` below)
     visit_node(expression, 1, nothing, 1, beat, call_location, assignment_location)
     for (call, call_location_arr) in call_location
-        replacement_variable = Dict()  # node_id => Replacement object
+        call_replacement_variable = Dict()  # node_id => Replacement object
         # Build array of arguments without keywords
         call_arg_arr = []
         for arg in call.args[2:end]  # First arg is the method name
@@ -115,13 +116,20 @@ macro butcher(expression)
             # Use the most recent value of all the arguments
             node_id = maximum(assignment_location_arr)
             # Create or retrieve replacement variable
-            x = get!(replacement_variable, node_id, gensym())
+            x = get!(call_replacement_variable, node_id, gensym())
             # Add new call_location for the replacement variable
             push!(
                 replacement_variable_location,
                 (x, call, call_arg_arr, call_location["parent"], call_location["row"]))
         end
-        for (node_id, x) in replacement_variable
+        for (node_id, x) in call_replacement_variable
+            parent, row = arg_assignment_location[node_id]
+            x_arr = get!(replacement_variable, node_id, Array{Any,1}())
+            push!(x_arr, (x, call, call_arg_arr, parent, row))
+        end
+    end
+    for (node_id, x_arr) in replacement_variable
+        for (x, call, call_arg_arr, parent, row) in reverse(x_arr)
             # Create replacement expression
             y = gensym()
             ex = quote
@@ -135,7 +143,6 @@ macro butcher(expression)
                 $x = SpineModel.Replacement($y, [$(call_arg_arr...)])
             end
             # Put the above expression at the desired location
-            parent, row = arg_assignment_location[node_id]
             parent.args[row + 1] = Expr(:block, ex, parent.args[row + 1])
         end
     end
