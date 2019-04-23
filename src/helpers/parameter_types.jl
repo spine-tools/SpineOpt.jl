@@ -216,17 +216,20 @@ convert(::Type{T}, x::ScalarParameter{T}) where {T} = x.value
 -(x::ScalarParameter{T}, y::N) where {T,N} = x.value - y
 *(x::ScalarParameter{T}, y::N) where {T,N} = x.value * y
 /(x::ScalarParameter{T}, y::N) where {T,N} = x.value / y
-<(x::ScalarParameter{T}, y::N) where {T,N} = isless(x.value, y)
+<(x::ScalarParameter{T}, y::N) where {T,N} = x.value < y
+==(x::ScalarParameter{T}, y::N) where {T,N} = x.value == y
 +(x::N, y::ScalarParameter{T}) where {T,N} = x + y.value
 -(x::N, y::ScalarParameter{T}) where {T,N} = x - y.value
 *(x::N, y::ScalarParameter{T}) where {T,N} = x * y.value
 /(x::N, y::ScalarParameter{T}) where {T,N} = x / y.value
-<(x::N, y::ScalarParameter{T}) where {T,N} = isless(x, y.value)
+<(x::N, y::ScalarParameter{T}) where {T,N} = x < y.value
+==(x::N, y::ScalarParameter{T}) where {T,N} = x == y.value
 +(x::ScalarParameter{T}, y::ScalarParameter{N}) where {T,N} = x.value + y.value
 -(x::ScalarParameter{T}, y::ScalarParameter{N}) where {T,N} = x.value - y.value
 *(x::ScalarParameter{T}, y::ScalarParameter{N}) where {T,N} = x.value * y.value
 /(x::ScalarParameter{T}, y::ScalarParameter{N}) where {T,N} = x.value / y.value
-<(x::ScalarParameter{N}, y::ScalarParameter{T}) where {T,N} = isless(x.value, y.value)
+<(x::ScalarParameter{N}, y::ScalarParameter{T}) where {T,N} = x.value < y.value
+==(x::ScalarParameter{N}, y::ScalarParameter{T}) where {T,N} = x.value == y.value
 
 ==(x::UnvaluedParameter, y::Nothing) = true
 ==(x::Nothing, y::UnvaluedParameter) = true
