@@ -223,6 +223,7 @@ function generate_time_slice_relationships()
             function $(Symbol(functionname_t_lowest_resolution))(t_list::Array{TimeSlice,1})
                 [t for t in t_list if isempty(t_in_t_excl(t_short=t, t_list = t_list))]
                 # More verbose older version:
+                # NOTE: the older version is about 10 times faster!
                 # # NOTE: sorting enables looking for top-level items by comparing the start of succesive items
                 # sort!(t_list)  # e.g.: [(1, 2), (1, 3), (1, 4), (2, 4), (5, 6), (5, 7), ...]
                 # top_list = []
