@@ -24,23 +24,37 @@ end
 
 
 """
-    push_recursive!(arr, expr)
+    push_recursive!(arr, arg)
 
-Visit the given expression and add all symbols to the end of the array.
+Visit the given argument expression and add all symbols to the end of the array.
 """
-function push_recursive!(arr, expr)
-    if expr isa Expr
-        if expr.head == :kw
-            push_recursive!(arr, expr.args[end])
-        elseif expr.head in (:parameters, :tuple)
-            for x in expr.args
+function push_recursive!(arr, arg)
+    if arg isa Expr
+        if arg.head == :kw
+            push_recursive!(arr, arg.args[end])
+        elseif arg.head in (:parameters, :tuple)
+            for x in arg.args
                 push_recursive!(arr, x)
             end
         else
-            push!(arr, expr)
+            push!(arr, arg)
         end
     else
-        push!(arr, expr)
+        push!(arr, arg)
+    end
+end
+
+"""
+    append_recursive!(arr, arg_arr)
+
+Sweep the given array of call argument expressions and add all symbols to the end of the array.
+"""
+function append_recursive!(arr, arg_arr)
+    if arg_arr[1] isa Expr && expr_arr[1].head == :call
+        append_recursive!(arr, arg_arr[1].args)
+    end
+    for arg in arg_arr[2:end]
+        push_recursive!(arr, arg)
     end
 end
 
@@ -89,9 +103,7 @@ macro butcher(expression)
         call_replacement_variable = Dict()  # node_id => Replacement object
         # Build array of arguments without keywords
         call_arg_arr = []
-        for arg in call.args[2:end]  # First arg is the method name
-            push_recursive!(call_arg_arr, arg)
-        end
+        append_recursive!(call_arg_arr, call.args)
         # Get rid of immutable arguments
         call_arg_arr = [arg for arg in call_arg_arr if !isimmutable(arg)]
         isempty(call_arg_arr) && continue
