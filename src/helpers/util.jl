@@ -137,36 +137,16 @@ function checkout_spinemodeldb(db_url; upgrade=false)
 end
 
 
+"""
+    t_in_t_list(filtering_options...)
+
+A function indicating whether the time slice t is an element of a list of time slices t_list. Returns true if no list of time slices is specified
+"""
 t_in_t_list(t, t_list) = t_list == :any ? true : (t in tuple(t_list...))
 
 
-"""
-    flow_keys(filtering_options...)
 
-A set of tuples for indexing the `flow` variable. Any filtering options can be specified
-for `commodity`, `node`, `unit`, `direction`, and `t`.
-"""
-function flow_keys(;commodity=:any, node=:any, unit=:any, direction=:any, t=:any)
-    [
-        (u, n, c, d, t1) for (n,c) in node__commodity(commodity=commodity,node=node,_compact=false) for (u, n_, d, blk) in unit__node__direction__temporal_block(
-            node=n, unit=unit, direction=direction, _compact=false
-        ) for t1 in time_slice(temporal_block=blk) if t_in_t_list(t1, t)
-    ]
-end
 
-"""
-    trans_keys(filtering_options...)
-
-A set of tuples for indexing the `trans` variable. Any filtering options can be specified
-for `commodity`, `node`, `connection`, `direction`, and `t`.
-"""
-function trans_keys(;commodity=:any, node=:any, connection=:any, direction=:any, t=:any)
-    [
-        (conn, n, c, d, t1) for (n, c) in node__commodity(commodity=commodity,node=node,_compact=false)  for (conn, n_, d, blk) in connection__node__direction__temporal_block(
-            node=n, connection=connection, direction=direction, _compact=false
-        ) for t1 in time_slice(temporal_block=blk) if t_in_t_list(t1, t)
-    ]
-end
 
 """
     param_keys(filtering_options...)

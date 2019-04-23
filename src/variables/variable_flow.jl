@@ -30,8 +30,21 @@ function variable_flow(m::Model)
     @butcher Dict{Tuple,JuMP.VariableRef}(
         (u, n, c, d, t) => @variable(
             m, base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
-        ) for (u, n, d, block) in unit__node__direction__temporal_block() for (c) in node__commodity(node=n)
-            for t in time_slice(temporal_block=block)
+        ) for (u, n, c, d, t) in flow_indices()
     )
 end
-# @Maren: Should we also generate a thing commodity__node__unit__direction__time_slice (what I called flow_tuples in the temporal representation slide)? I think we need it, not sure if this would be the best place to generate it!
+
+
+"""
+    flow_indices(filtering_options...)
+
+A set of tuples for indexing the `flow` variable. Any filtering options can be specified
+for `commodity`, `node`, `unit`, `direction`, and `t`.
+"""
+function flow_indices(;commodity=:any, node=:any, unit=:any, direction=:any, t=:any)
+    [
+        (u, n, c, d, t1) for (n,c) in node__commodity(commodity=commodity,node=node,_compact=false) for (u, n_, d, blk) in unit__node__direction__temporal_block(
+            node=n, unit=unit, direction=direction, _compact=false
+        ) for t1 in time_slice(temporal_block=blk) if t_in_t_list(t1, t)
+    ]
+end

@@ -35,6 +35,7 @@ export checkout_spinemodeldb
 export run_spinemodel
 export value
 export pack_trailing_dims
+export t_in_t_list
 export @butcher
 
 # Export variables
@@ -43,8 +44,9 @@ export variable_trans
 export variable_stor_state
 
 # Export filter functions
-export flow_keys
-export trans_keys
+export flow_indices
+export trans_indices
+export stor_state_indices
 export param_keys
 
 # Export objective

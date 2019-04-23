@@ -34,7 +34,7 @@ function constraint_max_cum_in_flow_bound(m::Model, flow)
         + reduce(
             +,
             flow[u, n, c, :in, t]
-            for (u, n, c, d, t) in flow_keys(direction=:in,unit=unit_group__unit(unit_group=ug),commodity=commodity_group__commodity(commodity_group=cg));
+            for (u, n, c, d, t) in flow_indices(direction=:in,unit=unit_group__unit(unit_group=ug),commodity=commodity_group__commodity(commodity_group=cg));
             init=0
         )
         <=

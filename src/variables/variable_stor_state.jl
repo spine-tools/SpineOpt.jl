@@ -26,9 +26,24 @@ attached to model `m`.
 """
 function variable_stor_state(m::Model)
     @butcher Dict{Tuple,JuMP.VariableRef}(
-        (c, stor, t) => @variable(
-            m, base_name="stor_state[$c, $stor, $(t.JuMP_name)]", lower_bound=0
-        ) for (c, stor, block) in commodity__storage__temporal_block()
-            for t in time_slice(temporal_block=block)
+        (stor, c, t) => @variable(
+            m, base_name="stor_state[$stor, $c, $(t.JuMP_name)]", lower_bound=0
+        ) for (stor, c, t) in stor_state_indices()
     )
+end
+
+
+"""
+    stor_state_indices(filtering_options...)
+
+A set of tuples for indexing the `stor_state` variable. Any filtering options can be specified
+for `commodity`, `stor`, and `t`. Storage variables are generated for the highest resolution flows of the commodity involved.
+"""
+# NEEDS TESTING!!
+function stor_state_indices(;storage=:any, commodity=:any, t=:any)
+        stor_state_at_connections = [(stor, c, t1) for (stor,c) in storage__commodity(storage=storage, commodity=commodity)
+                                            for t1 in t_highest_resolution(unique!([t2 for conn in storage__connection(storage=storage) for (conn,n,c,d,t2) in trans_indices(connection=conn,commodity=commodity) if t_in_t_list(t2, t)]))]
+        stor_state_at_units = [(stor, c, t1) for (stor,c) in storage__commodity(storage=storage, commodity=commodity)
+                                            for t1 in t_highest_resolution(unique!([t2 for u in storage__unit(storage=storage) for (u,n,c,d,t2) in flow_indices(unit=u,commodity=commodity) if t_in_t_list(t2, t)]))]
+        stor_state_indices = vcat(stor_state_at_connections,stor_state_at_units)
 end

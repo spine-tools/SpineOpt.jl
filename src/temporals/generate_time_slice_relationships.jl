@@ -57,7 +57,8 @@ function generate_time_slice_relationships()
         functionname_t_in_t_excl = "t_in_t_excl"
         functionname_t_overlaps_t = "t_overlaps_t"
         functionname_t_overlaps_t_excl = "t_overlaps_t_excl"
-        functionname_t_top_level = "t_top_level"
+        functionname_t_lowest_resolution = "t_lowest_resolution"
+        functionname_t_highest_resolution = "t_highest_resolution"
 
         @eval begin
             """
@@ -112,17 +113,33 @@ function generate_time_slice_relationships()
             See [`$($functionname_t_in_t)(;t_long=nothing, t_short=nothing)`](@ref)
             for details about keyword arguments `t_long` and `t_short`.
             """
-            function $(Symbol(functionname_t_in_t_excl))(;t_long=nothing, t_short=nothing)
+            function $(Symbol(functionname_t_in_t_excl))(;t_long=nothing, t_short=nothing, t_list=nothing)
                 if t_long == t_short == nothing
-                    $list_t_in_t_excl
+                    if t_list == nothing
+                        $list_t_in_t_excl
+                    else
+                        ((t1,t2) for (t1,t2) in $list_t_in_t_excl if t1 in tuple(t_list...) && t2 in tuple(t_list...))
+                    end
                 elseif t_long != nothing && t_short == nothing
-                    unique(t1 for (t1, t2) in $list_t_in_t_excl if t2 in tuple(t_long...))
+                    if t_list == nothing
+                        unique(t1 for (t1, t2) in $list_t_in_t_excl if t2 in tuple(t_long...))
+                    else
+                        unique(t1 for (t1, t2) in $list_t_in_t_excl if t2 in tuple(t_long...) && t1 in tuple(t_list...))
+                    end
                 elseif t_long == nothing && t_short != nothing
-                    unique(t2 for (t1, t2) in $list_t_in_t_excl if t1 in tuple(t_short...))
+                    if t_list == nothing
+                        unique(t2 for (t1, t2) in $list_t_in_t_excl if t1 in tuple(t_short...))
+                    else
+                        unique(t2 for (t1, t2) in $list_t_in_t_excl if t1 in tuple(t_short...) && t2 in tuple(t_list...))
+                    end
                 elseif t_long != nothing && t_short != nothing
-                    unique(t2 for (t1, t2) in $list_t_in_t_excl if t1 in tuple(t_short...) && t2 in tuple(t_long...))
+                    if t_list == nothing
+                        unique((t1,t2) for (t1, t2) in $list_t_in_t_excl if t1 in tuple(t_short...) && t2 in tuple(t_long...))
+                    else
+                        unique((t1,t2) for (t1, t2) in $list_t_in_t_excl if t1 in tuple(t_short...) && t2 in tuple(t_long...) && t1 in tuple(t_list...) && t2 in tuple(t_list...))
+                    end
                 else
-                    error("please specify just one of t_long and t_short")
+                    error("invalid arguments")
                 end
             end
             """
@@ -199,31 +216,43 @@ function generate_time_slice_relationships()
             end
 
             """
-                $($functionname_t_top_level)(t_list::Union{TimeSlice,Array{TimeSlice,1}})
+                $($functionname_t_lowest_resolution)(t_list::Union{TimeSlice,Array{TimeSlice,1}})
 
-            Return the list of top-level time slices from `t_list` (those that aren't contained in any other).
+            Return the list of the highest resolution time slices within `t_list` (those that aren't contained in any other).
             """
-            function $(Symbol(functionname_t_top_level))(t_list::Array{TimeSlice,1})
-                # NOTE: sorting enables looking for top-level items by comparing the start of succesive items
-                sort!(t_list)  # e.g.: [(1, 2), (1, 3), (1, 4), (2, 4), (5, 6), (5, 7), ...]
-                top_list = []
-                i = 1
-                while i <= length(t_list)
-                    if i != length(t_list) && t_list[i].start == t_list[i + 1].start
-                        # Keep going, we haven't reached top-level
-                        i += 1
-                    else
-                        # Top-level reached: either we're at the end, or the next item has a different start
-                        push!(top_list, t_list[i])
-                        # Advance i to the beginning of the next 'section'
-                        end_ = t_list[i].end_  # This marks the end of the current section
-                        i += 1
-                        while i <= length(t_list) && t_list[i].start < end_
-                            i += 1
-                        end
-                    end
-                end
-                unique(top_list)
+            function $(Symbol(functionname_t_lowest_resolution))(t_list::Array{TimeSlice,1})
+                [t for t in t_list if isempty(t_in_t_excl(t_short=t, t_list = t_list))]
+                # More verbose older version:
+                # # NOTE: sorting enables looking for top-level items by comparing the start of succesive items
+                # sort!(t_list)  # e.g.: [(1, 2), (1, 3), (1, 4), (2, 4), (5, 6), (5, 7), ...]
+                # top_list = []
+                # i = 1
+                # while i <= length(t_list)
+                #     if i != length(t_list) && t_list[i].start == t_list[i + 1].start
+                #         # Keep going, we haven't reached top-level
+                #         i += 1
+                #     else
+                #         # Top-level reached: either we're at the end, or the next item has a different start
+                #         push!(top_list, t_list[i])
+                #         # Advance i to the beginning of the next 'section'
+                #         end_ = t_list[i].end_  # This marks the end of the current section
+                #         i += 1
+                #         while i <= length(t_list) && t_list[i].start < end_
+                #             i += 1
+                #         end
+                #     end
+                # end
+                # unique(top_list)
+            end
+
+
+            """
+                $($functionname_t_highest_resolution)(t_list::Union{TimeSlice,Array{TimeSlice,1}})
+
+            Return the list of the highest resolution time slices from `t_list` (those that don't contain any other).
+            """
+            function $(Symbol(functionname_t_highest_resolution))(t_list::Array{TimeSlice,1})
+                [t for t in t_list if isempty(t_in_t_excl(t_long=t, t_list = t_list))]
             end
 
             export $(Symbol(functionname_t_before_t))
@@ -231,7 +260,8 @@ function generate_time_slice_relationships()
             export $(Symbol(functionname_t_in_t_excl))
             export $(Symbol(functionname_t_overlaps_t))
             export $(Symbol(functionname_t_overlaps_t_excl))
-            export $(Symbol(functionname_t_top_level))
+            export $(Symbol(functionname_t_lowest_resolution))
+            export $(Symbol(functionname_t_highest_resolution))
         end
     end
 end

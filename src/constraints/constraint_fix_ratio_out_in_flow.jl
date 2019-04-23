@@ -28,10 +28,10 @@ is specified.
 function constraint_fix_ratio_out_in_flow(m::Model, flow)
     for (u, cg_out, cg_in) in param_keys(fix_ratio_out_in_flow(),(:unit, :commodity_group1, :commodity_group2))
         time_slices_out = unique!([
-            t for (u, n, c_out, d, t) in flow_keys(unit=u,commodity=commodity_group__commodity(commodity_group=cg_out),direction=:out)
+            t for (u, n, c_out, d, t) in flow_indices(unit=u,commodity=commodity_group__commodity(commodity_group=cg_out),direction=:out)
                 ])
         time_slices_in = unique!([
-            t for (u, n, c_in, d, t) in flow_keys(unit=u,commodity=commodity_group__commodity(commodity_group=cg_in),direction=:in)
+            t for (u, n, c_in, d, t) in flow_indices(unit=u,commodity=commodity_group__commodity(commodity_group=cg_in),direction=:in)
                 ])
         #NOTE: the unique is not really necessary but reduces the timeslices for the next steps
         involved_timeslices = sort!([time_slices_out;time_slices_in])
@@ -42,20 +42,20 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
             # while the other commodity is constraint for a longer period, "overlaps" becomes active
             involved_timeslices = overlaps
         end
-        @butcher for t in t_top_level(involved_timeslices)
+        @butcher for t in t_lowest_resolution(involved_timeslices)
             @constraint(
                 m,
                 + sum(
                     +,
                     flow[u, n, c_out, :out, t1] * duration(t1)
-                    for (u, n, c_out, d, t1) in flow_keys(commodity = commodity_group__commodity(commodity_group=cg_out),direction=:out,t=t_in_t(t_long=t))
+                    for (u, n, c_out, d, t1) in flow_indices(commodity = commodity_group__commodity(commodity_group=cg_out),direction=:out,t=t_in_t(t_long=t))
                 )
                 ==
                 + fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)(t=t)
                 * sum(
                     +,
                     flow[u, n, c_in, :in, t1] * duration(t1)
-                    for (u, n, c_in, d, t1) in flow_keys(commodity = commodity_group__commodity(commodity_group=cg_in),direction=:in,t=t_in_t(t_long=t))
+                    for (u, n, c_in, d, t1) in flow_indices(commodity = commodity_group__commodity(commodity_group=cg_in),direction=:in,t=t_in_t(t_long=t))
                 )
             )
         end

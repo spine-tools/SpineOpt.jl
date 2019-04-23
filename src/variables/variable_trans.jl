@@ -30,7 +30,21 @@ function variable_trans(m::Model)
     @butcher Dict{Tuple,JuMP.VariableRef}(
         (conn, n, c, d, t) => @variable(
             m, base_name="trans[$conn, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
-        ) for (conn, n, d, block) in connection__node__direction__temporal_block() for c in node__commodity(node=n)
-                for t in time_slice(temporal_block=block)
+        ) for (conn, n, c, d, t) in trans_indices()
     )
+end
+
+
+"""
+    trans_indices(filtering_options...)
+
+A set of tuples for indexing the `trans` variable. Any filtering options can be specified
+for `commodity`, `node`, `connection`, `direction`, and `t`.
+"""
+function trans_indices(;commodity=:any, node=:any, connection=:any, direction=:any, t=:any)
+    [
+        (conn, n, c, d, t1) for (n, c) in node__commodity(commodity=commodity,node=node,_compact=false)  for (conn, n_, d, blk) in connection__node__direction__temporal_block(
+            node=n, connection=connection, direction=direction, _compact=false
+        ) for t1 in time_slice(temporal_block=blk) if t_in_t_list(t1, t)
+    ]
 end

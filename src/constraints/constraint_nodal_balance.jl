@@ -34,26 +34,26 @@ function constraint_nodal_balance(m::Model, flow, trans)
             + reduce(
                 +,
                 flow[u, n, c, :out, t1] * duration(t1)
-                	for (u, n, c, d, t1) in flow_keys(node=n,t=t_in_t(t_long=t), direction=:out);
+                	for (u, n, c, d, t1) in flow_indices(node=n,t=t_in_t(t_long=t), direction=:out);
                 init=0
             )
 			- reduce(
                 +,
                 flow[u, n, c, :in, t1] * duration(t1)
-				for (u, n, c, d, t1) in flow_keys(node=n,t=t_in_t(t_long=t), direction=:in);
+				for (u, n, c, d, t1) in flow_indices(node=n,t=t_in_t(t_long=t), direction=:in);
                 init=0
             )
             # Transfer of commodities between nodes
 			+ reduce(
                 +,
                 trans[conn, n, c, :out, t1] * duration(t1)
-                	for (conn, n, c,d,t1) in trans_keys(node=n,t=t_in_t(t_long=t), direction=:out);
+                	for (conn, n, c,d,t1) in trans_indices(node=n,t=t_in_t(t_long=t), direction=:out);
                 init=0
             )
 			- reduce(
                 +,
                 trans[conn, n, c, :in, t1] * duration(t1)
-                	for (conn, n, c,d,t1) in trans_keys(node=n,t=t_in_t(t_long=t), direction=:out);
+                	for (conn, n, c,d,t1) in trans_indices(node=n,t=t_in_t(t_long=t), direction=:out);
                 init=0
             )
         )
