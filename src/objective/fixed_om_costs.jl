@@ -25,11 +25,11 @@ Variable operation costs defined on flows.
 function fixed_om_costs(m::Model)
     #@butcher
     let fom_costs = zero(AffExpr)
-        for (u,) in param_keys(fom_cost()), c in param_keys(unit_capacity(), unit=u)
+        for (u,c) in param_keys(unit_capacity())
                 fom_costs +=
                 + reduce(
                     +,
-                    (u,c) in param_keys(unit_capacity()) ? unit_capacity(unit=u,commodity=c) : 0 * number_of_units(unit=u) * fom_cost(unit=u);
+                    unit_capacity(unit=u,commodity=c) * number_of_units(unit=u) * fom_cost(unit=u);
                     init=0
                 )
         end

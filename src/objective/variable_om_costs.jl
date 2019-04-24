@@ -29,8 +29,8 @@ function variable_om_costs(m::Model, flow)
                 vom_costs +=
                 + reduce(
                     +,
-                    flow[u, n, c, d, t] * vom_cost(unit=u,node=n,direction=d,temporal_block=block) * duration(t)
-                        for (u, n, c, d, t) in flow_keys(node=n,unit=u, direction=d);
+                    flow[u, n, c, d, t] * vom_cost(unit=u,node=n,direction=d,temporal_block=block)(t=t) * duration(t)
+                        for (u, n, c, d, t) in flow_indices(node=n,unit=u, direction=d);
                     init=0
                 )
         end

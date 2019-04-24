@@ -29,7 +29,8 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         ## Create objective function
         vom_costs = variable_om_costs(m,flow)
         fom_costs = fixed_om_costs(m)
-        production_cost = objective_minimize_production_cost(m, flow,vom_costs,fom_costs)
+        tax_costs = taxes(m,flow)
+        production_cost = objective_minimize_production_cost(m, flow,vom_costs,fom_costs,tax_costs)
         # Add constraints
     end
     printstyled("Generating constraints...\n"; bold=true)

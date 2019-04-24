@@ -53,6 +53,7 @@ export param_keys
 export objective_minimize_production_cost
 export variable_om_costs
 export fixed_om_costs
+export taxes
 
 # Export constraints
 export constraint_flow_capacity
@@ -87,6 +88,7 @@ include("variables/variable_stor_state.jl")
 include("objective/objective_minimize_production_cost.jl")
 include("objective/variable_om_costs.jl")
 include("objective/fixed_om_costs.jl")
+include("objective/taxes.jl")
 
 include("constraints/constraint_max_cum_in_flow_bound.jl")
 include("constraints/constraint_flow_capacity.jl")

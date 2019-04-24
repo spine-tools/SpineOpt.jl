@@ -23,7 +23,7 @@
 Minimize the `production_cost` correspond to the sum over all
 `conversion_cost` of each `unit`.
 """
-function objective_minimize_production_cost(m::Model, flow,vom_costs,fom_costs)
+function objective_minimize_production_cost(m::Model, flow,vom_costs,fom_costs,tax_costs)
     #@butcher begin
         let production_cost = zero(AffExpr)
             for (u,c) in param_keys(conversion_cost())
@@ -31,7 +31,7 @@ function objective_minimize_production_cost(m::Model, flow,vom_costs,fom_costs)
                     production_cost += flow[u, n, c, d, t] * duration(t) * conversion_cost(unit=u, commodity=c)(t=t)
                 end
             end
-            production_cost += vom_costs + fom_costs
+            production_cost += vom_costs + fom_costs + tax_costs
             @objective(m, Min, production_cost)
         end
     #end
