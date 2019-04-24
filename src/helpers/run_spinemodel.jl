@@ -27,7 +27,9 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         trans = variable_trans(m)
         stor_state = variable_stor_state(m)
         ## Create objective function
-        production_cost = objective_minimize_production_cost(m, flow)
+        vom_costs = variable_om_costs(m,flow)
+        fom_costs = fixed_om_costs(m)
+        production_cost = objective_minimize_production_cost(m, flow,vom_costs,fom_costs)
         # Add constraints
     end
     printstyled("Generating constraints...\n"; bold=true)
@@ -40,7 +42,7 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         #constraint_trans_loss(m, trans)
         constraint_fix_ratio_out_in_trans(m, trans)
         # Transmission line capacity
-        constraint_trans_capacity(m, trans)
+        #constraint_trans_capacity(m, trans)
         # Nodal balance
         constraint_nodal_balance(m, flow, trans)
         # Absolute bounds on commodities
