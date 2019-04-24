@@ -31,7 +31,7 @@ function generate_time_slice_relationships()
     list_t_overlaps_t = []
     for i in time_slice()
         for j in time_slice()
-            if suceeds(j, i)
+            if succeeds(j, i)
                 push!(list_t_before_t, tuple(i, j))
             end
             if in(i, j)
@@ -70,55 +70,91 @@ function generate_time_slice_relationships()
             (or any element in `t_before` if it's a list).
             If `t_after` is not `nothing`, return the list of time slices that are succeeded by `t_after`
             (or any element in `t_after` if it's a list).
-            Only one of `t_before` and `t_after` can be not `nothing` at a time.
+            if `t_list` is specified, only returns tuples of time slices or time slices that appear in `t_list`.
             """
-            function $(Symbol(functionname_t_before_t))(;t_before=nothing, t_after=nothing)
+            function $(Symbol(functionname_t_before_t))(;t_before=nothing, t_after=nothing, t_list=nothing)
                 if t_before == t_after == nothing
-                    $list_t_before_t
+                    if t_list == nothing
+                        $list_t_before_t
+                    else
+                        [(t1,t2) for (t1,t2) in $list_t_before_t if t1 in tuple(t_list...) && t2 in tuple(t_list...)]
+                    end
                 elseif t_before != nothing && t_after == nothing
-                    unique(t2 for (t1, t2) in $list_t_before_t if t1 in tuple(t_before...))
+                    if t_list == nothing
+                        unique(t2 for (t1, t2) in $list_t_before_t if t1 in tuple(t_before...))
+                    else
+                        unique(t2 for (t1, t2) in $list_t_before_t if t1 in tuple(t_before...) && t2 in tuple(t_list...))
+                    end
                 elseif t_before == nothing && t_after != nothing
-                    unique(t1 for (t1, t2) in $list_t_before_t if t2 in tuple(t_after...))
+                    if t_list == nothing
+                        unique(t1 for (t1, t2) in $list_t_before_t if t2 in tuple(t_after...))
+                    else
+                        unique(t1 for (t1, t2) in $list_t_before_t if t2 in tuple(t_after...) && t1 in tuple(t_list...))
+                    end
+                elseif t_before != nothing && t_after != nothing
+                    if t_list == nothing
+                        [(t1,t2) for (t1, t2) in $list_t_before_t if t1 in tuple(t_before...) && t2 in tuple(t_after...)]
+                    else
+                        [(t1,t2) for (t1, t2) in $list_t_before_t if t1 in tuple(t_before...) && t2 in tuple(t_after...) && t1 in tuple(t_list...) && t2 in tuple(t_list...)]
+                    end
                 else
-                    error("please specify just one of `t_before` and `t_after`")
+                    error("invalid arguments")
                 end
             end
+
             """
-                $($functionname_t_in_t)(;t_long=nothing, t_short=nothing)
+                $($functionname_t_in_t)(;t_long=nothing, t_short=nothing, t_list=nothing)
 
             Return the list of tuples `(t1, t2)`, where `t2` is contained in `t1`.
             If `t_long` is not `nothing`, return the list of time slices contained in `t_long`
             (or any element in `t_long` if it's a list).
             If `t_short` is not `nothing`, return the list of time slices that contain `t_short`
             (or any element in `t_short` if it's a list).
-            Only one of `t_long` and `t_short` can be not `nothing` at a time.
+            if `t_list` is specified, only returns tuples of time slices or time slices that appear in `t_list`.
             """
-            function $(Symbol(functionname_t_in_t))(;t_long=nothing, t_short=nothing)
+            function $(Symbol(functionname_t_in_t))(;t_long=nothing, t_short=nothing, t_list=nothing)
                 if t_long == t_short == nothing
-                    $list_t_in_t
+                    if t_list == nothing
+                        $list_t_in_t
+                    else
+                        [(t1,t2) for (t1,t2) in $list_t_in_t if t1 in tuple(t_list...) && t2 in tuple(t_list...)]
+                    end
                 elseif t_long != nothing && t_short == nothing
-                    unique(t1 for (t1, t2) in $list_t_in_t if t2 in tuple(t_long...))
+                    if t_list == nothing
+                        unique(t1 for (t1, t2) in $list_t_in_t if t2 in tuple(t_long...))
+                    else
+                        unique(t1 for (t1, t2) in $list_t_in_t if t2 in tuple(t_long...) && t1 in tuple(t_list...))
+                    end
                 elseif t_long == nothing && t_short != nothing
-                    unique(t2 for (t1, t2) in $list_t_in_t if t1 in tuple(t_short...))
+                    if t_list == nothing
+                        unique(t2 for (t1, t2) in $list_t_in_t if t1 in tuple(t_short...))
+                    else
+                        unique(t2 for (t1, t2) in $list_t_in_t if t1 in tuple(t_short...) && t2 in tuple(t_list...))
+                    end
                 elseif t_long != nothing && t_short != nothing
-                    unique(t2 for (t1, t2) in $list_t_in_t if t1 in tuple(t_short...) && t2 in tuple(t_long...))
+                    if t_list == nothing
+                        [(t1,t2) for (t1, t2) in $list_t_in_t if t1 in tuple(t_short...) && t2 in tuple(t_long...)]
+                    else
+                        [(t1,t2) for (t1, t2) in $list_t_in_t if t1 in tuple(t_short...) && t2 in tuple(t_long...) && t1 in tuple(t_list...) && t2 in tuple(t_list...)]
+                    end
                 else
-                    error("please specify just one of `t_long` and `t_short`")
+                    error("invalid arguments")
                 end
             end
+
             """
-                $($functionname_t_in_t_excl)(;t_long=nothing, t_short=nothing)
+                $($functionname_t_in_t_excl)(;t_long=nothing, t_short=nothing, t_list=nothing)
 
             Return the list of tuples `(t1, t2)`, where `t1` contains `t2` and `t1` is different from `t2`.
-            See [`$($functionname_t_in_t)(;t_long=nothing, t_short=nothing)`](@ref)
-            for details about keyword arguments `t_long` and `t_short`.
+            See [`$($functionname_t_in_t)(;t_long=nothing, t_short=nothing; t_list=nothing)`](@ref)
+            for details about keyword arguments `t_long`, `t_short` and `t_list`.
             """
             function $(Symbol(functionname_t_in_t_excl))(;t_long=nothing, t_short=nothing, t_list=nothing)
                 if t_long == t_short == nothing
                     if t_list == nothing
                         $list_t_in_t_excl
                     else
-                        ((t1,t2) for (t1,t2) in $list_t_in_t_excl if t1 in tuple(t_list...) && t2 in tuple(t_list...))
+                        [(t1,t2) for (t1,t2) in $list_t_in_t_excl if t1 in tuple(t_list...) && t2 in tuple(t_list...)]
                     end
                 elseif t_long != nothing && t_short == nothing
                     if t_list == nothing
@@ -134,85 +170,113 @@ function generate_time_slice_relationships()
                     end
                 elseif t_long != nothing && t_short != nothing
                     if t_list == nothing
-                        unique((t1,t2) for (t1, t2) in $list_t_in_t_excl if t1 in tuple(t_short...) && t2 in tuple(t_long...))
+                        [(t1,t2) for (t1, t2) in $list_t_in_t_excl if t1 in tuple(t_short...) && t2 in tuple(t_long...)]
                     else
-                        unique((t1,t2) for (t1, t2) in $list_t_in_t_excl if t1 in tuple(t_short...) && t2 in tuple(t_long...) && t1 in tuple(t_list...) && t2 in tuple(t_list...))
+                        [(t1,t2) for (t1, t2) in $list_t_in_t_excl if t1 in tuple(t_short...) && t2 in tuple(t_long...) && t1 in tuple(t_list...) && t2 in tuple(t_list...)]
                     end
                 else
                     error("invalid arguments")
                 end
             end
             """
-                $($functionname_t_overlaps_t)()
+                $($functionname_t_overlaps_t)(;t_list=nothing)
 
             Return the list of tuples `(t1, t2)` where `t1` and `t2` have some time in common.
+            if `t_list` is specified, only returns tuples of time slices that appear in `t_list`.
             """
-            function $(Symbol(functionname_t_overlaps_t))()
-                $list_t_overlaps_t
+            function $(Symbol(functionname_t_overlaps_t))(;t_list=nothing)
+                if t_list==nothing
+                    $list_t_overlaps_t
+                else
+                    [(t1,t2) for (t1,t2) in $list_t_overlaps_t if t1 in tuple(t_list...) && t2 in tuple(t_list...)]
+                end
             end
             """
-                $($functionname_t_overlaps_t)(t_overlap::Union{TimeSlice,Array{TimeSlice,1}})
+                $($functionname_t_overlaps_t)(t_overlap::Union{TimeSlice,Array{TimeSlice,1}}; t_list=nothing)
 
             Return the list of time slices that have some time in common with `t_overlap`
-            (or any element in `t_overlap` if it's a list).
+            (or some time in common with any element in `t_overlap` if it's a list).
+            if `t_list` is specified, only returns time slices that appear in `t_list`.
              ```
             """
-            function $(Symbol(functionname_t_overlaps_t))(t_overlap::Union{TimeSlice,Array{TimeSlice,1}})
-                unique(t2 for (t1, t2) in $list_t_overlaps_t if t1 in tuple(t_overlap...))
+            function $(Symbol(functionname_t_overlaps_t))(t_overlap::Union{TimeSlice,Array{TimeSlice,1}}; t_list=nothing)
+                if t_list==nothing
+                    unique(t2 for (t1, t2) in $list_t_overlaps_t if t1 in tuple(t_overlap...))
+                else
+                    unique(t2 for (t1, t2) in $list_t_overlaps_t if t1 in tuple(t_overlap...) && t2 in tuple(t_list...))
+                end
             end
             """
-                $($functionname_t_overlaps_t)(t_list1::Union{TimeSlice,Array{TimeSlice,1}}, t_list2::Union{TimeSlice,Array{TimeSlice,1}})
+                $($functionname_t_overlaps_t)(t_list1::Union{TimeSlice,Array{TimeSlice,1}}, t_list2::Union{TimeSlice,Array{TimeSlice,1}}; t_list=nothing)
 
-            Return a single lisf including all time slices from `t_list1` that overlap with any time slice in `t_list2`,
-            and all time slices from `t_list2` that overlap with any time slice in `t_list1`.
+            Return a list of time slices which are in t_list1 and have some time in common with any of the time slices in t_list2 and vice versa
+            if `t_list` is specified, only returns time slices that appear in `t_list`.
             """
             function $(Symbol(functionname_t_overlaps_t))(
                     t_list1::Union{TimeSlice,Array{TimeSlice,1}},
-                    t_list2::Union{TimeSlice,Array{TimeSlice,1}}
+                    t_list2::Union{TimeSlice,Array{TimeSlice,1}};
+                    t_list=nothing
                 )
                 overlap_list = [
                     (t1, t2) for (t1, t2) in $list_t_overlaps_t if t1 in tuple(t_list1...) && t2 in tuple(t_list2...)
-                ]
-                t_list = vcat(first.(overlap_list), last.(overlap_list))
-                unique(t_list)
+                    ]
+                t_overlap = vcat(first.(overlap_list), last.(overlap_list))
+                unique!(t_overlap)
+                if t_list != nothing
+                    t_overlap = [t for t in t_overlap if t in t_list]
+                end
+                return t_overlap
             end
 
-            """
-                $($functionname_t_overlaps_t_excl)()
 
-            Return the list of tuples `(t1, t2)` where `t1` and `t2` are different and have some time in common.
+            """
+                $($functionname_t_overlaps_t_excl)(;t_list=nothing)
+
+            Return the list of tuples `(t1, t2)` where `t1` and `t2` have some time in common and t1 is not equal to t2.
+            if `t_list` is specified, only returns tuples of time slices that appear in `t_list`.
+            """
+            function $(Symbol(functionname_t_overlaps_t_excl))(;t_list=nothing)
+                if t_list==nothing
+                    $list_t_overlaps_t_excl
+                else
+                    [(t1,t2) for (t1,t2) in $list_t_overlaps_t_excl if t1 in tuple(t_list...) && t2 in tuple(t_list...)]
+                end
+            end
+            """
+                $($functionname_t_overlaps_t_excl)(t_overlap::Union{TimeSlice,Array{TimeSlice,1}}; t_list=nothing)
+
+            Return the list of time slices that have some time in common with `t_overlap`
+            (or some time in common with any element in `t_overlap` if it's a list) and t1 is not equal to t2.
+            if `t_list` is specified, only returns time slices that appear in `t_list`.
              ```
             """
-            function $(Symbol(functionname_t_overlaps_t_excl))()
-                $list_t_overlaps_t_excl
+            function $(Symbol(functionname_t_overlaps_t_excl))(t_overlap::Union{TimeSlice,Array{TimeSlice,1}}; t_list=nothing)
+                if t_list==nothing
+                    unique(t2 for (t1, t2) in $list_t_overlaps_t_excl if t1 in tuple(t_overlap...))
+                else
+                    unique(t2 for (t1, t2) in $list_t_overlaps_t_excl if t1 in tuple(t_overlap...) && t2 in tuple(t_list...))
+                end
             end
-
             """
-                $($functionname_t_overlaps_t_excl)(t_overlap)
+                $($functionname_t_overlaps_t_excl)(t_list1::Union{TimeSlice,Array{TimeSlice,1}}, t_list2::Union{TimeSlice,Array{TimeSlice,1}}; t_list=nothing)
 
-            Return the list of time slices that have some time in common with `t_overlap` excluding `t_overlap` itself.
-            """
-            function $(Symbol(functionname_t_overlaps_t_excl))(t_overlap::Union{TimeSlice,Array{TimeSlice,1}})
-                unique(t2 for (t1, t2) in $list_t_overlaps_t_excl if t1 in tuple(t_overlap...))
-            end
-
-            """
-                $($functionname_t_overlaps_t_excl)(t_list1, t_list2)
-
-            Return a single list including all time slices from `t_list1` that overlap with
-            (but are different from) any time slice in `t_list2`,
-            and all time slices from `t_list2` that overlap with
-            (but are different from) any time slice in `t_list1`.
+            Return a list of time slices which are in t_list1 and have some time in common with any of the time slices in t_list2 (unless if they are the same time slice) and vice versa
+            if `t_list` is specified, only returns time slices that appear in `t_list`.
             """
             function $(Symbol(functionname_t_overlaps_t_excl))(
                     t_list1::Union{TimeSlice,Array{TimeSlice,1}},
-                    t_list2::Union{TimeSlice,Array{TimeSlice,1}})
+                    t_list2::Union{TimeSlice,Array{TimeSlice,1}};
+                    t_list=nothing
+                )
                 overlap_list = [
-                    (t1, t2)
-                    for (t1, t2) in $list_t_overlaps_t_excl if t1 in tuple(t_list1...) && t2 in tuple(t_list2...)
-                ]
-                t_list = vcat(first.(overlap_list), last.(overlap_list))
-                unique(t_list)
+                    (t1, t2) for (t1, t2) in $list_t_overlaps_t_excl if t1 in tuple(t_list1...) && t2 in tuple(t_list2...)
+                    ]
+                t_overlap = vcat(first.(overlap_list), last.(overlap_list))
+                unique!(t_overlap)
+                if t_list != nothing
+                    t_overlap = [t for t in t_overlap if t in t_list]
+                end
+                return t_overlap
             end
 
             """

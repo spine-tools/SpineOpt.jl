@@ -46,11 +46,11 @@ Base.isless(a::TimeSlice, b::TimeSlice) = tuple(a.start, a.end_) < tuple(b.start
 
 
 """
-    suceeds(b::TimeSlice, a::TimeSlice)
+    succeeds(a::TimeSlice, b::TimeSlice)
 
-Determine whether the end point of `b` is exactly the start point of `a`.
+Determine whether the start point of `a` is exactly the end point of `b`.
 """
-suceeds(b::TimeSlice, a::TimeSlice) = b.end_ == a.start
+succeeds(a::TimeSlice, b::TimeSlice) = b.end_ == a.start
 
 
 """
