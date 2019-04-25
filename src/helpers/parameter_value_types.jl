@@ -16,27 +16,27 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-struct UnvaluedParameter
+struct NoValue
 end
 
-struct ScalarParameter{T}
+struct ScalarValue{T}
     value::T
 end
 
-struct ArrayParameter
+struct ArrayValue
     value::Array
 end
 
-struct DictParameter
+struct DictValue
     value::Dict
 end
 
-struct TimePatternParameter
+struct TimePatternValue
     dict::Dict{TimePattern,T} where T
     default
 end
 
-struct TimeSeriesParameter{I,V}
+struct TimeSeriesValue{I,V}
     indexes::I
     values::Array{V,1}
     default::V
@@ -44,7 +44,7 @@ struct TimeSeriesParameter{I,V}
     repeat::Bool
     span::Period
     mean_value::V
-    function TimeSeriesParameter(i::I, v::Array{V,1}, d, iy=false, r=false) where {I,V}
+    function TimeSeriesValue(i::I, v::Array{V,1}, d, iy=false, r=false) where {I,V}
         if length(i) != length(v)
             error("lengths don't match")
         else
@@ -61,7 +61,7 @@ struct TimeSeriesParameter{I,V}
     end
 end
 
-function TimeSeriesParameter(db_value::Dict, default)
+function TimeSeriesValue(db_value::Dict, default)
     if !haskey(db_value, "data")
         # Naked dict, no meta
         data = db_value
@@ -70,29 +70,29 @@ function TimeSeriesParameter(db_value::Dict, default)
         data = db_value["data"]
         metadata = get(db_value, "metadata", Dict())
     end
-    TimeSeriesParameter(data, metadata, default)
+    TimeSeriesValue(data, metadata, default)
 end
 
-function TimeSeriesParameter(db_value::Array, default)
+function TimeSeriesValue(db_value::Array, default)
     # Naked array, no meta
     metadata = Dict()
-    TimeSeriesParameter(db_value, metadata, default)
+    TimeSeriesValue(db_value, metadata, default)
 end
 
-function TimeSeriesParameter(data::Dict, metadata::Dict, default)
+function TimeSeriesValue(data::Dict, metadata::Dict, default)
     # Indexes come with data, so just look for "ignore_year" in metadata
     repeat = false
     ignore_year = get(metadata, "ignore_year", false)
     data = Dict(DateTime(k) => v for (k, v) in data)
     ignore_year && (data = Dict(k - Year(k) => v for (k, v) in data))
     data = sort(data)
-    TimeSeriesParameter(collect(keys(data)), collect(values(data)), default, ignore_year, repeat)
+    TimeSeriesValue(collect(keys(data)), collect(values(data)), default, ignore_year, repeat)
 end
 
-function TimeSeriesParameter(data::Array, metadata::Dict, default)
+function TimeSeriesValue(data::Array, metadata::Dict, default)
     if data[1] isa Array
         # Assume two column array format: make it a dictionary and call the previous constructor
-        TimeSeriesParameter(Dict(k => v for (k, v) in data), metadata, default)
+        TimeSeriesValue(Dict(k => v for (k, v) in data), metadata, default)
     else
         # Assume one column array format
         if haskey(metadata, "start")
@@ -132,24 +132,24 @@ function TimeSeriesParameter(data::Array, metadata::Dict, default)
             end_ = start + len * res
             inds = start:res:end_
         end
-        TimeSeriesParameter(inds, data, default, ignore_year, repeat)
+        TimeSeriesValue(inds, data, default, ignore_year, repeat)
     end
 end
 
-(p::UnvaluedParameter)(;kwargs...) = nothing
-(p::ScalarParameter)(;kwargs...) = p.value
+(p::NoValue)(;kwargs...) = nothing
+(p::ScalarValue)(;kwargs...) = p.value
 
-function (p::ArrayParameter)(;i::Union{Int64,Nothing}=nothing)
+function (p::ArrayValue)(;i::Union{Int64,Nothing}=nothing)
     i === nothing && error("argument `i` missing")
     p.value[i]
 end
 
-function (p::DictParameter)(;k::Union{T,Nothing}=nothing) where T
+function (p::DictValue)(;k::Union{T,Nothing}=nothing) where T
     k === nothing && error("argument `k` missing")
     p.value[t]
 end
 
-function (p::TimePatternParameter)(;t::Union{TimeSlice,Nothing}=nothing)
+function (p::TimePatternValue)(;t::Union{TimeSlice,Nothing}=nothing)
     t === nothing && error("argument `t` missing")
     values = [val for (tp, val) in p.dict if match(t, tp)]
     if isempty(values)
@@ -160,7 +160,7 @@ function (p::TimePatternParameter)(;t::Union{TimeSlice,Nothing}=nothing)
     end
 end
 
-function (p::TimeSeriesParameter)(;t::Union{TimeSlice,Nothing}=nothing)
+function (p::TimeSeriesValue)(;t::Union{TimeSlice,Nothing}=nothing)
     t === nothing && error("argument `t` missing")
     start = t.start
     end_ = t.end_
@@ -208,28 +208,28 @@ function (p::TimeSeriesParameter)(;t::Union{TimeSlice,Nothing}=nothing)
     end
 end
 
-# Support basic operations with ScalarParameter
+# Support basic operations with ScalarValue
 # This is so one can write `parameter(class=object)` instead of `parameter(class=object)()`
-convert(::Type{T}, x::ScalarParameter{T}) where {T} = x.value
+convert(::Type{T}, x::ScalarValue{T}) where {T} = x.value
 
-+(x::ScalarParameter{T}, y::N) where {T,N} = x.value + y
--(x::ScalarParameter{T}, y::N) where {T,N} = x.value - y
-*(x::ScalarParameter{T}, y::N) where {T,N} = x.value * y
-/(x::ScalarParameter{T}, y::N) where {T,N} = x.value / y
-<(x::ScalarParameter{T}, y::N) where {T,N} = x.value < y
-==(x::ScalarParameter{T}, y::N) where {T,N} = x.value == y
-+(x::N, y::ScalarParameter{T}) where {T,N} = x + y.value
--(x::N, y::ScalarParameter{T}) where {T,N} = x - y.value
-*(x::N, y::ScalarParameter{T}) where {T,N} = x * y.value
-/(x::N, y::ScalarParameter{T}) where {T,N} = x / y.value
-<(x::N, y::ScalarParameter{T}) where {T,N} = x < y.value
-==(x::N, y::ScalarParameter{T}) where {T,N} = x == y.value
-+(x::ScalarParameter{T}, y::ScalarParameter{N}) where {T,N} = x.value + y.value
--(x::ScalarParameter{T}, y::ScalarParameter{N}) where {T,N} = x.value - y.value
-*(x::ScalarParameter{T}, y::ScalarParameter{N}) where {T,N} = x.value * y.value
-/(x::ScalarParameter{T}, y::ScalarParameter{N}) where {T,N} = x.value / y.value
-<(x::ScalarParameter{N}, y::ScalarParameter{T}) where {T,N} = x.value < y.value
-==(x::ScalarParameter{N}, y::ScalarParameter{T}) where {T,N} = x.value == y.value
++(x::ScalarValue{T}, y::N) where {T,N} = x.value + y
+-(x::ScalarValue{T}, y::N) where {T,N} = x.value - y
+*(x::ScalarValue{T}, y::N) where {T,N} = x.value * y
+/(x::ScalarValue{T}, y::N) where {T,N} = x.value / y
+<(x::ScalarValue{T}, y::N) where {T,N} = x.value < y
+==(x::ScalarValue{T}, y::N) where {T,N} = x.value == y
++(x::N, y::ScalarValue{T}) where {T,N} = x + y.value
+-(x::N, y::ScalarValue{T}) where {T,N} = x - y.value
+*(x::N, y::ScalarValue{T}) where {T,N} = x * y.value
+/(x::N, y::ScalarValue{T}) where {T,N} = x / y.value
+<(x::N, y::ScalarValue{T}) where {T,N} = x < y.value
+==(x::N, y::ScalarValue{T}) where {T,N} = x == y.value
++(x::ScalarValue{T}, y::ScalarValue{N}) where {T,N} = x.value + y.value
+-(x::ScalarValue{T}, y::ScalarValue{N}) where {T,N} = x.value - y.value
+*(x::ScalarValue{T}, y::ScalarValue{N}) where {T,N} = x.value * y.value
+/(x::ScalarValue{T}, y::ScalarValue{N}) where {T,N} = x.value / y.value
+<(x::ScalarValue{N}, y::ScalarValue{T}) where {T,N} = x.value < y.value
+==(x::ScalarValue{N}, y::ScalarValue{T}) where {T,N} = x.value == y.value
 
-==(x::UnvaluedParameter, y::Nothing) = true
-==(x::Nothing, y::UnvaluedParameter) = true
+==(x::NoValue, y::Nothing) = true
+==(x::Nothing, y::NoValue) = true
