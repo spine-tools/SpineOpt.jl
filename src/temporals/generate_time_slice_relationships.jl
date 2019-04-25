@@ -268,28 +268,17 @@ function generate_time_slice_relationships()
             (those that aren't contained in any other).
             """
             function t_lowest_resolution(t_list::Array{TimeSlice,1})
-                # [t for t in t_list if isempty(t_in_t_excl(t_short=t, t_list=t_list))]
-                # More verbose version, about ten times faster
-                # NOTE: sorting enables looking for top-level items by comparing the start of succesive items
-                sort!(t_list)  # e.g.: [(1, 2), (1, 3), (1, 4), (2, 4), (5, 6), (5, 7), ...]
-                result = []
-                i = 1
-                while i <= length(t_list)
-                    if i != length(t_list) && t_list[i].start == t_list[i + 1].start
-                        # Keep going, we haven't reached lowest res
-                        i += 1
-                    else
-                        # Lowest res reached: either we're at the end, or the next item has a different start
-                        push!(result, t_list[i])
-                        # Advance i to the beginning of the next 'section'
-                        end_ = t_list[i].end_  # This marks the end of the current section
-                        i += 1
-                        while i <= length(t_list) && t_list[i].start < end_
-                            i += 1
-                        end
+                # [t for t in t_list if isempty(t_in_t_excl(t_short=t, t_list=t_list))] # Nice, but ~20 times slower
+                sort!(t_list)
+                result::Array{TimeSlice,1} = [t_list[1]]
+                for t in t_list[2:end]
+                    if result[end] in t
+                        result[end] = t
+                    elseif !(t in result[end])
+                        push!(result, t)
                     end
                 end
-                unique(result)
+                result
             end
 
 
@@ -300,25 +289,30 @@ function generate_time_slice_relationships()
             (those that don't contain any other).
             """
             function t_highest_resolution(t_list::Array{TimeSlice,1})
-            #     [t for t in t_list if isempty(t_in_t_excl(t_long=t, t_list=t_list))]
-            # end
-            sort!(t_list)  # e.g.: [(1, 2), (1, 3), (1, 4), (2, 4), (5, 6), (5, 7), ...]
-            result = []
-            i = 1
-            push!(result,t_list[i])
-            while i < length(t_list)
-                if i != length(t_list) && t_list[i].start == t_list[i + 1].start
-                    # Keep going, we haven't reached lowest res
-                    i += 1
-                else
-                    # Lowest res reached: either we're at the end, or the next item has a different start
-                    push!(result, t_list[i+1])
-                    # Advance i to the beginning of the next 'section'
-                    i += 1
+                # [t for t in t_list if isempty(t_in_t_excl(t_long=t, t_list=t_list))] # Nice, but ~20 times slower
+                sort!(t_list)
+                result::Array{TimeSlice,1} = [t_list[1]]
+                for t in t_list[2:end]
+                    result[end] in t || push!(result, t)
                 end
+                result
+            # sort!(t_list)  # e.g.: [(1, 2), (1, 3), (1, 4), (2, 4), (5, 6), (5, 7), ...]
+            # result = []
+            # i = 1
+            # push!(result,t_list[i])
+            # while i < length(t_list)
+            #     if i != length(t_list) && t_list[i].start == t_list[i + 1].start
+            #         # Keep going, we haven't reached lowest res
+            #         i += 1
+            #     else
+            #         # Lowest res reached: either we're at the end, or the next item has a different start
+            #         push!(result, t_list[i+1])
+            #         # Advance i to the beginning of the next 'section'
+            #         i += 1
+            #     end
+            # end
+            # unique(result)
             end
-            unique(result)
-        end
 
             export t_before_t
             export t_in_t
