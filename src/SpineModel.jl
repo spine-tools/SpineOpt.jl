@@ -31,7 +31,7 @@ using Suppressor
 import Base: convert, +, -, *, /, <, ==
 
 # Export helpers
-export checkout_spinemodeldb
+export spinemodeldb_handle
 export run_spinemodel
 export value
 export pack_trailing_dims
@@ -78,7 +78,7 @@ include("temporals/time_pattern.jl")
 
 include("helpers/butcher.jl")
 include("helpers/parse_value.jl")
-include("helpers/parameter_types.jl")
+include("helpers/parameter_value_types.jl")
 include("helpers/util.jl")
 include("helpers/run_spinemodel.jl")
 
