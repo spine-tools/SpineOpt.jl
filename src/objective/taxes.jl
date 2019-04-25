@@ -22,7 +22,7 @@
 
 Variable operation costs defined on flows.
 """
-function taxes(m::Model, flow)
+function taxes(flow)
     #@butcher
     let tax_costs = zero(AffExpr)
         for (u,n,d,block) in param_keys(vom_cost())

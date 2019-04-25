@@ -18,22 +18,12 @@
 #############################################################################
 
 """
-    variable_om_costs(m::Model, flow)
+    objective_minimize_total_discounted_costs(m::Model,,vom_costs,fom_costs,tax_costs,op_costs)
 
-Variable operation costs defined on flows.
+Minimize the `total_discounted_costs` correspond to the sum over all
+cost terms.
 """
-function variable_om_costs(flow)
-    #@butcher
-    let vom_costs = zero(AffExpr)
-        for (u,n,d,block) in param_keys(vom_cost())
-                vom_costs +=
-                + reduce(
-                    +,
-                    flow[u, n, c, d, t] * vom_cost(unit=u,node=n,direction=d,temporal_block=block)(t=t) * duration(t)
-                        for (u, n, c, d, t) in flow_indices(node=n,unit=u, direction=d);
-                    init=0
-                )
-        end
-        vom_costs
-    end
+function objective_minimize_total_discounted_costs(m::Model,vom_costs,fom_costs,tax_costs,op_costs)
+    total_discounted_costs = vom_costs + fom_costs + tax_costs + op_costs
+    @objective(m, Min, total_discounted_costs)
 end
