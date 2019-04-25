@@ -270,7 +270,7 @@ function generate_time_slice_relationships()
             function t_lowest_resolution(t_list::Array{TimeSlice,1})
                 # [t for t in t_list if isempty(t_in_t_excl(t_short=t, t_list=t_list))] # Nice, but ~20 times slower
                 sort!(t_list)
-                result = [t_list[1]]
+                result::Array{TimeSlice,1} = [t_list[1]]
                 for t in t_list[2:end]
                     if result[end] in t
                         result[end] = t
@@ -291,7 +291,7 @@ function generate_time_slice_relationships()
             function t_highest_resolution(t_list::Array{TimeSlice,1})
                 # [t for t in t_list if isempty(t_in_t_excl(t_long=t, t_list=t_list))] # Nice, but ~20 times slower
                 sort!(t_list)
-                result = [t_list[1]]
+                result::Array{TimeSlice,1} = [t_list[1]]
                 for t in t_list[2:end]
                     result[end] in t || push!(result, t)
                 end
