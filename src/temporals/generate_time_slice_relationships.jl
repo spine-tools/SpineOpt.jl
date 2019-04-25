@@ -52,14 +52,6 @@ function generate_time_slice_relationships()
     list_t_overlaps_t_excl = [(t1, t2) for (t1, t2) in list_t_overlaps_t if t1 != t2]
 
     @suppress_err begin
-        # NOTE: Not sure why this is needed? -Manuel
-        # functionname_t_before_t = "t_before_t"
-        # functionname_t_in_t = "t_in_t"
-        # functionname_t_in_t_excl = "t_in_t_excl"
-        # functionname_t_overlaps_t = "t_overlaps_t"
-        # functionname_t_overlaps_t_excl = "t_overlaps_t_excl"
-        # functionname_t_lowest_resolution = "t_lowest_resolution"
-        # functionname_t_highest_resolution = "t_highest_resolution"
 
         @eval begin
             """
@@ -296,22 +288,6 @@ function generate_time_slice_relationships()
                     result[end] in t || push!(result, t)
                 end
                 result
-            # sort!(t_list)  # e.g.: [(1, 2), (1, 3), (1, 4), (2, 4), (5, 6), (5, 7), ...]
-            # result = []
-            # i = 1
-            # push!(result,t_list[i])
-            # while i < length(t_list)
-            #     if i != length(t_list) && t_list[i].start == t_list[i + 1].start
-            #         # Keep going, we haven't reached lowest res
-            #         i += 1
-            #     else
-            #         # Lowest res reached: either we're at the end, or the next item has a different start
-            #         push!(result, t_list[i+1])
-            #         # Advance i to the beginning of the next 'section'
-            #         i += 1
-            #     end
-            # end
-            # unique(result)
             end
 
             export t_before_t
