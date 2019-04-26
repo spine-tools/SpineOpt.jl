@@ -131,8 +131,8 @@ range_in(b::UnitRange{Int64}, a::UnitRange{Int64}) = b.start >= a.start && b.sto
     spinemodeldb_handle(db_url)
 
 """
-function spinemodeldb_handle(db_url; upgrade=false)
-    spinedb_handle(db_url; parse_value=parse_value, upgrade=upgrade)
+function using_spinemodeldb(db_url; upgrade=false)
+    using_spinedb(db_url; parse_value=parse_value, upgrade=upgrade)
 end
 
 

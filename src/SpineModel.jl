@@ -28,10 +28,9 @@ using TimeZones
 using Statistics
 using SpineInterface
 using Suppressor
-import Base: convert, +, -, *, /, <, ==
 
 # Export helpers
-export spinemodeldb_handle
+export using_spinemodeldb
 export run_spinemodel
 export value
 export pack_trailing_dims
