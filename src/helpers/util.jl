@@ -159,5 +159,5 @@ function param_keys(param) #TODO: one method for params one relationship/ one me
 end
 
 function param_keys(param,class) #TODO: one method for params one relationship/ one method for params with multiple relationships: these will need the specified relationship
-    keys(fix_ratio_out_in_flow()[class])
+    keys(param[class])
 end
