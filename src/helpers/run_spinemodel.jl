@@ -24,6 +24,7 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         m = Model(with_optimizer(optimizer))
         # Create decision variables
         flow = variable_flow(m)
+        units_online = variable_units_online(m)
         trans = variable_trans(m)
         stor_state = variable_stor_state(m)
         ## Create objective function

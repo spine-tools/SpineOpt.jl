@@ -154,6 +154,6 @@ function param_keys(param) #TODO: one method for params one relationship/ one me
     [parameter_keys for parameter_keys  in keys(param[keys(param)...]) if param[keys(param)...][parameter_keys] != nothing]
 end
 
-function param_keys(param, class) #TODO: one method for params one relationship/ one method for params with multiple relationships: these will need the specified relationship
-    keys(fix_ratio_out_in_flow()[class])
+function param_keys(param,class) #TODO: one method for params one relationship/ one method for params with multiple relationships: these will need the specified relationship
+    keys(param[class])
 end

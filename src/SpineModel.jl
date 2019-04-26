@@ -41,6 +41,7 @@ export @butcher
 export variable_flow
 export variable_trans
 export variable_stor_state
+export variable_units_online
 
 # Export filter functions
 export flow_indices
@@ -84,6 +85,7 @@ include("helpers/run_spinemodel.jl")
 include("variables/variable_flow.jl")
 include("variables/variable_trans.jl")
 include("variables/variable_stor_state.jl")
+include("variables/variable_units_online.jl")
 
 include("objective/objective_minimize_total_discounted_costs.jl")
 include("objective/variable_om_costs.jl")
