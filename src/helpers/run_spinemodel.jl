@@ -69,5 +69,5 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         )
     end
     printstyled("Done.\n"; bold=true)
-    m, flow, trans, stor_state
+    m, flow, trans, stor_state, units_online
 end

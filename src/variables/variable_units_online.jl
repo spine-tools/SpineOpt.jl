@@ -26,7 +26,7 @@
 function variable_units_online(m::Model)
     @butcher Dict{Tuple,JuMP.VariableRef}(
         (u, t) => @variable(
-            m, base_name="units_online[$u, $(t.JuMP_name)]", lower_bound=0
+            m, base_name="units_online[$u, $(t.JuMP_name)]", binary=true
         ) for (u, t) in unit_online_indices()
     )
 end
