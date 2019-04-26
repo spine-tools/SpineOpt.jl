@@ -137,21 +137,13 @@ end
 
 
 """
-    t_in_t_list(t::TimeSlice, t_list)
-
-Determine whether or not the time slice `t` is an element of the list of time slices `t_list`.
-"""
-t_in_t_list(t::TimeSlice, t_list) = t_list == :any ? true : (t in tuple(t_list...))
-
-
-"""
     param_keys(filtering_options...)
 
 WIP: functionality needs to be exteneded
 """
 
 function param_keys(param) #TODO: one method for params one relationship/ one method for params with multiple relationships: these will need the specified relationship
-    [parameter_keys for parameter_keys  in keys(param[keys(param)...]) if param[keys(param)...][parameter_keys] != nothing]
+    [parameter_keys for parameter_keys in keys(param[keys(param)...]) if param[keys(param)...][parameter_keys] != nothing]
 end
 
 function param_keys(param,class) #TODO: one method for params one relationship/ one method for params with multiple relationships: these will need the specified relationship

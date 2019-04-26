@@ -26,7 +26,7 @@ Set upperbound `max_cum_in_flow_bound `to the cumulated inflow of
 if `max_cum_in_flow_bound` exists for the combination of `cg` and `ug`.
 """
 function constraint_max_cum_in_flow_bound(m::Model, flow)
-    @butcher @constraint(
+    @constraint(
         m,
         [
             (ug, cg) in unit_group__commodity_group()
@@ -34,7 +34,11 @@ function constraint_max_cum_in_flow_bound(m::Model, flow)
         + reduce(
             +,
             flow[u, n, c, :in, t]
-            for (u, n, c, d, t) in flow_indices(direction=:in,unit=unit_group__unit(unit_group=ug),commodity=commodity_group__commodity(commodity_group=cg));
+            for (u, n, c, d, t) in flow_indices(
+                direction=:in,
+                unit=unit_group__unit(unit_group=ug),
+                commodity=commodity_group__commodity(commodity_group=cg)
+            );
             init=0
         )
         <=

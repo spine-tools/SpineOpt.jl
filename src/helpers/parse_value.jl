@@ -23,23 +23,13 @@ Parse a database parameter value into a function-like object to be returned by t
 that accesses the parameter.
 The default value is passed in the `default` argument, and tags are passed in the `tags...` argument
 """
-function parse_value(db_value::Nothing; default=nothing, tags...)
-    if default === nothing
-        NoValue()
-    else
-        parse_value(default; default=nothing, tags...)
-    end
-end
-
 function parse_value(db_value::Int64; duration=false, kwargs...)
     if duration
         ScalarValue(parse_duration(db_value))
     else
-        ScalarValue(db_value)
+        SpineInterface.parse_value(db_value; kwargs...)
     end
 end
-
-parse_value(db_value::Float64; kwargs...) = ScalarValue(db_value)
 
 function parse_value(db_value::String; date_time=false, duration=false, kwargs...)
     if date_time && duration
@@ -49,15 +39,7 @@ function parse_value(db_value::String; date_time=false, duration=false, kwargs..
     elseif duration
         ScalarValue(parse_duration(db_value))
     else
-        try
-            ScalarValue(parse(Int64, db_value))
-        catch
-            try
-                ScalarValue(parse(Float64, db_value))
-            catch
-                ScalarValue(Symbol(db_value))
-            end
-        end
+        SpineInterface.parse_value(db_value; kwargs...)
     end
 end
 
@@ -69,7 +51,7 @@ function parse_value(db_value::Array; default=nothing, duration=false, time_seri
     elseif time_series
         TimeSeriesValue(db_value, default)
     else
-        ArrayValue(db_value)
+        SpineInterface.parse_value(db_value; kwargs...)
     end
 end
 
@@ -81,7 +63,7 @@ function parse_value(db_value::Dict; default=nothing, time_pattern=false, time_s
             try
                 TimeSeriesValue(db_value, default)
             catch
-                parse_value(nothing; default=default)
+                NoValue()
             end
         end
     elseif time_pattern
@@ -89,6 +71,8 @@ function parse_value(db_value::Dict; default=nothing, time_pattern=false, time_s
     elseif time_series
         TimeSeriesValue(db_value, default)
     else
-        DictValue(db_value)
+        SpineInterface.parse_value(db_value; kwargs...)
     end
 end
+
+parse_value(db_value; kwargs...) = SpineInterface.parse_value(db_value; kwargs...)

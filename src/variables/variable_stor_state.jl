@@ -25,7 +25,7 @@ attached to model `m`.
 `stor_level` represents the state of the storage level.
 """
 function variable_stor_state(m::Model)
-    @butcher Dict{Tuple,JuMP.VariableRef}(
+    Dict{Tuple,JuMP.VariableRef}(
         (stor, c, t) => @variable(
             m, base_name="stor_state[$stor, $c, $(t.JuMP_name)]", lower_bound=0
         ) for (stor, c, t) in stor_state_indices()
@@ -42,15 +42,15 @@ Tuples are generated for the highest resolution 'flows' or 'trans' of the involv
 """
 # NEEDS TESTING!!
 function stor_state_indices(;storage=:any, commodity=:any, t=:any)
-    t_connection = unique(
-        x.t for c in storage__connection(storage=storage), x in trans_indices(connection=c, commodity=commodity, t=t)
-    )
-    t_unit = unique(
-        x.t for u in storage__unit(storage=storage), x in flow_indices(unit=u, commodity=commodity, t=t)
-    )
+    t_connection = unique(Array{TimeSlice,1}([
+        x.t for c in storage__connection(storage=storage) for x in trans_indices(connection=c, commodity=commodity, t=t)
+    ]))
+    t_unit = unique(Array{TimeSlice,1}([
+        x.t for u in storage__unit(storage=storage) for x in flow_indices(unit=u, commodity=commodity, t=t)
+    ]))
     t_all = vcat(t_highest_resolution(t_unit), t_highest_resolution(t_connection))
     [
         (storage=stor, commodity=c, t=t1)
-        for (stor, c) in storage__commodity(storage=storage, commodity=commodity), t1 in t_all
+        for (stor, c) in storage__commodity(storage=storage, commodity=commodity) for t1 in t_all
     ]
 end

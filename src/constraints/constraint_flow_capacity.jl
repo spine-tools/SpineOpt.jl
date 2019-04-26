@@ -29,20 +29,22 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 # @Maren: should the parameter unit_capacity have a direction index?
 function constraint_flow_capacity(m::Model, flow)
     #@butcher
-    for (u, c) in param_keys(unit_capacity()),(u,n,c,d,t) in flow_indices(unit=u,commodity=c)
-        all([
-            number_of_units(unit=u) != nothing,
-            unit_conv_cap_to_flow(unit=u, commodity=c) != nothing,
-            avail_factor(unit=u) != nothing
-        ]) || continue
-        @constraint(
-            m,
-            + flow[u, n, c, d, t]
-            <=
-            + avail_factor(unit=u)
-                * unit_capacity(unit=u, commodity=c)
-                    * number_of_units(unit=u)
-                        * unit_conv_cap_to_flow(unit=u, commodity=c)
-        )
+    for (u, c) in indices(unit_capacity)
+        for (u, n, c, d, t) in flow_indices(unit=u, commodity=c)
+            all([
+                number_of_units(unit=u) != nothing,
+                unit_conv_cap_to_flow(unit=u, commodity=c) != nothing,
+                avail_factor(unit=u) != nothing
+            ]) || continue
+            @constraint(
+                m,
+                + flow[u, n, c, d, t]
+                <=
+                + avail_factor(unit=u)
+                    * unit_capacity(unit=u, commodity=c)
+                        * number_of_units(unit=u)
+                            * unit_conv_cap_to_flow(unit=u, commodity=c)
+            )
+        end
     end
 end

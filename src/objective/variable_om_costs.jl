@@ -23,16 +23,14 @@
 Variable operation costs defined on flows.
 """
 function variable_om_costs(flow)
-    #@butcher
     let vom_costs = zero(AffExpr)
-        for (u,n,d,block) in param_keys(vom_cost())
-                vom_costs +=
-                + reduce(
-                    +,
-                    flow[u, n, c, d, t] * vom_cost(unit=u,node=n,direction=d,temporal_block=block)(t=t) * duration(t)
-                        for (u, n, c, d, t) in flow_indices(node=n,unit=u, direction=d);
-                    init=0
-                )
+        for (u, n, d, block) in indices(vom_cost)
+            vom_costs += reduce(
+                +,
+                flow[u, n, c, d, t] * vom_cost(unit=u, node=n, direction=d, temporal_block=block, t=t) * duration(t)
+                for (u, n, c, d, t) in flow_indices(node=n, unit=u, direction=d);
+                init=0
+            )
         end
         vom_costs
     end

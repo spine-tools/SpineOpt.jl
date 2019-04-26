@@ -43,10 +43,10 @@ for `commodity`, `node`, `connection`, `direction`, and `t`.
 """
 function trans_indices(;commodity=:any, node=:any, connection=:any, direction=:any, t=:any)
     [
-        (connection=conn, node=n, commodity=c, direction=d, t=t1) for (n, c) in node__commodity(
-            commodity=commodity, node=node, _compact=false
-        ) for (conn, n_, d, blk) in connection__node__direction__temporal_block(
-            node=n, connection=connection, direction=direction, _compact=false
-        ) for t1 in time_slice(temporal_block=blk) if t_in_t_list(t1, t)
+        (connection=conn, node=n, commodity=c, direction=d, t=t1)
+        for (n, c) in node__commodity(commodity=commodity, node=node, _compact=false)
+            for (conn, n_, d, tblk) in connection__node__direction__temporal_block(
+                    node=n, connection=connection, direction=direction, _compact=false)
+                for t1 in time_slice(temporal_block=tblk) if t_in_t_list(t1, t)
     ]
 end

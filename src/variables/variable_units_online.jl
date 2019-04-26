@@ -40,7 +40,7 @@ for `commodity`, `node`, `unit`, `direction`, and `t`.
 """
 function unit_online_indices(;unit=:any,t=:any)
     [
-        (unit=u, t=t1) for u in unit(
+        (unit=u, t=t1) for u in SpineModel.unit(
         ) for t1 in t_highest_resolution([t_list
             for clock in unit__node__direction__temporal_block(
             unit=u,node=:any,direction=:any, _compact=true
