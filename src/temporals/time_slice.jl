@@ -62,6 +62,30 @@ Base.in(b::TimeSlice, a::TimeSlice) = b.start >= a.start && b.end_ <= a.end_
 
 
 """
+    intersect(b::Array{TimeSlice,1}, a::TimeSlice)
+
+Determine if two TimeSlices intersect.
+"""
+Base.intersect(b::Array{TimeSlice,1}, a::TimeSlice) = intersect(b,[a])
+
+
+"""
+    intersect(b::TimeSlice, a::Array{TimeSlice,1})
+
+Determine if two TimeSlices intersect.
+"""
+Base.intersect(b::TimeSlice, a::Array{TimeSlice,1}) = intersect([b],a)
+
+
+"""
+    intersect(b::TimeSlice, a::TimeSlice)
+
+Determine if two TimeSlices intersect.
+"""
+Base.intersect(b::TimeSlice, a::TimeSlice) = intersect([b],[a])
+
+
+"""
     overlaps(a::TimeSlice, b::TimeSlice)
 
 Determine whether `a` and `b` overlap.
