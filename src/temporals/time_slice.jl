@@ -94,3 +94,48 @@ overlaps(a::TimeSlice, b::TimeSlice) = a.start <= b.start < a.end_ || b.start <=
 
 Base.iterate(t::TimeSlice) = iterate((t,))
 Base.iterate(t::TimeSlice, state::T) where T = iterate((t,), state)
+
+"""
+    t_lowest_resolution(t_list::Union{TimeSlice,Array{TimeSlice,1}})
+
+Return the list of the lowest resolution time slices within `t_list`
+(those that aren't contained in any other).
+"""
+function t_lowest_resolution(t_list::Array{TimeSlice,1})
+    isempty(t_list) && return t_list
+    sort!(t_list)
+    result::Array{TimeSlice,1} = [t_list[1]]
+    for t in t_list[2:end]
+        if result[end] in t
+            result[end] = t
+        elseif !(t in result[end])
+            push!(result, t)
+        end
+    end
+    result
+end
+
+
+"""
+    t_highest_resolution(t_list::Union{TimeSlice,Array{TimeSlice,1}})
+
+Return the list of the highest resolution time slices from `t_list`
+(those that don't contain any other).
+"""
+function t_highest_resolution(t_list::Array{TimeSlice,1})
+    isempty(t_list) && return t_list
+    sort!(t_list)
+    result::Array{TimeSlice,1} = [t_list[1]]
+    for t in t_list[2:end]
+        result[end] in t || push!(result, t)
+    end
+    result
+end
+
+
+"""
+    t_in_t_list(t::TimeSlice, t_list)
+
+Determine whether or not the time slice `t` is an element of the list of time slices `t_list`.
+"""
+t_in_t_list(t::TimeSlice, t_list) = t_list == :any ? true : (t in tuple(t_list...))

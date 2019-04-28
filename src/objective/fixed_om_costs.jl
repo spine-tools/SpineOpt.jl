@@ -23,7 +23,6 @@
 Variable operation costs defined on flows.
 """
 function fixed_om_costs()
-    #@butcher
     let fom_costs = zero(AffExpr)
         for (u, c, d) in unit_capacity_keys()
                 fom_costs +=

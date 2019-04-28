@@ -128,24 +128,12 @@ Test whether `b` is fully contained in `a`.
 range_in(b::UnitRange{Int64}, a::UnitRange{Int64}) = b.start >= a.start && b.stop <= a.stop
 
 """
-    checkout_spinemodeldb(db_url)
+    spinemodeldb_handle(db_url)
 
-Generate and export convenience functions for accessing the database at the given url.
 """
-function checkout_spinemodeldb(db_url; upgrade=false)
-    checkout_spinedb(db_url; parse_value=parse_value, upgrade=upgrade)
+function using_spinemodeldb(db_url; upgrade=false)
+    using_spinedb(db_url; parse_value=parse_value, upgrade=upgrade)
 end
-
-
-"""
-    t_in_t_list(filtering_options...)
-
-A function indicating whether the time slice t is an element of a list of time slices t_list. Returns true if no list of time slices is specified
-"""
-t_in_t_list(t, t_list) = t_list == :any ? true : (t in tuple(t_list...))
-
-
-
 
 
 """
@@ -155,7 +143,7 @@ WIP: functionality needs to be exteneded
 """
 
 function param_keys(param) #TODO: one method for params one relationship/ one method for params with multiple relationships: these will need the specified relationship
-    parameter_keys = [parameter_keys for parameter_keys  in keys(param[keys(param)...]) if param[keys(param)...][parameter_keys] != SpineModel.UnvaluedParameter()]
+    [parameter_keys for parameter_keys in keys(param[keys(param)...]) if param[keys(param)...][parameter_keys] != nothing]
 end
 
 function param_keys(param,class) #TODO: one method for params one relationship/ one method for params with multiple relationships: these will need the specified relationship

@@ -42,22 +42,31 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
         overlaps = sort!(t_overlaps_t(time_slices_in, time_slices_out))
         if involved_timeslices != overlaps
             @warn "Not all involved timeslices are overlapping, check your temporal_blocks"
-            #NOTE: this is a check for plausibility. If the user e.g. wants to oconstrain one commodity of a unit for a certain amount of time,
+            # NOTE: this is a check for plausibility.
+            # If the user e.g. wants to oconstrain one commodity of a unit for a certain amount of time,
             # while the other commodity is constraint for a longer period, "overlaps" becomes active
             involved_timeslices = overlaps
         end
-        @butcher for t in t_lowest_resolution(involved_timeslices)
+        for t in t_lowest_resolution(involved_timeslices)
             @constraint(
                 m,
                 + sum(
                     flow[u, n, c_out, :out, t1] * duration(t1)
-                    for (u, n, c_out, d, t1) in flow_indices(commodity = commodity_group__commodity(commodity_group=cg_out),direction=:out,t=t_in_t(t_long=t))
+                    for (u, n, c_out, d, t1) in flow_indices(
+                        commodity=commodity_group__commodity(commodity_group=cg_out),
+                        direction=:out,
+                        t=t_in_t(t_long=t)
+                    )
                 )
                 ==
-                + fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in)(t=t)
+                + fix_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in, t=t)
                 * sum(
                     flow[u, n, c_in, :in, t1] * duration(t1)
-                    for (u, n, c_in, d, t1) in flow_indices(commodity = commodity_group__commodity(commodity_group=cg_in),direction=:in,t=t_in_t(t_long=t))
+                    for (u, n, c_in, d, t1) in flow_indices(
+                        commodity=commodity_group__commodity(commodity_group=cg_in),
+                        direction=:in,
+                        t=t_in_t(t_long=t)
+                    )
                 )
             )
         end
