@@ -23,15 +23,17 @@
 Minimize the `production_cost` correspond to the sum over all
 `conversion_cost` of each `unit`.
 """
-function operating_costs(flow)
+function production_costs(flow)
     #@butcher begin
-        let op_cost = zero(AffExpr)
-            for (u,c) in param_keys(conversion_cost())
-                for (u,n,c, d,t) in flow_indices(unit=u,commodity=c)
-                    op_cost += flow[u, n, c, d, t] * duration(t) * operating_cost(unit=u, commodity=c)(t=t)
-                end
+        let prod_costs = zero(AffExpr)
+            for (u,c) in production_cost_keys()
+                prod_costs +=
+                sum(
+                    flow[u, n, c, d, t] * duration(t) * production_cost(unit=u, commodity=c)(t=t)
+                        for (u,n,c, d,t) in flow_indices(unit=u,commodity=c)
+                )
             end
-            op_cost
+            prod_costs
         end
     #end
 end

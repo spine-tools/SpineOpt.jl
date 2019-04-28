@@ -25,11 +25,10 @@ Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
 number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 
-# Suggested new version (see comments in version above)
-# @Maren: should the parameter unit_capacity have a direction index?
 function constraint_flow_capacity(m::Model, flow)
     #@butcher
-    for (u, c) in param_keys(unit_capacity()),(u,n,c,d,t) in flow_indices(unit=u,commodity=c)
+    for (u, c, d) in unit_capacity_keys(),(u, n, c, d, t) in flow_indices(
+            unit=u, commodity=c, direction=d)
         all([
             number_of_units(unit=u) != nothing,
             unit_conv_cap_to_flow(unit=u, commodity=c) != nothing,
@@ -40,9 +39,41 @@ function constraint_flow_capacity(m::Model, flow)
             + flow[u, n, c, d, t]
             <=
             + avail_factor(unit=u)
-                * unit_capacity(unit=u, commodity=c)
+                * unit_capacity(unit=u, commodity=c, direction=d)
                     * number_of_units(unit=u)
                         * unit_conv_cap_to_flow(unit=u, commodity=c)
+        )
+    end
+end
+
+"""
+    constraint_flow_capacity(m::Model, flow, units_online)
+
+Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
+number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
+"""
+
+function constraint_flow_capacity(m::Model, flow, units_online)
+    #@butcher
+    for (u, c, d) in unit_capacity_keys()
+        all([
+            unit_conv_cap_to_flow(unit=u, commodity=c) != nothing
+        ]) || continue
+        @constraint(
+            m,
+            + sum(
+                flow[u1, n, c1, d1, t] * duration(t)
+                    for (u1, n, c1, d1, t) in flow_indices(
+                            unit=u, commodity=c, direction=d)
+            )
+            <=
+            + sum(
+                units_online[u1, t1]
+                    * unit_capacity(unit=u, commodity=c, direction=d)
+                        * unit_conv_cap_to_flow(unit=u, commodity=c)
+                            *duration(t1)
+                                for (u1,t1) in unit_online_indices(unit=u)
+            )
         )
     end
 end

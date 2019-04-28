@@ -42,7 +42,7 @@ export @butcher
 export variable_flow
 export variable_trans
 export variable_stor_state
-export variable_units_online
+export variable_unit_online
 
 # Export filter functions
 export flow_indices
@@ -56,6 +56,7 @@ export variable_om_costs
 export fixed_om_costs
 export taxes
 export operating_costs
+# export production_costs
 
 # Export constraints
 export constraint_flow_capacity
@@ -86,13 +87,14 @@ include("helpers/run_spinemodel.jl")
 include("variables/variable_flow.jl")
 include("variables/variable_trans.jl")
 include("variables/variable_stor_state.jl")
-include("variables/variable_units_online.jl")
+include("variables/variable_unit_online.jl")
 
 include("objective/objective_minimize_total_discounted_costs.jl")
 include("objective/variable_om_costs.jl")
 include("objective/fixed_om_costs.jl")
 include("objective/taxes.jl")
 include("objective/operating_costs.jl")
+# include("objective/production_costs.jl")
 
 include("constraints/constraint_max_cum_in_flow_bound.jl")
 include("constraints/constraint_flow_capacity.jl")

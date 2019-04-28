@@ -29,7 +29,7 @@ function constraint_max_cum_in_flow_bound(m::Model, flow)
     @butcher @constraint(
         m,
         [
-            (ug, cg) in unit_group__commodity_group()
+            (ug, cg) in max_cum_in_flow_bound_keys()
         ],
         + reduce(
             +,
