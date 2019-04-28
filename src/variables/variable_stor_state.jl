@@ -25,7 +25,7 @@ attached to model `m`.
 `stor_level` represents the state of the storage level.
 """
 function variable_stor_state(m::Model)
-    @butcher Dict{Tuple,JuMP.VariableRef}(
+    Dict{Tuple,JuMP.VariableRef}(
         (stor, c, t) => @variable(
             m, base_name="stor_state[$stor, $c, $(t.JuMP_name)]", lower_bound=0
         ) for (stor, c, t) in stor_state_indices()
@@ -37,31 +37,20 @@ end
     stor_state_indices(filtering_options...)
 
 A set of tuples for indexing the `stor_state` variable. Any filtering options can be specified
-for `commodity`, `stor`, and `t`. Storage variables are generated for the highest resolution flows of the commodity involved.
+for `storage`, `commodity`, and `t`.
+Tuples are generated for the highest resolution 'flows' or 'trans' of the involved commodity.
 """
 # NEEDS TESTING!!
 function stor_state_indices(;storage=:any, commodity=:any, t=:any)
-    stor_state_at_connections = [
-        (storage=stor, commodity=c, t=t1) for (stor,c) in storage__commodity(
-            storage=storage, commodity=commodity
-        ) for t1 in t_highest_resolution(unique(
-            t2 for conn in storage__connection(
-                storage=storage
-            ) for (conn, n, c, d, t2) in trans_indices(
-                connection=conn, commodity=commodity
-            ) if t_in_t_list(t2, t)
-        ))
+    t_connection = unique(Array{TimeSlice,1}([
+        x.t for c in storage__connection(storage=storage) for x in trans_indices(connection=c, commodity=commodity, t=t)
+    ]))
+    t_unit = unique(Array{TimeSlice,1}([
+        x.t for u in storage__unit(storage=storage) for x in flow_indices(unit=u, commodity=commodity, t=t)
+    ]))
+    t_all = vcat(t_highest_resolution(t_unit), t_highest_resolution(t_connection))
+    [
+        (storage=stor, commodity=c, t=t1)
+        for (stor, c) in storage__commodity(storage=storage, commodity=commodity) for t1 in t_all
     ]
-    stor_state_at_units = [
-        (storage=stor, commodity=c, t=t1) for (stor,c) in storage__commodity(
-            storage=storage, commodity=commodity
-        ) for t1 in t_highest_resolution(unique(
-            t2 for u in storage__unit(
-                storage=storage
-            ) for (u, n, c, d, t2) in flow_indices(
-                unit=u, commodity=commodity
-            ) if t_in_t_list(t2, t)
-        ))
-    ]
-    vcat(stor_state_at_connections, stor_state_at_units)
 end

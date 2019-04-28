@@ -23,7 +23,6 @@
 Variable operation costs defined on flows.
 """
 function variable_om_costs(flow)
-    #@butcher
     let vom_costs = zero(AffExpr)
         for (c,u,d) in vom_cost_keys()
                 vom_costs +=

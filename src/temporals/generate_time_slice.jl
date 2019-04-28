@@ -16,23 +16,42 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+struct TimeSliceFunction
+    list::Array{TimeSlice,1}
+    temporal_block_list::Dict{Symbol,Array{TimeSlice,1}}
+end
 
+"""
+    time_slice(;temporal_block=nothing)
+
+Return all time slices in the model.
+If 'temporal_block' is not `nothing`, return only the time slices in that block.
+"""
+function (time_slice::TimeSliceFunction)(;temporal_block=nothing)
+    if temporal_block == nothing
+        time_slice.list
+    elseif haskey(time_slice.temporal_block_list, temporal_block)
+        time_slice.temporal_block_list[temporal_block]
+    else
+        error("temporal block '$temporal_block' not defined")
+    end
+end
 
 """
     generate_time_slice()
 
 """
 function generate_time_slice()
-    list_time_slice = Array{TimeSlice,1}()
-    list_time_slice_temporal_block = Dict()
+    time_slice_list = Array{TimeSlice,1}()
+    time_slice_temporal_block_list = Dict{Symbol,Array{TimeSlice,1}}()
     for (k, blk) in enumerate(temporal_block())
-        list_time_slice_temporal_block[blk] = Array{TimeSlice,1}()
+        time_slice_temporal_block_list[blk] = Array{TimeSlice,1}()
         temp_block_start = start_datetime(temporal_block=blk)  # DateTime value
         temp_block_end = end_datetime(temporal_block=blk)  # DateTime value
         time_slice_start = temp_block_start
         i = 1
         while time_slice_start < temp_block_end
-            duration = time_slice_duration(temporal_block=blk)(i=i)
+            duration = time_slice_duration(temporal_block=blk, i=i)
             time_slice_end = time_slice_start + duration
             if time_slice_end > temp_block_end
                 time_slice_end = temp_block_end
@@ -43,16 +62,16 @@ function generate_time_slice()
             end
             index = findfirst(
                 x -> tuple(x.start, x.end_) == tuple(time_slice_start, time_slice_end),
-                list_time_slice
+                time_slice_list
             )
             if index != nothing
-                existing_time_slice = list_time_slice[index]
-                push!(list_time_slice_temporal_block[blk], existing_time_slice)
+                existing_time_slice = time_slice_list[index]
+                push!(time_slice_temporal_block_list[blk], existing_time_slice)
             else
                 JuMP_name = "tb$(k)__t$(i)"
                 new_time_slice = TimeSlice(time_slice_start, time_slice_end, JuMP_name)
-                push!(list_time_slice, new_time_slice)
-                push!(list_time_slice_temporal_block[blk], new_time_slice)
+                push!(time_slice_list, new_time_slice)
+                push!(time_slice_temporal_block_list[blk], new_time_slice)
             end
             # Prepare for next iter
             time_slice_start = time_slice_end
@@ -60,32 +79,11 @@ function generate_time_slice()
         end
     end
     # TODO: Check if unique is actually needed here
-    unique!(list_time_slice)
-
-    # @Maren: The part about the argument that is passed. So can pass a temporal_block instead of a time_slice here?
-    # Something like ts = time_slice()[1] followed by time_slice(ts) does not work?
-    # @Maren: So how does this work exactly? list_time_slice is not stored somewhere?
-    @suppress_err begin
-        functionname_time_slice = "time_slice"
-
-        @eval begin
-            # Documentation needs to be updated
-            """
-                $($functionname_time_slice)(;temporal_block=nothing)
-
-            Return all time slices in the model.
-            If 'temporal_block' is not `nothing`, return only the time slices in that block.
-            """
-            function $(Symbol(functionname_time_slice))(;temporal_block=nothing) # propose to rename to time_slice
-                if temporal_block == nothing
-                    $list_time_slice
-                elseif haskey($list_time_slice_temporal_block, temporal_block)
-                    $list_time_slice_temporal_block[temporal_block]
-                else
-                    error("temporal block '$temporal_block' not defined")
-                end
-            end
-            export $(Symbol(functionname_time_slice))
-        end
+    unique!(time_slice_list)
+    # Create and export the function like object
+    time_slice = TimeSliceFunction(time_slice_list, time_slice_temporal_block_list)
+    @eval begin
+        time_slice = $time_slice
+        export time_slice
     end
 end

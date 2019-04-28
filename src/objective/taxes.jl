@@ -23,7 +23,6 @@
 Variable operation costs defined on flows.
 """
 function taxes(flow)
-    #@butcher
     let tax_costs = zero(AffExpr)
                 tax_costs =
                 + reduce(
