@@ -28,7 +28,7 @@ function variable_om_costs(flow)
                 vom_costs +=
                 + sum(
                     +,
-                    flow[u, n, c, d, t] * vom_cost(commodity=c,unit=u,direction=d)(t=t) * duration(t)
+                    flow[u, n, c, d, t] * vom_cost(commodity=c,unit=u,direction=d, t=t) * duration(t)
                         for (u, n, c, d, t) in flow_indices(commodity=c,unit=u, direction=d)
                 )
         end

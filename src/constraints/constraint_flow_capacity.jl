@@ -62,8 +62,8 @@ function constraint_flow_capacity(m::Model, flow, units_online)
         @constraint(
             m,
             + sum(
-                flow[u1, n, c1, d1, t] * duration(t)
-                    for (u1, n, c1, d1, t) in flow_indices(
+                flow[u1, n1, c1, d1, t1] * duration(t1)
+                    for (u1, n1, c1, d1, t1) in flow_indices(
                             unit=u, commodity=c, direction=d)
             )
             <=

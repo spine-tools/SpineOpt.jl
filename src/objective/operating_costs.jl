@@ -28,7 +28,7 @@ function operating_costs(flow)
         for (c,u,d) in operating_cost_keys()
             op_costs +=
             sum(
-                flow[u, n, c, d, t] * duration(t) * operating_cost(commodity=c, unit=u, direction=d)(t=t)
+                flow[u, n, c, d, t] * duration(t) * operating_cost(commodity=c, unit=u, direction=d, t=t)
                 for (u,n,c,d,t) in flow_indices(unit=u,commodity=c,direction=d)
             )
         end
