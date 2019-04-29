@@ -23,6 +23,7 @@ module SpineModel
 # Load packages
 using JuMP
 using Clp
+using Cbc
 using Dates
 using TimeZones
 using Statistics

@@ -17,8 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Optimizer)
-    # Export contents of database into the current session
-    # Init model
+    printstyled("Creating convenience functions...\n"; bold=true)
+    @time using_spinemodeldb(db_url_in; upgrade=true)
+    printstyled("Creating temporal structure...\n"; bold=true)
+    @time begin
+        generate_time_slice()
+        generate_time_slice_relationships()
+    end
     printstyled("Initializing model...\n"; bold=true)
     @time begin
         m = Model(with_optimizer(optimizer))
