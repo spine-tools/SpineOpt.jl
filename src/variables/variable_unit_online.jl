@@ -24,9 +24,9 @@
 #TODO: add model descirption here
 """
 function variable_unit_online(m::Model)
-    @butcher Dict{Tuple,JuMP.VariableRef}(
+    Dict{Tuple,JuMP.VariableRef}(
         (u, t) => @variable(
-            m, base_name="units_online[$u, $(t.JuMP_name)]", binary=true
+            m, base_name="unit_online[$u, $(t.JuMP_name)]", binary=true
         ) for (u, t) in unit_online_indices()
     )
 end
@@ -35,16 +35,14 @@ end
 """
     unit_online_indices(filtering_options...)
 
-A set of tuples for indexing the `flow` variable. Any filtering options can be specified
-for `commodity`, `node`, `unit`, `direction`, and `t`.
+A set of tuples for indexing the `unit_online` variable. Any filtering options can be specified
+for `unit` and `t`.
 """
-function unit_online_indices(;unit=:any,t=:any)
+function unit_online_indices(;unit=:any, t=:any)
     [
-        (unit=u, t=t1) for u in SpineModel.unit(
-        ) for t1 in t_highest_resolution([t_list
-            for blk in unit__node__direction__temporal_block(
-            unit=u,node=:any,direction=:any, _compact=true
-            ) for t_list in time_slice(temporal_block=blk)]
-        ) if t_in_t_list(t1, t)
+        (unit=u, t=t1) for (u, blk) in unit__node__direction__temporal_block(
+                unit=unit, node=:any, direction=:any, _indices=(:unit, :temporal_block))
+            for t1 in t_highest_resolution(time_slice(temporal_block=blk))
+                if t_in_t_list(t1, t)
     ]
 end
