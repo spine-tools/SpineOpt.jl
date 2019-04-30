@@ -41,8 +41,9 @@ for `unit` and `t`.
 function units_online_indices(;unit=:any, t=:any)
     [
         (unit=u, t=t1) for u in unit__node__direction__temporal_block(
-                unit=unit, node=:any, direction=:any, temporal_block=:any,_indices=(:unit,)
-                ) for t1 in t_highest_resolution([t for (c,n,u1,d,t) in flow_indices(unit=u)])
+                unit=unit, node=:any, direction=:any, temporal_block=:any, _indices=(:unit,)
+            )
+            for t1 in t_highest_resolution([x.t for x in flow_indices(unit=u)])
                 if t_in_t_list(t1, t)
     ]
 end

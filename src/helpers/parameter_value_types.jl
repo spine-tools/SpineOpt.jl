@@ -143,6 +143,7 @@ function (p::TimeSeriesValue)(;t::Union{TimeSlice,Nothing}=nothing)
         end_ = start + duration
     end
     if p.repeat
+        repetitions = 0
         if start > p.indexes[end]
             # Move start back within indexes range
             mismatch = start - p.indexes[1]

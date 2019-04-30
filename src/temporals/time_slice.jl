@@ -92,6 +92,7 @@ Determine whether `a` and `b` overlap.
 """
 overlaps(a::TimeSlice, b::TimeSlice) = a.start <= b.start < a.end_ || b.start <= a.start < b.end_
 
+# Iterate `TimeSlice`s as if they were `Int`s
 Base.iterate(t::TimeSlice) = iterate((t,))
 Base.iterate(t::TimeSlice, state::T) where T = iterate((t,), state)
 
