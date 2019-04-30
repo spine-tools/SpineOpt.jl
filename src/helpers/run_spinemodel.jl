@@ -48,9 +48,12 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         constraint_flow_capacity(m, flow, units_online)
         # Ratio of in/out flows of a unit
         constraint_fix_ratio_out_in_flow(m, flow)
+        constraint_max_ratio_out_in_flow(m, flow)
+        constraint_min_ratio_out_in_flow(m, flow)
         # Transmission losses
-        #constraint_trans_loss(m, trans)
         constraint_fix_ratio_out_in_trans(m, trans)
+        constraint_max_ratio_out_in_trans(m, trans)
+        constraint_min_ratio_out_in_trans(m, trans)
         # Transmission line capacity
         #constraint_trans_capacity(m, trans)
         # Nodal balance
@@ -65,7 +68,7 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
 
         constraint_units_online(m, units_online, units_available)
         constraint_units_available(m, units_available)
-        # constraint_minimum_operating_point(m, flow, units_online)
+        constraint_minimum_operating_point(m, flow, units_online)
         # needed: set/group of unitgroup CHP and Gasplant
     end
     # Run model

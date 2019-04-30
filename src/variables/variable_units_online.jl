@@ -26,7 +26,7 @@
 function variable_units_online(m::Model)
     Dict{Tuple,JuMP.VariableRef}(
         (u, t) => @variable(
-            m, base_name="units_online[$u, $(t.JuMP_name)]", integer=true
+            m, base_name="units_online[$u, $(t.JuMP_name)]", integer=true, lower_bound=0
         ) for (u, t) in units_online_indices()
     )
 end
@@ -40,9 +40,9 @@ for `unit` and `t`.
 """
 function units_online_indices(;unit=:any, t=:any)
     [
-        (unit=u, t=t1) for (u, blk) in unit__node__direction__temporal_block(
-                unit=unit, node=:any, direction=:any, _indices=(:unit, :temporal_block))
-            for t1 in t_highest_resolution(time_slice(temporal_block=blk))
+        (unit=u, t=t1) for u in unit__node__direction__temporal_block(
+                unit=unit, node=:any, direction=:any, temporal_block=:any,_indices=(:unit,)
+                ) for t1 in t_highest_resolution([t for (c,n,u1,d,t) in flow_indices(unit=u)])
                 if t_in_t_list(t1, t)
     ]
 end

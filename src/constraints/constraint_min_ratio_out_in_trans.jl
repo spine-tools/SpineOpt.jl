@@ -19,14 +19,14 @@
 
 
 """
-    constraint_fix_ratio_out_in_trans(m::Model, trans)
+    constraint_min_ratio_out_in_trans(m::Model, trans)
 
 Fix ratio between the output `trans` of a `node_group` to an input `trans` of a
-`node_group` for each `connection` for which the parameter `fix_ratio_out_in_trans`
+`node_group` for each `connection` for which the parameter `min_ratio_out_in_trans`
 is specified.
 """
-function constraint_fix_ratio_out_in_trans(m::Model, trans)
-    for (conn, ng_out, ng_in) in fix_ratio_out_in_trans_indices()
+function constraint_min_ratio_out_in_trans(m::Model, trans)
+    for (conn, ng_out, ng_in) in min_ratio_out_in_trans_indices()
         time_slices_out = unique(
             t for (conn, n_out, c, d, t) in trans_indices(
                 connection=conn, node=node_group__node(node_group=ng_out), direction=:out
@@ -58,8 +58,8 @@ function constraint_fix_ratio_out_in_trans(m::Model, trans)
                         t=t_in_t(t_long=t)
                     )
                 )
-                ==
-                + fix_ratio_out_in_trans(connection=conn, node_group1=ng_out, node_group2=ng_in, t=t)
+                >=
+                + min_ratio_out_in_trans(connection=conn, node_group1=ng_out, node_group2=ng_in, t=t)
                 * sum(
                     trans[conn, n_in, c, :in, t1] * duration(t1)
                     for (conn, n_in, c, d, t1) in trans_indices(

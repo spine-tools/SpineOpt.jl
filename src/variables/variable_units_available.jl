@@ -26,7 +26,7 @@
 function variable_units_available(m::Model)
     Dict{Tuple,JuMP.VariableRef}(
         (u, t) => @variable(
-            m, base_name="units_available[$u, $(t.JuMP_name)]", integer=true
+            m, base_name="units_available[$u, $(t.JuMP_name)]", integer=true, lower_bound=0
         ) for (u, t) in units_online_indices()
     )
 end

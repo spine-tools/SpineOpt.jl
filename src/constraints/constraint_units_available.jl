@@ -29,7 +29,7 @@ function constraint_units_available(m::Model, units_available)
         @constraint(
             m,
             + units_available[u, t]
-            <=
+            ==
             + number_of_units(unit=u, t=t) * avail_factor(unit=u, t=t)
         )
     end

@@ -62,8 +62,12 @@ export operating_costs
 # Export constraints
 export constraint_flow_capacity
 export constraint_fix_ratio_out_in_flow
+export constraint_max_ratio_out_in_flow
+export constraint_min_ratio_out_in_flow
 export constraint_max_cum_in_flow_bound
 export constraint_fix_ratio_out_in_trans
+export constraint_max_ratio_out_in_trans
+export constraint_min_ratio_out_in_trans
 export constraint_trans_capacity
 export constraint_nodal_balance
 export constraint_stor_state
@@ -105,7 +109,11 @@ include("constraints/constraint_max_cum_in_flow_bound.jl")
 include("constraints/constraint_flow_capacity.jl")
 include("constraints/constraint_nodal_balance.jl")
 include("constraints/constraint_fix_ratio_out_in_flow.jl")
+include("constraints/constraint_max_ratio_out_in_flow.jl")
+include("constraints/constraint_min_ratio_out_in_flow.jl")
 include("constraints/constraint_fix_ratio_out_in_trans.jl")
+include("constraints/constraint_max_ratio_out_in_trans.jl")
+include("constraints/constraint_min_ratio_out_in_trans.jl")
 include("constraints/constraint_trans_capacity.jl")
 include("constraints/constraint_stor_capacity.jl")
 include("constraints/constraint_stor_state.jl")

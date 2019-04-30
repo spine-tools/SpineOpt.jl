@@ -42,9 +42,10 @@ function constraint_minimum_operating_point(m::Model, flow, units_online)
                 * units_online[u, t]
                     * number_of_units(unit=u)
                             * sum(
-                            unit_capacity(unit=u1,commodity=c,direction=d)
-                              * unit_conv_cap_to_flow(unit=u, commodity=c)
-                            for (u1,c,d) in unit_capacity_indices(
+                            unit_capacity(unit=u1,commodity=c1,direction=d1)
+                              * unit_conv_cap_to_flow(unit=u1, commodity=c1)
+                            for (u1,c1,d1) in unit_capacity_indices(
+                                unit=u,
                                 commodity = commodity_group__commodity(commodity_group=cg),
                                 _indices = :all
                                 )

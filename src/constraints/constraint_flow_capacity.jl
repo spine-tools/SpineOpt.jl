@@ -54,7 +54,6 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 
 function constraint_flow_capacity(m::Model, flow, units_online)
-    #@butcher
     for (u, c, d) in unit_capacity_indices()
         all([
             unit_conv_cap_to_flow(unit=u, commodity=c) != nothing
