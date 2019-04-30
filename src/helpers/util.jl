@@ -134,18 +134,3 @@ range_in(b::UnitRange{Int64}, a::UnitRange{Int64}) = b.start >= a.start && b.sto
 function using_spinemodeldb(db_url; upgrade=false)
     using_spinedb(db_url; parse_value=parse_value, upgrade=upgrade)
 end
-
-
-"""
-    param_keys(filtering_options...)
-
-WIP: functionality needs to be exteneded
-"""
-
-function param_keys(param) #TODO: one method for params one relationship/ one method for params with multiple relationships: these will need the specified relationship
-    [parameter_keys for parameter_keys in keys(param[keys(param)...]) if param[keys(param)...][parameter_keys] != nothing]
-end
-
-function param_keys(param,class) #TODO: one method for params one relationship/ one method for params with multiple relationships: these will need the specified relationship
-    keys(param[class])
-end

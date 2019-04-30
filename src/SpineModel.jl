@@ -48,7 +48,7 @@ export variable_unit_online
 export flow_indices
 export trans_indices
 export stor_state_indices
-export param_keys
+export unit_online_indices
 
 # Export objective
 export objective_minimize_total_discounted_costs
