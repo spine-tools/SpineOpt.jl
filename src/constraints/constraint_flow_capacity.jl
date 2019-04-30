@@ -27,7 +27,7 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 
 function constraint_flow_capacity(m::Model, flow)
     #@butcher
-    for (u, c, d) in unit_capacity_keys(),(u, n, c, d, t) in flow_indices(
+    for (u, c, d) in unit_capacity_indices(),(u, n, c, d, t) in flow_indices(
             unit=u, commodity=c, direction=d)
         all([
             number_of_units(unit=u) != nothing,
@@ -55,7 +55,7 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 
 function constraint_flow_capacity(m::Model, flow, units_online)
     #@butcher
-    for (u, c, d) in unit_capacity_keys()
+    for (u, c, d) in unit_capacity_indices()
         all([
             unit_conv_cap_to_flow(unit=u, commodity=c) != nothing
         ]) || continue
@@ -72,7 +72,7 @@ function constraint_flow_capacity(m::Model, flow, units_online)
                     * unit_capacity(unit=u, commodity=c, direction=d)
                         * unit_conv_cap_to_flow(unit=u, commodity=c)
                             *duration(t1)
-                                for (u1,t1) in unit_online_indices(unit=u)
+                                for (u1,t1) in units_online_indices(unit=u)
             )
         )
     end

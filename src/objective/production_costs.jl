@@ -26,7 +26,7 @@ Minimize the `production_cost` correspond to the sum over all
 function production_costs(flow)
     #@butcher begin
         let prod_costs = zero(AffExpr)
-            for (u,c) in production_cost_keys()
+            for (u,c) in production_cost_indices()
                 prod_costs +=
                 sum(
                     flow[u, n, c, d, t] * duration(t) * production_cost(unit=u, commodity=c)(t=t)

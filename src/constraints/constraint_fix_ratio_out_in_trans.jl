@@ -29,7 +29,7 @@ function constraint_fix_ratio_out_in_trans(m::Model, trans)
     @constraint(
         m,
         [
-            (conn, node_in, node_out) in fix_ratio_out_in_trans_keys(),
+            (conn, node_in, node_out) in fix_ratio_out_in_trans_indices(),
             t in time_slice();
             fix_ratio_out_in_trans_t(connection=conn, node1=node_in, node2=node_out, t=t) != nothing
         ],

@@ -29,7 +29,7 @@ function constraint_max_cum_in_flow_bound(m::Model, flow)
     @constraint(
         m,
         [
-            (ug, cg) in max_cum_in_flow_bound_keys()
+            (ug, cg) in max_cum_in_flow_bound_indices()
         ],
         + reduce(
             +,

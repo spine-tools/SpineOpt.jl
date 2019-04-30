@@ -29,7 +29,8 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         m = Model(with_optimizer(optimizer))
         # Create decision variables
         flow = variable_flow(m)
-        unit_online = variable_unit_online(m)
+        units_online = variable_units_online(m)
+        units_available = variable_units_available(m)
         trans = variable_trans(m)
         stor_state = variable_stor_state(m)
         ## Create objective function
@@ -38,14 +39,13 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         tax_costs = taxes(flow)
         op_costs = operating_costs(flow)
         # prod_costs = production_costs(flow)
-        total_discounted_costs = objective_minimize_total_discounted_costs(
-                                m, flow)
+        objective_minimize_total_discounted_costs(m, flow)
         # Add constraints
     end
     printstyled("Generating constraints...\n"; bold=true)
     @time begin
         # Unit capacity
-        constraint_flow_capacity(m, flow, unit_online)
+        constraint_flow_capacity(m, flow, units_online)
         # Ratio of in/out flows of a unit
         constraint_fix_ratio_out_in_flow(m, flow)
         # Transmission losses
@@ -62,6 +62,10 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         # storage state balance equation
         constraint_stor_state_init(m, stor_state)
         constraint_stor_state(m, stor_state,trans,flow)
+
+        constraint_units_online(m, units_online, units_available)
+        constraint_units_available(m, units_available)
+        # constraint_minimum_operating_point(m, flow, units_online)
         # needed: set/group of unitgroup CHP and Gasplant
     end
     # Run model
@@ -80,5 +84,5 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         )
     end
     printstyled("Done.\n"; bold=true)
-    m, flow, trans, stor_state, unit_online
+    m, flow, trans, stor_state, units_online
 end

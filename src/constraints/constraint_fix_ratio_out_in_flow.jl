@@ -26,7 +26,7 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 is specified.
 """
 function constraint_fix_ratio_out_in_flow(m::Model, flow)
-    for (u, cg_out, cg_in) in fix_ratio_out_in_flow_keys()
+    for (u, cg_out, cg_in) in fix_ratio_out_in_flow_indices()
         time_slices_out = unique(
             t for (u, n, c_out, d, t) in flow_indices(
                 unit=u, commodity=commodity_group__commodity(commodity_group=cg_out), direction=:out

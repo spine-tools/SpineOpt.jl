@@ -24,7 +24,7 @@ Variable operation costs defined on flows.
 """
 function variable_om_costs(flow)
     let vom_costs = zero(AffExpr)
-        for (c,u,d) in vom_cost_keys()
+        for (c,u,d) in vom_cost_indices()
                 vom_costs +=
                 + sum(
                     +,

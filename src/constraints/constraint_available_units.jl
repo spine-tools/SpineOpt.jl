@@ -19,30 +19,18 @@
 
 
 """
-    generate_units_online(m::Model)
+    constraint_available_units(m::Model, units_online, units_available)
 
-#TODO: add model descirption here
+Limit the units_online by the number of available units.
 """
-function variable_unit_online(m::Model)
-    Dict{Tuple,JuMP.VariableRef}(
-        (u, t) => @variable(
-            m, base_name="unit_online[$u, $(t.JuMP_name)]", binary=true
-        ) for (u, t) in unit_online_indices()
-    )
-end
 
-
-"""
-    unit_online_indices(filtering_options...)
-
-A set of tuples for indexing the `unit_online` variable. Any filtering options can be specified
-for `unit` and `t`.
-"""
-function unit_online_indices(;unit=:any, t=:any)
-    [
-        (unit=u, t=t1) for (u, blk) in unit__node__direction__temporal_block(
-                unit=unit, node=:any, direction=:any, _indices=(:unit, :temporal_block))
-            for t1 in t_highest_resolution(time_slice(temporal_block=blk))
-                if t_in_t_list(t1, t)
-    ]
+function constraint_units_online(m::Model, units_online, units_available)
+    for (u, t) in units_online_indices()
+        @constraint(
+            m,
+            + units_online[u, t]
+            <=
+            + units_available[u, t]
+        )
+    end
 end
