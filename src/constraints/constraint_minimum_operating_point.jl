@@ -47,7 +47,7 @@ function constraint_minimum_operating_point(m::Model, flow, units_online)
                             for (u1,c1,d1) in unit_capacity_indices(
                                 unit=u,
                                 commodity=commodity_group__commodity(commodity_group=cg),
-                                _indices = :all
+                                _compact=false
                             )
                         )
         )

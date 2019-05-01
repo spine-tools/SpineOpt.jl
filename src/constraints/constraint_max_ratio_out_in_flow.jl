@@ -51,7 +51,7 @@ function constraint_max_ratio_out_in_flow(m::Model, flow)
             @constraint(
                 m,
                 + sum(
-                    flow[u, n, c_out, :out, t1] * duration(t1)
+                    flow[u, n, c_out, d, t1] * duration(t1)
                     for (u, n, c_out, d, t1) in flow_indices(
                         commodity=commodity_group__commodity(commodity_group=cg_out),
                         direction=:out,
@@ -61,7 +61,7 @@ function constraint_max_ratio_out_in_flow(m::Model, flow)
                 <=
                 + max_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in, t=t)
                 * sum(
-                    flow[u, n, c_in, :in, t1] * duration(t1)
+                    flow[u, n, c_in, d, t1] * duration(t1)
                     for (u, n, c_in, d, t1) in flow_indices(
                         commodity=commodity_group__commodity(commodity_group=cg_in),
                         direction=:in,

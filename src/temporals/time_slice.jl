@@ -60,31 +60,6 @@ Determine whether `b` is contained in `a`.
 """
 Base.in(b::TimeSlice, a::TimeSlice) = b.start >= a.start && b.end_ <= a.end_
 
-
-"""
-    intersect(b::Array{TimeSlice,1}, a::TimeSlice)
-
-Determine if two TimeSlices intersect.
-"""
-Base.intersect(b::Array{TimeSlice,1}, a::TimeSlice) = intersect(b,[a])
-
-
-"""
-    intersect(b::TimeSlice, a::Array{TimeSlice,1})
-
-Determine if two TimeSlices intersect.
-"""
-Base.intersect(b::TimeSlice, a::Array{TimeSlice,1}) = intersect([b],a)
-
-
-"""
-    intersect(b::TimeSlice, a::TimeSlice)
-
-Determine if two TimeSlices intersect.
-"""
-Base.intersect(b::TimeSlice, a::TimeSlice) = intersect([b],[a])
-
-
 """
     overlaps(a::TimeSlice, b::TimeSlice)
 
@@ -92,9 +67,10 @@ Determine whether `a` and `b` overlap.
 """
 overlaps(a::TimeSlice, b::TimeSlice) = a.start <= b.start < a.end_ || b.start <= a.start < b.end_
 
-# Iterate `TimeSlice`s as if they were `Int`s
+# Iterate `TimeSlice`s as if they were `Int`s. NOTE: This also enables `intersect` with a single `TimeSlice`
 Base.iterate(t::TimeSlice) = iterate((t,))
 Base.iterate(t::TimeSlice, state::T) where T = iterate((t,), state)
+Base.length(t::TimeSlice) = 1
 
 """
     t_lowest_resolution(t_list::Union{TimeSlice,Array{TimeSlice,1}})
@@ -132,11 +108,3 @@ function t_highest_resolution(t_list::Array{TimeSlice,1})
     end
     result
 end
-
-
-"""
-    t_in_t_list(t::TimeSlice, t_list)
-
-Determine whether or not the time slice `t` is an element of the list of time slices `t_list`.
-"""
-t_in_t_list(t::TimeSlice, t_list) = t_list == :any ? true : (t in tuple(t_list...))
