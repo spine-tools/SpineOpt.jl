@@ -45,6 +45,8 @@ export variable_trans
 export variable_stor_state
 export variable_units_online
 export variable_units_available
+export variable_units_starting_up
+export variable_units_shutting_down
 
 # Export filter functions
 export flow_indices
@@ -58,6 +60,8 @@ export variable_om_costs
 export fixed_om_costs
 export taxes
 export operating_costs
+export start_up_cost
+export shut_down_cost
 # export production_costs
 
 # Export constraints
@@ -77,6 +81,9 @@ export constraint_stor_capacity
 export constraint_units_online
 export constraint_units_available
 export constraint_minimum_operating_point
+export constraint_min_up_time
+export constraint_min_down_time
+export constraint_commitment_variables
 
 # Creating time_slices
 export generate_time_slice
@@ -98,12 +105,16 @@ include("variables/variable_trans.jl")
 include("variables/variable_stor_state.jl")
 include("variables/variable_units_online.jl")
 include("variables/variable_units_available.jl")
+include("variables/variable_units_starting_up.jl")
+include("variables/variable_units_shutting_down.jl")
 
 include("objective/objective_minimize_total_discounted_costs.jl")
 include("objective/variable_om_costs.jl")
 include("objective/fixed_om_costs.jl")
 include("objective/taxes.jl")
 include("objective/operating_costs.jl")
+include("objective/start_up_costs.jl")
+include("objective/shut_down_costs.jl")
 # include("objective/production_costs.jl")
 
 include("constraints/constraint_max_cum_in_flow_bound.jl")
@@ -122,5 +133,8 @@ include("constraints/constraint_stor_state_init.jl")
 include("constraints/constraint_units_online.jl")
 include("constraints/constraint_units_available.jl")
 include("constraints/constraint_minimum_operating_point.jl")
+include("constraints/constraint_min_up_time.jl")
+include("constraints/constraint_min_down_time.jl")
+include("constraints/constraint_commitment_variables.jl")
 
 end

@@ -18,7 +18,7 @@
 #############################################################################
 
 """
-    fixed_om_costs(m::Model, flow)
+    fixed_om_costs()
 
 Variable operation costs defined on flows.
 """

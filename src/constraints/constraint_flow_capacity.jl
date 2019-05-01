@@ -54,7 +54,7 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 
 function constraint_flow_capacity(m::Model, flow, units_online)
-    for (u, c, d) in unit_capacity_indices()
+    for (u, c, d) in unit_capacity_indices(), t in time_slice()
         all([
             unit_conv_cap_to_flow(unit=u, commodity=c) != nothing
         ]) || continue
@@ -63,7 +63,7 @@ function constraint_flow_capacity(m::Model, flow, units_online)
             + sum(
                 flow[u1, n1, c1, d1, t1] * duration(t1)
                     for (u1, n1, c1, d1, t1) in flow_indices(
-                            unit=u, commodity=c, direction=d)
+                            unit=u, commodity=c, direction=d, t=t)
             )
             <=
             + sum(
@@ -72,6 +72,7 @@ function constraint_flow_capacity(m::Model, flow, units_online)
                         * unit_conv_cap_to_flow(unit=u, commodity=c)
                             *duration(t1)
                                 for (u1,t1) in units_online_indices(unit=u)
+                                    if t1 in t_in_t(t_long=t)
             )
         )
     end

@@ -16,17 +16,26 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-# Export contents of database into the current session
-using Revise
-using SpineModel
-using SpineInterface
-using Cbc
 
-db_url_in = "sqlite:///$(@__DIR__)/data/new_temporal.sqlite"
-file_out = "$(@__DIR__)/data/new_temporal_out.sqlite"
-db_url_out = "sqlite:///$file_out"
-isfile(file_out) || create_results_db(db_url_out, db_url_in)
 
-m, flow, trans, stor_state, units_online,
-    units_available, units_starting_up, units_shutting_down =
-    run_spinemodel(db_url_in, db_url_out; optimizer=Cbc.Optimizer)
+"""
+    constraint_commitment_variables(m::Model, units_online, units_shutting_down, units_starting_up)
+
+Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
+number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
+"""
+
+function constraint_commitment_variables(m::Model, units_online, units_shutting_down, units_starting_up)
+    for (u, t) in units_online_indices(), t2 in t_before_t(t_after=t)
+        all(
+        !isempty(t2) && t2 in [t for (u,t) in units_online_indices(unit=u)]
+        ) || continue
+        @constraint(
+            m,
+            + units_online[u,t2] - units_online[u,t]
+            + units_starting_up[u,t] + units_shutting_down[u,t]
+            <=
+            0
+        )
+    end
+end

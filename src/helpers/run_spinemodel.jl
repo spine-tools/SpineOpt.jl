@@ -31,15 +31,13 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         flow = variable_flow(m)
         units_online = variable_units_online(m)
         units_available = variable_units_available(m)
+        units_starting_up = variable_units_starting_up(m)
+        units_shutting_down = variable_units_shutting_down(m)
         trans = variable_trans(m)
         stor_state = variable_stor_state(m)
         ## Create objective function
-        vom_costs = variable_om_costs(flow)
-        fom_costs = fixed_om_costs()
-        tax_costs = taxes(flow)
-        op_costs = operating_costs(flow)
-        # prod_costs = production_costs(flow)
-        objective_minimize_total_discounted_costs(m, flow)
+        objective_minimize_total_discounted_costs(m, flow,
+                                        units_starting_up, units_shutting_down)
         # Add constraints
     end
     printstyled("Generating constraints...\n"; bold=true)
@@ -69,6 +67,11 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         constraint_units_online(m, units_online, units_available)
         constraint_units_available(m, units_available)
         constraint_minimum_operating_point(m, flow, units_online)
+        constraint_min_down_time(m,units_online, units_available,
+                                                units_shutting_down)
+        constraint_min_up_time(m, units_online, units_starting_up)
+        constraint_commitment_variables(m, units_online, units_starting_up,
+                                                        units_shutting_down)
         # needed: set/group of unitgroup CHP and Gasplant
     end
     # Run model
@@ -87,5 +90,5 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         )
     end
     printstyled("Done.\n"; bold=true)
-    m, flow, trans, stor_state, units_online
+    m, flow, trans, stor_state, units_online, units_available, units_starting_up, units_shutting_down
 end

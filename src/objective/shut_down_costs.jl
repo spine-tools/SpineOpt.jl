@@ -16,17 +16,18 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-# Export contents of database into the current session
-using Revise
-using SpineModel
-using SpineInterface
-using Cbc
 
-db_url_in = "sqlite:///$(@__DIR__)/data/new_temporal.sqlite"
-file_out = "$(@__DIR__)/data/new_temporal_out.sqlite"
-db_url_out = "sqlite:///$file_out"
-isfile(file_out) || create_results_db(db_url_out, db_url_in)
+"""
+    shut_down_costs(units_shutting_down)
 
-m, flow, trans, stor_state, units_online,
-    units_available, units_starting_up, units_shutting_down =
-    run_spinemodel(db_url_in, db_url_out; optimizer=Cbc.Optimizer)
+Startup cost term for units.
+"""
+function shut_down_costs(units_shutting_down)
+    let sdc = zero(AffExpr)
+        for (u,t) in units_online_indices()
+                sdc +=
+                    shut_down_cost(unit=u)*units_shutting_down[u,t]
+        end
+        sdc
+    end
+end
