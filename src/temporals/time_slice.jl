@@ -67,7 +67,9 @@ Determine whether `a` and `b` overlap.
 """
 overlaps(a::TimeSlice, b::TimeSlice) = a.start <= b.start < a.end_ || b.start <= a.start < b.end_
 
-# Iterate `TimeSlice`s as if they were `Int`s. NOTE: This also enables `intersect` with a single `TimeSlice`
+# Iterate single `TimeSlice` as collection. NOTE: This also enables `intersect` with a single `TimeSlice`
+# I believe this is correct, since a single `TimeSlice` shouldn't be decomposed by an iterator
+# This is also Julia's default behaviour for `Number` types -Manuel
 Base.iterate(t::TimeSlice) = iterate((t,))
 Base.iterate(t::TimeSlice, state::T) where T = iterate((t,), state)
 Base.length(t::TimeSlice) = 1

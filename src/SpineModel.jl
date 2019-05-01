@@ -35,7 +35,8 @@ export using_spinemodeldb
 export run_spinemodel
 export value
 export pack_trailing_dims
-export t_in_t_list
+export t_lowest_resolution
+export t_highest_resolution
 export @butcher
 
 # Export variables
