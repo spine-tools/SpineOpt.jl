@@ -41,12 +41,12 @@ end
 A set of tuples for indexing the `trans` variable. Any filtering options can be specified
 for `commodity`, `node`, `connection`, `direction`, and `t`.
 """
-function trans_indices(;commodity=:any, node=:any, connection=:any, direction=:any, t=:any)
+function trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything)
     [
         (connection=conn, node=n, commodity=c, direction=d, t=t1)
-        for (n, c) in node__commodity(commodity=commodity, node=node, _indices=:all)
+        for (n, c) in node__commodity(commodity=commodity, node=node, _compact=false)
             for (conn, n_, d, tblk) in connection__node__direction__temporal_block(
-                    node=n, connection=connection, direction=direction, _indices=:all)
+                    node=n, connection=connection, direction=Object(direction), _compact=false)
                 for t1 in time_slice(temporal_block=tblk) if t_in_t_list(t1, t)
     ]
 end

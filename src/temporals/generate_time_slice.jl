@@ -18,7 +18,7 @@
 #############################################################################
 struct TimeSliceFunction
     list::Array{TimeSlice,1}
-    temporal_block_list::Dict{Symbol,Array{TimeSlice,1}}
+    temporal_block_list::Dict{Object,Array{TimeSlice,1}}
 end
 
 """
@@ -43,7 +43,7 @@ end
 """
 function generate_time_slice()
     time_slice_list = Array{TimeSlice,1}()
-    time_slice_temporal_block_list = Dict{Symbol,Array{TimeSlice,1}}()
+    time_slice_temporal_block_list = Dict{Object,Array{TimeSlice,1}}()
     for (k, blk) in enumerate(temporal_block())
         time_slice_temporal_block_list[blk] = Array{TimeSlice,1}()
         temp_block_start = start_datetime(temporal_block=blk)  # DateTime value

@@ -38,11 +38,10 @@ end
 A set of tuples for indexing the `units_online` variable. Any filtering options can be specified
 for `unit` and `t`.
 """
-function units_online_indices(;unit=:any, t=:any)
+function units_online_indices(;unit=anything, t=anything)
     [
-        (unit=u, t=t1) for u in unit__node__direction__temporal_block(
-                unit=unit, node=:any, direction=:any, temporal_block=:any,_indices=(:unit,)
-                ) for t1 in t_highest_resolution([t for (c,n,u1,d,t) in flow_indices(unit=u)])
-                if t_in_t_list(t1, t)
+        (unit=u, t=t1)
+        for u in intersect(SpineModel.unit(), unit)
+            for t1 in intersect(t_highest_resolution(Array{TimeSlice,1}([x.t for x in flow_indices(unit=u)])), t)
     ]
 end

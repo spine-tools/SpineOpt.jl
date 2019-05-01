@@ -27,7 +27,7 @@ attached to model `m`.
 in a certain 'direction'. The direction is relative to the unit.
 """
 function variable_flow(m::Model)
-    @butcher Dict{Tuple,JuMP.VariableRef}(
+    Dict{Tuple,JuMP.VariableRef}(
         (u, n, c, d, t) => @variable(
             m, base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
         ) for (u, n, c, d, t) in flow_indices()
@@ -41,12 +41,12 @@ end
 A set of tuples for indexing the `flow` variable. Any filtering options can be specified
 for `commodity`, `node`, `unit`, `direction`, and `t`.
 """
-function flow_indices(;commodity=:any, node=:any, unit=:any, direction=:any, t=:any)
+function flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything)
     [
         (unit=u, node=n, commodity=c, direction=d, t=t1)
-        for (n, c) in node__commodity(commodity=commodity, node=node, _indices=:all)
+        for (n, c) in node__commodity(commodity=commodity, node=node, _compact=false)
             for (u, n_, d, blk) in unit__node__direction__temporal_block(
-                    node=n, unit=unit, direction=direction, _indices=:all)
-                for t1 in time_slice(temporal_block=blk) if t_in_t_list(t1, t)
+                    node=n, unit=unit, direction=direction, _compact=false)
+                for t1 in intersect(time_slice(temporal_block=blk), t)
     ]
 end
