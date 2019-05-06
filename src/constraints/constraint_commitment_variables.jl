@@ -33,8 +33,8 @@ function constraint_commitment_variables(m::Model, units_online, units_shutting_
         @constraint(
             m,
             + units_online[u,t2] - units_online[u,t]
-            + units_starting_up[u,t] + units_shutting_down[u,t]
-            <=
+            + units_starting_up[u,t] - units_shutting_down[u,t]
+            ==
             0
         )
     end
