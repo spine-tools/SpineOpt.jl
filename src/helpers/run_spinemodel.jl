@@ -80,15 +80,15 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         printstyled("Writing results to the database...\n"; bold=true)
         # for (k, v) in sort(SpineModel.value(flow)) @show k, v end
         # for (k, v) in sort(SpineModel.value(units_online)) @show k, v end
-        # @time write_results(
-        #    db_url_out;
-        #    flow=pack_trailing_dims(SpineModel.value(flow), 1),
-        #    units_starting_up=pack_trailing_dims(SpineModel.value(units_starting_up), 1),
-        #    units_shutting_down=pack_trailing_dims(SpineModel.value(units_shutting_down), 1),
-        #    units_online=pack_trailing_dims(SpineModel.value(units_online), 1),
-        #    #trans=pack_trailing_dims(SpineModel.value(trans), 1),
-        #    #stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
-        # )
+        @time write_results(
+            db_url_out;
+            flow=pack_trailing_dims(SpineModel.value(flow), 1),
+            units_starting_up=pack_trailing_dims(SpineModel.value(units_starting_up), 1),
+            units_shutting_down=pack_trailing_dims(SpineModel.value(units_shutting_down), 1),
+            units_online=pack_trailing_dims(SpineModel.value(units_online), 1),
+            #trans=pack_trailing_dims(SpineModel.value(trans), 1),
+            #stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
+        )
     end
     printstyled("Done.\n"; bold=true)
     m, flow, trans, stor_state, units_online, units_available, units_starting_up, units_shutting_down
