@@ -27,7 +27,7 @@ Check if `unit_conv_cap_to_flow` is defined.
 function constraint_flow_capacity(m::Model, flow, units_online)
     for inds in indices(unit_capacity)
         for t in time_slice()
-            @constraint(
+            @show @constraint(
                 m,
                 + sum(
                     flow[x] * duration(x.t)
