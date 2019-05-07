@@ -45,7 +45,7 @@ function constraint_fix_ratio_out_in_flow(m::Model, flow)
         involved_timeslices = sort([time_slices_out; time_slices_in])
         overlaps = sort(t_overlaps_t(time_slices_in, time_slices_out))
         if involved_timeslices != overlaps
-            @warn "Not all involved timeslices are overlapping, check your temporal_blocks"
+            @warn "not all involved timeslices are overlapping, please check your temporal_blocks"
             # NOTE: this is a check for plausibility.
             # If the user e.g. wants to oconstrain one commodity of a unit for a certain amount of time,
             # while the other commodity is constraint for a longer period, "overlaps" becomes active
