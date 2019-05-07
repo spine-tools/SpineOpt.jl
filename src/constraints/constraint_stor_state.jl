@@ -23,13 +23,9 @@
 Balance for storage level.
 """
 function constraint_stor_state(m::Model, stor_state, trans, flow)
-    @butcher for (c, stor, block) in commodity__storage__temporal_block(), t in time_slice(temporal_block=block)
+    for (stor, c, t) in stor_state_indices()
         all([
-            t != time_slice(temporal_block=block)[1]
-            haskey(stor_state, (c, stor, t))
-            frac_state_loss(commodity=c, storage=stor) != nothing
-            eff_stor_charg(storage=stor) != nothing
-            eff_stor_discharg(storage=stor) != nothing
+            !isempty(t_before_t(t_after=t))
         ]) || continue
         @constraint(
             m,

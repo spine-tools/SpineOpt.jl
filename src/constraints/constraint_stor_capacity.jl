@@ -25,16 +25,16 @@ Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
 number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 function constraint_stor_capacity(m::Model, stor_state)
-    @butcher for (c, stor) in storage__commodity(), t in time_slice()
-        all([
-            stor_capacity(commodity=c, storage=stor) != nothing
-            haskey(stor_state, (c, stor, t))
-        ]) || continue
+    for (stor, cg) in stor_state_cap_indices(),
+        (stor,c,t) in stor_state_indices(storage=stor)
         @constraint(
             m,
-            stor_state[c, stor, t]
+            + sum(
+                stor_state[stor, c, t]
+                for c in commodity_group__commodity(commodity_group=cg)
+            )
             <=
-            stor_capacity(commodity=c, storage=stor)
+                stor_state_cap(storage=stor,commodity_group=cg)
         )
     end
 end

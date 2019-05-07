@@ -24,17 +24,17 @@
 Balance for storage level.
 """
 function constraint_stor_state_init(m::Model, stor_state)
-    @butcher for (c, stor, block) in commodity__storage__temporal_block(), t in time_slice(temporal_block=block)
-        all([
-            t == time_slice(temporal_block=block)[1],
-            haskey(stor_state, (c, stor, t)),
-            stor_state_init(commodity=c, storage=stor) != nothing
+    for (stor, c) in stor_state_init_indices(),
+        (stor, c, t) in stor_state_indices(storage=stor, commodity=c)
+        all(
+        [
+        isempty(t_before_t(t_after=t))
         ]) || continue
         @constraint(
             m,
-            + stor_state[c, stor, t]
+            + stor_state[stor, c, t]
             <=
-            + stor_state_init(commodity=c, storage=stor)
+            + stor_state_init(storage=stor, commodity=c)
         )
     end
 end
