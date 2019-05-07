@@ -24,7 +24,7 @@
 Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
 number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
-function constraint_commitment_variables(m::Model, units_online, units_shutting_down, units_starting_up)
+function constraint_commitment_variables(m::Model, units_online, units_starting_up, units_shutting_down)
     for inds in units_online_indices()
         for inds_before in units_online_indices(;inds..., t=t_before_t(t_after=inds.t))
             @constraint(
