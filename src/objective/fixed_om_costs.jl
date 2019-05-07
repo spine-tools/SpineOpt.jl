@@ -24,9 +24,8 @@ Variable operation costs defined on flows.
 """
 function fixed_om_costs()
     let fom_costs = zero(AffExpr)
-        for (u, cg, d) in unit_capacity_indices()
-                fom_costs +=
-                    unit_capacity(unit=u, commodity_group=cg, direction=d) * number_of_units(unit=u) * fom_cost(unit=u)
+        for inds in indices(unit_capacity)
+            fom_costs += unit_capacity(;inds...) * number_of_units(;inds...) * fom_cost(;inds...)
         end
         fom_costs
     end

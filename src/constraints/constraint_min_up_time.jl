@@ -25,15 +25,16 @@ Constraint running by minimum up time.
 """
 
 function constraint_min_up_time(m::Model, units_online, units_starting_up)
-    for (u,t) in units_online_indices()
-        all(min_up_time(unit=u)!=0) || continue
+    for inds in units_online_indices()
+        min_up_time(;inds...) != 0 || continue
         @constraint(
             m,
-            units_online[u,t]
+            + units_online[inds]
             >=
             + sum(
-            units_starting_up[u1,t1]
-            for (u1,t1) in units_online_indices(unit=u) if t1.start > t.start-min_up_time(unit=u) && t1.start <= t.start
+                units_starting_up[x]
+                for x in units_online_indices(unit=inds.unit)
+                    if inds.t.start - min_up_time(;inds...) < x.t.start <= inds.t.start
             )
         )
     end

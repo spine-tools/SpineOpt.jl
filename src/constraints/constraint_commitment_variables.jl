@@ -25,17 +25,34 @@ Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
 number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 
-function constraint_commitment_variables(m::Model, units_online, units_starting_up, units_shutting_down)
-    for (u, t2) in units_online_indices(), t1 in t_before_t(t_after=t2)
-        all(
-        !isempty(t1) && t1 in [t for (u,t) in units_online_indices(unit=u)]
-        ) || continue
-        @constraint(
-            m,
-            + units_online[u,t1] - units_online[u,t2]
-            + units_starting_up[u,t2] - units_shutting_down[u,t2]
-            ==
-            0
-        )
+#function constraint_commitment_variables(m::Model, units_online, units_starting_up, units_shutting_down)
+#    for inds in units_online_indices()
+#        for t1 in t_before_t(t_after=inds.t)
+#            (!isempty(t1) && t1 in [x.t for x in units_online_indices(unit=inds.unit)]) || continue
+#            @constraint(
+#                m,
+#                + units_online[u,t1] - units_online[inds]
+#                + units_starting_up[inds] - units_shutting_down[inds]
+#                ==
+#                0
+#            )
+#        end
+#    end
+#end
+
+
+
+function constraint_commitment_variables(m::Model, units_online, units_shutting_down, units_starting_up)
+    for inds in units_online_indices()
+        for inds_before in units_online_indices(;inds..., t=t_before_t(t_after=inds.t))
+            (!isempty(inds_before.t) && inds_before.t in [x.t for x in units_online_indices(unit=inds.unit)]) || continue
+            @constraint(
+                m,
+                + units_online[inds_before] - units_online[inds]
+                + units_starting_up[inds] - units_shutting_down[inds]
+                ==
+                0
+            )
+        end
     end
 end

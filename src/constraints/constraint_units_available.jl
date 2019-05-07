@@ -25,12 +25,12 @@ Limit the units_online by the number of available units.
 """
 
 function constraint_units_available(m::Model, units_available)
-    for (u, t) in units_online_indices()
+    for x in units_online_indices()
         @constraint(
             m,
-            + units_available[u, t]
+            + units_available[x]
             ==
-            + number_of_units(unit=u, t=t) * avail_factor(unit=u, t=t)
+            + number_of_units(;x...) * avail_factor(;x...)
         )
     end
 end

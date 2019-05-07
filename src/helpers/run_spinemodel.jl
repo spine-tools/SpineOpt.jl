@@ -63,15 +63,12 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         # storage state balance equation
         constraint_stor_state_init(m, stor_state)
         constraint_stor_state(m, stor_state,trans,flow)
-
         constraint_units_online(m, units_online, units_available)
         constraint_units_available(m, units_available)
         constraint_minimum_operating_point(m, flow, units_online)
-        constraint_min_down_time(m,units_online, units_available,
-                                                units_shutting_down)
-        constraint_min_up_time(m, units_online, units_starting_up)
-        constraint_commitment_variables(m, units_online, units_starting_up,
-                                                        units_shutting_down)
+        #constraint_min_down_time(m, units_online, units_available, units_shutting_down)
+        #constraint_min_up_time(m, units_online, units_starting_up)
+        constraint_commitment_variables(m, units_online, units_starting_up, units_shutting_down)
         # needed: set/group of unitgroup CHP and Gasplant
     end
     # Run model

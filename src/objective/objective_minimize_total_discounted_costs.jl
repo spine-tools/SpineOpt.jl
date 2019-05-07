@@ -32,7 +32,6 @@ function objective_minimize_total_discounted_costs(
     op_costs = operating_costs(flow)
     suc_costs = start_up_costs(units_starting_up)
     sdc_costs = shut_down_costs(units_shutting_down)
-    total_discounted_costs = vom_costs + fom_costs + tax_costs + op_costs +
-                                +suc_costs + sdc_costs
+    total_discounted_costs = vom_costs + fom_costs + tax_costs + op_costs + suc_costs + sdc_costs
     @objective(m, Min, total_discounted_costs)
 end

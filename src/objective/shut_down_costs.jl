@@ -24,9 +24,8 @@ Startup cost term for units.
 """
 function shut_down_costs(units_shutting_down)
     let sdc = zero(AffExpr)
-        for (u,t) in units_online_indices()
-                sdc +=
-                    shut_down_cost(unit=u)*units_shutting_down[u,t]
+        for inds in units_online_indices()
+            sdc += shut_down_cost(;inds...) * units_shutting_down[inds]
         end
         sdc
     end

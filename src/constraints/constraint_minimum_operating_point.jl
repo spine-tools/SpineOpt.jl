@@ -26,25 +26,28 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 
 function constraint_minimum_operating_point(m::Model, flow, units_online)
-    for (u, cg) in indices(minimum_operating_point), (u, t) in units_online_indices(unit=u),
-        d in unit_capacity_indices(unit=u, commodity_group=cg)
-        @constraint(
-            m,
-            + sum(
-                flow[u1, n, c, d1, t1]
-                    for (u1, n, c, d1, t1) in flow_indices(
-                        commodity=commodity_group__commodity(commodity_group=cg),
-                        unit=u,
-                        direction = d,
-                        t=t
+    for inds in indices(minimum_operating_point)
+        for cap_inds in indices(unit_capacity; inds...)
+            for u_on_inds in units_online_indices(;inds...)
+                @constraint(
+                    m,
+                    + sum(
+                        flow[x]
+                        for x in flow_indices(;
+                            inds...,
+                            cap_inds...,
+                            u_on_inds...,
+                            commodity=commodity_group__commodity(commodity_group=inds.commodity_group),
+                        )
                     )
-            )
-            >=
-            + minimum_operating_point(unit=u, commodity_group=cg, t=t)
-                * units_online[u, t]
-                    * number_of_units(unit=u)
-                            * unit_capacity(unit=u, commodity_group=cg, direction=d)
-                                * unit_conv_cap_to_flow(unit=u, commodity_group=cg)
-        )
+                    >=
+                    + minimum_operating_point(;inds..., u_on_inds...)
+                        * units_online[u_on_inds]
+                        * number_of_units(;u_on_inds...)
+                        * unit_capacity(;cap_inds...)
+                        * unit_conv_cap_to_flow(;inds...)
+                )
+            end
+        end
     end
 end

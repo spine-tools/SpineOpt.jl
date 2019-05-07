@@ -24,10 +24,13 @@
 #TODO: add model descirption here
 """
 function variable_units_online(m::Model)
-    Dict{Tuple,JuMP.VariableRef}(
-        (u, t) => @variable(
-            m, base_name="units_online[$u, $(t.JuMP_name)]", integer=true, lower_bound=0
-        ) for (u, t) in units_online_indices()
+    Dict{NamedTuple,JuMP.VariableRef}(
+        i => @variable(
+            m,
+            base_name="units_online[$(join(i, ", "))]", # TODO: JuMP_name (maybe use Base.show(..., ::TimeSlice))
+            integer=true,
+            lower_bound=0
+        ) for i in units_online_indices()
     )
 end
 
@@ -38,10 +41,10 @@ end
 A set of tuples for indexing the `units_online` variable. Any filtering options can be specified
 for `unit` and `t`.
 """
-function units_online_indices(;unit=anything, t=anything)
+function units_online_indices(;unit=anything, t=anything, tail...)
     [
-        (unit=u, t=t1)
-        for u in intersect(SpineModel.unit(), unit)
-            for t1 in intersect(t_highest_resolution(Array{TimeSlice,1}([x.t for x in flow_indices(unit=u)])), t)
+        (u_inds..., t=t1)
+        for u_inds in indices(has_flow; unit=unit, tail..., value_filter=x->x==true)
+            for t1 in intersect(t_highest_resolution([x.t for x in flow_indices(unit=u_inds.unit)]), t)
     ]
 end

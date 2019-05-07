@@ -19,14 +19,17 @@
 
 
 """
-    generate_units_shutting_down(m::Model)
+    units_shutting_down(m::Model)
 
 #TODO: add model descirption here
 """
 function variable_units_shutting_down(m::Model)
-    Dict{Tuple,JuMP.VariableRef}(
-        (u, t) => @variable(
-            m, base_name="units_shutting_down[$u, $(t.JuMP_name)]", integer=true, lower_bound=0
-        ) for (u, t) in units_online_indices()
+    Dict{NamedTuple,JuMP.VariableRef}(
+        i => @variable(
+            m,
+            base_name="units_shutting_down[$(join(i, ", "))]", # TODO: JuMP_name (maybe use Base.show(..., ::TimeSlice))
+            integer=true,
+            lower_bound=0
+        ) for i in units_online_indices()
     )
 end
