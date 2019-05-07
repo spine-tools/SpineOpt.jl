@@ -52,7 +52,6 @@ Limit the maximum in/out `flow` of a `unit` for all `unit_capacity` indices.
 Check if `unit_conv_cap_to_flow` is defined.
 """
 function constraint_flow_capacity(m::Model, flow, units_online)
-<<<<<<< Updated upstream
     for (u, cg, d) in unit_capacity_indices(), t in time_slice()
         @constraint(
             m,
@@ -69,24 +68,6 @@ function constraint_flow_capacity(m::Model, flow, units_online)
                             *duration(t1)
                                     for (u1,t1) in units_online_indices(unit=u)
                                         if t1 in t_in_t(t_long=t)
-=======
-    for (u, c, d) in unit_capacity_indices(), t in time_slice()
-        unit_conv_cap_to_flow(unit=u, commodity=c) != nothing || continue
-        @constraint(
-            m,
-            + sum(
-                + flow[u1, n1, c1, d1, t1] * duration(t1)
-                for (u1, n1, c1, d1, t1) in flow_indices(unit=u, commodity=c, direction=d, t=t)
-            )
-            <=
-            + sum(
-                + units_online[u1, t1]
-                    * unit_capacity(unit=u, commodity=c, direction=d)
-                    * unit_conv_cap_to_flow(unit=u, commodity=c)
-                    * duration(t1)
-                for (u1, t1) in units_online_indices(unit=u)
-                    if t1 in t_in_t(t_long=t)
->>>>>>> Stashed changes
             )
         )
     end
