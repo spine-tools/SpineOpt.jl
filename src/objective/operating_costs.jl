@@ -23,14 +23,12 @@
 Minimize the `production_cost` correspond to the sum over all
 `conversion_cost` of each `unit`.
 """
-function operating_costs(flow)
-    let op_costs = zero(AffExpr)
-        for inds in indices(operating_cost)
-            op_costs += sum(
-                flow[x] * duration(x.t) * operating_cost(;inds..., t=x.t)
-                for x in flow_indices(;inds...)
-            )
-        end
-        op_costs
-    end
+function operating_costs(m, flow)
+    @expression(
+        m,
+        sum(
+            flow[x] * duration(x.t) * operating_cost(;inds..., t=x.t)
+            for inds in indices(operating_cost) for x in flow_indices(;inds...)
+        )
+    )
 end

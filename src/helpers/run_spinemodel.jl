@@ -66,8 +66,8 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         constraint_units_online(m, units_online, units_available)
         constraint_units_available(m, units_available)
         constraint_minimum_operating_point(m, flow, units_online)
-        #constraint_min_down_time(m, units_online, units_available, units_shutting_down)
-        #constraint_min_up_time(m, units_online, units_starting_up)
+        constraint_min_down_time(m, units_online, units_available, units_shutting_down)
+        constraint_min_up_time(m, units_online, units_starting_up)
         constraint_commitment_variables(m, units_online, units_starting_up, units_shutting_down)
         # needed: set/group of unitgroup CHP and Gasplant
     end
@@ -79,15 +79,17 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
         printstyled("Writing results to the database...\n"; bold=true)
-        @time write_results(
-            db_url_out;
-            flow=pack_trailing_dims(SpineModel.value(flow), 1),
-            units_starting_up=pack_trailing_dims(SpineModel.value(units_starting_up), 1),
-            units_shutting_down=pack_trailing_dims(SpineModel.value(units_shutting_down), 1),
-            units_online=pack_trailing_dims(SpineModel.value(units_online), 1),
-            #trans=pack_trailing_dims(SpineModel.value(trans), 1),
-            #stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
-        )
+        for (k, v) in sort(SpineModel.value(flow)) @show k, v end
+        for (k, v) in sort(SpineModel.value(units_online)) @show k, v end
+        #@time write_results(
+        #    db_url_out;
+        #    flow=pack_trailing_dims(SpineModel.value(flow), 1),
+        #    units_starting_up=pack_trailing_dims(SpineModel.value(units_starting_up), 1),
+        #    units_shutting_down=pack_trailing_dims(SpineModel.value(units_shutting_down), 1),
+        #    units_online=pack_trailing_dims(SpineModel.value(units_online), 1),
+        #    #trans=pack_trailing_dims(SpineModel.value(trans), 1),
+        #    #stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
+        #)
     end
     printstyled("Done.\n"; bold=true)
     m, flow, trans, stor_state, units_online, units_available, units_starting_up, units_shutting_down

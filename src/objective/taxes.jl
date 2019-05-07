@@ -22,45 +22,48 @@
 
 Variable operation costs defined on flows.
 """
-function taxes(flow)
-    + reduce(
-        +,
-        flow[x] * tax_net_flow(;inds..., t=x.t) * duration(x.t)
-        for inds in indices(tax_net_flow)
-            for x in flow_indices(
-                node=node_group__node(node_group=inds.node_group),
-                commodity=commodity_group__commodity(commodity_group=inds.commodity_group),
-                direction=:out);
-        init=0
-    )
-    - reduce(
-        +,
-        flow[x] * tax_net_flow(;inds..., t=x.t) * duration(x.t)
-        for inds in indices(tax_net_flow)
-            for x in flow_indices(
-                node=node_group__node(node_group=inds.node_group),
-                commodity=commodity_group__commodity(commodity_group=inds.commodity_group),
-                direction=:in);
-        init=0
-    )
-    + reduce(
-        +,
-        flow[x] * tax_out_flow(;inds..., t=x.t) * duration(x.t)
-        for inds in indices(tax_out_flow)
-            for x in flow_indices(
-                node=node_group__node(node_group=inds.node_group),
-                commodity=commodity_group__commodity(commodity_group=inds.commodity_group),
-                direction=:out);
-        init=0
-    )
-    + reduce(
-        +,
-        flow[x] * tax_in_flow(;inds..., t=x.t) * duration(x.t)
-        for inds in indices(tax_in_flow)
-            for x in flow_indices(
-                node=node_group__node(node_group=inds.node_group),
-                commodity=commodity_group__commodity(commodity_group=inds.commodity_group),
-                direction=:in);
-        init=0
+function taxes(m, flow)
+    @expression(
+        m,
+        + reduce(
+            +,
+            flow[x] * tax_net_flow(;inds..., t=x.t) * duration(x.t)
+            for inds in indices(tax_net_flow)
+                for x in flow_indices(
+                    node=node_group__node(node_group=inds.node_group),
+                    commodity=commodity_group__commodity(commodity_group=inds.commodity_group),
+                    direction=:out);
+            init=0
+        )
+        - reduce(
+            +,
+            flow[x] * tax_net_flow(;inds..., t=x.t) * duration(x.t)
+            for inds in indices(tax_net_flow)
+                for x in flow_indices(
+                    node=node_group__node(node_group=inds.node_group),
+                    commodity=commodity_group__commodity(commodity_group=inds.commodity_group),
+                    direction=:in);
+            init=0
+        )
+        + reduce(
+            +,
+            flow[x] * tax_out_flow(;inds..., t=x.t) * duration(x.t)
+            for inds in indices(tax_out_flow)
+                for x in flow_indices(
+                    node=node_group__node(node_group=inds.node_group),
+                    commodity=commodity_group__commodity(commodity_group=inds.commodity_group),
+                    direction=:out);
+            init=0
+        )
+        + reduce(
+            +,
+            flow[x] * tax_in_flow(;inds..., t=x.t) * duration(x.t)
+            for inds in indices(tax_in_flow)
+                for x in flow_indices(
+                    node=node_group__node(node_group=inds.node_group),
+                    commodity=commodity_group__commodity(commodity_group=inds.commodity_group),
+                    direction=:in);
+            init=0
+        )
     )
 end

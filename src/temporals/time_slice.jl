@@ -35,6 +35,8 @@ function Base.show(io::IO, time_slice::TimeSlice)
     print(io, str)
 end
 
+Base.show(io::IO, time_slice::TimeSlice) = print(io, time_slice.JuMP_name)
+
 """
     duration(t::TimeSlice)
 

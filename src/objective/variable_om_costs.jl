@@ -22,11 +22,12 @@
 
 Variable operation costs defined on flows.
 """
-function variable_om_costs(flow)
-    let vom_costs = zero(AffExpr)
-        for inds in indices(vom_cost)
-            vom_costs += sum(flow[x] * vom_cost(;inds..., t=x.t) * duration(x.t) for x in flow_indices(;inds...))
-        end
-        vom_costs
-    end
+function variable_om_costs(m, flow)
+    @expression(
+        m,
+        sum(
+            flow[x] * vom_cost(;inds..., t=x.t) * duration(x.t)
+            for inds in indices(vom_cost) for x in flow_indices(;inds...)
+        )
+    )
 end
