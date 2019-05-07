@@ -42,6 +42,39 @@ function variable_units_online(m::Model)
     )
 end
 
+function variable_units_available(m::Model)
+    Dict{NamedTuple,JuMP.VariableRef}(
+        i => @variable(
+            m,
+            base_name="units_available[$(join(i, ", "))]", # TODO: JuMP_name (maybe use Base.show(..., ::TimeSlice))
+            integer=true,
+            lower_bound=0
+        ) for i in units_online_indices()
+    )
+end
+
+function variable_units_starting_up(m::Model)
+    Dict{NamedTuple,JuMP.VariableRef}(
+        i => @variable(
+            m,
+            base_name="units_starting_up[$(join(i, ", "))]", # TODO: JuMP_name (maybe use Base.show(..., ::TimeSlice))
+            integer=true,
+            lower_bound=0
+        ) for i in units_online_indices()
+    )
+end
+
+function variable_units_shutting_down(m::Model)
+    Dict{NamedTuple,JuMP.VariableRef}(
+        i => @variable(
+            m,
+            base_name="units_shutting_down[$(join(i, ", "))]", # TODO: JuMP_name (maybe use Base.show(..., ::TimeSlice))
+            integer=true,
+            lower_bound=0
+        ) for i in units_online_indices()
+    )
+end
+
 function units_online_indices(;unit=anything, t=anything, tail...)
     [
         (u_inds..., t=t1)
@@ -66,19 +99,6 @@ end
 # E_Fuel[n=ExtrS,t=1:T], Pfuel[n,t] == (1/efficiency[n]) * (Pbeta[n]*P[n,t] + Qbeta[n]*Q[n,t])
 # E_Feasible2[n=ExtrS,t=1:T], Pbeta[n]*P[n,t] + Qbeta[n]*Q[n,t] >= Pbeta[n]*Pmin[n]*U[n,t]
 # E_Feasible1[n=ExtrS,t=1:T], Pbeta[n]*P[n,t] + Qbeta[n]*Q[n,t] <= Pbeta[n]*Pmax[n]*U[n,t]
-####
-# E_Feasible1[n=ExtrS,t=1:T], Pbeta[n]*P[n,t] + Qbeta[n]*Q[n,t] - Pbeta[n]*Pmax[n]*U[n,t] <= 0
-# indices = (unit=CHP1, commodity=electricity) => flow_coeff = Pbeta, units_online_coeff = -Pbeta*Pmax
-# indices = (unit=CHP1, commodity=gas) => flow_coeff = Qbeta
-####
-# E_Feasible2[n=ExtrS,t=1:T], - Pbeta[n]*P[n,t] - Qbeta[n]*Q[n,t] + Pbeta[n]*Pmin[n]*U[n,t] <= 0
-# indices = (unit=CHP1, commodity=electricity) => flow_coeff = -Pbeta, units_online_coeff = Pbeta*Pmin
-# indices = (unit=CHP1, commodity=gas) => flow_coeff = -Qbeta
-####
-# E_Fuel[n=ExtrS,t=1:T], - Pfuel[n,t] + (1/efficiency[n]) * Pbeta[n]*P[n,t] + (1/efficiency[n]) * Qbeta[n]*Q[n,t]) == 0
-# indices = (unit=CHP1, commodity=fuel) => flow_coeff = -1
-# indices = (unit=CHP1, commodity=electricity) => flow_coeff = (1/efficiency[n]) * Pbeta[n]
-# indices = (unit=CHP1, commodity=heat) => flow_coeff = (1/efficiency[n]) * Qbeta[n]
 function constraint_flow_affine_expr(m::Model, flow, units_online)
     for cstr in constraint()
         for t in time_slice()
@@ -204,7 +224,19 @@ end
 # GT_Fuel[n=GasT,t=1:T], Pfuel[n,t] == (1/efficiency[n]) * (ratio[n]+1) / ratio[n] * P[n,t]
 function constraint_fix_ratio_out_in_flow(m::Model, flow)
     for inds in indices(fix_ratio_out_in_flow)
-        for t in time_slice()
+        time_slices_out = unique(
+            x.t for x in flow_indices(;
+                inds...,
+                commodity=commodity_group__commodity(commodity1=inds.commodity1, _default=inds.commodity1)
+            )
+        )
+        time_slices_in = unique(
+            x.t for x in flow_indices(;
+                inds...,
+                commodity=commodity_group__commodity(commodity1=inds.commodity2, _default=inds.commodity2)
+            )
+        )
+        for t in t_lowest_resolution(t_overlaps_t(time_slices_in, time_slices_out))
             @constraint(
                 m,
                 + sum(
@@ -278,18 +310,62 @@ function constraint_nodal_balance(m::Model, flow, trans)
     end
 end
 
+function constraint_units_online(m::Model, units_online, units_available)
+    for inds in units_online_indices()
+        @constraint(
+            m,
+            + units_online[inds]
+            <=
+            + units_available[inds]
+        )
+    end
+end
+
+
+function constraint_units_available(m::Model, units_available)
+    for inds in units_online_indices()
+        @constraint(
+            m,
+            + units_available[inds]
+            ==
+            + number_of_units(;inds..., t=inds.t) * avail_factor(;inds..., t=inds.t)
+        )
+    end
+end
+
 # BP_OperationStatus[n=BckP,t=1:T], U[n,t] == M1[n,t] + M2[n,t]
-# TODO: replace this by constraint_units_available and constraint_units_online
 function constraint_one_mode_at_a_time(m::Model, units_online)
-    for u in unit(unit_type=:back_pressure_steam)
+    for u in unit__mode(mode=anything)
         for t in time_slice()
-            @show @constraint(
+            @constraint(
                 m,
                 sum(units_online[x] for x in units_online_indices(unit=u, t=t)) <= 1
             )
         end
     end
 end
+
+
+# SU1[n=1:N,t=1:T], Y[n,t] <= U[n,t] # start-up only possible if comitted
+# SU2[n=1:N,t=1:T], Y[n,t] <= 1 - (t==1 ? Istate[n] : U[n,t-1]) # no start-up if already in operation
+# SU3[n=1:N,t=1:T], Y[n,t] >= U[n,t] - (t==1 ? Istate[n] : U[n,t-1]) # Start-up if comitted at t but not t-1
+# SD1[n=1:N,t=1:T], Z[n,t] <= 1 - U[n,t]
+# SD2[n=1:N,t=1:T], Z[n,t] <= (t==1 ? Istate[n] : U[n,t-1])
+# SD3[n=1:N,t=1:T], Z[n,t] >= -U[n,t] + (t==1 ? Istate[n] : U[n,t-1])
+function constraint_commitment_variables(m::Model, units_online, units_shutting_down, units_starting_up)
+    for inds in units_online_indices()
+        for inds_before in units_online_indices(;inds..., t=t_before_t(t_after=inds.t))
+            @show @constraint(
+                m,
+                + units_online[inds_before] - units_online[inds]
+                + units_starting_up[inds] - units_shutting_down[inds]
+                ==
+                0
+            )
+        end
+    end
+end
+
 
 db_url = "sqlite:////home/manuelma/Codes/spine/toolbox/projects/case_study_a3/input/input.sqlite"
 using_spinemodeldb(db_url; upgrade=true)
@@ -301,6 +377,9 @@ m = Model(with_optimizer(Cbc.Optimizer))
 flow = variable_flow(m)
 trans = variable_trans(m)
 units_online = variable_units_online(m)
+units_available = variable_units_available(m)
+units_starting_up = variable_units_starting_up(m)
+units_shutting_down = variable_units_shutting_down(m)
 # Create objective function
 objective_minimize_production_cost(m, flow)
 # Add constraints
@@ -311,14 +390,22 @@ constraint_fix_ratio_out_out_flow(m, flow)
 constraint_fix_ratio_out_in_flow(m, flow)
 constraint_nodal_balance(m, flow, trans)
 constraint_flow_affine_expr(m, flow, units_online)
+constraint_units_available(m, units_available)
+constraint_units_online(m, units_online, units_available)
+constraint_commitment_variables(m, units_online, units_shutting_down, units_starting_up)
+constraint_one_mode_at_a_time(m, units_online)
 optimize!(m)
 status = termination_status(m)
 println("Saving results...")
 if status == MOI.OPTIMAL
+    dest_url = "sqlite:////home/manuelma/Codes/spine/toolbox/projects/case_study_a3/output/output.sqlite"
+    write_results(
+        dest_url;
+        units_online=pack_trailing_dims(SpineModel.value(units_online), 1),
+        flow=pack_trailing_dims(SpineModel.value(flow), 1)
+    )
     println("units_online")
-    for (k,v) in sort(pack_trailing_dims(SpineModel.value(units_online), 1)) @show k, v end
+    for (k,v) in pack_trailing_dims(SpineModel.value(units_online), 1) @show k, v end
     println("flow")
-    for (k,v) in sort(pack_trailing_dims(SpineModel.value(flow), 1)) @show k, v end
-    println("trans")
-    for (k,v) in sort(pack_trailing_dims(SpineModel.value(trans), 1)) @show k, v end
+    for (k,v) in pack_trailing_dims(SpineModel.value(flow), 1) @show k, v end
 end

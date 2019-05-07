@@ -29,9 +29,6 @@ function pack_trailing_dims(dictionary::Dict, n::Int64=1)
     for (key, value) in dictionary
         # TODO: handle length(key) < n and stuff like that?
         left_key = key[1:end-n]
-        if length(left_key) == 1
-            left_key = left_key[1]
-        end
         right_key = key[end-n+1:end]
         right_dict = get!(left_dict, left_key, Dict())
         right_dict[right_key] = value
@@ -39,6 +36,18 @@ function pack_trailing_dims(dictionary::Dict, n::Int64=1)
     Dict(key => reshape([v for (k, v) in sort(collect(value))], :, n) for (key, value) in left_dict)
 end
 
+
+function pack_trailing_dims(dictionary::Dict{NamedTuple,N}, n::Int64=1) where N
+    left_dict = Dict{Any,Any}()
+    for (key, value) in dictionary
+        # TODO: handle length(key) < n and stuff like that?
+        left_key = NamedTuple{Tuple(collect(keys(key))[1:end-n])}(collect(values(key))[1:end-n])
+        right_key = NamedTuple{Tuple(collect(keys(key))[end-n+1:end])}(collect(values(key))[end-n+1:end])
+        right_dict = get!(left_dict, left_key, Dict())
+        right_dict[right_key] = value
+    end
+    Dict(key => reshape([v for (k, v) in sort(collect(value))], :, n) for (key, value) in left_dict)
+end
 
 """
     value(dictionary::Dict)
