@@ -27,10 +27,12 @@ for each tuple of `commodity__node__unit__direction__time_slice`, attached to mo
 in a certain 'direction'. The direction is relative to the connection.
 """
 function variable_trans(m::Model)
-    @butcher Dict{Tuple,JuMP.VariableRef}(
-        (conn, n, c, d, t) => @variable(
-            m, base_name="trans[$conn, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
-        ) for (conn, n, c, d, t) in trans_indices()
+    Dict{NamedTuple,JuMP.VariableRef}(
+        i => @variable(
+            m,
+            base_name="trans[$(join(i, ", "))]", # TODO: JuMP_name (maybe use Base.show(..., ::TimeSlice))
+            lower_bound=0
+        ) for i in trans_indices()
     )
 end
 
@@ -41,12 +43,13 @@ end
 A set of tuples for indexing the `trans` variable. Any filtering options can be specified
 for `commodity`, `node`, `connection`, `direction`, and `t`.
 """
-function trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything)
+function trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything, tail...)
     [
-        (connection=conn, node=n, commodity=c, direction=d, t=t1)
+        (conn_inds..., node=n, commodity=c, direction=d, t=t1)
         for (n, c) in node__commodity(commodity=commodity, node=node, _compact=false)
-            for (conn, n_, d, tblk) in connection__node__direction__temporal_block(
-                    node=n, connection=connection, direction=Object(direction), _compact=false)
-                for t1 in time_slice(temporal_block=tblk) if t_in_t_list(t1, t)
+            for (conn, n, d, blk) in connection__node__direction__temporal_block(
+                    node=n, connection=connection, direction=direction, _compact=false)
+                for conn_inds in indices(has_trans; connection=conn, tail..., value_filter=x->x==true)
+                    for t1 in intersect(time_slice(temporal_block=blk), t)
     ]
 end

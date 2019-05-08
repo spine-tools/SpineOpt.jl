@@ -224,9 +224,13 @@ version = "0.7.2"
 
 [[SpineInterface]]
 deps = ["Dates", "JSON", "PyCall", "Suppressor"]
+<<<<<<< HEAD
 git-tree-sha1 = "2c288728fa462df1a1c61bf140e513faa9887e07"
 repo-rev = "dev"
 repo-url = "C:\\Users\\u0093836\\repos\\git\\SpineInterface.jl"
+=======
+path = "C:\\\\Users\\\\u0122387\\\\Desktop\\\\SpineInterface"
+>>>>>>> dev
 uuid = "0cda1612-498a-11e9-3c92-77fa82595a4f"
 version = "0.1.0"
 

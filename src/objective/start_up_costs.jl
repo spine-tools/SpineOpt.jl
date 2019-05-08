@@ -22,12 +22,9 @@
 
 Startup cost term for units.
 """
-function start_up_costs(units_starting_up)
-    let suc = zero(AffExpr)
-        for (u,t) in units_online_indices()
-                suc +=
-                    start_up_cost(unit=u)*units_starting_up[u,t]
-        end
-        suc
-    end
+function start_up_costs(m, units_starting_up)
+    @expression(
+        m,
+        reduce(+, start_up_cost(;inds...) * units_starting_up[inds] for inds in units_online_indices(); init=0)
+    )
 end

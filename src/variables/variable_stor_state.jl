@@ -25,10 +25,12 @@ attached to model `m`.
 `stor_level` represents the state of the storage level.
 """
 function variable_stor_state(m::Model)
-    Dict{Tuple,JuMP.VariableRef}(
-        (stor, c, t) => @variable(
-            m, base_name="stor_state[$stor, $c, $(t.JuMP_name)]", lower_bound=0
-        ) for (stor, c, t) in stor_state_indices()
+    Dict{NamedTuple,JuMP.VariableRef}(
+        i => @variable(
+            m,
+            base_name="stor_state[$(join(i, ", "))]", # TODO: JuMP_name (maybe use Base.show(..., ::TimeSlice))
+            lower_bound=0
+        ) for i in stor_state_indices()
     )
 end
 
@@ -50,7 +52,7 @@ function stor_state_indices(;storage=anything, commodity=anything, t=anything)
     ]))
     t_all = vcat(t_highest_resolution(t_unit), t_highest_resolution(t_connection))
     [
-        (storage=stor, commodity=c, t=t1)
-        for (stor, c) in storage__commodity(storage=storage, commodity=commodity) for t1 in t_all
+        (storage=stor, commodity=c, t=t)
+        for (stor, c) in storage__commodity(storage=storage, commodity=commodity) for t in t_all
     ]
 end
