@@ -26,19 +26,20 @@ Fix ratio between the output `trans` of a `node_group` to an input `trans` of a
 is specified.
 """
 function constraint_fix_ratio_out_in_trans(m::Model, trans)
-    for (conn, ng_out, ng_in) in fix_ratio_out_in_trans_indices()
-        time_slices_out = unique(
-            t for (conn, n_out, c, d, t) in trans_indices(
-                connection=conn, node=node_group__node(node_group=ng_out), direction=:out
-            )
-        )
+    for (conn, ng_out, ng_in) in indices(fix_ratio_out_in)
         time_slices_in = unique(
             t for (conn, n_in, c, d, t) in trans_indices(
                 connection=conn, node=node_group__node(node_group=ng_in), direction=:in
             )
         )
+        time_slices_out = unique(
+            t for (conn, n_out, c, d, t) in trans_indices(
+                connection=conn, node=node_group__node(node_group=ng_out), direction=:out
+            )
+        )
+        (!isempty(time_slices_out) && !isempty(time_slices_in)) || continue
         #NOTE: the unique is not really necessary but reduces the timeslices for the next steps
-        involved_timeslices = sort!([time_slices_out;time_slices_in])
+        involved_timeslices = sort!(unique!([time_slices_out;time_slices_in]))
         overlaps = sort!(t_overlaps_t(time_slices_in, time_slices_out))
         if involved_timeslices != overlaps
             @warn "Not all involved timeslices are overlapping, check your temporal_blocks"
@@ -51,7 +52,7 @@ function constraint_fix_ratio_out_in_trans(m::Model, trans)
             @constraint(
                 m,
                 + sum(
-                    trans[conn, n_out, c, :out, t1] * duration(t1)
+                    trans[conn, n_out, c, d, t1] * duration(t1)
                     for (conn, n_out, c, d, t1) in trans_indices(
                         node=node_group__node(node_group=ng_out),
                         direction=:out,
@@ -59,9 +60,9 @@ function constraint_fix_ratio_out_in_trans(m::Model, trans)
                     )
                 )
                 ==
-                + fix_ratio_out_in_trans(connection=conn, node_group1=ng_out, node_group2=ng_in, t=t)
+                + fix_ratio_out_in(connection=conn, node_group1=ng_out, node_group2=ng_in, t=t)
                 * sum(
-                    trans[conn, n_in, c, :in, t1] * duration(t1)
+                    trans[conn, n_in, c, d, t1] * duration(t1)
                     for (conn, n_in, c, d, t1) in trans_indices(
                         node=node_group__node(node_group=ng_in),
                         direction=:in,

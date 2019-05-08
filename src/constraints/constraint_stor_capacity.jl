@@ -25,7 +25,7 @@ Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
 number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 function constraint_stor_capacity(m::Model, stor_state)
-    for (stor, cg) in stor_state_cap_indices(),
+    for (stor, cg) in indices(stor_state_cap),
         (stor,c,t) in stor_state_indices(storage=stor)
         @constraint(
             m,

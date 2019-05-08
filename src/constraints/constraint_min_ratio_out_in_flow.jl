@@ -26,7 +26,7 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 is specified.
 """
 function constraint_min_ratio_out_in_flow(m::Model, flow)
-    for (u, cg_out, cg_in) in min_ratio_out_in_flow_indices()
+    for (u, cg_out, cg_in) in indices(min_ratio_out_in)
         time_slices_out = unique(
             t for (u, n, c_out, d, t) in flow_indices(
                 unit=u, commodity=commodity_group__commodity(commodity_group=cg_out), direction=:out
@@ -37,6 +37,7 @@ function constraint_min_ratio_out_in_flow(m::Model, flow)
                 unit=u, commodity=commodity_group__commodity(commodity_group=cg_in), direction=:in
             )
         )
+        (!isempty(time_slices_out) && !isempty(time_slices_in)) || continue
         #NOTE: the unique is not really necessary but reduces the timeslices for the next steps
         involved_timeslices = sort!([time_slices_out;time_slices_in])
         overlaps = sort!(t_overlaps_t(time_slices_in, time_slices_out))
@@ -59,7 +60,7 @@ function constraint_min_ratio_out_in_flow(m::Model, flow)
                     )
                 )
                 >=
-                + min_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in, t=t)
+                + min_ratio_out_in(unit=u, commodity_group1=cg_out, commodity_group2=cg_in, t=t)
                 * sum(
                     flow[u, n, c_in, d, t1] * duration(t1)
                     for (u, n, c_in, d, t1) in flow_indices(

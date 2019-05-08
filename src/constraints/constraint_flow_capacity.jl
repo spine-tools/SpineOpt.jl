@@ -26,22 +26,23 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 
 function constraint_flow_capacity(m::Model, flow)
-    for (u, c, d) in unit_capacity_indices(),(u, n, c, d, t) in flow_indices(
+    for (u, c, d) in indices(unit_capacity),(u, n, c, d, t) in flow_indices(
             unit=u, commodity=c, direction=d)
-        all([
+        if all([
             number_of_units(unit=u) != nothing,
             unit_conv_cap_to_flow(unit=u, commodity=c) != nothing,
             avail_factor(unit=u) != nothing
-        ]) || continue
-        @constraint(
-            m,
-            + flow[u, n, c, d, t]
-            <=
-            + avail_factor(unit=u)
-                * unit_capacity(unit=u, commodity=c, direction=d)
-                    * number_of_units(unit=u)
-                        * unit_conv_cap_to_flow(unit=u, commodity=c)
-        )
+        ])
+            @constraint(
+                m,
+                + flow[u, n, c, d, t]
+                <=
+                + avail_factor(unit=u)
+                    * unit_capacity(unit=u, commodity=c, direction=d)
+                        * number_of_units(unit=u)
+                            * unit_conv_cap_to_flow(unit=u, commodity=c)
+            )
+        end
     end
 end
 

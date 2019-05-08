@@ -44,9 +44,9 @@ for `commodity`, `node`, `connection`, `direction`, and `t`.
 function trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything)
     [
         (connection=conn, node=n, commodity=c, direction=d, t=t1)
-        for (n, c) in node__commodity(commodity=commodity, node=node, _compact=false)
-            for (conn, n_, d, tblk) in connection__node__direction__temporal_block(
-                    node=n, connection=connection, direction=Object(direction), _compact=false)
-                for t1 in time_slice(temporal_block=tblk) if t_in_t_list(t1, t)
+        for (conn, n_, d, blk) in connection__node__direction__temporal_block(
+                node=node, connection=connection, direction=Object(direction), _compact=false)
+            for (n, c) in node__commodity(commodity=commodity, node=n_, _compact=false)
+                for t1 in intersect(time_slice(temporal_block=blk), t)
     ]
 end

@@ -24,17 +24,15 @@
 Balance for storage level.
 """
 function constraint_stor_state_init(m::Model, stor_state)
-    for (stor, c) in stor_state_init_indices(),
+    for (stor, c) in indices(stor_state_init),
         (stor, c, t) in stor_state_indices(storage=stor, commodity=c)
-        all(
-        [
-        isempty(t_before_t(t_after=t))
-        ]) || continue
-        @constraint(
-            m,
-            + stor_state[stor, c, t]
-            <=
-            + stor_state_init(storage=stor, commodity=c)
-        )
+        if isempty(t_before_t(t_after=t))
+            @constraint(
+                m,
+                + stor_state[stor, c, t]
+                <=
+                + stor_state_init(storage=stor, commodity=c)
+            )
+        end
     end
 end

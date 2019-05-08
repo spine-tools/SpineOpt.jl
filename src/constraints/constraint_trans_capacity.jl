@@ -21,26 +21,23 @@
 """
     constraint_trans_capacity(m::Model, trans)
 
-Limit the maximum in/out `trans` of a `connection` if the parameters `connection_capacity,
-number_of_connection, connection_conv_cap_to_trans, avail_factor` exist.
+Limit the maximum in/out `trans` of a `connection` for all `trans_capacity` indices.
+Check if `conn_conv_cap_to_trans` is defined.
 """
 function constraint_trans_capacity(m::Model, trans)
-    @butcher for (c, n, conn) in commodity__node__connection__direction__temporal_block(direction=:in, temporal_block=:any), t in time_slice()
-        all([
-            haskey(trans, (c, n, conn, :in, t)),
-            connection_capacity(commodity=c, node=n, connection=conn, direction=:in) != nothing,
-            number_of_connections(connection=conn) != nothing,
-            connection_conv_cap_to_trans(connection=conn, commodity=c) != nothing,
-            avail_factor_trans(connection=conn) != nothing
-        ]) || continue
+    for (conn, ng) in indices(trans_capacity),
+        (conn, n, t) in trans_indices(connection=conn)
         @constraint(
             m,
-            + trans[c, n, conn, :in, t]
+            + sum(
+                trans[conn1, n1, c1, d1, t1] * duration(t1)
+                    for (conn1, n1, c1, d1, t1) in trans_indices(
+                            connection=conn, commodity=node_group__node(node_group=ng), direction=d, t=t)
+            )
             <=
-            + avail_factor_trans(connection=conn)
-                * connection_capacity(commodity=c, node=n, connection=conn, direction=:in)
-                    * number_of_connections(connection=conn)
-                        * connection_conv_cap_to_trans(connection=conn, commodity=c)
+                trans_capacity(connection=conn, node_group=ng, direction=d)
+                    * conn_avail_factor(connection=conn, node_group=ng)
+                        * conn_conv_cap_to_trans(connection=conn, node_group=ng)
         )
     end
 end
