@@ -27,15 +27,13 @@ end
 
 TimeSlice(start::DateTime, end_::DateTime) = TimeSlice(start, end_, nothing)
 
-#function Base.show(io::IO, time_slice::TimeSlice)
-#    str = "$(time_slice.start)...$(time_slice.end_)"
-#    if time_slice.JuMP_name != nothing
-#        str = "$str ($(time_slice.JuMP_name))"
-#    end
-#    print(io, str)
-#end
-
-Base.show(io::IO, time_slice::TimeSlice) = print(io, time_slice.JuMP_name)
+function Base.show(io::IO, time_slice::TimeSlice)
+    str = "$(time_slice.start)...$(time_slice.end_)"
+    if time_slice.JuMP_name != nothing
+        str = "$str ($(time_slice.JuMP_name))"
+    end
+    print(io, str)
+end
 
 """
     duration(t::TimeSlice)

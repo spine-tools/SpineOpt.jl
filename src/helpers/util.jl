@@ -24,7 +24,7 @@ const iso8601dateformat = dateformat"y-m-dTH:M:Sz"
 
 An equivalent dictionary where the last `n` dimensions are packed into a matrix
 """
-function pack_trailing_dims(dictionary::Dict{Tuple,N}, n::Int64=1) where N
+function pack_trailing_dims(dictionary::Dict, n::Int64=1)
     left_dict = Dict{Any,Any}()
     for (key, value) in dictionary
         # TODO: handle length(key) < n and stuff like that?
@@ -37,7 +37,7 @@ function pack_trailing_dims(dictionary::Dict{Tuple,N}, n::Int64=1) where N
 end
 
 
-function pack_trailing_dims(dictionary::Dict{NamedTuple{R,S},N}, n::Int64=1) where R where S where N
+function pack_trailing_dims(dictionary::Dict{NamedTuple,N}, n::Int64=1) where N
     left_dict = Dict{Any,Any}()
     for (key, value) in dictionary
         # TODO: handle length(key) < n and stuff like that?

@@ -26,24 +26,20 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 is specified.
 """
 function constraint_min_ratio_out_in_flow(m::Model, flow)
-    for inds in indices(min_ratio_out_in_flow)
+    for (u, cg_out, cg_in) in min_ratio_out_in_flow_indices()
         time_slices_out = unique(
-            x.t
-            for x in flow_indices(;
-                inds...,
-                commodity=commodity_group__commodity(commodity_group=inds.commodity_group1)
+            t for (u, n, c_out, d, t) in flow_indices(
+                unit=u, commodity=commodity_group__commodity(commodity_group=cg_out), direction=:out
             )
         )
         time_slices_in = unique(
-            x.t
-            for x in flow_indices(;
-                inds...,
-                commodity=commodity_group__commodity(commodity_group=inds.commodity_group2)
+            t for (u, n, c_in, d, t) in flow_indices(
+                unit=u, commodity=commodity_group__commodity(commodity_group=cg_in), direction=:in
             )
         )
-        # NOTE: `unique` is not really necessary but it reduces the timeslices for the next steps
-        involved_timeslices = sort([time_slices_out; time_slices_in])
-        overlaps = sort(t_overlaps_t(time_slices_in, time_slices_out))
+        #NOTE: the unique is not really necessary but reduces the timeslices for the next steps
+        involved_timeslices = sort!([time_slices_out;time_slices_in])
+        overlaps = sort!(t_overlaps_t(time_slices_in, time_slices_out))
         if involved_timeslices != overlaps
             @warn "Not all involved timeslices are overlapping, check your temporal_blocks"
             # NOTE: this is a check for plausibility.
@@ -55,20 +51,20 @@ function constraint_min_ratio_out_in_flow(m::Model, flow)
             @constraint(
                 m,
                 + sum(
-                    flow[x] * duration(x.t)
-                    for x in flow_indices(;
-                        inds...,
-                        commodity=commodity_group__commodity(commodity_group=inds.commodity_group1),
+                    flow[u, n, c_out, d, t1] * duration(t1)
+                    for (u, n, c_out, d, t1) in flow_indices(
+                        commodity=commodity_group__commodity(commodity_group=cg_out),
+                        direction=:out,
                         t=t_in_t(t_long=t)
                     )
                 )
                 >=
-                + min_ratio_out_in_flow(;inds..., t=t)
+                + min_ratio_out_in_flow(unit=u, commodity_group1=cg_out, commodity_group2=cg_in, t=t)
                 * sum(
-                    flow[x] * duration(x.t)
-                    for x in flow_indices(;
-                        inds...,
-                        commodity=commodity_group__commodity(commodity_group=inds.commodity_group2),
+                    flow[u, n, c_in, d, t1] * duration(t1)
+                    for (u, n, c_in, d, t1) in flow_indices(
+                        commodity=commodity_group__commodity(commodity_group=cg_in),
+                        direction=:in,
                         t=t_in_t(t_long=t)
                     )
                 )

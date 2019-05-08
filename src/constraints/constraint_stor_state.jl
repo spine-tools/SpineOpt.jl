@@ -23,58 +23,51 @@
 Balance for storage level.
 """
 function constraint_stor_state(m::Model, stor_state, trans, flow)
-    for (stor, c, t1) in stor_state_indices(), t2 in t_before_t(t_before=t1)
-        if !isempty(t_before_t(t_after=t)) && t2 in [t for (stor,c, t) in stor_state_indices()]
+    for (stor, c, t) in stor_state_indices()
+        all([
+            !isempty(t_before_t(t_after=t))
+        ]) || continue
         @constraint(
             m,
-            + stor_state[c,stor,t2]
+            + stor_state[c,stor,t]
             ==
-            stor_state[c,stor, t1] * (1 - frac_state_loss(commodity=c, storage=stor))
-            - reduce(
-                +,
-                flow[u, n, c, :out, t1] *stor_discharg_eff(storage=stor, commodity=c,unit=u)
-                for (u, n, c, d, t1) in flow_indices(
-                    unit =unit_stor_discharg_eff_indices(storage=stor, commodity = c),
-                    commodity=c,
-                    t=t2
-                    )
-                    ;
-                init=0
-            )
             + reduce(
                 +,
-                flow[u, n, c, :out, t1] *stor_charg_eff(storage=stor, commodity=c,unit=u)
-                for (u, n, c, d, t1) in flow_indices(
-                    unit =unit_stor_charg_eff_indices(storage=stor, commodity = c),
-                    commodity=c,
-                    t=t2
-                    )
-                    ;
+                stor_state[c,stor, t2] for t2 in t_before_t(t_after=t) if haskey(stor_state, (c, stor, t2));
                 init=0
-            )
+            ) * (1 - frac_state_loss(commodity=c, storage=stor))
             - reduce(
                 +,
-                trans[conn, n, c, :out, t1] *stor_discharg_eff(storage=stor, commodity=c,connection=conn)
-                for (conn, n, c, d, t1) in trans_indices(
-                    conn =connection_stor_discharg_eff_indices(storage=stor, commodity = c),
-                    commodity=c,
-                    t=t2
-                    )
-                    ;
+                flow[c, n, u, :out, t2]
+                for (n, u) in commodity__node__unit__direction(commodity=c, direction=:out)
+                    for t2 in t_before_t(t_after=t)
+                        if u in storage__unit(storage=stor) && haskey(flow, (c, n, u, :out, t2));
                 init=0
-            )
+            ) * eff_stor_discharg(storage=stor)
             + reduce(
                 +,
-                trans[conn, n, c, :out, t1] *stor_charg_eff(storage=stor, commodity=c,connection=conn)
-                for (conn, n, c, d, t1) in trans_indices(
-                    conn =connection_stor_charg_eff_indices(storage=stor, commodity = c),
-                    commodity=c,
-                    t=t2
-                    )
-                    ;
+                flow[c, n, u, :in, t2]
+                for (n, u) in commodity__node__unit__direction(commodity=c, direction=:in)
+                    for t2 in t_before_t(t_after=t)
+                        if u in storage__unit(storage=stor) && haskey(flow, (c, n, u, :in, t2));
                 init=0
-            )
-            )
-    end
+            ) * eff_stor_charg(storage=stor)
+            - reduce(
+                +,
+                trans[c, n, conn, :out, t2]
+                for (n, conn) in commodity__node__connection__direction(commodity=c, direction=:out)
+                    for t2 in t_before_t(t_after=t)
+                        if conn in storage__connection(storage=stor) && haskey(trans, (c, n, conn, :out, t2));
+                init=0
+            ) * eff_stor_discharg(storage=stor)
+            + reduce(
+                +,
+                trans[c, n, conn, :in, t2]
+                for (n, conn) in commodity__node__connection__direction(commodity=c, direction=:in)
+                    for t2 in t_before_t(t_after=t)
+                        if conn in storage__connection(storage=stor) && haskey(trans, (c, n, conn, :in, t2));
+                init=0
+            ) * eff_stor_charg(storage=stor)
+        )
     end
 end

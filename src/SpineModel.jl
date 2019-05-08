@@ -37,6 +37,7 @@ export value
 export pack_trailing_dims
 export t_lowest_resolution
 export t_highest_resolution
+export @butcher
 
 # Export variables
 export variable_flow

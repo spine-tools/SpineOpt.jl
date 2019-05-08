@@ -25,19 +25,16 @@ Constraint start-up by minimum down time.
 """
 
 function constraint_min_down_time(m::Model, units_online, units_available, units_shutting_down)
-    for inds in indices(min_down_time; value_filter=v->v!=0)
-        for x in units_online_indices(;inds...)
-            @constraint(
-                m,
-                + units_online[x]
-                <=
-                + units_available[x]
-                - sum(
-                    units_shutting_down[y]
-                    for y in units_online_indices(;inds...)
-                        if x.t.start - min_down_time(;inds...) < y.t.start <= x.t.start
-                )
+    for (u,t) in units_online_indices()
+        all(min_down_time(unit=u)!=0)|| continue
+        @constraint(
+            m,
+            units_online[u,t]
+            <= units_available[u,t] -
+            + sum(
+            units_shutting_down[u1,t1]
+            for (u1,t1) in units_online_indices(unit=u) if t1.start > t.start-min_down_time(unit=u) && t1.start <= t.start
             )
-        end
+        )
     end
 end

@@ -18,18 +18,16 @@
 #############################################################################
 
 """
-    fixed_om_costs(m)
+    fixed_om_costs()
 
 Variable operation costs defined on flows.
 """
-function fixed_om_costs(m)
-    @expression(
-        m,
-        reduce(
-            +,
-            unit_capacity(;inds...) * number_of_units(;inds...) * fom_cost(;inds...)
-                for inds in indices(unit_capacity);
-            init=0
-        )
-    )
+function fixed_om_costs()
+    let fom_costs = zero(AffExpr)
+        for (u, cg, d) in unit_capacity_indices()
+                fom_costs +=
+                    unit_capacity(unit=u, commodity_group=cg, direction=d) * number_of_units(unit=u) * fom_cost(unit=u)
+        end
+        fom_costs
+    end
 end

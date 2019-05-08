@@ -27,12 +27,10 @@ attached to model `m`.
 in a certain 'direction'. The direction is relative to the unit.
 """
 function variable_flow(m::Model)
-    Dict{NamedTuple,JuMP.VariableRef}(
-        i => @variable(
-            m,
-            base_name="flow[$(join(i, ", "))]", # TODO: JuMP_name (maybe use Base.show(..., ::TimeSlice))
-            lower_bound=0
-        ) for i in flow_indices()
+    Dict{Tuple,JuMP.VariableRef}(
+        (u, n, c, d, t) => @variable(
+            m, base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
+        ) for (u, n, c, d, t) in flow_indices()
     )
 end
 
@@ -43,13 +41,12 @@ end
 A set of tuples for indexing the `flow` variable. Any filtering options can be specified
 for `commodity`, `node`, `unit`, `direction`, and `t`.
 """
-function flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything, tail...)
+function flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything)
     [
-        (u_inds..., node=n, commodity=c, direction=d, t=t1)
+        (unit=u, node=n, commodity=c, direction=d, t=t1)
         for (n, c) in node__commodity(commodity=commodity, node=node, _compact=false)
-            for (u, n, d, blk) in unit__node__direction__temporal_block(
+            for (u, n_, d, blk) in unit__node__direction__temporal_block(
                     node=n, unit=unit, direction=direction, _compact=false)
-                for u_inds in indices(has_flow; unit=u, tail..., value_filter=x->x==true)
-                    for t1 in intersect(time_slice(temporal_block=blk), t)
+                for t1 in intersect(time_slice(temporal_block=blk), t)
     ]
 end

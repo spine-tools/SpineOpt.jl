@@ -18,16 +18,16 @@
 #############################################################################
 
 """
-    start_up_costs(units_starting_up)
+    generate_variable_state(m::Model)
 
-Startup cost term for units.
+A `state` variable for each tuple returned by `commodity__node()`,
+attached to model `m`.
+`state` represents the 'commodity' stored  inside a 'node'.
 """
-function start_up_costs(units_starting_up)
-    let suc = zero(AffExpr)
-        for (u,t) in units_online_indices()
-                suc +=
-                    start_up_cost(unit=u)*units_starting_up[u,t]
-        end
-        suc
-    end
+function variable_nodal_state(m::Model)
+    @butcher Dict{Tuple,JuMP.VariableRef}(
+        (c, n, t) => @variable(
+            m, base_name="nodal_state[$c, $n, $(t.JuMP_name)]"
+        ) for (c, n) in commodity__node(), t=0:number_of_timesteps(time=:timer)
+    )
 end
