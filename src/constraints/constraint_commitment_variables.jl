@@ -21,21 +21,23 @@
 """
     constraint_commitment_variables(m::Model, units_online, units_shutting_down, units_starting_up)
 
-Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
-number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
+This constraint ensures consitency between the variables `units_online`, `units_starting_up`
+and `units_shutthing_down`.
 """
+# Can we think of a more generic name than commitment variables?
 
 function constraint_commitment_variables(m::Model, units_online, units_starting_up, units_shutting_down)
-    for (u, t2) in units_online_indices(), t1 in t_before_t(t_after=t2)
-        all(
-        !isempty(t1) && t1 in [t for (u,t) in units_online_indices(unit=u)]
-        ) || continue
-        @constraint(
-            m,
-            + units_online[u,t1] - units_online[u,t2]
-            + units_starting_up[u,t2] - units_shutting_down[u,t2]
-            ==
-            0
-        )
+    for (u, t_after) in units_online_indices()
+        for t_before in t_before_t(t_after=t_after)
+            if !isempty(t_before) && t_before in [t for (u,t) in units_online_indices(unit=u)]
+                @constraint(
+                    m,
+                    + units_online[u,t_after]
+                    ==
+                    + units_online[u,t_before]
+                    + units_starting_up[u,t_after] - units_shutting_down[u,t_after]
+                )
+            end
+        end
     end
 end
