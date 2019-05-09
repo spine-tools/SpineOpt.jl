@@ -25,14 +25,13 @@ Limit the units_on by the number of available units.
 """
 
 function constraint_units_on(m::Model)
-    units_on = m.ext[:variables][:units_on]
-    units_available = m.ext[:variables][:units_available]
-        for (u, t) in units_on_indices()
-            @constraint(
-                m,
-                + units_on[u, t]
-                <=
-                + units_available[u, t]
-            )
-        end
+    @fetch units_on, units_available = m.ext[:variables]
+    for (u, t) in units_on_indices()
+        @constraint(
+            m,
+            + units_on[u, t]
+            <=
+            + units_available[u, t]
+        )
+    end
 end

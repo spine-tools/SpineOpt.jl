@@ -18,10 +18,7 @@
 #############################################################################
 
 """
-    objective_minimize_production_cost(m::Model)
-
-Minimize the `production_cost` correspond to the sum over all
-`conversion_cost` of each `unit`.
+    operating_costs(m::Model)
 """
 function operating_costs(m::Model)
     @fetch flow = m.ext[:variables]

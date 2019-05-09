@@ -26,7 +26,7 @@ Fix ratio between the output `trans` of a `node_group` to an input `trans` of a
 is specified.
 """
 function constraint_fix_ratio_out_in_trans(m::Model)
-    trans = m.ext[:variables][:trans]
+    @fetch trans = m.ext[:variables]
     for (conn, ng_out, ng_in) in indices(fix_ratio_out_in)
         time_slices_in = unique(
             t for (conn, n_in, c, d, t) in trans_indices(
@@ -39,8 +39,8 @@ function constraint_fix_ratio_out_in_trans(m::Model)
             )
         )
         (!isempty(time_slices_out) && !isempty(time_slices_in)) || continue
-        #NOTE: the unique is not really necessary but reduces the timeslices for the next steps
-        involved_timeslices = sort!(unique!([time_slices_out;time_slices_in]))
+        # NOTE: the unique is not really necessary but reduces the timeslices for the next steps
+        involved_timeslices = sort!(unique!([time_slices_out; time_slices_in]))
         overlaps = sort!(t_overlaps_t(time_slices_in, time_slices_out))
         if involved_timeslices != overlaps
             @warn "Not all involved timeslices are overlapping, check your temporal_blocks"

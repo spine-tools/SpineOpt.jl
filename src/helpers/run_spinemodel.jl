@@ -92,5 +92,6 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         )
     end
     printstyled("Done.\n"; bold=true)
+    notusing_spinedb(db_url_in)
     m
 end

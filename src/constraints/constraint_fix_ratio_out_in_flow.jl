@@ -26,7 +26,7 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 is specified.
 """
 function constraint_fix_ratio_out_in_flow(m::Model)
-    flow = m.ext[:variables][:flow]
+    @fetch flow = m.ext[:variables]
     for (u, cg_out, cg_in) in indices(fix_ratio_out_in)
         time_slices_out = unique(
             t for (u, n, c_out, d, t) in flow_indices(
@@ -39,11 +39,11 @@ function constraint_fix_ratio_out_in_flow(m::Model)
             )
         )
         (!isempty(time_slices_out) && !isempty(time_slices_in)) || continue
-        #NOTE: the unique is not really necessary but reduces the timeslices for the next steps
-        involved_timeslices = sort!(unique!([time_slices_out;time_slices_in]))
+        # NOTE: the unique is not really necessary but reduces the timeslices for the next steps
+        involved_timeslices = sort!(unique!([time_slices_out; time_slices_in]))
         overlaps = sort!(t_overlaps_t(time_slices_in, time_slices_out))
         if involved_timeslices != overlaps
-            @warn "Not all involved timeslices are overlapping, check your temporal_blocks"
+            @warn "not all involved timeslices are overlapping, check your temporal_blocks"
             # NOTE: this is a check for plausibility.
             # If the user e.g. wants to oconstrain one commodity of a unit for a certain amount of time,
             # while the other commodity is constraint for a longer period, "overlaps" becomes active

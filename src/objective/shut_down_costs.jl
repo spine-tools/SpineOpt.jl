@@ -20,7 +20,7 @@
 """
     shut_down_costs(m::Model)
 
-Startup cost term for units.
+Shutdown cost term for units.
 """
 function shut_down_costs(m::Model)
     @fetch units_shut_down = m.ext[:variables]

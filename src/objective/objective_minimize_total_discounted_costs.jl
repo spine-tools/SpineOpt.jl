@@ -20,7 +20,7 @@
 """
     objective_minimize_total_discounted_costs(m::Model)
 
-Minimize the `total_discounted_costs` corresponding to the sum over all
+Minimize the total discounted costs, corresponding to the sum over all
 cost terms.
 """
 function objective_minimize_total_discounted_costs(m::Model)

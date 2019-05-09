@@ -20,7 +20,6 @@
 """
     taxes(m::Model)
 
-Variable operation costs defined on flows.
 """
 function taxes(m::Model)
     @fetch flow = m.ext[:variables]
