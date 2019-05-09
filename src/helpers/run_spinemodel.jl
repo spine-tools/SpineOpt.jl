@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Optimizer)
+function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Optimizer, cleanup=true)
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinemodeldb(db_url_in; upgrade=true)
     printstyled("Creating temporal structure...\n"; bold=true)
@@ -92,6 +92,6 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         )
     end
     printstyled("Done.\n"; bold=true)
-    notusing_spinedb(db_url_in)
+    cleanup && notusing_spinedb(db_url_in)
     m
 end
