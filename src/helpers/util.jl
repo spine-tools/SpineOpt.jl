@@ -62,9 +62,9 @@ value(var_dict::VariableDict) = value(var_dict.d)
 
 
 """
-    @fetch x, y = d
+    @fetch x, y, ... = d
 
-Assign mapping of :x and :y in `d` into `x` and `y` respectively
+Assign mapping of :x and :y in `d` to `x` and `y` respectively
 """
 macro fetch(expr)
     (expr isa Expr && expr.head == :(=)) || error("fetch only works with the assignment operator (=)")

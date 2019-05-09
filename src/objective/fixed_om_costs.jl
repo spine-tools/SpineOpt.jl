@@ -25,9 +25,11 @@ Variable operation costs defined on flows.
 function fixed_om_costs(m)
     @expression(
         m,
-        sum(
+        reduce(
+            +,
             unit_capacity(unit=u, commodity_group=cg, direction=d) * number_of_units(unit=u) * fom_cost(unit=u)
-            for (u, cg, d) in indices(unit_capacity)
+            for (u, cg, d) in indices(unit_capacity) if fom_cost(unit=u) != nothing;
+            init=0
         )
     )
 end

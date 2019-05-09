@@ -55,7 +55,7 @@ Check if `unit_conv_cap_to_flow` is defined.
 """
 function constraint_flow_capacity(m::Model)
     @fetch flow, units_on = m.ext[:variables]
-    for (u, cg, d) in unit_capacity_indices(), t in time_slice()
+    for (u, cg, d) in indices(unit_capacity), t in time_slice()
         @constraint(
             m,
             + sum(

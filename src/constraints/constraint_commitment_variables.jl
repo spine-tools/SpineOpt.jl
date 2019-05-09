@@ -21,8 +21,8 @@
 """
     constraint_commitment_variables(m::Model)
 
-This constraint ensures consitency between the variables `units_on`, `units_started_up`
-and `units_shutthing_down`.
+This constraint ensures consistency between the variables `units_on`, `units_started_up`
+and `units_shut_down`.
 """
 # Can we think of a more generic name than commitment variables?
 

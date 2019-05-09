@@ -26,10 +26,12 @@ function variable_om_costs(m::Model)
     @fetch flow = m.ext[:variables]
     @expression(
         m,
-        sum(
-            flow[u, n, c, d, t] * vom_cost(commodity=c,unit=u,direction=d, t=t) * duration(t)
-            for (c_, u_, d_) in vom_cost_indices()
-                for (u, n, c, d, t) in flow_indices(commodity=c_, unit=u_, direction=d_)
+        reduce(
+            +,
+            flow[u, n, c, d, t] * vom_cost(commodity=c, unit=u, direction=d, t=t) * duration(t)
+            for (c_, u_, d_) in indices(vom_cost)
+                for (u, n, c, d, t) in flow_indices(commodity=c_, unit=u_, direction=d_);
+            init=0
         )
     )
 end
