@@ -18,13 +18,13 @@
 #############################################################################
 
 """
-    objective_minimize_production_cost(m::Model, flow)
+    objective_minimize_production_cost(m::Model)
 
 Minimize the `production_cost` correspond to the sum over all
 `conversion_cost` of each `unit`.
 """
-function production_costs(flow)
-    #@butcher begin
+function production_costs(m::Model)
+    flow = m.ext[:variables][:flow]
         let prod_costs = zero(AffExpr)
             for (u,c) in production_cost_indices()
                 prod_costs +=

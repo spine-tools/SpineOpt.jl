@@ -25,51 +25,54 @@ Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
 number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 
-function constraint_flow_capacity(m::Model, flow)
-    for (u, c, d) in indices(unit_capacity),(u, n, c, d, t) in flow_indices(
-            unit=u, commodity=c, direction=d)
-        if all([
-            number_of_units(unit=u) != nothing,
-            unit_conv_cap_to_flow(unit=u, commodity=c) != nothing,
-            avail_factor(unit=u) != nothing
-        ])
-            @constraint(
-                m,
-                + flow[u, n, c, d, t]
-                <=
-                + avail_factor(unit=u)
-                    * unit_capacity(unit=u, commodity=c, direction=d)
-                        * number_of_units(unit=u)
-                            * unit_conv_cap_to_flow(unit=u, commodity=c)
-            )
+function constraint_flow_capacity(m::Model)
+    flow = m.ext[:variables][:flow]
+        for (u, c, d) in indices(unit_capacity),(u, n, c, d, t) in flow_indices(
+                unit=u, commodity=c, direction=d)
+            if all([
+                number_of_units(unit=u) != nothing,
+                unit_conv_cap_to_flow(unit=u, commodity=c) != nothing,
+                avail_factor(unit=u) != nothing
+            ])
+                @constraint(
+                    m,
+                    + flow[u, n, c, d, t]
+                    <=
+                    + avail_factor(unit=u)
+                        * unit_capacity(unit=u, commodity=c, direction=d)
+                            * number_of_units(unit=u)
+                                * unit_conv_cap_to_flow(unit=u, commodity=c)
+                )
+            end
         end
-    end
 end
 
 """
-    constraint_flow_capacity(m::Model, flow, units_online)
+    constraint_flow_capacity(m::Model)
 
 Limit the maximum in/out `flow` of a `unit` for all `unit_capacity` indices.
 Check if `unit_conv_cap_to_flow` is defined.
 """
-function constraint_flow_capacity(m::Model, flow, units_online)
-    for (u, cg, d) in unit_capacity_indices(), t in time_slice()
-        @constraint(
-            m,
-            + sum(
-                flow[u1, n1, c1, d1, t1] * duration(t1)
-                    for (u1, n1, c1, d1, t1) in flow_indices(
-                            unit=u, commodity=commodity_group__commodity(commodity_group = cg), direction=d, t=t)
+function constraint_flow_capacity(m::Model)
+    flow = m.ext[:variables][:flow]
+    units_on = m.ext[:variables][:units_on]
+        for (u, cg, d) in unit_capacity_indices(), t in time_slice()
+            @constraint(
+                m,
+                + sum(
+                    flow[u1, n1, c1, d1, t1] * duration(t1)
+                        for (u1, n1, c1, d1, t1) in flow_indices(
+                                unit=u, commodity=commodity_group__commodity(commodity_group = cg), direction=d, t=t)
+                )
+                <=
+                + sum(
+                    units_on[u1, t1]
+                        * unit_capacity(unit=u, commodity_group=cg, direction=d)
+                            * unit_conv_cap_to_flow(unit=u, commodity_group=cg)
+                                *duration(t1)
+                                        for (u1,t1) in units_on_indices(unit=u)
+                                            if t1 in t_in_t(t_long=t)
+                )
             )
-            <=
-            + sum(
-                units_online[u1, t1]
-                    * unit_capacity(unit=u, commodity_group=cg, direction=d)
-                        * unit_conv_cap_to_flow(unit=u, commodity_group=cg)
-                            *duration(t1)
-                                    for (u1,t1) in units_online_indices(unit=u)
-                                        if t1 in t_in_t(t_long=t)
-            )
-        )
-    end
+        end
 end

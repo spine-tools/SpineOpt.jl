@@ -31,12 +31,10 @@ file_out = "$(@__DIR__)/data/new_temporal_out.sqlite"
 db_url_out = "sqlite:///$file_out"
 isfile(file_out) || create_results_db(db_url_out, db_url_in)
 
-try
-    m, flow, trans, stor_state, units_online,
-        units_available, units_starting_up, units_shutting_down =
+# try
+    m  =
         run_spinemodel(db_url_in, db_url_out; optimizer=Gurobi.Optimizer)
-catch
-    m, flow, trans, stor_state, units_online,
-        units_available, units_starting_up, units_shutting_down =
-        run_spinemodel(db_url_in, db_url_out; optimizer=Cbc.Optimizer)
-end
+# catch
+#     m =  =
+#         run_spinemodel(db_url_in, db_url_out; optimizer=Cbc.Optimizer)
+# end

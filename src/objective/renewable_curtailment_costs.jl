@@ -18,11 +18,11 @@
 #############################################################################
 
 """
-    renewable_curtailment_costs(m::Model, flow)
+    renewable_curtailment_costs(m::Model)
 
 Variable operation costs defined on flows.
 """
-function renewable_curtailment_costs()
+function renewable_curtailment_costs(m::Model)
     let rcc_costs = zero(AffExpr)
         for (n,t) in curtailment_ren_indices()
                 rcc_costs +=

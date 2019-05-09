@@ -18,20 +18,18 @@
 #############################################################################
 
 """
-    objective_minimize_total_discounted_costs(m::Model, flow)
+    objective_minimize_total_discounted_costs(m::Model)
 
 Minimize the `total_discounted_costs` corresponding to the sum over all
 cost terms.
 """
-function objective_minimize_total_discounted_costs(
-    m::Model, flow, units_shutting_down, units_starting_up
-    )
-    vom_costs = variable_om_costs(flow)
+function objective_minimize_total_discounted_costs(m::Model)
+    vom_costs = variable_om_costs(m)
     fom_costs = fixed_om_costs()
-    tax_costs = taxes(flow)
-    op_costs = operating_costs(flow)
-    suc_costs = start_up_costs(units_starting_up)
-    sdc_costs = shut_down_costs(units_shutting_down)
+    tax_costs = taxes(m)
+    op_costs = operating_costs(m)
+    suc_costs = start_up_costs(m)
+    sdc_costs = shut_down_costs(m)
     total_discounted_costs = vom_costs + fom_costs + tax_costs + op_costs +
                                 +suc_costs + sdc_costs
     @objective(m, Min, total_discounted_costs)

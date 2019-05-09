@@ -27,51 +27,49 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
     printstyled("Initializing model...\n"; bold=true)
     @time begin
         m = Model(with_optimizer(optimizer))
+        m.ext[:variables] = Dict{Symbol, Dict{Tuple,JuMP.VariableRef}}()
         # Create decision variables
-        flow = variable_flow(m)
-        units_online = variable_units_online(m)
-        units_available = variable_units_available(m)
-        units_starting_up = variable_units_starting_up(m)
-        units_shutting_down = variable_units_shutting_down(m)
-        trans = variable_trans(m)
-        stor_state = variable_stor_state(m)
+        variable_flow(m)
+        variable_units_on(m)
+        variable_units_available(m)
+        variable_units_started_up(m)
+        variable_units_shut_down(m)
+        variable_trans(m)
+        variable_stor_state(m)
         ## Create objective function
-        objective_minimize_total_discounted_costs(m, flow,
-                                        units_starting_up, units_shutting_down)
+        objective_minimize_total_discounted_costs(m)
         # Add constraints
     end
     printstyled("Generating constraints...\n"; bold=true)
     @time begin
         # Unit capacity
-        constraint_flow_capacity(m, flow, units_online)
+        constraint_flow_capacity(m)
         # Ratio of in/out flows of a unit
-        constraint_fix_ratio_out_in_flow(m, flow)
-        constraint_max_ratio_out_in_flow(m, flow)
-        constraint_min_ratio_out_in_flow(m, flow)
+        constraint_fix_ratio_out_in_flow(m)
+        constraint_max_ratio_out_in_flow(m)
+        constraint_min_ratio_out_in_flow(m)
         # Transmission losses
-        constraint_fix_ratio_out_in_trans(m, trans)
-        constraint_max_ratio_out_in_trans(m, trans)
-        constraint_min_ratio_out_in_trans(m, trans)
+        constraint_fix_ratio_out_in_trans(m)
+        constraint_max_ratio_out_in_trans(m)
+        constraint_min_ratio_out_in_trans(m)
         # Transmission line capacity
-        #constraint_trans_capacity(m, trans)
+        #constraint_trans_capacity(m)
         # Nodal balance
-        constraint_nodal_balance(m, flow, trans)
+        constraint_nodal_balance(m)
         # Absolute bounds on commodities
-        constraint_max_cum_in_flow_bound(m, flow)
+        constraint_max_cum_in_flow_bound(m)
         # storage capacity
-        constraint_stor_capacity(m,stor_state)
+        constraint_stor_capacity(m)
         # storage state balance equation
-        constraint_stor_state_init(m, stor_state)
-        constraint_stor_state(m, stor_state,trans,flow)
+        constraint_stor_state_init(m)
+        constraint_stor_state(m)
 
-        constraint_units_online(m, units_online, units_available)
-        constraint_units_available(m, units_available)
-        constraint_minimum_operating_point(m, flow, units_online)
-        constraint_min_down_time(m,units_online, units_available,
-                                                units_shutting_down)
-        constraint_min_up_time(m, units_online, units_starting_up)
-        constraint_commitment_variables(m, units_online, units_starting_up,
-                                                        units_shutting_down)
+        constraint_units_on(m)
+        constraint_units_available(m)
+        constraint_minimum_operating_point(m)
+        constraint_min_down_time(m)
+        constraint_min_up_time(m)
+        constraint_commitment_variables(m)
         # needed: set/group of unitgroup CHP and Gasplant
     end
     # Run model
@@ -82,16 +80,16 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
         printstyled("Writing results to the database...\n"; bold=true)
-        @time write_results(
-            db_url_out;
-            flow=pack_trailing_dims(SpineModel.value(flow), 1),
-            units_starting_up=pack_trailing_dims(SpineModel.value(units_starting_up), 1),
-            units_shutting_down=pack_trailing_dims(SpineModel.value(units_shutting_down), 1),
-            units_online=pack_trailing_dims(SpineModel.value(units_online), 1),
-            #trans=pack_trailing_dims(SpineModel.value(trans), 1),
-            #stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
-        )
+        # @time write_results(
+        #     db_url_out;
+        #     flow=pack_trailing_dims(SpineModel.value(flow), 1),
+        #     units_started_up=pack_trailing_dims(SpineModel.value(units_started_up), 1),
+        #     units_shut_down=pack_trailing_dims(SpineModel.value(units_shut_down), 1),
+        #     units_on=pack_trailing_dims(SpineModel.value(units_on), 1),
+        #     #trans=pack_trailing_dims(SpineModel.value(trans), 1),
+        #     #stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
+        # )
     end
     printstyled("Done.\n"; bold=true)
-    m, flow, trans, stor_state, units_online, units_available, units_starting_up, units_shutting_down
+    m
 end

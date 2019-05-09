@@ -19,27 +19,28 @@
 
 
 """
-    constraint_max_cum_in_flow_bound(m::Model, flow)
+    constraint_max_cum_in_flow_bound(m::Model)
 
 Set upperbound `max_cum_in_flow_bound `to the cumulated inflow of
 `commodity_group cg` into a `unit_group ug`
 if `max_cum_in_flow_bound` exists for the combination of `cg` and `ug`.
 """
-function constraint_max_cum_in_flow_bound(m::Model, flow)
-    for (ug, cg) in indices(max_cum_in_flow_bound)
-        @constraint(
-            m,
-            + sum(
-                +,
-                flow[u, n, c, :in, t]
-                for (u, n, c, d, t) in flow_indices(
-                    direction=:in,
-                    unit=unit_group__unit(unit_group=ug),
-                    commodity=commodity_group__commodity(commodity_group=cg)
+function constraint_max_cum_in_flow_bound(m::Model)
+    flow = m.ext[:variables][:flow]
+        for (ug, cg) in indices(max_cum_in_flow_bound)
+            @constraint(
+                m,
+                + sum(
+                    +,
+                    flow[u, n, c, :in, t]
+                    for (u, n, c, d, t) in flow_indices(
+                        direction=:in,
+                        unit=unit_group__unit(unit_group=ug),
+                        commodity=commodity_group__commodity(commodity_group=cg)
+                    )
                 )
+                <=
+                + max_cum_in_flow_bound(unit_group=ug, commodity_group=cg)
             )
-            <=
-            + max_cum_in_flow_bound(unit_group=ug, commodity_group=cg)
-        )
-    end
+        end
 end

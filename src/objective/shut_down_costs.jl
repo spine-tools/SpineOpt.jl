@@ -18,15 +18,16 @@
 #############################################################################
 
 """
-    shut_down_costs(units_shutting_down)
+    shut_down_costs(m::Model)
 
 Startup cost term for units.
 """
-function shut_down_costs(units_shutting_down)
+function shut_down_costs(m::Model)
+    units_shut_down = m.ext[:variables][:units_shut_down]
     let sdc = zero(AffExpr)
-        for (u,t) in units_online_indices()
+        for (u,t) in units_on_indices()
                 sdc +=
-                    shut_down_cost(unit=u)*units_shutting_down[u,t]
+                    shut_down_cost(unit=u)*units_shut_down[u,t]
         end
         sdc
     end

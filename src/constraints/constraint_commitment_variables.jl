@@ -19,23 +19,26 @@
 
 
 """
-    constraint_commitment_variables(m::Model, units_online, units_shutting_down, units_starting_up)
+    constraint_commitment_variables(m::Model)
 
-This constraint ensures consitency between the variables `units_online`, `units_starting_up`
+This constraint ensures consitency between the variables `units_on`, `units_started_up`
 and `units_shutthing_down`.
 """
 # Can we think of a more generic name than commitment variables?
 
-function constraint_commitment_variables(m::Model, units_online, units_starting_up, units_shutting_down)
-    for (u, t_after) in units_online_indices()
+function constraint_commitment_variables(m::Model)
+    units_on = m.ext[:variables][:units_on]
+    units_started_up = m.ext[:variables][:units_started_up]
+    units_shut_down = m.ext[:variables][:units_shut_down]
+    for (u, t_after) in units_on_indices()
         for t_before in t_before_t(t_after=t_after)
-            if !isempty(t_before) && t_before in [t for (u,t) in units_online_indices(unit=u)]
+            if !isempty(t_before) && t_before in [t for (u,t) in units_on_indices(unit=u)]
                 @constraint(
                     m,
-                    + units_online[u,t_after]
+                    + units_on[u,t_after]
                     ==
-                    + units_online[u,t_before]
-                    + units_starting_up[u,t_after] - units_shutting_down[u,t_after]
+                    + units_on[u,t_before]
+                    + units_started_up[u,t_after] - units_shut_down[u,t_after]
                 )
             end
         end

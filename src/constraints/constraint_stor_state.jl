@@ -18,11 +18,14 @@
 #############################################################################
 
 """
-    constraint_stor_state(m::Model, stor_state, trans, flow)
+    constraint_stor_state(m::Model)
 
 Balance for storage level.
 """
-function constraint_stor_state(m::Model, stor_state, trans, flow)
+function constraint_stor_state(m::Model)
+    stor_state = m.ext[:variables][:stor_state]
+    trans = m.ext[:variables][:trans]
+    flow = m.ext[:variables][:flow]
     for (stor, c, t1) in stor_state_indices(), t2 in t_before_t(t_before=t1)
         if !isempty(t_before_t(t_after=t)) && t2 in [t for (stor,c, t) in stor_state_indices()]
         @constraint(

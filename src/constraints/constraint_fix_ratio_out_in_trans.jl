@@ -19,13 +19,14 @@
 
 
 """
-    constraint_fix_ratio_out_in_trans(m::Model, trans)
+    constraint_fix_ratio_out_in_trans(m::Model)
 
 Fix ratio between the output `trans` of a `node_group` to an input `trans` of a
 `node_group` for each `connection` for which the parameter `fix_ratio_out_in_trans`
 is specified.
 """
-function constraint_fix_ratio_out_in_trans(m::Model, trans)
+function constraint_fix_ratio_out_in_trans(m::Model)
+    trans = m.ext[:variables][:trans]
     for (conn, ng_out, ng_in) in indices(fix_ratio_out_in)
         time_slices_in = unique(
             t for (conn, n_in, c, d, t) in trans_indices(

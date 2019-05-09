@@ -18,11 +18,12 @@
 #############################################################################
 
 """
-    taxes(m::Model, flow)
+    taxes(m::Model)
 
 Variable operation costs defined on flows.
 """
-function taxes(flow)
+function taxes(m::Model)
+    flow = m.ext[:variables][:flow]
     let tax_costs = zero(AffExpr)
                 tax_costs =
                 + reduce(

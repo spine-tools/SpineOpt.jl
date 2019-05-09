@@ -18,50 +18,53 @@
 #############################################################################
 
 """
-    constraint_nodal_balance(m::Model, flow, trans)
+    constraint_nodal_balance(m::Model)
 
 Enforce balance of all commodity flows from and to a node.
 """
-function constraint_nodal_balance(m::Model, flow, trans)
-	for (n, tblock) in node__temporal_block()
-        for t in time_slice(temporal_block=tblock)
-            @constraint(
-                m,
-    			0
-                ==
-                # Demand for the commodity
-    			- (demand(node=n, t=t) != nothing && demand(node=n, t=t) * duration(t))
-                # Output of units into this node, and their input from this node
-                + reduce(
-                    +,
-                    flow[u, n, c, d, t1] * duration(t1)
-                    	for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=:out);
-                    init=0
-                )
-    			- reduce(
-                    +,
-                    flow[u, n, c, d, t1] * duration(t1)
-    				for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=:in);
-                    init=0
-                )
-                # Transfer of commodities between nodes
-    			+ reduce(
-                    +,
-                    trans[conn, n, c, d, t1] * duration(t1)
-                    	for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=:out);
-                    init=0
-                )
-    			- reduce(
-                    +,
-                    trans[conn, n, c, d, t1] * duration(t1)
-                    	for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=:out);
-                    init=0
-                )
-            )
-        end
-    end
+function constraint_nodal_balance(m::Model)
+	flow = m.ext[:variables][:flow]
+	trans = m.ext[:variables][:trans]
+		for (n, tblock) in node__temporal_block()
+	        for t in time_slice(temporal_block=tblock)
+	            @constraint(
+	                m,
+	    			0
+	                ==
+	                # Demand for the commodity
+	    			- (demand(node=n, t=t) != nothing && demand(node=n, t=t) * duration(t))
+	                # Output of units into this node, and their input from this node
+	                + reduce(
+	                    +,
+	                    flow[u, n, c, d, t1] * duration(t1)
+	                    	for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=:out);
+	                    init=0
+	                )
+	    			- reduce(
+	                    +,
+	                    flow[u, n, c, d, t1] * duration(t1)
+	    				for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=:in);
+	                    init=0
+	                )
+	                # Transfer of commodities between nodes
+	    			+ reduce(
+	                    +,
+	                    trans[conn, n, c, d, t1] * duration(t1)
+	                    	for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=:out);
+	                    init=0
+	                )
+	    			- reduce(
+	                    +,
+	                    trans[conn, n, c, d, t1] * duration(t1)
+	                    	for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=:out);
+	                    init=0
+	                )
+	            )
+	        end
+	    end
 end
 #=
+@Kris: is this still needed?
 # new proposed version (not currently working because we don't yet have the required functionality)
 #@ TO DO: exogeneous supply parameter to be added
 function constraint_nodal_balance(m::Model, flow, trans, time_slice,timesliceblocks)

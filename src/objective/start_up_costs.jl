@@ -18,15 +18,16 @@
 #############################################################################
 
 """
-    start_up_costs(units_starting_up)
+    start_up_costs(m::Model)
 
 Startup cost term for units.
 """
-function start_up_costs(units_starting_up)
+function start_up_costs(m::Model)
+    units_started_up = m.ext[:variables][:units_started_up]
     let suc = zero(AffExpr)
-        for (u,t) in units_online_indices()
+        for (u,t) in units_on_indices()
                 suc +=
-                    start_up_cost(unit=u)*units_starting_up[u,t]
+                    start_up_cost(unit=u)*units_started_up[u,t]
         end
         suc
     end

@@ -19,14 +19,20 @@
 
 
 """
-    generate_units_starting_up(m::Model)
+    constraint_available_units(m::Model, units_on, units_available)
 
-#TODO: add model descirption here
+Limit the units_on by the number of available units.
 """
-function variable_units_starting_up(m::Model)
-    Dict{Tuple,JuMP.VariableRef}(
-        (u, t) => @variable(
-            m, base_name="units_starting_up[$u, $(t.JuMP_name)]", integer=true, lower_bound=0
-        ) for (u, t) in units_online_indices()
-    )
+
+function constraint_units_on(m::Model)
+    units_on = m.ext[:variables][:units_on]
+    units_available = m.ext[:variables][:units_available]
+        for (u, t) in units_on_indices()
+            @constraint(
+                m,
+                + units_on[u, t]
+                <=
+                + units_available[u, t]
+            )
+        end
 end

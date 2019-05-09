@@ -23,7 +23,8 @@
 
 Balance for storage level.
 """
-function constraint_stor_state_init(m::Model, stor_state)
+function constraint_stor_state_init(m::Model)
+    stor_state = m.ext[:variables][:stor_state]
     for (stor, c) in indices(stor_state_init),
         (stor, c, t) in stor_state_indices(storage=stor, commodity=c)
         if isempty(t_before_t(t_after=t))

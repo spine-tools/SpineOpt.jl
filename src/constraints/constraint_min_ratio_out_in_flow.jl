@@ -19,13 +19,14 @@
 
 
 """
-    constraint_min_ratio_out_in_flow(m::Model, flow)
+    constraint_min_ratio_out_in_flow(m::Model)
 
 Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of a
 `commodity_group` for each `unit` for which the parameter `min_ratio_out_in_flow`
 is specified.
 """
-function constraint_min_ratio_out_in_flow(m::Model, flow)
+function constraint_min_ratio_out_in_flow(m::Model)
+    flow = m.ext[:variables][:flow]
     for (u, cg_out, cg_in) in indices(min_ratio_out_in)
         time_slices_out = unique(
             t for (u, n, c_out, d, t) in flow_indices(

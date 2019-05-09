@@ -19,18 +19,19 @@
 
 
 """
-    constraint_available_units(m::Model, units_online, units_available)
+    constraint_available_units(m::Model)
 
 Limit the units_online by the number of available units.
 """
 
-function constraint_units_available(m::Model, units_available)
-    for (u, t) in units_online_indices()
-        @constraint(
-            m,
-            + units_available[u, t]
-            ==
-            + number_of_units(unit=u, t=t) * avail_factor(unit=u, t=t)
-        )
-    end
+function constraint_units_available(m::Model)
+    units_available = m.ext[:variables][:units_available]
+        for (u, t) in units_on_indices()
+            @constraint(
+                m,
+                + units_available[u, t]
+                ==
+                + number_of_units(unit=u, t=t) * avail_factor(unit=u, t=t)
+            )
+        end
 end

@@ -19,18 +19,29 @@
 
 
 """
-    constraint_available_units(m::Model, units_online, units_available)
+    generate_units_on(m::Model)
 
-Limit the units_online by the number of available units.
+#TODO: add model descirption here
 """
+function variable_units_on(m::Model)
+    m.ext[:variables][:units_on] = Dict{Tuple,JuMP.VariableRef}(
+        (u, t) => @variable(
+            m, base_name="units_on[$u, $(t.JuMP_name)]", integer=true, lower_bound=0
+        ) for (u, t) in units_on_indices()
+    )
+end
 
-function constraint_units_online(m::Model, units_online, units_available)
-    for (u, t) in units_online_indices()
-        @constraint(
-            m,
-            + units_online[u, t]
-            <=
-            + units_available[u, t]
-        )
-    end
+
+"""
+    units_on_indices(filtering_options...)
+
+A set of tuples for indexing the `units_on` variable. Any filtering options can be specified
+for `unit` and `t`.
+"""
+function units_on_indices(;unit=anything, t=anything)
+    [
+        (unit=u, t=t1)
+        for u in intersect(SpineModel.unit(), unit)
+            for t1 in intersect(t_highest_resolution(Array{TimeSlice,1}([x.t for x in flow_indices(unit=u)])), t)
+    ]
 end

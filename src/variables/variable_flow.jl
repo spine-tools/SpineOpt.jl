@@ -27,7 +27,7 @@ attached to model `m`.
 in a certain 'direction'. The direction is relative to the unit.
 """
 function variable_flow(m::Model)
-    Dict{Tuple,JuMP.VariableRef}(
+    m.ext[:variables][:flow] = Dict{Tuple,JuMP.VariableRef}(
         (u, n, c, d, t) => @variable(
             m, base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
         ) for (u, n, c, d, t) in flow_indices()
