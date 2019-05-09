@@ -69,7 +69,11 @@ Assign mapping of :x and :y in `d` into `x` and `y` respectively
 macro fetch(expr)
     (expr isa Expr && expr.head == :(=)) || error("fetch only works with the assignment operator (=)")
     keys, dict = expr.args
-    values = Expr(:tuple, [:($dict[$(Expr(:quote, k))]) for k in keys.args]...)
+    values = if keys isa Expr
+        Expr(:tuple, [:($dict[$(Expr(:quote, k))]) for k in keys.args]...)
+    else
+        :($dict[$(Expr(:quote, keys))])
+    end
     esc(Expr(:(=), keys, values))
 end
 

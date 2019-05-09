@@ -25,12 +25,11 @@ cost terms.
 """
 function objective_minimize_total_discounted_costs(m::Model)
     vom_costs = variable_om_costs(m)
-    fom_costs = fixed_om_costs()
+    fom_costs = fixed_om_costs(m)
     tax_costs = taxes(m)
     op_costs = operating_costs(m)
     suc_costs = start_up_costs(m)
     sdc_costs = shut_down_costs(m)
-    total_discounted_costs = vom_costs + fom_costs + tax_costs + op_costs +
-                                +suc_costs + sdc_costs
+    total_discounted_costs = vom_costs + fom_costs + tax_costs + op_costs + suc_costs + sdc_costs
     @objective(m, Min, total_discounted_costs)
 end

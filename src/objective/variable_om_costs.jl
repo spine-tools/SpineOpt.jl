@@ -23,16 +23,13 @@
 Variable operation costs defined on flows.
 """
 function variable_om_costs(m::Model)
-    flow = m.ext[:variables][:flow]
-    let vom_costs = zero(AffExpr)
-        for (c,u,d) in vom_cost_indices()
-                vom_costs +=
-                + sum(
-                    +,
-                    flow[u, n, c, d, t] * vom_cost(commodity=c,unit=u,direction=d, t=t) * duration(t)
-                        for (u, n, c, d, t) in flow_indices(commodity=c,unit=u, direction=d)
-                )
-        end
-        vom_costs
-    end
+    @fetch flow = m.ext[:variables]
+    @expression(
+        m,
+        sum(
+            flow[u, n, c, d, t] * vom_cost(commodity=c,unit=u,direction=d, t=t) * duration(t)
+            for (c_, u_, d_) in vom_cost_indices()
+                for (u, n, c, d, t) in flow_indices(commodity=c_, unit=u_, direction=d_)
+        )
+    )
 end

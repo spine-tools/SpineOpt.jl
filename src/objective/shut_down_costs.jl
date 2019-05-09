@@ -23,12 +23,11 @@
 Startup cost term for units.
 """
 function shut_down_costs(m::Model)
-    units_shut_down = m.ext[:variables][:units_shut_down]
-    let sdc = zero(AffExpr)
-        for (u,t) in units_on_indices()
-                sdc +=
-                    shut_down_cost(unit=u)*units_shut_down[u,t]
-        end
-        sdc
-    end
+    @fetch units_shut_down = m.ext[:variables]
+    @expression(
+        m,
+        sum(
+            shut_down_cost(unit=u) * units_shut_down[u, t] for (u, t) in units_on_indices()
+        )
+    )
 end

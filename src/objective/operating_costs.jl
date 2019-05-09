@@ -24,15 +24,13 @@ Minimize the `production_cost` correspond to the sum over all
 `conversion_cost` of each `unit`.
 """
 function operating_costs(m::Model)
-    flow = m.ext[:variables][:flow]
-    let op_costs = zero(AffExpr)
-        for (c,u,d) in operating_cost_indices()
-            op_costs +=
-            sum(
-                flow[u, n, c, d, t] * duration(t) * operating_cost(commodity=c, unit=u, direction=d, t=t)
-                for (u,n,c,d,t) in flow_indices(unit=u,commodity=c,direction=d)
-            )
-        end
-        op_costs
-    end
+    @fetch flow = m.ext[:variables]
+    @expression(
+        m,
+        sum(
+            flow[u, n, c, d, t] * duration(t) * operating_cost(commodity=c, unit=u, direction=d, t=t)
+            for (c_, u_, d_) in indices(operating_cost)
+                for (u, n, c, d, t) in flow_indices(unit=u_, commodity=c_, direction=d_)
+        )
+    )
 end

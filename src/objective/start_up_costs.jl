@@ -23,12 +23,9 @@
 Startup cost term for units.
 """
 function start_up_costs(m::Model)
-    units_started_up = m.ext[:variables][:units_started_up]
-    let suc = zero(AffExpr)
-        for (u,t) in units_on_indices()
-                suc +=
-                    start_up_cost(unit=u)*units_started_up[u,t]
-        end
-        suc
-    end
+    @fetch units_started_up = m.ext[:variables]
+    @expression(
+        m,
+        sum(start_up_cost(unit=u) * units_started_up[u, t] for (u, t) in units_on_indices())
+    )
 end

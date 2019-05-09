@@ -23,37 +23,52 @@
 Variable operation costs defined on flows.
 """
 function taxes(m::Model)
-    flow = m.ext[:variables][:flow]
-    let tax_costs = zero(AffExpr)
-                tax_costs =
-                + reduce(
-                    +,
-                    flow[u, n, c, d, t] * tax_net_flow(commodity_group=cg1,node_group=ng1, t=t) * duration(t)
-                        for (cg1,ng1) in tax_net_flow_indices()
-                            for (u, n, c, d, t) in flow_indices(node=node_group__node(node_group = ng1),commodity=commodity_group__commodity(commodity_group=cg1), direction=:out);
-                    init=0
-                )
-                - reduce(
-                    +,
-                    flow[u, n, c, d, t] * tax_net_flow(commodity_group=cg1,node_group=ng1, t=t) * duration(t)
-                        for (cg1,ng1) in tax_net_flow_indices()
-                            for (u, n, c, d, t) in flow_indices(node=node_group__node(node_group = ng1),commodity=commodity_group__commodity(commodity_group=cg1), direction=:in);
-                    init=0
-                )
-                + reduce(
-                    +,
-                    flow[u, n, c, d, t] * tax_out_flow(commodity_group=cg1,node_group=ng1, t=t) * duration(t)
-                        for (cg1,ng1) in tax_out_flow_indices()
-                            for (u, n, c, d, t) in flow_indices(node=node_group__node(node_group = ng1),commodity=commodity_group__commodity(commodity_group=cg1), direction=:out);
-                    init=0
-                )
-                + reduce(
-                    +,
-                    flow[u, n, c, d, t] * tax_in_flow(commodity_group=cg1,node_group=ng1, t=t) * duration(t)
-                        for (cg1,ng1) in tax_in_flow_indices()
-                            for (u, n, c, d, t) in flow_indices(node=node_group__node(node_group = ng1),commodity=commodity_group__commodity(commodity_group=cg1), direction=:in);
-                    init=0
-                )
-        tax_costs
-    end
+    @fetch flow = m.ext[:variables]
+    @expression(
+        m,
+        + reduce(
+            +,
+            flow[u, n, c, d, t] * tax_net_flow(commodity_group=cg1, node_group=ng1, t=t) * duration(t)
+                for (cg1, ng1) in tax_net_flow_indices()
+                    for (u, n, c, d, t) in flow_indices(
+                        node=node_group__node(node_group=ng1),
+                        commodity=commodity_group__commodity(commodity_group=cg1),
+                        direction=:out
+                    );
+            init=0
+        )
+        - reduce(
+            +,
+            flow[u, n, c, d, t] * tax_net_flow(commodity_group=cg1, node_group=ng1, t=t) * duration(t)
+                for (cg1, ng1) in tax_net_flow_indices()
+                    for (u, n, c, d, t) in flow_indices(
+                        node=node_group__node(node_group=ng1),
+                        commodity=commodity_group__commodity(commodity_group=cg1),
+                        direction=:in
+                    );
+            init=0
+        )
+        + reduce(
+            +,
+            flow[u, n, c, d, t] * tax_out_flow(commodity_group=cg1, node_group=ng1, t=t) * duration(t)
+                for (cg1, ng1) in tax_out_flow_indices()
+                    for (u, n, c, d, t) in flow_indices(
+                        node=node_group__node(node_group = ng1),
+                        commodity=commodity_group__commodity(commodity_group=cg1),
+                        direction=:out
+                    );
+            init=0
+        )
+        + reduce(
+            +,
+            flow[u, n, c, d, t] * tax_in_flow(commodity_group=cg1, node_group=ng1, t=t) * duration(t)
+                for (cg1, ng1) in tax_in_flow_indices()
+                    for (u, n, c, d, t) in flow_indices(
+                        node=node_group__node(node_group = ng1),
+                        commodity=commodity_group__commodity(commodity_group=cg1),
+                        direction=:in
+                    );
+            init=0
+        )
+    )
 end
