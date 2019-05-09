@@ -30,12 +30,12 @@ function constraint_max_ratio_out_in_trans(m::Model)
     for (conn, ng_out, ng_in) in indices(max_ratio_out_in)
         time_slices_out = unique(
             t for (conn, n_out, c, d, t) in trans_indices(
-                connection=conn, node=node_group__node(node_group=ng_out), direction=:out
+                connection=conn, node=node_group__node(node_group=ng_out), direction=:to_node
             )
         )
         time_slices_in = unique(
             t for (conn, n_in, c, d, t) in trans_indices(
-                connection=conn, node=node_group__node(node_group=ng_in), direction=:in
+                connection=conn, node=node_group__node(node_group=ng_in), direction=:from_node
             )
         )
         (!isempty(time_slices_out) && !isempty(time_slices_in)) || continue
@@ -53,20 +53,20 @@ function constraint_max_ratio_out_in_trans(m::Model)
             @constraint(
                 m,
                 + sum(
-                    trans[conn, n_out, c, :out, t1] * duration(t1)
+                    trans[conn, n_out, c, :to_node, t1] * duration(t1)
                     for (conn, n_out, c, d, t1) in trans_indices(
                         node=node_group__node(node_group=ng_out),
-                        direction=:out,
+                        direction=:to_node,
                         t=t_in_t(t_long=t)
                     )
                 )
                 <=
                 + max_ratio_out_in(connection=conn, node_group1=ng_out, node_group2=ng_in, t=t)
                 * sum(
-                    trans[conn, n_in, c, :in, t1] * duration(t1)
+                    trans[conn, n_in, c, :from_node, t1] * duration(t1)
                     for (conn, n_in, c, d, t1) in trans_indices(
                         node=node_group__node(node_group=ng_in),
-                        direction=:in,
+                        direction=:from_node,
                         t=t_in_t(t_long=t)
                     )
                 )

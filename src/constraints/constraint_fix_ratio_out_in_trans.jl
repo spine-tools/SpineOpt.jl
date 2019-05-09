@@ -30,12 +30,12 @@ function constraint_fix_ratio_out_in_trans(m::Model)
     for (conn, ng_out, ng_in) in indices(fix_ratio_out_in)
         time_slices_in = unique(
             t for (conn, n_in, c, d, t) in trans_indices(
-                connection=conn, node=node_group__node(node_group=ng_in), direction=:in
+                connection=conn, node=node_group__node(node_group=ng_in), direction=:from_node
             )
         )
         time_slices_out = unique(
             t for (conn, n_out, c, d, t) in trans_indices(
-                connection=conn, node=node_group__node(node_group=ng_out), direction=:out
+                connection=conn, node=node_group__node(node_group=ng_out), direction=:to_node
             )
         )
         (!isempty(time_slices_out) && !isempty(time_slices_in)) || continue
@@ -56,7 +56,7 @@ function constraint_fix_ratio_out_in_trans(m::Model)
                     trans[conn, n_out, c, d, t1] * duration(t1)
                     for (conn, n_out, c, d, t1) in trans_indices(
                         node=node_group__node(node_group=ng_out),
-                        direction=:out,
+                        direction=:to_node,
                         t=t_in_t(t_long=t)
                     )
                 )
@@ -66,7 +66,7 @@ function constraint_fix_ratio_out_in_trans(m::Model)
                     trans[conn, n_in, c, d, t1] * duration(t1)
                     for (conn, n_in, c, d, t1) in trans_indices(
                         node=node_group__node(node_group=ng_in),
-                        direction=:in,
+                        direction=:from_node,
                         t=t_in_t(t_long=t)
                     )
                 )

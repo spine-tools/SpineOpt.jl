@@ -30,12 +30,12 @@ function constraint_fix_ratio_out_in_flow(m::Model)
     for (u, cg_out, cg_in) in indices(fix_ratio_out_in)
         time_slices_out = unique(
             t for (u, n, c_out, d, t) in flow_indices(
-                unit=u, commodity=commodity_group__commodity(commodity_group=cg_out), direction=:out
+                unit=u, commodity=commodity_group__commodity(commodity_group=cg_out), direction=:to_node
             )
         )
         time_slices_in = unique(
             t for (u, n, c_in, d, t) in flow_indices(
-                unit=u, commodity=commodity_group__commodity(commodity_group=cg_in), direction=:in
+                unit=u, commodity=commodity_group__commodity(commodity_group=cg_in), direction=:from_node
             )
         )
         (!isempty(time_slices_out) && !isempty(time_slices_in)) || continue
@@ -56,7 +56,7 @@ function constraint_fix_ratio_out_in_flow(m::Model)
                     flow[u, n, c_out, d, t1] * duration(t1)
                     for (u, n, c_out, d, t1) in flow_indices(
                         commodity=commodity_group__commodity(commodity_group=cg_out),
-                        direction=:out,
+                        direction=:to_node,
                         t=t_in_t(t_long=t)
                     )
                 )
@@ -66,7 +66,7 @@ function constraint_fix_ratio_out_in_flow(m::Model)
                     flow[u, n, c_in, d, t1] * duration(t1)
                     for (u, n, c_in, d, t1) in flow_indices(
                         commodity=commodity_group__commodity(commodity_group=cg_in),
-                        direction=:in,
+                        direction=:from_node,
                         t=t_in_t(t_long=t)
                     )
                 )

@@ -36,26 +36,26 @@ function constraint_nodal_balance(m::Model)
                 + reduce(
                     +,
                     flow[u, n, c, d, t1] * duration(t1)
-                    for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=:out);
+                    for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=:to_node);
                     init=0
                 )
                 - reduce(
                     +,
                     flow[u, n, c, d, t1] * duration(t1)
-                    for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=:in);
+                    for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=:from_node);
                     init=0
                 )
                 # Transfer of commodities between nodes
                 + reduce(
                     +,
                     trans[conn, n, c, d, t1] * duration(t1)
-                    for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=:out);
+                    for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=:to_node);
                     init=0
                 )
                 - reduce(
                     +,
                     trans[conn, n, c, d, t1] * duration(t1)
-                    for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=:out);
+                    for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=:to_node);
                     init=0
                 )
             )
@@ -79,26 +79,26 @@ function constraint_nodal_balance(m::Model, flow, trans, time_slice,timesliceblo
 				)
 				# Output of units into this node, and their input from this node
 	            + reduce(+,
-	                flow[c, n, u, :out, tprime] min(time_slice_duration(t), time_slice_duration(t_prime)) # @Manuel, Maren: important that we get this to work!
-	                for (c, u, tprime) in commodity__node__unit__direction__time_slice(node=n, direction=:out) # @Maren, @Manuel: Important that we get this to work nicely!
+	                flow[c, n, u, :to_node, tprime] min(time_slice_duration(t), time_slice_duration(t_prime)) # @Manuel, Maren: important that we get this to work!
+	                for (c, u, tprime) in commodity__node__unit__direction__time_slice(node=n, direction=:to_node) # @Maren, @Manuel: Important that we get this to work nicely!
 						if t_prime in t_overlaps_t(t)
 	                )
 	            - reduce(+,
-	                flow[c, n, u, :in, t]
-	                for (c, u, t_prime) in commodity__node__unit__direction__time_slice(node=n, direction=:in)
+	                flow[c, n, u, :from_node, t]
+	                for (c, u, t_prime) in commodity__node__unit__direction__time_slice(node=n, direction=:from_node)
 						if t_prime in t_overlaps_t(t)
 	                )
 	            # @Maren: transfers should be adjusted in a similar fashion
 	            + reduce(+,
-	                trans[c, n, conn, :out, t]
-	                for (c, conn) in commodity__node__connection__direction(node=n, direction=:out)
-						if haskey(trans,(c,n,conn,:out,t));
+	                trans[c, n, conn, :to_node, t]
+	                for (c, conn) in commodity__node__connection__direction(node=n, direction=:to_node)
+						if haskey(trans,(c,n,conn,:to_node,t));
 	                    init=0
 	                )
 	            - reduce(+,
-	                trans[c, n, conn, :in, t]
-	                for (c, conn) in commodity__node__connection__direction(node=n, direction=:in)
-						if haskey(trans,(c,n,conn,:in,t));
+	                trans[c, n, conn, :from_node, t]
+	                for (c, conn) in commodity__node__connection__direction(node=n, direction=:from_node)
+						if haskey(trans,(c,n,conn,:from_node,t));
 	                    init=0
 	                )
 	        )

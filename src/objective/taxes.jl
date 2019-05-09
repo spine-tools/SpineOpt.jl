@@ -32,7 +32,7 @@ function taxes(m::Model)
                     for (u, n, c, d, t) in flow_indices(
                         node=node_group__node(node_group=ng1),
                         commodity=commodity_group__commodity(commodity_group=cg1),
-                        direction=:out
+                        direction=:to_node
                     );
             init=0
         )
@@ -43,7 +43,7 @@ function taxes(m::Model)
                     for (u, n, c, d, t) in flow_indices(
                         node=node_group__node(node_group=ng1),
                         commodity=commodity_group__commodity(commodity_group=cg1),
-                        direction=:in
+                        direction=:from_node
                     );
             init=0
         )
@@ -54,7 +54,7 @@ function taxes(m::Model)
                     for (u, n, c, d, t) in flow_indices(
                         node=node_group__node(node_group = ng1),
                         commodity=commodity_group__commodity(commodity_group=cg1),
-                        direction=:out
+                        direction=:to_node
                     );
             init=0
         )
@@ -65,7 +65,7 @@ function taxes(m::Model)
                     for (u, n, c, d, t) in flow_indices(
                         node=node_group__node(node_group = ng1),
                         commodity=commodity_group__commodity(commodity_group=cg1),
-                        direction=:in
+                        direction=:from_node
                     );
             init=0
         )

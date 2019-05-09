@@ -32,9 +32,9 @@ function constraint_max_cum_in_flow_bound(m::Model)
             m,
             + sum(
                 +,
-                flow[u, n, c, :in, t]
+                flow[u, n, c, :from_node, t]
                 for (u, n, c, d, t) in flow_indices(
-                    direction=:in,
+                    direction=:from_node,
                     unit=unit_group__unit(unit_group=ug),
                     commodity=commodity_group__commodity(commodity_group=cg)
                 )
