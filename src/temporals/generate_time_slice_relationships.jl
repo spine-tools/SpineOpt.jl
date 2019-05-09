@@ -126,12 +126,12 @@ function (t_overlaps_t::TOverlapsTFunction)()
 end
 
 """
-    t_overlaps_t(t_overlap::Union{TimeSlice,Array{TimeSlice,1}})
+    t_overlaps_t(t_overlap)
 
 Return the list of time slices that have some time in common with `t_overlap`
 (or some time in common with any element in `t_overlap` if it's a list).
 """
-function (t_overlaps_t::TOverlapsTFunction)(t_overlap::Union{TimeSlice,Array{TimeSlice,1}})
+function (t_overlaps_t::TOverlapsTFunction)(t_overlap)
     unique(t2 for (t1, t2) in t_overlaps_t.list if t1 in tuple(t_overlap...))
 end
 
@@ -141,10 +141,7 @@ end
 Return a list of time slices which are in `t_list1` and have some time in common
 with any of the time slices in `t_list2` and vice versa.
 """
-function (t_overlaps_t::TOverlapsTFunction)(
-        t_list1::Union{TimeSlice,Array{TimeSlice,1}},
-        t_list2::Union{TimeSlice,Array{TimeSlice,1}}
-    )
+function (t_overlaps_t::TOverlapsTFunction)(t_list1, t_list2)
     orig_list = t_overlaps_t.list
     overlap_list = [
         (t1, t2) for (t1, t2) in orig_list if t1 in tuple(t_list1...) && t2 in tuple(t_list2...)
@@ -164,12 +161,12 @@ end
 
 
 """
-    t_overlaps_t_excl(t_overlap::Union{TimeSlice,Array{TimeSlice,1}})
+    t_overlaps_t_excl(t_overlap)
 
 Return the list of time slices that have some time in common with `t_overlap`
 (or some time in common with any element in `t_overlap` if it's a list) and `t1` is not equal to `t2`.
 """
-function (t_overlaps_t_excl::TOverlapsTExclFunction)(t_overlap::Union{TimeSlice,Array{TimeSlice,1}})
+function (t_overlaps_t_excl::TOverlapsTExclFunction)(t_overlap)
     unique(t2 for (t1, t2) in t_overlaps_t_excl.list if t1 in tuple(t_overlap...))
 end
 """
@@ -178,10 +175,7 @@ end
 Return a list of time slices which are in `t_list1` and have some time in common
 with any of the time slices in `t_list2` (unless they are the same time slice) and vice versa.
 """
-function (t_overlaps_t_excl::TOverlapsTExclFunction)(
-        t_list1::Union{TimeSlice,Array{TimeSlice,1}},
-        t_list2::Union{TimeSlice,Array{TimeSlice,1}}
-    )
+function (t_overlaps_t_excl::TOverlapsTExclFunction)(t_list1, t_list2)
     orig_list = t_overlaps_t_excl.list
     overlap_list = [
         (t1, t2) for (t1, t2) in orig_list if t1 in tuple(t_list1...) && t2 in tuple(t_list2...)

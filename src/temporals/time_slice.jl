@@ -75,12 +75,12 @@ Base.iterate(t::TimeSlice, state::T) where T = iterate((t,), state)
 Base.length(t::TimeSlice) = 1
 
 """
-    t_lowest_resolution(t_list::Union{TimeSlice,Array{TimeSlice,1}})
+    t_lowest_resolution(t_list)
 
 Return the list of the lowest resolution time slices within `t_list`
 (those that aren't contained in any other).
 """
-function t_lowest_resolution(t_list::Array{TimeSlice,1})
+function t_lowest_resolution(t_list)
     isempty(t_list) && return t_list
     sort!(t_list)
     result::Array{TimeSlice,1} = [t_list[1]]
@@ -96,12 +96,12 @@ end
 
 
 """
-    t_highest_resolution(t_list::Union{TimeSlice,Array{TimeSlice,1}})
+    t_highest_resolution(t_list)
 
 Return the list of the highest resolution time slices from `t_list`
 (those that don't contain any other).
 """
-function t_highest_resolution(t_list::Array{TimeSlice,1})
+function t_highest_resolution(t_list)
     isempty(t_list) && return t_list
     sort!(t_list)
     result::Array{TimeSlice,1} = [t_list[1]]
