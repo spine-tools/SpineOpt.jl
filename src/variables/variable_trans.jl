@@ -27,10 +27,12 @@ for each tuple of `commodity__node__unit__direction__time_slice`, attached to mo
 in a certain 'direction'. The direction is relative to the connection.
 """
 function variable_trans(m::Model)
-    m.ext[:variables][:trans] = Dict{Tuple,JuMP.VariableRef}(
-        (conn, n, c, d, t) => @variable(
-            m, base_name="trans[$conn, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
-        ) for (conn, n, c, d, t) in trans_indices()
+    m.ext[:variables][:trans] = VariableDict(
+        x => @variable(
+            m,
+            base_name="trans[$(x.connection), $(x.node), $(x.commodity), $(x.direction), $(x.t.JuMP_name)]", 
+            lower_bound=0
+        ) for x in trans_indices()
     )
 end
 

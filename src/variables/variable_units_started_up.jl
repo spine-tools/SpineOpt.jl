@@ -24,9 +24,9 @@
 #TODO: add model descirption here
 """
 function variable_units_started_up(m::Model)
-    m.ext[:variables][:units_started_up] = Dict{Tuple,JuMP.VariableRef}(
-        (u, t) => @variable(
-            m, base_name="units_started_up[$u, $(t.JuMP_name)]", integer=true, lower_bound=0
-        ) for (u, t) in units_on_indices()
+    m.ext[:variables][:units_started_up] = VariableDict(
+        x => @variable(
+            m, base_name="units_started_up[$(x.unit), $(x.t.JuMP_name)]", integer=true, lower_bound=0
+        ) for x in units_on_indices()
     )
 end

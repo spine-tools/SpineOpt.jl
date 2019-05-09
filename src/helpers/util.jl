@@ -19,25 +19,28 @@
 
 const iso8601dateformat = dateformat"y-m-dTH:M:Sz"
 
+struct VariableDict
+    d::Dict{NamedTuple,JuMP.VariableRef}
+    k::Tuple
+    function VariableDict(itr...)
+        d = Dict(itr...)
+        k = !isempty(keys(d)) ? keys(first(keys(d))) : ()
+        new(d, k)
+    end
+end
+
+Base.getindex(X::VariableDict; key...) = Base.getindex(X.d, NamedTuple{keys(key)}(values(key)))
+Base.getindex(X::VariableDict, key...) = Base.getindex(X.d, NamedTuple{X.k}(values(key)))
+Base.setindex!(X::VariableDict, value, key...) = Base.setindex!(X.d, value, key...)
+Base.firstindex(X::VariableDict) = Base.firstindex(X.d)
+Base.lastindex(X::VariableDict) = Base.lastindex(X.d)
+
 """
     pack_trailing_dims(dictionary::Dict, n::Int64=1)
 
 An equivalent dictionary where the last `n` dimensions are packed into a matrix
 """
-function pack_trailing_dims(dictionary::Dict, n::Int64=1)
-    left_dict = Dict{Any,Any}()
-    for (key, value) in dictionary
-        # TODO: handle length(key) < n and stuff like that?
-        left_key = key[1:end-n]
-        right_key = key[end-n+1:end]
-        right_dict = get!(left_dict, left_key, Dict())
-        right_dict[right_key] = value
-    end
-    Dict(key => reshape([v for (k, v) in sort(collect(value))], :, n) for (key, value) in left_dict)
-end
-
-
-function pack_trailing_dims(dictionary::Dict{NamedTuple,N}, n::Int64=1) where N
+function pack_trailing_dims(dictionary::Dict{S,T}, n::Int64=1) where {S<:NamedTuple,T}
     left_dict = Dict{Any,Any}()
     for (key, value) in dictionary
         # TODO: handle length(key) < n and stuff like that?
@@ -50,12 +53,25 @@ function pack_trailing_dims(dictionary::Dict{NamedTuple,N}, n::Int64=1) where N
 end
 
 """
-    value(dictionary::Dict)
+    value(d::Dict)
 
 An equivalent dictionary where values are gathered using `JuMP.value`.
 """
-value(dictionary::Dict) = Dict(k => JuMP.value(v) for (k, v) in dictionary)
+value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => JuMP.value(v) for (k, v) in d)
+value(var_dict::VariableDict) = value(var_dict.d)
 
+
+"""
+    @fetch x, y = d
+
+Assign mapping of :x and :y in `d` into `x` and `y` respectively
+"""
+macro fetch(expr)
+    (expr isa Expr && expr.head == :(=)) || error("fetch only works with the assignment operator (=)")
+    keys, dict = expr.args
+    values = Expr(:tuple, [:($dict[$(Expr(:quote, k))]) for k in keys.args]...)
+    esc(Expr(:(=), keys, values))
+end
 
 """
     parse_duration(str::String)

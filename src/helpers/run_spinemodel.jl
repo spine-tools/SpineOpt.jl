@@ -27,7 +27,7 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
     printstyled("Initializing model...\n"; bold=true)
     @time begin
         m = Model(with_optimizer(optimizer))
-        m.ext[:variables] = Dict{Symbol, Dict{Tuple,JuMP.VariableRef}}()
+        m.ext[:variables] = Dict{Symbol,VariableDict}()
         # Create decision variables
         variable_flow(m)
         variable_units_on(m)
@@ -80,15 +80,16 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
         printstyled("Writing results to the database...\n"; bold=true)
-        # @time write_results(
-        #     db_url_out;
-        #     flow=pack_trailing_dims(SpineModel.value(flow), 1),
-        #     units_started_up=pack_trailing_dims(SpineModel.value(units_started_up), 1),
-        #     units_shut_down=pack_trailing_dims(SpineModel.value(units_shut_down), 1),
-        #     units_on=pack_trailing_dims(SpineModel.value(units_on), 1),
-        #     #trans=pack_trailing_dims(SpineModel.value(trans), 1),
-        #     #stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
-        # )
+        @fetch flow, units_started_up, units_shut_down, units_on = m.ext[:variables]
+        @time write_results(
+             db_url_out;
+             flow=pack_trailing_dims(SpineModel.value(flow), 1),
+             units_started_up=pack_trailing_dims(SpineModel.value(units_started_up), 1),
+             units_shut_down=pack_trailing_dims(SpineModel.value(units_shut_down), 1),
+             units_on=pack_trailing_dims(SpineModel.value(units_on), 1),
+             #trans=pack_trailing_dims(SpineModel.value(trans), 1),
+             #stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
+        )
     end
     printstyled("Done.\n"; bold=true)
     m

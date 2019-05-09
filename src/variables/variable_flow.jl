@@ -19,7 +19,7 @@
 
 
 """
-    generate_variable_flow(m::Model)
+    variable_flow(m::Model)
 
 A `flow` variable for each tuple of `commodity__node__unit__direction__time_slice`,
 attached to model `m`.
@@ -27,10 +27,12 @@ attached to model `m`.
 in a certain 'direction'. The direction is relative to the unit.
 """
 function variable_flow(m::Model)
-    m.ext[:variables][:flow] = Dict{Tuple,JuMP.VariableRef}(
-        (u, n, c, d, t) => @variable(
-            m, base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
-        ) for (u, n, c, d, t) in flow_indices()
+    m.ext[:variables][:flow] = VariableDict(
+        x => @variable(
+            m,
+            base_name="flow[$(x.unit), $(x.node), $(x.commodity), $(x.direction), $(x.t.JuMP_name)]",
+            lower_bound=0
+        ) for x in flow_indices()
     )
 end
 

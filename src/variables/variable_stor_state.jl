@@ -25,10 +25,10 @@ attached to model `m`.
 `stor_level` represents the state of the storage level.
 """
 function variable_stor_state(m::Model)
-    m.ext[:variables][:stor_state] = Dict{Tuple,JuMP.VariableRef}(
-        (stor, c, t) => @variable(
-            m, base_name="stor_state[$stor, $c, $(t.JuMP_name)]", lower_bound=0
-        ) for (stor, c, t) in stor_state_indices()
+    m.ext[:variables][:stor_state] = VariableDict(
+        x => @variable(
+            m, base_name="stor_state[$(x.stor), $(x.commodity), $(x.t.JuMP_name)]", lower_bound=0
+        ) for x in stor_state_indices()
     )
 end
 
