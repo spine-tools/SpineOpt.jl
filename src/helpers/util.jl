@@ -34,6 +34,7 @@ Base.getindex(X::VariableDict, key...) = Base.getindex(X.d, NamedTuple{X.k}(valu
 Base.setindex!(X::VariableDict, value, key...) = Base.setindex!(X.d, value, key...)
 Base.firstindex(X::VariableDict) = Base.firstindex(X.d)
 Base.lastindex(X::VariableDict) = Base.lastindex(X.d)
+Base.push!(X::VariableDict,item) = push!(X.d,item)
 
 """
     pack_trailing_dims(dictionary::Dict, n::Int64=1)

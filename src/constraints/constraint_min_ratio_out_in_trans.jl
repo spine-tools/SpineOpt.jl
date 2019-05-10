@@ -28,25 +28,11 @@ is specified.
 function constraint_min_ratio_out_in_trans(m::Model)
     @fetch trans = m.ext[:variables]
     for (conn, ng_out, ng_in) in indices( min_ratio_out_in)
-        time_slices_out = [
-            t for (conn, n_out, c, d, t) in trans_indices(
-                connection=conn, node=node_group__node(node_group=ng_out), direction=:to_node
-            )
-        ]
-        time_slices_in = [
+        involved_timeslices = [
             t for (conn, n_in, c, d, t) in trans_indices(
-                connection=conn, node=node_group__node(node_group=ng_in), direction=:from_node
+                connection=conn, node=node_group__node(node_group=[ng_in, ng_out])
             )
         ]
-        involved_timeslices = sort!(unique!([time_slices_out; time_slices_in]))
-        overlaps = sort!(t_overlaps_t(time_slices_in, time_slices_out))
-        if involved_timeslices != overlaps
-            @warn "not all involved timeslices are overlapping, check your temporal_blocks"
-            # NOTE: this is a check for plausibility.
-            # If the user e.g. wants to oconstrain one node of a connection for a certain amount of time,
-            # while the other node is constraint for a longer period, "overlaps" becomes active
-            involved_timeslices = overlaps
-        end
         for t in t_lowest_resolution(involved_timeslices)
             @constraint(
                 m,

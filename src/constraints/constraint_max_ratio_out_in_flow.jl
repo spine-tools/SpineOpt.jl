@@ -28,25 +28,10 @@ is specified.
 function constraint_max_ratio_out_in_flow(m::Model)
     @fetch flow = m.ext[:variables]
     for (u, cg_out, cg_in) in indices(max_ratio_out_in)
-        time_slices_out = [
+        involved_timeslices = [
             t for (u, n, c_out, d, t) in flow_indices(
-                unit=u, commodity=commodity_group__commodity(commodity_group=cg_out), direction=:to_node
-            )
+                unit=u, commodity=commodity_group__commodity(commodity_group=[cg_in,cg_out]))
         ]
-        time_slices_in = [
-            t for (u, n, c_in, d, t) in flow_indices(
-                unit=u, commodity=commodity_group__commodity(commodity_group=cg_in), direction=:from_node
-            )
-        ]
-        involved_timeslices = sort!(unique!([time_slices_out; time_slices_in]))
-        overlaps = sort!(t_overlaps_t(time_slices_in, time_slices_out))
-        if involved_timeslices != overlaps
-            @warn "not all involved timeslices are overlapping, check your temporal_blocks"
-            # NOTE: this is a check for plausibility.
-            # If the user e.g. wants to oconstrain one commodity of a unit for a certain amount of time,
-            # while the other commodity is constraint for a longer period, "overlaps" becomes active
-            involved_timeslices = overlaps
-        end
         for t in t_lowest_resolution(involved_timeslices)
             @constraint(
                 m,
