@@ -27,7 +27,7 @@ attached to model `m`.
 in a certain 'direction'. The direction is relative to the unit.
 """
 function variable_flow(m::Model)
-    m.ext[:variables][:flow] = VariableDict(
+    m.ext[:variables][:flow] = Dict(
         x => @variable(
             m,
             base_name="flow[$(x.unit), $(x.node), $(x.commodity), $(x.direction), $(x.t.JuMP_name)]",

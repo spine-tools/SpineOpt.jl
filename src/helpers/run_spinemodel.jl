@@ -27,7 +27,7 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
     printstyled("Initializing model...\n"; bold=true)
     @time begin
         m = Model(with_optimizer(optimizer))
-        m.ext[:variables] = Dict{Symbol,VariableDict}()
+        m.ext[:variables] = Dict{Symbol,Dict}()
         # Create decision variables
         variable_flow(m)
         variable_units_on(m)

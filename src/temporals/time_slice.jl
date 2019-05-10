@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-mutable struct TimeSlice
+mutable struct TimeSlice <: ObjectLike
     start::DateTime
     end_::DateTime
     duration::Period

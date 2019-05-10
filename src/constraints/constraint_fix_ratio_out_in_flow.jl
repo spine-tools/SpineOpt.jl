@@ -30,7 +30,7 @@ function constraint_fix_ratio_out_in_flow(m::Model)
     for (u, cg_out, cg_in) in indices(fix_ratio_out_in)
         involved_timeslices = [
             t for (u, n, c_out, d, t) in flow_indices(
-                unit=u, commodity=commodity_group__commodity(commodity_group=[cg_in,cg_out]))
+                unit=u, commodity=commodity_group__commodity(commodity_group=[cg_in, cg_out]))
         ]
         for t in t_lowest_resolution(involved_timeslices)
             @constraint(

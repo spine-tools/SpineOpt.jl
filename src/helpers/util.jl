@@ -19,22 +19,11 @@
 
 const iso8601dateformat = dateformat"y-m-dTH:M:Sz"
 
-struct VariableDict
-    d::Dict{NamedTuple,JuMP.VariableRef}
-    k::Tuple
-    function VariableDict(itr...)
-        d = Dict(itr...)
-        k = !isempty(keys(d)) ? keys(first(keys(d))) : ()
-        new(d, k)
-    end
+function Base.getindex(d::Dict{NamedTuple{X,Y},Z}, key::ObjectLike...) where {N,Y<:NTuple{N,ObjectLike},X,Z}
+    isempty(d) && throw(KeyError(key))
+    names = keys(first(keys(d))) # Get names from first key, TODO: check how bad it is for performance
+    Base.getindex(d, NamedTuple{names}(values(key)))
 end
-
-Base.getindex(X::VariableDict; key...) = Base.getindex(X.d, NamedTuple{keys(key)}(values(key)))
-Base.getindex(X::VariableDict, key...) = Base.getindex(X.d, NamedTuple{X.k}(values(key)))
-Base.setindex!(X::VariableDict, value, key...) = Base.setindex!(X.d, value, key...)
-Base.firstindex(X::VariableDict) = Base.firstindex(X.d)
-Base.lastindex(X::VariableDict) = Base.lastindex(X.d)
-Base.push!(X::VariableDict,item) = push!(X.d,item)
 
 """
     pack_trailing_dims(dictionary::Dict, n::Int64=1)
@@ -59,8 +48,6 @@ end
 An equivalent dictionary where values are gathered using `JuMP.value`.
 """
 value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => JuMP.value(v) for (k, v) in d)
-value(var_dict::VariableDict) = value(var_dict.d)
-
 
 """
     @fetch x, y, ... = d
