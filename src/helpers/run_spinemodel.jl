@@ -28,6 +28,7 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
     @time begin
         m = Model(with_optimizer(optimizer))
         m.ext[:variables] = Dict{Symbol,Dict}()
+        m.ext[:constraints] = Dict{Symbol,Dict}()
         # Create decision variables
         variable_flow(m)
         variable_units_on(m)

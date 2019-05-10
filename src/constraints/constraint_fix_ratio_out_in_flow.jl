@@ -27,17 +27,19 @@ is specified.
 """
 function constraint_fix_ratio_out_in_flow(m::Model)
     @fetch flow = m.ext[:variables]
+    constr_dict = m.ext[:constraints][:fix_ratio_out_in_flow] = Dict()
     for (u, cg_out, cg_in) in indices(fix_ratio_out_in)
         involved_timeslices = [
             t for (u, n, c_out, d, t) in flow_indices(
                 unit=u, commodity=commodity_group__commodity(commodity_group=[cg_in, cg_out]))
         ]
         for t in t_lowest_resolution(involved_timeslices)
-            @constraint(
+            constr_dict[u, cg_out, cg_in, t] = @constraint(
                 m,
                 + sum(
-                    flow[u, n, c_out, d, t1] * duration(t1)
-                    for (u, n, c_out, d, t1) in flow_indices(
+                    flow[u_, n, c_out, d, t1] * duration(t1)
+                    for (u_, n, c_out, d, t1) in flow_indices(
+                        unit=u,
                         commodity=commodity_group__commodity(commodity_group=cg_out),
                         direction=:to_node,
                         t=t_in_t(t_long=t)
@@ -46,8 +48,9 @@ function constraint_fix_ratio_out_in_flow(m::Model)
                 ==
                 + fix_ratio_out_in(unit=u, commodity_group1=cg_out, commodity_group2=cg_in, t=t)
                 * sum(
-                    flow[u, n, c_in, d, t1] * duration(t1)
-                    for (u, n, c_in, d, t1) in flow_indices(
+                    flow[u_, n, c_in, d, t1] * duration(t1)
+                    for (u_, n, c_in, d, t1) in flow_indices(
+                        unit=u,
                         commodity=commodity_group__commodity(commodity_group=cg_in),
                         direction=:from_node,
                         t=t_in_t(t_long=t)

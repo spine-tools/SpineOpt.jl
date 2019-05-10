@@ -35,7 +35,7 @@ function constraint_stor_capacity(m::Model)
                 for c in commodity_group__commodity(commodity_group=cg)
             )
             <=
-            stor_state_cap(storage=stor,commodity_group=cg)
+            stor_state_cap(storage=stor, commodity_group=cg)
         )
     end
 end

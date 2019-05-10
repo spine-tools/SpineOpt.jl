@@ -30,12 +30,12 @@ function constraint_stor_state(m::Model)
                 m,
                 + stor_state[c,stor,t2]
                 ==
-                stor_state[c,stor, t1] * (1 - frac_state_loss(commodity=c, storage=stor))
+                stor_state[c,stor, t1] * (1 - frac_state_loss(storage=stor, commodity=c))
                 - reduce(
                     +,
                     flow[u, n, c, :to_node, t1] * stor_discharg_eff(storage=stor, commodity=c, unit=u)
                     for (u, n, c, d, t1) in flow_indices(
-                        unit =unit_stor_discharg_eff_indices(storage=stor, commodity=c),
+                        unit=unit_stor_discharg_eff_indices(storage=stor, commodity=c),
                         commodity=c,
                         t=t2
                     );
@@ -45,7 +45,7 @@ function constraint_stor_state(m::Model)
                     +,
                     flow[u, n, c, :to_node, t1] * stor_charg_eff(storage=stor, commodity=c, unit=u)
                     for (u, n, c, d, t1) in flow_indices(
-                        unit =unit_stor_charg_eff_indices(storage=stor, commodity=c),
+                        unit=unit_stor_charg_eff_indices(storage=stor, commodity=c),
                         commodity=c,
                         t=t2
                     );
@@ -55,7 +55,9 @@ function constraint_stor_state(m::Model)
                     +,
                     trans[conn, n, c, :to_node, t1] * stor_discharg_eff(storage=stor, commodity=c, connection=conn)
                     for (conn, n, c, d, t1) in trans_indices(
-                        conn =conn_stor_discharg_eff_indices(storage=stor, commodity=c),
+                        conn=conn_stor_discharg_eff_indices(
+                            storage=stor, commodity=c
+                        ),
                         commodity=c,
                         t=t2
                     );
@@ -65,7 +67,7 @@ function constraint_stor_state(m::Model)
                     +,
                     trans[conn, n, c, :to_node, t1] * stor_charg_eff(storage=stor, commodity=c, connection=conn)
                     for (conn, n, c, d, t1) in trans_indices(
-                        conn =conn_stor_charg_eff_indices(storage=stor, commodity=c),
+                        conn=conn_stor_charg_eff_indices(storage=stor, commodity=c),
                         commodity=c,
                         t=t2
                     );

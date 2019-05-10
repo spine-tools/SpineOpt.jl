@@ -24,10 +24,10 @@
 Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
 number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
-
+# Can we remove this one? -Manuel
 function constraint_flow_capacity(m::Model)
     @fetch flow = m.ext[:variables]
-    for (u, c, d) in indices(unit_capacity),(u, n, c, d, t) in flow_indices(
+    for (u, c, d) in indices(unit_capacity), (u, n, c, d, t) in flow_indices(
             unit=u, commodity=c, direction=d)
         if all([
             number_of_units(unit=u) != nothing,
@@ -44,6 +44,7 @@ function constraint_flow_capacity(m::Model)
                             * unit_conv_cap_to_flow(unit=u, commodity=c)
             )
         end
+        constr_dict[u, c, d]
     end
 end
 
@@ -55,13 +56,17 @@ Check if `unit_conv_cap_to_flow` is defined.
 """
 function constraint_flow_capacity(m::Model)
     @fetch flow, units_on = m.ext[:variables]
+    constr_dict = m.ext[:constraints][:flow_capacity] = Dict()
     for (u, cg, d) in indices(unit_capacity), t in time_slice()
-        @constraint(
+        constr_dict[u, cg, d] = @constraint(
             m,
             + sum(
                 flow[u1, n1, c1, d1, t1] * duration(t1)
                     for (u1, n1, c1, d1, t1) in flow_indices(
-                        unit=u, commodity=commodity_group__commodity(commodity_group = cg), direction=d, t=t)
+                        unit=u,
+                        commodity=commodity_group__commodity(commodity_group=cg),
+                        direction=d,
+                        t=t)
             )
             <=
             + sum(

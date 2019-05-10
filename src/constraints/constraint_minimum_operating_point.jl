@@ -27,9 +27,10 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 
 function constraint_minimum_operating_point(m::Model)
     @fetch flow, units_on = m.ext[:variables]
+    constr_dict = m.ext[:constraints][:minimum_operating_point] = Dict()
     for (u, cg) in indices(minimum_operating_point), (u, t) in units_on_indices(unit=u),
-        d in unit_capacity_indices(unit=u, commodity_group=cg)
-        @constraint(
+        (u, cg, d) in indices(unit_capacity; unit=u, commodity_group=cg)
+        constr_dict[u, cg, d, t] = @constraint(
             m,
             + sum(
                 flow[u1, n, c, d1, t1]
@@ -41,8 +42,8 @@ function constraint_minimum_operating_point(m::Model)
                     )
             )
             >=
-            + minimum_operating_point(unit=u, commodity_group=cg, t=t)
-                * units_on[u, t]
+            + units_on[u, t]
+                * minimum_operating_point(unit=u, commodity_group=cg, t=t)
                     * number_of_units(unit=u)
                         * unit_capacity(unit=u, commodity_group=cg, direction=d)
                             * unit_conv_cap_to_flow(unit=u, commodity_group=cg)

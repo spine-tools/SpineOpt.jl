@@ -28,9 +28,12 @@ function variable_om_costs(m::Model)
         m,
         reduce(
             +,
-            flow[u, n, c, d, t] * vom_cost(commodity=c, unit=u, direction=d, t=t) * duration(t)
-            for (c_, u_, d_) in indices(vom_cost)
-                for (u, n, c, d, t) in flow_indices(commodity=c_, unit=u_, direction=d_);
+            flow[u, n, c, d, t] * duration(t) * vom_cost(unit=u, commodity_group=cg, direction=d, t=t)
+            for (u_, cg, d_) in indices(vom_cost)
+                for (u, n, c, d, t) in flow_indices(
+                    unit=u_,
+                    commodity=commodity_group__commodity(commodity_group=cg),
+                    direction=d_);
             init=0
         )
     )
