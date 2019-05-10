@@ -28,11 +28,11 @@ in a certain 'direction'. The direction is relative to the unit.
 """
 function variable_flow(m::Model)
     m.ext[:variables][:flow] = Dict(
-        x => @variable(
+        (unit=u, node=n, commodity=c, direction=d, t=t) => @variable(
             m,
-            base_name="flow[$(x.unit), $(x.node), $(x.commodity), $(x.direction), $(x.t.JuMP_name)]",
+            base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]",
             lower_bound=0
-        ) for x in flow_indices()
+        ) for (u, n, c, d, t) in flow_indices()
     )
 end
 

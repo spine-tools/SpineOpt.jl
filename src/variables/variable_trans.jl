@@ -28,11 +28,11 @@ in a certain 'direction'. The direction is relative to the connection.
 """
 function variable_trans(m::Model)
     m.ext[:variables][:trans] = Dict(
-        x => @variable(
+        (connection=conn, node=n, commodity=c, direction=d, t=t) => @variable(
             m,
-            base_name="trans[$(x.connection), $(x.node), $(x.commodity), $(x.direction), $(x.t.JuMP_name)]",
+            base_name="trans[$conn, $n, $c, $d, $(t.JuMP_name)]",
             lower_bound=0
-        ) for x in trans_indices()
+        ) for (conn, n, c, d, t) in trans_indices()
     )
 end
 

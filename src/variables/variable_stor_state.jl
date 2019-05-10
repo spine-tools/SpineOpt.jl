@@ -26,9 +26,9 @@ attached to model `m`.
 """
 function variable_stor_state(m::Model)
     m.ext[:variables][:stor_state] = Dict(
-        x => @variable(
-            m, base_name="stor_state[$(x.stor), $(x.commodity), $(x.t.JuMP_name)]", lower_bound=0
-        ) for x in stor_state_indices()
+        (storage=stor, commodity=c, t=t) => @variable(
+            m, base_name="stor_state[$stor, $c, $(t.JuMP_name)]", lower_bound=0
+        ) for (stor, c, t) in stor_state_indices()
     )
 end
 

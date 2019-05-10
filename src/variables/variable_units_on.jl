@@ -25,9 +25,9 @@
 """
 function variable_units_on(m::Model)
     m.ext[:variables][:units_on] = Dict(
-        x => @variable(
-            m, base_name="units_on[$(x.unit), $(x.t.JuMP_name)]", integer=true, lower_bound=0
-        ) for x in units_on_indices()
+        (unit=u, t=t) => @variable(
+            m, base_name="units_on[$u, $(t.JuMP_name)]", integer=true, lower_bound=0
+        ) for (u, t) in units_on_indices()
     )
 end
 

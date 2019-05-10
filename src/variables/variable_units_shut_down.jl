@@ -25,8 +25,8 @@
 """
 function variable_units_shut_down(m::Model)
     m.ext[:variables][:units_shut_down] = Dict(
-        x => @variable(
-            m, base_name="units_shut_down[$(x.unit), $(x.t.JuMP_name)]", integer=true, lower_bound=0
-        ) for x in units_on_indices()
+        (unit=u, t=t) => @variable(
+            m, base_name="units_shut_down[$u, $(t.JuMP_name)]", integer=true, lower_bound=0
+        ) for (u, t) in units_on_indices()
     )
 end
