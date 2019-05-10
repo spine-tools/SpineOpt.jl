@@ -28,19 +28,17 @@ is specified.
 function constraint_min_ratio_out_in_flow(m::Model)
     @fetch flow = m.ext[:variables]
     for (u, cg_out, cg_in) in indices(min_ratio_out_in)
-        time_slices_out = unique(
+        time_slices_out = [
             t for (u, n, c_out, d, t) in flow_indices(
                 unit=u, commodity=commodity_group__commodity(commodity_group=cg_out), direction=:to_node
             )
-        )
-        time_slices_in = unique(
+        ]
+        time_slices_in = [
             t for (u, n, c_in, d, t) in flow_indices(
                 unit=u, commodity=commodity_group__commodity(commodity_group=cg_in), direction=:from_node
             )
-        )
-        (!isempty(time_slices_out) && !isempty(time_slices_in)) || continue
-        # NOTE: the unique is not really necessary but reduces the timeslices for the next steps
-        involved_timeslices = sort!([time_slices_out; time_slices_in])
+        ]
+        involved_timeslices = sort!(unique!([time_slices_out; time_slices_in]))
         overlaps = sort!(t_overlaps_t(time_slices_in, time_slices_out))
         if involved_timeslices != overlaps
             @warn "not all involved timeslices are overlapping, check your temporal_blocks"
