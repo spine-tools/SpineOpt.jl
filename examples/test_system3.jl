@@ -27,8 +27,8 @@ end
 
 db_url_in = "sqlite:///$(@__DIR__)/data/new_temporal.sqlite"
 db_url_out = "sqlite:///$(@__DIR__)/data/new_temporal_out.sqlite"
-m = #try
+m = try
     run_spinemodel(db_url_in, db_url_out; optimizer=Gurobi.Optimizer)
-# catch
-#      run_spinemodel(db_url_in, db_url_out; optimizer=Cbc.Optimizer)
-# end
+catch
+     run_spinemodel(db_url_in, db_url_out; optimizer=Cbc.Optimizer)
+end
