@@ -86,7 +86,7 @@ export constraint_units_available
 export constraint_minimum_operating_point
 export constraint_min_up_time
 export constraint_min_down_time
-export constraint_commitment_variables
+export constraint_unit_state_transition
 
 # Creating time_slices
 export generate_time_slice
@@ -142,6 +142,6 @@ include("constraints/constraint_units_available.jl")
 include("constraints/constraint_minimum_operating_point.jl")
 include("constraints/constraint_min_up_time.jl")
 include("constraints/constraint_min_down_time.jl")
-include("constraints/constraint_commitment_variables.jl")
+include("constraints/constraint_unit_state_transition.jl")
 
 end

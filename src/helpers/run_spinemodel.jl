@@ -76,7 +76,7 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         constraint_minimum_operating_point(m)
         constraint_min_down_time(m)
         constraint_min_up_time(m)
-        constraint_commitment_variables(m)
+        constraint_unit_state_transition(m)
         # needed: set/group of unitgroup CHP and Gasplant
     end
     # Run model
