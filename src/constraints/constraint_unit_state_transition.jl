@@ -19,14 +19,12 @@
 
 
 """
-    constraint_commitment_variables(m::Model)
+    constraint_unit_state_transition(m::Model)
 
 This constraint ensures consistency between the variables `units_on`, `units_started_up`
 and `units_shut_down`.
 """
-# Can we think of a more generic name than commitment variables?
-
-function constraint_commitment_variables(m::Model)
+function constraint_unit_state_transition(m::Model)
     @fetch units_on, units_started_up, units_shut_down = m.ext[:variables]
     for (u, t_after) in units_on_indices()
         for t_before in t_before_t(t_after=t_after)
