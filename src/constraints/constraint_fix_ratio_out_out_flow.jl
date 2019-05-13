@@ -52,7 +52,7 @@ function constraint_fix_ratio_out_out_flow(m::Model)
                     for (u_, n, c2, d, t1) in flow_indices(
                         unit=u,
                         commodity=commodity_group__commodity(commodity_group=cg2),
-                        direction=:from_node,
+                        direction=:to_node,
                         t=t_in_t(t_long=t)
                     )
                 )

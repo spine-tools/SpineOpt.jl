@@ -41,7 +41,7 @@ function constraint_max_ratio_in_in_flow(m::Model)
                     for (u_, n, c1, d, t1) in flow_indices(
                         unit=u,
                         commodity=commodity_group__commodity(commodity_group=cg1),
-                        direction=:to_node,
+                        direction=:from_node,
                         t=t_in_t(t_long=t)
                     )
                 )
