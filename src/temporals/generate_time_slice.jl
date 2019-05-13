@@ -30,10 +30,8 @@ If 'temporal_block' is not `nothing`, return only the time slices in that block.
 function (time_slice::TimeSliceFunction)(;temporal_block=nothing)
     if temporal_block == nothing
         time_slice.list
-    elseif haskey(time_slice.temporal_block_list, temporal_block)
-        time_slice.temporal_block_list[temporal_block]
     else
-        error("temporal block '$temporal_block' not defined")
+        [t for tblk in temporal_block for ts in time_slice.temporal_block_list[tblk] for t in ts]
     end
 end
 
