@@ -24,7 +24,7 @@ Enforce balance of all commodity flows from and to a node.
 """
 function constraint_nodal_balance(m::Model)
 	@fetch flow, trans = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:flow_capacity] = Dict()
+    constr_dict = m.ext[:constraints][:nodal_balance] = Dict()
 	for (n, tblock) in node__temporal_block()
         for t in time_slice(temporal_block=tblock)
             constr_dict[n, t] = @constraint(

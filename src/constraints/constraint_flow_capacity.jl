@@ -17,37 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
-"""
-    constraint_flow_capacity(m::Model, flow)
-
-Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
-number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
-"""
-# Can we remove this one? -Manuel
-function constraint_flow_capacity(m::Model)
-    @fetch flow = m.ext[:variables]
-    for (u, c, d) in indices(unit_capacity), (u, n, c, d, t) in flow_indices(
-            unit=u, commodity=c, direction=d)
-        if all([
-            number_of_units(unit=u) != nothing,
-            unit_conv_cap_to_flow(unit=u, commodity=c) != nothing,
-            avail_factor(unit=u) != nothing
-        ])
-            @constraint(
-                m,
-                + flow[u, n, c, d, t]
-                <=
-                + avail_factor(unit=u)
-                    * unit_capacity(unit=u, commodity=c, direction=d)
-                        * number_of_units(unit=u)
-                            * unit_conv_cap_to_flow(unit=u, commodity=c)
-            )
-        end
-        constr_dict[u, c, d]
-    end
-end
-
 """
     constraint_flow_capacity(m::Model)
 
