@@ -39,7 +39,11 @@ function pack_trailing_dims(dictionary::Dict{S,T}, n::Int64=1) where {S<:NamedTu
         right_dict = get!(left_dict, left_key, Dict())
         right_dict[right_key] = value
     end
-    Dict(key => reshape([v for (k, v) in sort(collect(value))], :, n) for (key, value) in left_dict)
+    if n > 1
+        Dict(key => reshape([v for (k, v) in sort(collect(value))], n, :) for (key, value) in left_dict)
+    else
+        Dict(key => [v for (k, v) in sort(collect(value))] for (key, value) in left_dict)
+    end
 end
 
 """

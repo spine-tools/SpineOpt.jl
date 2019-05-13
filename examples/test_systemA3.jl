@@ -17,7 +17,7 @@ import SpineModel: duration
 ### flow_coeff(cstr, CHP1, elec) = Pbeta
 ### flow_coeff(cstr, CHP1, heat) = Qbeta
 ### units_on_coeff(cstr, CHP1) = -Pbeta*Pmax
-# BP_OperationStatus[n=BckP,t=1:T], U[n,t] == M1[n,t] + M2[n,t] => M1[n,t] + M2[n,t] <= 1
+# BP_OperationStatus[n=BckP,t=1:T], U[n,t] == M1[n,t] + M2[n,t] <=> M1[n,t] + M2[n,t] <= 1
 ### units_on_coeff(cstr, CHP8_CHP_mode) = 1
 ### units_on_coeff(cstr, CHP8_boiler_mode) = 1
 
@@ -70,12 +70,3 @@ end
 db_url_in = "sqlite:////home/manuelma/Codes/spine/toolbox/projects/case_study_a3/input/input.sqlite"
 db_url_out = "sqlite:////home/manuelma/Codes/spine/toolbox/projects/case_study_a3/output/output.sqlite"
 m = run_spinemodel(db_url_in, db_url_out; extend_model=extend_model)
-
-
-
-# constraint_flow_capacity
-##########################
-# GT_PowerMax[n=GasT,t=1:T], P[n,t] <= Pmax[n]*U[n,t]
-# HB_Max[n=HeatB,t=1:T], Q[n,t] <= Qmax[n]*U[n,t]
-# BP_CHPModePowerMax[n=BckP,t=1:T], P[n,t] <= Pmax[n]*M1[n,t]
-# BP_BoilerModeHeatMax[n=BckP,t=1:T], QM2[n,t] <= Qmax[n]*M2[n,t]
