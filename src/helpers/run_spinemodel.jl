@@ -49,6 +49,12 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         constraint_fix_ratio_out_in_flow(m)
         constraint_max_ratio_out_in_flow(m)
         constraint_min_ratio_out_in_flow(m)
+        # Ratio of out/out flows of a unit
+        constraint_fix_ratio_out_out_flow(m)
+        constraint_max_ratio_out_out_flow(m)
+        # Ratio of in/in flows of a unit
+        constraint_fix_ratio_in_in_flow(m)
+        constraint_max_ratio_in_in_flow(m)
         # Transmission losses
         constraint_fix_ratio_out_in_trans(m)
         constraint_max_ratio_out_in_trans(m)

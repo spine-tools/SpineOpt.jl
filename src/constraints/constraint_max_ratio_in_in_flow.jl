@@ -19,16 +19,16 @@
 
 
 """
-    constraint_max_ratio_out_out_flow(m::Model)
+    constraint_max_ratio_in_in_flow(m::Model)
 
-Maximum ratio between the output `flow` of two `commodity_group`s
-for each `unit` for which the parameter `max_ratio_out_out`
+Maximum ratio between the input `flow` of two `commodity_group`s
+for each `unit` for which the parameter `max_ratio_in_in`
 is specified.
 """
-function constraint_max_ratio_out_out_flow(m::Model)
+function constraint_max_ratio_in_in_flow(m::Model)
     @fetch flow = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:max_ratio_out_out_flow] = Dict()
-    for (u, cg1, cg2) in indices(max_ratio_out_out)
+    constr_dict = m.ext[:constraints][:max_ratio_in_in_flow] = Dict()
+    for (u, cg1, cg2) in indices(max_ratio_in_in)
         involved_timeslices = [
             t for (u, n, c, d, t) in flow_indices(
                 unit=u, commodity=commodity_group__commodity(commodity_group=[cg1, cg2]))
@@ -46,7 +46,7 @@ function constraint_max_ratio_out_out_flow(m::Model)
                     )
                 )
                 <=
-                + max_ratio_out_out(unit=u, commodity_group1=cg1, commodity_group2=cg2, t=t)
+                + max_ratio_in_in(unit=u, commodity_group1=cg1, commodity_group2=cg2, t=t)
                 * sum(
                     flow[u_, n, c2, d, t1] * duration(t1)
                     for (u_, n, c2, d, t1) in flow_indices(
