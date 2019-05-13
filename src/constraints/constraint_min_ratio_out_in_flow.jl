@@ -29,7 +29,7 @@ function constraint_min_ratio_out_in_flow(m::Model)
     @fetch flow = m.ext[:variables]
     for (u, cg_out, cg_in) in indices(min_ratio_out_in)
         involved_timeslices = [
-            t for (u, n, c_out, d, t) in flow_indices(
+            t for (u, n, c, d, t) in flow_indices(
                 unit=u, commodity=commodity_group__commodity(commodity_group=[cg_in,cg_out]))
         ]
         for t in t_lowest_resolution(involved_timeslices)

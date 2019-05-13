@@ -22,7 +22,7 @@
     constraint_fix_ratio_out_in_flow(m::Model)
 
 Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of a
-`commodity_group` for each `unit` for which the parameter `fix_ratio_out_in_flow`
+`commodity_group` for each `unit` for which the parameter `fix_ratio_out_in`
 is specified.
 """
 function constraint_fix_ratio_out_in_flow(m::Model)
@@ -30,7 +30,7 @@ function constraint_fix_ratio_out_in_flow(m::Model)
     constr_dict = m.ext[:constraints][:fix_ratio_out_in_flow] = Dict()
     for (u, cg_out, cg_in) in indices(fix_ratio_out_in)
         involved_timeslices = [
-            t for (u, n, c_out, d, t) in flow_indices(
+            t for (u, n, c, d, t) in flow_indices(
                 unit=u, commodity=commodity_group__commodity(commodity_group=[cg_in, cg_out]))
         ]
         for t in t_lowest_resolution(involved_timeslices)

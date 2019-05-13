@@ -29,7 +29,7 @@ function constraint_min_ratio_out_in_trans(m::Model)
     @fetch trans = m.ext[:variables]
     for (conn, ng_out, ng_in) in indices( min_ratio_out_in)
         involved_timeslices = [
-            t for (conn, n_in, c, d, t) in trans_indices(
+            t for (conn, n, c, d, t) in trans_indices(
                 connection=conn, node=node_group__node(node_group=[ng_in, ng_out])
             )
         ]

@@ -68,6 +68,8 @@ export constraint_flow_capacity
 export constraint_fix_ratio_out_in_flow
 export constraint_max_ratio_out_in_flow
 export constraint_min_ratio_out_in_flow
+export constraint_fix_ratio_out_out_flow
+export constraint_max_ratio_out_out_flow
 export constraint_max_cum_in_flow_bound
 export constraint_fix_ratio_out_in_trans
 export constraint_max_ratio_out_in_trans
@@ -125,6 +127,8 @@ include("constraints/constraint_min_ratio_out_in_flow.jl")
 include("constraints/constraint_fix_ratio_out_in_trans.jl")
 include("constraints/constraint_max_ratio_out_in_trans.jl")
 include("constraints/constraint_min_ratio_out_in_trans.jl")
+include("constraints/constraint_fix_ratio_out_out_flow.jl")
+include("constraints/constraint_max_ratio_out_out_flow.jl")
 include("constraints/constraint_trans_capacity.jl")
 include("constraints/constraint_stor_capacity.jl")
 include("constraints/constraint_stor_state.jl")

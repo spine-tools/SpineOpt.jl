@@ -19,36 +19,39 @@
 
 
 """
-    constraint_max_ratio_out_in_flow(m::Model)
+    constraint_fix_ratio_out_out_flow(m::Model)
 
-Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of a
-`commodity_group` for each `unit` for which the parameter `max_ratio_out_in_flow`
+Fix ratio between the output `flow` of two `commodity_group`s
+for each `unit` for which the parameter `fix_ratio_out_out`
 is specified.
 """
-function constraint_max_ratio_out_in_flow(m::Model)
+function constraint_fix_ratio_out_out_flow(m::Model)
     @fetch flow = m.ext[:variables]
-    for (u, cg_out, cg_in) in indices(max_ratio_out_in)
+    constr_dict = m.ext[:constraints][:fix_ratio_out_out_flow] = Dict()
+    for (u, cg2, cg1) in indices(fix_ratio_out_out)
         involved_timeslices = [
             t for (u, n, c, d, t) in flow_indices(
-                unit=u, commodity=commodity_group__commodity(commodity_group=[cg_in,cg_out]))
+                unit=u, commodity=commodity_group__commodity(commodity_group=[cg2, cg1]))
         ]
         for t in t_lowest_resolution(involved_timeslices)
-            @constraint(
+            constr_dict[u, cg2, cg1, t] = @constraint(
                 m,
                 + sum(
-                    flow[u, n, c_out, d, t1] * duration(t1)
-                    for (u, n, c_out, d, t1) in flow_indices(
-                        commodity=commodity_group__commodity(commodity_group=cg_out),
+                    flow[u_, n, c2, d, t1] * duration(t1)
+                    for (u_, n, c2, d, t1) in flow_indices(
+                        unit=u,
+                        commodity=commodity_group__commodity(commodity_group=cg2),
                         direction=:to_node,
                         t=t_in_t(t_long=t)
                     )
                 )
-                <=
-                + max_ratio_out_in(unit=u, commodity_group1=cg_out, commodity_group2=cg_in, t=t)
+                ==
+                + fix_ratio_out_out(unit=u, commodity_group2=cg2, commodity_group1=cg1, t=t)
                 * sum(
-                    flow[u, n, c_in, d, t1] * duration(t1)
-                    for (u, n, c_in, d, t1) in flow_indices(
-                        commodity=commodity_group__commodity(commodity_group=cg_in),
+                    flow[u_, n, c1, d, t1] * duration(t1)
+                    for (u_, n, c1, d, t1) in flow_indices(
+                        unit=u,
+                        commodity=commodity_group__commodity(commodity_group=cg1),
                         direction=:from_node,
                         t=t_in_t(t_long=t)
                     )
