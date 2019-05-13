@@ -16,7 +16,25 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Optimizer, cleanup=true)
+"""
+    run_spinemodel(db_url; optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing)
+
+Run the Spine model from `db_url` and write results to the same url.
+"""
+# TODO: explain kwargs
+function run_spinemodel(db_url::String; optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing)
+    run_spinemodel(db_url, db_url; optimizer=optimizer, cleanup=cleanup, extend_model=extend_model)
+end
+
+"""
+    run_spinemodel(db_url_in, db_url_out; optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing)
+
+Run the Spine model from `db_url_in` and write results to `db_url_out`.
+"""
+function run_spinemodel(
+        db_url_in::String, db_url_out::String;
+        optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing
+    )
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinemodeldb(db_url_in; upgrade=true)
     printstyled("Creating temporal structure...\n"; bold=true)
@@ -60,7 +78,7 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         constraint_max_ratio_out_in_trans(m)
         constraint_min_ratio_out_in_trans(m)
         # Transmission line capacity
-        #constraint_trans_capacity(m)
+        # constraint_trans_capacity(m)
         # Nodal balance
         constraint_nodal_balance(m)
         # Absolute bounds on commodities
@@ -70,14 +88,14 @@ function run_spinemodel(db_url_in::String, db_url_out::String; optimizer=Clp.Opt
         # storage state balance equation
         constraint_stor_state_init(m)
         constraint_stor_state(m)
-
+        # commitment stuff
         constraint_units_on(m)
         constraint_units_available(m)
         constraint_minimum_operating_point(m)
         constraint_min_down_time(m)
         constraint_min_up_time(m)
         constraint_unit_state_transition(m)
-        # needed: set/group of unitgroup CHP and Gasplant
+        extend_model(m)
     end
     # Run model
     printstyled("Solving model...\n"; bold=true)
