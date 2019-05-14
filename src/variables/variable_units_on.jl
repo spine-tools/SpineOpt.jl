@@ -24,11 +24,32 @@
 #TODO: add model descirption here
 """
 function variable_units_on(m::Model)
-    m.ext[:variables][:units_on] = Dict(
+    m.ext[:variables][:units_on1] = Dict(
         (unit=u, t=t) => @variable(
             m, base_name="units_on[$u, $(t.JuMP_name)]", integer=true, lower_bound=0
-        ) for (u, t) in units_on_indices()
+        ) for (u, t) in units_on_indices() if online_variable_type(unit=u) == :integer_online_variable
     )
+    m.ext[:variables][:units_on2] = Dict(
+        (unit=u, t=t) => @variable(
+            m, base_name="units_on[$u, $(t.JuMP_name)]", binary=true
+        ) for (u, t) in units_on_indices() if online_variable_type(unit=u) == :binary_online_variable
+    )
+    m.ext[:variables][:units_on3] = Dict(
+        (unit=u, t=t) => @variable(
+            m, base_name="units_on[$u, $(t.JuMP_name)]", lower_bound=0
+        ) for (u, t) in units_on_indices() if online_variable_type(unit=u) == :continuous_online_variable
+    )
+    m.ext[:variables][:units_on4] = Dict(
+        (unit=u, t=t) => @variable(
+            m, base_name="units_on[$u, $(t.JuMP_name)]", lower_bound=1 , upper_bound=1
+        ) for (u, t) in units_on_indices() if online_variable_type(unit=u) == :no_online_variable
+    )
+    m.ext[:variables][:units_on] = merge(
+                                    m.ext[:variables][:units_on1],
+                                    m.ext[:variables][:units_on2],
+                                    m.ext[:variables][:units_on3],
+                                    m.ext[:variables][:units_on4]
+                                    )
 end
 
 
