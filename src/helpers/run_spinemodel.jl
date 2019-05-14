@@ -22,8 +22,13 @@
 Run the Spine model from `db_url` and write results to the same url.
 """
 # TODO: explain kwargs
-function run_spinemodel(db_url::String; optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing)
-    run_spinemodel(db_url, db_url; optimizer=optimizer, cleanup=cleanup, extend_model=extend_model)
+function run_spinemodel(
+        db_url::String; optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing, result_name=""
+    )
+    run_spinemodel(
+        db_url, db_url;
+        optimizer=optimizer, cleanup=cleanup, extend_model=extend_model, result_name=result_name
+    )
 end
 
 """
@@ -33,7 +38,7 @@ Run the Spine model from `db_url_in` and write results to `db_url_out`.
 """
 function run_spinemodel(
         db_url_in::String, db_url_out::String;
-        optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing
+        optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing, result_name=""
     )
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinemodeldb(db_url_in; upgrade=true)
@@ -108,6 +113,7 @@ function run_spinemodel(
         @fetch flow, units_started_up, units_shut_down, units_on = m.ext[:variables]
         @time write_results(
              db_url_out;
+             result_name=result_name,
              flow=pack_trailing_dims(SpineModel.value(flow), 1),
              units_started_up=pack_trailing_dims(SpineModel.value(units_started_up), 1),
              units_shut_down=pack_trailing_dims(SpineModel.value(units_shut_down), 1),

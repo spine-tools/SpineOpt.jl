@@ -6,9 +6,9 @@ using JuMP
 import SpineModel: duration
 
 # E_Fuel[n=ExtrS,t=1:T], Pfuel[n,t] == (1/efficiency[n]) * (Pbeta[n]*P[n,t] + Qbeta[n]*Q[n,t])
-### flow_coeff(cstr, CHP1, fuel) = 1
-### flow_coeff(cstr, CHP1, elec) = (1/eff)*Pbeta
-### flow_coeff(cstr, CHP1, heat) = (1/eff)*Qbeta
+### flow_coeff(cstr, CHP1, fuel) = eff
+### flow_coeff(cstr, CHP1, elec) = Pbeta
+### flow_coeff(cstr, CHP1, heat) = Qbeta
 # E_Feasible2[n=ExtrS,t=1:T], Pbeta[n]*P[n,t] + Qbeta[n]*Q[n,t] >= Pbeta[n]*Pmin[n]*U[n,t]
 ### flow_coeff(cstr, CHP1, elec) = -Pbeta
 ### flow_coeff(cstr, CHP1, heat) = -Qbeta
@@ -20,7 +20,10 @@ import SpineModel: duration
 # BP_OperationStatus[n=BckP,t=1:T], U[n,t] == M1[n,t] + M2[n,t] <=> M1[n,t] + M2[n,t] <= 1
 ### units_on_coeff(cstr, CHP8_CHP_mode) = 1
 ### units_on_coeff(cstr, CHP8_boiler_mode) = 1
-
+# BP_Fuel[n=GB,t=1:T], Pfuel[n,t] == (1/efficiency[n]) * (P[n,t]+Q[n,t]) # Ok
+### flow_coeff(cstr, CHP8_CHP_mode, fuel) = -1
+### flow_coeff(cstr, CHP8_CHP_mode, electricity) = 1/efficiency
+### flow_coeff(cstr, CHP8_CHP_mode, head) = 1/efficiency
 function constraint_flow_affine_expr(m::Model)
     @fetch flow, units_on = m.ext[:variables]
     constr_dict = m.ext[:constraints][:flow_affine_expr] = Dict()
@@ -69,4 +72,4 @@ end
 
 db_url_in = "sqlite:////home/manuelma/Codes/spine/toolbox/projects/case_study_a3/input/input.sqlite"
 db_url_out = "sqlite:////home/manuelma/Codes/spine/toolbox/projects/case_study_a3/output/output.sqlite"
-m = run_spinemodel(db_url_in, db_url_out; extend_model=extend_model)
+m = run_spinemodel(db_url_in, db_url_out; extend_model=extend_model, result_name="testing")
