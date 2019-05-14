@@ -56,7 +56,7 @@ function constraint_nodal_balance(m::Model)
                 - reduce(
                     +,
                     trans[conn, n, c, d, t1] * duration(t1)
-                    for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=:to_node);
+                    for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=:from_node);
                     init=0
                 )
             )

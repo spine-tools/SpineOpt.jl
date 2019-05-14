@@ -110,7 +110,7 @@ function run_spinemodel(
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
         printstyled("Writing results to the database...\n"; bold=true)
-        @fetch flow, units_started_up, units_shut_down, units_on = m.ext[:variables]
+        @fetch flow, units_started_up, units_shut_down, units_on, trans = m.ext[:variables]
         @time write_results(
              db_url_out;
              result_name=result_name,
@@ -118,7 +118,7 @@ function run_spinemodel(
              units_started_up=pack_trailing_dims(SpineModel.value(units_started_up), 1),
              units_shut_down=pack_trailing_dims(SpineModel.value(units_shut_down), 1),
              units_on=pack_trailing_dims(SpineModel.value(units_on), 1),
-             #trans=pack_trailing_dims(SpineModel.value(trans), 1),
+             trans=pack_trailing_dims(SpineModel.value(trans), 1),
              #stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
         )
     end

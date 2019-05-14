@@ -27,6 +27,7 @@ is specified.
 """
 function constraint_fix_ratio_out_in_trans(m::Model)
     @fetch trans = m.ext[:variables]
+    constr_dict = m.ext[:constraints][:fix_ratio_out_in_trans] = Dict()
     for (conn, ng_out, ng_in) in indices(fix_ratio_out_in)
         involved_timeslices = [
             t for (conn, n, c, d, t) in trans_indices(
@@ -34,7 +35,7 @@ function constraint_fix_ratio_out_in_trans(m::Model)
             )
         ]
         for t in t_lowest_resolution(involved_timeslices)
-            @constraint(
+            constr_dict[conn, ng_out, ng_in, t] = @constraint(
                 m,
                 + sum(
                     trans[conn, n_out, c, d, t1] * duration(t1)
