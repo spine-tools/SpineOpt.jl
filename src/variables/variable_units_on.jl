@@ -24,32 +24,36 @@
 #TODO: add model descirption here
 """
 function variable_units_on(m::Model)
-    m.ext[:variables][:units_on1] = Dict(
+    m.ext[:variables][:integer_units_on] = Dict{NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}},Any}(
         (unit=u, t=t) => @variable(
             m, base_name="units_on[$u, $(t.JuMP_name)]", integer=true, lower_bound=0
-        ) for (u, t) in units_on_indices() if online_variable_type(unit=u) == :integer_online_variable
+        ) for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :integer_online_variable
     )
-    m.ext[:variables][:units_on2] = Dict(
+    m.ext[:variables][:binary_units_on] = Dict{NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}},Any}(
         (unit=u, t=t) => @variable(
             m, base_name="units_on[$u, $(t.JuMP_name)]", binary=true
-        ) for (u, t) in units_on_indices() if online_variable_type(unit=u) == :binary_online_variable
+        ) for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :binary_online_variable
     )
-    m.ext[:variables][:units_on3] = Dict(
+    m.ext[:variables][:continuous_units_on] = Dict{NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}},Any}(
         (unit=u, t=t) => @variable(
             m, base_name="units_on[$u, $(t.JuMP_name)]", lower_bound=0
-        ) for (u, t) in units_on_indices() if online_variable_type(unit=u) == :continuous_online_variable
+        ) for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :continuous_online_variable
     )
-    m.ext[:variables][:units_on4] = Dict(
+    m.ext[:variables][:no_units_on] = Dict{NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}},Any}(
         (unit=u, t=t) => @variable(
             m, base_name="units_on[$u, $(t.JuMP_name)]", lower_bound=1 , upper_bound=1
-        ) for (u, t) in units_on_indices() if online_variable_type(unit=u) == :no_online_variable
+        ) for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :no_online_variable
+    )
+    m.ext[:variables][:fix_units_on] = Dict{NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}},Any}(
+        (unit=u, t=t) => fix_units_on(unit=u, t=t) for (u, t) in fix_units_on_indices()
     )
     m.ext[:variables][:units_on] = merge(
-                                    m.ext[:variables][:units_on1],
-                                    m.ext[:variables][:units_on2],
-                                    m.ext[:variables][:units_on3],
-                                    m.ext[:variables][:units_on4]
-                                    )
+        m.ext[:variables][:integer_units_on],
+        m.ext[:variables][:binary_units_on],
+        m.ext[:variables][:continuous_units_on],
+        m.ext[:variables][:no_units_on],
+        m.ext[:variables][:fix_units_on]
+    )
 end
 
 
@@ -60,9 +64,22 @@ A set of tuples for indexing the `units_on` variable. Any filtering options can 
 for `unit` and `t`.
 """
 function units_on_indices(;unit=anything, t=anything)
+    [var_units_on_indices(unit=unit, t=t); fix_units_on_indices(unit=unit, t=t)]
+end
+
+function var_units_on_indices(;unit=anything, t=anything)
     [
         (unit=u, t=t1)
         for u in intersect(SpineModel.unit(), unit)
             for t1 in intersect(t_highest_resolution([x.t for x in flow_indices(unit=u)]), t)
+    ]
+end
+
+function fix_units_on_indices(;unit=anything, t=anything)
+    [
+        (unit=u, t=t1)
+        for (u,) in indices(fix_units_on; unit=unit)
+            if fix_units_on(unit=u) isa TimeSeriesValue
+                for t1 in intersect(TimeSlice.(indices(fix_units_on(unit=u))), t)
     ]
 end

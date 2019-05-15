@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-mutable struct TimeSlice <: ObjectLike
+struct TimeSlice <: ObjectLike
     start::DateTime
     end_::DateTime
     duration::Period
@@ -25,7 +25,8 @@ mutable struct TimeSlice <: ObjectLike
     TimeSlice(x, y, n) = x > y ? error("out of order") : new(x, y, Minute(y - x), n)
 end
 
-TimeSlice(start::DateTime, end_::DateTime) = TimeSlice(start, end_, nothing)
+TimeSlice(start::DateTime, end_::DateTime) = TimeSlice(start, end_, "tb0__t0")
+TimeSlice(start::DateTime) = TimeSlice(start, start + Minute(1))
 
 function Base.show(io::IO, time_slice::TimeSlice)
     str = "$(time_slice.start)...$(time_slice.end_)"
@@ -41,6 +42,9 @@ end
 The duration of time slice `t` (in minutes).
 """
 duration(t::TimeSlice) = t.duration.value
+
+start(t::TimeSlice) = t.start
+end_(t::TimeSlice) = t.end_
 
 Base.isless(a::TimeSlice, b::TimeSlice) = tuple(a.start, a.end_) < tuple(b.start, b.end_)
 
