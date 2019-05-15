@@ -26,17 +26,16 @@ and `units_shut_down`.
 """
 function constraint_unit_state_transition(m::Model)
     @fetch units_on, units_started_up, units_shut_down = m.ext[:variables]
-    for (u, t_after) in units_on_indices()
-        for t_before in t_before_t(t_after=t_after)
-            if !isempty(t_before) && t_before in [t for (u,t) in units_on_indices(unit=u)]
-                @constraint(
-                    m,
-                    + units_on[u, t_after]
-                    ==
-                    + units_on[u, t_before]
-                    + units_started_up[u, t_after] - units_shut_down[u, t_after]
-                )
-            end
+    constr_dict = m.ext[:constraints][:unit_state_transition] = Dict()
+    for (u_, t_after) in units_on_indices()
+        for (u, t_before) in units_on_indices(unit=u_, t=t_before_t(t_after=t_after))
+            constr_dict[u, t_before, t_after] = @constraint(
+                m,
+                + units_on[u, t_after]
+                ==
+                + units_on[u, t_before]
+                + units_started_up[u, t_after] - units_shut_down[u, t_after]
+            )
         end
     end
 end
