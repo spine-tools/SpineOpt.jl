@@ -21,7 +21,7 @@ const iso8601dateformat = dateformat"y-m-dTH:M:Sz"
 
 function Base.getindex(d::Dict{NamedTuple{X,Y},Z}, key::ObjectLike...) where {N,Y<:NTuple{N,ObjectLike},X,Z}
     isempty(d) && throw(KeyError(key))
-    names = keys(first(keys(d))) # Get names from first key, TODO: check how bad it is for performance
+    names = keys(first(keys(d))) # Get names from first key, TODO: check how bad this is for performance
     Base.getindex(d, NamedTuple{names}(values(key)))
 end
 
@@ -49,9 +49,9 @@ end
 """
     value(d::Dict)
 
-An equivalent dictionary where values are gathered using `JuMP.value`.
+An equivalent dictionary where `JuMP.VariableRef` values are gathered using `JuMP.value`.
 """
-value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => JuMP.value(v) for (k, v) in d)
+value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => JuMP.value(v) for (k, v) in d if v isa JuMP.VariableRef)
 
 """
     @fetch x, y, ... = d
@@ -147,11 +147,3 @@ end
 Test whether `b` is fully contained in `a`.
 """
 range_in(b::UnitRange{Int64}, a::UnitRange{Int64}) = b.start >= a.start && b.stop <= a.stop
-
-"""
-    spinemodeldb_handle(db_url)
-
-"""
-function using_spinemodeldb(db_url; upgrade=false)
-    using_spinedb(db_url; parse_value=parse_value, upgrade=upgrade)
-end

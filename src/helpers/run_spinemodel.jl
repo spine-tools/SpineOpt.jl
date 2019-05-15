@@ -41,7 +41,7 @@ function run_spinemodel(
         optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing, result_name=""
     )
     printstyled("Creating convenience functions...\n"; bold=true)
-    @time using_spinemodeldb(db_url_in; upgrade=true)
+    @time using_spinedb(db_url_in; upgrade=true)
     printstyled("Creating temporal structure...\n"; bold=true)
     @time begin
         generate_time_slice()

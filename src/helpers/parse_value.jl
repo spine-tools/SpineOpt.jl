@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+import SpineInterface: parse_value
+
 """
     parse_value(db_value; default, tags...)
 
@@ -27,7 +29,7 @@ function parse_value(db_value::Int64; duration=false, kwargs...)
     if duration
         ScalarValue(parse_duration(db_value))
     else
-        SpineInterface.parse_value(db_value; kwargs...)
+        ScalarValue(db_value)
     end
 end
 
@@ -39,7 +41,7 @@ function parse_value(db_value::String; date_time=false, duration=false, kwargs..
     elseif duration
         ScalarValue(parse_duration(db_value))
     else
-        SpineInterface.parse_value(db_value; kwargs...)
+        ScalarValue(db_value)
     end
 end
 
@@ -51,7 +53,7 @@ function parse_value(db_value::Array; default=nothing, duration=false, time_seri
     elseif time_series
         TimeSeriesValue(db_value, default)
     else
-        SpineInterface.parse_value(db_value; kwargs...)
+        ArrayValue(parse_value.(db_value))
     end
 end
 
@@ -71,8 +73,6 @@ function parse_value(db_value::Dict; default=nothing, time_pattern=false, time_s
     elseif time_series
         TimeSeriesValue(db_value, default)
     else
-        SpineInterface.parse_value(db_value; kwargs...)
+        DictValue(k => parse_value(v) for (k, v) in db_value)
     end
 end
-
-parse_value(db_value; kwargs...) = SpineInterface.parse_value(db_value; kwargs...)
