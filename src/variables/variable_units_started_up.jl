@@ -19,7 +19,7 @@
 
 
 """
-    generate_units_started_up(m::Model)
+    variable_units_started_up(m::Model)
 
 #TODO: add model descirption here
 """

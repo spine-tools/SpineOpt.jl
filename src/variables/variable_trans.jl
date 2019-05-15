@@ -19,7 +19,7 @@
 
 
 """
-    generate_variable_trans(m::Model)
+    variable_trans(m::Model)
 
 A `trans` variable (short for transfer)
 for each tuple of `commodity__node__unit__direction__time_slice`, attached to model `m`.

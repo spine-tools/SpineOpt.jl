@@ -18,7 +18,7 @@
 #############################################################################
 
 """
-    generate_variable_stor_state(m::Model)
+    variable_stor_state(m::Model)
 
 A `stor_level` variable for each tuple returned by `commodity__stor()`,
 attached to model `m`.
