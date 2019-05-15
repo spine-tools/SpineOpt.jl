@@ -22,15 +22,15 @@ struct TimePatternValue
     default
 end
 
-struct TimeSeriesValue{I,V}
-    indexes::I
+struct TimeSeriesValue{I,V,DV}
+    indices::I
     values::Array{V,1}
-    default::V
+    default::DV
     ignore_year::Bool
     repeat::Bool
     span::Period
     mean_value::V
-    function TimeSeriesValue(i::I, v::Array{V,1}, d, iy=false, r=false) where {I,V}
+    function TimeSeriesValue(i::I, v::Array{V,1}, d::DV, iy=false, r=false) where {I,V,DV}
         if length(i) != length(v)
             error("lengths don't match")
         else
@@ -42,7 +42,7 @@ struct TimeSeriesValue{I,V}
                 s = zero(Hour)
                 mv = zero(V)
             end
-            new{I,V}(i, v, d, iy, r, s, mv)
+            new{I,V,DV}(i, v, d, iy, r, s, mv)
         end
     end
 end
@@ -66,7 +66,7 @@ function TimeSeriesValue(db_value::Array, default)
 end
 
 function TimeSeriesValue(data::Dict, metadata::Dict, default)
-    # Indexes come with data, so just look for "ignore_year" in metadata
+    # indices come with data, so just look for "ignore_year" in metadata
     repeat = false
     ignore_year = get(metadata, "ignore_year", false)
     data = Dict(DateTime(k) => v for (k, v) in data)
@@ -134,7 +134,7 @@ function (p::TimePatternValue)(;t::Union{TimeSlice,Nothing}=nothing)
 end
 
 function (p::TimeSeriesValue)(;t::Union{TimeSlice,Nothing}=nothing)
-    t === nothing && error("argument `t` missing")
+    t === nothing && return p
     start = t.start
     end_ = t.end_
     duration = t.duration
@@ -144,21 +144,21 @@ function (p::TimeSeriesValue)(;t::Union{TimeSlice,Nothing}=nothing)
     end
     if p.repeat
         repetitions = 0
-        if start > p.indexes[end]
-            # Move start back within indexes range
-            mismatch = start - p.indexes[1]
+        if start > p.indices[end]
+            # Move start back within indices range
+            mismatch = start - p.indices[1]
             repetitions = div(mismatch, p.span)
             start -= repetitions * p.span
             end_ = start + duration
         end
-        if end_ > p.indexes[end]
-            # Move end_ back within indexes range
-            mismatch = end_ - p.indexes[1]
+        if end_ > p.indices[end]
+            # Move end_ back within indices range
+            mismatch = end_ - p.indices[1]
             repetitions = div(mismatch, p.span)
             end_ -= repetitions * p.span
         end
-        a = findfirst(i -> i >= start, p.indexes)
-        b = findlast(i -> i < end_, p.indexes)
+        a = findfirst(i -> i >= start, p.indices)
+        b = findlast(i -> i < end_, p.indices)
         if a === nothing || b === nothing
             @warn("$p is not defined on $t, using default value...")
             p.default
@@ -171,8 +171,8 @@ function (p::TimeSeriesValue)(;t::Union{TimeSlice,Nothing}=nothing)
             value + repetitions * p.mean_value  # repetitions holds the number of rolls we move back the end
         end
     else
-        a = findfirst(i -> i >= start, p.indexes)
-        b = findlast(i -> i < end_, p.indexes)
+        a = findfirst(i -> i >= start, p.indices)
+        b = findlast(i -> i < end_, p.indices)
         if a === nothing || b === nothing
             @warn("$p is not defined on $t, using default value...")
             p.default
@@ -181,3 +181,5 @@ function (p::TimeSeriesValue)(;t::Union{TimeSlice,Nothing}=nothing)
         end
     end
 end
+
+SpineInterface.indices(val::TimeSeriesValue) = collect(val.indices)
