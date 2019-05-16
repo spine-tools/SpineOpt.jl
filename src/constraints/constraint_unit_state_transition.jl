@@ -24,7 +24,7 @@
 This constraint ensures consistency between the variables `units_on`, `units_started_up`
 and `units_shut_down`.
 """
-function constraint_unit_state_transition(m::Model)
+@catch_undef function constraint_unit_state_transition(m::Model)
     @fetch units_on, units_started_up, units_shut_down = m.ext[:variables]
     constr_dict = m.ext[:constraints][:unit_state_transition] = Dict()
     for (u_, t_after) in units_on_indices()

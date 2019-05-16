@@ -90,7 +90,7 @@ value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => JuMP.value(v) for (k, v) in d
 Assign mapping of :x and :y in `d` to `x` and `y` respectively
 """
 macro fetch(expr)
-    (expr isa Expr && expr.head == :(=)) || error("fetch only works with the assignment operator (=)")
+    (expr isa Expr && expr.head == :(=)) || error("please use @fetch with the assignment operator (=)")
     keys, dict = expr.args
     values = if keys isa Expr
         Expr(:tuple, [:($dict[$(Expr(:quote, k))]) for k in keys.args]...)
@@ -98,6 +98,23 @@ macro fetch(expr)
         :($dict[$(Expr(:quote, keys))])
     end
     esc(Expr(:(=), keys, values))
+end
+
+
+macro catch_undef(expr)
+    (expr isa Expr && expr.head == :function) || error("please use @catch_undef with function definitions")
+    name = expr.args[1].args[1]
+    body = expr.args[2]
+    new_expr = copy(expr)
+    new_expr.args[2] = quote
+        try
+            $body
+        catch e
+            !(e isa UndefVarError) && rethrow()
+            @warn("$(e.var) not defined, although needed by $($name) —anyways, moving on...")
+        end
+    end
+    esc(new_expr)
 end
 
 """

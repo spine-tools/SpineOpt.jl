@@ -25,7 +25,7 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 `commodity_group` for each `unit` for which the parameter `max_ratio_out_in_flow`
 is specified.
 """
-function constraint_max_ratio_out_in_flow(m::Model)
+@catch_undef function constraint_max_ratio_out_in_flow(m::Model)
     @fetch flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:max_ratio_out_in_flow] = Dict()
     for (u, cg_out, cg_in) in indices(max_ratio_out_in)

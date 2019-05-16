@@ -22,7 +22,7 @@
 
 Enforce balance of all commodity flows from and to a node.
 """
-function constraint_nodal_balance(m::Model)
+@catch_undef function constraint_nodal_balance(m::Model)
 	@fetch flow, trans = m.ext[:variables]
     constr_dict = m.ext[:constraints][:nodal_balance] = Dict()
 	for (n, tblock) in node__temporal_block()
@@ -67,7 +67,7 @@ end
 @Kris: is this still needed?
 # new proposed version (not currently working because we don't yet have the required functionality)
 #@ TO DO: exogeneous supply parameter to be added
-function constraint_nodal_balance(m::Model, flow, trans, time_slice,timesliceblocks)
+@catch_undef function constraint_nodal_balance(m::Model, flow, trans, time_slice,timesliceblocks)
 	for (n,tblock) in node__temporal_block()
 		for t in keys(timesliceblocks[tblock])
 	        @constraint(

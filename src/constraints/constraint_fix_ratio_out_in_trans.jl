@@ -25,7 +25,7 @@ Fix ratio between the output `trans` of a `node_group` to an input `trans` of a
 `node_group` for each `connection` for which the parameter `fix_ratio_out_in_trans`
 is specified.
 """
-function constraint_fix_ratio_out_in_trans(m::Model)
+@catch_undef function constraint_fix_ratio_out_in_trans(m::Model)
     @fetch trans = m.ext[:variables]
     constr_dict = m.ext[:constraints][:fix_ratio_out_in_trans] = Dict()
     for (conn, ng_out, ng_in) in indices(fix_ratio_out_in)

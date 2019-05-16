@@ -25,7 +25,7 @@ Maximum ratio between the input `flow` of two `commodity_group`s
 for each `unit` for which the parameter `max_ratio_in_in`
 is specified.
 """
-function constraint_max_ratio_in_in_flow(m::Model)
+@catch_undef function constraint_max_ratio_in_in_flow(m::Model)
     @fetch flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:max_ratio_in_in_flow] = Dict()
     for (u, cg1, cg2) in indices(max_ratio_in_in)
