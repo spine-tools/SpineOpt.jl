@@ -27,13 +27,14 @@ is specified.
 """
 function constraint_max_ratio_out_in_flow(m::Model)
     @fetch flow = m.ext[:variables]
+    constr_dict = m.ext[:constraints][:max_ratio_out_in_flow] = Dict()
     for (u, cg_out, cg_in) in indices(max_ratio_out_in)
         involved_timeslices = [
             t for (u, n, c, d, t) in flow_indices(
                 unit=u, commodity=commodity_group__commodity(commodity_group=[cg_in,cg_out]))
         ]
         for t in t_lowest_resolution(involved_timeslices)
-            @constraint(
+            constr_dict[u, cg_out, cg_in, t] = @constraint(
                 m,
                 + sum(
                     flow[u, n, c_out, d, t1] * duration(t1)

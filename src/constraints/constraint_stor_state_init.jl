@@ -25,10 +25,11 @@ Balance for storage level.
 """
 function constraint_stor_state_init(m::Model)
     @fetch stor_state = m.ext[:variables]
+    constr_dict = m.ext[:constraints][:stor_state_init] = Dict()
     for (stor, c) in indices(stor_state_init),
-        (stor, c, t) in stor_state_indices(storage=stor, commodity=c)
+            (stor, c, t) in stor_state_indices(storage=stor, commodity=c)
         if isempty(t_before_t(t_after=t))
-            @constraint(
+            constr_dict[stor, c, t] = @constraint(
                 m,
                 + stor_state[stor, c, t]
                 <=

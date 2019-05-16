@@ -26,9 +26,10 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 function constraint_stor_capacity(m::Model)
     @fetch stor_state = m.ext[:variables]
+    constr_dict = m.ext[:constraints][:stor_state_cap] = Dict()
     for (stor, cg) in indices(stor_state_cap),
-        (stor, c, t) in stor_state_indices(storage=stor)
-        @constraint(
+            (stor, c, t) in stor_state_indices(storage=stor)
+        constr_dict[stor, c, t] = @constraint(
             m,
             + sum(
                 stor_state[stor, c, t]

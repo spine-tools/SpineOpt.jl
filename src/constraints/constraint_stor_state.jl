@@ -24,9 +24,10 @@ Balance for storage level.
 """
 function constraint_stor_state(m::Model)
     @fetch stor_state, trans, flow = m.ext[:variables]
+    constr_dict = m.ext[:constraints][:stor_state] = Dict()
     for (stor, c, t1) in stor_state_indices(), t2 in t_before_t(t_before=t1)
         if !isempty(t_before_t(t_after=t)) && t2 in [t for (stor, c, t) in stor_state_indices()]
-            @constraint(
+            constr_dict[stor, c, t1, t2] = @constraint(
                 m,
                 + stor_state[c,stor,t2]
                 ==

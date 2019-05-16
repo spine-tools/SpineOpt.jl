@@ -40,7 +40,7 @@ struct TimeSeriesValue{I,V,DV}
                 mv = mean(v)
             else
                 s = zero(Hour)
-                mv = zero(V)
+                mv = 0
             end
             new{I,V,DV}(i, v, d, iy, r, s, mv)
         end

@@ -26,9 +26,10 @@ Check if `conn_conv_cap_to_trans` is defined.
 """
 function constraint_trans_capacity(m::Model)
     @fetch trans = m.ext
+    constr_dict = m.ext[:constraints][:trans_capacity] = Dict()
     for (conn, ng) in indices(trans_capacity),
-        (conn, n, t) in trans_indices(connection=conn)
-        @constraint(
+            (conn, n, t) in trans_indices(connection=conn)
+        constr_dict[conn, n, t] = @constraint(
             m,
             + sum(
                 trans[conn1, n1, c1, d1, t1] * duration(t1)

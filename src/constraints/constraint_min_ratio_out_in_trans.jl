@@ -27,14 +27,15 @@ is specified.
 """
 function constraint_min_ratio_out_in_trans(m::Model)
     @fetch trans = m.ext[:variables]
-    for (conn, ng_out, ng_in) in indices( min_ratio_out_in)
+    constr_dict = m.ext[:constraints][:min_ratio_out_in_trans] = Dict()
+    for (conn, ng_out, ng_in) in indices(min_ratio_out_in)
         involved_timeslices = [
             t for (conn, n, c, d, t) in trans_indices(
                 connection=conn, node=node_group__node(node_group=[ng_in, ng_out])
             )
         ]
         for t in t_lowest_resolution(involved_timeslices)
-            @constraint(
+            constr_dict[conn, ng_out, ng_in, t] = @constraint(
                 m,
                 + sum(
                     trans[conn, n_out, c, :to_node, t1] * duration(t1)
