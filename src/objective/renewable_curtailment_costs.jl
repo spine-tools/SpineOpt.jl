@@ -25,8 +25,7 @@ Variable operation costs defined on flows.
 function renewable_curtailment_costs(m::Model)
     let rcc_costs = zero(AffExpr)
         for (n,t) in curtailment_ren_indices()
-                rcc_costs +=
-                    renewable_curtailment_cost(node=n) * curtailment_ren[n,t]
+            add_to_expression!(rcc_costs, renewable_curtailment_cost(node=n) * curtailment_ren[n,t])
         end
         rccm_costs
     end

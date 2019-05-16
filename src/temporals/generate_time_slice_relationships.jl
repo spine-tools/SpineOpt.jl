@@ -189,7 +189,8 @@ end
 Create and export convenience functions to access time slice relationships:
 `t_in_t`, `t_preceeds_t`, `t_overlaps_t`...
 """
-function generate_time_slice_relationships()
+function old_generate_time_slice_relationships()
+    # About 2 times slower than newer version below
     t_before_t_list = []
     t_in_t_list = []
     t_overlaps_t_list = []
@@ -203,6 +204,76 @@ function generate_time_slice_relationships()
             end
             if overlaps(i, j)
                 push!(t_overlaps_t_list, tuple(i, j))
+            end
+        end
+    end
+    # TODO: instead of unique -> check beforehand whether timeslice tuple is already added
+    # Is `unique!()` slow? I fear the above check can be a bit slow.
+    # An alternative is to use `Set()` instead of `[]` to warranty uniqueness,
+    # but then we lose the order - do we care about order?
+    unique!(t_in_t_list)
+    unique!(t_overlaps_t_list)
+    t_in_t_excl_list = [(t1, t2) for (t1, t2) in t_in_t_list if t1 != t2]
+    t_overlaps_t_excl_list = [(t1, t2) for (t1, t2) in t_overlaps_t_list if t1 != t2]
+    # Create function-like objects
+    t_before_t = TBeforeTFunction(t_before_t_list)
+    t_in_t = TInTFunction(t_in_t_list)
+    t_in_t_excl = TInTExclFunction(t_in_t_excl_list)
+    t_overlaps_t = TOverlapsTFunction(t_overlaps_t_list)
+    t_overlaps_t_excl = TOverlapsTExclFunction(t_overlaps_t_excl_list)
+    # Export the function-like objects
+    @eval begin
+        t_before_t = $t_before_t
+        t_in_t = $t_in_t
+        t_in_t_excl = $t_in_t_excl
+        t_overlaps_t = $t_overlaps_t
+        t_overlaps_t_excl = $t_overlaps_t_excl
+        export t_before_t
+        export t_in_t
+        export t_in_t_excl
+        export t_overlaps_t
+        export t_overlaps_t_excl
+    end
+end
+
+
+function generate_time_slice_relationships()
+    t_before_t_list = []
+    t_in_t_list = []
+    t_overlaps_t_list = []
+    time_slice_list = time_slice()
+    sort!(time_slice_list)
+    for (i, t_i) in enumerate(time_slice_list)
+        found = false
+        for t_j in time_slice_list[i:end]
+            if succeeds(t_j, t_i)
+                found = true
+                push!(t_before_t_list, tuple(t_i, t_j))
+            elseif found
+                break
+            end
+        end
+    end
+    for t_i in time_slice_list
+        found_in = false
+        break_in = false
+        found_overlaps = false
+        break_overlaps = false
+        for t_j in time_slice_list
+            if in(t_i, t_j)
+                found_in = true
+                push!(t_in_t_list, tuple(t_i, t_j))
+            elseif found_in
+                break_in = true
+            end
+            if overlaps(t_i, t_j)
+                found_overlaps = true
+                push!(t_overlaps_t_list, tuple(t_i, t_j))
+            elseif found_overlaps
+                break_overlaps = true
+            end
+            if break_in && break_overlaps
+                break
             end
         end
     end

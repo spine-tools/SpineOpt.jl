@@ -39,7 +39,8 @@ end
     generate_time_slice()
 
 """
-function generate_time_slice()
+function old_generate_time_slice()
+    # About 15 times slower than newer version below
     time_slice_list = Array{TimeSlice,1}()
     time_slice_temporal_block_list = Dict{Object,Array{TimeSlice,1}}()
     for (k, blk) in enumerate(temporal_block())
@@ -78,6 +79,43 @@ function generate_time_slice()
     end
     # TODO: Check if unique is actually needed here
     unique!(time_slice_list)
+    # Create and export the function like object
+    time_slice = TimeSliceFunction(time_slice_list, time_slice_temporal_block_list)
+    @eval begin
+        time_slice = $time_slice
+        export time_slice
+    end
+end
+
+
+function generate_time_slice()
+    # time_slice_list = Array{TimeSlice,1}()
+    time_slice_temporal_block_list = Dict{Object,Array{TimeSlice,1}}()
+    for (k, blk) in enumerate(temporal_block())
+        time_slice_list = Array{TimeSlice,1}()
+        temp_block_start = start_datetime(temporal_block=blk)  # DateTime value
+        temp_block_end = end_datetime(temporal_block=blk)  # DateTime value
+        time_slice_start = temp_block_start
+        i = 1
+        while time_slice_start < temp_block_end
+            duration = time_slice_duration(temporal_block=blk, i=i)
+            time_slice_end = time_slice_start + duration
+            if time_slice_end > temp_block_end
+                time_slice_end = temp_block_end
+                @warn(
+                    "the duration of the last time slice of temporal block $blk has been reduced "
+                    * "to respect the specified end time"
+                )
+            end
+            new_time_slice = TimeSlice(time_slice_start, time_slice_end, "tb$(k)__t$(i)")
+            push!(time_slice_list, new_time_slice)
+            # Prepare for next iter
+            time_slice_start = time_slice_end
+            i += 1
+        end
+        time_slice_temporal_block_list[blk] = time_slice_list
+    end
+    time_slice_list = unique(t for v in values(time_slice_temporal_block_list) for t in v)
     # Create and export the function like object
     time_slice = TimeSliceFunction(time_slice_list, time_slice_temporal_block_list)
     @eval begin

@@ -27,10 +27,12 @@ function production_costs(m::Model)
     flow = m.ext[:variables][:flow]
         let prod_costs = zero(AffExpr)
             for (u,c) in production_cost_indices()
-                prod_costs +=
-                sum(
-                    flow[u, n, c, d, t] * duration(t) * production_cost(unit=u, commodity=c)(t=t)
+                add_to_expression!(
+                    prod_costs,
+                    sum(
+                        flow[u, n, c, d, t] * duration(t) * production_cost(unit=u, commodity=c)(t=t)
                         for (u,n,c, d,t) in flow_indices(unit=u,commodity=c)
+                    )
                 )
             end
             prod_costs
