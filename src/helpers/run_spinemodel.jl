@@ -110,7 +110,7 @@ function run_spinemodel(
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
         printstyled("Writing results to the database...\n"; bold=true)
-        for (k, v) in pack_time_series(SpineModel.value(flow)) @show k, v end
+        @fetch flow, units_started_up, units_shut_down, units_on, trans = m.ext[:variables]
         @time write_results(
              db_url_out;
              result_name=result_name,
