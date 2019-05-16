@@ -111,14 +111,15 @@ function run_spinemodel(
         println("Objective function value: $(objective_value(m))")
         printstyled("Writing results to the database...\n"; bold=true)
         @fetch flow, units_started_up, units_shut_down, units_on, trans = m.ext[:variables]
+        for (k, v) in pack_time_series(SpineModel.value(flow)) @show k, v end
         @time write_results(
              db_url_out;
              result_name=result_name,
-             flow=pack_trailing_dims(SpineModel.value(flow), 1),
-             units_started_up=pack_trailing_dims(SpineModel.value(units_started_up), 1),
-             units_shut_down=pack_trailing_dims(SpineModel.value(units_shut_down), 1),
-             units_on=pack_trailing_dims(SpineModel.value(units_on), 1),
-             trans=pack_trailing_dims(SpineModel.value(trans), 1),
+             flow=pack_time_series(SpineModel.value(flow)),
+             units_started_up=pack_time_series(SpineModel.value(units_started_up)),
+             units_shut_down=pack_time_series(SpineModel.value(units_shut_down)),
+             units_on=pack_time_series(SpineModel.value(units_on)),
+             trans=pack_time_series(SpineModel.value(trans)),
              #stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
         )
     end

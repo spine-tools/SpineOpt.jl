@@ -23,7 +23,7 @@ struct TimePatternValue
 end
 
 struct TimeSeriesValue{I,V,DV}
-    indices::I
+    time_stamps::I
     values::Array{V,1}
     default::DV
     ignore_year::Bool
@@ -66,23 +66,24 @@ function TimeSeriesValue(db_value::Array, default)
 end
 
 function TimeSeriesValue(data::Dict, metadata::Dict, default)
-    # indices come with data, so just look for "ignore_year" in metadata
+    # time_stamps come with data, so just look for "ignore_year" in metadata
     repeat = false
     ignore_year = get(metadata, "ignore_year", false)
-    data = Dict(DateTime(k) => v for (k, v) in data)
+    data = Dict(parse_date_time(k) => v for (k, v) in data)
     ignore_year && (data = Dict(k - Year(k) => v for (k, v) in data))
     data = sort(data)
     TimeSeriesValue(collect(keys(data)), collect(values(data)), default, ignore_year, repeat)
 end
 
 function TimeSeriesValue(data::Array, metadata::Dict, default)
+    # Look at the first element in data to see whether it's one column or two column format (and pray)
     if data[1] isa Array
-        # Assume two column array format: make it a dictionary and call the previous constructor
+        # Two column array format
         TimeSeriesValue(Dict(k => v for (k, v) in data), metadata, default)
     else
-        # Assume one column array format
+        # One column array format
         if haskey(metadata, "start")
-            start = DateTime(metadata["start"], iso8601dateformat)
+            start = parse_date_time(metadata["start"])
             ignore_year = get(metadata, "ignore_year", false)
             repeat = get(metadata, "repeat", false)
         else
@@ -144,21 +145,21 @@ function (p::TimeSeriesValue)(;t::Union{TimeSlice,Nothing}=nothing)
     end
     if p.repeat
         repetitions = 0
-        if start > p.indices[end]
-            # Move start back within indices range
-            mismatch = start - p.indices[1]
+        if start > p.time_stamps[end]
+            # Move start back within time_stamps range
+            mismatch = start - p.time_stamps[1]
             repetitions = div(mismatch, p.span)
             start -= repetitions * p.span
             end_ = start + duration
         end
-        if end_ > p.indices[end]
-            # Move end_ back within indices range
-            mismatch = end_ - p.indices[1]
+        if end_ > p.time_stamps[end]
+            # Move end_ back within time_stamps range
+            mismatch = end_ - p.time_stamps[1]
             repetitions = div(mismatch, p.span)
             end_ -= repetitions * p.span
         end
-        a = findfirst(i -> i >= start, p.indices)
-        b = findlast(i -> i < end_, p.indices)
+        a = findfirst(i -> i >= start, p.time_stamps)
+        b = findlast(i -> i < end_, p.time_stamps)
         if a === nothing || b === nothing
             @warn("$p is not defined on $t, using default value...")
             p.default
@@ -171,8 +172,8 @@ function (p::TimeSeriesValue)(;t::Union{TimeSlice,Nothing}=nothing)
             value + repetitions * p.mean_value  # repetitions holds the number of rolls we move back the end
         end
     else
-        a = findfirst(i -> i >= start, p.indices)
-        b = findlast(i -> i < end_, p.indices)
+        a = findfirst(i -> i >= start, p.time_stamps)
+        b = findlast(i -> i < end_, p.time_stamps)
         if a === nothing || b === nothing
             @warn("$p is not defined on $t, using default value...")
             p.default
@@ -182,4 +183,4 @@ function (p::TimeSeriesValue)(;t::Union{TimeSlice,Nothing}=nothing)
     end
 end
 
-SpineInterface.indices(val::TimeSeriesValue) = collect(val.indices)
+time_stamps(val::TimeSeriesValue) = val.time_stamps

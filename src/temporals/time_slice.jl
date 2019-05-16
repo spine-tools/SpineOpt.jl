@@ -25,8 +25,7 @@ struct TimeSlice <: ObjectLike
     TimeSlice(x, y, n) = x > y ? error("out of order") : new(x, y, Minute(y - x), n)
 end
 
-TimeSlice(start::DateTime, end_::DateTime) = TimeSlice(start, end_, "tb0__t0")
-TimeSlice(start::DateTime) = TimeSlice(start, start + Minute(1))
+TimeSlice(start::DateTime, end_::DateTime) = TimeSlice(start, end_, "$start...$end_")
 
 function Base.show(io::IO, time_slice::TimeSlice)
     str = "$(time_slice.start)...$(time_slice.end_)"
@@ -113,4 +112,12 @@ function t_highest_resolution(t_list)
         result[end] in t || push!(result, t)
     end
     result
+end
+
+
+function to_time_slices(time_stamps)
+    len = length(time_stamps)
+    len < 2 && error("at least two time stamps are needed")
+    sort!(time_stamps)
+    [TimeSlice(time_stamps[i], time_stamps[i+1]) for i=1:len-1]
 end

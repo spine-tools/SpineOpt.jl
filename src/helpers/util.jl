@@ -17,7 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-const iso8601dateformat = dateformat"y-m-dTH:M:Sz"
+# const iso8601 = dateformat"yyyy-mm-ddTHH:MMz"
+const iso8601zoneless = dateformat"yyyy-mm-ddTHH:MM"
+
+function parse_date_time(value)
+    DateTime(value, iso8601zoneless)
+    # try
+    #    ZonedDateTime(value, iso8601)
+    # catch
+    #    ZonedDateTime(DateTime(value, iso8601zoneless), tz"UTC")
+    # end
+end
 
 function Base.getindex(d::Dict{NamedTuple{X,Y},Z}, key::ObjectLike...) where {N,Y<:NTuple{N,ObjectLike},X,Z}
     isempty(d) && throw(KeyError(key))
@@ -47,9 +57,30 @@ function pack_trailing_dims(dictionary::Dict{S,T}, n::Int64=1) where {S<:NamedTu
 end
 
 """
+    pack_time_series(dictionary::Dict)
+
+An equivalent dictionary where the last dimension is packed into a time series
+(i.e., a `Dict` mapping `String` time stamps to data).
+"""
+function pack_time_series(dictionary::Dict{NamedTuple{X,Y},Z}) where {N,Y<:NTuple{N,ObjectLike},X,Z}
+    Y.parameters[N] != TimeSlice && error("can't pack objects of type `$(Y.parameters[N])` into a time series")
+    left_dict = Dict{Any,Any}()
+    for (key, value) in dictionary
+        key_keys = collect(keys(key))
+        key_values = collect(values(key))
+        left_key = NamedTuple{Tuple(key_keys[1:end-1])}(key_values[1:end-1])
+        right_dict = get!(left_dict, left_key, Dict{String,Any}())
+        # Pick the `TimeSlice`'s start as time stamp
+        right_key = Dates.format(start(key[end]), iso8601zoneless)
+        right_dict[right_key] = value
+    end
+    Dict(key => sort(value) for (key, value) in left_dict)
+end
+
+"""
     value(d::Dict)
 
-An equivalent dictionary where `JuMP.VariableRef` values are gathered using `JuMP.value`.
+An equivalent dictionary where `JuMP.VariableRef` values are replaced by their `JuMP.value`.
 """
 value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => JuMP.value(v) for (k, v) in d if v isa JuMP.VariableRef)
 

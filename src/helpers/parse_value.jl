@@ -37,7 +37,7 @@ function parse_value(db_value::String; date_time=false, duration=false, kwargs..
     if date_time && duration
         error("uncompatible tags 'date_time' and 'duration'")
     elseif date_time
-        ScalarValue(DateTime(db_value, iso8601dateformat))
+        ScalarValue(parse_date_time(db_value))
     elseif duration
         ScalarValue(parse_duration(db_value))
     else
