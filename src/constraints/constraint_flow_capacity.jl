@@ -45,7 +45,7 @@ Check if `unit_conv_cap_to_flow` is defined.
                     * unit_capacity(unit=u, commodity=c, direction=d)
                         * unit_conv_cap_to_flow(unit=u, commodity=c)
                             * duration(t1)
-                    for (u1, t1) in units_on_indices(unit=u) if t1 in t_in_t(t_long=t)
+                    for (u1, t1) in units_on_indices(unit=u, t=t_in_t(t_long=t))
                 )
             )
         end

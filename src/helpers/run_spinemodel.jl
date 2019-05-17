@@ -83,7 +83,7 @@ function run_spinemodel(
         constraint_max_ratio_out_in_trans(m)
         constraint_min_ratio_out_in_trans(m)
         # Transmission line capacity
-        # constraint_trans_capacity(m)
+        constraint_trans_capacity(m)
         # Nodal balance
         constraint_nodal_balance(m)
         # Absolute bounds on commodities

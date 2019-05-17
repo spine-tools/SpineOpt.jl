@@ -25,25 +25,27 @@ Limit the maximum in/out `trans` of a `connection` for all `trans_capacity` indi
 Check if `conn_conv_cap_to_trans` is defined.
 """
 @catch_undef function constraint_trans_capacity(m::Model)
-    @fetch trans = m.ext
+    @fetch trans = m.ext[:variables]
     constr_dict = m.ext[:constraints][:trans_capacity] = Dict()
-    for (conn, ng) in indices(trans_capacity),
-            (conn, n, t) in trans_indices(connection=conn)
-        constr_dict[conn, n, t] = @constraint(
-            m,
-            + sum(
-                trans[conn1, n1, c1, d1, t1] * duration(t1)
-                for (conn1, n1, c1, d1, t1) in trans_indices(
-                    connection=conn,
-                    commodity=node_group__node(node_group=ng),
-                    direction=d,
-                    t=t
+    for (conn, n, d) in indices(trans_capacity)
+        for t in time_slice()
+            constr_dict[conn, n, t] = @constraint(
+                m,
+                + sum(
+                    trans[conn1, n1, c1, d1, t1] * duration(t1)
+                    for (conn1, n1, c1, d1, t1) in trans_indices(
+                        connection=conn,
+                        node=n,
+                        direction=d,
+                        t=t
+                    )
                 )
+                <=
+                + trans_capacity(connection=conn, node=n, direction=d)
+                * conn_avail_factor(connection=conn, node=n)
+                    * conn_conv_cap_to_trans(connection=conn, node=n)
+                        * duration(t)
             )
-            <=
-            + trans_capacity(connection=conn, node_group=ng, direction=d)
-            * conn_avail_factor(connection=conn, node_group=ng)
-                * conn_conv_cap_to_trans(connection=conn, node_group=ng)
-        )
+        end
     end
 end
