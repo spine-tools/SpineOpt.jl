@@ -37,8 +37,9 @@ is specified.
             constr_dict[u, cg_out, cg_in, t] = @constraint(
                 m,
                 + sum(
-                    flow[u, n, c_out, d, t1] * duration(t1)
-                    for (u, n, c_out, d, t1) in flow_indices(
+                    flow[u1, n, c_out, d, t1] * duration(t1)
+                    for (u1, n, c_out, d, t1) in flow_indices(
+                        unit=u,
                         commodity=commodity_group__commodity(commodity_group=cg_out),
                         direction=:to_node,
                         t=t_in_t(t_long=t)
@@ -47,8 +48,9 @@ is specified.
                 >=
                 + min_ratio_out_in(unit=u, commodity_group1=cg_out, commodity_group2=cg_in, t=t)
                 * sum(
-                    flow[u, n, c_in, d, t1] * duration(t1)
-                    for (u, n, c_in, d, t1) in flow_indices(
+                    flow[u1, n, c_in, d, t1] * duration(t1)
+                    for (u1, n, c_in, d, t1) in flow_indices(
+                        unit=u,
                         commodity=commodity_group__commodity(commodity_group=cg_in),
                         direction=:from_node,
                         t=t_in_t(t_long=t)
