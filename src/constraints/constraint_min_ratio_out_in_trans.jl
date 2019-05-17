@@ -28,29 +28,27 @@ is specified.
 @catch_undef function constraint_min_ratio_out_in_trans(m::Model)
     @fetch trans = m.ext[:variables]
     constr_dict = m.ext[:constraints][:min_ratio_out_in_trans] = Dict()
-    for (conn, ng_out, ng_in) in indices(min_ratio_out_in)
-        involved_timeslices = [
-            t for (conn, n, c, d, t) in trans_indices(
-                connection=conn, node=node_group__node(node_group=[ng_in, ng_out])
-            )
-        ]
+    for (conn, n_out, n_in) in indices(min_ratio_out_in_trans)
+        involved_timeslices = [t for (conn, n, c, d, t) in trans_indices(connection=conn, node=[n_out, n_in])]
         for t in t_lowest_resolution(involved_timeslices)
-            constr_dict[conn, ng_out, ng_in, t] = @constraint(
+            constr_dict[conn, n_out, n_in, t] = @constraint(
                 m,
                 + sum(
-                    trans[conn, n_out, c, :to_node, t1] * duration(t1)
-                    for (conn, n_out, c, d, t1) in trans_indices(
-                        node=node_group__node(node_group=ng_out),
+                    trans[conn_, n_out_, c, :to_node, t1] * duration(t1)
+                    for (conn_, n_out_, c, d, t1) in trans_indices(
+                        connection=conn,
+                        node=n_out,
                         direction=:to_node,
                         t=t_in_t(t_long=t)
                     )
                 )
                 >=
-                + min_ratio_out_in(connection=conn, node_group1=ng_out, node_group2=ng_in, t=t)
+                + min_ratio_out_in_trans(connection=conn, node1=n_out, node2=n_in, t=t)
                 * sum(
-                    trans[conn, n_in, c, :from_node, t1] * duration(t1)
-                    for (conn, n_in, c, d, t1) in trans_indices(
-                        node=node_group__node(node_group=ng_in),
+                    trans[conn_, n_in_, c, :from_node, t1] * duration(t1)
+                    for (conn_, n_in_, c, d, t1) in trans_indices(
+                        connection=conn,
+                        node=n_in,
                         direction=:from_node,
                         t=t_in_t(t_long=t)
                     )

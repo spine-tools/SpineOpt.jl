@@ -26,14 +26,14 @@ Check if `unit_conv_cap_to_flow` is defined.
 @catch_undef function constraint_flow_capacity(m::Model)
     @fetch flow, units_on = m.ext[:variables]
     constr_dict = m.ext[:constraints][:flow_capacity] = Dict()
-    for (u, cg, d) in indices(unit_capacity), t in time_slice()
-        constr_dict[u, cg, d] = @constraint(
+    for (u, c, d) in indices(unit_capacity), t in time_slice()
+        constr_dict[u, c, d] = @constraint(
             m,
             + sum(
                 + flow[u1, n1, c1, d1, t1] * duration(t1)
                 for (u1, n1, c1, d1, t1) in flow_indices(
                     unit=u,
-                    commodity=commodity_group__commodity(commodity_group=cg),
+                    commodity=c,
                     direction=d,
                     t=t
                 )
@@ -41,8 +41,8 @@ Check if `unit_conv_cap_to_flow` is defined.
             <=
             + sum(
                 + units_on[u1, t1]
-                * unit_capacity(unit=u, commodity_group=cg, direction=d)
-                    * unit_conv_cap_to_flow(unit=u, commodity_group=cg)
+                * unit_capacity(unit=u, commodity=c, direction=d)
+                    * unit_conv_cap_to_flow(unit=u, commodity=c)
                         * duration(t1)
                 for (u1, t1) in units_on_indices(unit=u) if t1 in t_in_t(t_long=t)
             )

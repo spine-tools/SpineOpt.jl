@@ -25,7 +25,8 @@ catch
     using Cbc
 end
 
-db_url_in = "sqlite:///$(@__DIR__)/data/new_temporal.sqlite"
+# db_url_in = "sqlite:///$(@__DIR__)/data/new_temporal.sqlite"
+db_url_in = "sqlite:////home/manuelma/Codes/spine/toolbox/projects/case_study_a5/newertemp/spine_db.sqlite"
 db_url_out = "sqlite:///$(@__DIR__)/data/new_temporal_out.sqlite"
 m = try
     run_spinemodel(db_url_in, db_url_out; optimizer=Gurobi.Optimizer, cleanup=false)

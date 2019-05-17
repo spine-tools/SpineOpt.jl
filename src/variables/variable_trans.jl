@@ -44,6 +44,8 @@ A set of tuples for indexing the `trans` variable. Any filtering options can be 
 for `commodity`, `node`, `connection`, `direction`, and `t`.
 """
 function trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything)
+    node = expand_node_group(node)
+    commodity = expand_commodity_group(commodity)
     [
         (connection=conn, node=n, commodity=c, direction=d, t=t1)
         for (conn, n_, d, blk) in connection__node__direction__temporal_block(

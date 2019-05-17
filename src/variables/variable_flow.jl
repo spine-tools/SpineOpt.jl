@@ -44,6 +44,9 @@ A set of tuples for indexing the `flow` variable. Any filtering options can be s
 for `commodity`, `node`, `unit`, `direction`, and `t`.
 """
 function flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything)
+    unit = expand_unit_group(unit)
+    node = expand_node_group(node)
+    commodity = expand_commodity_group(commodity)
     [
         (unit=u, node=n, commodity=c, direction=d, t=t1)
         for (u, n, d, blk) in unit__node__direction__temporal_block(

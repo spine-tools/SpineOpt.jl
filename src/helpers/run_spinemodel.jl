@@ -86,20 +86,20 @@ function run_spinemodel(
         # constraint_trans_capacity(m)
         # Nodal balance
         constraint_nodal_balance(m)
-        # Absolute bounds on commodities
-        constraint_max_cum_in_flow_bound(m)
-        # storage capacity
-        constraint_stor_capacity(m)
-        # storage state balance equation
-        constraint_stor_state_init(m)
-        constraint_stor_state(m)
-        # commitment stuff
-        constraint_units_on(m)
-        constraint_units_available(m)
-        constraint_minimum_operating_point(m)
-        constraint_min_down_time(m)
-        constraint_min_up_time(m)
-        constraint_unit_state_transition(m)
+        ## Absolute bounds on commodities
+        #constraint_max_cum_in_flow_bound(m)
+        ## storage capacity
+        #constraint_stor_capacity(m)
+        ## storage state balance equation
+        #constraint_stor_state_init(m)
+        #constraint_stor_state(m)
+        ## commitment stuff
+        #constraint_units_on(m)
+        #constraint_units_available(m)
+        #constraint_minimum_operating_point(m)
+        #constraint_min_down_time(m)
+        #constraint_min_up_time(m)
+        #constraint_unit_state_transition(m)
         extend_model(m)
     end
     # Run model
@@ -110,7 +110,7 @@ function run_spinemodel(
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
         printstyled("Writing results to the database...\n"; bold=true)
-        @fetch flow, units_started_up, units_shut_down, units_on, trans = m.ext[:variables]
+        @fetch flow, units_started_up, units_shut_down, units_on, trans, stor_state = m.ext[:variables]
         @time write_results(
              db_url_out;
              result_name=result_name,
