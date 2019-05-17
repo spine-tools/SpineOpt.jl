@@ -35,19 +35,19 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
                     m,
                     + sum(
                         flow[u1, n, c, d1, t1]
-                            for (u1, n, c, d1, t1) in flow_indices(
-                                commodity=commodity_group__commodity(commodity_group=cg),
-                                unit=u,
-                                direction = d,
-                                t=t
-                            )
+                        for (u1, n, c, d1, t1) in flow_indices(
+                            commodity=commodity_group__commodity(commodity_group=cg),
+                            unit=u,
+                            direction = d,
+                            t=t
+                        )
                     )
                     >=
                     + units_on[u, t]
-                        * minimum_operating_point(unit=u, commodity_group=cg, t=t)
-                            * number_of_units(unit=u)
-                                * unit_capacity(unit=u, commodity_group=cg, direction=d)
-                                    * unit_conv_cap_to_flow(unit=u, commodity_group=cg)
+                    * minimum_operating_point(unit=u, commodity_group=cg, t=t)
+                        * number_of_units(unit=u)
+                            * unit_capacity(unit=u, commodity_group=cg, direction=d)
+                                * unit_conv_cap_to_flow(unit=u, commodity_group=cg)
                 )
             end
         end

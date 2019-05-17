@@ -46,7 +46,7 @@ is specified.
                     )
                 )
                 >=
-                +  min_ratio_out_in(connection=conn, node_group1=ng_out, node_group2=ng_in, t=t)
+                + min_ratio_out_in(connection=conn, node_group1=ng_out, node_group2=ng_in, t=t)
                 * sum(
                     trans[conn, n_in, c, :from_node, t1] * duration(t1)
                     for (conn, n_in, c, d, t1) in trans_indices(

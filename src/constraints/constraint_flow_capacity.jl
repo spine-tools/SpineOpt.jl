@@ -30,21 +30,21 @@ Check if `unit_conv_cap_to_flow` is defined.
         constr_dict[u, cg, d] = @constraint(
             m,
             + sum(
-                flow[u1, n1, c1, d1, t1] * duration(t1)
-                    for (u1, n1, c1, d1, t1) in flow_indices(
-                        unit=u,
-                        commodity=commodity_group__commodity(commodity_group=cg),
-                        direction=d,
-                        t=t)
+                + flow[u1, n1, c1, d1, t1] * duration(t1)
+                for (u1, n1, c1, d1, t1) in flow_indices(
+                    unit=u,
+                    commodity=commodity_group__commodity(commodity_group=cg),
+                    direction=d,
+                    t=t
+                )
             )
             <=
             + sum(
-                units_on[u1, t1]
-                    * unit_capacity(unit=u, commodity_group=cg, direction=d)
-                        * unit_conv_cap_to_flow(unit=u, commodity_group=cg)
-                            * duration(t1)
-                                for (u1, t1) in units_on_indices(unit=u)
-                                    if t1 in t_in_t(t_long=t)
+                + units_on[u1, t1]
+                * unit_capacity(unit=u, commodity_group=cg, direction=d)
+                    * unit_conv_cap_to_flow(unit=u, commodity_group=cg)
+                        * duration(t1)
+                for (u1, t1) in units_on_indices(unit=u) if t1 in t_in_t(t_long=t)
             )
         )
     end

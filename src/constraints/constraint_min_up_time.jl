@@ -31,7 +31,7 @@ Constraint running by minimum up time.
         if min_up_time(unit=u) != 0
             constr_dict[u, t] = @constraint(
                 m,
-                units_on[u, t]
+                + units_on[u, t]
                 >=
                 + sum(
                     units_started_up[u1, t1]

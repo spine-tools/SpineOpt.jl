@@ -119,7 +119,7 @@ function run_spinemodel(
              units_shut_down=pack_time_series(SpineModel.value(units_shut_down)),
              units_on=pack_time_series(SpineModel.value(units_on)),
              trans=pack_time_series(SpineModel.value(trans)),
-             #stor_state=pack_trailing_dims(SpineModel.value(stor_state), 1),
+             stor_state=pack_time_series(SpineModel.value(stor_state))
         )
     end
     printstyled("Done.\n"; bold=true)

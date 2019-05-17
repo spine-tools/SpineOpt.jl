@@ -24,27 +24,28 @@
 #TODO: add model descirption here
 """
 function variable_units_on(m::Model)
-    m.ext[:variables][:integer_units_on] = Dict{NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}},Any}(
+    KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
+    m.ext[:variables][:integer_units_on] = Dict{KeyType,Any}(
         (unit=u, t=t) => @variable(
             m, base_name="units_on[$u, $(t.JuMP_name)]", integer=true, lower_bound=0
         ) for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :integer_online_variable
     )
-    m.ext[:variables][:binary_units_on] = Dict{NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}},Any}(
+    m.ext[:variables][:binary_units_on] = Dict{KeyType,Any}(
         (unit=u, t=t) => @variable(
             m, base_name="units_on[$u, $(t.JuMP_name)]", binary=true
         ) for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :binary_online_variable
     )
-    m.ext[:variables][:continuous_units_on] = Dict{NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}},Any}(
+    m.ext[:variables][:continuous_units_on] = Dict{KeyType,Any}(
         (unit=u, t=t) => @variable(
             m, base_name="units_on[$u, $(t.JuMP_name)]", lower_bound=0
         ) for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :continuous_online_variable
     )
-    m.ext[:variables][:no_units_on] = Dict{NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}},Any}(
+    m.ext[:variables][:no_units_on] = Dict{KeyType,Any}(
         (unit=u, t=t) => @variable(
             m, base_name="units_on[$u, $(t.JuMP_name)]", lower_bound=1 , upper_bound=1
         ) for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :no_online_variable
     )
-    m.ext[:variables][:fix_units_on] = Dict{NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}},Any}(
+    m.ext[:variables][:fix_units_on] = Dict{KeyType,Any}(
         (unit=u, t=t) => fix_units_on(unit=u, t=t) for (u, t) in fix_units_on_indices()
     )
     m.ext[:variables][:units_on] = merge(

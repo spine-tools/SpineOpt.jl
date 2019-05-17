@@ -63,7 +63,10 @@ An equivalent dictionary where the last dimension is packed into a time series
 (i.e., a `Dict` mapping `String` time stamps to data).
 """
 function pack_time_series(dictionary::Dict{NamedTuple{X,Y},Z}) where {N,Y<:NTuple{N,ObjectLike},X,Z}
-    Y.parameters[N] != TimeSlice && error("can't pack objects of type `$(Y.parameters[N])` into a time series")
+    if Y.parameters[N] != TimeSlice
+        @warn("can't pack objects of type `$(Y.parameters[N])` into a time series")
+        return dictionary
+    end
     left_dict = Dict{Any,Any}()
     for (key, value) in dictionary
         key_keys = collect(keys(key))
@@ -76,6 +79,8 @@ function pack_time_series(dictionary::Dict{NamedTuple{X,Y},Z}) where {N,Y<:NTupl
     end
     Dict(key => sort(value) for (key, value) in left_dict)
 end
+
+pack_time_series(dictionary::Dict) = dictionary
 
 """
     value(d::Dict)
