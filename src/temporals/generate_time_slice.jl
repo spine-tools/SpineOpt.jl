@@ -58,7 +58,7 @@ function generate_time_slice()
                     * "to respect the specified end time"
                 )
             end
-            new_time_slice = TimeSlice(time_slice_start, time_slice_end, "tb$(k)__t$(i)")
+            new_time_slice = TimeSlice(time_slice_start, time_slice_end, "$(blk)__t$(i)")
             push!(time_slice_list, new_time_slice)
             # Prepare for next iter
             time_slice_start = time_slice_end

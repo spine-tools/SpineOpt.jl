@@ -113,11 +113,3 @@ function t_highest_resolution(t_list)
     end
     result
 end
-
-
-function to_time_slices(time_stamps)
-    len = length(time_stamps)
-    len < 2 && error("at least two time stamps are needed")
-    sort!(time_stamps)
-    [TimeSlice(time_stamps[i], time_stamps[i+1]) for i=1:len-1]
-end
