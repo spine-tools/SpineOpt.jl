@@ -31,7 +31,7 @@ function (time_slice::TimeSliceFunction)(;temporal_block=nothing)
     if temporal_block == nothing
         time_slice.list
     else
-        [t for tblk in temporal_block for ts in time_slice.temporal_block_list[tblk] for t in ts]
+        [t for tblk in Object.(temporal_block) for ts in time_slice.temporal_block_list[tblk] for t in ts]
     end
 end
 
@@ -39,57 +39,8 @@ end
     generate_time_slice()
 
 """
-function old_generate_time_slice()
-    # About 15 times slower than newer version below
-    time_slice_list = Array{TimeSlice,1}()
-    time_slice_temporal_block_list = Dict{Object,Array{TimeSlice,1}}()
-    for (k, blk) in enumerate(temporal_block())
-        time_slice_temporal_block_list[blk] = Array{TimeSlice,1}()
-        temp_block_start = start_datetime(temporal_block=blk)  # DateTime value
-        temp_block_end = end_datetime(temporal_block=blk)  # DateTime value
-        time_slice_start = temp_block_start
-        i = 1
-        while time_slice_start < temp_block_end
-            duration = time_slice_duration(temporal_block=blk, i=i)
-            time_slice_end = time_slice_start + duration
-            if time_slice_end > temp_block_end
-                time_slice_end = temp_block_end
-                @warn(
-                    "the duration of the last time slice of temporal block $blk has been reduced "
-                    * "to respect the specified end time"
-                )
-            end
-            index = findfirst(
-                x -> tuple(x.start, x.end_) == tuple(time_slice_start, time_slice_end),
-                time_slice_list
-            )
-            if index != nothing
-                existing_time_slice = time_slice_list[index]
-                push!(time_slice_temporal_block_list[blk], existing_time_slice)
-            else
-                JuMP_name = "tb$(k)__t$(i)"
-                new_time_slice = TimeSlice(time_slice_start, time_slice_end, JuMP_name)
-                push!(time_slice_list, new_time_slice)
-                push!(time_slice_temporal_block_list[blk], new_time_slice)
-            end
-            # Prepare for next iter
-            time_slice_start = time_slice_end
-            i += 1
-        end
-    end
-    # TODO: Check if unique is actually needed here
-    unique!(time_slice_list)
-    # Create and export the function like object
-    time_slice = TimeSliceFunction(time_slice_list, time_slice_temporal_block_list)
-    @eval begin
-        time_slice = $time_slice
-        export time_slice
-    end
-end
-
-
 function generate_time_slice()
-    # time_slice_list = Array{TimeSlice,1}()
+    # NOTE: not checking if the timeslice exists makes it 15 times faster
     time_slice_temporal_block_list = Dict{Object,Array{TimeSlice,1}}()
     for (k, blk) in enumerate(temporal_block())
         time_slice_list = Array{TimeSlice,1}()

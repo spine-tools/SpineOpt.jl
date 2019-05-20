@@ -30,22 +30,26 @@ Check if `unit_conv_cap_to_flow` is defined.
         for t in time_slice()
             constr_dict[(unit=u, commodity=c, direction=d)] = @constraint(
                 m,
-                + sum(
+                + reduce(
+                    +,
                     + flow[u1, n1, c1, d1, t1] * duration(t1)
                     for (u1, n1, c1, d1, t1) in flow_indices(
                         unit=u,
                         commodity=c,
                         direction=d,
                         t=t
-                    )
+                    );
+                    init=0
                 )
                 <=
-                + sum(
+                + reduce(
+                    +,
                     + units_on[u1, t1]
                     * unit_capacity(unit=u, commodity=c, direction=d)
                         * unit_conv_cap_to_flow(unit=u, commodity=c)
                             * duration(t1)
-                    for (u1, t1) in units_on_indices(unit=u, t=t_in_t(t_long=t))
+                    for (u1, t1) in units_on_indices(unit=u, t=t_in_t(t_long=t));
+                    init=0
                 )
             )
         end

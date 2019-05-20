@@ -31,14 +31,16 @@ Check if `conn_conv_cap_to_trans` is defined.
         for t in time_slice()
             constr_dict[conn, n, t] = @constraint(
                 m,
-                + sum(
+                + reduce(
+                    +,
                     trans[conn1, n1, c1, d1, t1] * duration(t1)
                     for (conn1, n1, c1, d1, t1) in trans_indices(
                         connection=conn,
                         node=n,
                         direction=d,
                         t=t
-                    )
+                    );
+                    init=0
                 )
                 <=
                 + trans_capacity(connection=conn, node=n, direction=d)
