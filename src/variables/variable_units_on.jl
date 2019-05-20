@@ -80,6 +80,14 @@ function fix_units_on_indices(;unit=anything, t=anything)
     [
         (unit=u, t=t1)
         for (u,) in indices(fix_units_on; unit=unit) if fix_units_on(unit=u) isa TimeSeriesValue
-            for t1 in intersect(to_time_slices(time_stamps(fix_units_on(unit=u))), t)
+            for t1 in intersect(
+                t_highest_resolution(
+                    [
+                        t for s in time_stamps(fix_units_on(unit=u))
+                            for t in time_slice() if t.start <= s < t.end_
+                    ]
+                ),
+                t
+            )
     ]
 end
