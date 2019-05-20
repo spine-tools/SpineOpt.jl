@@ -56,6 +56,9 @@ function pack_trailing_dims(dictionary::Dict{S,T}, n::Int64=1) where {S<:NamedTu
     end
 end
 
+
+pack_time_series(dictionary::Dict) = dictionary
+
 """
     pack_time_series(dictionary::Dict)
 
@@ -80,8 +83,6 @@ function pack_time_series(dictionary::Dict{NamedTuple{X,Y},Z}) where {N,Y<:NTupl
     Dict(key => sort(value) for (key, value) in left_dict)
 end
 
-pack_time_series(dictionary::Dict) = dictionary
-
 """
     value(d::Dict)
 
@@ -90,11 +91,11 @@ An equivalent dictionary where `JuMP.VariableRef` values are replaced by their `
 value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => JuMP.value(v) for (k, v) in d if v isa JuMP.VariableRef)
 
 """
-    code(d::Dict)
+    formulation(d::Dict)
 
-An equivalent dictionary where `JuMP.ConstraintRef` values are replaced by a `String` showing their code.
+An equivalent dictionary where `JuMP.ConstraintRef` values are replaced by a `String` showing their formulation.
 """
-code(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => sprint(show, v) for (k, v) in d if v isa JuMP.ConstraintRef)
+formulation(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => sprint(show, v) for (k, v) in d if v isa JuMP.ConstraintRef)
 
 """
     @fetch x, y, ... = d

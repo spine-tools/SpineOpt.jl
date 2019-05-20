@@ -121,7 +121,7 @@ function run_spinemodel(
              units_on=pack_time_series(SpineModel.value(units_on)),
              trans=pack_time_series(SpineModel.value(trans)),
              stor_state=pack_time_series(SpineModel.value(stor_state)),
-             constraint_flow_capacity=pack_time_series(code(flow_capacity))
+             constraint_flow_capacity=pack_time_series(formulation(flow_capacity))
         )
     end
     printstyled("Done.\n"; bold=true)

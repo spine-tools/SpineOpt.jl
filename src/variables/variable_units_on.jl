@@ -79,8 +79,7 @@ end
 function fix_units_on_indices(;unit=anything, t=anything)
     [
         (unit=u, t=t1)
-        for (u,) in indices(fix_units_on; unit=unit)
-            if fix_units_on(unit=u) isa TimeSeriesValue
-                for t1 in intersect(to_time_slices(time_stamps(fix_units_on(unit=u))), t)
+        for (u,) in indices(fix_units_on; unit=unit) if fix_units_on(unit=u) isa TimeSeriesValue
+            for t1 in intersect(to_time_slices(time_stamps(fix_units_on(unit=u))), t)
     ]
 end
