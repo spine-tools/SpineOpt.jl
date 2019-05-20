@@ -73,7 +73,7 @@ function pack_time_series(dictionary::Dict{NamedTuple{X,Y},Z}) where {N,Y<:NTupl
         key_values = collect(values(key))
         left_key = NamedTuple{Tuple(key_keys[1:end-1])}(key_values[1:end-1])
         right_dict = get!(left_dict, left_key, Dict{String,Any}())
-        # Pick the `TimeSlice`'s start as time stamp
+        # NOTE: The time stamp is the start point of the `TimeSlice`
         right_key = Dates.format(start(key[end]), iso8601zoneless)
         right_dict[right_key] = value
     end
@@ -88,6 +88,13 @@ pack_time_series(dictionary::Dict) = dictionary
 An equivalent dictionary where `JuMP.VariableRef` values are replaced by their `JuMP.value`.
 """
 value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => JuMP.value(v) for (k, v) in d if v isa JuMP.VariableRef)
+
+"""
+    code(d::Dict)
+
+An equivalent dictionary where `JuMP.ConstraintRef` values are replaced by a `String` showing their code.
+"""
+code(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => sprint(show, v) for (k, v) in d if v isa JuMP.ConstraintRef)
 
 """
     @fetch x, y, ... = d

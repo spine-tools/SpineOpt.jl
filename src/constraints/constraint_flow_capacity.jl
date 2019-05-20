@@ -25,10 +25,10 @@ Check if `unit_conv_cap_to_flow` is defined.
 """
 @catch_undef function constraint_flow_capacity(m::Model)
     @fetch flow, units_on = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:flow_capacity] = Dict()
+    constr_dict = m.ext[:constraints][:flow_capacity] = Dict{NamedTuple,Any}()
     for (u, c, d) in indices(unit_capacity)
         for t in time_slice()
-            constr_dict[u, c, d] = @constraint(
+            constr_dict[(unit=u, commodity=c, direction=d)] = @constraint(
                 m,
                 + sum(
                     + flow[u1, n1, c1, d1, t1] * duration(t1)

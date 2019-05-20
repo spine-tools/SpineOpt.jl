@@ -27,6 +27,15 @@ Balance for storage level.
     constr_dict = m.ext[:constraints][:stor_state] = Dict()
     for (stor, c, t1) in stor_state_indices()
         for (stor, c, t2) in stor_state_indices(storage=stor, commodity=c, t=t_before_t(t_before=t1))
+            @show flow_indices(
+                unit=[
+                    u1 for u1 in storage__unit(storage=stor)
+                        if stor_unit_discharg_eff(storage=stor, commodity=c, unit=u1) != nothing
+                ],
+                commodity=c,
+                direction=:to_node,
+                t=t2
+            )
             constr_dict[stor, c, t1, t2] = @constraint(
                 m,
                 + stor_state[stor, c, t2]
@@ -36,30 +45,9 @@ Balance for storage level.
                     +,
                     flow[u, n, c_, d, t_] * stor_unit_discharg_eff(storage=stor, commodity=c, unit=u)
                     for (u, n, c_, d, t_) in flow_indices(
-                        unit=[u1 for (stor1, u1, c1) in indices(stor_unit_discharg_eff; storage=stor, commodity=c)],
-                        commodity=c,
-                        direction=:to_node,
-                        t=t2
-                    );
-                    init=0
-                )
-                + reduce(
-                    +,
-                    flow[u, n, c, d, t1] * stor_unit_charg_eff(storage=stor, commodity=c, unit=u)
-                    for (u, n, c, d, t1) in flow_indices(
-                        unit=[u_ for (stor_, u_, c_) in indices(stor_unit_charg_eff; storage=stor, commodity=c)],
-                        commodity=c,
-                        direction=:from_node,
-                        t=t2
-                    );
-                    init=0
-                )
-                - reduce(
-                    +,
-                    trans[conn, n, c, d, t1] * stor_conn_discharg_eff(storage=stor, commodity=c, connection=conn)
-                    for (conn, n, c, d, t1) in trans_indices(
-                        connection=[
-                            conn_ for (stor_, conn_, c_) in indices(stor_conn_discharg_eff; storage=stor, commodity=c)
+                        unit=[
+                            u1 for u1 in storage__unit(storage=stor)
+                                if stor_unit_discharg_eff(storage=stor, commodity=c, unit=u1) != nothing
                         ],
                         commodity=c,
                         direction=:to_node,
@@ -69,10 +57,39 @@ Balance for storage level.
                 )
                 + reduce(
                     +,
-                    trans[conn, n, c, d, t1] * stor_conn_charg_eff(storage=stor, commodity=c, connection=conn)
-                    for (conn, n, c, d, t1) in trans_indices(
+                    flow[u, n, c_, d, t_] * stor_unit_charg_eff(storage=stor, commodity=c, unit=u)
+                    for (u, n, c_, d, t_) in flow_indices(
+                        unit=[
+                            u1 for u1 in storage__unit(storage=stor)
+                                if stor_unit_charg_eff(storage=stor, commodity=c, unit=u1) != nothing
+                        ],
+                        commodity=c,
+                        direction=:from_node,
+                        t=t2
+                    );
+                    init=0
+                )
+                - reduce(
+                    +,
+                    trans[conn, n, c_, d, t_] * stor_conn_discharg_eff(storage=stor, commodity=c, connection=conn)
+                    for (conn, n, c_, d, t_) in trans_indices(
                         connection=[
-                            conn_ for (stor_, conn_, c_) in indices(stor_conn_charg_eff; storage=stor, commodity=c)
+                            conn1 for conn1 in storage__connection(storage=stor)
+                                if stor_conn_discharg_eff(storage=stor, commodity=c, connection=conn1) != nothing
+                        ],
+                        commodity=c,
+                        direction=:to_node,
+                        t=t2
+                    );
+                    init=0
+                )
+                + reduce(
+                    +,
+                    trans[conn, n, c_, d, t_] * stor_conn_charg_eff(storage=stor, commodity=c, connection=conn)
+                    for (conn, n, c_, d, t_) in trans_indices(
+                        connection=[
+                            conn1 for conn1 in storage__connection(storage=stor)
+                                if stor_conn_charg_eff(storage=stor, commodity=c, connection=conn1) != nothing
                         ],
                         commodity=c,
                         direction=:from_node,

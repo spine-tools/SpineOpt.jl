@@ -111,6 +111,8 @@ function run_spinemodel(
         println("Objective function value: $(objective_value(m))")
         printstyled("Writing results to the database...\n"; bold=true)
         @fetch flow, units_started_up, units_shut_down, units_on, trans, stor_state = m.ext[:variables]
+        @fetch flow_capacity = m.ext[:constraints]
+        @show pack_time_series(flow_capacity)
         @time write_results(
              db_url_out;
              result_name=result_name,
@@ -119,7 +121,8 @@ function run_spinemodel(
              units_shut_down=pack_time_series(SpineModel.value(units_shut_down)),
              units_on=pack_time_series(SpineModel.value(units_on)),
              trans=pack_time_series(SpineModel.value(trans)),
-             #stor_state=pack_time_series(SpineModel.value(stor_state))
+             stor_state=pack_time_series(SpineModel.value(stor_state)),
+             constraint_flow_capacity=pack_time_series(code(flow_capacity))
         )
     end
     printstyled("Done.\n"; bold=true)
