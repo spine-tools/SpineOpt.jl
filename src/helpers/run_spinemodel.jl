@@ -91,7 +91,6 @@ function run_spinemodel(
         # storage capacity
         constraint_stor_capacity(m)
         # storage state balance equation
-        # constraint_stor_state_init(m)
         constraint_stor_state(m)
         # commitment stuff
         constraint_units_on(m)
