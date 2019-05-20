@@ -91,7 +91,7 @@ function run_spinemodel(
         # storage capacity
         constraint_stor_capacity(m)
         # storage state balance equation
-        constraint_stor_state_init(m)
+        # constraint_stor_state_init(m)
         constraint_stor_state(m)
         # commitment stuff
         constraint_units_on(m)
@@ -112,7 +112,6 @@ function run_spinemodel(
         printstyled("Writing results to the database...\n"; bold=true)
         @fetch flow, units_started_up, units_shut_down, units_on, trans, stor_state = m.ext[:variables]
         @fetch flow_capacity = m.ext[:constraints]
-        @show pack_time_series(flow_capacity)
         @time write_results(
              db_url_out;
              result_name=result_name,
