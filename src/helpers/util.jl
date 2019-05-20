@@ -124,7 +124,7 @@ macro catch_undef(expr)
             $body
         catch e
             !(e isa UndefVarError) && rethrow()
-            @warn("$(e.var) not defined, although needed by $($name) —anyways, moving on...")
+            @warn("$(e.var) not defined, $($name) is being skipped")
         end
     end
     esc(new_expr)

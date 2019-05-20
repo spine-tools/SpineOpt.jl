@@ -36,7 +36,7 @@ Balance for storage level.
                     +,
                     flow[u, n, c_, d, t_] * stor_unit_discharg_eff(storage=stor, unit=u)
                     for (u, n, c_, d, t_) in flow_indices(
-                        unit=[u1 for (stor1, u1) in indices(stor_unit_discharg_eff)],
+                        unit=[u1 for (stor1, u1) in indices(stor_unit_discharg_eff; storage=stor)],
                         commodity=c,
                         direction=:to_node,
                         t=t2
@@ -47,7 +47,7 @@ Balance for storage level.
                     +,
                     flow[u, n, c_, d, t_] * stor_unit_charg_eff(storage=stor, unit=u)
                     for (u, n, c_, d, t_) in flow_indices(
-                        unit=[u1 for (stor1, u1) in indices(stor_unit_charg_eff)],
+                        unit=[u1 for (stor1, u1) in indices(stor_unit_charg_eff; storage=stor)],
                         commodity=c,
                         direction=:from_node,
                         t=t2
@@ -58,7 +58,7 @@ Balance for storage level.
                     +,
                     trans[conn, n, c_, d, t_] * stor_conn_discharg_eff(storage=stor, connection=conn)
                     for (conn, n, c_, d, t_) in trans_indices(
-                        connection=[conn1 for (stor1, conn1) in indices(stor_conn_discharg_eff)],
+                        connection=[conn1 for (stor1, conn1) in indices(stor_conn_discharg_eff; storage=stor)],
                         commodity=c,
                         direction=:to_node,
                         t=t2
@@ -69,7 +69,7 @@ Balance for storage level.
                     +,
                     trans[conn, n, c_, d, t_] * stor_conn_charg_eff(storage=stor, connection=conn)
                     for (conn, n, c_, d, t_) in trans_indices(
-                        connection=[conn1 for (stor1, conn1) in indices(stor_conn_charg_eff)],
+                        connection=[conn1 for (stor1, conn1) in indices(stor_conn_charg_eff; storage=stor)],
                         commodity=c,
                         direction=:from_node,
                         t=t2
