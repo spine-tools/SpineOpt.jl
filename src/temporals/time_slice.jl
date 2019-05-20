@@ -70,12 +70,22 @@ Determine whether `a` and `b` overlap.
 """
 overlaps(a::TimeSlice, b::TimeSlice) = a.start <= b.start < a.end_ || b.start <= a.start < b.end_
 
+function overlap_duration(a::TimeSlice, b::TimeSlice)
+    overlaps(a, b) || return Minute(0)
+    overlap_start = max(a.start, b.start)
+    overlap_end = min(a.end_, b.end_)
+    Minute(overlap_end - overlap_start)
+end
+
 # Iterate single `TimeSlice` as collection. NOTE: This also enables `intersect` with a single `TimeSlice`
 # I believe this is correct, since a single `TimeSlice` shouldn't be decomposed by an iterator
 # This is also Julia's default behaviour for `Number` types -Manuel
 Base.iterate(t::TimeSlice) = iterate((t,))
 Base.iterate(t::TimeSlice, state::T) where T = iterate((t,), state)
 Base.length(t::TimeSlice) = 1
+
+# Convenience subtraction operator
+Base.:-(t::TimeSlice, p::Period) = TimeSlice(t.start - p, t.end_ - p)
 
 """
     t_lowest_resolution(t_list)
