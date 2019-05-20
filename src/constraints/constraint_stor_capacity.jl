@@ -27,18 +27,18 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 @catch_undef function constraint_stor_capacity(m::Model)
     @fetch stor_state = m.ext[:variables]
     constr_dict = m.ext[:constraints][:stor_state_cap] = Dict()
-    for (stor, c) in indices(stor_state_cap)
+    for (stor,) in indices(stor_state_cap)
         for t in time_slice()
-            constr_dict[stor, c, t] = @constraint(
+            constr_dict[stor, t] = @constraint(
                 m,
                 + reduce(
                     +,
                     stor_state[stor1, c1, t1] * duration(t1)
-                    for (stor1, c1, t1) in stor_state_indices(storage=stor, commodity=c, t=t);
+                    for (stor1, c1, t1) in stor_state_indices(storage=stor, t=t);
                     init=0
                 )
                 <=
-                stor_state_cap(storage=stor, commodity=c, t=t) * duration(t)
+                stor_state_cap(storage=stor, t=t) * duration(t)
             )
         end
     end
