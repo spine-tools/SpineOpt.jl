@@ -28,30 +28,27 @@ is specified.
 @catch_undef function constraint_max_ratio_out_out_flow(m::Model)
     @fetch flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:max_ratio_out_out_flow] = Dict()
-    for (u, cg1, cg2) in indices(max_ratio_out_out)
-        involved_timeslices = [
-            t for (u, n, c, d, t) in flow_indices(
-                unit=u, commodity=commodity_group__commodity(commodity_group=[cg1, cg2]))
-        ]
+    for (u, c1, c2) in indices(max_ratio_out_out_flow)
+        involved_timeslices = [t for (u, n, c, d, t) in flow_indices(unit=u, commodity=[c1, c2])]
         for t in t_lowest_resolution(involved_timeslices)
-            constr_dict[u, cg1, cg2, t] = @constraint(
+            constr_dict[u, c1, c2, t] = @constraint(
                 m,
                 + sum(
-                    flow[u_, n, c1, d, t1] * duration(t1)
-                    for (u_, n, c1, d, t1) in flow_indices(
+                    flow[u_, n, c1_, d, t1] * duration(t1)
+                    for (u_, n, c1_, d, t1) in flow_indices(
                         unit=u,
-                        commodity=commodity_group__commodity(commodity_group=cg1),
+                        commodity=c1,
                         direction=:to_node,
                         t=t_in_t(t_long=t)
                     )
                 )
                 <=
-                + max_ratio_out_out(unit=u, commodity_group1=cg1, commodity_group2=cg2, t=t)
+                + max_ratio_out_out_flow(unit=u, commodity1=c1, commodity2=c2, t=t)
                 * sum(
-                    flow[u_, n, c2, d, t1] * duration(t1)
-                    for (u_, n, c2, d, t1) in flow_indices(
+                    flow[u_, n, c2_, d, t1] * duration(t1)
+                    for (u_, n, c2_, d, t1) in flow_indices(
                         unit=u,
-                        commodity=commodity_group__commodity(commodity_group=cg2),
+                        commodity=c2,
                         direction=:to_node,
                         t=t_in_t(t_long=t)
                     )

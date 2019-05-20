@@ -25,51 +25,57 @@ Balance for storage level.
 @catch_undef function constraint_stor_state(m::Model)
     @fetch stor_state, trans, flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:stor_state] = Dict()
-    for (stor, c, t1) in stor_state_indices(), t2 in t_before_t(t_before=t1)
-        if !isempty(t_before_t(t_after=t)) && t2 in [t for (stor, c, t) in stor_state_indices()]
+    for (stor, c, t1) in stor_state_indices()
+        for (stor, c, t2) in stor_state_indices(storage=stor, commodity=c, t=t_before_t(t_before=t1))
             constr_dict[stor, c, t1, t2] = @constraint(
                 m,
-                + stor_state[c,stor,t2]
+                + stor_state[stor, c, t2]
                 ==
-                stor_state[c,stor, t1] * (1 - frac_state_loss(storage=stor, commodity=c))
+                + stor_state[stor, c, t1] * (1 - frac_state_loss(storage=stor, commodity=c))
                 - reduce(
                     +,
-                    flow[u, n, c, :to_node, t1] * stor_discharg_eff(storage=stor, commodity=c, unit=u)
-                    for (u, n, c, d, t1) in flow_indices(
-                        unit=unit_stor_discharg_eff_indices(storage=stor, commodity=c),
+                    flow[u, n, c_, d, t_] * stor_unit_discharg_eff(storage=stor, commodity=c, unit=u)
+                    for (u, n, c_, d, t_) in flow_indices(
+                        unit=[u1 for (stor1, u1, c1) in indices(stor_unit_discharg_eff; storage=stor, commodity=c)],
                         commodity=c,
+                        direction=:to_node,
                         t=t2
                     );
                     init=0
                 )
                 + reduce(
                     +,
-                    flow[u, n, c, :to_node, t1] * stor_charg_eff(storage=stor, commodity=c, unit=u)
+                    flow[u, n, c, d, t1] * stor_unit_charg_eff(storage=stor, commodity=c, unit=u)
                     for (u, n, c, d, t1) in flow_indices(
-                        unit=unit_stor_charg_eff_indices(storage=stor, commodity=c),
+                        unit=[u_ for (stor_, u_, c_) in indices(stor_unit_charg_eff; storage=stor, commodity=c)],
                         commodity=c,
+                        direction=:from_node,
                         t=t2
                     );
                     init=0
                 )
                 - reduce(
                     +,
-                    trans[conn, n, c, :to_node, t1] * stor_discharg_eff(storage=stor, commodity=c, connection=conn)
+                    trans[conn, n, c, d, t1] * stor_conn_discharg_eff(storage=stor, commodity=c, connection=conn)
                     for (conn, n, c, d, t1) in trans_indices(
-                        conn=conn_stor_discharg_eff_indices(
-                            storage=stor, commodity=c
-                        ),
+                        connection=[
+                            conn_ for (stor_, conn_, c_) in indices(stor_conn_discharg_eff; storage=stor, commodity=c)
+                        ],
                         commodity=c,
+                        direction=:to_node,
                         t=t2
                     );
                     init=0
                 )
                 + reduce(
                     +,
-                    trans[conn, n, c, :to_node, t1] * stor_charg_eff(storage=stor, commodity=c, connection=conn)
+                    trans[conn, n, c, d, t1] * stor_conn_charg_eff(storage=stor, commodity=c, connection=conn)
                     for (conn, n, c, d, t1) in trans_indices(
-                        conn=conn_stor_charg_eff_indices(storage=stor, commodity=c),
+                        connection=[
+                            conn_ for (stor_, conn_, c_) in indices(stor_conn_charg_eff; storage=stor, commodity=c)
+                        ],
                         commodity=c,
+                        direction=:from_node,
                         t=t2
                     );
                     init=0

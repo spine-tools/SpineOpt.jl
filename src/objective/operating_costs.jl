@@ -26,12 +26,13 @@ function operating_costs(m::Model)
         m,
         reduce(
             +,
-            flow[u, n, c, d, t] * duration(t) * operating_cost(unit=u, commodity_group=cg, direction=d, t=t)
-            for (u_, cg, d_) in indices(operating_cost)
+            flow[u, n, c, d, t] * duration(t) * operating_cost(unit=u_, commodity=c_, direction=d_, t=t)
+            for (u_, c_, d_) in indices(operating_cost)
                 for (u, n, c, d, t) in flow_indices(
                     unit=u_,
-                    commodity=commodity_group__commodity(commodity_group=cg),
-                    direction=d_);
+                    commodity=c_,
+                    direction=d_
+                );
             init=0
         )
     )

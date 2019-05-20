@@ -83,7 +83,7 @@ function run_spinemodel(
         constraint_max_ratio_out_in_trans(m)
         constraint_min_ratio_out_in_trans(m)
         # Transmission line capacity
-        # constraint_trans_capacity(m)
+        constraint_trans_capacity(m)
         # Nodal balance
         constraint_nodal_balance(m)
         # Absolute bounds on commodities
@@ -110,7 +110,7 @@ function run_spinemodel(
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
         printstyled("Writing results to the database...\n"; bold=true)
-        @fetch flow, units_started_up, units_shut_down, units_on, trans = m.ext[:variables]
+        @fetch flow, units_started_up, units_shut_down, units_on, trans, stor_state = m.ext[:variables]
         @time write_results(
              db_url_out;
              result_name=result_name,
