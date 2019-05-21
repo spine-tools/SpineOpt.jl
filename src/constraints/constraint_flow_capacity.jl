@@ -28,7 +28,7 @@ Check if `unit_conv_cap_to_flow` is defined.
     constr_dict = m.ext[:constraints][:flow_capacity] = Dict{NamedTuple,Any}()
     for (u, c, d) in indices(unit_capacity)
         for t in time_slice()
-            constr_dict[(unit=u, commodity=c, direction=d)] = @constraint(
+            constr_dict[(unit=u, commodity=c, direction=d, t=t)] = @constraint(
                 m,
                 + reduce(
                     +,
