@@ -19,101 +19,12 @@
 # TODO: have an eye on where unique! is necessary for speedup
 # TODO: add examples to all docstrings when all this begins to converge
 
-struct TBeforeTRelationshipClass
-    list::Array{Tuple{TimeSlice,TimeSlice},1}
-end
-
-struct TInTRelationshipClass
-    list::Array{Tuple{TimeSlice,TimeSlice},1}
-end
-
-struct TInTExclRelationshipClass
-    list::Array{Tuple{TimeSlice,TimeSlice},1}
-end
-
 struct TOverlapsTRelationshipClass
     list::Array{Tuple{TimeSlice,TimeSlice},1}
 end
 
 struct TOverlapsTExclRelationshipClass
     list::Array{Tuple{TimeSlice,TimeSlice},1}
-end
-
-"""
-    t_before_t(;t_before=nothing, t_after=nothing)
-
-Return the list of tuples `(t1, t2)` where `t1` is right before `t2` in the sense that it
-ends when `t2` starts, i.e. `t1.end_ == t2.start`.
-If `t_before` is not `nothing`, return the list of time slices that succeed `t_before`
-(or any element in `t_before` if it's a list).
-If `t_after` is not `nothing`, return the list of time slices that are succeeded by `t_after`
-(or any element in `t_after` if it's a list).
-"""
-function (t_before_t::TBeforeTRelationshipClass)(;t_before=nothing, t_after=nothing)
-    result = t_before_t.list
-    if t_before != nothing
-        result = [(t1, t2) for (t1, t2) in result if t1 in tuple(t_before...)]
-    end
-    if t_after != nothing
-        result = [(t1, t2) for (t1, t2) in result if t2 in tuple(t_after...)]
-    end
-    if t_before != nothing && t_after == nothing
-        [t2 for (t1, t2) in result]
-    elseif t_before == nothing && t_after != nothing
-        [t1 for (t1, t2) in result]
-    else
-        result
-    end
-end
-
-"""
-    t_in_t(;t_short=nothing, t_long=nothing)
-
-Return the list of tuples `(t1, t2)`, where `t2` is contained in `t1`.
-If `t_long` is not `nothing`, return the list of time slices contained in `t_long`
-(or any element in `t_long` if it's a list).
-If `t_short` is not `nothing`, return the list of time slices that contain `t_short`
-(or any element in `t_short` if it's a list).
-"""
-function (t_in_t::TInTRelationshipClass)(;t_short=nothing, t_long=nothing)
-    result = t_in_t.list
-    if t_short != nothing
-        result = [(t1, t2) for (t1, t2) in result if t1 in tuple(t_short...)]
-    end
-    if t_long != nothing
-        result = [(t1, t2) for (t1, t2) in result if t2 in tuple(t_long...)]
-    end
-    if t_short != nothing && t_long == nothing
-        [t2 for (t1, t2) in result]
-    elseif t_short == nothing && t_long != nothing
-        [t1 for (t1, t2) in result]
-    else
-        result
-    end
-end
-
-"""
-    t_in_t_excl(;t_short=nothing, t_long=nothing)
-
-Return the list of tuples `(t1, t2)`, where `t1` contains `t2` and `t1` is different from `t2`.
-See [`t_in_t(;t_long=nothing, t_short=nothing)`](@ref)
-for details about keyword arguments `t_long`, `t_short`.
-"""
-function (t_in_t_excl::TInTExclRelationshipClass)(;t_short=nothing, t_long=nothing)
-    result = t_in_t_excl.list
-    if t_short != nothing
-        result = [(t1, t2) for (t1, t2) in result if t1 in tuple(t_short...)]
-    end
-    if t_long != nothing
-        result = [(t1, t2) for (t1, t2) in result if t2 in tuple(t_long...)]
-    end
-    if t_short != nothing && t_long == nothing
-        [t2 for (t1, t2) in result]
-    elseif t_short == nothing && t_long != nothing
-        [t1 for (t1, t2) in result]
-    else
-        result
-    end
 end
 
 """
@@ -239,9 +150,21 @@ function generate_time_slice_relationships()
     t_in_t_excl_list = [(t1, t2) for (t1, t2) in t_in_t_list if t1 != t2]
     t_overlaps_t_excl_list = [(t1, t2) for (t1, t2) in t_overlaps_t_list if t1 != t2]
     # Create function-like objects
-    t_before_t = TBeforeTRelationshipClass(t_before_t_list)
-    t_in_t = TInTRelationshipClass(t_in_t_list)
-    t_in_t_excl = TInTExclRelationshipClass(t_in_t_excl_list)
+    t_before_t = RelationshipClass(
+        :t_before_t,
+        (:t_before, :t_after),
+        [NamedTuple{(:t_before, :t_after)}(x) for x in t_before_t_list]
+    )
+    t_in_t = RelationshipClass(
+        :t_in_t,
+        (:t_short, :t_long),
+        [NamedTuple{(:t_short, :t_long)}(x) for x in t_in_t_list]
+    )
+    t_in_t_excl = RelationshipClass(
+        :t_in_t_excl,
+        (:t_short, :t_long),
+        [NamedTuple{(:t_short, :t_long)}(x) for x in t_in_t_excl_list]
+    )
     t_overlaps_t = TOverlapsTRelationshipClass(t_overlaps_t_list)
     t_overlaps_t_excl = TOverlapsTExclRelationshipClass(t_overlaps_t_excl_list)
     # Export the function-like objects
@@ -253,7 +176,7 @@ function generate_time_slice_relationships()
         t_overlaps_t_excl = $t_overlaps_t_excl
         export t_before_t
         export t_in_t
-        export t_in_t_excl
+        #export t_in_t_excl
         export t_overlaps_t
         export t_overlaps_t_excl
     end
