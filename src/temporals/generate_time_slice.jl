@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-struct TimeSliceFunction
+struct TimeSliceObjectClass
     list::Array{TimeSlice,1}
     temporal_block_list::Dict{Object,Array{TimeSlice,1}}
 end
@@ -27,7 +27,7 @@ end
 Return all time slices in the model.
 If 'temporal_block' is not `nothing`, return only the time slices in that block.
 """
-function (time_slice::TimeSliceFunction)(;temporal_block=nothing)
+function (time_slice::TimeSliceObjectClass)(;temporal_block=nothing, t_overlap=nothing)
     if temporal_block == nothing
         time_slice.list
     else
@@ -68,7 +68,7 @@ function generate_time_slice()
     end
     time_slice_list = unique(t for v in values(time_slice_temporal_block_list) for t in v)
     # Create and export the function like object
-    time_slice = TimeSliceFunction(time_slice_list, time_slice_temporal_block_list)
+    time_slice = TimeSliceObjectClass(time_slice_list, time_slice_temporal_block_list)
     @eval begin
         time_slice = $time_slice
         export time_slice

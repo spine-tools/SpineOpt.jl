@@ -19,23 +19,23 @@
 # TODO: have an eye on where unique! is necessary for speedup
 # TODO: add examples to all docstrings when all this begins to converge
 
-struct TBeforeTFunction
+struct TBeforeTRelationshipClass
     list::Array{Tuple{TimeSlice,TimeSlice},1}
 end
 
-struct TInTFunction
+struct TInTRelationshipClass
     list::Array{Tuple{TimeSlice,TimeSlice},1}
 end
 
-struct TInTExclFunction
+struct TInTExclRelationshipClass
     list::Array{Tuple{TimeSlice,TimeSlice},1}
 end
 
-struct TOverlapsTFunction
+struct TOverlapsTRelationshipClass
     list::Array{Tuple{TimeSlice,TimeSlice},1}
 end
 
-struct TOverlapsTExclFunction
+struct TOverlapsTExclRelationshipClass
     list::Array{Tuple{TimeSlice,TimeSlice},1}
 end
 
@@ -49,7 +49,7 @@ If `t_before` is not `nothing`, return the list of time slices that succeed `t_b
 If `t_after` is not `nothing`, return the list of time slices that are succeeded by `t_after`
 (or any element in `t_after` if it's a list).
 """
-function (t_before_t::TBeforeTFunction)(;t_before=nothing, t_after=nothing)
+function (t_before_t::TBeforeTRelationshipClass)(;t_before=nothing, t_after=nothing)
     result = t_before_t.list
     if t_before != nothing
         result = [(t1, t2) for (t1, t2) in result if t1 in tuple(t_before...)]
@@ -75,7 +75,7 @@ If `t_long` is not `nothing`, return the list of time slices contained in `t_lon
 If `t_short` is not `nothing`, return the list of time slices that contain `t_short`
 (or any element in `t_short` if it's a list).
 """
-function (t_in_t::TInTFunction)(;t_short=nothing, t_long=nothing)
+function (t_in_t::TInTRelationshipClass)(;t_short=nothing, t_long=nothing)
     result = t_in_t.list
     if t_short != nothing
         result = [(t1, t2) for (t1, t2) in result if t1 in tuple(t_short...)]
@@ -99,7 +99,7 @@ Return the list of tuples `(t1, t2)`, where `t1` contains `t2` and `t1` is diffe
 See [`t_in_t(;t_long=nothing, t_short=nothing)`](@ref)
 for details about keyword arguments `t_long`, `t_short`.
 """
-function (t_in_t_excl::TInTExclFunction)(;t_short=nothing, t_long=nothing)
+function (t_in_t_excl::TInTExclRelationshipClass)(;t_short=nothing, t_long=nothing)
     result = t_in_t_excl.list
     if t_short != nothing
         result = [(t1, t2) for (t1, t2) in result if t1 in tuple(t_short...)]
@@ -121,7 +121,7 @@ end
 
 Return the list of tuples `(t1, t2)` where `t1` and `t2` have some time in common.
 """
-function (t_overlaps_t::TOverlapsTFunction)()
+function (t_overlaps_t::TOverlapsTRelationshipClass)()
     t_overlaps_t.list
 end
 
@@ -131,7 +131,7 @@ end
 Return the list of time slices that have some time in common with `t_overlap`
 (or some time in common with any element in `t_overlap` if it's a list).
 """
-function (t_overlaps_t::TOverlapsTFunction)(t_overlap)
+function (t_overlaps_t::TOverlapsTRelationshipClass)(t_overlap)
     unique(t2 for (t1, t2) in t_overlaps_t.list if t1 in tuple(t_overlap...))
 end
 
@@ -141,7 +141,7 @@ end
 Return a list of time slices which are in `t_list1` and have some time in common
 with any of the time slices in `t_list2` and vice versa.
 """
-function (t_overlaps_t::TOverlapsTFunction)(t_list1, t_list2)
+function (t_overlaps_t::TOverlapsTRelationshipClass)(t_list1, t_list2)
     orig_list = t_overlaps_t.list
     overlap_list = [
         (t1, t2) for (t1, t2) in orig_list if t1 in tuple(t_list1...) && t2 in tuple(t_list2...)
@@ -155,7 +155,7 @@ end
 Return the list of tuples `(t1, t2)` where `t1` and `t2` have some time in common
 and `t1` is not equal to `t2`.
 """
-function (t_overlaps_t_excl::TOverlapsTExclFunction)()
+function (t_overlaps_t_excl::TOverlapsTExclRelationshipClass)()
     t_overlaps_t_excl.list
 end
 
@@ -166,7 +166,7 @@ end
 Return the list of time slices that have some time in common with `t_overlap`
 (or some time in common with any element in `t_overlap` if it's a list) and `t1` is not equal to `t2`.
 """
-function (t_overlaps_t_excl::TOverlapsTExclFunction)(t_overlap)
+function (t_overlaps_t_excl::TOverlapsTExclRelationshipClass)(t_overlap)
     unique(t2 for (t1, t2) in t_overlaps_t_excl.list if t1 in tuple(t_overlap...))
 end
 """
@@ -175,7 +175,7 @@ end
 Return a list of time slices which are in `t_list1` and have some time in common
 with any of the time slices in `t_list2` (unless they are the same time slice) and vice versa.
 """
-function (t_overlaps_t_excl::TOverlapsTExclFunction)(t_list1, t_list2)
+function (t_overlaps_t_excl::TOverlapsTExclRelationshipClass)(t_list1, t_list2)
     orig_list = t_overlaps_t_excl.list
     overlap_list = [
         (t1, t2) for (t1, t2) in orig_list if t1 in tuple(t_list1...) && t2 in tuple(t_list2...)
@@ -239,11 +239,11 @@ function generate_time_slice_relationships()
     t_in_t_excl_list = [(t1, t2) for (t1, t2) in t_in_t_list if t1 != t2]
     t_overlaps_t_excl_list = [(t1, t2) for (t1, t2) in t_overlaps_t_list if t1 != t2]
     # Create function-like objects
-    t_before_t = TBeforeTFunction(t_before_t_list)
-    t_in_t = TInTFunction(t_in_t_list)
-    t_in_t_excl = TInTExclFunction(t_in_t_excl_list)
-    t_overlaps_t = TOverlapsTFunction(t_overlaps_t_list)
-    t_overlaps_t_excl = TOverlapsTExclFunction(t_overlaps_t_excl_list)
+    t_before_t = TBeforeTRelationshipClass(t_before_t_list)
+    t_in_t = TInTRelationshipClass(t_in_t_list)
+    t_in_t_excl = TInTExclRelationshipClass(t_in_t_excl_list)
+    t_overlaps_t = TOverlapsTRelationshipClass(t_overlaps_t_list)
+    t_overlaps_t_excl = TOverlapsTExclRelationshipClass(t_overlaps_t_excl_list)
     # Export the function-like objects
     @eval begin
         t_before_t = $t_before_t
