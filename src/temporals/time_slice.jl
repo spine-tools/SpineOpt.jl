@@ -26,6 +26,7 @@ struct TimeSlice <: ObjectLike
 end
 
 TimeSlice(start::DateTime, end_::DateTime) = TimeSlice(start, end_, "$start...$end_")
+TimeSlice(other::TimeSlice) = other
 
 function Base.show(io::IO, time_slice::TimeSlice)
     str = "$(time_slice.start)...$(time_slice.end_)"
@@ -89,6 +90,30 @@ end
 Base.iterate(t::TimeSlice) = iterate((t,))
 Base.iterate(t::TimeSlice, state::T) where T = iterate((t,), state)
 Base.length(t::TimeSlice) = 1
+
+function Base.intersect(s::Array{TimeSlice,1}, itrs...)
+    result = Array{TimeSlice,1}()
+    sort!(s)
+    coll = sort([x for itr in itrs for x in itr])
+    t2 = nothing
+    i = 1
+    for t in s
+        for j in i:length(coll)
+            t2 = coll[j]
+            if t2 > t
+                i = j
+                break
+            elseif t2 == t
+                if isempty(result) || t != result[end]
+                    push!(result, t)
+                end
+            end
+        end
+    end
+    result
+end
+
+Base.intersect(s::Array{TimeSlice,1}, ::Anything) = s
 
 # Convenience subtraction operator
 Base.:-(t::TimeSlice, p::Period) = TimeSlice(t.start - p, t.end_ - p)
