@@ -71,11 +71,16 @@ Determine whether `a` and `b` overlap.
 """
 overlaps(a::TimeSlice, b::TimeSlice) = a.start <= b.start < a.end_ || b.start <= a.start < b.end_
 
+"""
+    overlap_duration(a::TimeSlice, b::TimeSlice)
+
+The number of minutes time slices `a` and `b` overlap.
+"""
 function overlap_duration(a::TimeSlice, b::TimeSlice)
-    overlaps(a, b) || return Minute(0)
+    overlaps(a, b) || return 0
     overlap_start = max(a.start, b.start)
     overlap_end = min(a.end_, b.end_)
-    Minute(overlap_end - overlap_start)
+    Minute(overlap_end - overlap_start).value
 end
 
 # Iterate single `TimeSlice` as collection. NOTE: This also enables `intersect` with a single `TimeSlice`
