@@ -62,6 +62,7 @@ succeeds(a::TimeSlice, b::TimeSlice) = b.end_ == a.start
 Determine whether `b` is contained in `a`.
 """
 Base.in(b::TimeSlice, a::TimeSlice) = b.start >= a.start && b.end_ <= a.end_
+Base.in(b::DateTime, a::TimeSlice) = a.start <= b <= a.end_
 
 """
     overlaps(a::TimeSlice, b::TimeSlice)
@@ -94,10 +95,11 @@ Return the list of the lowest resolution time slices within `t_list`
 (those that aren't contained in any other).
 """
 function t_lowest_resolution(t_list)
-    isempty(t_list) && return t_list
-    sort!(t_list)
-    result::Array{TimeSlice,1} = [t_list[1]]
-    for t in t_list[2:end]
+    isempty(t_list) && return []
+    t_coll = collect(t_list)
+    sort!(t_coll)
+    result::Array{TimeSlice,1} = [t_coll[1]]
+    for t in t_coll[2:end]
         if result[end] in t
             result[end] = t
         elseif !(t in result[end])
@@ -115,10 +117,11 @@ Return the list of the highest resolution time slices from `t_list`
 (those that don't contain any other).
 """
 function t_highest_resolution(t_list)
-    isempty(t_list) && return t_list
-    sort!(t_list)
-    result::Array{TimeSlice,1} = [t_list[1]]
-    for t in t_list[2:end]
+    isempty(t_list) && return []
+    t_coll = collect(t_list)
+    sort!(t_coll)
+    result::Array{TimeSlice,1} = [t_coll[1]]
+    for t in t_coll[2:end]
         result[end] in t || push!(result, t)
     end
     result
