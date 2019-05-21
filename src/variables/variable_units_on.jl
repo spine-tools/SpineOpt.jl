@@ -65,7 +65,7 @@ A set of tuples for indexing the `units_on` variable. Any filtering options can 
 for `unit` and `t`.
 """
 function units_on_indices(;unit=anything, t=anything)
-    [var_units_on_indices(unit=unit, t=t); fix_units_on_indices(unit=unit, t=t)]
+    unique([var_units_on_indices(unit=unit, t=t); fix_units_on_indices(unit=unit, t=t)])
 end
 
 function var_units_on_indices(;unit=anything, t=anything)
@@ -81,13 +81,10 @@ function fix_units_on_indices(;unit=anything, t=anything)
         (unit=u, t=t1)
         for (u,) in indices(fix_units_on; unit=unit) if fix_units_on(unit=u) isa TimeSeriesValue
             for t1 in intersect(
-                t_highest_resolution(
-                    [
-                        t for s in time_stamps(fix_units_on(unit=u))
-                            for t in time_slice() if t.start <= s < t.end_
-                    ]
-                ),
-                t
-            )
+                    t_highest_resolution(
+                        t for t in time_slice() if any(s in t for s in time_stamps(fix_units_on(unit=u)))
+                    ),
+                    t
+                )
     ]
 end
