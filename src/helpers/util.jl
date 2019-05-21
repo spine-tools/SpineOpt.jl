@@ -124,7 +124,7 @@ macro catch_undef(expr)
             $body
         catch e
             !(e isa UndefVarError) && rethrow()
-            @warn("$(e.var) not defined, $($name) is being skipped")
+            @warn("$(e.var) not defined, skipping $($name)")
         end
     end
     esc(new_expr)
@@ -141,17 +141,17 @@ function parse_duration(str::String)
         # Compact form, eg. "1D"
         number = str[1:end-1]
         time_unit = str[end]
-        if lowercase(time_unit) == "y"
+        if lowercase(time_unit) == 'y'
             Year(number)
-        elseif time_unit == "m"
+        elseif time_unit == 'm'
             Month(number)
-        elseif time_unit == "d"
+        elseif time_unit == 'd'
             Day(number)
-        elseif time_unit == "H"
+        elseif time_unit == 'H'
             Hour(number)
-        elseif time_unit == "M"
+        elseif time_unit == 'M'
             Minute(number)
-        elseif time_unit == "S"
+        elseif time_unit == 'S'
             Second(number)
         else
             error("invalid duration specification '$str'")
