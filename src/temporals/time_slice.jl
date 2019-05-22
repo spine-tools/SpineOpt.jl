@@ -28,13 +28,7 @@ end
 TimeSlice(start::DateTime, end_::DateTime) = TimeSlice(start, end_, "$start...$end_")
 TimeSlice(other::TimeSlice) = other
 
-function Base.show(io::IO, time_slice::TimeSlice)
-    str = "$(time_slice.start)...$(time_slice.end_)"
-    if time_slice.JuMP_name != nothing
-        str = "$str ($(time_slice.JuMP_name))"
-    end
-    print(io, str)
-end
+Base.show(io::IO, time_slice::TimeSlice) = print(io, time_slice.JuMP_name)
 
 """
     duration(t::TimeSlice)

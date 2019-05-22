@@ -78,9 +78,9 @@ function fix_trans_indices(;commodity=anything, node=anything, connection=anythi
     commodity = expand_commodity_group(commodity)
     [
         (connection=conn, node=n, commodity=c, direction=d, t=t1)
-        for (conn, n_, d) in indices(fix_trans; connection=connection, node=node, direction=direction)
+        for (conn, n, d) in indices(fix_trans; connection=connection, node=node, direction=direction)
                 if fix_trans(connection=conn, node=n, direction=d) isa TimeSeriesValue
-            for (n, c) in node__commodity(commodity=commodity, node=n_, _compact=false)
+            for (n, c) in node__commodity(commodity=commodity, node=n, _compact=false)
                 for t1 in intersect(
                         t_highest_resolution(
                             t for t in time_slice()

@@ -29,7 +29,7 @@ is specified.
     @fetch trans = m.ext[:variables]
     constr_dict = m.ext[:constraints][:min_ratio_out_in_trans] = Dict()
     for (conn, n_out, n_in) in indices(min_ratio_out_in_trans)
-        involved_timeslices = [t for (conn, n, c, d, t) in trans_indices(connection=conn, node=[n_out, n_in])]
+        involved_timeslices = [t for (conn, n, c, d, t) in var_trans_indices(connection=conn, node=[n_out, n_in])]
         for t in t_lowest_resolution(involved_timeslices)
             constr_dict[conn, n_out, n_in, t] = @constraint(
                 m,
