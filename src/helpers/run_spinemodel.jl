@@ -82,17 +82,19 @@ function run_spinemodel(
         constraint_fix_ratio_out_in_trans(m)
         constraint_max_ratio_out_in_trans(m)
         constraint_min_ratio_out_in_trans(m)
+        # Transmission delays
+        constraint_fix_delay_out_in_trans(m)
         # Transmission line capacity
         constraint_trans_capacity(m)
         # Nodal balance
         constraint_nodal_balance(m)
         # Absolute bounds on commodities
         constraint_max_cum_in_flow_bound(m)
-        # storage capacity
+        # Storage capacity
         constraint_stor_capacity(m)
-        # storage state balance equation
+        # Storage state balance equation
         constraint_stor_state(m)
-        # commitment stuff
+        # Unit state
         constraint_units_on(m)
         constraint_units_available(m)
         constraint_minimum_operating_point(m)
@@ -110,7 +112,7 @@ function run_spinemodel(
         println("Objective function value: $(objective_value(m))")
         printstyled("Writing results to the database...\n"; bold=true)
         @fetch flow, units_started_up, units_shut_down, units_on, trans, stor_state = m.ext[:variables]
-        @fetch flow_capacity = m.ext[:constraints]
+        # @fetch flow_capacity = m.ext[:constraints]
         @time write_results(
              db_url_out;
              result_name=result_name,
@@ -120,7 +122,7 @@ function run_spinemodel(
              units_on=pack_time_series(SpineModel.value(units_on)),
              trans=pack_time_series(SpineModel.value(trans)),
              stor_state=pack_time_series(SpineModel.value(stor_state)),
-             constraint_flow_capacity=pack_time_series(formulation(flow_capacity))
+             # constraint_flow_capacity=pack_time_series(formulation(flow_capacity))
         )
     end
     printstyled("Done.\n"; bold=true)
