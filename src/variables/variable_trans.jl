@@ -55,10 +55,10 @@ A set of tuples for indexing the `trans` variable. Any filtering options can be 
 for `commodity`, `node`, `connection`, `direction`, and `t`.
 """
 function trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything)
-    unique([
+    [
         var_trans_indices(commodity=commodity, node=node, connection=connection, direction=direction, t=t);
         fix_trans_indices(commodity=commodity, node=node, connection=connection, direction=direction, t=t)
-    ])
+    ]
 end
 
 function var_trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything)
@@ -67,9 +67,9 @@ function var_trans_indices(;commodity=anything, node=anything, connection=anythi
     [
         (connection=conn, node=n, commodity=c, direction=d, t=t1)
         for (conn, n_, d, blk) in connection__node__direction__temporal_block(
-                node=node, connection=connection, direction=Object(direction), _compact=false)
+                    node=node, connection=connection, direction=direction, _compact=false)
             for (n, c) in node__commodity(commodity=commodity, node=n_, _compact=false)
-                for t1 in intersect(time_slice(temporal_block=blk), t)
+                for t1 in time_slice(temporal_block=blk, t=t)
     ]
 end
 

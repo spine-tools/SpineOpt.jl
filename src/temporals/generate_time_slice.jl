@@ -27,11 +27,16 @@ end
 Return all time slices in the model.
 If 'temporal_block' is not `nothing`, return only the time slices in that block.
 """
-function (time_slice::TimeSliceObjectClass)(;temporal_block=nothing, t_overlap=nothing)
-    if temporal_block == nothing
+function (time_slice::TimeSliceObjectClass)(;temporal_block=anything, t=anything)
+    if temporal_block == anything
         time_slice.list
-    else
+    elseif t == anything
         [t for tblk in Object.(temporal_block) for ts in time_slice.temporal_block_list[tblk] for t in ts]
+    else
+        start = start_datetime(temporal_block=Object(temporal_block))
+        end_ = end_datetime(temporal_block=Object(temporal_block))
+        dur = time_slice_duration(temporal_block=Object(temporal_block))
+        [s for s in t if s.start >= start && s.end_ <= end_ && s.duration == dur]  # TODO: make it work with time slice adjustment
     end
 end
 
@@ -58,7 +63,8 @@ function generate_time_slice()
                     * "to respect the specified end time"
                 )
             end
-            new_time_slice = TimeSlice(time_slice_start, time_slice_end, "$(blk)__t$(i)")
+            # NOTE: Letting the time slice be named automatically makes them unique across blocks!
+            new_time_slice = TimeSlice(time_slice_start, time_slice_end)
             push!(time_slice_list, new_time_slice)
             # Prepare for next iter
             time_slice_start = time_slice_end

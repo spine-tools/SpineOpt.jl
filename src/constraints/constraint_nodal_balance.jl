@@ -33,26 +33,28 @@ Enforce balance of all commodity flows from and to a node.
                 ==
                 # Demand for the commodity
                 - (demand(node=n, t=t) != nothing && demand(node=n, t=t) * duration(t))
-                # Output of units into this node, and their input from this node
+                # Commodity flows from units
                 + reduce(
                     +,
                     flow[u, n, c, d, t1] * duration(t1)
                     for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=:to_node);
                     init=0
                 )
+                # Commodity flows to units
                 - reduce(
                     +,
                     flow[u, n, c, d, t1] * duration(t1)
                     for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=:from_node);
                     init=0
                 )
-                # Transfer of commodities between nodes
+                # Commodity transfers from connections
                 + reduce(
                     +,
                     trans[conn, n, c, d, t1] * duration(t1)
                     for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=:to_node);
                     init=0
                 )
+                # Commodity transfers to connections
                 - reduce(
                     +,
                     trans[conn, n, c, d, t1] * duration(t1)

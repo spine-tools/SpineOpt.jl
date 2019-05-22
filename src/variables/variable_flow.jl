@@ -52,6 +52,6 @@ function flow_indices(;commodity=anything, node=anything, unit=anything, directi
         for (u, n, d, blk) in unit__node__direction__temporal_block(
                 node=node, unit=unit, direction=direction, _compact=false)
             for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
-                for t1 in intersect(time_slice(temporal_block=blk), t)
+                for t1 in time_slice(temporal_block=blk, t=t)
     ]
 end
