@@ -55,12 +55,10 @@ and the `trans` reaching the connection from another node.
                         connection=conn,
                         node=n_in,
                         direction=:from_node,
-                        t=[
-                            t_ for t_ in time_slice() if overlaps(
-                                t_,
-                                t - fix_delay_out_in_trans(connection=conn, node1=n_out, node2=n_in, t=t)
-                            )
-                        ]
+                        t=overlap(
+                            time_slice,
+                            t - fix_delay_out_in_trans(connection=conn, node1=n_out, node2=n_in, t=t)
+                        )
                     );
                     init=0
                 )
