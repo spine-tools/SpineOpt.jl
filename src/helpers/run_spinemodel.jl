@@ -41,7 +41,9 @@ function run_spinemodel(
         optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing, result_name=""
     )
     printstyled("Creating convenience functions...\n"; bold=true)
-    @time using_spinedb(db_url_in; upgrade=true)
+    @time begin
+        using_spinedb(db_url_in; upgrade=true)
+    end
     printstyled("Creating temporal structure...\n"; bold=true)
     @time begin
         generate_time_slice()
@@ -66,42 +68,54 @@ function run_spinemodel(
     end
     printstyled("Generating constraints...\n"; bold=true)
     @time begin
-        # Unit capacity
-        constraint_flow_capacity(m)
-        # Ratio of in/out flows of a unit
-        constraint_fix_ratio_out_in_flow(m)
-        constraint_max_ratio_out_in_flow(m)
-        constraint_min_ratio_out_in_flow(m)
-        # Ratio of out/out flows of a unit
-        constraint_fix_ratio_out_out_flow(m)
-        constraint_max_ratio_out_out_flow(m)
-        # Ratio of in/in flows of a unit
-        constraint_fix_ratio_in_in_flow(m)
-        constraint_max_ratio_in_in_flow(m)
-        # Transmission losses
-        constraint_fix_ratio_out_in_trans(m)
-        constraint_max_ratio_out_in_trans(m)
-        constraint_min_ratio_out_in_trans(m)
-        # Transmission delays
-        constraint_fix_delay_out_in_trans(m)
-        # Transmission line capacity
-        constraint_trans_capacity(m)
-        # Nodal balance
-        constraint_nodal_balance(m)
-        # Absolute bounds on commodities
-        constraint_max_cum_in_flow_bound(m)
-        # Storage capacity
-        constraint_stor_capacity(m)
-        # Storage state balance equation
-        constraint_stor_state(m)
-        # Unit state
-        constraint_units_on(m)
-        constraint_units_available(m)
-        constraint_minimum_operating_point(m)
-        constraint_min_down_time(m)
-        constraint_min_up_time(m)
-        constraint_unit_state_transition(m)
-        extend_model(m)
+        println("[constraint_flow_capacity]")
+        @time constraint_flow_capacity(m)
+        println("[constraint_fix_ratio_out_in_flow]")
+        @time constraint_fix_ratio_out_in_flow(m)
+        println("[constraint_max_ratio_out_in_flow]")
+        @time constraint_max_ratio_out_in_flow(m)
+        println("[constraint_min_ratio_out_in_flow]")
+        @time constraint_min_ratio_out_in_flow(m)
+        println("[constraint_fix_ratio_out_out_flow]")
+        @time constraint_fix_ratio_out_out_flow(m)
+        println("[constraint_max_ratio_out_out_flow]")
+        @time constraint_max_ratio_out_out_flow(m)
+        println("[constraint_fix_ratio_in_in_flow]")
+        @time constraint_fix_ratio_in_in_flow(m)
+        println("[constraint_max_ratio_in_in_flow]")
+        @time constraint_max_ratio_in_in_flow(m)
+        println("[constraint_fix_ratio_out_in_trans]")
+        @time constraint_fix_ratio_out_in_trans(m)
+        println("[constraint_max_ratio_out_in_trans]")
+        @time constraint_max_ratio_out_in_trans(m)
+        println("[constraint_min_ratio_out_in_trans]")
+        @time constraint_min_ratio_out_in_trans(m)
+        println("[constraint_fix_delay_out_in_trans]")
+        @time constraint_fix_delay_out_in_trans(m)
+        println("[constraint_trans_capacity]")
+        @time constraint_trans_capacity(m)
+        println("[constraint_nodal_balance]")
+        @time constraint_nodal_balance(m)
+        println("[constraint_max_cum_in_flow_bound]")
+        @time constraint_max_cum_in_flow_bound(m)
+        println("[constraint_stor_capacity]")
+        @time constraint_stor_capacity(m)
+        println("[constraint_stor_state]")
+        @time constraint_stor_state(m)
+        println("[constraint_units_on]")
+        @time constraint_units_on(m)
+        println("[constraint_units_available]")
+        @time constraint_units_available(m)
+        println("[constraint_minimum_operating_point]")
+        @time constraint_minimum_operating_point(m)
+        println("[constraint_min_down_time]")
+        @time constraint_min_down_time(m)
+        println("[constraint_min_up_time]")
+        @time constraint_min_up_time(m)
+        println("[constraint_unit_state_transition]")
+        @time constraint_unit_state_transition(m)
+        println("[extend_model]")
+        @time extend_model(m)
     end
     # Run model
     printstyled("Solving model...\n"; bold=true)
