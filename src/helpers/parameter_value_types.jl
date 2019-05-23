@@ -173,7 +173,7 @@ function (p::TimeSeriesValue)(;t::Union{TimeSlice,Nothing}=nothing)
         end
     else
         a = findfirst(i -> i >= start, p.time_stamps)
-        b = findlast(i -> i < end_, p.time_stamps)
+        b = findlast(i -> i <= end_, p.time_stamps)
         if a === nothing || b === nothing
             @warn("$p is not defined on $t, using default value...")
             p.default

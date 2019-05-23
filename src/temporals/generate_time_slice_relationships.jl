@@ -176,7 +176,7 @@ function generate_time_slice_relationships()
         t_overlaps_t_excl = $t_overlaps_t_excl
         export t_before_t
         export t_in_t
-        #export t_in_t_excl
+        export t_in_t_excl
         export t_overlaps_t
         export t_overlaps_t_excl
     end
