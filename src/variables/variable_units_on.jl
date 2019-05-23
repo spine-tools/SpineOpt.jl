@@ -82,7 +82,10 @@ function fix_units_on_indices(;unit=anything, t=anything)
         for (u,) in indices(fix_units_on; unit=unit) if fix_units_on(unit=u) isa TimeSeriesValue
             for t1 in intersect(
                     t_highest_resolution(
-                        t for t in time_slice() if any(s in t for s in time_stamps(fix_units_on(unit=u)))
+                        overlap(
+                            time_slice,
+                            time_stamps(fix_units_on(unit=u))...
+                        )
                     ),
                     t
                 )

@@ -85,7 +85,7 @@ function fix_stor_state_indices(;storage=anything, commodity=anything, t=anythin
                     if fix_stor_state(storage=stor) isa TimeSeriesValue
                 for t1 in intersect(
                         t_highest_resolution(
-                            t for t in time_slice() if any(s in t for s in time_stamps(fix_stor_state(storage=stor)))
+                            overlap(time_slice, time_stamps(fix_stor_state(storage=stor))...)
                         ),
                         t
                     )

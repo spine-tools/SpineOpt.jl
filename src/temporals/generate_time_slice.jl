@@ -45,17 +45,35 @@ function (time_slice::TimeSliceObjectClass)(;temporal_block=anything, t=anything
 end
 
 
-function overlap(time_slice::TimeSliceObjectClass, t::TimeSlice)
+function overlap(time_slice::TimeSliceObjectClass, t::TimeSlice...)
     d = Dict{Object,Array{Int64,1}}()
     for (blk, index) in time_slice.block_slice_index
         temp_block_start = start_datetime(temporal_block=blk)
         temp_block_end = end_datetime(temporal_block=blk)
-        start = max(temp_block_start, t.start)
-        end_ = min(temp_block_end, t.end_)
-        end_ <= start && continue
-        first_pos = index[Minute(start - temp_block_start).value + 1]
-        last_pos = index[Minute(end_ - temp_block_start).value]
-        d[blk] = first_pos:last_pos
+        ranges = []
+        for s in t
+            start = max(temp_block_start, s.start)
+            end_ = min(temp_block_end, s.end_)
+            end_ <= start && continue
+            first_pos = index[Minute(start - temp_block_start).value + 1]
+            last_pos = index[Minute(end_ - temp_block_start).value]
+            push!(ranges, first_pos:last_pos)
+        end
+        isempty(ranges) && continue
+        d[blk] = union(ranges...)
+    end
+    [t for (blk, xs) in d for t in time_slice.block_slice_list[blk][xs]]
+end
+
+function overlap(time_slice::TimeSliceObjectClass, t::DateTime...)
+    d = Dict{Object,Array{Int64,1}}()
+    for (blk, index) in time_slice.block_slice_index
+        temp_block_start = start_datetime(temporal_block=blk)
+        temp_block_end = end_datetime(temporal_block=blk)
+        d[blk] = unique(
+            index[Minute(s - temp_block_start).value + 1]
+            for s in t if temp_block_start <= s < temp_block_end
+        )
     end
     [t for (blk, xs) in d for t in time_slice.block_slice_list[blk][xs]]
 end
