@@ -22,23 +22,18 @@ struct TimeSliceSet
     block_slice_index::Dict{Object,Array{Int64,1}}
 end
 
-struct TinTSet
-    list::Array{TimeSlice,1}
-    block_slice_list::Dict{Object,Array{TimeSlice,1}}
-    block_slice_index::Dict{Object,Array{Int64,1}}
-end
-
-struct TBeforeTSet
+struct ToTimeSlice
     list::Array{TimeSlice,1}
     block_slice_list::Dict{Object,Array{TimeSlice,1}}
     block_slice_index::Dict{Object,Array{Int64,1}}
 end
 
 """
-    time_slice(;temporal_block=nothing)
+    time_slice(;temporal_block=anything, t=anything)
 
-Return all time slices in the model.
+An array of all time slices in the model.
 If 'temporal_block' is not `nothing`, return only the time slices in that block.
+If 't' is not `nothing`, return only the time slices from `t`.
 """
 function (time_slice::TimeSliceSet)(;temporal_block=anything, t=anything)
     if temporal_block == anything
@@ -56,9 +51,15 @@ function (time_slice::TimeSliceSet)(;temporal_block=anything, t=anything)
     end
 end
 
-function overlap(time_slice::TimeSliceSet, t::TimeSlice...)
+"""
+    to_time_slice(t::TimeSlice...)
+
+An array of time slices *in the model* that overlap `t`,
+where `t` may not be in the model.
+"""
+function (to_time_slice::ToTimeSlice)(t::TimeSlice...)
     d = Dict{Object,Array{Int64,1}}()
-    for (blk, index) in time_slice.block_slice_index
+    for (blk, index) in to_time_slice.block_slice_index
         temp_block_start = start_datetime(temporal_block=blk)
         temp_block_end = end_datetime(temporal_block=blk)
         ranges = []
@@ -73,12 +74,17 @@ function overlap(time_slice::TimeSliceSet, t::TimeSlice...)
         isempty(ranges) && continue
         d[blk] = union(ranges...)
     end
-    [t for (blk, xs) in d for t in time_slice.block_slice_list[blk][xs]]
+    [t for (blk, xs) in d for t in to_time_slice.block_slice_list[blk][xs]]
 end
 
-function overlap(time_slice::TimeSliceSet, t::DateTime...)
+"""
+    to_time_slice(t::TimeSlice...)
+
+An array of time slices *in the model* that overlap `t`.
+"""
+function (to_time_slice::ToTimeSlice)(t::DateTime...)
     d = Dict{Object,Array{Int64,1}}()
-    for (blk, index) in time_slice.block_slice_index
+    for (blk, index) in to_time_slice.block_slice_index
         temp_block_start = start_datetime(temporal_block=blk)
         temp_block_end = end_datetime(temporal_block=blk)
         d[blk] = unique(
@@ -86,7 +92,7 @@ function overlap(time_slice::TimeSliceSet, t::DateTime...)
             for s in t if temp_block_start <= s < temp_block_end
         )
     end
-    [t for (blk, xs) in d for t in time_slice.block_slice_list[blk][xs]]
+    [t for (blk, xs) in d for t in to_time_slice.block_slice_list[blk][xs]]
 end
 
 """
@@ -143,8 +149,11 @@ function generate_time_slice()
     time_slice_list = unique_sorted(sort([t for v in values(block_slice_list) for t in v]))
     # Create and export the function like object
     time_slice = TimeSliceSet(time_slice_list, block_slice_list, block_slice_index)
+    to_time_slice = ToTimeSlice(time_slice_list, block_slice_list, block_slice_index)
     @eval begin
         time_slice = $time_slice
+        to_time_slice = $to_time_slice
         export time_slice
+        export to_time_slice
     end
 end

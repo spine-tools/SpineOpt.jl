@@ -83,10 +83,7 @@ function fix_trans_indices(;commodity=anything, node=anything, connection=anythi
             for (n, c) in node__commodity(commodity=commodity, node=n, _compact=false)
                 for t1 in intersect(
                         t_highest_resolution(
-                            overlap(
-                                time_slice,
-                                time_stamps(fix_trans(connection=conn, node=n, direction=d))...
-                            )
+                            to_time_slice(time_stamps(fix_trans(connection=conn, node=n, direction=d))...)
                         ),
                         t
                     )
