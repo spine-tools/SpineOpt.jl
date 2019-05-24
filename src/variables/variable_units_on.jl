@@ -72,7 +72,7 @@ function var_units_on_indices(;unit=anything, t=anything)
     [
         (unit=u, t=t1)
         for u in intersect(SpineModel.unit(), unit)
-            for t1 in intersect(t_highest_resolution([x.t for x in flow_indices(unit=u)]), t)
+            for t1 in intersect(t_highest_resolution(x.t for x in flow_indices(unit=u)), t)
     ]
 end
 

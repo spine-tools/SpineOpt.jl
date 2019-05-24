@@ -21,11 +21,12 @@ struct TimeSlice <: ObjectLike
     start::DateTime
     end_::DateTime
     duration::Period
-    JuMP_name::Union{String,Nothing}
-    TimeSlice(x, y, n) = x > y ? error("out of order") : new(x, y, Minute(y - x), n)
+    blocks::Tuple
+    JuMP_name::String
+    TimeSlice(x, y, blk, n) = x > y ? error("out of order") : new(x, y, Minute(y - x), blk, n)
 end
 
-TimeSlice(start::DateTime, end_::DateTime) = TimeSlice(start, end_, "$start...$end_")
+TimeSlice(start::DateTime, end_::DateTime, blocks::Object...) = TimeSlice(start, end_, blocks, "$start...$end_")
 TimeSlice(other::TimeSlice) = other
 
 Base.show(io::IO, time_slice::TimeSlice) = print(io, time_slice.JuMP_name)
@@ -107,20 +108,28 @@ function Base.intersect(s::Array{TimeSlice,1}, itrs...)
     result
 end
 
+function Base.intersect(s::Array{TimeSlice,1}, itrs...)
+    sort!(s)
+    for itr in itrs
+        s = [s[i] for t in itr for i in searchsorted(s, t)]
+    end
+    unique_sorted(s)
+end
+
 Base.intersect(s::Array{TimeSlice,1}, ::Anything) = s
 
 # Convenience subtraction operator
 Base.:-(t::TimeSlice, p::Period) = TimeSlice(t.start - p, t.end_ - p)
 
 """
-    t_lowest_resolution(t_list)
+    t_lowest_resolution(t_iter)
 
-Return the list of the lowest resolution time slices within `t_list`
+Return the list of the lowest resolution time slices within `t_iter`
 (those that aren't contained in any other).
 """
-function t_lowest_resolution(t_list)
-    isempty(t_list) && return []
-    t_coll = collect(t_list)
+function t_lowest_resolution(t_iter)
+    isempty(t_iter) && return []
+    t_coll = collect(t_iter)
     sort!(t_coll)
     result::Array{TimeSlice,1} = [t_coll[1]]
     for t in t_coll[2:end]
@@ -135,14 +144,14 @@ end
 
 
 """
-    t_highest_resolution(t_list)
+    t_highest_resolution(t_iter)
 
-Return the list of the highest resolution time slices from `t_list`
+Return the list of the highest resolution time slices from `t_iter`
 (those that don't contain any other).
 """
-function t_highest_resolution(t_list)
-    isempty(t_list) && return []
-    t_coll = collect(t_list)
+function t_highest_resolution(t_iter)
+    isempty(t_iter) && return []
+    t_coll = collect(t_iter)
     sort!(t_coll)
     result::Array{TimeSlice,1} = [t_coll[1]]
     for t in t_coll[2:end]

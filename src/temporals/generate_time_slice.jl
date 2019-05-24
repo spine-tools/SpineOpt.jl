@@ -16,7 +16,19 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-struct TimeSliceObjectClass
+struct TimeSliceSet
+    list::Array{TimeSlice,1}
+    block_slice_list::Dict{Object,Array{TimeSlice,1}}
+    block_slice_index::Dict{Object,Array{Int64,1}}
+end
+
+struct TinTSet
+    list::Array{TimeSlice,1}
+    block_slice_list::Dict{Object,Array{TimeSlice,1}}
+    block_slice_index::Dict{Object,Array{Int64,1}}
+end
+
+struct TBeforeTSet
     list::Array{TimeSlice,1}
     block_slice_list::Dict{Object,Array{TimeSlice,1}}
     block_slice_index::Dict{Object,Array{Int64,1}}
@@ -28,24 +40,23 @@ end
 Return all time slices in the model.
 If 'temporal_block' is not `nothing`, return only the time slices in that block.
 """
-function (time_slice::TimeSliceObjectClass)(;temporal_block=anything, t=anything)
+function (time_slice::TimeSliceSet)(;temporal_block=anything, t=anything)
     if temporal_block == anything
         if t == anything
             time_slice.list
         else
-            t
+            [s for s in t if any(blk in keys(time_slice.block_slice_list) for blk in s.blocks)]
         end
     else
         if t == anything
             [s for tblk in Object.(temporal_block) for ts in time_slice.block_slice_list[tblk] for s in ts]
         else
-            [s for tblk in Object.(temporal_block) for ts in time_slice.block_slice_list[tblk] for s in ts if s in t]
+            [s for s in t if any(blk in Object.(temporal_block) for blk in s.blocks)]
         end
     end
 end
 
-
-function overlap(time_slice::TimeSliceObjectClass, t::TimeSlice...)
+function overlap(time_slice::TimeSliceSet, t::TimeSlice...)
     d = Dict{Object,Array{Int64,1}}()
     for (blk, index) in time_slice.block_slice_index
         temp_block_start = start_datetime(temporal_block=blk)
@@ -55,9 +66,9 @@ function overlap(time_slice::TimeSliceObjectClass, t::TimeSlice...)
             start = max(temp_block_start, s.start)
             end_ = min(temp_block_end, s.end_)
             end_ <= start && continue
-            first_pos = index[Minute(start - temp_block_start).value + 1]
-            last_pos = index[Minute(end_ - temp_block_start).value]
-            push!(ranges, first_pos:last_pos)
+            first_ind = index[Minute(start - temp_block_start).value + 1]
+            last_ind = index[Minute(end_ - temp_block_start).value]
+            push!(ranges, first_ind:last_ind)
         end
         isempty(ranges) && continue
         d[blk] = union(ranges...)
@@ -65,7 +76,7 @@ function overlap(time_slice::TimeSliceObjectClass, t::TimeSlice...)
     [t for (blk, xs) in d for t in time_slice.block_slice_list[blk][xs]]
 end
 
-function overlap(time_slice::TimeSliceObjectClass, t::DateTime...)
+function overlap(time_slice::TimeSliceSet, t::DateTime...)
     d = Dict{Object,Array{Int64,1}}()
     for (blk, index) in time_slice.block_slice_index
         temp_block_start = start_datetime(temporal_block=blk)
@@ -79,55 +90,16 @@ function overlap(time_slice::TimeSliceObjectClass, t::DateTime...)
 end
 
 """
-    generate_time_slice()
+    generate_time_slice_set()
 
 """
-function old_generate_time_slice()
-    # NOTE: not checking if the timeslice exists makes it 15 times faster
-    block_slice_list = Dict{Object,Array{TimeSlice,1}}()
-    slice_block_list = Dict{TimeSlice,Array{Object,1}}()
-    for (k, blk) in enumerate(temporal_block())
-        time_slice_list = Array{TimeSlice,1}()
-        temp_block_start = start_datetime(temporal_block=blk)  # DateTime value
-        temp_block_end = end_datetime(temporal_block=blk)  # DateTime value
-        time_slice_start = temp_block_start
-        i = 1
-        while time_slice_start < temp_block_end
-            duration = time_slice_duration(temporal_block=blk, i=i)
-            time_slice_end = time_slice_start + duration
-            if time_slice_end > temp_block_end
-                time_slice_end = temp_block_end
-                @warn(
-                    "the duration of the last time slice of temporal block $blk has been reduced "
-                    * "to respect the specified end time"
-                )
-            end
-            # NOTE: Letting the time slice be named automatically makes them unique across blocks!
-            new_time_slice = TimeSlice(time_slice_start, time_slice_end)
-            push!(time_slice_list, new_time_slice)
-            push!(get!(slice_block_list, new_time_slice, []), blk)
-            # Prepare for next iter
-            time_slice_start = time_slice_end
-            i += 1
-        end
-        block_slice_list[blk] = time_slice_list
-    end
-    time_slice_list = unique(t for v in values(block_slice_list) for t in v)
-    # Create and export the function like object
-    time_slice = TimeSliceObjectClass(time_slice_list, block_slice_list, slice_block_list)
-    @eval begin
-        time_slice = $time_slice
-        export time_slice
-    end
-end
-
-
 function generate_time_slice()
-    # NOTE: not checking if the timeslice exists makes it 15 times faster
     block_slice_list = Dict{Object,Array{TimeSlice,1}}()
+    block_start_end_list = Dict{Object,Array{Tuple{DateTime,DateTime},1}}()
     block_slice_index = Dict{Object,Array{Int64,1}}()
+    slice_blocks = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
     for blk in temporal_block()
-        time_slice_list = Array{TimeSlice,1}()
+        start_end_list = Array{Tuple{DateTime,DateTime},1}()
         temp_block_start = start_datetime(temporal_block=blk)  # DateTime value
         temp_block_end = end_datetime(temporal_block=blk)  # DateTime value
         temp_block_minutes = Minute(temp_block_end - temp_block_start).value
@@ -145,8 +117,10 @@ function generate_time_slice()
                 )
             end
             # NOTE: Letting the time slice be named automatically makes them unique across blocks!
-            new_time_slice = TimeSlice(time_slice_start, time_slice_end)
-            push!(time_slice_list, new_time_slice)
+            start_end = (time_slice_start, time_slice_end)
+            push!(get!(slice_blocks, start_end, Array{Object,1}()), blk)
+            push!(start_end_list, start_end)
+            # Index new_time_slice
             for x in time_slice_start:Minute(1):time_slice_end - Minute(1)
                 time_slice_index[Minute(x - temp_block_start).value + 1] = i
             end
@@ -154,12 +128,21 @@ function generate_time_slice()
             time_slice_start = time_slice_end
             i += 1
         end
-        block_slice_list[blk] = time_slice_list
+        block_start_end_list[blk] = start_end_list
         block_slice_index[blk] = time_slice_index
+    end
+    for (blk, start_end_list) in block_start_end_list
+        time_slice_list = Array{TimeSlice,1}()
+        for start_end in start_end_list
+            time_slice_start, time_slice_end = start_end
+            blocks = slice_blocks[start_end]
+            push!(time_slice_list, TimeSlice(time_slice_start, time_slice_end, blocks...))
+        end
+        block_slice_list[blk] = time_slice_list
     end
     time_slice_list = unique_sorted(sort([t for v in values(block_slice_list) for t in v]))
     # Create and export the function like object
-    time_slice = TimeSliceObjectClass(time_slice_list, block_slice_list, block_slice_index)
+    time_slice = TimeSliceSet(time_slice_list, block_slice_list, block_slice_index)
     @eval begin
         time_slice = $time_slice
         export time_slice

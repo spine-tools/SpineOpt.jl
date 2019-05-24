@@ -25,13 +25,13 @@ Balance for storage level.
 @catch_undef function constraint_stor_state(m::Model)
     @fetch stor_state, trans, flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:stor_state] = Dict()
-    for (stor, c, t1) in stor_state_indices()
-        for (stor, c, t2) in stor_state_indices(storage=stor, commodity=c, t=t_before_t(t_before=t1))
-            constr_dict[stor, c, t1, t2] = @constraint(
+    for (stor, c, t_after) in stor_state_indices()
+        for (stor, c, t_before) in stor_state_indices(storage=stor, commodity=c, t=t_before_t(t_after=t_after))
+            constr_dict[stor, c, t_before, t_after] = @constraint(
                 m,
-                + stor_state[stor, c, t2]
+                + stor_state[stor, c, t_after]
                 ==
-                + stor_state[stor, c, t1] * (1 - frac_state_loss(storage=stor))
+                + stor_state[stor, c, t_before] * (1 - frac_state_loss(storage=stor))
                 - reduce(
                     +,
                     flow[u, n, c_, d, t_] * stor_unit_discharg_eff(storage=stor, unit=u)
@@ -39,7 +39,7 @@ Balance for storage level.
                         unit=[u1 for (stor1, u1) in indices(stor_unit_discharg_eff; storage=stor)],
                         commodity=c,
                         direction=:to_node,
-                        t=t2
+                        t=t_after
                     );
                     init=0
                 )
@@ -50,7 +50,7 @@ Balance for storage level.
                         unit=[u1 for (stor1, u1) in indices(stor_unit_charg_eff; storage=stor)],
                         commodity=c,
                         direction=:from_node,
-                        t=t2
+                        t=t_after
                     );
                     init=0
                 )
@@ -61,7 +61,7 @@ Balance for storage level.
                         connection=[conn1 for (stor1, conn1) in indices(stor_conn_discharg_eff; storage=stor)],
                         commodity=c,
                         direction=:to_node,
-                        t=t2
+                        t=t_after
                     );
                     init=0
                 )
@@ -72,7 +72,7 @@ Balance for storage level.
                         connection=[conn1 for (stor1, conn1) in indices(stor_conn_charg_eff; storage=stor)],
                         commodity=c,
                         direction=:from_node,
-                        t=t2
+                        t=t_after
                     );
                     init=0
                 )
