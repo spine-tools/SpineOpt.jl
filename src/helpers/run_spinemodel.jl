@@ -90,8 +90,6 @@ function run_spinemodel(
         @time constraint_max_ratio_out_in_trans(m)
         println("[constraint_min_ratio_out_in_trans]")
         @time constraint_min_ratio_out_in_trans(m)
-        println("[constraint_fix_delay_out_in_trans]")
-        @time constraint_fix_delay_out_in_trans(m)
         println("[constraint_trans_capacity]")
         @time constraint_trans_capacity(m)
         println("[constraint_nodal_balance]")
