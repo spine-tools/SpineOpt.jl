@@ -24,12 +24,10 @@ addons:
     - python3-pip
 before_script: # homebrew for mac
    # install spinedatabase_api
-   - julia -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/Spine-project/SpineInterface.jl.git"));
+   - julia --project=docs/ -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/Spine-project/SpineInterface.jl.git"));'
 #  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
 
-## uncomment the following lines to override the default test script
 script:
-  - julia -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/Spine-project/SpineModel.jl.git")); Pkg.build("SpineModel")'
-after_success:
-  - julia 'using Pkg; Pkg.add("Documenter")'
-  - julia --color=yes -e 'using SpineModel; include(joinpath(pathof(SpineModel), "..", "..", "docs", "make.jl"))'
+  - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.build("SpineModel"); Pkg.instantiate()'
+  - julia --project=docs/ docs/make.jl
+after_success: skip
