@@ -1,13 +1,11 @@
 ## Documentation: http://docs.travis-ci.com/user/languages/julia/
-dist: trusty
+dist: xenial
 language: julia
 os:
   - linux
   # - osx
 julia:
   - 1.1
-python:
-  - "3.6"
 notifications:
   email: false
 git:
