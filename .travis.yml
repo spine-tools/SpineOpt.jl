@@ -24,10 +24,10 @@ addons:
     - python3-pip
 before_script: # homebrew for mac
    # install spinedatabase_api
-   - julia --project=docs/ -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/Spine-project/SpineInterface.jl.git"));'
+   - sudo julia --project=docs/ -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/Spine-project/SpineInterface.jl.git"));'
 #  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
 
 script:
-  - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.build("SpineModel"); Pkg.instantiate()'
+  - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
   - julia --project=docs/ docs/make.jl
 after_success: skip
