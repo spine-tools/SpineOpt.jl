@@ -31,7 +31,6 @@ using SpineInterface
 using Suppressor
 
 # Export helpers
-export using_spinemodeldb
 export run_spinemodel
 export value
 export pack_trailing_dims

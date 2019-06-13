@@ -10,14 +10,14 @@ Depth = 3
 ### Data input/output
 
 ```@docs
-JuMP_all_out(db_url)
-JuMP_all_out(db_map::PyObject)
+run_spinemodel(::String)
+run_spinemodel(::String, ::String)
 ```
 
 ## Macros
 
 ```@docs
-@butcher expression
+@fetch
 ```
 
 ## Index

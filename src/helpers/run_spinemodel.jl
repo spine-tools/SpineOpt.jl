@@ -17,11 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-    run_spinemodel(db_url; optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing)
+    run_spinemodel(db_url; optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing, result_name="")
 
 Run the Spine model from `db_url` and write results to the same url.
 """
-# TODO: explain kwargs
 function run_spinemodel(
         db_url::String; optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing, result_name=""
     )
