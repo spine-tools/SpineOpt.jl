@@ -1,10 +1,13 @@
 ## Documentation: http://docs.travis-ci.com/user/languages/julia/
+dist: trusty
 language: julia
 os:
   - linux
   # - osx
 julia:
   - 1.1
+python:
+  - "3.6"
 notifications:
   email: false
 git:
@@ -24,8 +27,7 @@ addons:
     - python3-pip
 before_script: # homebrew for mac
    # install spinedatabase_api
-   - sudo pip3 install git+https://github.com/Spine-project/Spine-Database-API.git
-   - julia --project=docs/ -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/Spine-project/SpineInterface.jl.git"));'
+   - julia --project=docs/ -e 'using Pkg; Pkg.add(PackageSpec(url="https://github.com/Spine-project/SpineInterface.jl.git")); Pkg.build("SpineInterface")'
 #  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
 
 script:
