@@ -7,5 +7,5 @@ makedocs(
 deploydocs(
     repo  = "github.com/Spine-project/Spine-Model.git",
     devurl = "dev",
-    versions = ["stable" => "v^", "v#.#", devurl => devurl]
+    versions = ["stable" => "v^", "v#.#", devurl => "dev"]
 )
