@@ -20,6 +20,9 @@ dist: xenial
 ## uncomment and modify the following lines to manually install system packages
 addons:
   apt: # apt-get for linux
+    update: true
+    sources:
+    - deadsnakes
     packages:
     - python3.6
     - python3-pip
