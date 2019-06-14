@@ -5,5 +5,6 @@ makedocs(
 )
 
 deploydocs(
-    repo  = "github.com/Spine-project/Spine-Model.git"
+    repo  = "github.com/Spine-project/Spine-Model.git",
+    versions = ["stable" => "v^", "v#.#", devurl => devurl]
 )
