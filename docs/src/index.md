@@ -1,26 +1,27 @@
 # SpineModel.jl Documentation
 
+Documentation for `SpineModel.jl`.
+
+## Contents
 
 ```@contents
 Depth = 3
-```
-
-## Functions
-
-### Data input/output
-
-```@docs
-run_spinemodel(::String)
-run_spinemodel(::String, ::String)
-```
-
-## Macros
-
-```@docs
-@fetch
 ```
 
 ## Index
 
 ```@index
 ```
+
+
+## Public interface
+
+```@docs
+run_spinemodel(::String, ::String)
+run_spinemodel(::String)
+```
+
+
+## Internals
+
+TODO

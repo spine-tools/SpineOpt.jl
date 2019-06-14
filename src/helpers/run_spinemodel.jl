@@ -17,31 +17,58 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-    run_spinemodel(db_url; optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing, result_name="")
+    run_spinemodel(
+        url;
+        optimizer=Cbc.Optimizer,
+        cleanup=true,
+        extend=m->nothing,
+        result=""
+    )
 
-Run the Spine model from `db_url` and write results to the same url.
+Run the Spine model from `url` and write results to the same `url`.
+Keyword arguments have the same purpose as for [`run_spinemodel(::String, ::String)`](@ref).
 """
 function run_spinemodel(
-        db_url::String; optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing, result_name=""
+        url::String; optimizer=Cbc.Optimizer, cleanup=true, extend=m->nothing, result=""
     )
     run_spinemodel(
-        db_url, db_url;
-        optimizer=optimizer, cleanup=cleanup, extend_model=extend_model, result_name=result_name
+        url, url;
+        optimizer=optimizer, cleanup=cleanup, extend=extend, result=result
     )
 end
 
 """
-    run_spinemodel(db_url_in, db_url_out; optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing)
+    run_spinemodel(
+        url_in, url_out;
+        optimizer=Cbc.Optimizer,
+        cleanup=true,
+        extend=m->nothing,
+        result=""
+    )
 
-Run the Spine model from `db_url_in` and write results to `db_url_out`.
+Run the Spine model from `url_in` and write results to `url_out`.
+At least `url_in` must point to valid Spine database.
+A new Spine database is created at `url_out` if it doesn't exist.
+
+# Optional keyword arguments
+
+**`optimizer`** is the constructor of the optimizer used for building and solving the model.
+
+**`cleanup`** tells [`run_spinemodel`](@ref) whether or not convenience function callables should be
+set to `nothing` after completion.
+
+**`extend`** is a function for extending the model. [`run_spinemodel`](@ref) calls this function with
+the internal `JuMP.Model` object before calling `JuMP.optimize!`.
+
+**`result`** is the name of the result object to write to `url_out` when saving results.
 """
 function run_spinemodel(
-        db_url_in::String, db_url_out::String;
-        optimizer=Cbc.Optimizer, cleanup=true, extend_model=m->nothing, result_name=""
+        url_in::String, url_out::String;
+        optimizer=Cbc.Optimizer, cleanup=true, extend=m->nothing, result=""
     )
     printstyled("Creating convenience functions...\n"; bold=true)
     @time begin
-        using_spinedb(db_url_in; upgrade=true)
+        using_spinedb(url_in; upgrade=true)
     end
     printstyled("Creating temporal structure...\n"; bold=true)
     @time begin
@@ -111,8 +138,8 @@ function run_spinemodel(
         @time constraint_min_up_time(m)
         println("[constraint_unit_state_transition]")
         @time constraint_unit_state_transition(m)
-        println("[extend_model]")
-        @time extend_model(m)
+        println("[extend]")
+        @time extend(m)
     end
     # Run model
     printstyled("Solving model...\n"; bold=true)
@@ -125,8 +152,8 @@ function run_spinemodel(
         @fetch flow, units_started_up, units_shut_down, units_on, trans, stor_state = m.ext[:variables]
         # @fetch flow_capacity = m.ext[:constraints]
         @time write_results(
-             db_url_out;
-             result_name=result_name,
+             url_out;
+             result=result,
              flow=pack_time_series(SpineModel.value(flow)),
              units_started_up=pack_time_series(SpineModel.value(units_started_up)),
              units_shut_down=pack_time_series(SpineModel.value(units_shut_down)),
@@ -137,6 +164,6 @@ function run_spinemodel(
         )
     end
     printstyled("Done.\n"; bold=true)
-    cleanup && notusing_spinedb(db_url_in)
+    cleanup && notusing_spinedb(url_in)
     m
 end

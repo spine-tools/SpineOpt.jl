@@ -1,7 +1,11 @@
 name = "SpineModel"
 uuid = "b74cbf36-17f7-11e9-3430-fdc535b30a00"
-authors = ["Manuel Marin <manuelma@kth.se>"]
-version = "0.1.0"
+authors = [
+  "Manuel Marin <manuelma@kth.se>",
+  "Maren Ihlemann <maren.ihlemann@kuleuven.be>",
+  "Kris Poncelet <kris.poncelet@kuleuven.be>"
+]
+version = "0.1.5"
 
 [deps]
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"

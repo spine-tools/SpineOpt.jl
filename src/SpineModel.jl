@@ -30,7 +30,7 @@ using Statistics
 using SpineInterface
 using Suppressor
 
-# Export helpers
+# Export utility
 export run_spinemodel
 export value
 export pack_trailing_dims
