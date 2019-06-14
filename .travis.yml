@@ -1,5 +1,4 @@
 ## Documentation: http://docs.travis-ci.com/user/languages/julia/
-dist: xenial
 language: julia
 os:
   - linux
@@ -16,12 +15,13 @@ git:
 #matrix:
 #  allow_failures:
 #  - julia: nightly
-
+env: PYTHON=3.6
+dist: xenial
 ## uncomment and modify the following lines to manually install system packages
 addons:
   apt: # apt-get for linux
     packages:
-    - python3
+    - python3.6
     - python3-pip
 before_script: # homebrew for mac
    # install spinedatabase_api
