@@ -49,9 +49,17 @@ export variable_units_shut_down
 
 # Export filter functions
 export flow_indices
+export var_flow_indices
+export fix_flow_indices
 export trans_indices
+export var_trans_indices
+export fix_trans_indices
 export stor_state_indices
+export var_stor_state_indices
+export fix_stor_state_indices
 export units_on_indices
+export var_units_on_indices
+export fix_units_on_indices
 
 # Export objective
 export objective_minimize_total_discounted_costs

@@ -21,10 +21,12 @@
 """
     variable_flow(m::Model)
 
-A `flow` variable for each tuple of `commodity__node__unit__direction__time_slice`,
-attached to model `m`.
-`flow` represents the (average) instantaneous flow of a 'commodity' between a 'node' and a 'unit' within a certain 'time_slice'
-in a certain 'direction'. The direction is relative to the unit.
+Create the `flow` variable for the model `m`.
+
+This variable represents the (average) instantaneous flow of a *commodity*
+between a *node* and a *unit* in a certain *direction*
+and within a certain *time slice*.
+
 """
 function variable_flow(m::Model)
     m.ext[:variables][:flow] = Dict(
@@ -36,14 +38,38 @@ function variable_flow(m::Model)
     )
 end
 
-
 """
-    flow_indices(filtering_options...)
+    flow_indices(
+        commodity=anything,
+        node=anything,
+        unit=anything,
+        direction=anything,
+        t=anything
+    )
 
-A set of tuples for indexing the `flow` variable. Any filtering options can be specified
-for `commodity`, `node`, `unit`, `direction`, and `t`.
+A list of `NamedTuple`s corresponding to indices of the `flow` variable.
+The keyword arguments act as filters for each dimension.
 """
 function flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything)
+    [
+        var_flow_indices(commodity=commodity, node=node, unit=unit, direction=direction, t=t);
+        fix_flow_indices(commodity=commodity, node=node, unit=unit, direction=direction, t=t)
+    ]
+end
+
+"""
+    var_flow_indices(
+        commodity=anything,
+        node=anything,
+        unit=anything,
+        direction=anything,
+        t=anything
+    )
+
+A list of `NamedTuple`s corresponding to *non-fixed* indices of the `flow` variable.
+The keyword arguments act as filters for each dimension.
+"""
+function var_flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything)
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
     commodity = expand_commodity_group(commodity)
@@ -53,5 +79,35 @@ function flow_indices(;commodity=anything, node=anything, unit=anything, directi
                 node=node, unit=unit, direction=direction, _compact=false)
             for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
                 for t1 in time_slice(temporal_block=blk, t=t)
+    ]
+end
+
+"""
+    fix_flow_indices(
+        commodity=anything,
+        node=anything,
+        unit=anything,
+        direction=anything,
+        t=anything
+    )
+
+A list of `NamedTuple`s corresponding to *fixed* indices of the `flow` variable.
+The keyword arguments act as filters for each dimension.
+"""
+function fix_flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything)
+    unit = expand_unit_group(unit)
+    node = expand_node_group(node)
+    commodity = expand_commodity_group(commodity)
+    [
+        (unit=u, node=n, commodity=c, direction=d, t=t1)
+        for (u, c, d) in indices(fix_flow; unit=unit, commodity=commodity, direction=direction)
+                if fix_flow(unit=u, commodity=c, direction=d) isa TimeSeriesValue
+            for (n, c) in node__commodity(commodity=c, node=node, _compact=false)
+                for t1 in intersect(
+                        t_highest_resolution(
+                            to_time_slice(time_stamps(fix_flow(unit=u, commodity=c, direction=d))...)
+                        ),
+                        t
+                    )
     ]
 end

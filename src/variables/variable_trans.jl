@@ -21,10 +21,10 @@
 """
     variable_trans(m::Model)
 
-A `trans` variable (short for transfer)
-for each tuple of commodity, node, unit, direction, and time slice, attached to model `m`.
-`trans` represents the (average) instantaneous flow of a commodity between a node and a connection,
-within a certain time slice and in a certain direction. The direction is relative to the connection.
+Create the `trans` variable for model `m`.
+
+This variable represents the (average) instantaneous flow of a *commodity* between a *node* and a *connection*
+in a certain *direction* and within a certain *time slice*.
 """
 function variable_trans(m::Model)
     names = (:connection, :node, :commodity, :direction, :t)
@@ -49,10 +49,16 @@ end
 
 
 """
-    trans_indices(filtering_options...)
+    trans_indices(
+        commodity=anything,
+        node=anything,
+        connection=anything,
+        direction=anything,
+        t=anything
+    )
 
-A set of tuples for indexing the `trans` variable. Any filtering options can be specified
-for `commodity`, `node`, `connection`, `direction`, and `t`.
+A list of `NamedTuple`s corresponding to indices of the `trans` variable.
+The keyword arguments act as filters for each dimension.
 """
 function trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything)
     [
@@ -61,6 +67,18 @@ function trans_indices(;commodity=anything, node=anything, connection=anything, 
     ]
 end
 
+"""
+    var_trans_indices(
+        commodity=anything,
+        node=anything,
+        connection=anything,
+        direction=anything,
+        t=anything
+    )
+
+A list of `NamedTuple`s corresponding to *non-fixed* indices of the `trans` variable.
+The keyword arguments act as filters for each dimension.
+"""
 function var_trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything)
     node = expand_node_group(node)
     commodity = expand_commodity_group(commodity)
@@ -73,6 +91,18 @@ function var_trans_indices(;commodity=anything, node=anything, connection=anythi
     ]
 end
 
+"""
+    fix_trans_indices(
+        commodity=anything,
+        node=anything,
+        connection=anything,
+        direction=anything,
+        t=anything
+    )
+
+A list of `NamedTuple`s corresponding to *fixed* indices of the `trans` variable.
+The keyword arguments act as filters for each dimension.
+"""
 function fix_trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything)
     node = expand_node_group(node)
     commodity = expand_commodity_group(commodity)

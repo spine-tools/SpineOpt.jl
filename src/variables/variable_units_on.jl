@@ -19,9 +19,12 @@
 
 
 """
-    generate_units_on(m::Model)
+    variable_units_on(m::Model)
 
-#TODO: add model descirption here
+Create the `units_on` variable for model `m`.
+
+This variable represents the number of online units for a given *unit*
+within a certain *time slice*.
 """
 function variable_units_on(m::Model)
     KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
@@ -59,15 +62,21 @@ end
 
 
 """
-    units_on_indices(filtering_options...)
+    units_on_indices(unit=anything, t=anything)
 
-A set of tuples for indexing the `units_on` variable. Any filtering options can be specified
-for `unit` and `t`.
+A list of `NamedTuple`s corresponding to indices of the `units_on` variable.
+The keyword arguments act as filters for each dimension.
 """
 function units_on_indices(;unit=anything, t=anything)
     unique([var_units_on_indices(unit=unit, t=t); fix_units_on_indices(unit=unit, t=t)])
 end
 
+"""
+    var_units_on_indices(unit=anything, t=anything)
+
+A list of `NamedTuple`s corresponding to *non_fixed* indices of the `units_on` variable.
+The keyword arguments act as filters for each dimension.
+"""
 function var_units_on_indices(;unit=anything, t=anything)
     [
         (unit=u, t=t1)
@@ -76,6 +85,12 @@ function var_units_on_indices(;unit=anything, t=anything)
     ]
 end
 
+"""
+    fix_units_on_indices(unit=anything, t=anything)
+
+A list of `NamedTuple`s corresponding to *fixed* indices of the `units_on` variable.
+The keyword arguments act as filters for each dimension.
+"""
 function fix_units_on_indices(;unit=anything, t=anything)
     [
         (unit=u, t=t1)

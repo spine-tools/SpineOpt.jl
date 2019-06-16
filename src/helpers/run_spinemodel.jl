@@ -26,7 +26,7 @@
     )
 
 Run the Spine model from `url` and write results to the same `url`.
-Keyword arguments have the same purpose as for [`run_spinemodel(::String, ::String)`](@ref).
+Keyword arguments have the same purpose as for [`run_spinemodel`](@ref).
 """
 function run_spinemodel(
         url::String; optimizer=Cbc.Optimizer, cleanup=true, extend=m->nothing, result=""
