@@ -1,7 +1,11 @@
 using Documenter, SpineModel
 
 makedocs(
-    sitename = "SpineModel Documentation"
+    sitename = "SpineModel.jl",
+    pages = [
+        "Home" => "index.md",
+        "Library" => "library.md",
+    ]
 )
 
 deploydocs(

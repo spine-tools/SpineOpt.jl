@@ -1,27 +1,11 @@
-# SpineModel.jl Documentation
+# SpineModel.jl
 
-Documentation for `SpineModel.jl`.
+*The Spine model generator.*
 
-## Contents
+A package to generate and run the Spine model for energy system integration problems.
 
-```@contents
-Depth = 3
-```
-
-## Index
-
-```@index
-```
+## Package features
 
 
-## Public interface
 
-```@docs
-run_spinemodel(::String, ::String)
-run_spinemodel(::String)
-```
-
-
-## Internals
-
-TODO
+## Library outline
