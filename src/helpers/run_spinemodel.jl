@@ -61,6 +61,7 @@ set to `nothing` after completion.
 the internal `JuMP.Model` object before calling `JuMP.optimize!`.
 
 **`result`** is the name of the result object to write to `url_out` when saving results.
+An empty string (the default) gets replaced by `"result"` with the current time appended.
 """
 function run_spinemodel(
         url_in::String, url_out::String;
