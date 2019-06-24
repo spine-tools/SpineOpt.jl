@@ -17,17 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# const iso8601 = dateformat"yyyy-mm-ddTHH:MMz"
-const iso8601zoneless = dateformat"yyyy-mm-ddTHH:MM"
-
-function parse_date_time(value)
-    DateTime(value, iso8601zoneless)
-    # try
-    #    ZonedDateTime(value, iso8601)
-    # catch
-    #    ZonedDateTime(DateTime(value, iso8601zoneless), tz"UTC")
-    # end
-end
 
 function Base.getindex(d::Dict{NamedTuple{X,Y},Z}, key::ObjectLike...) where {N,Y<:NTuple{N,ObjectLike},X,Z}
     isempty(d) && throw(KeyError(key))
@@ -130,84 +119,6 @@ macro catch_undef(expr)
     esc(new_expr)
 end
 
-"""
-    parse_duration(str::String)
-
-Parse the given string as a Period value.
-"""
-function parse_duration(str::String)
-    split_str = split(str, " ")
-    if length(split_str) == 1
-        # Compact form, eg. "1D"
-        number = str[1:end-1]
-        time_unit = str[end]
-        if lowercase(time_unit) == 'y'
-            Year(number)
-        elseif time_unit == 'm'
-            Month(number)
-        elseif time_unit == 'd'
-            Day(number)
-        elseif time_unit == 'H'
-            Hour(number)
-        elseif time_unit == 'M'
-            Minute(number)
-        elseif time_unit == 'S'
-            Second(number)
-        else
-            error("invalid duration specification '$str'")
-        end
-    elseif length(split_str) == 2
-        # Verbose form, eg. "1 day"
-        number, time_unit = split_str
-        time_unit = lowercase(time_unit)
-        time_unit = endswith(time_unit, "s") ? time_unit[1:end-1] : time_unit
-        if time_unit == "year"
-            Year(number)
-        elseif time_unit == "month"
-            Month(number)
-        elseif time_unit == "day"
-            Day(number)
-        elseif time_unit == "hour"
-            Hour(number)
-        elseif time_unit == "minute"
-            Minute(number)
-        elseif time_unit == "second"
-            Second(number)
-        else
-            error("invalid duration specification '$str'")
-        end
-    else
-        error("invalid duration specification '$str'")
-    end
-end
-
-parse_duration(int::Int64) = Minute(int)
-
-"""
-    match(ts::TimeSlice, tp::TimePattern)
-
-Test whether a time slice matches a time pattern.
-A time pattern and a time series match iff, for every time level (year, month, and so on),
-the time slice fully contains at least one of the ranges specified in the time pattern for that level.
-"""
-function match(ts::TimeSlice, tp::TimePattern)
-    conds = Array{Bool,1}()
-    tp.y != nothing && push!(conds, any(range_in(rng, year(ts.start):year(ts.end_)) for rng in tp.y))
-    tp.m != nothing && push!(conds, any(range_in(rng, month(ts.start):month(ts.end_)) for rng in tp.m))
-    tp.d != nothing && push!(conds, any(range_in(rng, day(ts.start):day(ts.end_)) for rng in tp.d))
-    tp.wd != nothing && push!(conds, any(range_in(rng, dayofweek(ts.start):dayofweek(ts.end_)) for rng in tp.wd))
-    tp.H != nothing && push!(conds, any(range_in(rng, hour(ts.start):hour(ts.end_)) for rng in tp.H))
-    tp.M != nothing && push!(conds, any(range_in(rng, minute(ts.start):minute(ts.end_)) for rng in tp.M))
-    tp.S != nothing && push!(conds, any(range_in(rng, second(ts.start):second(ts.end_)) for rng in tp.S))
-    all(conds)
-end
-
-"""
-    range_in(b::UnitRange{Int64}, a::UnitRange{Int64})
-
-Test whether `b` is fully contained in `a`.
-"""
-range_in(b::UnitRange{Int64}, a::UnitRange{Int64}) = b.start >= a.start && b.stop <= a.stop
 
 
 expand_unit_group(::Anything) = anything

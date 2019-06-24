@@ -110,7 +110,7 @@ function generate_time_slice_relationships()
     for (i, t_i) in enumerate(time_slice_list)
         found = false
         for t_j in time_slice_list[i:end]
-            if succeeds(t_j, t_i)
+            if before(t_i, t_j)
                 found = true
                 push!(t_before_t_list, tuple(t_i, t_j))
             elseif found

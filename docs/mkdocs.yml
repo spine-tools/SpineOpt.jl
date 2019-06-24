@@ -1,6 +1,6 @@
 site_name:        SpineModel.jl
 repo_url:         https://github.com/Spine-project/Spine-Model
-site_description: SpineModel Documentation
+site_description: SpineModel.jl
 site_author:      Spine Project
 
 theme: readthedocs

@@ -26,7 +26,6 @@ using Clp
 using Cbc
 using Dates
 using TimeZones
-using Statistics
 using SpineInterface
 using Suppressor
 
@@ -34,8 +33,6 @@ using Suppressor
 export run_spinemodel
 export value
 export pack_trailing_dims
-export t_lowest_resolution
-export t_highest_resolution
 export @fetch
 
 # Export variables
@@ -100,13 +97,9 @@ export constraint_unit_state_transition
 export generate_time_slice
 export generate_time_slice_relationships
 
-include("temporals/time_slice.jl")
 include("temporals/generate_time_slice.jl")
 include("temporals/generate_time_slice_relationships.jl")
-include("temporals/time_pattern.jl")
 
-include("helpers/parse_value.jl")
-include("helpers/parameter_value_types.jl")
 include("helpers/util.jl")
 include("helpers/run_spinemodel.jl")
 
