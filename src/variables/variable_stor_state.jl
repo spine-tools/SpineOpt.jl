@@ -82,9 +82,9 @@ function fix_stor_state_indices(;storage=anything, commodity=anything, t=anythin
         (storage=stor, commodity=c, t=t1)
         for (stor, c) in storage__commodity(storage=storage, commodity=commodity, _compact=false)
             for (stor,) in indices(fix_stor_state; storage=stor)
-                    if fix_stor_state(storage=stor) isa TimeSeriesValue
+                    if fix_stor_state(storage=stor) isa TimeSeries
                 for t1 in intersect(
-                        t_highest_resolution(to_time_slice(time_stamps(fix_stor_state(storage=stor))...)),
+                        t_highest_resolution(to_time_slice(fix_stor_state(storage=stor).indexes...)),
                         t
                     )
     ]

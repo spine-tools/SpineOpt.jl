@@ -109,11 +109,11 @@ function fix_trans_indices(;commodity=anything, node=anything, connection=anythi
     [
         (connection=conn, node=n, commodity=c, direction=d, t=t1)
         for (conn, n, d) in indices(fix_trans; connection=connection, node=node, direction=direction)
-                if fix_trans(connection=conn, node=n, direction=d) isa TimeSeriesValue
+                if fix_trans(connection=conn, node=n, direction=d) isa SpineInterface.TimeSeries
             for (n, c) in node__commodity(commodity=commodity, node=n, _compact=false)
                 for t1 in intersect(
                         t_highest_resolution(
-                            to_time_slice(time_stamps(fix_trans(connection=conn, node=n, direction=d))...)
+                            to_time_slice(fix_trans(connection=conn, node=n, direction=d).indexes...)
                         ),
                         t
                     )

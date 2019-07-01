@@ -124,7 +124,7 @@ function generate_time_slice_relationships()
         found_overlaps = false
         break_overlaps = false
         for t_j in time_slice_list
-            if in(t_i, t_j)
+            if iscontained(t_i, t_j)
                 found_in = true
                 push!(t_in_t_list, tuple(t_i, t_j))
             elseif found_in

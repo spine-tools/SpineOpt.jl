@@ -101,11 +101,11 @@ function fix_flow_indices(;commodity=anything, node=anything, unit=anything, dir
     [
         (unit=u, node=n, commodity=c, direction=d, t=t1)
         for (u, c, d) in indices(fix_flow; unit=unit, commodity=commodity, direction=direction)
-                if fix_flow(unit=u, commodity=c, direction=d) isa TimeSeriesValue
+                if fix_flow(unit=u, commodity=c, direction=d) isa TimeSeries
             for (n, c) in node__commodity(commodity=c, node=node, _compact=false)
                 for t1 in intersect(
                         t_highest_resolution(
-                            to_time_slice(time_stamps(fix_flow(unit=u, commodity=c, direction=d))...)
+                            to_time_slice(fix_flow(unit=u, commodity=c, direction=d).indexes...)
                         ),
                         t
                     )
