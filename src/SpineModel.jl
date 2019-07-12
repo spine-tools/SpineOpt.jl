@@ -100,8 +100,8 @@ export generate_time_slice_relationships
 include("temporals/generate_time_slice.jl")
 include("temporals/generate_time_slice_relationships.jl")
 
-include("helpers/util.jl")
-include("helpers/run_spinemodel.jl")
+include("util/misc.jl")
+include("util/run_spinemodel.jl")
 
 include("variables/variable_flow.jl")
 include("variables/variable_trans.jl")

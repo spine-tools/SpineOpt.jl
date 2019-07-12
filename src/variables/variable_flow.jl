@@ -100,12 +100,12 @@ function fix_flow_indices(;commodity=anything, node=anything, unit=anything, dir
     commodity = expand_commodity_group(commodity)
     [
         (unit=u, node=n, commodity=c, direction=d, t=t1)
-        for (u, c, d) in indices(fix_flow; unit=unit, commodity=commodity, direction=direction)
-                if fix_flow(unit=u, commodity=c, direction=d) isa TimeSeries
-            for (n, c) in node__commodity(commodity=c, node=node, _compact=false)
+        for (u, n, d) in indices(fix_flow; unit=unit, node=node, direction=direction)
+                if fix_flow(unit=u, node=n, direction=d) isa TimeSeries
+            for (n, c) in node__commodity(commodity=commodity, node=n, _compact=false)
                 for t1 in intersect(
                         t_highest_resolution(
-                            to_time_slice(fix_flow(unit=u, commodity=c, direction=d).indexes...)
+                            to_time_slice(fix_flow(unit=u, node=n, direction=d).indexes...)
                         ),
                         t
                     )
