@@ -20,71 +20,10 @@
 
 function Base.getindex(d::Dict{NamedTuple{X,Y},Z}, key::ObjectLike...) where {N,Y<:NTuple{N,ObjectLike},X,Z}
     isempty(d) && throw(KeyError(key))
-    names = keys(first(keys(d))) # Get names from first key, TODO: check how bad this is for performance
+    names = keys(first(keys(d))) # Get names from first key. TODO: check how bad this is for performance
     Base.getindex(d, NamedTuple{names}(values(key)))
 end
 
-"""
-    pack_trailing_dims(dictionary::Dict, n::Int64=1)
-
-An equivalent dictionary where the last `n` dimensions are packed into a matrix
-"""
-function pack_trailing_dims(dictionary::Dict{S,T}, n::Int64=1) where {S<:NamedTuple,T}
-    left_dict = Dict{Any,Any}()
-    for (key, value) in dictionary
-        # TODO: handle length(key) < n and stuff like that?
-        left_key = NamedTuple{Tuple(collect(keys(key))[1:end-n])}(collect(values(key))[1:end-n])
-        right_key = NamedTuple{Tuple(collect(keys(key))[end-n+1:end])}(collect(values(key))[end-n+1:end])
-        right_dict = get!(left_dict, left_key, Dict())
-        right_dict[right_key] = value
-    end
-    if n > 1
-        Dict(key => reshape([v for (k, v) in sort(collect(value))], n, :) for (key, value) in left_dict)
-    else
-        Dict(key => [v for (k, v) in sort(collect(value))] for (key, value) in left_dict)
-    end
-end
-
-
-pack_time_series(dictionary::Dict) = dictionary
-
-"""
-    pack_time_series(dictionary::Dict)
-
-An equivalent dictionary where the last dimension is packed into a time series
-(i.e., a `Dict` mapping `String` time stamps to data).
-"""
-function pack_time_series(dictionary::Dict{NamedTuple{X,Y},Z}) where {N,Y<:NTuple{N,ObjectLike},X,Z}
-    if Y.parameters[N] != TimeSlice
-        @warn("can't pack objects of type `$(Y.parameters[N])` into a time series")
-        return dictionary
-    end
-    left_dict = Dict{Any,Any}()
-    for (key, value) in dictionary
-        key_keys = collect(keys(key))
-        key_values = collect(values(key))
-        left_key = NamedTuple{Tuple(key_keys[1:end-1])}(key_values[1:end-1])
-        right_dict = get!(left_dict, left_key, Dict{String,Any}())
-        # NOTE: The time stamp is the start point of the `TimeSlice`
-        right_key = Dates.format(start(key[end]), iso8601zoneless)
-        right_dict[right_key] = value
-    end
-    Dict(key => sort(value) for (key, value) in left_dict)
-end
-
-"""
-    value(d::Dict)
-
-An equivalent dictionary where `JuMP.VariableRef` values are replaced by their `JuMP.value`.
-"""
-value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => JuMP.value(v) for (k, v) in d if v isa JuMP.VariableRef)
-
-"""
-    formulation(d::Dict)
-
-An equivalent dictionary where `JuMP.ConstraintRef` values are replaced by a `String` showing their formulation.
-"""
-formulation(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => sprint(show, v) for (k, v) in d if v isa JuMP.ConstraintRef)
 
 """
     @fetch x, y, ... = d

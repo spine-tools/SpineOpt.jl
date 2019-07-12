@@ -21,20 +21,14 @@
         url;
         optimizer=Cbc.Optimizer,
         cleanup=true,
-        extend=m->nothing,
-        result=""
+        extend=m->nothing
     )
 
-Run the Spine model from `url` and write results to the same `url`.
+Run the Spine model from `url` and write report to the same `url`.
 Keyword arguments have the same purpose as for [`run_spinemodel`](@ref).
 """
-function run_spinemodel(
-        url::String; optimizer=Cbc.Optimizer, cleanup=true, extend=m->nothing, result=""
-    )
-    run_spinemodel(
-        url, url;
-        optimizer=optimizer, cleanup=cleanup, extend=extend, result=result
-    )
+function run_spinemodel(url::String; optimizer=Cbc.Optimizer, cleanup=true, extend=m->nothing)
+    run_spinemodel(url, url; optimizer=optimizer, cleanup=cleanup, extend=extend)
 end
 
 """
@@ -42,11 +36,10 @@ end
         url_in, url_out;
         optimizer=Cbc.Optimizer,
         cleanup=true,
-        extend=m->nothing,
-        result=""
+        extend=m->nothing
     )
 
-Run the Spine model from `url_in` and write results to `url_out`.
+Run the Spine model from `url_in` and write report to `url_out`.
 At least `url_in` must point to valid Spine database.
 A new Spine database is created at `url_out` if it doesn't exist.
 
@@ -59,14 +52,8 @@ set to `nothing` after completion.
 
 **`extend`** is a function for extending the model. [`run_spinemodel`](@ref) calls this function with
 the internal `JuMP.Model` object before calling `JuMP.optimize!`.
-
-**`result`** is the name of the result object to write to `url_out` when saving results.
-An empty string (the default) gets replaced by `"result"` appended by the current time stamp.
 """
-function run_spinemodel(
-        url_in::String, url_out::String;
-        optimizer=Cbc.Optimizer, cleanup=true, extend=m->nothing, result=""
-    )
+function run_spinemodel(url_in::String, url_out::String; optimizer=Cbc.Optimizer, cleanup=true, extend=m->nothing)
     printstyled("Creating convenience functions...\n"; bold=true)
     @time begin
         using_spinedb(url_in; upgrade=true)
@@ -149,22 +136,93 @@ function run_spinemodel(
     if status == MOI.OPTIMAL
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
-        printstyled("Writing results to the database...\n"; bold=true)
-        @fetch flow, units_started_up, units_shut_down, units_on, trans, stor_state = m.ext[:variables]
-        # @fetch flow_capacity = m.ext[:constraints]
-        @time write_results(
-             url_out;
-             result=result,
-             flow=pack_time_series(SpineModel.value(flow)),
-             units_started_up=pack_time_series(SpineModel.value(units_started_up)),
-             units_shut_down=pack_time_series(SpineModel.value(units_shut_down)),
-             units_on=pack_time_series(SpineModel.value(units_on)),
-             trans=pack_time_series(SpineModel.value(trans)),
-             stor_state=pack_time_series(SpineModel.value(stor_state)),
-             # constraint_flow_capacity=pack_time_series(formulation(flow_capacity))
-        )
+        printstyled("Writing report...\n"; bold=true)
+        write_report(m, url_out)
     end
     printstyled("Done.\n"; bold=true)
     cleanup && notusing_spinedb(url_in)
     m
 end
+
+
+@catch_undef function write_report(m, default_url)
+    reports = Dict()
+    for (rpt, out) in report__output()
+        out_var = get(m.ext[:variables], out.name, nothing)
+        if out_var === nothing
+            @warn "can't find output '$(out.name)'"
+            continue
+        end
+        url = output_db_url(report=rpt)
+        url === nothing && (url = default_url)
+        url_reports = get!(reports, url, Dict())
+        out_parameters = get!(url_reports, string(rpt.name), Dict())
+        out_parameters[out.name] = d = Dict()
+        for (key, val) in pack_trailing_dims(SpineModel.value(out_var))
+            inds, vals = zip(val...)
+            d[key] = to_database(TimeSeries(collect(inds), collect(vals), false, false))
+        end
+    end
+    for (url, url_reports) in reports
+        @show url
+        for (report, out_parameters) in url_reports
+            write_parameters(url; report=report, out_parameters...)
+        end
+    end
+end
+
+
+
+"""
+    pack_trailing_dims(dictionary::Dict, n::Int64=1)
+
+An equivalent dictionary where the last `n` dimensions are packed into a matrix
+"""
+function pack_trailing_dims(dictionary::Dict{S,T}, n::Int64=1) where {S<:NamedTuple,T}
+    left_dict = Dict{Any,Any}()
+    for (key, value) in dictionary
+        # TODO: handle length(key) < n and stuff like that?
+        left_key = NamedTuple{Tuple(collect(keys(key))[1:end-n])}(collect(values(key))[1:end-n])
+        right_key = NamedTuple{Tuple(collect(keys(key))[end-n+1:end])}(collect(values(key))[end-n+1:end])
+        right_dict = get!(left_dict, left_key, Dict())
+        right_dict[right_key] = value
+    end
+    if n > 1
+        Dict(key => reshape([(k, v) for (k, v) in sort(collect(value))], n, :) for (key, value) in left_dict)
+    else
+        Dict(key => [(k, v) for (k, v) in sort(collect(value))] for (key, value) in left_dict)
+    end
+end
+
+"""
+    value(d::Dict)
+
+An equivalent dictionary where `JuMP.VariableRef` values are replaced by their `JuMP.value`.
+"""
+value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => JuMP.value(v) for (k, v) in d if v isa JuMP.VariableRef)
+
+"""
+    formulation(d::Dict)
+
+An equivalent dictionary where `JuMP.ConstraintRef` values are replaced by a `String` showing their formulation.
+"""
+formulation(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => sprint(show, v) for (k, v) in d if v isa JuMP.ConstraintRef)
+
+
+#=
+
+
+    @fetch flow, units_started_up, units_shut_down, units_on, trans, stor_state = m.ext[:variables]
+    # @fetch flow_capacity = m.ext[:constraints]
+    @time write_parameters(
+         url_out;
+         result=result,
+         flow=pack_time_series(SpineModel.value(flow)),
+         units_started_up=pack_time_series(SpineModel.value(units_started_up)),
+         units_shut_down=pack_time_series(SpineModel.value(units_shut_down)),
+         units_on=pack_time_series(SpineModel.value(units_on)),
+         trans=pack_time_series(SpineModel.value(trans)),
+         stor_state=pack_time_series(SpineModel.value(stor_state)),
+         # constraint_flow_capacity=pack_time_series(formulation(flow_capacity))
+    )
+=#
