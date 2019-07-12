@@ -207,22 +207,3 @@ value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => JuMP.value(v) for (k, v) in d
 An equivalent dictionary where `JuMP.ConstraintRef` values are replaced by a `String` showing their formulation.
 """
 formulation(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => sprint(show, v) for (k, v) in d if v isa JuMP.ConstraintRef)
-
-
-#=
-
-
-    @fetch flow, units_started_up, units_shut_down, units_on, trans, stor_state = m.ext[:variables]
-    # @fetch flow_capacity = m.ext[:constraints]
-    @time write_parameters(
-         url_out;
-         result=result,
-         flow=pack_time_series(SpineModel.value(flow)),
-         units_started_up=pack_time_series(SpineModel.value(units_started_up)),
-         units_shut_down=pack_time_series(SpineModel.value(units_shut_down)),
-         units_on=pack_time_series(SpineModel.value(units_on)),
-         trans=pack_time_series(SpineModel.value(trans)),
-         stor_state=pack_time_series(SpineModel.value(stor_state)),
-         # constraint_flow_capacity=pack_time_series(formulation(flow_capacity))
-    )
-=#
