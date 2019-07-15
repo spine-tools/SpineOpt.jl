@@ -29,9 +29,9 @@ end
 """
     time_slice(;temporal_block=anything, t=anything)
 
-An array of all time slices in the model.
-If 'temporal_block' is not `nothing`, return only the time slices in that block.
-If 't' is not `nothing`, return only the time slices from `t`.
+An `Array` of all time slices in the model.
+- `temporal_block` is a temporal block object used to filter the result by.
+- `t` is a `TimeSlice` or collection of `TimeSlice`s to intersect the result with.
 """
 function (time_slice::TimeSliceFunctor)(;temporal_block=anything, t=anything)
     if temporal_block == anything
@@ -76,7 +76,7 @@ function (to_time_slice::ToTimeSliceFunctor)(t::TimeSlice...)
 end
 
 """
-    to_time_slice(t::TimeSlice...)
+    to_time_slice(t::DateTime...)
 
 An array of time slices *in the model* that overlap `t`.
 """
@@ -94,6 +94,11 @@ function (to_time_slice::ToTimeSliceFunctor)(t::DateTime...)
     [t for (blk, rngs) in blk_rngs for t in to_time_slice.blocks[blk][rngs]]
 end
 
+"""
+    block_time_slices()
+
+A `Dict` mapping temporal blocks to an `Array` of `TimeSlice`s in that block.
+"""
 function block_time_slices()
     result = Dict{Object,Array{TimeSlice,1}}()
     for blk in temporal_block()
@@ -122,7 +127,14 @@ function block_time_slices()
     result
 end
 
-function block_time_slices_split()
+"""
+    block_time_slices_split(rolling_horizon=:default)
+
+Take the output of [`block_time_slices()`](@ref) and split it among iterations
+of the given rolling horizon.
+"""
+function block_time_slices_split(rolling_horizon=:default)
+    # Get rolls if any
     rolls = Array{TimeSlice,1}()
     try
         horizon_start = start_datetime(rolling_horizon=rolling_horizon)
@@ -140,6 +152,7 @@ function block_time_slices_split()
     catch UndefVarError
     end
     if isempty(rolls)
+        # No rolls, can't split
         [block_time_slices()]
     else
         # Do the splitting
@@ -177,7 +190,7 @@ end
     generate_time_slice(block_time_slices::Dict{Object,Array{TimeSlice,1}})
 
 Generate and export a convenience functor called `time_slice`, that can be used to retrieve
-time slices given by `block_time_slices`.
+time slices given by `block_time_slices`. See [@TimeSliceFunctor()](@ref).
 """
 function generate_time_slice(block_time_slices)
     # Invert dictionary

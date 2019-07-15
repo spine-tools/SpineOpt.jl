@@ -62,8 +62,8 @@ function run_spinemodel(
         rolling_horizon=:default)
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in; upgrade=true)
-    for (roll_count, block_time_slices) in enumerate(block_time_slices_split())
-        printstyled("Roll $roll_count\n"; bold=true, color=:underline)
+    for (k, block_time_slices) in enumerate(block_time_slices_split(rolling_horizon=rolling_horizon))
+        printstyled("Roll $k\n"; bold=true, color=:underline)
         printstyled("Creating temporal structure...\n"; bold=true)
         @time begin
             generate_time_slice(block_time_slices)
@@ -171,7 +171,6 @@ end
         end
     end
     for (url, url_reports) in reports
-        @show url
         for (report, out_parameters) in url_reports
             write_parameters(url; report=report, out_parameters...)
         end
