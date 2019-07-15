@@ -53,93 +53,100 @@ set to `nothing` after completion.
 **`extend`** is a function for extending the model. [`run_spinemodel`](@ref) calls this function with
 the internal `JuMP.Model` object before calling `JuMP.optimize!`.
 """
-function run_spinemodel(url_in::String, url_out::String; optimizer=Cbc.Optimizer, cleanup=true, extend=m->nothing)
+function run_spinemodel(
+        url_in::String,
+        url_out::String;
+        optimizer=Cbc.Optimizer,
+        cleanup=true,
+        extend=m->nothing,
+        rolling_horizon=:default)
     printstyled("Creating convenience functions...\n"; bold=true)
-    @time begin
-        using_spinedb(url_in; upgrade=true)
+    @time using_spinedb(url_in; upgrade=true)
+    for (roll_count, block_time_slices) in enumerate(block_time_slices_split())
+        printstyled("Roll $roll_count\n"; bold=true, color=:underline)
+        printstyled("Creating temporal structure...\n"; bold=true)
+        @time begin
+            generate_time_slice(block_time_slices)
+            generate_time_slice_relationships()
+        end
+        printstyled("Initializing model...\n"; bold=true)
+        @time begin
+            m = Model(with_optimizer(optimizer))
+            m.ext[:variables] = Dict{Symbol,Dict}()
+            m.ext[:constraints] = Dict{Symbol,Dict}()
+            # Create decision variables
+            variable_flow(m)
+            variable_units_on(m)
+            variable_units_available(m)
+            variable_units_started_up(m)
+            variable_units_shut_down(m)
+            variable_trans(m)
+            variable_stor_state(m)
+            ## Create objective function
+            objective_minimize_total_discounted_costs(m)
+            # Add constraints
+        end
+        printstyled("Generating constraints...\n"; bold=true)
+        @time begin
+            println("[constraint_flow_capacity]")
+            @time constraint_flow_capacity(m)
+            println("[constraint_fix_ratio_out_in_flow]")
+            @time constraint_fix_ratio_out_in_flow(m)
+            println("[constraint_max_ratio_out_in_flow]")
+            @time constraint_max_ratio_out_in_flow(m)
+            println("[constraint_min_ratio_out_in_flow]")
+            @time constraint_min_ratio_out_in_flow(m)
+            println("[constraint_fix_ratio_out_out_flow]")
+            @time constraint_fix_ratio_out_out_flow(m)
+            println("[constraint_max_ratio_out_out_flow]")
+            @time constraint_max_ratio_out_out_flow(m)
+            println("[constraint_fix_ratio_in_in_flow]")
+            @time constraint_fix_ratio_in_in_flow(m)
+            println("[constraint_max_ratio_in_in_flow]")
+            @time constraint_max_ratio_in_in_flow(m)
+            println("[constraint_fix_ratio_out_in_trans]")
+            @time constraint_fix_ratio_out_in_trans(m)
+            println("[constraint_max_ratio_out_in_trans]")
+            @time constraint_max_ratio_out_in_trans(m)
+            println("[constraint_min_ratio_out_in_trans]")
+            @time constraint_min_ratio_out_in_trans(m)
+            println("[constraint_trans_capacity]")
+            @time constraint_trans_capacity(m)
+            println("[constraint_nodal_balance]")
+            @time constraint_nodal_balance(m)
+            println("[constraint_max_cum_in_flow_bound]")
+            @time constraint_max_cum_in_flow_bound(m)
+            println("[constraint_stor_capacity]")
+            @time constraint_stor_capacity(m)
+            println("[constraint_stor_state]")
+            @time constraint_stor_state(m)
+            println("[constraint_units_on]")
+            @time constraint_units_on(m)
+            println("[constraint_units_available]")
+            @time constraint_units_available(m)
+            println("[constraint_minimum_operating_point]")
+            @time constraint_minimum_operating_point(m)
+            println("[constraint_min_down_time]")
+            @time constraint_min_down_time(m)
+            println("[constraint_min_up_time]")
+            @time constraint_min_up_time(m)
+            println("[constraint_unit_state_transition]")
+            @time constraint_unit_state_transition(m)
+            println("[extend]")
+            @time extend(m)
+        end
+        # Run model
+        printstyled("Solving model...\n"; bold=true)
+        @time optimize!(m)
+        status = termination_status(m)
+        if status == MOI.OPTIMAL
+            println("Optimal solution found")
+            println("Objective function value: $(objective_value(m))")
+            printstyled("Writing report...\n"; bold=true)
+            write_report(m, url_out)
+        end
+        printstyled("Done.\n"; bold=true)
     end
-    printstyled("Creating temporal structure...\n"; bold=true)
-    @time begin
-        generate_time_slice()
-        generate_time_slice_relationships()
-    end
-    printstyled("Initializing model...\n"; bold=true)
-    @time begin
-        m = Model(with_optimizer(optimizer))
-        m.ext[:variables] = Dict{Symbol,Dict}()
-        m.ext[:constraints] = Dict{Symbol,Dict}()
-        # Create decision variables
-        variable_flow(m)
-        variable_units_on(m)
-        variable_units_available(m)
-        variable_units_started_up(m)
-        variable_units_shut_down(m)
-        variable_trans(m)
-        variable_stor_state(m)
-        ## Create objective function
-        objective_minimize_total_discounted_costs(m)
-        # Add constraints
-    end
-    printstyled("Generating constraints...\n"; bold=true)
-    @time begin
-        println("[constraint_flow_capacity]")
-        @time constraint_flow_capacity(m)
-        println("[constraint_fix_ratio_out_in_flow]")
-        @time constraint_fix_ratio_out_in_flow(m)
-        println("[constraint_max_ratio_out_in_flow]")
-        @time constraint_max_ratio_out_in_flow(m)
-        println("[constraint_min_ratio_out_in_flow]")
-        @time constraint_min_ratio_out_in_flow(m)
-        println("[constraint_fix_ratio_out_out_flow]")
-        @time constraint_fix_ratio_out_out_flow(m)
-        println("[constraint_max_ratio_out_out_flow]")
-        @time constraint_max_ratio_out_out_flow(m)
-        println("[constraint_fix_ratio_in_in_flow]")
-        @time constraint_fix_ratio_in_in_flow(m)
-        println("[constraint_max_ratio_in_in_flow]")
-        @time constraint_max_ratio_in_in_flow(m)
-        println("[constraint_fix_ratio_out_in_trans]")
-        @time constraint_fix_ratio_out_in_trans(m)
-        println("[constraint_max_ratio_out_in_trans]")
-        @time constraint_max_ratio_out_in_trans(m)
-        println("[constraint_min_ratio_out_in_trans]")
-        @time constraint_min_ratio_out_in_trans(m)
-        println("[constraint_trans_capacity]")
-        @time constraint_trans_capacity(m)
-        println("[constraint_nodal_balance]")
-        @time constraint_nodal_balance(m)
-        println("[constraint_max_cum_in_flow_bound]")
-        @time constraint_max_cum_in_flow_bound(m)
-        println("[constraint_stor_capacity]")
-        @time constraint_stor_capacity(m)
-        println("[constraint_stor_state]")
-        @time constraint_stor_state(m)
-        println("[constraint_units_on]")
-        @time constraint_units_on(m)
-        println("[constraint_units_available]")
-        @time constraint_units_available(m)
-        println("[constraint_minimum_operating_point]")
-        @time constraint_minimum_operating_point(m)
-        println("[constraint_min_down_time]")
-        @time constraint_min_down_time(m)
-        println("[constraint_min_up_time]")
-        @time constraint_min_up_time(m)
-        println("[constraint_unit_state_transition]")
-        @time constraint_unit_state_transition(m)
-        println("[extend]")
-        @time extend(m)
-    end
-    # Run model
-    printstyled("Solving model...\n"; bold=true)
-    @time optimize!(m)
-    status = termination_status(m)
-    if status == MOI.OPTIMAL
-        println("Optimal solution found")
-        println("Objective function value: $(objective_value(m))")
-        printstyled("Writing report...\n"; bold=true)
-        write_report(m, url_out)
-    end
-    printstyled("Done.\n"; bold=true)
     cleanup && notusing_spinedb(url_in)
     m
 end
