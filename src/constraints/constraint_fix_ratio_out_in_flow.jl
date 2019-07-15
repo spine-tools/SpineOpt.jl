@@ -29,7 +29,7 @@ is specified.
     @fetch flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:fix_ratio_out_in_flow] = Dict()
     for (u, c_out, c_in) in indices(fix_ratio_out_in_flow)
-        involved_timeslices = [t for (u, n, c, d, t) in flow_indices(unit=u, commodity=[c_out, c_in])]
+        involved_timeslices = [t for (u, n, c, d, t) in var_flow_indices(unit=u, commodity=[c_out, c_in])]
         for t in t_lowest_resolution(involved_timeslices)
             constr_dict[u, c_out, c_in, t] = @constraint(
                 m,
