@@ -144,6 +144,9 @@ function block_time_slices_split(rolling_horizon=:default)
         while roll_start < horizon_end
             duration = roll_duration(rolling_horizon=rolling_horizon, i=i)
             roll_end = roll_start + duration
+            if roll_end > horizon_end
+                roll_end = horizon_end
+            end
             push!(rolls, TimeSlice(roll_start, roll_end))
             roll_start = roll_end
             i += 1
