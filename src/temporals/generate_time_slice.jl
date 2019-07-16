@@ -29,31 +29,34 @@ end
 """
     time_slice(;temporal_block=anything, t=anything)
 
-An `Array` of all time slices in the model.
+An `Array` of time slices *in the model*.
 - `temporal_block` is a temporal block object used to filter the result by.
 - `t` is a `TimeSlice` or collection of `TimeSlice`s to intersect the result with.
 """
 function (time_slice::TimeSliceFunctor)(;temporal_block=anything, t=anything)
-    if temporal_block == anything
-        if t == anything
-            time_slice.all
-        else
-            [s for s in t if any(blk in keys(time_slice.blocks) for blk in s.blocks)]
+    temporal_block === t === anything && return time_slice.all
+    # Break `t` into a dictionary keyed by temporal block
+    blocks = Dict{Object,Union{Anything,Array{TimeSlice,1}}}()
+    if t === anything
+        for blk in keys(time_slice.blocks)
+            blocks[blk] = anything
         end
     else
-        if t == anything
-            [s for tblk in Object.(temporal_block) for ts in time_slice.blocks[tblk] for s in ts]
-        else
-            [s for s in t if any(blk in Object.(temporal_block) for blk in s.blocks)]
+        for t_ in t
+            for blk in t_.blocks
+                blk in keys(time_slice.blocks) || continue
+                push!(get!(blocks, blk, Array{TimeSlice,1}()), t_)
+            end
         end
     end
+    sort(unique(t for blk in keys(blocks) for t in intersect(time_slice.blocks[blk], blocks[blk])))
 end
 
 """
     to_time_slice(t::TimeSlice...)
 
-An array of time slices *in the model* that overlap `t`,
-where `t` may not be in the model.
+An array of time slices *in the model* that overlap `t`
+(where `t` may not be in the model).
 """
 function (to_time_slice::ToTimeSliceFunctor)(t::TimeSlice...)
     blk_rngs = Array{Tuple{Object,Array{Int64,1}},1}()
@@ -128,64 +131,63 @@ function block_time_slices()
 end
 
 """
-    block_time_slices_split(rolling_horizon=:default)
+    block_time_slices_split(rolling=:default)
 
-Take the output of [`block_time_slices()`](@ref) and split it among iterations
-of the given rolling horizon.
+Like [`block_time_slices()`](@ref) but split among steps in the given rolling horizon.
 """
-function block_time_slices_split(rolling_horizon=:default)
-    # Get rolls if any
-    rolls = Array{TimeSlice,1}()
+function block_time_slices_split(rolling=:default)
+    # Get steps if any
+    steps = Array{TimeSlice,1}()
     try
-        horizon_start = start_datetime(rolling_horizon=rolling_horizon)
-        horizon_end = end_datetime(rolling_horizon=rolling_horizon)
-        roll_start = horizon_start
+        horizon_start = start_datetime(rolling=rolling)
+        horizon_end = end_datetime(rolling=rolling)
+        step_start = horizon_start
         i = 1
-        while roll_start < horizon_end
-            duration = roll_duration(rolling_horizon=rolling_horizon, i=i)
-            roll_end = roll_start + duration
-            if roll_end > horizon_end
-                roll_end = horizon_end
+        while step_start < horizon_end
+            duration = step_duration(rolling=rolling, i=i)
+            step_end = step_start + duration
+            if step_end > horizon_end
+                step_end = horizon_end
             end
-            push!(rolls, TimeSlice(roll_start, roll_end))
-            roll_start = roll_end
+            push!(steps, TimeSlice(step_start, step_end))
+            step_start = step_end
             i += 1
         end
-        rolls
+        steps
     catch UndefVarError
     end
-    if isempty(rolls)
-        # No rolls, can't split
+    if isempty(steps)
+        # No steps, can't split
         [block_time_slices()]
     else
         # Do the splitting
-        result = Dict(roll => Dict{Object,Array{TimeSlice,1}}() for roll in rolls)
+        result = Dict(step => Dict{Object,Array{TimeSlice,1}}() for step in steps)
         for (block, time_slices) in block_time_slices()
-            rolls_copy = copy(rolls)
-            roll = popfirst!(rolls_copy)
-            roll_time_slices = result[roll][block] = Array{TimeSlice,1}()
+            steps_copy = copy(steps)
+            step = popfirst!(steps_copy)
+            step_time_slices = result[step][block] = Array{TimeSlice,1}()
             # Move forward to the interesting part
-            i = findfirst(end_.(time_slices) .> start(roll))
+            i = findfirst(end_.(time_slices) .> start(step))
             # Adjust start of the first time slice
-            if start(time_slices[i]) < start(roll)
-                time_slices[i] = TimeSlice(start(roll), end_(time_slices[i]))
+            if start(time_slices[i]) < start(step)
+                time_slices[i] = TimeSlice(start(step), end_(time_slices[i]))
             end
             for t in time_slices[i:end]
-                if end_(t) <= end_(roll)
-                    # time slice well within the roll
-                    push!(roll_time_slices, t)
+                if end_(t) <= end_(step)
+                    # time slice well within the step
+                    push!(step_time_slices, t)
                 else
-                    # time slice needs to be split across two rolls
-                    breakpoint = end_(roll)
-                    push!(roll_time_slices, TimeSlice(start(t), breakpoint))
-                    isempty!(rolls_copy) && break
-                    roll = popfirst!(rolls_copy)
-                    roll_time_slices = d[roll][block] = Array{TimeSlice,1}()
-                    push!(roll_time_slices, TimeSlice(breakpoint, end_(t)))
+                    # time slice needs to be split across two steps
+                    breakpoint = end_(step)
+                    push!(step_time_slices, TimeSlice(start(t), breakpoint))
+                    isempty!(steps_copy) && break
+                    step = popfirst!(steps_copy)
+                    step_time_slices = d[step][block] = Array{TimeSlice,1}()
+                    push!(step_time_slices, TimeSlice(breakpoint, end_(t)))
                 end
             end
         end
-        [result[roll] for roll in rolls]
+        [result[step] for step in steps]
     end
 end
 
@@ -222,7 +224,7 @@ function generate_time_slice(block_time_slices)
         block_full_time_slices[blk] = full_time_slices
         block_time_slice_index[blk] = time_slice_index
     end
-    all_time_slices = unique_sorted(sort([t for v in values(block_full_time_slices) for t in v]))
+    all_time_slices = sort(unique(t for v in values(block_full_time_slices) for t in v))
     # Create and export the function like object
     time_slice = TimeSliceFunctor(all_time_slices, block_full_time_slices)
     to_time_slice = ToTimeSliceFunctor(block_full_time_slices, block_time_slice_index)

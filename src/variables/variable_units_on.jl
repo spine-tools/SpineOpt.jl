@@ -81,7 +81,7 @@ function var_units_on_indices(;unit=anything, t=anything)
     [
         (unit=u, t=t1)
         for u in intersect(SpineModel.unit(), unit)
-            for t1 in intersect(t_highest_resolution(x.t for x in flow_indices(unit=u)), t)
+            for t1 in t_highest_resolution(unique(x.t for x in flow_indices(unit=u, t=t)))
     ]
 end
 
@@ -95,9 +95,6 @@ function fix_units_on_indices(;unit=anything, t=anything)
     [
         (unit=u, t=t1)
         for (u,) in indices(fix_units_on; unit=unit) if fix_units_on(unit=u) isa TimeSeries
-            for t1 in intersect(
-                    t_highest_resolution(to_time_slice(fix_units_on(unit=u).indexes...)),
-                    t
-                )
+            for t1 in t_highest_resolution(intersect(to_time_slice(fix_units_on(unit=u).indexes...), t))
     ]
 end

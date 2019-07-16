@@ -59,10 +59,10 @@ function run_spinemodel(
         optimizer=Cbc.Optimizer,
         cleanup=true,
         extend=m->nothing,
-        rolling_horizon=:default)
+        rolling=:default)
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in; upgrade=true)
-    for (k, block_time_slices) in enumerate(block_time_slices_split(rolling_horizon=rolling_horizon))
+    for (k, block_time_slices) in enumerate(block_time_slices_split(rolling))
         printstyled("Roll $k\n"; bold=true, color=:underline)
         printstyled("Creating temporal structure...\n"; bold=true)
         @time begin
