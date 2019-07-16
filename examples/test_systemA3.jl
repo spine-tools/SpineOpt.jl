@@ -65,11 +65,11 @@ function constraint_flow_affine_expr(m::Model)
     end
 end
 
-function extend_model(m::Model)
+function extend(m::Model)
     constraint_flow_affine_expr(m)
 end
 
 
 db_url_in = "sqlite:////home/manuelma/Codes/spine/toolbox/projects/case_study_a3/input/input.sqlite"
 db_url_out = "sqlite:////home/manuelma/Codes/spine/toolbox/projects/case_study_a3/output/output.sqlite"
-m = run_spinemodel(db_url_in, db_url_out; extend_model=extend_model, result="testing", cleanup=false)
+m = run_spinemodel(db_url_in, db_url_out; extend=extend, cleanup=false)
