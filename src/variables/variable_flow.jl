@@ -41,8 +41,7 @@ function variable_flow(m::Model)
         (unit=u, node=n, commodity=c, direction=d, t=t) => fix_flow(unit=u, node=n, direction=d, t=t)
         for (u, n, c, d, t) in fix_flow_indices()
     )
-    m.ext[:variables][:flow] = merge(m.ext[:variables][:var_flow], m.ext[:variables][:fix_flow]
-    )
+    m.ext[:variables][:flow] = merge(m.ext[:variables][:var_flow], m.ext[:variables][:fix_flow])
 end
 
 """
