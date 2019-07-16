@@ -28,11 +28,7 @@ function operating_costs(m::Model)
             +,
             flow[u, n, c, d, t] * duration(t) * operating_cost(unit=u_, commodity=c_, direction=d_, t=t)
             for (u_, c_, d_) in indices(operating_cost)
-                for (u, n, c, d, t) in flow_indices(
-                    unit=u_,
-                    commodity=c_,
-                    direction=d_
-                );
+            for (u, n, c, d, t) in flow_indices(unit=u_, commodity=c_, direction=d_);
             init=0
         )
     )
