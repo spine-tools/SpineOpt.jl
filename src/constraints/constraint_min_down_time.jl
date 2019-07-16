@@ -31,13 +31,13 @@ Constraint start-up by minimum down time.
         if min_down_time(unit=u) != 0
             constr_dict[u, t] = @constraint(
                 m,
-                units_on[u, t]
+                + units_on[u, t]
                 <=
                 + units_available[u, t]
                 - sum(
                     units_shut_down[u1, t1]
                     for (u1, t1) in units_on_indices(unit=u)
-                        if t.start - min_down_time(unit=u) < t1.start <= t.start
+                    if start(t) - min_down_time(unit=u) < start(t1) <= start(t)
                 )
             )
         end

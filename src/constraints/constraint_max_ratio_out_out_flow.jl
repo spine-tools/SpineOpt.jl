@@ -29,17 +29,14 @@ is specified.
     @fetch flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:max_ratio_out_out_flow] = Dict()
     for (u, c1, c2) in indices(max_ratio_out_out_flow)
-        involved_timeslices = [t for (u, n, c, d, t) in flow_indices(unit=u, commodity=[c1, c2])]
+        involved_timeslices = [t for (u, n, c, d, t) in var_flow_indices(unit=u, commodity=[c1, c2])]
         for t in t_lowest_resolution(involved_timeslices)
             constr_dict[u, c1, c2, t] = @constraint(
                 m,
                 + sum(
                     flow[u_, n, c1_, d, t1] * duration(t1)
                     for (u_, n, c1_, d, t1) in flow_indices(
-                        unit=u,
-                        commodity=c1,
-                        direction=:to_node,
-                        t=t_in_t(t_long=t)
+                        unit=u, commodity=c1, direction=:to_node, t=t_in_t(t_long=t)
                     )
                 )
                 <=
@@ -47,10 +44,7 @@ is specified.
                 * sum(
                     flow[u_, n, c2_, d, t1] * duration(t1)
                     for (u_, n, c2_, d, t1) in flow_indices(
-                        unit=u,
-                        commodity=c2,
-                        direction=:to_node,
-                        t=t_in_t(t_long=t)
+                        unit=u, commodity=c2, direction=:to_node, t=t_in_t(t_long=t)
                     )
                 )
             )

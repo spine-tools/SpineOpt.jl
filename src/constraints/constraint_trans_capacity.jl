@@ -34,19 +34,14 @@ Check if `conn_conv_cap_to_trans` is defined.
                 + reduce(
                     +,
                     trans[conn1, n1, c1, d1, t1] * duration(t1)
-                    for (conn1, n1, c1, d1, t1) in trans_indices(
-                        connection=conn,
-                        node=n,
-                        direction=d,
-                        t=t
-                    );
+                    for (conn1, n1, c1, d1, t1) in trans_indices(connection=conn, node=n, direction=d, t=t);
                     init=0
                 )
                 <=
                 + conn_capacity(connection=conn, node=n, direction=d)
                 * conn_avail_factor(connection=conn, node=n)
-                    * conn_conv_cap_to_trans(connection=conn, node=n)
-                        * duration(t)
+                * conn_conv_cap_to_trans(connection=conn, node=n)
+                * duration(t)
             )
         end
     end

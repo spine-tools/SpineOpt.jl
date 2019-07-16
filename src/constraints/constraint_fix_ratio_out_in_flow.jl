@@ -36,10 +36,7 @@ is specified.
                 + sum(
                     flow[u_, n, c_out_, d, t1] * duration(t1)
                     for (u_, n, c_out_, d, t1) in flow_indices(
-                        unit=u,
-                        commodity=c_out,
-                        direction=:to_node,
-                        t=t_in_t(t_long=t)
+                        unit=u, commodity=c_out, direction=:to_node, t=t_in_t(t_long=t)
                     )
                 )
                 ==
@@ -47,10 +44,7 @@ is specified.
                 * sum(
                     flow[u_, n, c_in_, d, t1] * duration(t1)
                     for (u_, n, c_in_, d, t1) in flow_indices(
-                        unit=u,
-                        commodity=c_in,
-                        direction=:from_node,
-                        t=t_in_t(t_long=t)
+                        unit=u, commodity=c_in, direction=:from_node, t=t_in_t(t_long=t)
                     )
                 )
             )

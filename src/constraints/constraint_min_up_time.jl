@@ -36,7 +36,7 @@ Constraint running by minimum up time.
                 + sum(
                     units_started_up[u1, t1]
                     for (u1, t1) in units_on_indices(unit=u)
-                        if t.start - min_up_time(unit=u) < t1.start <= t.start
+                    if start(t) - min_up_time(unit=u) < start(t1) <= start(t)
                 )
             )
         end

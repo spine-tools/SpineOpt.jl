@@ -38,7 +38,7 @@ function variable_flow(m::Model)
         for (u, n, c, d, t) in var_flow_indices()
     )
     m.ext[:variables][:fix_flow] = Dict{KeyType,Any}(
-        (unit=u, node=n, commodity=c, direction=d, t=t) => fix_trans(unit=u, node=n, direction=d, t=t)
+        (unit=u, node=n, commodity=c, direction=d, t=t) => fix_flow(unit=u, node=n, direction=d, t=t)
         for (u, n, c, d, t) in fix_flow_indices()
     )
     m.ext[:variables][:flow] = merge(m.ext[:variables][:var_flow], m.ext[:variables][:fix_flow]

@@ -33,12 +33,7 @@ Check if `unit_conv_cap_to_flow` is defined.
                 + reduce(
                     +,
                     + flow[u1, n1, c1, d1, t1] * duration(t1)
-                    for (u1, n1, c1, d1, t1) in flow_indices(
-                        unit=u,
-                        commodity=c,
-                        direction=d,
-                        t=t
-                    );
+                    for (u1, n1, c1, d1, t1) in flow_indices(unit=u, commodity=c, direction=d, t=t);
                     init=0
                 )
                 <=
