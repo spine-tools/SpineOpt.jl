@@ -148,7 +148,7 @@ function run_spinemodel(
         printstyled("Done.\n"; bold=true)
     end
     cleanup && notusing_spinedb(url_in)
-    m
+    # m
 end
 
 

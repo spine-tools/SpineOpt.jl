@@ -84,7 +84,6 @@ export constraint_min_ratio_out_in_trans
 export constraint_trans_capacity
 export constraint_nodal_balance
 export constraint_stor_state
-export constraint_stor_state_init
 export constraint_stor_capacity
 export constraint_units_on
 export constraint_units_available
@@ -136,7 +135,6 @@ include("constraints/constraint_max_ratio_in_in_flow.jl")
 include("constraints/constraint_trans_capacity.jl")
 include("constraints/constraint_stor_capacity.jl")
 include("constraints/constraint_stor_state.jl")
-include("constraints/constraint_stor_state_init.jl")
 include("constraints/constraint_units_on.jl")
 include("constraints/constraint_units_available.jl")
 include("constraints/constraint_minimum_operating_point.jl")
