@@ -35,7 +35,7 @@ is specified.
                 m,
                 + sum(
                     flow[u_, n, c_out_, d, t1] * duration(t1)
-                    for (u_, n, c_out_, d, t1) in flow_indices(
+                    for (u_, n, c_out_, d, t1) in var_flow_indices(
                         unit=u, commodity=c_out, direction=:to_node, t=t_in_t(t_long=t)
                     )
                 )
@@ -43,7 +43,7 @@ is specified.
                 + fix_ratio_out_in_flow(unit=u, commodity1=c_out, commodity2=c_in, t=t)
                 * sum(
                     flow[u_, n, c_in_, d, t1] * duration(t1)
-                    for (u_, n, c_in_, d, t1) in flow_indices(
+                    for (u_, n, c_in_, d, t1) in var_flow_indices(
                         unit=u, commodity=c_in, direction=:from_node, t=t_in_t(t_long=t)
                     )
                 )

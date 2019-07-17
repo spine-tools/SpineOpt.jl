@@ -35,7 +35,7 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
                     m,
                     + sum(
                         flow[u_, n, c_, d_, t1]
-                        for (u_, n, c_, d_, t1) in flow_indices(unit=u, commodity=c, direction = d, t=t)
+                        for (u_, n, c_, d_, t1) in var_flow_indices(unit=u, commodity=c, direction = d, t=t)
                     )
                     >=
                     + units_on[u, t]

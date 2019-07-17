@@ -36,7 +36,7 @@ is specified.
                 + reduce(
                     +,
                     + trans[conn_, n_out_, c, d, t1] * duration(t1)
-                    for (conn_, n_out_, c, d, t1) in trans_indices(
+                    for (conn_, n_out_, c, d, t1) in var_trans_indices(
                         connection=conn, node=n_out, direction=:to_node, t=t_in_t(t_long=t)
                     );
                     init=0

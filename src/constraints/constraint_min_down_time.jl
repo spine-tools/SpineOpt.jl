@@ -23,11 +23,10 @@
 
 Constraint start-up by minimum down time.
 """
-
 @catch_undef function constraint_min_down_time(m::Model)
     @fetch units_on, units_available, units_shut_down = m.ext[:variables]
     constr_dict = m.ext[:constraints][:min_down_time] = Dict()
-    for (u, t) in units_on_indices()
+    for (u, t) in var_units_on_indices()
         if min_down_time(unit=u) != 0
             constr_dict[u, t] = @constraint(
                 m,
@@ -35,9 +34,9 @@ Constraint start-up by minimum down time.
                 <=
                 + units_available[u, t]
                 - sum(
-                    units_shut_down[u1, t1]
-                    for (u1, t1) in units_on_indices(unit=u)
-                    if start(t) - min_down_time(unit=u) < start(t1) <= start(t)
+                    units_shut_down[u_, t_]
+                    for (u_, t_) in units_on_indices(unit=u)
+                    if start(t) - min_down_time(unit=u) < start(t_) <= start(t)
                 )
             )
         end

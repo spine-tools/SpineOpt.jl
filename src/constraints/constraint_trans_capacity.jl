@@ -34,7 +34,7 @@ Check if `conn_conv_cap_to_trans` is defined.
                 + reduce(
                     +,
                     trans[conn1, n1, c1, d1, t1] * duration(t1)
-                    for (conn1, n1, c1, d1, t1) in trans_indices(connection=conn, node=n, direction=d, t=t);
+                    for (conn1, n1, c1, d1, t1) in var_trans_indices(connection=conn, node=n, direction=d, t=t);
                     init=0
                 )
                 <=

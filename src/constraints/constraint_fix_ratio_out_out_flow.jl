@@ -35,7 +35,7 @@ is specified.
                 m,
                 + sum(
                     flow[u_, n, c1_, d, t1] * duration(t1)
-                    for (u_, n, c1_, d, t1) in flow_indices(
+                    for (u_, n, c1_, d, t1) in var_flow_indices(
                         unit=u, commodity=c1, direction=:to_node, t=t_in_t(t_long=t)
                     )
                 )

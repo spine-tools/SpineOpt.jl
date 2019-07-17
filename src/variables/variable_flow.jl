@@ -29,8 +29,7 @@ and within a certain *time slice*.
 
 """
 function variable_flow(m::Model)
-    names = (:unit, :node, :commodity, :direction, :t)
-    KeyType = NamedTuple{names,Tuple{Object,Object,Object,Object,TimeSlice}}
+    KeyType = NamedTuple{(:unit, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}}
     m.ext[:variables][:var_flow] = Dict{KeyType,Any}(
         (unit=u, node=n, commodity=c, direction=d, t=t) => @variable(
             m, base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
@@ -108,8 +107,8 @@ function fix_flow_indices(;commodity=anything, node=anything, unit=anything, dir
     [
         (unit=u, node=n, commodity=c, direction=d, t=t1)
         for (u, n, d) in indices(fix_flow; unit=unit, node=node, direction=direction)
-        if fix_flow(unit=u, node=n, direction=d) isa TimeSeries
-        for (n, c) in node__commodity(commodity=commodity, node=n, _compact=false)
-        for t1 in intersect(t_highest_resolution(to_time_slice(fix_flow(unit=u, node=n, direction=d).indexes...)), t)
+        for t_ in time_slice(t=t)
+        if fix_flow(unit=u, node=n, direction=d, t=t_) != nothing
+        for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
     ]
 end

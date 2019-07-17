@@ -90,7 +90,8 @@ The keyword arguments act as filters for each dimension.
 function fix_units_on_indices(;unit=anything, t=anything)
     [
         (unit=u, t=t1)
-        for (u,) in indices(fix_units_on; unit=unit) if fix_units_on(unit=u) isa TimeSeries
-        for t1 in t_highest_resolution(intersect(to_time_slice(fix_units_on(unit=u).indexes...), t))
+        for (u,) in indices(fix_units_on; unit=unit)
+        for t_ in time_slice(t=t)
+        if fix_units_on(unit=u, t=t_) != nothing
     ]
 end
