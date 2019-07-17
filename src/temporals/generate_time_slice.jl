@@ -35,19 +35,19 @@ An `Array` of time slices *in the model*.
 """
 function (time_slice::TimeSliceFunctor)(;temporal_block=anything, t=anything)
     temporal_block === t === anything && return time_slice.all
+    temp_blk = intersect(collect(keys(time_slice.blocks)), Object.(temporal_block))
     # Break `t` into a dictionary keyed by temporal block
-    blocks = Dict{Object,Union{Anything,Array{TimeSlice,1}}}()
-    if t === anything
-        for blk in keys(time_slice.blocks)
-            blocks[blk] = anything
-        end
+    blocks = if t === anything
+        Dict{Object,Anything}(blk => anything for blk in temp_blk)
     else
+        blocks = Dict{Object,Array{TimeSlice,1}}()
         for t_ in t
             for blk in t_.blocks
-                blk in keys(time_slice.blocks) || continue
+                blk in temp_blk || continue
                 push!(get!(blocks, blk, Array{TimeSlice,1}()), t_)
             end
         end
+        blocks
     end
     sort(unique(t for blk in keys(blocks) for t in intersect(time_slice.blocks[blk], blocks[blk])))
 end
@@ -61,21 +61,21 @@ An array of time slices *in the model* that overlap `t`
 function (to_time_slice::ToTimeSliceFunctor)(t::TimeSlice...)
     blk_rngs = Array{Tuple{Object,Array{Int64,1}},1}()
     for (blk, index) in to_time_slice.index
-        temp_block_start = start_datetime(temporal_block=blk)
-        temp_block_end = end_datetime(temporal_block=blk)
+        temp_block_start = start(first(to_time_slice.blocks[blk]))
+        temp_block_end = end_(last(to_time_slice.blocks[blk]))
         ranges = []
         for s in t
-            start = max(temp_block_start, s.start)
-            end_ = min(temp_block_end, s.end_)
-            end_ <= start && continue
-            first_ind = index[Minute(start - temp_block_start).value + 1]
-            last_ind = index[Minute(end_ - temp_block_start).value]
+            s_start = max(temp_block_start, start(s))
+            s_end = min(temp_block_end, end_(s))
+            s_end <= s_start && continue
+            first_ind = index[Minute(s_start - temp_block_start).value + 1]
+            last_ind = index[Minute(s_end - temp_block_start).value]
             push!(ranges, first_ind:last_ind)
         end
         isempty(ranges) && continue
         push!(blk_rngs, (blk, union(ranges...)))
     end
-    [t for (blk, rngs) in blk_rngs for t in to_time_slice.blocks[blk][rngs]]
+    unique(t for (blk, rngs) in blk_rngs for t in to_time_slice.blocks[blk][rngs])
 end
 
 """
@@ -86,15 +86,15 @@ An array of time slices *in the model* that overlap `t`.
 function (to_time_slice::ToTimeSliceFunctor)(t::DateTime...)
     blk_rngs = Array{Tuple{Object,Array{Int64,1}},1}()
     for (blk, index) in to_time_slice.index
-        temp_block_start = start_datetime(temporal_block=blk)
-        temp_block_end = end_datetime(temporal_block=blk)
-        rngs = unique(
+        temp_block_start = start(first(to_time_slice.blocks[blk]))
+        temp_block_end = end_(last(to_time_slice.blocks[blk]))
+        rngs = [
             index[Minute(s - temp_block_start).value + 1]
             for s in t if temp_block_start <= s < temp_block_end
-        )
+        ]
         push!(blk_rngs, (blk, rngs))
     end
-    [t for (blk, rngs) in blk_rngs for t in to_time_slice.blocks[blk][rngs]]
+    unique(t for (blk, rngs) in blk_rngs for t in to_time_slice.blocks[blk][rngs])
 end
 
 """
@@ -168,6 +168,10 @@ function block_time_slices_split(rolling=:default)
             step_time_slices = result[step][block] = Array{TimeSlice,1}()
             # Move forward to the interesting part
             i = findfirst(end_.(time_slices) .> start(step))
+            if i === nothing
+                result[step][block]
+                continue
+            end
             # Adjust start of the first time slice
             if start(time_slices[i]) < start(step)
                 time_slices[i] = TimeSlice(start(step), end_(time_slices[i]))
@@ -180,9 +184,9 @@ function block_time_slices_split(rolling=:default)
                     # time slice needs to be split across two steps
                     breakpoint = end_(step)
                     push!(step_time_slices, TimeSlice(start(t), breakpoint))
-                    isempty!(steps_copy) && break
+                    isempty(steps_copy) && break
                     step = popfirst!(steps_copy)
-                    step_time_slices = d[step][block] = Array{TimeSlice,1}()
+                    step_time_slices = result[step][block] = Array{TimeSlice,1}()
                     push!(step_time_slices, TimeSlice(breakpoint, end_(t)))
                 end
             end

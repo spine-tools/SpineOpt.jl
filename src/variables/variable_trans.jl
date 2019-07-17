@@ -102,7 +102,7 @@ function fix_trans_indices(;commodity=anything, node=anything, connection=anythi
     node = expand_node_group(node)
     commodity = expand_commodity_group(commodity)
     [
-        (connection=conn, node=n, commodity=c, direction=d, t=t1)
+        (connection=conn, node=n, commodity=c, direction=d, t=t_)
         for (conn, n, d) in indices(fix_trans; connection=connection, node=node, direction=direction)
         for t_ in time_slice(t=t)
         if fix_trans(connection=conn, node=n, direction=d, t=t_) != nothing

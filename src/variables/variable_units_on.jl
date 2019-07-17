@@ -75,9 +75,9 @@ The keyword arguments act as filters for each dimension.
 """
 function var_units_on_indices(;unit=anything, t=anything)
     [
-        (unit=u, t=t1)
+        (unit=u, t=t_)
         for u in intersect(SpineModel.unit(), unit)
-        for t1 in t_highest_resolution(unique(x.t for x in flow_indices(unit=u, t=t)))
+        for t_ in t_highest_resolution(unique(x.t for x in flow_indices(unit=u, t=t)))
     ]
 end
 
@@ -89,7 +89,7 @@ The keyword arguments act as filters for each dimension.
 """
 function fix_units_on_indices(;unit=anything, t=anything)
     [
-        (unit=u, t=t1)
+        (unit=u, t=t_)
         for (u,) in indices(fix_units_on; unit=unit)
         for t_ in time_slice(t=t)
         if fix_units_on(unit=u, t=t_) != nothing

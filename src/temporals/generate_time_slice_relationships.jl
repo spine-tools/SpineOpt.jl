@@ -141,10 +141,6 @@ function generate_time_slice_relationships()
             end
         end
     end
-    # TODO: instead of unique -> check beforehand whether timeslice tuple is already added
-    # Is `unique!()` slow? I fear the above check can be a bit slow.
-    # An alternative is to use `Set()` instead of `[]` to warranty uniqueness,
-    # but then we lose the order - do we care about order?
     unique!(t_in_t_list)
     unique!(t_overlaps_t_list)
     t_in_t_excl_list = [(t1, t2) for (t1, t2) in t_in_t_list if t1 != t2]

@@ -105,7 +105,7 @@ function fix_flow_indices(;commodity=anything, node=anything, unit=anything, dir
     node = expand_node_group(node)
     commodity = expand_commodity_group(commodity)
     [
-        (unit=u, node=n, commodity=c, direction=d, t=t1)
+        (unit=u, node=n, commodity=c, direction=d, t=t_)
         for (u, n, d) in indices(fix_flow; unit=unit, node=node, direction=direction)
         for t_ in time_slice(t=t)
         if fix_flow(unit=u, node=n, direction=d, t=t_) != nothing

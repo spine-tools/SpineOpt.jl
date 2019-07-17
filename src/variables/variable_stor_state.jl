@@ -75,7 +75,7 @@ end
 
 function fix_stor_state_indices(;storage=anything, commodity=anything, t=anything)
     [
-        (storage=stor, commodity=c, t=t1)
+        (storage=stor, commodity=c, t=t_)
         for (stor,) in indices(fix_stor_state; storage=storage)
         for t_ in time_slice(t=t)
         if fix_stor_state(storage=stor, t=t_) != nothing
