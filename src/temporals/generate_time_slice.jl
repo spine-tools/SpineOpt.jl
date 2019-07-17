@@ -146,7 +146,7 @@ function generate_time_slice()
         end
         block_slice_list[blk] = time_slice_list
     end
-    time_slice_list = unique_sorted(sort([t for v in values(block_slice_list) for t in v]))
+    time_slice_list = unique(t for v in values(block_slice_list) for t in v)
     # Create and export the function like object
     time_slice = TimeSliceSet(time_slice_list, block_slice_list, block_slice_index)
     to_time_slice = ToTimeSlice(time_slice_list, block_slice_list, block_slice_index)
