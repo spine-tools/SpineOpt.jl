@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-# Export contents of database into the current session
 using SpineModel
 using SpineInterface
 
@@ -25,7 +24,7 @@ db_url = "sqlite:///$(@__DIR__)/data/test_rolling.sqlite"
 # You're welcome to fix this by adding some data to `test_rolling.sqlite`
 # run_spinemodel(db_url)
 
-# The following is just for illustration purposes. If shows all the steps of the rolling horizon optimization,
+# The following is just for illustration purposes. It shows all the steps of the rolling horizon optimization,
 # their blocks and time slices per block
 using_spinedb(db_url)
 for (step, block_time_slices) in enumerate(SpineModel.block_time_slices_split())
