@@ -21,8 +21,12 @@ using SpineModel
 using SpineInterface
 
 db_url = "sqlite:///$(@__DIR__)/data/test_rolling.sqlite"
+# The database only has one `temporal_block` and one `rolling` object, so `run_spinemodel` doesn't work for now.
+# You're welcome to fix this by adding some data to `test_rolling.sqlite`
 # run_spinemodel(db_url)
 
+# The following is just for illustration purposes. If shows all the steps of the rolling horizon optimization,
+# their blocks and time slices per block
 using_spinedb(db_url)
 for (step, block_time_slices) in enumerate(SpineModel.block_time_slices_split())
     @show step
