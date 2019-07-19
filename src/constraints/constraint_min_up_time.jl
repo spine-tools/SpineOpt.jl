@@ -27,7 +27,7 @@ Constraint running by minimum up time.
 @catch_undef function constraint_min_up_time(m::Model)
     @fetch units_on, units_started_up = m.ext[:variables]
     constr_dict = m.ext[:constraints][:min_up_time] = Dict()
-    for (u, t) in units_on_indices()
+    for (u, t) in var_units_on_indices()
         if min_up_time(unit=u) != 0
             constr_dict[u, t] = @constraint(
                 m,
@@ -35,8 +35,9 @@ Constraint running by minimum up time.
                 >=
                 + sum(
                     units_started_up[u1, t1]
-                    for (u1, t1) in units_on_indices(unit=u)
-                        if t.start - min_up_time(unit=u) < t1.start <= t.start
+                    for (u1, t1) in units_on_indices(
+                        unit=u, t=to_time_slice(TimeSlice(start(t) - min_up_time(unit=u), start(t)))
+                    )
                 )
             )
         end

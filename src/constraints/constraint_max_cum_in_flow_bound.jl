@@ -25,6 +25,7 @@ Set upperbound `max_cum_in_flow_bound `to the cumulated inflow of
 `commodity_group cg` into a `unit_group ug`
 if `max_cum_in_flow_bound` exists for the combination of `cg` and `ug`.
 """
+# TODO: This one looks outdated
 @catch_undef function constraint_max_cum_in_flow_bound(m::Model)
     @fetch flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:max_cum_in_flow_bound] = Dict()
@@ -32,7 +33,6 @@ if `max_cum_in_flow_bound` exists for the combination of `cg` and `ug`.
         constr_dict[ug, cg] = @constraint(
             m,
             + sum(
-                +,
                 flow[u, n, c, :from_node, t]
                 for (u, n, c, d, t) in flow_indices(
                     direction=:from_node,

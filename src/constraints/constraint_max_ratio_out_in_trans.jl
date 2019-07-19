@@ -35,22 +35,16 @@ is specified.
                 m,
                 + sum(
                     trans[conn_, n_out_, c, :to_node, t1] * duration(t1)
-                    for (conn_, n_out_, c, d, t1) in trans_indices(
-                        connection=conn,
-                        node=n_out,
-                        direction=:to_node,
-                        t=t_in_t(t_long=t)
+                    for (conn_, n_out_, c, d, t1) in var_trans_indices(
+                        connection=conn, node=n_out, direction=:to_node, t=t_in_t(t_long=t)
                     )
                 )
                 <=
                 + max_ratio_out_in_trans(connection=conn, node1=n_out, node2=n_in, t=t)
                 * sum(
                     trans[conn_, n_in_, c, :from_node, t1] * duration(t1)
-                    for (conn_, n_in_, c, d, t1) in trans_indices(
-                        connection=conn,
-                        node=ng_in,
-                        direction=:from_node,
-                        t=t_in_t(t_long=t)
+                    for (conn_, n_in_, c, d, t1) in var_trans_indices(
+                        connection=conn, node=ng_in, direction=:from_node, t=t_in_t(t_long=t)
                     )
                 )
             )

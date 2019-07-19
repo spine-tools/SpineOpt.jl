@@ -29,13 +29,18 @@ and within a certain *time slice*.
 
 """
 function variable_flow(m::Model)
-    m.ext[:variables][:flow] = Dict(
+    KeyType = NamedTuple{(:unit, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}}
+    m.ext[:variables][:var_flow] = Dict{KeyType,Any}(
         (unit=u, node=n, commodity=c, direction=d, t=t) => @variable(
-            m,
-            base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]",
-            lower_bound=0
-        ) for (u, n, c, d, t) in flow_indices()
+            m, base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
+        )
+        for (u, n, c, d, t) in var_flow_indices()
     )
+    m.ext[:variables][:fix_flow] = Dict{KeyType,Any}(
+        (unit=u, node=n, commodity=c, direction=d, t=t) => fix_flow(unit=u, node=n, direction=d, t=t)
+        for (u, n, c, d, t) in fix_flow_indices()
+    )
+    m.ext[:variables][:flow] = merge(m.ext[:variables][:var_flow], m.ext[:variables][:fix_flow])
 end
 
 """
@@ -76,9 +81,10 @@ function var_flow_indices(;commodity=anything, node=anything, unit=anything, dir
     [
         (unit=u, node=n, commodity=c, direction=d, t=t1)
         for (u, n, d, blk) in unit__node__direction__temporal_block(
-                node=node, unit=unit, direction=direction, _compact=false)
-            for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
-                for t1 in time_slice(temporal_block=blk, t=t)
+            node=node, unit=unit, direction=direction, _compact=false
+        )
+        for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
+        for t1 in time_slice(temporal_block=blk, t=t)
     ]
 end
 
@@ -99,15 +105,10 @@ function fix_flow_indices(;commodity=anything, node=anything, unit=anything, dir
     node = expand_node_group(node)
     commodity = expand_commodity_group(commodity)
     [
-        (unit=u, node=n, commodity=c, direction=d, t=t1)
+        (unit=u, node=n, commodity=c, direction=d, t=t_)
         for (u, n, d) in indices(fix_flow; unit=unit, node=node, direction=direction)
-                if fix_flow(unit=u, node=n, direction=d) isa TimeSeries
-            for (n, c) in node__commodity(commodity=commodity, node=n, _compact=false)
-                for t1 in intersect(
-                        t_highest_resolution(
-                            to_time_slice(fix_flow(unit=u, node=n, direction=d).indexes...)
-                        ),
-                        t
-                    )
+        for t_ in time_slice(t=t)
+        if fix_flow(unit=u, node=n, direction=d, t=t_) != nothing
+        for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
     ]
 end

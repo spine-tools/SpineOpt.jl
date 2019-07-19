@@ -29,24 +29,20 @@ within a certain *time slice*.
 function variable_units_on(m::Model)
     KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
     m.ext[:variables][:integer_units_on] = Dict{KeyType,Any}(
-        (unit=u, t=t) => @variable(
-            m, base_name="units_on[$u, $(t.JuMP_name)]", integer=true, lower_bound=0
-        ) for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :integer_online_variable
+        (unit=u, t=t) => @variable(m, base_name="units_on[$u, $(t.JuMP_name)]", integer=true, lower_bound=0)
+        for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :integer_online_variable
     )
     m.ext[:variables][:binary_units_on] = Dict{KeyType,Any}(
-        (unit=u, t=t) => @variable(
-            m, base_name="units_on[$u, $(t.JuMP_name)]", binary=true
-        ) for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :binary_online_variable
+        (unit=u, t=t) => @variable(m, base_name="units_on[$u, $(t.JuMP_name)]", binary=true)
+        for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :binary_online_variable
     )
     m.ext[:variables][:continuous_units_on] = Dict{KeyType,Any}(
-        (unit=u, t=t) => @variable(
-            m, base_name="units_on[$u, $(t.JuMP_name)]", lower_bound=0
-        ) for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :continuous_online_variable
+        (unit=u, t=t) => @variable(m, base_name="units_on[$u, $(t.JuMP_name)]", lower_bound=0)
+        for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :continuous_online_variable
     )
     m.ext[:variables][:no_units_on] = Dict{KeyType,Any}(
-        (unit=u, t=t) => @variable(
-            m, base_name="units_on[$u, $(t.JuMP_name)]", lower_bound=1 , upper_bound=1
-        ) for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :no_online_variable
+        (unit=u, t=t) => @variable(m, base_name="units_on[$u, $(t.JuMP_name)]", lower_bound=1 , upper_bound=1)
+        for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :no_online_variable
     )
     m.ext[:variables][:fix_units_on] = Dict{KeyType,Any}(
         (unit=u, t=t) => fix_units_on(unit=u, t=t) for (u, t) in fix_units_on_indices()
@@ -79,9 +75,9 @@ The keyword arguments act as filters for each dimension.
 """
 function var_units_on_indices(;unit=anything, t=anything)
     [
-        (unit=u, t=t1)
+        (unit=u, t=t_)
         for u in intersect(SpineModel.unit(), unit)
-            for t1 in intersect(t_highest_resolution(x.t for x in flow_indices(unit=u)), t)
+        for t_ in t_highest_resolution(unique(x.t for x in flow_indices(unit=u, t=t)))
     ]
 end
 
@@ -93,11 +89,9 @@ The keyword arguments act as filters for each dimension.
 """
 function fix_units_on_indices(;unit=anything, t=anything)
     [
-        (unit=u, t=t1)
-        for (u,) in indices(fix_units_on; unit=unit) if fix_units_on(unit=u) isa TimeSeries
-            for t1 in intersect(
-                    t_highest_resolution(to_time_slice(fix_units_on(unit=u).indexes...)),
-                    t
-                )
+        (unit=u, t=t_)
+        for (u,) in indices(fix_units_on; unit=unit)
+        for t_ in time_slice(t=t)
+        if fix_units_on(unit=u, t=t_) != nothing
     ]
 end

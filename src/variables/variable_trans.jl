@@ -27,24 +27,18 @@ This variable represents the (average) instantaneous flow of a *commodity* betwe
 in a certain *direction* and within a certain *time slice*.
 """
 function variable_trans(m::Model)
-    names = (:connection, :node, :commodity, :direction, :t)
-    KeyType = NamedTuple{names,Tuple{Object,Object,Object,Object,TimeSlice}}
+    KeyType = NamedTuple{(:connection, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}}
     m.ext[:variables][:var_trans] = Dict{KeyType,Any}(
         (connection=conn, node=n, commodity=c, direction=d, t=t) => @variable(
-            m,
-            base_name="trans[$conn, $n, $c, $d, $(t.JuMP_name)]",
-            lower_bound=0
-        ) for (conn, n, c, d, t) in var_trans_indices()
+            m, base_name="trans[$conn, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
+        )
+        for (conn, n, c, d, t) in var_trans_indices()
     )
     m.ext[:variables][:fix_trans] = Dict{KeyType,Any}(
-        (connection=conn, node=n, commodity=c, direction=d, t=t) => fix_trans(
-            connection=conn, node=n, direction=d, t=t
-        ) for (conn, n, c, d, t) in fix_trans_indices()
+        (connection=conn, node=n, commodity=c, direction=d, t=t) => fix_trans(connection=conn, node=n, direction=d, t=t)
+        for (conn, n, c, d, t) in fix_trans_indices()
     )
-    m.ext[:variables][:trans] = merge(
-        m.ext[:variables][:var_trans],
-        m.ext[:variables][:fix_trans]
-    )
+    m.ext[:variables][:trans] = merge(m.ext[:variables][:var_trans], m.ext[:variables][:fix_trans])
 end
 
 
@@ -84,10 +78,11 @@ function var_trans_indices(;commodity=anything, node=anything, connection=anythi
     commodity = expand_commodity_group(commodity)
     [
         (connection=conn, node=n, commodity=c, direction=d, t=t1)
-        for (conn, n_, d, blk) in connection__node__direction__temporal_block(
-                    node=node, connection=connection, direction=direction, _compact=false)
-            for (n, c) in node__commodity(commodity=commodity, node=n_, _compact=false)
-                for t1 in time_slice(temporal_block=blk, t=t)
+        for (conn, n, d, blk) in connection__node__direction__temporal_block(
+            node=node, connection=connection, direction=direction, _compact=false
+        )
+        for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
+        for t1 in time_slice(temporal_block=blk, t=t)
     ]
 end
 
@@ -107,15 +102,10 @@ function fix_trans_indices(;commodity=anything, node=anything, connection=anythi
     node = expand_node_group(node)
     commodity = expand_commodity_group(commodity)
     [
-        (connection=conn, node=n, commodity=c, direction=d, t=t1)
+        (connection=conn, node=n, commodity=c, direction=d, t=t_)
         for (conn, n, d) in indices(fix_trans; connection=connection, node=node, direction=direction)
-                if fix_trans(connection=conn, node=n, direction=d) isa SpineInterface.TimeSeries
-            for (n, c) in node__commodity(commodity=commodity, node=n, _compact=false)
-                for t1 in intersect(
-                        t_highest_resolution(
-                            to_time_slice(fix_trans(connection=conn, node=n, direction=d).indexes...)
-                        ),
-                        t
-                    )
+        for t_ in time_slice(t=t)
+        if fix_trans(connection=conn, node=n, direction=d, t=t_) != nothing
+        for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
     ]
 end

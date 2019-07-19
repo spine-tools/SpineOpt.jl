@@ -36,11 +36,8 @@ is specified.
                 + reduce(
                     +,
                     trans[conn_, n_out_, c, d, t1] * duration(t1)
-                    for (conn_, n_out_, c, d, t1) in trans_indices(
-                        connection=conn,
-                        node=n_out,
-                        direction=:to_node,
-                        t=t_in_t(t_long=t)
+                    for (conn_, n_out_, c, d, t1) in var_trans_indices(
+                        connection=conn, node=n_out, direction=:to_node, t=t_in_t(t_long=t)
                     );
                     init=0
                 )
@@ -49,10 +46,7 @@ is specified.
                 * reduce(
                     +,
                     trans[conn_, n_in_, c, d, t1]
-                        * overlap_duration(
-                            t1,
-                            t - trans_delay(connection=conn, node1=n_out, node2=n_in, t=t)
-                        )
+                    * overlap_duration(t1, t - trans_delay(connection=conn, node1=n_out, node2=n_in, t=t))
                     for (conn_, n_in_, c, d, t1) in trans_indices(
                         connection=conn,
                         node=n_in,

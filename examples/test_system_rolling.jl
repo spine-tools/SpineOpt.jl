@@ -16,26 +16,18 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+# Export contents of database into the current session
+using SpineModel
+using SpineInterface
 
+db_url = "sqlite:///$(@__DIR__)/data/test_rolling.sqlite"
+# run_spinemodel(db_url)
 
-"""
-    constraint_stor_state_init(m::Model, stor_state)
-
-Balance for storage level.
-"""
-@catch_undef function constraint_stor_state_init(m::Model)
-    @fetch stor_state = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:stor_state_init] = Dict()
-    for (stor, c) in indices(stor_state_init)
-        for (stor, c, t) in stor_state_indices(storage=stor, commodity=c)
-            if isempty(t_before_t(t_after=t))
-                constr_dict[stor, c, t] = @constraint(
-                    m,
-                    + stor_state[stor, c, t]
-                    <=
-                    + stor_state_init(storage=stor, commodity=c)
-                )
-            end
-        end
+using_spinedb(db_url)
+for (step, block_time_slices) in enumerate(SpineModel.block_time_slices_split())
+    @show step
+    for (block, time_slices) in block_time_slices
+        @show block
+        @show time_slices
     end
 end

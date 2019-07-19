@@ -28,45 +28,29 @@ function taxes(m::Model)
         + reduce(
             +,
             flow[u, n, c, d, t] * tax_net_flow(commodity=c1, node=n1, t=t) * duration(t)
-                for (c1, n1) in indices(tax_net_flow)
-                    for (u, n, c, d, t) in flow_indices(
-                        node=n1,
-                        commodity=c1,
-                        direction=:to_node
-                    );
+            for (c1, n1) in indices(tax_net_flow)
+            for (u, n, c, d, t) in flow_indices(node=n1, commodity=c1, direction=:to_node);
             init=0
         )
         - reduce(
             +,
             flow[u, n, c, d, t] * tax_net_flow(commodity=c1, node=n1, t=t) * duration(t)
-                for (c1, n1) in indices(tax_net_flow)
-                    for (u, n, c, d, t) in flow_indices(
-                        node=n1,
-                        commodity=c1,
-                        direction=:to_node
-                    );
+            for (c1, n1) in indices(tax_net_flow)
+            for (u, n, c, d, t) in flow_indices(node=n1, commodity=c1, direction=:to_node);
             init=0
         )
         + reduce(
             +,
             flow[u, n, c, d, t] * tax_out_flow(commodity=c1, node=n1, t=t) * duration(t)
-                for (c1, n1) in indices(tax_out_flow)
-                    for (u, n, c, d, t) in flow_indices(
-                        node=n1,
-                        commodity=c1,
-                        direction=:to_node
-                    );
+            for (c1, n1) in indices(tax_out_flow)
+            for (u, n, c, d, t) in flow_indices(node=n1, commodity=c1, direction=:to_node);
             init=0
         )
         + reduce(
             +,
             flow[u, n, c, d, t] * tax_in_flow(commodity=c1, node=n1, t=t) * duration(t)
-                for (c1, n1) in indices(tax_out_flow)
-                    for (u, n, c, d, t) in flow_indices(
-                        node=n1,
-                        commodity=c1,
-                        direction=:to_node
-                    );
+            for (c1, n1) in indices(tax_out_flow)
+            for (u, n, c, d, t) in flow_indices(node=n1, commodity=c1, direction=:to_node);
             init=0
         )
     )
