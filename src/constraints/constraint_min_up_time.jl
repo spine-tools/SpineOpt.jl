@@ -35,8 +35,9 @@ Constraint running by minimum up time.
                 >=
                 + sum(
                     units_started_up[u1, t1]
-                    for (u1, t1) in units_on_indices(unit=u)
-                    if start(t) - min_up_time(unit=u) < start(t1) <= start(t)
+                    for (u1, t1) in units_on_indices(
+                        unit=u, t=to_time_slice(TimeSlice(start(t) - min_up_time(unit=u), start(t)))
+                    )
                 )
             )
         end

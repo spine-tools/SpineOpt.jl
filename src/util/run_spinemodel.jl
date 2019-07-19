@@ -63,7 +63,7 @@ function run_spinemodel(
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in; upgrade=true)
     for (k, block_time_slices) in enumerate(block_time_slices_split(rolling))
-        printstyled("Roll $k\n"; bold=true, color=:underline)
+        printstyled("Step $k\n"; bold=true, color=:underline)
         printstyled("Creating temporal structure...\n"; bold=true)
         @time begin
             generate_time_slice(block_time_slices)
@@ -71,7 +71,7 @@ function run_spinemodel(
         end
         printstyled("Initializing model...\n"; bold=true)
         @time begin
-            m = Model(with_optimizer(optimizer))
+            global m = Model(with_optimizer(optimizer))
             m.ext[:variables] = Dict{Symbol,Dict}()
             m.ext[:constraints] = Dict{Symbol,Dict}()
             # Create decision variables
@@ -82,9 +82,8 @@ function run_spinemodel(
             variable_units_shut_down(m)
             variable_trans(m)
             variable_stor_state(m)
-            ## Create objective function
+            # Create objective function
             objective_minimize_total_discounted_costs(m)
-            # Add constraints
         end
         printstyled("Generating constraints...\n"; bold=true)
         @time begin
@@ -135,7 +134,6 @@ function run_spinemodel(
             println("[extend]")
             @time extend(m)
         end
-        # Run model
         printstyled("Solving model...\n"; bold=true)
         @time optimize!(m)
         status = termination_status(m)
@@ -148,7 +146,7 @@ function run_spinemodel(
         printstyled("Done.\n"; bold=true)
     end
     cleanup && notusing_spinedb(url_in)
-    # m
+    m
 end
 
 

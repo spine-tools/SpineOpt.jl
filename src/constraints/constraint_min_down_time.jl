@@ -35,8 +35,9 @@ Constraint start-up by minimum down time.
                 + units_available[u, t]
                 - sum(
                     units_shut_down[u_, t_]
-                    for (u_, t_) in units_on_indices(unit=u)
-                    if start(t) - min_down_time(unit=u) < start(t_) <= start(t)
+                    for (u_, t_) in units_on_indices(
+                        unit=u, t=to_time_slice(TimeSlice(start(t) - min_down_time(unit=u), start(t)))
+                    )
                 )
             )
         end

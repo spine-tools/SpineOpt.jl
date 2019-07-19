@@ -100,7 +100,7 @@ end
 """
     block_time_slices()
 
-A `Dict` mapping temporal blocks to an `Array` of `TimeSlice`s in that block.
+A `Dict` mapping temporal blocks to an `Array` of `TimeSlice`s in that block, sorted.
 """
 function block_time_slices()
     result = Dict{Object,Array{TimeSlice,1}}()
@@ -136,62 +136,90 @@ end
 Like [`block_time_slices()`](@ref) but split among steps in the given rolling horizon.
 """
 function block_time_slices_split(rolling=:default)
-    # Get steps if any
+    # Compute steps and step look-backs if possible
     steps = Array{TimeSlice,1}()
+    step_look_backs = Array{TimeSlice,1}()
     try
-        horizon_start = start_datetime(rolling=rolling)
+        global horizon_start = start_datetime(rolling=rolling)
+        global horizon_look_back_start = horizon_start - look_back_duration(rolling=rolling, i=1)
         horizon_end = end_datetime(rolling=rolling)
         step_start = horizon_start
         i = 1
         while step_start < horizon_end
-            duration = step_duration(rolling=rolling, i=i)
-            step_end = step_start + duration
+            step_dur = step_duration(rolling=rolling, i=i)
+            look_back_dur = look_back_duration(rolling=rolling, i=i)
+            jump_ahead_len = jump_ahead_length(rolling=rolling, i=i)
+            step_end = step_start + step_dur
             if step_end > horizon_end
                 step_end = horizon_end
             end
+            look_back_start = step_start - look_back_dur
             push!(steps, TimeSlice(step_start, step_end))
-            step_start = step_end
+            push!(step_look_backs, TimeSlice(look_back_start, step_start))
+            step_start += jump_ahead_len
             i += 1
         end
-        steps
+        horizon_minutes = Minute(horizon_end - horizon_start).value
+        # Build map of steps and look-backs in the entire horizon
+        global step_map = [Array{Int64,1}() for i in 1:horizon_minutes]
+        global step_look_back_map = [Array{Int64,1}() for i in 1:horizon_minutes]
+        for (step_index, step) in enumerate(steps)
+            for x in start(step):Minute(1):end_(step) - Minute(1)
+                push!(step_map[Minute(x - horizon_start).value + 1], step_index)
+            end
+        end
+        for (step_index, step_look_back) in enumerate(step_look_backs)
+            for x in start(step_look_back):Minute(1):end_(step_look_back) - Minute(1)
+                push!(step_look_back_map[Minute(x - horizon_look_back_start).value + 1], step_index)
+            end
+        end
     catch UndefVarError
+        # `steps` should be empty here
     end
     if isempty(steps)
-        # No steps, can't split
+        # No steps, can't do any split
         [block_time_slices()]
     else
-        # Do the splitting
-        result = Dict(step => Dict{Object,Array{TimeSlice,1}}() for step in steps)
+        # Do split
+        step_time_slices = [Dict{Object,Array{TimeSlice,1}}() for i in 1:length(steps)]
         for (block, time_slices) in block_time_slices()
-            steps_copy = copy(steps)
-            step = popfirst!(steps_copy)
-            step_time_slices = result[step][block] = Array{TimeSlice,1}()
-            # Move forward to the interesting part
-            i = findfirst(end_.(time_slices) .> start(step))
-            if i === nothing
-                result[step][block]
-                continue
-            end
-            # Adjust start of the first time slice
-            if start(time_slices[i]) < start(step)
-                time_slices[i] = TimeSlice(start(step), end_(time_slices[i]))
-            end
-            for t in time_slices[i:end]
-                if end_(t) <= end_(step)
-                    # time slice well within the step
-                    push!(step_time_slices, t)
-                else
-                    # time slice needs to be split across two steps
-                    breakpoint = end_(step)
-                    push!(step_time_slices, TimeSlice(start(t), breakpoint))
-                    isempty(steps_copy) && break
-                    step = popfirst!(steps_copy)
-                    step_time_slices = result[step][block] = Array{TimeSlice,1}()
-                    push!(step_time_slices, TimeSlice(breakpoint, end_(t)))
+            # We need a different block for the time slices in the look back zone,
+            # since we don't want to 'track' variables here
+            # TODO: Fix name ambiguity
+            block_look_back = Object(Symbol(block.name, "_look_back"))
+            for t in time_slices
+                t_start = start(t)
+                t_end = end_(t)
+                # Get overlapping steps
+                step_indexes = unique(
+                    i
+                    for x in t_start:Minute(1):t_end - Minute(1)
+                    for i in get(step_map, Minute(x - horizon_start).value + 1, ())
+                )
+                for step_index in step_indexes
+                    step = steps[step_index]
+                    t_start = max(start(step), t_start)
+                    t_end = min(end_(step), t_end)
+                    push!(get!(step_time_slices[step_index], block, Array{TimeSlice,1}()), TimeSlice(t_start, t_end))
+                end
+                # Get overlapping step look-backs
+                step_indexes = unique(
+                    i
+                    for x in t_start:Minute(1):t_end - Minute(1)
+                    for i in get(step_look_back_map, Minute(x - horizon_look_back_start).value + 1, ())
+                )
+                for step_index in step_indexes
+                    step_look_back = step_look_backs[step_index]
+                    t_start = max(start(step_look_back), t_start)
+                    t_end = min(end_(step_look_back), t_end)
+                    push!(
+                        get!(step_time_slices[step_index], block_look_back, Array{TimeSlice,1}()),
+                        TimeSlice(t_start, t_end)
+                    )
                 end
             end
         end
-        [result[step] for step in steps]
+        step_time_slices
     end
 end
 
