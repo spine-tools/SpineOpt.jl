@@ -23,7 +23,7 @@
 Limit the maximum in/out `flow` of a `unit` for all `unit_capacity` indices.
 Check if `unit_conv_cap_to_flow` is defined.
 """
-@catch_undef function constraint_flow_capacity(m::Model)
+function constraint_flow_capacity(m::Model)
     @fetch flow, units_on = m.ext[:variables]
     constr_dict = m.ext[:constraints][:flow_capacity] = Dict{NamedTuple,Any}()
     for (u, c, d) in indices(unit_capacity)

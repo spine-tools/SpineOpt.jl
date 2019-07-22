@@ -24,7 +24,7 @@
 Limit the units_online by the number of available units.
 """
 
-@catch_undef function constraint_units_available(m::Model)
+function constraint_units_available(m::Model)
     @fetch units_available = m.ext[:variables]
     constr_dict = m.ext[:constraints][:units_available] = Dict()
     for (u, t) in var_units_on_indices()

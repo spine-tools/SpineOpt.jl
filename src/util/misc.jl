@@ -41,25 +41,6 @@ macro fetch(expr)
     esc(Expr(:(=), keys, values))
 end
 
-
-macro catch_undef(expr)
-    (expr isa Expr && expr.head == :function) || error("please use @catch_undef with function definitions")
-    name = expr.args[1].args[1]
-    body = expr.args[2]
-    new_expr = copy(expr)
-    new_expr.args[2] = quote
-        try
-            $body
-        catch e
-            !(e isa UndefVarError) && rethrow()
-            @warn("$(e.var) not defined, skipping $($name)")
-        end
-    end
-    esc(new_expr)
-end
-
-
-
 expand_unit_group(::Anything) = anything
 expand_node_group(::Anything) = anything
 expand_commodity_group(::Anything) = anything

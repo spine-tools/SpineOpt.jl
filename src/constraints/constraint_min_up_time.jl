@@ -19,12 +19,12 @@
 
 
 """
-    @catch_undef function constraint_min_up_time(m::Model)
+    function constraint_min_up_time(m::Model)
 
 Constraint running by minimum up time.
 """
 
-@catch_undef function constraint_min_up_time(m::Model)
+function constraint_min_up_time(m::Model)
     @fetch units_on, units_started_up = m.ext[:variables]
     constr_dict = m.ext[:constraints][:min_up_time] = Dict()
     for (u, t) in var_units_on_indices()

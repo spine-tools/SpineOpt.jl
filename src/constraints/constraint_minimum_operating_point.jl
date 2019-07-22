@@ -25,7 +25,7 @@ Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
 number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 
-@catch_undef function constraint_minimum_operating_point(m::Model)
+function constraint_minimum_operating_point(m::Model)
     @fetch flow, units_on = m.ext[:variables]
     constr_dict = m.ext[:constraints][:minimum_operating_point] = Dict()
     for (u, c) in indices(minimum_operating_point)

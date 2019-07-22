@@ -31,5 +31,9 @@ function objective_minimize_total_discounted_costs(m::Model)
     suc_costs = start_up_costs(m)
     sdc_costs = shut_down_costs(m)
     total_discounted_costs = vom_costs + fom_costs + tax_costs + op_costs + suc_costs + sdc_costs
-    @objective(m, Min, total_discounted_costs)
+    if total_discounted_costs != 0
+        @objective(m, Min, total_discounted_costs)
+    else
+        @warn "zero objective"
+    end
 end

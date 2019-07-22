@@ -22,7 +22,7 @@
 
 Balance for storage level.
 """
-@catch_undef function constraint_stor_state(m::Model)
+function constraint_stor_state(m::Model)
     @fetch stor_state, trans, flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:stor_state] = Dict()
     for (stor, c, t_after) in stor_state_indices()

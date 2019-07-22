@@ -150,7 +150,7 @@ function run_spinemodel(
 end
 
 
-@catch_undef function write_report(m, default_url)
+function write_report(m, default_url)
     reports = Dict()
     for (rpt, out) in report__output()
         out_var = get(m.ext[:variables], out.name, nothing)

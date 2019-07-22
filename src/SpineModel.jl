@@ -99,6 +99,7 @@ export generate_time_slice_relationships
 include("temporals/generate_time_slice.jl")
 include("temporals/generate_time_slice_relationships.jl")
 
+include("util/missing_item_handlers.jl")
 include("util/misc.jl")
 include("util/run_spinemodel.jl")
 

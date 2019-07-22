@@ -24,7 +24,7 @@
 Limit the maximum in/out `trans` of a `connection` for all `trans_capacity` indices.
 Check if `conn_conv_cap_to_trans` is defined.
 """
-@catch_undef function constraint_trans_capacity(m::Model)
+function constraint_trans_capacity(m::Model)
     @fetch trans = m.ext[:variables]
     constr_dict = m.ext[:constraints][:trans_capacity] = Dict()
     for (conn, n, d) in indices(conn_capacity)

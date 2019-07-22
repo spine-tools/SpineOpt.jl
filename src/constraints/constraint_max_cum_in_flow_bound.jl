@@ -26,7 +26,7 @@ Set upperbound `max_cum_in_flow_bound `to the cumulated inflow of
 if `max_cum_in_flow_bound` exists for the combination of `cg` and `ug`.
 """
 # TODO: This one looks outdated
-@catch_undef function constraint_max_cum_in_flow_bound(m::Model)
+function constraint_max_cum_in_flow_bound(m::Model)
     @fetch flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:max_cum_in_flow_bound] = Dict()
     for (ug, cg) in indices(max_cum_in_flow_bound)

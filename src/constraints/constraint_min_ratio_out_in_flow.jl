@@ -25,7 +25,7 @@ Fix ratio between the output `flow` of a `commodity_group` to an input `flow` of
 `commodity_group` for each `unit` for which the parameter `min_ratio_out_in_flow`
 is specified.
 """
-@catch_undef function constraint_min_ratio_out_in_flow(m::Model)
+function constraint_min_ratio_out_in_flow(m::Model)
     @fetch flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:min_ratio_out_in_flow] = Dict()
     for (u, c_out, c_in) in indices(min_ratio_out_in_flow)

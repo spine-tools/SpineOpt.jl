@@ -25,7 +25,7 @@ Fix ratio between the output `flow` of two `commodity_group`s
 for each `unit` for which the parameter `fix_ratio_out_out`
 is specified.
 """
-@catch_undef function constraint_fix_ratio_out_out_flow(m::Model)
+function constraint_fix_ratio_out_out_flow(m::Model)
     @fetch flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:fix_ratio_out_out_flow] = Dict()
     for (u, c1, c2) in indices(fix_ratio_out_out_flow)
