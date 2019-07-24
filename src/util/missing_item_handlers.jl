@@ -25,6 +25,38 @@
 # As things stabilize, we should see a correspondance between this
 # and what we find in `spinedb_api.create_new_spine_database(for_spine_model=True)`
 
+"""
+A type to handle missing db items.
+"""
+struct MissingItemHandler
+    name::Symbol
+    value::Any
+    handled::Ref{Bool}
+    MissingItemHandler(name, value) = new(name, value, false)
+end
+
+"""
+    (f::MissingItemHandler)(args...; kwargs...)
+
+The `value` field of `f`. Warn the user that this is a missing item handler.
+"""
+function (f::MissingItemHandler)(args...; kwargs...)
+    if !f.handled[]
+        @warn "`$(f.name)` is missing"
+        f.handled[] = true
+    end
+    f.value
+end
+
+
+function SpineInterface.indices(f::MissingItemHandler; kwargs...)
+    if !f.handled[]
+        @warn "`$(f.name)` is missing"
+        f.handled[] = true
+    end
+    ()
+end
+
 const object_classes = [
     :direction,
     :unit,

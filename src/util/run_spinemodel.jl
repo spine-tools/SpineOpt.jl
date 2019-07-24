@@ -61,7 +61,7 @@ function run_spinemodel(
         extend=m->nothing,
         rolling=:default)
     printstyled("Creating convenience functions...\n"; bold=true)
-    @time using_spinedb(url_in; upgrade=true)
+    @time using_spinedb(url_in, @__MODULE__; upgrade=true)
     for (k, block_time_slices) in enumerate(block_time_slices_split(rolling))
         printstyled("Step $k\n"; bold=true, color=:underline)
         printstyled("Creating temporal structure...\n"; bold=true)
@@ -145,7 +145,7 @@ function run_spinemodel(
         end
         printstyled("Done.\n"; bold=true)
     end
-    cleanup && notusing_spinedb(url_in)
+    cleanup && notusing_spinedb(url_in, @__MODULE__)
     m
 end
 
