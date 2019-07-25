@@ -31,6 +31,7 @@ function constraint_stor_state(m::Model)
                 m,
                 + (stor_state[stor, c, t_after] - stor_state[stor, c, t_before])
                     * state_coeff(storage=stor)
+                    / duration(t_after)
                 ==
                 - stor_state[stor, c, t_after] * frac_state_loss(storage=stor)
                 - reduce(
