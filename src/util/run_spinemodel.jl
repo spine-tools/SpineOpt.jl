@@ -27,8 +27,8 @@
 Run the Spine model from `url` and write report to the same `url`.
 Keyword arguments have the same purpose as for [`run_spinemodel`](@ref).
 """
-function run_spinemodel(url::String; optimizer=Cbc.Optimizer, cleanup=true, extend=m->nothing)
-    run_spinemodel(url, url; optimizer=optimizer, cleanup=cleanup, extend=extend)
+function run_spinemodel(url::String; optimizer=Cbc.Optimizer, cleanup=true, extend=m->nothing, rolling=:default)
+    run_spinemodel(url, url; optimizer=optimizer, cleanup=cleanup, extend=extend, rolling=rolling)
 end
 
 """
@@ -141,7 +141,7 @@ function run_spinemodel(
             println("Optimal solution found")
             println("Objective function value: $(objective_value(m))")
             printstyled("Writing report...\n"; bold=true)
-            write_report(m, url_out)
+            #write_report(m, url_out)
         end
         printstyled("Done.\n"; bold=true)
     end

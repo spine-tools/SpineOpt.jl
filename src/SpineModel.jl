@@ -118,7 +118,7 @@ include("objective/taxes.jl")
 include("objective/operating_costs.jl")
 include("objective/start_up_costs.jl")
 include("objective/shut_down_costs.jl")
-# include("objective/production_costs.jl")
+include("objective/fuel_costs.jl")
 
 include("constraints/constraint_max_cum_in_flow_bound.jl")
 include("constraints/constraint_flow_capacity.jl")
