@@ -26,7 +26,7 @@ end
 
 db_url = "sqlite:///$(@__DIR__)/data/testsystemA4.sqlite"
 m = try
-    run_spinemodel(db_url_in, db_url_out; optimizer=Gurobi.Optimizer, cleanup=false)
+    run_spinemodel(db_url; optimizer=Gurobi.Optimizer, cleanup=false)
 catch
-     run_spinemodel(db_url_in, db_url_out; optimizer=Cbc.Optimizer, cleanup=false)
+     run_spinemodel(db_url; optimizer=Cbc.Optimizer, cleanup=false)
 end
