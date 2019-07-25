@@ -35,6 +35,16 @@ function constraint_stor_state(m::Model)
                 - stor_state[stor, c, t_after] * frac_state_loss(storage=stor)
                 - reduce(
                     +,
+                    stor_state[stor, c, t_after] * diff_coeff(storage1=stor, storage2=stor_)
+                    for stor_ in storage__storage(storage1=stor, storage2=stor_)
+                )
+                + reduce(
+                    +,
+                    stor_state[stor_, c, t_after] * diff_coeff(storage1=stor_, storage2=stor)
+                    for stor_ in storage__storage(storage1=stor_, storage2=stor)
+                )
+                - reduce(
+                    +,
                     flow[u, n, c_, d, t_] * stor_unit_discharg_eff(storage=stor, unit=u)
                     for (u, n, c_, d, t_) in flow_indices(
                         unit=[u1 for (stor1, u1) in indices(stor_unit_discharg_eff; storage=stor)],
