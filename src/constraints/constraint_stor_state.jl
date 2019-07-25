@@ -29,9 +29,9 @@ function constraint_stor_state(m::Model)
         for (stor, c, t_before) in stor_state_indices(storage=stor, commodity=c, t=t_before_t(t_after=t_after))
             constr_dict[stor, c, t_before, t_after] = @constraint(
                 m,
-                + stor_state[stor, c, t_after]
+                + (stor_state[stor, c, t_after] - stor_state[stor, c, t_before])
+                    * state_coeff(storage=stor)
                 ==
-                + stor_state[stor, c, t_before]
                 - stor_state[stor, c, t_after] * frac_state_loss(storage=stor)
                 - reduce(
                     +,
