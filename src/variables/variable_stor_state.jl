@@ -28,7 +28,9 @@ function variable_stor_state(m::Model)
     KeyType = NamedTuple{(:storage, :commodity, :t),Tuple{Object,Object,TimeSlice}}
     m.ext[:variables][:var_stor_state] = Dict{KeyType,Any}(
         (storage=stor, commodity=c, t=t) => @variable(
-            m, base_name="stor_state[$stor, $c, $(t.JuMP_name)]", lower_bound=0
+            m,
+            base_name="stor_state[$stor, $c, $(t.JuMP_name)]",
+            lower_bound=stor_state_min(storage=stor)
         )
         for (stor, c, t) in var_stor_state_indices()
     )
