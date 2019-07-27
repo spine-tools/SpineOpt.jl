@@ -133,93 +133,93 @@ end
 """
     block_time_slices_split(rolling=:default)
 
-Like [`block_time_slices()`](@ref) but split among steps in the given rolling horizon.
+Like [`block_time_slices()`](@ref) but split among rolling_windows in the given rolling horizon.
 """
 function block_time_slices_split(rolling=:default)
-    # Compute steps and step look-backs if possible
-    steps = Array{TimeSlice,1}()
-    step_look_backs = Array{TimeSlice,1}()
-    try
+    # Compute rolling_windows and rolling_window look-backs if possible
+    rolling_windows = Array{TimeSlice,1}()
+    rolling_window_initial_conditions = Array{TimeSlice,1}()
+    # try
         global horizon_start = start_datetime(rolling=rolling)
-        global horizon_look_back_start = horizon_start - look_back_duration(rolling=rolling, i=1)
+        global horizon_initial_condition_start = horizon_start - initial_condition_duration(rolling=rolling, i=1)
         horizon_end = end_datetime(rolling=rolling)
-        step_start = horizon_start
+        rolling_window_start = horizon_start
         i = 1
-        while step_start < horizon_end
-            step_dur = step_duration(rolling=rolling, i=i)
-            look_back_dur = look_back_duration(rolling=rolling, i=i)
-            jump_ahead_len = jump_ahead_length(rolling=rolling, i=i)
-            step_end = step_start + step_dur
-            if step_end > horizon_end
-                step_end = horizon_end
+        while rolling_window_start < horizon_end
+            rolling_window_dur = rolling_window_duration(rolling=rolling, i=i)
+            initial_condition_dur = initial_condition_duration(rolling=rolling, i=i)
+            reoptimization_frequ = reoptimization_frequency(rolling=rolling, i=i)
+            rolling_window_end = rolling_window_start + rolling_window_dur
+            if rolling_window_end > horizon_end
+                rolling_window_end = horizon_end
             end
-            look_back_start = step_start - look_back_dur
-            push!(steps, TimeSlice(step_start, step_end))
-            push!(step_look_backs, TimeSlice(look_back_start, step_start))
-            step_start += jump_ahead_len
+            initial_condition_start = rolling_window_start - initial_condition_dur
+            push!(rolling_windows, TimeSlice(rolling_window_start, rolling_window_end))
+            push!(rolling_window_initial_conditions, TimeSlice(initial_condition_start, rolling_window_start))
+            rolling_window_start += reoptimization_frequ
             i += 1
         end
         horizon_minutes = Minute(horizon_end - horizon_start).value
-        # Build map of steps and look-backs in the entire horizon
-        global step_map = [Array{Int64,1}() for i in 1:horizon_minutes]
-        global step_look_back_map = [Array{Int64,1}() for i in 1:horizon_minutes]
-        for (step_index, step) in enumerate(steps)
-            for x in start(step):Minute(1):end_(step) - Minute(1)
-                push!(step_map[Minute(x - horizon_start).value + 1], step_index)
+        # Build map of rolling_windows and look-backs in the entire horizon
+        global rolling_window_map = [Array{Int64,1}() for i in 1:horizon_minutes]
+        global rolling_window_initial_condition_map = [Array{Int64,1}() for i in 1:horizon_minutes]
+        for (rolling_window_index, rolling_window) in enumerate(rolling_windows)
+            for x in start(rolling_window):Minute(1):end_(rolling_window) - Minute(1)
+                push!(rolling_window_map[Minute(x - horizon_start).value + 1], rolling_window_index)
             end
         end
-        for (step_index, step_look_back) in enumerate(step_look_backs)
-            for x in start(step_look_back):Minute(1):end_(step_look_back) - Minute(1)
-                push!(step_look_back_map[Minute(x - horizon_look_back_start).value + 1], step_index)
+        for (rolling_window_index, rolling_window_initial_condition) in enumerate(rolling_window_initial_conditions)
+            for x in start(rolling_window_initial_condition):Minute(1):end_(rolling_window_initial_condition) - Minute(1)
+                push!(rolling_window_initial_condition_map[Minute(x - horizon_initial_condition_start).value + 1], rolling_window_index)
             end
         end
-    catch UndefVarError
-        # `steps` should be empty here
-    end
-    if isempty(steps)
-        # No steps, can't do any split
+    # catch UndefVarError
+        # `rolling_windows` should be empty here
+    # end
+    if isempty(rolling_windows)
+        # No rolling_windows, can't do any split
         [block_time_slices()]
     else
         # Do split
-        step_time_slices = [Dict{Object,Array{TimeSlice,1}}() for i in 1:length(steps)]
+        rolling_window_time_slices = [Dict{Object,Array{TimeSlice,1}}() for i in 1:length(rolling_windows)]
         for (block, time_slices) in block_time_slices()
             # We need a different block for the time slices in the look back zone,
             # since we don't want to 'track' variables here
             # TODO: Fix name ambiguity
-            block_look_back = Object(Symbol(block.name, "_look_back"))
+            block_initial_condition = Object(Symbol(block.name, "_initial_condition"))
             for t in time_slices
                 t_start = start(t)
                 t_end = end_(t)
-                # Get overlapping steps
-                step_indexes = unique(
+                # Get overlapping rolling_windows
+                rolling_window_indexes = unique(
                     i
                     for x in t_start:Minute(1):t_end - Minute(1)
-                    for i in get(step_map, Minute(x - horizon_start).value + 1, ())
+                    for i in get(rolling_window_map, Minute(x - horizon_start).value + 1, ())
                 )
-                for step_index in step_indexes
-                    step = steps[step_index]
-                    t_start = max(start(step), t_start)
-                    t_end = min(end_(step), t_end)
-                    push!(get!(step_time_slices[step_index], block, Array{TimeSlice,1}()), TimeSlice(t_start, t_end))
+                for rolling_window_index in rolling_window_indexes
+                    rolling_window = rolling_windows[rolling_window_index]
+                    t_start = max(start(rolling_window), t_start)
+                    t_end = min(end_(rolling_window), t_end)
+                    push!(get!(rolling_window_time_slices[rolling_window_index], block, Array{TimeSlice,1}()), TimeSlice(t_start, t_end))
                 end
-                # Get overlapping step look-backs
-                step_indexes = unique(
+                # Get overlapping rolling_window look-backs
+                rolling_window_indexes = unique(
                     i
                     for x in t_start:Minute(1):t_end - Minute(1)
-                    for i in get(step_look_back_map, Minute(x - horizon_look_back_start).value + 1, ())
+                    for i in get(rolling_window_initial_condition_map, Minute(x - horizon_initial_condition_start).value + 1, ())
                 )
-                for step_index in step_indexes
-                    step_look_back = step_look_backs[step_index]
-                    t_start = max(start(step_look_back), t_start)
-                    t_end = min(end_(step_look_back), t_end)
+                for rolling_window_index in rolling_window_indexes
+                    rolling_window_initial_condition = rolling_window_initial_conditions[rolling_window_index]
+                    t_start = max(start(rolling_window_initial_condition), t_start)
+                    t_end = min(end_(rolling_window_initial_condition), t_end)
                     push!(
-                        get!(step_time_slices[step_index], block_look_back, Array{TimeSlice,1}()),
+                        get!(rolling_window_time_slices[rolling_window_index], block_initial_condition, Array{TimeSlice,1}()),
                         TimeSlice(t_start, t_end)
                     )
                 end
             end
         end
-        step_time_slices
+        rolling_window_time_slices
     end
 end
 

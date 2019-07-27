@@ -18,23 +18,22 @@
 #############################################################################
 
 """
-    objective_minimize_total_discounted_costs(m::Model)
-
-Minimize the total discounted costs, corresponding to the sum over all
-cost terms.
+    fuel_costs(m::Model)
 """
-function objective_minimize_total_discounted_costs(m::Model)
-    vom_costs = variable_om_costs(m)
-    fom_costs = fixed_om_costs(m)
-    tax_costs = taxes(m)
-    op_costs = operating_costs(m)
-    fl_costs = fuel_costs(m)
-    suc_costs = start_up_costs(m)
-    sdc_costs = shut_down_costs(m)
-    total_discounted_costs = vom_costs + fom_costs + tax_costs + op_costs + suc_costs + sdc_costs + fl_costs
-    if total_discounted_costs != 0
-        @objective(m, Min, total_discounted_costs)
-    else
-        @warn "zero objective"
-    end
+function fuel_costs(m::Model)
+    @fetch flow = m.ext[:variables]
+    @expression(
+        m,
+        reduce(
+            +,
+            flow[u, n, c, d, t] * duration(t) * fuel_cost(unit=u_, commodity=c_, direction=d_, t=t)
+            for (u_, c_, d_) in indices(fuel_cost)
+                for (u, n, c, d, t) in flow_indices(
+                    unit=u_,
+                    commodity=c_,
+                    direction=d_
+                );
+            init=0
+        )
+    )
 end
