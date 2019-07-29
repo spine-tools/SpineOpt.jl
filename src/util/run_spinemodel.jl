@@ -62,8 +62,8 @@ function run_spinemodel(
         rolling=:default)
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
-    for (k, block_time_slices) in enumerate(block_time_slices_split(rolling))
-        printstyled("Step $k\n"; bold=true, color=:underline)
+    for (k, block_time_slices) in enumerate(window_block_time_slices(rolling))
+        printstyled("Window $k\n"; bold=true, color=:underline)
         printstyled("Creating temporal structure...\n"; bold=true)
         @time begin
             generate_time_slice(block_time_slices)
@@ -141,7 +141,7 @@ function run_spinemodel(
             println("Optimal solution found")
             println("Objective function value: $(objective_value(m))")
             printstyled("Writing report...\n"; bold=true)
-            #write_report(m, url_out)
+            write_report(m, url_out)
         end
         printstyled("Done.\n"; bold=true)
     end
