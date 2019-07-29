@@ -148,18 +148,21 @@ function generate_time_slice_relationships()
     # Create function-like objects
     t_before_t = RelationshipClass(
         :t_before_t,
+        NamedTuple(),
         (:t_before, :t_after),
-        [NamedTuple{(:t_before, :t_after)}(x) for x in t_before_t_list]
+        [(NamedTuple{(:t_before, :t_after)}(x), NamedTuple()) for x in t_before_t_list]
     )
     t_in_t = RelationshipClass(
         :t_in_t,
+        NamedTuple(),
         (:t_short, :t_long),
-        [NamedTuple{(:t_short, :t_long)}(x) for x in t_in_t_list]
+        [(NamedTuple{(:t_short, :t_long)}(x), NamedTuple()) for x in t_in_t_list]
     )
     t_in_t_excl = RelationshipClass(
         :t_in_t_excl,
+        NamedTuple(),
         (:t_short, :t_long),
-        [NamedTuple{(:t_short, :t_long)}(x) for x in t_in_t_excl_list]
+        [(NamedTuple{(:t_short, :t_long)}(x), NamedTuple()) for x in t_in_t_excl_list]
     )
     t_overlaps_t = TOverlapsTRelationshipClass(t_overlaps_t_list)
     t_overlaps_t_excl = TOverlapsTExclRelationshipClass(t_overlaps_t_excl_list)
