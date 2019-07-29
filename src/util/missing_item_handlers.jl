@@ -101,6 +101,7 @@ const parameters = [
     :online_variable_type,
     :fix_units_on,
     :stor_state_cap,
+    :stor_state_min,
     :frac_state_loss,
     :unit_conv_cap_to_flow,
     :unit_capacity,
