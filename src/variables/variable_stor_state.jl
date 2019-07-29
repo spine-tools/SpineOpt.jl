@@ -30,7 +30,7 @@ function variable_stor_state(m::Model)
         (storage=stor, commodity=c, t=t) => @variable(
             m,
             base_name="stor_state[$stor, $c, $(t.JuMP_name)]",
-            lower_bound=stor_state_min(storage=stor)
+            lower_bound= stor_state_min(storage=stor) != nothing && stor_state_min(storage=stor)
         )
         for (stor, c, t) in var_stor_state_indices()
     )
