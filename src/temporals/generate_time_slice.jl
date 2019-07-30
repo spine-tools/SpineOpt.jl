@@ -144,9 +144,9 @@ function window_block_time_slices(rolling=:default)
     # Compute `windows` and `initial_condition_windows` look-backs if possible
     windows = Array{TimeSlice,1}()
     initial_condition_windows = Array{TimeSlice,1}()
-    horizon_start = window_start_datetime(rolling=rolling)
+    horizon_start = horizon_start_datetime(rolling=rolling)
     horizon_init_cond_start = horizon_start - initial_condition_duration(rolling=rolling, i=1)
-    horizon_end = window_end_datetime(rolling=rolling)
+    horizon_end = horizon_end_datetime(rolling=rolling)
     window_start = horizon_start
     i = 1
     while window_start < horizon_end
@@ -207,10 +207,10 @@ function window_block_time_slices(rolling=:default)
                 window_indexes = unique(
                     i
                     for x in t_start:Minute(1):t_end - Minute(1)
-                    for i in get(window_initial_condition_map, Minute(x - horizon_init_cond_start).value + 1, ())
+                    for i in get(initial_condition_window_map, Minute(x - horizon_init_cond_start).value + 1, ())
                 )
                 for ind in window_indexes
-                    window_initial_condition = window_initial_conditions[ind]
+                    window_initial_condition = initial_condition_windows[ind]
                     t_start = max(start(window_initial_condition), t_start)
                     t_end = min(end_(window_initial_condition), t_end)
                     push!(
