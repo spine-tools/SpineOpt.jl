@@ -106,6 +106,7 @@ const parameters = [
     :stor_state_cap,
     :stor_state_min,
     :frac_state_loss,
+    :diff_coeff,
     :unit_conv_cap_to_flow,
     :unit_capacity,
     :conn_capacity,

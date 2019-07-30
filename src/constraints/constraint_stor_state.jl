@@ -36,13 +36,15 @@ function constraint_stor_state(m::Model)
                 - stor_state[stor, c, t_after] * frac_state_loss(storage=stor)
                 - reduce(
                     +,
-                    stor_state[stor, c, t_after] * diff_coeff(storage1=stor, storage2=stor_)
+                    stor_state[stor, c, t_after]
+                    * (diff_coeff(storage1=stor, storage2=stor_) != nothing && diff_coeff(storage1=stor, storage2=stor_))
                     for stor_ in storage__storage(storage1=stor);
                     init = 0
                 )
                 + reduce(
                     +,
-                    stor_state[stor_, c, t_after] * diff_coeff(storage1=stor_, storage2=stor)
+                    stor_state[stor_, c, t_after]
+                    * (diff_coeff(storage1=stor_, storage2=stor) != nothing && diff_coeff(storage1=stor_, storage2=stor))
                     for stor_ in storage__storage(storage2=stor);
                     init = 0
                 )
