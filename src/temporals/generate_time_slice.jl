@@ -140,83 +140,80 @@ end
 
 Like [`block_time_slices()`](@ref) but split among 'windows' in the given rolling object.
 """
-function window_block_time_slices(rolling=:default)
-    # Compute `windows` and `initial_condition_windows` look-backs if possible
-    windows = Array{TimeSlice,1}()
-    initial_condition_windows = Array{TimeSlice,1}()
-    horizon_start = horizon_start_datetime(rolling=rolling)
-    horizon_init_cond_start = horizon_start - initial_condition_duration(rolling=rolling, i=1)
-    horizon_end = horizon_end_datetime(rolling=rolling)
-    window_start = horizon_start
-    i = 1
-    while window_start < horizon_end
-        window_dur = rolling_window_duration(rolling=rolling, i=i)
-        initial_condition_dur = initial_condition_duration(rolling=rolling, i=i)
-        reoptimization_freq = reoptimization_frequency(rolling=rolling, i=i)
-        window_end = window_start + window_dur
-        if window_end > horizon_end
-            window_end = horizon_end
+function window_block_time_slices(rolling=nothing)
+    windows = TimeSlice[]
+    if rolling != nothing
+        # Compute `windows` and `initial_condition_windows`
+        initial_condition_windows = TimeSlice[]
+        horizon_start = horizon_start_datetime(rolling=rolling)
+        horizon_init_cond_start = horizon_start - initial_condition_duration(rolling=rolling, i=1)
+        horizon_end = horizon_end_datetime(rolling=rolling)
+        window_start = horizon_start
+        i = 1
+        while window_start < horizon_end
+            window_dur = rolling_window_duration(rolling=rolling, i=i)
+            initial_condition_dur = initial_condition_duration(rolling=rolling, i=i)
+            reoptimization_freq = reoptimization_frequency(rolling=rolling, i=i)
+            window_end = window_start + window_dur
+            if window_end > horizon_end
+                window_end = horizon_end
+            end
+            initial_condition_start = window_start - initial_condition_dur
+            push!(windows, TimeSlice(window_start, window_end))
+            push!(initial_condition_windows, TimeSlice(initial_condition_start, window_start))
+            window_start += reoptimization_freq
+            i += 1
         end
-        initial_condition_start = window_start - initial_condition_dur
-        push!(windows, TimeSlice(window_start, window_end))
-        push!(initial_condition_windows, TimeSlice(initial_condition_start, window_start))
-        window_start += reoptimization_freq
-        i += 1
-    end
-    # Build map of windows and initial condition windows in the entire horizon
-    horizon_minutes = Minute(horizon_end - horizon_start).value
-    window_map = [Array{Int64,1}() for i in 1:horizon_minutes]
-    initial_condition_window_map = [Array{Int64,1}() for i in 1:horizon_minutes]
-    for (ind, window) in enumerate(windows)
-        for x in start(window):Minute(1):end_(window) - Minute(1)
-            push!(window_map[Minute(x - horizon_start).value + 1], ind)
+        # Map each minute in the horizon to the indexes of windows spanning that minute.
+        # This is used below to allocate time slices to windows
+        window_map = [Int64[] for i in 1:Minute(horizon_end - horizon_start).value]
+        for (ind, window) in enumerate(windows)
+            first_minute = Minute(start(window) - horizon_start).value + 1
+            last_minute = Minute(end_(window) - horizon_start).value
+            push!.(window_map[first_minute:last_minute], ind)
         end
-    end
-    for (ind, initial_condition_window) in enumerate(initial_condition_windows)
-        for x in start(initial_condition_window):Minute(1):end_(initial_condition_window) - Minute(1)
-            push!(initial_condition_window_map[Minute(x - horizon_init_cond_start).value + 1], ind)
+        # Repeat the above, now for initial condition windows
+        init_cond_window_map = [Int64[] for i in 1:Minute(horizon_end - horizon_init_cond_start).value]
+        for (ind, initial_condition_window) in enumerate(initial_condition_windows)
+            first_minute = Minute(start(initial_condition_window) - horizon_init_cond_start).value + 1
+            last_minute = Minute(end_(initial_condition_window) - horizon_init_cond_start).value
+            push!.(init_cond_window_map[first_minute:last_minute], ind)
         end
     end
     if isempty(windows)
         # No windows, can't do any split
         [block_time_slices()]
     else
-        # Do split
+        # Do split. Basically we go through all blocks and time slices and allocate them
+        # to the appropriate windows
         window_block_time_slices = [Dict{Object,Array{TimeSlice,1}}() for i in 1:length(windows)]
         for (block, time_slices) in block_time_slices()
-            # We need a different block for the time slices in the look back zone,
-            # since we don't want to 'track' variables here
+            # We need a different block for the time slices in the initial conditions zone,
+            # since we don't want to 'track' variables there
             # TODO: Fix name ambiguity
-            block_initial_condition = Object(Symbol(block.name, "_initial_condition"))
+            init_cond_blk = Object(Symbol(block.name, "_initial_condition"))
             for t in time_slices
-                t_start = start(t)
-                t_end = end_(t)
-                # Get overlapping windows
-                window_indexes = unique(
-                    i
-                    for x in t_start:Minute(1):t_end - Minute(1)
-                    for i in get(window_map, Minute(x - horizon_start).value + 1, ())
-                )
+                # Translate the time slice into minutes since the beginning of the horizon,
+                # and then look at the window map we created above to find out the windows where it belongs
+                first_minute = max(1, Minute(start(t) - horizon_start).value + 1)
+                last_minute = min(length(window_map), Minute(end_(t) - horizon_start).value)
+                window_indexes = unique(Iterators.flatten(window_map[first_minute:last_minute]))
                 for ind in window_indexes
                     window = windows[ind]
-                    t_start = max(start(window), t_start)
-                    t_end = min(end_(window), t_end)
-                    push!(get!(window_block_time_slices[ind], block, Array{TimeSlice,1}()), TimeSlice(t_start, t_end))
+                    # Adjust time slice to fit in the window
+                    t_start = max(start(window), start(t))
+                    t_end = min(end_(window), end_(t))
+                    push!(get!(window_block_time_slices[ind], block, TimeSlice[]), TimeSlice(t_start, t_end))
                 end
-                # Get overlapping initial condition windows
-                window_indexes = unique(
-                    i
-                    for x in t_start:Minute(1):t_end - Minute(1)
-                    for i in get(initial_condition_window_map, Minute(x - horizon_init_cond_start).value + 1, ())
-                )
+                # Repeat the above, now for initial condition windows
+                first_minute = max(1, Minute(start(t) - horizon_init_cond_start).value + 1)
+                last_minute = min(length(init_cond_window_map), Minute(end_(t) - horizon_init_cond_start).value)
+                window_indexes = unique(Iterators.flatten(init_cond_window_map[first_minute:last_minute]))
                 for ind in window_indexes
-                    window_initial_condition = initial_condition_windows[ind]
-                    t_start = max(start(window_initial_condition), t_start)
-                    t_end = min(end_(window_initial_condition), t_end)
-                    push!(
-                        get!(window_block_time_slices[ind], block_initial_condition, Array{TimeSlice,1}()),
-                        TimeSlice(t_start, t_end)
-                    )
+                    initial_condition_window = initial_condition_windows[ind]
+                    t_start = max(start(initial_condition_window), start(t))
+                    t_end = min(end_(initial_condition_window), end_(t))
+                    push!(get!(window_block_time_slices[ind], init_cond_blk, TimeSlice[]), TimeSlice(t_start, t_end))
                 end
             end
         end
@@ -245,17 +242,17 @@ function generate_time_slice(block_time_slices)
         temp_block_start = start(first(time_slices))
         temp_block_end = end_(last(time_slices))
         full_time_slices = Array{TimeSlice,1}()
-        time_slice_index = Array{Int64,1}(undef, Minute(temp_block_end - temp_block_start).value)
-        for (index, t) in enumerate(time_slices)
+        time_slice_map = Array{Int64,1}(undef, Minute(temp_block_end - temp_block_start).value)
+        for (ind, t) in enumerate(time_slices)
             blocks = time_slice_blocks[t]
             push!(full_time_slices, TimeSlice(start(t), end_(t), blocks...))
-            # Map time slice
-            for x in start(t):Minute(1):end_(t) - Minute(1)
-                time_slice_index[Minute(x - temp_block_start).value + 1] = index
-            end
+            # Map each minute in the block to the corresponding time slice index (used by `ToTimeSliceFunctor`)
+            first_minute = Minute(start(t) - temp_block_start).value + 1
+            last_minute = Minute(end_(t) - temp_block_start).value
+            time_slice_map[first_minute:last_minute] .= ind
         end
         block_full_time_slices[blk] = full_time_slices
-        block_time_slice_map[blk] = time_slice_index
+        block_time_slice_map[blk] = time_slice_map
     end
     all_time_slices = sort(unique(t for v in values(block_full_time_slices) for t in v))
     # Create and export the function like object
