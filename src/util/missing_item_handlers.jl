@@ -88,6 +88,7 @@ const relationship_classes = [
 ]
 const parameters = [
     :fom_cost,
+    :fuel_cost,
     :start_up_cost,
     :shut_down_cost,
     :number_of_units,
