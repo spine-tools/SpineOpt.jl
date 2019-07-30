@@ -85,6 +85,7 @@ const relationship_classes = [
     :storage__unit,
     :storage__connection,
     :storage__commodity,
+    :storage__storage,
 ]
 const parameters = [
     :fom_cost,
@@ -101,6 +102,7 @@ const parameters = [
     :demand,
     :online_variable_type,
     :fix_units_on,
+    :state_coeff,
     :stor_state_cap,
     :stor_state_min,
     :frac_state_loss,
