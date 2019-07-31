@@ -26,7 +26,7 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 function constraint_stor_capacity(m::Model)
     @fetch stor_state = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:stor_state_cap] = Dict()
+    constr_dict = m.ext[:constraints][:stor_capacity] = Dict()
     for (stor,) in indices(stor_state_cap)
         for t in time_slice()
             constr_dict[stor, t] = @constraint(
