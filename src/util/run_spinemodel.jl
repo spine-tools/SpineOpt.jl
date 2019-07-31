@@ -59,7 +59,7 @@ function run_spinemodel(
         optimizer=Cbc.Optimizer,
         cleanup=true,
         extend=m->nothing,
-        rolling=:default)
+        rolling=nothing)
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
     for (k, block_time_slices) in enumerate(window_block_time_slices(rolling))
