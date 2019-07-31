@@ -85,6 +85,7 @@ const relationship_classes = [
     :storage__unit,
     :storage__connection,
     :storage__commodity,
+    :storage__storage,
     :report__output,
 ]
 const parameters = [
@@ -101,11 +102,11 @@ const parameters = [
     (:demand, nothing),
     (:online_variable_type, nothing),
     (:fix_units_on, nothing),
-    (:state_coeff, nothing),
+    (:state_coeff, 0),
     (:stor_state_cap, nothing),
-    (:stor_state_min, nothing),
-    (:frac_state_loss, nothing),
-    (:diff_coeff, nothing),
+    (:stor_state_min, 0),
+    (:frac_state_loss, 0),
+    (:diff_coeff, 0),
     (:unit_conv_cap_to_flow, nothing),
     (:unit_capacity, nothing),
     (:conn_capacity, nothing),

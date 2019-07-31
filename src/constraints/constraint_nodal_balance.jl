@@ -32,7 +32,7 @@ function constraint_nodal_balance(m::Model)
 	   			0
                 ==
                 # Demand for the commodity
-                - (demand(node=n, t=t) != nothing && demand(node=n, t=t) * duration(t))
+                - demand(node=n, t=t) * duration(t)
                 # Commodity flows from units
                 + reduce(
                     +,
