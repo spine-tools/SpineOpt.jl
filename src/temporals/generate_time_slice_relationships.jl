@@ -112,7 +112,7 @@ function generate_time_slice_relationships()
         for t_j in time_slice_list[i:end]
             if before(t_i, t_j)
                 found = true
-                push!(t_before_t_list, tuple(t_i, t_j))
+                push!(t_before_t_list, (t_before=t_i, t_after=t_j))
             elseif found
                 break
             end
@@ -126,7 +126,7 @@ function generate_time_slice_relationships()
         for t_j in time_slice_list
             if iscontained(t_i, t_j)
                 found_in = true
-                push!(t_in_t_list, tuple(t_i, t_j))
+                push!(t_in_t_list, (t_short=t_i, t_long=t_j))
             elseif found_in
                 break_in = true
             end
@@ -143,27 +143,12 @@ function generate_time_slice_relationships()
     end
     unique!(t_in_t_list)
     unique!(t_overlaps_t_list)
-    t_in_t_excl_list = [(t1, t2) for (t1, t2) in t_in_t_list if t1 != t2]
+    t_in_t_excl_list = [(t_short=t1, t_long=t2) for (t1, t2) in t_in_t_list if t1 != t2]
     t_overlaps_t_excl_list = [(t1, t2) for (t1, t2) in t_overlaps_t_list if t1 != t2]
     # Create function-like objects
-    t_before_t = RelationshipClass(
-        :t_before_t,
-        NamedTuple(),
-        (:t_before, :t_after),
-        [(NamedTuple{(:t_before, :t_after)}(x), NamedTuple()) for x in t_before_t_list]
-    )
-    t_in_t = RelationshipClass(
-        :t_in_t,
-        NamedTuple(),
-        (:t_short, :t_long),
-        [(NamedTuple{(:t_short, :t_long)}(x), NamedTuple()) for x in t_in_t_list]
-    )
-    t_in_t_excl = RelationshipClass(
-        :t_in_t_excl,
-        NamedTuple(),
-        (:t_short, :t_long),
-        [(NamedTuple{(:t_short, :t_long)}(x), NamedTuple()) for x in t_in_t_excl_list]
-    )
+    t_before_t = RelationshipClass(:t_before_t, NamedTuple(), (:t_before, :t_after), t_before_t_list, [])
+    t_in_t = RelationshipClass(:t_in_t, NamedTuple(), (:t_short, :t_long), t_in_t_list, [])
+    t_in_t_excl = RelationshipClass(:t_in_t_excl, NamedTuple(), (:t_short, :t_long), t_in_t_excl_list, [])
     t_overlaps_t = TOverlapsTRelationshipClass(t_overlaps_t_list)
     t_overlaps_t_excl = TOverlapsTExclRelationshipClass(t_overlaps_t_excl_list)
     # Export the function-like objects

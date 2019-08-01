@@ -164,7 +164,7 @@ function window_block_time_slices(rolling=nothing)
             window_start += reoptimization_freq
             i += 1
         end
-        # Map each minute in the horizon to the indexes of windows spanning that minute.
+        # Map each minute in the horizon to the indexes of windows defined over that minute.
         # This is used below to allocate time slices to windows
         window_map = [Int64[] for i in 1:Minute(horizon_end - horizon_start).value]
         for (ind, window) in enumerate(windows)
