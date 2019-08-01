@@ -75,9 +75,9 @@ A list of `NamedTuple`s corresponding to *non-fixed* indices of the `flow` varia
 The keyword arguments act as filters for each dimension.
 """
 function var_flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything)
-    unit = expand_unit_group(unit)
-    node = expand_node_group(node)
-    commodity = expand_commodity_group(commodity)
+    # unit = expand_unit_group(unit)
+    # node = expand_node_group(node)
+    # commodity = expand_commodity_group(commodity)
     [
         (unit=u, node=n, commodity=c, direction=d, t=t1)
         for (u, n, d, blk) in unit__node__direction__temporal_block(
@@ -101,9 +101,9 @@ A list of `NamedTuple`s corresponding to *fixed* indices of the `flow` variable.
 The keyword arguments act as filters for each dimension.
 """
 function fix_flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything)
-    unit = expand_unit_group(unit)
-    node = expand_node_group(node)
-    commodity = expand_commodity_group(commodity)
+    # unit = expand_unit_group(unit)
+    # node = expand_node_group(node)
+    # commodity = expand_commodity_group(commodity)
     [
         (unit=u, node=n, commodity=c, direction=d, t=t_)
         for (u, n, d) in indices(fix_flow; unit=unit, node=node, direction=direction)
