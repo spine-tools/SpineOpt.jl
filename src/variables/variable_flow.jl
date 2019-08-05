@@ -104,6 +104,11 @@ function fix_flow_indices(;commodity=anything, node=anything, unit=anything, dir
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
     commodity = expand_commodity_group(commodity)
+    # We go through all indices of the `fix_flow` parameter and then through all time slices in the model,
+    # checking if `fix_flow` has a value for that time slice. If yes, then we have a fix flow index.
+    # NOTE that the user could specify `fix_flow` for some periods and then don't define
+    # any time slice in those periods -- that will obviously not work. They need to specify the
+    # parameter value *and* the time slices that go along.
     [
         (unit=u, node=n, commodity=c, direction=d, t=t_)
         for (u, n, d) in indices(fix_flow; unit=unit, node=node, direction=direction)
