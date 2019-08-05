@@ -47,7 +47,7 @@ db_url = "sqlite:///$(@__DIR__)/data/testsystemA4.sqlite"
 m = try
     run_spinemodel(db_url; optimizer=Gurobi.Optimizer, cleanup=false, extend=m->constraint_stor_cyclic(m))
 catch
-     run_spinemodel(db_url; optimizer=Cbc.Optimizer, cleanup=false, extend=m->constraint_stor_cyclic(m))
+    run_spinemodel(db_url; optimizer=Cbc.Optimizer, cleanup=false, extend=m->constraint_stor_cyclic(m))
 end
 
 # Show active variables and constraints
