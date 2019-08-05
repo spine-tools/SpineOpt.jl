@@ -203,11 +203,11 @@ end
 
 An equivalent dictionary where `JuMP.VariableRef` values are replaced by their `JuMP.value`.
 """
-value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => JuMP.value(v) for (k, v) in d if v isa JuMP.VariableRef)
+value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => v isa JuMP.VariableRef ? JuMP.value(v) : v for (k, v) in d)
 
 """
     formulation(d::Dict)
 
 An equivalent dictionary where `JuMP.ConstraintRef` values are replaced by a `String` showing their formulation.
 """
-formulation(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => sprint(show, v) for (k, v) in d if v isa JuMP.ConstraintRef)
+formulation(d::Dict{K,JuMP.ConstraintRef}) where {K} = Dict{K,Any}(k => sprint(show, v) for (k, v) in d)
