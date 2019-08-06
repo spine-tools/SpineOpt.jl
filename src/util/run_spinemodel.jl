@@ -170,7 +170,7 @@ function write_report(m, default_url)
     end
     for (url, url_reports) in reports
         for (report, out_parameters) in url_reports
-            write_parameters(url; report=report, out_parameters...)
+            write_parameters(out_parameters, url; report=report)
         end
     end
 end
