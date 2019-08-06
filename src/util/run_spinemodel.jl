@@ -62,6 +62,7 @@ function run_spinemodel(
         rolling=nothing)
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
+    let out_var = Dict()
     for (k, block_time_slices) in enumerate(window_block_time_slices(rolling))
         printstyled("Window $k\n"; bold=true, color=:underline)
         printstyled("Creating temporal structure...\n"; bold=true)
@@ -69,6 +70,54 @@ function run_spinemodel(
             generate_time_slice(block_time_slices)
             generate_time_slice_relationships()
         end
+################WIP: to do for all variable not only fix_flow!
+        if !isempty(out_var)
+            let i=0
+            for ((u,n,c,d) , result_values) in pack_trailing_dims(SpineModel.value(out_var))
+              i += 1
+                if isempty(result_values) # check if there's actually results for this variable
+                  continue
+                else
+                    @show typeof(u)
+                    if (unit=u, node =n , direction =d) in fix_flow.classes[1].relationships #if the relationship already exists
+                        @show "this is a relationship"
+                    index = findfirst(x ->x == (unit=u, node =n , direction =d), fix_flow.classes[1].relationships) # find position in array
+                       for j = 1:length(result_values) # go through all the results of this relationship
+                           @show result_values[j]
+                          positions  = findall(x -> x == first(result_values[j]).t.start, ((((fix_flow.classes[1]).values[index]).fix_flow).value).indexes)
+                         if isempty(positions)#this means: relationship already exist, but not for this timestep
+                           push!(((((fix_flow.classes[1]).values[index]).fix_flow).value).indexes,(first(result_values[j]).t).start)
+                           push!(((((fix_flow.classes[1]).values[index]).fix_flow).value).values, last(result_values[j]))
+                       else #this means: relationship already exist, and value already for this timestep -> replace it
+                            ((((fix_flow.classes[1]).values[index]).fix_flow).value).values[positions] =  last(result_values[j])
+                       end
+                     end
+                   else
+                     push!(fix_flow.classes[1].relationships,(unit = u,node = n,direction = d))
+                     index2 = findfirst(x ->x == (unit=u, node =n , direction =d), fix_flow.classes[1].relationships) #...or just go to the end
+                     push!(fix_flow.classes[1].values,(fix_flow = SpineInterface.TimeSeriesCallable{Array{DateTime,1},Float64}(TimeSeries(DateTime[first(result_values[1]).t.start], [last(result_values[1])], false, false)),))
+                    #  push!(fix_flow.classes[1].values,(fix_flow = SpineInterface.TimeSeriesCallable{TimeSlice,Float64}(TimeSeries([first(result_values[1]).t], [last(result_values[1])], false, false)),))
+                     for i = 2:length(result_values)
+                     # TimeSeries{Array{Dates.DateTime,1},Float64}(Dates.DateTime[2000-01-01T00:00:00, 2000-01-01T01:00:00, 2030-01-03T02:00:00], [0.0, 0.0, 147.0], false, false)
+                     push!(((((fix_flow.classes[1]).values[index2]).fix_flow).value).indexes,(first(result_values[i]).t).start)
+                     push!(((((fix_flow.classes[1]).values[index2]).fix_flow).value).values, last(result_values[i]))
+                      end
+                   end
+                 end
+               end
+            end
+        end
+#####################WIP
+        ### what if relationship doesn't exist yet?
+        ### commodity_node -> node
+        ### after time_slices_bock have been created -> push fix_flow
+        # but only if t in initial_condition_window
+        # for u in unit()
+        # update!(fix_flow,u,value_flow)
+        # end
+        # for con in connection()
+        # update!(fix_trans,conn,value_trans)
+        # end
         printstyled("Initializing model...\n"; bold=true)
         @time begin
             global m = Model(with_optimizer(optimizer))
@@ -144,9 +193,14 @@ function run_spinemodel(
             write_report(m, url_out)
         end
         printstyled("Done.\n"; bold=true)
+        out_var = get(m.ext[:variables], Object("flow").name, nothing)
+        # @show out_var
+        @show time_slice
+        #here results need to be passed to global workspace
     end
-    cleanup && notusing_spinedb(url_in, @__MODULE__)
+    # cleanup && notusing_spinedb(url_in, @__MODULE__)
     m
+end #let out_Var
 end
 
 
