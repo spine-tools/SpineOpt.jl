@@ -30,15 +30,14 @@ end
     time_slice(;temporal_block=anything, t=anything)
 
 An `Array` of time slices *in the model*.
-- `temporal_block` is a temporal block object used to filter the result by.
-- `t` is a `TimeSlice` or collection of `TimeSlice`s to filter the result by.
+- `temporal_block` is a temporal block object to filter the result.
+- `t` is a `TimeSlice` or collection of `TimeSlice`s *in the model* to filter the result.
 """
 (h::TimeSliceSet)(;temporal_block=anything, t=anything) = h(temporal_block, t)
 (h::TimeSliceSet)(::Anything, ::Anything) = h.time_slices
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = h.block_time_slices[temporal_block]
-(h::TimeSliceSet)(::Anything, s) = intersect(h.time_slices, s)
-(h::TimeSliceSet)(temporal_block::Object, s) =
-    intersect(h.block_time_slices[temporal_block], (t for t in s if temporal_block in t.blocks))
+(h::TimeSliceSet)(::Anything, s) = s
+(h::TimeSliceSet)(temporal_block::Object, s) = (t for t in s if temporal_block in t.blocks)
 
 """
     to_time_slice(t::TimeSlice...)
@@ -173,8 +172,11 @@ function window_block_time_slices(rolling=nothing)
         # to the appropriate windows
         window_block_time_slices = [Dict{Object,Array{TimeSlice,1}}() for i in 1:length(windows)]
         for (block, time_slices) in block_time_slices()
-            # We need a different block for the time slices in the initial conditions zone,
-            # since we don't want to 'track' variables there
+            # We create a new block to put time slices in the initial condition window,
+            # because we don't want to write constraints for these time slices.
+            # (for instance, look at `constraint_nodal_balance`).
+            # Time slices in the initial condition zone are just needed
+            # so that variables can be fixed (using `fix_flow` and friends)
             # TODO: Fix name ambiguity
             init_cond_blk = Object(Symbol(block.name, "_initial_condition"))
             for t in time_slices
