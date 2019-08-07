@@ -63,6 +63,9 @@ function run_spinemodel(
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
     let out_var = Dict()
+    key_dict = []
+    val_dict = []
+    timelise = Dict()
     for (k, block_time_slices) in enumerate(window_block_time_slices(rolling))
         printstyled("Window $k\n"; bold=true, color=:underline)
         printstyled("Creating temporal structure...\n"; bold=true)
@@ -70,54 +73,50 @@ function run_spinemodel(
             generate_time_slice(block_time_slices)
             generate_time_slice_relationships()
         end
-################WIP: to do for all variable not only fix_flow!
+################WIP: to do for all variable not only fix_flow! but also fix_trans, TODO: write to d.b. in the end
         if !isempty(out_var)
             let i=0
-            for ((u,n,c,d) , result_values) in pack_trailing_dims(SpineModel.value(out_var))
-              i += 1
-                if isempty(result_values) # check if there's actually results for this variable
-                  continue
-                else
-                    @show typeof(u)
-                    if (unit=u, node =n , direction =d) in fix_flow.classes[1].relationships #if the relationship already exists
-                        @show "this is a relationship"
-                    index = findfirst(x ->x == (unit=u, node =n , direction =d), fix_flow.classes[1].relationships) # find position in array
-                       for j = 1:length(result_values) # go through all the results of this relationship
-                           @show result_values[j]
-                          positions  = findall(x -> x == first(result_values[j]).t.start, ((((fix_flow.classes[1]).values[index]).fix_flow).value).indexes)
-                         if isempty(positions)#this means: relationship already exist, but not for this timestep
-                           push!(((((fix_flow.classes[1]).values[index]).fix_flow).value).indexes,(first(result_values[j]).t).start)
-                           push!(((((fix_flow.classes[1]).values[index]).fix_flow).value).values, last(result_values[j]))
-                       else #this means: relationship already exist, and value already for this timestep -> replace it
-                            ((((fix_flow.classes[1]).values[index]).fix_flow).value).values[positions] =  last(result_values[j])
-                       end
-                     end
-                   else
-                     push!(fix_flow.classes[1].relationships,(unit = u,node = n,direction = d))
-                     index2 = findfirst(x ->x == (unit=u, node =n , direction =d), fix_flow.classes[1].relationships) #...or just go to the end
-                     push!(fix_flow.classes[1].values,(fix_flow = SpineInterface.TimeSeriesCallable{Array{DateTime,1},Float64}(TimeSeries(DateTime[first(result_values[1]).t.start], [last(result_values[1])], false, false)),))
-                    #  push!(fix_flow.classes[1].values,(fix_flow = SpineInterface.TimeSeriesCallable{TimeSlice,Float64}(TimeSeries([first(result_values[1]).t], [last(result_values[1])], false, false)),))
-                     for i = 2:length(result_values)
-                     # TimeSeries{Array{Dates.DateTime,1},Float64}(Dates.DateTime[2000-01-01T00:00:00, 2000-01-01T01:00:00, 2030-01-03T02:00:00], [0.0, 0.0, 147.0], false, false)
-                     push!(((((fix_flow.classes[1]).values[index2]).fix_flow).value).indexes,(first(result_values[i]).t).start)
-                     push!(((((fix_flow.classes[1]).values[index2]).fix_flow).value).values, last(result_values[i]))
-                      end
-                   end
-                 end
-               end
-            end
-        end
-#####################WIP
-        ### what if relationship doesn't exist yet?
-        ### commodity_node -> node
-        ### after time_slices_bock have been created -> push fix_flow
-        # but only if t in initial_condition_window
-        # for u in unit()
-        # update!(fix_flow,u,value_flow)
-        # end
-        # for con in connection()
-        # update!(fix_trans,conn,value_trans)
-        # end
+                for ((u,n,c,d) , result_values) in pack_trailing_dims(SpineModel.value(out_var))
+                    i += 1
+                    if isempty(result_values) # check if there's actually results for this variable
+                        continue
+                    else
+                        if (unit=u, node =n , direction =d) in fix_flow.classes[1].relationships #if the relationship already exists
+                            index = findfirst(x ->x == (unit=u, node =n , direction =d), fix_flow.classes[1].relationships) # find position in array
+                            for j = 1:length(result_values) # go through all the results of this relationship
+                                positions  = findall(x -> x == first(result_values[j]).t.start, ((((fix_flow.classes[1]).values[index]).fix_flow).value).indexes)
+                                if isempty(positions)#this means: relationship already exist, but not for this timestep
+                                    if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
+                                        @show "this timeslice $(first(result_values[j]).t) -  rel already exist, adding new values"
+                                        push!(((((fix_flow.classes[1]).values[index]).fix_flow).value).indexes,(first(result_values[j]).t).start)
+                                        push!(((((fix_flow.classes[1]).values[index]).fix_flow).value).values, last(result_values[j]))
+                                    end
+                                else #this means: relationship already exist, and value already for this timestep -> replace it
+                                    if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
+                                        @show "this timeslice $(first(result_values[j]).t) -  rel already exist, overwriting values"
+                                        ((((fix_flow.classes[1]).values[index]).fix_flow).value).values[positions] =  last(result_values[j])
+                                    end
+                                end
+                            end
+                        else
+                            @show "now this"
+                            for res_val_length = 1:length(result_values)
+                                index2 = findfirst(x ->x == (unit=u, node =n , direction =d), fix_flow.classes[1].relationships)
+                                if first(result_values[res_val_length]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
+                                    if index2 == nothing
+                                        push!(fix_flow.classes[1].relationships,(unit = u,node = n,direction = d))
+                                        push!(fix_flow.classes[1].values,(fix_flow = SpineInterface.TimeSeriesCallable{Array{DateTime,1},Float64}(TimeSeries(DateTime[first(result_values[res_val_length]).t.start], [last(result_values[res_val_length])], false, false)),))
+                                    else
+                                        push!(((((fix_flow.classes[1]).values[index2]).fix_flow).value).indexes,(first(result_values[res_val_length]).t).start)
+                                        push!(((((fix_flow.classes[1]).values[index2]).fix_flow).value).values, last(result_values[res_val_length]))
+                                    end
+                            end
+                        end
+                        end #else if (relationship exists or not)
+                    end #end else if  (result is empty or nor)
+                end #for
+            end #let i
+        end # end if k>1
         printstyled("Initializing model...\n"; bold=true)
         @time begin
             global m = Model(with_optimizer(optimizer))
@@ -190,21 +189,18 @@ function run_spinemodel(
             println("Optimal solution found")
             println("Objective function value: $(objective_value(m))")
             printstyled("Writing report...\n"; bold=true)
-            write_report(m, url_out)
+            key_dict, val_dict = write_report(m, url_out,key_dict, val_dict)
         end
         printstyled("Done.\n"; bold=true)
-        out_var = get(m.ext[:variables], Object("flow").name, nothing)
-        # @show out_var
-        @show time_slice
-        #here results need to be passed to global workspace
+        out_var = get(m.ext[:variables], Object("flow").name, nothing) # this is required for the enxt loop
     end
     # cleanup && notusing_spinedb(url_in, @__MODULE__)
-    m
+    m#, timelise
 end #let out_Var
 end
 
 
-function write_report(m, default_url)
+function write_report(m, default_url, key_dict, val_dict) ####### always have a look -> these value dicts will need a key to identify out put variable...
     reports = Dict()
     for (rpt, out) in report__output()
         out_var = get(m.ext[:variables], out.name, nothing)
@@ -217,16 +213,41 @@ function write_report(m, default_url)
         url_reports = get!(reports, url, Dict())
         out_parameters = get!(url_reports, string(rpt.name), Dict())
         out_parameters[out.name] = d = Dict()
-        for (key, val) in pack_trailing_dims(SpineModel.value(out_var))
-            inds, vals = zip(val...)
-            d[key] = to_database(TimeSeries(collect(inds), collect(vals), false, false))
+        for (key, val) in pack_trailing_dims(SpineModel.value(out_var)) ### key: relationship (u,n,c,d); val: Array of tuples as in (t,value)
+            if key in key_dict ### for the case that there is already the key existing/ rel already in output vars
+                pos = findfirst(x -> x == key, key_dict) ### look up position
+                for i = 1:length(val) ### go through all results of this run (for this relationship)
+                    was_found = false
+                    for k = 1:length(val_dict[pos]) ### go through all already existing results
+                         if first(val[i]).t == (first(val_dict[pos][k]).t) ### if there is already a value for this timeslice
+                             val_dict[pos][k] = val[i] ### reassign to new value
+                             was_found = true
+                        end
+                    end
+                    if !was_found
+                        push!(val_dict[pos],val[i]) ### else push complet results for this relitonhsip
+                    end
+                end
+            else ## rel does not exist yet, so push to dict
+                push!(key_dict,key)
+                push!(val_dict,val)
+            end
         end
+        new_dict = []
+        for i = 1:length(val_dict)
+            push!(new_dict,(key_dict[i],val_dict[i]))
+        end ### rather ineffieceint, does the job for now
+        for (key, val) in new_dict
+                inds, vals = zip(val...)
+                d[key] = to_database(TimeSeries(collect(inds), collect(vals), false, false))
+        end ### write results to database
     end
     for (url, url_reports) in reports
         for (report, out_parameters) in url_reports
             write_parameters(url; report=report, out_parameters...)
         end
     end
+    key_dict,val_dict
 end
 
 
