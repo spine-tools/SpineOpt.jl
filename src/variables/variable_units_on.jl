@@ -87,11 +87,12 @@ end
 A list of `NamedTuple`s corresponding to *fixed* indices of the `units_on` variable.
 The keyword arguments act as filters for each dimension.
 """
-function fix_units_on_indices(;unit=anything, t=anything)
+function fix_units_on_indices(;unit=anything, fix=Object("fix"),t=anything)
+    unit = expand_unit_group(unit)
     [
         (unit=u, t=t_)
-        for (u,) in indices(fix_units_on; unit=unit)
+        for (f,u) in indices(fix_unit_on;fix=fix,unit=unit)
         for t_ in time_slice(t=t)
-        if fix_units_on(unit=u, t=t_) != nothing
+        if fix_unit_on(fix=f,unit=u, t=t_;_optimize=false) != nothing
     ]
 end

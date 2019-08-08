@@ -105,7 +105,7 @@ function fix_trans_indices(;commodity=anything, node=anything, connection=anythi
         (connection=conn, node=n, commodity=c, direction=d, t=t_)
         for (conn, n, d) in indices(fix_trans; connection=connection, node=node, direction=direction)
         for t_ in time_slice(t=t)
-        if fix_trans(connection=conn, node=n, direction=d, t=t_) != nothing
+        if fix_trans(connection=conn, node=n, direction=d, t=t_;_optimize=false) != nothing
         for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
     ]
 end

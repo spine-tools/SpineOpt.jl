@@ -62,9 +62,13 @@ function run_spinemodel(
         rolling=nothing)
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
-    let out_var = Dict()
+    res_flow = []
+    res_trans =[]
+    res_units_on = []
     key_dict = []
     val_dict = []
+    new_dict = []
+    eval_results = []
     timelise = Dict()
     for (k, block_time_slices) in enumerate(window_block_time_slices(rolling))
         printstyled("Window $k\n"; bold=true, color=:underline)
@@ -74,9 +78,15 @@ function run_spinemodel(
             generate_time_slice_relationships()
         end
 ################WIP: to do for all variable not only fix_flow! but also fix_trans, TODO: write to d.b. in the end
-        if !isempty(out_var)
+#### flow variable:
+        if k == 3
+            break
+        end
+        @show block_time_slices
+        @show time_slice
+        if !isempty(res_flow)
             let i=0
-                for ((u,n,c,d) , result_values) in pack_trailing_dims(SpineModel.value(out_var))
+                for ((u,n,c,d) , result_values) in pack_trailing_dims(SpineModel.value(res_flow))
                     i += 1
                     if isempty(result_values) # check if there's actually results for this variable
                         continue
@@ -117,6 +127,146 @@ function run_spinemodel(
                 end #for
             end #let i
         end # end if k>1
+#### trans variable:
+        if !isempty(res_trans)
+            let i=0
+                for ((conn,n,c,d) , result_values) in pack_trailing_dims(SpineModel.value(res_trans))
+                    i += 1
+                    if isempty(result_values) # check if there's actually results for this variable
+                        continue
+                    else
+                        if (connection=conn, node =n , direction =d) in fix_trans.classes[1].relationships #if the relationship already exists
+                            index = findfirst(x ->x == (connection=conn, node =n , direction =d), fix_trans.classes[1].relationships) # find position in array
+                            for j = 1:length(result_values) # go through all the results of this relationship
+                                positions  = findall(x -> x == first(result_values[j]).t.start, ((((fix_trans.classes[1]).values[index]).fix_trans).value).indexes)
+                                if isempty(positions)#this means: relationship already exist, but not for this timestep
+                                    if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
+                                        @show "this timeslice $(first(result_values[j]).t) -  rel already exist, adding new values"
+                                        push!(((((fix_trans.classes[1]).values[index]).fix_trans).value).indexes,(first(result_values[j]).t).start)
+                                        push!(((((fix_trans.classes[1]).values[index]).fix_trans).value).values, last(result_values[j]))
+                                    end
+                                else #this means: relationship already exist, and value already for this timestep -> replace it
+                                    if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
+                                        @show "this timeslice $(first(result_values[j]).t) -  rel already exist, overwriting values"
+                                        ((((fix_trans.classes[1]).values[index]).fix_trans).value).values[positions] =  last(result_values[j])
+                                    end
+                                end
+                            end
+                        else
+                            @show "now this"
+                            for res_val_length = 1:length(result_values)
+                                index2 = findfirst(x ->x == (connection=conn, node =n , direction =d), fix_trans.classes[1].relationships)
+                                if first(result_values[res_val_length]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
+                                    if index2 == nothing
+                                        push!(fix_trans.classes[1].relationships,(connection=conn,node = n,direction = d))
+                                        push!(fix_trans.classes[1].values,(fix_trans = SpineInterface.TimeSeriesCallable{Array{DateTime,1},Float64}(TimeSeries(DateTime[first(result_values[res_val_length]).t.start], [last(result_values[res_val_length])], false, false)),))
+                                    else
+                                        push!(((((fix_trans.classes[1]).values[index2]).fix_trans).value).indexes,(first(result_values[res_val_length]).t).start)
+                                        push!(((((fix_trans.classes[1]).values[index2]).fix_trans).value).values, last(result_values[res_val_length]))
+                                    end
+                            end
+                        end
+                        end #else if (relationship exists or not)
+                    end #end else if  (result is empty or nor)
+                end #for
+            end #let i
+        end # end if k>1
+
+#### units_on variable:
+        if !isempty(res_units_on)
+            let i=0
+                for ((u,) , result_values) in pack_trailing_dims(SpineModel.value(res_units_on))
+                    i += 1
+                    if isempty(result_values) # check if there's actually results for this variable
+                        continue
+                    else
+                        if (fix=Object("fix"), unit = u) in fix_unit_on.classes[1].relationships #if the relationship already exists
+                            index = findfirst(x ->x == (fix=Object("fix"), unit = u), fix_unit_on.classes[1].relationships) # find position in array
+                            for j = 1:length(result_values) # go through all the results of this relationship
+                                positions  = findall(x -> x == first(result_values[j]).t.start, ((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).indexes)
+                                if isempty(positions)#this means: relationship already exist, but not for this timestep
+                                    if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
+                                        @show "this timeslice $(first(result_values[j]).t) -  rel already exist, adding new values"
+                                        push!(((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).indexes,(first(result_values[j]).t).start)
+                                        push!(((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).values, last(result_values[j]))
+                                    end
+                                else #this means: relationship already exist, and value already for this timestep -> replace it
+                                    if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
+                                        @show "this timeslice $(first(result_values[j]).t) -  rel already exist, overwriting values"
+                                        ((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).values[positions] =  last(result_values[j])
+                                    end
+                                end
+                            end
+                        else
+                            @show "now this"
+                            for res_val_length = 1:length(result_values)
+                                index2 = findfirst(x ->x == (fix=Object("fix"), unit = u), fix_unit_on.classes[1].relationships)
+                                if first(result_values[res_val_length]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
+                                    if index2 == nothing
+                                        push!(fix_unit_on.classes[1].relationships,(fix=Object("fix"), unit = u))
+                                        push!(fix_unit_on.classes[1].values,(fix_unit_on = SpineInterface.TimeSeriesCallable{Array{DateTime,1},Float64}(TimeSeries(DateTime[first(result_values[res_val_length]).t.start], [last(result_values[res_val_length])], false, false)),))
+                                    else
+                                        push!(((((fix_unit_on.classes[1]).values[index2]).fix_unit_on).value).indexes,(first(result_values[res_val_length]).t).start)
+                                        push!(((((fix_unit_on.classes[1]).values[index2]).fix_unit_on).value).values, last(result_values[res_val_length]))
+                                    end
+                            end
+                        end
+                        end #else if (relationship exists or not)
+                    end #end else if  (result is empty or nor)
+                end #for
+            end #let i
+        end # end if k>1
+
+
+#### units_on variable:
+        # if !isempty(res_units_on)
+        #     let i=0
+        #         for (unit_tuple, result_values) in pack_trailing_dims(SpineModel.value(res_units_on))
+        #             u = unit_tuple.unit
+        #             i += 1
+        #             if isempty(result_values) # check if there's actually results for this variable
+        #                 continue
+        #             else
+        #                     index = findfirst(x ->x == u, fix_unit_on.classes[1].objects) # find position in array
+        #                     for j = 1:length(result_values) # go through all the results of this object
+        #                         if :fix_unit_on in keys(fix_unit_on.classes[1].values[index])
+        #                             positions  = findall(x -> x == first(result_values[j]).t.start, ((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).indexes)
+        #                             if isempty(positions)#this means: object already exist, but not for this timestep
+        #                                 if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
+        #                                     @show "this timeslice $(first(result_values[j]).t) -  rel already exist, adding new values"
+        #                                     push!(((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).indexes,(first(result_values[j]).t).start)
+        #                                     push!(((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).values, last(result_values[j]))
+        #                                 end
+        #                             else #this means: object already exist, and value already for this timestep -> replace it
+        #                                 if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
+        #                                     @show "this timeslice $(first(result_values[j]).t) -  rel already exist, overwriting values"
+        #                                     ((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).values[positions] =  last(result_values[j])
+        #                                 end
+        #                             end
+        #                         else
+        #                             @show "now this - add units_on parameter"
+        #                             for res_val_length = 1:length(result_values)
+        #                                 index2 = findfirst(x ->x == :fix_unit_on, keys(fix_unit_on.classes[1].values[index]))
+        #                                 if first(result_values[res_val_length]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
+        #                                     if index2 == nothing ###!!!!!!!!something else than index2
+        #                                         list_names = [collect(keys(fix_unit_on.classes[1].values[index]));:fix_unit_on]
+        #                                         list_values = [collect(fix_unit_on.classes[1].values[index]);SpineInterface.TimeSeriesCallable{Array{DateTime,1},Float64}(TimeSeries(DateTime[first(result_values[res_val_length]).t.start], [last(result_values[res_val_length])], false, false))]
+        #                                     # !!!!!!!    push!(fix_unit_on.classes[1].values[index],(fix_unit_on = SpineInterface.TimeSeriesCallable{Array{DateTime,1},Float64}(TimeSeries(DateTime[first(result_values[res_val_length]).t.start], [last(result_values[res_val_length])], false, false)),))
+        #                                         fix_unit_on.classes[1].values[index] = NamedTuple{Tuple(list_names)}(list_values)
+        #                                         @show fix_unit_on.classes[1].values[index]
+        #                                     else
+        #                                         list_names = [collect(keys(fix_unit_on.classes[1].values[index]))]
+        #                                         list_values = [collect(fix_unit_on.classes[1].values[index]);SpineInterface.TimeSeriesCallable{Array{DateTime,1},Float64}(TimeSeries(DateTime[first(result_values[res_val_length]).t.start], [last(result_values[res_val_length])], false, false))]
+        #                                         fix_unit_on.classes[1].values[index] = NamedTuple{Tuple(list_names)}(list_values)
+        #                                     end
+        #                             end
+        #                         end
+        #                     end
+        #                 end #else if (relationship exists or not)
+        #             end #end else if  (result is empty or nor)
+        #         end #for
+        #     end #let i
+        # end # end if k>1
         printstyled("Initializing model...\n"; bold=true)
         @time begin
             global m = Model(with_optimizer(optimizer))
@@ -189,18 +339,19 @@ function run_spinemodel(
             println("Optimal solution found")
             println("Objective function value: $(objective_value(m))")
             printstyled("Writing report...\n"; bold=true)
-            key_dict, val_dict = write_report(m, url_out,key_dict, val_dict)
+            key_dict, val_dict, new_dict = write_report(m, url_out,key_dict, val_dict, new_dict)
         end
         printstyled("Done.\n"; bold=true)
-        out_var = get(m.ext[:variables], Object("flow").name, nothing) # this is required for the enxt loop
+        res_flow = get(m.ext[:variables], Object("flow").name, nothing) # this is required for the enxt loop
+        res_trans = get(m.ext[:variables], Object("trans").name, nothing) # this is required for the enxt loop
+        res_units_on = get(m.ext[:variables], Object("units_on").name, nothing) # this is required for the enxt loop
     end
     # cleanup && notusing_spinedb(url_in, @__MODULE__)
-    m#, timelise
-end #let out_Var
+    m, eval_results, new_dict#, timelise
 end
 
 
-function write_report(m, default_url, key_dict, val_dict) ####### always have a look -> these value dicts will need a key to identify out put variable...
+function write_report(m, default_url, key_dict, val_dict, new_dict) ####### always have a look -> these value dicts will need a key to identify out put variable...
     reports = Dict()
     for (rpt, out) in report__output()
         out_var = get(m.ext[:variables], out.name, nothing)
@@ -247,7 +398,7 @@ function write_report(m, default_url, key_dict, val_dict) ####### always have a 
             write_parameters(url; report=report, out_parameters...)
         end
     end
-    key_dict,val_dict
+    key_dict,val_dict,new_dict
 end
 
 
