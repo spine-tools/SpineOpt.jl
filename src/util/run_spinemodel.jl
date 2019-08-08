@@ -17,48 +17,40 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-    run_spinemodel(
-        url;
-        optimizer=Cbc.Optimizer,
-        cleanup=true,
-        extend=m->nothing
-    )
+    run_spinemodel(url; <keyword arguments>)
 
 Run the Spine model from `url` and write report to the same `url`.
 Keyword arguments have the same purpose as for [`run_spinemodel`](@ref).
 """
-function run_spinemodel(url::String; optimizer=Cbc.Optimizer, cleanup=true, extend=m->nothing, rolling=:default)
+function run_spinemodel(url::String; optimizer=Cbc.Optimizer, cleanup=true, extend=m -> nothing, rolling=nothing)
     run_spinemodel(url, url; optimizer=optimizer, cleanup=cleanup, extend=extend, rolling=rolling)
 end
 
 """
-    run_spinemodel(
-        url_in, url_out;
-        optimizer=Cbc.Optimizer,
-        cleanup=true,
-        extend=m->nothing
-    )
+    run_spinemodel(url_in, url_out; <keyword arguments>)
 
 Run the Spine model from `url_in` and write report to `url_out`.
 At least `url_in` must point to valid Spine database.
 A new Spine database is created at `url_out` if it doesn't exist.
 
-# Optional keyword arguments
+# Keyword arguments
 
-**`optimizer`** is the constructor of the optimizer used for building and solving the model.
+**`optimizer=Cbc.Optimizer`** is the constructor of the optimizer used for building and solving the model.
 
-**`cleanup`** tells [`run_spinemodel`](@ref) whether or not convenience function callables should be
+**`cleanup=true`** tells [`run_spinemodel`](@ref) whether or not convenience function callables should be
 set to `nothing` after completion.
 
-**`extend`** is a function for extending the model. [`run_spinemodel`](@ref) calls this function with
+**`extend=m -> nothing`** is a function for extending the model. [`run_spinemodel`](@ref) calls this function with
 the internal `JuMP.Model` object before calling `JuMP.optimize!`.
+
+**`rolling=nothing`** is the name of a rolling object.
 """
 function run_spinemodel(
         url_in::String,
         url_out::String;
         optimizer=Cbc.Optimizer,
         cleanup=true,
-        extend=m->nothing,
+        extend=m -> nothing,
         rolling=nothing)
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
@@ -161,16 +153,16 @@ function write_report(m, default_url)
         url = output_db_url(report=rpt)
         url === nothing && (url = default_url)
         url_reports = get!(reports, url, Dict())
-        out_parameters = get!(url_reports, string(rpt.name), Dict())
+        out_parameters = get!(url_reports, rpt.name, Dict())
         out_parameters[out.name] = d = Dict()
-        for (key, val) in pack_trailing_dims(SpineModel.value(out_var))
+        for (key, val) in pack_trailing_dims(value(out_var))
             inds, vals = zip(val...)
-            d[key] = to_database(TimeSeries(collect(inds), collect(vals), false, false))
+            d[key] = TimeSeries(collect(inds), collect(vals), false, false)
         end
     end
     for (url, url_reports) in reports
         for (report, out_parameters) in url_reports
-            write_parameters(out_parameters, url; report=report)
+            write_parameters(out_parameters, url; report=string(report))
         end
     end
 end
