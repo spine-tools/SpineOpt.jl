@@ -79,11 +79,6 @@ function run_spinemodel(
         end
 ################WIP: to do for all variable not only fix_flow! but also fix_trans, TODO: write to d.b. in the end
 #### flow variable:
-        if k == 3
-            break
-        end
-        @show block_time_slices
-        @show time_slice
         if !isempty(res_flow)
             let i=0
                 for ((u,n,c,d) , result_values) in pack_trailing_dims(SpineModel.value(res_flow))
@@ -97,19 +92,20 @@ function run_spinemodel(
                                 positions  = findall(x -> x == first(result_values[j]).t.start, ((((fix_flow.classes[1]).values[index]).fix_flow).value).indexes)
                                 if isempty(positions)#this means: relationship already exist, but not for this timestep
                                     if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
-                                        @show "this timeslice $(first(result_values[j]).t) -  rel already exist, adding new values"
+                                        # @show "this timeslice $(first(result_values[j]).t) -  rel already exist, adding new values"
                                         push!(((((fix_flow.classes[1]).values[index]).fix_flow).value).indexes,(first(result_values[j]).t).start)
                                         push!(((((fix_flow.classes[1]).values[index]).fix_flow).value).values, last(result_values[j]))
+                                        # @show ((((fix_flow.classes[1]).values[index]).fix_flow).value)
                                     end
                                 else #this means: relationship already exist, and value already for this timestep -> replace it
                                     if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
-                                        @show "this timeslice $(first(result_values[j]).t) -  rel already exist, overwriting values"
+                                        # @show "this timeslice $(first(result_values[j]).t) -  rel already exist, overwriting values"
                                         ((((fix_flow.classes[1]).values[index]).fix_flow).value).values[positions] =  last(result_values[j])
                                     end
                                 end
                             end
                         else
-                            @show "now this"
+                            # @show "now this"
                             for res_val_length = 1:length(result_values)
                                 index2 = findfirst(x ->x == (unit=u, node =n , direction =d), fix_flow.classes[1].relationships)
                                 if first(result_values[res_val_length]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
@@ -141,19 +137,19 @@ function run_spinemodel(
                                 positions  = findall(x -> x == first(result_values[j]).t.start, ((((fix_trans.classes[1]).values[index]).fix_trans).value).indexes)
                                 if isempty(positions)#this means: relationship already exist, but not for this timestep
                                     if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
-                                        @show "this timeslice $(first(result_values[j]).t) -  rel already exist, adding new values"
+                                        # @show "this timeslice $(first(result_values[j]).t) -  rel already exist, adding new values"
                                         push!(((((fix_trans.classes[1]).values[index]).fix_trans).value).indexes,(first(result_values[j]).t).start)
                                         push!(((((fix_trans.classes[1]).values[index]).fix_trans).value).values, last(result_values[j]))
                                     end
                                 else #this means: relationship already exist, and value already for this timestep -> replace it
                                     if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
-                                        @show "this timeslice $(first(result_values[j]).t) -  rel already exist, overwriting values"
+                                        # @show "this timeslice $(first(result_values[j]).t) -  rel already exist, overwriting values"
                                         ((((fix_trans.classes[1]).values[index]).fix_trans).value).values[positions] =  last(result_values[j])
                                     end
                                 end
                             end
                         else
-                            @show "now this"
+                            # @show "now this"
                             for res_val_length = 1:length(result_values)
                                 index2 = findfirst(x ->x == (connection=conn, node =n , direction =d), fix_trans.classes[1].relationships)
                                 if first(result_values[res_val_length]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
@@ -186,19 +182,19 @@ function run_spinemodel(
                                 positions  = findall(x -> x == first(result_values[j]).t.start, ((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).indexes)
                                 if isempty(positions)#this means: relationship already exist, but not for this timestep
                                     if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
-                                        @show "this timeslice $(first(result_values[j]).t) -  rel already exist, adding new values"
+                                        # @show "this timeslice $(first(result_values[j]).t) -  rel already exist, adding new values"
                                         push!(((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).indexes,(first(result_values[j]).t).start)
                                         push!(((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).values, last(result_values[j]))
                                     end
                                 else #this means: relationship already exist, and value already for this timestep -> replace it
                                     if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
-                                        @show "this timeslice $(first(result_values[j]).t) -  rel already exist, overwriting values"
+                                        # @show "this timeslice $(first(result_values[j]).t) -  rel already exist, overwriting values"
                                         ((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).values[positions] =  last(result_values[j])
                                     end
                                 end
                             end
                         else
-                            @show "now this"
+                            # @show "now this"
                             for res_val_length = 1:length(result_values)
                                 index2 = findfirst(x ->x == (fix=Object("fix"), unit = u), fix_unit_on.classes[1].relationships)
                                 if first(result_values[res_val_length]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
@@ -282,6 +278,7 @@ function run_spinemodel(
             variable_stor_state(m)
             # Create objective function
             objective_minimize_total_discounted_costs(m)
+            # @show m.ext[:variables][:flow]
         end
         printstyled("Generating constraints...\n"; bold=true)
         @time begin
@@ -339,19 +336,22 @@ function run_spinemodel(
             println("Optimal solution found")
             println("Objective function value: $(objective_value(m))")
             printstyled("Writing report...\n"; bold=true)
-            key_dict, val_dict, new_dict = write_report(m, url_out,key_dict, val_dict, new_dict)
+            key_dict, val_dict, new_dict = write_report(m, url_out,key_dict, val_dict, new_dict,false)
+        else
+            break
         end
         printstyled("Done.\n"; bold=true)
         res_flow = get(m.ext[:variables], Object("flow").name, nothing) # this is required for the enxt loop
         res_trans = get(m.ext[:variables], Object("trans").name, nothing) # this is required for the enxt loop
         res_units_on = get(m.ext[:variables], Object("units_on").name, nothing) # this is required for the enxt loop
     end
+    key_dict, val_dict, new_dict = write_report(m, url_out,key_dict, val_dict, new_dict,true)
     # cleanup && notusing_spinedb(url_in, @__MODULE__)
     m, eval_results, new_dict#, timelise
 end
 
 
-function write_report(m, default_url, key_dict, val_dict, new_dict) ####### always have a look -> these value dicts will need a key to identify out put variable...
+function write_report(m, default_url, key_dict, val_dict, new_dict,final) ####### always have a look -> these value dicts will need a key to identify out put variable...
     reports = Dict()
     for (rpt, out) in report__output()
         out_var = get(m.ext[:variables], out.name, nothing)
@@ -393,10 +393,12 @@ function write_report(m, default_url, key_dict, val_dict, new_dict) ####### alwa
                 d[key] = to_database(TimeSeries(collect(inds), collect(vals), false, false))
         end ### write results to database
     end
+    if final == true
     for (url, url_reports) in reports
         for (report, out_parameters) in url_reports
             write_parameters(url; report=report, out_parameters...)
         end
+    end
     end
     key_dict,val_dict,new_dict
 end
