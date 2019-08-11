@@ -29,7 +29,6 @@ function constraint_trans_capacity(m::Model)
     constr_dict = m.ext[:constraints][:trans_capacity] = Dict()
     for (conn, n, d) in indices(conn_capacity)
         try
-         @show conn_avail_factor(connection=conn, node=n)
         for t in time_slice()
             constr_dict[conn, n, t] = @constraint(
                 m,
@@ -47,6 +46,7 @@ function constraint_trans_capacity(m::Model)
             )
         end
     catch
+        @show "teres a problem here"
         continue
     end
     end

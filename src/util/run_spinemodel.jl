@@ -65,9 +65,14 @@ function run_spinemodel(
     res_flow = []
     res_trans =[]
     res_units_on = []
-    key_dict = []
-    val_dict = []
-    new_dict = []
+    key_dict = Dict()
+    val_dict = Dict()
+    new_dict = Dict()
+    for (rpt, out) in report__output()
+        key_dict[out.name] = []
+        val_dict[out.name] = []
+        new_dict[out.name] = []
+    end
     eval_results = []
     timelise = Dict()
     for (k, block_time_slices) in enumerate(window_block_time_slices(rolling))
@@ -212,57 +217,6 @@ function run_spinemodel(
                 end #for
             end #let i
         end # end if k>1
-
-
-#### units_on variable:
-        # if !isempty(res_units_on)
-        #     let i=0
-        #         for (unit_tuple, result_values) in pack_trailing_dims(SpineModel.value(res_units_on))
-        #             u = unit_tuple.unit
-        #             i += 1
-        #             if isempty(result_values) # check if there's actually results for this variable
-        #                 continue
-        #             else
-        #                     index = findfirst(x ->x == u, fix_unit_on.classes[1].objects) # find position in array
-        #                     for j = 1:length(result_values) # go through all the results of this object
-        #                         if :fix_unit_on in keys(fix_unit_on.classes[1].values[index])
-        #                             positions  = findall(x -> x == first(result_values[j]).t.start, ((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).indexes)
-        #                             if isempty(positions)#this means: object already exist, but not for this timestep
-        #                                 if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
-        #                                     @show "this timeslice $(first(result_values[j]).t) -  rel already exist, adding new values"
-        #                                     push!(((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).indexes,(first(result_values[j]).t).start)
-        #                                     push!(((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).values, last(result_values[j]))
-        #                                 end
-        #                             else #this means: object already exist, and value already for this timestep -> replace it
-        #                                 if first(result_values[j]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
-        #                                     @show "this timeslice $(first(result_values[j]).t) -  rel already exist, overwriting values"
-        #                                     ((((fix_unit_on.classes[1]).values[index]).fix_unit_on).value).values[positions] =  last(result_values[j])
-        #                                 end
-        #                             end
-        #                         else
-        #                             @show "now this - add units_on parameter"
-        #                             for res_val_length = 1:length(result_values)
-        #                                 index2 = findfirst(x ->x == :fix_unit_on, keys(fix_unit_on.classes[1].values[index]))
-        #                                 if first(result_values[res_val_length]).t in block_time_slices[Object("DA_quarterly-hours_initial_condition")] ##TODO: hard coded, how to make this universal?
-        #                                     if index2 == nothing ###!!!!!!!!something else than index2
-        #                                         list_names = [collect(keys(fix_unit_on.classes[1].values[index]));:fix_unit_on]
-        #                                         list_values = [collect(fix_unit_on.classes[1].values[index]);SpineInterface.TimeSeriesCallable{Array{DateTime,1},Float64}(TimeSeries(DateTime[first(result_values[res_val_length]).t.start], [last(result_values[res_val_length])], false, false))]
-        #                                     # !!!!!!!    push!(fix_unit_on.classes[1].values[index],(fix_unit_on = SpineInterface.TimeSeriesCallable{Array{DateTime,1},Float64}(TimeSeries(DateTime[first(result_values[res_val_length]).t.start], [last(result_values[res_val_length])], false, false)),))
-        #                                         fix_unit_on.classes[1].values[index] = NamedTuple{Tuple(list_names)}(list_values)
-        #                                         @show fix_unit_on.classes[1].values[index]
-        #                                     else
-        #                                         list_names = [collect(keys(fix_unit_on.classes[1].values[index]))]
-        #                                         list_values = [collect(fix_unit_on.classes[1].values[index]);SpineInterface.TimeSeriesCallable{Array{DateTime,1},Float64}(TimeSeries(DateTime[first(result_values[res_val_length]).t.start], [last(result_values[res_val_length])], false, false))]
-        #                                         fix_unit_on.classes[1].values[index] = NamedTuple{Tuple(list_names)}(list_values)
-        #                                     end
-        #                             end
-        #                         end
-        #                     end
-        #                 end #else if (relationship exists or not)
-        #             end #end else if  (result is empty or nor)
-        #         end #for
-        #     end #let i
-        # end # end if k>1
         printstyled("Initializing model...\n"; bold=true)
         @time begin
             global m = Model(with_optimizer(optimizer))
@@ -332,7 +286,7 @@ function run_spinemodel(
         printstyled("Solving model...\n"; bold=true)
         @time optimize!(m)
         status = termination_status(m)
-        if status == MOI.OPTIMAL
+        if status == MOI.OPTIMAL && k < 1
             println("Optimal solution found")
             println("Objective function value: $(objective_value(m))")
             printstyled("Writing report...\n"; bold=true)
@@ -345,7 +299,7 @@ function run_spinemodel(
         res_trans = get(m.ext[:variables], Object("trans").name, nothing) # this is required for the enxt loop
         res_units_on = get(m.ext[:variables], Object("units_on").name, nothing) # this is required for the enxt loop
     end
-    key_dict, val_dict, new_dict = write_report(m, url_out,key_dict, val_dict, new_dict,true)
+    # key_dict, val_dict, new_dict = write_report(m, url_out,key_dict, val_dict, new_dict,true)
     # cleanup && notusing_spinedb(url_in, @__MODULE__)
     m, eval_results, new_dict#, timelise
 end
@@ -365,40 +319,48 @@ function write_report(m, default_url, key_dict, val_dict, new_dict,final) ######
         out_parameters = get!(url_reports, string(rpt.name), Dict())
         out_parameters[out.name] = d = Dict()
         for (key, val) in pack_trailing_dims(SpineModel.value(out_var)) ### key: relationship (u,n,c,d); val: Array of tuples as in (t,value)
-            if key in key_dict ### for the case that there is already the key existing/ rel already in output vars
-                pos = findfirst(x -> x == key, key_dict) ### look up position
+            if key in key_dict[out.name] ### for the case that there is already the key existing/ rel already in output vars
+                pos = findfirst(x -> x == key, key_dict[out.name]) ### look up position
                 for i = 1:length(val) ### go through all results of this run (for this relationship)
                     was_found = false
-                    for k = 1:length(val_dict[pos]) ### go through all already existing results
-                         if first(val[i]).t == (first(val_dict[pos][k]).t) ### if there is already a value for this timeslice
-                             val_dict[pos][k] = val[i] ### reassign to new value
+                    for k = 1:length(val_dict[out.name][pos]) ### go through all already existing results
+                         if first(val[i]).t == (first(val_dict[out.name][pos][k]).t) ### if there is already a value for this timeslice
+                             val_dict[out.name][pos][k] = val[i] ### reassign to new value
                              was_found = true
                         end
                     end
                     if !was_found
-                        push!(val_dict[pos],val[i]) ### else push complet results for this relitonhsip
+                        push!(val_dict[out.name][pos],val[i]) ### else push complet results for this relitonhsip
                     end
                 end
             else ## rel does not exist yet, so push to dict
-                push!(key_dict,key)
-                push!(val_dict,val)
+                push!(key_dict[out.name],key)
+                push!(val_dict[out.name],val)
             end
         end
-        new_dict = []
-        for i = 1:length(val_dict)
-            push!(new_dict,(key_dict[i],val_dict[i]))
+        new_dict[out.name] = []
+        for i = 1:length(val_dict[out.name])
+            push!(new_dict[out.name],(key_dict[out.name][i],val_dict[out.name][i]))
         end ### rather ineffieceint, does the job for now
-        for (key, val) in new_dict
-                inds, vals = zip(val...)
-                d[key] = to_database(TimeSeries(collect(inds), collect(vals), false, false))
-        end ### write results to database
-    end
-    if final == true
-    for (url, url_reports) in reports
-        for (report, out_parameters) in url_reports
-            write_parameters(url; report=report, out_parameters...)
+        if final == true
+            for (key, val) in new_dict[out.name]
+                inds_dict = Array{NamedTuple{(:t,),Tuple{TimeSlice}},1}()
+                vals_dict= []
+                for j = 1:length(val)
+                    push!(vals_dict,last(val[j]))
+                    push!(inds_dict,val[j][1])
+                end
+                    TimeSeries(inds_dict, vals_dict, false, false)
+                    d[key] = to_database(TimeSeries(inds_dict, vals_dict, false, false))
+            end ### write results to database
         end
     end
+    if final == true
+        for (url, url_reports) in reports
+            for (report, out_parameters) in url_reports
+                write_parameters(url; report=report, out_parameters...)
+            end
+        end
     end
     key_dict,val_dict,new_dict
 end
