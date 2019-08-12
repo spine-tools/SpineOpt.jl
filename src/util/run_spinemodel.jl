@@ -286,7 +286,7 @@ function run_spinemodel(
         printstyled("Solving model...\n"; bold=true)
         @time optimize!(m)
         status = termination_status(m)
-        if status == MOI.OPTIMAL && k < 1
+        if status == MOI.OPTIMAL
             println("Optimal solution found")
             println("Objective function value: $(objective_value(m))")
             printstyled("Writing report...\n"; bold=true)
@@ -299,7 +299,7 @@ function run_spinemodel(
         res_trans = get(m.ext[:variables], Object("trans").name, nothing) # this is required for the enxt loop
         res_units_on = get(m.ext[:variables], Object("units_on").name, nothing) # this is required for the enxt loop
     end
-    # key_dict, val_dict, new_dict = write_report(m, url_out,key_dict, val_dict, new_dict,true)
+    key_dict, val_dict, new_dict = write_report(m, url_out,key_dict, val_dict, new_dict,true)
     # cleanup && notusing_spinedb(url_in, @__MODULE__)
     m, eval_results, new_dict#, timelise
 end
