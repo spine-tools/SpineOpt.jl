@@ -226,7 +226,7 @@ version = "0.7.2"
 deps = ["Dates", "JSON", "PyCall", "Suppressor"]
 git-tree-sha1 = "2c288728fa462df1a1c61bf140e513faa9887e07"
 repo-rev = "dev"
-repo-url = "C:\\Users\\u0093836\\repos\\git\\SpineInterface.jl"
+repo-url = "https://gitlab.vtt.fi/spine/SpineInterface.jl"
 uuid = "0cda1612-498a-11e9-3c92-77fa82595a4f"
 version = "0.1.0"
 
