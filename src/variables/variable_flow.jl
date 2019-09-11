@@ -37,7 +37,7 @@ function variable_flow(m::Model)
         for (u, n, c, d, t) in var_flow_indices()
     )
     m.ext[:variables][:fix_flow] = Dict{KeyType,Any}(
-        (unit=u, node=n, commodity=c, direction=d, t=t) => fix_flow(unit=u, node=n, direction=d, t=t)
+        (unit=u, node=n, commodity=c, direction=d, t=t) => fix_flow(unit=u, node=n, direction=d, t=TimeSlice(t.start,t.start);_optimize=false)
         for (u, n, c, d, t) in fix_flow_indices()
     )
     m.ext[:variables][:flow] = merge(m.ext[:variables][:var_flow], m.ext[:variables][:fix_flow])
@@ -83,8 +83,9 @@ function var_flow_indices(;commodity=anything, node=anything, unit=anything, dir
         for (u, n, d, blk) in unit__node__direction__temporal_block(
             node=node, unit=unit, direction=direction, _compact=false
         )
-        for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
         for t1 in time_slice(temporal_block=blk, t=t)
+            if (!((unit=u, node= n, direction=d) in indices(fix_flow))) || (fix_flow(unit=u, node=n, direction=d, t=t1;_optimize=false) == nothing)
+                        for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
     ]
 end
 
@@ -111,9 +112,9 @@ function fix_flow_indices(;commodity=anything, node=anything, unit=anything, dir
     # parameter value *and* the time slices that go along.
     [
         (unit=u, node=n, commodity=c, direction=d, t=t_)
-        for (u, n, d) in indices(fix_flow; unit=unit, node=node, direction=direction)
+        for (u, n, d) in indices(fix_flow; _optimize=false, unit=unit, node=node, direction=direction)
         for t_ in time_slice(t=t)
-        if fix_flow(unit=u, node=n, direction=d, t=t_) != nothing
+        if fix_flow(unit=u, node=n, direction=d, t=t_;_optimize=false) != nothing
         for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
     ]
 end
