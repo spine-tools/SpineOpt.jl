@@ -35,7 +35,7 @@ function variable_trans(m::Model)
         for (conn, n, c, d, t) in var_trans_indices()
     )
     m.ext[:variables][:fix_trans] = Dict{KeyType,Any}(
-        (connection=conn, node=n, commodity=c, direction=d, t=t) => fix_trans(connection=conn, node=n, direction=d, t=TimeSlice(t.start,t.start);_optimize=false)
+        (connection=conn, node=n, commodity=c, direction=d, t=t) => fix_trans(connection=conn, node=n, direction=d, t=t;_optimize=false)
         for (conn, n, c, d, t) in fix_trans_indices()
     )
     m.ext[:variables][:trans] = merge(m.ext[:variables][:var_trans], m.ext[:variables][:fix_trans])

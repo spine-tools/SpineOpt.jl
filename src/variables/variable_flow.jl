@@ -37,7 +37,7 @@ function variable_flow(m::Model)
         for (u, n, c, d, t) in var_flow_indices()
     )
     m.ext[:variables][:fix_flow] = Dict{KeyType,Any}(
-        (unit=u, node=n, commodity=c, direction=d, t=t) => fix_flow(unit=u, node=n, direction=d, t=TimeSlice(t.start,t.start);_optimize=false)
+        (unit=u, node=n, commodity=c, direction=d, t=t) => fix_flow(unit=u, node=n, direction=d, t=t;_optimize=false)
         for (u, n, c, d, t) in fix_flow_indices()
     )
     m.ext[:variables][:flow] = merge(m.ext[:variables][:var_flow], m.ext[:variables][:fix_flow])
@@ -75,17 +75,18 @@ A list of `NamedTuple`s corresponding to *non-fixed* indices of the `flow` varia
 The keyword arguments act as filters for each dimension.
 """
 function var_flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything)
-    # unit = expand_unit_group(unit)
-    # node = expand_node_group(node)
-    # commodity = expand_commodity_group(commodity)
+    unit = expand_unit_group(unit)
+    node = expand_node_group(node)
+    commodity = expand_commodity_group(commodity)
     [
         (unit=u, node=n, commodity=c, direction=d, t=t1)
-        for (u, n, d, blk) in unit__node__direction__temporal_block(
+        for (u, n_, d, blk) in unit__node__direction__temporal_block(
             node=node, unit=unit, direction=direction, _compact=false
         )
         for t1 in time_slice(temporal_block=blk, t=t)
-            if (!((unit=u, node= n, direction=d) in indices(fix_flow))) || (fix_flow(unit=u, node=n, direction=d, t=t1;_optimize=false) == nothing)
-                        for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
+            for (n, c) in node__commodity(commodity=commodity, node=n_, _compact=false)
+                if (!((unit=u, node= n_, direction=d) in indices(fix_flow;_optimize=false))) || (fix_flow(unit=u, node=n_, direction=d, t=t1;_optimize=false) == nothing)
+
     ]
 end
 

@@ -45,7 +45,7 @@ function variable_units_on(m::Model)
         for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :no_online_variable
     )
     m.ext[:variables][:fix_units_on] = Dict{KeyType,Any}(
-        (unit=u, t=t) => fix_unit_on(fix=Object("fix"),unit=u, t=TimeSlice(t.start,t.start);_optimize=false) for (u, t) in fix_units_on_indices()
+        (unit=u, t=t) => fix_unit_on(fix=Object("fix"),unit=u, t=t;_optimize=false) for (u, t) in fix_units_on_indices()
     )
     m.ext[:variables][:units_on] = merge(
         m.ext[:variables][:integer_units_on],
