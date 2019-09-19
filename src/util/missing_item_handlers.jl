@@ -101,7 +101,7 @@ const parameters = [
     (:time_slice_duration, nothing),
     (:demand, nothing),
     (:online_variable_type, nothing),
-    (:fix_units_on, nothing),
+    (:fix_unit_on, nothing),
     (:state_coeff, 0),
     (:stor_state_cap, nothing),
     (:stor_state_min, 0),
