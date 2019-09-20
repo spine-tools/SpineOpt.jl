@@ -191,7 +191,7 @@ function run_spinemodel(
     end
     key_dict,val_dict,new_dict = write_report(m, url_out,key_dict, val_dict, new_dict,true)
     # cleanup && notusing_spinedb(url_in, @__MODULE__)
-    m , key_dict,val_dict,new_dict
+    m
 end
 
 
