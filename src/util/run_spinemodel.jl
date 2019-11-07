@@ -72,42 +72,6 @@ function run_spinemodel(
             generate_time_slice(block_time_slices)
             generate_time_slice_relationships()
         end
-################WIP: to do for all variable not only fix_flow! but also fix_trans, TODO: write to d.b. in the end
-#### flow variable:
-        if !isempty(res_flow)
-            for ((u,n,c,d) , result_values) in pack_trailing_dims(SpineModel.value(res_flow))
-                if isempty(result_values) # check if there's actually results for this variable
-                    continue
-                else
-                    filter!(x -> x[1].t in block_time_slices[Object("DA_quarterly-hours_initial_condition")],result_values)
-                    update!(fix_flow, (unit=u, node =n , direction =d), result_values)
-                end #if
-            end #for
-        end # if !isempty
-#### trans variable:
-        if !isempty(res_trans)
-                for ((conn,n,c,d) , result_values) in pack_trailing_dims(SpineModel.value(res_trans))
-                    if isempty(result_values) # check if there's actually results for this variable
-                        continue
-                    else
-                        filter!(x -> x[1].t in block_time_slices[Object("DA_quarterly-hours_initial_condition")],result_values)
-                        update!(fix_trans, (connection=conn, node =n , direction =d), result_values)
-                    end #if
-             end #for
-        end # end if isempty
-
-#### units_on variable:
-        if !isempty(res_units_on)
-                for ((u,) , result_values) in pack_trailing_dims(SpineModel.value(res_units_on))
-                    if isempty(result_values) # check if there's actually results for this variable
-                        continue
-                    else
-                        filter!(x -> x[1].t in block_time_slices[Object("DA_quarterly-hours_initial_condition")],result_values)
-                        update!(fix_unit_on, (fix=Object("fix"), unit =u), result_values)
-                        @show typeof(result_values)
-                    end #if
-             end #for
-        end # end if isempty
         printstyled("Initializing model...\n"; bold=true)
         @time begin
             global m = Model(with_optimizer(optimizer))
