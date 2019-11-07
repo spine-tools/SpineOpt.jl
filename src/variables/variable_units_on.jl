@@ -45,7 +45,7 @@ function variable_units_on(m::Model)
         for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :no_online_variable
     )
     m.ext[:variables][:fix_units_on] = Dict{KeyType,Any}(
-        (unit=u, t=t) => fix_unit_on(fix=Object("fix"),unit=u, t=t;_optimize=false) for (u, t) in fix_units_on_indices()
+        (unit=u, t=t) => fix_unit_on(fix=Object("fix"), unit=u, t=t) for (u, t) in fix_units_on_indices()
     )
     m.ext[:variables][:units_on] = merge(
         m.ext[:variables][:integer_units_on],
@@ -78,7 +78,7 @@ function var_units_on_indices(;unit=anything, t=anything, fix=Object("fix"))
         (unit=u, t=t_)
         for u in intersect(SpineModel.unit(), unit)
         for t_ in t_highest_resolution(unique(x.t for x in flow_indices(unit=u, t=t)))
-            if (!((fix=fix, unit=u) in indices(fix_unit_on;_optimize=false))) || (fix_unit_on(fix=fix,unit=u, t=t_;_optimize=false) == nothing)
+        if fix_unit_on(fix=fix, unit=u, t=t_, _strict=false) === nothing
     ]
 end
 
@@ -88,12 +88,12 @@ end
 A list of `NamedTuple`s corresponding to *fixed* indices of the `units_on` variable.
 The keyword arguments act as filters for each dimension.
 """
-function fix_units_on_indices(;unit=anything, fix=Object("fix"),t=anything)
+function fix_units_on_indices(;unit=anything, t=anything, fix=Object("fix"))
     unit = expand_unit_group(unit)
     [
         (unit=u, t=t_)
-        for (f,u) in indices(fix_unit_on;fix=fix,unit=unit, _optimize=false)
+        for (f, u) in indices(fix_unit_on; fix=fix, unit=unit)
         for t_ in time_slice(t=t)
-        if fix_unit_on(fix=f,unit=u, t=t_;_optimize=false) != nothing
+        if fix_unit_on(fix=f, unit=u, t=t_) != nothing
     ]
 end
