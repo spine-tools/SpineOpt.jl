@@ -66,6 +66,7 @@ const object_classes = [
     :node,
     :temporal_block,
     :rolling,
+    :model,
 ]
 const relationship_classes = [
     :unit__node__direction__temporal_block,
@@ -89,6 +90,12 @@ const relationship_classes = [
     :report__output,
 ]
 const parameters = [
+    (:model_start, nothing),
+    (:model_end, nothing),
+    (:roll_forward, nothing),
+    (:block_start, nothing),
+    (:block_end, nothing),
+    (:resolution, nothing),
     (:fom_cost, nothing),
     (:start_up_cost, nothing),
     (:shut_down_cost, nothing),
@@ -96,9 +103,6 @@ const parameters = [
     (:avail_factor, nothing),
     (:min_down_time, nothing),
     (:min_up_time, nothing),
-    (:start_datetime, nothing),
-    (:end_datetime, nothing),
-    (:time_slice_duration, nothing),
     (:demand, nothing),
     (:online_variable_type, nothing),
     (:fix_unit_on, nothing),

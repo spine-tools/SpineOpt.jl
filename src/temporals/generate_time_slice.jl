@@ -85,139 +85,76 @@ function (h::ToTimeSlice)(t::DateTime...)
 end
 
 """
-    block_time_slices()
+    rolling_windows()
+
+An iterator over tuples of start and end time for each rolling window.
+"""
+function rolling_windows()
+    instance = first(model())
+    m_start = model_start(model=instance)
+    m_end = model_end(model=instance)
+    m_roll_forward = roll_forward(model=instance, _strict=false)
+    m_roll_forward === nothing && return ((m_start, m_end),)
+    ticks = m_start:m_roll_forward:m_end
+    zip(ticks[1:end - 1], ticks[2:end])
+end
+
+# Adjuster functions, in case blocks specify their own start and end
+adjusted_start(window_start, window_end, ::Nothing) = window_start
+adjusted_start(window_start, window_end, blk_start::Period) = min(window_start + blk_start, window_end)
+adjusted_start(window_start, window_end, blk_start::DateTime) = max(window_start, blk_start)
+
+adjusted_end(blk_start, window_end, ::Nothing) = window_end
+adjusted_end(blk_start, window_end, blk_end::Period) = min(window_end, blk_start + blk_end)
+adjusted_end(blk_start, window_end, blk_end::DateTime) = min(window_end, blk_end)
+
+
+"""
+    time_slices_per_block(window_start, window_end)
 
 A `Dict` mapping temporal blocks to a sorted `Array` of `TimeSlice`s in that block.
 """
-function block_time_slices()
-    result = Dict{Object,Array{TimeSlice,1}}()
+function block_time_slices(window_start, window_end)
+    d = Dict{Object,Array{TimeSlice,1}}()
     for blk in temporal_block()
         time_slices = Array{TimeSlice,1}()
-        temp_block_start = start_datetime(temporal_block=blk)
-        temp_block_end = end_datetime(temporal_block=blk)
-        time_slice_start = temp_block_start
+        blk_spec_start = block_start(temporal_block=blk, _strict=false)
+        blk_spec_end = block_end(temporal_block=blk, _strict=false)
+        blk_start = adjusted_start(window_start, window_end, blk_spec_start)
+        blk_end = adjusted_end(blk_start, window_end, blk_spec_end)
+        time_slice_start = blk_start
         i = 1
-        while time_slice_start < temp_block_end
-            duration = time_slice_duration(temporal_block=blk, i=i)
+        while time_slice_start < blk_end
+            duration = resolution(temporal_block=blk, i=i)
             time_slice_end = time_slice_start + duration
-            if time_slice_end > temp_block_end
-                time_slice_end = temp_block_end
+            if time_slice_end > blk_end
+                time_slice_end = blk_end
                 @warn(
                     """
-                    the duration of the last time slice of temporal block $blk has been reduced
-                    to respect the specified end time
+                    the last time slice of temporal block $blk has been cut to fit within the optimisation window
                     """
                 )
             end
             push!(time_slices, TimeSlice(time_slice_start, time_slice_end))
-            # Prepare for next iter
             time_slice_start = time_slice_end
             i += 1
         end
-        result[blk] = time_slices
+        d[blk] = time_slices
     end
-    result
+    d
 end
 
 """
-    block_time_slices_split(rolling=:default)
-
-Like [`block_time_slices()`](@ref) but split among 'windows' in the given rolling object.
-"""
-function window_block_time_slices(rolling=nothing)
-    windows = TimeSlice[]
-    if rolling != nothing
-        # Compute `windows` and `initial_condition_windows`
-        initial_condition_windows = TimeSlice[]
-        horizon_start = horizon_start_datetime(rolling=rolling)
-        horizon_init_cond_start = horizon_start - initial_condition_duration(rolling=rolling, i=1)
-        horizon_end = horizon_end_datetime(rolling=rolling)
-        window_start = horizon_start
-        i = 1
-        while window_start < horizon_end
-            window_dur = rolling_window_duration(rolling=rolling, i=i)
-            initial_condition_dur = initial_condition_duration(rolling=rolling, i=i)
-            reoptimization_freq = reoptimization_frequency(rolling=rolling, i=i)
-            window_end = window_start + window_dur
-            if window_end > horizon_end
-                window_end = horizon_end
-            end
-            initial_condition_start = window_start - initial_condition_dur
-            push!(windows, TimeSlice(window_start, window_end))
-            push!(initial_condition_windows, TimeSlice(initial_condition_start, window_start))
-            window_start += reoptimization_freq
-            i += 1
-        end
-        # Map each minute in the horizon to the indexes of windows defined over that minute.
-        # This is used below to allocate time slices to windows
-        window_map = [Int64[] for i in 1:Minute(horizon_end - horizon_start).value]
-        for (ind, window) in enumerate(windows)
-            first_minute = Minute(start(window) - horizon_start).value + 1
-            last_minute = Minute(end_(window) - horizon_start).value
-            push!.(window_map[first_minute:last_minute], ind)
-        end
-        # Repeat the above, now for initial condition windows
-        init_cond_window_map = [Int64[] for i in 1:Minute(horizon_end - horizon_init_cond_start).value]
-        for (ind, initial_condition_window) in enumerate(initial_condition_windows)
-            first_minute = Minute(start(initial_condition_window) - horizon_init_cond_start).value + 1
-            last_minute = Minute(end_(initial_condition_window) - horizon_init_cond_start).value
-            push!.(init_cond_window_map[first_minute:last_minute], ind)
-        end
-    end
-    if isempty(windows)
-        # No windows, can't do any split
-        [block_time_slices()]
-    else
-        # Do split. Basically we go through all blocks and time slices and allocate them
-        # to the appropriate windows
-        window_block_time_slices = [Dict{Object,Array{TimeSlice,1}}() for i in 1:length(windows)]
-        for (block, time_slices) in block_time_slices()
-            # We create a new block to put time slices in the initial condition window,
-            # because we don't want to write constraints for these time slices.
-            # (for instance, look at `constraint_nodal_balance`).
-            # Time slices in the initial condition zone are just needed
-            # so that variables can be fixed (using `fix_flow` and friends)
-            # TODO: Fix name ambiguity
-            init_cond_blk = Object(Symbol(block.name, "_initial_condition"))
-            for t in time_slices
-                # Translate the time slice into minutes since the beginning of the horizon,
-                # and then look at the window map we created above to find out the windows where it belongs
-                first_minute = max(1, Minute(start(t) - horizon_start).value + 1)
-                last_minute = min(length(window_map), Minute(end_(t) - horizon_start).value)
-                window_indexes = unique(Iterators.flatten(window_map[first_minute:last_minute]))
-                for ind in window_indexes
-                    window = windows[ind]
-                    # Adjust time slice to fit in the window
-                    t_start = max(start(window), start(t))
-                    t_end = min(end_(window), end_(t))
-                    push!(get!(window_block_time_slices[ind], block, TimeSlice[]), TimeSlice(t_start, t_end))
-                end
-                # Repeat the above, now for initial condition windows
-                first_minute = max(1, Minute(start(t) - horizon_init_cond_start).value + 1)
-                last_minute = min(length(init_cond_window_map), Minute(end_(t) - horizon_init_cond_start).value)
-                window_indexes = unique(Iterators.flatten(init_cond_window_map[first_minute:last_minute]))
-                for ind in window_indexes
-                    initial_condition_window = initial_condition_windows[ind]
-                    t_start = max(start(initial_condition_window), start(t))
-                    t_end = min(end_(initial_condition_window), end_(t))
-                    push!(get!(window_block_time_slices[ind], init_cond_blk, TimeSlice[]), TimeSlice(t_start, t_end))
-                end
-            end
-        end
-        window_block_time_slices
-    end
-end
-
-"""
-    generate_time_slice(block_time_slices::Dict{Object,Array{TimeSlice,1}})
+    generate_time_slice(window_start, window_end)
 
 Generate and export a convenience functor called `time_slice`, that can be used to retrieve
-time slices given by `block_time_slices`. See [@TimeSliceSet()](@ref).
+time slices in the model between `window_start` and `window_end`. See [@TimeSliceSet()](@ref).
 """
-function generate_time_slice(block_time_slices)
+function generate_time_slice(window_start, window_end)
+    blk_time_slices = block_time_slices(window_start, window_end)
     # Invert dictionary
     time_slice_blocks = Dict{TimeSlice,Array{Object,1}}()
-    for (blk, time_slices) in block_time_slices
+    for (blk, time_slices) in blk_time_slices
         for t in time_slices
             push!(get!(time_slice_blocks, t, Array{Object,1}()), blk)
         end
@@ -225,7 +162,7 @@ function generate_time_slice(block_time_slices)
     # Generate full time slices (ie having block information) and time slice map
     block_full_time_slices = Dict{Object,Array{TimeSlice,1}}()
     block_time_slice_map = Dict{Object,Array{Int64,1}}()
-    for (blk, time_slices) in block_time_slices
+    for (blk, time_slices) in blk_time_slices
         temp_block_start = start(first(time_slices))
         temp_block_end = end_(last(time_slices))
         full_time_slices = Array{TimeSlice,1}()
@@ -242,7 +179,7 @@ function generate_time_slice(block_time_slices)
         block_time_slice_map[blk] = time_slice_map
     end
     all_time_slices = sort(unique(t for v in values(block_full_time_slices) for t in v))
-    # Create and export the function like object
+    # Create and export the function-like objects
     time_slice = TimeSliceSet(all_time_slices, block_full_time_slices)
     to_time_slice = ToTimeSlice(block_full_time_slices, block_time_slice_map)
     @eval begin

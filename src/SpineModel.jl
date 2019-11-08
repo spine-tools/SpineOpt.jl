@@ -92,7 +92,7 @@ export constraint_min_up_time
 export constraint_min_down_time
 export constraint_unit_state_transition
 
-# Creating time_slices
+export rolling_windows
 export generate_time_slice
 export generate_time_slice_relationships
 

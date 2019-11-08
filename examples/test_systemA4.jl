@@ -44,7 +44,7 @@ function constraint_stor_cyclic(m::Model)
 end
 
 # Run the model from the database
-db_url = "sqlite:///$(@__DIR__)/data/testsystemA4.sqlite"
+db_url = "sqlite:///$(@__DIR__)/data/DataStoreA4.sqlite"
 m = try
     run_spinemodel(db_url; optimizer=Gurobi.Optimizer, cleanup=false, extend=m->constraint_stor_cyclic(m))
 catch

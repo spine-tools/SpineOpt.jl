@@ -22,8 +22,8 @@
 Run the Spine model from `url` and write report to the same `url`.
 Keyword arguments have the same purpose as for [`run_spinemodel`](@ref).
 """
-function run_spinemodel(url::String; optimizer=Cbc.Optimizer, cleanup=true, extend=m -> nothing, rolling=nothing)
-    run_spinemodel(url, url; optimizer=optimizer, cleanup=cleanup, extend=extend, rolling=rolling)
+function run_spinemodel(url::String; optimizer=Cbc.Optimizer, cleanup=true, extend=m -> nothing)
+    run_spinemodel(url, url; optimizer=optimizer, cleanup=cleanup, extend=extend)
 end
 
 """
@@ -37,39 +37,26 @@ A new Spine database is created at `url_out` if it doesn't exist.
 
 **`optimizer=Cbc.Optimizer`** is the constructor of the optimizer used for building and solving the model.
 
-**`cleanup=true`** tells [`run_spinemodel`](@ref) whether or not convenience function callables should be
+**`cleanup=true`** tells [`run_spinemodel`](@ref) whether or not convenience functors should be
 set to `nothing` after completion.
 
 **`extend=m -> nothing`** is a function for extending the model. [`run_spinemodel`](@ref) calls this function with
 the internal `JuMP.Model` object before calling `JuMP.optimize!`.
-
-**`rolling=nothing`** is the name of a rolling object.
 """
 function run_spinemodel(
         url_in::String,
         url_out::String;
         optimizer=Cbc.Optimizer,
         cleanup=true,
-        extend=m -> nothing,
-        rolling=nothing)
+        extend=m->nothing)
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
-    res_flow = []
-    res_trans =[]
-    res_units_on = []
-    key_dict = Dict()
-    val_dict = Dict()
-    new_dict = Dict()
-    for (rpt, out) in report__output()
-        key_dict[out.name] = []
-        val_dict[out.name] = []
-        new_dict[out.name] = []
-    end
-    for (k, block_time_slices) in enumerate(window_block_time_slices(rolling))
+    outputs = Dict()
+    for (k, (window_start, window_end)) in enumerate(rolling_windows())
         printstyled("Window $k\n"; bold=true, color=:underline)
         printstyled("Creating temporal structure...\n"; bold=true)
         @time begin
-            generate_time_slice(block_time_slices)
+            generate_time_slice(window_start, window_end)
             generate_time_slice_relationships()
         end
         printstyled("Initializing model...\n"; bold=true)
@@ -140,88 +127,59 @@ function run_spinemodel(
         printstyled("Solving model...\n"; bold=true)
         @time optimize!(m)
         status = termination_status(m)
-        if status == MOI.OPTIMAL && k<2
-            println("Optimal solution found")
-            println("Objective function value: $(objective_value(m))")
-            printstyled("Writing report...\n"; bold=true)
-            key_dict,val_dict,new_dict = write_report(m, url_out,key_dict, val_dict, new_dict,true)
-        else
-            break
-        end
-        printstyled("Done.\n"; bold=true)
-        res_flow = get(m.ext[:variables], Object("flow").name, nothing) # this is required for the enxt loop
-        res_trans = get(m.ext[:variables], Object("trans").name, nothing) # this is required for the enxt loop
-        res_units_on = get(m.ext[:variables], Object("units_on").name, nothing) # this is required for the enxt loop
+        status != MOI.OPTIMAL && break
+        println("Optimal solution found")
+        println("Objective function value: $(objective_value(m))")
+        save_outputs!(outputs, m)
     end
-    key_dict,val_dict,new_dict = write_report(m, url_out,key_dict, val_dict, new_dict,true)
+    printstyled("Writing report...\n"; bold=true)
     # cleanup && notusing_spinedb(url_in, @__MODULE__)
+    write_report(outputs, url_out)
     m
 end
 
+"""
+    save_outputs!(outputs, m)
 
-function write_report(m, default_url, key_dict, val_dict, new_dict,final) ####### always have a look -> these value dicts will need a key to identify out put variable...
-    reports = Dict()
-    for (rpt, out) in report__output()
+Update keys in `outputs` with corresponding values from `m.ext[:variables]`
+"""
+function save_outputs!(outputs, m)
+    for out in output()
         out_var = get(m.ext[:variables], out.name, nothing)
         if out_var === nothing
-            @warn "can't find output '$(out.name)'"
+            @warn "can't find outputs for '$(out.name)'"
+            continue
+        end
+        new_value = SpineModel.value(out_var)
+        existing_value = get!(outputs, out.name, Dict{NamedTuple,Any}())
+        merge!(existing_value, new_value)
+    end
+end
+
+
+function write_report(outputs, default_url)
+    reports = Dict()
+    for (rpt, out) in report__output()
+        output_value = get(outputs, out.name, nothing)
+        if output_value === nothing
+            @warn "can't find outputs for '$(out.name)'"
             continue
         end
         url = output_db_url(report=rpt)
         url === nothing && (url = default_url)
         url_reports = get!(reports, url, Dict())
-        out_parameters = get!(url_reports, rpt.name, Dict())
-        out_parameters[out.name] = d = Dict()
-        # resolve marge:
-        # for (key, val) in pack_trailing_dims(value(out_var))
-        #     inds, vals = zip(val...)
-        #     d[key] = TimeSeries(collect(inds), collect(vals), false, false)
-        for (key, val) in pack_trailing_dims(SpineModel.value(out_var)) ### key: relationship (u,n,c,d); val: Array of tuples as in (t,value)
-            # if key in key_dict[out.name] ### for the case that there is already the key existing/ rel already in output vars
-            pos = findfirst(x -> x == key, key_dict[out.name]) ### look up position
-            if pos != nothing
-                for i = 1:length(val) ### go through all results of this run (for this relationship)
-                    was_found = false
-                    for k = 1:length(val_dict[out.name][pos]) ### go through all already existing results
-                         if first(val[i]).t == (first(val_dict[out.name][pos][k]).t) ### if there is already a value for this timeslice
-                             val_dict[out.name][pos][k] = val[i] ### reassign to new value
-                             was_found = true
-                        end
-                    end
-                    if !was_found
-                        push!(val_dict[out.name][pos],val[i]) ### else push complet results for this relitonhsip
-                    end
-                end
-            else ## rel does not exist yet, so push to dict
-                push!(key_dict[out.name],key)
-                push!(val_dict[out.name],val)
-            end
-        end
-        new_dict[out.name] = []
-        for i = 1:length(val_dict[out.name])
-            push!(new_dict[out.name],(key_dict[out.name][i],val_dict[out.name][i]))
-        end ### rather ineffieceint, does the job for now
-        if final == true
-            for (key, val) in new_dict[out.name]
-                inds_dict = Array{NamedTuple{(:t,),Tuple{TimeSlice}},1}()
-                vals_dict= []
-                for j = 1:length(val)
-                    push!(vals_dict,last(val[j]))
-                    push!(inds_dict,val[j][1])
-                end
-                    TimeSeries(inds_dict, vals_dict, false, false)
-                    d[key] = TimeSeries(inds_dict, vals_dict, false, false)
-            end ### write results to database
+        rpt = get!(url_reports, rpt.name, Dict())
+        d = rpt[out.name] = Dict()
+        for (key, val) in pack_trailing_dims(output_value)
+            inds, vals = zip(val...)
+            d[key] = TimeSeries(collect(inds), collect(vals), false, false)
         end
     end
-    if final == true
-        for (url, url_reports) in reports
-            for (report, out_parameters) in url_reports
-                write_parameters(out_parameters, url; report=string(report))
-            end
+    for (url, url_reports) in reports
+        for (rpt, output_params) in url_reports
+            write_parameters(output_params, url; report=string(rpt))
         end
     end
-    key_dict,val_dict,new_dict
 end
 
 
