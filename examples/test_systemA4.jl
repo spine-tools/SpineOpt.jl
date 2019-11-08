@@ -44,11 +44,12 @@ function constraint_stor_cyclic(m::Model)
 end
 
 # Run the model from the database
-db_url = "sqlite:///$(@__DIR__)/data/DataStoreA4.sqlite"
+url_in = "sqlite:///$(@__DIR__)/data/test_systemA4.sqlite"
+url_out = "sqlite:///$(@__DIR__)/data/test_systemA4_out.sqlite"
 m = try
-    run_spinemodel(db_url; optimizer=Gurobi.Optimizer, cleanup=false, extend=m->constraint_stor_cyclic(m))
+    run_spinemodel(url_in, url_out; optimizer=Gurobi.Optimizer, cleanup=false, extend=m->constraint_stor_cyclic(m))
 catch
-    run_spinemodel(db_url; optimizer=Cbc.Optimizer, cleanup=false, extend=m->constraint_stor_cyclic(m))
+    run_spinemodel(url_in, url_out; optimizer=Cbc.Optimizer, cleanup=false, extend=m->constraint_stor_cyclic(m))
 end
 
 # Show active variables and constraints

@@ -1,11 +1,8 @@
 using Revise
 using SpineModel
-using SpineInterface
-using JuMP
-using Cbc
 
-db_url_in = "sqlite:////home/manuelma/Codes/spine/toolbox/projects/case_study_a5/input/input.sqlite"
-db_url_out = "sqlite:////home/manuelma/Codes/spine/toolbox/projects/case_study_a5/output/output.sqlite"
+db_url_in = "sqlite:///$(@__DIR__)/data/test_systemA5.sqlite"
+db_url_out = "sqlite:///$(@__DIR__)/data/test_systemA5_out.sqlite"
 m = run_spinemodel(db_url_in, db_url_out; cleanup=false)
 
 # TODO: add the 'second-segment' unit
