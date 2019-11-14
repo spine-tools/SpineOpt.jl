@@ -162,6 +162,9 @@ function generate_time_slice(window_start, window_end)
     # Generate full time slices (ie having block information) and time slice map
     block_full_time_slices = Dict{Object,Array{TimeSlice,1}}()
     block_time_slice_map = Dict{Object,Array{Int64,1}}()
+    instance = first(model())
+    d = Dict(:minute => Minute, :hour => Hour)
+    dur_unit = get(d, duration_unit(model=instance, _strict=false), Minute)
     for (blk, time_slices) in blk_time_slices
         temp_block_start = start(first(time_slices))
         temp_block_end = end_(last(time_slices))
@@ -169,7 +172,7 @@ function generate_time_slice(window_start, window_end)
         time_slice_map = Array{Int64,1}(undef, Minute(temp_block_end - temp_block_start).value)
         for (ind, t) in enumerate(time_slices)
             blocks = time_slice_blocks[t]
-            push!(full_time_slices, TimeSlice(start(t), end_(t), blocks...))
+            push!(full_time_slices, TimeSlice(start(t), end_(t), blocks...; duration_unit=dur_unit))
             # Map each minute in the block to the corresponding time slice index (used by `ToTimeSlice`)
             first_minute = Minute(start(t) - temp_block_start).value + 1
             last_minute = Minute(end_(t) - temp_block_start).value

@@ -92,6 +92,7 @@ const relationship_classes = [
 const parameters = [
     (:model_start, nothing),
     (:model_end, nothing),
+    (:duration_unit, :minute),
     (:roll_forward, nothing),
     (:block_start, nothing),
     (:block_end, nothing),
@@ -106,7 +107,7 @@ const parameters = [
     (:demand, nothing),
     (:online_variable_type, nothing),
     (:fix_unit_on, nothing),
-    (:state_coeff, 0),
+    (:state_coeff, 1),
     (:stor_state_cap, nothing),
     (:stor_state_min, 0),
     (:frac_state_loss, 0),
