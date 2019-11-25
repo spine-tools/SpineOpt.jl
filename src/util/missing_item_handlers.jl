@@ -154,6 +154,7 @@ const parameters = [
     (:reoptimization_frequency, 0),
     (:rolling_window_duration, 0),
     (:fuel_cost, nothing),
+    (:trans_delay, Second(0)),
 ]
 for name in [object_classes; relationship_classes]
     quoted_name = Expr(:quote, name)
