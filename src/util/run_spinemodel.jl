@@ -130,7 +130,9 @@ function run_spinemodel(
         status != MOI.OPTIMAL && break
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
-        save_outputs!(outputs, m)
+        res = results(m)
+        save_outputs!(outputs, res)
+        fix_parameters(res)
     end
     printstyled("Writing report...\n"; bold=true)
     # cleanup && notusing_spinedb(url_in, @__MODULE__)
@@ -138,21 +140,46 @@ function run_spinemodel(
     m
 end
 
-"""
-    save_outputs!(outputs, m)
 
-Update keys in `outputs` with corresponding values from `m.ext[:variables]`
+results(m) = Dict(var => SpineModel.value(val) for (var, val) in m.ext[:variables])
+
 """
-function save_outputs!(outputs, m)
+    save_outputs!(outputs, results)
+
+Update `outputs` with values from `results`
+"""
+function save_outputs!(outputs, results)
     for out in output()
-        out_var = get(m.ext[:variables], out.name, nothing)
-        if out_var === nothing
-            @warn "can't find outputs for '$(out.name)'"
+        value = get(results, out.name, nothing)
+        if value === nothing
+            @warn "can't find results for '$(out.name)'"
             continue
         end
-        new_value = SpineModel.value(out_var)
         existing_value = get!(outputs, out.name, Dict{NamedTuple,Any}())
-        merge!(existing_value, new_value)
+        merge!(existing_value, value)
+    end
+end
+
+"""
+    fix_parameters(results)
+
+Fix values of parameters according to `results`.
+"""
+function fix_parameters(results)
+    fix_param_lookup = Dict(
+        :flow => fix_flow,
+        :trans => fix_trans,
+        :stor_state => fix_stor_state,
+        :units_on => fix_units_on,
+    )
+    for (var, value) in results
+        fix_param = get(fix_param_lookup, var, nothing)
+        fix_param === nothing && continue
+        for (key, val) in pack_trailing_dims(value)
+            inds, vals = zip(val...)
+            ts = TimeSeries(collect(inds), collect(vals), false, false)
+            @show append!(fix_param, ts; key...)
+        end
     end
 end
 
@@ -181,7 +208,6 @@ function write_report(outputs, default_url)
         end
     end
 end
-
 
 
 """
@@ -215,6 +241,6 @@ value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => v isa JuMP.VariableRef ? JuMP
 """
     formulation(d::Dict)
 
-An equivalent dictionary where `JuMP.ConstraintRef` values are replaced by a `String` showing their formulation.
+An equivalent dictionary where `JuMP.ConstraintRef` values are replaced by their `String` formulation.
 """
 formulation(d::Dict{K,JuMP.ConstraintRef}) where {K} = Dict{K,Any}(k => sprint(show, v) for (k, v) in d)

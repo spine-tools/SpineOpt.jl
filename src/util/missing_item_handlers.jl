@@ -57,6 +57,10 @@ function SpineInterface.indices(f::MissingItemHandler; kwargs...)
     ()
 end
 
+function Base.append!(f::MissingItemHandler, value; kwargs...)
+    f
+end
+
 const object_classes = [
     :direction,
     :unit,
