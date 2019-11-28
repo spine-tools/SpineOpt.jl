@@ -25,7 +25,11 @@
 """
 function variable_units_shut_down(m::Model)
     m.ext[:variables][:units_shut_down] = Dict(
-        (unit=u, t=t) => @variable(m, base_name="units_shut_down[$u, $(t.JuMP_name)]", integer=true, lower_bound=0)
+        (unit=u, t=t) => @variable(m, base_name="units_shut_down[$u, $(t.JuMP_name)]",
+            integer = online_variable_type(unit=u) == :integer_online_variable,
+            binary = online_variable_type(unit=u) == :binary_online_variable,
+            lower_bound=0
+            )
         for (u, t) in units_on_indices()
     )
 end
