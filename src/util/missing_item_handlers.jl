@@ -58,6 +58,10 @@ function SpineInterface.indices(f::MissingItemHandler; kwargs...)
 end
 
 function Base.append!(f::MissingItemHandler, value; kwargs...)
+    if !f.handled[]
+        @warn "`$(f.name)` is missing"
+        f.handled[] = true
+    end
     f
 end
 
@@ -73,9 +77,10 @@ const object_classes = [
     :model,
 ]
 const relationship_classes = [
-    :unit__node__direction__temporal_block,
-    :connection__node__direction__temporal_block,
+    :unit__node__direction,
+    :connection__node__direction,
     :node__commodity,
+    :node__temporal_block,
     :unit_group__unit,
     :commodity_group__commodity,
     :node_group__node,
@@ -84,9 +89,7 @@ const relationship_classes = [
     :unit__commodity,
     :unit__commodity__direction,
     :unit__commodity__commodity,
-    :connection__node__direction,
     :connection__node__node,
-    :node__temporal_block,
     :storage__unit,
     :storage__connection,
     :storage__commodity,
@@ -110,7 +113,6 @@ const parameters = [
     (:min_up_time, nothing),
     (:demand, nothing),
     (:online_variable_type, nothing),
-    (:fix_unit_on, nothing),
     (:state_coeff, 1),
     (:stor_state_cap, nothing),
     (:stor_state_min, 0),
@@ -151,6 +153,7 @@ const parameters = [
     (:fix_flow, nothing),
     (:fix_trans, nothing),
     (:fix_stor_state, nothing),
+    (:fix_units_on, nothing),
     (:output_db_url, nothing),
     (:horizon_start_datetime, 0),
     (:horizon_end_datetime, 0),

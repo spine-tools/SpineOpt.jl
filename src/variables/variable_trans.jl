@@ -78,12 +78,13 @@ function var_trans_indices(;commodity=anything, node=anything, connection=anythi
     commodity = expand_commodity_group(commodity)
     [
         (connection=conn, node=n, commodity=c, direction=d, t=t1)
-        for (conn, n, d, blk) in connection__node__direction__temporal_block(
-            node=node, connection=connection, direction=direction, _compact=false
+        for (conn, n, d) in connection__node__direction(
+            connection=connection, node=node, direction=direction, _compact=false
         )
-        for t1 in time_slice(temporal_block=blk, t=t)
+        for t_blk in node__temporal_block(node=n)
+        for t1 in time_slice(temporal_block=t_blk, t=t)
         if fix_trans(connection=conn, node=n, direction=d, t=t1, _strict=false) === nothing
-        for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
+        for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
     ]
 end
 
@@ -107,6 +108,6 @@ function fix_trans_indices(;commodity=anything, node=anything, connection=anythi
         for (conn, n, d) in indices(fix_trans; connection=connection, node=node, direction=direction)
         for t_ in time_slice(t=t)
         if fix_trans(connection=conn, node=n, direction=d, t=t_) != nothing
-        for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
+        for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
     ]
 end

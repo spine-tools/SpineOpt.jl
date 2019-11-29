@@ -80,12 +80,11 @@ function var_flow_indices(;commodity=anything, node=anything, unit=anything, dir
     commodity = expand_commodity_group(commodity)
     [
         (unit=u, node=n, commodity=c, direction=d, t=t1)
-        for (u, n, d, blk) in unit__node__direction__temporal_block(
-            node=node, unit=unit, direction=direction, _compact=false
-        )
-        for t1 in time_slice(temporal_block=blk, t=t)
+        for (u, n, d) in unit__node__direction(unit=unit, node=node, direction=direction, _compact=false)
+        for t_blk in node__temporal_block(node=n)
+        for t1 in time_slice(temporal_block=t_blk, t=t)
         if fix_flow(unit=u, node=n, direction=d, t=t1, _strict=false) === nothing
-        for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
+        for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
     ]
 end
 
@@ -115,6 +114,6 @@ function fix_flow_indices(;commodity=anything, node=anything, unit=anything, dir
         for (u, n, d) in indices(fix_flow; unit=unit, node=node, direction=direction)
         for t_ in time_slice(t=t)
         if fix_flow(unit=u, node=n, direction=d, t=t_) != nothing
-        for (n_, c) in node__commodity(commodity=commodity, node=n, _compact=false)
+        for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
     ]
 end

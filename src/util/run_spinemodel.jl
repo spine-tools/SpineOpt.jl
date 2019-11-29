@@ -130,13 +130,16 @@ function run_spinemodel(
         status != MOI.OPTIMAL && break
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
-        res = results(m)
-        save_outputs!(outputs, res)
-        fix_parameters(res)
+        printstyled("Saving results...\n"; bold=true)
+        @time begin
+            res = results(m)
+            save_outputs!(outputs, res)
+            fix_parameters(res)
+        end
     end
     printstyled("Writing report...\n"; bold=true)
     # cleanup && notusing_spinedb(url_in, @__MODULE__)
-    write_report(outputs, url_out)
+    @time write_report(outputs, url_out)
     m
 end
 
@@ -178,7 +181,7 @@ function fix_parameters(results)
         for (key, val) in pack_trailing_dims(value)
             inds, vals = zip(val...)
             ts = TimeSeries(collect(inds), collect(vals), false, false)
-            @show append!(fix_param, ts; key...)
+            append!(fix_param, ts; key...)
         end
     end
 end
