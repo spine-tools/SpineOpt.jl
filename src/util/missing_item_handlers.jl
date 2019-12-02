@@ -75,6 +75,7 @@ const object_classes = [
     :temporal_block,
     :rolling,
     :model,
+    :output,
 ]
 const relationship_classes = [
     :unit__node__direction,
