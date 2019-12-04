@@ -28,6 +28,7 @@ using Dates
 using TimeZones
 using SpineInterface
 using Suppressor
+using NamedTupleTools
 
 # Export utility
 export run_spinemodel

@@ -179,6 +179,7 @@ function fix_parameters(results)
         fix_param = get(fix_param_lookup, var, nothing)
         fix_param === nothing && continue
         for (key, val) in pack_trailing_dims(value)
+            key = NamedTupleTools.delete(key, :commodity)
             inds, vals = zip(val...)
             ts = TimeSeries(collect(inds), collect(vals), false, false)
             append!(fix_param, ts; key...)
