@@ -102,12 +102,12 @@ end
 
 # Adjuster functions, in case blocks specify their own start and end
 adjusted_start(window_start, window_end, ::Nothing) = window_start
-adjusted_start(window_start, window_end, blk_start::Period) = min(window_start + blk_start, window_end)
+adjusted_start(window_start, window_end, blk_start::Period) = window_start + blk_start
 adjusted_start(window_start, window_end, blk_start::DateTime) = max(window_start, blk_start)
 
-adjusted_end(blk_start, window_end, ::Nothing) = window_end
-adjusted_end(blk_start, window_end, blk_end::Period) = max(window_end, blk_start + blk_end)
-adjusted_end(blk_start, window_end, blk_end::DateTime) = max(window_end, blk_end)
+adjusted_end(window_start, window_end, ::Nothing) = window_end
+adjusted_end(window_start, window_end, blk_end::Period) = max(window_end, window_start + blk_end)
+adjusted_end(window_start, window_end, blk_end::DateTime) = max(window_end, blk_end)
 
 
 """
@@ -122,7 +122,7 @@ function block_time_slices(window_start, window_end)
         blk_spec_start = block_start(temporal_block=blk, _strict=false)
         blk_spec_end = block_end(temporal_block=blk, _strict=false)
         blk_start = adjusted_start(window_start, window_end, blk_spec_start)
-        blk_end = adjusted_end(blk_start, window_end, blk_spec_end)
+        blk_end = adjusted_end(window_start, window_end, blk_spec_end)
         time_slice_start = blk_start
         i = 1
         while time_slice_start < blk_end
