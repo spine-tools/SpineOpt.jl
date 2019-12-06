@@ -18,15 +18,14 @@
 #############################################################################
 
 """
-    variable_stor_state(m::Model)
+    create_variable_stor_state!(m::Model)
 
-A `stor_level` variable for each tuple returned by `commodity__stor()`,
-attached to model `m`.
-`stor_level` represents the state of the storage level.
+Add `stor_state` variable to model `m`.
+`stor_state` represents the state of the storage level.
 """
-function variable_stor_state(m::Model)
+function create_variable_stor_state!(m::Model)
     KeyType = NamedTuple{(:storage, :commodity, :t),Tuple{Object,Object,TimeSlice}}
-    m.ext[:variables][:var_stor_state] = Dict{KeyType,Any}(
+    var = Dict{KeyType,Any}(
         (storage=stor, commodity=c, t=t) => @variable(
             m,
             base_name="stor_state[$stor, $c, $(t.JuMP_name)]",
@@ -34,11 +33,18 @@ function variable_stor_state(m::Model)
         )
         for (stor, c, t) in var_stor_state_indices()
     )
-    m.ext[:variables][:fix_stor_state] = Dict{KeyType,Any}(
+    fix = Dict{KeyType,Any}(
         (storage=stor, commodity=c, t=t) => fix_stor_state(storage=stor, t=t)
         for (stor, c, t) in fix_stor_state_indices()
     )
-    m.ext[:variables][:stor_state] = merge(m.ext[:variables][:var_stor_state], m.ext[:variables][:fix_stor_state])
+    merge!(get!(m.ext[:variables], :stor_state, Dict{KeyType,Any}()), var, fix)
+end
+
+function variable_stor_state_value(m::Model)
+    Dict{NamedTuple{(:storage, :commodity, :t),Tuple{Object,Object,TimeSlice}},Any}(
+        (storage=stor, commodity=c, t=t) => value(m.ext[:variables][:stor_state][stor, c, t]) 
+        for (stor, c, t) in var_stor_state_indices()
+    )
 end
 
 

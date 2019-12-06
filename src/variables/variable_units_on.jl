@@ -19,43 +19,31 @@
 
 
 """
-    variable_units_on(m::Model)
+    create_variable_units_on!(m::Model)
 
-Create the `units_on` variable for model `m`.
+Add `units_on` variable for model `m`.
 
 This variable represents the number of online units for a given *unit*
 within a certain *time slice*.
 """
-function variable_units_on(m::Model)
+function create_variable_units_on!(m::Model)
     KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
-    m.ext[:variables][:integer_units_on] = Dict{KeyType,Any}(
+    var = Dict{KeyType,Any}(
         (unit=u, t=t) => @variable(m, base_name="units_on[$u, $(t.JuMP_name)]", integer=true, lower_bound=0)
-        for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :integer_online_variable
+        for (u, t) in var_units_on_indices()
     )
-    m.ext[:variables][:binary_units_on] = Dict{KeyType,Any}(
-        (unit=u, t=t) => @variable(m, base_name="units_on[$u, $(t.JuMP_name)]", binary=true)
-        for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :binary_online_variable
-    )
-    m.ext[:variables][:continuous_units_on] = Dict{KeyType,Any}(
-        (unit=u, t=t) => @variable(m, base_name="units_on[$u, $(t.JuMP_name)]", lower_bound=0)
-        for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :continuous_online_variable
-    )
-    m.ext[:variables][:no_units_on] = Dict{KeyType,Any}(
-        (unit=u, t=t) => @variable(m, base_name="units_on[$u, $(t.JuMP_name)]", lower_bound=1 , upper_bound=1)
-        for (u, t) in var_units_on_indices() if online_variable_type(unit=u) == :no_online_variable
-    )
-    m.ext[:variables][:fix_units_on] = Dict{KeyType,Any}(
+    fix = Dict{KeyType,Any}(
         (unit=u, t=t) => fix_units_on(unit=u, t=t) for (u, t) in fix_units_on_indices()
     )
-    m.ext[:variables][:units_on] = merge(
-        m.ext[:variables][:integer_units_on],
-        m.ext[:variables][:binary_units_on],
-        m.ext[:variables][:continuous_units_on],
-        m.ext[:variables][:no_units_on],
-        m.ext[:variables][:fix_units_on]
-    )
+    merge!(get!(m.ext[:variables], :units_on, Dict{KeyType,Any}()), var, fix)
 end
 
+function variable_units_on_value(m::Model)
+    Dict{NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}},Any}(
+        (unit=u, t=t) => value(m.ext[:variables][:units_on][u, t])
+        for (u, t) in var_units_on_indices()
+    )
+end
 
 """
     units_on_indices(unit=anything, t=anything)

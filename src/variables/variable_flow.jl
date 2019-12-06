@@ -19,28 +19,35 @@
 
 
 """
-    variable_flow(m::Model)
+    create_variable_flow!(m::Model)
 
-Create the `flow` variable for the model `m`.
+Add new `flow` variable to the model `m`.
 
 This variable represents the (average) instantaneous flow of a *commodity*
 between a *node* and a *unit* in a certain *direction*
 and within a certain *time slice*.
 
 """
-function variable_flow(m::Model)
+function create_variable_flow!(m::Model)
     KeyType = NamedTuple{(:unit, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}}
-    m.ext[:variables][:var_flow] = Dict{KeyType,Any}(
+    var = Dict{KeyType,Any}(
         (unit=u, node=n, commodity=c, direction=d, t=t) => @variable(
             m, base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
         )
         for (u, n, c, d, t) in var_flow_indices()
     )
-    m.ext[:variables][:fix_flow] = Dict{KeyType,Any}(
+    fix = Dict{KeyType,Any}(
         (unit=u, node=n, commodity=c, direction=d, t=t) => fix_flow(unit=u, node=n, direction=d, t=t)
         for (u, n, c, d, t) in fix_flow_indices()
     )
-    m.ext[:variables][:flow] = merge(m.ext[:variables][:var_flow], m.ext[:variables][:fix_flow])
+    merge!(get!(m.ext[:variables], :flow, Dict{KeyType,Any}()), var, fix)
+end
+
+function variable_flow_value(m::Model)
+    Dict{NamedTuple{(:unit, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}},Any}(
+        (unit=u, node=n, commodity=c, direction=d, t=t) => value(m.ext[:variables][:flow][u, n, c, d, t]) 
+        for (u, n, c, d, t) in var_flow_indices()
+    )
 end
 
 """
@@ -104,8 +111,8 @@ function fix_flow_indices(;commodity=anything, node=anything, unit=anything, dir
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
     commodity = expand_commodity_group(commodity)
-    # We go through all indices of the `fix_flow` parameter and then through all time slices in the model,
-    # checking if `fix_flow` has a value for that time slice. If yes, then we have a fix flow index.
+    # We go through all indices of the `fix_flow` parameter and then through all time slices in the model.
+    # If `fix_flow` has a value for any of these combinations, then we have a fix flow index.
     # NOTE that the user could specify `fix_flow` for some periods and then don't define
     # any time slice in those periods -- that will obviously be insufficient. They need to specify the
     # parameter value *and* the time slices that go along.

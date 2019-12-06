@@ -19,26 +19,38 @@
 
 
 """
-    variable_trans(m::Model)
+    create_variable_trans!(m::Model)
 
-Create the `trans` variable for model `m`.
+Add new `trans` variable for model `m`.
 
 This variable represents the (average) instantaneous flow of a *commodity* between a *node* and a *connection*
 in a certain *direction* and within a certain *time slice*.
 """
-function variable_trans(m::Model)
+function create_variable_trans!(m::Model)
     KeyType = NamedTuple{(:connection, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}}
-    m.ext[:variables][:var_trans] = Dict{KeyType,Any}(
+    var = Dict{KeyType,Any}(
         (connection=conn, node=n, commodity=c, direction=d, t=t) => @variable(
             m, base_name="trans[$conn, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
         )
         for (conn, n, c, d, t) in var_trans_indices()
     )
-    m.ext[:variables][:fix_trans] = Dict{KeyType,Any}(
-        (connection=conn, node=n, commodity=c, direction=d, t=t) => fix_trans(connection=conn, node=n, direction=d, t=t)
+    fix = Dict{KeyType,Any}(
+        (connection=conn, node=n, commodity=c, direction=d, t=t) => fix_trans(
+            connection=conn, node=n, direction=d, t=t
+        )
         for (conn, n, c, d, t) in fix_trans_indices()
     )
-    m.ext[:variables][:trans] = merge(m.ext[:variables][:var_trans], m.ext[:variables][:fix_trans])
+    merge!(get!(m.ext[:variables], :trans, Dict{KeyType,Any}()), var, fix)
+end
+
+function variable_trans_value(m::Model)
+    KeyType = NamedTuple{(:connection, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}}
+    Dict{KeyType,Any}(
+        (connection=conn, node=n, commodity=c, direction=d, t=t) => value(
+            m.ext[:variables][:trans][conn, n, c, d, t]
+        )
+        for (conn, n, c, d, t) in var_trans_indices()
+    )
 end
 
 
