@@ -29,7 +29,11 @@ within a certain *time slice*.
 function create_variable_units_on!(m::Model)
     KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
     var = Dict{KeyType,Any}(
-        (unit=u, t=t) => @variable(m, base_name="units_on[$u, $(t.JuMP_name)]", integer=true, lower_bound=0)
+        (unit=u, t=t) => @variable(m, base_name="units_on[$u, $(t.JuMP_name)]",
+            integer = online_variable_type(unit=u) == :integer_online_variable,
+            binary = online_variable_type(unit=u) == :binary_online_variable,
+            lower_bound=0
+            )
         for (u, t) in var_units_on_indices()
     )
     fix = Dict{KeyType,Any}(
