@@ -19,11 +19,10 @@
 
 
 """
-    variable_units_available(m::Model)
+    create_variable_units_available!(m::Model)
 
-#TODO: add model descirption here
 """
-function variable_units_available(m::Model)
+function create_variable_units_available!(m::Model)
     m.ext[:variables][:units_available] = Dict(
         (unit=u, t=t) => @variable(m, base_name="units_available[$u, $(t.JuMP_name)]",
             integer = online_variable_type(unit=u) == :integer_online_variable,

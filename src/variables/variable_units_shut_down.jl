@@ -19,11 +19,10 @@
 
 
 """
-    variable_units_shut_down(m::Model)
+    create_variable_units_shut_down!(m::Model)
 
-#TODO: add model descirption here
 """
-function variable_units_shut_down(m::Model)
+function create_variable_units_shut_down!(m::Model)
     m.ext[:variables][:units_shut_down] = Dict(
         (unit=u, t=t) => @variable(m, base_name="units_shut_down[$u, $(t.JuMP_name)]",
             integer = online_variable_type(unit=u) == :integer_online_variable,

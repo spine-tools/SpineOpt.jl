@@ -51,9 +51,11 @@ function run_spinemodel(
         extend=m->nothing)
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
+    m = nothing
     outputs = Dict()
     for (k, (window_start, window_end)) in enumerate(rolling_windows())
         printstyled("Window $k\n"; bold=true, color=:underline)
+        init_conds = variable_values(m)
         printstyled("Creating temporal structure...\n"; bold=true)
         @time begin
             generate_time_slice(window_start, window_end)
@@ -61,18 +63,16 @@ function run_spinemodel(
         end
         printstyled("Initializing model...\n"; bold=true)
         @time begin
-            global m = Model(with_optimizer(optimizer))
-            m.ext[:variables] = Dict{Symbol,Dict}()
+            m = Model(with_optimizer(optimizer))
+            m.ext[:variables] = init_conds
             m.ext[:constraints] = Dict{Symbol,Dict}()
-            # Create decision variables
-            variable_flow(m)
-            variable_units_on(m)
-            variable_units_available(m)
-            variable_units_started_up(m)
-            variable_units_shut_down(m)
-            variable_trans(m)
-            variable_stor_state(m)
-            # Create objective function
+            create_variable_flow!(m)
+            create_variable_units_on!(m)
+            create_variable_units_available!(m)
+            create_variable_units_started_up!(m)
+            create_variable_units_shut_down!(m)
+            create_variable_trans!(m)
+            create_variable_stor_state!(m)
             objective_minimize_total_discounted_costs(m)
         end
         printstyled("Generating constraints...\n"; bold=true)
@@ -131,27 +131,38 @@ function run_spinemodel(
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
         printstyled("Saving results...\n"; bold=true)
-        @time begin
-            res = results(m)
-            save_outputs!(outputs, res)
-            fix_parameters(res)
-        end
+        @time save_outputs!(outputs, m)
     end
     printstyled("Writing report...\n"; bold=true)
-    # cleanup && notusing_spinedb(url_in, @__MODULE__)
+    # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
     @time write_report(outputs, url_out)
     m
 end
 
+"""
+    variable_values(m)
 
-results(m) = Dict(var => SpineModel.value(val) for (var, val) in m.ext[:variables])
+A dictionary mapping variable names to their value in the given model.
+"""
+function variable_values(m::Model)
+    Dict{Symbol,Dict}(
+        :flow => variable_flow_value(m),
+        :trans => variable_trans_value(m),
+        :stor_state => variable_stor_state_value(m),
+        :units_on => variable_units_on_value(m)
+    )
+end
+
+variable_values(::Nothing) = Dict{Symbol,Dict}()
+
 
 """
-    save_outputs!(outputs, results)
+    save_outputs!(outputs, m)
 
-Update `outputs` with values from `results`
+Update `outputs` with values from `m`
 """
-function save_outputs!(outputs, results)
+function save_outputs!(outputs, m)
+    results = Dict(var => SpineModel.value(val) for (var, val) in m.ext[:variables])
     for out in output()
         value = get(results, out.name, nothing)
         if value === nothing
@@ -162,31 +173,6 @@ function save_outputs!(outputs, results)
         merge!(existing_value, value)
     end
 end
-
-"""
-    fix_parameters(results)
-
-Fix values of parameters according to `results`.
-"""
-function fix_parameters(results)
-    fix_param_lookup = Dict(
-        :flow => fix_flow,
-        :trans => fix_trans,
-        :stor_state => fix_stor_state,
-        :units_on => fix_units_on,
-    )
-    for (var, value) in results
-        fix_param = get(fix_param_lookup, var, nothing)
-        fix_param === nothing && continue
-        for (key, val) in pack_trailing_dims(value)
-            key = NamedTupleTools.delete(key, :commodity)
-            inds, vals = zip(val...)
-            ts = TimeSeries(collect(inds), collect(vals), false, false)
-            append!(fix_param, ts; key...)
-        end
-    end
-end
-
 
 function write_report(outputs, default_url)
     reports = Dict()
@@ -240,7 +226,7 @@ end
 
 An equivalent dictionary where `JuMP.VariableRef` values are replaced by their `JuMP.value`.
 """
-value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => v isa JuMP.VariableRef ? JuMP.value(v) : v for (k, v) in d)
+value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => value(v) for (k, v) in d)
 
 """
     formulation(d::Dict)
