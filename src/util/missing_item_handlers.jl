@@ -73,7 +73,6 @@ const object_classes = [
     :commodity,
     :node,
     :temporal_block,
-    :rolling,
     :model,
     :output,
 ]
