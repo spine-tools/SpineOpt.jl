@@ -94,7 +94,7 @@ function var_trans_indices(;commodity=anything, node=anything, connection=anythi
             connection=connection, node=node, direction=direction, _compact=false
         )
         for t_blk in node__temporal_block(node=n)
-        for t1 in time_slice(temporal_block=t_blk, t=t)
+        for t1 in current_time_slice(temporal_block=t_blk, t=t)
         if fix_trans(connection=conn, node=n, direction=d, t=t1, _strict=false) === nothing
         for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
     ]
@@ -118,7 +118,7 @@ function fix_trans_indices(;commodity=anything, node=anything, connection=anythi
     [
         (connection=conn, node=n, commodity=c, direction=d, t=t_)
         for (conn, n, d) in indices(fix_trans; connection=connection, node=node, direction=direction)
-        for t_ in time_slice(t=t)
+        for t_ in current_time_slice(t=t)
         if fix_trans(connection=conn, node=n, direction=d, t=t_) != nothing
         for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
     ]

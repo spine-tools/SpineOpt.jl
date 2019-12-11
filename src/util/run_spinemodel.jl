@@ -52,6 +52,7 @@ function run_spinemodel(
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
     m = nothing
+    initialize_time_slice_history()
     outputs = Dict()
     for (k, (window_start, window_end)) in enumerate(rolling_windows())
         printstyled("Window $k\n"; bold=true, color=:underline)
@@ -136,7 +137,7 @@ function run_spinemodel(
     printstyled("Writing report...\n"; bold=true)
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
     @time write_report(outputs, url_out)
-    m
+    return m
 end
 
 """
@@ -150,6 +151,7 @@ function variable_values(m::Model)
         :trans => variable_trans_value(m),
         :stor_state => variable_stor_state_value(m),
         :units_on => variable_units_on_value(m)
+        # TODO: Add the remaining variables, at least startup/shutdown should be recorded
     )
 end
 

@@ -146,6 +146,22 @@ function block_time_slices(window_start, window_end)
 end
 
 """
+    initialize_time_slice_history()
+
+Initializes the `TimeSlice` history for rolling optimization.
+"""
+function initialize_time_slice_history()
+    empty_history = Array{TimeSlice,1}()
+    block_empty_history = Dict{Object,Array{TimeSlice,1}}()
+    block_empty_history[Object("time_slice_history")] = empty_history
+    time_slice_history = TimeSliceSet(empty_history, block_empty_history)
+    @eval begin
+        time_slice_history = $time_slice_history
+        export time_slice_history
+    end
+end
+
+"""
     generate_time_slice(window_start, window_end)
 
 Generate and export a convenience functor called `time_slice`, that can be used to retrieve
@@ -161,7 +177,8 @@ function generate_time_slice(window_start, window_end)
         end
     end
     # Generate full time slices (ie having block information) and time slice map
-    block_full_time_slices = Dict{Object,Array{TimeSlice,1}}()
+    block_full_time_slices = copy(time_slice_history.block_time_slices)
+    history = first(keys(time_slice_history.block_time_slices))
     block_time_slice_map = Dict{Object,Array{Int64,1}}()
     instance = first(model())
     d = Dict(:minute => Minute, :hour => Hour)
@@ -182,14 +199,24 @@ function generate_time_slice(window_start, window_end)
         block_full_time_slices[blk] = full_time_slices
         block_time_slice_map[blk] = time_slice_map
     end
+    block_current_time_slices = filter(x -> x.first != history, block_full_time_slices)
     all_time_slices = sort(unique(t for v in values(block_full_time_slices) for t in v))
+    current_time_slices = sort(unique(t for v in values(block_current_time_slices) for t in v))
+
     # Create and export the function-like objects
     time_slice = TimeSliceSet(all_time_slices, block_full_time_slices)
+    current_time_slice = TimeSliceSet(current_time_slices, block_current_time_slices)
     to_time_slice = ToTimeSlice(block_full_time_slices, block_time_slice_map)
     @eval begin
         time_slice = $time_slice
         to_time_slice = $to_time_slice
+        current_time_slice = $current_time_slice
         export time_slice
         export to_time_slice
+        export current_time_slice
     end
+    # Update time_slice_history
+    append!(time_slice_history(), filter(x -> x.end_ <= window_end, current_time_slice()))
+    # TODO: Filter away unnecessary history depending on the longest modelled delay.
+    # something like: filter!(x -> x.start <= window_start - longest_delay, time_slice_history)
 end
