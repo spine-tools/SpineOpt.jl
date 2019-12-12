@@ -147,11 +147,13 @@ A dictionary mapping variable names to their value in the given model.
 """
 function variable_values(m::Model)
     Dict{Symbol,Dict}(
-        :flow => variable_flow_value(m),
-        :trans => variable_trans_value(m),
+        #:flow => variable_flow_value(m), # Not included in dynamical constraints. TODO: Relevant for future ramp constraints?
         :stor_state => variable_stor_state_value(m),
-        :units_on => variable_units_on_value(m)
-        # TODO: Add the remaining variables, at least startup/shutdown should be recorded
+        :trans => variable_trans_value(m),
+        #:units_available => variable_units_available_value(m), # Not included in dynamical constraints. TODO: Create if necessary?
+        :units_on => variable_units_on_value(m),
+        :units_shut_down => variable_units_shut_down_value(m),
+        :units_started_up => variable_units_started_up_value(m),
     )
 end
 
