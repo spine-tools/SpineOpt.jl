@@ -132,7 +132,7 @@ function run_spinemodel(
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
         printstyled("Saving results...\n"; bold=true)
-        @time save_outputs!(outputs, m)
+        @time save_outputs!(outputs, m, window_end)
     end
     printstyled("Writing report...\n"; bold=true)
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
@@ -165,7 +165,7 @@ variable_values(::Nothing) = Dict{Symbol,Dict}()
 
 Update `outputs` with values from `m`
 """
-function save_outputs!(outputs, m)
+function save_outputs!(outputs, m, window_end)
     results = Dict(var => SpineModel.value(val) for (var, val) in m.ext[:variables])
     for out in output()
         value = get(results, out.name, nothing)
@@ -173,6 +173,7 @@ function save_outputs!(outputs, m)
             @warn "can't find results for '$(out.name)'"
             continue
         end
+        filter!(x -> x[1].t.start < window_end, value)
         existing_value = get!(outputs, out.name, Dict{NamedTuple,Any}())
         merge!(existing_value, value)
     end
