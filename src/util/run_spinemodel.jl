@@ -174,7 +174,7 @@ function aggregate_demand!(m)
         if isa(demand(node=n), TimeSeries)
             ind = demand(node=n).indexes
             val = demand(node=n).values
-            for t in current_time_slice()
+            for t in current_time_slice() # TODO: Aggregation not dependent on potentially different nodal time structures.
                 t_ind = findall(x -> t.start <= x < t.end_, ind)
                 push!(m.ext[:parameters][:aggregated_demand], (node=n,t=t) => mean(val[t_ind]))
             end
