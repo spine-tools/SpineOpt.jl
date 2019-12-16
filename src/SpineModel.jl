@@ -28,6 +28,7 @@ using Dates
 using TimeZones
 using SpineInterface
 using Suppressor
+using Statistics
 
 # Export utility
 export run_spinemodel
