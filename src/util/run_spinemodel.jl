@@ -220,8 +220,9 @@ function write_report(outputs, default_url)
         rpt = get!(url_reports, rpt.name, Dict())
         d = rpt[out.name] = Dict()
         for (key, val) in pack_trailing_dims(output_value)
-            inds, vals = zip(val...)
-            d[key] = TimeSeries(collect(inds), collect(vals), false, false)
+            inds = map(x->x[1], val)
+            vals = map(x->x[2], val)
+            d[key] = TimeSeries(inds, vals, false, false)
         end
     end
     for (url, url_reports) in reports
