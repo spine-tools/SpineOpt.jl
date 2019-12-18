@@ -176,6 +176,34 @@ function initialize_time_slice_history()
 end
 
 """
+    earliest_necessary_timestep()
+
+Determines the earliest necessary historical time step.
+"""
+function earliest_necessary_timestep(window_start::Dates.DateTime)
+    ts = window_start - Minute(first(current_time_slice()).duration)
+    # Transfer delay parameters
+    for (c,n1,n2) in indices(trans_delay)
+        delay = trans_delay(connection=c, node1=n1, node2=n2)
+        if isa(delay, TimeSeries)
+            ts = min(ts, fill(window_start, size(delay.values)) - delay.values)
+        else
+            ts = min(ts, window_start)
+        end
+    end
+    # Minimum uptime parameters
+    for u in indices(min_up_time)
+        ts = min(ts, window_start - min_up_time(unit=u))
+    end
+    # Minimum downtime parameters
+    for u in indices(min_down_time)
+        ts = min(ts, window_start - min_down_time(unit=u))
+    end
+    return ts
+end
+
+
+"""
     generate_time_slice(window_start, window_end)
 
 Generate and export a convenience functor called `time_slice`, that can be used to retrieve
@@ -231,6 +259,6 @@ function generate_time_slice(window_start, window_end)
     end
     # Update time_slice_history
     append!(time_slice_history(), filter(x -> x.end_ <= window_end, current_time_slice()))
-    # TODO: Filter away unnecessary history depending on the longest modelled delay.
-    # something like: filter!(x -> x.start <= window_start - longest_delay, time_slice_history)
+    t = earliest_necessary_timestep(window_end)
+    filter!(x -> x.start >= t, time_slice_history())
 end
