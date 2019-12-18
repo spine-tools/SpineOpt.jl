@@ -86,6 +86,21 @@ function (h::ToTimeSlice)(t::DateTime...)
 end
 
 """
+    create_compound_interval(from::Dates.DateTime, step::Union{Period, Dates.CompoundPeriod}, until::Dates.DateTime)
+
+Creates an array of tuples containing the start and end of each inter
+"""
+function create_period_interval(from::Dates.DateTime, step::Union{Period, Dates.CompoundPeriod}, until::Dates.DateTime)
+    interval = Array{Tuple{Dates.DateTime, Dates.DateTime},1}()
+    while from < until
+        push!(interval, (from, from + step))
+        from += step
+    end
+    return interval
+end
+
+
+"""
     rolling_windows()
 
 An iterator over tuples of start and end time for each rolling window.
@@ -96,17 +111,16 @@ function rolling_windows()
     m_end = model_end(model=instance)
     m_roll_forward = roll_forward(model=instance, _strict=false)
     m_roll_forward === nothing && return ((m_start, m_end),)
-    ticks = m_start:m_roll_forward:m_end
-    zip(ticks[1:end - 1], ticks[2:end])
+    interval = create_period_interval(m_start, m_roll_forward, m_end)
 end
 
 # Adjuster functions, in case blocks specify their own start and end
 adjusted_start(window_start, window_end, ::Nothing) = window_start
-adjusted_start(window_start, window_end, blk_start::Period) = window_start + blk_start
+adjusted_start(window_start, window_end, blk_start::Dates.CompoundPeriod) = window_start + blk_start
 adjusted_start(window_start, window_end, blk_start::DateTime) = max(window_start, blk_start)
 
 adjusted_end(window_start, window_end, ::Nothing) = window_end
-adjusted_end(window_start, window_end, blk_end::Period) = max(window_end, window_start + blk_end)
+adjusted_end(window_start, window_end, blk_end::Dates.CompoundPeriod) = max(window_end, window_start + blk_end)
 adjusted_end(window_start, window_end, blk_end::DateTime) = max(window_end, blk_end)
 
 
