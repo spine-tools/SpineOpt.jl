@@ -32,8 +32,8 @@ function create_variable_units_on!(m::Model)
     for (u, t) in var_units_on_indices()
         base_name = "units_on[$u, $(t.JuMP_name)]"
         var_type = online_variable_type(unit=u)
-        var[(unit=u, t=t)] = if var_type == :none
-            @variable(m, base_name=base_name, lower_bound=1, upper_bound=1)
+        var[(unit=u, t=t)] = if var_type == :binary
+            @variable(m, base_name=base_name, lower_bound=0, upper_bound=1, integer=true)
         elseif var_type == :integer
             @variable(m, base_name=base_name, lower_bound=0, integer=true)
         else
