@@ -67,8 +67,6 @@ function run_spinemodel(
             m = Model(with_optimizer(optimizer))
             m.ext[:variables] = init_conds
             m.ext[:constraints] = Dict{Symbol,Dict}()
-            m.ext[:parameters] = Dict{Symbol,Dict}()
-            aggregate_demand!(m)
             create_variable_flow!(m)
             create_variable_units_on!(m)
             create_variable_units_available!(m)
@@ -160,32 +158,6 @@ function variable_values(m::Model)
 end
 
 variable_values(::Nothing) = Dict{Symbol,Dict}()
-
-"""
-    aggregate_demand()
-
-Aggregates demand time series to match the aggregated time structure (currently only averaging)
-"""
-function aggregate_demand!(m)
-    KeyType = NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}
-    m.ext[:parameters][:aggregated_demand] = Dict{KeyType,Any}()
-    for n in indices(demand)
-        # TimeSeries are averaged
-        if isa(demand(node=n), TimeSeries)
-            ind = demand(node=n).indexes
-            val = demand(node=n).values
-            for t in current_time_slice() # TODO: Aggregation not dependent on potentially different nodal time structures.
-                t_ind = findall(x -> t.start <= x < t.end_, ind)
-                push!(m.ext[:parameters][:aggregated_demand], (node=n,t=t) => mean(val[t_ind]))
-            end
-        # Other types (constants?) are used as is
-        else
-            for t in current_time_slice()
-                push!(m.ext[:parameters][:aggregated_demand], (node=n,t=t) => demand(node=n))
-            end
-        end
-    end
-end
 
 """
     save_outputs!(outputs, m)

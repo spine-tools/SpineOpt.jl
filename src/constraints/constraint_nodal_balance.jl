@@ -32,7 +32,7 @@ function constraint_nodal_balance(m::Model)
 	   			0
                 ==
                 # Demand for the commodity
-                - m.ext[:parameters][:aggregated_demand][n,t] * duration(t)
+                - demand(node=n, t=t) * duration(t)
                 # Commodity flows from units
                 + reduce(
                     +,
