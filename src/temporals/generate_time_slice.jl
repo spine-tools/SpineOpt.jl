@@ -116,11 +116,11 @@ end
 
 # Adjuster functions, in case blocks specify their own start and end
 adjusted_start(window_start, window_end, ::Nothing) = window_start
-adjusted_start(window_start, window_end, blk_start::Dates.CompoundPeriod) = window_start + blk_start
+adjusted_start(window_start, window_end, blk_start::Union{Period, Dates.CompoundPeriod}) = window_start + blk_start
 adjusted_start(window_start, window_end, blk_start::DateTime) = max(window_start, blk_start)
 
 adjusted_end(window_start, window_end, ::Nothing) = window_end
-adjusted_end(window_start, window_end, blk_end::Dates.CompoundPeriod) = max(window_end, window_start + blk_end)
+adjusted_end(window_start, window_end, blk_end::Union{Period, Dates.CompoundPeriod}) = max(window_end, window_start + blk_end)
 adjusted_end(window_start, window_end, blk_end::DateTime) = max(window_end, blk_end)
 
 
