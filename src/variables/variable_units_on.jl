@@ -34,6 +34,8 @@ function create_variable_units_on!(m::Model)
         var_type = online_variable_type(unit=u)
         var[(unit=u, t=t)] = if var_type == :none
             @variable(m, base_name=base_name, lower_bound=1, upper_bound=1)
+        elseif var_type == :binary
+            @variable(m, base_name=base_name, lower_bound=0, binary=true)
         elseif var_type == :integer
             @variable(m, base_name=base_name, lower_bound=0, integer=true)
         else

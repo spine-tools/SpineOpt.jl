@@ -29,7 +29,7 @@ function constraint_trans_capacity(m::Model)
     constr_dict = m.ext[:constraints][:trans_capacity] = Dict()
     for (conn_, n_, d) in indices(conn_capacity)
         for (conn,n) in indices(conn_avail_factor;connection=conn_, node=n_)
-        for t in time_slice()
+        for t in current_time_slice()
             constr_dict[conn, n, t] = @constraint(
                 m,
                 + reduce(

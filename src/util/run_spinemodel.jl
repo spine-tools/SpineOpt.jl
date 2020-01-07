@@ -52,6 +52,7 @@ function run_spinemodel(
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
     m = nothing
+    initialize_time_slice_history()
     outputs = Dict()
     for (k, (window_start, window_end)) in enumerate(rolling_windows())
         printstyled("Window $k\n"; bold=true, color=:underline)
@@ -131,12 +132,12 @@ function run_spinemodel(
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
         printstyled("Saving results...\n"; bold=true)
-        @time save_outputs!(outputs, m)
+        @time save_outputs!(outputs, m, window_end)
     end
     printstyled("Writing report...\n"; bold=true)
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
     @time write_report(outputs, url_out)
-    m
+    return m
 end
 
 """
@@ -146,22 +147,24 @@ A dictionary mapping variable names to their value in the given model.
 """
 function variable_values(m::Model)
     Dict{Symbol,Dict}(
-        :flow => variable_flow_value(m),
-        :trans => variable_trans_value(m),
+        #:flow => variable_flow_value(m), # Not included in dynamical constraints. TODO: Relevant for future ramp constraints?
         :stor_state => variable_stor_state_value(m),
-        :units_on => variable_units_on_value(m)
+        :trans => variable_trans_value(m),
+        #:units_available => variable_units_available_value(m), # Not included in dynamical constraints. TODO: Create if necessary?
+        :units_on => variable_units_on_value(m),
+        :units_shut_down => variable_units_shut_down_value(m),
+        :units_started_up => variable_units_started_up_value(m),
     )
 end
 
 variable_values(::Nothing) = Dict{Symbol,Dict}()
-
 
 """
     save_outputs!(outputs, m)
 
 Update `outputs` with values from `m`
 """
-function save_outputs!(outputs, m)
+function save_outputs!(outputs, m, window_end)
     results = Dict(var => SpineModel.value(val) for (var, val) in m.ext[:variables])
     for out in output()
         value = get(results, out.name, nothing)
@@ -169,6 +172,7 @@ function save_outputs!(outputs, m)
             @warn "can't find results for '$(out.name)'"
             continue
         end
+        filter!(x -> x[1].t.start < window_end, value)
         existing_value = get!(outputs, out.name, Dict{NamedTuple,Any}())
         merge!(existing_value, value)
     end
@@ -188,8 +192,9 @@ function write_report(outputs, default_url)
         rpt = get!(url_reports, rpt.name, Dict())
         d = rpt[out.name] = Dict()
         for (key, val) in pack_trailing_dims(output_value)
-            inds, vals = zip(val...)
-            d[key] = TimeSeries(collect(inds), collect(vals), false, false)
+            inds = map(x->x[1], val)
+            vals = map(x->x[2], val)
+            d[key] = TimeSeries(inds, vals, false, false)
         end
     end
     for (url, url_reports) in reports

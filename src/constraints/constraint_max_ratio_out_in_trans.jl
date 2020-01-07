@@ -41,6 +41,7 @@ function constraint_max_ratio_out_in_trans(m::Model)
                 )
                 <=
                 + max_ratio_out_in_trans(connection=conn, node1=n_out, node2=n_in, t=t)
+                # TODO: `trans_delay` needs to be taken into account.
                 * sum(
                     trans[conn_, n_in_, c, :from_node, t1] * duration(t1)
                     for (conn_, n_in_, c, d, t1) in var_trans_indices(

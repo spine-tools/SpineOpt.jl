@@ -34,10 +34,8 @@ function constraint_min_down_time(m::Model)
                 <=
                 + units_available[u, t]
                 - sum(
-                    units_shut_down[u_, t_]
-                    for (u_, t_) in units_on_indices(
-                        unit=u, t=to_time_slice(TimeSlice(end_(t) - min_down_time(unit=u), end_(t)))
-                    )
+                    units_shut_down[u, t_]
+                    for t_ in to_time_slice(TimeSlice(end_(t) - min_down_time(unit=u), end_(t)))
                 )
             )
         end
