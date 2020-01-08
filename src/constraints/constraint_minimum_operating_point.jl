@@ -40,7 +40,6 @@ function constraint_minimum_operating_point(m::Model)
                     >=
                     + units_on[u, t]
                     * minimum_operating_point(unit=u, commodity=c, t=t)
-                    * number_of_units(unit=u)
                     * unit_capacity(unit=u, commodity=c, direction=d)
                     * unit_conv_cap_to_flow(unit=u, commodity=c)
                 )

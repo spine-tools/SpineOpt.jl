@@ -27,7 +27,7 @@ function constraint_flow_capacity(m::Model)
     @fetch flow, units_on = m.ext[:variables]
     constr_dict = m.ext[:constraints][:flow_capacity] = Dict{NamedTuple,Any}()
     for (u, c, d) in indices(unit_capacity)
-        for t in time_slice()
+        for t in current_time_slice()
             constr_dict[(unit=u, commodity=c, direction=d, t=t)] = @constraint(
                 m,
                 + reduce(

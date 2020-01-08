@@ -24,7 +24,13 @@
 """
 function create_variable_units_available!(m::Model)
     m.ext[:variables][:units_available] = Dict(
-        (unit=u, t=t) => @variable(m, base_name="units_available[$u, $(t.JuMP_name)]", integer=true, lower_bound=0)
+        (unit=u, t=t) => @variable(m, base_name="units_available[$u, $(t.JuMP_name)]",
+            integer = online_variable_type(unit=u) == :integer_online_variable,
+            binary = online_variable_type(unit=u) == :binary_online_variable,
+            lower_bound=0
+            )
         for (u, t) in units_on_indices()
     )
 end
+
+# TODO: Create `variable_units_available_value(m)` if it becomes necessary.

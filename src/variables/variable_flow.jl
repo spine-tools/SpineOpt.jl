@@ -43,12 +43,14 @@ function create_variable_flow!(m::Model)
     merge!(get!(m.ext[:variables], :flow, Dict{KeyType,Any}()), var, fix)
 end
 
+#= Currently unnecessary, since there are no dynamic constraints including flow delays. TODO: Relevant for future ramp constraints?
 function variable_flow_value(m::Model)
     Dict{NamedTuple{(:unit, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}},Any}(
         (unit=u, node=n, commodity=c, direction=d, t=t) => value(m.ext[:variables][:flow][u, n, c, d, t]) 
         for (u, n, c, d, t) in var_flow_indices()
     )
 end
+=#
 
 """
     flow_indices(
@@ -89,7 +91,7 @@ function var_flow_indices(;commodity=anything, node=anything, unit=anything, dir
         (unit=u, node=n, commodity=c, direction=d, t=t1)
         for (u, n, d) in unit__node__direction(unit=unit, node=node, direction=direction, _compact=false)
         for t_blk in node__temporal_block(node=n)
-        for t1 in time_slice(temporal_block=t_blk, t=t)
+        for t1 in current_time_slice(temporal_block=t_blk, t=t)
         if fix_flow(unit=u, node=n, direction=d, t=t1, _strict=false) === nothing
         for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
     ]
@@ -119,7 +121,7 @@ function fix_flow_indices(;commodity=anything, node=anything, unit=anything, dir
     [
         (unit=u, node=n, commodity=c, direction=d, t=t_)
         for (u, n, d) in indices(fix_flow; unit=unit, node=node, direction=direction)
-        for t_ in time_slice(t=t)
+        for t_ in current_time_slice(t=t)
         if fix_flow(unit=u, node=n, direction=d, t=t_) != nothing
         for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
     ]
