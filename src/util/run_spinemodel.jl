@@ -52,7 +52,6 @@ function run_spinemodel(
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
     m = nothing
-    initialize_time_slice_history()
     outputs = Dict()
     for (k, (window_start, window_end)) in enumerate(rolling_windows())
         printstyled("Window $k\n"; bold=true, color=:underline)

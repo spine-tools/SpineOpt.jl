@@ -160,49 +160,6 @@ function _block_time_intervals(window_start, window_end)
     d
 end
 
-"""
-    initialize_time_slice_history()
-
-Initializes the `TimeSlice` history for rolling optimization.
-"""
-function initialize_time_slice_history()
-    empty_history = Array{TimeSlice,1}()
-    block_empty_history = Dict{Object,Array{TimeSlice,1}}()
-    block_empty_history[Object("time_slice_history")] = empty_history
-    time_slice_history = TimeSliceSet(empty_history, block_empty_history)
-    @eval begin
-        time_slice_history = $time_slice_history
-        export time_slice_history
-    end
-end
-
-"""
-    earliest_necessary_timestep()
-
-Determines the earliest necessary historical time step.
-"""
-function earliest_necessary_timestep(window_start::Dates.DateTime)
-    ts = window_start - Minute(first(current_time_slice()).duration)
-    # Transfer delay parameters
-    for (c,n1,n2) in indices(trans_delay)
-        delay = trans_delay(connection=c, node1=n1, node2=n2)
-        if isa(delay, TimeSeries)
-            ts = min(ts, fill(window_start, size(delay.values)) - delay.values)
-        else
-            ts = min(ts, window_start)
-        end
-    end
-    # Minimum uptime parameters
-    for u in indices(min_up_time)
-        ts = min(ts, window_start - min_up_time(unit=u))
-    end
-    # Minimum downtime parameters
-    for u in indices(min_down_time)
-        ts = min(ts, window_start - min_down_time(unit=u))
-    end
-    return ts
-end
-
 
 function _block_time_slices(block_time_intervals)
     inv_block_time_intervals = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
@@ -250,8 +207,14 @@ function generate_time_slice(window_start, window_end)
     block_time_slices = _block_time_slices(block_time_intervals)
     block_time_slice_map = _block_time_slice_map(block_time_slices)
     current_time_slices = sort(unique(t for v in values(block_time_slices) for t in v))
-    all_time_slices = sort(unique([time_slice_history.time_slices; current_time_slices]))
-
+    if isdefined(SpineModel, :current_time_slice)
+        history_time_slices = SpineModel.current_time_slice()
+        history_start_ = history_start(window_start, current_time_slices)
+        filter!(x -> x.start >= history_start_ && x.end_ <= window_start, history_time_slices)
+        all_time_slices = sort(unique([history_time_slices; current_time_slices]))
+    else
+        all_time_slices = current_time_slices
+    end
     # Create and export the function-like objects
     current_time_slice = TimeSliceSet(current_time_slices, block_time_slices)
     to_time_slice = ToTimeSlice(block_time_slices, block_time_slice_map)
@@ -261,9 +224,20 @@ function generate_time_slice(window_start, window_end)
         export to_time_slice
         export current_time_slice
     end
-    # Update time_slice_history
-    append!(time_slice_history(), filter(x -> x.end_ <= window_end, current_time_slice()))
-    t = earliest_necessary_timestep(window_end)
-    filter!(x -> x.start >= t, time_slice_history())
     generate_time_slice_relationships(all_time_slices)
+end
+
+
+function history_start(window_start, time_slices)
+    min_trans_delay = minimum(
+        window_start - trans_delay(;inds..., t=t) for inds in indices(trans_delay) for t in time_slices
+    )
+    min_min_up_time = minimum(
+        window_start - min_up_time(unit=u, t=t) for u in indices(min_up_time) for t in time_slices
+    )
+    min_min_down_time = minimum(
+        window_start - min_down_time(unit=u, t=t) for u in indices(min_down_time) for t in time_slices
+    )
+    min_time_slice_duration = minimum(window_start - (end_(t) - start(t)) for t in time_slices)
+    min(min_trans_delay, min_min_up_time, min_min_down_time, min_time_slice_duration)
 end
