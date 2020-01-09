@@ -58,10 +58,7 @@ function run_spinemodel(
         printstyled("Window $k\n"; bold=true, color=:underline)
         init_conds = variable_values(m)
         printstyled("Creating temporal structure...\n"; bold=true)
-        @time begin
-            generate_time_slice(window_start, window_end)
-            generate_time_slice_relationships()
-        end
+        @time generate_time_slice(window_start, window_end)
         printstyled("Initializing model...\n"; bold=true)
         @time begin
             m = Model(with_optimizer(optimizer))

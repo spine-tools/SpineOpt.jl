@@ -249,21 +249,15 @@ function generate_time_slice(window_start, window_end)
     block_time_intervals = _block_time_intervals(window_start, window_end)
     block_time_slices = _block_time_slices(block_time_intervals)
     block_time_slice_map = _block_time_slice_map(block_time_slices)
-    history = first(keys(time_slice_history.block_time_slices))
-    merge!(block_time_slices, copy(time_slice_history.block_time_slices))
-    block_current_time_slices = filter(x -> x.first != history, block_time_slices)
-    all_time_slices = sort(unique(t for v in values(block_time_slices) for t in v))
-    current_time_slices = sort(unique(t for v in values(block_current_time_slices) for t in v))
+    current_time_slices = sort(unique(t for v in values(block_time_slices) for t in v))
+    all_time_slices = sort(unique([time_slice_history.time_slices; current_time_slices]))
 
     # Create and export the function-like objects
-    time_slice = TimeSliceSet(all_time_slices, block_time_slices)
-    current_time_slice = TimeSliceSet(current_time_slices, block_current_time_slices)
+    current_time_slice = TimeSliceSet(current_time_slices, block_time_slices)
     to_time_slice = ToTimeSlice(block_time_slices, block_time_slice_map)
     @eval begin
-        time_slice = $time_slice
         to_time_slice = $to_time_slice
         current_time_slice = $current_time_slice
-        export time_slice
         export to_time_slice
         export current_time_slice
     end
@@ -271,4 +265,5 @@ function generate_time_slice(window_start, window_end)
     append!(time_slice_history(), filter(x -> x.end_ <= window_end, current_time_slice()))
     t = earliest_necessary_timestep(window_end)
     filter!(x -> x.start >= t, time_slice_history())
+    generate_time_slice_relationships(all_time_slices)
 end
