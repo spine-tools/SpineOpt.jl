@@ -207,8 +207,8 @@ function generate_time_slice(window_start, window_end)
     block_time_slices = _block_time_slices(block_time_intervals)
     block_time_slice_map = _block_time_slice_map(block_time_slices)
     current_time_slices = sort(unique(t for v in values(block_time_slices) for t in v))
-    if isdefined(SpineModel, :current_time_slice)
-        history_time_slices = SpineModel.current_time_slice()
+    if isdefined(SpineModel, :time_slice)
+        history_time_slices = SpineModel.time_slice()
         history_start_ = history_start(window_start, current_time_slices)
         filter!(x -> x.start >= history_start_ && x.end_ <= window_start, history_time_slices)
         all_time_slices = sort(unique([history_time_slices; current_time_slices]))
@@ -216,28 +216,28 @@ function generate_time_slice(window_start, window_end)
         all_time_slices = current_time_slices
     end
     # Create and export the function-like objects
-    current_time_slice = TimeSliceSet(current_time_slices, block_time_slices)
+    time_slice = TimeSliceSet(current_time_slices, block_time_slices)
     to_time_slice = ToTimeSlice(block_time_slices, block_time_slice_map)
     @eval begin
         to_time_slice = $to_time_slice
-        current_time_slice = $current_time_slice
+        time_slice = $time_slice
         export to_time_slice
-        export current_time_slice
+        export time_slice
     end
     generate_time_slice_relationships(all_time_slices)
 end
 
 
 function history_start(window_start, time_slices)
-    min_trans_delay = minimum(
+    trans_delay_start = minimum(
         window_start - trans_delay(;inds..., t=t) for inds in indices(trans_delay) for t in time_slices
     )
-    min_min_up_time = minimum(
+    min_up_time_start = minimum(
         window_start - min_up_time(unit=u, t=t) for u in indices(min_up_time) for t in time_slices
     )
-    min_min_down_time = minimum(
+    min_down_time_start = minimum(
         window_start - min_down_time(unit=u, t=t) for u in indices(min_down_time) for t in time_slices
     )
-    min_time_slice_duration = minimum(window_start - (end_(t) - start(t)) for t in time_slices)
-    min(min_trans_delay, min_min_up_time, min_min_down_time, min_time_slice_duration)
+    time_slice_start = minimum(window_start - (end_(t) - start(t)) for t in time_slices)
+    min(trans_delay_start, min_up_time_start, min_down_time_start, time_slice_start)
 end
