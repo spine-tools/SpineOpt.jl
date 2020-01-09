@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
+import Dates: CompoundPeriod
+
 struct TimeSliceSet
     time_slices::Array{TimeSlice,1}
     block_time_slices::Dict{Object,Array{TimeSlice,1}}
@@ -86,12 +89,12 @@ function (h::ToTimeSlice)(t::DateTime...)
 end
 
 """
-    create_compound_interval(from::Dates.DateTime, step::Union{Period, Dates.CompoundPeriod}, until::Dates.DateTime)
+    _rolling_windows(from::Dates.DateTime, step::Union{Period,CompoundPeriod}, until::DateTime)
 
-Creates an array of tuples containing the start and end of each inter
+An array of tuples of start and end time for each rolling window.
 """
-function create_period_interval(from::Dates.DateTime, step::Union{Period, Dates.CompoundPeriod}, until::Dates.DateTime)
-    interval = Array{Tuple{Dates.DateTime, Dates.DateTime},1}()
+function _rolling_windows(from::Dates.DateTime, step::Union{Period,CompoundPeriod}, until::DateTime)
+    interval = Array{Tuple{DateTime,DateTime},1}()
     while from < until
         push!(interval, (from, from + step))
         from += step
@@ -103,24 +106,24 @@ end
 """
     rolling_windows()
 
-An iterator over tuples of start and end time for each rolling window.
+An array of tuples of start and end time for each rolling window.
 """
 function rolling_windows()
     instance = first(model())
     m_start = model_start(model=instance)
     m_end = model_end(model=instance)
     m_roll_forward = roll_forward(model=instance, _strict=false)
-    m_roll_forward === nothing && return ((m_start, m_end),)
-    interval = create_period_interval(m_start, m_roll_forward, m_end)
+    m_roll_forward === nothing && return [(m_start, m_end)]
+    _rolling_windows(m_start, m_roll_forward, m_end)
 end
 
 # Adjuster functions, in case blocks specify their own start and end
 adjusted_start(window_start, window_end, ::Nothing) = window_start
-adjusted_start(window_start, window_end, blk_start::Union{Period, Dates.CompoundPeriod}) = window_start + blk_start
+adjusted_start(window_start, window_end, blk_start::Union{Period,CompoundPeriod}) = window_start + blk_start
 adjusted_start(window_start, window_end, blk_start::DateTime) = max(window_start, blk_start)
 
 adjusted_end(window_start, window_end, ::Nothing) = window_end
-adjusted_end(window_start, window_end, blk_end::Union{Period, Dates.CompoundPeriod}) = max(window_end, window_start + blk_end)
+adjusted_end(window_start, window_end, blk_end::Union{Period,CompoundPeriod}) = max(window_end, window_start + blk_end)
 adjusted_end(window_start, window_end, blk_end::DateTime) = max(window_end, blk_end)
 
 
