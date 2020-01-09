@@ -128,36 +128,34 @@ adjusted_end(window_start, window_end, blk_end::DateTime) = max(window_end, blk_
 
 
 """
-    time_slices_per_block(window_start, window_end)
+    _block_time_intervals(window_start, window_end)
 
-A `Dict` mapping temporal blocks to a sorted `Array` of `TimeSlice`s in that block.
+A `Dict` mapping temporal blocks to a sorted `Array` of time intervals, i.e., (start, end) tuples.
 """
-function block_time_slices(window_start, window_end)
-    d = Dict{Object,Array{TimeSlice,1}}()
-    for blk in temporal_block()
-        time_slices = Array{TimeSlice,1}()
-        blk_spec_start = block_start(temporal_block=blk, _strict=false)
-        blk_spec_end = block_end(temporal_block=blk, _strict=false)
-        blk_start = adjusted_start(window_start, window_end, blk_spec_start)
-        blk_end = adjusted_end(window_start, window_end, blk_spec_end)
-        time_slice_start = blk_start
+function _block_time_intervals(window_start, window_end)
+    d = Dict{Object,Array{Tuple{DateTime,DateTime},1}}()
+    for block in temporal_block()
+        time_intervals = Array{Tuple{DateTime,DateTime},1}()
+        block_start_ = adjusted_start(window_start, window_end, block_start(temporal_block=block, _strict=false))
+        block_end_ = adjusted_end(window_start, window_end, block_end(temporal_block=block, _strict=false))
+        time_slice_start = block_start_
         i = 1
-        while time_slice_start < blk_end
-            duration = resolution(temporal_block=blk, i=i)
+        while time_slice_start < block_end_
+            duration = resolution(temporal_block=block, i=i)
             time_slice_end = time_slice_start + duration
-            if time_slice_end > blk_end
-                time_slice_end = blk_end
+            if time_slice_end > block_end_
+                time_slice_end = block_end_
                 @warn(
                     """
-                    the last time slice of temporal block $blk has been cut to fit within the optimisation window
+                    the last time slice of temporal block $block has been cut to fit within the optimisation window
                     """
                 )
             end
-            push!(time_slices, TimeSlice(time_slice_start, time_slice_end))
+            push!(time_intervals, (time_slice_start, time_slice_end))
             time_slice_start = time_slice_end
             i += 1
         end
-        d[blk] = time_slices
+        d[block] = time_intervals
     end
     d
 end
@@ -206,6 +204,41 @@ function earliest_necessary_timestep(window_start::Dates.DateTime)
 end
 
 
+function _block_time_slices(block_time_intervals)
+    inv_block_time_intervals = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
+    for (block, time_intervals) in block_time_intervals
+        for t in time_intervals
+            push!(get!(inv_block_time_intervals, t, Array{Object,1}()), block)
+        end
+    end
+    instance = first(model())
+    d = Dict(:minute => Minute, :hour => Hour)
+    duration_unit_ = get(d, duration_unit(model=instance, _strict=false), Minute)
+    Dict(
+        block => [
+            TimeSlice(t..., inv_block_time_intervals[t]...; duration_unit=duration_unit_)
+            for t in time_intervals
+        ]
+        for (block, time_intervals) in block_time_intervals
+    )
+end
+
+
+function _block_time_slice_map(block_time_slices)
+    d = Dict{Object,Array{Int64,1}}()
+    for (block, time_slices) in block_time_slices
+        temp_block_start = start(first(time_slices))
+        temp_block_end = end_(last(time_slices))
+        d[block] = time_slice_map = Array{Int64,1}(undef, Minute(temp_block_end - temp_block_start).value)
+        for (ind, t) in enumerate(time_slices)
+            first_minute = Minute(start(t) - temp_block_start).value + 1
+            last_minute = Minute(end_(t) - temp_block_start).value
+            time_slice_map[first_minute:last_minute] .= ind
+        end
+    end
+    d
+end
+
 """
     generate_time_slice(window_start, window_end)
 
@@ -213,45 +246,19 @@ Generate and export a convenience functor called `time_slice`, that can be used 
 time slices in the model between `window_start` and `window_end`. See [@TimeSliceSet()](@ref).
 """
 function generate_time_slice(window_start, window_end)
-    blk_time_slices = block_time_slices(window_start, window_end)
-    # Invert dictionary
-    time_slice_blocks = Dict{TimeSlice,Array{Object,1}}()
-    for (blk, time_slices) in blk_time_slices
-        for t in time_slices
-            push!(get!(time_slice_blocks, t, Array{Object,1}()), blk)
-        end
-    end
-    # Generate full time slices (ie having block information) and time slice map
-    block_full_time_slices = copy(time_slice_history.block_time_slices)
+    block_time_intervals = _block_time_intervals(window_start, window_end)
+    block_time_slices = _block_time_slices(block_time_intervals)
+    block_time_slice_map = _block_time_slice_map(block_time_slices)
     history = first(keys(time_slice_history.block_time_slices))
-    block_time_slice_map = Dict{Object,Array{Int64,1}}()
-    instance = first(model())
-    d = Dict(:minute => Minute, :hour => Hour)
-    dur_unit = get(d, duration_unit(model=instance, _strict=false), Minute)
-    for (blk, time_slices) in blk_time_slices
-        temp_block_start = start(first(time_slices))
-        temp_block_end = end_(last(time_slices))
-        full_time_slices = Array{TimeSlice,1}()
-        time_slice_map = Array{Int64,1}(undef, Minute(temp_block_end - temp_block_start).value)
-        for (ind, t) in enumerate(time_slices)
-            blocks = time_slice_blocks[t]
-            push!(full_time_slices, TimeSlice(start(t), end_(t), blocks...; duration_unit=dur_unit))
-            # Map each minute in the block to the corresponding time slice index (used by `ToTimeSlice`)
-            first_minute = Minute(start(t) - temp_block_start).value + 1
-            last_minute = Minute(end_(t) - temp_block_start).value
-            time_slice_map[first_minute:last_minute] .= ind
-        end
-        block_full_time_slices[blk] = full_time_slices
-        block_time_slice_map[blk] = time_slice_map
-    end
-    block_current_time_slices = filter(x -> x.first != history, block_full_time_slices)
-    all_time_slices = sort(unique(t for v in values(block_full_time_slices) for t in v))
+    merge!(block_time_slices, copy(time_slice_history.block_time_slices))
+    block_current_time_slices = filter(x -> x.first != history, block_time_slices)
+    all_time_slices = sort(unique(t for v in values(block_time_slices) for t in v))
     current_time_slices = sort(unique(t for v in values(block_current_time_slices) for t in v))
 
     # Create and export the function-like objects
-    time_slice = TimeSliceSet(all_time_slices, block_full_time_slices)
+    time_slice = TimeSliceSet(all_time_slices, block_time_slices)
     current_time_slice = TimeSliceSet(current_time_slices, block_current_time_slices)
-    to_time_slice = ToTimeSlice(block_full_time_slices, block_time_slice_map)
+    to_time_slice = ToTimeSlice(block_time_slices, block_time_slice_map)
     @eval begin
         time_slice = $time_slice
         to_time_slice = $to_time_slice
