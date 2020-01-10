@@ -25,8 +25,8 @@ Balance for storage level.
 function constraint_stor_state(m::Model)
     @fetch stor_state, trans, flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:stor_state] = Dict()
-    for (stor, c, t_after) in var_stor_state_indices()
-        for t_before in t_before_t(t_after=t_after)
+    for (stor, c, t_after) in stor_state_indices()
+        for (stor, c, t_before) in stor_state_indices(storage=stor, commodity=c, t=t_before_t(t_after=t_after))
             constr_dict[stor, c, t_before, t_after] = @constraint(
                 m,
                 (stor_state[stor, c, t_after] - stor_state[stor, c, t_before])
