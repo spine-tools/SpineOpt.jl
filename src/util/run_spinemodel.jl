@@ -52,16 +52,12 @@ function run_spinemodel(
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
     m = nothing
-    initialize_time_slice_history()
     outputs = Dict()
     for (k, (window_start, window_end)) in enumerate(rolling_windows())
         printstyled("Window $k\n"; bold=true, color=:underline)
         init_conds = variable_values(m)
         printstyled("Creating temporal structure...\n"; bold=true)
-        @time begin
-            generate_time_slice(window_start, window_end)
-            generate_time_slice_relationships()
-        end
+        @time generate_time_slice(window_start, window_end)
         printstyled("Initializing model...\n"; bold=true)
         @time begin
             m = Model(with_optimizer(optimizer))
