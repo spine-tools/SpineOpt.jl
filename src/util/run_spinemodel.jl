@@ -136,6 +136,13 @@ function run_spinemodel(
     return m
 end
 
+
+function generate_temporal_structure(window_start, window_end)
+    time_slices = generate_time_slice(window_start, window_end)
+    generate_time_slice_relationships(time_slices)
+end
+
+
 """
     variable_values(m)
 
