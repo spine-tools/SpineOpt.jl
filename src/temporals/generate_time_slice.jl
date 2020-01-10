@@ -229,15 +229,27 @@ end
 
 
 function history_start(window_start, time_slices)
-    trans_delay_start = minimum(
-        window_start - trans_delay(;inds..., t=t) for inds in indices(trans_delay) for t in time_slices
-    )
-    min_up_time_start = minimum(
-        window_start - min_up_time(unit=u, t=t) for u in indices(min_up_time) for t in time_slices
-    )
-    min_down_time_start = minimum(
-        window_start - min_down_time(unit=u, t=t) for u in indices(min_down_time) for t in time_slices
-    )
+    if !isempty(indices(trans_delay))
+        trans_delay_start = minimum(
+            window_start - trans_delay(;inds..., t=t) for inds in indices(trans_delay) for t in time_slices
+        )
+    else
+        trans_delay_start = window_start
+    end
+    if !isempty(indices(min_up_time))
+        min_up_time_start = minimum(
+            window_start - min_up_time(unit=u, t=t) for u in indices(min_up_time) for t in time_slices
+        )
+    else
+        min_up_time_start = window_start
+    end
+    if !isempty(indices(min_down_time))
+        min_down_time_start = minimum(
+            window_start - min_down_time(unit=u, t=t) for u in indices(min_down_time) for t in time_slices
+        )
+    else
+        min_down_time_start = window_start
+    end
     time_slice_start = minimum(window_start - (end_(t) - start(t)) for t in time_slices)
     min(trans_delay_start, min_up_time_start, min_down_time_start, time_slice_start)
 end
