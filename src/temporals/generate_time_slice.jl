@@ -205,18 +205,10 @@ time slices in the model between `window_start` and `window_end`. See [@TimeSlic
 function generate_time_slice(window_start, window_end)
     block_time_intervals = _block_time_intervals(window_start, window_end)
     block_time_slices = _block_time_slices(block_time_intervals)
+    time_slices = sort(unique(t for v in values(block_time_slices) for t in v))
+    time_slice = TimeSliceSet(copy(time_slices), deepcopy(block_time_slices))
+    prepend_history!(time_slices, block_time_slices, window_start)
     block_time_slice_map = _block_time_slice_map(block_time_slices)
-    current_time_slices = sort(unique(t for v in values(block_time_slices) for t in v))
-    if isdefined(SpineModel, :time_slice)
-        history_time_slices = SpineModel.time_slice()
-        history_start_ = history_start(window_start, current_time_slices)
-        filter!(x -> x.start >= history_start_ && x.end_ <= window_start, history_time_slices)
-        all_time_slices = sort(unique([history_time_slices; current_time_slices]))
-    else
-        all_time_slices = current_time_slices
-    end
-    # Create and export the function-like objects
-    time_slice = TimeSliceSet(current_time_slices, block_time_slices)
     to_time_slice = ToTimeSlice(block_time_slices, block_time_slice_map)
     @eval begin
         to_time_slice = $to_time_slice
@@ -224,7 +216,21 @@ function generate_time_slice(window_start, window_end)
         export to_time_slice
         export time_slice
     end
-    generate_time_slice_relationships(all_time_slices)
+    time_slices
+end
+
+
+function prepend_history!(time_slices, block_time_slices, window_start)
+    isdefined(SpineModel, :time_slice) || return
+    history_start_ = history_start(window_start, time_slices)
+    history_time_slices = SpineModel.time_slice.time_slices
+    block_history_time_slices = SpineModel.time_slice.block_time_slices
+    filter!(x -> x.start >= history_start_ && x.end_ <= window_start, history_time_slices)
+    prepend!(time_slices, history_time_slices)
+    for (block, history_time_slices) in block_history_time_slices
+        filter!(x -> x.start >= history_start_ && x.end_ <= window_start, history_time_slices)
+        prepend!(block_time_slices[block], history_time_slices)
+    end
 end
 
 

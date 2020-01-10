@@ -59,3 +59,9 @@ end
 
 value(x::JuMP.VariableRef) = JuMP.value(x)
 value(x) = x
+
+
+function generate_temporal_structure(window_start, window_end)
+    time_slices = generate_time_slice(window_start, window_end)
+    generate_time_slice_relationships(time_slices)
+end
