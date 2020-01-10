@@ -21,7 +21,7 @@
 function Base.getindex(d::Dict{NamedTuple{X,Y},Z}, key::ObjectLike...) where {N,Y<:NTuple{N,ObjectLike},X,Z}
     isempty(d) && throw(KeyError(key))
     names = keys(first(keys(d))) # Get names from first key. TODO: check how bad this is for performance
-    Base.getindex(d, NamedTuple{names}(values(key)))
+    get(d, NamedTuple{names}(values(key)), 0)
 end
 
 
