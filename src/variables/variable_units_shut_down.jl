@@ -24,13 +24,9 @@
 """
 function create_variable_units_shut_down!(m::Model)
     KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
-    var = Dict{KeyType,Any}(
-        (unit=u, t=t) => @variable(m, base_name="units_shut_down[$u, $(t.JuMP_name)]",
-            integer = online_variable_type(unit=u) == :integer_online_variable,
-            binary = online_variable_type(unit=u) == :binary_online_variable,
-            lower_bound=0
-            )
-        for (u, t) in units_on_indices()
-    )
-    merge!(get!(m.ext[:variables], :units_shut_down, Dict{KeyType,Any}()), var)
+    units_shut_down = Dict{KeyType,Any}()
+    for (u, t) in units_on_indices()
+        units_shut_down[(unit=u, t=t)] = units_variable(m, u, "units_shut_down[$u, $(t.JuMP_name)]")
+    end
+    merge!(get!(m.ext[:variables], :units_shut_down, Dict{KeyType,Any}()), units_shut_down)
 end

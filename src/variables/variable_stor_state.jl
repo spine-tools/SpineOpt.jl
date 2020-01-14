@@ -25,19 +25,16 @@ Add `stor_state` variable to model `m`.
 """
 function create_variable_stor_state!(m::Model)
     KeyType = NamedTuple{(:storage, :commodity, :t),Tuple{Object,Object,TimeSlice}}
-    var = Dict{KeyType,Any}(
-        (storage=stor, commodity=c, t=t) => @variable(
-            m,
-            base_name="stor_state[$stor, $c, $(t.JuMP_name)]",
-            lower_bound= stor_state_min(storage=stor)
-        )
-        for (stor, c, t) in var_stor_state_indices()
-    )
-    fix = Dict{KeyType,Any}(
-        (storage=stor, commodity=c, t=t) => fix_stor_state(storage=stor, t=t)
-        for (stor, c, t) in fix_stor_state_indices()
-    )
-    merge!(get!(m.ext[:variables], :stor_state, Dict{KeyType,Any}()), var, fix)
+    stor_state = Dict{KeyType,Any}()
+    for (stor, c, t) in stor_state_indices()
+        fix_stor_state_ = fix_stor_state(storage=stor, t=t)
+        stor_state[(storage=stor, commodity=c, t=t)] = if fix_stor_state_ != nothing
+            fix_stor_state_
+        else
+            @variable(m, base_name="stor_state[$stor, $c, $(t.JuMP_name)]", lower_bound=stor_state_min(storage=stor))
+        end
+    end
+    merge!(get!(m.ext[:variables], :stor_state, Dict{KeyType,Any}()), stor_state)
 end
 
 
@@ -49,15 +46,6 @@ for `storage`, `commodity`, and `t`.
 Tuples are generated for the highest resolution 'flows' or 'trans' of the involved commodity.
 """
 function stor_state_indices(;storage=anything, commodity=anything, t=anything)
-    unique(
-        [
-            var_stor_state_indices(storage=storage, commodity=commodity, t=t);
-            fix_stor_state_indices(storage=storage, commodity=commodity, t=t)
-        ]
-    )
-end
-
-function var_stor_state_indices(;storage=anything, commodity=anything, t=anything)
     [
         [
             (storage=stor, commodity=c, t=t1)
@@ -71,15 +59,5 @@ function var_stor_state_indices(;storage=anything, commodity=anything, t=anythin
             for conn in storage__connection(storage=stor)
             for t1 in t_highest_resolution(unique(x.t for x in trans_indices(connection=conn, commodity=c, t=t)))
         ]
-    ]
-end
-
-function fix_stor_state_indices(;storage=anything, commodity=anything, t=anything)
-    [
-        (storage=stor, commodity=c, t=t_)
-        for (stor,) in indices(fix_stor_state; storage=storage)
-        for t_ in time_slice(t=t)
-        if fix_stor_state(storage=stor, t=t_) != nothing
-        for (stor_, c) in storage__commodity(storage=stor, commodity=commodity, _compact=false)
     ]
 end

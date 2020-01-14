@@ -24,13 +24,9 @@
 """
 function create_variable_units_started_up!(m::Model)
     KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
-    var = Dict{KeyType,Any}(
-        (unit=u, t=t) => @variable(m, base_name="units_started_up[$u, $(t.JuMP_name)]",
-            integer = online_variable_type(unit=u) == :integer_online_variable,
-            binary = online_variable_type(unit=u) == :binary_online_variable,
-            lower_bound=0
-            )
-        for (u, t) in units_on_indices()
-    )
-    merge!(get!(m.ext[:variables], :units_started_up, Dict{KeyType,Any}()), var)
+    units_started_up = Dict{KeyType,Any}()
+    for (u, t) in units_on_indices()
+        units_started_up[(unit=u, t=t)] = units_variable(m, u, "units_started_up[$u, $(t.JuMP_name)]")
+    end
+    merge!(get!(m.ext[:variables], :units_started_up, Dict{KeyType,Any}()), units_started_up)
 end

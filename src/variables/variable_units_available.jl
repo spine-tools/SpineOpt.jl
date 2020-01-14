@@ -23,12 +23,9 @@
 
 """
 function create_variable_units_available!(m::Model)
-    m.ext[:variables][:units_available] = Dict(
-        (unit=u, t=t) => @variable(m, base_name="units_available[$u, $(t.JuMP_name)]",
-            integer = online_variable_type(unit=u) == :integer_online_variable,
-            binary = online_variable_type(unit=u) == :binary_online_variable,
-            lower_bound=0
-            )
-        for (u, t) in units_on_indices()
-    )
+	KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
+    m.ext[:variables][:units_available] = units_available = Dict{KeyType,Any}()
+    for (u, t) in units_on_indices()
+        units_available[(unit=u, t=t)] = units_variable(m, u, "units_available[$u, $(t.JuMP_name)]")
+    end
 end

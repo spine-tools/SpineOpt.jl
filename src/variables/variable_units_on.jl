@@ -28,24 +28,16 @@ within a certain *time slice*.
 """
 function create_variable_units_on!(m::Model)
     KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
-    var = Dict{KeyType,Any}()
-    for (u, t) in var_units_on_indices()
-        base_name = "units_on[$u, $(t.JuMP_name)]"
-        var_type = online_variable_type(unit=u)
-        var[(unit=u, t=t)] = if var_type == :none
-            @variable(m, base_name=base_name, lower_bound=1, upper_bound=1)
-        elseif var_type == :binary
-            @variable(m, base_name=base_name, lower_bound=0, binary=true)
-        elseif var_type == :integer
-            @variable(m, base_name=base_name, lower_bound=0, integer=true)
+    units_on = Dict{KeyType,Any}()
+    for (u, t) in units_on_indices()
+        fix_units_on_ = fix_units_on(unit=u, t=t)
+        units_on[(unit=u, t=t)] = if fix_units_on_ != nothing
+            fix_units_on_
         else
-            @variable(m, base_name=base_name, lower_bound=0)
+            units_variable(m, u, "units_on[$u, $(t.JuMP_name)]")
         end
     end
-    fix = Dict{KeyType,Any}(
-        (unit=u, t=t) => fix_units_on(unit=u, t=t) for (u, t) in fix_units_on_indices()
-    )
-    merge!(get!(m.ext[:variables], :units_on, Dict{KeyType,Any}()), var, fix)
+    merge!(get!(m.ext[:variables], :units_on, Dict{KeyType,Any}()), units_on)
 end
 
 """
@@ -55,16 +47,6 @@ A list of `NamedTuple`s corresponding to indices of the `units_on` variable.
 The keyword arguments act as filters for each dimension.
 """
 function units_on_indices(;unit=anything, t=anything)
-    unique([var_units_on_indices(unit=unit, t=t); fix_units_on_indices(unit=unit, t=t)])
-end
-
-"""
-    var_units_on_indices(unit=anything, t=anything)
-
-A list of `NamedTuple`s corresponding to *non_fixed* indices of the `units_on` variable.
-The keyword arguments act as filters for each dimension.
-"""
-function var_units_on_indices(;unit=anything, t=anything)
     [
         (unit=u, t=t_)
         for u in intersect(SpineModel.unit(), unit)
@@ -73,18 +55,19 @@ function var_units_on_indices(;unit=anything, t=anything)
     ]
 end
 
-"""
-    fix_units_on_indices(unit=anything, t=anything)
-
-A list of `NamedTuple`s corresponding to *fixed* indices of the `units_on` variable.
-The keyword arguments act as filters for each dimension.
-"""
-function fix_units_on_indices(;unit=anything, t=anything, )
-    unit = expand_unit_group(unit)
-    [
-        (unit=u, t=t_)
-        for (u,) in indices(fix_units_on; unit=unit)
-        for t_ in time_slice(t=t)
-        if fix_units_on(unit=u, t=t_) != nothing
-    ]
+function units_variable(m, u, base_name)
+    var_type = online_variable_type(unit=u)
+    if var_type == :none
+        @variable(m, base_name=base_name, lower_bound=1, upper_bound=1)
+    elseif var_type == :binary
+        @variable(m, base_name=base_name, lower_bound=0, binary=true)
+    elseif var_type == :integer
+        @variable(m, base_name=base_name, lower_bound=0, integer=true)
+    else
+        @variable(m, base_name=base_name, lower_bound=0)
+    end
 end
+
+
+
+

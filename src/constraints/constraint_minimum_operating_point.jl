@@ -30,12 +30,12 @@ function constraint_minimum_operating_point(m::Model)
     constr_dict = m.ext[:constraints][:minimum_operating_point] = Dict()
     for (u, c) in indices(minimum_operating_point)
         for (u, c, d) in indices(unit_capacity; unit=u, commodity=c)
-            for (u, t) in var_units_on_indices(unit=u)
+            for (u, t) in units_on_indices(unit=u)
                 constr_dict[u, c, d, t] = @constraint(
                     m,
                     + sum(
                         flow[u_, n, c_, d_, t1]
-                        for (u_, n, c_, d_, t1) in var_flow_indices(unit=u, commodity=c, direction = d, t=t)
+                        for (u_, n, c_, d_, t1) in flow_indices(unit=u, commodity=c, direction = d, t=t)
                     )
                     >=
                     + units_on[u, t]
