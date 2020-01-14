@@ -184,6 +184,7 @@ end
 function _block_time_slice_map(block_time_slices)
     d = Dict{Object,Array{Int64,1}}()
     for (block, time_slices) in block_time_slices
+        isempty(time_slices) && continue
         temp_block_start = start(first(time_slices))
         temp_block_end = end_(last(time_slices))
         d[block] = time_slice_map = Array{Int64,1}(undef, Minute(temp_block_end - temp_block_start).value)
@@ -195,6 +196,7 @@ function _block_time_slice_map(block_time_slices)
     end
     d
 end
+
 
 """
     generate_time_slice(window_start, window_end)
@@ -221,7 +223,6 @@ end
 
 
 function prepend_history!(time_slices, block_time_slices, window_start)
-    isdefined(SpineModel, :time_slice) || return
     history_time_slices = SpineModel.time_slice.time_slices
     block_history_time_slices = SpineModel.time_slice.block_time_slices
     history_start_ = history_start(window_start, time_slices)
@@ -229,7 +230,7 @@ function prepend_history!(time_slices, block_time_slices, window_start)
     prepend!(time_slices, history_time_slices)
     for (block, history_time_slices) in block_history_time_slices
         filter!(x -> x.start >= history_start_ && x.end_ <= window_start, history_time_slices)
-        prepend!(block_time_slices[block], history_time_slices)
+        prepend!(get!(block_time_slices, block, []), history_time_slices)
     end
 end
 
@@ -248,4 +249,35 @@ function history_start(window_start, time_slices)
     )
     time_slice_start = _minimum_start(window_start, (end_(t) - start(t)) for t in time_slices)
     min(trans_delay_start, min_up_time_start, min_down_time_start, time_slice_start)
+end
+
+
+function init_time_slice()
+    instance = first(model())
+    model_start_ = model_start(model=instance)
+    date_times = Array{DateTime,1}()
+    for (u, n, d) in indices(fix_flow)
+        fix_flow(unit=u, node=n, direction=d) isa TimeSeries || continue
+        append!(date_times, fix_flow(unit=u, node=n, direction=d).indexes)
+    end
+    for (conn, n, d) in indices(fix_trans)
+        fix_trans(connection=conn, node=n, direction=d) isa TimeSeries || continue
+        append!(date_times, fix_trans(connection=conn, node=n, direction=d).indexes)
+    end
+    for stor in indices(fix_stor_state)
+        fix_stor_state(storage=stor) isa TimeSeries || continue
+        append!(date_times, fix_stor_state(storage=stor).indexes)
+    end
+    for u in indices(fix_units_on)
+        fix_units_on(unit=u) isa TimeSeries || continue
+        append!(date_times, fix_units_on(unit=u).indexes)
+    end
+    filter!(t -> t < model_start_, date_times)
+    unique!(date_times)
+    time_slices = [TimeSlice(t, t) for t in date_times]
+    time_slice = TimeSliceSet(time_slices, Dict(Object("prehistory") => copy(time_slices)))
+    @eval begin
+        time_slice = $time_slice
+        export time_slice
+    end
 end

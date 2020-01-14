@@ -53,6 +53,7 @@ function run_spinemodel(
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
     m = nothing
     outputs = Dict()
+    init_time_slice()
     for (k, (window_start, window_end)) in enumerate(rolling_windows())
         printstyled("Window $k\n"; bold=true, color=:underline)
         init_conds = variable_values(m)
