@@ -56,10 +56,9 @@ function run_spinemodel(
     @time init_time_slice()
     printstyled("Setting up initial conditions...\n"; bold=true)
     @time begin
-        m = Model(with_optimizer(optimizer))
+        m = Model()
         m.ext[:variables] = Dict{Symbol,Dict}()
         create_variables!(m)
-        optimize!(m)
     end
     outputs = Dict()
     for (k, (window_start, window_end)) in enumerate(rolling_windows())
@@ -230,6 +229,8 @@ end
 An equivalent dictionary where `JuMP.VariableRef` values are replaced by their `JuMP.value`.
 """
 value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => value(v) for (k, v) in d)
+
+value(v::JuMP.VariableRef) = has_values(owner_model(v)) ? JuMP.value(v) : zero(Float64)
 
 """
     formulation(d::Dict)
