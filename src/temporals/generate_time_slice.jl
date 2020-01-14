@@ -230,7 +230,7 @@ function prepend_history!(time_slices, block_time_slices, window_start)
     prepend!(time_slices, history_time_slices)
     for (block, history_time_slices) in block_history_time_slices
         filter!(x -> x.start >= history_start_ && x.end_ <= window_start, history_time_slices)
-        prepend!(get!(block_time_slices, block, []), history_time_slices)
+        prepend!(block_time_slices[block], history_time_slices)
     end
 end
 
@@ -255,6 +255,9 @@ end
 function init_time_slice()
     instance = first(model())
     model_start_ = model_start(model=instance)
+    duration_unit_ = get(
+        Dict(:minute => Minute, :hour => Hour), duration_unit(model=instance, _strict=false), Minute
+    )
     date_times = Array{DateTime,1}()
     for (u, n, d) in indices(fix_flow)
         fix_flow(unit=u, node=n, direction=d) isa TimeSeries || continue
@@ -272,10 +275,16 @@ function init_time_slice()
         fix_units_on(unit=u) isa TimeSeries || continue
         append!(date_times, fix_units_on(unit=u).indexes)
     end
-    filter!(t -> t < model_start_, date_times)
+    filter!(t -> t <= model_start_, date_times)
+    push!(date_times, model_start_)
+    sort!(date_times)
     unique!(date_times)
-    time_slices = [TimeSlice(t, t) for t in date_times]
-    time_slice = TimeSliceSet(time_slices, Dict(Object("prehistory") => copy(time_slices)))
+    time_slices = [
+        TimeSlice(start, end_, temporal_block()...; duration_unit=duration_unit_) 
+        for (start, end_) in zip(date_times[1:end - 1], date_times[2:end])
+    ]
+    block_time_slices = Dict(block => copy(time_slices) for block in temporal_block())
+    time_slice = TimeSliceSet(time_slices, block_time_slices)
     @eval begin
         time_slice = $time_slice
         export time_slice
