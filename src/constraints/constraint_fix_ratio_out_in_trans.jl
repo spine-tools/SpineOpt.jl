@@ -45,11 +45,14 @@ function constraint_fix_ratio_out_in_trans(m::Model)
                 + fix_ratio_out_in_trans(connection=conn, node1=n_out, node2=n_in, t=t)
                 * reduce(
                     +,
-                    trans[conn, n_in, c, d, t1]
-                    * overlap_duration(t1, t - trans_delay(connection=conn, node1=n_out, node2=n_in, t=t))
-                    for c in node__commodity(node=n_in)
-                    for d in filter(x -> x.name == :from_node, direction())
-                    for t1 in to_time_slice(t - trans_delay(connection=conn, node1=n_out, node2=n_in, t=t));
+                    trans[conn_, n_in_, c, d, t_]
+                    * overlap_duration(t_, t - trans_delay(connection=conn, node1=n_out, node2=n_in, t=t))
+                    for (conn_, n_in_, c, d, t_) in trans_indices(
+                        connection=conn,
+                        node=n_in,
+                        direction=:from_node,
+                        t=to_time_slice(t - trans_delay(connection=conn, node1=n_out, node2=n_in, t=t))
+                    );
                     init=0
                 )
             )

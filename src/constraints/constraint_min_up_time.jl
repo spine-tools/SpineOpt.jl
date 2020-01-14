@@ -34,8 +34,10 @@ function constraint_min_up_time(m::Model)
                 + units_on[u, t]
                 >=
                 + sum(
-                    units_started_up[u, t1]
-                    for t1 in to_time_slice(TimeSlice(end_(t) - min_up_time(unit=u), end_(t)))
+                    units_started_up[u1, t1]
+                    for (u1, t1) in units_on_indices(
+                        unit=u, t=to_time_slice(TimeSlice(end_(t) - min_up_time(unit=u), end_(t)))
+                    )
                 )
             )
         end

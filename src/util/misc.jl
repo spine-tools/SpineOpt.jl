@@ -59,3 +59,7 @@ end
 
 value(x::JuMP.VariableRef) = JuMP.value(x)
 value(x) = x
+
+
+
+

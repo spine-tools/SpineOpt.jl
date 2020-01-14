@@ -40,8 +40,8 @@ An `Array` of time slices *in the model*.
 (h::TimeSliceSet)(::Anything, ::Anything) = h.time_slices
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = h.block_time_slices[temporal_block]
 (h::TimeSliceSet)(::Anything, s) = s
-(h::TimeSliceSet)(temporal_block::Object, s) = (t for t in s if temporal_block in t.blocks)
-(h::TimeSliceSet)(temporal_blocks::Array{Object,1}, s) = (t for blk in temporal_blocks for t in h(blk, s))
+(h::TimeSliceSet)(temporal_block::Object, s) = [t for t in s if temporal_block in t.blocks]
+(h::TimeSliceSet)(temporal_blocks::Array{Object,1}, s) = [t for blk in temporal_blocks for t in h(blk, s)]
 
 """
     to_time_slice(t::TimeSlice...)
@@ -94,12 +94,12 @@ end
 An array of tuples of start and end time for each rolling window.
 """
 function _rolling_windows(from::Dates.DateTime, step::Union{Period,CompoundPeriod}, until::DateTime)
-    interval = Array{Tuple{DateTime,DateTime},1}()
+    windows = Array{Tuple{DateTime,DateTime},1}()
     while from < until
-        push!(interval, (from, from + step))
+        push!(windows, (from, from + step))
         from += step
     end
-    return interval
+    windows
 end
 
 
@@ -205,18 +205,10 @@ time slices in the model between `window_start` and `window_end`. See [@TimeSlic
 function generate_time_slice(window_start, window_end)
     block_time_intervals = _block_time_intervals(window_start, window_end)
     block_time_slices = _block_time_slices(block_time_intervals)
+    time_slices = sort(unique(t for v in values(block_time_slices) for t in v))
+    time_slice = TimeSliceSet(copy(time_slices), deepcopy(block_time_slices))
+    prepend_history!(time_slices, block_time_slices, window_start)
     block_time_slice_map = _block_time_slice_map(block_time_slices)
-    current_time_slices = sort(unique(t for v in values(block_time_slices) for t in v))
-    if isdefined(SpineModel, :time_slice)
-        history_time_slices = SpineModel.time_slice()
-        history_start_ = history_start(window_start, current_time_slices)
-        filter!(x -> x.start >= history_start_ && x.end_ <= window_start, history_time_slices)
-        all_time_slices = sort(unique([history_time_slices; current_time_slices]))
-    else
-        all_time_slices = current_time_slices
-    end
-    # Create and export the function-like objects
-    time_slice = TimeSliceSet(current_time_slices, block_time_slices)
     to_time_slice = ToTimeSlice(block_time_slices, block_time_slice_map)
     @eval begin
         to_time_slice = $to_time_slice
@@ -224,32 +216,36 @@ function generate_time_slice(window_start, window_end)
         export to_time_slice
         export time_slice
     end
-    generate_time_slice_relationships(all_time_slices)
+    time_slices
 end
 
 
+function prepend_history!(time_slices, block_time_slices, window_start)
+    isdefined(SpineModel, :time_slice) || return
+    history_time_slices = SpineModel.time_slice.time_slices
+    block_history_time_slices = SpineModel.time_slice.block_time_slices
+    history_start_ = history_start(window_start, time_slices)
+    filter!(x -> x.start >= history_start_ && x.end_ <= window_start, history_time_slices)
+    prepend!(time_slices, history_time_slices)
+    for (block, history_time_slices) in block_history_time_slices
+        filter!(x -> x.start >= history_start_ && x.end_ <= window_start, history_time_slices)
+        prepend!(block_time_slices[block], history_time_slices)
+    end
+end
+
+
+_minimum_start(ref, iter)= isempty(iter) ? ref : minimum(ref - x for x in iter)
+
 function history_start(window_start, time_slices)
-    if !isempty(indices(trans_delay))
-        trans_delay_start = minimum(
-            window_start - trans_delay(;inds..., t=t) for inds in indices(trans_delay) for t in time_slices
-        )
-    else
-        trans_delay_start = window_start
-    end
-    if !isempty(indices(min_up_time))
-        min_up_time_start = minimum(
-            window_start - min_up_time(unit=u, t=t) for u in indices(min_up_time) for t in time_slices
-        )
-    else
-        min_up_time_start = window_start
-    end
-    if !isempty(indices(min_down_time))
-        min_down_time_start = minimum(
-            window_start - min_down_time(unit=u, t=t) for u in indices(min_down_time) for t in time_slices
-        )
-    else
-        min_down_time_start = window_start
-    end
-    time_slice_start = minimum(window_start - (end_(t) - start(t)) for t in time_slices)
+    trans_delay_start = _minimum_start(
+        window_start, trans_delay(;inds..., t=t) for inds in indices(trans_delay) for t in time_slices
+    )
+    min_up_time_start = _minimum_start(
+        window_start, min_up_time(unit=u, t=t) for u in indices(min_up_time) for t in time_slices
+    )
+    min_down_time_start = _minimum_start(
+        window_start, min_down_time(unit=u, t=t) for u in indices(min_up_time) for t in time_slices
+    )
+    time_slice_start = _minimum_start(window_start, (end_(t) - start(t)) for t in time_slices)
     min(trans_delay_start, min_up_time_start, min_down_time_start, time_slice_start)
 end
