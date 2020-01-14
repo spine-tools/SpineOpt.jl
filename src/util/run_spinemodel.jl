@@ -51,26 +51,28 @@ function run_spinemodel(
         extend=m->nothing)
     printstyled("Creating convenience functions...\n"; bold=true)
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
-    m = nothing
+    printstyled("Preparation phase\n"; bold=true, color=:underline)
+    printstyled("Initializing temporal structure...\n"; bold=true)
+    @time init_time_slice()
+    printstyled("Setting up initial conditions...\n"; bold=true)
+    @time begin
+        m = Model(with_optimizer(optimizer))
+        m.ext[:variables] = Dict{Symbol,Dict}()
+        create_variables!(m)
+        optimize!(m)
+    end
     outputs = Dict()
-    init_conds = Dict()
-    init_time_slice()
     for (k, (window_start, window_end)) in enumerate(rolling_windows())
         printstyled("Window $k\n"; bold=true, color=:underline)
         printstyled("Creating temporal structure...\n"; bold=true)
         @time generate_temporal_structure(window_start, window_end)
         printstyled("Initializing model...\n"; bold=true)
         @time begin
+            init_conds = value(m.ext[:variables])
             m = Model(with_optimizer(optimizer))
             m.ext[:variables] = init_conds
             m.ext[:constraints] = Dict{Symbol,Dict}()
-            create_variable_flow!(m)
-            create_variable_units_on!(m)
-            create_variable_units_available!(m)
-            create_variable_units_started_up!(m)
-            create_variable_units_shut_down!(m)
-            create_variable_trans!(m)
-            create_variable_stor_state!(m)
+            create_variables!(m)
             objective_minimize_total_discounted_costs(m)
         end
         printstyled("Generating constraints...\n"; bold=true)
@@ -130,12 +132,22 @@ function run_spinemodel(
         println("Objective function value: $(objective_value(m))")
         printstyled("Saving results...\n"; bold=true)
         @time save_outputs!(outputs, m, window_end)
-        init_conds = value(m.ext[:variables])
     end
     printstyled("Writing report...\n"; bold=true)
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
     @time write_report(outputs, url_out)
     return m
+end
+
+
+function create_variables!(m::Model)
+    create_variable_flow!(m)
+    create_variable_units_on!(m)
+    create_variable_units_available!(m)
+    create_variable_units_started_up!(m)
+    create_variable_units_shut_down!(m)
+    create_variable_trans!(m)
+    create_variable_stor_state!(m)
 end
 
 
