@@ -53,10 +53,10 @@ function run_spinemodel(
     @time using_spinedb(url_in, @__MODULE__; upgrade=true)
     m = nothing
     outputs = Dict()
+    init_conds = Dict()
     init_time_slice()
     for (k, (window_start, window_end)) in enumerate(rolling_windows())
         printstyled("Window $k\n"; bold=true, color=:underline)
-        init_conds = variable_values(m)
         printstyled("Creating temporal structure...\n"; bold=true)
         @time generate_temporal_structure(window_start, window_end)
         printstyled("Initializing model...\n"; bold=true)
@@ -130,6 +130,7 @@ function run_spinemodel(
         println("Objective function value: $(objective_value(m))")
         printstyled("Saving results...\n"; bold=true)
         @time save_outputs!(outputs, m, window_end)
+        init_conds = value(m.ext[:variables])
     end
     printstyled("Writing report...\n"; bold=true)
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
@@ -143,25 +144,6 @@ function generate_temporal_structure(window_start, window_end)
     generate_time_slice_relationships(time_slices)
 end
 
-
-"""
-    variable_values(m)
-
-A dictionary mapping variable names to their value in the given model.
-"""
-function variable_values(m::Model)
-    Dict{Symbol,Dict}(
-        #:flow => variable_flow_value(m), # Not included in dynamical constraints. TODO: Relevant for future ramp constraints?
-        :stor_state => variable_stor_state_value(m),
-        :trans => variable_trans_value(m),
-        #:units_available => variable_units_available_value(m), # Not included in dynamical constraints. TODO: Create if necessary?
-        :units_on => variable_units_on_value(m),
-        :units_shut_down => variable_units_shut_down_value(m),
-        :units_started_up => variable_units_started_up_value(m),
-    )
-end
-
-variable_values(::Nothing) = Dict{Symbol,Dict}()
 
 """
     save_outputs!(outputs, m)

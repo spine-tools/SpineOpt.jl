@@ -34,10 +34,3 @@ function create_variable_units_shut_down!(m::Model)
     )
     merge!(get!(m.ext[:variables], :units_shut_down, Dict{KeyType,Any}()), var)
 end
-
-function variable_units_shut_down_value(m::Model)
-    Dict{NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}},Any}(
-        (unit=u, t=t) => value(m.ext[:variables][:units_shut_down][u, t])
-        for (u, t) in var_units_on_indices()
-    )
-end

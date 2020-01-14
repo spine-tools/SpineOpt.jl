@@ -43,15 +43,6 @@ function create_variable_flow!(m::Model)
     merge!(get!(m.ext[:variables], :flow, Dict{KeyType,Any}()), var, fix)
 end
 
-#= Currently unnecessary, since there are no dynamic constraints including flow delays. TODO: Relevant for future ramp constraints?
-function variable_flow_value(m::Model)
-    Dict{NamedTuple{(:unit, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}},Any}(
-        (unit=u, node=n, commodity=c, direction=d, t=t) => value(m.ext[:variables][:flow][u, n, c, d, t]) 
-        for (u, n, c, d, t) in var_flow_indices()
-    )
-end
-=#
-
 """
     flow_indices(
         commodity=anything,

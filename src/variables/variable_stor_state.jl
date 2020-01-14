@@ -40,13 +40,6 @@ function create_variable_stor_state!(m::Model)
     merge!(get!(m.ext[:variables], :stor_state, Dict{KeyType,Any}()), var, fix)
 end
 
-function variable_stor_state_value(m::Model)
-    Dict{NamedTuple{(:storage, :commodity, :t),Tuple{Object,Object,TimeSlice}},Any}(
-        (storage=stor, commodity=c, t=t) => value(m.ext[:variables][:stor_state][stor, c, t]) 
-        for (stor, c, t) in var_stor_state_indices()
-    )
-end
-
 
 """
     stor_state_indices(filtering_options...)

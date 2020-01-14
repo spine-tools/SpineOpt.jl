@@ -32,5 +32,3 @@ function create_variable_units_available!(m::Model)
         for (u, t) in units_on_indices()
     )
 end
-
-# TODO: Create `variable_units_available_value(m)` if it becomes necessary.

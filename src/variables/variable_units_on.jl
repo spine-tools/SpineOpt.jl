@@ -48,13 +48,6 @@ function create_variable_units_on!(m::Model)
     merge!(get!(m.ext[:variables], :units_on, Dict{KeyType,Any}()), var, fix)
 end
 
-function variable_units_on_value(m::Model)
-    Dict{NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}},Any}(
-        (unit=u, t=t) => value(m.ext[:variables][:units_on][u, t])
-        for (u, t) in var_units_on_indices()
-    )
-end
-
 """
     units_on_indices(unit=anything, t=anything)
 

@@ -43,16 +43,6 @@ function create_variable_trans!(m::Model)
     merge!(get!(m.ext[:variables], :trans, Dict{KeyType,Any}()), var, fix)
 end
 
-function variable_trans_value(m::Model)
-    KeyType = NamedTuple{(:connection, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}}
-    Dict{KeyType,Any}(
-        (connection=conn, node=n, commodity=c, direction=d, t=t) => value(
-            m.ext[:variables][:trans][conn, n, c, d, t]
-        )
-        for (conn, n, c, d, t) in var_trans_indices()
-    )
-end
-
 
 """
     trans_indices(
