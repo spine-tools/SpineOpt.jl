@@ -59,6 +59,7 @@ function run_spinemodel(
         m = Model()
         m.ext[:variables] = Dict{Symbol,Dict}()
         create_variables!(m)
+        results = value(m.ext[:variables])
     end
     outputs = Dict()
     for (k, (window_start, window_end)) in enumerate(rolling_windows())
@@ -67,9 +68,8 @@ function run_spinemodel(
         @time generate_temporal_structure(window_start, window_end)
         printstyled("Initializing model...\n"; bold=true)
         @time begin
-            init_conds = value(m.ext[:variables])
             m = Model(with_optimizer(optimizer))
-            m.ext[:variables] = init_conds
+            m.ext[:variables] = results
             m.ext[:constraints] = Dict{Symbol,Dict}()
             create_variables!(m)
             objective_minimize_total_discounted_costs(m)
@@ -130,7 +130,8 @@ function run_spinemodel(
         println("Optimal solution found")
         println("Objective function value: $(objective_value(m))")
         printstyled("Saving results...\n"; bold=true)
-        @time save_outputs!(outputs, m, window_end)
+        results = value(m.ext[:variables])
+        @time save_outputs!(outputs, results, window_start, window_end)
     end
     printstyled("Writing report...\n"; bold=true)
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
@@ -157,19 +158,18 @@ end
 
 
 """
-    save_outputs!(outputs, m)
+    save_outputs!(outputs, results, window_start, window_end)
 
-Update `outputs` with values from `m`
+Update `outputs` with given `results`.
 """
-function save_outputs!(outputs, m, window_end)
-    results = Dict(var => SpineModel.value(val) for (var, val) in m.ext[:variables])
+function save_outputs!(outputs, results, window_start, window_end)
     for out in output()
         value = get(results, out.name, nothing)
         if value === nothing
             @warn "can't find results for '$(out.name)'"
             continue
         end
-        filter!(x -> x[1].t.start < window_end, value)
+        filter!(x -> window_start <= x[1].t.start < window_end, value)
         existing_value = get!(outputs, out.name, Dict{NamedTuple,Any}())
         merge!(existing_value, value)
     end
@@ -231,6 +231,8 @@ An equivalent dictionary where `JuMP.VariableRef` values are replaced by their `
 value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => value(v) for (k, v) in d)
 
 value(v::JuMP.VariableRef) = has_values(owner_model(v)) ? JuMP.value(v) : zero(Float64)
+value(x) = x
+
 
 """
     formulation(d::Dict)
