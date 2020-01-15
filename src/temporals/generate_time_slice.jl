@@ -225,10 +225,10 @@ function prepend_history!(time_slices, block_time_slices, window_start)
     history_time_slices = SpineModel.time_slice.time_slices
     block_history_time_slices = SpineModel.time_slice.block_time_slices
     history_start_ = history_start(window_start, time_slices)
-    filter!(x -> x.start >= history_start_ && x.end_ <= window_start, history_time_slices)
+    filter!(x -> iscontained(history_start_, x) && x.end_ <= window_start, history_time_slices)
     prepend!(time_slices, history_time_slices)
     for (block, history_time_slices) in block_history_time_slices
-        filter!(x -> x.start >= history_start_ && x.end_ <= window_start, history_time_slices)
+        filter!(x -> iscontained(history_start_, x) && x.end_ <= window_start, history_time_slices)
         prepend!(block_time_slices[block], history_time_slices)
     end
 end
