@@ -234,7 +234,7 @@ function prepend_history!(time_slices, block_time_slices, window_start)
 end
 
 
-_minimum_start(ref, iter)= isempty(iter) ? ref : minimum(ref - x for x in iter)
+_minimum_start(ref, iter) = isempty(iter) ? ref : minimum(ref - x for x in iter)
 
 function history_start(window_start, time_slices)
     trans_delay_start = _minimum_start(
@@ -244,7 +244,7 @@ function history_start(window_start, time_slices)
         window_start, min_up_time(unit=u, t=t) for u in indices(min_up_time) for t in time_slices
     )
     min_down_time_start = _minimum_start(
-        window_start, min_down_time(unit=u, t=t) for u in indices(min_up_time) for t in time_slices
+        window_start, min_down_time(unit=u, t=t) for u in indices(min_down_time) for t in time_slices
     )
     time_slice_start = _minimum_start(window_start, (end_(t) - start(t)) for t in time_slices)
     min(trans_delay_start, min_up_time_start, min_down_time_start, time_slice_start)
