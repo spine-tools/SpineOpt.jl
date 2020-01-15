@@ -51,7 +51,6 @@ function units_on_indices(;unit=anything, t=anything)
         (unit=u, t=t_)
         for u in intersect(SpineModel.unit(), unit)
         for t_ in t_highest_resolution(unique(x.t for x in flow_indices(unit=u, t=t)))
-        if fix_units_on(unit=u, t=t_, _strict=false) === nothing
     ]
 end
 
