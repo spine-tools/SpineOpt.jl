@@ -58,6 +58,19 @@ function expand_commodity_group(cgs::X) where X >: Anything
 end
 
 
+macro cond_time_msg(cond, msg, expr)
+    quote
+        if $(esc(cond))
+            @time_msg $(esc(msg)) $(esc(expr))
+        else
+            $(esc(expr))
+        end
+    end
+end
 
-
-
+macro time_msg(msg, expr)
+    quote
+        printstyled($(esc(msg)); bold=true)
+        @time $(esc(expr))
+    end
+end

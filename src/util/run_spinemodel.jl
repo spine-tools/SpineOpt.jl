@@ -22,8 +22,8 @@
 Run the Spine model from `url` and write report to the same `url`.
 Keyword arguments have the same purpose as for [`run_spinemodel`](@ref).
 """
-function run_spinemodel(url::String; optimizer=Cbc.Optimizer, cleanup=true, extend=m -> nothing)
-    run_spinemodel(url, url; optimizer=optimizer, cleanup=cleanup, extend=extend)
+function run_spinemodel(url::String; optimizer=Cbc.Optimizer, cleanup=true, extend=m -> nothing, log_level=2)
+    run_spinemodel(url, url; optimizer=optimizer, cleanup=cleanup, extend=extend, log_level=log_level)
 end
 
 """
@@ -35,107 +35,92 @@ A new Spine database is created at `url_out` if it doesn't exist.
 
 # Keyword arguments
 
-**`optimizer=Cbc.Optimizer`** is the constructor of the optimizer used for building and solving the model.
+**`with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0)`** is the optimizer factory for building the JuMP model.
 
 **`cleanup=true`** tells [`run_spinemodel`](@ref) whether or not convenience functors should be
 set to `nothing` after completion.
 
 **`extend=m -> nothing`** is a function for extending the model. [`run_spinemodel`](@ref) calls this function with
 the internal `JuMP.Model` object before calling `JuMP.optimize!`.
+
+**`log_level=2`** is the log level.
 """
 function run_spinemodel(
         url_in::String,
         url_out::String;
-        optimizer=Cbc.Optimizer,
+        with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0),
         cleanup=true,
-        extend=m->nothing)
-    printstyled("Creating convenience functions...\n"; bold=true)
-    @time using_spinedb(url_in, @__MODULE__; upgrade=true)
-    printstyled("Preparation phase\n"; bold=true, color=:underline)
-    printstyled("Initializing temporal structure...\n"; bold=true)
-    @time init_time_slice()
-    printstyled("Setting up initial conditions...\n"; bold=true)
-    @time begin
-        m = Model()
-        m.ext[:variables] = Dict{Symbol,Dict}()
-        create_variables!(m)
-        results = value(m.ext[:variables])
-    end
+        extend=m->nothing,
+        log_level=2)
+    printstyled("Running Spine Model for $(url_in)\n\n"; bold=true)
+    @cond_time_msg(
+        log_level >= 2, "Creating convenience functions...", using_spinedb(url_in, @__MODULE__; upgrade=true)
+    )
+    log_level >= 2 && printstyled("Preparation phase\n"; bold=true, color=:underline)
+    @cond_time_msg(log_level >= 2, "Initializing temporal structure...", init_time_slice())
+    @cond_time_msg(
+        log_level >= 2, 
+        "Setting up initial conditions...", 
+        begin
+            m = Model()
+            m.ext[:variables] = Dict{Symbol,Dict}()
+            create_variables!(m)
+            results = value(m.ext[:variables])
+        end
+    )
     outputs = Dict()
     for (k, (window_start, window_end)) in enumerate(rolling_windows())
-        printstyled("Window $k\n"; bold=true, color=:underline)
-        printstyled("Creating temporal structure...\n"; bold=true)
-        @time generate_temporal_structure(window_start, window_end)
-        printstyled("Initializing model...\n"; bold=true)
-        @time begin
-            m = Model(with_optimizer(optimizer))
-            m.ext[:variables] = results
-            m.ext[:constraints] = Dict{Symbol,Dict}()
-            create_variables!(m)
-            objective_minimize_total_discounted_costs(m)
+        if log_level >= 1
+            printstyled("Window $k"; bold=true, color=:underline)
+            println(" (from $window_start to $window_end)")
         end
-        printstyled("Generating constraints...\n"; bold=true)
-        @time begin
-            println("[constraint_flow_capacity]")
-            @time constraint_flow_capacity(m)
-            println("[constraint_fix_ratio_out_in_flow]")
-            @time constraint_fix_ratio_out_in_flow(m)
-            println("[constraint_max_ratio_out_in_flow]")
-            @time constraint_max_ratio_out_in_flow(m)
-            println("[constraint_min_ratio_out_in_flow]")
-            @time constraint_min_ratio_out_in_flow(m)
-            println("[constraint_fix_ratio_out_out_flow]")
-            @time constraint_fix_ratio_out_out_flow(m)
-            println("[constraint_max_ratio_out_out_flow]")
-            @time constraint_max_ratio_out_out_flow(m)
-            println("[constraint_fix_ratio_in_in_flow]")
-            @time constraint_fix_ratio_in_in_flow(m)
-            println("[constraint_max_ratio_in_in_flow]")
-            @time constraint_max_ratio_in_in_flow(m)
-            println("[constraint_fix_ratio_out_in_trans]")
-            @time constraint_fix_ratio_out_in_trans(m)
-            println("[constraint_max_ratio_out_in_trans]")
-            @time constraint_max_ratio_out_in_trans(m)
-            println("[constraint_min_ratio_out_in_trans]")
-            @time constraint_min_ratio_out_in_trans(m)
-            println("[constraint_trans_capacity]")
-            @time constraint_trans_capacity(m)
-            println("[constraint_nodal_balance]")
-            @time constraint_nodal_balance(m)
-            println("[constraint_max_cum_in_flow_bound]")
-            @time constraint_max_cum_in_flow_bound(m)
-            println("[constraint_stor_capacity]")
-            @time constraint_stor_capacity(m)
-            println("[constraint_stor_state]")
-            @time constraint_stor_state(m)
-            println("[constraint_units_on]")
-            @time constraint_units_on(m)
-            println("[constraint_units_available]")
-            @time constraint_units_available(m)
-            println("[constraint_minimum_operating_point]")
-            @time constraint_minimum_operating_point(m)
-            println("[constraint_min_down_time]")
-            @time constraint_min_down_time(m)
-            println("[constraint_min_up_time]")
-            @time constraint_min_up_time(m)
-            println("[constraint_unit_state_transition]")
-            @time constraint_unit_state_transition(m)
-            println("[extend]")
-            @time extend(m)
-        end
-        printstyled("Solving model...\n"; bold=true)
-        @time optimize!(m)
+        @cond_time_msg(
+            log_level >= 2, "Creating temporal structure...", generate_temporal_structure(window_start, window_end)
+        )
+        @cond_time_msg(
+            log_level >= 2, 
+            "Initializing model...",
+            begin
+                m = Model(with_optimizer)
+                m.ext[:variables] = results
+                m.ext[:constraints] = Dict{Symbol,Dict}()
+                create_variables!(m)
+                objective_minimize_total_discounted_costs(m)
+            end
+        )
+        log_level >= 2 && printstyled("Generating constraints...\n"; bold=true)
+        @cond_time_msg(log_level >= 2, "- [constraint_flow_capacity]", constraint_flow_capacity(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_fix_ratio_out_in_flow]", constraint_fix_ratio_out_in_flow(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_max_ratio_out_in_flow]", constraint_max_ratio_out_in_flow(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_min_ratio_out_in_flow]", constraint_min_ratio_out_in_flow(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_fix_ratio_out_out_flow]", constraint_fix_ratio_out_out_flow(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_max_ratio_out_out_flow]", constraint_max_ratio_out_out_flow(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_fix_ratio_in_in_flow]", constraint_fix_ratio_in_in_flow(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_max_ratio_in_in_flow]", constraint_max_ratio_in_in_flow(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_fix_ratio_out_in_trans]", constraint_fix_ratio_out_in_trans(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_max_ratio_out_in_trans]", constraint_max_ratio_out_in_trans(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_min_ratio_out_in_trans]", constraint_min_ratio_out_in_trans(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_trans_capacity]", constraint_trans_capacity(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_nodal_balance]", constraint_nodal_balance(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_max_cum_in_flow_bound]", constraint_max_cum_in_flow_bound(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_stor_capacity]", constraint_stor_capacity(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_stor_state]", constraint_stor_state(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_units_on]", constraint_units_on(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_units_available]", constraint_units_available(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_minimum_operating_point]", constraint_minimum_operating_point(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_min_down_time]", constraint_min_down_time(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_min_up_time]", constraint_min_up_time(m))
+        @cond_time_msg(log_level >= 2, "- [constraint_unit_state_transition]", constraint_unit_state_transition(m))
+        @cond_time_msg(log_level >= 2, "- [extend]", extend(m))
+        @cond_time_msg(log_level >= 2, "Solving model...", optimize!(m))
         status = termination_status(m)
         status != MOI.OPTIMAL && break
-        println("Optimal solution found")
-        println("Objective function value: $(objective_value(m))")
-        printstyled("Saving results...\n"; bold=true)
+        log_level >= 1 && println("Optimal solution found, objective function value: $(objective_value(m))")
         results = value(m.ext[:variables])
-        @time save_outputs!(outputs, results, window_start, window_end)
+        @cond_time_msg(log_level >= 2, "Saving results...", save_outputs!(outputs, results, window_start, window_end))
     end
-    printstyled("Writing report...\n"; bold=true)
+    @cond_time_msg(log_level >= 2, "Writing report...", write_report(outputs, url_out))
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
-    @time write_report(outputs, url_out)
     return m
 end
 
@@ -180,7 +165,6 @@ function write_report(outputs, default_url)
     for (rpt, out) in report__output()
         output_value = get(outputs, out.name, nothing)
         if output_value === nothing
-            @warn "can't find outputs for '$(out.name)'"
             continue
         end
         url = output_db_url(report=rpt)
