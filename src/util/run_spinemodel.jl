@@ -186,7 +186,7 @@ function write_report(outputs, default_url)
         url = output_db_url(report=rpt)
         url === nothing && (url = default_url)
         url_reports = get!(reports, url, Dict())
-        rpt = get!(url_reports, rpt.name, Dict())
+        rpt = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
         d = rpt[out.name] = Dict()
         for (key, val) in pack_trailing_dims(output_value)
             inds = map(x->x[1], val)
@@ -207,12 +207,13 @@ end
 
 An equivalent dictionary where the last `n` dimensions are packed into a matrix
 """
-function pack_trailing_dims(dictionary::Dict{S,T}, n::Int64=1) where {S<:NamedTuple,T}
+function pack_trailing_dims(dictionary::Dict{K,V}, n::Int64=1) where {K<:NamedTuple,V}
     left_dict = Dict{Any,Any}()
     for (key, value) in dictionary
         # TODO: handle length(key) < n and stuff like that?
-        left_key = NamedTuple{Tuple(collect(keys(key))[1:end-n])}(collect(values(key))[1:end-n])
-        right_key = NamedTuple{Tuple(collect(keys(key))[end-n+1:end])}(collect(values(key))[end-n+1:end])
+        bp = length(key) - n
+        left_key = NamedTuple{Tuple(collect(keys(key))[1:bp])}(collect(values(key))[1:bp])
+        right_key = NamedTuple{Tuple(collect(keys(key))[bp + 1:end])}(collect(values(key))[bp + 1:end])
         right_dict = get!(left_dict, left_key, Dict())
         right_dict[right_key] = value
     end
