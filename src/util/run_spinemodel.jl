@@ -171,7 +171,7 @@ function write_report(outputs, default_url)
         url === nothing && (url = default_url)
         url_reports = get!(reports, url, Dict())
         rpt = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
-        d = rpt[out.name] = Dict()
+        d = rpt[out.name] = Dict{NamedTuple,TimeSeries}()
         for (key, val) in pack_trailing_dims(output_value)
             inds = map(x->x[1], val)
             vals = map(x->x[2], val)
@@ -192,7 +192,7 @@ end
 An equivalent dictionary where the last `n` dimensions are packed into a matrix
 """
 function pack_trailing_dims(dictionary::Dict{K,V}, n::Int64=1) where {K<:NamedTuple,V}
-    left_dict = Dict{Any,Any}()
+    left_dict = Dict()
     for (key, value) in dictionary
         # TODO: handle length(key) < n and stuff like that?
         bp = length(key) - n
