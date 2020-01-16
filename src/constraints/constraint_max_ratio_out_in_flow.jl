@@ -29,13 +29,13 @@ function constraint_max_ratio_out_in_flow(m::Model)
     @fetch flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:max_ratio_out_in_flow] = Dict()
     for (u, c_out, c_in) in indices(max_ratio_out_in_flow)
-        involved_timeslices = [t for (u, n, c, d, t) in var_flow_indices(unit=u, commodity=[c_out, c_in])]
+        involved_timeslices = [t for (u, n, c, d, t) in flow_indices(unit=u, commodity=[c_out, c_in])]
         for t in t_lowest_resolution(involved_timeslices)
             constr_dict[u, c_out, c_in, t] = @constraint(
                 m,
                 + sum(
                     flow[u_, n, c_out_, d, t1] * duration(t1)
-                    for (u_, n, c_out_, d, t1) in var_flow_indices(
+                    for (u_, n, c_out_, d, t1) in flow_indices(
                         unit=u, commodity=c_out, direction=:to_node, t=t_in_t(t_long=t)
                     )
                 )
@@ -43,7 +43,7 @@ function constraint_max_ratio_out_in_flow(m::Model)
                 + max_ratio_out_in_flow(unit=u, commodity1=c_out, commodity2=c_in, t=t)
                 * sum(
                     flow[u_, n, c_in_, d, t1] * duration(t1)
-                    for (u_, n, c_in_, d, t1) in var_flow_indices(
+                    for (u_, n, c_in_, d, t1) in flow_indices(
                         unit=u, commodity=c_in, direction=:from_node, t=t_in_t(t_long=t)
                     )
                 )

@@ -30,27 +30,17 @@ and within a certain *time slice*.
 """
 function create_variable_flow!(m::Model)
     KeyType = NamedTuple{(:unit, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}}
-    var = Dict{KeyType,Any}(
-        (unit=u, node=n, commodity=c, direction=d, t=t) => @variable(
-            m, base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
-        )
-        for (u, n, c, d, t) in var_flow_indices()
-    )
-    fix = Dict{KeyType,Any}(
-        (unit=u, node=n, commodity=c, direction=d, t=t) => fix_flow(unit=u, node=n, direction=d, t=t)
-        for (u, n, c, d, t) in fix_flow_indices()
-    )
-    merge!(get!(m.ext[:variables], :flow, Dict{KeyType,Any}()), var, fix)
+    flow = Dict{KeyType,Any}()
+    for (u, n, c, d, t) in flow_indices()
+        fix_flow_ = fix_flow(unit=u, node=n, direction=d, t=t)
+        flow[(unit=u, node=n, commodity=c, direction=d, t=t)] = if fix_flow_ != nothing
+            fix_flow_
+        else
+            @variable(m, base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0)
+        end
+    end
+    merge!(get!(m.ext[:variables], :flow, Dict{KeyType,Any}()), flow)
 end
-
-#= Currently unnecessary, since there are no dynamic constraints including flow delays. TODO: Relevant for future ramp constraints?
-function variable_flow_value(m::Model)
-    Dict{NamedTuple{(:unit, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}},Any}(
-        (unit=u, node=n, commodity=c, direction=d, t=t) => value(m.ext[:variables][:flow][u, n, c, d, t]) 
-        for (u, n, c, d, t) in var_flow_indices()
-    )
-end
-=#
 
 """
     flow_indices(
@@ -65,25 +55,6 @@ A list of `NamedTuple`s corresponding to indices of the `flow` variable.
 The keyword arguments act as filters for each dimension.
 """
 function flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything)
-    [
-        var_flow_indices(commodity=commodity, node=node, unit=unit, direction=direction, t=t);
-        fix_flow_indices(commodity=commodity, node=node, unit=unit, direction=direction, t=t)
-    ]
-end
-
-"""
-    var_flow_indices(
-        commodity=anything,
-        node=anything,
-        unit=anything,
-        direction=anything,
-        t=anything
-    )
-
-A list of `NamedTuple`s corresponding to *non-fixed* indices of the `flow` variable.
-The keyword arguments act as filters for each dimension.
-"""
-function var_flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything)
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
     commodity = expand_commodity_group(commodity)
@@ -92,37 +63,6 @@ function var_flow_indices(;commodity=anything, node=anything, unit=anything, dir
         for (u, n, d) in unit__node__direction(unit=unit, node=node, direction=direction, _compact=false)
         for t_blk in node__temporal_block(node=n)
         for t1 in time_slice(temporal_block=t_blk, t=t)
-        if fix_flow(unit=u, node=n, direction=d, t=t1, _strict=false) === nothing
-        for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
-    ]
-end
-
-"""
-    fix_flow_indices(
-        commodity=anything,
-        node=anything,
-        unit=anything,
-        direction=anything,
-        t=anything
-    )
-
-A list of `NamedTuple`s corresponding to *fixed* indices of the `flow` variable.
-The keyword arguments act as filters for each dimension.
-"""
-function fix_flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything)
-    unit = expand_unit_group(unit)
-    node = expand_node_group(node)
-    commodity = expand_commodity_group(commodity)
-    # We go through all indices of the `fix_flow` parameter and then through all time slices in the model.
-    # If `fix_flow` has a value for any of these combinations, then we have a fix flow index.
-    # NOTE that the user could specify `fix_flow` for some periods and then don't define
-    # any time slice in those periods -- that will obviously be insufficient. They need to specify the
-    # parameter value *and* the time slices that go along.
-    [
-        (unit=u, node=n, commodity=c, direction=d, t=t_)
-        for (u, n, d) in indices(fix_flow; unit=unit, node=node, direction=direction)
-        for t_ in time_slice(t=t)
-        if fix_flow(unit=u, node=n, direction=d, t=t_) != nothing
         for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
     ]
 end

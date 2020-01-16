@@ -28,29 +28,16 @@ in a certain *direction* and within a certain *time slice*.
 """
 function create_variable_trans!(m::Model)
     KeyType = NamedTuple{(:connection, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}}
-    var = Dict{KeyType,Any}(
-        (connection=conn, node=n, commodity=c, direction=d, t=t) => @variable(
-            m, base_name="trans[$conn, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0
-        )
-        for (conn, n, c, d, t) in var_trans_indices()
-    )
-    fix = Dict{KeyType,Any}(
-        (connection=conn, node=n, commodity=c, direction=d, t=t) => fix_trans(
-            connection=conn, node=n, direction=d, t=t
-        )
-        for (conn, n, c, d, t) in fix_trans_indices()
-    )
-    merge!(get!(m.ext[:variables], :trans, Dict{KeyType,Any}()), var, fix)
-end
-
-function variable_trans_value(m::Model)
-    KeyType = NamedTuple{(:connection, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}}
-    Dict{KeyType,Any}(
-        (connection=conn, node=n, commodity=c, direction=d, t=t) => value(
-            m.ext[:variables][:trans][conn, n, c, d, t]
-        )
-        for (conn, n, c, d, t) in var_trans_indices()
-    )
+    trans = Dict{KeyType,Any}()
+    for (conn, n, c, d, t) in trans_indices()
+        fix_trans_ = fix_trans(connection=conn, node=n, direction=d, t=t)
+        trans[(connection=conn, node=n, commodity=c, direction=d, t=t)] = if fix_trans_ != nothing
+            fix_trans_
+        else
+            @variable(m, base_name="trans[$conn, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0)
+        end
+    end
+    merge!(get!(m.ext[:variables], :trans, Dict{KeyType,Any}()), trans)
 end
 
 
@@ -67,25 +54,6 @@ A list of `NamedTuple`s corresponding to indices of the `trans` variable.
 The keyword arguments act as filters for each dimension.
 """
 function trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything)
-    [
-        var_trans_indices(commodity=commodity, node=node, connection=connection, direction=direction, t=t);
-        fix_trans_indices(commodity=commodity, node=node, connection=connection, direction=direction, t=t)
-    ]
-end
-
-"""
-    var_trans_indices(
-        commodity=anything,
-        node=anything,
-        connection=anything,
-        direction=anything,
-        t=anything
-    )
-
-A list of `NamedTuple`s corresponding to *non-fixed* indices of the `trans` variable.
-The keyword arguments act as filters for each dimension.
-"""
-function var_trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything)
     node = expand_node_group(node)
     commodity = expand_commodity_group(commodity)
     [
@@ -95,31 +63,6 @@ function var_trans_indices(;commodity=anything, node=anything, connection=anythi
         )
         for t_blk in node__temporal_block(node=n)
         for t1 in time_slice(temporal_block=t_blk, t=t)
-        if fix_trans(connection=conn, node=n, direction=d, t=t1, _strict=false) === nothing
-        for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
-    ]
-end
-
-"""
-    fix_trans_indices(
-        commodity=anything,
-        node=anything,
-        connection=anything,
-        direction=anything,
-        t=anything
-    )
-
-A list of `NamedTuple`s corresponding to *fixed* indices of the `trans` variable.
-The keyword arguments act as filters for each dimension.
-"""
-function fix_trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything)
-    node = expand_node_group(node)
-    commodity = expand_commodity_group(commodity)
-    [
-        (connection=conn, node=n, commodity=c, direction=d, t=t_)
-        for (conn, n, d) in indices(fix_trans; connection=connection, node=node, direction=direction)
-        for t_ in time_slice(t=t)
-        if fix_trans(connection=conn, node=n, direction=d, t=t_) != nothing
         for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
     ]
 end

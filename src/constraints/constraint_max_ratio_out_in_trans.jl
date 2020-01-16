@@ -29,13 +29,13 @@ function constraint_max_ratio_out_in_trans(m::Model)
     @fetch trans = m.ext[:variables]
     constr_dict = m.ext[:constraints][:max_ratio_out_in_trans] = Dict()
     for (conn, n_out, n_in) in indices(max_ratio_out_in_trans)
-        involved_timeslices = [t for (conn, n, c, d, t) in var_trans_indices(connection=conn, node=[n_out, n_in])]
+        involved_timeslices = [t for (conn, n, c, d, t) in trans_indices(connection=conn, node=[n_out, n_in])]
         for t in t_lowest_resolution(involved_timeslices)
             constr_dict[conn, n_out, n_in, t] = @constraint(
                 m,
                 + sum(
                     trans[conn_, n_out_, c, :to_node, t1] * duration(t1)
-                    for (conn_, n_out_, c, d, t1) in var_trans_indices(
+                    for (conn_, n_out_, c, d, t1) in trans_indices(
                         connection=conn, node=n_out, direction=:to_node, t=t_in_t(t_long=t)
                     )
                 )
@@ -44,7 +44,7 @@ function constraint_max_ratio_out_in_trans(m::Model)
                 # TODO: `trans_delay` needs to be taken into account.
                 * sum(
                     trans[conn_, n_in_, c, :from_node, t1] * duration(t1)
-                    for (conn_, n_in_, c, d, t1) in var_trans_indices(
+                    for (conn_, n_in_, c, d, t1) in trans_indices(
                         connection=conn, node=ng_in, direction=:from_node, t=t_in_t(t_long=t)
                     )
                 )

@@ -27,7 +27,7 @@ and `units_shut_down`.
 function constraint_unit_state_transition(m::Model)
     @fetch units_on, units_started_up, units_shut_down = m.ext[:variables]
     constr_dict = m.ext[:constraints][:unit_state_transition] = Dict()
-    for (u, t_after) in var_units_on_indices()
+    for (u, t_after) in units_on_indices()
         for (u_, t_before) in units_on_indices(unit=u, t=t_before_t(t_after=t_after))
             constr_dict[u, t_before, t_after] = @constraint(
                 m,

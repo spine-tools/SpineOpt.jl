@@ -57,9 +57,20 @@ function expand_commodity_group(cgs::X) where X >: Anything
     [c for cg in cgs for c in commodity_group__commodity(commodity1=cg, _default=cg)]
 end
 
-value(x::JuMP.VariableRef) = JuMP.value(x)
-value(x) = x
 
+macro cond_time_msg(cond, msg, expr)
+    quote
+        if $(esc(cond))
+            @time_msg $(esc(msg)) $(esc(expr))
+        else
+            $(esc(expr))
+        end
+    end
+end
 
-
-
+macro time_msg(msg, expr)
+    quote
+        printstyled($(esc(msg)); bold=true)
+        @time $(esc(expr))
+    end
+end

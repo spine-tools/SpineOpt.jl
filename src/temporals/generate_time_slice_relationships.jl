@@ -19,80 +19,39 @@
 # TODO: have an eye on where unique! is necessary for speedup
 # TODO: add examples to all docstrings when all this begins to converge
 
-struct TOverlapsTRelationshipClass
-    list::Array{Tuple{TimeSlice,TimeSlice},1}
-end
-
-struct TOverlapsTExclRelationshipClass
+struct TOverlapsT
     list::Array{Tuple{TimeSlice,TimeSlice},1}
 end
 
 """
     t_overlaps_t()
 
-Return the list of tuples `(t1, t2)` where `t1` and `t2` have some time in common.
+A list of tuples `(t1, t2)` where `t1` and `t2` have some time in common.
 """
-function (t_overlaps_t::TOverlapsTRelationshipClass)()
-    t_overlaps_t.list
+function (h::TOverlapsT)()
+    h.list
 end
 
 """
     t_overlaps_t(t_overlap)
 
-Return the list of time slices that have some time in common with `t_overlap`
+A list of time slices that have some time in common with `t_overlap`
 (or some time in common with any element in `t_overlap` if it's a list).
 """
-function (t_overlaps_t::TOverlapsTRelationshipClass)(t_overlap)
-    unique(t2 for (t1, t2) in t_overlaps_t.list if t1 in tuple(t_overlap...))
+function (h::TOverlapsT)(t_overlap)
+    unique(t2 for (t1, t2) in h.list if t1 in tuple(t_overlap...))
 end
 
 """
-    t_overlaps_t(t_list1, t_list2)
+    t_overlaps_t(t1, t2)
 
-Return a list of time slices which are in `t_list1` and have some time in common
-with any of the time slices in `t_list2` and vice versa.
+A list of time slices which are in `t1` and have some time in common
+with any of the time slices in `t2` and vice versa.
 """
-function (t_overlaps_t::TOverlapsTRelationshipClass)(t_list1, t_list2)
-    orig_list = t_overlaps_t.list
-    overlap_list = [
-        (t1, t2) for (t1, t2) in orig_list if t1 in tuple(t_list1...) && t2 in tuple(t_list2...)
-    ]
-    unique(vcat(first.(overlap_list), last.(overlap_list)))
+function (h::TOverlapsT)(t1, t2)
+    unique(Iterators.flatten(filter(t -> t[1] in tuple(t1...) && t[2] in tuple(t2...), h.list)))
 end
 
-"""
-    t_overlaps_t_excl()
-
-Return the list of tuples `(t1, t2)` where `t1` and `t2` have some time in common
-and `t1` is not equal to `t2`.
-"""
-function (t_overlaps_t_excl::TOverlapsTExclRelationshipClass)()
-    t_overlaps_t_excl.list
-end
-
-
-"""
-    t_overlaps_t_excl(t_overlap)
-
-Return the list of time slices that have some time in common with `t_overlap`
-(or some time in common with any element in `t_overlap` if it's a list) and `t1` is not equal to `t2`.
-"""
-function (t_overlaps_t_excl::TOverlapsTExclRelationshipClass)(t_overlap)
-    unique(t2 for (t1, t2) in t_overlaps_t_excl.list if t1 in tuple(t_overlap...))
-end
-"""
-    t_overlaps_t_excl(t_list1, t_list2)
-
-Return a list of time slices which are in `t_list1` and have some time in common
-with any of the time slices in `t_list2` (unless they are the same time slice) and vice versa.
-"""
-function (t_overlaps_t_excl::TOverlapsTExclRelationshipClass)(t_list1, t_list2)
-    orig_list = t_overlaps_t_excl.list
-    overlap_list = [
-        (t1, t2) for (t1, t2) in orig_list if t1 in tuple(t_list1...) && t2 in tuple(t_list2...)
-    ]
-    unique(vcat(first.(overlap_list), last.(overlap_list)))
-end
 
 """
     generate_time_slice_relationships()
@@ -148,8 +107,8 @@ function generate_time_slice_relationships(time_slices)
     t_before_t = RelationshipClass(:t_before_t, (:t_before, :t_after), t_before_t_list, [])
     t_in_t = RelationshipClass(:t_in_t, (:t_short, :t_long), t_in_t_list, [])
     t_in_t_excl = RelationshipClass(:t_in_t_excl, (:t_short, :t_long), t_in_t_excl_list, [])
-    t_overlaps_t = TOverlapsTRelationshipClass(t_overlaps_t_list)
-    t_overlaps_t_excl = TOverlapsTExclRelationshipClass(t_overlaps_t_excl_list)
+    t_overlaps_t = TOverlapsT(t_overlaps_t_list)
+    t_overlaps_t_excl = TOverlapsT(t_overlaps_t_excl_list)
     # Export the function-like objects
     @eval begin
         t_before_t = $t_before_t
