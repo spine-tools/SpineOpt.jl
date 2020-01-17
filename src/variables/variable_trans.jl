@@ -56,7 +56,7 @@ The keyword arguments act as filters for each dimension.
 function trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything)
     node = expand_node_group(node)
     commodity = expand_commodity_group(commodity)
-    [
+    unique([
         (connection=conn, node=n, commodity=c, direction=d, t=t1)
         for (conn, n, d) in connection__node__direction(
             connection=connection, node=node, direction=direction, _compact=false
@@ -64,5 +64,5 @@ function trans_indices(;commodity=anything, node=anything, connection=anything, 
         for t_blk in node__temporal_block(node=n)
         for t1 in time_slice(temporal_block=t_blk, t=t)
         for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
-    ]
+    ])
 end

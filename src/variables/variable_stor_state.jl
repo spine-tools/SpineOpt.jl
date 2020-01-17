@@ -46,7 +46,7 @@ for `storage`, `commodity`, and `t`.
 Tuples are generated for the highest resolution 'flows' or 'trans' of the involved commodity.
 """
 function stor_state_indices(;storage=anything, commodity=anything, t=anything)
-    [
+    unique([
         [
             (storage=stor, commodity=c, t=t1)
             for (stor, c) in storage__commodity(storage=storage, commodity=commodity, _compact=false)
@@ -59,5 +59,5 @@ function stor_state_indices(;storage=anything, commodity=anything, t=anything)
             for conn in storage__connection(storage=stor)
             for t1 in t_highest_resolution(unique(x.t for x in trans_indices(connection=conn, commodity=c, t=t)))
         ]
-    ]
+    ])
 end
