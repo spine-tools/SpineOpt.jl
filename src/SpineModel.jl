@@ -95,6 +95,7 @@ include("util/missing_item_handlers.jl")
 include("util/misc.jl")
 include("util/run_spinemodel.jl")
 
+include("variables/generate_variable_indices.jl")
 include("variables/variable_flow.jl")
 include("variables/variable_trans.jl")
 include("variables/variable_stor_state.jl")

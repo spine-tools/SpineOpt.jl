@@ -64,6 +64,7 @@ function run_spinemodel(
     @log level0 "Running Spine Model for $(url_in)..."
     @log level2 "Preparation phase"
     @logtime level2 "Creating convenience functions..." using_spinedb(url_in, @__MODULE__; upgrade=true)
+    @logtime level2 "Generating indices..." generate_variable_indices()
     @logtime level2 "Initializing temporal structure..." init_time_slice()
     @logtime level2 "Setting up initial conditions..." begin
         m = Model()

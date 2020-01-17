@@ -58,11 +58,9 @@ function trans_indices(;commodity=anything, node=anything, connection=anything, 
     commodity = expand_commodity_group(commodity)
     [
         (connection=conn, node=n, commodity=c, direction=d, t=t1)
-        for (conn, n, d) in connection__node__direction(
-            connection=connection, node=node, direction=direction, _compact=false
+        for (conn, n, c, d, tb) in trans_indices_rc(
+            connection=connection, node=node, commodity=commodity, direction=direction, _compact=false
         )
-        for t_blk in node__temporal_block(node=n)
-        for t1 in time_slice(temporal_block=t_blk, t=t)
-        for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
+        for t1 in time_slice(temporal_block=tb, t=t)
     ]
 end

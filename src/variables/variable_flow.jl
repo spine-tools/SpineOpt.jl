@@ -60,9 +60,9 @@ function flow_indices(;commodity=anything, node=anything, unit=anything, directi
     commodity = expand_commodity_group(commodity)
     [
         (unit=u, node=n, commodity=c, direction=d, t=t1)
-        for (u, n, d) in unit__node__direction(unit=unit, node=node, direction=direction, _compact=false)
-        for t_blk in node__temporal_block(node=n)
-        for t1 in time_slice(temporal_block=t_blk, t=t)
-        for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
+        for (u, n, c, d, tb) in flow_indices_rc(
+            unit=unit, node=node, commodity=commodity, direction=direction, _compact=false
+        )
+        for t1 in time_slice(temporal_block=tb, t=t)
     ]
 end

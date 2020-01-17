@@ -49,14 +49,14 @@ function stor_state_indices(;storage=anything, commodity=anything, t=anything)
     [
         [
             (storage=stor, commodity=c, t=t1)
-            for (stor, c) in storage__commodity(storage=storage, commodity=commodity, _compact=false)
-            for u in storage__unit(storage=stor)
+            for (stor, c, u) in unit_stor_state_indices_rc(storage=storage, commodity=commodity, _compact=false)
             for t1 in t_highest_resolution(unique(x.t for x in flow_indices(unit=u, commodity=c, t=t)))
         ];
         [
             (storage=stor, commodity=c, t=t1)
-            for (stor, c) in storage__commodity(storage=storage, commodity=commodity, _compact=false)
-            for conn in storage__connection(storage=stor)
+            for (stor, c, conn) in connection_stor_state_indices_rc(
+                storage=storage, commodity=commodity, _compact=false
+            )
             for t1 in t_highest_resolution(unique(x.t for x in trans_indices(connection=conn, commodity=c, t=t)))
         ]
     ]
