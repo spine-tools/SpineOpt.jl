@@ -26,7 +26,8 @@ function run_spinemodel(
         url::String; 
         with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0), 
         cleanup=true, 
-        extend=m -> nothing, log_level=3)
+        extend=m -> nothing, 
+        log_level=3)
     run_spinemodel(url, url; with_optimizer=with_optimizer, cleanup=cleanup, extend=extend, log_level=log_level)
 end
 
@@ -54,7 +55,7 @@ function run_spinemodel(
         url_out::String;
         with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0),
         cleanup=true,
-        extend=m->nothing,
+        extend=m -> nothing,
         log_level=3)
     level0 = log_level >= 0
     level1 = log_level >= 1
