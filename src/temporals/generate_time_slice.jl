@@ -122,7 +122,7 @@ adjusted_start(window_start, window_end, blk_start::Union{Period,CompoundPeriod}
 adjusted_start(window_start, window_end, blk_start::DateTime) = max(window_start, blk_start)
 
 adjusted_end(window_start, window_end, ::Nothing) = window_end
-adjusted_end(window_start, window_end, blk_end::Union{Period,CompoundPeriod}) = max(window_end, window_start + blk_end)
+adjusted_end(window_start, window_end, blk_end::Union{Period,CompoundPeriod}) = max(window_end, window_start + blk_end) # CHANGE THIS!!!
 adjusted_end(window_start, window_end, blk_end::DateTime) = max(window_end, blk_end)
 
 
@@ -140,7 +140,7 @@ function _block_time_intervals(window_start, window_end)
         time_slice_start = block_start_
         i = 1
         while time_slice_start < block_end_
-            duration = resolution(temporal_block=block, i=i)
+            duration = resolution(temporal_block=block, i=i) # PREVENT ZERO RESOLUTION!
             time_slice_end = time_slice_start + duration
             if time_slice_end > block_end_
                 time_slice_end = block_end_
