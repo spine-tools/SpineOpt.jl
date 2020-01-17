@@ -57,18 +57,26 @@ function expand_commodity_group(cgs::X) where X >: Anything
     [c for cg in cgs for c in commodity_group__commodity(commodity1=cg, _default=cg)]
 end
 
-
-macro cond_time_msg(cond, msg, expr)
+macro log(level, msg)
     quote
-        if $(esc(cond))
-            @time_msg $(esc(msg)) $(esc(expr))
+        if $(esc(level))
+            printstyled($(esc(msg)), "\n"; bold=true)
+        end
+    end
+end
+
+
+macro logtime(level, msg, expr)
+    quote
+        if $(esc(level))
+            @msgtime $(esc(msg)) $(esc(expr))
         else
             $(esc(expr))
         end
     end
 end
 
-macro time_msg(msg, expr)
+macro msgtime(msg, expr)
     quote
         printstyled($(esc(msg)); bold=true)
         @time $(esc(expr))
