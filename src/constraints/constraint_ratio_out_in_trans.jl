@@ -18,36 +18,36 @@
 #############################################################################
 
 """
-    constraint_ratio_out_in_trans(m, parameter, sense)
+    constraint_ratio_out_in_trans(m, ratio_out_in, sense)
 
 Ratio of `trans` variables.
 """
-function constraint_ratio_out_in_trans(m::Model, ratio, sense)
+function constraint_ratio_out_in_trans(m::Model, ratio_out_in, sense)
     @fetch trans = m.ext[:variables]
-    constr_dict = m.ext[:constraints][ratio.name] = Dict()
-    for (conn, n1, n2) in indices(ratio)
-        for t in t_lowest_resolution(map(x -> x.t, trans_indices(connection=conn, node=[n1, n2])))
-            constr_dict[conn, n1, n2, t] = sense_constraint(
+    constr_dict = m.ext[:constraints][ratio_out_in.name] = Dict()
+    for (conn, n_out, n_in) in indices(ratio_out_in)
+        for t in t_lowest_resolution(map(x -> x.t, trans_indices(connection=conn, node=[n_out, n_in])))
+            constr_dict[conn, n_out, n_in, t] = sense_constraint(
                 m,
                 + reduce(
                     +,
-                    trans[conn_, n1_, c, d, t_] * duration(t_)
-                    for (conn_, n1_, c, d, t_) in trans_indices(
-                        connection=conn, node=n1, direction=:to_node, t=t_in_t(t_long=t)
+                    trans[conn_, n_out_, c, d, t_] * duration(t_)
+                    for (conn_, n_out_, c, d, t_) in trans_indices(
+                        connection=conn, node=n_out, direction=:to_node, t=t_in_t(t_long=t)
                     );
                     init=0
                 ),
                 sense,
-                + ratio(connection=conn, node1=n1, node2=n2, t=t)
+                + ratio_out_in(connection=conn, node1=n_out, node2=n_in, t=t)
                 * reduce(
                     +,
-                    trans[conn_, n2_, c, d, t_]
-                    * overlap_duration(t_, t - trans_delay(connection=conn, node1=n1, node2=n2, t=t))
-                    for (conn_, n2_, c, d, t_) in trans_indices(
+                    trans[conn_, n_in_, c, d, t_]
+                    * overlap_duration(t_, t - trans_delay(connection=conn, node1=n_out, node2=n_in, t=t))
+                    for (conn_, n_in_, c, d, t_) in trans_indices(
                         connection=conn,
-                        node=n2,
+                        node=n_in,
                         direction=:from_node,
-                        t=to_time_slice(t - trans_delay(connection=conn, node1=n1, node2=n2, t=t))
+                        t=to_time_slice(t - trans_delay(connection=conn, node1=n_out, node2=n_in, t=t))
                     );
                     init=0
                 )

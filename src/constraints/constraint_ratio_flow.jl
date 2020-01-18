@@ -18,7 +18,7 @@
 #############################################################################
 
 """
-    constraint_ratio_flow(m, parameter, sense, d1, d2)
+    constraint_ratio_flow(m, ratio, sense, d1, d2)
 
 Ratio of `flow` variables.
 """
