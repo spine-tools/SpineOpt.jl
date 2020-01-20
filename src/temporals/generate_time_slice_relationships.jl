@@ -59,15 +59,14 @@ end
 Create and export convenience functions to access time slice relationships:
 `t_in_t`, `t_preceeds_t`, `t_overlaps_t`...
 """
-function generate_time_slice_relationships(time_slices)
+function generate_time_slice_relationships()
     t_before_t_list = []
     t_in_t_list = []
     t_overlaps_t_list = []
-    sort!(time_slices)
     # NOTE: splitting the loop into two loops as below makes it ~2 times faster
-    for (i, t_i) in enumerate(time_slices)
+    for (i, t_i) in enumerate(all_time_slices)
         found = false
-        for t_j in time_slices[i:end]
+        for t_j in all_time_slices[i:end]
             if before(t_i, t_j)
                 found = true
                 push!(t_before_t_list, (t_before=t_i, t_after=t_j))
@@ -76,12 +75,12 @@ function generate_time_slice_relationships(time_slices)
             end
         end
     end
-    for t_i in time_slices
+    for t_i in all_time_slices
         found_in = false
         break_in = false
         found_overlaps = false
         break_overlaps = false
-        for t_j in time_slices
+        for t_j in all_time_slices
             if iscontained(t_i, t_j)
                 found_in = true
                 push!(t_in_t_list, (t_short=t_i, t_long=t_j))

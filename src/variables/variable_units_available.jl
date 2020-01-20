@@ -17,15 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
-"""
-    create_variable_units_available!(m::Model)
-
-"""
 function create_variable_units_available!(m::Model)
-	KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
-    m.ext[:variables][:units_available] = units_available = Dict{KeyType,Any}()
-    for (u, t) in units_on_indices()
-        units_available[(unit=u, t=t)] = units_variable(m, u, "units_available[$u, $t]")
-    end
+    create_variable!(m, :units_available, units_on_indices; lb=x -> 0, bin=units_on_bin, int=units_on_int)
 end
+
+save_variable_units_available!(m::Model) = save_variable!(m, :units_available, units_on_indices)

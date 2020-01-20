@@ -17,30 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
-"""
-    create_variable_trans!(m::Model)
-
-Add new `trans` variable for model `m`.
-
-This variable represents the (average) instantaneous flow of a *commodity* between a *node* and a *connection*
-in a certain *direction* and within a certain *time slice*.
-"""
-function create_variable_trans!(m::Model)
-    KeyType = NamedTuple{(:connection, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}}
-    trans = Dict{KeyType,Any}()
-    for (conn, n, c, d, t) in trans_indices()
-        fix_trans_ = fix_trans(connection=conn, node=n, direction=d, t=t)
-        trans[(connection=conn, node=n, commodity=c, direction=d, t=t)] = if fix_trans_ != nothing
-            fix_trans_
-        else
-            @variable(m, base_name="trans[$conn, $n, $c, $d, $t]", lower_bound=0)
-        end
-    end
-    merge!(get!(m.ext[:variables], :trans, Dict{KeyType,Any}()), trans)
-end
-
-
 """
     trans_indices(
         commodity=anything,
@@ -64,3 +40,9 @@ function trans_indices(;commodity=anything, node=anything, connection=anything, 
         for t1 in time_slice(temporal_block=tb, t=t)
     ]
 end
+
+fix_trans_(x) = fix_trans(connection=x.connection, node=x.node, direction=x.direction, t=x.t, _strict=false)
+
+create_variable_trans!(m::Model) = create_variable!(m, :trans, trans_indices; lb=x -> 0)
+save_variable_trans!(m::Model) = save_variable!(m, :trans, trans_indices)
+fix_variable_trans!(m::Model) = fix_variable!(m, :trans, trans_indices, fix_trans_)

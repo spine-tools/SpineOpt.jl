@@ -16,32 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
-
-"""
-    create_variable_flow!(m::Model)
-
-Add new `flow` variable to the model `m`.
-
-This variable represents the (average) instantaneous flow of a *commodity*
-between a *node* and a *unit* in a certain *direction*
-and within a certain *time slice*.
-
-"""
-function create_variable_flow!(m::Model)
-    KeyType = NamedTuple{(:unit, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}}
-    flow = Dict{KeyType,Any}()
-    for (u, n, c, d, t) in flow_indices()
-        fix_flow_ = fix_flow(unit=u, node=n, direction=d, t=t)
-        flow[(unit=u, node=n, commodity=c, direction=d, t=t)] = if fix_flow_ != nothing
-            fix_flow_
-        else
-            @variable(m, base_name="flow[$u, $n, $c, $d, $t]", lower_bound=0)
-        end
-    end
-    merge!(get!(m.ext[:variables], :flow, Dict{KeyType,Any}()), flow)
-end
-
 """
     flow_indices(
         commodity=anything,
@@ -66,3 +40,9 @@ function flow_indices(;commodity=anything, node=anything, unit=anything, directi
         for t1 in time_slice(temporal_block=tb, t=t)
     ]
 end
+
+fix_flow_(x) = fix_flow(unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false)
+
+create_variable_flow!(m::Model) = create_variable!(m, :flow, flow_indices; lb=x -> 0)
+save_variable_flow!(m::Model) = save_variable!(m, :flow, flow_indices)
+fix_variable_flow!(m::Model) = fix_variable!(m, :flow, flow_indices, fix_flow_)
