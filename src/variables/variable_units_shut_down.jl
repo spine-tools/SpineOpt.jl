@@ -26,7 +26,7 @@ function create_variable_units_shut_down!(m::Model)
     KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
     units_shut_down = Dict{KeyType,Any}()
     for (u, t) in units_on_indices()
-        units_shut_down[(unit=u, t=t)] = units_variable(m, u, "units_shut_down[$u, $(t.JuMP_name)]")
+        units_shut_down[(unit=u, t=t)] = units_variable(m, u, "units_shut_down[$u, $t]")
     end
     merge!(get!(m.ext[:variables], :units_shut_down, Dict{KeyType,Any}()), units_shut_down)
 end

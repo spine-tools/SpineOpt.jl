@@ -34,7 +34,7 @@ function create_variable_trans!(m::Model)
         trans[(connection=conn, node=n, commodity=c, direction=d, t=t)] = if fix_trans_ != nothing
             fix_trans_
         else
-            @variable(m, base_name="trans[$conn, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0)
+            @variable(m, base_name="trans[$conn, $n, $c, $d, $t]", lower_bound=0)
         end
     end
     merge!(get!(m.ext[:variables], :trans, Dict{KeyType,Any}()), trans)

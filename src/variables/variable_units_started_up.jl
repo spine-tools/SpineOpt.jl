@@ -26,7 +26,7 @@ function create_variable_units_started_up!(m::Model)
     KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
     units_started_up = Dict{KeyType,Any}()
     for (u, t) in units_on_indices()
-        units_started_up[(unit=u, t=t)] = units_variable(m, u, "units_started_up[$u, $(t.JuMP_name)]")
+        units_started_up[(unit=u, t=t)] = units_variable(m, u, "units_started_up[$u, $t]")
     end
     merge!(get!(m.ext[:variables], :units_started_up, Dict{KeyType,Any}()), units_started_up)
 end

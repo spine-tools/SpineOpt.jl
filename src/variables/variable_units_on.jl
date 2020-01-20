@@ -34,7 +34,7 @@ function create_variable_units_on!(m::Model)
         units_on[(unit=u, t=t)] = if fix_units_on_ != nothing
             fix_units_on_
         else
-            units_variable(m, u, "units_on[$u, $(t.JuMP_name)]")
+            units_variable(m, u, "units_on[$u, $t]")
         end
     end
     merge!(get!(m.ext[:variables], :units_on, Dict{KeyType,Any}()), units_on)

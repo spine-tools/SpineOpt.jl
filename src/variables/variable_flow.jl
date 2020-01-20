@@ -36,7 +36,7 @@ function create_variable_flow!(m::Model)
         flow[(unit=u, node=n, commodity=c, direction=d, t=t)] = if fix_flow_ != nothing
             fix_flow_
         else
-            @variable(m, base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0)
+            @variable(m, base_name="flow[$u, $n, $c, $d, $t]", lower_bound=0)
         end
     end
     merge!(get!(m.ext[:variables], :flow, Dict{KeyType,Any}()), flow)

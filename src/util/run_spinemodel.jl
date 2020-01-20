@@ -146,7 +146,7 @@ function save_outputs!(outputs, results, window_start, window_end)
             @warn "can't find results for '$(out.name)'"
             continue
         end
-        filter!(x -> window_start <= x[1].t.start < window_end, value)
+        filter!(x -> window_start <= start(x[1].t) < window_end, value)
         existing_value = get!(outputs, out.name, Dict{NamedTuple,Any}())
         merge!(existing_value, value)
     end

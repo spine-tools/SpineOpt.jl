@@ -26,6 +26,6 @@ function create_variable_units_available!(m::Model)
 	KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
     m.ext[:variables][:units_available] = units_available = Dict{KeyType,Any}()
     for (u, t) in units_on_indices()
-        units_available[(unit=u, t=t)] = units_variable(m, u, "units_available[$u, $(t.JuMP_name)]")
+        units_available[(unit=u, t=t)] = units_variable(m, u, "units_available[$u, $t]")
     end
 end

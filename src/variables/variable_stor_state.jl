@@ -31,7 +31,7 @@ function create_variable_stor_state!(m::Model)
         stor_state[(storage=stor, commodity=c, t=t)] = if fix_stor_state_ != nothing
             fix_stor_state_
         else
-            @variable(m, base_name="stor_state[$stor, $c, $(t.JuMP_name)]", lower_bound=stor_state_min(storage=stor))
+            @variable(m, base_name="stor_state[$stor, $c, $t]", lower_bound=stor_state_min(storage=stor))
         end
     end
     merge!(get!(m.ext[:variables], :stor_state, Dict{KeyType,Any}()), stor_state)
