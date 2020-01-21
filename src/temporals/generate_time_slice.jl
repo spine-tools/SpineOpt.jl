@@ -20,13 +20,32 @@
 import Dates: CompoundPeriod
 
 struct TimeSliceSet
-    time_slices::Array{TimeSlice,1}
     block_time_slices::Dict{Object,Array{TimeSlice,1}}
+    time_slices::Array{TimeSlice,1}
+    function TimeSliceSet(block_time_slices)
+        time_slices = sort(unique(t for v in values(block_time_slices) for t in v))
+        new(block_time_slices, time_slices)
+    end
 end
 
 struct ToTimeSlice
     block_time_slices::Dict{Object,Array{TimeSlice,1}}
     block_time_slice_map::Dict{Object,Array{Int64,1}}
+    function ToTimeSlice(block_time_slices)
+        block_time_slice_map = Dict{Object,Array{Int64,1}}()
+        for (block, time_slices) in block_time_slices
+            isempty(time_slices) && continue
+            temp_block_start = start(first(time_slices))
+            temp_block_end = end_(last(time_slices))
+            m = block_time_slice_map[block] = Array{Int64,1}(undef, Minute(temp_block_end - temp_block_start).value)
+            for (ind, t) in enumerate(time_slices)
+                first_minute = Minute(start(t) - temp_block_start).value + 1
+                last_minute = Minute(end_(t) - temp_block_start).value
+                m[first_minute:last_minute] .= ind
+            end
+        end
+        new(block_time_slices, block_time_slice_map)
+    end
 end
 
 """
@@ -174,23 +193,6 @@ A `Dict` mapping temporal blocks to a sorted `Array` of `TimeSlices`.
 block_time_slices(window_start, window_end) = block_time_slices(block_time_intervals(window_start, window_end))
 
 
-function block_time_slice_map(block_time_slices)
-    d = Dict{Object,Array{Int64,1}}()
-    for (block, time_slices) in block_time_slices
-        isempty(time_slices) && continue
-        temp_block_start = start(first(time_slices))
-        temp_block_end = end_(last(time_slices))
-        d[block] = time_slice_map = Array{Int64,1}(undef, Minute(temp_block_end - temp_block_start).value)
-        for (ind, t) in enumerate(time_slices)
-            first_minute = Minute(start(t) - temp_block_start).value + 1
-            last_minute = Minute(end_(t) - temp_block_start).value
-            time_slice_map[first_minute:last_minute] .= ind
-        end
-    end
-    d
-end
-
-
 """
     generate_time_slice(window_start, window_end)
 
@@ -200,24 +202,22 @@ Return an `Array` of all `TimeSlice`s in the model (including history).
 See [@TimeSliceSet()](@ref).
 """
 function generate_time_slice(window_start, window_end)
-    current_window = TimeSlice(window_start, window_end)
     window_span = window_end - window_start
     window_block_time_slices = block_time_slices(window_start, window_end)
+    time_slice = TimeSliceSet(window_block_time_slices)
     all_block_time_slices = Dict(
         block => [map(t -> t - window_span, filter(t -> end_(t) <= window_end, time_slices)); time_slices]
         for (block, time_slices) in window_block_time_slices
     )
-    window_time_slices = sort(unique(t for v in values(window_block_time_slices) for t in v))
-    t_history_t = Dict(t => t - window_span for t in filter(t -> end_(t) <= window_end, window_time_slices))
-    all_time_slices = [collect(values(t_history_t)); window_time_slices]
-    all_block_time_slice_map = block_time_slice_map(all_block_time_slices)
-    time_slice = TimeSliceSet(window_time_slices, window_block_time_slices)
-    to_time_slice = ToTimeSlice(all_block_time_slices, all_block_time_slice_map)
+    to_time_slice = ToTimeSlice(all_block_time_slices)
+    current_window = TimeSlice(window_start, window_end)
+    t_history_t = Dict(t => t - window_span for t in filter(t -> end_(t) <= window_end, time_slice()))
+    all_time_slices = sort(unique(t for v in values(all_block_time_slices) for t in v))
     @eval begin
         time_slice = $time_slice
         to_time_slice = $to_time_slice
-        t_history_t = $t_history_t
         current_window = $current_window
+        t_history_t = $t_history_t
         all_time_slices = $all_time_slices
         export time_slice
         export to_time_slice

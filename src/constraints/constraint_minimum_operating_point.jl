@@ -19,19 +19,19 @@
 
 
 """
-    constraint_minimum_operating_point(m::Model)
+    add_constraint_minimum_operating_point!(m::Model)
 
 Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
 number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
 
-function constraint_minimum_operating_point(m::Model)
+function add_constraint_minimum_operating_point!(m::Model)
     @fetch flow, units_on = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:minimum_operating_point] = Dict()
+    cons = m.ext[:constraints][:minimum_operating_point] = Dict()
     for (u, c) in indices(minimum_operating_point)
         for (u, c, d) in indices(unit_capacity; unit=u, commodity=c)
             for (u, t) in units_on_indices(unit=u)
-                constr_dict[u, c, d, t] = @constraint(
+                cons[u, c, d, t] = @constraint(
                     m,
                     + sum(
                         flow[u_, n, c_, d_, t1]
@@ -40,8 +40,26 @@ function constraint_minimum_operating_point(m::Model)
                     >=
                     + units_on[u, t]
                     * minimum_operating_point(unit=u, commodity=c, t=t)
-                    * unit_capacity(unit=u, commodity=c, direction=d)
-                    * unit_conv_cap_to_flow(unit=u, commodity=c)
+                    * unit_capacity(unit=u, commodity=c, direction=d, t=t)
+                    * unit_conv_cap_to_flow(unit=u, commodity=c, t=t)
+                )
+            end
+        end
+    end
+end
+
+function update_constraint_minimum_operating_point!(m::Model)
+    @fetch units_on = m.ext[:variables]
+    cons = m.ext[:constraints][:minimum_operating_point]
+    for (u, c) in indices(minimum_operating_point)
+        for (u, c, d) in indices(unit_capacity; unit=u, commodity=c)
+            for (u, t) in units_on_indices(unit=u)
+                set_normalized_coefficient(
+                    cons[u, c, d, t],
+                    units_on[u, t],
+                    - minimum_operating_point(unit=u, commodity=c, t=t)
+                    * unit_capacity(unit=u, commodity=c, direction=d, t=t)
+                    * unit_conv_cap_to_flow(unit=u, commodity=c, t=t)
                 )
             end
         end

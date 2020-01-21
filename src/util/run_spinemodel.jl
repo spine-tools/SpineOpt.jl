@@ -26,10 +26,26 @@ function run_spinemodel(
         url::String; 
         with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0), 
         cleanup=true, 
-        extend=m -> nothing, 
+        add_constraint_user=m -> nothing, 
+        update_constraint_user=m -> nothing, 
         log_level=3)
-    run_spinemodel(url, url; with_optimizer=with_optimizer, cleanup=cleanup, extend=extend, log_level=log_level)
+    run_spinemodel(
+        url, url; 
+        with_optimizer=with_optimizer, 
+        cleanup=cleanup, 
+        add_constraint_user=add_constraint_user, 
+        update_constraint_user=update_constraint_user, 
+        log_level=log_level
+    )
 end
+
+
+function generate_temporal_structure()
+    window_start, window_end = rolling_window()
+    generate_time_slice(window_start, window_end)
+    generate_time_slice_relationships()
+end
+
 
 """
     run_spinemodel(url_in, url_out; <keyword arguments>)
@@ -55,27 +71,94 @@ function run_spinemodel(
         url_out::String;
         with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0),
         cleanup=true,
-        extend=m -> nothing,
+        add_constraint_user=m -> nothing, 
+        update_constraint_user=m -> nothing, 
         log_level=3)
     level0 = log_level >= 0
     level1 = log_level >= 1
     level2 = log_level >= 2
     level3 = log_level >= 3
     @log level0 "Running Spine Model for $(url_in)..."
-    @log level2 "Preparation phase"
     @logtime level2 "Creating convenience functions..." using_spinedb(url_in, @__MODULE__; upgrade=true)
+    @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @logtime level2 "Generating indices..." generate_variable_indices()
-    @logtime level2 "Initializing temporal structure..." init_time_slice()
-    @logtime level2 "Setting up initial conditions..." begin
-        m = Model()
+    @log level1 "Window: $current_window"
+    @logtime level2 "Initializing model..." begin
+        m = Model(with_optimizer)
         m.ext[:variables] = Dict{Symbol,Dict}()
+        m.ext[:constraints] = Dict{Symbol,Dict}()
         create_variables!(m)
-        results = value(m.ext[:variables])
+        fix_variables!(m)
+        objective_minimize_total_discounted_costs(m)
     end
+    @logtime level2 "Adding constraints...\n" begin
+        @logtime level3 "- [constraint_flow_capacity]" add_constraint_flow_capacity!(m)
+        @logtime level3 "- [constraint_fix_ratio_out_in_flow]" add_constraint_fix_ratio_out_in_flow!(m)
+        @logtime level3 "- [constraint_max_ratio_out_in_flow]" add_constraint_max_ratio_out_in_flow!(m)
+        @logtime level3 "- [constraint_min_ratio_out_in_flow]" add_constraint_min_ratio_out_in_flow!(m)
+        @logtime level3 "- [constraint_fix_ratio_out_out_flow]" add_constraint_fix_ratio_out_out_flow!(m)
+        @logtime level3 "- [constraint_max_ratio_out_out_flow]" add_constraint_max_ratio_out_out_flow!(m)
+        @logtime level3 "- [constraint_fix_ratio_in_in_flow]" add_constraint_fix_ratio_in_in_flow!(m)
+        @logtime level3 "- [constraint_max_ratio_in_in_flow]" add_constraint_max_ratio_in_in_flow!(m)
+        @logtime level3 "- [constraint_fix_ratio_out_in_trans]" add_constraint_fix_ratio_out_in_trans!(m)
+        @logtime level3 "- [constraint_max_ratio_out_in_trans]" add_constraint_max_ratio_out_in_trans!(m)
+        @logtime level3 "- [constraint_min_ratio_out_in_trans]" add_constraint_min_ratio_out_in_trans!(m)
+        @logtime level3 "- [constraint_trans_capacity]" add_constraint_trans_capacity!(m)
+        @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
+        @logtime level3 "- [constraint_max_cum_in_flow_bound]" add_constraint_max_cum_in_flow_bound!(m)
+        @logtime level3 "- [constraint_stor_capacity]" add_constraint_stor_capacity!(m)
+        @logtime level3 "- [constraint_stor_state]" add_constraint_stor_state!(m)
+        @logtime level3 "- [constraint_units_on]" add_constraint_units_on!(m)
+        @logtime level3 "- [constraint_units_available]" add_constraint_units_available!(m)
+        @logtime level3 "- [constraint_minimum_operating_point]" add_constraint_minimum_operating_point!(m)
+        @logtime level3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)
+        @logtime level3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
+        @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
+        @logtime level3 "- [constraint_user]" add_constraint_user(m)
+    end
+    @logtime level2 "Solving model..." optimize!(m)
+    if termination_status(m) == MOI.OPTIMAL
+        @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
+    end
+    return m
+    while roll_temporal_structure()
+        @log level1 "Window: $current_window"
+        save_variables!(m)
+        fix_variables!(m)
+        @logtime level2 "Updating constraints...\n" begin
+            @logtime level3 "- [constraint_flow_capacity]" update_constraint_flow_capacity!(m)
+            @logtime level3 "- [constraint_fix_ratio_out_in_flow]" update_constraint_fix_ratio_out_in_flow!(m)
+            @logtime level3 "- [constraint_max_ratio_out_in_flow]" update_constraint_max_ratio_out_in_flow!(m)
+            @logtime level3 "- [constraint_min_ratio_out_in_flow]" update_constraint_min_ratio_out_in_flow!(m)
+            @logtime level3 "- [constraint_fix_ratio_out_out_flow]" update_constraint_fix_ratio_out_out_flow!(m)
+            @logtime level3 "- [constraint_max_ratio_out_out_flow]" update_constraint_max_ratio_out_out_flow!(m)
+            @logtime level3 "- [constraint_fix_ratio_in_in_flow]" update_constraint_fix_ratio_in_in_flow!(m)
+            @logtime level3 "- [constraint_max_ratio_in_in_flow]" update_constraint_max_ratio_in_in_flow!(m)
+            @logtime level3 "- [constraint_fix_ratio_out_in_trans]" update_constraint_fix_ratio_out_in_trans!(m)
+            @logtime level3 "- [constraint_max_ratio_out_in_trans]" update_constraint_max_ratio_out_in_trans!(m)
+            @logtime level3 "- [constraint_min_ratio_out_in_trans]" update_constraint_min_ratio_out_in_trans!(m)
+            @logtime level3 "- [constraint_trans_capacity]" update_constraint_trans_capacity!(m)
+            @logtime level3 "- [constraint_nodal_balance]" update_constraint_nodal_balance!(m)
+            @logtime level3 "- [constraint_stor_capacity]" update_constraint_stor_capacity!(m)
+            @logtime level3 "- [constraint_stor_state]" update_constraint_stor_state!(m)
+            @logtime level3 "- [constraint_units_on]" update_constraint_units_on!(m)
+            @logtime level3 "- [constraint_units_available]" update_constraint_units_available!(m)
+            @logtime level3 "- [constraint_minimum_operating_point]" update_constraint_minimum_operating_point!(m)
+            @logtime level3 "- [constraint_min_up_time]" update_constraint_min_down_time!(m)
+            @logtime level3 "- [constraint_min_down_time]" update_constraint_min_up_time!(m)
+            @logtime level3 "- [constraint_unit_state_transition]" update_constraint_unit_state_transition!(m)
+            @logtime level3 "- [constraint_user]" update_constraint_user(m)
+        end        
+        @logtime level2 "Solving model..." optimize!(m)
+        if termination_status(m) == MOI.OPTIMAL
+            @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
+        end
+    end
+    return m
+
     outputs = Dict()
     for (k, (window_start, window_end)) in enumerate(rolling_windows())
         @log level1 "Window $k, from $window_start to $window_end"
-        @logtime level2 "Creating temporal structure..." generate_temporal_structure(window_start, window_end)
         @logtime level2 "Initializing model..." begin
             m = Model(with_optimizer)
             m.ext[:variables] = results
@@ -83,32 +166,7 @@ function run_spinemodel(
             create_variables!(m)
             objective_minimize_total_discounted_costs(m)
         end
-        @logtime level2 "Generating constraints...\n" begin
-            @logtime level3 "- [constraint_flow_capacity]" constraint_flow_capacity(m)
-            @logtime level3 "- [constraint_fix_ratio_out_in_flow]" constraint_fix_ratio_out_in_flow(m)
-            @logtime level3 "- [constraint_max_ratio_out_in_flow]" constraint_max_ratio_out_in_flow(m)
-            @logtime level3 "- [constraint_min_ratio_out_in_flow]" constraint_min_ratio_out_in_flow(m)
-            @logtime level3 "- [constraint_fix_ratio_out_out_flow]" constraint_fix_ratio_out_out_flow(m)
-            @logtime level3 "- [constraint_max_ratio_out_out_flow]" constraint_max_ratio_out_out_flow(m)
-            @logtime level3 "- [constraint_fix_ratio_in_in_flow]" constraint_fix_ratio_in_in_flow(m)
-            @logtime level3 "- [constraint_max_ratio_in_in_flow]" constraint_max_ratio_in_in_flow(m)
-            @logtime level3 "- [constraint_fix_ratio_out_in_trans]" constraint_fix_ratio_out_in_trans(m)
-            @logtime level3 "- [constraint_max_ratio_out_in_trans]" constraint_max_ratio_out_in_trans(m)
-            @logtime level3 "- [constraint_min_ratio_out_in_trans]" constraint_min_ratio_out_in_trans(m)
-            @logtime level3 "- [constraint_trans_capacity]" constraint_trans_capacity(m)
-            @logtime level3 "- [constraint_nodal_balance]" constraint_nodal_balance(m)
-            @logtime level3 "- [constraint_max_cum_in_flow_bound]" constraint_max_cum_in_flow_bound(m)
-            @logtime level3 "- [constraint_stor_capacity]" constraint_stor_capacity(m)
-            @logtime level3 "- [constraint_stor_state]" constraint_stor_state(m)
-            @logtime level3 "- [constraint_units_on]" constraint_units_on(m)
-            @logtime level3 "- [constraint_units_available]" constraint_units_available(m)
-            @logtime level3 "- [constraint_minimum_operating_point]" constraint_minimum_operating_point(m)
-            @logtime level3 "- [constraint_min_down_time]" constraint_min_down_time(m)
-            @logtime level3 "- [constraint_min_up_time]" constraint_min_up_time(m)
-            @logtime level3 "- [constraint_unit_state_transition]" constraint_unit_state_transition(m)
-            @logtime level3 "- [extend]" extend(m)
-        end
-        @logtime level2 "Solving model..." optimize!(m)
+        
         termination_status(m) != MOI.OPTIMAL && break
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
         results = value(m.ext[:variables])
@@ -119,20 +177,7 @@ function run_spinemodel(
     return m
 end
 
-function create_variables!(m::Model)
-    create_variable_flow!(m)
-    create_variable_units_on!(m)
-    create_variable_units_available!(m)
-    create_variable_units_started_up!(m)
-    create_variable_units_shut_down!(m)
-    create_variable_trans!(m)
-    create_variable_stor_state!(m)
-end
 
-function generate_temporal_structure(window_start, window_end)
-    time_slices = generate_time_slice(window_start, window_end)
-    generate_time_slice_relationships(time_slices)
-end
 
 """
     save_outputs!(outputs, results, window_start, window_end)

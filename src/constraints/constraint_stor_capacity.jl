@@ -19,17 +19,17 @@
 
 
 """
-    constraint_stor_capacity(m::Model)
+    add_constraint_stor_capacity!(m::Model)
 
 Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
 number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 """
-function constraint_stor_capacity(m::Model)
+function add_constraint_stor_capacity!(m::Model)
     @fetch stor_state = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:stor_capacity] = Dict()
+    cons = m.ext[:constraints][:stor_capacity] = Dict()
     for (stor,) in indices(stor_state_cap)
         for t in time_slice()
-            constr_dict[stor, t] = @constraint(
+            cons[stor, t] = @constraint(
                 m,
                 + reduce(
                     +,
@@ -40,6 +40,15 @@ function constraint_stor_capacity(m::Model)
                 <=
                 stor_state_cap(storage=stor, t=t) * duration(t)
             )
+        end
+    end
+end
+
+function update_constraint_stor_capacity!(m::Model)
+    cons = m.ext[:constraints][:stor_capacity]
+    for (stor,) in indices(stor_state_cap)
+        for t in time_slice()
+            set_normalized_rhs(cons[stor, t], stor_state_cap(storage=stor, t=t) * duration(t))
         end
     end
 end

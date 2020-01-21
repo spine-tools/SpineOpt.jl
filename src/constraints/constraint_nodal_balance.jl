@@ -18,21 +18,17 @@
 #############################################################################
 
 """
-    constraint_nodal_balance(m::Model)
+    add_constraint_nodal_balance!(m::Model)
 
 Enforce balance of all commodity flows from and to a node.
 """
-function constraint_nodal_balance(m::Model)
+function add_constraint_nodal_balance!(m::Model)
 	@fetch flow, trans = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:nodal_balance] = Dict()
+    cons = m.ext[:constraints][:nodal_balance] = Dict()
 	for (n, tblock) in node__temporal_block()
         for t in time_slice(temporal_block=tblock)
-            constr_dict[n, t] = @constraint(
+            cons[n, t] = @constraint(
                 m,
-	   			0
-                ==
-                # Demand for the commodity
-                - demand(node=n, t=t) * duration(t)
                 # Commodity flows from units
                 + reduce(
                     +,
@@ -61,7 +57,20 @@ function constraint_nodal_balance(m::Model)
                     for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=:from_node);
                     init=0
                 )
+                ==
+                # Demand for the commodity
+                demand(node=n, t=t) * duration(t)
             )
+        end
+    end
+end
+
+
+function update_constraint_nodal_balance!(m::Model)
+    cons = m.ext[:constraints][:nodal_balance]
+    for (n, tblock) in node__temporal_block()
+        for t in time_slice(temporal_block=tblock)
+            set_normalized_rhs(cons[n, t], demand(node=n, t=t) * duration(t))
         end
     end
 end

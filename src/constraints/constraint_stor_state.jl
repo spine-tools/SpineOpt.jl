@@ -18,16 +18,16 @@
 #############################################################################
 
 """
-    constraint_stor_state(m::Model)
+    add_constraint_stor_state!(m::Model)
 
 Balance for storage level.
 """
-function constraint_stor_state(m::Model)
+function add_constraint_stor_state!(m::Model)
     @fetch stor_state, trans, flow = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:stor_state] = Dict()
+    cons = m.ext[:constraints][:stor_state] = Dict()
     for (stor, c, t_after) in stor_state_indices()
         for (stor, c, t_before) in stor_state_indices(storage=stor, commodity=c, t=t_before_t(t_after=t_after))
-            constr_dict[stor, c, t_before, t_after] = @constraint(
+            cons[stor, c, t_before, t_after] = @constraint(
                 m,
                 (stor_state[stor, c, t_after] - stor_state[stor, c, t_before])
                     * state_coeff(storage=stor)
@@ -96,3 +96,6 @@ function constraint_stor_state(m::Model)
         end
     end
 end
+
+# TODO
+update_constraint_stor_state!(m::Model) = nothing

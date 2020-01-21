@@ -19,32 +19,50 @@
 
 
 """
-    constraint_trans_capacity(m::Model)
+    add_constraint_trans_capacity!(m::Model)
 
 Limit the maximum in/out `trans` of a `connection` for all `trans_capacity` indices.
 Check if `conn_conv_cap_to_trans` is defined.
 """
-function constraint_trans_capacity(m::Model)
+function add_constraint_trans_capacity!(m::Model)
     @fetch trans = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:trans_capacity] = Dict()
+    cons = m.ext[:constraints][:trans_capacity] = Dict()
     for (conn_, n_, d) in indices(conn_capacity)
-        for (conn,n) in indices(conn_avail_factor;connection=conn_, node=n_)
-        for t in time_slice()
-            constr_dict[conn, n, t] = @constraint(
-                m,
-                + reduce(
-                    +,
-                    trans[conn1, n1, c1, d1, t1] * duration(t1)
-                    for (conn1, n1, c1, d1, t1) in trans_indices(connection=conn, node=n, direction=d, t=t);
-                    init=0
+        for (conn, n) in indices(conn_avail_factor; connection=conn_, node=n_)
+            for t in time_slice()
+                cons[conn, n, t] = @constraint(
+                    m,
+                    + reduce(
+                        +,
+                        trans[conn1, n1, c1, d1, t1] * duration(t1)
+                        for (conn1, n1, c1, d1, t1) in trans_indices(connection=conn, node=n, direction=d, t=t);
+                        init=0
+                    )
+                    <=
+                    + conn_capacity(connection=conn, node=n, direction=d, t=t)
+                    * conn_avail_factor(connection=conn, node=n, t=t)
+                    * conn_conv_cap_to_trans(connection=conn, node=n, t=t)
+                    * duration(t)
                 )
-                <=
-                + conn_capacity(connection=conn, node=n, direction=d)
-                * conn_avail_factor(connection=conn, node=n)
-                * conn_conv_cap_to_trans(connection=conn, node=n)
-                * duration(t)
-            )
+            end
         end
     end
 end
+
+function update_constraint_trans_capacity!(m::Model)
+    @fetch trans = m.ext[:variables]
+    cons = m.ext[:constraints][:trans_capacity]
+    for (conn_, n_, d) in indices(conn_capacity)
+        for (conn, n) in indices(conn_avail_factor; connection=conn_, node=n_)
+            for t in time_slice()
+                set_normalized_rhs(
+                    cons[conn, n, t],
+                    + conn_capacity(connection=conn, node=n, direction=d, t=t)
+                    * conn_avail_factor(connection=conn, node=n, t=t)
+                    * conn_conv_cap_to_trans(connection=conn, node=n, t=t)
+                    * duration(t)
+                )
+            end
+        end
+    end
 end
