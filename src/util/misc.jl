@@ -82,3 +82,8 @@ macro msgtime(msg, expr)
         @time $(esc(expr))
     end
 end
+
+
+sense_constraint(m, lhs, sense::typeof(<=), rhs) = @constraint(m, lhs <= rhs)
+sense_constraint(m, lhs, sense::typeof(==), rhs) = @constraint(m, lhs == rhs)
+sense_constraint(m, lhs, sense::typeof(>=), rhs) = @constraint(m, lhs >= rhs)
