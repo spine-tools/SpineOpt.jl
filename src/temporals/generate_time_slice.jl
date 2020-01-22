@@ -116,7 +116,8 @@ function rolling_window()
     model_start_ = model_start(model=instance)
     model_end_ = model_end(model=instance)
     roll_forward_ = roll_forward(model=instance, _strict=false)
-    model_start_, (roll_forward_ === nothing) ? model_end_ : model_start_ + roll_forward_
+    roll_forward_ === nothing && return model_start_, model_end_
+    model_start_, min(model_start_ + roll_forward_, model_end_)
 end
 
 

@@ -29,19 +29,23 @@ function add_constraint_ratio_flow!(m::Model, ratio, sense, d1, d2)
         for t in t_lowest_resolution(map(x -> x.t, flow_indices(unit=u, commodity=[c1, c2])))
             cons[u, c1, c2, t] = sense_constraint(
                 m,
-                + sum(
+                + reduce(
+                    +,
                     flow[u_, n, c1_, d, t_] * duration(t_)
                     for (u_, n, c1_, d, t_) in flow_indices(
                         unit=u, commodity=c1, direction=d1, t=t_in_t(t_long=t)
-                    )
+                    );
+                    init=0
                 ),
                 sense,
                 + ratio(unit=u, commodity1=c1, commodity2=c2, t=t)
-                * sum(
+                * reduce(
+                    +,
                     flow[u_, n, c2_, d, t_] * duration(t_)
                     for (u_, n, c2_, d, t_) in flow_indices(
                         unit=u, commodity=c2, direction=d2, t=t_in_t(t_long=t)
-                    )
+                    );
+                    init=0
                 )
             )
         end
@@ -77,13 +81,13 @@ function add_constraint_fix_ratio_in_in_flow!(m::Model)
     add_constraint_ratio_flow!(m, fix_ratio_in_in_flow, ==, :from_node, :from_node)
 end
 function add_constraint_max_ratio_in_in_flow!(m::Model)
-    add_constraint_ratio_flow!(m, max_ratio_in_in_flow, >=, :from_node, :from_node)
+    add_constraint_ratio_flow!(m, max_ratio_in_in_flow, <=, :from_node, :from_node)
 end
 function add_constraint_fix_ratio_out_out_flow!(m::Model)
     add_constraint_ratio_flow!(m, fix_ratio_out_out_flow, ==, :to_node, :to_node)
 end
 function add_constraint_max_ratio_out_out_flow!(m::Model)
-    add_constraint_ratio_flow!(m, max_ratio_out_out_flow, >=, :to_node, :to_node)
+    add_constraint_ratio_flow!(m, max_ratio_out_out_flow, <=, :to_node, :to_node)
 end
 
 function update_constraint_fix_ratio_out_in_flow!(m::Model)

@@ -22,7 +22,7 @@ function create_variable!(
         lb=nothing, ub=nothing, bin=nothing, int=nothing
     )
     inds = indices()
-    m.ext[:variables][name] = var = Dict{eltype(inds),Union{VariableRef,Float64}}()
+    m.ext[:variables][name] = var = Dict{eltype(inds),Union{VariableRef,Number}}()
     for ind in inds
         base_name = """$(name)[$(join(ind, ", "))]"""
         var[ind] = @variable(m, base_name=base_name)
