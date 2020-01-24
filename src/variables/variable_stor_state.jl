@@ -48,5 +48,4 @@ fix_stor_state_(x) = fix_stor_state(storage=x.storage, t=x.t, _strict=false)
 stor_state_lb(x) = stor_state_min(storage=x.storage)
 
 create_variable_stor_state!(m::Model) = create_variable!(m, :stor_state, stor_state_indices; lb=stor_state_lb)
-save_variable_stor_state!(m::Model) = save_variable!(m, :stor_state, stor_state_indices)
 fix_variable_stor_state!(m::Model) = fix_variable!(m, :stor_state, stor_state_indices, fix_stor_state_)

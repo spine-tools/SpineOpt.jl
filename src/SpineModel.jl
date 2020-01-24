@@ -96,7 +96,7 @@ include("util/misc.jl")
 include("util/run_spinemodel.jl")
 
 include("variables/generate_variable_indices.jl")
-include("variables/create_variable.jl")
+include("variables/variable_common.jl")
 include("variables/variable_flow.jl")
 include("variables/variable_trans.jl")
 include("variables/variable_stor_state.jl")

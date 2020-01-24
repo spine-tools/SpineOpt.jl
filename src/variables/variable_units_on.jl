@@ -39,7 +39,6 @@ function create_variable_units_on!(m::Model)
     create_variable!(m, :units_on, units_on_indices; lb=x -> 0, bin=units_on_bin, int=units_on_int)
 end
 
-save_variable_units_on!(m::Model) = save_variable!(m, :units_on, units_on_indices)
 fix_variable_units_on!(m::Model) = fix_variable!(m, :units_on, units_on_indices, fix_units_on_)
 
 

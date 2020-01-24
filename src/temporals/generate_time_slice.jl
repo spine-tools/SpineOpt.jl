@@ -233,5 +233,6 @@ function roll_temporal_structure()
     roll_forward_ === nothing && return false
     roll!(current_window, roll_forward_)
     roll!.(all_time_slices, roll_forward_)
+    roll!.(values(t_history_t), roll_forward_)
     true
 end

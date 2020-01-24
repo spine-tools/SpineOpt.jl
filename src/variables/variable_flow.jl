@@ -44,5 +44,4 @@ end
 fix_flow_(x) = fix_flow(unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false)
 
 create_variable_flow!(m::Model) = create_variable!(m, :flow, flow_indices; lb=x -> 0)
-save_variable_flow!(m::Model) = save_variable!(m, :flow, flow_indices)
 fix_variable_flow!(m::Model) = fix_variable!(m, :flow, flow_indices, fix_flow_)

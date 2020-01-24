@@ -86,6 +86,7 @@ function run_spinemodel(
     @logtime level2 "Initializing model..." begin
         m = Model(with_optimizer)
         m.ext[:variables] = Dict{Symbol,Dict}()
+        m.ext[:results] = Dict{Symbol,Dict}()
         m.ext[:constraints] = Dict{Symbol,Dict}()
         create_variables!(m)
         fix_variables!(m)
@@ -119,11 +120,11 @@ function run_spinemodel(
     @logtime level2 "Solving model..." optimize!(m)
     if termination_status(m) == MOI.OPTIMAL
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
+        save_results!(m)
     end
-    return m
     while roll_temporal_structure()
         @log level1 "Window: $current_window"
-        save_variables!(m)
+        update_variables!(m)
         fix_variables!(m)
         @logtime level2 "Updating constraints...\n" begin
             @logtime level3 "- [constraint_flow_capacity]" update_constraint_flow_capacity!(m)
@@ -144,14 +145,15 @@ function run_spinemodel(
             @logtime level3 "- [constraint_units_on]" update_constraint_units_on!(m)
             @logtime level3 "- [constraint_units_available]" update_constraint_units_available!(m)
             @logtime level3 "- [constraint_minimum_operating_point]" update_constraint_minimum_operating_point!(m)
-            @logtime level3 "- [constraint_min_up_time]" update_constraint_min_down_time!(m)
             @logtime level3 "- [constraint_min_down_time]" update_constraint_min_up_time!(m)
+            @logtime level3 "- [constraint_min_up_time]" update_constraint_min_down_time!(m)
             @logtime level3 "- [constraint_unit_state_transition]" update_constraint_unit_state_transition!(m)
             @logtime level3 "- [constraint_user]" update_constraint_user(m)
         end        
         @logtime level2 "Solving model..." optimize!(m)
         if termination_status(m) == MOI.OPTIMAL
             @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
+            save_results!(m)
         end
     end
     return m

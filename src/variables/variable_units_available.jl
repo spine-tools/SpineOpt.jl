@@ -21,4 +21,3 @@ function create_variable_units_available!(m::Model)
     create_variable!(m, :units_available, units_on_indices; lb=x -> 0, bin=units_on_bin, int=units_on_int)
 end
 
-save_variable_units_available!(m::Model) = save_variable!(m, :units_available, units_on_indices)
