@@ -54,24 +54,25 @@ function fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Fun
     end
 end
 
-function save_result!(m::Model, name::Symbol, indices::Function)
+function save_value!(m::Model, name::Symbol, indices::Function)
     inds = indices()
     var = m.ext[:variables][name]
-    res = m.ext[:results][name] = Dict{eltype(inds),Number}()
+    val = m.ext[:values][name] = Dict{eltype(inds),Number}()
     for ind in inds
-        res[ind] = JuMP.value(var[ind])
+        end_(ind.t) <= end_(current_window) || continue
+        val[ind] = JuMP.value(var[ind])
     end
 end
 
 function update_variable!(m::Model, name::Symbol, indices::Function)
     var = m.ext[:variables][name]
-    res = m.ext[:results][name]
+    val = m.ext[:values][name]
     for ind in indices()
         set_name(var[ind], _base_name(name, ind))
         end_(ind.t) <= end_(current_window) || continue
         history_ind = (; ind..., t=t_history_t[ind.t])
         set_name(var[history_ind], _base_name(name, history_ind))
-        fix(var[history_ind], res[ind]; force=true)
+        fix(var[history_ind], val[ind]; force=true)
     end
 end
 
@@ -92,14 +93,14 @@ function fix_variables!(m::Model)
     fix_variable_stor_state!(m)
 end
 
-function save_results!(m::Model)
-    save_result!(m, :flow, flow_indices)
-    save_result!(m, :trans, trans_indices)
-    save_result!(m, :stor_state, stor_state_indices)
-    save_result!(m, :units_on, units_on_indices)
-    save_result!(m, :units_available , units_on_indices)
-    save_result!(m, :units_started_up, units_on_indices)
-    save_result!(m, :units_shut_down, units_on_indices)
+function save_values!(m::Model)
+    save_value!(m, :flow, flow_indices)
+    save_value!(m, :trans, trans_indices)
+    save_value!(m, :stor_state, stor_state_indices)
+    save_value!(m, :units_on, units_on_indices)
+    save_value!(m, :units_available , units_on_indices)
+    save_value!(m, :units_started_up, units_on_indices)
+    save_value!(m, :units_shut_down, units_on_indices)
 end
 
 function update_variables!(m::Model)

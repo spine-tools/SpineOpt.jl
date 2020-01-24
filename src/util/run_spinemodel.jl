@@ -61,8 +61,9 @@ A new Spine database is created at `url_out` if it doesn't exist.
 **`cleanup=true`** tells [`run_spinemodel`](@ref) whether or not convenience functors should be
 set to `nothing` after completion.
 
-**`extend=m -> nothing`** is a function for extending the model. [`run_spinemodel`](@ref) calls this function with
-the internal `JuMP.Model` object before calling `JuMP.optimize!`.
+**`add_constraint_user=m -> nothing`** allows adding user contraints.
+
+**`update_constraint_user=m -> nothing`** allows updating contraints added by `add_constraint_user`.
 
 **`log_level=3`** is the log level.
 """
@@ -86,11 +87,12 @@ function run_spinemodel(
     @logtime level2 "Initializing model..." begin
         m = Model(with_optimizer)
         m.ext[:variables] = Dict{Symbol,Dict}()
-        m.ext[:results] = Dict{Symbol,Dict}()
+        m.ext[:values] = Dict{Symbol,Dict}()
         m.ext[:constraints] = Dict{Symbol,Dict}()
         create_variables!(m)
         fix_variables!(m)
         objective_minimize_total_discounted_costs(m)
+        results = Dict()
     end
     @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_flow_capacity]" add_constraint_flow_capacity!(m)
@@ -117,15 +119,25 @@ function run_spinemodel(
         @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
         @logtime level3 "- [constraint_user]" add_constraint_user(m)
     end
-    @logtime level2 "Solving model..." optimize!(m)
-    if termination_status(m) == MOI.OPTIMAL
-        @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
-        save_results!(m)
-    end
-    while roll_temporal_structure()
-        @log level1 "Window: $current_window"
-        update_variables!(m)
-        fix_variables!(m)
+    k = 1
+    while true
+        @log level1 "Window $k: $current_window"
+        @logtime level2 "Solving model..." optimize!(m)
+        if termination_status(m) == MOI.OPTIMAL
+            @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
+            @logtime level2 "Saving results..." begin
+                save_values!(m)
+                save_results!(results, m)
+            end
+        else
+            @log level1 "Unable to find solution, quitting..."
+            break
+        end
+        roll_temporal_structure() || break
+        @logtime level2 "Updating model..." begin            
+            update_variables!(m)
+            fix_variables!(m)
+        end
         @logtime level2 "Updating constraints...\n" begin
             @logtime level3 "- [constraint_flow_capacity]" update_constraint_flow_capacity!(m)
             @logtime level3 "- [constraint_fix_ratio_out_in_flow]" update_constraint_fix_ratio_out_in_flow!(m)
@@ -149,61 +161,37 @@ function run_spinemodel(
             @logtime level3 "- [constraint_min_up_time]" update_constraint_min_down_time!(m)
             @logtime level3 "- [constraint_unit_state_transition]" update_constraint_unit_state_transition!(m)
             @logtime level3 "- [constraint_user]" update_constraint_user(m)
-        end        
-        @logtime level2 "Solving model..." optimize!(m)
-        if termination_status(m) == MOI.OPTIMAL
-            @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
-            save_results!(m)
         end
+        k += 1
     end
-    return m
-
-    outputs = Dict()
-    for (k, (window_start, window_end)) in enumerate(rolling_windows())
-        @log level1 "Window $k, from $window_start to $window_end"
-        @logtime level2 "Initializing model..." begin
-            m = Model(with_optimizer)
-            m.ext[:variables] = results
-            m.ext[:constraints] = Dict{Symbol,Dict}()
-            create_variables!(m)
-            objective_minimize_total_discounted_costs(m)
-        end
-        
-        termination_status(m) != MOI.OPTIMAL && break
-        @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
-        results = value(m.ext[:variables])
-        @logtime level2 "Saving results..." save_outputs!(outputs, results, window_start, window_end)
-    end
-    @logtime level2 "Writing report..." write_report(outputs, url_out)
+    @logtime level2 "Writing report..." write_report(results, url_out)
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
-    return m
+    m
 end
 
-
-
 """
-    save_outputs!(outputs, results, window_start, window_end)
+    save_results!(results, m)
 
-Update `outputs` with given `results`.
+Update `results` with results from `m`.
 """
-function save_outputs!(outputs, results, window_start, window_end)
+function save_results!(results, m)
     for out in output()
-        value = get(results, out.name, nothing)
+        value = get(m.ext[:values], out.name, nothing)
         if value === nothing
             @warn "can't find results for '$(out.name)'"
             continue
         end
-        filter!(x -> window_start <= start(x[1].t) < window_end, value)
-        existing_value = get!(outputs, out.name, Dict{NamedTuple,Any}())
-        merge!(existing_value, value)
+        # filter!(x -> window_start <= start(x[1].t) < window_end, value)
+        existing_result = get!(results, out.name, Dict{NamedTuple,Any}())
+        merge!(existing_result, value)
     end
 end
 
-function write_report(outputs, default_url)
+function write_report(results, default_url)
     reports = Dict()
     for (rpt, out) in report__output()
-        output_value = get(outputs, out.name, nothing)
-        if output_value === nothing
+        value = get(results, out.name, nothing)
+        if value === nothing
             continue
         end
         url = output_db_url(report=rpt, _strict=false)
@@ -211,9 +199,9 @@ function write_report(outputs, default_url)
         url_reports = get!(reports, url, Dict())
         rpt = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
         d = rpt[out.name] = Dict{NamedTuple,TimeSeries}()
-        for (key, val) in pack_trailing_dims(output_value)
-            inds = map(x->x[1], val)
-            vals = map(x->x[2], val)
+        for (key, val) in pack_trailing_dims(value)
+            inds = first.(val)
+            vals = last.(val)
             d[key] = TimeSeries(inds, vals, false, false)
         end
     end
@@ -245,16 +233,6 @@ function pack_trailing_dims(dictionary::Dict{K,V}, n::Int64=1) where {K<:NamedTu
         Dict(key => [(k, v) for (k, v) in sort(collect(value))] for (key, value) in left_dict)
     end
 end
-
-"""
-    value(d::Dict)
-
-An equivalent dictionary where `JuMP.VariableRef` values are replaced by their `JuMP.value`.
-"""
-value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => value(v) for (k, v) in d)
-
-value(v::JuMP.VariableRef) = has_values(owner_model(v)) ? JuMP.value(v) : zero(Float64)
-value(x) = x
 
 """
     formulation(d::Dict)
