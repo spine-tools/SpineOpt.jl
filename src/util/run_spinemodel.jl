@@ -41,8 +41,8 @@ end
 
 
 function generate_temporal_structure()
-    window_start, window_end = rolling_window()
-    generate_time_slice(window_start, window_end)
+    generate_current_window()
+    generate_time_slice()
     generate_time_slice_relationships()
 end
 
@@ -79,6 +79,7 @@ function run_spinemodel(
     level1 = log_level >= 1
     level2 = log_level >= 2
     level3 = log_level >= 3
+    results = Dict()
     @log level0 "Running Spine Model for $(url_in)..."
     @logtime level2 "Creating convenience functions..." using_spinedb(url_in, @__MODULE__; upgrade=true)
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
@@ -92,7 +93,6 @@ function run_spinemodel(
         create_variables!(m)
         fix_variables!(m)
         objective_minimize_total_discounted_costs(m)
-        results = Dict()
     end
     @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_flow_capacity]" add_constraint_flow_capacity!(m)
@@ -137,6 +137,7 @@ function run_spinemodel(
         @logtime level2 "Updating model..." begin            
             update_variables!(m)
             fix_variables!(m)
+            objective_minimize_total_discounted_costs(m)
         end
         @logtime level2 "Updating constraints...\n" begin
             @logtime level3 "- [constraint_flow_capacity]" update_constraint_flow_capacity!(m)

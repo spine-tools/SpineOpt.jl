@@ -50,7 +50,7 @@ function fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Fun
         end_(ind.t) <= end_(current_window) || continue
         history_ind = (; ind..., t=t_history_t[ind.t])
         fix_value_ = fix_value(history_ind)
-        fix_value_ != nothing && (var[history_ind] = fix_value_)
+        fix_value_ != nothing && fix(var[history_ind], fix_value_; force=true)
     end
 end
 
@@ -98,7 +98,7 @@ function save_values!(m::Model)
     save_value!(m, :trans, trans_indices)
     save_value!(m, :stor_state, stor_state_indices)
     save_value!(m, :units_on, units_on_indices)
-    save_value!(m, :units_available , units_on_indices)
+    save_value!(m, :units_available, units_on_indices)
     save_value!(m, :units_started_up, units_on_indices)
     save_value!(m, :units_shut_down, units_on_indices)
 end
@@ -108,7 +108,7 @@ function update_variables!(m::Model)
     update_variable!(m, :trans, trans_indices)
     update_variable!(m, :stor_state, stor_state_indices)
     update_variable!(m, :units_on, units_on_indices)
-    update_variable!(m, :units_available , units_on_indices)
+    update_variable!(m, :units_available, units_on_indices)
     update_variable!(m, :units_started_up, units_on_indices)
     update_variable!(m, :units_shut_down, units_on_indices)
 end

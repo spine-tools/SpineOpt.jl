@@ -111,13 +111,17 @@ end
 
 A tuple of start and end time for the main rolling window.
 """
-function rolling_window()
+function generate_current_window()
     instance = first(model())
     model_start_ = model_start(model=instance)
     model_end_ = model_end(model=instance)
     roll_forward_ = roll_forward(model=instance, _strict=false)
-    roll_forward_ === nothing && return model_start_, model_end_
-    model_start_, min(model_start_ + roll_forward_, model_end_)
+    window_start = model_start_
+    window_end = (roll_forward_ === nothing) ? model_end_ : min(model_start_ + roll_forward_, model_end_)
+    current_window = TimeSlice(window_start, window_end)
+    @eval begin
+        current_window = $current_window
+    end
 end
 
 
@@ -202,7 +206,9 @@ Return an `Array` of all `TimeSlice`s in the model (including history).
 
 See [@TimeSliceSet()](@ref).
 """
-function generate_time_slice(window_start, window_end)
+function generate_time_slice()
+    window_start = start(current_window)
+    window_end = end_(current_window)
     window_span = window_end - window_start
     window_block_time_slices = block_time_slices(window_start, window_end)
     time_slice = TimeSliceSet(window_block_time_slices)
@@ -210,14 +216,12 @@ function generate_time_slice(window_start, window_end)
         block => [map(t -> t - window_span, filter(t -> end_(t) <= window_end, time_slices)); time_slices]
         for (block, time_slices) in window_block_time_slices
     )
-    to_time_slice = ToTimeSlice(all_block_time_slices)
-    current_window = TimeSlice(window_start, window_end)
+    to_time_slice = ToTimeSlice(all_block_time_slices)    
     t_history_t = Dict(t => t - window_span for t in filter(t -> end_(t) <= window_end, time_slice()))
     all_time_slices = sort(unique(t for v in values(all_block_time_slices) for t in v))
     @eval begin
         time_slice = $time_slice
         to_time_slice = $to_time_slice
-        current_window = $current_window
         t_history_t = $t_history_t
         all_time_slices = $all_time_slices
         export time_slice
