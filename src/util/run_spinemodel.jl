@@ -84,10 +84,12 @@ function run_spinemodel(
     @logtime level2 "Creating convenience functions..." using_spinedb(url_in, @__MODULE__; upgrade=true)
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @logtime level2 "Generating indices..." generate_variable_indices()
-    @log level1 "Window: $current_window"
+    @log level1 "Window 1: $current_window"
     @logtime level2 "Initializing model..." begin
         m = Model(with_optimizer)
         m.ext[:variables] = Dict{Symbol,Dict}()
+        m.ext[:variables_lb] = Dict{Symbol,Any}()
+        m.ext[:variables_ub] = Dict{Symbol,Any}()
         m.ext[:values] = Dict{Symbol,Dict}()
         m.ext[:constraints] = Dict{Symbol,Dict}()
         create_variables!(m)
@@ -119,9 +121,8 @@ function run_spinemodel(
         @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
         @logtime level3 "- [constraint_user]" add_constraint_user(m)
     end
-    k = 1
+    k = 2
     while true
-        @log level1 "Window $k: $current_window"
         @logtime level2 "Solving model..." optimize!(m)
         if termination_status(m) == MOI.OPTIMAL
             @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
@@ -130,10 +131,11 @@ function run_spinemodel(
                 save_results!(results, m)
             end
         else
-            @log level1 "Unable to find solution, quitting..."
+            @log level1 "Unable to find solution (reason: $(termination_status(m))), exiting..."
             break
         end
         roll_temporal_structure() || break
+        @log level1 "Window $k: $current_window"
         @logtime level2 "Updating model..." begin            
             update_variables!(m)
             fix_variables!(m)

@@ -21,10 +21,10 @@ _base_name(name, ind) = """$(name)[$(join(ind, ", "))]"""
 
 function _variable(m, name, ind, lb, ub, bin, int)
     var = @variable(m, base_name=_base_name(name, ind))
-    lb isa Function && set_lower_bound(var, lb(ind))
-    ub isa Function && set_upper_bound(var, ub(ind))
-    bin isa Function && bin(ind) && set_binary(var)
-    int isa Function && int(ind) && set_integer(var)
+    lb != nothing && set_lower_bound(var, lb(ind))
+    ub != nothing && set_upper_bound(var, ub(ind))
+    bin != nothing && bin(ind) && set_binary(var)
+    int != nothing && int(ind) && set_integer(var)
     var
 end
 
@@ -34,6 +34,8 @@ function create_variable!(
     )
     inds = indices()
     var = m.ext[:variables][name] = Dict{eltype(inds),VariableRef}()
+    m.ext[:variables_ub][name] = lb
+    m.ext[:variables_lb][name] = lb
     for ind in inds
         var[ind] = _variable(m, name, ind, lb, ub, bin, int)
         end_(ind.t) <= end_(current_window) || continue
@@ -54,21 +56,30 @@ function fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Fun
     end
 end
 
+_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value(v)) : JuMP.value(v)
+
 function save_value!(m::Model, name::Symbol, indices::Function)
     inds = indices()
     var = m.ext[:variables][name]
     val = m.ext[:values][name] = Dict{eltype(inds),Number}()
     for ind in inds
         end_(ind.t) <= end_(current_window) || continue
-        val[ind] = JuMP.value(var[ind])
+        val[ind] = _value(var[ind])
     end
 end
 
 function update_variable!(m::Model, name::Symbol, indices::Function)
     var = m.ext[:variables][name]
     val = m.ext[:values][name]
+    lb = m.ext[:variables_lb][name]
+    ub = m.ext[:variables_ub][name]
     for ind in indices()
         set_name(var[ind], _base_name(name, ind))
+        if is_fixed(var[ind])
+            unfix(var[ind])
+            lb != nothing && set_lower_bound(var[ind], lb(ind))
+            ub != nothing && set_upper_bound(var[ind], ub(ind))
+        end
         end_(ind.t) <= end_(current_window) || continue
         history_ind = (; ind..., t=t_history_t[ind.t])
         set_name(var[history_ind], _base_name(name, history_ind))
@@ -112,4 +123,3 @@ function update_variables!(m::Model)
     update_variable!(m, :units_started_up, units_on_indices)
     update_variable!(m, :units_shut_down, units_on_indices)
 end
-
