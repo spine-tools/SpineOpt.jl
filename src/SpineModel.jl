@@ -31,7 +31,6 @@ using Suppressor
 
 # Export utility
 export run_spinemodel
-export pack_trailing_dims
 export @fetch
 
 # Export variables

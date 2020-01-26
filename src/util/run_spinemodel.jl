@@ -184,9 +184,10 @@ function save_results!(results, m)
             @warn "can't find results for '$(out.name)'"
             continue
         end
+        value_ = Dict{NamedTuple,Number}((; k..., t=start(k.t)) => v for (k, v) in value)
         # filter!(x -> window_start <= start(x[1].t) < window_end, value)
-        existing_result = get!(results, out.name, Dict{NamedTuple,Any}())
-        merge!(existing_result, value)
+        existing = get!(results, out.name, Dict{NamedTuple,Number}())
+        merge!(existing, value_)
     end
 end
 
@@ -200,41 +201,34 @@ function write_report(results, default_url)
         url = output_db_url(report=rpt, _strict=false)
         url === nothing && (url = default_url)
         url_reports = get!(reports, url, Dict())
-        rpt = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
-        d = rpt[out.name] = Dict{NamedTuple,TimeSeries}()
-        for (key, val) in pack_trailing_dims(value)
-            inds = first.(val)
-            vals = last.(val)
-            d[key] = TimeSeries(inds, vals, false, false)
+        report = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
+        d = report[out.name] = Dict{NamedTuple,TimeSeries}()
+        for (k, v) in valueize_dimensions(value, :t)
+            inds = first.(v)
+            vals = last.(v)
+            d[k] = TimeSeries(inds, vals, false, false)
         end
     end
     for (url, url_reports) in reports
-        for (rpt, output_params) in url_reports
-            write_parameters(output_params, url; report=string(rpt))
+        for (rpt_name, output_params) in url_reports
+            write_parameters(output_params, url; report=string(rpt_name))
         end
     end
 end
 
 """
-    pack_trailing_dims(dictionary::Dict, n::Int64=1)
+    valueize_dimensions(input, dims...)
 
-An equivalent dictionary where the last `n` dimensions are packed into a matrix
+An equivalent dictionary where the given dimensions are moved from the key into the value.
 """
-function pack_trailing_dims(dictionary::Dict{K,V}, n::Int64=1) where {K<:NamedTuple,V}
-    left_dict = Dict()
-    for (key, value) in dictionary
-        # TODO: handle length(key) < n and stuff like that?
-        bp = length(key) - n
-        left_key = NamedTuple{Tuple(collect(keys(key))[1:bp])}(collect(values(key))[1:bp])
-        right_key = NamedTuple{Tuple(collect(keys(key))[bp + 1:end])}(collect(values(key))[bp + 1:end])
-        right_dict = get!(left_dict, left_key, Dict())
-        right_dict[right_key] = value
+function valueize_dimensions(input::Dict{K,V}, dims::Symbol...) where {K<:NamedTuple,V}
+    output = Dict()
+    for (key, value) in sort(input)
+        output_key = (; (k => v for (k, v) in pairs(key) if !(k in dims))...)
+        output_value = ((key[dim] for dim in dims)..., value)
+        push!(get!(output, output_key, []), output_value)
     end
-    if n > 1
-        Dict(key => reshape([(k, v) for (k, v) in sort(collect(value))], n, :) for (key, value) in left_dict)
-    else
-        Dict(key => [(k, v) for (k, v) in sort(collect(value))] for (key, value) in left_dict)
-    end
+    output
 end
 
 """
