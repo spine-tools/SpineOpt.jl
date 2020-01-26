@@ -31,7 +31,9 @@ function objective_minimize_total_discounted_costs(m::Model)
     fl_costs = fuel_costs(m)
     suc_costs = start_up_costs(m)
     sdc_costs = shut_down_costs(m)
-    total_discounted_costs = vom_costs + fom_costs + tax_costs + op_costs + suc_costs + sdc_costs + fl_costs
+    total_discounted_costs = @expression(
+        m, vom_costs + fom_costs + tax_costs + op_costs + suc_costs + sdc_costs + fl_costs
+    )
     if total_discounted_costs != 0
         @objective(m, Min, total_discounted_costs)
     else
