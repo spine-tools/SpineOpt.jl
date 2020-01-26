@@ -94,7 +94,7 @@ function run_spinemodel(
         m.ext[:constraints] = Dict{Symbol,Dict}()
         create_variables!(m)
         fix_variables!(m)
-        objective_minimize_total_discounted_costs(m)
+        set_objective!(m)
     end
     @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_flow_capacity]" add_constraint_flow_capacity!(m)
@@ -139,7 +139,7 @@ function run_spinemodel(
         @logtime level2 "Updating model..." begin            
             update_variables!(m)
             fix_variables!(m)
-            objective_minimize_total_discounted_costs(m)
+            set_objective!(m)
         end
         @logtime level2 "Updating constraints...\n" begin
             @logtime level3 "- [constraint_flow_capacity]" update_constraint_flow_capacity!(m)

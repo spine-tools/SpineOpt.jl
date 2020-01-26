@@ -18,12 +18,12 @@
 #############################################################################
 
 """
-    objective_minimize_total_discounted_costs(m::Model)
+    set_objective!(m::Model)
 
 Minimize the total discounted costs, corresponding to the sum over all
 cost terms.
 """
-function objective_minimize_total_discounted_costs(m::Model)
+function set_objective!(m::Model)
     vom_costs = variable_om_costs(m)
     fom_costs = fixed_om_costs(m)
     tax_costs = taxes(m)

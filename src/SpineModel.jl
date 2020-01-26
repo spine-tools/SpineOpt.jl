@@ -104,7 +104,7 @@ include("variables/variable_units_available.jl")
 include("variables/variable_units_started_up.jl")
 include("variables/variable_units_shut_down.jl")
 
-include("objective/objective_minimize_total_discounted_costs.jl")
+include("objective/set_objective.jl")
 include("objective/variable_om_costs.jl")
 include("objective/fixed_om_costs.jl")
 include("objective/taxes.jl")

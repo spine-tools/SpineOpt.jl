@@ -199,10 +199,9 @@ block_time_slices(window_start, window_end) = block_time_slices(block_time_inter
 
 
 """
-    generate_time_slice(window_start, window_end)
+    generate_time_slice()
 
-Create and export a `TimeSliceSet` containing `TimeSlice`s in the given window.
-Return an `Array` of all `TimeSlice`s in the model (including history).
+Create and export a `TimeSliceSet` containing `TimeSlice`s in the current window.
 
 See [@TimeSliceSet()](@ref).
 """
