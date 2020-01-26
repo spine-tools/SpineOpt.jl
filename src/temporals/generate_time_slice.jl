@@ -212,12 +212,12 @@ function generate_time_slice()
     window_span = window_end - window_start
     window_block_time_slices = block_time_slices(window_start, window_end)
     time_slice = TimeSliceSet(window_block_time_slices)
+    t_history_t = Dict(t => t - window_span for t in time_slice() if end_(t) <= window_end)
     all_block_time_slices = Dict(
-        block => [map(t -> t - window_span, filter(t -> end_(t) <= window_end, time_slices)); time_slices]
+        block => [[t_history_t[t] for t in time_slices if end_(t) <= window_end]; time_slices]
         for (block, time_slices) in window_block_time_slices
     )
     to_time_slice = ToTimeSlice(all_block_time_slices)    
-    t_history_t = Dict(t => t - window_span for t in filter(t -> end_(t) <= window_end, time_slice()))
     all_time_slices = sort(unique(t for v in values(all_block_time_slices) for t in v))
     @eval begin
         time_slice = $time_slice
@@ -237,6 +237,5 @@ function roll_temporal_structure()
     roll_forward_ === nothing && return false
     roll!(current_window, roll_forward_)
     roll!.(all_time_slices, roll_forward_)
-    roll!.(values(t_history_t), roll_forward_)
     true
 end
