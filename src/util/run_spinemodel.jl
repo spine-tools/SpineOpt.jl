@@ -203,7 +203,7 @@ function write_report(results, default_url)
         url_reports = get!(reports, url, Dict())
         report = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
         d = report[out.name] = Dict{NamedTuple,TimeSeries}()
-        for (k, v) in valueize_dimensions(value, :t)
+        for (k, v) in pulldims(value, :t)
             inds = first.(v)
             vals = last.(v)
             d[k] = TimeSeries(inds, vals, false, false)
@@ -217,11 +217,11 @@ function write_report(results, default_url)
 end
 
 """
-    valueize_dimensions(input, dims...)
+    pulldims(input, dims...)
 
-An equivalent dictionary where the given dimensions are moved from the key into the value.
+An equivalent dictionary where the given dimensions are pulled from the key to the value.
 """
-function valueize_dimensions(input::Dict{K,V}, dims::Symbol...) where {K<:NamedTuple,V}
+function pulldims(input::Dict{K,V}, dims::Symbol...) where {K<:NamedTuple,V}
     output = Dict()
     for (key, value) in sort(input)
         output_key = (; (k => v for (k, v) in pairs(key) if !(k in dims))...)
