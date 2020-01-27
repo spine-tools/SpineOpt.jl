@@ -24,7 +24,7 @@ for `storage`, `commodity`, and `t`.
 Tuples are generated for the highest resolution 'flows' or 'trans' of the involved commodity.
 """
 function stor_state_indices(;storage=anything, commodity=anything, t=anything)
-    NamedTuple{(:storage, :commodity, :t),Tuple{Object,Object,TimeSlice}}[
+    inds = NamedTuple{(:storage, :commodity, :t),Tuple{Object,Object,TimeSlice}}[
         [
             (storage=stor, commodity=c, t=t1)
             for (stor, c, u) in unit_stor_state_indices_rc(storage=storage, commodity=commodity, _compact=false)
@@ -42,6 +42,7 @@ function stor_state_indices(;storage=anything, commodity=anything, t=anything)
             )
         ]
     ]
+    unique(inds)
 end
 
 fix_stor_state_(x) = fix_stor_state(storage=x.storage, t=x.t, _strict=false)
