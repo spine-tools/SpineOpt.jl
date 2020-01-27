@@ -28,26 +28,6 @@ struct TimeSliceSet
     end
 end
 
-struct ToTimeSlice
-    block_time_slices::Dict{Object,Array{TimeSlice,1}}
-    block_time_slice_map::Dict{Object,Array{Int64,1}}
-    function ToTimeSlice(block_time_slices)
-        block_time_slice_map = Dict{Object,Array{Int64,1}}()
-        for (block, time_slices) in block_time_slices
-            isempty(time_slices) && continue
-            temp_block_start = start(first(time_slices))
-            temp_block_end = end_(last(time_slices))
-            m = block_time_slice_map[block] = Array{Int64,1}(undef, Minute(temp_block_end - temp_block_start).value)
-            for (ind, t) in enumerate(time_slices)
-                first_minute = Minute(start(t) - temp_block_start).value + 1
-                last_minute = Minute(end_(t) - temp_block_start).value
-                m[first_minute:last_minute] .= ind
-            end
-        end
-        new(block_time_slices, block_time_slice_map)
-    end
-end
-
 """
     time_slice(;temporal_block=anything, t=anything)
 
@@ -61,49 +41,6 @@ An `Array` of time slices *in the model*.
 (h::TimeSliceSet)(::Anything, s) = s
 (h::TimeSliceSet)(temporal_block::Object, s) = [t for t in s if temporal_block in t.blocks]
 (h::TimeSliceSet)(temporal_blocks::Array{Object,1}, s) = [t for blk in temporal_blocks for t in h(blk, s)]
-
-
-"""
-    to_time_slice(t...)
-
-An array of time slices *in the model* that overlap `t`
-(where `t` may not be in the model).
-"""
-function (h::ToTimeSlice)(t::Union{TimeSlice,DateTime}...)
-    mapped = Array{TimeSlice,1}()
-    for (blk, time_slice_map) in h.block_time_slice_map
-        time_slices = h.block_time_slices[blk]
-        append!(mapped, mapped_time_slices(time_slice_map, time_slices, t...))
-    end
-    unique(mapped)
-end
-
-"""
-    mapped_time_slices(time_slice_map, time_slices, t...)
-
-An array of all time slices in `time_slices` that overlap any `t`.
-"""
-function mapped_time_slices(time_slice_map, time_slices, t::TimeSlice...)
-    mapped = Array{TimeSlice,1}()
-    block_start = start(first(time_slices))
-    block_end = end_(last(time_slices))
-    for s in t
-        s_start = max(block_start, start(s))
-        s_end = min(block_end, end_(s))
-        s_end <= s_start && continue
-        first_ind = time_slice_map[Minute(s_start - block_start).value + 1]
-        last_ind = time_slice_map[Minute(s_end - block_start).value]
-        append!(mapped, time_slices[first_ind:last_ind])
-    end
-    mapped
-end
-
-
-function mapped_time_slices(time_slice_map, time_slices, t::DateTime...)
-    block_start = start(first(time_slices))
-    block_end = end_(last(time_slices))
-    [time_slices[time_slice_map[Minute(s - block_start).value + 1]] for s in t if block_start <= s < block_end]
-end
 
 
 """
@@ -212,12 +149,8 @@ function generate_time_slice()
     window_block_time_slices = block_time_slices(window_start, window_end)
     time_slice = TimeSliceSet(window_block_time_slices)
     t_history_t = Dict(t => t - window_span for t in time_slice() if end_(t) <= window_end)
-    all_block_time_slices = Dict(
-        block => [[t_history_t[t] for t in time_slices if end_(t) <= window_end]; time_slices]
-        for (block, time_slices) in window_block_time_slices
-    )
-    to_time_slice = ToTimeSlice(all_block_time_slices)    
-    all_time_slices = sort(unique(t for v in values(all_block_time_slices) for t in v))
+    all_time_slices = [sort(collect(values(t_history_t))); time_slice()]
+    to_time_slice = TimeSliceMap(all_time_slices)
     @eval begin
         time_slice = $time_slice
         to_time_slice = $to_time_slice

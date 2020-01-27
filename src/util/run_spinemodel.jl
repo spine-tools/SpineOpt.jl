@@ -131,7 +131,7 @@ function run_spinemodel(
                 save_results!(results, m)
             end
         else
-            @log level1 "Unable to find solution (reason: $(termination_status(m))), exiting..."
+            @log level1 "Unable to find solution (reason: $(termination_status(m)))"
             break
         end
         roll_temporal_structure() || break
