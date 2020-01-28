@@ -33,28 +33,28 @@ function add_constraint_nodal_balance!(m::Model)
                 + reduce(
                     +,
                     flow[u, n, c, d, t1] * duration(t1)
-                    for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=:to_node);
+                    for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=direction(:to_node));
                     init=0
                 )
                 # Commodity flows to units
                 - reduce(
                     +,
                     flow[u, n, c, d, t1] * duration(t1)
-                    for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=:from_node);
+                    for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=direction(:from_node));
                     init=0
                 )
                 # Commodity transfers from connections
                 + reduce(
                     +,
                     trans[conn, n, c, d, t1] * duration(t1)
-                    for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=:to_node);
+                    for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=direction(:to_node));
                     init=0
                 )
                 # Commodity transfers to connections
                 - reduce(
                     +,
                     trans[conn, n, c, d, t1] * duration(t1)
-                    for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=:from_node);
+                    for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=direction(:from_node));
                     init=0
                 )
                 ==

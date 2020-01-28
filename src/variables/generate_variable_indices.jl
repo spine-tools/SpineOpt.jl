@@ -40,16 +40,16 @@ function generate_variable_indices()
         for conn in storage__connection(storage=stor)
     )
 	flow_indices_rc = RelationshipClass(
-		:flow_indices_rc, (:unit, :node, :commodity, :direction, :temporal_block), flow_indices, []
+		:flow_indices_rc, (:unit, :node, :commodity, :direction, :temporal_block), flow_indices
 	)
 	trans_indices_rc = RelationshipClass(
-		:trans_indices_rc, (:connection, :node, :commodity, :direction, :temporal_block), trans_indices, []
+		:trans_indices_rc, (:connection, :node, :commodity, :direction, :temporal_block), trans_indices
 	)
 	unit_stor_state_indices_rc = RelationshipClass(
-		:unit_stor_state_indices_rc, (:storage, :commodity, :unit), unit_stor_state_indices, []
+		:unit_stor_state_indices_rc, (:storage, :commodity, :unit), unit_stor_state_indices
 	)
 	connection_stor_state_indices_rc = RelationshipClass(
-		:connection_stor_state_indices_rc, (:storage, :commodity, :connection), connection_stor_state_indices, []
+		:connection_stor_state_indices_rc, (:storage, :commodity, :connection), connection_stor_state_indices
 	)
 	@eval begin
         flow_indices_rc = $flow_indices_rc

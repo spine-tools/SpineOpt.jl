@@ -33,7 +33,7 @@ function add_constraint_ratio_out_in_trans!(m::Model, ratio_out_in, sense)
                     +,
                     trans[conn_, n_out_, c, d, t_] * duration(t_)
                     for (conn_, n_out_, c, d, t_) in trans_indices(
-                        connection=conn, node=n_out, direction=:to_node, t=t_in_t(t_long=t)
+                        connection=conn, node=n_out, direction=direction(:to_node), t=t_in_t(t_long=t)
                     );
                     init=0
                 ),
@@ -46,7 +46,7 @@ function add_constraint_ratio_out_in_trans!(m::Model, ratio_out_in, sense)
                     for (conn_, n_in_, c, d, t_) in trans_indices(
                         connection=conn,
                         node=n_in,
-                        direction=:from_node,
+                        direction=direction(:from_node),
                         t=to_time_slice(t - trans_delay(connection=conn, node1=n_out, node2=n_in, t=t))
                     );
                     init=0
@@ -64,7 +64,7 @@ function update_constraint_ratio_out_in_trans!(m::Model, ratio_out_in)
             for (conn_, n_in_, c, d, t_) in trans_indices(
                     connection=conn,
                     node=n_in,
-                    direction=:from_node,
+                    direction=direction(:from_node),
                     t=to_time_slice(t - trans_delay(connection=conn, node1=n_out, node2=n_in, t=t)))
                 set_normalized_coefficient(
                     cons[conn, n_out, n_in, t],

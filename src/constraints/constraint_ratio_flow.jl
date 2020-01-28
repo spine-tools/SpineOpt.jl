@@ -69,45 +69,45 @@ function update_constraint_ratio_flow!(m::Model, ratio, d2)
 end
 
 function add_constraint_fix_ratio_out_in_flow!(m::Model)
-    add_constraint_ratio_flow!(m, fix_ratio_out_in_flow, ==, :to_node, :from_node)
+    add_constraint_ratio_flow!(m, fix_ratio_out_in_flow, ==, direction(:to_node), direction(:from_node))
 end
 function add_constraint_max_ratio_out_in_flow!(m::Model)
-    add_constraint_ratio_flow!(m, max_ratio_out_in_flow, <=, :to_node, :from_node)
+    add_constraint_ratio_flow!(m, max_ratio_out_in_flow, <=, direction(:to_node), direction(:from_node))
 end
 function add_constraint_min_ratio_out_in_flow!(m::Model)
-    add_constraint_ratio_flow!(m, min_ratio_out_in_flow, >=, :to_node, :from_node)
+    add_constraint_ratio_flow!(m, min_ratio_out_in_flow, >=, direction(:to_node), direction(:from_node))
 end
 function add_constraint_fix_ratio_in_in_flow!(m::Model)
-    add_constraint_ratio_flow!(m, fix_ratio_in_in_flow, ==, :from_node, :from_node)
+    add_constraint_ratio_flow!(m, fix_ratio_in_in_flow, ==, direction(:from_node), direction(:from_node))
 end
 function add_constraint_max_ratio_in_in_flow!(m::Model)
-    add_constraint_ratio_flow!(m, max_ratio_in_in_flow, <=, :from_node, :from_node)
+    add_constraint_ratio_flow!(m, max_ratio_in_in_flow, <=, direction(:from_node), direction(:from_node))
 end
 function add_constraint_fix_ratio_out_out_flow!(m::Model)
-    add_constraint_ratio_flow!(m, fix_ratio_out_out_flow, ==, :to_node, :to_node)
+    add_constraint_ratio_flow!(m, fix_ratio_out_out_flow, ==, direction(:to_node), direction(:to_node))
 end
 function add_constraint_max_ratio_out_out_flow!(m::Model)
-    add_constraint_ratio_flow!(m, max_ratio_out_out_flow, <=, :to_node, :to_node)
+    add_constraint_ratio_flow!(m, max_ratio_out_out_flow, <=, direction(:to_node), direction(:to_node))
 end
 
 function update_constraint_fix_ratio_out_in_flow!(m::Model)
-    update_constraint_ratio_flow!(m, fix_ratio_out_in_flow, :from_node)
+    update_constraint_ratio_flow!(m, fix_ratio_out_in_flow, direction(:from_node))
 end
 function update_constraint_max_ratio_out_in_flow!(m::Model)
-    update_constraint_ratio_flow!(m, max_ratio_out_in_flow, :from_node)
+    update_constraint_ratio_flow!(m, max_ratio_out_in_flow, direction(:from_node))
 end
 function update_constraint_min_ratio_out_in_flow!(m::Model)
-    update_constraint_ratio_flow!(m, min_ratio_out_in_flow, :from_node)
+    update_constraint_ratio_flow!(m, min_ratio_out_in_flow, direction(:from_node))
 end
 function update_constraint_fix_ratio_in_in_flow!(m::Model)
-    update_constraint_ratio_flow!(m, fix_ratio_in_in_flow, :from_node)
+    update_constraint_ratio_flow!(m, fix_ratio_in_in_flow, direction(:from_node))
 end
 function update_constraint_max_ratio_in_in_flow!(m::Model)
-    update_constraint_ratio_flow!(m, max_ratio_in_in_flow, :from_node)
+    update_constraint_ratio_flow!(m, max_ratio_in_in_flow, direction(:from_node))
 end
 function update_constraint_fix_ratio_out_out_flow!(m::Model)
-    update_constraint_ratio_flow!(m, fix_ratio_out_out_flow, :to_node)
+    update_constraint_ratio_flow!(m, fix_ratio_out_out_flow, direction(:to_node))
 end
 function update_constraint_max_ratio_out_out_flow!(m::Model)
-    update_constraint_ratio_flow!(m, max_ratio_out_out_flow, :to_node)
+    update_constraint_ratio_flow!(m, max_ratio_out_out_flow, direction(:to_node))
 end

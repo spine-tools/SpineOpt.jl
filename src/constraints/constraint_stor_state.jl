@@ -54,7 +54,7 @@ function add_constraint_stor_state!(m::Model)
                     for (u, n, c_, d, t_) in flow_indices(
                         unit=[u1 for (stor1, u1) in indices(stor_unit_discharg_eff; storage=stor)],
                         commodity=c,
-                        direction=:to_node,
+                        direction=direction(:to_node),
                         t=t_after
                     );
                     init=0
@@ -65,7 +65,7 @@ function add_constraint_stor_state!(m::Model)
                     for (u, n, c_, d, t_) in flow_indices(
                         unit=[u1 for (stor1, u1) in indices(stor_unit_charg_eff; storage=stor)],
                         commodity=c,
-                        direction=:from_node,
+                        direction=direction(:from_node),
                         t=t_after
                     );
                     init=0
@@ -76,7 +76,7 @@ function add_constraint_stor_state!(m::Model)
                     for (conn, n, c_, d, t_) in trans_indices(
                         connection=[conn1 for (stor1, conn1) in indices(stor_conn_discharg_eff; storage=stor)],
                         commodity=c,
-                        direction=:to_node,
+                        direction=direction(:to_node),
                         t=t_after
                     );
                     init=0
@@ -87,7 +87,7 @@ function add_constraint_stor_state!(m::Model)
                     for (conn, n, c_, d, t_) in trans_indices(
                         connection=[conn1 for (stor1, conn1) in indices(stor_conn_charg_eff; storage=stor)],
                         commodity=c,
-                        direction=:from_node,
+                        direction=direction(:from_node),
                         t=t_after
                     );
                     init=0

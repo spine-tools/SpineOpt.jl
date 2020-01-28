@@ -103,9 +103,9 @@ function generate_time_slice_relationships()
     t_in_t_excl_list = [(t_short=t1, t_long=t2) for (t1, t2) in t_in_t_list if t1 != t2]
     t_overlaps_t_excl_list = [(t1, t2) for (t1, t2) in t_overlaps_t_list if t1 != t2]
     # Create function-like objects
-    t_before_t = RelationshipClass(:t_before_t, (:t_before, :t_after), t_before_t_list, [])
-    t_in_t = RelationshipClass(:t_in_t, (:t_short, :t_long), t_in_t_list, [])
-    t_in_t_excl = RelationshipClass(:t_in_t_excl, (:t_short, :t_long), t_in_t_excl_list, [])
+    t_before_t = RelationshipClass(:t_before_t, (:t_before, :t_after), t_before_t_list)
+    t_in_t = RelationshipClass(:t_in_t, (:t_short, :t_long), t_in_t_list)
+    t_in_t_excl = RelationshipClass(:t_in_t_excl, (:t_short, :t_long), t_in_t_excl_list)
     t_overlaps_t = TOverlapsT(t_overlaps_t_list)
     t_overlaps_t_excl = TOverlapsT(t_overlaps_t_excl_list)
     # Export the function-like objects
