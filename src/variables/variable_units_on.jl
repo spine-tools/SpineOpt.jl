@@ -57,7 +57,7 @@ end
 function units_variable(m, u, base_name)
     var_type = online_variable_type(unit=u)
     if var_type == :none
-        @variable(m, base_name=base_name, lower_bound=1, upper_bound=1)
+        @variable(m, base_name=base_name, lower_bound=number_of_units(unit=u), upper_bound=number_of_units(unit=u))
     elseif var_type == :binary
         @variable(m, base_name=base_name, lower_bound=0, binary=true)
     elseif var_type == :integer
