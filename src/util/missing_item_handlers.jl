@@ -163,7 +163,8 @@ const parameters = [
     (:fuel_cost, nothing),
     (:trans_delay, Second(0)),
     (:slope, nothing),
-    (:section, nothing)
+    (:section, nothing),
+    (:cyclic, nothing)
 ]
 for name in [object_classes; relationship_classes]
     quoted_name = Expr(:quote, name)
