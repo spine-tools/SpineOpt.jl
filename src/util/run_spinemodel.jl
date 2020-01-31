@@ -26,15 +26,15 @@ function run_spinemodel(
         url::String; 
         with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0), 
         cleanup=true, 
-        add_constraint_user=m -> nothing, 
-        update_constraint_user=m -> nothing, 
+        add_constraints=m -> nothing, 
+        update_constraints=m -> nothing, 
         log_level=3)
     run_spinemodel(
         url, url; 
         with_optimizer=with_optimizer, 
         cleanup=cleanup, 
-        add_constraint_user=add_constraint_user, 
-        update_constraint_user=update_constraint_user, 
+        add_constraints=add_constraints, 
+        update_constraints=update_constraints, 
         log_level=log_level
     )
 end
@@ -61,9 +61,9 @@ A new Spine database is created at `url_out` if it doesn't exist.
 **`cleanup=true`** tells [`run_spinemodel`](@ref) whether or not convenience functors should be
 set to `nothing` after completion.
 
-**`add_constraint_user=m -> nothing`** allows adding user contraints.
+**`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window, and allows adding user contraints.
 
-**`update_constraint_user=m -> nothing`** allows updating contraints added by `add_constraint_user`.
+**`update_constraints=m -> nothing`** is called in windows 2 to the last, and allows updating contraints added by `add_constraints`.
 
 **`log_level=3`** is the log level.
 """
@@ -72,8 +72,8 @@ function run_spinemodel(
         url_out::String;
         with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0),
         cleanup=true,
-        add_constraint_user=m -> nothing, 
-        update_constraint_user=m -> nothing, 
+        add_constraints=m -> nothing, 
+        update_constraints=m -> nothing, 
         log_level=3)
     level0 = log_level >= 0
     level1 = log_level >= 1
@@ -119,7 +119,7 @@ function run_spinemodel(
         @logtime level3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)
         @logtime level3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
         @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
-        @logtime level3 "- [constraint_user]" add_constraint_user(m)
+        @logtime level3 "- [constraint_user]" add_constraints(m)
     end
     k = 2
     while true
@@ -163,7 +163,7 @@ function run_spinemodel(
             @logtime level3 "- [constraint_min_down_time]" update_constraint_min_up_time!(m)
             @logtime level3 "- [constraint_min_up_time]" update_constraint_min_down_time!(m)
             @logtime level3 "- [constraint_unit_state_transition]" update_constraint_unit_state_transition!(m)
-            @logtime level3 "- [constraint_user]" update_constraint_user(m)
+            @logtime level3 "- [constraint_user]" update_constraints(m)
         end
         k += 1
     end
