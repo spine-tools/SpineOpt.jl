@@ -129,7 +129,7 @@ end
 """
     time_slices(window_start, window_end)
 
-A `Dict` mapping temporal blocks to a sorted `Array` of `TimeSlices`.
+A sorted `Array` of `TimeSlices` in the given window.
 """
 time_slices(window_start, window_end) = time_slices(block_time_intervals(window_start, window_end))
 
