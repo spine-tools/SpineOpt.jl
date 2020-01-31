@@ -69,6 +69,7 @@ function run_spinemodel(
         m = Model()
         m.ext[:variables] = Dict{Symbol,Dict}()
         create_variables!(m)
+        m.ext[:variables][:obj] = Dict{NamedTuple{(:model, :t),Tuple{Object,TimeSlice}},Any}()
         results = value(m.ext[:variables])
     end
     outputs = Dict()
@@ -110,6 +111,7 @@ function run_spinemodel(
         @logtime level2 "Solving model..." optimize!(m)
         termination_status(m) != MOI.OPTIMAL && break
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
+        m.ext[:variables][:obj][(model=first(model()), t=first(filter(t->t.start==window_start,time_slice())))] = objective_value(m)
         results = value(m.ext[:variables])
         @logtime level2 "Saving results..." save_outputs!(outputs, results, window_start, window_end)
     end
