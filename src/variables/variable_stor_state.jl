@@ -42,7 +42,7 @@ function stor_state_indices(;storage=anything, commodity=anything, t=anything)
             )
         ]
     ]
-    unique(inds)
+    unique!(inds)
 end
 
 fix_stor_state_(x) = fix_stor_state(storage=x.storage, t=x.t, _strict=false)

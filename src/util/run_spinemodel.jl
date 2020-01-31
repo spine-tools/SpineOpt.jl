@@ -185,7 +185,6 @@ function save_results!(results, m)
             continue
         end
         value_ = Dict{NamedTuple,Number}((; k..., t=start(k.t)) => v for (k, v) in value)
-        # filter!(x -> window_start <= start(x[1].t) < window_end, value)
         existing = get!(results, out.name, Dict{NamedTuple,Number}())
         merge!(existing, value_)
     end

@@ -17,13 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
-function Base.getindex(d::Dict{NamedTuple{X,Y},Z}, key::ObjectLike...) where {N,Y<:NTuple{N,ObjectLike},X,Z}
-    isempty(d) && throw(KeyError(key))
-    names = keys(first(keys(d))) # Get names from first key. TODO: check how bad this is for performance
-    Base.getindex(d, NamedTuple{names}(values(key)))
+function Base.getindex(d::Dict{K,VariableRef}, key::ObjectLike...) where {J,K<:Relationship{J}}
+    Base.getindex(d, NamedTuple{J}(values(key)))
 end
-
 
 """
     @fetch x, y, ... = d
