@@ -20,11 +20,16 @@
 import Dates: CompoundPeriod
 
 struct TimeSliceSet
-    block_time_slices::Dict{Object,Array{TimeSlice,1}}
     time_slices::Array{TimeSlice,1}
-    function TimeSliceSet(block_time_slices)
-        time_slices = sort(unique(t for v in values(block_time_slices) for t in v))
-        new(block_time_slices, time_slices)
+    block_time_slices::Dict{Object,Array{TimeSlice,1}}
+    function TimeSliceSet(time_slices)
+        block_time_slices = Dict{Object,Array{TimeSlice,1}}()
+        for t in time_slices
+            for block in blocks(t)
+                push!(get!(block_time_slices, block, []), t)
+            end
+        end
+        new(time_slices, block_time_slices)
     end
 end
 
@@ -107,7 +112,7 @@ function block_time_intervals(window_start, window_end)
 end
 
 
-function block_time_slices(block_time_intervals)
+function time_slices(block_time_intervals)
     inv_block_time_intervals = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
     for (block, time_intervals) in block_time_intervals
         for t in time_intervals
@@ -117,22 +122,17 @@ function block_time_slices(block_time_intervals)
     instance = first(model())
     d = Dict(:minute => Minute, :hour => Hour)
     duration_unit_ = get(d, duration_unit(model=instance, _strict=false), Minute)
-    Dict(
-        block => [
-            TimeSlice(t..., inv_block_time_intervals[t]...; duration_unit=duration_unit_)
-            for t in time_intervals
-        ]
-        for (block, time_intervals) in block_time_intervals
-    )
+    a = [TimeSlice(t..., blocks...; duration_unit=duration_unit_) for (t, blocks) in inv_block_time_intervals]
+    sort!(a)
 end
 
 
 """
-    block_time_slices(window_start, window_end)
+    time_slices(window_start, window_end)
 
 A `Dict` mapping temporal blocks to a sorted `Array` of `TimeSlices`.
 """
-block_time_slices(window_start, window_end) = block_time_slices(block_time_intervals(window_start, window_end))
+time_slices(window_start, window_end) = time_slices(block_time_intervals(window_start, window_end))
 
 
 """
@@ -146,10 +146,10 @@ function generate_time_slice()
     window_start = start(current_window)
     window_end = end_(current_window)
     window_span = window_end - window_start
-    window_block_time_slices = block_time_slices(window_start, window_end)
-    time_slice = TimeSliceSet(window_block_time_slices)
-    t_history_t = Dict(t => t - window_span for t in time_slice() if end_(t) <= window_end)
-    all_time_slices = [sort(collect(values(t_history_t))); time_slice()]
+    window_time_slices = time_slices(window_start, window_end)
+    time_slice = TimeSliceSet(window_time_slices)
+    t_history_t = Dict(t => t - window_span for t in window_time_slices if end_(t) <= window_end)
+    all_time_slices = [sort(collect(values(t_history_t))); window_time_slices]
     to_time_slice = TimeSliceMap(all_time_slices)
     @eval begin
         time_slice = $time_slice
