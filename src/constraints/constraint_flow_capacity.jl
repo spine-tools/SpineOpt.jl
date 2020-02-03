@@ -18,17 +18,17 @@
 #############################################################################
 
 """
-    constraint_flow_capacity(m::Model)
+    add_constraint_flow_capacity!(m::Model)
 
 Limit the maximum in/out `flow` of a `unit` for all `unit_capacity` indices.
 Check if `unit_conv_cap_to_flow` is defined.
 """
-function constraint_flow_capacity(m::Model)
+function add_constraint_flow_capacity!(m::Model)
     @fetch flow, units_on = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:flow_capacity] = Dict{NamedTuple,Any}()
+    cons = m.ext[:constraints][:flow_capacity] = Dict()
     for (u, c, d) in indices(unit_capacity)
         for t in time_slice()
-            constr_dict[(unit=u, commodity=c, direction=d, t=t)] = @constraint(
+            cons[u, c, d, t] = @constraint(
                 m,
                 + reduce(
                     +,
@@ -37,16 +37,33 @@ function constraint_flow_capacity(m::Model)
                     init=0
                 )
                 <=
-                + reduce(
+                + unit_capacity(unit=u, commodity=c, direction=d, t=t)
+                * unit_conv_cap_to_flow(unit=u, commodity=c, t=t)
+                * reduce(
                     +,
-                    units_on[u1, t1]
-                    * unit_capacity(unit=u, commodity=c, direction=d)
-                    * unit_conv_cap_to_flow(unit=u, commodity=c)
-                    * duration(t1)
+                    units_on[u1, t1] * duration(t1)
                     for (u1, t1) in units_on_indices(unit=u, t=t_in_t(t_long=t));
                     init=0
                 )
             )
+        end
+    end
+end
+
+function update_constraint_flow_capacity!(m::Model)
+    @fetch units_on = m.ext[:variables]
+    cons = m.ext[:constraints][:flow_capacity]
+    for (u, c, d) in indices(unit_capacity)
+        for t in time_slice()
+            for (u1, t1) in units_on_indices(unit=u, t=t_in_t(t_long=t))
+                set_normalized_coefficient(
+                    cons[u, c, d, t],
+                    units_on[u1, t1],
+                    - unit_capacity(unit=u, commodity=c, direction=d, t=t)
+                    * unit_conv_cap_to_flow(unit=u, commodity=c, t=t)
+                    * duration(t1)
+                )
+            end
         end
     end
 end

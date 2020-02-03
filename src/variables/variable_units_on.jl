@@ -17,29 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
-"""
-    create_variable_units_on!(m::Model)
-
-Add `units_on` variable for model `m`.
-
-This variable represents the number of online units for a given *unit*
-within a certain *time slice*.
-"""
-function create_variable_units_on!(m::Model)
-    KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
-    units_on = Dict{KeyType,Any}()
-    for (u, t) in units_on_indices()
-        fix_units_on_ = fix_units_on(unit=u, t=t)
-        units_on[(unit=u, t=t)] = if fix_units_on_ != nothing
-            fix_units_on_
-        else
-            units_variable(m, u, "units_on[$u, $(t.JuMP_name)]")
-        end
-    end
-    merge!(get!(m.ext[:variables], :units_on, Dict{KeyType,Any}()), units_on)
-end
-
 """
     units_on_indices(unit=anything, t=anything)
 
@@ -54,19 +31,15 @@ function units_on_indices(;unit=anything, t=anything)
     ]
 end
 
-function units_variable(m, u, base_name)
-    var_type = online_variable_type(unit=u)
-    if var_type == :none
-        @variable(m, base_name=base_name, lower_bound=1, upper_bound=1)
-    elseif var_type == :binary
-        @variable(m, base_name=base_name, lower_bound=0, binary=true)
-    elseif var_type == :integer
-        @variable(m, base_name=base_name, lower_bound=0, integer=true)
-    else
-        @variable(m, base_name=base_name, lower_bound=0)
-    end
+fix_units_on_(x) = fix_units_on(unit=x.unit, t=x.t, _strict=false)
+units_on_bin(x) = online_variable_type(unit=x.unit) == :binary
+units_on_int(x) = online_variable_type(unit=x.unit) == :integer
+
+function create_variable_units_on!(m::Model)
+    create_variable!(m, :units_on, units_on_indices; lb=x -> 0, bin=units_on_bin, int=units_on_int)
 end
 
+fix_variable_units_on!(m::Model) = fix_variable!(m, :units_on, units_on_indices, fix_units_on_)
 
 
 

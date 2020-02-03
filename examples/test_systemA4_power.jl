@@ -29,7 +29,7 @@ end
 # Custon constraint for cyclical boundary conditions for stor_state.
 # Simply intended to prevent ridiculous initial temperatures
 # without the need to fix them
-function constraint_stor_cyclic(m::Model)
+function add_constraint_stor_cyclic!(m::Model)
     @fetch stor_state = m.ext[:variables]
     constr_dict = m.ext[:constraints][:stor_cyclic] = Dict()
     stor_start = [first(stor_state_indices(storage=stor, commodity=c)) for (stor, c) in storage__commodity()]
@@ -38,18 +38,18 @@ function constraint_stor_cyclic(m::Model)
             m,
             stor_state[stor, c, t_first]
             ==
-            stor_state[stor, c, time_slice()[end]]
+            stor_state[stor, c, last(time_slice())]
         )
     end
 end
 
 # Run the model from the database
-url_in = "sqlite:///$(@__DIR__)/data/test_systemA4.sqlite"
-url_out = "sqlite:///$(@__DIR__)/data/test_systemA4_out.sqlite"
+url_in = "sqlite:///$(@__DIR__)/data/Power_System_Data_A4.sqlite"
+url_out = "sqlite:///$(@__DIR__)/data/Power_System_Data_A4_out.sqlite"
 m = try
-    run_spinemodel(url_in, url_out; optimizer=Gurobi.Optimizer, cleanup=false, extend=m->constraint_stor_cyclic(m))
+    run_spinemodel(url_in, url_out; with_optimizer=with_optimizer(Gurobi.Optimizer), cleanup=false, add_constraints=add_constraint_stor_cyclic!)
 catch
-    run_spinemodel(url_in, url_out; optimizer=Cbc.Optimizer, cleanup=false, extend=m->constraint_stor_cyclic(m))
+    run_spinemodel(url_in, url_out; cleanup=false, add_constraints=add_constraint_stor_cyclic!, log_level=2)
 end
 
 # Show active variables and constraints

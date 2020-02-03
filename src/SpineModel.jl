@@ -31,8 +31,6 @@ using Suppressor
 
 # Export utility
 export run_spinemodel
-export value
-export pack_trailing_dims
 export @fetch
 
 # Export variables
@@ -95,6 +93,8 @@ include("util/missing_item_handlers.jl")
 include("util/misc.jl")
 include("util/run_spinemodel.jl")
 
+include("variables/generate_variable_indices.jl")
+include("variables/variable_common.jl")
 include("variables/variable_flow.jl")
 include("variables/variable_trans.jl")
 include("variables/variable_stor_state.jl")
@@ -103,7 +103,7 @@ include("variables/variable_units_available.jl")
 include("variables/variable_units_started_up.jl")
 include("variables/variable_units_shut_down.jl")
 
-include("objective/objective_minimize_total_discounted_costs.jl")
+include("objective/set_objective.jl")
 include("objective/variable_om_costs.jl")
 include("objective/fixed_om_costs.jl")
 include("objective/taxes.jl")

@@ -18,16 +18,16 @@
 #############################################################################
 
 """
-    constraint_stor_state(m::Model)
+    add_constraint_stor_state!(m::Model)
 
 Balance for storage level.
 """
-function constraint_stor_state(m::Model)
+function add_constraint_stor_state!(m::Model)
     @fetch stor_state, trans, flow = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:stor_state] = Dict()
+    cons = m.ext[:constraints][:stor_state] = Dict()
     for (stor, c, t_after) in stor_state_indices()
         for (stor, c, t_before) in stor_state_indices(storage=stor, commodity=c, t=t_before_t(t_after=t_after))
-            constr_dict[stor, c, t_before, t_after] = @constraint(
+            cons[stor, c, t_before, t_after] = @constraint(
                 m,
                 (stor_state[stor, c, t_after] - stor_state[stor, c, t_before])
                     * state_coeff(storage=stor)
@@ -54,7 +54,7 @@ function constraint_stor_state(m::Model)
                     for (u, n, c_, d, t_) in flow_indices(
                         unit=[u1 for (stor1, u1) in indices(stor_unit_discharg_eff; storage=stor)],
                         commodity=c,
-                        direction=:to_node,
+                        direction=direction(:to_node),
                         t=t_after
                     );
                     init=0
@@ -65,7 +65,7 @@ function constraint_stor_state(m::Model)
                     for (u, n, c_, d, t_) in flow_indices(
                         unit=[u1 for (stor1, u1) in indices(stor_unit_charg_eff; storage=stor)],
                         commodity=c,
-                        direction=:from_node,
+                        direction=direction(:from_node),
                         t=t_after
                     );
                     init=0
@@ -76,7 +76,7 @@ function constraint_stor_state(m::Model)
                     for (conn, n, c_, d, t_) in trans_indices(
                         connection=[conn1 for (stor1, conn1) in indices(stor_conn_discharg_eff; storage=stor)],
                         commodity=c,
-                        direction=:to_node,
+                        direction=direction(:to_node),
                         t=t_after
                     );
                     init=0
@@ -87,7 +87,7 @@ function constraint_stor_state(m::Model)
                     for (conn, n, c_, d, t_) in trans_indices(
                         connection=[conn1 for (stor1, conn1) in indices(stor_conn_charg_eff; storage=stor)],
                         commodity=c,
-                        direction=:from_node,
+                        direction=direction(:from_node),
                         t=t_after
                     );
                     init=0
@@ -96,3 +96,6 @@ function constraint_stor_state(m::Model)
         end
     end
 end
+
+# TODO
+update_constraint_stor_state!(m::Model) = nothing

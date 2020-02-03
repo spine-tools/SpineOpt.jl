@@ -17,16 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
-"""
-    create_variable_units_shut_down!(m::Model)
-
-"""
 function create_variable_units_shut_down!(m::Model)
-    KeyType = NamedTuple{(:unit, :t),Tuple{Object,TimeSlice}}
-    units_shut_down = Dict{KeyType,Any}()
-    for (u, t) in units_on_indices()
-        units_shut_down[(unit=u, t=t)] = units_variable(m, u, "units_shut_down[$u, $(t.JuMP_name)]")
-    end
-    merge!(get!(m.ext[:variables], :units_shut_down, Dict{KeyType,Any}()), units_shut_down)
+    create_variable!(m, :units_shut_down, units_on_indices; lb=x -> 0, bin=units_on_bin, int=units_on_int)
 end
+

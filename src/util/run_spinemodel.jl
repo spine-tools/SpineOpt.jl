@@ -26,10 +26,26 @@ function run_spinemodel(
         url::String; 
         with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0), 
         cleanup=true, 
-        extend=m -> nothing, 
+        add_constraints=m -> nothing, 
+        update_constraints=m -> nothing, 
         log_level=3)
-    run_spinemodel(url, url; with_optimizer=with_optimizer, cleanup=cleanup, extend=extend, log_level=log_level)
+    run_spinemodel(
+        url, url; 
+        with_optimizer=with_optimizer, 
+        cleanup=cleanup, 
+        add_constraints=add_constraints, 
+        update_constraints=update_constraints, 
+        log_level=log_level
+    )
 end
+
+
+function generate_temporal_structure()
+    generate_current_window()
+    generate_time_slice()
+    generate_time_slice_relationships()
+end
+
 
 """
     run_spinemodel(url_in, url_out; <keyword arguments>)
@@ -45,8 +61,9 @@ A new Spine database is created at `url_out` if it doesn't exist.
 **`cleanup=true`** tells [`run_spinemodel`](@ref) whether or not convenience functors should be
 set to `nothing` after completion.
 
-**`extend=m -> nothing`** is a function for extending the model. [`run_spinemodel`](@ref) calls this function with
-the internal `JuMP.Model` object before calling `JuMP.optimize!`.
+**`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window, and allows adding user contraints.
+
+**`update_constraints=m -> nothing`** is called in windows 2 to the last, and allows updating contraints added by `add_constraints`.
 
 **`log_level=3`** is the log level.
 """
@@ -55,158 +72,163 @@ function run_spinemodel(
         url_out::String;
         with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0),
         cleanup=true,
-        extend=m -> nothing,
+        add_constraints=m -> nothing, 
+        update_constraints=m -> nothing, 
         log_level=3)
     level0 = log_level >= 0
     level1 = log_level >= 1
     level2 = log_level >= 2
     level3 = log_level >= 3
+    results = Dict()
     @log level0 "Running Spine Model for $(url_in)..."
-    @log level2 "Preparation phase"
     @logtime level2 "Creating convenience functions..." using_spinedb(url_in, @__MODULE__; upgrade=true)
-    @logtime level2 "Initializing temporal structure..." init_time_slice()
-    @logtime level2 "Setting up initial conditions..." begin
-        m = Model()
+    @logtime level2 "Creating temporal structure..." generate_temporal_structure()
+    @logtime level2 "Generating indices..." generate_variable_indices()
+    @log level1 "Window 1: $current_window"
+    @logtime level2 "Initializing model..." begin
+        m = Model(with_optimizer)
         m.ext[:variables] = Dict{Symbol,Dict}()
+        m.ext[:variables_lb] = Dict{Symbol,Any}()
+        m.ext[:variables_ub] = Dict{Symbol,Any}()
+        m.ext[:values] = Dict{Symbol,Dict}()
+        m.ext[:constraints] = Dict{Symbol,Dict}()
         create_variables!(m)
-        results = value(m.ext[:variables])
+        fix_variables!(m)
+        set_objective!(m)
     end
-    outputs = Dict()
-    for (k, (window_start, window_end)) in enumerate(rolling_windows())
-        @log level1 "Window $k, from $window_start to $window_end"
-        @logtime level2 "Creating temporal structure..." generate_temporal_structure(window_start, window_end)
-        @logtime level2 "Initializing model..." begin
-            m = Model(with_optimizer)
-            m.ext[:variables] = results
-            m.ext[:constraints] = Dict{Symbol,Dict}()
-            create_variables!(m)
-            objective_minimize_total_discounted_costs(m)
-        end
-        @logtime level2 "Generating constraints...\n" begin
-            @logtime level3 "- [constraint_flow_capacity]" constraint_flow_capacity(m)
-            @logtime level3 "- [constraint_fix_ratio_out_in_flow]" constraint_fix_ratio_out_in_flow(m)
-            @logtime level3 "- [constraint_max_ratio_out_in_flow]" constraint_max_ratio_out_in_flow(m)
-            @logtime level3 "- [constraint_min_ratio_out_in_flow]" constraint_min_ratio_out_in_flow(m)
-            @logtime level3 "- [constraint_fix_ratio_out_out_flow]" constraint_fix_ratio_out_out_flow(m)
-            @logtime level3 "- [constraint_max_ratio_out_out_flow]" constraint_max_ratio_out_out_flow(m)
-            @logtime level3 "- [constraint_fix_ratio_in_in_flow]" constraint_fix_ratio_in_in_flow(m)
-            @logtime level3 "- [constraint_max_ratio_in_in_flow]" constraint_max_ratio_in_in_flow(m)
-            @logtime level3 "- [constraint_fix_ratio_out_in_trans]" constraint_fix_ratio_out_in_trans(m)
-            @logtime level3 "- [constraint_max_ratio_out_in_trans]" constraint_max_ratio_out_in_trans(m)
-            @logtime level3 "- [constraint_min_ratio_out_in_trans]" constraint_min_ratio_out_in_trans(m)
-            @logtime level3 "- [constraint_trans_capacity]" constraint_trans_capacity(m)
-            @logtime level3 "- [constraint_nodal_balance]" constraint_nodal_balance(m)
-            @logtime level3 "- [constraint_max_cum_in_flow_bound]" constraint_max_cum_in_flow_bound(m)
-            @logtime level3 "- [constraint_stor_capacity]" constraint_stor_capacity(m)
-            @logtime level3 "- [constraint_stor_state]" constraint_stor_state(m)
-            @logtime level3 "- [constraint_units_on]" constraint_units_on(m)
-            @logtime level3 "- [constraint_units_available]" constraint_units_available(m)
-            @logtime level3 "- [constraint_minimum_operating_point]" constraint_minimum_operating_point(m)
-            @logtime level3 "- [constraint_min_down_time]" constraint_min_down_time(m)
-            @logtime level3 "- [constraint_min_up_time]" constraint_min_up_time(m)
-            @logtime level3 "- [constraint_unit_state_transition]" constraint_unit_state_transition(m)
-            @logtime level3 "- [extend]" extend(m)
-        end
+    @logtime level2 "Adding constraints...\n" begin
+        @logtime level3 "- [constraint_flow_capacity]" add_constraint_flow_capacity!(m)
+        @logtime level3 "- [constraint_fix_ratio_out_in_flow]" add_constraint_fix_ratio_out_in_flow!(m)
+        @logtime level3 "- [constraint_max_ratio_out_in_flow]" add_constraint_max_ratio_out_in_flow!(m)
+        @logtime level3 "- [constraint_min_ratio_out_in_flow]" add_constraint_min_ratio_out_in_flow!(m)
+        @logtime level3 "- [constraint_fix_ratio_out_out_flow]" add_constraint_fix_ratio_out_out_flow!(m)
+        @logtime level3 "- [constraint_max_ratio_out_out_flow]" add_constraint_max_ratio_out_out_flow!(m)
+        @logtime level3 "- [constraint_fix_ratio_in_in_flow]" add_constraint_fix_ratio_in_in_flow!(m)
+        @logtime level3 "- [constraint_max_ratio_in_in_flow]" add_constraint_max_ratio_in_in_flow!(m)
+        @logtime level3 "- [constraint_fix_ratio_out_in_trans]" add_constraint_fix_ratio_out_in_trans!(m)
+        @logtime level3 "- [constraint_max_ratio_out_in_trans]" add_constraint_max_ratio_out_in_trans!(m)
+        @logtime level3 "- [constraint_min_ratio_out_in_trans]" add_constraint_min_ratio_out_in_trans!(m)
+        @logtime level3 "- [constraint_trans_capacity]" add_constraint_trans_capacity!(m)
+        @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
+        @logtime level3 "- [constraint_max_cum_in_flow_bound]" add_constraint_max_cum_in_flow_bound!(m)
+        @logtime level3 "- [constraint_stor_capacity]" add_constraint_stor_capacity!(m)
+        @logtime level3 "- [constraint_stor_state]" add_constraint_stor_state!(m)
+        @logtime level3 "- [constraint_units_on]" add_constraint_units_on!(m)
+        @logtime level3 "- [constraint_units_available]" add_constraint_units_available!(m)
+        @logtime level3 "- [constraint_minimum_operating_point]" add_constraint_minimum_operating_point!(m)
+        @logtime level3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)
+        @logtime level3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
+        @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
+        @logtime level3 "- [constraint_user]" add_constraints(m)
+    end
+    k = 2
+    while true
         @logtime level2 "Solving model..." optimize!(m)
-        termination_status(m) != MOI.OPTIMAL && break
-        @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
-        results = value(m.ext[:variables])
-        @logtime level2 "Saving results..." save_outputs!(outputs, results, window_start, window_end)
+        if termination_status(m) == MOI.OPTIMAL
+            @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
+            @logtime level2 "Saving results..." begin
+                save_values!(m)
+                save_results!(results, m)
+            end
+        else
+            @log level1 "Unable to find solution (reason: $(termination_status(m)))"
+            break
+        end
+        roll_temporal_structure() || break
+        @log level1 "Window $k: $current_window"
+        @logtime level2 "Updating model..." begin            
+            update_variables!(m)
+            fix_variables!(m)
+            set_objective!(m)
+        end
+        @logtime level2 "Updating constraints...\n" begin
+            @logtime level3 "- [constraint_flow_capacity]" update_constraint_flow_capacity!(m)
+            @logtime level3 "- [constraint_fix_ratio_out_in_flow]" update_constraint_fix_ratio_out_in_flow!(m)
+            @logtime level3 "- [constraint_max_ratio_out_in_flow]" update_constraint_max_ratio_out_in_flow!(m)
+            @logtime level3 "- [constraint_min_ratio_out_in_flow]" update_constraint_min_ratio_out_in_flow!(m)
+            @logtime level3 "- [constraint_fix_ratio_out_out_flow]" update_constraint_fix_ratio_out_out_flow!(m)
+            @logtime level3 "- [constraint_max_ratio_out_out_flow]" update_constraint_max_ratio_out_out_flow!(m)
+            @logtime level3 "- [constraint_fix_ratio_in_in_flow]" update_constraint_fix_ratio_in_in_flow!(m)
+            @logtime level3 "- [constraint_max_ratio_in_in_flow]" update_constraint_max_ratio_in_in_flow!(m)
+            @logtime level3 "- [constraint_fix_ratio_out_in_trans]" update_constraint_fix_ratio_out_in_trans!(m)
+            @logtime level3 "- [constraint_max_ratio_out_in_trans]" update_constraint_max_ratio_out_in_trans!(m)
+            @logtime level3 "- [constraint_min_ratio_out_in_trans]" update_constraint_min_ratio_out_in_trans!(m)
+            @logtime level3 "- [constraint_trans_capacity]" update_constraint_trans_capacity!(m)
+            @logtime level3 "- [constraint_nodal_balance]" update_constraint_nodal_balance!(m)
+            @logtime level3 "- [constraint_stor_capacity]" update_constraint_stor_capacity!(m)
+            @logtime level3 "- [constraint_stor_state]" update_constraint_stor_state!(m)
+            @logtime level3 "- [constraint_units_on]" update_constraint_units_on!(m)
+            @logtime level3 "- [constraint_units_available]" update_constraint_units_available!(m)
+            @logtime level3 "- [constraint_minimum_operating_point]" update_constraint_minimum_operating_point!(m)
+            @logtime level3 "- [constraint_min_down_time]" update_constraint_min_up_time!(m)
+            @logtime level3 "- [constraint_min_up_time]" update_constraint_min_down_time!(m)
+            @logtime level3 "- [constraint_unit_state_transition]" update_constraint_unit_state_transition!(m)
+            @logtime level3 "- [constraint_user]" update_constraints(m)
+        end
+        k += 1
     end
-    @logtime level2 "Writing report..." write_report(outputs, url_out)
+    @logtime level2 "Writing report..." write_report(results, url_out)
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
-    return m
-end
-
-function create_variables!(m::Model)
-    create_variable_flow!(m)
-    create_variable_units_on!(m)
-    create_variable_units_available!(m)
-    create_variable_units_started_up!(m)
-    create_variable_units_shut_down!(m)
-    create_variable_trans!(m)
-    create_variable_stor_state!(m)
-end
-
-function generate_temporal_structure(window_start, window_end)
-    time_slices = generate_time_slice(window_start, window_end)
-    generate_time_slice_relationships(time_slices)
+    m
 end
 
 """
-    save_outputs!(outputs, results, window_start, window_end)
+    save_results!(results, m)
 
-Update `outputs` with given `results`.
+Update `results` with results from `m`.
 """
-function save_outputs!(outputs, results, window_start, window_end)
+function save_results!(results, m)
     for out in output()
-        value = get(results, out.name, nothing)
+        value = get(m.ext[:values], out.name, nothing)
         if value === nothing
             @warn "can't find results for '$(out.name)'"
             continue
         end
-        filter!(x -> window_start <= x[1].t.start < window_end, value)
-        existing_value = get!(outputs, out.name, Dict{NamedTuple,Any}())
-        merge!(existing_value, value)
+        value_ = Dict{NamedTuple,Number}((; k..., t=start(k.t)) => v for (k, v) in value)
+        existing = get!(results, out.name, Dict{NamedTuple,Number}())
+        merge!(existing, value_)
     end
 end
 
-function write_report(outputs, default_url)
+function write_report(results, default_url)
     reports = Dict()
     for (rpt, out) in report__output()
-        output_value = get(outputs, out.name, nothing)
-        if output_value === nothing
+        value = get(results, out.name, nothing)
+        if value === nothing
             continue
         end
         url = output_db_url(report=rpt, _strict=false)
         url === nothing && (url = default_url)
         url_reports = get!(reports, url, Dict())
-        rpt = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
-        d = rpt[out.name] = Dict{NamedTuple,TimeSeries}()
-        for (key, val) in pack_trailing_dims(output_value)
-            inds = map(x->x[1], val)
-            vals = map(x->x[2], val)
-            d[key] = TimeSeries(inds, vals, false, false)
+        report = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
+        d = report[out.name] = Dict{NamedTuple,TimeSeries}()
+        for (k, v) in pulldims(value, :t)
+            inds = first.(v)
+            vals = last.(v)
+            d[k] = TimeSeries(inds, vals, false, false)
         end
     end
     for (url, url_reports) in reports
-        for (rpt, output_params) in url_reports
-            write_parameters(output_params, url; report=string(rpt))
+        for (rpt_name, output_params) in url_reports
+            write_parameters(output_params, url; report=string(rpt_name))
         end
     end
 end
 
 """
-    pack_trailing_dims(dictionary::Dict, n::Int64=1)
+    pulldims(input, dims...)
 
-An equivalent dictionary where the last `n` dimensions are packed into a matrix
+An equivalent dictionary where the given dimensions are pulled from the key to the value.
 """
-function pack_trailing_dims(dictionary::Dict{K,V}, n::Int64=1) where {K<:NamedTuple,V}
-    left_dict = Dict()
-    for (key, value) in dictionary
-        # TODO: handle length(key) < n and stuff like that?
-        bp = length(key) - n
-        left_key = NamedTuple{Tuple(collect(keys(key))[1:bp])}(collect(values(key))[1:bp])
-        right_key = NamedTuple{Tuple(collect(keys(key))[bp + 1:end])}(collect(values(key))[bp + 1:end])
-        right_dict = get!(left_dict, left_key, Dict())
-        right_dict[right_key] = value
+function pulldims(input::Dict{K,V}, dims::Symbol...) where {K<:NamedTuple,V}
+    output = Dict()
+    for (key, value) in sort(input)
+        output_key = (; (k => v for (k, v) in pairs(key) if !(k in dims))...)
+        output_value = ((key[dim] for dim in dims)..., value)
+        push!(get!(output, output_key, []), output_value)
     end
-    if n > 1
-        Dict(key => reshape([(k, v) for (k, v) in sort(collect(value))], n, :) for (key, value) in left_dict)
-    else
-        Dict(key => [(k, v) for (k, v) in sort(collect(value))] for (key, value) in left_dict)
-    end
+    output
 end
-
-"""
-    value(d::Dict)
-
-An equivalent dictionary where `JuMP.VariableRef` values are replaced by their `JuMP.value`.
-"""
-value(d::Dict{K,V}) where {K,V} = Dict{K,Any}(k => value(v) for (k, v) in d)
-
-value(v::JuMP.VariableRef) = has_values(owner_model(v)) ? JuMP.value(v) : zero(Float64)
-value(x) = x
 
 """
     formulation(d::Dict)

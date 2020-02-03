@@ -22,11 +22,15 @@ import Dates: CompoundPeriod
 struct TimeSliceSet
     time_slices::Array{TimeSlice,1}
     block_time_slices::Dict{Object,Array{TimeSlice,1}}
-end
-
-struct ToTimeSlice
-    block_time_slices::Dict{Object,Array{TimeSlice,1}}
-    block_time_slice_map::Dict{Object,Array{Int64,1}}
+    function TimeSliceSet(time_slices)
+        block_time_slices = Dict{Object,Array{TimeSlice,1}}()
+        for t in time_slices
+            for block in blocks(t)
+                push!(get!(block_time_slices, block, []), t)
+            end
+        end
+        new(time_slices, block_time_slices)
+    end
 end
 
 """
@@ -45,76 +49,23 @@ An `Array` of time slices *in the model*.
 
 
 """
-    to_time_slice(t...)
-
-An array of time slices *in the model* that overlap `t`
-(where `t` may not be in the model).
-"""
-function (h::ToTimeSlice)(t::Union{TimeSlice,DateTime}...)
-    mapped = Array{TimeSlice,1}()
-    for (blk, time_slice_map) in h.block_time_slice_map
-        time_slices = h.block_time_slices[blk]
-        append!(mapped, mapped_time_slices(time_slice_map, time_slices, t...))
-    end
-    unique(mapped)
-end
-
-"""
-    mapped_time_slices(time_slice_map, time_slices, t...)
-
-An array of all time slices in `time_slices` that overlap any `t`.
-"""
-function mapped_time_slices(time_slice_map, time_slices, t::TimeSlice...)
-    mapped = Array{TimeSlice,1}()
-    block_start = start(first(time_slices))
-    block_end = end_(last(time_slices))
-    for s in t
-        s_start = max(block_start, start(s))
-        s_end = min(block_end, end_(s))
-        s_end <= s_start && continue
-        first_ind = time_slice_map[Minute(s_start - block_start).value + 1]
-        last_ind = time_slice_map[Minute(s_end - block_start).value]
-        append!(mapped, time_slices[first_ind:last_ind])
-    end
-    mapped
-end
-
-
-function mapped_time_slices(time_slice_map, time_slices, t::DateTime...)
-    block_start = start(first(time_slices))
-    block_end = end_(last(time_slices))
-    [time_slices[time_slice_map[Minute(s - block_start).value + 1]] for s in t if block_start <= s < block_end]
-end
-
-
-"""
-    _rolling_windows(from::Dates.DateTime, step::Union{Period,CompoundPeriod}, until::DateTime)
-
-An array of tuples of start and end time for each rolling window.
-"""
-function _rolling_windows(from::Dates.DateTime, step::Union{Period,CompoundPeriod}, until::DateTime)
-    windows = Array{Tuple{DateTime,DateTime},1}()
-    while from < until
-        push!(windows, (from, from + step))
-        from += step
-    end
-    windows
-end
-
-
-"""
     rolling_windows()
 
-An array of tuples of start and end time for each rolling window.
+A tuple of start and end time for the main rolling window.
 """
-function rolling_windows()
+function generate_current_window()
     instance = first(model())
-    m_start = model_start(model=instance)
-    m_end = model_end(model=instance)
-    m_roll_forward = roll_forward(model=instance, _strict=false)
-    m_roll_forward === nothing && return [(m_start, m_end)]
-    _rolling_windows(m_start, m_roll_forward, m_end)
+    model_start_ = model_start(model=instance)
+    model_end_ = model_end(model=instance)
+    roll_forward_ = roll_forward(model=instance, _strict=false)
+    window_start = model_start_
+    window_end = (roll_forward_ === nothing) ? model_end_ : min(model_start_ + roll_forward_, model_end_)
+    current_window = TimeSlice(window_start, window_end)
+    @eval begin
+        current_window = $current_window
+    end
 end
+
 
 # Adjuster functions, in case blocks specify their own start and end
 adjusted_start(window_start, window_end, ::Nothing) = window_start
@@ -122,16 +73,16 @@ adjusted_start(window_start, window_end, blk_start::Union{Period,CompoundPeriod}
 adjusted_start(window_start, window_end, blk_start::DateTime) = max(window_start, blk_start)
 
 adjusted_end(window_start, window_end, ::Nothing) = window_end
-adjusted_end(window_start, window_end, blk_end::Union{Period,CompoundPeriod}) = max(window_end, window_start + blk_end)
-adjusted_end(window_start, window_end, blk_end::DateTime) = max(window_end, blk_end)
+adjusted_end(window_start, window_end, blk_end::Union{Period,CompoundPeriod}) = window_start + blk_end
+adjusted_end(window_start, window_end, blk_end::DateTime) = max(window_start, blk_end)
 
 
 """
-    _block_time_intervals(window_start, window_end)
+    block_time_intervals(window_start, window_end)
 
 A `Dict` mapping temporal blocks to a sorted `Array` of time intervals, i.e., (start, end) tuples.
 """
-function _block_time_intervals(window_start, window_end)
+function block_time_intervals(window_start, window_end)
     d = Dict{Object,Array{Tuple{DateTime,DateTime},1}}()
     for block in temporal_block()
         time_intervals = Array{Tuple{DateTime,DateTime},1}()
@@ -160,7 +111,7 @@ function _block_time_intervals(window_start, window_end)
 end
 
 
-function _block_time_slices(block_time_intervals)
+function time_slices(block_time_intervals)
     inv_block_time_intervals = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
     for (block, time_intervals) in block_time_intervals
         for t in time_intervals
@@ -170,122 +121,52 @@ function _block_time_slices(block_time_intervals)
     instance = first(model())
     d = Dict(:minute => Minute, :hour => Hour)
     duration_unit_ = get(d, duration_unit(model=instance, _strict=false), Minute)
-    Dict(
-        block => [
-            TimeSlice(t..., inv_block_time_intervals[t]...; duration_unit=duration_unit_)
-            for t in time_intervals
-        ]
-        for (block, time_intervals) in block_time_intervals
-    )
-end
-
-
-function _block_time_slice_map(block_time_slices)
-    d = Dict{Object,Array{Int64,1}}()
-    for (block, time_slices) in block_time_slices
-        isempty(time_slices) && continue
-        temp_block_start = start(first(time_slices))
-        temp_block_end = end_(last(time_slices))
-        d[block] = time_slice_map = Array{Int64,1}(undef, Minute(temp_block_end - temp_block_start).value)
-        for (ind, t) in enumerate(time_slices)
-            first_minute = Minute(start(t) - temp_block_start).value + 1
-            last_minute = Minute(end_(t) - temp_block_start).value
-            time_slice_map[first_minute:last_minute] .= ind
-        end
-    end
-    d
+    a = [TimeSlice(t..., blocks...; duration_unit=duration_unit_) for (t, blocks) in inv_block_time_intervals]
+    sort!(a)
 end
 
 
 """
-    generate_time_slice(window_start, window_end)
+    time_slices(window_start, window_end)
 
-Generate and export a convenience functor called `time_slice`, that can be used to retrieve
-time slices in the model between `window_start` and `window_end`. See [@TimeSliceSet()](@ref).
+A sorted `Array` of `TimeSlices` in the given window.
 """
-function generate_time_slice(window_start, window_end)
-    block_time_intervals = _block_time_intervals(window_start, window_end)
-    block_time_slices = _block_time_slices(block_time_intervals)
-    time_slices = sort(unique(t for v in values(block_time_slices) for t in v))
-    time_slice = TimeSliceSet(copy(time_slices), deepcopy(block_time_slices))
-    prepend_history!(time_slices, block_time_slices, window_start)
-    block_time_slice_map = _block_time_slice_map(block_time_slices)
-    to_time_slice = ToTimeSlice(block_time_slices, block_time_slice_map)
+time_slices(window_start, window_end) = time_slices(block_time_intervals(window_start, window_end))
+
+
+"""
+    generate_time_slice()
+
+Create and export a `TimeSliceSet` containing `TimeSlice`s in the current window.
+
+See [@TimeSliceSet()](@ref).
+"""
+function generate_time_slice()
+    window_start = start(current_window)
+    window_end = end_(current_window)
+    window_span = window_end - window_start
+    window_time_slices = time_slices(window_start, window_end)
+    time_slice = TimeSliceSet(window_time_slices)
+    t_history_t = Dict(t => t - window_span for t in window_time_slices if end_(t) <= window_end)
+    all_time_slices = [sort(collect(values(t_history_t))); window_time_slices]
+    to_time_slice = TimeSliceMap(all_time_slices)
     @eval begin
+        time_slice = $time_slice
         to_time_slice = $to_time_slice
-        time_slice = $time_slice
+        t_history_t = $t_history_t
+        all_time_slices = $all_time_slices
+        export time_slice
         export to_time_slice
-        export time_slice
-    end
-    time_slices
-end
-
-
-function prepend_history!(time_slices, block_time_slices, window_start)
-    history_time_slices = SpineModel.time_slice.time_slices
-    block_history_time_slices = SpineModel.time_slice.block_time_slices
-    history_start_ = history_start(window_start, time_slices)
-    filter!(x -> history_start_ <= x.end_ <= window_start, history_time_slices)
-    prepend!(time_slices, history_time_slices)
-    for (block, history_time_slices) in block_history_time_slices
-        filter!(x -> history_start_ <= x.end_ <= window_start, history_time_slices)
-        prepend!(block_time_slices[block], history_time_slices)
     end
 end
 
 
-_minimum_start(ref, iter) = isempty(iter) ? ref : minimum(ref - x for x in iter)
-
-function history_start(window_start, time_slices)
-    trans_delay_start = _minimum_start(
-        window_start, trans_delay(;inds..., t=t) for inds in indices(trans_delay) for t in time_slices
-    )
-    min_up_time_start = _minimum_start(
-        window_start, min_up_time(unit=u, t=t) for u in indices(min_up_time) for t in time_slices
-    )
-    min_down_time_start = _minimum_start(
-        window_start, min_down_time(unit=u, t=t) for u in indices(min_down_time) for t in time_slices
-    )
-    time_slice_start = _minimum_start(window_start, (end_(t) - start(t)) for t in time_slices)
-    min(trans_delay_start, min_up_time_start, min_down_time_start, time_slice_start)
-end
-
-
-function init_time_slice()
+function roll_temporal_structure()
     instance = first(model())
-    model_start_ = model_start(model=instance)
-    duration_unit_ = get(
-        Dict(:minute => Minute, :hour => Hour), duration_unit(model=instance, _strict=false), Minute
-    )
-    date_times = Array{DateTime,1}()
-    for (u, n, d) in indices(fix_flow)
-        fix_flow(unit=u, node=n, direction=d) isa TimeSeries || continue
-        append!(date_times, fix_flow(unit=u, node=n, direction=d).indexes)
-    end
-    for (conn, n, d) in indices(fix_trans)
-        fix_trans(connection=conn, node=n, direction=d) isa TimeSeries || continue
-        append!(date_times, fix_trans(connection=conn, node=n, direction=d).indexes)
-    end
-    for stor in indices(fix_stor_state)
-        fix_stor_state(storage=stor) isa TimeSeries || continue
-        append!(date_times, fix_stor_state(storage=stor).indexes)
-    end
-    for u in indices(fix_units_on)
-        fix_units_on(unit=u) isa TimeSeries || continue
-        append!(date_times, fix_units_on(unit=u).indexes)
-    end
-    filter!(t -> t <= model_start_, date_times)
-    push!(date_times, model_start_)
-    sort!(date_times)
-    unique!(date_times)
-    time_slices = [
-        TimeSlice(start, end_, temporal_block()...; duration_unit=duration_unit_) 
-        for (start, end_) in zip(date_times[1:end - 1], date_times[2:end])
-    ]
-    block_time_slices = Dict(block => copy(time_slices) for block in temporal_block())
-    time_slice = TimeSliceSet(time_slices, block_time_slices)
-    @eval begin
-        time_slice = $time_slice
-        export time_slice
-    end
+    end_(current_window) >= model_end(model=instance) && return false
+    roll_forward_ = roll_forward(model=instance, _strict=false)
+    roll_forward_ === nothing && return false
+    roll!(current_window, roll_forward_)
+    roll!.(all_time_slices, roll_forward_)
+    true
 end

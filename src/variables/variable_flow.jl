@@ -16,32 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
-
-"""
-    create_variable_flow!(m::Model)
-
-Add new `flow` variable to the model `m`.
-
-This variable represents the (average) instantaneous flow of a *commodity*
-between a *node* and a *unit* in a certain *direction*
-and within a certain *time slice*.
-
-"""
-function create_variable_flow!(m::Model)
-    KeyType = NamedTuple{(:unit, :node, :commodity, :direction, :t),Tuple{Object,Object,Object,Object,TimeSlice}}
-    flow = Dict{KeyType,Any}()
-    for (u, n, c, d, t) in flow_indices()
-        fix_flow_ = fix_flow(unit=u, node=n, direction=d, t=t)
-        flow[(unit=u, node=n, commodity=c, direction=d, t=t)] = if fix_flow_ != nothing
-            fix_flow_
-        else
-            @variable(m, base_name="flow[$u, $n, $c, $d, $(t.JuMP_name)]", lower_bound=0)
-        end
-    end
-    merge!(get!(m.ext[:variables], :flow, Dict{KeyType,Any}()), flow)
-end
-
 """
     flow_indices(
         commodity=anything,
@@ -60,9 +34,14 @@ function flow_indices(;commodity=anything, node=anything, unit=anything, directi
     commodity = expand_commodity_group(commodity)
     [
         (unit=u, node=n, commodity=c, direction=d, t=t1)
-        for (u, n, d) in unit__node__direction(unit=unit, node=node, direction=direction, _compact=false)
-        for t_blk in node__temporal_block(node=n)
-        for t1 in time_slice(temporal_block=t_blk, t=t)
-        for (n_, c) in node__commodity(node=n, commodity=commodity, _compact=false)
+        for (u, n, c, d, tb) in flow_indices_rc(
+            unit=unit, node=node, commodity=commodity, direction=direction, _compact=false
+        )
+        for t1 in time_slice(temporal_block=tb, t=t)
     ]
 end
+
+fix_flow_(x) = fix_flow(unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false)
+
+create_variable_flow!(m::Model) = create_variable!(m, :flow, flow_indices; lb=x -> 0)
+fix_variable_flow!(m::Model) = fix_variable!(m, :flow, flow_indices, fix_flow_)
