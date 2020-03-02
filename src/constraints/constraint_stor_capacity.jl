@@ -38,7 +38,7 @@ function add_constraint_stor_capacity!(m::Model)
                     init=0
                 )
                 <=
-                stor_state_cap(storage=stor, t=t) * duration(t)
+                stor_state_cap[(storage=stor, t=t)] * duration(t)
             )
         end
     end

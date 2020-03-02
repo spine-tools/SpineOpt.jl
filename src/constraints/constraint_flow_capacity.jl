@@ -37,8 +37,8 @@ function add_constraint_flow_capacity!(m::Model)
                     init=0
                 )
                 <=
-                + unit_capacity(unit=u, commodity=c, direction=d, t=t)
-                * unit_conv_cap_to_flow(unit=u, commodity=c, t=t)
+                + unit_capacity[(unit=u, commodity=c, direction=d, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, commodity=c, t=t)]
                 * reduce(
                     +,
                     units_on[u1, t1] * duration(t1)

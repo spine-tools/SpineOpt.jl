@@ -38,7 +38,7 @@ function add_constraint_ratio_flow!(m::Model, ratio, sense, d1, d2)
                     init=0
                 ),
                 sense,
-                + ratio(unit=u, commodity1=c1, commodity2=c2, t=t)
+                + ratio[(unit=u, commodity1=c1, commodity2=c2, t=t)]
                 * reduce(
                     +,
                     flow[u_, n, c2_, d, t_] * duration(t_)

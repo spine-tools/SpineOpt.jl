@@ -30,29 +30,29 @@ function add_constraint_stor_state!(m::Model)
             cons[stor, c, t_before, t_after] = @constraint(
                 m,
                 (
-                    stor_state[stor, c, t_after] * state_coeff(storage=stor, t=t_after)
-                    - stor_state[stor, c, t_before] * state_coeff(storage=stor, t=t_before)   
+                    stor_state[stor, c, t_after] * state_coeff[(storage=stor, t=t_after)]
+                    - stor_state[stor, c, t_before] * state_coeff[(storage=stor, t=t_before)   ]
                 )
                     / duration(t_after)
                 ==
-                - stor_state[stor, c, t_after] * frac_state_loss(storage=stor, t=t_after)
+                - stor_state[stor, c, t_after] * frac_state_loss[(storage=stor, t=t_after)]
                 - reduce(
                     +,
                     stor_state[stor, c, t_after]
-                    * diff_coeff(storage1=stor, storage2=stor_, t=t_after)
+                    * diff_coeff[(storage1=stor, storage2=stor_, t=t_after)]
                     for stor_ in storage__storage(storage1=stor);
                     init = 0
                 )
                 + reduce(
                     +,
                     stor_state[stor_, c, t_after]
-                    * diff_coeff(storage1=stor_, storage2=stor, t=t_after)
+                    * diff_coeff[(storage1=stor_, storage2=stor, t=t_after)]
                     for stor_ in storage__storage(storage2=stor);
                     init = 0
                 )
                 - reduce(
                     +,
-                    flow[u, n, c_, d, t_] * stor_unit_discharg_eff(storage=stor, unit=u, t=t_after) # TODO: Shouldn't this be divided by the efficiency instead of multiplying?
+                    flow[u, n, c_, d, t_] * stor_unit_discharg_eff[(storage=stor, unit=u, t=t_after)] # TODO: Shouldn't this be divided by the efficiency instead of multiplying?
                     for (u, n, c_, d, t_) in flow_indices(
                         unit=[u1 for (stor1, u1) in indices(stor_unit_discharg_eff; storage=stor)],
                         commodity=c,
@@ -63,7 +63,7 @@ function add_constraint_stor_state!(m::Model)
                 )
                 + reduce(
                     +,
-                    flow[u, n, c_, d, t_] * stor_unit_charg_eff(storage=stor, unit=u, t=t_after)
+                    flow[u, n, c_, d, t_] * stor_unit_charg_eff[(storage=stor, unit=u, t=t_after)]
                     for (u, n, c_, d, t_) in flow_indices(
                         unit=[u1 for (stor1, u1) in indices(stor_unit_charg_eff; storage=stor)],
                         commodity=c,
@@ -74,7 +74,7 @@ function add_constraint_stor_state!(m::Model)
                 )
                 - reduce(
                     +,
-                    trans[conn, n, c_, d, t_] * stor_conn_discharg_eff(storage=stor, connection=conn, t=t_after) # TODO: Shouldn't this be divided by the efficiency instead of multiplying?
+                    trans[conn, n, c_, d, t_] * stor_conn_discharg_eff[(storage=stor, connection=conn, t=t_after)] # TODO: Shouldn't this be divided by the efficiency instead of multiplying?
                     for (conn, n, c_, d, t_) in trans_indices(
                         connection=[conn1 for (stor1, conn1) in indices(stor_conn_discharg_eff; storage=stor)],
                         commodity=c,
@@ -85,7 +85,7 @@ function add_constraint_stor_state!(m::Model)
                 )
                 + reduce(
                     +,
-                    trans[conn, n, c_, d, t_] * stor_conn_charg_eff(storage=stor, connection=conn, t=t_after)
+                    trans[conn, n, c_, d, t_] * stor_conn_charg_eff[(storage=stor, connection=conn, t=t_after)]
                     for (conn, n, c_, d, t_) in trans_indices(
                         connection=[conn1 for (stor1, conn1) in indices(stor_conn_charg_eff; storage=stor)],
                         commodity=c,

@@ -32,7 +32,7 @@ function add_constraint_units_available!(m::Model)
             m,
             + units_available[u, t]
             ==
-            + number_of_units(unit=u, t=t) * avail_factor(unit=u, t=t)
+            + number_of_units[(unit=u, t=t)] * avail_factor[(unit=u, t=t)]
         )
     end
 end

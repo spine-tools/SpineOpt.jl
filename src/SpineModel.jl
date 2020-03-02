@@ -33,58 +33,11 @@ using Suppressor
 export run_spinemodel
 export @fetch
 
-# Export variables
-export variable_flow
-export variable_trans
-export variable_stor_state
-export variable_units_on
-export variable_units_available
-export variable_units_started_up
-export variable_units_shut_down
-
-# Export filter functions
+# Export indices functions
 export flow_indices
 export trans_indices
 export stor_state_indices
 export units_on_indices
-
-# Export objective
-export objective_minimize_total_discounted_costs
-export variable_om_costs
-export fixed_om_costs
-export taxes
-export operating_costs
-export start_up_cost
-export shut_down_cost
-# export production_costs
-
-# Export constraints
-export constraint_flow_capacity
-export constraint_fix_ratio_out_in_flow
-export constraint_max_ratio_out_in_flow
-export constraint_min_ratio_out_in_flow
-export constraint_fix_ratio_out_out_flow
-export constraint_max_ratio_out_out_flow
-export constraint_fix_ratio_in_in_flow
-export constraint_max_ratio_in_in_flow
-export constraint_max_cum_in_flow_bound
-export constraint_fix_ratio_out_in_trans
-export constraint_max_ratio_out_in_trans
-export constraint_min_ratio_out_in_trans
-export constraint_trans_capacity
-export constraint_nodal_balance
-export constraint_stor_state
-export constraint_stor_capacity
-export constraint_units_on
-export constraint_units_available
-export constraint_minimum_operating_point
-export constraint_min_up_time
-export constraint_min_down_time
-export constraint_unit_state_transition
-
-export rolling_windows
-export generate_time_slice
-export generate_time_slice_relationships
 
 include("temporals/generate_time_slice.jl")
 include("temporals/generate_time_slice_relationships.jl")
@@ -92,6 +45,7 @@ include("temporals/generate_time_slice_relationships.jl")
 include("util/missing_item_handlers.jl")
 include("util/misc.jl")
 include("util/run_spinemodel.jl")
+include("util/constraint_with_calls.jl")
 
 include("variables/generate_variable_indices.jl")
 include("variables/variable_common.jl")

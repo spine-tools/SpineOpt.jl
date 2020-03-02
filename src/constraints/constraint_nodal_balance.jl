@@ -59,7 +59,7 @@ function add_constraint_nodal_balance!(m::Model)
                 )
                 ==
                 # Demand for the commodity
-                demand(node=n, t=t) * duration(t)
+                demand[(node=n, t=t)] * duration(t)
             )
         end
     end

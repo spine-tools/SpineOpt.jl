@@ -39,9 +39,9 @@ function add_constraint_trans_capacity!(m::Model)
                         init=0
                     )
                     <=
-                    + conn_capacity(connection=conn, node=n, direction=d, t=t)
-                    * conn_avail_factor(connection=conn, node=n, t=t)
-                    * conn_conv_cap_to_trans(connection=conn, node=n, t=t)
+                    + conn_capacity[(connection=conn, node=n, direction=d, t=t)]
+                    * conn_avail_factor[(connection=conn, node=n, t=t)]
+                    * conn_conv_cap_to_trans[(connection=conn, node=n, t=t)]
                     * duration(t)
                 )
             end
