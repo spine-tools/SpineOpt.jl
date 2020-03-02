@@ -59,7 +59,10 @@ function SpineInterface.realize(e::GenericAffExpr{Call,K}) where K
 end
 
 # add_to_expression!
-JuMP.add_to_expression!(aff::GenericAffExpr{Call,K}, call::Call) where K = (aff.constant = call + aff.constant; aff)
+function JuMP.add_to_expression!(aff::GenericAffExpr{Call,K}, call::Call) where K
+    aff.constant = call + aff.constant
+    aff
+end
 
 function JuMP.add_to_expression!(aff::GenericAffExpr{Call,V}, other::GenericAffExpr{C,V}) where {C,V}
     merge!(+, aff.terms, other.terms)
@@ -80,15 +83,15 @@ end
 
 # constraint macro
 function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,K}, set::MOI.AbstractScalarSet) where K
-    call_for_set = Call(-, (expr.constant,), ())
+    call = Call(-, (expr.constant,), ())
     expr.constant = Call(0.0)
-    set_with_call = _build_set_with_call(set, call_for_set)
-    ScalarConstraint(expr, set_with_call)
+    new_set = _build_set_with_call(set, call)
+    ScalarConstraint(expr, new_set)
 end
 
 function JuMP.add_constraint(model::Model, con::ScalarConstraint{GenericAffExpr{Call,K},S}, name::String="") where {K,S}
-    materialized_con = ScalarConstraint(SpineInterface.realize(con.func), SpineInterface.realize(con.set))
-    con_ref = JuMP.add_constraint(model, materialized_con, name)
+    realized_con = ScalarConstraint(SpineInterface.realize(con.func), SpineInterface.realize(con.set))
+    con_ref = JuMP.add_constraint(model, realized_con, name)
     # TODO: register `con` in `model` so we can then `update(model)` or something, 
     # where we use `realize` combined with `set_normalized_coefficient` and `set_normalized_rhs`
     con_ref
