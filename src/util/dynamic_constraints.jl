@@ -21,11 +21,11 @@ import DataStructures.OrderedDict
 import JuMP: AbstractVariableRef, Model, GenericAffExpr, ScalarConstraint, MOI
 
 struct GreaterThanCall <: MOI.AbstractScalarSet
-    lower::Call
+    value::Call
 end
 
 struct LessThanCall <: MOI.AbstractScalarSet
-    upper::Call
+    value::Call
 end
 
 struct EqualToCall <: MOI.AbstractScalarSet
@@ -48,8 +48,8 @@ function Base.show(io::IO, e::GenericAffExpr{Call,K}) where K
 end
 
 # realize
-SpineInterface.realize(s::GreaterThanCall) = MOI.GreaterThan(SpineInterface.realize(s.lower))
-SpineInterface.realize(s::LessThanCall) = MOI.LessThan(SpineInterface.realize(s.upper))
+SpineInterface.realize(s::GreaterThanCall) = MOI.GreaterThan(SpineInterface.realize(s.value))
+SpineInterface.realize(s::LessThanCall) = MOI.LessThan(SpineInterface.realize(s.value))
 SpineInterface.realize(s::EqualToCall) = MOI.EqualTo(SpineInterface.realize(s.value))
 
 function SpineInterface.realize(e::GenericAffExpr{Call,K}) where K
@@ -92,9 +92,22 @@ end
 function JuMP.add_constraint(model::Model, con::ScalarConstraint{GenericAffExpr{Call,K},S}, name::String="") where {K,S}
     realized_con = ScalarConstraint(SpineInterface.realize(con.func), SpineInterface.realize(con.set))
     con_ref = JuMP.add_constraint(model, realized_con, name)
-    # TODO: register `con` in `model` so we can then `update(model)` or something, 
-    # where we use `realize` combined with `set_normalized_coefficient` and `set_normalized_rhs`
+    # TODO: try to use MOI.set for style points
+    get!(model.ext, :dynamic_constraints, Dict())[con_ref] = con
     con_ref
+end
+
+function update_dynamic_constraints!(model::Model)
+    for (con_ref, con) in get(model.ext, :dynamic_constraints, ())
+        for (var, coeff) in con.func.terms
+            if SpineInterface.is_dynamic(coeff)
+                set_normalized_coefficient(con_ref, var, SpineInterface.realize(coeff))
+            end
+        end
+        if SpineInterface.is_dynamic(con.set.value)
+            set_normalized_rhs(con_ref, SpineInterface.realize(con.set.value))
+        end
+    end
 end
 
 # operators
