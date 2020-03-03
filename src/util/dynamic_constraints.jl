@@ -17,6 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+# Here we extend `JuMP.@constraint` so we're able to build constraints involving `Call` objects.
+# In `JuMP.add_constraint`, we `realize` all `Call`s to compute a constraint that can be added to the model.
+# But more importantly, we save all dynamic constraints (involving `Call`s) in the `Model` object,
+# so we're able to automatically update them later, in `update_dynamic_constraints!`.
+
 import DataStructures: OrderedDict
 import JuMP: MOI
 
@@ -96,21 +101,24 @@ function JuMP.add_constraint(
     ) where S
     realized_con = ScalarConstraint(realize(con.func), realize(con.set))
     con_ref = JuMP.add_constraint(model, realized_con, name)
-    # TODO: try to use MOI.set for style points
-    get!(model.ext, :dynamic_constraints, Dict())[con_ref] = con
+    dynamic_terms = Dict(var => coeff for (var, coeff) in con.func.terms if is_dynamic(coeff))
+    if !isempty(dynamic_terms)
+        get!(model.ext, :dynamic_constraint_terms, Dict())[con_ref] = dynamic_terms
+    end
+    if is_dynamic(con.set.value)
+        get!(model.ext, :dynamic_constraint_rhs, Dict())[con_ref] = con.set.value
+    end
     con_ref
 end
 
 function update_dynamic_constraints!(model::Model)
-    for (con_ref, con) in get(model.ext, :dynamic_constraints, ())
-        for (var, coeff) in con.func.terms
-            if SpineInterface.is_dynamic(coeff)
-                set_normalized_coefficient(con_ref, var, realize(coeff))
-            end
+    for (con_ref, terms) in get(model.ext, :dynamic_constraint_terms, ())
+        for (var, coeff) in terms
+            set_normalized_coefficient(con_ref, var, realize(coeff))
         end
-        if SpineInterface.is_dynamic(con.set.value)
-            set_normalized_rhs(con_ref, realize(con.set.value))
-        end
+    end
+    for (con_ref, rhs) in get(model.ext, :dynamic_constraint_rhs, ())  
+        set_normalized_rhs(con_ref, realize(rhs))
     end
 end
 
