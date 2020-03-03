@@ -34,7 +34,7 @@ function create_variable!(
     )
     inds = indices()
     var = m.ext[:variables][name] = Dict{eltype(inds),VariableRef}()
-    m.ext[:variables_ub][name] = lb
+    m.ext[:variables_ub][name] = ub
     m.ext[:variables_lb][name] = lb
     for ind in inds
         var[ind] = _variable(m, name, ind, lb, ub, bin, int)
