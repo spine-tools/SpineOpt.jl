@@ -69,7 +69,6 @@ const object_classes = [
     :direction,
     :unit,
     :connection,
-    :storage,
     :commodity,
     :node,
     :temporal_block,
@@ -90,10 +89,6 @@ const relationship_classes = [
     :unit__commodity__direction,
     :unit__commodity__commodity,
     :connection__node__node,
-    :storage__unit,
-    :storage__connection,
-    :storage__commodity,
-    :storage__storage,
     :report__output,
 ]
 const parameters = [

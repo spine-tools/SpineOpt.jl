@@ -29,15 +29,10 @@ function generate_variable_indices()
         for c in node__commodity(node=n)
         for tb in node__temporal_block(node=n)
     )
-    unit_stor_state_indices = unique(
-    	(storage=stor, commodity=c, unit=u)
-        for (stor, c) in storage__commodity()
-        for u in storage__unit(storage=stor)
-    )
-    connection_stor_state_indices = unique(
-    	(storage=stor, commodity=c, connection=conn)
-        for (stor, c) in storage__commodity()
-        for conn in storage__connection(storage=stor)
+    node_state_indices = unique(
+    	(node=n, commodity=c, temporal_block=tb)
+        for (n, c) in node__commodity()
+        for tb in node__temporal_block(node=n)
     )
 	flow_indices_rc = RelationshipClass(
 		:flow_indices_rc, (:unit, :node, :commodity, :direction, :temporal_block), flow_indices
@@ -45,20 +40,15 @@ function generate_variable_indices()
 	trans_indices_rc = RelationshipClass(
 		:trans_indices_rc, (:connection, :node, :commodity, :direction, :temporal_block), trans_indices
 	)
-	unit_stor_state_indices_rc = RelationshipClass(
-		:unit_stor_state_indices_rc, (:storage, :commodity, :unit), unit_stor_state_indices
-	)
-	connection_stor_state_indices_rc = RelationshipClass(
-		:connection_stor_state_indices_rc, (:storage, :commodity, :connection), connection_stor_state_indices
+	node_state_indices_rc = RelationshipClass(
+		:node_state_indices_rc, (:node, :commodity, :temporal), node_state_indices
 	)
 	@eval begin
         flow_indices_rc = $flow_indices_rc
         trans_indices_rc = $trans_indices_rc
-        unit_stor_state_indices_rc = $unit_stor_state_indices_rc
-        connection_stor_state_indices_rc = $connection_stor_state_indices_rc
+        node_state_indices_rc = $node_state_indices_rc
         export flow_indices_rc
         export trans_indices_rc
-        export unit_stor_state_indices_rc
-        export connection_stor_state_indices_rc
+        export node_state_indices_rc
     end
 end
