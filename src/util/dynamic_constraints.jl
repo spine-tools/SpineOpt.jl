@@ -18,7 +18,7 @@
 #############################################################################
 
 import DataStructures.OrderedDict
-import JuMP: AbstractVariableRef, Model, GenericAffExpr, ScalarConstraint, MOI
+import JuMP: MOI
 
 struct GreaterThanCall <: MOI.AbstractScalarSet
     value::Call
@@ -36,13 +36,13 @@ _build_set_with_call(::MOI.GreaterThan, call::Call) = GreaterThanCall(call)
 _build_set_with_call(::MOI.LessThan, call::Call) = LessThanCall(call)
 _build_set_with_call(::MOI.EqualTo, call::Call) = EqualToCall(call)
 
-function _build_aff_expr_with_calls(constant::Call, coef::Call, var::K) where {K}
-    terms = OrderedDict{K,Call}()
+function _build_aff_expr_with_calls(constant::Call, coef::Call, var::VariableRef)
+    terms = OrderedDict{VariableRef,Call}()
     terms[var] = coef
-    return GenericAffExpr{Call,K}(constant, terms)
+    return GenericAffExpr{Call,VariableRef}(constant, terms)
 end
 
-function Base.show(io::IO, e::GenericAffExpr{Call,K}) where K
+function Base.show(io::IO, e::GenericAffExpr{Call,V}) where V
     str = string(join([string(coeff, " * ", var) for (var, coeff) in e.terms], " + "), " + ", e.constant)
     print(io, str)
 end
@@ -52,44 +52,48 @@ SpineInterface.realize(s::GreaterThanCall) = MOI.GreaterThan(SpineInterface.real
 SpineInterface.realize(s::LessThanCall) = MOI.LessThan(SpineInterface.realize(s.value))
 SpineInterface.realize(s::EqualToCall) = MOI.EqualTo(SpineInterface.realize(s.value))
 
-function SpineInterface.realize(e::GenericAffExpr{Call,K}) where K
+function SpineInterface.realize(e::GenericAffExpr{C,VariableRef}) where C
     constant = SpineInterface.realize(e.constant)
-    terms = OrderedDict{K,typeof(constant)}(k => SpineInterface.realize(v) for (k, v) in e.terms)
+    terms = OrderedDict{VariableRef,typeof(constant)}(k => SpineInterface.realize(v) for (k, v) in e.terms)
     GenericAffExpr(constant, terms)
 end
 
 # add_to_expression!
-function JuMP.add_to_expression!(aff::GenericAffExpr{Call,K}, call::Call) where K
+function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, call::Call)
     aff.constant = call + aff.constant
     aff
 end
 
-function JuMP.add_to_expression!(aff::GenericAffExpr{Call,V}, other::GenericAffExpr{C,V}) where {C,V}
+function JuMP.add_to_expression!(
+        aff::GenericAffExpr{Call,VariableRef}, other::GenericAffExpr{C,VariableRef}
+    ) where C
     merge!(+, aff.terms, other.terms)
     aff.constant += other.constant
     aff
 end
 
-function JuMP.add_to_expression!(aff::GenericAffExpr{Call,V}, new_coef::Call, new_var::V) where {C,V}
+function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, new_coef::Call, new_var::VariableRef)
     if !iszero(new_coef)
-        aff.terms[new_var] = get(aff.terms, new_var, zero(V)) + new_coef
+        aff.terms[new_var] = get(aff.terms, new_var, zero(VariableRef)) + new_coef
     end
     aff
 end
 
-function JuMP.add_to_expression!(aff::GenericAffExpr{Call,V}, new_var::V, new_coef::Call) where {C,V}
+function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, new_var::VariableRef, new_coef::Call)
     JuMP.add_to_expression!(aff, new_coef, new_var)
 end
 
 # constraint macro
-function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,K}, set::MOI.AbstractScalarSet) where K
+function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,VariableRef}, set::MOI.AbstractScalarSet)
     call = Call(-, (expr.constant,), ())
     expr.constant = Call(0.0)
     new_set = _build_set_with_call(set, call)
     ScalarConstraint(expr, new_set)
 end
 
-function JuMP.add_constraint(model::Model, con::ScalarConstraint{GenericAffExpr{Call,K},S}, name::String="") where {K,S}
+function JuMP.add_constraint(
+        model::Model, con::ScalarConstraint{GenericAffExpr{Call,VariableRef},S}, name::String=""
+    ) where S
     realized_con = ScalarConstraint(SpineInterface.realize(con.func), SpineInterface.realize(con.set))
     con_ref = JuMP.add_constraint(model, realized_con, name)
     # TODO: try to use MOI.set for style points
@@ -111,34 +115,40 @@ function update_dynamic_constraints!(model::Model)
 end
 
 # operators
-# Call--AbstractVariableRef
-Base.:+(lhs::Call, rhs::AbstractVariableRef) = _build_aff_expr_with_calls(lhs, Call(1.0), rhs)
-Base.:-(lhs::Call, rhs::AbstractVariableRef) = _build_aff_expr_with_calls(lhs, Call(-1.0), rhs)
-Base.:*(lhs::Call, rhs::AbstractVariableRef) = _build_aff_expr_with_calls(Call(0.0), lhs, rhs)
-Base.:+(lhs::AbstractVariableRef, rhs::Call) = (+)(rhs, lhs)
-Base.:-(lhs::AbstractVariableRef, rhs::Call) = (+)(lhs, -rhs)
-Base.:*(lhs::AbstractVariableRef, rhs::Call) = (*)(rhs, lhs)
+# Call--VariableRef
+Base.:+(lhs::Call, rhs::VariableRef) = _build_aff_expr_with_calls(lhs, Call(1.0), rhs)
+Base.:+(lhs::VariableRef, rhs::Call) = (+)(rhs, lhs)
+Base.:-(lhs::Call, rhs::VariableRef) = _build_aff_expr_with_calls(lhs, Call(-1.0), rhs)
+Base.:-(lhs::VariableRef, rhs::Call) = (+)(lhs, -rhs)
+Base.:*(lhs::Call, rhs::VariableRef) = _build_aff_expr_with_calls(Call(0.0), lhs, rhs)
+Base.:*(lhs::VariableRef, rhs::Call) = (*)(rhs, lhs)
 
 # Call--GenericAffExpr
-function Base.:+(lhs::Call, rhs::GenericAffExpr{V,K}) where {V,K}
+function Base.:+(lhs::Call, rhs::GenericAffExpr{C,VariableRef}) where C
     constant = lhs + rhs.constant
-    terms = OrderedDict{K,Call}(var => Call(coeff) for (var, coeff) in rhs.terms)
+    terms = OrderedDict{VariableRef,Call}(var => Call(coeff) for (var, coeff) in rhs.terms)
     GenericAffExpr(constant, terms)
 end
-Base.:-(lhs::Call, rhs::GenericAffExpr) = (+)(lhs, -rhs)
-function Base.:*(lhs::Call, rhs::GenericAffExpr{V,K}) where {V,K}
-    constant = lhs * rhs.constant
-    terms = OrderedDict{K,Call}(var => lhs * coeff for (var, coeff) in rhs.terms)
-    GenericAffExpr(constant, terms)
-end
-Base.:/(lhs::Call, rhs::GenericAffExpr) = (*)(lhs, 1.0 / rhs)
 Base.:+(lhs::GenericAffExpr, rhs::Call) = (+)(rhs, lhs)
+Base.:-(lhs::Call, rhs::GenericAffExpr) = (+)(lhs, -rhs)
 Base.:-(lhs::GenericAffExpr, rhs::Call) = (+)(lhs, -rhs)
+function Base.:*(lhs::Call, rhs::GenericAffExpr{C,VariableRef}) where C
+    constant = lhs * rhs.constant
+    terms = OrderedDict{VariableRef,Call}(var => lhs * coeff for (var, coeff) in rhs.terms)
+    GenericAffExpr(constant, terms)
+end
 Base.:*(lhs::GenericAffExpr, rhs::Call) = (*)(rhs, lhs)
+Base.:/(lhs::Call, rhs::GenericAffExpr) = (*)(lhs, 1.0 / rhs)
 Base.:/(lhs::GenericAffExpr, rhs::Call) = (*)(lhs, 1.0 / rhs)
 
-# GenericAffExpr{Call,V}--GenericAffExpr
-Base.:+(lhs::GenericAffExpr{Call,V}, rhs::GenericAffExpr{C,V}) where {C,V} = JuMP.add_to_expression!(copy(lhs), rhs)
-Base.:-(lhs::GenericAffExpr{Call,V}, rhs::GenericAffExpr{C,V}) where {C,V} = (+)(lhs, -rhs)
-Base.:+(lhs::GenericAffExpr{C,V}, rhs::GenericAffExpr{Call,V}) where {C,V} = (+)(rhs, lhs)
-Base.:-(lhs::GenericAffExpr{C,V}, rhs::GenericAffExpr{Call,V}) where {C,V} = (+)(lhs, -rhs)
+# GenericAffExpr--GenericAffExpr
+function Base.:+(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{Call,VariableRef})
+    JuMP.add_to_expression!(copy(lhs), rhs)
+end
+function Base.:+(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{C,VariableRef}) where C
+    JuMP.add_to_expression!(copy(lhs), rhs)
+end
+Base.:+(lhs::GenericAffExpr{C,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) where C = (+)(rhs, lhs)
+Base.:-(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) = (+)(lhs, -rhs)
+Base.:-(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{C,VariableRef}) where C = (+)(lhs, -rhs)
+Base.:-(lhs::GenericAffExpr{C,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) where C = (+)(lhs, -rhs)
