@@ -52,22 +52,6 @@ function add_constraint_ratio_flow!(m::Model, ratio, sense, d1, d2)
     end
 end
 
-function update_constraint_ratio_flow!(m::Model, ratio, d2)
-    @fetch flow = m.ext[:variables]
-    cons = m.ext[:constraints][ratio.name]
-    for (u, c1, c2) in indices(ratio)
-        for t in t_lowest_resolution(map(x -> x.t, flow_indices(unit=u, commodity=[c1, c2])))
-            for (u_, n, c2_, d, t_) in flow_indices(unit=u, commodity=c2, direction=d2, t=t_in_t(t_long=t))
-                set_normalized_coefficient(
-                    cons[u, c1, c2, t],
-                    flow[u_, n, c2_, d, t_],
-                    - ratio(unit=u, commodity1=c1, commodity2=c2, t=t) * duration(t_)
-                )
-            end
-        end
-    end
-end
-
 function add_constraint_fix_ratio_out_in_flow!(m::Model)
     add_constraint_ratio_flow!(m, fix_ratio_out_in_flow, ==, direction(:to_node), direction(:from_node))
 end
@@ -88,26 +72,4 @@ function add_constraint_fix_ratio_out_out_flow!(m::Model)
 end
 function add_constraint_max_ratio_out_out_flow!(m::Model)
     add_constraint_ratio_flow!(m, max_ratio_out_out_flow, <=, direction(:to_node), direction(:to_node))
-end
-
-function update_constraint_fix_ratio_out_in_flow!(m::Model)
-    update_constraint_ratio_flow!(m, fix_ratio_out_in_flow, direction(:from_node))
-end
-function update_constraint_max_ratio_out_in_flow!(m::Model)
-    update_constraint_ratio_flow!(m, max_ratio_out_in_flow, direction(:from_node))
-end
-function update_constraint_min_ratio_out_in_flow!(m::Model)
-    update_constraint_ratio_flow!(m, min_ratio_out_in_flow, direction(:from_node))
-end
-function update_constraint_fix_ratio_in_in_flow!(m::Model)
-    update_constraint_ratio_flow!(m, fix_ratio_in_in_flow, direction(:from_node))
-end
-function update_constraint_max_ratio_in_in_flow!(m::Model)
-    update_constraint_ratio_flow!(m, max_ratio_in_in_flow, direction(:from_node))
-end
-function update_constraint_fix_ratio_out_out_flow!(m::Model)
-    update_constraint_ratio_flow!(m, fix_ratio_out_out_flow, direction(:to_node))
-end
-function update_constraint_max_ratio_out_out_flow!(m::Model)
-    update_constraint_ratio_flow!(m, max_ratio_out_out_flow, direction(:to_node))
 end

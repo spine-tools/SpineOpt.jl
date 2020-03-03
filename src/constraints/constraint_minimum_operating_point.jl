@@ -47,21 +47,3 @@ function add_constraint_minimum_operating_point!(m::Model)
         end
     end
 end
-
-function update_constraint_minimum_operating_point!(m::Model)
-    @fetch units_on = m.ext[:variables]
-    cons = m.ext[:constraints][:minimum_operating_point]
-    for (u, c) in indices(minimum_operating_point)
-        for (u, c, d) in indices(unit_capacity; unit=u, commodity=c)
-            for (u, t) in units_on_indices(unit=u)
-                set_normalized_coefficient(
-                    cons[u, c, d, t],
-                    units_on[u, t],
-                    - minimum_operating_point(unit=u, commodity=c, t=t)
-                    * unit_capacity(unit=u, commodity=c, direction=d, t=t)
-                    * unit_conv_cap_to_flow(unit=u, commodity=c, t=t)
-                )
-            end
-        end
-    end
-end

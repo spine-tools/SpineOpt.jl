@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-import DataStructures.OrderedDict
+import DataStructures: OrderedDict
 import JuMP: MOI
 
 struct GreaterThanCall <: MOI.AbstractScalarSet
@@ -53,8 +53,8 @@ SpineInterface.realize(s::LessThanCall) = MOI.LessThan(SpineInterface.realize(s.
 SpineInterface.realize(s::EqualToCall) = MOI.EqualTo(SpineInterface.realize(s.value))
 
 function SpineInterface.realize(e::GenericAffExpr{C,VariableRef}) where C
-    constant = SpineInterface.realize(e.constant)
-    terms = OrderedDict{VariableRef,typeof(constant)}(k => SpineInterface.realize(v) for (k, v) in e.terms)
+    constant = realize(e.constant)
+    terms = OrderedDict{VariableRef,typeof(constant)}(k => realize(v) for (k, v) in e.terms)
     GenericAffExpr(constant, terms)
 end
 
@@ -85,7 +85,7 @@ end
 
 # constraint macro
 function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,VariableRef}, set::MOI.AbstractScalarSet)
-    call = Call(-, (expr.constant,), ())
+    call = Call(-, (expr.constant,))
     expr.constant = Call(0.0)
     new_set = _build_set_with_call(set, call)
     ScalarConstraint(expr, new_set)
@@ -94,7 +94,7 @@ end
 function JuMP.add_constraint(
         model::Model, con::ScalarConstraint{GenericAffExpr{Call,VariableRef},S}, name::String=""
     ) where S
-    realized_con = ScalarConstraint(SpineInterface.realize(con.func), SpineInterface.realize(con.set))
+    realized_con = ScalarConstraint(realize(con.func), realize(con.set))
     con_ref = JuMP.add_constraint(model, realized_con, name)
     # TODO: try to use MOI.set for style points
     get!(model.ext, :dynamic_constraints, Dict())[con_ref] = con
@@ -105,11 +105,11 @@ function update_dynamic_constraints!(model::Model)
     for (con_ref, con) in get(model.ext, :dynamic_constraints, ())
         for (var, coeff) in con.func.terms
             if SpineInterface.is_dynamic(coeff)
-                set_normalized_coefficient(con_ref, var, SpineInterface.realize(coeff))
+                set_normalized_coefficient(con_ref, var, realize(coeff))
             end
         end
         if SpineInterface.is_dynamic(con.set.value)
-            set_normalized_rhs(con_ref, SpineInterface.realize(con.set.value))
+            set_normalized_rhs(con_ref, realize(con.set.value))
         end
     end
 end

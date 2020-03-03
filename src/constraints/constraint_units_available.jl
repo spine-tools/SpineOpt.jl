@@ -36,10 +36,3 @@ function add_constraint_units_available!(m::Model)
         )
     end
 end
-
-function update_constraint_units_available!(m::Model)
-    cons = m.ext[:constraints][:units_available]
-    for (u, t) in units_on_indices()
-        set_normalized_rhs(cons[u, t], number_of_units(unit=u, t=t) * avail_factor(unit=u, t=t))
-    end
-end

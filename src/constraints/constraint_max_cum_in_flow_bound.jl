@@ -40,5 +40,3 @@ function add_constraint_max_cum_in_flow_bound!(m::Model)
         )
     end
 end
-
-update_constraint_max_cum_in_flow_bound!(m::Model) = nothing

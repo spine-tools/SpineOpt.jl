@@ -142,6 +142,7 @@ function run_spinemodel(
             set_objective!(m)
         end
         @logtime level2 "Updating dynamic constraints..." update_dynamic_constraints!(m)
+        @logtime level2 "Updating user constraints..." update_constraints(m)
         k += 1
     end
     @logtime level2 "Writing report..." write_report(results, url_out)

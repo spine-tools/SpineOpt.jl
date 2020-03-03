@@ -36,5 +36,3 @@ function add_constraint_units_on!(m::Model)
         )
     end
 end
-
-update_constraint_units_on!(m::Model) = nothing
