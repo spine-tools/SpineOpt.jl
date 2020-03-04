@@ -89,7 +89,7 @@ function add_constraint_node_state_balance!(m::Model)
     end
 end
 
-function update_constraint_node_state!(m::Model)
+function update_constraint_node_state_balance!(m::Model)
     @fetch node_state, trans, flow = m.ext[:variables]
     cons = m.ext[:constraints][:node_state_balance]
     for (n, t_after) in node_state_indices()
