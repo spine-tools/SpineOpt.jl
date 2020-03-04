@@ -110,7 +110,7 @@ const parameters = [
     (:demand, nothing),
     (:online_variable_type, nothing),
     (:state_coeff, 0),
-    (:node_state_max, nothing),
+    (:node_state_cap, nothing),
     (:node_state_min, 0),
     (:frac_state_loss, 0),
     (:diff_coeff, 0),

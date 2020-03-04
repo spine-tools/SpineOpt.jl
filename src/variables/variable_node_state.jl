@@ -35,14 +35,12 @@ end
 
 fix_node_state_(x) = fix_node_state(node=x.node, t=x.t, _strict=false)
 node_state_lb(x) = node_state_min(node=x.node)
-node_state_ub(x) = node_state_max(node=x.node)
 
 create_variable_node_state!(m::Model) = create_variable!(
     m,
     :node_state,
     node_state_indices;
-    lb=node_state_lb,
-    ub=node_state_ub
+    lb=node_state_lb
 )
 fix_variable_node_state!(m::Model) = fix_variable!(m, :node_state, node_state_indices, fix_node_state_)
 

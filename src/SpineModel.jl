@@ -73,6 +73,7 @@ export constraint_max_ratio_out_in_trans
 export constraint_min_ratio_out_in_trans
 export constraint_trans_capacity
 export constraint_node_state_balance
+export constraint_node_state_capacity
 export constraint_units_on
 export constraint_units_available
 export constraint_minimum_operating_point
@@ -113,6 +114,7 @@ include("objective/fuel_costs.jl")
 include("constraints/constraint_max_cum_in_flow_bound.jl")
 include("constraints/constraint_flow_capacity.jl")
 include("constraints/constraint_node_state_balance.jl")
+include("constraints/constraint_node_state_capacity.jl")
 include("constraints/constraint_ratio_flow.jl")
 include("constraints/constraint_ratio_out_in_trans.jl")
 include("constraints/constraint_trans_capacity.jl")
