@@ -37,16 +37,6 @@ struct EqualToCall <: MOI.AbstractScalarSet
     value::Call
 end
 
-_build_set_with_call(::MOI.GreaterThan, call::Call) = GreaterThanCall(call)
-_build_set_with_call(::MOI.LessThan, call::Call) = LessThanCall(call)
-_build_set_with_call(::MOI.EqualTo, call::Call) = EqualToCall(call)
-
-function _build_aff_expr_with_calls(constant::Call, coef::Call, var::VariableRef)
-    terms = OrderedDict{VariableRef,Call}()
-    terms[var] = coef
-    return GenericAffExpr{Call,VariableRef}(constant, terms)
-end
-
 function Base.show(io::IO, e::GenericAffExpr{Call,V}) where V
     str = string(join([string(coeff, " * ", var) for (var, coeff) in e.terms], " + "), " + ", e.constant)
     print(io, str)
@@ -89,6 +79,16 @@ function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, new_var:
 end
 
 # constraint macro
+# utility
+_build_set_with_call(::MOI.GreaterThan, call::Call) = GreaterThanCall(call)
+_build_set_with_call(::MOI.LessThan, call::Call) = LessThanCall(call)
+_build_set_with_call(::MOI.EqualTo, call::Call) = EqualToCall(call)
+
+function JuMP.build_constraint(_error::Function, call::Call, set::MOI.AbstractScalarSet)
+    expr = GenericAffExpr{Call,VariableRef}(call, OrderedDict{VariableRef,Call}())
+    build_constraint(_error, expr, set)
+end
+
 function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,VariableRef}, set::MOI.AbstractScalarSet)
     call = Call(-, (expr.constant,))
     expr.constant = Call(0.0)
@@ -111,6 +111,7 @@ function JuMP.add_constraint(
     con_ref
 end
 
+# update_dynamic_constraints!
 function update_dynamic_constraints!(model::Model)
     for (con_ref, terms) in get(model.ext, :dynamic_constraint_terms, ())
         for (var, coeff) in terms
@@ -123,6 +124,15 @@ function update_dynamic_constraints!(model::Model)
 end
 
 # operators
+# strategy: Make operators between a `Call` and a `VariableRef` return a `GenericAffExpr`,
+# and proceed from there.
+# utility
+function _build_aff_expr_with_calls(constant::Call, coef::Call, var::VariableRef)
+    terms = OrderedDict{VariableRef,Call}()
+    terms[var] = coef
+    GenericAffExpr{Call,VariableRef}(constant, terms)
+end
+
 # Call--VariableRef
 Base.:+(lhs::Call, rhs::VariableRef) = _build_aff_expr_with_calls(lhs, Call(1.0), rhs)
 Base.:+(lhs::VariableRef, rhs::Call) = (+)(rhs, lhs)
