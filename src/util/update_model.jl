@@ -24,41 +24,45 @@
 # We follow the same strategy for the objective.
 
 import DataStructures: OrderedDict
-import JuMP: MOI
+import JuMP: MOI, MOIU, linear_terms
 
 struct GreaterThanCall <: MOI.AbstractScalarSet
-    value::Call
+    lower::Call
 end
 
 struct LessThanCall <: MOI.AbstractScalarSet
-    value::Call
+    upper::Call
 end
 
 struct EqualToCall <: MOI.AbstractScalarSet
     value::Call
 end
 
+MOI.constant(s::GreaterThanCall) = s.lower
+MOI.constant(s::LessThanCall) = s.upper
+MOI.constant(s::EqualToCall) = s.value
+
 function Base.show(io::IO, e::GenericAffExpr{Call,V}) where V
-    str = string(join([string(coeff, " * ", var) for (var, coeff) in e.terms], " + "), " + ", e.constant)
+    str = string(join([string(coeff, " * ", var) for (coeff, var) in linear_terms(e)], " + "), " + ", e.constant)
     print(io, str)
 end
 
 # realize
-SpineInterface.realize(s::GreaterThanCall) = MOI.GreaterThan(SpineInterface.realize(s.value))
-SpineInterface.realize(s::LessThanCall) = MOI.LessThan(SpineInterface.realize(s.value))
-SpineInterface.realize(s::EqualToCall) = MOI.EqualTo(SpineInterface.realize(s.value))
+SpineInterface.realize(s::GreaterThanCall) = MOI.GreaterThan(realize(MOI.constant(s)))
+SpineInterface.realize(s::LessThanCall) = MOI.LessThan(realize(MOI.constant(s)))
+SpineInterface.realize(s::EqualToCall) = MOI.EqualTo(realize(MOI.constant(s)))
 
 function SpineInterface.realize(e::GenericAffExpr{C,VariableRef}) where C
     constant = realize(e.constant)
-    terms = OrderedDict{VariableRef,typeof(constant)}(k => realize(v) for (k, v) in e.terms)
+    terms = OrderedDict{VariableRef,typeof(constant)}(var => realize(coeff) for (coeff, var) in linear_terms(e))
     GenericAffExpr(constant, terms)
 end
 
 # @constraint macro extension
 # utility
-_build_set_with_call(::MOI.GreaterThan, call::Call) = GreaterThanCall(call)
-_build_set_with_call(::MOI.LessThan, call::Call) = LessThanCall(call)
-_build_set_with_call(::MOI.EqualTo, call::Call) = EqualToCall(call)
+MOIU.shift_constant(s::MOI.GreaterThan, call::Call) = GreaterThanCall(MOI.constant(s) + call)
+MOIU.shift_constant(s::MOI.LessThan, call::Call) = LessThanCall(MOI.constant(s) + call)
+MOIU.shift_constant(s::MOI.EqualTo, call::Call) = EqualToCall(MOI.constant(s) + call)
 
 function JuMP.build_constraint(_error::Function, call::Call, set::MOI.AbstractScalarSet)
     expr = GenericAffExpr{Call,VariableRef}(call, OrderedDict{VariableRef,Call}())
@@ -66,9 +70,9 @@ function JuMP.build_constraint(_error::Function, call::Call, set::MOI.AbstractSc
 end
 
 function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,VariableRef}, set::MOI.AbstractScalarSet)
-    call = Call(-, (expr.constant,))
-    expr.constant = Call(0.0)
-    new_set = _build_set_with_call(set, call)
+    call = expr.constant
+    expr.constant = zero(Call)
+    new_set = MOIU.shift_constant(set, -call)
     ScalarConstraint(expr, new_set)
 end
 
@@ -78,12 +82,12 @@ function JuMP.add_constraint(
     realized_con = ScalarConstraint(realize(con.func), realize(con.set))
     con_ref = add_constraint(model, realized_con, name)
     # Register varying stuff in `model.ext` so we can do work in `update_varying_constraints!`. This is the entire trick.
-    varying_terms = Dict(var => coeff for (var, coeff) in con.func.terms if is_varying(coeff))
+    varying_terms = Dict(var => coeff for (coeff, var) in linear_terms(con.func) if is_varying(coeff))
     if !isempty(varying_terms)
         get!(model.ext, :varying_constraint_terms, Dict())[con_ref] = varying_terms
     end
-    if is_varying(con.set.value)
-        get!(model.ext, :varying_constraint_rhs, Dict())[con_ref] = con.set.value
+    if is_varying(MOI.constant(con.set))
+        get!(model.ext, :varying_constraint_rhs, Dict())[con_ref] = MOI.constant(con.set)
     end
     con_ref
 end
@@ -111,7 +115,7 @@ function _build_aff_expr_with_calls(constant::Call, coef::Call, var::VariableRef
 end
 
 function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, call::Call)
-    aff.constant = call + aff.constant
+    aff.constant += call
     aff
 end
 
@@ -125,7 +129,7 @@ end
 
 function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, new_coef::Call, new_var::VariableRef)
     if !iszero(new_coef)
-        aff.terms[new_var] = get(aff.terms, new_var, zero(VariableRef)) + new_coef
+        aff.terms[new_var] = get(aff.terms, new_var, zero(Call)) + new_coef
     end
     aff
 end
@@ -145,7 +149,7 @@ Base.:*(lhs::VariableRef, rhs::Call) = (*)(rhs, lhs)
 # Call--GenericAffExpr
 function Base.:+(lhs::Call, rhs::GenericAffExpr{C,VariableRef}) where C
     constant = lhs + rhs.constant
-    terms = OrderedDict{VariableRef,Call}(var => Call(coeff) for (var, coeff) in rhs.terms)
+    terms = OrderedDict{VariableRef,Call}(var => Call(coeff) for (coeff, var) in linear_terms(rhs))
     GenericAffExpr(constant, terms)
 end
 Base.:+(lhs::GenericAffExpr, rhs::Call) = (+)(rhs, lhs)
@@ -153,7 +157,7 @@ Base.:-(lhs::Call, rhs::GenericAffExpr) = (+)(lhs, -rhs)
 Base.:-(lhs::GenericAffExpr, rhs::Call) = (+)(lhs, -rhs)
 function Base.:*(lhs::Call, rhs::GenericAffExpr{C,VariableRef}) where C
     constant = lhs * rhs.constant
-    terms = OrderedDict{VariableRef,Call}(var => lhs * coeff for (var, coeff) in rhs.terms)
+    terms = OrderedDict{VariableRef,Call}(var => lhs * coeff for (coeff, var) in linear_terms(rhs))
     GenericAffExpr(constant, terms)
 end
 Base.:*(lhs::GenericAffExpr, rhs::Call) = (*)(rhs, lhs)
@@ -172,9 +176,11 @@ Base.:-(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{Call,Variable
 Base.:-(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{C,VariableRef}) where C = (+)(lhs, -rhs)
 Base.:-(lhs::GenericAffExpr{C,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) where C = (+)(lhs, -rhs)
 
-
+# @objective extension
 function JuMP.set_objective_function(model::Model, func::GenericAffExpr{Call,VariableRef})
-    model.ext[:varying_objective_terms] = Dict(var => coeff for (var, coeff) in func.terms if is_varying(coeff))
+    model.ext[:varying_objective_terms] = Dict(
+        var => coeff for (coeff, var) in linear_terms(func) if is_varying(coeff)
+    )
     set_objective_function(model, realize(func))
 end
 
