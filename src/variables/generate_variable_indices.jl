@@ -30,9 +30,8 @@ function generate_variable_indices()
         for tb in node__temporal_block(node=n)
     )
     node_state_indices = unique(
-    	(node=n, commodity=c, temporal_block=tb)
-        for (n, c) in node__commodity()
-        for tb in node__temporal_block(node=n)
+    	(node=n, temporal_block=tb)
+        for (n, tb) in node__temporal_block()
     )
 	flow_indices_rc = RelationshipClass(
 		:flow_indices_rc, (:unit, :node, :commodity, :direction, :temporal_block), flow_indices

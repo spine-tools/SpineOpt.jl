@@ -22,11 +22,11 @@
 A set of tuples for indexing the `node_state` variable. Any filtering options can be specified
 for `node`, `commodity`, and `t`.
 """
-function node_state_indices(;node=anything, commodity=anything, t=anything)
-    inds = NamedTuple{(:node, :commodity, :t),Tuple{Object,Object,TimeSlice}}[
-        (node=n, commodity=c, t=t)
-        for (n, c, tb) in node_state_indices_rc(
-            node=node, commodity=commodity, _compact=false
+function node_state_indices(;node=anything, t=anything)
+    inds = NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}[
+        (node=n, t=t)
+        for (n, tb) in node_state_indices_rc(
+            node=node, _compact=false
         )
         for t in time_slice(temporal_block=tb)
     ]
