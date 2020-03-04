@@ -43,7 +43,7 @@ MOI.constant(s::LessThanCall) = s.upper
 MOI.constant(s::EqualToCall) = s.value
 
 function Base.show(io::IO, e::GenericAffExpr{Call,V}) where V
-    str = string(join([string(coeff, " * ", var) for (coeff, var) in linear_terms(e)], " + "), " + ", e.constant)
+    str = string(join([string(coef, " * ", var) for (coef, var) in linear_terms(e)], " + "), " + ", e.constant)
     print(io, str)
 end
 
@@ -54,7 +54,7 @@ SpineInterface.realize(s::EqualToCall) = MOI.EqualTo(realize(MOI.constant(s)))
 
 function SpineInterface.realize(e::GenericAffExpr{C,VariableRef}) where C
     constant = realize(e.constant)
-    terms = OrderedDict{VariableRef,typeof(constant)}(var => realize(coeff) for (coeff, var) in linear_terms(e))
+    terms = OrderedDict{VariableRef,typeof(constant)}(var => realize(coef) for (coef, var) in linear_terms(e))
     GenericAffExpr(constant, terms)
 end
 
@@ -82,7 +82,7 @@ function JuMP.add_constraint(
     realized_con = ScalarConstraint(realize(con.func), realize(con.set))
     con_ref = add_constraint(model, realized_con, name)
     # Register varying stuff in `model.ext` so we can do work in `update_varying_constraints!`. This is the entire trick.
-    varying_terms = Dict(var => coeff for (coeff, var) in linear_terms(con.func) if is_varying(coeff))
+    varying_terms = Dict(var => coef for (coef, var) in linear_terms(con.func) if is_varying(coef))
     if !isempty(varying_terms)
         get!(model.ext, :varying_constraint_terms, Dict())[con_ref] = varying_terms
     end
@@ -95,8 +95,8 @@ end
 # update_varying_constraints!
 function update_varying_constraints!(model::Model)
     for (con_ref, terms) in get(model.ext, :varying_constraint_terms, ())
-        for (var, coeff) in terms
-            set_normalized_coefficient(con_ref, var, realize(coeff))
+        for (var, coef) in terms
+            set_normalized_coefficient(con_ref, var, realize(coef))
         end
     end
     for (con_ref, rhs) in get(model.ext, :varying_constraint_rhs, ())  
@@ -109,8 +109,7 @@ end
 # and proceed from there.
 # utility
 function _build_aff_expr_with_calls(constant::Call, coef::Call, var::VariableRef)
-    terms = OrderedDict{VariableRef,Call}()
-    terms[var] = coef
+    terms = OrderedDict{VariableRef,Call}(var => coef)
     GenericAffExpr{Call,VariableRef}(constant, terms)
 end
 
@@ -149,7 +148,7 @@ Base.:*(lhs::VariableRef, rhs::Call) = (*)(rhs, lhs)
 # Call--GenericAffExpr
 function Base.:+(lhs::Call, rhs::GenericAffExpr{C,VariableRef}) where C
     constant = lhs + rhs.constant
-    terms = OrderedDict{VariableRef,Call}(var => Call(coeff) for (coeff, var) in linear_terms(rhs))
+    terms = OrderedDict{VariableRef,Call}(var => Call(coef) for (coef, var) in linear_terms(rhs))
     GenericAffExpr(constant, terms)
 end
 Base.:+(lhs::GenericAffExpr, rhs::Call) = (+)(rhs, lhs)
@@ -157,7 +156,7 @@ Base.:-(lhs::Call, rhs::GenericAffExpr) = (+)(lhs, -rhs)
 Base.:-(lhs::GenericAffExpr, rhs::Call) = (+)(lhs, -rhs)
 function Base.:*(lhs::Call, rhs::GenericAffExpr{C,VariableRef}) where C
     constant = lhs * rhs.constant
-    terms = OrderedDict{VariableRef,Call}(var => lhs * coeff for (coeff, var) in linear_terms(rhs))
+    terms = OrderedDict{VariableRef,Call}(var => lhs * coef for (coef, var) in linear_terms(rhs))
     GenericAffExpr(constant, terms)
 end
 Base.:*(lhs::GenericAffExpr, rhs::Call) = (*)(rhs, lhs)
@@ -179,13 +178,13 @@ Base.:-(lhs::GenericAffExpr{C,VariableRef}, rhs::GenericAffExpr{Call,VariableRef
 # @objective extension
 function JuMP.set_objective_function(model::Model, func::GenericAffExpr{Call,VariableRef})
     model.ext[:varying_objective_terms] = Dict(
-        var => coeff for (coeff, var) in linear_terms(func) if is_varying(coeff)
+        var => coef for (coef, var) in linear_terms(func) if is_varying(coef)
     )
     set_objective_function(model, realize(func))
 end
 
 function update_varying_objective!(model::Model)
-    for (var, coeff) in model.ext[:varying_objective_terms]
-        set_objective_coefficient(model, var, realize(coeff))
+    for (var, coef) in model.ext[:varying_objective_terms]
+        set_objective_coefficient(model, var, realize(coef))
     end    
 end
