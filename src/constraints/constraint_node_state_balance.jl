@@ -26,7 +26,7 @@ function add_constraint_node_state_balance!(m::Model)
     @fetch node_state, trans, flow = m.ext[:variables]
     cons = m.ext[:constraints][:node_state_balance] = Dict()
     for (n, t_after) in node_state_indices()
-        for (n, t_before) in node_state_indices(node=n, commodity=c, t=t_before_t(t_after=t_after))
+        for t_before in t_before_t(t_after=t_after) # TODO: See if this can be done using `node_state_indices` without the amount of constraints blowing up...
             cons[n, t_before, t_after] = @constraint(
                 m,
                 # Change in node commodity content
@@ -93,7 +93,7 @@ function update_constraint_node_state_balance!(m::Model)
     @fetch node_state, trans, flow = m.ext[:variables]
     cons = m.ext[:constraints][:node_state_balance]
     for (n, t_after) in node_state_indices()
-        for (n, t_before) in node_state_indices(node=n, t=t_before_t(t_after=t_after))
+        for t_before in t_before_t(t_after=t_after) # TODO: See if this can be done using `node_state_indices` without the amount of constraints blowing up...
             # Update this node's node_state(t_after) coefficient
             set_normalized_coefficient(
                 cons[n, t_before, t_after],
