@@ -53,32 +53,7 @@ function SpineInterface.realize(e::GenericAffExpr{C,VariableRef}) where C
     GenericAffExpr(constant, terms)
 end
 
-# add_to_expression!
-function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, call::Call)
-    aff.constant = call + aff.constant
-    aff
-end
-
-function JuMP.add_to_expression!(
-        aff::GenericAffExpr{Call,VariableRef}, other::GenericAffExpr{C,VariableRef}
-    ) where C
-    merge!(+, aff.terms, other.terms)
-    aff.constant += other.constant
-    aff
-end
-
-function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, new_coef::Call, new_var::VariableRef)
-    if !iszero(new_coef)
-        aff.terms[new_var] = get(aff.terms, new_var, zero(VariableRef)) + new_coef
-    end
-    aff
-end
-
-function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, new_var::VariableRef, new_coef::Call)
-    JuMP.add_to_expression!(aff, new_coef, new_var)
-end
-
-# constraint macro
+# @constraint macro
 # utility
 _build_set_with_call(::MOI.GreaterThan, call::Call) = GreaterThanCall(call)
 _build_set_with_call(::MOI.LessThan, call::Call) = LessThanCall(call)
@@ -101,6 +76,7 @@ function JuMP.add_constraint(
     ) where S
     realized_con = ScalarConstraint(realize(con.func), realize(con.set))
     con_ref = JuMP.add_constraint(model, realized_con, name)
+    # Register dynamic stuff in `model.ext` so we can do work in `update_dynamic_constraints!`. This is the entire trick.
     dynamic_terms = Dict(var => coeff for (var, coeff) in con.func.terms if is_dynamic(coeff))
     if !isempty(dynamic_terms)
         get!(model.ext, :dynamic_constraint_terms, Dict())[con_ref] = dynamic_terms
@@ -131,6 +107,30 @@ function _build_aff_expr_with_calls(constant::Call, coef::Call, var::VariableRef
     terms = OrderedDict{VariableRef,Call}()
     terms[var] = coef
     GenericAffExpr{Call,VariableRef}(constant, terms)
+end
+
+function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, call::Call)
+    aff.constant = call + aff.constant
+    aff
+end
+
+function JuMP.add_to_expression!(
+        aff::GenericAffExpr{Call,VariableRef}, other::GenericAffExpr{C,VariableRef}
+    ) where C
+    merge!(+, aff.terms, other.terms)
+    aff.constant += other.constant
+    aff
+end
+
+function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, new_coef::Call, new_var::VariableRef)
+    if !iszero(new_coef)
+        aff.terms[new_var] = get(aff.terms, new_var, zero(VariableRef)) + new_coef
+    end
+    aff
+end
+
+function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, new_var::VariableRef, new_coef::Call)
+    JuMP.add_to_expression!(aff, new_coef, new_var)
 end
 
 # Call--VariableRef
