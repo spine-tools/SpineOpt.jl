@@ -44,6 +44,6 @@ create_variable_node_state!(m::Model) = create_variable!(
     lb=node_state_lb,
     ub=node_state_ub
 )
-fix_variable_node_state!(m::Model) = fix_variable!(m, :stor_state, stor_state_indices, fix_stor_state_)
+fix_variable_node_state!(m::Model) = fix_variable!(m, :node_state, node_state_indices, fix_node_state_)
 
 # TODO: Method for node state? Control through `fix_node_state?`
