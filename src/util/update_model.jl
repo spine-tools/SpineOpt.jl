@@ -19,8 +19,9 @@
 
 # Here we extend `JuMP.@constraint` so we're able to build constraints involving `Call` objects.
 # In `JuMP.add_constraint`, we `realize` all `Call`s to compute a constraint that can be added to the model.
-# But more importantly, we save all dynamic constraints (involving `Call`s) in the `Model` object,
-# so we're able to automatically update them later, in `update_dynamic_constraints!`.
+# But more importantly, we save all varying constraints (involving `ParameterCall`s) in the `Model` object,
+# so we're able to automatically update them later, in `update_varying_constraints!`.
+# We follow the same strategy for the objective.
 
 import DataStructures: OrderedDict
 import JuMP: MOI
@@ -53,7 +54,7 @@ function SpineInterface.realize(e::GenericAffExpr{C,VariableRef}) where C
     GenericAffExpr(constant, terms)
 end
 
-# @constraint macro
+# @constraint macro extension
 # utility
 _build_set_with_call(::MOI.GreaterThan, call::Call) = GreaterThanCall(call)
 _build_set_with_call(::MOI.LessThan, call::Call) = LessThanCall(call)
@@ -75,26 +76,26 @@ function JuMP.add_constraint(
         model::Model, con::ScalarConstraint{GenericAffExpr{Call,VariableRef},S}, name::String=""
     ) where S
     realized_con = ScalarConstraint(realize(con.func), realize(con.set))
-    con_ref = JuMP.add_constraint(model, realized_con, name)
-    # Register dynamic stuff in `model.ext` so we can do work in `update_dynamic_constraints!`. This is the entire trick.
-    dynamic_terms = Dict(var => coeff for (var, coeff) in con.func.terms if is_dynamic(coeff))
-    if !isempty(dynamic_terms)
-        get!(model.ext, :dynamic_constraint_terms, Dict())[con_ref] = dynamic_terms
+    con_ref = add_constraint(model, realized_con, name)
+    # Register varying stuff in `model.ext` so we can do work in `update_varying_constraints!`. This is the entire trick.
+    varying_terms = Dict(var => coeff for (var, coeff) in con.func.terms if is_varying(coeff))
+    if !isempty(varying_terms)
+        get!(model.ext, :varying_constraint_terms, Dict())[con_ref] = varying_terms
     end
-    if is_dynamic(con.set.value)
-        get!(model.ext, :dynamic_constraint_rhs, Dict())[con_ref] = con.set.value
+    if is_varying(con.set.value)
+        get!(model.ext, :varying_constraint_rhs, Dict())[con_ref] = con.set.value
     end
     con_ref
 end
 
-# update_dynamic_constraints!
-function update_dynamic_constraints!(model::Model)
-    for (con_ref, terms) in get(model.ext, :dynamic_constraint_terms, ())
+# update_varying_constraints!
+function update_varying_constraints!(model::Model)
+    for (con_ref, terms) in get(model.ext, :varying_constraint_terms, ())
         for (var, coeff) in terms
             set_normalized_coefficient(con_ref, var, realize(coeff))
         end
     end
-    for (con_ref, rhs) in get(model.ext, :dynamic_constraint_rhs, ())  
+    for (con_ref, rhs) in get(model.ext, :varying_constraint_rhs, ())  
         set_normalized_rhs(con_ref, realize(rhs))
     end
 end
@@ -170,3 +171,15 @@ Base.:+(lhs::GenericAffExpr{C,VariableRef}, rhs::GenericAffExpr{Call,VariableRef
 Base.:-(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) = (+)(lhs, -rhs)
 Base.:-(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{C,VariableRef}) where C = (+)(lhs, -rhs)
 Base.:-(lhs::GenericAffExpr{C,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) where C = (+)(lhs, -rhs)
+
+
+function JuMP.set_objective_function(model::Model, func::GenericAffExpr{Call,VariableRef})
+    model.ext[:varying_objective_terms] = Dict(var => coeff for (var, coeff) in func.terms if is_varying(coeff))
+    set_objective_function(model, realize(func))
+end
+
+function update_varying_objective!(model::Model)
+    for (var, coeff) in model.ext[:varying_objective_terms]
+        set_objective_coefficient(model, var, realize(coeff))
+    end    
+end

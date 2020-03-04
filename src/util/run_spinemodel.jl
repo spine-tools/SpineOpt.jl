@@ -122,32 +122,36 @@ function run_spinemodel(
         @logtime level3 "- [constraint_user]" add_constraints(m)
     end
     k = 2
-    while true
-        @logtime level2 "Solving model..." optimize!(m)
-        if termination_status(m) == MOI.OPTIMAL
-            @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
-            @logtime level2 "Saving results..." begin
-                save_values!(m)
-                save_results!(results, m)
-            end
-        else
-            @log level1 "Unable to find solution (reason: $(termination_status(m)))"
-            break
+    while optimize_model!(m)
+        @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
+        @logtime level2 "Saving results..." begin
+            save_values!(m)
+            save_results!(results, m)
         end
         roll_temporal_structure() || break
         @log level1 "Window $k: $current_window"
         @logtime level2 "Updating model..." begin            
             update_variables!(m)
             fix_variables!(m)
-            set_objective!(m)
+            update_varying_objective!(m)
         end
-        @logtime level2 "Updating dynamic constraints..." update_dynamic_constraints!(m)
+        @logtime level2 "Updating varying constraints..." update_varying_constraints!(m)
         @logtime level2 "Updating user constraints..." update_constraints(m)
         k += 1
     end
     @logtime level2 "Writing report..." write_report(results, url_out)
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
     m
+end
+
+function optimize_model!(m::Model)
+    optimize!(m)
+    if termination_status(m) == MOI.OPTIMAL        
+        true
+    else
+        @log true "Unable to find solution (reason: $(termination_status(m)))"
+        false
+    end
 end
 
 """
