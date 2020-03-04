@@ -68,8 +68,22 @@ function add_constraint_node_state_balance!(m::Model)
                     for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:from_node));
                     init=0
                 )
-                # TODO: Connection interactions
-                # TODO: Demand
+                # Commodity transfers from connections
+                + reduce(
+                    +,
+                    trans[conn, n, c, d, t1]
+                    for (conn, n, c, d, t1) in trans_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:to_node));
+                    init=0
+                )
+                # Commodity transfers to connections
+                - reduce(
+                    +,
+                    trans[conn, n, c, d, t1]
+                    for (conn, n, c, d, t1) in trans_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:from_node));
+                    init=0
+                )
+                # Demand for the commodity
+                - demand(node=n, t=t_after)
             )
         end
     end
@@ -78,13 +92,13 @@ end
 function update_constraint_node_state!(m::Model)
     @fetch node_state, trans, flow = m.ext[:variables]
     cons = m.ext[:constraints][:node_state_balance]
-    for (n, c, t_after) in node_state_indices()
-        for (n, c, t_before) in node_state_indices(node=n, commodity=c, t=t_before_t(t_after=t_after))
+    for (n, t_after) in node_state_indices()
+        for (n, t_before) in node_state_indices(node=n, t=t_before_t(t_after=t_after))
             # Update this node's node_state(t_after) coefficient
             set_normalized_coefficient(
-                cons[node, c, t_before, t_after],
-                node_state[node, c, t_after],
-                + state_coeff(node=node, t=t_after) / duration(t_after)
+                cons[n, t_before, t_after],
+                node_state[n, t_after],
+                + state_coeff(node=n, t=t_after) / duration(t_after)
                 + frac_state_loss(node=n, t=t_after)
                 + reduce(
                     +,
@@ -95,21 +109,23 @@ function update_constraint_node_state!(m::Model)
             )
             # Update this node's node_state(t_before) coefficient
             set_normalized_coefficient(
-                cons[n, c, t_before, t_after],
-                node_state[n, c, t_before],
+                cons[n, t_before, t_after],
+                node_state[n, t_before],
                 - state_coeff(node=n, t=t_before) / duration(t_after)
             )
             # Update coefficients for connected node_states
             for n_ in node__node(node2=n)
                 set_normalized_coefficient(
-                    cons[n, c, t_before, t_after],
-                    node_state[n_, c, t_after],
+                    cons[n, t_before, t_after],
+                    node_state[n_, t_after],
                     - diff_coeff(node1=n_, node2=n, t=t_after)
                 )
             end
-            # TODO: Unit interactions
-            # TODO: Connection interactions
-            # TODO: Demand
+            # Update demand
+            set_normalized_rhs(
+                cons[n, t_before, t_after],
+                - demand(node=n, t=t_after)
+            )
         end
     end
 end
