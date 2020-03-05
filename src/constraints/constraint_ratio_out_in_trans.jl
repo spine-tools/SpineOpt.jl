@@ -38,11 +38,11 @@ function add_constraint_ratio_out_in_trans!(m::Model, ratio_out_in, sense)
                     init=0
                 ),
                 sense,
-                + ratio_out_in(connection=conn, node1=n_out, node2=n_in, t=t)
+                + ratio_out_in[(connection=conn, node1=n_out, node2=n_in, t=t)]
                 * reduce(
                     +,
                     trans[conn_, n_in_, c, d, t_]
-                    * overlap_duration(t_, t - trans_delay(connection=conn, node1=n_out, node2=n_in, t=t))
+                    * overlap_duration(t_, t - trans_delay(connection=conn, node1=n_out, node2=n_in))
                     for (conn_, n_in_, c, d, t_) in trans_indices(
                         connection=conn,
                         node=n_in,
@@ -56,31 +56,6 @@ function add_constraint_ratio_out_in_trans!(m::Model, ratio_out_in, sense)
     end
 end
 
-function update_constraint_ratio_out_in_trans!(m::Model, ratio_out_in)
-    @fetch trans = m.ext[:variables]
-    cons = m.ext[:constraints][ratio_out_in.name]
-    for (conn, n_out, n_in) in indices(ratio_out_in)
-        for t in t_lowest_resolution(map(x -> x.t, trans_indices(connection=conn, node=[n_out, n_in])))
-            for (conn_, n_in_, c, d, t_) in trans_indices(
-                    connection=conn,
-                    node=n_in,
-                    direction=direction(:from_node),
-                    t=to_time_slice(t - trans_delay(connection=conn, node1=n_out, node2=n_in, t=t)))
-                set_normalized_coefficient(
-                    cons[conn, n_out, n_in, t],
-                    trans[conn_, n_in_, c, d, t_],
-                    - ratio_out_in(connection=conn, node1=n_out, node2=n_in, t=t)
-                    * overlap_duration(t_, t - trans_delay(connection=conn, node1=n_out, node2=n_in, t=t))
-                )
-            end
-        end
-    end
-end
-
 add_constraint_fix_ratio_out_in_trans!(m::Model) = add_constraint_ratio_out_in_trans!(m, fix_ratio_out_in_trans, ==)
 add_constraint_max_ratio_out_in_trans!(m::Model) = add_constraint_ratio_out_in_trans!(m, max_ratio_out_in_trans, <=)
 add_constraint_min_ratio_out_in_trans!(m::Model) = add_constraint_ratio_out_in_trans!(m, min_ratio_out_in_trans, >=)
-
-update_constraint_fix_ratio_out_in_trans!(m::Model) = update_constraint_ratio_out_in_trans!(m, fix_ratio_out_in_trans)
-update_constraint_max_ratio_out_in_trans!(m::Model) = update_constraint_ratio_out_in_trans!(m, max_ratio_out_in_trans)
-update_constraint_min_ratio_out_in_trans!(m::Model) = update_constraint_ratio_out_in_trans!(m, min_ratio_out_in_trans)

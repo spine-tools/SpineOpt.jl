@@ -59,18 +59,8 @@ function add_constraint_nodal_balance!(m::Model)
                 )
                 ==
                 # Demand for the commodity
-                demand(node=n, t=t) * duration(t)
+                demand[(node=n, t=t)] * duration(t)
             )
-        end
-    end
-end
-
-
-function update_constraint_nodal_balance!(m::Model)
-    cons = m.ext[:constraints][:nodal_balance]
-    for (n, tblock) in node__temporal_block()
-        for t in time_slice(temporal_block=tblock)
-            set_normalized_rhs(cons[n, t], demand(node=n, t=t) * duration(t))
         end
     end
 end

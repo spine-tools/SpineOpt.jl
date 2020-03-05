@@ -39,5 +39,3 @@ function add_constraint_unit_state_transition!(m::Model)
         end
     end
 end
-
-update_constraint_unit_state_transition!(m::Model) = nothing

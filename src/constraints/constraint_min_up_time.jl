@@ -43,5 +43,3 @@ function add_constraint_min_up_time!(m::Model)
         end
     end
 end
-
-update_constraint_min_up_time!(m::Model) = nothing

@@ -122,54 +122,36 @@ function run_spinemodel(
         @logtime level3 "- [constraint_user]" add_constraints(m)
     end
     k = 2
-    while true
-        @logtime level2 "Solving model..." optimize!(m)
-        if termination_status(m) == MOI.OPTIMAL
-            @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
-            @logtime level2 "Saving results..." begin
-                save_values!(m)
-                save_results!(results, m)
-            end
-        else
-            @log level1 "Unable to find solution (reason: $(termination_status(m)))"
-            break
+    while optimize_model!(m)
+        @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
+        @logtime level2 "Saving results..." begin
+            save_values!(m)
+            save_results!(results, m)
         end
         roll_temporal_structure() || break
         @log level1 "Window $k: $current_window"
         @logtime level2 "Updating model..." begin            
             update_variables!(m)
             fix_variables!(m)
-            set_objective!(m)
+            update_varying_objective!(m)
         end
-        @logtime level2 "Updating constraints...\n" begin
-            @logtime level3 "- [constraint_flow_capacity]" update_constraint_flow_capacity!(m)
-            @logtime level3 "- [constraint_fix_ratio_out_in_flow]" update_constraint_fix_ratio_out_in_flow!(m)
-            @logtime level3 "- [constraint_max_ratio_out_in_flow]" update_constraint_max_ratio_out_in_flow!(m)
-            @logtime level3 "- [constraint_min_ratio_out_in_flow]" update_constraint_min_ratio_out_in_flow!(m)
-            @logtime level3 "- [constraint_fix_ratio_out_out_flow]" update_constraint_fix_ratio_out_out_flow!(m)
-            @logtime level3 "- [constraint_max_ratio_out_out_flow]" update_constraint_max_ratio_out_out_flow!(m)
-            @logtime level3 "- [constraint_fix_ratio_in_in_flow]" update_constraint_fix_ratio_in_in_flow!(m)
-            @logtime level3 "- [constraint_max_ratio_in_in_flow]" update_constraint_max_ratio_in_in_flow!(m)
-            @logtime level3 "- [constraint_fix_ratio_out_in_trans]" update_constraint_fix_ratio_out_in_trans!(m)
-            @logtime level3 "- [constraint_max_ratio_out_in_trans]" update_constraint_max_ratio_out_in_trans!(m)
-            @logtime level3 "- [constraint_min_ratio_out_in_trans]" update_constraint_min_ratio_out_in_trans!(m)
-            @logtime level3 "- [constraint_trans_capacity]" update_constraint_trans_capacity!(m)
-            @logtime level3 "- [constraint_nodal_balance]" update_constraint_nodal_balance!(m)
-            @logtime level3 "- [constraint_stor_capacity]" update_constraint_stor_capacity!(m)
-            @logtime level3 "- [constraint_stor_state]" update_constraint_stor_state!(m)
-            @logtime level3 "- [constraint_units_on]" update_constraint_units_on!(m)
-            @logtime level3 "- [constraint_units_available]" update_constraint_units_available!(m)
-            @logtime level3 "- [constraint_minimum_operating_point]" update_constraint_minimum_operating_point!(m)
-            @logtime level3 "- [constraint_min_down_time]" update_constraint_min_up_time!(m)
-            @logtime level3 "- [constraint_min_up_time]" update_constraint_min_down_time!(m)
-            @logtime level3 "- [constraint_unit_state_transition]" update_constraint_unit_state_transition!(m)
-            @logtime level3 "- [constraint_user]" update_constraints(m)
-        end
+        @logtime level2 "Updating varying constraints..." update_varying_constraints!(m)
+        @logtime level2 "Updating user constraints..." update_constraints(m)
         k += 1
     end
     @logtime level2 "Writing report..." write_report(results, url_out)
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
     m
+end
+
+function optimize_model!(m::Model)
+    optimize!(m)
+    if termination_status(m) == MOI.OPTIMAL        
+        true
+    else
+        @log true "Unable to find solution (reason: $(termination_status(m)))"
+        false
+    end
 end
 
 """

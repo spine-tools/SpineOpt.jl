@@ -38,17 +38,8 @@ function add_constraint_stor_capacity!(m::Model)
                     init=0
                 )
                 <=
-                stor_state_cap(storage=stor, t=t) * duration(t)
+                stor_state_cap[(storage=stor, t=t)] * duration(t)
             )
-        end
-    end
-end
-
-function update_constraint_stor_capacity!(m::Model)
-    cons = m.ext[:constraints][:stor_capacity]
-    for (stor,) in indices(stor_state_cap)
-        for t in time_slice()
-            set_normalized_rhs(cons[stor, t], stor_state_cap(storage=stor, t=t) * duration(t))
         end
     end
 end

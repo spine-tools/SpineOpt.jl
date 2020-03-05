@@ -28,8 +28,8 @@ function start_up_costs(m::Model)
         m,
         reduce(
             +,
-            start_up_cost(unit=u) * units_started_up[u, t]
-            for (u, t) in units_on_indices() if start_up_cost(unit=u) != nothing; 
+            start_up_cost[(unit=u, t=t)] * units_started_up[u, t]
+            for (u, t) in units_on_indices(unit=indices(start_up_cost));
             init=0
         )
     )
