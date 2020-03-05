@@ -37,8 +37,8 @@ function add_constraint_flow_capacity!(m::Model)
                     init=0
                 )
                 <=
-                + unit_capacity(unit=u, commodity=c, direction=d, t=t)
-                * unit_conv_cap_to_flow(unit=u, commodity=c, t=t)
+                + unit_capacity[(unit=u, commodity=c, direction=d, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, commodity=c, t=t)]
                 * reduce(
                     +,
                     units_on[u1, t1] * duration(t1)
@@ -46,24 +46,6 @@ function add_constraint_flow_capacity!(m::Model)
                     init=0
                 )
             )
-        end
-    end
-end
-
-function update_constraint_flow_capacity!(m::Model)
-    @fetch units_on = m.ext[:variables]
-    cons = m.ext[:constraints][:flow_capacity]
-    for (u, c, d) in indices(unit_capacity)
-        for t in time_slice()
-            for (u1, t1) in units_on_indices(unit=u, t=t_in_t(t_long=t))
-                set_normalized_coefficient(
-                    cons[u, c, d, t],
-                    units_on[u1, t1],
-                    - unit_capacity(unit=u, commodity=c, direction=d, t=t)
-                    * unit_conv_cap_to_flow(unit=u, commodity=c, t=t)
-                    * duration(t1)
-                )
-            end
         end
     end
 end
