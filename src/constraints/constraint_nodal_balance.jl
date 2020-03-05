@@ -32,7 +32,7 @@ function add_constraint_nodal_balance!(m::Model)
                 # Change in node commodity content
                 (
                     node_state[n, t_after] * state_coeff(node=n, t=t_after)
-                    - node_state[n, t_before] * state_coeff(node=n, t=t_before)   
+                    - node_state[n, t_before] * state_coeff(node=n, t=t_before)
                 )
                     / duration(t_after)
                 ==
@@ -83,48 +83,7 @@ function add_constraint_nodal_balance!(m::Model)
                     init=0
                 )
                 # Demand for the commodity
-                - demand(node=n, t=t_after)
-            )
-        end
-    end
-end
-
-function update_constraint_nodal_balance!(m::Model)
-    @fetch node_state, trans, flow = m.ext[:variables]
-    cons = m.ext[:constraints][:nodal_balance]
-    for (n, t_after) in node_state_indices()
-        for (n, t_before) in node_state_indices(node=n, t=t_before_t(t_after=t_after))
-            # Update this node's node_state(t_after) coefficient
-            set_normalized_coefficient(
-                cons[n, t_before, t_after],
-                node_state[n, t_after],
-                + state_coeff(node=n, t=t_after) / duration(t_after)
-                + frac_state_loss(node=n, t=t_after)
-                + reduce(
-                    +,
-                    diff_coeff(node1=n, node2=n_, t=t_after)
-                    for n_ in node__node(node1=n);
-                    init = 0
-                )
-            )
-            # Update this node's node_state(t_before) coefficient
-            set_normalized_coefficient(
-                cons[n, t_before, t_after],
-                node_state[n, t_before],
-                - state_coeff(node=n, t=t_before) / duration(t_after)
-            )
-            # Update coefficients for connected node_states
-            for n_ in node__node(node2=n)
-                set_normalized_coefficient(
-                    cons[n, t_before, t_after],
-                    node_state[n_, t_after],
-                    - diff_coeff(node1=n_, node2=n, t=t_after)
-                )
-            end
-            # Update demand
-            set_normalized_rhs(
-                cons[n, t_before, t_after],
-                - demand(node=n, t=t_after)
+                - demand[(node=n, t=t_after)]
             )
         end
     end
