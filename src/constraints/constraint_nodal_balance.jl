@@ -18,13 +18,13 @@
 #############################################################################
 
 """
-    add_constraint_node_state_balance!(m::Model)
+    add_constraint_nodal_balance!(m::Model)
 
-Balance equation for node state.
+Balance equation for nodes.
 """
-function add_constraint_node_state_balance!(m::Model)
+function add_constraint_nodal_balance!(m::Model)
     @fetch node_state, trans, flow = m.ext[:variables]
-    cons = m.ext[:constraints][:node_state_balance] = Dict()
+    cons = m.ext[:constraints][:nodal_balance] = Dict()
     for (n, t_after) in node_state_indices()
         for (n, t_before) in node_state_indices(node=n, t=t_before_t(t_after=t_after))
             cons[n, t_before, t_after] = @constraint(
@@ -89,9 +89,9 @@ function add_constraint_node_state_balance!(m::Model)
     end
 end
 
-function update_constraint_node_state_balance!(m::Model)
+function update_constraint_nodal_balance!(m::Model)
     @fetch node_state, trans, flow = m.ext[:variables]
-    cons = m.ext[:constraints][:node_state_balance]
+    cons = m.ext[:constraints][:nodal_balance]
     for (n, t_after) in node_state_indices()
         for (n, t_before) in node_state_indices(node=n, t=t_before_t(t_after=t_after))
             # Update this node's node_state(t_after) coefficient
