@@ -27,8 +27,8 @@ if it exists.
 function add_constraint_node_state_capacity!(m::Model)
     @fetch node_state = m.ext[:variables]
     cons = m.ext[:constraints][:node_state_capacity] = Dict()
-    for (n_,) in indices(node_state_cap)
-        for (n, t) in node_state_indices(node=n_)
+    for (n,) in indices(node_state_cap)
+        for (n, t) in node_state_indices(node=n)
             cons[n, t] = @constraint(
                 m,
                 node_state[n, t]
@@ -41,8 +41,8 @@ end
 
 function update_constraint_node_state_capacity!(m::Model)
     cons = m.ext[:constraints][:node_state_capacity]
-    for (n_,) in indices(node_state_cap)
-        for (n, t) in node_state_indices(node=n_)
+    for (n,) in indices(node_state_cap)
+        for (n, t) in node_state_indices(node=n)
             set_normalized_rhs(
                 cons[n, t],
                 node_state_cap(node=n, t=t)

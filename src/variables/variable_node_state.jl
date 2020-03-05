@@ -28,7 +28,7 @@ function node_state_indices(;node=anything, t=anything)
         for (n, tb) in node_state_indices_rc(
             node=node, _compact=false
         )
-        for t in time_slice(temporal_block=tb)
+        for t in time_slice(temporal_block=tb, t=t)
     ]
     unique!(inds)
 end
