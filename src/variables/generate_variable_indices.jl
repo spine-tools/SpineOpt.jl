@@ -40,7 +40,7 @@ function generate_variable_indices()
 		:trans_indices_rc, (:connection, :node, :commodity, :direction, :temporal_block), trans_indices
 	)
 	node_state_indices_rc = RelationshipClass(
-		:node_state_indices_rc, (:node, :commodity, :temporal), node_state_indices
+		:node_state_indices_rc, (:node, :temporal), node_state_indices
 	)
 	@eval begin
         flow_indices_rc = $flow_indices_rc
