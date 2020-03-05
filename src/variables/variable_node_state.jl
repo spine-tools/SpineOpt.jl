@@ -20,7 +20,7 @@
     node_state_indices(filtering_options...)
 
 A set of tuples for indexing the `node_state` variable. Any filtering options can be specified
-for `node`, `commodity`, and `t`.
+for `node`, and `t`.
 """
 function node_state_indices(;node=anything, t=anything)
     inds = NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}[

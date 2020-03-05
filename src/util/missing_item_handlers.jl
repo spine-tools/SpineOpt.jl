@@ -77,6 +77,8 @@ const object_classes = [
 ]
 const relationship_classes = [
     :unit__node__direction,
+    :unit__direction,
+    :unit__node__node,
     :connection__node__direction,
     :node__commodity,
     :node__temporal_block,
@@ -86,9 +88,6 @@ const relationship_classes = [
     :node_group__node,
     :unit_group__commodity_group,
     :commodity_group__node_group,
-    :unit__commodity,
-    :unit__commodity__direction,
-    :unit__commodity__commodity,
     :connection__node__node,
     :report__output,
 ]

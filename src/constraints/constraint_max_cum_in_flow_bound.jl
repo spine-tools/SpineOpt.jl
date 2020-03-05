@@ -21,22 +21,21 @@
 """
     add_constraint_max_cum_in_flow_bound!(m::Model)
 
-Set upperbound `max_cum_in_flow_bound `to the cumulated inflow of
-`commodity_group cg` into a `unit_group ug`
-if `max_cum_in_flow_bound` exists for the combination of `cg` and `ug`.
+Set upperbound `max_cum_in_flow_bound `to the cumulated inflow
+into a `unit_group ug` if `max_cum_in_flow_bound` exists.
 """
 function add_constraint_max_cum_in_flow_bound!(m::Model)
     @fetch flow = m.ext[:variables]
     cons = m.ext[:constraints][:max_cum_in_flow_bound] = Dict()
-    for (ug, cg) in indices(max_cum_in_flow_bound)
-        cons[ug, cg] = @constraint(
+    for (ug,) in indices(max_cum_in_flow_bound)
+        cons[ug] = @constraint(
             m,
             + sum(
-                flow[u, n, c, d, t]
-                for (u, n, c, d, t) in flow_indices(direction=direction(:from_node), unit=ug, commodity=cg)
+                flow[u, n, d, t]
+                for (u, n, d, t) in flow_indices(direction=direction(:from_node), unit=ug)
             )
             <=
-            + max_cum_in_flow_bound[(unit=ug, commodity=cg)]
+            + max_cum_in_flow_bound(unit=ug) # TODO: Calling this parameter with brackets `max_cum_in_flow_bound[(unit=ug)]` fails.
         )
     end
 end

@@ -18,15 +18,13 @@
 #############################################################################
 function generate_variable_indices()
 	flow_indices = unique(
-        (unit=u, node=n, commodity=c, direction=d, temporal_block=tb)
+        (unit=u, node=n, direction=d, temporal_block=tb)
         for (u, n, d) in unit__node__direction()
-        for c in node__commodity(node=n)
         for tb in node__temporal_block(node=n)
     )
     trans_indices = unique(
-        (connection=conn, node=n, commodity=c, direction=d, temporal_block=tb)
+        (connection=conn, node=n, direction=d, temporal_block=tb)
         for (conn, n, d) in connection__node__direction()
-        for c in node__commodity(node=n)
         for tb in node__temporal_block(node=n)
     )
     node_state_indices = unique(
@@ -34,13 +32,13 @@ function generate_variable_indices()
         for (n, tb) in node__temporal_block()
     )
 	flow_indices_rc = RelationshipClass(
-		:flow_indices_rc, (:unit, :node, :commodity, :direction, :temporal_block), flow_indices
+		:flow_indices_rc, (:unit, :node, :direction, :temporal_block), flow_indices
 	)
 	trans_indices_rc = RelationshipClass(
-		:trans_indices_rc, (:connection, :node, :commodity, :direction, :temporal_block), trans_indices
+		:trans_indices_rc, (:connection, :node, :direction, :temporal_block), trans_indices
 	)
 	node_state_indices_rc = RelationshipClass(
-		:node_state_indices_rc, (:node, :temporal), node_state_indices
+		:node_state_indices_rc, (:node, :temporal_block), node_state_indices
 	)
 	@eval begin
         flow_indices_rc = $flow_indices_rc

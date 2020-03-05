@@ -27,10 +27,10 @@ function fixed_om_costs(m)
         m,
         reduce(
             +,
-            + unit_capacity[(unit=u, commodity=c, direction=d, t=t)] 
+            + unit_capacity[(unit=u, direction=d, t=t)] 
             * number_of_units[(unit=u, t=t)] 
             * fom_cost[(unit=u, t=t)]
-            for (u, c, d) in indices(unit_capacity; unit=indices(fom_cost));
+            for (u, d) in indices(unit_capacity; unit=indices(fom_cost));
             init=0
         )
     )
