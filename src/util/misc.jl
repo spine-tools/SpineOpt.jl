@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
 # override `getindex` so we can access our variable dicts with a `Tuple` instead of the actual `NamedTuple`
 function Base.getindex(d::Dict{K,VariableRef}, key::ObjectLike...) where {J,K<:Relationship{J}}
     try
@@ -28,12 +27,22 @@ function Base.getindex(d::Dict{K,VariableRef}, key::ObjectLike...) where {J,K<:R
     end
 end
 
-# Override (:), so we can write `variable[inds] :or: default`
+# Override `:`, so we can write `variable[inds...] :or: default` and get `default` if `inds...` aren't found
 struct Or end
 or = Or()
 
 Base.:(:)(v::VariableRef, ::Or, x) = v
 Base.:(:)(v::Missing, ::Or, x) = x
+
+# Override `|` so we can write `variable(inds...) | default` and get `default` if `inds...` aren't found
+struct _Wrapper{T}
+    value::T
+end
+
+(d::Dict{K,VariableRef})(key::ObjectLike...) where {J,K<:Relationship{J}} = _Wrapper(d[key...])
+Base.:|(v::_Wrapper{Missing}, x) = x
+Base.:|(v::_Wrapper, x) = v.value
+
 
 """
     @fetch x, y, ... = d
