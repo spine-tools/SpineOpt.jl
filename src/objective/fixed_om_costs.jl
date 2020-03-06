@@ -30,7 +30,8 @@ function fixed_om_costs(m)
             + unit_capacity[(unit=u, direction=d, t=t)] 
             * number_of_units[(unit=u, t=t)] 
             * fom_cost[(unit=u, t=t)]
-            for (u, d) in indices(unit_capacity; unit=indices(fom_cost));
+            for (u, d) in indices(unit_capacity; unit=indices(fom_cost))
+            for t in time_slice();
             init=0
         )
     )
