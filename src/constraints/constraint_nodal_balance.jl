@@ -31,18 +31,18 @@ function add_constraint_nodal_balance!(m::Model)
                 m,
                 # Change in node state
                 (
-                    node_state[n, t_after] * state_coeff(node=n, t=t_after)
-                    - node_state[n, t_before] * state_coeff(node=n, t=t_before)
+                    node_state[n, t_after] * state_coeff[(node=n, t=t_after)]
+                    - node_state[n, t_before] * state_coeff[(node=n, t=t_before)]
                 )
                     / duration(t_after)
                 ==
-                # Self-discharge losses
-                - node_state[n, t_after] * frac_state_loss(node=n, t=t_after)
-                # Diffusion from this node to other nodes
+                # Self-discharge commodity losses
+                - node_state[n, t_after] * frac_state_loss[(node=n, t=t_after)]
+                # Diffusion of commodity from this node to other nodes
                 - reduce(
                     +,
                     node_state[n, t_after]
-                    * diff_coeff(node1=n, node2=n_, t=t_after)
+                    * diff_coeff[(node1=n, node2=n_, t=t_after)]
                     for n_ in node__node(node1=n);
                     init = 0
                 )
@@ -50,7 +50,7 @@ function add_constraint_nodal_balance!(m::Model)
                 + reduce(
                     +,
                     node_state[n_, t_after]
-                    * diff_coeff(node1=n_, node2=n, t=t_after)
+                    * diff_coeff[(node1=n_, node2=n, t=t_after)]
                     for n_ in node__node(node2=n);
                     init = 0
                 )
