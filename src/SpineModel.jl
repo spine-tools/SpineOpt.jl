@@ -32,6 +32,7 @@ using Suppressor
 # Export utility
 export run_spinemodel
 export @fetch
+export or
 
 # Export indices functions
 export flow_indices
