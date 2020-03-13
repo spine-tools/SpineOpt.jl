@@ -19,23 +19,22 @@
 
 
 """
-    add_constraint_max_cum_in_flow_bound!(m::Model)
+    add_constraint_node_state_capacity!(m::Model)
 
-Set upperbound `max_cum_in_flow_bound `to the cumulated inflow
-into a `unit_group ug` if `max_cum_in_flow_bound` exists.
+Limit the maximum value of a `node_state` variable under `node_state_cap`,
+if it exists.
 """
-function add_constraint_max_cum_in_flow_bound!(m::Model)
-    @fetch flow = m.ext[:variables]
-    cons = m.ext[:constraints][:max_cum_in_flow_bound] = Dict()
-    for (ug,) in indices(max_cum_in_flow_bound)
-        cons[ug] = @constraint(
-            m,
-            + sum(
-                flow[u, n, d, t]
-                for (u, n, d, t) in flow_indices(direction=direction(:from_node), unit=ug)
+function add_constraint_node_state_capacity!(m::Model)
+    @fetch node_state = m.ext[:variables]
+    cons = m.ext[:constraints][:node_state_capacity] = Dict()
+    for (n,) in indices(node_state_cap)
+        for (n, t) in node_state_indices(node=n)
+            cons[n, t] = @constraint(
+                m,
+                node_state[n, t]
+                <=
+                node_state_cap[(node=n, t=t)]
             )
-            <=
-            + max_cum_in_flow_bound(unit=ug) # TODO: Calling this parameter with brackets `max_cum_in_flow_bound[(unit=ug)]` fails.
-        )
+        end
     end
 end

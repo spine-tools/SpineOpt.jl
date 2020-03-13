@@ -19,9 +19,8 @@
 
 """
     trans_indices(
-        commodity=anything,
-        node=anything,
         connection=anything,
+        node=anything,
         direction=anything,
         t=anything
     )
@@ -29,13 +28,12 @@
 A list of `NamedTuple`s corresponding to indices of the `trans` variable.
 The keyword arguments act as filters for each dimension.
 """
-function trans_indices(;commodity=anything, node=anything, connection=anything, direction=anything, t=anything)
+function trans_indices(;connection=anything, node=anything, direction=anything, t=anything)
     node = expand_node_group(node)
-    commodity = expand_commodity_group(commodity)
     [
-        (connection=conn, node=n, commodity=c, direction=d, t=t1)
-        for (conn, n, c, d, tb) in trans_indices_rc(
-            connection=connection, node=node, commodity=commodity, direction=direction, _compact=false
+        (connection=conn, node=n, direction=d, t=t1)
+        for (conn, n, d, tb) in trans_indices_rc(
+            connection=connection, node=node, direction=direction, _compact=false
         )
         for t1 in time_slice(temporal_block=tb, t=t)
     ]
