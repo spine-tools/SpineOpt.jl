@@ -18,9 +18,8 @@
 #############################################################################
 """
     flow_indices(
-        commodity=anything,
-        node=anything,
         unit=anything,
+        node=anything,
         direction=anything,
         t=anything
     )
@@ -28,14 +27,13 @@
 A list of `NamedTuple`s corresponding to indices of the `flow` variable.
 The keyword arguments act as filters for each dimension.
 """
-function flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything)
+function flow_indices(;unit=anything, node=anything, direction=anything, t=anything)
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
-    commodity = expand_commodity_group(commodity)
     [
-        (unit=u, node=n, commodity=c, direction=d, t=t1)
-        for (u, n, c, d, tb) in flow_indices_rc(
-            unit=unit, node=node, commodity=commodity, direction=direction, _compact=false
+        (unit=u, node=n, direction=d, t=t1)
+        for (u, n, d, tb) in flow_indices_rc(
+            unit=unit, node=node, direction=direction, _compact=false
         )
         for t1 in time_slice(temporal_block=tb, t=t)
     ]

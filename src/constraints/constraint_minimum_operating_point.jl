@@ -28,20 +28,20 @@ number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
 function add_constraint_minimum_operating_point!(m::Model)
     @fetch flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][:minimum_operating_point] = Dict()
-    for (u, c) in indices(minimum_operating_point)
-        for (u, c, d) in indices(unit_capacity; unit=u, commodity=c)
+    for (u, d) in indices(minimum_operating_point)
+        for (u, d) in indices(unit_capacity; unit=u, direction=d)
             for (u, t) in units_on_indices(unit=u)
-                cons[u, c, d, t] = @constraint(
+                cons[u, d, t] = @constraint(
                     m,
                     + sum(
-                        flow[u_, n, c_, d_, t1]
-                        for (u_, n, c_, d_, t1) in flow_indices(unit=u, commodity=c, direction = d, t=t)
+                        flow[u_, n, d_, t1]
+                        for (u_, n, d_, t1) in flow_indices(unit=u, direction=d, t=t)
                     )
                     >=
                     + units_on[u, t]
-                    * minimum_operating_point[(unit=u, commodity=c, t=t)]
-                    * unit_capacity[(unit=u, commodity=c, direction=d, t=t)]
-                    * unit_conv_cap_to_flow[(unit=u, commodity=c, t=t)]
+                    * minimum_operating_point[(unit=u, direction=d, t=t)]
+                    * unit_capacity[(unit=u, direction=d, t=t)]
+                    * unit_conv_cap_to_flow[(unit=u, direction=d, t=t)]
                 )
             end
         end

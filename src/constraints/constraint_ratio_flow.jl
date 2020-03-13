@@ -25,25 +25,25 @@ Ratio of `flow` variables.
 function add_constraint_ratio_flow!(m::Model, ratio, sense, d1, d2)
     @fetch flow = m.ext[:variables]
     cons = m.ext[:constraints][ratio.name] = Dict()
-    for (u, c1, c2) in indices(ratio)
-        for t in t_lowest_resolution(map(x -> x.t, flow_indices(unit=u, commodity=[c1, c2])))
-            cons[u, c1, c2, t] = sense_constraint(
+    for (u, n1, n2) in indices(ratio)
+        for t in t_lowest_resolution(map(x -> x.t, flow_indices(unit=u, node=[n1, n2])))
+            cons[u, n1, n2, t] = sense_constraint(
                 m,
                 + reduce(
                     +,
-                    flow[u_, n, c1_, d, t_] * duration(t_)
-                    for (u_, n, c1_, d, t_) in flow_indices(
-                        unit=u, commodity=c1, direction=d1, t=t_in_t(t_long=t)
+                    flow[u_, n1_, d1_, t_] * duration(t_)
+                    for (u_, n1_, d1_, t_) in flow_indices(
+                        unit=u, node=n1, direction=d1, t=t_in_t(t_long=t)
                     );
                     init=0
                 ),
                 sense,
-                + ratio[(unit=u, commodity1=c1, commodity2=c2, t=t)]
+                + ratio[(unit=u, node1=n1, node2=n2, t=t)]
                 * reduce(
                     +,
-                    flow[u_, n, c2_, d, t_] * duration(t_)
-                    for (u_, n, c2_, d, t_) in flow_indices(
-                        unit=u, commodity=c2, direction=d2, t=t_in_t(t_long=t)
+                    flow[u_, n2_, d2_, t_] * duration(t_)
+                    for (u_, n2_, d2_, t_) in flow_indices(
+                        unit=u, node=n2, direction=d2, t=t_in_t(t_long=t)
                     );
                     init=0
                 )
