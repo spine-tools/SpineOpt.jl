@@ -24,7 +24,7 @@ Keyword arguments have the same purpose as for [`run_spinemodel`](@ref).
 """
 function run_spinemodel(
         url::String; 
-        with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0), 
+        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0),
         cleanup=true, 
         add_constraints=m -> nothing, 
         update_constraints=m -> nothing, 
@@ -70,7 +70,7 @@ set to `nothing` after completion.
 function run_spinemodel(
         url_in::String,
         url_out::String;
-        with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0),
+        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0),
         cleanup=true,
         add_constraints=m -> nothing, 
         update_constraints=m -> nothing, 
