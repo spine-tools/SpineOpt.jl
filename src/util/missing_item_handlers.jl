@@ -117,7 +117,7 @@ const parameters = [
     (:unit_conv_cap_to_flow, nothing),
     (:unit_capacity, nothing),
     (:connection_capacity, nothing),
-    (:connection_conv_cap_to_trans, nothing),
+    (:connection_conv_cap_to_flow, nothing),
     (:connection_availability_factor, nothing),
     (:operating_cost, nothing),
     (:vom_cost, nothing),
