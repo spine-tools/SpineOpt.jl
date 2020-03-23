@@ -33,10 +33,10 @@ variable_trans
 variable_units_on
 flow_indices
 var_flow_indices
-fix_flow_indices
+fix_unit_flow_indices
 trans_indices
 var_trans_indices
-fix_trans_indices
+fix_connection_flow_indices
 units_on_indices
 var_units_on_indices
 fix_units_on_indices

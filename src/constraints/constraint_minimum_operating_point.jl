@@ -22,26 +22,23 @@
     add_constraint_minimum_operating_point!(m::Model)
 
 Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
-number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
+number_of_unit, unit_conv_cap_to_flow, unit_availability_factor` exist.
 """
 
 function add_constraint_minimum_operating_point!(m::Model)
     @fetch flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][:minimum_operating_point] = Dict()
-    for (u, d) in indices(minimum_operating_point)
-        for (u, d) in indices(unit_capacity; unit=u, direction=d)
+    for (u, n, d) in indices(minimum_operating_point)
+        for (u, n, d) in indices(unit_capacity; unit=u, node=n, direction=d)
             for (u, t) in units_on_indices(unit=u)
-                cons[u, d, t] = @constraint(
+                cons[u, n, d, t] = @constraint(
                     m,
-                    + sum(
-                        flow[u_, n, d_, t1]
-                        for (u_, n, d_, t1) in flow_indices(unit=u, direction=d, t=t)
-                    )
+                    flow[u, n, d, t1]
                     >=
                     + units_on[u, t]
-                    * minimum_operating_point[(unit=u, direction=d, t=t)]
-                    * unit_capacity[(unit=u, direction=d, t=t)]
-                    * unit_conv_cap_to_flow[(unit=u, direction=d, t=t)]
+                    * minimum_operating_point[(unit=u, node=n, direction=d, t=t)]
+                    * unit_capacity[(unit=u, node=n, direction=d, t=t)]
+                    * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
                 )
             end
         end

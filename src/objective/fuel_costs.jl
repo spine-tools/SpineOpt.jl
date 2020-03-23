@@ -26,9 +26,9 @@ function fuel_costs(m::Model)
         m,
         reduce(
             +,
-            flow[u, n, d, t] * duration(t) * fuel_cost[(unit=u_, direction=d_, t=t)]
-            for (u_, d_) in indices(fuel_cost)
-            for (u, n, d, t) in flow_indices(unit=u_, direction=d_);
+            flow[u, n, d, t] * duration(t) * fuel_cost[(unit=u_, node=n_, direction=d_, t=t)]
+            for (u_, n_, d_) in indices(fuel_cost)
+            for (u, n, d, t) in flow_indices(unit=u_, node=n_, direction=d_);
             init=0
         )
     )

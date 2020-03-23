@@ -22,13 +22,13 @@
     add_constraint_trans_capacity!(m::Model)
 
 Limit the maximum in/out `trans` of a `connection` for all `trans_capacity` indices.
-Check if `conn_conv_cap_to_trans` is defined.
+Check if `connection_conv_cap_to_trans` is defined.
 """
 function add_constraint_trans_capacity!(m::Model)
     @fetch trans = m.ext[:variables]
     cons = m.ext[:constraints][:trans_capacity] = Dict()
-    for (conn_, n_, d) in indices(conn_capacity)
-        for (conn, n) in indices(conn_avail_factor; connection=conn_, node=n_)
+    for (conn_, n_, d) in indices(connection_capacity)
+        for (conn,) in indices(connection_availability_factor; connection=conn_)
             for t in time_slice()
                 cons[conn, n, t] = @constraint(
                     m,
@@ -39,9 +39,9 @@ function add_constraint_trans_capacity!(m::Model)
                         init=0
                     )
                     <=
-                    + conn_capacity[(connection=conn, node=n, direction=d, t=t)]
-                    * conn_avail_factor[(connection=conn, node=n, t=t)]
-                    * conn_conv_cap_to_trans[(connection=conn, node=n, t=t)]
+                    + connection_capacity[(connection=conn, node=n, direction=d, t=t)]
+                    * connection_availability_factor[(connection=conn, t=t)]
+                    * connection_conv_cap_to_trans[(connection=conn, node=n, direction=d, t=t)]
                     * duration(t)
                 )
             end

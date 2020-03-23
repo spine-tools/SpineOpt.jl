@@ -39,7 +39,7 @@ function trans_indices(;connection=anything, node=anything, direction=anything, 
     ]
 end
 
-fix_trans_(x) = fix_trans(connection=x.connection, node=x.node, direction=x.direction, t=x.t, _strict=false)
+fix_trans_(x) = fix_connection_flow(connection=x.connection, node=x.node, direction=x.direction, t=x.t, _strict=false)
 
 create_variable_trans!(m::Model) = create_variable!(m, :trans, trans_indices; lb=x -> 0)
 save_variable_trans!(m::Model) = save_variable!(m, :trans, trans_indices)

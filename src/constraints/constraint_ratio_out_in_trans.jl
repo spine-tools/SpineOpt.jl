@@ -42,12 +42,12 @@ function add_constraint_ratio_out_in_trans!(m::Model, ratio_out_in, sense)
                 * reduce(
                     +,
                     trans[conn_, n_in_, d, t_]
-                    * overlap_duration(t_, t - trans_delay(connection=conn, node1=n_out, node2=n_in))
+                    * overlap_duration(t_, t - connection_flow_delay(connection=conn, node1=n_out, node2=n_in))
                     for (conn_, n_in_, d, t_) in trans_indices(
                         connection=conn,
                         node=n_in,
                         direction=direction(:from_node),
-                        t=to_time_slice(t - trans_delay(connection=conn, node1=n_out, node2=n_in, t=t))
+                        t=to_time_slice(t - connection_flow_delay(connection=conn, node1=n_out, node2=n_in, t=t))
                     );
                     init=0
                 )
