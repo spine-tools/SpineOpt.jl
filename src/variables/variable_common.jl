@@ -88,9 +88,9 @@ function update_variable!(m::Model, name::Symbol, indices::Function)
 end
 
 function create_variables!(m::Model)
-    create_variable_flow!(m)
+    create_variable_unit_flow!(m)
     create_variable_units_on!(m)
-    create_variable_trans!(m)
+    create_variable_connection_flow!(m)
     create_variable_node_state!(m)
     create_variable_units_available!(m)
     create_variable_units_started_up!(m)
@@ -98,15 +98,15 @@ function create_variables!(m::Model)
 end
 
 function fix_variables!(m::Model)
-    fix_variable_flow!(m)
+    fix_variable_unit_flow!(m)
     fix_variable_units_on!(m)
-    fix_variable_trans!(m)
+    fix_variable_connection_flow!(m)
     fix_variable_node_state!(m)
 end
 
 function save_values!(m::Model)
-    save_value!(m, :flow, flow_indices)
-    save_value!(m, :trans, trans_indices)
+    save_value!(m, :unit_flow, unit_flow_indices)
+    save_value!(m, :connection_flow, connection_flow_indices)
     save_value!(m, :node_state, node_state_indices)
     save_value!(m, :units_on, units_on_indices)
     save_value!(m, :units_available, units_on_indices)
@@ -115,8 +115,8 @@ function save_values!(m::Model)
 end
 
 function update_variables!(m::Model)
-    update_variable!(m, :flow, flow_indices)
-    update_variable!(m, :trans, trans_indices)
+    update_variable!(m, :unit_flow, unit_flow_indices)
+    update_variable!(m, :connection_flow, connection_flow_indices)
     update_variable!(m, :node_state, node_state_indices)
     update_variable!(m, :units_on, units_on_indices)
     update_variable!(m, :units_available, units_on_indices)

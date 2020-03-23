@@ -29,13 +29,13 @@ run_spinemodel(::String)
 
 ```@docs
 variable_flow
-variable_trans
+variable_connection_flow
 variable_units_on
 flow_indices
 var_flow_indices
 fix_unit_flow_indices
-trans_indices
-var_trans_indices
+connection_flow_indices
+var_connection_flow_indices
 fix_connection_flow_indices
 units_on_indices
 var_units_on_indices

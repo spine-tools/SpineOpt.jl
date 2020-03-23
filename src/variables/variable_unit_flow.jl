@@ -16,31 +16,30 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
 """
-    trans_indices(
-        connection=anything,
+    unit_flow_indices(
+        unit=anything,
         node=anything,
         direction=anything,
         t=anything
     )
 
-A list of `NamedTuple`s corresponding to indices of the `trans` variable.
+A list of `NamedTuple`s corresponding to indices of the `unit_flow` variable.
 The keyword arguments act as filters for each dimension.
 """
-function trans_indices(;connection=anything, node=anything, direction=anything, t=anything)
+function unit_flow_indices(;unit=anything, node=anything, direction=anything, t=anything)
+    unit = expand_unit_group(unit)
     node = expand_node_group(node)
     [
-        (connection=conn, node=n, direction=d, t=t1)
-        for (conn, n, d, tb) in trans_indices_rc(
-            connection=connection, node=node, direction=direction, _compact=false
+        (unit=u, node=n, direction=d, t=t1)
+        for (u, n, d, tb) in unit_flow_indices_rc(
+            unit=unit, node=node, direction=direction, _compact=false
         )
         for t1 in time_slice(temporal_block=tb, t=t)
     ]
 end
 
-fix_trans_(x) = fix_connection_flow(connection=x.connection, node=x.node, direction=x.direction, t=x.t, _strict=false)
+fix_unit_flow_(x) = fix_unit_flow(unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false)
 
-create_variable_trans!(m::Model) = create_variable!(m, :trans, trans_indices; lb=x -> 0)
-save_variable_trans!(m::Model) = save_variable!(m, :trans, trans_indices)
-fix_variable_trans!(m::Model) = fix_variable!(m, :trans, trans_indices, fix_trans_)
+create_variable_unit_flow!(m::Model) = create_variable!(m, :unit_flow, unit_flow_indices; lb=x -> 0)
+fix_variable_unit_flow!(m::Model) = fix_variable!(m, :unit_flow, unit_flow_indices, fix_unit_flow_)

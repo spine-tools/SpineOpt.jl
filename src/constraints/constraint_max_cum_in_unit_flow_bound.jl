@@ -16,30 +16,26 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    flow_indices(
-        unit=anything,
-        node=anything,
-        direction=anything,
-        t=anything
-    )
 
-A list of `NamedTuple`s corresponding to indices of the `flow` variable.
-The keyword arguments act as filters for each dimension.
+
 """
-function flow_indices(;unit=anything, node=anything, direction=anything, t=anything)
-    unit = expand_unit_group(unit)
-    node = expand_node_group(node)
-    [
-        (unit=u, node=n, direction=d, t=t1)
-        for (u, n, d, tb) in flow_indices_rc(
-            unit=unit, node=node, direction=direction, _compact=false
+    add_constraint_max_cum_in_unit_flow_bound!(m::Model)
+
+Set upperbound `max_cum_in_flow_bound `to the cumulated inflow
+into a `unit_group ug` if `max_cum_in_unit_flow_bound` exists.
+"""
+function add_constraint_max_cum_in_unit_flow_bound!(m::Model)
+    @fetch unit_flow = m.ext[:variables]
+    cons = m.ext[:constraints][:max_cum_in_unit_flow_bound] = Dict()
+    for (ug,) in indices(max_cum_in_unit_flow_bound)
+        cons[ug] = @constraint(
+            m,
+            + sum(
+                unit_flow[u, n, d, t]
+                for (u, n, d, t) in unit_flow_indices(direction=direction(:from_node), unit=ug)
+            )
+            <=
+            + max_cum_in_unit_flow_bound(unit=ug) # TODO: Calling this parameter with brackets `max_cum_in_unit_flow_bound[(unit=ug)]` fails.
         )
-        for t1 in time_slice(temporal_block=tb, t=t)
-    ]
+    end
 end
-
-fix_flow_(x) = fix_unit_flow(unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false)
-
-create_variable_flow!(m::Model) = create_variable!(m, :flow, flow_indices; lb=x -> 0)
-fix_variable_flow!(m::Model) = fix_variable!(m, :flow, flow_indices, fix_flow_)

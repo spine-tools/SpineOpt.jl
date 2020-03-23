@@ -20,7 +20,7 @@
 """
     fixed_om_costs(m)
 
-Variable operation costs defined on flows.
+Fixed operation costs of units.
 """
 function fixed_om_costs(m)
     @expression(

@@ -18,19 +18,19 @@
 #############################################################################
 
 """
-    add_constraint_flow_capacity!(m::Model)
+    add_constraint_unit_flow_capacity!(m::Model)
 
-Limit the maximum in/out `flow` of a `unit` for all `unit_capacity` indices.
+Limit the maximum in/out `unit_flow` of a `unit` for all `unit_capacity` indices.
 Check if `unit_conv_cap_to_flow` is defined.
 """
-function add_constraint_flow_capacity!(m::Model)
-    @fetch flow, units_on = m.ext[:variables]
-    cons = m.ext[:constraints][:flow_capacity] = Dict()
+function add_constraint_unit_flow_capacity!(m::Model)
+    @fetch unit_flow, units_on = m.ext[:variables]
+    cons = m.ext[:constraints][:unit_flow_capacity] = Dict()
     for (u, n, d) in indices(unit_capacity)
-        for t in time_slice() # TODO: Should we have a check for `flow_indices` here?
+        for t in time_slice() # TODO: Should we have a check for `unit_flow_indices` here?
             cons[u, n, d, t] = @constraint(
                 m,
-                flow[u, n, d, t] * duration(t)
+                unit_flow[u, n, d, t] * duration(t)
                 <=
                 + unit_capacity[(unit=u, node=n, direction=d, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
