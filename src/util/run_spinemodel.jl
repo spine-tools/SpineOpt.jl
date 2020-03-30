@@ -70,7 +70,7 @@ set to `nothing` after completion.
 function run_spinemodel(
         url_in::String,
         url_out::String;
-        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0),
+        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
         cleanup=true,
         add_constraints=m -> nothing, 
         update_constraints=m -> nothing, 
@@ -83,7 +83,7 @@ function run_spinemodel(
     @log level0 "Running Spine Model for $(url_in)..."
     @logtime level2 "Creating convenience functions..." using_spinedb(url_in, @__MODULE__; upgrade=true)
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
-    @logtime level2 "Generating indices..." generate_variable_indices()
+    @logtime level2 "Generating special handlers..." generate_special_handlers()
     @log level1 "Window 1: $current_window"
     @logtime level2 "Initializing model..." begin
         m = Model(with_optimizer)

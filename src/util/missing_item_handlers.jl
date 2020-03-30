@@ -77,9 +77,11 @@ const object_classes = [
     :report,
 ]
 const relationship_classes = [
-    :unit__node__direction,
+    :unit__from_node,
+    :unit__to_node,
     :unit__node__node,
-    :connection__node__direction,
+    :connection__from_node,
+    :connection__to_node,
     :connection__node__node,
     :node__commodity,
     :node__node,
