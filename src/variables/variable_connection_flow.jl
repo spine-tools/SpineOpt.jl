@@ -18,29 +18,29 @@
 #############################################################################
 
 """
-    trans_indices(
+    connection_flow_indices(
         connection=anything,
         node=anything,
         direction=anything,
         t=anything
     )
 
-A list of `NamedTuple`s corresponding to indices of the `trans` variable.
+A list of `NamedTuple`s corresponding to indices of the `connection_flow` variable.
 The keyword arguments act as filters for each dimension.
 """
-function trans_indices(;connection=anything, node=anything, direction=anything, t=anything)
+function connection_flow_indices(;connection=anything, node=anything, direction=anything, t=anything)
     node = expand_node_group(node)
     [
         (connection=conn, node=n, direction=d, t=t1)
-        for (conn, n, d, tb) in trans_indices_rc(
+        for (conn, n, d, tb) in connection_flow_indices_rc(
             connection=connection, node=node, direction=direction, _compact=false
         )
         for t1 in time_slice(temporal_block=tb, t=t)
     ]
 end
 
-fix_trans_(x) = fix_trans(connection=x.connection, node=x.node, direction=x.direction, t=x.t, _strict=false)
+fix_connection_flow_(x) = fix_connection_flow(connection=x.connection, node=x.node, direction=x.direction, t=x.t, _strict=false)
 
-create_variable_trans!(m::Model) = create_variable!(m, :trans, trans_indices; lb=x -> 0)
-save_variable_trans!(m::Model) = save_variable!(m, :trans, trans_indices)
-fix_variable_trans!(m::Model) = fix_variable!(m, :trans, trans_indices, fix_trans_)
+create_variable_connection_flow!(m::Model) = create_variable!(m, :connection_flow, connection_flow_indices; lb=x -> 0)
+save_variable_connection_flow!(m::Model) = save_variable!(m, :connection_flow, connection_flow_indices)
+fix_variable_connection_flow!(m::Model) = fix_variable!(m, :connection_flow, connection_flow_indices, fix_connection_flow_)

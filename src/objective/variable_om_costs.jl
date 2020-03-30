@@ -20,17 +20,17 @@
 """
     variable_om_costs(m::Model)
 
-Variable operation costs defined on flows.
+Variable operation costs defined on unit_flows.
 """
 function variable_om_costs(m::Model)
-    @fetch flow = m.ext[:variables]
+    @fetch unit_flow = m.ext[:variables]
     @expression(
         m,
         reduce(
             +,
-            flow[u, n, d, t] * duration(t) * vom_cost[(unit=u_, direction=d_, t=t)]
-            for (u_, d_) in indices(vom_cost)
-            for (u, n, d, t) in flow_indices(unit=u_, direction=d_);
+            unit_flow[u, n, d, t] * duration(t) * vom_cost[(unit=u_, node=n_, direction=d_, t=t)]
+            for (u_, n_, d_) in indices(vom_cost)
+            for (u, n, d, t) in unit_flow_indices(unit=u_, node=n_, direction=d_);
             init=0
         )
     )

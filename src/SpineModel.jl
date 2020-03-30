@@ -35,8 +35,8 @@ export @fetch
 export or
 
 # Export indices functions
-export flow_indices
-export trans_indices
+export unit_flow_indices
+export connection_flow_indices
 export node_state_indices
 export units_on_indices
 
@@ -50,8 +50,8 @@ include("util/update_model.jl")
 
 include("variables/generate_variable_indices.jl")
 include("variables/variable_common.jl")
-include("variables/variable_flow.jl")
-include("variables/variable_trans.jl")
+include("variables/variable_unit_flow.jl")
+include("variables/variable_connection_flow.jl")
 include("variables/variable_node_state.jl")
 include("variables/variable_units_on.jl")
 include("variables/variable_units_available.jl")
@@ -67,13 +67,13 @@ include("objective/start_up_costs.jl")
 include("objective/shut_down_costs.jl")
 include("objective/fuel_costs.jl")
 
-include("constraints/constraint_max_cum_in_flow_bound.jl")
-include("constraints/constraint_flow_capacity.jl")
+include("constraints/constraint_max_cum_in_unit_flow_bound.jl")
+include("constraints/constraint_unit_flow_capacity.jl")
 include("constraints/constraint_nodal_balance.jl")
 include("constraints/constraint_node_state_capacity.jl")
-include("constraints/constraint_ratio_flow.jl")
-include("constraints/constraint_ratio_out_in_trans.jl")
-include("constraints/constraint_trans_capacity.jl")
+include("constraints/constraint_ratio_unit_flow.jl")
+include("constraints/constraint_ratio_out_in_connection_flow.jl")
+include("constraints/constraint_connection_flow_capacity.jl")
 include("constraints/constraint_units_on.jl")
 include("constraints/constraint_units_available.jl")
 include("constraints/constraint_minimum_operating_point.jl")

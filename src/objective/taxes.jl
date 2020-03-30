@@ -22,35 +22,35 @@
 
 """
 function taxes(m::Model)
-    @fetch flow = m.ext[:variables]
+    @fetch unit_flow = m.ext[:variables]
     @expression(
         m,
         + reduce(
             +,
-            flow[u, n, d, t] * tax_net_flow[(node=n1, t=t)] * duration(t)
-            for (n1,) in indices(tax_net_flow)
-            for (u, n, d, t) in flow_indices(node=n1, direction=direction(:to_node));
+            unit_flow[u, n, d, t] * tax_net_unit_flow[(node=n1, t=t)] * duration(t)
+            for (n1,) in indices(tax_net_unit_flow)
+            for (u, n, d, t) in unit_flow_indices(node=n1, direction=direction(:to_node));
             init=0
         )
         - reduce(
             +,
-            flow[u, n, d, t] * tax_net_flow[(node=n1, t=t)] * duration(t)
-            for (n1,) in indices(tax_net_flow)
-            for (u, n, d, t) in flow_indices(node=n1, direction=direction(:from_node));
+            unit_flow[u, n, d, t] * tax_net_unit_flow[(node=n1, t=t)] * duration(t)
+            for (n1,) in indices(tax_net_unit_flow)
+            for (u, n, d, t) in unit_flow_indices(node=n1, direction=direction(:from_node));
             init=0
         )
         + reduce(
             +,
-            flow[u, n, d, t] * tax_out_flow[(node=n1, t=t)] * duration(t)
-            for (n1,) in indices(tax_out_flow)
-            for (u, n, d, t) in flow_indices(node=n1, direction=direction(:from_node));
+            unit_flow[u, n, d, t] * tax_out_unit_flow[(node=n1, t=t)] * duration(t)
+            for (n1,) in indices(tax_out_unit_flow)
+            for (u, n, d, t) in unit_flow_indices(node=n1, direction=direction(:from_node));
             init=0
         )
         + reduce(
             +,
-            flow[u, n, d, t] * tax_in_flow[(node=n1, t=t)] * duration(t)
-            for (n1,) in indices(tax_out_flow)
-            for (u, n, d, t) in flow_indices(node=n1, direction=direction(:to_node));
+            unit_flow[u, n, d, t] * tax_in_unit_flow[(node=n1, t=t)] * duration(t)
+            for (n1,) in indices(tax_out_unit_flow)
+            for (u, n, d, t) in unit_flow_indices(node=n1, direction=direction(:to_node));
             init=0
         )
     )

@@ -20,17 +20,17 @@
 """
     fixed_om_costs(m)
 
-Variable operation costs defined on flows.
+Fixed operation costs of units.
 """
 function fixed_om_costs(m)
     @expression(
         m,
         reduce(
             +,
-            + unit_capacity[(unit=u, direction=d, t=t)] 
+            + unit_capacity[(unit=u, node=n, direction=d, t=t)] 
             * number_of_units[(unit=u, t=t)] 
             * fom_cost[(unit=u, t=t)]
-            for (u, d) in indices(unit_capacity; unit=indices(fom_cost))
+            for (u, n, d) in indices(unit_capacity; unit=indices(fom_cost))
             for t in time_slice();
             init=0
         )

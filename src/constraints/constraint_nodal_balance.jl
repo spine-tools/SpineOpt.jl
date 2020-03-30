@@ -23,7 +23,7 @@
 Balance equation for nodes.
 """
 function add_constraint_nodal_balance!(m::Model)
-    @fetch node_state, trans, flow = m.ext[:variables]
+    @fetch node_state, connection_flow, unit_flow = m.ext[:variables]
     cons = m.ext[:constraints][:nodal_balance] = Dict()
     for (n, tb) in node__temporal_block()
         for t_after in time_slice(temporal_block=tb)
@@ -58,29 +58,29 @@ function add_constraint_nodal_balance!(m::Model)
                     # Commodity flows from units
                     + reduce(
                         +,
-                        flow[u, n, d, t1]
-                        for (u, n, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:to_node));
+                        unit_flow[u, n, d, t1]
+                        for (u, n, d, t1) in unit_flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:to_node));
                         init=0
                     )
                     # Commodity flows to units
                     - reduce(
                         +,
-                        flow[u, n, d, t1]
-                        for (u, n, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:from_node));
+                        unit_flow[u, n, d, t1]
+                        for (u, n, d, t1) in unit_flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:from_node));
                         init=0
                     )
                     # Commodity transfers from connections
                     + reduce(
                         +,
-                        trans[conn, n, d, t1]
-                        for (conn, n, d, t1) in trans_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:to_node));
+                        connection_flow[conn, n, d, t1]
+                        for (conn, n, d, t1) in connection_flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:to_node));
                         init=0
                     )
                     # Commodity transfers to connections
                     - reduce(
                         +,
-                        trans[conn, n, d, t1]
-                        for (conn, n, d, t1) in trans_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:from_node));
+                        connection_flow[conn, n, d, t1]
+                        for (conn, n, d, t1) in connection_flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:from_node));
                         init=0
                     )
                     # Demand for the commodity

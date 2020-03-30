@@ -19,23 +19,23 @@
 
 
 """
-    add_constraint_max_cum_in_flow_bound!(m::Model)
+    add_constraint_max_cum_in_unit_flow_bound!(m::Model)
 
 Set upperbound `max_cum_in_flow_bound `to the cumulated inflow
-into a `unit_group ug` if `max_cum_in_flow_bound` exists.
+into a `unit_group ug` if `max_cum_in_unit_flow_bound` exists.
 """
-function add_constraint_max_cum_in_flow_bound!(m::Model)
-    @fetch flow = m.ext[:variables]
-    cons = m.ext[:constraints][:max_cum_in_flow_bound] = Dict()
-    for (ug,) in indices(max_cum_in_flow_bound)
+function add_constraint_max_cum_in_unit_flow_bound!(m::Model)
+    @fetch unit_flow = m.ext[:variables]
+    cons = m.ext[:constraints][:max_cum_in_unit_flow_bound] = Dict()
+    for (ug,) in indices(max_cum_in_unit_flow_bound)
         cons[ug] = @constraint(
             m,
             + sum(
-                flow[u, n, d, t]
-                for (u, n, d, t) in flow_indices(direction=direction(:from_node), unit=ug)
+                unit_flow[u, n, d, t]
+                for (u, n, d, t) in unit_flow_indices(direction=direction(:from_node), unit=ug)
             )
             <=
-            + max_cum_in_flow_bound(unit=ug) # TODO: Calling this parameter with brackets `max_cum_in_flow_bound[(unit=ug)]` fails.
+            + max_cum_in_unit_flow_bound(unit=ug) # TODO: Calling this parameter with brackets `max_cum_in_unit_flow_bound[(unit=ug)]` fails.
         )
     end
 end
