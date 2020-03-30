@@ -28,8 +28,8 @@ number_of_unit, unit_conv_cap_to_flow, unit_availability_factor` exist.
 function add_constraint_minimum_operating_point!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][:minimum_operating_point] = Dict()
-    for (u_, n, d) in intersect(indices(minimum_operating_point), indices(unit_capacity))
-        for (u, t) in units_on_indices(unit=u_)
+    for (u, n, d) in intersect(indices(minimum_operating_point), indices(unit_capacity))
+        for (u, t) in units_on_indices(unit=u)
             cons[u, n, d, t] = @constraint(
                 m,
                 unit_flow[u, n, d, t]

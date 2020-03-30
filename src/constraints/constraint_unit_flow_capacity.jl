@@ -27,7 +27,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][:unit_flow_capacity] = Dict()
     for (u, n, d) in indices(unit_capacity)
-        for t in time_slice() # TODO: Should we have a check for `unit_flow_indices` here?
+        for (u, n, d, t) in unit_flow_indices(unit=u, node=n, direction=d)
             cons[u, n, d, t] = @constraint(
                 m,
                 unit_flow[u, n, d, t] * duration(t)
