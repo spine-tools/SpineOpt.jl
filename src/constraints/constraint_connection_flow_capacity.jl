@@ -27,22 +27,16 @@ Check if `connection_conv_cap_to_flow` is defined.
 function add_constraint_connection_flow_capacity!(m::Model)
     @fetch connection_flow = m.ext[:variables]
     cons = m.ext[:constraints][:connection_flow_capacity] = Dict()
-    for (conn_, n, d) in indices(connection_capacity)
-        for (conn,) in indices(connection_availability_factor; connection=conn_)
-            for t in time_slice()
+    for (conn, n, d) in indices(connection_capacity)
+        for (conn,) in indices(connection_availability_factor; connection=conn)
+            for (conn, n, d, t) in connection_flow_indices(connection=conn, node=n, direction=d)
                 cons[conn, n, t] = @constraint(
                     m,
-                    + reduce(
-                        +,
-                        connection_flow[conn1, n1, d1, t1] * duration(t1)
-                        for (conn1, n1, d1, t1) in connection_flow_indices(connection=conn, node=n, direction=d, t=t);
-                        init=0
-                    )
+                    connection_flow[conn, n, d, t]
                     <=
                     + connection_capacity[(connection=conn, node=n, direction=d, t=t)]
                     * connection_availability_factor[(connection=conn, t=t)]
                     * connection_conv_cap_to_flow[(connection=conn, node=n, direction=d, t=t)]
-                    * duration(t)
                 )
             end
         end

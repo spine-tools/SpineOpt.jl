@@ -27,7 +27,7 @@ if it exists.
 function add_constraint_node_state_capacity!(m::Model)
     @fetch node_state = m.ext[:variables]
     cons = m.ext[:constraints][:node_state_capacity] = Dict()
-    for (n,) in indices(node_state_cap)
+    for n in indices(node_state_cap)
         for (n, t) in node_state_indices(node=n)
             cons[n, t] = @constraint(
                 m,
