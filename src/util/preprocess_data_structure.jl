@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function generate_special_handlers()
+function preprocess_data_structure()
     generate_direction()
     generate_variable_indices()
 end

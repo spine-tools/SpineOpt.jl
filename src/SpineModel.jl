@@ -47,7 +47,7 @@ include("util/missing_item_handlers.jl")
 include("util/misc.jl")
 include("util/run_spinemodel.jl")
 include("util/update_model.jl")
-include("util/generate_special_handlers.jl")
+include("util/preprocess_data_structure.jl")
 
 include("variables/variable_common.jl")
 include("variables/variable_unit_flow.jl")

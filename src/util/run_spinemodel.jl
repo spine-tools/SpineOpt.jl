@@ -81,9 +81,9 @@ function run_spinemodel(
     level3 = log_level >= 3
     results = Dict()
     @log level0 "Running Spine Model for $(url_in)..."
-    @logtime level2 "Creating convenience functions..." using_spinedb(url_in, @__MODULE__; upgrade=true)
+    @logtime level2 "Initializing data structure from db..." using_spinedb(url_in, @__MODULE__; upgrade=true)
+    @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
-    @logtime level2 "Generating special handlers..." generate_special_handlers()
     @log level1 "Window 1: $current_window"
     @logtime level2 "Initializing model..." begin
         m = Model(with_optimizer)
