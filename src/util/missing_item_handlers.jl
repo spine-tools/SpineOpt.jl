@@ -35,38 +35,32 @@ struct MissingItemHandler
     MissingItemHandler(name, value) = new(name, value, false)
 end
 
-"""
-    (f::MissingItemHandler)(args...; kwargs...)
-
-The `value` field of `f`. Warn the user that this is a missing item handler.
-"""
-function (f::MissingItemHandler)(args...; kwargs...)
-    if !f.handled[]
-        @warn "`$(f.name)` is missing"
-        f.handled[] = true
+function (item::MissingItemHandler)(args...; kwargs...)
+    if !item.handled[]
+        @warn "`$(item.name)` is missing"
+        item.handled[] = true
     end
-    f.value
+    item.value
 end
 
-
-function SpineInterface.indices(f::MissingItemHandler; kwargs...)
-    if !f.handled[]
-        @warn "`$(f.name)` is missing"
-        f.handled[] = true
+function SpineInterface.indices(item::MissingItemHandler; kwargs...)
+    if !item.handled[]
+        @warn "`$(item.name)` is missing"
+        item.handled[] = true
     end
     ()
 end
 
-function Base.append!(f::MissingItemHandler, value; kwargs...)
-    if !f.handled[]
-        @warn "`$(f.name)` is missing"
-        f.handled[] = true
+function Base.getproperty(item::MissingItemHandler, prop::Symbol)
+    prop in (:name, :value, :handled) && return getfield(item, prop)
+    if !item.handled[]
+        @warn "`$(item.name)` is missing"
+        item.handled[] = true
     end
-    f
+    []
 end
 
 const object_classes = [
-    :direction,
     :unit,
     :connection,
     :commodity,
@@ -76,6 +70,7 @@ const object_classes = [
     :output,
     :report,
 ]
+
 const relationship_classes = [
     :unit__from_node,
     :unit__to_node,
@@ -93,6 +88,7 @@ const relationship_classes = [
     :commodity_group__node_group,
     :report__output,
 ]
+
 const parameters = [
     (:model_start, nothing),
     (:model_end, nothing),
@@ -159,6 +155,7 @@ const parameters = [
     (:fuel_cost, nothing),
     (:connection_flow_delay, Second(0)),
 ]
+
 for name in [object_classes; relationship_classes]
     quoted_name = Expr(:quote, name)
     @eval $name = MissingItemHandler($quoted_name, ())
