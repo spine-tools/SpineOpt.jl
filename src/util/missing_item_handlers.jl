@@ -35,67 +35,60 @@ struct MissingItemHandler
     MissingItemHandler(name, value) = new(name, value, false)
 end
 
-"""
-    (f::MissingItemHandler)(args...; kwargs...)
-
-The `value` field of `f`. Warn the user that this is a missing item handler.
-"""
-function (f::MissingItemHandler)(args...; kwargs...)
-    if !f.handled[]
-        @warn "`$(f.name)` is missing"
-        f.handled[] = true
+function (item::MissingItemHandler)(args...; kwargs...)
+    if !item.handled[]
+        @warn "`$(item.name)` is missing"
+        item.handled[] = true
     end
-    f.value
+    item.value
 end
 
-
-function SpineInterface.indices(f::MissingItemHandler; kwargs...)
-    if !f.handled[]
-        @warn "`$(f.name)` is missing"
-        f.handled[] = true
+function SpineInterface.indices(item::MissingItemHandler; kwargs...)
+    if !item.handled[]
+        @warn "`$(item.name)` is missing"
+        item.handled[] = true
     end
     ()
 end
 
-function Base.append!(f::MissingItemHandler, value; kwargs...)
-    if !f.handled[]
-        @warn "`$(f.name)` is missing"
-        f.handled[] = true
+function Base.getproperty(item::MissingItemHandler, prop::Symbol)
+    prop in (:name, :value, :handled) && return getfield(item, prop)
+    if !item.handled[]
+        @warn "`$(item.name)` is missing"
+        item.handled[] = true
     end
-    f
+    []
 end
 
 const object_classes = [
-    :direction,
     :unit,
     :connection,
-    :storage,
     :commodity,
     :node,
-    :temporal_block,
     :model,
+    :temporal_block,
     :output,
+    :report,
 ]
+
 const relationship_classes = [
-    :unit__node__direction,
-    :connection__node__direction,
+    :unit__from_node,
+    :unit__to_node,
+    :unit__node__node,
+    :connection__from_node,
+    :connection__to_node,
+    :connection__node__node,
     :node__commodity,
+    :node__node,
     :node__temporal_block,
     :unit_group__unit,
     :commodity_group__commodity,
     :node_group__node,
     :unit_group__commodity_group,
     :commodity_group__node_group,
-    :unit__commodity,
-    :unit__commodity__direction,
-    :unit__commodity__commodity,
-    :connection__node__node,
-    :storage__unit,
-    :storage__connection,
-    :storage__commodity,
-    :storage__storage,
     :report__output,
 ]
+
 const parameters = [
     (:model_start, nothing),
     (:model_end, nothing),
@@ -108,52 +101,51 @@ const parameters = [
     (:start_up_cost, nothing),
     (:shut_down_cost, nothing),
     (:number_of_units, nothing),
-    (:avail_factor, nothing),
+    (:unit_availability_factor, nothing),
     (:min_down_time, nothing),
     (:min_up_time, nothing),
-    (:demand, nothing),
     (:online_variable_type, nothing),
-    (:state_coeff, 1),
-    (:stor_state_cap, nothing),
-    (:stor_state_min, 0),
+    (:fix_units_on, nothing),
+    (:demand, nothing),
+    (:state_coeff, 0),
+    (:has_state, nothing),
+    (:node_state_cap, nothing),
+    (:node_state_min, 0),
     (:frac_state_loss, 0),
     (:diff_coeff, 0),
     (:unit_conv_cap_to_flow, nothing),
     (:unit_capacity, nothing),
-    (:conn_capacity, nothing),
+    (:connection_capacity, nothing),
+    (:connection_conv_cap_to_flow, nothing),
+    (:connection_availability_factor, nothing),
     (:operating_cost, nothing),
     (:vom_cost, nothing),
-    (:tax_net_flow, nothing),
-    (:tax_out_flow, nothing),
-    (:tax_in_flow, nothing),
-    (:fix_ratio_out_in_flow, nothing),
-    (:fix_ratio_in_in_flow, nothing),
-    (:fix_ratio_out_out_flow, nothing),
-    (:max_ratio_out_in_flow, nothing),
-    (:max_ratio_in_in_flow, nothing),
-    (:max_ratio_out_out_flow, nothing),
-    (:min_ratio_out_in_flow, nothing),
-    (:min_ratio_in_in_flow, nothing),
-    (:min_ratio_out_out_flow, nothing),
-    (:fix_ratio_out_in_trans, nothing),
-    (:fix_ratio_in_in_trans, nothing),
-    (:fix_ratio_out_out_trans, nothing),
-    (:max_ratio_out_in_trans, nothing),
-    (:max_ratio_in_in_trans, nothing),
-    (:max_ratio_out_out_trans, nothing),
-    (:min_ratio_out_in_trans, nothing),
-    (:min_ratio_in_in_trans, nothing),
-    (:min_ratio_out_out_trans, nothing),
+    (:tax_net_unit_flow, nothing),
+    (:tax_out_unit_flow, nothing),
+    (:tax_in_unit_flow, nothing),
+    (:fix_ratio_out_in_unit_flow, nothing),
+    (:fix_ratio_in_in_unit_flow, nothing),
+    (:fix_ratio_out_out_unit_flow, nothing),
+    (:max_ratio_out_in_unit_flow, nothing),
+    (:max_ratio_in_in_unit_flow, nothing),
+    (:max_ratio_out_out_unit_flow, nothing),
+    (:min_ratio_out_in_unit_flow, nothing),
+    (:min_ratio_in_in_unit_flow, nothing),
+    (:min_ratio_out_out_unit_flow, nothing),
+    (:fix_ratio_out_in_connection_flow, nothing),
+    (:fix_ratio_in_in_connection_flow, nothing),
+    (:fix_ratio_out_out_connection_flow, nothing),
+    (:max_ratio_out_in_connection_flow, nothing),
+    (:max_ratio_in_in_connection_flow, nothing),
+    (:max_ratio_out_out_connection_flow, nothing),
+    (:min_ratio_out_in_connection_flow, nothing),
+    (:min_ratio_in_in_connection_flow, nothing),
+    (:min_ratio_out_out_connection_flow, nothing),
     (:minimum_operating_point, nothing),
-    (:stor_unit_discharg_eff, nothing),
-    (:stor_unit_charg_eff, nothing),
-    (:stor_conn_discharg_eff, nothing),
-    (:stor_conn_charg_eff, nothing),
-    (:max_cum_in_flow_bound, nothing),
-    (:fix_flow, nothing),
-    (:fix_trans, nothing),
-    (:fix_stor_state, nothing),
-    (:fix_units_on, nothing),
+    (:max_cum_in_unit_flow_bound, nothing),
+    (:fix_unit_flow, nothing),
+    (:fix_connection_flow, nothing),
+    (:fix_node_state, nothing),
     (:output_db_url, nothing),
     (:horizon_start_datetime, 0),
     (:horizon_end_datetime, 0),
@@ -161,8 +153,9 @@ const parameters = [
     (:reoptimization_frequency, 0),
     (:rolling_window_duration, 0),
     (:fuel_cost, nothing),
-    (:trans_delay, Second(0)),
+    (:connection_flow_delay, Second(0)),
 ]
+
 for name in [object_classes; relationship_classes]
     quoted_name = Expr(:quote, name)
     @eval $name = MissingItemHandler($quoted_name, ())

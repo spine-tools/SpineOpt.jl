@@ -21,47 +21,24 @@
 """
     add_constraint_minimum_operating_point!(m::Model)
 
-Limit the maximum in/out `flow` of a `unit` if the parameters `unit_capacity,
-number_of_unit, unit_conv_cap_to_flow, avail_factor` exist.
+Limit the maximum in/out `unit_flow` of a `unit` if the parameters `unit_capacity,
+number_of_unit, unit_conv_cap_to_flow, unit_availability_factor` exist.
 """
 
 function add_constraint_minimum_operating_point!(m::Model)
-    @fetch flow, units_on = m.ext[:variables]
+    @fetch unit_flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][:minimum_operating_point] = Dict()
-    for (u, c) in indices(minimum_operating_point)
-        for (u, c, d) in indices(unit_capacity; unit=u, commodity=c)
-            for (u, t) in units_on_indices(unit=u)
-                cons[u, c, d, t] = @constraint(
-                    m,
-                    + sum(
-                        flow[u_, n, c_, d_, t1]
-                        for (u_, n, c_, d_, t1) in flow_indices(unit=u, commodity=c, direction = d, t=t)
-                    )
-                    >=
-                    + units_on[u, t]
-                    * minimum_operating_point(unit=u, commodity=c, t=t)
-                    * unit_capacity(unit=u, commodity=c, direction=d, t=t)
-                    * unit_conv_cap_to_flow(unit=u, commodity=c, t=t)
-                )
-            end
-        end
-    end
-end
-
-function update_constraint_minimum_operating_point!(m::Model)
-    @fetch units_on = m.ext[:variables]
-    cons = m.ext[:constraints][:minimum_operating_point]
-    for (u, c) in indices(minimum_operating_point)
-        for (u, c, d) in indices(unit_capacity; unit=u, commodity=c)
-            for (u, t) in units_on_indices(unit=u)
-                set_normalized_coefficient(
-                    cons[u, c, d, t],
-                    units_on[u, t],
-                    - minimum_operating_point(unit=u, commodity=c, t=t)
-                    * unit_capacity(unit=u, commodity=c, direction=d, t=t)
-                    * unit_conv_cap_to_flow(unit=u, commodity=c, t=t)
-                )
-            end
+    for (u, n, d) in intersect(indices(minimum_operating_point), indices(unit_capacity))
+        for (u, t) in units_on_indices(unit=u)
+            cons[u, n, d, t] = @constraint(
+                m,
+                unit_flow[u, n, d, t]
+                >=
+                + units_on[u, t]
+                * minimum_operating_point[(unit=u, node=n, direction=d, t=t)]
+                * unit_capacity[(unit=u, node=n, direction=d, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
+            )
         end
     end
 end

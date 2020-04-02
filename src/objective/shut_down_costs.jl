@@ -28,8 +28,8 @@ function shut_down_costs(m::Model)
         m,
         reduce(
             +,
-            shut_down_cost(unit=u) * units_shut_down[u, t]
-            for (u, t) in units_on_indices() if shut_down_cost(unit=u) != nothing;
+            shut_down_cost[(unit=u, t=t)] * units_shut_down[u, t]
+            for (u, t) in units_on_indices(unit=indices(shut_down_cost));
             init=0
         )
     )

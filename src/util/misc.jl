@@ -17,8 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+# override `get` and `getindex` so we can access our variable dicts with a `Tuple` instead of the actual `NamedTuple`
+function Base.get(d::Dict{K,VariableRef}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:Relationship{J}}
+    Base.get(d, NamedTuple{J}(key), default)
+end
+
 function Base.getindex(d::Dict{K,VariableRef}, key::ObjectLike...) where {J,K<:Relationship{J}}
-    Base.getindex(d, NamedTuple{J}(values(key)))
+    Base.getindex(d, NamedTuple{J}(key))
 end
 
 """

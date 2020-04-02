@@ -20,57 +20,73 @@
 """
     add_constraint_nodal_balance!(m::Model)
 
-Enforce balance of all commodity flows from and to a node.
+Balance equation for nodes.
 """
 function add_constraint_nodal_balance!(m::Model)
-	@fetch flow, trans = m.ext[:variables]
+    @fetch node_state, connection_flow, unit_flow = m.ext[:variables]
     cons = m.ext[:constraints][:nodal_balance] = Dict()
-	for (n, tblock) in node__temporal_block()
-        for t in time_slice(temporal_block=tblock)
-            cons[n, t] = @constraint(
-                m,
-                # Commodity flows from units
-                + reduce(
-                    +,
-                    flow[u, n, c, d, t1] * duration(t1)
-                    for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=direction(:to_node));
-                    init=0
+    for (n, tb) in node__temporal_block()
+        for t_after in time_slice(temporal_block=tb)
+            for t_before in t_before_t(t_after=t_after)
+                cons[n, t_before, t_after] = @constraint(
+                    m,
+                    # Change in node commodity content
+                    (
+                        get(node_state, (n, t_after), 0) * state_coeff[(node=n, t=t_after)]
+                        - get(node_state, (n, t_before), 0) * state_coeff[(node=n, t=t_before)]
+                    )
+                        / duration(t_after)
+                    ==
+                    # Self-discharge commodity losses
+                    - get(node_state, (n, t_after), 0) * frac_state_loss[(node=n, t=t_after)]
+                    # Diffusion of commodity from this node to other nodes
+                    - reduce(
+                        +,
+                        get(node_state, (n, t_after), 0)
+                        * diff_coeff[(node1=n, node2=n_, t=t_after)]
+                        for n_ in node__node(node1=n);
+                        init = 0
+                    )
+                    # Diffusion of commodity from other nodes to this one
+                    + reduce(
+                        +,
+                        get(node_state, (n_, t_after), 0)
+                        * diff_coeff[(node1=n_, node2=n, t=t_after)]
+                        for n_ in node__node(node2=n);
+                        init = 0
+                    )
+                    # Commodity flows from units
+                    + reduce(
+                        +,
+                        unit_flow[u, n, d, t1]
+                        for (u, n, d, t1) in unit_flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:to_node));
+                        init=0
+                    )
+                    # Commodity flows to units
+                    - reduce(
+                        +,
+                        unit_flow[u, n, d, t1]
+                        for (u, n, d, t1) in unit_flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:from_node));
+                        init=0
+                    )
+                    # Commodity flows from connections
+                    + reduce(
+                        +,
+                        connection_flow[conn, n, d, t1]
+                        for (conn, n, d, t1) in connection_flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:to_node));
+                        init=0
+                    )
+                    # Commodity flows to connections
+                    - reduce(
+                        +,
+                        connection_flow[conn, n, d, t1]
+                        for (conn, n, d, t1) in connection_flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:from_node));
+                        init=0
+                    )
+                    # Demand for the commodity
+                    - demand[(node=n, t=t_after)]
                 )
-                # Commodity flows to units
-                - reduce(
-                    +,
-                    flow[u, n, c, d, t1] * duration(t1)
-                    for (u, n, c, d, t1) in flow_indices(node=n, t=t_in_t(t_long=t), direction=direction(:from_node));
-                    init=0
-                )
-                # Commodity transfers from connections
-                + reduce(
-                    +,
-                    trans[conn, n, c, d, t1] * duration(t1)
-                    for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=direction(:to_node));
-                    init=0
-                )
-                # Commodity transfers to connections
-                - reduce(
-                    +,
-                    trans[conn, n, c, d, t1] * duration(t1)
-                    for (conn, n, c,d,t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=direction(:from_node));
-                    init=0
-                )
-                ==
-                # Demand for the commodity
-                demand(node=n, t=t) * duration(t)
-            )
-        end
-    end
-end
-
-
-function update_constraint_nodal_balance!(m::Model)
-    cons = m.ext[:constraints][:nodal_balance]
-    for (n, tblock) in node__temporal_block()
-        for t in time_slice(temporal_block=tblock)
-            set_normalized_rhs(cons[n, t], demand(node=n, t=t) * duration(t))
+            end
         end
     end
 end

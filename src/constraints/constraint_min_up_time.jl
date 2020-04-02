@@ -27,8 +27,8 @@ Constraint running by minimum up time.
 function add_constraint_min_up_time!(m::Model)
     @fetch units_on, units_started_up = m.ext[:variables]
     cons = m.ext[:constraints][:min_up_time] = Dict()
-    for (u, t) in units_on_indices()
-        if min_up_time(unit=u) != nothing
+    for u in indices(min_up_time)
+        for (u, t) in units_on_indices(unit=u)
             cons[u, t] = @constraint(
                 m,
                 + units_on[u, t]
@@ -43,5 +43,3 @@ function add_constraint_min_up_time!(m::Model)
         end
     end
 end
-
-update_constraint_min_up_time!(m::Model) = nothing

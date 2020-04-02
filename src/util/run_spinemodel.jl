@@ -24,7 +24,7 @@ Keyword arguments have the same purpose as for [`run_spinemodel`](@ref).
 """
 function run_spinemodel(
         url::String; 
-        with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0), 
+        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0),
         cleanup=true, 
         add_constraints=m -> nothing, 
         update_constraints=m -> nothing, 
@@ -70,7 +70,7 @@ set to `nothing` after completion.
 function run_spinemodel(
         url_in::String,
         url_out::String;
-        with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0),
+        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
         cleanup=true,
         add_constraints=m -> nothing, 
         update_constraints=m -> nothing, 
@@ -81,9 +81,9 @@ function run_spinemodel(
     level3 = log_level >= 3
     results = Dict()
     @log level0 "Running Spine Model for $(url_in)..."
-    @logtime level2 "Creating convenience functions..." using_spinedb(url_in, @__MODULE__; upgrade=true)
+    @logtime level2 "Initializing data structure from db..." using_spinedb(url_in, @__MODULE__; upgrade=true)
+    @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
-    @logtime level2 "Generating indices..." generate_variable_indices()
     @log level1 "Window 1: $current_window"
     @logtime level2 "Initializing model..." begin
         m = Model(with_optimizer)
@@ -97,22 +97,21 @@ function run_spinemodel(
         set_objective!(m)
     end
     @logtime level2 "Adding constraints...\n" begin
-        @logtime level3 "- [constraint_flow_capacity]" add_constraint_flow_capacity!(m)
-        @logtime level3 "- [constraint_fix_ratio_out_in_flow]" add_constraint_fix_ratio_out_in_flow!(m)
-        @logtime level3 "- [constraint_max_ratio_out_in_flow]" add_constraint_max_ratio_out_in_flow!(m)
-        @logtime level3 "- [constraint_min_ratio_out_in_flow]" add_constraint_min_ratio_out_in_flow!(m)
-        @logtime level3 "- [constraint_fix_ratio_out_out_flow]" add_constraint_fix_ratio_out_out_flow!(m)
-        @logtime level3 "- [constraint_max_ratio_out_out_flow]" add_constraint_max_ratio_out_out_flow!(m)
-        @logtime level3 "- [constraint_fix_ratio_in_in_flow]" add_constraint_fix_ratio_in_in_flow!(m)
-        @logtime level3 "- [constraint_max_ratio_in_in_flow]" add_constraint_max_ratio_in_in_flow!(m)
-        @logtime level3 "- [constraint_fix_ratio_out_in_trans]" add_constraint_fix_ratio_out_in_trans!(m)
-        @logtime level3 "- [constraint_max_ratio_out_in_trans]" add_constraint_max_ratio_out_in_trans!(m)
-        @logtime level3 "- [constraint_min_ratio_out_in_trans]" add_constraint_min_ratio_out_in_trans!(m)
-        @logtime level3 "- [constraint_trans_capacity]" add_constraint_trans_capacity!(m)
+        @logtime level3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
+        @logtime level3 "- [constraint_fix_ratio_out_in_unit_flow]" add_constraint_fix_ratio_out_in_unit_flow!(m)
+        @logtime level3 "- [constraint_max_ratio_out_in_unit_flow]" add_constraint_max_ratio_out_in_unit_flow!(m)
+        @logtime level3 "- [constraint_min_ratio_out_in_unit_flow]" add_constraint_min_ratio_out_in_unit_flow!(m)
+        @logtime level3 "- [constraint_fix_ratio_out_out_unit_flow]" add_constraint_fix_ratio_out_out_unit_flow!(m)
+        @logtime level3 "- [constraint_max_ratio_out_out_unit_flow]" add_constraint_max_ratio_out_out_unit_flow!(m)
+        @logtime level3 "- [constraint_fix_ratio_in_in_unit_flow]" add_constraint_fix_ratio_in_in_unit_flow!(m)
+        @logtime level3 "- [constraint_max_ratio_in_in_unit_flow]" add_constraint_max_ratio_in_in_unit_flow!(m)
+        @logtime level3 "- [constraint_fix_ratio_out_in_connection_flow]" add_constraint_fix_ratio_out_in_connection_flow!(m)
+        @logtime level3 "- [constraint_max_ratio_out_in_connection_flow]" add_constraint_max_ratio_out_in_connection_flow!(m)
+        @logtime level3 "- [constraint_min_ratio_out_in_connection_flow]" add_constraint_min_ratio_out_in_connection_flow!(m)
+        @logtime level3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)
         @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
-        @logtime level3 "- [constraint_max_cum_in_flow_bound]" add_constraint_max_cum_in_flow_bound!(m)
-        @logtime level3 "- [constraint_stor_capacity]" add_constraint_stor_capacity!(m)
-        @logtime level3 "- [constraint_stor_state]" add_constraint_stor_state!(m)
+        @logtime level3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
+        @logtime level3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
         @logtime level3 "- [constraint_units_on]" add_constraint_units_on!(m)
         @logtime level3 "- [constraint_units_available]" add_constraint_units_available!(m)
         @logtime level3 "- [constraint_minimum_operating_point]" add_constraint_minimum_operating_point!(m)
@@ -122,54 +121,36 @@ function run_spinemodel(
         @logtime level3 "- [constraint_user]" add_constraints(m)
     end
     k = 2
-    while true
-        @logtime level2 "Solving model..." optimize!(m)
-        if termination_status(m) == MOI.OPTIMAL
-            @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
-            @logtime level2 "Saving results..." begin
-                save_values!(m)
-                save_results!(results, m)
-            end
-        else
-            @log level1 "Unable to find solution (reason: $(termination_status(m)))"
-            break
+    while optimize_model!(m)
+        @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
+        @logtime level2 "Saving results..." begin
+            save_values!(m)
+            save_results!(results, m)
         end
         roll_temporal_structure() || break
         @log level1 "Window $k: $current_window"
         @logtime level2 "Updating model..." begin            
             update_variables!(m)
             fix_variables!(m)
-            set_objective!(m)
+            update_varying_objective!(m)
         end
-        @logtime level2 "Updating constraints...\n" begin
-            @logtime level3 "- [constraint_flow_capacity]" update_constraint_flow_capacity!(m)
-            @logtime level3 "- [constraint_fix_ratio_out_in_flow]" update_constraint_fix_ratio_out_in_flow!(m)
-            @logtime level3 "- [constraint_max_ratio_out_in_flow]" update_constraint_max_ratio_out_in_flow!(m)
-            @logtime level3 "- [constraint_min_ratio_out_in_flow]" update_constraint_min_ratio_out_in_flow!(m)
-            @logtime level3 "- [constraint_fix_ratio_out_out_flow]" update_constraint_fix_ratio_out_out_flow!(m)
-            @logtime level3 "- [constraint_max_ratio_out_out_flow]" update_constraint_max_ratio_out_out_flow!(m)
-            @logtime level3 "- [constraint_fix_ratio_in_in_flow]" update_constraint_fix_ratio_in_in_flow!(m)
-            @logtime level3 "- [constraint_max_ratio_in_in_flow]" update_constraint_max_ratio_in_in_flow!(m)
-            @logtime level3 "- [constraint_fix_ratio_out_in_trans]" update_constraint_fix_ratio_out_in_trans!(m)
-            @logtime level3 "- [constraint_max_ratio_out_in_trans]" update_constraint_max_ratio_out_in_trans!(m)
-            @logtime level3 "- [constraint_min_ratio_out_in_trans]" update_constraint_min_ratio_out_in_trans!(m)
-            @logtime level3 "- [constraint_trans_capacity]" update_constraint_trans_capacity!(m)
-            @logtime level3 "- [constraint_nodal_balance]" update_constraint_nodal_balance!(m)
-            @logtime level3 "- [constraint_stor_capacity]" update_constraint_stor_capacity!(m)
-            @logtime level3 "- [constraint_stor_state]" update_constraint_stor_state!(m)
-            @logtime level3 "- [constraint_units_on]" update_constraint_units_on!(m)
-            @logtime level3 "- [constraint_units_available]" update_constraint_units_available!(m)
-            @logtime level3 "- [constraint_minimum_operating_point]" update_constraint_minimum_operating_point!(m)
-            @logtime level3 "- [constraint_min_down_time]" update_constraint_min_up_time!(m)
-            @logtime level3 "- [constraint_min_up_time]" update_constraint_min_down_time!(m)
-            @logtime level3 "- [constraint_unit_state_transition]" update_constraint_unit_state_transition!(m)
-            @logtime level3 "- [constraint_user]" update_constraints(m)
-        end
+        @logtime level2 "Updating varying constraints..." update_varying_constraints!(m)
+        @logtime level2 "Updating user constraints..." update_constraints(m)
         k += 1
     end
     @logtime level2 "Writing report..." write_report(results, url_out)
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
     m
+end
+
+function optimize_model!(m::Model)
+    optimize!(m)
+    if termination_status(m) == MOI.OPTIMAL        
+        true
+    else
+        @log true "Unable to find solution (reason: $(termination_status(m)))"
+        false
+    end
 end
 
 """

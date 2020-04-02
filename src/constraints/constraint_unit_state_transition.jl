@@ -34,10 +34,9 @@ function add_constraint_unit_state_transition!(m::Model)
                 + units_on[u, t_after]
                 ==
                 + units_on[u, t_before]
-                + units_started_up[u, t_after] - units_shut_down[u, t_after]
+                + units_started_up[u, t_after]
+                - units_shut_down[u, t_after]
             )
         end
     end
 end
-
-update_constraint_unit_state_transition!(m::Model) = nothing

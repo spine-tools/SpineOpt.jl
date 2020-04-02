@@ -16,29 +16,30 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
-
 """
-    add_constraint_max_cum_in_flow_bound!(m::Model)
+    node_state_indices(filtering_options...)
 
-Set upperbound `max_cum_in_flow_bound `to the cumulated inflow of
-`commodity_group cg` into a `unit_group ug`
-if `max_cum_in_flow_bound` exists for the combination of `cg` and `ug`.
+A set of tuples for indexing the `node_state` variable. Any filtering options can be specified
+for `node`, and `t`.
 """
-function add_constraint_max_cum_in_flow_bound!(m::Model)
-    @fetch flow = m.ext[:variables]
-    cons = m.ext[:constraints][:max_cum_in_flow_bound] = Dict()
-    for (ug, cg) in indices(max_cum_in_flow_bound)
-        cons[ug, cg] = @constraint(
-            m,
-            + sum(
-                flow[u, n, c, d, t]
-                for (u, n, c, d, t) in flow_indices(direction=direction(:from_node), unit=ug, commodity=cg)
-            )
-            <=
-            + max_cum_in_flow_bound(unit=ug, commodity=cg)
+function node_state_indices(;node=anything, t=anything)
+    inds = NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}[
+        (node=n, t=t)
+        for (n, tb) in node_state_indices_rc(
+            node=node, _compact=false
         )
-    end
+        for t in time_slice(temporal_block=tb, t=t)
+    ]
+    unique!(inds)
 end
 
-update_constraint_max_cum_in_flow_bound!(m::Model) = nothing
+fix_node_state_(x) = fix_node_state(node=x.node, t=x.t, _strict=false)
+node_state_lb(x) = node_state_min(node=x.node)
+
+create_variable_node_state!(m::Model) = create_variable!(
+    m,
+    :node_state,
+    node_state_indices;
+    lb=node_state_lb
+)
+fix_variable_node_state!(m::Model) = fix_variable!(m, :node_state, node_state_indices, fix_node_state_)

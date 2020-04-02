@@ -21,14 +21,14 @@
     operating_costs(m::Model)
 """
 function operating_costs(m::Model)
-    @fetch flow = m.ext[:variables]
+    @fetch unit_flow = m.ext[:variables]
     @expression(
         m,
         reduce(
             +,
-            flow[u, n, c, d, t] * duration(t) * operating_cost(unit=u_, commodity=c_, direction=d_, t=t)
-            for (u_, c_, d_) in indices(operating_cost)
-            for (u, n, c, d, t) in flow_indices(unit=u_, commodity=c_, direction=d_);
+            unit_flow[u, n, d, t] * duration(t) * operating_cost[(unit=u_, node=n_, direction=d_, t=t)]
+            for (u_, n_, d_) in indices(operating_cost)
+            for (u, n, d, t) in unit_flow_indices(unit=u_, node=n_, direction=d_);
             init=0
         )
     )

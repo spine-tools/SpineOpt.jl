@@ -16,32 +16,31 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
 """
-    flow_indices(
-        commodity=anything,
+    connection_flow_indices(
+        connection=anything,
         node=anything,
-        unit=anything,
         direction=anything,
         t=anything
     )
 
-A list of `NamedTuple`s corresponding to indices of the `flow` variable.
+A list of `NamedTuple`s corresponding to indices of the `connection_flow` variable.
 The keyword arguments act as filters for each dimension.
 """
-function flow_indices(;commodity=anything, node=anything, unit=anything, direction=anything, t=anything)
-    unit = expand_unit_group(unit)
+function connection_flow_indices(;connection=anything, node=anything, direction=anything, t=anything)
     node = expand_node_group(node)
-    commodity = expand_commodity_group(commodity)
     [
-        (unit=u, node=n, commodity=c, direction=d, t=t1)
-        for (u, n, c, d, tb) in flow_indices_rc(
-            unit=unit, node=node, commodity=commodity, direction=direction, _compact=false
+        (connection=conn, node=n, direction=d, t=t1)
+        for (conn, n, d, tb) in connection_flow_indices_rc(
+            connection=connection, node=node, direction=direction, _compact=false
         )
         for t1 in time_slice(temporal_block=tb, t=t)
     ]
 end
 
-fix_flow_(x) = fix_flow(unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false)
+fix_connection_flow_(x) = fix_connection_flow(connection=x.connection, node=x.node, direction=x.direction, t=x.t, _strict=false)
 
-create_variable_flow!(m::Model) = create_variable!(m, :flow, flow_indices; lb=x -> 0)
-fix_variable_flow!(m::Model) = fix_variable!(m, :flow, flow_indices, fix_flow_)
+create_variable_connection_flow!(m::Model) = create_variable!(m, :connection_flow, connection_flow_indices; lb=x -> 0)
+save_variable_connection_flow!(m::Model) = save_variable!(m, :connection_flow, connection_flow_indices)
+fix_variable_connection_flow!(m::Model) = fix_variable!(m, :connection_flow, connection_flow_indices, fix_connection_flow_)
