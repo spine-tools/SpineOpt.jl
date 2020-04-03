@@ -60,107 +60,32 @@ function Base.getproperty(item::MissingItemHandler, prop::Symbol)
     []
 end
 
-const object_classes = [
-    :unit,
-    :connection,
-    :commodity,
-    :node,
-    :model,
-    :temporal_block,
-    :output,
-    :report,
-]
+_parse_value(value::Nothing) = value
+_parse_value(value::Bool) = value
+_parse_value(value::Int64) = value
+_parse_value(value::Float64) = value
+_parse_value(value::String) = value
+_parse_value(value::Array) = value
+_parse_value(value::Dict) = SpineInterface.db_api.from_database(JSON.json(value)).value
 
-const relationship_classes = [
-    :unit__from_node,
-    :unit__to_node,
-    :unit__node__node,
-    :connection__from_node,
-    :connection__to_node,
-    :connection__node__node,
-    :node__commodity,
-    :node__node,
-    :node__temporal_block,
-    :unit_group__unit,
-    :commodity_group__commodity,
-    :node_group__node,
-    :unit_group__commodity_group,
-    :commodity_group__node_group,
-    :report__output,
-]
 
-const parameters = [
-    (:model_start, nothing),
-    (:model_end, nothing),
-    (:duration_unit, :minute),
-    (:roll_forward, nothing),
-    (:block_start, nothing),
-    (:block_end, nothing),
-    (:resolution, nothing),
-    (:fom_cost, nothing),
-    (:start_up_cost, nothing),
-    (:shut_down_cost, nothing),
-    (:number_of_units, nothing),
-    (:unit_availability_factor, nothing),
-    (:min_down_time, nothing),
-    (:min_up_time, nothing),
-    (:online_variable_type, nothing),
-    (:fix_units_on, nothing),
-    (:demand, nothing),
-    (:state_coeff, 0),
-    (:has_state, nothing),
-    (:node_state_cap, nothing),
-    (:node_state_min, 0),
-    (:frac_state_loss, 0),
-    (:diff_coeff, 0),
-    (:unit_conv_cap_to_flow, nothing),
-    (:unit_capacity, nothing),
-    (:connection_capacity, nothing),
-    (:connection_conv_cap_to_flow, nothing),
-    (:connection_availability_factor, nothing),
-    (:operating_cost, nothing),
-    (:vom_cost, nothing),
-    (:tax_net_unit_flow, nothing),
-    (:tax_out_unit_flow, nothing),
-    (:tax_in_unit_flow, nothing),
-    (:fix_ratio_out_in_unit_flow, nothing),
-    (:fix_ratio_in_in_unit_flow, nothing),
-    (:fix_ratio_out_out_unit_flow, nothing),
-    (:max_ratio_out_in_unit_flow, nothing),
-    (:max_ratio_in_in_unit_flow, nothing),
-    (:max_ratio_out_out_unit_flow, nothing),
-    (:min_ratio_out_in_unit_flow, nothing),
-    (:min_ratio_in_in_unit_flow, nothing),
-    (:min_ratio_out_out_unit_flow, nothing),
-    (:fix_ratio_out_in_connection_flow, nothing),
-    (:fix_ratio_in_in_connection_flow, nothing),
-    (:fix_ratio_out_out_connection_flow, nothing),
-    (:max_ratio_out_in_connection_flow, nothing),
-    (:max_ratio_in_in_connection_flow, nothing),
-    (:max_ratio_out_out_connection_flow, nothing),
-    (:min_ratio_out_in_connection_flow, nothing),
-    (:min_ratio_in_in_connection_flow, nothing),
-    (:min_ratio_out_out_connection_flow, nothing),
-    (:minimum_operating_point, nothing),
-    (:max_cum_in_unit_flow_bound, nothing),
-    (:fix_unit_flow, nothing),
-    (:fix_connection_flow, nothing),
-    (:fix_node_state, nothing),
-    (:output_db_url, nothing),
-    (:horizon_start_datetime, 0),
-    (:horizon_end_datetime, 0),
-    (:initial_condition_duration, 0),
-    (:reoptimization_frequency, 0),
-    (:rolling_window_duration, 0),
-    (:fuel_cost, nothing),
-    (:connection_flow_delay, Second(0)),
-]
-
-for name in [object_classes; relationship_classes]
-    quoted_name = Expr(:quote, name)
-    @eval $name = MissingItemHandler($quoted_name, ())
-end
-for (name, default) in parameters
-    quoted_name = Expr(:quote, name)
-    @eval $name = MissingItemHandler($quoted_name, $default)
+function generate_missing_item_handlers()
+    template_path = joinpath(dirname(pathof(@__MODULE__)), "..", "data", "spine_model_template.json")
+    template = JSON.parsefile(template_path)
+    for name in template["object_classes"]
+        symname = Symbol(name)
+        quoted_name = Expr(:quote, symname)
+        @eval $symname = MissingItemHandler($quoted_name, [])
+    end
+    for (name, object_class_names) in template["relationship_classes"]
+        symname = Symbol(name)
+        quoted_name = Expr(:quote, symname)
+        @eval $symname = MissingItemHandler($quoted_name, [])
+    end
+    for (class_name, name, default_value) in [template["object_parameters"]; template["relationship_parameters"]]
+        symname = Symbol(name)
+        parsed_value = _parse_value(default_value)
+        quoted_name = Expr(:quote, symname)
+        @eval $symname = MissingItemHandler($quoted_name, $parsed_value)
+    end
 end

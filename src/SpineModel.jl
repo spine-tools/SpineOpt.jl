@@ -28,6 +28,7 @@ using Dates
 using TimeZones
 using SpineInterface
 using Suppressor
+using JSON
 
 # Export utility
 export run_spinemodel
@@ -80,5 +81,10 @@ include("constraints/constraint_minimum_operating_point.jl")
 include("constraints/constraint_min_up_time.jl")
 include("constraints/constraint_min_down_time.jl")
 include("constraints/constraint_unit_state_transition.jl")
+
+
+function __init__()
+	generate_missing_item_handlers()
+end
 
 end
