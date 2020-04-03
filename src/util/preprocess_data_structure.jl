@@ -62,7 +62,7 @@ function generate_variable_indices()
     )
     node_state_indices = unique(
         (node=n, temporal_block=tb)
-        for n in node(has_state=Symbol("true"))
+        for n in node(has_state=Symbol("True"))
         for tb in node__temporal_block(node=n)
     )
     unit_flow_indices_rc = RelationshipClass(
