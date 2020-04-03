@@ -23,18 +23,18 @@ Run the Spine model from `url` and write report to the same `url`.
 Keyword arguments have the same purpose as for [`run_spinemodel`](@ref).
 """
 function run_spinemodel(
-        url::String; 
+        url::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0),
-        cleanup=true, 
-        add_constraints=m -> nothing, 
-        update_constraints=m -> nothing, 
+        cleanup=true,
+        add_constraints=m -> nothing,
+        update_constraints=m -> nothing,
         log_level=3)
     run_spinemodel(
-        url, url; 
-        with_optimizer=with_optimizer, 
-        cleanup=cleanup, 
-        add_constraints=add_constraints, 
-        update_constraints=update_constraints, 
+        url, url;
+        with_optimizer=with_optimizer,
+        cleanup=cleanup,
+        add_constraints=add_constraints,
+        update_constraints=update_constraints,
         log_level=log_level
     )
 end
@@ -72,8 +72,8 @@ function run_spinemodel(
         url_out::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
         cleanup=true,
-        add_constraints=m -> nothing, 
-        update_constraints=m -> nothing, 
+        add_constraints=m -> nothing,
+        update_constraints=m -> nothing,
         log_level=3)
     level0 = log_level >= 0
     level1 = log_level >= 1
@@ -105,6 +105,9 @@ function run_spinemodel(
         @logtime level3 "- [constraint_max_ratio_out_out_unit_flow]" add_constraint_max_ratio_out_out_unit_flow!(m)
         @logtime level3 "- [constraint_fix_ratio_in_in_unit_flow]" add_constraint_fix_ratio_in_in_unit_flow!(m)
         @logtime level3 "- [constraint_max_ratio_in_in_unit_flow]" add_constraint_max_ratio_in_in_unit_flow!(m)
+        @logtime level3 "- [constraint_fix_ratio_in_out_unit_flow]" add_constraint_fix_ratio_in_out_unit_flow!(m)
+        @logtime level3 "- [constraint_max_ratio_in_out_unit_flow]" add_constraint_max_ratio_in_out_unit_flow!(m)
+        @logtime level3 "- [constraint_min_ratio_in_out_unit_flow]" add_constraint_min_ratio_in_out_unit_flow!(m)
         @logtime level3 "- [constraint_fix_ratio_out_in_connection_flow]" add_constraint_fix_ratio_out_in_connection_flow!(m)
         @logtime level3 "- [constraint_max_ratio_out_in_connection_flow]" add_constraint_max_ratio_out_in_connection_flow!(m)
         @logtime level3 "- [constraint_min_ratio_out_in_connection_flow]" add_constraint_min_ratio_out_in_connection_flow!(m)
@@ -129,7 +132,7 @@ function run_spinemodel(
         end
         roll_temporal_structure() || break
         @log level1 "Window $k: $current_window"
-        @logtime level2 "Updating model..." begin            
+        @logtime level2 "Updating model..." begin
             update_variables!(m)
             fix_variables!(m)
             update_varying_objective!(m)
@@ -145,10 +148,12 @@ end
 
 function optimize_model!(m::Model)
     optimize!(m)
-    if termination_status(m) == MOI.OPTIMAL        
+    if termination_status(m) == MOI.OPTIMAL
         true
     else
         @log true "Unable to find solution (reason: $(termination_status(m)))"
+        # TODO: perhaps add the option to write the mps for diagnostics as follows
+        # write_to_file(m, "model_diagnostics.mps")
         false
     end
 end
