@@ -87,7 +87,7 @@ function add_constraint_nodal_balance!(m::Model)
                     - demand[(node=n, t=t_after)]
                     - reduce(
                         +,
-                        fractional_demand[(node=n, t=t_after)] * demand[(area=a, t=t_after)]
+                        fractional_demand[(node=n, area=a, t=t_after)] * demand[(area=a, t=t_after)]
                         for a in node__area(node=n);
                         init=0
                     )
