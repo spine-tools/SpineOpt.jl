@@ -32,14 +32,11 @@ function units_on_indices(;unit=anything, t=anything)
 end
 
 fix_units_on_(x) = fix_units_on(unit=x.unit, t=x.t, _strict=false)
-units_on_bin(x) = online_variable_type(unit=x.unit) == :binary
-units_on_int(x) = online_variable_type(unit=x.unit) == :integer
+units_on_bin(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_binary
+units_on_int(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_integer
 
 function create_variable_units_on!(m::Model)
     create_variable!(m, :units_on, units_on_indices; lb=x -> 0, bin=units_on_bin, int=units_on_int)
 end
 
 fix_variable_units_on!(m::Model) = fix_variable!(m, :units_on, units_on_indices, fix_units_on_)
-
-
-
