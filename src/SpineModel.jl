@@ -48,6 +48,7 @@ include("util/misc.jl")
 include("util/run_spinemodel.jl")
 include("util/update_model.jl")
 include("util/preprocess_data_structure.jl")
+include("util/network_functions.jl")
 
 include("variables/variable_common.jl")
 include("variables/variable_unit_flow.jl")

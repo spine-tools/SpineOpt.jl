@@ -96,6 +96,33 @@ function run_spinemodel(
         fix_variables!(m)
         set_objective!(m)
     end
+
+# Load flow - do basic network checks and calculate ptdfs and lodfs, depending on value of commodity_physics using PowerSystems.jl
+
+    for c in commodity()
+        if commodity_physics(commodity=c)==:commodity_physics_ptdf ||
+           commodity_physics(commodity=c)==:commodity_physics_lodf
+
+            printstyled("Calculating ptdfs for commodity ", c, " with network_physics : ", commodity_physics(commodity=c), "\n" ; bold = true)
+
+            n_islands, island_node = islands()
+            println("Your network consists of ", n_islands, " islands")
+            if n_islands > 1
+                println("Your network consists of multiple islands, this may end badly. Island-node mapping follows :")
+                print(island_node)
+            end
+
+            net_inj_nodes=get_net_inj_nodes() # returns list of nodes that have demand and/or generation
+
+            @time ptdf_conn_n = calculate_ptdfs()
+            if commodity_physics(commodity = c) == :commodity_physics_lodf
+                printstyled("Calculating lodfs for commodity ", c, " with network_physics : ", commodity_physics(commodity=c), "\n"; bold = true)
+                con__mon = Tuple{Object,Object}[]
+                @time lodf_con_mon = calculate_lodfs(ptdf_conn_n, con__mon)
+            end
+        end
+    end
+
     @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
         @logtime level3 "- [constraint_fix_ratio_out_in_unit_flow]" add_constraint_fix_ratio_out_in_unit_flow!(m)

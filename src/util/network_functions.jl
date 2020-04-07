@@ -1,0 +1,271 @@
+#############################################################################
+# Copyright (C) 2017 - 2020  Spine Project
+#
+# This file is part of Spine Model.
+#
+# Spine Model is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Spine Model is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#############################################################################
+
+# The functions in this file utilise PowerSystems.jl to calculate
+# power transmission distrivution factors (ptdfs) and line outage
+# distribution factors (lodfs). These are used in the power flow
+# constraints in SpineModel
+#
+#
+#
+
+using PowerSystems
+
+# Some globals for the islanding check
+visited_d=Dict{Object,Bool}()
+island_node=Dict{Int64,Array}()
+visited=0
+
+"""
+    islands()
+
+Determines the number of islands in a commodity network - used for diagnostic purposes
+
+"""
+function islands()
+    island=0
+    visited=0
+    for c in commodity()
+        if commodity_physics(commodity=c)==:commodity_physics_ptdf || commodity_physics(commodity=c)==:commodity_physics_lodf
+            for n in node__commodity(commodity=c)
+                visited_d[n]=false
+            end
+        end
+    end
+
+    for c in commodity()
+        if commodity_physics(commodity=c)==:commodity_physics_ptdf || commodity_physics(commodity=c)==:commodity_physics_lodf
+            for n in node__commodity(commodity=c)
+                if !visited_d[n]
+                    island=island+1
+                    island_node[island]=Object[]
+                    @info "New Island" n
+                    visit(n, island)
+                end
+            end
+        end
+    end
+    @info "Network island check : Number of islands found " island
+    return island, island_node
+end
+
+"""
+    visit()
+
+Function called recursively to visit nodes in the network to determine number of islands
+
+"""
+function visit(n, island)
+    global visited=visited+1
+    visited_d[n]=true
+    push!(island_node[island],n)
+    for (conn,n2) in connection__node__node(node1=n)
+        if !visited_d[n2]
+            visit(n2,island)
+        end
+    end
+end
+
+"""
+    check_x()
+
+Check for low reactance values
+
+"""
+function check_x()
+    @info "Checking reactances"
+    for conn in connection()
+        if conn_reactance(connection=conn) < 0.0001
+            @info "Low reactance may cause problems for line " conn
+        end
+    end
+end
+
+"""
+    calculate_ptdfs()
+
+Returns a dict indexed on tuples of (connection, node) containing the ptdfs of the system currently in memory.
+
+"""
+function calculate_ptdfs()
+    ps_busses=Bus[]
+    ps_lines=Line[]
+
+    node_ps_bus=Dict{Object,Bus}()
+    i=1
+    for c in commodity()
+        if commodity_physics(commodity=c)==:commodity_physics_ptdf || commodity_physics(commodity=c)==:commodity_physics_lodf
+            for n in node__commodity(commodity=c)
+                if node_opf_type(node=n)==:node_opf_type_reference
+                    bustype=BusTypes.REF
+                else
+                    bustype=BusTypes.PV
+                end
+                ps_bus=Bus(
+                    number=i,
+                    name=string(n),
+                    bustype=bustype,
+                    angle = 0.0,
+                    voltage = 0.0,
+                    voltagelimits = (min = 0.0, max = 0.0),
+                    basevoltage = nothing,
+                    area = Area(string(node__area(node=n))),
+                    load_zone = LoadZone(nothing),
+                    ext = Dict{String, Any}()
+                )
+
+                push!(ps_busses,ps_bus)
+                node_ps_bus[n]=ps_bus
+                i = i + 1
+            end
+
+            PowerSystems.buscheck(ps_busses)
+            PowerSystems.slack_bus_check(ps_busses)
+
+
+            for conn in connection()
+                for (n_from, n_to) in connection__node__node(connection=conn)
+                    for c in node__commodity(node=n_from)
+                        if commodity_physics(commodity=c)==:commodity_physics_ptdf || commodity_physics(commodity=c)==:commodity_physics_lodf
+                            ps_arc=Arc(node_ps_bus[n_from],node_ps_bus[n_to])
+                            new_line=Line(;
+                                name = string(conn),
+                                available = true,
+                                activepower_flow = 0.0,
+                                reactivepower_flow = 0.0,
+                                arc = ps_arc,
+                                r = connection_resistance(connection=conn),
+                                x = max(connection_reactance(connection=conn), 0.00001),
+                                b = (from=0.0, to=0.0),
+                                rate = 0.0,
+                                anglelimits = (min = 0.0, max = 0.0)
+                            )
+
+                            push!(ps_lines,new_line)
+                        end  #in case there are somehow multiple commodities
+                        break
+                    end
+                    break     #the line is defined in both directions, but PowerSystems.jl only needs it in one.
+                end
+            end
+        end
+    end
+
+    ps_ptdf=PowerSystems.PTDF(ps_lines,ps_busses)
+
+    ptdf=Dict{Tuple{Object,Object},Float64}()
+
+    for c in commodity()
+        if commodity_physics(commodity=c) == :commodity_physics_ptdf || commodity_physics(commodity=c) == :commodity_physics_lodf
+            for n in node__commodity(commodity=c)
+                for conn in connection()
+                    ptdf[(conn,n)] = ps_ptdf[string(conn),node_ps_bus[n].number]
+                end
+            end
+        end
+    end
+
+    return ptdf
+
+    #buildlodf needs to be updated to account for cases
+    #lodfs=PowerSystems.buildlodf(ps_lines,ps_busses)
+end
+
+#function (ptdf::PTDF)(conn::Object, n::Object)
+#     # Do something with ptdf, conn, and n, and return the value
+#
+#     return ptdf[string(conn),string(n)]
+#end
+
+
+
+"""
+    calculate_lodfs(ptdf_b_n, b_con__b_mon)
+
+Returns lodfs for the system specified by ptdf_b_n ,b_con__b_mon as a dict of tuples: contingent_line, monitored_line
+
+"""
+# This function takes a long time. PowerSystems has a function that does it faster using linear algebra but doesn't handle the case of tails like
+# I would like.
+
+function calculate_lodfs(ptdf_conn_n,con__mon)
+    lodf_con_mon=Dict{Tuple{Object,Object},Float64}()
+    considered_contingencies=0
+    skipped=0
+    tolerance=0
+    for conn_con in connection()
+        if connection_contingency(connection=conn_con)==1
+            for (n_from, n_to) in connection__node__node(connection=conn_con)
+                demoninator = 1-(ptdf_conn_n[(conn_con,n_from)]-ptdf_conn_n[(conn_con,n_to)])
+                if abs(demoninator) < 0.001
+                    demoninator = -1
+                end
+                for conn_mon in connection()
+                    if connection_monitored(connection=conn_mon)==1 && conn_con != conn_mon
+                        if demoninator == -1
+                            lodf_trial = (ptdf_conn_n[(conn_mon,n_from)]-ptdf_conn_n[(conn_mon,n_to)])/demoninator
+                        else
+                            lodf_trial = -ptdf_conn_n[(conn_mon,n_from)]
+                        end
+                        for m in model()
+                            tolerance=tx_lodf_tolerance(model=m)
+                            if abs(lodf_trial) > tolerance
+                                considered_contingencies = considered_contingencies + 1
+                                push!(con__mon,(conn_con,conn_mon))
+                                lodf_con_mon[(conn_con,conn_mon)]=lodf_trial
+                            else
+                                skipped = skipped + 1
+                            end
+                            break   #execute only once if there are multiple models defined
+                        end
+                    end
+                end
+            end
+        end
+    end
+    @info "Contingencies summary " considered_contingencies skipped tolerance
+    return lodf_con_mon
+end
+
+function get_net_inj_nodes()
+    net_inj_nodes=[]
+    for c in commodity()
+        if commodity_physics(commodity=c)==:commodity_physics_scopf_ptdf ||
+            commodity_physics(commodity=c)==:commodity_physics_scopf_lodf
+            for n in node__commodity(commodity=c)
+                for u in unit__out(node=n)
+                    if !(n in net_inj_nodes)
+                        push!(net_inj_nodes,n)
+                    end
+                end
+                for u in unit__in(node=n)
+                    if !(n in net_inj_nodes)
+                        push!(net_inj_nodes,n)
+                    end
+                end
+                if demand_factor(node=n) > 0
+                    if !(n in net_inj_nodes)
+                        push!(net_inj_nodes,n)
+                    end
+                end
+            end
+        end
+    end
+    return net_inj_nodes
+end
