@@ -246,22 +246,24 @@ end
 function get_net_inj_nodes()
     net_inj_nodes=[]
     for c in commodity()
-        if commodity_physics(commodity=c)==:commodity_physics_scopf_ptdf ||
-            commodity_physics(commodity=c)==:commodity_physics_scopf_lodf
+        if commodity_physics(commodity=c)==:commodity_physics_ptdf ||
+            commodity_physics(commodity=c)==:commodity_physics_lodf
             for n in node__commodity(commodity=c)
-                for u in unit__out(node=n)
+                for u in unit__to_node(node=n)
                     if !(n in net_inj_nodes)
                         push!(net_inj_nodes,n)
                     end
                 end
-                for u in unit__in(node=n)
+                for u in unit__from_node(node=n)
                     if !(n in net_inj_nodes)
                         push!(net_inj_nodes,n)
                     end
                 end
-                if demand_factor(node=n) > 0
-                    if !(n in net_inj_nodes)
-                        push!(net_inj_nodes,n)
+                for a in node__area(node=n)
+                    if fractional_demand(node=n, area=a) > 0 || demand(node=n) > 0
+                        if !(n in net_inj_nodes)
+                            push!(net_inj_nodes,n)
+                        end
                     end
                 end
             end

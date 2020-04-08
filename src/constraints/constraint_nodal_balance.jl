@@ -23,7 +23,7 @@
 Balance equation for nodes.
 """
 function add_constraint_nodal_balance!(m::Model)
-    @fetch node_state, connection_flow, unit_flow = m.ext[:variables]
+    @fetch node_state, connection_flow, unit_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
     cons = m.ext[:constraints][:nodal_balance] = Dict()
     for (n, tb) in node__temporal_block()
         for t_after in time_slice(temporal_block=tb)
@@ -91,6 +91,8 @@ function add_constraint_nodal_balance!(m::Model)
                         for a in node__area(node=n);
                         init=0
                     )
+                    + get(node_slack_pos, (n, t_after), 0)
+                    - get(node_slack_neg, (n, t_after), 0)
 
                 )
             end

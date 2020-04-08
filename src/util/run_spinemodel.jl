@@ -80,6 +80,13 @@ function run_spinemodel(
     level2 = log_level >= 2
     level3 = log_level >= 3
     results = Dict()
+
+    # calculate ptdfs using PowerSystems.jl
+    con__mon = Tuple{Object,Object}[]
+    ptdf_conn_n = Dict{Tuple{Object,Object},Float64}()
+    lodf_con_mon = Dict{Tuple{Object,Object},Float64}()
+    net_inj_nodes=[]
+
     @log level0 "Running Spine Model for $(url_in)..."
     @logtime level2 "Initializing data structure from db..." using_spinedb(url_in, @__MODULE__; upgrade=true)
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
@@ -87,15 +94,20 @@ function run_spinemodel(
     @log level1 "Window 1: $current_window"
     @logtime level2 "Initializing model..." begin
         m = Model(with_optimizer)
+        println()
+        println("variables...")
         m.ext[:variables] = Dict{Symbol,Dict}()
         m.ext[:variables_lb] = Dict{Symbol,Any}()
         m.ext[:variables_ub] = Dict{Symbol,Any}()
         m.ext[:values] = Dict{Symbol,Dict}()
         m.ext[:constraints] = Dict{Symbol,Dict}()
         create_variables!(m)
+        println("fix variables...")
         fix_variables!(m)
+        println("objective...")
         set_objective!(m)
     end
+
 
 # Load flow - do basic network checks and calculate ptdfs and lodfs, depending on value of commodity_physics using PowerSystems.jl
 
@@ -124,6 +136,7 @@ function run_spinemodel(
     end
 
     @logtime level2 "Adding constraints...\n" begin
+        @logtime level3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m, ptdf_conn_n, net_inj_nodes)
         @logtime level3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
         @logtime level3 "- [constraint_fix_ratio_out_in_unit_flow]" add_constraint_fix_ratio_out_in_unit_flow!(m)
         @logtime level3 "- [constraint_max_ratio_out_in_unit_flow]" add_constraint_max_ratio_out_in_unit_flow!(m)
@@ -174,13 +187,13 @@ function run_spinemodel(
 end
 
 function optimize_model!(m::Model)
-    optimize!(m)
+    optimize!(m)    
     if termination_status(m) == MOI.OPTIMAL
         true
     else
         @log true "Unable to find solution (reason: $(termination_status(m)))"
         # TODO: perhaps add the option to write the mps for diagnostics as follows
-        # write_to_file(m, "model_diagnostics.mps")
+        #write_to_file(m, "model_diagnostics.mps")
         false
     end
 end
