@@ -26,7 +26,7 @@ steady state flow based on PTDFs
 """
 function add_constraint_connection_flow_ptdf!(m::Model, ptdf_conn_n, net_inj_nodes)
     @fetch connection_flow, unit_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:flow_ptdf] = Dict()
+    constr_dict = m.ext[:constraints][:flow_ptdf_gt] = Dict()
     for conn in connection(connection_monitored=:true)
         for n_to in connection__to_node(connection=conn)
             for c in node__commodity(node=n_to)
@@ -36,7 +36,8 @@ function add_constraint_connection_flow_ptdf!(m::Model, ptdf_conn_n, net_inj_nod
                             m,
                             + connection_flow[conn, n_to, direction(:to_node), t]
                             - connection_flow[conn, n_to, direction(:from_node), t]
-                            ==
+                            >=
+                            - commodity_ptdf_flow_tolerance(commodity=c)
                             + reduce(
                                 +,
                                 + ptdf_conn_n[(conn,n_inj)] * (
@@ -61,7 +62,7 @@ function add_constraint_connection_flow_ptdf!(m::Model, ptdf_conn_n, net_inj_nod
                                         init=0
                                     )
                                 )
-                                for n_inj in net_inj_nodes if abs(ptdf_conn_n[(conn,n_inj)]) > 0.0000001
+                                for n_inj in net_inj_nodes if abs(ptdf_conn_n[(conn,n_inj)]) > commodity_ptdf_threshold(commodity=c)
                                 ;
                                 init=0
                             )
@@ -72,4 +73,52 @@ function add_constraint_connection_flow_ptdf!(m::Model, ptdf_conn_n, net_inj_nod
             break #only process the constraint for one direction
         end
     end
+    constr_dict = m.ext[:constraints][:flow_ptdf_lt] = Dict()
+    for conn in connection(connection_monitored=:true)
+        for n_to in connection__to_node(connection=conn)
+            for c in node__commodity(node=n_to)
+                if commodity_physics(commodity = c) == :commodity_physics_lodf || commodity_physics(commodity = c) == :commodity_physics_ptdf
+                    for (conn, n_to, d, t) in connection_flow_indices(connection=conn,node=n_to, direction=direction(:to_node))
+                        constr_dict[conn, t] = @constraint(
+                            m,
+                            + connection_flow[conn, n_to, direction(:to_node), t]
+                            - connection_flow[conn, n_to, direction(:from_node), t]
+                            <=
+                            + commodity_ptdf_flow_tolerance(commodity=c)
+                            + reduce(
+                                +,
+                                + ptdf_conn_n[(conn,n_inj)] * (
+                                    # explicit node demand
+                                    - demand(node=n_inj, t=t)
+                                    # demand defined by fractional_demand
+                                    - sum(
+                                        fractional_demand(node=n_inj, area=a, t=t) * demand(area=a, t=t)
+                                        for a in node__area(node=n_inj)
+                                    )
+                                    # Flows from units
+                                    + reduce(
+                                        +,
+                                        unit_flow[u, n_inj, direction(:to_node), t]
+                                        for u in unit__to_node(node=n_inj, direction=direction(:to_node));
+                                        init=0
+                                    )
+                                    - reduce(
+                                        +,
+                                        unit_flow[u, n_inj, direction(:from_node), t]
+                                        for u in unit__from_node(node=n_inj, direction=direction(:from_node));
+                                        init=0
+                                    )
+                                )
+                                for n_inj in net_inj_nodes if abs(ptdf_conn_n[(conn,n_inj)]) > commodity_ptdf_threshold(commodity=c)
+                                ;
+                                init=0
+                            )
+                        )
+                    end
+                end
+            end
+            break #only process the constraint for one direction
+        end
+    end
+
 end

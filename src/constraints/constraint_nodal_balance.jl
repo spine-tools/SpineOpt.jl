@@ -93,7 +93,6 @@ function add_constraint_nodal_balance!(m::Model)
                     )
                     + get(node_slack_pos, (n, t_after), 0)
                     - get(node_slack_neg, (n, t_after), 0)
-
                 )
             end
         end
