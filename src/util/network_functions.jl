@@ -223,8 +223,8 @@ function calculate_lodfs(ptdf_conn_n,con__mon)
                         else
                             lodf_trial = -ptdf_conn_n[(conn_mon,n_from)]
                         end
-                        for m in model()
-                            tolerance=tx_lodf_tolerance(model=m)
+                        for c in indices(commodity_lodf_tolerance)
+                            tolerance=commodity_lodf_tolerance(commodity=c)
                             if abs(lodf_trial) > tolerance
                                 considered_contingencies = considered_contingencies + 1
                                 push!(con__mon,(conn_con,conn_mon))
