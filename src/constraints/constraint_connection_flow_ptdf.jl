@@ -50,19 +50,18 @@ function add_constraint_connection_flow_ptdf!(m::Model, ptdf_conn_n, net_inj_nod
                                     # Flows from units
                                     + reduce(
                                         +,
-                                        ptdf_conn_n[(conn,n_inj)] * unit_flow[u, n_inj, direction(:to_node), t]
+                                        unit_flow[u, n_inj, direction(:to_node), t]
                     				    for u in unit__to_node(node=n_inj, direction=direction(:to_node));
                                         init=0
                                     )
                                     - reduce(
                                         +,
-                                        ptdf_conn_n[(conn,n_inj)] * unit_flow[u, n_inj, direction(:from_node), t]
+                                        unit_flow[u, n_inj, direction(:from_node), t]
                     				    for u in unit__from_node(node=n_inj, direction=direction(:from_node));
                                         init=0
                                     )
                                 )
-                                #for n in net_inj_nodes if ( abs(ptdf_conn_n[(conn,n)]) > commodity_ptdf_threshold[(commodity=c)]);
-                                for n_inj in net_inj_nodes if abs(ptdf_conn_n[(conn,n_inj)]) > 0.0001
+                                for n_inj in net_inj_nodes if abs(ptdf_conn_n[(conn,n_inj)]) > 0.0000001
                                 ;
                                 init=0
                             )

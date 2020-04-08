@@ -271,3 +271,21 @@ function get_net_inj_nodes()
     end
     return net_inj_nodes
 end
+
+
+function write_ptdfs(ptdfs,net_inj_nodes)
+    io=open("ptdfs.csv", "w")
+    print(io,"connection,")
+    for n in net_inj_nodes
+        print(io,string(n),",")
+    end
+    write(io,"\n")
+    for conn in connection(connection_monitored=:true)
+        print(io,string(conn),",")
+        for n in net_inj_nodes
+            print(io,ptdfs[(conn,n)],",")
+        end
+        print(io,"\n")
+    end
+    close(io)
+end
