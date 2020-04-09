@@ -259,8 +259,8 @@ function get_net_inj_nodes()
                         push!(net_inj_nodes,n)
                     end
                 end
-                for a in node__area(node=n)
-                    if fractional_demand(node=n, area=a) > 0 || demand(node=n) > 0
+                for ng in node_group__node(node2=n)
+                    if fractional_demand(node1=ng, node2=n) > 0 || demand(node=n) > 0
                         if !(n in net_inj_nodes)
                             push!(net_inj_nodes,n)
                         end
@@ -279,7 +279,7 @@ function write_ptdfs(ptdfs,net_inj_nodes)
     for n in net_inj_nodes
         print(io,string(n),",")
     end
-    write(io,"\n")
+    print(io,"\n")
     for conn in connection(connection_monitored=:true)
         print(io,string(conn),",")
         for n in net_inj_nodes

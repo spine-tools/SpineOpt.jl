@@ -29,11 +29,10 @@ function objective_penalties(m::Model)
             (
                  + node_slack_neg[n, t]
                  + node_slack_pos[n, t]
-#            ) * duration(t) * node_slack_penalty[(node=n_, t=t)]
-            ) * duration(t)
+            ) * duration(t) * node_slack_penalty[(node=n, t=t)]
             for n_ in indices(node_slack_penalty)
             for (n, t) in node_slack_pos_indices(node=n_);
             init=0
-        ) * 1000
+        )
     )
 end

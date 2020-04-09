@@ -18,28 +18,14 @@
 #############################################################################
 
 """
-    add_constraint_nodal_balance!(m::Model)
+    add_constraint_group_balance!(m::Model)
 
 Balance equation for nodes.
 """
-function add_constraint_nodal_balance!(m::Model)
+function add_constraint_group_balance!(m::Model)
     @fetch node_state, connection_flow, unit_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
-    cons = m.ext[:constraints][:nodal_balance] = Dict()
-
-    node_balance_nodes=[]
-    for n in node()
-        if isempty(node_group__node(node2=n))
-            push!(node_balance_nodes,n)
-        else
-            for ng in node_group__node(node2=n)
-                if balance_type(node=ng) != :balance_type_group
-                    push!(node_balance_nodes,n)
-                end
-            end
-        end
-    end
-
-    for n in node_balance_nodes
+    cons = m.ext[:constraints][:group_balance] = Dict()
+    for n in node(node_balance=:node_balance_group)
         for tb in node__temporal_block(node=n)
             for t_after in time_slice(temporal_block=tb)
                 for t_before in t_before_t(t_after=t_after)
@@ -88,14 +74,18 @@ function add_constraint_nodal_balance!(m::Model)
                         + reduce(
                             +,
                             connection_flow[conn, n, d, t1]
-                            for (conn, n, d, t1) in connection_flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:to_node));
+                            for (conn, n1, d, t1) in connection_flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:to_node))
+							for (conn, n2, c, d, t1) in trans_indices(connection=conn, commodity=c,direction=d,t=t1)
+							if n2 != n1 && !in(n2,expand_node_group(n));
                             init=0
                         )
                         # Commodity flows to connections
                         - reduce(
                             +,
-                            connection_flow[conn, n, d, t1]
-                            for (conn, n, d, t1) in connection_flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:from_node));
+                            connection_flow[conn, n1, d, t1]
+                            for (conn, n1, c, d, t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=direction(:from_node))
+							for (conn, n2, c, d, t1) in trans_indices(connection=conn, commodity=c,direction=d,t=t1)
+							if n2 != n1 && !in(n2,expand_node_group(n));
                             init=0
                         )
                         # Explicit nodal demand
