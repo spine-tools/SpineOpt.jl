@@ -64,6 +64,7 @@ function add_constraint_connection_flow_ptdf!(m::Model, ptdf_conn_n, net_inj_nod
                                     )
                                 )
 #                                for n_inj in net_inj_nodes if abs(ptdf_conn_n[(conn,n_inj)]) > commodity_ptdf_threshold[(commodity=c)];
+# TODO Why does enabling the previous line result in an error?
                                 for n_inj in net_inj_nodes if abs(ptdf_conn_n[(conn,n_inj)]) > 0.0001;
                                 init=0
                             )

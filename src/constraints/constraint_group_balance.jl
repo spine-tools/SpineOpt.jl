@@ -25,7 +25,7 @@ Balance equation for nodes.
 function add_constraint_group_balance!(m::Model)
     @fetch node_state, connection_flow, unit_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
     cons = m.ext[:constraints][:group_balance] = Dict()
-    for n in node(node_balance=:node_balance_group)
+    for n in node(balance_type=:balance_type_group)
         for tb in node__temporal_block(node=n)
             for t_after in time_slice(temporal_block=tb)
                 for t_before in t_before_t(t_after=t_after)
@@ -73,9 +73,9 @@ function add_constraint_group_balance!(m::Model)
                         # Commodity flows from connections
                         + reduce(
                             +,
-                            connection_flow[conn, n, d, t1]
+                            connection_flow[conn, n1, d, t1]
                             for (conn, n1, d, t1) in connection_flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:to_node))
-							for (conn, n2, c, d, t1) in trans_indices(connection=conn, commodity=c,direction=d,t=t1)
+							for (conn, n2, d, t1) in connection_flow_indices(connection=conn, direction=d,t=t1)
 							if n2 != n1 && !in(n2,expand_node_group(n));
                             init=0
                         )
@@ -83,8 +83,8 @@ function add_constraint_group_balance!(m::Model)
                         - reduce(
                             +,
                             connection_flow[conn, n1, d, t1]
-                            for (conn, n1, c, d, t1) in trans_indices(node=n, t=t_in_t(t_long=t), direction=direction(:from_node))
-							for (conn, n2, c, d, t1) in trans_indices(connection=conn, commodity=c,direction=d,t=t1)
+                            for (conn, n1, d, t1) in connection_flow_indices(node=n, t=t_in_t(t_long=t_after), direction=direction(:from_node))
+							for (conn, n2, d, t1) in connection_flow_indices(connection=conn, direction=d,t=t1)
 							if n2 != n1 && !in(n2,expand_node_group(n));
                             init=0
                         )

@@ -83,6 +83,7 @@ function run_spinemodel(
 
     # variables used in the calculation of ptdfs and lodfs using PowerSystems.jl
     con__mon = Tuple{Object,Object}[] # this is a set of monitored and contingent line tuples that must be considered as defined by the connection_monitored and connection_contingency parmaeters
+    monitored_lines=[]
     ptdf_conn_n = Dict{Tuple{Object,Object},Float64}() #ptdfs returned by PowerSystems.jl
     lodf_con_mon = Dict{Tuple{Object,Object},Float64}() #lodfs calcuated based on ptdfs returned by PowerSystems.jl
     net_inj_nodes=[] # this is the set of nodes with demand or generation
@@ -134,7 +135,9 @@ function run_spinemodel(
         end
     end
 
-    @logtime level2 "Adding constraints...\n" begin
+        @logtime level2 "Adding constraints...\n" begin
+        @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
+        @logtime level3 "- [constraint_group_balance]" add_constraint_group_balance!(m)
         @logtime level3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m, ptdf_conn_n, net_inj_nodes)
         @logtime level3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m, lodf_con_mon, con__mon)
         @logtime level3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
@@ -152,8 +155,6 @@ function run_spinemodel(
         @logtime level3 "- [constraint_max_ratio_out_in_connection_flow]" add_constraint_max_ratio_out_in_connection_flow!(m)
         @logtime level3 "- [constraint_min_ratio_out_in_connection_flow]" add_constraint_min_ratio_out_in_connection_flow!(m)
         @logtime level3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)
-        @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
-        @logtime level3 "- [constraint_group_balance]" add_constraint_group_balance!(m)
         @logtime level3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
         @logtime level3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
         @logtime level3 "- [constraint_units_on]" add_constraint_units_on!(m)
