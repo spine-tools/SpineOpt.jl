@@ -23,7 +23,7 @@
 Ratio of `unit_flow` variables.
 """
 function add_constraint_ratio_unit_flow!(m::Model, ratio, sense, d1, d2, units_on_coefficient)
-    @fetch unit_flow, units_on = m.ext[:variables]
+    @fetch unit_flow, unit_flow_op, units_on = m.ext[:variables]
     cons = m.ext[:constraints][ratio.name] = Dict()
     for (u, n1, n2) in indices(ratio)
         for t in t_lowest_resolution(map(x -> x.t, unit_flow_indices(unit=u, node=[n1, n2])))
@@ -39,13 +39,18 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, sense, d1, d2, units_o
                 )
                 ,
                 sense,
-                + ratio[(unit=u, node1=n1, node2=n2, t=t)]
-                * reduce(
+                + reduce(
                     +,
-                    unit_flow[u_, n2_, d2_, t_] * duration(t_)
-                    for (u_, n2_, d2_, t_) in unit_flow_indices(
-                        unit=u, node=n2, direction=d2, t=t_in_t(t_long=t)
-                    );
+                    + ratio[(unit=u, node1=n1, node2=n2, i=op, t=t)]
+                    * reduce(
+                        +,
+                        unit_flow_op[u_, n2_, d2_, op_, t_] * duration(t_)
+                        for (u_, n2_, d2_, op_, t_) in unit_flow_op_indices(
+                            unit=u, node=n2, direction=d2, operating_point=op, t=t_in_t(t_long=t)
+                        );
+                        init=0
+                    )
+                    for op in 1:length(operating_points(unit=u));
                     init=0
                 )
                 + units_on_coefficient[(unit=u, node1=n1, node2=n2, t=t)]

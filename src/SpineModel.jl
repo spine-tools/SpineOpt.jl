@@ -37,6 +37,7 @@ export or
 
 # Export indices functions
 export unit_flow_indices
+export unit_flow_op_indices
 export connection_flow_indices
 export node_state_indices
 export units_on_indices
@@ -53,6 +54,7 @@ include("util/network_functions.jl")
 
 include("variables/variable_common.jl")
 include("variables/variable_unit_flow.jl")
+include("variables/variable_unit_flow_op.jl")
 include("variables/variable_connection_flow.jl")
 include("variables/variable_node_state.jl")
 include("variables/variable_units_on.jl")
@@ -74,6 +76,8 @@ include("objective/objective_penalties.jl")
 
 include("constraints/constraint_max_cum_in_unit_flow_bound.jl")
 include("constraints/constraint_unit_flow_capacity.jl")
+include("constraints/constraint_operating_point_bounds.jl")
+include("constraints/constraint_operating_point_sum.jl")
 include("constraints/constraint_nodal_balance.jl")
 include("constraints/constraint_group_balance.jl")
 include("constraints/constraint_node_state_capacity.jl")

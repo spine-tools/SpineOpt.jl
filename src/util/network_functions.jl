@@ -125,7 +125,7 @@ function calculate_ptdfs()
                     voltage = 0.0,
                     voltagelimits = (min = 0.0, max = 0.0),
                     basevoltage = nothing,
-                    area = Area(string(node__area(node=n))),
+                    area = nothing,
                     load_zone = LoadZone(nothing),
                     ext = Dict{String, Any}()
                 )

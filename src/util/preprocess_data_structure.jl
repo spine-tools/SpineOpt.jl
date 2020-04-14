@@ -19,13 +19,27 @@
 
 function preprocess_data_structure()
     generate_direction()
+#   generate_array_indices()
     generate_variable_indices()
 end
 
+function generate_array_indices()
+    array_indices=[]
+    for i in 1:100
+        push!(array_indices,Object(Symbol(i), 100000000+i))
+    end
+    array_index = ObjectClass(:array_index, array_indices, Dict())
+    @eval begin
+        array_index = $array_index
+        export array_index
+    end
+end
 
 function generate_direction()
+
     from_node = Object(:from_node, 1)
     to_node = Object(:to_node, 2)
+
     direction = ObjectClass(:direction, [from_node, to_node], Dict())
     directions_by_class = Dict(
         unit__from_node => from_node,
