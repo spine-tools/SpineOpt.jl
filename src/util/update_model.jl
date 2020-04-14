@@ -128,6 +128,11 @@ function JuMP.add_to_expression!(
     aff
 end
 
+# TODO: Try to find out why we need this one
+function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, new_coef::Call, new_coef_::Call)
+    add_to_expression!(aff, new_coef * new_coef_)
+end
+
 function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, new_coef::Call, new_var::VariableRef)
     if !iszero(new_coef)
         aff.terms[new_var] = get(aff.terms, new_var, zero(Call)) + new_coef
