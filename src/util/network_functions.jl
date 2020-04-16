@@ -27,10 +27,38 @@
 
 using PowerSystems
 
-# Some globals for the islanding check
-visited_d=Dict{Object,Bool}()
-island_node=Dict{Int64,Array}()
-visited=0
+"""
+    process_network()
+
+Main function which is called in run_spine_model.jl to caluate PTDFs, LODFs and network diagnostics
+
+"""
+
+function process_network()
+    for c in commodity()
+        if commodity_physics(commodity=c) in (:commodity_physics_ptdf, :commodity_physics_lodf)
+
+            printstyled("Calculating ptdfs for commodity ", c, " with network_physics : ", commodity_physics(commodity=c), "\n" ; bold = true)
+
+            n_islands, island_node = islands()
+            println("Your network consists of ", n_islands, " islands")
+            if n_islands > 1
+                println("Your network consists of multiple islands, this may end badly. Island-node mapping follows :")
+                print(island_node)
+            end
+
+            net_inj_nodes=get_net_inj_nodes() # returns list of nodes that have demand and/or generation
+
+            @time ptdf_conn_n = calculate_ptdfs()
+            if commodity_physics(commodity = c) == :commodity_physics_lodf
+                printstyled("Calculating lodfs for commodity ", c, " with network_physics : ", commodity_physics(commodity=c), "\n"; bold = true)
+                con__mon = Tuple{Object,Object}[]
+                @time lodf_con_mon = calculate_lodfs(ptdf_conn_n, con__mon)
+            end
+        end
+    end
+end
+
 
 """
     islands()
@@ -39,24 +67,26 @@ Determines the number of islands in a commodity network - used for diagnostic pu
 
 """
 function islands()
-    island=0
-    visited=0
+    visited_d = Dict{Object,Bool}()
+    island_node = Dict{Int64,Array}()
+    island = 0
+
     for c in commodity()
-        if commodity_physics(commodity=c)==:commodity_physics_ptdf || commodity_physics(commodity=c)==:commodity_physics_lodf
+        if commodity_physics(commodity=c) in(:commodity_physics_lodf, :commodity_physics_ptdf)
             for n in node__commodity(commodity=c)
-                visited_d[n]=false
+                visited_d[n] = false
             end
         end
     end
 
     for c in commodity()
-        if commodity_physics(commodity=c)==:commodity_physics_ptdf || commodity_physics(commodity=c)==:commodity_physics_lodf
+        if commodity_physics(commodity=c) in(:commodity_physics_lodf, :commodity_physics_ptdf)
             for n in node__commodity(commodity=c)
                 if !visited_d[n]
-                    island=island+1
-                    island_node[island]=Object[]
+                    island = island + 1
+                    island_node[island] = Object[]
                     @info "New Island" n
-                    visit(n, island)
+                    visit(n, island, visited_d, island_node)
                 end
             end
         end
@@ -71,13 +101,12 @@ end
 Function called recursively to visit nodes in the network to determine number of islands
 
 """
-function visit(n, island)
-    global visited=visited+1
-    visited_d[n]=true
-    push!(island_node[island],n)
-    for (conn,n2) in connection__node__node(node1=n)
+function visit(n, island, visited_d, island_node)
+    visited_d[n] = true
+    push!(island_node[island], n)
+    for (conn, n2) in connection__node__node(node1=n)
         if !visited_d[n2]
-            visit(n2,island)
+            visit(n2, island, visited_d, island_node)
         end
     end
 end
@@ -104,23 +133,23 @@ Returns a dict indexed on tuples of (connection, node) containing the ptdfs of t
 
 """
 function calculate_ptdfs()
-    ps_busses=Bus[]
-    ps_lines=Line[]
+    ps_busses = Bus[]
+    ps_lines = Line[]
 
-    node_ps_bus=Dict{Object,Bus}()
-    i=1
+    node_ps_bus  =Dict{Object,Bus}()
+    i = 1
     for c in commodity()
-        if commodity_physics(commodity=c)==:commodity_physics_ptdf || commodity_physics(commodity=c)==:commodity_physics_lodf
+        if commodity_physics(commodity=c) in(:commodity_physics_lodf, :commodity_physics_ptdf)
             for n in node__commodity(commodity=c)
-                if node_opf_type(node=n)==:node_opf_type_reference
-                    bustype=BusTypes.REF
+                if node_opf_type(node=n) == :node_opf_type_reference
+                    bustype = BusTypes.REF
                 else
-                    bustype=BusTypes.PV
+                    bustype = BusTypes.PV
                 end
-                ps_bus=Bus(
-                    number=i,
-                    name=string(n),
-                    bustype=bustype,
+                ps_bus = Bus(
+                    number = i,
+                    name = string(n),
+                    bustype = bustype,
                     angle = 0.0,
                     voltage = 0.0,
                     voltagelimits = (min = 0.0, max = 0.0),
@@ -131,20 +160,19 @@ function calculate_ptdfs()
                 )
 
                 push!(ps_busses,ps_bus)
-                node_ps_bus[n]=ps_bus
+                node_ps_bus[n] = ps_bus
                 i = i + 1
             end
 
             PowerSystems.buscheck(ps_busses)
             PowerSystems.slack_bus_check(ps_busses)
 
-
             for conn in connection()
                 for (n_from, n_to) in connection__node__node(connection=conn)
                     for c in node__commodity(node=n_from)
-                        if commodity_physics(commodity=c)==:commodity_physics_ptdf || commodity_physics(commodity=c)==:commodity_physics_lodf
-                            ps_arc=Arc(node_ps_bus[n_from],node_ps_bus[n_to])
-                            new_line=Line(;
+                        if commodity_physics(commodity=c) in(:commodity_physics_lodf, :commodity_physics_ptdf)
+                            ps_arc = Arc(node_ps_bus[n_from], node_ps_bus[n_to])
+                            new_line = Line(;
                                 name = string(conn),
                                 available = true,
                                 activepower_flow = 0.0,
@@ -172,10 +200,10 @@ function calculate_ptdfs()
     ptdf=Dict{Tuple{Object,Object},Float64}()
 
     for c in commodity()
-        if commodity_physics(commodity=c) == :commodity_physics_ptdf || commodity_physics(commodity=c) == :commodity_physics_lodf
+        if commodity_physics(commodity=c) in(:commodity_physics_lodf, :commodity_physics_ptdf)
             for n in node__commodity(commodity=c)
                 for conn in connection()
-                    ptdf[(conn,n)] = ps_ptdf[string(conn),node_ps_bus[n].number]
+                    ptdf[(conn,n)] = ps_ptdf[string(conn), node_ps_bus[n].number]
                 end
             end
         end
@@ -204,35 +232,33 @@ Returns lodfs for the system specified by ptdf_b_n ,b_con__b_mon as a dict of tu
 # This function takes a long time. PowerSystems has a function that does it faster using linear algebra but doesn't handle the case of tails like
 # I would like.
 
-function calculate_lodfs(ptdf_conn_n,con__mon)
-    lodf_con_mon=Dict{Tuple{Object,Object},Float64}()
-    considered_contingencies=0
-    skipped=0
-    tolerance=0
+function calculate_lodfs(ptdf_conn_n, con__mon)
+    lodf_con_mon = Dict{Tuple{Object,Object},Float64}()
+    considered_contingencies = 0
+    skipped = 0
+    tolerance = 0
     for conn_con in connection()
-        if connection_contingency(connection=conn_con)==1
+        if connection_contingency(connection = conn_con) == 1
             for (n_from, n_to) in connection__node__node(connection=conn_con)
-                demoninator = 1-(ptdf_conn_n[(conn_con,n_from)]-ptdf_conn_n[(conn_con,n_to)])
+                demoninator = 1 - (ptdf_conn_n[(conn_con, n_from)]-ptdf_conn_n[(conn_con, n_to)])
                 if abs(demoninator) < 0.001
                     demoninator = -1
                 end
                 for conn_mon in connection()
-                    if connection_monitored(connection=conn_mon)==1 && conn_con != conn_mon
+                    if connection_monitored(connection=conn_mon) == 1 && conn_con != conn_mon
                         if demoninator == -1
-                            lodf_trial = (ptdf_conn_n[(conn_mon,n_from)]-ptdf_conn_n[(conn_mon,n_to)])/demoninator
+                            lodf_trial = (ptdf_conn_n[(conn_mon, n_from)] - ptdf_conn_n[(conn_mon, n_to)]) / demoninator
                         else
-                            lodf_trial = -ptdf_conn_n[(conn_mon,n_from)]
+                            lodf_trial = -ptdf_conn_n[(conn_mon, n_from)]
                         end
-                        for c in indices(commodity_lodf_tolerance)
-                            tolerance=commodity_lodf_tolerance(commodity=c)
-                            if abs(lodf_trial) > tolerance
-                                considered_contingencies = considered_contingencies + 1
-                                push!(con__mon,(conn_con,conn_mon))
-                                lodf_con_mon[(conn_con,conn_mon)]=lodf_trial
-                            else
-                                skipped = skipped + 1
-                            end
-                            break   #execute only once if there are multiple models defined
+                        c = first(indices(commodity_lodf_tolerance))
+                        tolerance = commodity_lodf_tolerance(commodity=c)
+                        if abs(lodf_trial) > tolerance
+                            considered_contingencies = considered_contingencies + 1
+                            push!(con__mon, (conn_con, conn_mon))
+                            lodf_con_mon[(conn_con, conn_mon)] = lodf_trial
+                        else
+                            skipped = skipped + 1
                         end
                     end
                 end
@@ -244,25 +270,24 @@ function calculate_lodfs(ptdf_conn_n,con__mon)
 end
 
 function get_net_inj_nodes()
-    net_inj_nodes=[]
+    net_inj_nodes = []
     for c in commodity()
-        if commodity_physics(commodity=c)==:commodity_physics_ptdf ||
-            commodity_physics(commodity=c)==:commodity_physics_lodf
+        if commodity_physics(commodity=c) in(:commodity_physics_lodf, :commodity_physics_ptdf)
             for n in node__commodity(commodity=c)
                 for u in unit__to_node(node=n)
                     if !(n in net_inj_nodes)
-                        push!(net_inj_nodes,n)
+                        push!(net_inj_nodes, n)
                     end
                 end
                 for u in unit__from_node(node=n)
                     if !(n in net_inj_nodes)
-                        push!(net_inj_nodes,n)
+                        push!(net_inj_nodes, n)
                     end
                 end
                 for ng in node_group__node(node2=n)
                     if fractional_demand(node1=ng, node2=n) > 0 || demand(node=n) > 0
                         if !(n in net_inj_nodes)
-                            push!(net_inj_nodes,n)
+                            push!(net_inj_nodes, n)
                         end
                     end
                 end
@@ -273,19 +298,19 @@ function get_net_inj_nodes()
 end
 
 
-function write_ptdfs(ptdfs,net_inj_nodes)
-    io=open("ptdfs.csv", "w")
-    print(io,"connection,")
+function write_ptdfs(ptdfs, net_inj_nodes)
+    io = open("ptdfs.csv", "w")
+    print(io, "connection,")
     for n in net_inj_nodes
-        print(io,string(n),",")
+        print(io, string(n), ",")
     end
-    print(io,"\n")
+    print(io, "\n")
     for conn in connection(connection_monitored=:true)
-        print(io,string(conn),",")
+        print(io, string(conn), ",")
         for n in net_inj_nodes
-            print(io,ptdfs[(conn,n)],",")
+            print(io, ptdfs[(conn,n)], ",")
         end
-        print(io,"\n")
+        print(io, "\n")
     end
     close(io)
 end
