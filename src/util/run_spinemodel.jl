@@ -47,6 +47,11 @@ function generate_temporal_structure()
 end
 
 
+function generate_stochastic_structure()
+    # TODO: Generate stochastic structure
+end
+
+
 """
     run_spinemodel(url_in, url_out; <keyword arguments>)
 
@@ -84,6 +89,7 @@ function run_spinemodel(
     @logtime level2 "Initializing data structure from db..." using_spinedb(url_in, @__MODULE__; upgrade=true)
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
+    @logtime level2 "Creating stochastic structure..." generate_stochastic_structure()
     @log level1 "Window 1: $current_window"
     @logtime level2 "Initializing model..." begin
         m = Model(with_optimizer)

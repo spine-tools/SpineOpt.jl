@@ -43,6 +43,7 @@ export units_on_indices
 
 include("temporals/generate_time_slice.jl")
 include("temporals/generate_time_slice_relationships.jl")
+include("temporals/generate_stochastic_structure.jl")
 
 include("util/missing_item_handlers.jl")
 include("util/misc.jl")
