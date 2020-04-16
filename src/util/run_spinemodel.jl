@@ -30,7 +30,8 @@ function run_spinemodel(
         update_constraints=m -> nothing,
         log_level=3)
     run_spinemodel(
-        url, url;
+        url,
+        url;
         with_optimizer=with_optimizer,
         cleanup=cleanup,
         add_constraints=add_constraints,
@@ -81,7 +82,10 @@ function run_spinemodel(
     level3 = log_level >= 3
     results = Dict()
     @log level0 "Running Spine Model for $(url_in)..."
-    @logtime level2 "Initializing data structure from db..." using_spinedb(url_in, @__MODULE__; upgrade=true)
+    @logtime level2 "Initializing data structure from db..." begin
+        using_spinedb(url_in, @__MODULE__; upgrade=true)
+        generate_missing_items()
+    end
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @log level1 "Window 1: $current_window"
