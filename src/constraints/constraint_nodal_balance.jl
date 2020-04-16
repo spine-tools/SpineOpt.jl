@@ -26,6 +26,8 @@ function add_constraint_nodal_balance!(m::Model)
     @fetch node_state, connection_flow, unit_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
     cons = m.ext[:constraints][:nodal_balance] = Dict()
 
+#   Supress the node-balance constraint for nodes that are part of a node_group which has balance_type=balance_type_group set
+#   node_balance_nodes[] will contain the set of nodes less those for which the above is true
     node_balance_nodes=[]
     for n in node()
         if isempty(node_group__node(node2=n))

@@ -107,7 +107,7 @@ function run_spinemodel(
         fix_variables!(m)
         println("objective...")
         set_objective!(m)
-    end    
+    end
 
 # Load flow - do basic network checks and calculate ptdfs and lodfs, depending on value of commodity_physics using PowerSystems.jl
 
@@ -136,6 +136,7 @@ function run_spinemodel(
     end
 
         @logtime level2 "Adding constraints...\n" begin
+        @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
         @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
         @logtime level3 "- [constraint_group_balance]" add_constraint_group_balance!(m)
         @logtime level3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m, ptdf_conn_n, net_inj_nodes)

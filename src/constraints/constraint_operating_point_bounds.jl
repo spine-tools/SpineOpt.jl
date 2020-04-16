@@ -36,16 +36,16 @@ function add_constraint_operating_point_bounds!(m::Model)
                 unit_flow_op[u, n, d, op, t]
                 <=
                 (
-                    + operating_points(unit=u, i=op)
+                    + operating_points[(unit=u, i=op)]
                     - reduce(
                         +,
-                        - operating_points(unit=u, i=op_previous)
+                        - operating_points[(unit=u, i=op_previous)]
                         for op_previous in op-1:op-1 if op > 1;
                         init = 0
                     )
                 )
-                * unit_capacity(unit=u, node=n, direction=d, t=t)
-                * unit_conv_cap_to_flow(unit=u, node=n, direction=d, t=t)
+                * unit_capacity[(unit=u, node=n, direction=d, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
             )
         end
     end

@@ -92,6 +92,7 @@ include("constraints/constraint_minimum_operating_point.jl")
 include("constraints/constraint_min_up_time.jl")
 include("constraints/constraint_min_down_time.jl")
 include("constraints/constraint_unit_state_transition.jl")
+include("constraints/constraint_unit_constraint.jl")
 
 
 function __init__()

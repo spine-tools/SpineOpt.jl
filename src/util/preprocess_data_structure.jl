@@ -19,20 +19,7 @@
 
 function preprocess_data_structure()
     generate_direction()
-#   generate_array_indices()
     generate_variable_indices()
-end
-
-function generate_array_indices()
-    array_indices=[]
-    for i in 1:100
-        push!(array_indices,Object(Symbol(i), 100000000+i))
-    end
-    array_index = ObjectClass(:array_index, array_indices, Dict())
-    @eval begin
-        array_index = $array_index
-        export array_index
-    end
 end
 
 function generate_direction()
