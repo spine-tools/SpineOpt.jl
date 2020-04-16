@@ -32,6 +32,7 @@ using JSON
 
 # Export utility
 export run_spinemodel
+export rerun_spinemodel
 export @fetch
 export or
 
