@@ -30,7 +30,7 @@ function add_constraint_connection_flow_ptdf!(m::Model, ptdf_conn_n, net_inj_nod
     for conn in connection(connection_monitored=:true)
         for n_to in connection__to_node(connection=conn)
             for c in node__commodity(node=n_to)
-                if commodity_physics(commodity = c) == :commodity_physics_lodf || commodity_physics(commodity = c) == :commodity_physics_ptdf
+                if commodity_physics(commodity=c) in(:commodity_physics_lodf, :commodity_physics_ptdf)
                     for (conn, n_to, d, t) in connection_flow_indices(connection=conn,node=n_to, direction=direction(:to_node))
                         constr_dict[conn, t] = @constraint(
                             m,
