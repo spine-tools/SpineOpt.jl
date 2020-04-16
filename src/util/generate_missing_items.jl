@@ -32,21 +32,21 @@ function generate_missing_items()
     for name in template["object_classes"]
         sym_name = Symbol(name)
         sym_name in keys(classes) && continue
-        @warn "Object class $sym_name is missing from the db."
+        @warn "object class $sym_name is missing from the db"
         object_class = ObjectClass(sym_name, [])
         @eval $sym_name = $object_class
     end
     for (name, object_class_names) in template["relationship_classes"]
         sym_name = Symbol(name)
         sym_name in keys(classes) && continue
-        @warn "Relationship class $sym_name is missing from the db."
+        @warn "relationship class $sym_name is missing from the db"
         relationship_class = RelationshipClass(sym_name, Symbol.(object_class_names), [])
         @eval $sym_name = $relationship_class
     end
     for (class_name, name, default_value) in [template["object_parameters"]; template["relationship_parameters"]]
         sym_name = Symbol(name)
         sym_name in parameters && continue
-        @warn "Parameter $sym_name is missing from the db."
+        @warn "parameter $sym_name is missing from the db"
         sym_class_name = Symbol(class_name)
         class = classes[sym_class_name]
         default_val = callable(db_api.from_database(JSON.json(default_value)))
