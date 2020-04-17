@@ -84,6 +84,7 @@ function run_spinemodel(
     end
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     rerun_spinemodel(
+        url_in,
         url_out;
         with_optimizer=with_optimizer,
         cleanup=cleanup,
@@ -94,12 +95,14 @@ function run_spinemodel(
 end
 
 function rerun_spinemodel(
+        url_in::String,
         url_out::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
         cleanup=true,
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
         log_level=3)
+    level0 = log_level >= 0
     level1 = log_level >= 1
     level2 = log_level >= 2
     level3 = log_level >= 3
