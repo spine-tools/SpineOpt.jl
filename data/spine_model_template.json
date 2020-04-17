@@ -34,6 +34,7 @@
         ["node__stochastic_structure", ["node", "stochastic_structure"]]
     ],
     "object_parameters": [
+        ["commodity", "commodity_physics", null],
         ["connection", "connection_availability_factor", 1.0],
         ["model", "duration_unit", "minute"],
         ["model", "model_end", {"type": "date_time", "data": "2000-01-01T00:00:00"}],
@@ -46,6 +47,7 @@
         ["node", "node_state_cap", null],
         ["node", "node_state_min", 0.0],
         ["node", "state_coeff", 1.0],
+        ["node", "node_slack_penalty", null],
         ["report", "output_db_url", null],
         ["temporal_block", "block_end", null],
         ["temporal_block", "block_start", null],
