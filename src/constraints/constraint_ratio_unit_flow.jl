@@ -22,8 +22,8 @@
 
 Ratio of `unit_flow` variables.
 """
-function add_constraint_ratio_unit_flow!(m::Model, ratio, sense, d1, d2, units_on_coefficient)
-    @fetch unit_flow, unit_flow_op, units_on = m.ext[:variables]
+function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, sense, d1, d2)
+    @fetch unit_flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][ratio.name] = Dict()
     for (u, n1, n2) in indices(ratio)
         for t in t_lowest_resolution(map(x -> x.t, unit_flow_indices(unit=u, node=[n1, n2])))
@@ -39,27 +39,20 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, sense, d1, d2, units_o
                 )
                 ,
                 sense,
-                + reduce(
+                + ratio[(unit=u, node1=n1, node2=n2, t=t)]
+                * reduce(
                     +,
-                    + ratio[(unit=u, node1=n1, node2=n2, i=op, t=t)]
-                    * reduce(
-                        +,
-                        unit_flow_op[u_, n2_, d2_, op_, t_] * duration(t_)
-                        for (u_, n2_, d2_, op_, t_) in unit_flow_op_indices(
-                            unit=u, node=n2, direction=d2, operating_point=op, t=t_in_t(t_long=t)
-                        );
-                        init=0
-                    )
-                    for op in 1:length(operating_points(unit=u));
+                    unit_flow[u_, n2_, d2_, t_] * duration(t_)
+                    for (u_, n2_, d2_, t_) in unit_flow_indices(
+                        unit=u, node=n2, direction=d2, t=t_in_t(t_long=t)
+                    );
                     init=0
                 )
                 + units_on_coefficient[(unit=u, node1=n1, node2=n2, t=t)]
                 * reduce(
                     +,
                     units_on[u_, t_] * duration(t_)
-                    for (u_, t_) in units_on_indices(
-                        unit=u, t=t_in_t(t_long=t)
-                    );
+                    for (u_, t_) in units_on_indices(unit=u, t=t_in_t(t_long=t));
                     init=0
                 ),
 
@@ -69,32 +62,52 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, sense, d1, d2, units_o
 end
 
 function add_constraint_fix_ratio_out_in_unit_flow!(m::Model)
-    add_constraint_ratio_unit_flow!(m, fix_ratio_out_in_unit_flow, ==, direction(:to_node), direction(:from_node), fix_units_on_coefficient_out_in)
+    add_constraint_ratio_unit_flow!(
+        m, fix_ratio_out_in_unit_flow, fix_units_on_coefficient_out_in, ==, direction(:to_node), direction(:from_node)
+    )
 end
 function add_constraint_max_ratio_out_in_unit_flow!(m::Model)
-    add_constraint_ratio_unit_flow!(m, max_ratio_out_in_unit_flow, <=, direction(:to_node), direction(:from_node), max_units_on_coefficient_out_in)
+    add_constraint_ratio_unit_flow!(
+        m, max_ratio_out_in_unit_flow, max_units_on_coefficient_out_in, <=, direction(:to_node), direction(:from_node)
+    )
 end
 function add_constraint_min_ratio_out_in_unit_flow!(m::Model)
-    add_constraint_ratio_unit_flow!(m, min_ratio_out_in_unit_flow, >=, direction(:to_node), direction(:from_node), min_units_on_coefficient_out_in)
+    add_constraint_ratio_unit_flow!(
+        m, min_ratio_out_in_unit_flow, min_units_on_coefficient_out_in, >=, direction(:to_node), direction(:from_node)
+    )
 end
 function add_constraint_fix_ratio_in_in_unit_flow!(m::Model)
-    add_constraint_ratio_unit_flow!(m, fix_ratio_in_in_unit_flow, ==, direction(:from_node), direction(:from_node), fix_units_on_coefficient_in_in)
+    add_constraint_ratio_unit_flow!(
+        m, fix_ratio_in_in_unit_flow, fix_units_on_coefficient_in_in, ==, direction(:from_node), direction(:from_node)
+    )
 end
 function add_constraint_max_ratio_in_in_unit_flow!(m::Model)
-    add_constraint_ratio_unit_flow!(m, max_ratio_in_in_unit_flow, <=, direction(:from_node), direction(:from_node), max_units_on_coefficient_in_in)
+    add_constraint_ratio_unit_flow!(
+        m, max_ratio_in_in_unit_flow, max_units_on_coefficient_in_in, <=, direction(:from_node), direction(:from_node)
+    )
 end
 function add_constraint_fix_ratio_out_out_unit_flow!(m::Model)
-    add_constraint_ratio_unit_flow!(m, fix_ratio_out_out_unit_flow, ==, direction(:to_node), direction(:to_node), fix_units_on_coefficient_out_out)
+    add_constraint_ratio_unit_flow!(
+        m, fix_ratio_out_out_unit_flow, fix_units_on_coefficient_out_out, ==, direction(:to_node), direction(:to_node)
+    )
 end
 function add_constraint_max_ratio_out_out_unit_flow!(m::Model)
-    add_constraint_ratio_unit_flow!(m, max_ratio_out_out_unit_flow, <=, direction(:to_node), direction(:to_node), max_units_on_coefficient_out_out)
+    add_constraint_ratio_unit_flow!(
+        m, max_ratio_out_out_unit_flow, max_units_on_coefficient_out_out, <=, direction(:to_node), direction(:to_node)
+    )
 end
 function add_constraint_fix_ratio_in_out_unit_flow!(m::Model)
-    add_constraint_ratio_unit_flow!(m, fix_ratio_in_out_unit_flow, ==, direction(:from_node), direction(:to_node), fix_units_on_coefficient_in_out)
+    add_constraint_ratio_unit_flow!(
+        m, fix_ratio_in_out_unit_flow, fix_units_on_coefficient_in_out, ==, direction(:from_node), direction(:to_node)
+    )
 end
 function add_constraint_max_ratio_in_out_unit_flow!(m::Model)
-    add_constraint_ratio_unit_flow!(m, max_ratio_in_out_unit_flow, <=, direction(:from_node), direction(:to_node), max_units_on_coefficient_in_out)
+    add_constraint_ratio_unit_flow!(
+        m, max_ratio_in_out_unit_flow, max_units_on_coefficient_in_out, <=, direction(:from_node), direction(:to_node)
+    )
 end
 function add_constraint_min_ratio_in_out_unit_flow!(m::Model)
-    add_constraint_ratio_unit_flow!(m, min_ratio_in_out_unit_flow, >=, direction(:from_node), direction(:to_node), min_units_on_coefficient_in_out)
+    add_constraint_ratio_unit_flow!(
+        m, min_ratio_in_out_unit_flow, min_units_on_coefficient_in_out, >=, direction(:from_node), direction(:to_node)
+    )
 end

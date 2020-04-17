@@ -25,21 +25,25 @@ Ratio of `unit_flow` variables.
 function add_constraint_unit_constraint!(m::Model)
     @fetch unit_flow_op, units_on = m.ext[:variables]
     cons = m.ext[:constraints][:unit_constraint] = Dict()
-    for (u,uc) in unit__unit_constraint()
+    for uc in unit_constraint()
         involved_nodes=[]
-        for n in unit_constraint__to_node(unit_constraint=uc)
-            push!(involved_nodes, n)
+        for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
+            if !(n in involved_nodes)
+                push!(involved_nodes, n)
+            end
         end
-        for n in unit_constraint__from_node(unit_constraint=uc)
-            push!(involved_nodes, n)
+        for (u, n) in unit__to_node__unit_constraint(unit_constraint=uc)
+            if !(n in involved_nodes)
+                push!(involved_nodes, n)
+            end
         end
-        for t in t_lowest_resolution(map(x -> x.t, unit_flow_indices(unit=u, node=involved_nodes)))
+        for t in t_lowest_resolution(map(x -> x.t, unit_flow_indices(node=involved_nodes)))
             cons[uc, t] = sense_constraint(
                 m,
                 + reduce(
                     +,
-                    + unit_flow_op[u_, n_, d_, op_, t_] * unit_flow_from_node_coefficient[(unit_constraint=uc, node=n_, i=op_, t=t_)] * duration(t_)
-                    for n in unit_constraint__from_node(unit_constraint=uc)
+                    + unit_flow_op[u_, n_, d_, op_, t_] * unit_flow_coefficient[(unit=u_, node=n_, unit_constraint=uc, i=op_, t=t_)] * duration(t_)
+                    for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
                     for (u_, n_, d_, op_, t_) in unit_flow_op_indices(
                         unit=u, node=n, direction=direction(:from_node), t=t_in_t(t_long=t)
                     );
@@ -47,35 +51,37 @@ function add_constraint_unit_constraint!(m::Model)
                 )
                 + reduce(
                     +,
-                    + unit_flow_op[u_, n_, d_, op_, t_] * unit_flow_to_node_coefficient[(unit_constraint=uc, node=n_, i=op_, t=t_)] * duration(t_)
-                    for n in unit_constraint__from_node(unit_constraint=uc)
-                    for (u_, n_, d_, op_, t_) in unit_flow_op_indices(
-                        unit=u, node=n, direction=direction(:to_node), t=t_in_t(t_long=t)
-                    );
-                    init=0
-                )
-                + reduce(
-                    +,
-                    + unit_flow_op[u_, n_, d_, op_, t_] * unit_flow_from_node_coefficient[(unit_constraint=uc, node=n_, i=op_, t=t_)] * duration(t_)
-                    for n in unit_constraint__to_node(unit_constraint=uc)
-                    for (u_, n_, d_, op_, t_) in unit_flow_op_indices(
+                    + unit_flow[u_, n_, d_, t_] * unit_flow_coefficient[(unit=u_, node=n_, unit_constraint=uc, i=1, t=t_)] * duration(t_)
+                    for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
+                    for (u_, n_, d_, t_) in unit_flow_indices(
                         unit=u, node=n, direction=direction(:from_node), t=t_in_t(t_long=t)
-                    );
+                    )
+                    if operating_points(unit=u, node=n)) == 1;
                     init=0
                 )
                 + reduce(
                     +,
-                    + unit_flow_op[u_, n_, d_, op_, t_] * unit_flow_to_node_coefficient[(unit_constraint=uc, node=n_, i=op_, t=t_)] * duration(t_)
-                    for n in unit_constraint__to_node(unit_constraint=uc)
+                    + unit_flow_op[u_, n_, d_, op_, t_] * unit_flow_coefficient[(unit=u_, node=n_, unit_constraint=uc, i=op_, t=t_)] * duration(t_)
+                    for (u, n) in unit__to_node__unit_constraint(unit_constraint=uc)
                     for (u_, n_, d_, op_, t_) in unit_flow_op_indices(
                         unit=u, node=n, direction=direction(:to_node), t=t_in_t(t_long=t)
                     );
                     init=0
                 )
-                + units_on_coefficient[(unit_constraint=uc, unit=u, t=t)]
-                * reduce(
+                + reduce(
                     +,
-                    units_on[u_, t_] * duration(t_)
+                    + unit_flow[u_, n_, d_, t_] * unit_flow_coefficient[(unit=u_, node=n_, unit_constraint=uc, i=1, t=t_)] * duration(t_)
+                    for (u, n) in unit__to_node__unit_constraint(unit_constraint=uc)
+                    for (u_, n_, d_, t_) in unit_flow_indices(
+                        unit=u, node=n, direction=direction(:to_node), t=t_in_t(t_long=t)
+                    )
+                    if operating_points(unit=u, node=n)) == 1;
+                    init=0
+                )
+                + reduce(
+                    +,
+                    units_on[u_, t_] * units_on_coefficient[(unit_constraint=uc, unit=u, t=t)] * duration(t_)
+                    for u in unit__unit_constraint(unit_constraint=uc)
                     for (u_, t_) in units_on_indices(
                         unit=u, t=t_in_t(t_long=t)
                     );

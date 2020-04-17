@@ -109,10 +109,8 @@ function run_spinemodel(
         set_objective!(m)
     end
 
-# Load flow - do basic network checks and calculate ptdfs and lodfs, depending on value of commodity_physics using PowerSystems.jl
 
         @logtime level2 "Processing network...\n" process_network()
-
         @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
         @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
@@ -169,7 +167,7 @@ function run_spinemodel(
     m
 end
 
-function optimize_model!(m::Model)
+function optimize_model!(m::Model)    
     optimize!(m)
     if termination_status(m) == MOI.OPTIMAL
         true

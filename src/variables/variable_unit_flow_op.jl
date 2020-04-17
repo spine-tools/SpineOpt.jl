@@ -36,7 +36,8 @@ function unit_flow_op_indices(;unit=anything, node=anything, direction=anything,
         for (u, n, d, t) in unit_flow_indices(
             unit=unit, node=node, direction=direction
         )
-        for i_ in intersect(operating_point, 1:length(operating_points(unit=u)))
+        for i_ in intersect(operating_point, 1:length(operating_points(unit=u, node=n)))
+        if length(operating_points(unit=u, node=n)) > 1
     ]
 end
 
