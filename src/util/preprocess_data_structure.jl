@@ -26,7 +26,7 @@ end
 function generate_direction()
     from_node = Object(:from_node, 1)
     to_node = Object(:to_node, 2)
-    direction = ObjectClass(:direction, [from_node, to_node], Dict())
+    direction = ObjectClass(:direction, [from_node, to_node])
     directions_by_class = Dict(
         unit__from_node => from_node,
         unit__to_node => to_node,

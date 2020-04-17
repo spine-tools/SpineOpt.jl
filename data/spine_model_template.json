@@ -7,7 +7,8 @@
         "output",
         "report",
         "temporal_block",
-        "unit"
+        "unit",
+        "area"
     ],
     "relationship_classes": [
         ["commodity_group__commodity", ["commodity", "commodity"]],
@@ -24,7 +25,8 @@
         ["unit__node__node", ["unit", "node", "node"]],
         ["unit__to_node", ["unit", "node"]],
         ["unit_group__commodity_group", ["unit", "commodity"]],
-        ["unit_group__unit", ["unit", "unit"]]
+        ["unit_group__unit", ["unit", "unit"]],
+        ["node__area", ["node", "area"]]
     ],
     "object_parameters": [
         ["connection", "connection_availability_factor", 1.0],
@@ -76,14 +78,27 @@
         ["unit__from_node", "unit_conv_cap_to_flow", 1.0],
         ["unit__from_node", "vom_cost", null],
         ["unit__node__node", "fix_ratio_in_in_unit_flow", null],
-        ["unit__node__node", "fix_ratio_out_in_unit_flow", 1.0],
+        ["unit__node__node", "fix_ratio_out_in_unit_flow", null],
+        ["unit__node__node", "fix_ratio_in_out_unit_flow", null],
         ["unit__node__node", "fix_ratio_out_out_unit_flow", null],
         ["unit__node__node", "max_ratio_in_in_unit_flow", null],
         ["unit__node__node", "max_ratio_out_in_unit_flow", null],
+        ["unit__node__node", "max_ratio_in_out_unit_flow", null],
         ["unit__node__node", "max_ratio_out_out_unit_flow", null],
         ["unit__node__node", "min_ratio_in_in_unit_flow", null],
         ["unit__node__node", "min_ratio_out_in_unit_flow", null],
+        ["unit__node__node", "min_ratio_in_out_unit_flow", null],
         ["unit__node__node", "min_ratio_out_out_unit_flow", null],
+        ["unit__node__node", "fix_units_on_coefficient_out_in", 0.0],
+        ["unit__node__node", "max_units_on_coefficient_out_in", 0.0],
+        ["unit__node__node", "min_units_on_coefficient_out_in", 0.0],
+        ["unit__node__node", "fix_units_on_coefficient_in_in", 0.0],
+        ["unit__node__node", "max_units_on_coefficient_in_in", 0.0],
+        ["unit__node__node", "fix_units_on_coefficient_out_out", 0.0],
+        ["unit__node__node", "max_units_on_coefficient_out_out", 0.0],
+        ["unit__node__node", "fix_units_on_coefficient_in_out", 0.0],
+        ["unit__node__node", "max_units_on_coefficient_in_out", 0.0],
+        ["unit__node__node", "min_units_on_coefficient_in_out", 0.0],
         ["unit__to_node", "fix_unit_flow", null],
         ["unit__to_node", "fuel_cost", null],
         ["unit__to_node", "minimum_operating_point", null],
