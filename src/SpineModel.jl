@@ -29,6 +29,7 @@ using TimeZones
 using SpineInterface
 using Suppressor
 using JSON
+using PowerSystems
 
 # Export utility
 export run_spinemodel
