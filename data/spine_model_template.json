@@ -8,7 +8,9 @@
         "report",
         "temporal_block",
         "unit",
-        "area"
+        "area",
+        "stochastic_scenario",
+        "stochastic_structure"
     ],
     "relationship_classes": [
         ["commodity_group__commodity", ["commodity", "commodity"]],
@@ -26,7 +28,10 @@
         ["unit__to_node", ["unit", "node"]],
         ["unit_group__commodity_group", ["unit", "commodity"]],
         ["unit_group__unit", ["unit", "unit"]],
-        ["node__area", ["node", "area"]]
+        ["node__area", ["node", "area"]],
+        ["parent_stochastic_scenario__child_stochastic_scenario", ["stochastic_scenario", "stochastic_scenario"]],
+        ["stochastic_structure__stochastic_scenario", ["stochastic_structure", "stochastic_scenario"]],
+        ["node__stochastic_structure", ["node", "stochastic_structure"]]
     ],
     "object_parameters": [
         ["connection", "connection_availability_factor", 1.0],
@@ -107,6 +112,8 @@
         ["unit__to_node", "unit_conv_cap_to_flow", 1.0],
         ["unit__to_node", "vom_cost", null],
         ["unit_group__commodity_group", "max_cum_in_unit_flow_bound", null]
+        ["stochastic_structure__stochastic_scenario", "weight_relative_to_parent", null],
+        ["stochastic_structure__stocahstic_scenario", "stochastic_scenario_end", null]
     ],
     "objects": [],
     "relationships": [],
