@@ -111,9 +111,9 @@
         ["unit__to_node", "unit_capacity", null],
         ["unit__to_node", "unit_conv_cap_to_flow", 1.0],
         ["unit__to_node", "vom_cost", null],
-        ["unit_group__commodity_group", "max_cum_in_unit_flow_bound", null]
+        ["unit_group__commodity_group", "max_cum_in_unit_flow_bound", null],
         ["stochastic_structure__stochastic_scenario", "weight_relative_to_parent", null],
-        ["stochastic_structure__stocahstic_scenario", "stochastic_scenario_end", null]
+        ["stochastic_structure__stochastic_scenario", "stochastic_scenario_end", null]
     ],
     "objects": [],
     "relationships": [],
