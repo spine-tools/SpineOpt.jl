@@ -28,8 +28,8 @@ Limit the operating point flow variables to the difference between successive op
 function add_constraint_operating_point_sum!(m::Model)
     @fetch unit_flow_op, unit_flow = m.ext[:variables]
     cons = m.ext[:constraints][:operating_point_sum] = Dict()
-    for (u_, n_) in indices(operating_points)
-        for (u, n, d, t) in unit_flow_indices(unit=u_, node=n_)
+    for (u_, n_, d_) in indices(operating_points)
+        for (u, n, d, t) in unit_flow_indices(unit=u_, node=n_, direction=d_)
             cons[u, n, d, t] = @constraint(
                 m,
                 unit_flow[u, n, d, t]
@@ -37,7 +37,7 @@ function add_constraint_operating_point_sum!(m::Model)
                 + reduce(
                     +,
                     + unit_flow_op[u, n, d, op, t]
-                    for op in 1:length(operating_points(unit=u, node=n));
+                    for op in 1:length(operating_points(unit=u, node=n, direction=d));
                     init=0
                 )
             )

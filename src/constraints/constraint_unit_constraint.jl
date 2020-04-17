@@ -23,7 +23,7 @@
 Ratio of `unit_flow` variables.
 """
 function add_constraint_unit_constraint!(m::Model)
-    @fetch unit_flow_op, units_on = m.ext[:variables]
+    @fetch unit_flow_op, unit_flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][:unit_constraint] = Dict()
     for uc in unit_constraint()
         involved_nodes=[]
@@ -56,7 +56,7 @@ function add_constraint_unit_constraint!(m::Model)
                     for (u_, n_, d_, t_) in unit_flow_indices(
                         unit=u, node=n, direction=direction(:from_node), t=t_in_t(t_long=t)
                     )
-                    if operating_points(unit=u, node=n)) == 1;
+                    if isempty(unit_flow_op_indices(unit=u_, node=n_, direction=d_, t=t_)) ;
                     init=0
                 )
                 + reduce(
@@ -75,7 +75,7 @@ function add_constraint_unit_constraint!(m::Model)
                     for (u_, n_, d_, t_) in unit_flow_indices(
                         unit=u, node=n, direction=direction(:to_node), t=t_in_t(t_long=t)
                     )
-                    if operating_points(unit=u, node=n)) == 1;
+                    if isempty(unit_flow_op_indices(unit=u_, node=n_, direction=d_, t=t_)) ;
                     init=0
                 )
                 + reduce(

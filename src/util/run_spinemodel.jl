@@ -88,6 +88,7 @@ function run_spinemodel(
     lodf_con_mon = Dict{Tuple{Object,Object},Float64}() #lodfs calcuated based on ptdfs returned by PowerSystems.jl
     net_inj_nodes=[] # this is the set of nodes with demand or generation
 
+
     @log level0 "Running Spine Model for $(url_in)..."
     @logtime level2 "Initializing data structure from db..." using_spinedb(url_in, @__MODULE__; upgrade=true)
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
@@ -108,7 +109,6 @@ function run_spinemodel(
         println("objective...")
         set_objective!(m)
     end
-
 
         @logtime level2 "Processing network...\n" process_network()
         @logtime level2 "Adding constraints...\n" begin
@@ -145,6 +145,10 @@ function run_spinemodel(
         @logtime level3 "- [constraint_user]" add_constraints(m)
     end
     k = 2
+
+    #@logtime level2 "Writing diagnostics file" write_to_file(m, "model_diagnostics.mps")
+
+
     while optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
         @logtime level2 "Saving results..." begin
@@ -167,7 +171,7 @@ function run_spinemodel(
     m
 end
 
-function optimize_model!(m::Model)    
+function optimize_model!(m::Model)
     optimize!(m)
     if termination_status(m) == MOI.OPTIMAL
         true
