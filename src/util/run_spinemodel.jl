@@ -84,7 +84,6 @@ function run_spinemodel(
     end
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     rerun_spinemodel(
-        url_in,
         url_out;
         with_optimizer=with_optimizer,
         cleanup=cleanup,
@@ -95,7 +94,6 @@ function run_spinemodel(
 end
 
 function rerun_spinemodel(
-        url_in::String,
         url_out::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
         cleanup=true,
@@ -114,10 +112,6 @@ function rerun_spinemodel(
     ptdf_conn_n = Dict{Tuple{Object,Object},Float64}() #ptdfs returned by PowerSystems.jl
     lodf_con_mon = Dict{Tuple{Object,Object},Float64}() #lodfs calcuated based on ptdfs returned by PowerSystems.jl
     net_inj_nodes=[] # this is the set of nodes with demand or generation
-
-    @log level0 "Running Spine Model for $(url_in)..."
-    @logtime level2 "Initializing data structure from db..." using_spinedb(url_in, @__MODULE__; upgrade=true)
-    @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @log level1 "Window 1: $current_window"
     @logtime level2 "Initializing model..." begin
@@ -135,9 +129,8 @@ function rerun_spinemodel(
         println("objective...")
         set_objective!(m)
     end
-
-        @logtime level2 "Processing network...\n" process_network()
-        @logtime level2 "Adding constraints...\n" begin
+    @logtime level2 "Processing network...\n" process_network()
+    @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
         @logtime level3 "- [constraint_group_balance]" add_constraint_group_balance!(m)
         @logtime level3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m, ptdf_conn_n, net_inj_nodes)
