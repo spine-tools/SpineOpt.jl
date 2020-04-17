@@ -47,6 +47,8 @@ include("temporals/generate_time_slice_relationships.jl")
 
 include("util/misc.jl")
 include("util/generate_missing_items.jl")
+include("util/run_spinemodel.jl")
+include("util/update_model.jl")
 include("util/preprocess_data_structure.jl")
 include("util/network_functions.jl")
 
