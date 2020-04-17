@@ -24,11 +24,11 @@ Finds and returns all the children of a `stochastic_scenario` in the stochastic 
 defined by the `parent_stocahstic_scenario__child_stochastic_scenario` relationship.
 """
 function find_children(stochastic_scenario::Object)
-    reduced_tree = filter(
+    parent_and_children = filter(
         x->x.stochastic_scenario1==stochastic_scenario,
         parent_stochastic_scenario__child_stochastic_scenario()
     )
-    return [x.stochastic_scenario2 for x in reduced_tree]
+    return [x.stochastic_scenario2 for x in parent_and_children]
 end
 
 """
@@ -45,21 +45,23 @@ end
 
 
 """
-    nodal_stochastic_tree(node, window_start)
+    generate_stochastic_tree(stochastic_structure, window_start)
 
-Generates the stochastic tree of a `node` relative to a desired `window_start`
-based on the `scenario_end` parameters in the `node__stochastic_scenario` relationship.
+Generates the stochastic tree of a `stochastic_structure` relative to a desired `window_start`
+based on the `stochastic_scenario_end` parameters in the `stochastic_structure__stochastic_scenario` relationship.
 """
-function nodal_stochastic_tree(node, window_start)
+function generate_stochastic_tree(stochastic_structure, window_start)
     scenarios = find_root_scenarios()
     scen_start = Dict()
     scen_end = Dict()
+    scen_weight = Dict()
     for root_scenario in scenarios
         scen_start[root_scenario] = window_start
+        scen_weight[root_scenario] = weight_relative_to_parent(stochastic_structure=stochastic_structure, stochastic_scenario=root_scenario)
     end
     for scen in scenarios
-        if (node=node, stochastic_scenario=scen) in indices(scenario_end)
-            scen_end[scen] = window_start + scenario_end(node=node, stochastic_scenario=scen)
+        if (stochastic_structure=stochastic_structure, stochastic_scenario=scen) in indices(stochastic_scenario_end)
+            scen_end[scen] = window_start + stochastic_scenario_end(stochastic_structure=stochastic_structure, stochastic_scenario=scen)
             children = find_children(scen)
             for child in children
                 if isnothing(get(scen_start, child, nothing))
@@ -67,15 +69,24 @@ function nodal_stochastic_tree(node, window_start)
                 else
                     scen_start[child] = min(scen_start[child], scen_end[scen])
                 end
+                child_weight = weight_relative_to_parent(stochastic_structure=stochastic_structure, stochastic_scenario=child) * scen_weight[scen]
+                if isnothing(get(scen_weight, child, nothing))
+                    scen_weight[child] = child_weight
+                else
+                    scen_weight[child] += child_weight
+                end
             end
             append!(scenarios, children)
         end
     end
-    nodal_stochastic_tree = Dict()
+    stochastic_tree = Dict()
     for scen in scenarios
-        nodal_stochastic_tree[(node, scen)] = TimeSlice(scen_start[scen], get(scen_end, scen, scen_start[scen])) # TODO: Figure out where the last scenario ends
+        stochastic_tree[scen] = (
+            timeslice = TimeSlice(scen_start[scen], get(scen_end, scen, scen_start[scen])), # TODO: Figure out where the last scenario ends
+            weight = scen_weight[scen]
+        )
     end
-    return nodal_stochastic_tree
+    return stochastic_tree
 end
 
 #=
