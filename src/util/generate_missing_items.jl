@@ -26,31 +26,51 @@
 # and what we find in `spinedb_api.create_new_spine_database(for_spine_model=True)`
 
 function generate_missing_items()
-    classes = Dict{Symbol,Union{ObjectClass,RelationshipClass}}(class.name => class for class in object_class(@__MODULE__))
-    merge!(classes, Dict(class.name => class for class in relationship_class(@__MODULE__)))
-    parameters = Set(param.name for param in parameter(@__MODULE__))
+    mod = @__MODULE__ 
+    classes = Dict{Symbol,Union{ObjectClass,RelationshipClass}}(
+        class.name => class for class in object_class(mod)
+    )
+    merge!(classes, Dict(class.name => class for class in relationship_class(mod)))
+    parameters = Set(param.name for param in parameter(mod))
     for name in template["object_classes"]
         sym_name = Symbol(name)
         sym_name in keys(classes) && continue
-        @warn "object class $sym_name is missing from the db"
-        object_class = ObjectClass(sym_name, [])
-        @eval $sym_name = $object_class
+        @warn "object class $name is missing from the db"
+        object_class = classes[sym_name] = ObjectClass(sym_name, [])
+        @eval mod begin
+            $sym_name = $object_class
+            export $sym_name
+        end
     end
     for (name, object_class_names) in template["relationship_classes"]
         sym_name = Symbol(name)
         sym_name in keys(classes) && continue
-        @warn "relationship class $sym_name is missing from the db"
-        relationship_class = RelationshipClass(sym_name, Symbol.(object_class_names), [])
-        @eval $sym_name = $relationship_class
+        @warn "relationship class $name is missing from the db"
+        relationship_class = classes[sym_name] = RelationshipClass(sym_name, Symbol.(object_class_names), [])
+        @eval mod begin
+            $sym_name = $relationship_class
+            export $sym_name
+        end
     end
+    d = Dict{Symbol,Array{Pair{Union{ObjectClass,RelationshipClass},AbstractCallable},1}}()
     for (class_name, name, default_value) in [template["object_parameters"]; template["relationship_parameters"]]
         sym_name = Symbol(name)
         sym_name in parameters && continue
-        @warn "parameter $sym_name is missing from the db"
-        sym_class_name = Symbol(class_name)
-        class = classes[sym_class_name]
+        @warn "parameter $name associated to class $class_name is missing from the db"
+        class = classes[Symbol(class_name)]
         default_val = callable(db_api.from_database(JSON.json(default_value)))
-        parameter = Parameter(sym_name, Dict(class => default_val))
-        @eval $sym_name = $parameter
+        push!(get!(d, sym_name, []), class => default_val)
+    end
+    for (sym_name, class_default_values) in d
+        for (class, default_val) in class_default_values
+            for key in keys(class.parameter_values)
+                class.parameter_values[key][sym_name] = copy(default_val)
+            end
+        end
+        parameter = Parameter(sym_name, first.(class_default_values))
+        @eval mod begin
+            $sym_name = $parameter
+            export $sym_name
+        end
     end
 end
