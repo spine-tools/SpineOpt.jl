@@ -65,17 +65,9 @@ function generate_stochastic_tree(stochastic_structure::Object, window_start::Da
             scen_end[scen] = window_start + stochastic_scenario_end(stochastic_structure=stochastic_structure, stochastic_scenario=scen)
             children = find_children(scen)
             for child in children
-                if isnothing(get(scen_start, child, nothing))
-                    scen_start[child] = scen_end[scen]
-                else
-                    scen_start[child] = min(scen_start[child], scen_end[scen])
-                end
+                scen_start[child] = min(get(scen_start, child, scen_end[scen]), scen_end[scen])
                 child_weight = weight_relative_to_parent(stochastic_structure=stochastic_structure, stochastic_scenario=child) * scen_weight[scen]
-                if isnothing(get(scen_weight, child, nothing))
-                    scen_weight[child] = child_weight
-                else
-                    scen_weight[child] += child_weight
-                end
+                scen_weight[child] = get(scen_weight, child, 0) + child_weight
             end
             append!(scenarios, children)
         end
