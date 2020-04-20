@@ -74,7 +74,7 @@ function generate_stochastic_tree(stochastic_structure::Object, window_start::Da
     end
     stochastic_tree = Dict()
     for scen in scenarios
-        stochastic_tree[(stochastic_structure=stochastic_structure, stochastic_scenario=scen)] = (
+        stochastic_tree[scen] = (
             timeslice = TimeSlice(scen_start[scen], get(scen_end, scen, last(time_slice()).end_.x)),
             weight = scen_weight[scen]
         )
@@ -84,48 +84,56 @@ end
 
 
 """
-    generate_stochastic_forest(window_start::DateTime)
+    generate_all_stochastic_trees(window_start::DateTime)
 
 Generates the stochastic trees of every `stochastic_structure`.
 """
-function generate_stochastic_forest(window_start::DateTime)
-    stochastic_forest = Dict()
+function generate_all_stochastic_trees(window_start::DateTime)
+    stochastic_trees = Dict()
     for structure in stochastic_structure()
-        merge!(
-            stochastic_forest,
-            generate_stochastic_tree(structure, window_start)
-        )
+        stochastic_trees[structure] = generate_stochastic_tree(structure, window_start)
     end
-    return stochastic_forest
+    return stochastic_trees
+end
+
+
+"""
+    node_stochastic_time_indices(node::Object, stochastic_tree::Dict)
+
+Function to generate the `(node, stochastic_scenario, time_slice)` indices
+for a `node` based on a stochastic tree.
+"""
+function node_stochastic_time_indices(node::Object, stochastic_tree::Dict)
+    node__stochastic_scenario__time_slice = []
+    for temporal_block in node__temporal_block(node=node)
+        for t in time_slice.block_time_slices[temporal_block]
+            scenarios = keys(filter(tree->tree[2].timeslice.start.x <= t.start.x < tree[2].timeslice.end_.x, stochastic_tree))
+            for scen in scenarios
+                push!(
+                    node__stochastic_scenario__time_slice,
+                    (node=node, stochastic_scenario=scen, t=t)
+                )
+            end
+        end
+    end
+    return node__stochastic_scenario__time_slice
 end
 
 
 """
     generate_node_stochastic_time_indices(window_start::DateTime)
 
-Function to generate the `(node__stochastic_scenario__time_slice)` indices
-based on the `stochastic_forest` for all `nodes`.
+Function to generate the `(node__stochastic_scenario__time_slice)` indices for all `nodes`.
 """
 function generate_node_stochastic_time_indices(window_start::DateTime)
-    stochastic_forest = generate_stochastic_forest(window_start)
+    all_stochastic_trees = generate_all_stochastic_trees(window_start)
     node__stochastic_scenario__time_slice = []
-    for (node, temporal_block) in node__temporal_block()
+    for (node, structure) in node__stochastic_structure()
         if length(node__stochastic_structure(node=node)) > 1
             @error("Node `$(node)` cannot have more than one `stochastic_structure`!")
         end
-        current_stochastic_structure = first(node__stochastic_structure(node=node))
-        current_stochastic_scenarios = stochastic_structure__stochastic_scenario(stochastic_structure=current_stochastic_structure)
-        for t in time_slice.block_time_slices[temporal_block]
-            for scen in current_stochastic_scenarios
-                scenario_timespan = stochastic_forest[(
-                    stochastic_structure=current_stochastic_structure,
-                    stochastic_scenario=scen
-                )].timeslice
-                if scenario_timespan.start.x <= t.start.x < scenario_timespan.end_.x
-                    push!(node__stochastic_scenario__time_slice, (node=node, stochastic_scenario=scen, time_slice=t))
-                end
-            end
-        end
+        node_stochastic_time = node_stochastic_time_indices(node, all_stochastic_trees[structure])
+        append!(node__stochastic_scenario__time_slice, node_stochastic_time)
     end
     return node__stochastic_scenario__time_slice
 end
