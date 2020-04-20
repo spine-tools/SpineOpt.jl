@@ -122,7 +122,7 @@ function rerun_spinemodel(
         m.ext[:variables_ub] = Dict{Symbol,Any}()
         m.ext[:values] = Dict{Symbol,Dict}()
         m.ext[:constraints] = Dict{Symbol,Dict}()
-        @logtime level3  "create variables" create_variables!(m)
+        @logtime level3  "creating variables" create_variables!(m)
         @logtime level3  "handle fix variables" fix_variables!(m)
         @logtime level3  "objective function" set_objective!(m)
     end
