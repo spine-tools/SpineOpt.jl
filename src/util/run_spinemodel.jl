@@ -117,20 +117,17 @@ function rerun_spinemodel(
     @logtime level2 "Initializing model..." begin
         m = Model(with_optimizer)
         println()
-        println("variables...")
         m.ext[:variables] = Dict{Symbol,Dict}()
         m.ext[:variables_lb] = Dict{Symbol,Any}()
         m.ext[:variables_ub] = Dict{Symbol,Any}()
         m.ext[:values] = Dict{Symbol,Dict}()
         m.ext[:constraints] = Dict{Symbol,Dict}()
-        create_variables!(m)
-        println("fix variables...")
-        fix_variables!(m)
-        println("objective...")
-        set_objective!(m)
+        @logtime level3  "create variables" create_variables!(m)
+        @logtime level3  "handle fix variables" fix_variables!(m)
+        @logtime level3  "objective function" set_objective!(m)
     end
 
-        @logtime level2 "Processing network...\n" process_network()
+        @logtime level2 "Processing network...\n" process_network(log_level)
         @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
         @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
