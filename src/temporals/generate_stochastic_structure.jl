@@ -89,6 +89,23 @@ function generate_stochastic_tree(stochastic_structure::Object, window_start::Da
     return stochastic_tree
 end
 
+
+"""
+    generate_stochastic_forest(window_start::)
+
+Generates the stochastic trees of every `stochastic_structure`.
+"""
+function generate_stochastic_forest(window_start::DateTime)
+    stochastic_forest = Dict()
+    for structure in stochastic_structure()
+        merge!(
+            stochastic_forest,
+            generate_stochastic_tree(structure, window_start)
+        )
+    end
+    return stochastic_forest
+end
+
 #=
 """
     generate_node_stochastic_time_indices()
