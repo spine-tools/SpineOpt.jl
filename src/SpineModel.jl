@@ -29,9 +29,11 @@ using TimeZones
 using SpineInterface
 using Suppressor
 using JSON
+using PowerSystems
 
 # Export utility
 export run_spinemodel
+export rerun_spinemodel
 export @fetch
 export or
 
@@ -45,8 +47,8 @@ export units_on_indices
 include("temporals/generate_time_slice.jl")
 include("temporals/generate_time_slice_relationships.jl")
 
-include("util/missing_item_handlers.jl")
 include("util/misc.jl")
+include("util/generate_missing_items.jl")
 include("util/run_spinemodel.jl")
 include("util/update_model.jl")
 include("util/preprocess_data_structure.jl")
@@ -94,9 +96,6 @@ include("constraints/constraint_min_down_time.jl")
 include("constraints/constraint_unit_state_transition.jl")
 include("constraints/constraint_unit_constraint.jl")
 
-
-function __init__()
-	generate_missing_item_handlers()
-end
+const template = JSON.parsefile(joinpath(dirname(pathof(@__MODULE__)), "..", "data", "spine_model_template.json"))
 
 end

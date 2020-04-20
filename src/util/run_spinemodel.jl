@@ -30,7 +30,8 @@ function run_spinemodel(
         update_constraints=m -> nothing,
         log_level=3)
     run_spinemodel(
-        url, url;
+        url,
+        url;
         with_optimizer=with_optimizer,
         cleanup=cleanup,
         add_constraints=add_constraints,
@@ -75,6 +76,30 @@ function run_spinemodel(
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
         log_level=3)
+    level2 = log_level >= 2
+    @log true "Running Spine Model for $(url_in)..."
+    @logtime level2 "Initializing data structure from db..." begin
+        using_spinedb(url_in, @__MODULE__; upgrade=true)
+        generate_missing_items()
+    end
+    @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
+    rerun_spinemodel(
+        url_out;
+        with_optimizer=with_optimizer,
+        cleanup=cleanup,
+        add_constraints=add_constraints,
+        update_constraints=update_constraints,
+        log_level=log_level
+    )
+end
+
+function rerun_spinemodel(
+        url_out::String;
+        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+        cleanup=true,
+        add_constraints=m -> nothing,
+        update_constraints=m -> nothing,
+        log_level=3)
     level0 = log_level >= 0
     level1 = log_level >= 1
     level2 = log_level >= 2
@@ -87,11 +112,6 @@ function run_spinemodel(
     ptdf_conn_n = Dict{Tuple{Object,Object},Float64}() #ptdfs returned by PowerSystems.jl
     lodf_con_mon = Dict{Tuple{Object,Object},Float64}() #lodfs calcuated based on ptdfs returned by PowerSystems.jl
     net_inj_nodes=[] # this is the set of nodes with demand or generation
-
-
-    @log level0 "Running Spine Model for $(url_in)..."
-    @logtime level2 "Initializing data structure from db..." using_spinedb(url_in, @__MODULE__; upgrade=true)
-    @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @log level1 "Window 1: $current_window"
     @logtime level2 "Initializing model..." begin
