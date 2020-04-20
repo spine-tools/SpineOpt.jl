@@ -48,6 +48,7 @@
         ["node", "node_state_min", 0.0],
         ["node", "state_coeff", 1.0],
         ["node", "node_slack_penalty", null],
+        ["node", "balance_type", null],
         ["report", "output_db_url", null],
         ["temporal_block", "block_end", null],
         ["temporal_block", "block_start", null],
