@@ -82,7 +82,7 @@ function generate_stochastic_tree(stochastic_structure, window_start)
     stochastic_tree = Dict()
     for scen in scenarios
         stochastic_tree[scen] = (
-            timeslice = TimeSlice(scen_start[scen], get(scen_end, scen, scen_start[scen])), # TODO: Figure out where the last scenario ends
+            timeslice = TimeSlice(scen_start[scen], get(scen_end, scen, last(time_slice()).end_.x)),
             weight = scen_weight[scen]
         )
     end
