@@ -20,8 +20,8 @@
 """
     find_children(stochastic_scenario::Object)
 
-Finds and returns all the children of a `stochastic_scenario` in the stochastic tree
-defined by the `parent_stocahstic_scenario__child_stochastic_scenario` relationship.
+Finds and returns all the children of a `stochastic_scenario` defined by the 
+`parent_stocahstic_scenario__child_stochastic_scenario` relationship.
 """
 function find_children(stochastic_scenario::Object)
     parent_and_children = filter(
@@ -31,10 +31,11 @@ function find_children(stochastic_scenario::Object)
     return [x.stochastic_scenario2 for x in parent_and_children]
 end
 
+
 """
     find_root_scenarios()
 
-Finds and returns all the `stochastic_scenarios` that don't have parents
+Finds and returns all the `stochastic_scenarios` without parents.
 """
 function find_root_scenarios()
     stochastic_tree = parent_stochastic_scenario__child_stochastic_scenario()
@@ -91,7 +92,7 @@ end
 
 
 """
-    generate_stochastic_forest(window_start::)
+    generate_stochastic_forest(window_start::DateTime)
 
 Generates the stochastic trees of every `stochastic_structure`.
 """
