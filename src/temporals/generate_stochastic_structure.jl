@@ -99,18 +99,33 @@ function generate_stochastic_forest(window_start::DateTime)
     return stochastic_forest
 end
 
-#=
-"""
-    generate_node_stochastic_time_indices()
 
-Function to access 
 """
-function generate_node_stochastic_time_indices(window_start::TimeSlice)
-    scenarios = find_root_scenarios()
-    scenario_ = Dict{Tuple{Object,Object},TimeSlice}()
-    scenario_end = Dict{Tuple{Object,Object},TimeSlice}()
-    for scen in scenarios
+    generate_node_stochastic_time_indices(window_start::DateTime)
 
+Function to generate the `(node__stochastic_scenario__time_slice)` indices
+based on the `stochastic_forest` for all `nodes`.
+"""
+function generate_node_stochastic_time_indices(window_start::DateTime)
+    stochastic_forest = generate_stochastic_forest(window_start)
+    node__stochastic_scenario__time_slice = []
+    for (node, temporal_block) in node__temporal_block()
+        if length(node__stochastic_structure(node=node)) > 1
+            @error("Node `$(node)` cannot have more than one `stochastic_structure`!")
+        end
+        current_stochastic_structure = first(node__stochastic_structure(node=node))
+        current_stochastic_scenarios = stochastic_structure__stochastic_scenario(stochastic_structure=current_stochastic_structure)
+        for t in time_slice.block_time_slices[temporal_block]
+            for scen in current_stochastic_scenarios
+                scenario_timespan = stochastic_forest[(
+                    stochastic_structure=current_stochastic_structure,
+                    stochastic_scenario=scen
+                )].timeslice
+                if scenario_timespan.start.x <= t.start.x < scenario_timespan.end_.x
+                    push!(node__stochastic_scenario__time_slice, (node=node, stochastic_scenario=scen, time_slice=t))
+                end
+            end
+        end
     end
+    return node__stochastic_scenario__time_slice
 end
-=#
