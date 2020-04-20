@@ -50,7 +50,7 @@ end
 Generates the stochastic tree of a `stochastic_structure` relative to a desired `window_start`
 based on the `stochastic_scenario_end` parameters in the `stochastic_structure__stochastic_scenario` relationship.
 """
-function generate_stochastic_tree(stochastic_structure, window_start)
+function generate_stochastic_tree(stochastic_structure::Object, window_start::DateTime)
     scenarios = find_root_scenarios()
     scen_start = Dict()
     scen_end = Dict()
@@ -81,7 +81,7 @@ function generate_stochastic_tree(stochastic_structure, window_start)
     end
     stochastic_tree = Dict()
     for scen in scenarios
-        stochastic_tree[scen] = (
+        stochastic_tree[(stochastic_structure=stochastic_structure, stochastic_scenario=scen)] = (
             timeslice = TimeSlice(scen_start[scen], get(scen_end, scen, last(time_slice()).end_.x)),
             weight = scen_weight[scen]
         )
