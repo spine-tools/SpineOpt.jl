@@ -16,31 +16,31 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    node_state_indices(filtering_options...)
 
-A set of tuples for indexing the `node_state` variable. Any filtering options can be specified
-for `node`, and `t`.
+
 """
-function node_slack_neg_indices(;node=anything, t=anything)
-    inds = NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}[
-        (node=n, t=t)
-        for n in indices(node_slack_penalty)
-        for (n, tb) in node__temporal_block(
-            node=n, _compact=false
-        )
-        for t in time_slice(temporal_block=tb, t=t)
-    ]
-    unique!(inds)
+    add_constraint_operating_point_sum!(m::Model)
+
+Limit the operating point flow variables to the difference between successive operating points times the capacity of the unit
+
+"""
+
+function add_constraint_operating_point_sum!(m::Model)
+    @fetch unit_flow_op, unit_flow = m.ext[:variables]
+    cons = m.ext[:constraints][:operating_point_sum] = Dict()
+    for (u_, n_, d_) in indices(operating_points)
+        for (u, n, d, t) in unit_flow_indices(unit=u_, node=n_, direction=d_)
+            cons[u, n, d, t] = @constraint(
+                m,
+                unit_flow[u, n, d, t]
+                ==
+                + reduce(
+                    +,
+                    + unit_flow_op[u, n, d, op, t]
+                    for op in 1:length(operating_points(unit=u, node=n, direction=d));
+                    init=0
+                )
+            )
+        end
+    end
 end
-
-fix_node_slack_neg(x) = fix_node_slack_neg(node=x.node, t=x.t, _strict=false)
-node_slack_neg_lb(x) = 0
-
-create_variable_node_slack_neg!(m::Model) = create_variable!(
-    m,
-    :node_slack_neg,
-    node_slack_neg_indices;
-    lb=node_slack_neg_lb
-)
-fix_variable_node_slack_neg!(m::Model) = fix_variable!(m, :node_slack_neg, node_slack_neg_indices, fix_node_slack_neg_)

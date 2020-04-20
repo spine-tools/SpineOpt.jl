@@ -88,3 +88,13 @@ end
 sense_constraint(m, lhs, sense::typeof(<=), rhs) = @constraint(m, lhs <= rhs)
 sense_constraint(m, lhs, sense::typeof(==), rhs) = @constraint(m, lhs == rhs)
 sense_constraint(m, lhs, sense::typeof(>=), rhs) = @constraint(m, lhs >= rhs)
+
+function sense_constraint(m, lhs, sense::Symbol, rhs)
+    if sense == :>=
+        @constraint(m, lhs >= rhs)
+    elseif sense == :<=
+        @constraint(m, lhs <= rhs)
+    else
+        @constraint(m, lhs == rhs)
+    end
+end
