@@ -32,26 +32,30 @@ Main function which is called in run_spine_model.jl to caluate PTDFs, LODFs and 
 
 """
 
-function process_network()
+function process_network(log_level)
+
+    level0 = log_level >= 0
+    level1 = log_level >= 1
+    level2 = log_level >= 2
+    level3 = log_level >= 3
+
     for c in commodity()
         if commodity_physics(commodity=c) in (:commodity_physics_ptdf, :commodity_physics_lodf)
 
-            printstyled("Calculating ptdfs for commodity ", c, " with network_physics : ", commodity_physics(commodity=c), "\n" ; bold = true)
-
-            n_islands, island_node = islands()
-            println("Your network consists of ", n_islands, " islands")
+            @log     level2 "Processing network for commodity $(c) with network_physics $(commodity_physics(commodity=c))"
+            @logtime level3 "Checking network for islands" n_islands, island_node = islands()
+            @log     level3 "Your network consists of $(n_islands) islands"
             if n_islands > 1
-                println("Your network consists of multiple islands, this may end badly. Island-node mapping follows :")
-                print(island_node)
+                @warn "Your network consists of multiple islands, this may end badly."
+#                print(island_node)
             end
 
             net_inj_nodes=get_net_inj_nodes() # returns list of nodes that have demand and/or generation
 
-            @time ptdf_conn_n = calculate_ptdfs()
+            @logtime level3 "calculating ptdfs" ptdf_conn_n = calculate_ptdfs()
             if commodity_physics(commodity = c) == :commodity_physics_lodf
-                printstyled("Calculating lodfs for commodity ", c, " with network_physics : ", commodity_physics(commodity=c), "\n"; bold = true)
                 con__mon = Tuple{Object,Object}[]
-                @time lodf_con_mon = calculate_lodfs(ptdf_conn_n, con__mon)
+                @logtime level3 "calculating lodfs"  lodf_con_mon = calculate_lodfs(ptdf_conn_n, con__mon)
             end
         end
     end
@@ -83,13 +87,11 @@ function islands()
                 if !visited_d[n]
                     island = island + 1
                     island_node[island] = Object[]
-                    @info "New Island" n
                     visit(n, island, visited_d, island_node)
                 end
             end
         end
     end
-    @info "Network island check : Number of islands found " island
     return island, island_node
 end
 
@@ -263,7 +265,7 @@ function calculate_lodfs(ptdf_conn_n, con__mon)
             end
         end
     end
-    @info "Contingencies summary " considered_contingencies skipped tolerance
+    #@info "Contingencies summary " considered_contingencies skipped tolerance
     return lodf_con_mon
 end
 

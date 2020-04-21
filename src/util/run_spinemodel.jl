@@ -125,25 +125,26 @@ function rerun_spinemodel(
     @logtime level2 "Initializing model..." begin
         m = Model(with_optimizer)
         println()
-        println("variables...")
         m.ext[:variables] = Dict{Symbol,Dict}()
         m.ext[:variables_lb] = Dict{Symbol,Any}()
         m.ext[:variables_ub] = Dict{Symbol,Any}()
         m.ext[:values] = Dict{Symbol,Dict}()
         m.ext[:constraints] = Dict{Symbol,Dict}()
-        create_variables!(m)
-        println("fix variables...")
-        fix_variables!(m)
-        println("objective...")
-        set_objective!(m)
+        @logtime level3  "creating variables" create_variables!(m)
+        @logtime level3  "handle fix variables" fix_variables!(m)
+        @logtime level3  "objective function" set_objective!(m)
     end
-    @logtime level2 "Processing network...\n" process_network()
-    @logtime level2 "Adding constraints...\n" begin
+
+        @logtime level2 "Processing network...\n" process_network(log_level)
+        @logtime level2 "Adding constraints...\n" begin
+        @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
         @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
         @logtime level3 "- [constraint_group_balance]" add_constraint_group_balance!(m)
         @logtime level3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m, ptdf_conn_n, net_inj_nodes)
         @logtime level3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m, lodf_con_mon, con__mon)
         @logtime level3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
+        @logtime level3 "- [constraint_operating_point_bounds]" add_constraint_operating_point_bounds!(m)
+        @logtime level3 "- [constraint_operating_point_sum]" add_constraint_operating_point_sum!(m)
         @logtime level3 "- [constraint_fix_ratio_out_in_unit_flow]" add_constraint_fix_ratio_out_in_unit_flow!(m)
         @logtime level3 "- [constraint_max_ratio_out_in_unit_flow]" add_constraint_max_ratio_out_in_unit_flow!(m)
         @logtime level3 "- [constraint_min_ratio_out_in_unit_flow]" add_constraint_min_ratio_out_in_unit_flow!(m)
@@ -169,6 +170,10 @@ function rerun_spinemodel(
         @logtime level3 "- [constraint_user]" add_constraints(m)
     end
     k = 2
+
+    #@logtime level2 "Writing diagnostics file" write_to_file(m, "model_diagnostics.mps")
+
+
     while optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
         @logtime level2 "Saving results..." begin
