@@ -75,7 +75,8 @@ function generate_stochastic_tree(stochastic_structure::Object, window_start::Da
     stochastic_tree = Dict()
     for scen in scenarios
         stochastic_tree[scen] = (
-            timeslice = TimeSlice(scen_start[scen], get(scen_end, scen, last(time_slice()).end_.x)),
+            start = scen_start[scen],
+            end_ = get(scen_end, scen, last(time_slice()).end_.x),
             weight = scen_weight[scen]
         )
     end
@@ -107,7 +108,7 @@ function node_stochastic_time_indices(node::Object, stochastic_tree::Dict)
     node__stochastic_scenario__time_slice = []
     for temporal_block in node__temporal_block(node=node)
         for t in time_slice.block_time_slices[temporal_block]
-            scenarios = keys(filter(tree->tree[2].timeslice.start.x <= t.start.x < tree[2].timeslice.end_.x, stochastic_tree))
+            scenarios = keys(filter(tree->tree[2].start <= t.start.x < tree[2].end_, stochastic_tree))
             for scen in scenarios
                 push!(
                     node__stochastic_scenario__time_slice,
