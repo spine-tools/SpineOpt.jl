@@ -124,10 +124,10 @@ end
 """
     generate_node_stochastic_time_indices(window_start::DateTime)
 
-Function to generate the `(node__stochastic_scenario__time_slice)` indices for all `nodes`.
+Function to generate the `(node__stochastic_scenario__time_slice)` indices for all `nodes`
+based on all of the stochastic trees of all defined `stochastic_structures`.
 """
-function generate_node_stochastic_time_indices(window_start::DateTime)
-    all_stochastic_trees = generate_all_stochastic_trees(window_start)
+function generate_node_stochastic_time_indices(all_stochastic_trees::Dict)
     node__stochastic_scenario__time_slice = []
     for (node, structure) in node__stochastic_structure()
         if length(node__stochastic_structure(node=node)) > 1
@@ -153,4 +153,37 @@ The keyword arguments act as filters for each dimension.
 """
 function node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
     node_stochastic_time_indices_rc(node=node, stochastic_scenario=stochastic_scenario, t=t, _compact=false)    
+end
+
+
+"""
+    generate_node_stochastic_scenario_weight(all_stochastic_trees::Dict)
+
+Generates the `node_stochastic_scenario_weight` parameter for easier access to the scenario weights.
+"""
+function generate_node_stochastic_scenario_weight(all_stochastic_trees::Dict)
+    node_scenario = []
+    parameter_vals = Dict{Tuple{Vararg{Object}},Dict{Symbol,AbstractCallable}}()
+    for (node, structure) in node__stochastic_structure()
+        if length(node__stochastic_structure(node=node)) > 1
+            @error("Node `$(node)` cannot have more than one `stochastic_structure`!")
+        end
+        scenarios = keys(all_stochastic_trees[structure])
+        for scen in scenarios
+            push!(node_scenario, (node=node, stochastic_scenario=scen))
+            parameter_vals[(node, scen)] = Dict{Symbol,AbstractCallable}()
+            push!(
+                parameter_vals[(node, scen)],
+                :node_stochastic_scenario_weight => SpineInterface.ScalarCallable(all_stochastic_trees[structure][scen].weight)
+            )
+        end
+    end
+    node__stochastic_scenario = RelationshipClass(
+        :node__stochastic_scenario, [:node, :stochastic_scenario], node_scenario, parameter_vals
+    )
+    node_stochastic_scenario_weight = Parameter(:node_stochastic_scenario_weight, [node__stochastic_scenario])
+    @eval begin
+        node__stochastic_scenario = $node__stochastic_scenario
+        node_stochastic_scenario_weight = $node_stochastic_scenario_weight
+    end
 end
