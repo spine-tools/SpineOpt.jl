@@ -136,5 +136,21 @@ function generate_node_stochastic_time_indices(window_start::DateTime)
         node_stochastic_time = node_stochastic_time_indices(node, all_stochastic_trees[structure])
         append!(node__stochastic_scenario__time_slice, node_stochastic_time)
     end
-    return node__stochastic_scenario__time_slice
+    node_stochastic_time_indices_rc = RelationshipClass(
+        :node_stochastic_time_indices_rc, [:node, :stochastic_scenario, :time_slice], node__stochastic_scenario__time_slice
+    )
+    @eval begin
+        node_stochastic_time_indices_rc = $node_stochastic_time_indices_rc
+    end
+end
+
+
+"""
+    node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
+
+A list of `NamedTuple`s corresponding to the nodal stochastic time indices.
+The keyword arguments act as filters for each dimension.
+"""
+function node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
+    node_stochastic_time_indices_rc(node=node, stochastic_scenario=stochastic_scenario, t=t, _compact=false)    
 end
