@@ -128,16 +128,16 @@ Function to generate the `(node__stochastic_scenario__time_slice)` indices for a
 based on all of the stochastic trees of all defined `stochastic_structures`.
 """
 function generate_node_stochastic_time_indices(all_stochastic_trees::Dict)
-    node__stochastic_scenario__time_slice = []
+    node__stochastic_scenario__t = []
     for (node, structure) in node__stochastic_structure()
         if length(node__stochastic_structure(node=node)) > 1
             @error("Node `$(node)` cannot have more than one `stochastic_structure`!")
         end
         node_stochastic_time = node_stochastic_time_indices(node, all_stochastic_trees[structure])
-        append!(node__stochastic_scenario__time_slice, node_stochastic_time)
+        append!(node__stochastic_scenario__t, node_stochastic_time)
     end
     node_stochastic_time_indices_rc = RelationshipClass(
-        :node_stochastic_time_indices_rc, [:node, :stochastic_scenario, :time_slice], unique(node__stochastic_scenario__time_slice)
+        :node_stochastic_time_indices_rc, [:node, :stochastic_scenario, :t], unique(node__stochastic_scenario__t)
     )
     @eval begin
         node_stochastic_time_indices_rc = $node_stochastic_time_indices_rc
