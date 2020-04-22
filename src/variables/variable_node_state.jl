@@ -20,15 +20,12 @@
     node_state_indices(filtering_options...)
 
 A set of tuples for indexing the `node_state` variable. Any filtering options can be specified
-for `node`, and `t`.
+for `node`, `s`, and `t`.
 """
-function node_state_indices(;node=anything, t=anything)
-    inds = NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}[
-        (node=n, t=t)
-        for (n, tb) in node_state_indices_rc(
-            node=node, _compact=false
-        )
-        for t in time_slice(temporal_block=tb, t=t)
+function node_state_indices(;node=anything, s=anything, t=anything)
+    inds = NamedTuple{(:node, :s, :t),Tuple{Object,TimeSlice}}[
+        (node=n, s=s, t=t)
+        for (n, s, t) in node_stochastic_time_indices(node=node, s=s, t=t)
     ]
     unique!(inds)
 end

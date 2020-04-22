@@ -137,7 +137,7 @@ function generate_node_stochastic_time_indices(all_stochastic_trees::Dict)
         append!(node__stochastic_scenario__time_slice, node_stochastic_time)
     end
     node_stochastic_time_indices_rc = RelationshipClass(
-        :node_stochastic_time_indices_rc, [:node, :stochastic_scenario, :time_slice], node__stochastic_scenario__time_slice
+        :node_stochastic_time_indices_rc, [:node, :stochastic_scenario, :time_slice], unique(node__stochastic_scenario__time_slice)
     )
     @eval begin
         node_stochastic_time_indices_rc = $node_stochastic_time_indices_rc

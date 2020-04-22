@@ -90,6 +90,9 @@ function run_spinemodel(
         generate_missing_items()
     end
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
+    @logtime level2 "Creating temporal structure..." generate_temporal_structure()
+    @logtime level2 "Creating stochastic structure..." generate_stochastic_structure()
+    @logtime level2 "Creating variable indices..." generate_variable_indices()
     rerun_spinemodel(
         url_in,
         url_out;
@@ -121,8 +124,6 @@ function rerun_spinemodel(
     ptdf_conn_n = Dict{Tuple{Object,Object},Float64}() #ptdfs returned by PowerSystems.jl
     lodf_con_mon = Dict{Tuple{Object,Object},Float64}() #lodfs calcuated based on ptdfs returned by PowerSystems.jl
     net_inj_nodes=[] # this is the set of nodes with demand or generation
-    @logtime level2 "Creating temporal structure..." generate_temporal_structure()
-    @logtime level2 "Creating stochastic structure..." generate_stochastic_structure()
     @log level1 "Window 1: $current_window"
     @logtime level2 "Initializing model..." begin
         m = Model(with_optimizer)

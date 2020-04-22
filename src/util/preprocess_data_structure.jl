@@ -19,7 +19,6 @@
 
 function preprocess_data_structure()
     generate_direction()
-    generate_variable_indices()
 end
 
 
@@ -51,19 +50,19 @@ end
 
 function generate_variable_indices()
     unit_flow_indices = unique(
-        (unit=u, node=n, direction=d, temporal_block=tb)
+        (unit=u, node=n, direction=d, s=s, t=t)
         for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
-        for tb in node__temporal_block(node=n)
+        for (n, s, t) in node_stochastic_time_indices(node=n)
     )
     connection_flow_indices = unique(
-        (connection=conn, node=n, direction=d, temporal_block=tb)
+        (connection=conn, node=n, direction=d, s=s, t=t)
         for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
-        for tb in node__temporal_block(node=n)
+        for (n, s, t) in node_stochastic_time_indices(node=n)
     )
     node_state_indices = unique(
-        (node=n, temporal_block=tb)
+        (node=n, s=s, t=t)
         for n in node(has_state=:node_has_state_true)
-        for tb in node__temporal_block(node=n)
+        for (n, s, t) in node_stochastic_time_indices(node=n)
     )
     unit_flow_indices_rc = RelationshipClass(
         :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices

@@ -21,21 +21,21 @@
         unit=anything,
         node=anything,
         direction=anything,
+        s=anything
         t=anything
     )
 
 A list of `NamedTuple`s corresponding to indices of the `unit_flow` variable.
 The keyword arguments act as filters for each dimension.
 """
-function unit_flow_indices(;unit=anything, node=anything, direction=anything, t=anything)
+function unit_flow_indices(;unit=anything, node=anything, direction=anything, s=anything, t=anything)
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
     [
-        (unit=u, node=n, direction=d, t=t1)
-        for (u, n, d, tb) in unit_flow_indices_rc(
-            unit=unit, node=node, direction=direction, _compact=false
+        (unit=u, node=n, direction=d, s=s, t=t)
+        for (u, n, d, s, t) in unit_flow_indices_rc(
+            unit=unit, node=node, direction=direction, s=s, t=t, _compact=false
         )
-        for t1 in time_slice(temporal_block=tb, t=t)
     ]
 end
 
