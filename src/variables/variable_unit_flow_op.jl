@@ -29,14 +29,21 @@
 A list of `NamedTuple`s corresponding to indices of the `unit_flow` variable.
 The keyword arguments act as filters for each dimension.
 """
-function unit_flow_op_indices(;unit=anything, node=anything, direction=anything, operating_point=anything, s=anything, t=anything)
+function unit_flow_op_indices(;
+    unit=anything,
+    node=anything,
+    direction=anything,
+    operating_point=anything,
+    stochastic_scenario=anything,
+    t=anything
+)
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
     [
-        (unit=u, node=n, direction=d, i=i_, s=s, t=t)
+        (unit=u, node=n, direction=d, i=i_, stochastic_scenario=s, t=t)
         for (u_, n_) in indices(operating_points, unit=unit, node=node)
         for (u, n, d, s, t) in unit_flow_indices(
-                unit=u_, node=n_, direction=direction, s=s, t=t
+                unit=u_, node=n_, direction=direction, stochastic_scenario=stochastic_scenario, t=t
         )
         for i_ in intersect(operating_point, 1:length(operating_points(unit=u_, node=n_, direction=d)))
     ]

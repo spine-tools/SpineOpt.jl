@@ -50,28 +50,28 @@ end
 
 function generate_variable_indices()
     unit_flow_indices = unique(
-        (unit=u, node=n, direction=d, s=s, t=t)
+        (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
         for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
         for (n, s, t) in node_stochastic_time_indices(node=n)
     )
     connection_flow_indices = unique(
-        (connection=conn, node=n, direction=d, s=s, t=t)
+        (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
         for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
         for (n, s, t) in node_stochastic_time_indices(node=n)
     )
     node_state_indices = unique(
-        (node=n, s=s, t=t)
+        (node=n, stochastic_scenario=s, t=t)
         for n in node(has_state=:node_has_state_true)
         for (n, s, t) in node_stochastic_time_indices(node=n)
     )
     unit_flow_indices_rc = RelationshipClass(
-        :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices
+        :unit_flow_indices_rc, [:unit, :node, :direction, :stochastic_scenario, :t], unit_flow_indices
     )
     connection_flow_indices_rc = RelationshipClass(
-        :connection_flow_indices_rc, [:connection, :node, :direction, :temporal_block], connection_flow_indices
+        :connection_flow_indices_rc, [:connection, :node, :direction, :stochastic_scenario, :t], connection_flow_indices
     )
     node_state_indices_rc = RelationshipClass(
-        :node_state_indices_rc, [:node, :temporal_block], node_state_indices
+        :node_state_indices_rc, [:node, :stochastic_scenario, :t], node_state_indices
     )
     @eval begin
         unit_flow_indices_rc = $unit_flow_indices_rc

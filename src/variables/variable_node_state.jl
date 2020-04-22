@@ -22,10 +22,10 @@
 A set of tuples for indexing the `node_state` variable. Any filtering options can be specified
 for `node`, `s`, and `t`.
 """
-function node_state_indices(;node=anything, s=anything, t=anything)
-    inds = NamedTuple{(:node, :s, :t),Tuple{Object,TimeSlice}}[
-        (node=n, s=s, t=t)
-        for (n, s, t) in node_stochastic_time_indices(node=node, s=s, t=t)
+function node_state_indices(;node=anything, stochastic_scenario=anything, t=anything)
+    inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
+        (node=n, stochastic_scenario=s, t=t)
+        for (n, s, t) in node_stochastic_time_indices(node=node, stochastic_scenario=stochastic_scenario, t=t)
     ]
     unique!(inds)
 end
