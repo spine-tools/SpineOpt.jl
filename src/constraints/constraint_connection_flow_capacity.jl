@@ -29,7 +29,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
     cons = m.ext[:constraints][:connection_flow_capacity] = Dict()
     for (conn, n, d) in indices(connection_capacity)
         for (conn, n, d, t) in connection_flow_indices(connection=conn, node=n, direction=d)
-            cons[conn, n, t] = @constraint(
+            cons[conn, n, d, t] = @constraint(
                 m,
                 connection_flow[conn, n, d, t]
                 <=
