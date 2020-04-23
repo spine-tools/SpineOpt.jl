@@ -25,19 +25,15 @@ Ratio of `unit_flow` variables.
 function add_constraint_unit_constraint!(m::Model)
     @fetch unit_flow_op, unit_flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][:unit_constraint] = Dict()
-    for uc in unit_constraint()
-        involved_nodes=[]
+    for uc in unit_constraint()        
+        invloved_unit_flow_indices=[]
         for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
-            if !(n in involved_nodes)
-                push!(involved_nodes, n)
-            end
+            append!(invloved_unit_flow_indices, unit_flow_indices(unit=u, node=n))
         end
         for (u, n) in unit__to_node__unit_constraint(unit_constraint=uc)
-            if !(n in involved_nodes)
-                push!(involved_nodes, n)
-            end
+            append!(invloved_unit_flow_indices, unit_flow_indices(unit=u, node=n))
         end
-        for t in t_lowest_resolution(map(x -> x.t, unit_flow_indices(node=involved_nodes)))
+        for t in t_lowest_resolution(map(x -> x.t, invloved_unit_flow_indices ))
             cons[uc, t] = sense_constraint(
                 m,
                 + reduce(
@@ -80,7 +76,7 @@ function add_constraint_unit_constraint!(m::Model)
                 )
                 + reduce(
                     +,
-                    units_on[u_, t_] * units_on_coefficient[(unit_constraint=uc, unit=u, t=t)] * duration(t_)
+                    units_on[u_, t_] * units_on_coefficient[(unit_constraint=uc, unit=u_, t=t_)] * duration(t_)
                     for u in unit__unit_constraint(unit_constraint=uc)
                     for (u_, t_) in units_on_indices(
                         unit=u, t=t_in_t(t_long=t)

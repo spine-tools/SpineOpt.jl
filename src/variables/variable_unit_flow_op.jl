@@ -32,11 +32,12 @@ function unit_flow_op_indices(;unit=anything, node=anything, direction=anything,
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
     [
-        (unit=u, node=n, direction=d, i=i_, t=t)
+        (unit=u, node=n, direction=d, i=i_, t=t1)
         for (u_, n_) in indices(operating_points, unit=unit, node=node)
-        for (u, n, d, t) in unit_flow_indices(
-                unit=u_, node=n_, direction=direction
+        for (u, n, d, tb) in unit_flow_indices_rc(
+            unit=u_, node=n_, direction=direction, _compact=false
         )
+        for t1 in time_slice(temporal_block=tb, t=t)
         for i_ in intersect(operating_point, 1:length(operating_points(unit=u_, node=n_, direction=d)))
     ]
 end
