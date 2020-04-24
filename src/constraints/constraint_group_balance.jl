@@ -27,7 +27,7 @@ function add_constraint_group_balance!(m::Model)
     cons = m.ext[:constraints][:group_balance] = Dict()
     for n in node(balance_type=:balance_type_group)
         for (n, s_after, t_after) in node_stochastic_time_indices(node=n)
-            for (n, s_before, t_before) in node_stochastic_time_indices(node=n, t=t_before_t(t_after=t_after))
+            for (n, s_before, t_before) in all_node_stochastic_time_indices(node=n, t=t_before_t(t_after=t_after))
                 cons[n, s_before, t_before, s_after, t_after] = @constraint( # TODO: Direct diffusion will require stochastic path indexing...
                     m,
                     # Change in node commodity content

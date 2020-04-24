@@ -122,25 +122,56 @@ end
 
 
 """
+    node_stochastic_time_indices_history(node::Object)
+
+Function to generate the `(node, stochastic_scenario, time_slice)` indices
+for a `node` for the historical time steps, based on root `stochastic_scenarios`.
+"""
+function node_stochastic_time_indices_history(node::Object)
+    node__stochastic_scenario__time_slice_history = [
+        (node=node, stochastic_scenario=scen, t=t)
+        for scen in find_root_scenarios()
+        for t in sort(collect(values(t_history_t)))
+    ]
+    return node__stochastic_scenario__time_slice_history
+end
+
+
+"""
     generate_node_stochastic_time_indices(window_start::DateTime)
 
-Function to generate the `(node__stochastic_scenario__time_slice)` indices for all `nodes`
+Function to generate the `node_stochastic_time_indices_rc` and `all_node_stochastic_time_indices_rc`
+RelationshipClasses to store the stochastic time indices for all `nodes`,
 based on all of the stochastic trees of all defined `stochastic_structures`.
+
+`node_stochastic_time_indices_rc` stores the current active stochastic time steps, while
+`all_node_stocahstic_time_indices_rc` also includes the historical time steps.
 """
 function generate_node_stochastic_time_indices(all_stochastic_trees::Dict)
     node__stochastic_scenario__t = []
+    node__stochastic_scenario__t_history = []
     for (node, structure) in node__stochastic_structure()
         if length(node__stochastic_structure(node=node)) > 1
             @error("Node `$(node)` cannot have more than one `stochastic_structure`!")
         end
         node_stochastic_time = node_stochastic_time_indices(node, all_stochastic_trees[structure])
         append!(node__stochastic_scenario__t, node_stochastic_time)
+        node_stochastic_time_history = node_stochastic_time_indices_history(node)
+        append!(node__stochastic_scenario__t_history, node_stochastic_time_history)
     end
+    unique!(node__stochastic_scenario__t)
+    unique!(node__stochastic_scenario__t_history)
     node_stochastic_time_indices_rc = RelationshipClass(
-        :node_stochastic_time_indices_rc, [:node, :stochastic_scenario, :t], unique(node__stochastic_scenario__t)
+        :node_stochastic_time_indices_rc, [:node, :stochastic_scenario, :t], node__stochastic_scenario__t
+    )
+    all_node_stochastic_time_indices_rc = RelationshipClass(
+        :all_node_stochastic_time_indices_rc,
+        [:node, :stochastic_scenario, :t],
+        unique(vcat(node__stochastic_scenario__t_history, node__stochastic_scenario__t))
     )
     @eval begin
         node_stochastic_time_indices_rc = $node_stochastic_time_indices_rc
+        all_node_stochastic_time_indices_rc = $all_node_stochastic_time_indices_rc
     end
 end
 
@@ -148,11 +179,22 @@ end
 """
     node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
 
-A list of `NamedTuple`s corresponding to the nodal stochastic time indices.
+A list of `NamedTuple`s corresponding to the *current* nodal stochastic time indices.
 The keyword arguments act as filters for each dimension.
 """
 function node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
     node_stochastic_time_indices_rc(node=node, stochastic_scenario=stochastic_scenario, t=t, _compact=false)    
+end
+
+
+"""
+    all_node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
+
+A list of `NamedTuple`s corresponding to the current and *historical* nodal stochastic time indices.
+The keyword arguments act as filters for each dimension.
+"""
+function all_node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
+    all_node_stochastic_time_indices_rc(node=node, stochastic_scenario=stochastic_scenario, t=t, _compact=false)    
 end
 
 

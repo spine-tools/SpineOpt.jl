@@ -43,7 +43,7 @@ function add_constraint_nodal_balance!(m::Model)
 
     for n in node_balance_nodes
         for (n, s_after, t_after) in node_stochastic_time_indices(node=n)
-            for (n, s_before, t_before) in node_stochastic_time_indices(node=n, t=t_before_t(t_after=t_after))
+            for (n, s_before, t_before) in all_node_stochastic_time_indices(node=n, t=t_before_t(t_after=t_after))
                 cons[n, s_before, t_before, s_after, t_after] = @constraint( # TODO: Stochastic path indexing required due to dynamics
                     m,
                     # Change in node commodity content
