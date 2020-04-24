@@ -38,6 +38,8 @@ function process_network(log_level)
     level1 = log_level >= 1
     level2 = log_level >= 2
     level3 = log_level >= 3
+    ptdf_conn_n = Dict{Tuple{Object,Object},Float64}() #ptdfs returned by PowerSystems.jl
+    net_inj_nodes=[] # this is the set of nodes with demand or generation
 
     for c in commodity()
         if commodity_physics(commodity=c) in (:commodity_physics_ptdf, :commodity_physics_lodf)
@@ -59,6 +61,7 @@ function process_network(log_level)
             end
         end
     end
+    return ptdf_conn_n, net_inj_nodes
 end
 
 
@@ -168,28 +171,32 @@ function calculate_ptdfs()
             PowerSystems.slack_bus_check(ps_busses)
 
             for conn in connection()
-                for (n_from, n_to) in connection__node__node(connection=conn)
-                    for c in node__commodity(node=n_from)
-                        if commodity_physics(commodity=c) in(:commodity_physics_lodf, :commodity_physics_ptdf)
-                            ps_arc = Arc(node_ps_bus[n_from], node_ps_bus[n_to])
-                            new_line = Line(;
-                                name = string(conn),
-                                available = true,
-                                activepower_flow = 0.0,
-                                reactivepower_flow = 0.0,
-                                arc = ps_arc,
-                                r = connection_resistance(connection=conn),
-                                x = max(connection_reactance(connection=conn), 0.00001),
-                                b = (from=0.0, to=0.0),
-                                rate = 0.0,
-                                anglelimits = (min = 0.0, max = 0.0)
-                            )
-
-                            push!(ps_lines,new_line)
-                        end  #in case there are somehow multiple commodities
+                n_from = first(connection__from_node(connection=conn, direction=direction(:from_node)))
+                n_to=n_from
+                for n in connection__to_node(connection=conn, direction=direction(:to_node))
+                    if !(n == n_from)
+                        n_to = n
                         break
                     end
-                    break     #the line is defined in both directions, but PowerSystems.jl only needs it in one.
+                end
+                for c in node__commodity(node=n_from)
+                    if commodity_physics(commodity=c) in(:commodity_physics_lodf, :commodity_physics_ptdf)
+                        ps_arc = Arc(node_ps_bus[n_from], node_ps_bus[n_to])
+                        new_line = Line(;
+                            name = string(conn),
+                            available = true,
+                            activepower_flow = 0.0,
+                            reactivepower_flow = 0.0,
+                            arc = ps_arc,
+                            r = connection_resistance(connection=conn),
+                            x = max(connection_reactance(connection=conn), 0.00001),
+                            b = (from=0.0, to=0.0),
+                            rate = 0.0,
+                            anglelimits = (min = 0.0, max = 0.0)
+                        )
+                        push!(ps_lines,new_line)
+                    end  #in case there are somehow multiple commodities
+                    break
                 end
             end
         end

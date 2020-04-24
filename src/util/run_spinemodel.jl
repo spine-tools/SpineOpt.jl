@@ -127,7 +127,7 @@ function rerun_spinemodel(
         @logtime level3  "objective function" set_objective!(m)
     end
 
-        @logtime level2 "Processing network...\n" process_network(log_level)
+        @logtime level2 "Processing network...\n" ptdf_conn_n, net_inj_nodes = process_network(log_level)
         @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
         @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
@@ -189,6 +189,7 @@ function rerun_spinemodel(
 end
 
 function optimize_model!(m::Model)
+    write_to_file(m, "model_diagnostics.mps")
     optimize!(m)
     if termination_status(m) == MOI.OPTIMAL
         true
