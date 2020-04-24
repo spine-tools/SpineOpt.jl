@@ -30,15 +30,17 @@ function add_constraint_minimum_operating_point!(m::Model)
     cons = m.ext[:constraints][:minimum_operating_point] = Dict()
     for (u, n, d) in intersect(indices(minimum_operating_point), indices(unit_capacity))
         for (u, t) in units_on_indices(unit=u)
-            cons[u, n, d, t] = @constraint(
-                m,
-                unit_flow[u, n, d, t]
-                >=
-                + units_on[u, t]
-                * minimum_operating_point[(unit=u, node=n, direction=d, t=t)]
-                * unit_capacity[(unit=u, node=n, direction=d, t=t)]
-                * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
-            )
+            for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d, t=t)
+                cons[u, n, d, s, t] = @constraint(
+                    m,
+                    unit_flow[u, n, d, s, t]
+                    >=
+                    + units_on[u, t] # TODO: How are the stochastic indices of `units` defined?
+                    * minimum_operating_point[(unit=u, node=n, direction=d, t=t)] # TODO: Stochastic parameters
+                    * unit_capacity[(unit=u, node=n, direction=d, t=t)]
+                    * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
+                )
+            end
         end
     end
 end

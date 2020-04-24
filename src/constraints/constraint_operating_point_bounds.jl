@@ -30,13 +30,13 @@ function add_constraint_operating_point_bounds!(m::Model)
     cons = m.ext[:constraints][:operating_point_bounds] = Dict()
 
     for (u_, n_, d_) in indices(unit_capacity)
-        for (u, n, d, op, t) in unit_flow_op_indices(unit=u_, node=n_, direction=d_)
-            cons[u, n, d, op, t] = @constraint(
+        for (u, n, d, op, s, t) in unit_flow_op_indices(unit=u_, node=n_, direction=d_)
+            cons[u, n, d, op, s, t] = @constraint(
                 m,
-                unit_flow_op[u, n, d, op, t]
+                unit_flow_op[u, n, d, op, s, t]
                 <=
                 (
-                    + operating_points[(unit=u, node=n, direction=d, i=op)]
+                    + operating_points[(unit=u, node=n, direction=d, i=op)] # TODO: Stochastic parameters
                     - reduce(
                         +,
                         + operating_points[(unit=u, node=n, direction=d, i=op_previous)]

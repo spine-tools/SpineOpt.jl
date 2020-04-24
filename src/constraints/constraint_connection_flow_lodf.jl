@@ -27,16 +27,16 @@ function add_constraint_connection_flow_lodf!(m::Model, lodf_con_mon, con__mon)
     @fetch connection_flow = m.ext[:variables]
     cons = m.ext[:constraints][:connection_flow_lodf] = Dict()
     for (con,mon) in con__mon
-        for (mon_, n_mon, d, t) in connection_flow_indices(connection=mon, direction=direction(:to_node))
+        for (mon_, n_mon, d, s, t) in connection_flow_indices(connection=mon, direction=direction(:to_node))
             for n_con in connection__to_node(connection=con,direction=direction(:to_node))
-                cons[con, mon, t] = @constraint(
+                cons[con, mon, s, t] = @constraint( # TODO: This constraint seems to function between multiple nodes, so stochastic path indexing will be required...
                     m,
-                     + connection_flow[mon, n_mon, direction(:to_node), t]
-                     - connection_flow[mon, n_mon, direction(:from_node), t]
-                     + lodf_con_mon[(con,mon)]*connection_flow[con, n_con, direction(:to_node), t]
-                     - lodf_con_mon[(con,mon)]*connection_flow[con, n_con, direction(:from_node), t]
+                     + connection_flow[mon, n_mon, direction(:to_node), s, t]
+                     - connection_flow[mon, n_mon, direction(:from_node), s, t]
+                     + lodf_con_mon[(con,mon)]*connection_flow[con, n_con, direction(:to_node), s, t]
+                     - lodf_con_mon[(con,mon)]*connection_flow[con, n_con, direction(:from_node), s, t]
                     <=
-                    + connection_emergency_capacity[(connection=mon, node=n_mon, direction=d, t=t)]
+                    + connection_emergency_capacity[(connection=mon, node=n_mon, direction=d, t=t)] # TODO: Stochastic parameters
                     * connection_availability_factor[(connection=mon, t=t)]
                     * connection_conv_cap_to_flow[(connection=mon, node=n_mon, direction=d, t=t)]
                 )

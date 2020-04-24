@@ -31,15 +31,15 @@ function add_constraint_connection_flow_ptdf!(m::Model, ptdf_conn_n, net_inj_nod
         for n_to in connection__to_node(connection=conn)
             for c in node__commodity(node=n_to)
                 if commodity_physics(commodity=c) in(:commodity_physics_lodf, :commodity_physics_ptdf)
-                    for (conn, n_to, d, t) in connection_flow_indices(connection=conn,node=n_to, direction=direction(:to_node))
-                        constr_dict[conn, t] = @constraint(
+                    for (conn, n_to, d, s, t) in connection_flow_indices(connection=conn,node=n_to, direction=direction(:to_node))
+                        constr_dict[conn, s, t] = @constraint( # TODO: Multiple nodes, so stochastic path indexing will be required
                             m,
-                            + connection_flow[conn, n_to, direction(:to_node), t]
-                            - connection_flow[conn, n_to, direction(:from_node), t]
+                            + connection_flow[conn, n_to, direction(:to_node), s, t]
+                            - connection_flow[conn, n_to, direction(:from_node), s, t]
                             ==
                             + reduce(
                                 +,
-                                + ptdf_conn_n[(conn,n_inj)] * (
+                                + ptdf_conn_n[(conn,n_inj)] * ( # TODO: Stochastic parameters
                                     # explicit node demand
                                     - demand[(node=n_inj, t=t)]
                                     # demand defined by fractional_demand
@@ -52,13 +52,13 @@ function add_constraint_connection_flow_ptdf!(m::Model, ptdf_conn_n, net_inj_nod
                                     # Flows from units
                                     + reduce(
                                         +,
-                                        unit_flow[u, n_inj, direction(:to_node), t]
+                                        unit_flow[u, n_inj, direction(:to_node), s, t]
                     				    for u in unit__to_node(node=n_inj, direction=direction(:to_node));
                                         init=0
                                     )
                                     - reduce(
                                         +,
-                                        unit_flow[u, n_inj, direction(:from_node), t]
+                                        unit_flow[u, n_inj, direction(:from_node), s, t]
                     				    for u in unit__from_node(node=n_inj, direction=direction(:from_node));
                                         init=0
                                     )

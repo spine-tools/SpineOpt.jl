@@ -28,7 +28,7 @@ function add_constraint_min_down_time!(m::Model)
     cons = m.ext[:constraints][:min_down_time] = Dict()
     for u in indices(min_down_time)
         for (u, t) in units_on_indices(unit=u)
-            cons[u, t] = @constraint(
+            cons[u, t] = @constraint( # TODO: Stochastic path indexing required due to time delays, but first we'll have to decide how to determine the stochastic indices of `units`.
                 m,
                 + units_on[u, t]
                 <=
@@ -37,7 +37,7 @@ function add_constraint_min_down_time!(m::Model)
                     +,
                     units_shut_down[u1, t1]
                     for (u1, t1) in units_on_indices(
-                        unit=u, t=to_time_slice(TimeSlice(end_(t) - min_down_time(unit=u), end_(t)))
+                        unit=u, t=to_time_slice(TimeSlice(end_(t) - min_down_time(unit=u), end_(t))) # TODO: Stochastic parameters
                     );
                     init=0
                 )

@@ -28,12 +28,12 @@ function add_constraint_connection_flow_capacity!(m::Model)
     @fetch connection_flow = m.ext[:variables]
     cons = m.ext[:constraints][:connection_flow_capacity] = Dict()
     for (conn, n, d) in indices(connection_capacity)
-        for (conn, n, d, t) in connection_flow_indices(connection=conn, node=n, direction=d)
-            cons[conn, n, d, t] = @constraint(
+        for (conn, n, d, s, t) in connection_flow_indices(connection=conn, node=n, direction=d)
+            cons[conn, n, d, s, t] = @constraint(
                 m,
-                connection_flow[conn, n, d, t]
+                connection_flow[conn, n, d, s, t]
                 <=
-                + connection_capacity[(connection=conn, node=n, direction=d, t=t)]
+                + connection_capacity[(connection=conn, node=n, direction=d, t=t)] # TODO: Stochastic parameters
                 * connection_availability_factor[(connection=conn, t=t)]
                 * connection_conv_cap_to_flow[(connection=conn, node=n, direction=d, t=t)]
             )
