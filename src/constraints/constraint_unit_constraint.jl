@@ -33,7 +33,7 @@ function add_constraint_unit_constraint!(m::Model)
         for (u, n) in unit__to_node__unit_constraint(unit_constraint=uc)
             append!(invloved_unit_flow_indices, unit_flow_indices(unit=u, node=n))
         end
-        for t in t_lowest_resolution(map(x -> x.t, invloved_unit_flow_indices ))
+        for t in t_lowest_resolution!(map(x -> x.t, invloved_unit_flow_indices ))
             cons[uc, t] = sense_constraint(
                 m,
                 + reduce(

@@ -26,9 +26,7 @@ function node_slack_neg_indices(;node=anything, t=anything)
     inds = NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}[
         (node=n, t=t)
         for n in indices(node_slack_penalty)
-        for (n, tb) in node__temporal_block(
-            node=n, _compact=false
-        )
+        for (n, tb) in node__temporal_block(node=n, _compact=false)
         for t in time_slice(temporal_block=tb, t=t)
     ]
     unique!(inds)

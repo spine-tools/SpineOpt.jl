@@ -83,6 +83,7 @@ function run_spinemodel(
         generate_missing_items()
     end
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
+    check_islands(log_level)
     rerun_spinemodel(
         url_out;
         with_optimizer=with_optimizer,
@@ -105,13 +106,6 @@ function rerun_spinemodel(
     level2 = log_level >= 2
     level3 = log_level >= 3
     results = Dict()
-
-    # variables used in the calculation of ptdfs and lodfs using PowerSystems.jl
-    con__mon = Tuple{Object,Object}[] # this is a set of monitored and contingent line tuples that must be considered as defined by the connection_monitored and connection_contingency parmaeters
-    monitored_lines=[]
-    ptdf_conn_n = Dict{Tuple{Object,Object},Float64}() #ptdfs returned by PowerSystems.jl
-    lodf_con_mon = Dict{Tuple{Object,Object},Float64}() #lodfs calcuated based on ptdfs returned by PowerSystems.jl
-    net_inj_nodes=[] # this is the set of nodes with demand or generation
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @log level1 "Window 1: $current_window"
     @logtime level2 "Initializing model..." begin
@@ -126,14 +120,12 @@ function rerun_spinemodel(
         @logtime level3  "handle fix variables" fix_variables!(m)
         @logtime level3  "objective function" set_objective!(m)
     end
-
-        @logtime level2 "Processing network...\n" ptdf_conn_n, net_inj_nodes = process_network(log_level)
-        @logtime level2 "Adding constraints...\n" begin
+    @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
         @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
         @logtime level3 "- [constraint_group_balance]" add_constraint_group_balance!(m)
-        @logtime level3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m, ptdf_conn_n, net_inj_nodes)
-        @logtime level3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m, lodf_con_mon, con__mon)
+        @logtime level3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m)
+        @logtime level3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
         @logtime level3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
         @logtime level3 "- [constraint_operating_point_bounds]" add_constraint_operating_point_bounds!(m)
         @logtime level3 "- [constraint_operating_point_sum]" add_constraint_operating_point_sum!(m)
@@ -161,11 +153,8 @@ function rerun_spinemodel(
         @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
         @logtime level3 "- [constraint_user]" add_constraints(m)
     end
-    k = 2
-
     #@logtime level2 "Writing diagnostics file" write_to_file(m, "model_diagnostics.mps")
-
-
+    k = 2
     while optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
         @logtime level2 "Saving results..." begin
@@ -183,20 +172,21 @@ function rerun_spinemodel(
         @logtime level2 "Updating user constraints..." update_constraints(m)
         k += 1
     end
-    @logtime level2 "Writing report..." write_report(results, url_out)
+    # @logtime level2 "Writing report..." write_report(results, url_out)
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
     m
 end
 
 function optimize_model!(m::Model)
-    write_to_file(m, "model_diagnostics.mps")
+    # TODO: perhaps add the option to write the mps for diagnostics as follows
+    # write_to_file(m, "model_diagnostics.mps")
+    # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS, 
+    # but is not mentioned in the COLUMNS section. We are ignoring it.
     optimize!(m)
     if termination_status(m) == MOI.OPTIMAL
         true
     else
         @log true "Unable to find solution (reason: $(termination_status(m)))"
-        # TODO: perhaps add the option to write the mps for diagnostics as follows
-        #write_to_file(m, "model_diagnostics.mps")
         false
     end
 end
