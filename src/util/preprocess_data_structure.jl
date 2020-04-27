@@ -216,22 +216,33 @@ end
 Generate lodf parameter.
 """
 function generate_lodf()
-    lodf_values = Dict{Tuple{Object,Object},Dict{Symbol,AbstractCallable}}()
-    for conn_cont in connection(connection_contingency=true, has_lodf=true)
-        tolerance = connnection_lodf_tolerance(connection=conn_cont)
+
+    """
+    Given a contingency connection, return a function that given the monitored connection, return the lodf
+    """
+    function make_lodf_fn(conn_cont)
         n_from, n_to = connection__from_node(connection=conn_cont)
         denom = 1 - (ptdf(connection=conn_cont, node=n_from) - ptdf(connection=conn_cont, node=n_to))
         is_tail = isapprox(denom, 0; atol=0.001)
-        tail_lodf_fn(conn_mon) = ptdf(connection=conn_mon, node=n_to)
-        std_lodf_fn(conn_mon) = (ptdf(connection=conn_mon, node=n_from) - ptdf(connection=conn_mon, node=n_to)) / denom
-        lodf_fn = is_tail ? tail_lodf_fn : std_lodf_fn
-        for conn_mon in connection(connection_monitored=true, has_lodf=true)
-            conn_cont === conn_mon && continue
-            lodf_trial = lodf_fn(conn_mon)
-            isapprox(lodf_trial, 0; atol=tolerance) && continue
-            lodf_values[conn_cont, conn_mon] = Dict(:lodf => SpineInterface.callable(lodf_trial))
+        if is_tail
+            conn_mon -> ptdf(connection=conn_mon, node=n_to)
+        else
+            conn_mon -> (ptdf(connection=conn_mon, node=n_from) - ptdf(connection=conn_mon, node=n_to)) / denom
         end
     end
+
+    lodf_values = Dict(
+        (conn_cont, conn_mon) => Dict(:lodf => SpineInterface.callable(lodf_trial))
+        for (conn_cont, lodf_fn, tolerance) in (
+            (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont))
+            for conn_cont in connection(connection_contingency=true, has_lodf=true)
+        )
+        for (conn_mon, lodf_trial) in (
+            (conn_mon, lodf_fn(conn_mon))
+            for conn_mon in connection(connection_monitored=true, has_lodf=true)
+        )
+        if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
+    )  # NOTE: in my machine, a Dict comprehension is ~4 faster than a Dict built incrementally
     lodf_rel_cls = RelationshipClass(
         :lodf_connection__connection,
         [:connection1, :connection2],
