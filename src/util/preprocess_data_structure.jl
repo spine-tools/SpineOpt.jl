@@ -219,18 +219,17 @@ function generate_lodf()
     lodf_values = Dict{Tuple{Object,Object},Dict{Symbol,AbstractCallable}}()
     for conn_cont in connection(connection_contingency=true, has_lodf=true)
         tolerance = connnection_lodf_tolerance(connection=conn_cont)
-        n1, n2 = connection__from_node(connection=conn_cont)
-        for (n_from, n_to) in ((n1, n2), (n2, n1))
-            # TODO: this is to match the old computation but doesn't feel super right?
-            denom = 1 - (ptdf(connection=conn_cont, node=n_from) - ptdf(connection=conn_cont, node=n_to))
-            cond = abs(denom) < 0.001 || (denom == -1)
-            for conn_mon in connection(connection_monitored=true, has_lodf=true)
-                conn_cont !== conn_mon || continue
-                lodf_trial = -ptdf(connection=conn_mon, node=n_from)
-                cond && (lodf_trial += ptdf(connection=conn_mon, node=n_to))
-                abs(lodf_trial) > tolerance || continue
-                lodf_values[conn_cont, conn_mon] = Dict(:lodf => SpineInterface.callable(lodf_trial))
-            end
+        n_from, n_to = connection__from_node(connection=conn_cont)
+        denom = 1 - (ptdf(connection=conn_cont, node=n_from) - ptdf(connection=conn_cont, node=n_to))
+        is_tail = isapprox(denom, 0; atol=0.001)
+        tail_lodf_fn(conn_mon) = ptdf(connection=conn_mon, node=n_to)
+        std_lodf_fn(conn_mon) = (ptdf(connection=conn_mon, node=n_from) - ptdf(connection=conn_mon, node=n_to)) / denom
+        lodf_fn = is_tail ? tail_lodf_fn : std_lodf_fn
+        for conn_mon in connection(connection_monitored=true, has_lodf=true)
+            conn_cont === conn_mon && continue
+            lodf_trial = lodf_fn(conn_mon)
+            isapprox(lodf_trial, 0; atol=tolerance) && continue
+            lodf_values[conn_cont, conn_mon] = Dict(:lodf => SpineInterface.callable(lodf_trial))
         end
     end
     lodf_rel_cls = RelationshipClass(
