@@ -26,7 +26,7 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
     @fetch connection_flow = m.ext[:variables]
     cons = m.ext[:constraints][ratio_out_in.name] = Dict()
     for (conn, n_out, n_in) in indices(ratio_out_in)
-        for t in t_lowest_resolution!(map(x -> x.t, connection_flow_indices(connection=conn, node=[n_out, n_in])))
+        for t in t_lowest_resolution(x.t for x in connection_flow_indices(connection=conn, node=[n_out, n_in]))
             con = cons[conn, n_out, n_in, t] = sense_constraint(
                 m,
                 + reduce(
