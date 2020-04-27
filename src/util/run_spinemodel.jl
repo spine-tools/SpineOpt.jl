@@ -158,6 +158,7 @@ function rerun_spinemodel(
     while optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
         @logtime level2 "Saving results..." begin
+            postprocess_results!(m)
             save_values!(m)
             save_results!(results, m)
         end
@@ -172,7 +173,7 @@ function rerun_spinemodel(
         @logtime level2 "Updating user constraints..." update_constraints(m)
         k += 1
     end
-    # @logtime level2 "Writing report..." write_report(results, url_out)
+     @logtime level2 "Writing report..." write_report(results, url_out)
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
     m
 end
@@ -180,7 +181,7 @@ end
 function optimize_model!(m::Model)
     # TODO: perhaps add the option to write the mps for diagnostics as follows
     # write_to_file(m, "model_diagnostics.mps")
-    # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS, 
+    # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     optimize!(m)
     if termination_status(m) == MOI.OPTIMAL
@@ -202,7 +203,7 @@ function save_results!(results, m)
         if value === nothing
             @warn "can't find results for '$(out.name)'"
             continue
-        end
+        end        
         value_ = Dict{NamedTuple,Number}((; k..., t=start(k.t)) => v for (k, v) in value)
         existing = get!(results, out.name, Dict{NamedTuple,Number}())
         merge!(existing, value_)
