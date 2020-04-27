@@ -25,70 +25,72 @@ Ratio of `unit_flow` variables.
 function add_constraint_unit_constraint!(m::Model)
     @fetch unit_flow_op, unit_flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][:unit_constraint] = Dict()
-    for uc in unit_constraint()        
-        involved_unit_flow_indices=[]
-        for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
-            append!(involved_unit_flow_indices, unit_flow_indices(unit=u, node=n))
-        end
-        for (u, n) in unit__to_node__unit_constraint(unit_constraint=uc)
-            append!(involved_unit_flow_indices, unit_flow_indices(unit=u, node=n))
-        end
-        for t in t_lowest_resolution(map(x -> x.t, involved_unit_flow_indices ))
-            for s in map(x -> x.s, involved_unit_flow_indices)
-                cons[uc, s, t] = sense_constraint( # TODO: Stochastic path indexing
-                    m,
-                    + reduce(
-                        +,
-                        + unit_flow_op[u_, n_, d_, op_, s_, t_] * unit_flow_coefficient[(unit=u_, node=n_, unit_constraint=uc, i=op_, t=t_)] * duration(t_) # TODO: Stochastic parameters
-                        for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
-                        for (u_, n_, d_, op_, s_, t_) in unit_flow_op_indices(
-                            unit=u, node=n, direction=direction(:from_node), stochastic_scenario=s, t=t_in_t(t_long=t)
-                        );
-                        init=0
-                    )
-                    + reduce(
-                        +,
-                        + unit_flow[u_, n_, d_, s_, t_] * unit_flow_coefficient[(unit=u_, node=n_, unit_constraint=uc, i=1, t=t_)] * duration(t_)
-                        for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
-                        for (u_, n_, d_, s_, t_) in unit_flow_indices(
-                            unit=u, node=n, direction=direction(:from_node), stochastic_scenario=s, t=t_in_t(t_long=t)
-                        )
-                        if isempty(unit_flow_op_indices(unit=u_, node=n_, direction=d_, stochastic_scenario=s_, t=t_)) ;
-                        init=0
-                    )
-                    + reduce(
-                        +,
-                        + unit_flow_op[u_, n_, d_, op_, s_, t_] * unit_flow_coefficient[(unit=u_, node=n_, unit_constraint=uc, i=op_, t=t_)] * duration(t_)
-                        for (u, n) in unit__to_node__unit_constraint(unit_constraint=uc)
-                        for (u_, n_, d_, op_, s_, t_) in unit_flow_op_indices(
-                            unit=u, node=n, direction=direction(:to_node), stochastic_scenario=s, t=t_in_t(t_long=t)
-                        );
-                        init=0
-                    )
-                    + reduce(
-                        +,
-                        + unit_flow[u_, n_, d_, t_] * unit_flow_coefficient[(unit=u_, node=n_, unit_constraint=uc, i=1, t=t_)] * duration(t_)
-                        for (u, n) in unit__to_node__unit_constraint(unit_constraint=uc)
-                        for (u_, n_, d_, s_, t_) in unit_flow_indices(
-                            unit=u, node=n, direction=direction(:to_node), stochastic_scenario=s, t=t_in_t(t_long=t)
-                        )
-                        if isempty(unit_flow_op_indices(unit=u_, node=n_, direction=d_, s=s_, t=t_)) ;
-                        init=0
-                    )
-                    + reduce(
-                        +,
-                        units_on[u_, t_] * units_on_coefficient[(unit_constraint=uc, unit=u_, t=t_)] * duration(t_) # TODO: Stochastic `unit` indexing
-                        for u in unit__unit_constraint(unit_constraint=uc)
-                        for (u_, t_) in units_on_indices(
-                            unit=u, t=t_in_t(t_long=t)
-                        );
-                        init=0
-                    )
-                    ,
-                    constraint_sense(unit_constraint=uc),
-                    + right_hand_side(unit_constraint=uc, t=t),
+    for uc in unit_constraint()
+        unit_node_iter = Iterators.flatten(
+            (unit__from_node__unit_constraint(unit_constraint=uc), unit__to_node__unit_constraint(unit_constraint=uc))
+        )
+        involved_unit_flow_indices = Iterators.flatten(unit_flow_indices(unit=u, node=n) for (u, n) in unit_node_iter)
+        for t in t_lowest_resolution!(map(x -> x.t, involved_unit_flow_indices))
+            cons[uc, t] = sense_constraint(
+                m,
+                + reduce(
+                    +,
+                    + unit_flow_op[u, n, d, op, t_short] 
+                    * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=op, t=t_short)] 
+                    * duration(t_short)
+                    for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
+                    for (u, n, d, op, t_short) in unit_flow_op_indices(
+                        unit=u, node=n, direction=direction(:from_node), t=t_in_t(t_long=t)
+                    );
+                    init=0
                 )
-            end
+                + reduce(
+                    +,
+                    + unit_flow[u, n, d, t_short] 
+                    * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=1, t=t_short)] 
+                    * duration(t_short)
+                    for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
+                    for (u, n, d, t_short) in unit_flow_indices(
+                        unit=u, node=n, direction=direction(:from_node), t=t_in_t(t_long=t)
+                    )
+                    if isempty(unit_flow_op_indices(unit=u, node=n, direction=d, t=t_short));
+                    init=0
+                )
+                + reduce(
+                    +,
+                    + unit_flow_op[u, n, d, op, t_short] 
+                    * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=op, t=t_short)] 
+                    * duration(t_short)
+                    for (u, n) in unit__to_node__unit_constraint(unit_constraint=uc)
+                    for (u, n, d, op, t_short) in unit_flow_op_indices(
+                        unit=u, node=n, direction=direction(:to_node), t=t_in_t(t_long=t)
+                    );
+                    init=0
+                )
+                + reduce(
+                    +,
+                    + unit_flow[u, n, d, t_short] 
+                    * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=1, t=t_short)] 
+                    * duration(t_short)
+                    for (u, n) in unit__to_node__unit_constraint(unit_constraint=uc)
+                    for (u, n, d, t_short) in unit_flow_indices(
+                        unit=u, node=n, direction=direction(:to_node), t=t_in_t(t_long=t)
+                    )
+                    if isempty(unit_flow_op_indices(unit=u, node=n, direction=d, t=t_short));
+                    init=0
+                )
+                + reduce(
+                    +,
+                    + units_on[u, t_short] 
+                    * units_on_coefficient[(unit_constraint=uc, unit=u, t=t_short)] 
+                    * duration(t_short)
+                    for u in unit__unit_constraint(unit_constraint=uc)
+                    for (u, t_short) in units_on_indices(unit=u, t=t_in_t(t_long=t));
+                    init=0
+                ),
+                constraint_sense(unit_constraint=uc),
+                + right_hand_side(unit_constraint=uc, t=t),
+            )
         end
     end
 end

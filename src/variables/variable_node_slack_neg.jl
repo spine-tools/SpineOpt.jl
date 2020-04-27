@@ -26,7 +26,8 @@ function node_slack_neg_indices(;node=anything, stochastic_scenario=anything, t=
     inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
         (node=n, stochastic_scenario=s, t=t)
         for n in indices(node_slack_penalty)
-        for (n, s, t) in node_stochastic_time_indices(node=n, stochastic_scenario=stochastic_scenario, t=t)
+        for (n, tb) in node__temporal_block(node=n, _compact=false)
+        for t in time_slice(temporal_block=tb, t=t)
     ]
     unique!(inds)
 end

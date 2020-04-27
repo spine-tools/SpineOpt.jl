@@ -30,12 +30,14 @@ function add_constraint_nodal_balance!(m::Model)
 #   node_balance_nodes[] will contain the set of nodes less those for which the above is true
     node_balance_nodes=[]
     for n in node()
-        if isempty(node_group__node(node2=n))
-            push!(node_balance_nodes,n)
-        else
-            for ng in node_group__node(node2=n)
-                if balance_type(node=ng) != :balance_type_group
-                    push!(node_balance_nodes,n)
+        if balance_type(node=n) != :balance_type_group
+            if isempty(node_group__node(node2=n))
+                push!(node_balance_nodes,n)
+            else
+                for ng in node_group__node(node2=n)
+                    if balance_type(node=ng) != :balance_type_group
+                        push!(node_balance_nodes,n)
+                    end
                 end
             end
         end

@@ -26,38 +26,37 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
     @fetch unit_flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][ratio.name] = Dict()
     for (u, n1, n2) in indices(ratio)
-        for t in t_lowest_resolution(map(x -> x.t, unit_flow_indices(unit=u, node=[n1, n2])))
-            for s in map(x -> x.stochastic_scenario, unit_flow_indices(unit=u, node=[n1, n2], t=t))
-                cons[u, n1, n2, s, t] = sense_constraint( # TODO: Multiple `nodes` require stochastic path indexing
-                    m,
-                    + reduce(
-                        +,
-                        unit_flow[u_, n1_, d1_, s, t_] * duration(t_)
-                        for (u_, n1_, d1_, s, t_) in unit_flow_indices(
-                            unit=u, node=n1, direction=d1, stochastic_scenario=s, t=t_in_t(t_long=t)
-                        );
-                        init=0
-                    )
-                    ,
-                    sense,
-                    + ratio[(unit=u, node1=n1, node2=n2, t=t)] # TODO: Stochastic parameters, how to index this one?
-                    * reduce(
-                        +,
-                        unit_flow[u_, n2_, d2_, s, t_] * duration(t_)
-                        for (u_, n2_, d2_, s, t_) in unit_flow_indices(
-                            unit=u, node=n2, direction=d2, stochastic_scenario=s, t=t_in_t(t_long=t)
-                        );
-                        init=0
-                    )
-                    + units_on_coefficient[(unit=u, node1=n1, node2=n2, t=t)] # TODO: How are `units` stochastically indexed?
-                    * reduce(
-                        +,
-                        units_on[u_, t_] * duration(t_)
-                        for (u_, t_) in units_on_indices(unit=u, t=t_in_t(t_long=t));
-                        init=0
-                    ),
+        for t in t_lowest_resolution!(map(x -> x.t, unit_flow_indices(unit=u, node=[n1, n2])))
+            cons[u, n1, n2, t] = sense_constraint(
+                m,
+                + reduce(
+                    +,
+                    unit_flow[u, n1, d1, t_short] * duration(t_short)
+                    for (u, n1, d1, t_short) in unit_flow_indices(
+                        unit=u, node=n1, direction=d1, t=t_in_t(t_long=t)
+                    );
+                    init=0
                 )
-            end
+                ,
+                sense,
+                + ratio[(unit=u, node1=n1, node2=n2, t=t)]
+                * reduce(
+                    +,
+                    unit_flow[u, n2, d2, t_short] * duration(t_short)
+                    for (u, n2, d2, t_short) in unit_flow_indices(
+                        unit=u, node=n2, direction=d2, t=t_in_t(t_long=t)
+                    );
+                    init=0
+                )
+                + units_on_coefficient[(unit=u, node1=n1, node2=n2, t=t)]
+                * reduce(
+                    +,
+                    units_on[u, t_short] * duration(t_short)
+                    for (u, t_short) in units_on_indices(unit=u, t=t_in_t(t_long=t));
+                    init=0
+                ),
+
+            )
         end
     end
 end

@@ -36,8 +36,8 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
                 * reduce(
                     +,
-                    units_on[u1, t1] * duration(t1) # TODO: Stochastic `unit` indexing
-                    for (u1, t1) in units_on_indices(unit=u, t=t_in_t(t_long=t));
+                    units_on[u, t_short] * duration(t_short)
+                    for (u, t_short) in units_on_indices(unit=u, t=t_in_t(t_long=t));
                     init=0
                 )
             )
