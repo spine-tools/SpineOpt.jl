@@ -242,7 +242,7 @@ function generate_lodf()
             for conn_mon in connection(connection_monitored=true, has_lodf=true)
         )
         if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
-    )  # NOTE: in my machine, a Dict comprehension is ~4 faster than a Dict built incrementally
+    )  # NOTE: in my machine, a Dict comprehension is ~4x faster than a Dict built incrementally
     lodf_rel_cls = RelationshipClass(
         :lodf_connection__connection,
         [:connection1, :connection2],
