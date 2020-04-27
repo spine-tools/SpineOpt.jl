@@ -151,10 +151,7 @@ function generate_connection_has_lodf()
     end
 end
 
-"""
-Generate ptdf parameter.
-"""
-function generate_ptdf()
+function _ptdf_values()
     ps_busses_by_node = Dict(
         n => Bus(
             number=i,
@@ -191,11 +188,18 @@ function generate_ptdf()
     )
     ps_lines = collect(values(ps_lines_by_connection))
     ps_ptdf = PowerSystems.PTDF(ps_lines, ps_busses)
-    ptdf_values = Dict(
+    Dict(
         (conn, n) => Dict(:ptdf => SpineInterface.callable(ps_ptdf[line.name, bus.number]))
         for (conn, line) in ps_lines_by_connection
         for (n, bus) in ps_busses_by_node
     )
+end
+
+"""
+Generate ptdf parameter.
+"""
+function generate_ptdf()
+    ptdf_values = _ptdf_values()
     ptdf_rel_cls = RelationshipClass(
         :ptdf_connection__node,
         [:connection, :node],
