@@ -34,6 +34,7 @@
         ["balance_type_list", ["\"balance_type_node\"", "\"balance_type_group\"", "\"balance_type_none\""]],
         ["commodity_physics_list", ["\"commodity_physics_ptdf\"", "\"commodity_physics_lodf\"", "\"commodity_physics_none\""]],
         ["constraint_sense", ["\"==\"", "\">=\"", "\"<=\""]],
+        ["duration_unit_list", ["\"minute\"", "\"hour\""]],
         ["node_has_state_list", ["\"node_has_state_true\"", "\"node_has_state_false\""]],
         ["node_opf_type_list", ["\"node_opf_type_reference\"", "\"node_opt_type_normal\""]],
         ["unit_online_variable_type_list", ["\"unit_online_variable_type_binary\"", "\"unit_online_variable_type_integer\"", "\"unit_online_variable_type_linear\""]]
@@ -50,7 +51,7 @@
         ["connection", "connection_monitored", null, null],
         ["connection", "connection_reactance", null, null],
         ["connection", "connection_resistance", null, null],
-        ["model", "duration_unit", "Minute", null],
+        ["model", "duration_unit", "minute", "duration_unit_list"],
         ["model", "model_end", {"type": "date_time", "data": "2000-01-02T00:00:00"}, null],
         ["model", "model_start", {"type": "date_time", "data": "2000-01-01T00:00:00"}, null],
         ["model", "roll_forward", null, null],
