@@ -26,9 +26,9 @@ function operating_costs(m::Model)
         m,
         reduce(
             +,
-            unit_flow[u, n, d, t] * duration(t) * operating_cost[(unit=u_, node=n_, direction=d_, t=t)]
-            for (u_, n_, d_) in indices(operating_cost)
-            for (u, n, d, t) in unit_flow_indices(unit=u_, node=n_, direction=d_);
+            unit_flow[u, n, d, t] * duration(t) * operating_cost[(unit=u, node=n, direction=d, t=t)]
+            for (u, n, d) in indices(operating_cost)
+            for (u, n, d, t) in unit_flow_indices(unit=u, node=n, direction=d);
             init=0
         )
     )
