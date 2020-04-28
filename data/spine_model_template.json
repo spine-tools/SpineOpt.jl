@@ -8,7 +8,9 @@
         "report",
         "temporal_block",
         "unit",
-        "unit_constraint"
+        "unit_constraint",
+        "stochastic_scenario",
+        "stochastic_structure"
     ],
     "relationship_classes": [
         ["commodity_group__commodity", ["commodity", "commodity"]],
@@ -19,6 +21,7 @@
         ["node__commodity", ["node", "commodity"]],
         ["node__node", ["node", "node"]],
         ["node__temporal_block", ["node", "temporal_block"]],
+        ["node__stochastic_structure", ["node", "stochastic_structure"]],
         ["node_group__node", ["node", "node"]],
         ["report__output", ["report", "output"]],
         ["unit__from_node", ["unit", "node"]],
@@ -28,7 +31,9 @@
         ["unit__to_node__unit_constraint", ["unit", "node", "unit_constraint"]],
         ["unit__unit_constraint", ["unit", "unit_constraint"]],
         ["unit_group__commodity_group", ["unit", "commodity"]],
-        ["unit_group__unit", ["unit", "unit"]]
+        ["unit_group__unit", ["unit", "unit"]],
+        ["parent_stochastic_scenario__child_stochastic_scenario", ["stochastic_scenario", "stochastic_scenario"]],
+        ["stochastic_structure__stochastic_scenario", ["stochastic_structure", "stochastic_scenario"]]
     ],
     "parameter_value_lists": [
         ["balance_type_list", ["\"balance_type_node\"", "\"balance_type_group\"", "\"balance_type_none\""]],
@@ -144,6 +149,8 @@
         ["unit__to_node", "vom_cost", null, null],
         ["unit__to_node__unit_constraint", "unit_flow_coefficient", 0.0, null],
         ["unit__unit_constraint", "units_on_coefficient", null, null],
-        ["unit_group__commodity_group", "max_cum_in_unit_flow_bound", null, null]
+        ["unit_group__commodity_group", "max_cum_in_unit_flow_bound", null, null],
+        ["stochastic_structure__stochastic_scenario", "stochastic_scenario_end", null, null],
+        ["stochastic_structure__stochastic_scenario", "weight_relative_to_parent", null, null]
     ]
 }
