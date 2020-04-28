@@ -46,6 +46,38 @@ end
 
 
 """
+    full_stochastic_paths()
+
+Finds all the unique paths through the `parent_stochastic_scenario__child_stochastic_scenario` tree.
+"""
+function full_stochastic_paths()
+    root_scenarios = find_root_scenarios()
+    all_paths = [[scen] for scen in root_scenarios]
+    full_paths = Array{Array{Object,1},1}()
+    for path in all_paths
+        children = find_children(path[end])
+        if isempty(children)
+            push!(full_paths, path)
+        else
+            for child in children
+                push!(all_paths, vcat(path, child))
+            end
+        end
+    end
+    return unique!(full_paths)
+end
+
+
+"""
+    active_stochastic_paths(full_stochastic_paths::Array{Array{Object,1},1}, active_scenarios::Union{Array{Object,1},Object})
+
+Finds all the unique combinations of active `stochastic_scenarios` along valid stochastic paths.
+"""
+function active_stochastic_paths(full_stochastic_paths::Array{Array{Object,1},1}, active_scenarios::Union{Array{Object,1},Object})
+    unique(map(path -> intersect(path, active_scenarios), full_stochastic_paths))
+end
+
+"""
     generate_stochastic_tree(stochastic_structure, window_start)
 
 Generates the stochastic tree of a `stochastic_structure` relative to a desired `window_start`
