@@ -52,6 +52,10 @@ function generate_stochastic_structure()
     all_stochastic_trees = generate_all_stochastic_trees(start(current_window))
     generate_node_stochastic_time_indices(all_stochastic_trees)
     generate_node_stochastic_scenario_weight(all_stochastic_trees)
+    full_stochastic_paths = find_full_stochastic_paths()
+    @eval begin
+        full_stochastic_paths = $full_stochastic_paths
+    end
 end
 
 
@@ -90,6 +94,9 @@ function run_spinemodel(
         generate_missing_items()
     end
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
+    @logtime level2 "Creating temporal structure..." generate_temporal_structure()
+    @logtime level2 "Creating stochastic structure..." generate_stochastic_structure()
+    @logtime level2 "Creating variable indices..." generate_variable_indices()
     check_islands(log_level)
     rerun_spinemodel(
         url_in,
@@ -115,7 +122,6 @@ function rerun_spinemodel(
     level2 = log_level >= 2
     level3 = log_level >= 3
     results = Dict()
-    @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @log level1 "Window 1: $current_window"
     @logtime level2 "Initializing model..." begin
         m = Model(with_optimizer)
