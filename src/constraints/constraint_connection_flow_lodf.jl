@@ -28,15 +28,11 @@ function add_constraint_connection_flow_lodf!(m::Model)
     cons = m.ext[:constraints][:connection_flow_lodf] = Dict()
     for (conn_mon, n_mon, d) in indices(connection_emergency_capacity)
         for (conn_cont, conn_mon) in indices(lodf; connection2=conn_mon)
-            for t in t_lowest_resolution!(
-                    map(
-                        x -> x.t, 
-                        Iterators.flatten(
-                            connection_flow_indices(; connection=conn, last(connection__from_node(connection=conn))...)
-                            for conn in (conn_cont, conn_mon)
-                        )
-                    )
-                )
+            connection_flow_indices_iter = Iterators.flatten(
+                connection_flow_indices(; connection=conn, last(connection__from_node(connection=conn))...)
+                for conn in (conn_cont, conn_mon)
+            )
+            for t in t_lowest_resolution(x.t for x in connection_flow_indices_iter)
                 cons[conn_cont, conn_mon, t] = @constraint(
                     m,
                     # flow in monitored connection

@@ -26,11 +26,10 @@ function add_constraint_unit_constraint!(m::Model)
     @fetch unit_flow_op, unit_flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][:unit_constraint] = Dict()
     for uc in unit_constraint()
-        unit_node_iter = Iterators.flatten(
+        involved_unit_node = Iterators.flatten(
             (unit__from_node__unit_constraint(unit_constraint=uc), unit__to_node__unit_constraint(unit_constraint=uc))
         )
-        involved_unit_flow_indices = Iterators.flatten(unit_flow_indices(unit=u, node=n) for (u, n) in unit_node_iter)
-        for t in t_lowest_resolution!(map(x -> x.t, involved_unit_flow_indices))
+        for t in t_lowest_resolution(x.t for (u, n) in involved_unit_node for x in unit_flow_indices(unit=u, node=n))
             cons[uc, t] = sense_constraint(
                 m,
                 + reduce(

@@ -23,11 +23,11 @@
 A list of `NamedTuple`s corresponding to indices of the `units_on` variable.
 The keyword arguments act as filters for each dimension.
 """
-function units_on_indices(;unit=anything, t=anything) # TODO: How to determine the stochastic indices for `unit` variables not tied to any `node`?
+function units_on_indices(;unit=anything, t=anything)
     [
         (unit=u, t=t_)
         for u in intersect(SpineModel.unit(), unit)
-        for t_ in t_highest_resolution!(map(x -> x.t, unit_flow_indices(unit=u, t=t)))
+        for t_ in t_highest_resolution(x.t for x in unit_flow_indices(unit=u, t=t))
     ]
 end
 

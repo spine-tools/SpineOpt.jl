@@ -26,7 +26,7 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
     @fetch unit_flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][ratio.name] = Dict()
     for (u, n1, n2) in indices(ratio)
-        for t in t_lowest_resolution!(map(x -> x.t, unit_flow_indices(unit=u, node=[n1, n2])))
+        for t in t_lowest_resolution(x.t for x in unit_flow_indices(unit=u, node=[n1, n2]))
             cons[u, n1, n2, t] = sense_constraint(
                 m,
                 + reduce(

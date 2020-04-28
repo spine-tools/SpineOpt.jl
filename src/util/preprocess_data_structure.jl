@@ -118,7 +118,7 @@ function generate_connection_has_ptdf()
             is_bidirectional
             && fix_ratio_out_in_connection_flow(;
                 connection=conn, zip((:node1, :node2), connection__from_node(connection=conn))..., _strict=false
-            ) == 1            
+            ) == 1
         )
         connection.parameter_values[conn][:has_ptdf] = SpineInterface.callable(
             is_bidirectional_loseless && all(has_ptdf(node=n) for n in connection__from_node(connection=conn))
@@ -186,7 +186,7 @@ function _ptdf_values()
         for conn in connection(has_ptdf=true)
     )
     ps_lines = collect(values(ps_lines_by_connection))
-    ps_ptdf = PowerSystems.PTDF(ps_lines, ps_busses)    
+    ps_ptdf = PowerSystems.PTDF(ps_lines, ps_busses)
     Dict(
         (conn, n) => Dict(:ptdf => SpineInterface.callable(ps_ptdf[line.name, bus.number]))
         for (conn, line) in ps_lines_by_connection
@@ -200,7 +200,7 @@ Generate ptdf parameter.
 function generate_ptdf()
     ptdf_values = _ptdf_values()
     ptdf_rel_cls = RelationshipClass(
-        :ptdf_connection__node, 
+        :ptdf_connection__node,
         [:connection, :node],
         [(connection=conn, node=n) for (conn, n) in keys(ptdf_values)],
         ptdf_values
@@ -215,25 +215,35 @@ end
 Generate lodf parameter.
 """
 function generate_lodf()
-    lodf_values = Dict{Tuple{Object,Object},Dict{Symbol,AbstractCallable}}()
-    for conn_cont in connection(connection_contingency=true, has_lodf=true)
-        tolerance = connnection_lodf_tolerance(connection=conn_cont)
-        n1, n2 = connection__from_node(connection=conn_cont)
-        for (n_from, n_to) in ((n1, n2), (n2, n1))
-            # TODO: this is to match the old computation but doesn't feel super right?
-            denom = 1 - (ptdf(connection=conn_cont, node=n_from) - ptdf(connection=conn_cont, node=n_to))
-            cond = abs(denom) < 0.001 || (denom == -1)        
-            for conn_mon in connection(connection_monitored=true, has_lodf=true)
-                conn_cont !== conn_mon || continue
-                lodf_trial = -ptdf(connection=conn_mon, node=n_from)
-                cond && (lodf_trial += ptdf(connection=conn_mon, node=n_to))
-                abs(lodf_trial) > tolerance || continue
-                lodf_values[conn_cont, conn_mon] = Dict(:lodf => SpineInterface.callable(lodf_trial))
-            end
+
+    """
+    Given a contingency connection, return a function that given the monitored connection, return the lodf
+    """
+    function make_lodf_fn(conn_cont)
+        n_from, n_to = connection__from_node(connection=conn_cont)
+        denom = 1 - (ptdf(connection=conn_cont, node=n_from) - ptdf(connection=conn_cont, node=n_to))
+        is_tail = isapprox(denom, 0; atol=0.001)
+        if is_tail
+            conn_mon -> ptdf(connection=conn_mon, node=n_to)
+        else
+            conn_mon -> (ptdf(connection=conn_mon, node=n_from) - ptdf(connection=conn_mon, node=n_to)) / denom
         end
     end
+
+    lodf_values = Dict(
+        (conn_cont, conn_mon) => Dict(:lodf => SpineInterface.callable(lodf_trial))
+        for (conn_cont, lodf_fn, tolerance) in (
+            (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont))
+            for conn_cont in connection(connection_contingency=true, has_lodf=true)
+        )
+        for (conn_mon, lodf_trial) in (
+            (conn_mon, lodf_fn(conn_mon))
+            for conn_mon in connection(connection_monitored=true, has_lodf=true)
+        )
+        if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
+    )  # NOTE: in my machine, a Dict comprehension is ~4x faster than a Dict built incrementally
     lodf_rel_cls = RelationshipClass(
-        :lodf_connection__connection, 
+        :lodf_connection__connection,
         [:connection1, :connection2],
         [(connection1=conn_cont, connection2=conn_mon) for (conn_cont, conn_mon) in keys(lodf_values)],
         lodf_values
@@ -250,4 +260,22 @@ function generate_network_components()
     generate_connection_has_lodf()
     generate_ptdf()
     generate_lodf()
+    # write_ptdfs() # NOTE Uncomment this line to write the resulting PTDFs to a csv file
+end
+
+function write_ptdfs()
+    io = open("ptdfs.csv", "w")
+    print(io, "connection,")
+    for n in node(has_ptdf=true)
+        print(io, string(n), ",")
+    end
+    print(io, "\n")
+    for conn in connection(has_ptdf=true)
+        print(io, string(conn), ",")
+        for n in node(has_ptdf=true)
+            print(io, ptdf(connection=conn, node=n), ",")
+        end
+        print(io, "\n")
+    end
+    close(io)
 end

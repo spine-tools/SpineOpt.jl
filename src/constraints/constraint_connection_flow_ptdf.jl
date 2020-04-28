@@ -66,7 +66,7 @@ function add_constraint_connection_flow_ptdf!(m::Model)
                         )
                     )
                     for (conn, n_inj) in indices(ptdf; connection=conn)
-                    if abs(ptdf(connection=conn, node=n_inj)) > node_ptdf_threshold(node=n_inj);
+                    if !isapprox(ptdf(connection=conn, node=n_inj), 0; atol=node_ptdf_threshold(node=n_inj));
                     init=0
                 )
             )
