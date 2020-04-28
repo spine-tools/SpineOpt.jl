@@ -46,11 +46,11 @@ end
 
 
 """
-    full_stochastic_paths()
+    find_full_stochastic_paths()
 
 Finds all the unique paths through the `parent_stochastic_scenario__child_stochastic_scenario` tree.
 """
-function full_stochastic_paths()
+function find_full_stochastic_paths()
     root_scenarios = find_root_scenarios()
     all_paths = [[scen] for scen in root_scenarios]
     full_paths = Array{Array{Object,1},1}()
