@@ -52,6 +52,7 @@ function generate_stochastic_structure()
     all_stochastic_trees = generate_all_stochastic_trees(start(current_window))
     generate_node_stochastic_time_indices(all_stochastic_trees)
     generate_node_stochastic_scenario_weight(all_stochastic_trees)
+    generate_unit_stochastic_time_indices()
     full_stochastic_paths = find_full_stochastic_paths()
     @eval begin
         full_stochastic_paths = $full_stochastic_paths

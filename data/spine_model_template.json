@@ -42,7 +42,8 @@
         ["duration_unit_list", ["\"minute\"", "\"hour\""]],
         ["node_has_state_list", ["\"node_has_state_true\"", "\"node_has_state_false\""]],
         ["node_opf_type_list", ["\"node_opf_type_reference\"", "\"node_opt_type_normal\""]],
-        ["unit_online_variable_type_list", ["\"unit_online_variable_type_binary\"", "\"unit_online_variable_type_integer\"", "\"unit_online_variable_type_linear\""]]
+        ["unit_online_variable_type_list", ["\"unit_online_variable_type_binary\"", "\"unit_online_variable_type_integer\"", "\"unit_online_variable_type_linear\""]],
+        ["import_temporal_structure_list", ["\"true\"", "\"false\""]]
     ],
     "object_parameters": [
         ["commodity", "commodity_lodf_tolerance", 0.1, null],
@@ -113,6 +114,7 @@
         ["unit__from_node", "unit_capacity", null, null],
         ["unit__from_node", "unit_conv_cap_to_flow", 1.0, null],
         ["unit__from_node", "vom_cost", null, null],
+        ["unit__from_node", "import_temporal_structure", false, null],
         ["unit__from_node__unit_constraint", "unit_flow_coefficient", 0.0, null],
         ["unit__node__node", "fix_ratio_in_in_unit_flow", null, null],
         ["unit__node__node", "fix_ratio_in_out_unit_flow", null, null],
@@ -148,6 +150,7 @@
         ["unit__to_node", "unit_conv_cap_to_flow", 1.0, null],
         ["unit__to_node", "vom_cost", null, null],
         ["unit__to_node__unit_constraint", "unit_flow_coefficient", 0.0, null],
+        ["unit__to_node", "import_temporal_structure", false, null],
         ["unit__unit_constraint", "units_on_coefficient", null, null],
         ["unit_group__commodity_group", "max_cum_in_unit_flow_bound", null, null],
         ["stochastic_structure__stochastic_scenario", "stochastic_scenario_end", null, null],

@@ -77,6 +77,7 @@ function active_stochastic_paths(full_stochastic_paths::Array{Array{Object,1},1}
     unique(map(path -> intersect(path, active_scenarios), full_stochastic_paths))
 end
 
+
 """
     generate_stochastic_tree(stochastic_structure, window_start)
 
@@ -172,12 +173,12 @@ end
 """
     generate_node_stochastic_time_indices(window_start::DateTime)
 
-Function to generate the `node_stochastic_time_indices_rc` and `all_node_stochastic_time_indices_rc`
+Generates the `node_stochastic_time_indices_rc` and `all_node_stochastic_time_indices_rc`
 RelationshipClasses to store the stochastic time indices for all `nodes`,
 based on all of the stochastic trees of all defined `stochastic_structures`.
 
 `node_stochastic_time_indices_rc` stores the current active stochastic time steps, while
-`all_node_stocahstic_time_indices_rc` also includes the historical time steps.
+`all_node_stochastic_time_indices_rc` also includes the historical time steps.
 """
 function generate_node_stochastic_time_indices(all_stochastic_trees::Dict)
     node__stochastic_scenario__t = []
@@ -227,6 +228,83 @@ The keyword arguments act as filters for each dimension.
 """
 function all_node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
     all_node_stochastic_time_indices_rc(node=node, stochastic_scenario=stochastic_scenario, t=t, _compact=false)    
+end
+
+
+"""
+    generate_unit_stochastic_time_indices()
+
+Generates the `unit_stochastic_time_indices_rc` and `all_unit_stochastic_time_indices_rc`
+RelationshipClasses to store the stochastic time indices for all `units`,
+based on the `import_temporal_structure` parameter and `node_stochastic_time_indices`.
+
+`unit_stochastic_time_indices_rc` stores the current active stochastic time steps, while
+`all_unit_stochastic_time_indices_rc` also includes the historical time steps.
+"""
+function generate_unit_stochastic_time_indices()
+    units = unit()
+    imported_temporal_structures = collect(indices(import_temporal_structure))
+    unit__stochastic_scenario__t = []
+    unit__stochastic_scenario__t_history = []
+    for u in units
+        temporal_structure = filter(und -> und.unit == u, imported_temporal_structures)
+        if length(temporal_structure) != 1
+            @error("Unit `$(u)` must have exactly one `import_temporal_structure` defined, no more, no less!")
+        end
+        append!(
+            unit__stochastic_scenario__t,
+            [
+                (unit=u, stochastic_scenario=s, t=t)
+                for (n, s, t) in node_stochastic_time_indices(node=first(temporal_structure).node)
+            ]
+        )
+        append!(
+            unit__stochastic_scenario__t_history,
+            [
+                (unit=u, stochastic_scenario=s, t=t)
+                for s in find_root_scenarios()
+                for t in sort(collect(values(t_history_t)))
+            ]
+        )
+    end
+    unique!(unit__stochastic_scenario__t)
+    unique!(unit__stochastic_scenario__t_history)
+    unit_stochastic_time_indices_rc = RelationshipClass(
+        :unit_stochastic_time_indices_rc,
+        [:unit, :stochastic_scenario, :t],
+        unit__stochastic_scenario__t
+    )
+    all_unit_stochastic_time_indices_rc = RelationshipClass(
+        :all_unit_stochastic_time_indices_rc,
+        [:unit, :stochastic_scenario, :t],
+        unique(vcat(unit__stochastic_scenario__t_history, unit__stochastic_scenario__t))
+    )
+    @eval begin
+        unit_stochastic_time_indices_rc = $unit_stochastic_time_indices_rc
+        all_unit_stochastic_time_indices_rc = $all_unit_stochastic_time_indices_rc
+    end
+end
+
+
+"""
+    unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
+
+A list of `NamedTuple`s corresponding to the *current* unit stochastic time indices.
+The keyword arguments act as filters for each dimension.
+"""
+function unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
+    unit_stochastic_time_indices_rc(unit=unit, stochastic_scenario=stochastic_scenario, t=t, _compact=false)    
+end
+
+
+"""
+    all_unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
+
+A list of `NamedTuple`s corresponding to the current and *historical* unit stochastic time indices.
+The keyword arguments act as filters for each dimension.
+"""
+function all_unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
+    all_unit_stochastic_time_indices_rc(unit=unit, stochastic_scenario=stochastic_scenario, t=t, _compact=false)    
 end
 
 
