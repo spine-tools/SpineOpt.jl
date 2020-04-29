@@ -98,3 +98,17 @@ function sense_constraint(m, lhs, sense::Symbol, rhs)
         @constraint(m, lhs == rhs)
     end
 end
+
+
+"""
+    name_constraints!(m::Model)
+
+Sets constraint names for more useful diagnostic output
+"""
+function name_constraints!(m::Model)
+    for (con_key, cons) in m.ext[:constraints]
+        for (inds, con) in cons
+            set_name(con, string(con_key,inds))
+        end
+    end
+end

@@ -95,7 +95,7 @@ function generate_node_has_ptdf()
         )
         node.parameter_values[n][:has_ptdf] = SpineInterface.callable(!isempty(ptdf_comms))
         node.parameter_values[n][:node_ptdf_threshold] = SpineInterface.callable(
-            reduce(min, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0)
+            reduce(max, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0.0000001)
         )
     end
     has_ptdf = Parameter(:has_ptdf, [node])
@@ -261,8 +261,9 @@ function generate_network_components()
     generate_connection_has_lodf()
     generate_ptdf()
     generate_lodf()
-    write_ptdf_file(model=first(model())) == Symbol(:true) && write_ptdfs()
-    write_lodf_file(model=first(model())) == Symbol(:true) && write_lodfs()
+    # the below needs the parameters write_ptdf_file and write_lodf_file - we can uncomment when we update the template perhaps?
+    # write_ptdf_file(model=first(model())) == Symbol(:true) && write_ptdfs()
+    # write_lodf_file(model=first(model())) == Symbol(:true) && write_lodfs()
 end
 
 function write_ptdfs()

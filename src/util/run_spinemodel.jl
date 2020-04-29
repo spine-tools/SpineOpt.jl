@@ -101,6 +101,7 @@ function rerun_spinemodel(
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
         log_level=3)
+
     level0 = log_level >= 0
     level1 = log_level >= 1
     level2 = log_level >= 2
@@ -152,9 +153,10 @@ function rerun_spinemodel(
         @logtime level3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
         @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
         @logtime level3 "- [constraint_user]" add_constraints(m)
+        @logtime level3 "- [setting constraint names]" name_constraints!(m)
     end
-    #@logtime level2 "Writing diagnostics file" write_to_file(m, "model_diagnostics.mps")
     k = 2
+
     while optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
         @logtime level2 "Saving results..." begin
@@ -189,7 +191,8 @@ function optimize_model!(m::Model)
         true
     else
         @log true "Unable to find solution (reason: $(termination_status(m)))"
-        write_mps_file(model=first(model())) in (:write_mps_on_no_solve, :write_mps_always) && write_to_file(m, "model_diagnostics.mps")
+        # the below needs the parameter write_mps_file - we can uncomment when we update the template perhaps?
+        # write_mps_file(model=first(model())) in (:write_mps_on_no_solve, :write_mps_always) && write_to_file(m, "model_diagnostics.mps")
         false
     end
 end
