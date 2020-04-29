@@ -25,7 +25,7 @@ For connection networks with monitored and has_ptdf set to true, set the steady 
 function add_constraint_connection_flow_ptdf!(m::Model)
     @fetch connection_flow, unit_flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:flow_ptdf] = Dict()
-    for conn in connection(connection_monitored=:true, has_ptdf=true)
+    for conn in connection(connection_monitored=:value_true, has_ptdf=true)
         for (conn, n_to, d, t) in connection_flow_indices(;
                 connection=conn, last(connection__from_node(connection=conn))...
             ) # NOTE: always assume that the second (last) node in `connection__from_node` is the 'to' node

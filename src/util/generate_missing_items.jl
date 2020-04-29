@@ -26,7 +26,12 @@
 # and what we find in `spinedb_api.create_new_spine_database(for_spine_model=True)`
 
 function generate_missing_items()
-    mod = @__MODULE__ 
+    mod = @__MODULE__
+    missing_items = Dict(
+        "object classes" => String[],
+        "relationship classes" => String[],
+        "parameter definitions" => String[],
+    )
     classes = Dict{Symbol,Union{ObjectClass,RelationshipClass}}(
         class.name => class for class in object_class(mod)
     )
@@ -35,7 +40,7 @@ function generate_missing_items()
     for name in template["object_classes"]
         sym_name = Symbol(name)
         sym_name in keys(classes) && continue
-        @warn "object class $name is missing from the db"
+        push!(missing_items["object classes"], name)
         object_class = classes[sym_name] = ObjectClass(sym_name, [])
         @eval mod begin
             $sym_name = $object_class
@@ -45,7 +50,7 @@ function generate_missing_items()
     for (name, object_class_names) in template["relationship_classes"]
         sym_name = Symbol(name)
         sym_name in keys(classes) && continue
-        @warn "relationship class $name is missing from the db"
+        push!(missing_items["relationship classes"], name)
         relationship_class = classes[sym_name] = RelationshipClass(sym_name, Symbol.(object_class_names), [])
         @eval mod begin
             $sym_name = $relationship_class
@@ -56,7 +61,7 @@ function generate_missing_items()
     for (class_name, name, default_value) in [template["object_parameters"]; template["relationship_parameters"]]
         sym_name = Symbol(name)
         sym_name in parameters && continue
-        @warn "parameter $name associated to class $class_name is missing from the db"
+        push!(missing_items["parameter definitions"], string(class_name, ".", name))
         class = classes[Symbol(class_name)]
         default_val = callable(db_api.from_database(JSON.json(default_value)))
         push!(get!(d, sym_name, []), class => default_val)
@@ -72,5 +77,26 @@ function generate_missing_items()
             $sym_name = $parameter
             export $sym_name
         end
+    end
+    header_size = maximum(length(key) for key in keys(missing_items))
+    empty_header = repeat(" ", header_size)
+    splitter = repeat(" ", 2)
+    missing_items_str = ""
+    for (key, value) in missing_items
+        isempty(value) && continue
+        header = lpad(key, header_size)
+        missing_items_str *= "\n" * string(header, splitter, value[1], "\n")
+        missing_items_str *= join([string(empty_header, splitter, x) for x in value[2:end]], "\n") * "\n"
+    end
+    if !isempty(missing_items_str)
+        println()
+        @warn """
+        Some items are missing from the input database.
+        We'll assume sensitive defaults for any missing parameter definitions, and empty collections for any missing classes.
+        Spine Model might still be able to run, but otherwise you'd need to check your input database.
+
+        Missing item list follows:
+        $missing_items_str
+        """
     end
 end

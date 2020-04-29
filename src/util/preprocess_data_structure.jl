@@ -63,7 +63,7 @@ function generate_variable_indices()
     )
     node_state_indices = unique(
         (node=n, temporal_block=tb)
-        for n in node(has_state=:node_has_state_true)
+        for n in node(has_state=:value_true)
         for tb in node__temporal_block(node=n)
     )
     unit_flow_indices_rc = RelationshipClass(
@@ -140,7 +140,7 @@ function generate_connection_has_lodf()
         )
         connection.parameter_values[conn][:has_lodf] = SpineInterface.callable(!isempty(lodf_comms))
         connection.parameter_values[conn][:connnection_lodf_tolerance] = SpineInterface.callable(
-            reduce(min, (commodity_lodf_tolerance(commodity=c) for c in lodf_comms); init=0)
+            reduce(max, (commodity_lodf_tolerance(commodity=c) for c in lodf_comms); init=0.05)
         )
     end
     has_lodf = Parameter(:has_lodf, [connection])
@@ -156,7 +156,7 @@ function _ptdf_values()
         n => Bus(
             number=i,
             name=string(n.name),
-            bustype=(node_opf_type(node=n) == :node_opf_type_reference) ? BusTypes.REF : BusTypes.PV,
+            bustype=(node_opt_type(node=n) == :node_opt_type_reference) ? BusTypes.REF : BusTypes.PV,
             angle=0.0,
             voltage=0.0,
             voltagelimits=(min=0.0, max=0.0),
@@ -235,11 +235,11 @@ function generate_lodf()
         (conn_cont, conn_mon) => Dict(:lodf => SpineInterface.callable(lodf_trial))
         for (conn_cont, lodf_fn, tolerance) in (
             (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont))
-            for conn_cont in connection(connection_contingency=true, has_lodf=true)
+            for conn_cont in connection(connection_contingency=:value_true, has_lodf=true)
         )
         for (conn_mon, lodf_trial) in (
             (conn_mon, lodf_fn(conn_mon))
-            for conn_mon in connection(connection_monitored=true, has_lodf=true)
+            for conn_mon in connection(connection_monitored=:value_true, has_lodf=true)
         )
         if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
     )  # NOTE: in my machine, a Dict comprehension is ~4x faster than a Dict built incrementally
@@ -261,9 +261,7 @@ function generate_network_components()
     generate_connection_has_lodf()
     generate_ptdf()
     generate_lodf()
-    # the below needs the parameters write_ptdf_file and write_lodf_file - we can uncomment when we update the template perhaps?
-    # write_ptdf_file(model=first(model())) == Symbol(:true) && write_ptdfs()
-    # write_lodf_file(model=first(model())) == Symbol(:true) && write_lodfs()
+    # write_ptdfs() # NOTE Uncomment this line to write the resulting PTDFs to a csv file
 end
 
 function write_ptdfs()
@@ -277,30 +275,6 @@ function write_ptdfs()
         print(io, string(conn), ",")
         for n in node(has_ptdf=true)
             print(io, ptdf(connection=conn, node=n), ",")
-        end
-        print(io, "\n")
-    end
-    close(io)
-end
-
-function write_lodfs()
-
-    io = open("lodfs.csv", "w")
-    print(io, raw"contingency line,from_node,to node,")
-
-    for conn_mon in connection(connection_monitored=true)
-        print(io, string(conn_mon), ",")
-    end
-    print(io, "\n")
-
-    for conn_cont in connection(connection_contingency=true)
-        n_from, n_to = connection__from_node(connection=conn_cont)
-        print(io, string(conn_cont), ",", string(n_from), ",", string(n_to))
-        for conn_mon_ in connection(connection_monitored=true)
-            print(io, ",")
-            for (conn_cont, conn_mon) in indices(lodf; connection1=conn_cont, connection2=conn_mon_)
-                print(io, lodf(connection1=conn_cont, connection2=conn_mon))
-            end
         end
         print(io, "\n")
     end

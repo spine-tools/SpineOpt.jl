@@ -35,7 +35,7 @@ function save_connection_avg_throughflow!(m::Model)
     @fetch connection_flow = m.ext[:variables]
     val = m.ext[:values][:connection_avg_throughflow] = Dict{NamedTuple{(:connection, :t),Tuple{SpineInterface.Object,SpineInterface.TimeSlice}},Number}()
 
-    for conn in connection(connection_monitored=:true, has_ptdf=true)
+    for conn in connection(connection_monitored=:value_true, has_ptdf=true)
         for (conn, n_to, d, t) in connection_flow_indices(;
                 connection=conn, last(connection__from_node(connection=conn))...
             ) # NOTE: always assume that the second (last) node in `connection__from_node` is the 'to' node
