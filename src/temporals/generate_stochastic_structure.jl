@@ -244,6 +244,10 @@ based on the `import_temporal_structure` parameter and `node_stochastic_time_ind
 function generate_unit_stochastic_time_indices()
     units = unit()
     imported_temporal_structures = collect(indices(import_temporal_structure))
+    filter!(
+        inds -> import_temporal_structure(unit=inds.unit, node=inds.node, direction=inds.direction) == :value_true,
+        imported_temporal_structures
+    )
     unit__stochastic_scenario__t = []
     unit__stochastic_scenario__t_history = []
     for u in units
