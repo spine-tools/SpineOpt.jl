@@ -185,7 +185,7 @@ function generate_node_stochastic_time_indices(all_stochastic_trees::Dict)
     node__stochastic_scenario__t_history = []
     for (node, structure) in node__stochastic_structure()
         if length(node__stochastic_structure(node=node)) > 1
-            @error("Node `$(node)` cannot have more than one `stochastic_structure`!")
+            error("Node `$(node)` cannot have more than one `stochastic_structure`!")
         end
         node_stochastic_time = node_stochastic_time_indices(node, all_stochastic_trees[structure])
         append!(node__stochastic_scenario__t, node_stochastic_time)
@@ -253,7 +253,7 @@ function generate_unit_stochastic_time_indices()
     for u in units
         temporal_structure = filter(und -> und.unit == u, imported_temporal_structures)
         if length(temporal_structure) != 1
-            @error("Unit `$(u)` must have exactly one `import_temporal_structure` defined, no more, no less!")
+            error("Unit `$(u)` must have exactly one `import_temporal_structure` set to `value_true`!")
         end
         append!(
             unit__stochastic_scenario__t,
@@ -322,7 +322,7 @@ function generate_node_stochastic_scenario_weight(all_stochastic_trees::Dict)
     parameter_vals = Dict{Tuple{Vararg{Object}},Dict{Symbol,AbstractCallable}}()
     for (node, structure) in node__stochastic_structure()
         if length(node__stochastic_structure(node=node)) > 1
-            @error("Node `$(node)` cannot have more than one `stochastic_structure`!")
+            error("Node `$(node)` cannot have more than one `stochastic_structure`!")
         end
         scenarios = keys(all_stochastic_trees[structure])
         for scen in scenarios
@@ -330,7 +330,7 @@ function generate_node_stochastic_scenario_weight(all_stochastic_trees::Dict)
             parameter_vals[(node, scen)] = Dict{Symbol,AbstractCallable}()
             val = all_stochastic_trees[structure][scen].weight
             if isnothing(val)
-                @error("`stochastic_structure` `$(structure)` lacks a `weight_relative_to_parent` for `stochastic_scenario` `$(scen)`!")
+                error("`stochastic_structure` `$(structure)` lacks a `weight_relative_to_parent` for `stochastic_scenario` `$(scen)`!")
             end
             push!(
                 parameter_vals[(node, scen)],
