@@ -261,7 +261,9 @@ function generate_network_components()
     generate_connection_has_lodf()
     generate_ptdf()
     generate_lodf()
-    # write_ptdfs() # NOTE Uncomment this line to write the resulting PTDFs to a csv file
+    # the below needs the parameters write_ptdf_file and write_lodf_file - we can uncomment when we update the template perhaps?
+    # write_ptdf_file(model=first(model())) == Symbol(:true) && write_ptdfs()
+    # write_lodf_file(model=first(model())) == Symbol(:true) && write_lodfs()
 end
 
 function write_ptdfs()
@@ -275,6 +277,30 @@ function write_ptdfs()
         print(io, string(conn), ",")
         for n in node(has_ptdf=true)
             print(io, ptdf(connection=conn, node=n), ",")
+        end
+        print(io, "\n")
+    end
+    close(io)
+end
+
+function write_lodfs()
+
+    io = open("lodfs.csv", "w")
+    print(io, raw"contingency line,from_node,to node,")
+
+    for conn_mon in connection(connection_monitored=true)
+        print(io, string(conn_mon), ",")
+    end
+    print(io, "\n")
+
+    for conn_cont in connection(connection_contingency=true)
+        n_from, n_to = connection__from_node(connection=conn_cont)
+        print(io, string(conn_cont), ",", string(n_from), ",", string(n_to))
+        for conn_mon_ in connection(connection_monitored=true)
+            print(io, ",")
+            for (conn_cont, conn_mon) in indices(lodf; connection1=conn_cont, connection2=conn_mon_)
+                print(io, lodf(connection1=conn_cont, connection2=conn_mon))
+            end
         end
         print(io, "\n")
     end
