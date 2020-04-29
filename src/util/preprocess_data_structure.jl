@@ -95,7 +95,7 @@ function generate_node_has_ptdf()
         )
         node.parameter_values[n][:has_ptdf] = SpineInterface.callable(!isempty(ptdf_comms))
         node.parameter_values[n][:node_ptdf_threshold] = SpineInterface.callable(
-            reduce(min, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0)
+            reduce(max, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0.000001)
         )
     end
     has_ptdf = Parameter(:has_ptdf, [node])
