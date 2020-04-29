@@ -111,17 +111,15 @@ function add_constraint_nodal_balance!(m::Model)
 end
 
 """
-Determines whether or not a connection is internal to a node group, in the sense that it only connects nodes within that group.
+Determine whether or not a connection is internal to a node group, in the sense that it only connects nodes within that group.
 """
 _is_internal(conn, ng) = issubset(_connection_nodes(conn), node_group__node(node1=ng))
 
 """
-Returns an iterators over all nodes of a connection.
+An iterator over all nodes of a connection.
 """
-function _connection_nodes(conn)
-    (
-        n
-        for connection__node in (connection__from_node, connection__to_node)
-        for n in connection__node(connection=conn, direction=anything)
-    )
-end
+_connection_nodes(conn) = (
+    n
+    for connection__node in (connection__from_node, connection__to_node)
+    for n in connection__node(connection=conn, direction=anything)
+)

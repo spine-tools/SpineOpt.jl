@@ -31,6 +31,7 @@ function postprocess_results!(m::Model)
     end
 end
 
+# TODO: Try and refactor this so it accounts for different time resolution in connection nodes
 function save_connection_avg_throughflow!(m::Model)
     @fetch connection_flow = m.ext[:variables]
     val = m.ext[:values][:connection_avg_throughflow] = Dict{NamedTuple{(:connection, :t),Tuple{SpineInterface.Object,SpineInterface.TimeSlice}},Number}()
