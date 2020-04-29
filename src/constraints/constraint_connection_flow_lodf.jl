@@ -26,22 +26,26 @@ Limit the post contingency flow on monitored connection mon to conn_emergency_ca
 function add_constraint_connection_flow_lodf!(m::Model)
     @fetch connection_flow = m.ext[:variables]
     cons = m.ext[:constraints][:connection_flow_lodf] = Dict()
-    for (conn_mon, n_mon, d) in indices(connection_emergency_capacity)
-        for (conn_cont, conn_mon) in indices(lodf; connection2=conn_mon)
-            connection_flow_indices_iter = Iterators.flatten(
-                connection_flow_indices(; connection=conn, last(connection__from_node(connection=conn))...)
-                for conn in (conn_cont, conn_mon)
-            )
-            for t in t_lowest_resolution(x.t for x in connection_flow_indices_iter)
-                cons[conn_cont, conn_mon, t] = @constraint(
-                    m,
+    for (conn_cont, conn_mon) in indices(lodf)
+        involved_t = (
+            x.t
+            for conn in (conn_cont, conn_mon)
+            for x in connection_flow_indices(; connection=conn, last(connection__from_node(connection=conn))...)
+        )
+        for t in t_lowest_resolution(involved_t)
+            cons[conn_cont, conn_mon, t] = @constraint(
+                m,
+                - 1
+                <=
+                (
                     # flow in monitored connection
                     + reduce(
                         +,
                         + connection_flow[conn_mon, n_mon_to, direction(:to_node), t_short]
                         - connection_flow[conn_mon, n_mon_to, direction(:from_node), t_short]
                         for (conn_mon, n_mon_to, d, t_short) in connection_flow_indices(;
-                            connection=conn_mon, last(connection__from_node(connection=conn_mon))..., t=t_in_t(t_long=t)
+                            connection=conn_mon, 
+                            last(connection__from_node(connection=conn_mon))..., t=t_in_t(t_long=t)
                         ); # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
                         init=0
                     )
@@ -52,16 +56,21 @@ function add_constraint_connection_flow_lodf!(m::Model)
                         + connection_flow[conn_cont, n_cont_to, direction(:to_node), t_short]
                         - connection_flow[conn_cont, n_cont_to, direction(:from_node), t_short]
                         for (conn_cont, n_cont_to, d, t_short) in connection_flow_indices(;
-                            connection=conn_cont, last(connection__from_node(connection=conn_cont))..., t=t_in_t(t_long=t)
+                            connection=conn_cont, 
+                            last(connection__from_node(connection=conn_cont))..., t=t_in_t(t_long=t)
                         ); # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
                         init=0
                     )
-                    <=
+                ) 
+                / minimum(
                     + connection_emergency_capacity[(connection=conn_mon, node=n_mon, direction=d, t=t)]
                     * connection_availability_factor[(connection=conn_mon, t=t)]
                     * connection_conv_cap_to_flow[(connection=conn_mon, node=n_mon, direction=d, t=t)]
+                    for (conn_mon, n_mon, d) in indices(connection_emergency_capacity; connection=conn_mon)
                 )
-            end
+                <=
+                + 1
+            )
         end
     end
 end
