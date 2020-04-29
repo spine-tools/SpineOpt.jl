@@ -101,7 +101,6 @@ function rerun_spinemodel(
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
         log_level=3)
-
     level0 = log_level >= 0
     level1 = log_level >= 1
     level2 = log_level >= 2
@@ -156,7 +155,6 @@ function rerun_spinemodel(
         @logtime level3 "- [setting constraint names]" name_constraints!(m)
     end
     k = 2
-
     while optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
         @logtime level2 "Saving results..." begin
@@ -181,8 +179,6 @@ function rerun_spinemodel(
 end
 
 function optimize_model!(m::Model)
-    # TODO: perhaps add the option to write the mps for diagnostics as follows
-
     write_mps_file(model=first(model())) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
@@ -191,8 +187,9 @@ function optimize_model!(m::Model)
         true
     else
         @log true "Unable to find solution (reason: $(termination_status(m)))"
-        # the below needs the parameter write_mps_file - we can uncomment when we update the template perhaps?
-        # write_mps_file(model=first(model())) in (:write_mps_on_no_solve, :write_mps_always) && write_to_file(m, "model_diagnostics.mps")
+        if write_mps_file(model=first(model())) in (:write_mps_on_no_solve, :write_mps_always)
+            write_to_file(m, "model_diagnostics.mps")
+        end
         false
     end
 end

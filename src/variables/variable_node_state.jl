@@ -25,9 +25,7 @@ for `node`, and `t`.
 function node_state_indices(;node=anything, t=anything)
     inds = NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}[
         (node=n, t=t)
-        for (n, tb) in node_state_indices_rc(
-            node=node, _compact=false
-        )
+        for (n, tb) in node_state_indices_rc(node=node, _compact=false)
         for t in time_slice(temporal_block=tb, t=t)
     ]
     unique!(inds)

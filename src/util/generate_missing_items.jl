@@ -17,14 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# NOTE: these `MissingItemHandler`s come into play whenever the database is missing some of the stuff
-# SpineModel expects to find in there.
-# The above can happen (i) during development, as we introduce new symbols for novel functionality, and
-# (ii) in production, if the user 'accidentally' deletes something.
-# I believe SpineModel needs this kind of safeguards to be robust.
-# As things stabilize, we should see a correspondance between this
-# and what we find in `spinedb_api.create_new_spine_database(for_spine_model=True)`
-
 function generate_missing_items()
     mod = @__MODULE__
     missing_items = Dict(

@@ -57,6 +57,7 @@
         ["model", "model_end", {"type": "date_time", "data": "2000-01-02T00:00:00"}, null],
         ["model", "model_start", {"type": "date_time", "data": "2000-01-01T00:00:00"}, null],
         ["model", "roll_forward", null, null],
+        ["model", "write_mps_file", null, null],
         ["node", "balance_type", "balance_type_node", "balance_type_list"],
         ["node", "demand", 0.0, null],
         ["node", "fix_node_state", null, null],
