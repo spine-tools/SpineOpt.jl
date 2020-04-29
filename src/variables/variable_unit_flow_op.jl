@@ -41,10 +41,16 @@ function unit_flow_op_indices(;
     node = expand_node_group(node)
     [
         (unit=u, node=n, direction=d, i=i_, stochastic_scenario=s, t=t)
-        for (u_, n_) in indices(operating_points, unit=unit, node=node)
-        for (u, n, d, tb) in unit_flow_indices_rc(unit=u_, node=n_, direction=direction, _compact=false)
-        for t1 in time_slice(temporal_block=tb, t=t)
-        for i_ in intersect(operating_point, 1:length(operating_points(unit=u_, node=n_, direction=d)))
+        for (u, n) in indices(operating_points, unit=unit, node=node)
+        for (u, n, d, s, t) in unit_flow_indices_rc(
+            unit=u,
+            node=n,
+            direction=direction,
+            stochastic_scenario=stochastic_scenario,
+            t=t,
+            _compact=false
+        )
+        for i_ in intersect(operating_point, 1:length(operating_points(unit=u, node=n, direction=d)))
     ]
 end
 
