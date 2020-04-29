@@ -63,7 +63,7 @@ function generate_variable_indices()
     )
     node_state_indices = unique(
         (node=n, temporal_block=tb)
-        for n in node(has_state=:node_has_state_true)
+        for n in node(has_state=:value_true)
         for tb in node__temporal_block(node=n)
     )
     unit_flow_indices_rc = RelationshipClass(
@@ -95,7 +95,7 @@ function generate_node_has_ptdf()
         )
         node.parameter_values[n][:has_ptdf] = SpineInterface.callable(!isempty(ptdf_comms))
         node.parameter_values[n][:node_ptdf_threshold] = SpineInterface.callable(
-            reduce(max, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0.000001)
+            reduce(min, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0)
         )
     end
     has_ptdf = Parameter(:has_ptdf, [node])
@@ -132,7 +132,7 @@ end
 Generate has_lodf and connnection_lodf_tolerance parameters associated to the connection class.
 """
 function generate_connection_has_lodf()
-    for conn in connection(has_ptdf=true)
+    for conn in connection(has_ptdf=:value_true)
         lodf_comms = Tuple(
             c
             for c in commodity(commodity_physics=:commodity_physics_lodf)
@@ -156,7 +156,7 @@ function _ptdf_values()
         n => Bus(
             number=i,
             name=string(n.name),
-            bustype=(node_opf_type(node=n) == :node_opf_type_reference) ? BusTypes.REF : BusTypes.PV,
+            bustype=(node_opt_type(node=n) == :node_opt_type_reference) ? BusTypes.REF : BusTypes.PV,
             angle=0.0,
             voltage=0.0,
             voltagelimits=(min=0.0, max=0.0),
@@ -165,7 +165,7 @@ function _ptdf_values()
             load_zone=LoadZone(nothing),
             ext=Dict{String,Any}()
         )
-        for (i, n) in enumerate(node(has_ptdf=true))
+        for (i, n) in enumerate(node(has_ptdf=:value_true))
     )
     isempty(ps_busses_by_node) && return Dict()
     ps_busses = collect(values(ps_busses_by_node))
@@ -184,7 +184,7 @@ function _ptdf_values()
             rate=0.0,
             anglelimits=(min=0.0, max=0.0)
         )  # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
-        for conn in connection(has_ptdf=true)
+        for conn in connection(has_ptdf=:value_true)
     )
     ps_lines = collect(values(ps_lines_by_connection))
     ps_ptdf = PowerSystems.PTDF(ps_lines, ps_busses)
@@ -235,11 +235,11 @@ function generate_lodf()
         (conn_cont, conn_mon) => Dict(:lodf => SpineInterface.callable(lodf_trial))
         for (conn_cont, lodf_fn, tolerance) in (
             (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont))
-            for conn_cont in connection(connection_contingency=true, has_lodf=true)
+            for conn_cont in connection(connection_contingency=:value_true, has_lodf=:value_true)
         )
         for (conn_mon, lodf_trial) in (
             (conn_mon, lodf_fn(conn_mon))
-            for conn_mon in connection(connection_monitored=true, has_lodf=true)
+            for conn_mon in connection(connection_monitored=:value_true, has_lodf=:value_true)
         )
         if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
     )  # NOTE: in my machine, a Dict comprehension is ~4x faster than a Dict built incrementally
@@ -261,19 +261,19 @@ function generate_network_components()
     generate_connection_has_lodf()
     generate_ptdf()
     generate_lodf()
-    # write_ptdfs() # NOTE Uncomment this line to write the resulting PTDFs to a csv file
+    write_ptdfs() # NOTE Uncomment this line to write the resulting PTDFs to a csv file
 end
 
 function write_ptdfs()
     io = open("ptdfs.csv", "w")
     print(io, "connection,")
-    for n in node(has_ptdf=true)
+    for n in node(has_ptdf=:value_true)
         print(io, string(n), ",")
     end
     print(io, "\n")
-    for conn in connection(has_ptdf=true)
+    for conn in connection(has_ptdf=:value_true)
         print(io, string(conn), ",")
-        for n in node(has_ptdf=true)
+        for n in node(has_ptdf=:value_true)
             print(io, ptdf(connection=conn, node=n), ",")
         end
         print(io, "\n")
