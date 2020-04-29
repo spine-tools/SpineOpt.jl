@@ -28,14 +28,18 @@ using Dates
 using TimeZones
 using SpineInterface
 using Suppressor
+using JSON
+using PowerSystems
 
 # Export utility
 export run_spinemodel
+export rerun_spinemodel
 export @fetch
 export or
 
 # Export indices functions
 export unit_flow_indices
+export unit_flow_op_indices
 export connection_flow_indices
 export node_state_indices
 export units_on_indices
@@ -43,20 +47,25 @@ export units_on_indices
 include("temporals/generate_time_slice.jl")
 include("temporals/generate_time_slice_relationships.jl")
 
-include("util/missing_item_handlers.jl")
 include("util/misc.jl")
+include("util/generate_missing_items.jl")
 include("util/run_spinemodel.jl")
 include("util/update_model.jl")
 include("util/preprocess_data_structure.jl")
+include("util/postprocess_results.jl")
+include("util/check_spinemodel.jl")
 
 include("variables/variable_common.jl")
 include("variables/variable_unit_flow.jl")
+include("variables/variable_unit_flow_op.jl")
 include("variables/variable_connection_flow.jl")
 include("variables/variable_node_state.jl")
 include("variables/variable_units_on.jl")
 include("variables/variable_units_available.jl")
 include("variables/variable_units_started_up.jl")
 include("variables/variable_units_shut_down.jl")
+include("variables/variable_node_slack_pos.jl")
+include("variables/variable_node_slack_neg.jl")
 
 include("objective/set_objective.jl")
 include("objective/variable_om_costs.jl")
@@ -66,19 +75,28 @@ include("objective/operating_costs.jl")
 include("objective/start_up_costs.jl")
 include("objective/shut_down_costs.jl")
 include("objective/fuel_costs.jl")
+include("objective/objective_penalties.jl")
 
 include("constraints/constraint_max_cum_in_unit_flow_bound.jl")
 include("constraints/constraint_unit_flow_capacity.jl")
+include("constraints/constraint_operating_point_bounds.jl")
+include("constraints/constraint_operating_point_sum.jl")
 include("constraints/constraint_nodal_balance.jl")
+include("constraints/constraint_group_balance.jl")
 include("constraints/constraint_node_state_capacity.jl")
 include("constraints/constraint_ratio_unit_flow.jl")
 include("constraints/constraint_ratio_out_in_connection_flow.jl")
 include("constraints/constraint_connection_flow_capacity.jl")
+include("constraints/constraint_connection_flow_ptdf.jl")
+include("constraints/constraint_connection_flow_lodf.jl")
 include("constraints/constraint_units_on.jl")
 include("constraints/constraint_units_available.jl")
 include("constraints/constraint_minimum_operating_point.jl")
 include("constraints/constraint_min_up_time.jl")
 include("constraints/constraint_min_down_time.jl")
 include("constraints/constraint_unit_state_transition.jl")
+include("constraints/constraint_unit_constraint.jl")
+
+const template = JSON.parsefile(joinpath(dirname(pathof(@__MODULE__)), "..", "data", "spine_model_template.json"))
 
 end

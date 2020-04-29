@@ -23,18 +23,19 @@ Run the Spine model from `url` and write report to the same `url`.
 Keyword arguments have the same purpose as for [`run_spinemodel`](@ref).
 """
 function run_spinemodel(
-        url::String; 
+        url::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0),
-        cleanup=true, 
-        add_constraints=m -> nothing, 
-        update_constraints=m -> nothing, 
+        cleanup=true,
+        add_constraints=m -> nothing,
+        update_constraints=m -> nothing,
         log_level=3)
     run_spinemodel(
-        url, url; 
-        with_optimizer=with_optimizer, 
-        cleanup=cleanup, 
-        add_constraints=add_constraints, 
-        update_constraints=update_constraints, 
+        url,
+        url;
+        with_optimizer=with_optimizer,
+        cleanup=cleanup,
+        add_constraints=add_constraints,
+        update_constraints=update_constraints,
         log_level=log_level
     )
 end
@@ -72,32 +73,62 @@ function run_spinemodel(
         url_out::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
         cleanup=true,
-        add_constraints=m -> nothing, 
-        update_constraints=m -> nothing, 
+        add_constraints=m -> nothing,
+        update_constraints=m -> nothing,
+        log_level=3)
+    level2 = log_level >= 2
+    @log true "Running Spine Model for $(url_in)..."
+    @logtime level2 "Initializing data structure from db..." begin
+        using_spinedb(url_in, @__MODULE__; upgrade=true)
+        generate_missing_items()
+    end
+    @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
+    check_islands(log_level)
+    rerun_spinemodel(
+        url_out;
+        with_optimizer=with_optimizer,
+        cleanup=cleanup,
+        add_constraints=add_constraints,
+        update_constraints=update_constraints,
+        log_level=log_level
+    )
+end
+
+function rerun_spinemodel(
+        url_out::String;
+        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+        cleanup=true,
+        add_constraints=m -> nothing,
+        update_constraints=m -> nothing,
         log_level=3)
     level0 = log_level >= 0
     level1 = log_level >= 1
     level2 = log_level >= 2
     level3 = log_level >= 3
     results = Dict()
-    @log level0 "Running Spine Model for $(url_in)..."
-    @logtime level2 "Initializing data structure from db..." using_spinedb(url_in, @__MODULE__; upgrade=true)
-    @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @log level1 "Window 1: $current_window"
     @logtime level2 "Initializing model..." begin
         m = Model(with_optimizer)
+        println()
         m.ext[:variables] = Dict{Symbol,Dict}()
         m.ext[:variables_lb] = Dict{Symbol,Any}()
         m.ext[:variables_ub] = Dict{Symbol,Any}()
         m.ext[:values] = Dict{Symbol,Dict}()
         m.ext[:constraints] = Dict{Symbol,Dict}()
-        create_variables!(m)
-        fix_variables!(m)
-        set_objective!(m)
+        @logtime level3  "creating variables" create_variables!(m)
+        @logtime level3  "handle fix variables" fix_variables!(m)
+        @logtime level3  "objective function" set_objective!(m)
     end
     @logtime level2 "Adding constraints...\n" begin
+        @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
+        @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
+        @logtime level3 "- [constraint_group_balance]" add_constraint_group_balance!(m)
+        @logtime level3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m)
+        @logtime level3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
         @logtime level3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
+        @logtime level3 "- [constraint_operating_point_bounds]" add_constraint_operating_point_bounds!(m)
+        @logtime level3 "- [constraint_operating_point_sum]" add_constraint_operating_point_sum!(m)
         @logtime level3 "- [constraint_fix_ratio_out_in_unit_flow]" add_constraint_fix_ratio_out_in_unit_flow!(m)
         @logtime level3 "- [constraint_max_ratio_out_in_unit_flow]" add_constraint_max_ratio_out_in_unit_flow!(m)
         @logtime level3 "- [constraint_min_ratio_out_in_unit_flow]" add_constraint_min_ratio_out_in_unit_flow!(m)
@@ -105,11 +136,13 @@ function run_spinemodel(
         @logtime level3 "- [constraint_max_ratio_out_out_unit_flow]" add_constraint_max_ratio_out_out_unit_flow!(m)
         @logtime level3 "- [constraint_fix_ratio_in_in_unit_flow]" add_constraint_fix_ratio_in_in_unit_flow!(m)
         @logtime level3 "- [constraint_max_ratio_in_in_unit_flow]" add_constraint_max_ratio_in_in_unit_flow!(m)
+        @logtime level3 "- [constraint_fix_ratio_in_out_unit_flow]" add_constraint_fix_ratio_in_out_unit_flow!(m)
+        @logtime level3 "- [constraint_max_ratio_in_out_unit_flow]" add_constraint_max_ratio_in_out_unit_flow!(m)
+        @logtime level3 "- [constraint_min_ratio_in_out_unit_flow]" add_constraint_min_ratio_in_out_unit_flow!(m)
         @logtime level3 "- [constraint_fix_ratio_out_in_connection_flow]" add_constraint_fix_ratio_out_in_connection_flow!(m)
         @logtime level3 "- [constraint_max_ratio_out_in_connection_flow]" add_constraint_max_ratio_out_in_connection_flow!(m)
         @logtime level3 "- [constraint_min_ratio_out_in_connection_flow]" add_constraint_min_ratio_out_in_connection_flow!(m)
         @logtime level3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)
-        @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
         @logtime level3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
         @logtime level3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
         @logtime level3 "- [constraint_units_on]" add_constraint_units_on!(m)
@@ -120,16 +153,18 @@ function run_spinemodel(
         @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
         @logtime level3 "- [constraint_user]" add_constraints(m)
     end
+    #@logtime level2 "Writing diagnostics file" write_to_file(m, "model_diagnostics.mps")
     k = 2
     while optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
         @logtime level2 "Saving results..." begin
+            postprocess_results!(m)
             save_values!(m)
             save_results!(results, m)
         end
         roll_temporal_structure() || break
         @log level1 "Window $k: $current_window"
-        @logtime level2 "Updating model..." begin            
+        @logtime level2 "Updating model..." begin
             update_variables!(m)
             fix_variables!(m)
             update_varying_objective!(m)
@@ -138,14 +173,18 @@ function run_spinemodel(
         @logtime level2 "Updating user constraints..." update_constraints(m)
         k += 1
     end
-    @logtime level2 "Writing report..." write_report(results, url_out)
+     @logtime level2 "Writing report..." write_report(results, url_out)
     # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
     m
 end
 
 function optimize_model!(m::Model)
+    # TODO: perhaps add the option to write the mps for diagnostics as follows
+    # write_to_file(m, "model_diagnostics.mps")
+    # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
+    # but is not mentioned in the COLUMNS section. We are ignoring it.
     optimize!(m)
-    if termination_status(m) == MOI.OPTIMAL        
+    if termination_status(m) == MOI.OPTIMAL
         true
     else
         @log true "Unable to find solution (reason: $(termination_status(m)))"
@@ -164,7 +203,7 @@ function save_results!(results, m)
         if value === nothing
             @warn "can't find results for '$(out.name)'"
             continue
-        end
+        end        
         value_ = Dict{NamedTuple,Number}((; k..., t=start(k.t)) => v for (k, v) in value)
         existing = get!(results, out.name, Dict{NamedTuple,Number}())
         merge!(existing, value_)

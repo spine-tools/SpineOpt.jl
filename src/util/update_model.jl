@@ -29,15 +29,17 @@ import JuMP: MOI, MOIU
 
 _Constant = Union{Number,UniformScaling}
 
-struct GreaterThanCall <: MOI.AbstractScalarSet
+abstract type CallSet <: MOI.AbstractScalarSet end
+
+struct GreaterThanCall <: CallSet
     lower::Call
 end
 
-struct LessThanCall <: MOI.AbstractScalarSet
+struct LessThanCall <: CallSet
     upper::Call
 end
 
-struct EqualToCall <: MOI.AbstractScalarSet
+struct EqualToCall <: CallSet
     value::Call
 end
 
@@ -81,15 +83,38 @@ function JuMP.build_constraint(_error::Function, call::Call, set::MOI.AbstractSc
 end
 
 function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,VariableRef}, set::MOI.AbstractScalarSet)
-    call = expr.constant
+    constant = expr.constant
     expr.constant = zero(Call)
-    new_set = MOIU.shift_constant(set, -call)
+    new_set = MOIU.shift_constant(set, -constant)
     ScalarConstraint(expr, new_set)
+end
+
+function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,VariableRef}, lb::Real, ub::Real)
+    build_constraint(_error, expr, Call(lb), Call(ub))
+end
+
+function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,VariableRef}, lb::Real, ub::Call)
+    build_constraint(_error, expr, Call(lb), ub)
+end
+
+function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,VariableRef}, lb::Call, ub::Real)
+    build_constraint(_error, expr, lb, Call(ub))
+end
+
+function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,VariableRef}, lb::Call, ub::Call)
+    constant = expr.constant
+    if any(is_varying(x) for x in (lb, ub, constant))
+        _error("Range constraint with time-varying bounds or free-term is not supported at the moment.")
+    else
+        set = MOI.Interval(realize(lb), realize(ub))
+        new_set = MOIU.shift_constant(set, -realize(constant))
+        ScalarConstraint(expr, new_set)
+    end
 end
 
 function JuMP.add_constraint(
         model::Model, con::ScalarConstraint{GenericAffExpr{Call,VariableRef},S}, name::String=""
-    ) where S
+    ) where S <: CallSet
     realized_con = ScalarConstraint(realize(con.func), realize(con.set))
     con_ref = add_constraint(model, realized_con, name)
     # Register varying stuff in `model.ext` so we can do work in `update_varying_constraints!`. This is the entire trick.
@@ -101,6 +126,13 @@ function JuMP.add_constraint(
         get!(model.ext, :varying_constraint_rhs, Dict())[con_ref] = MOI.constant(con.set)
     end
     con_ref
+end
+
+function JuMP.add_constraint(
+        model::Model, con::ScalarConstraint{GenericAffExpr{Call,VariableRef},MOI.Interval{T}}, name::String=""
+    ) where T
+    realized_con = ScalarConstraint(realize(con.func), con.set)
+    add_constraint(model, realized_con, name)
 end
 
 function update_varying_constraints!(model::Model)
@@ -126,6 +158,11 @@ function JuMP.add_to_expression!(
     merge!(+, aff.terms, other.terms)
     aff.constant += other.constant
     aff
+end
+
+# TODO: Try to find out why we need this one
+function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, new_coef::Call, new_coef_::Call)
+    add_to_expression!(aff, new_coef * new_coef_)
 end
 
 function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, new_coef::Call, new_var::VariableRef)

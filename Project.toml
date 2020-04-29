@@ -1,6 +1,6 @@
 name = "SpineModel"
 uuid = "b74cbf36-17f7-11e9-3430-fdc535b30a00"
-authors = ["Manuel Marin <manuelma@kth.se>", "Maren Ihlemann <maren.ihlemann@kuleuven.be>", "Kris Poncelet <kris.poncelet@kuleuven.be>"]
+authors = ["Spine Project consortium <spine_info@vtt.fi>"]
 version = "0.1.5"
 
 [deps]
@@ -8,10 +8,15 @@ Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
 Clp = "e2554f3b-3117-50c0-817c-e040a3ddf72d"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 NamedTupleTools = "d9ec5142-1e00-5aa0-9d6a-321866360f50"
+PowerSystems = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
 SpineInterface = "0cda1612-498a-11e9-3c92-77fa82595a4f"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
 TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
+
+[compat]
+julia = "^1.2"

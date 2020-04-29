@@ -92,6 +92,9 @@ function block_time_intervals(window_start, window_end)
         i = 1
         while time_slice_start < block_end_
             duration = resolution(temporal_block=block, i=i)
+            if iszero(duration)
+                error("`resolution` of temporal block `$(block)` cannot be zero!")
+            end
             time_slice_end = time_slice_start + duration
             if time_slice_end > block_end_
                 time_slice_end = block_end_
@@ -170,3 +173,5 @@ function roll_temporal_structure()
     roll!.(all_time_slices, roll_forward_)
     true
 end
+
+# TODO: Currently, the temporal structure seems to be generated for all defined `temporal_blocks` in the database, regardless of whether they actually appear in the model via the `node__temporal_block` relationship.

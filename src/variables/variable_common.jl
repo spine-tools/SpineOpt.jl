@@ -29,7 +29,7 @@ function _variable(m, name, ind, lb, ub, bin, int)
 end
 
 function create_variable!(
-        m::Model, name::Symbol, indices::Function; 
+        m::Model, name::Symbol, indices::Function;
         lb=nothing, ub=nothing, bin=nothing, int=nothing
     )
     inds = indices()
@@ -89,16 +89,21 @@ end
 
 function create_variables!(m::Model)
     create_variable_unit_flow!(m)
+    create_variable_unit_flow_op!(m)
     create_variable_units_on!(m)
     create_variable_connection_flow!(m)
     create_variable_node_state!(m)
+    create_variable_node_slack_pos!(m)
+    create_variable_node_slack_neg!(m)
     create_variable_units_available!(m)
     create_variable_units_started_up!(m)
     create_variable_units_shut_down!(m)
+
 end
 
 function fix_variables!(m::Model)
     fix_variable_unit_flow!(m)
+    fix_variable_unit_flow_op!(m)
     fix_variable_units_on!(m)
     fix_variable_connection_flow!(m)
     fix_variable_node_state!(m)
@@ -106,20 +111,26 @@ end
 
 function save_values!(m::Model)
     save_value!(m, :unit_flow, unit_flow_indices)
+    save_value!(m, :unit_flow_op, unit_flow_op_indices)
     save_value!(m, :connection_flow, connection_flow_indices)
     save_value!(m, :node_state, node_state_indices)
     save_value!(m, :units_on, units_on_indices)
     save_value!(m, :units_available, units_on_indices)
     save_value!(m, :units_started_up, units_on_indices)
     save_value!(m, :units_shut_down, units_on_indices)
+    save_value!(m, :node_slack_pos, node_slack_pos_indices)
+    save_value!(m, :node_slack_neg, node_slack_neg_indices)
 end
 
 function update_variables!(m::Model)
     update_variable!(m, :unit_flow, unit_flow_indices)
+    update_variable!(m, :unit_flow_op, unit_flow_op_indices)
     update_variable!(m, :connection_flow, connection_flow_indices)
     update_variable!(m, :node_state, node_state_indices)
     update_variable!(m, :units_on, units_on_indices)
     update_variable!(m, :units_available, units_on_indices)
     update_variable!(m, :units_started_up, units_on_indices)
     update_variable!(m, :units_shut_down, units_on_indices)
+    update_variable!(m, :node_slack_pos, node_slack_pos_indices)
+    update_variable!(m, :node_slack_neg, node_slack_neg_indices)
 end

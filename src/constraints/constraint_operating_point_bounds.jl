@@ -19,23 +19,27 @@
 
 
 """
-    add_constraint_connection_flow_capacity!(m::Model)
+    add_constraint_operating_point_bounds!(m::Model)
 
-Limit the maximum in/out `connection_flow` of a `connection` for all `connection_flow_capacity` indices.
-Check if `connection_conv_cap_to_flow` is defined.
+Limit the operating point flow variables to the difference between successive operating points times the capacity of the unit
+
 """
-function add_constraint_connection_flow_capacity!(m::Model)
-    @fetch connection_flow = m.ext[:variables]
-    cons = m.ext[:constraints][:connection_flow_capacity] = Dict()
-    for (conn, n, d) in indices(connection_capacity)
-        for (conn, n, d, t) in connection_flow_indices(connection=conn, node=n, direction=d)
-            cons[conn, n, d, t] = @constraint(
+
+function add_constraint_operating_point_bounds!(m::Model)
+    @fetch unit_flow_op, unit_flow = m.ext[:variables]
+    cons = m.ext[:constraints][:operating_point_bounds] = Dict()
+    for (u, n, d) in indices(unit_capacity)
+        for (u, n, d, op, t) in unit_flow_op_indices(unit=u, node=n, direction=d)
+            cons[u, n, d, op, t] = @constraint(
                 m,
-                connection_flow[conn, n, d, t]
+                unit_flow_op[u, n, d, op, t]
                 <=
-                + connection_capacity[(connection=conn, node=n, direction=d, t=t)]
-                * connection_availability_factor[(connection=conn, t=t)]
-                * connection_conv_cap_to_flow[(connection=conn, node=n, direction=d, t=t)]
+                (
+                    + operating_points[(unit=u, node=n, direction=d, i=op)]
+                    - ((op > 1) ? operating_points[(unit=u, node=n, direction=d, i=op - 1)] : 0)
+                )
+                * unit_capacity[(unit=u, node=n, direction=d, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
             )
         end
     end
