@@ -123,7 +123,6 @@ function rerun_spinemodel(
     @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
         @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
-        @logtime level3 "- [constraint_group_balance]" add_constraint_group_balance!(m)
         @logtime level3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m)
         @logtime level3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
         @logtime level3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
@@ -187,9 +186,7 @@ function optimize_model!(m::Model)
         true
     else
         @log true "Unable to find solution (reason: $(termination_status(m)))"
-        if write_mps_file(model=first(model())) in (:write_mps_on_no_solve, :write_mps_always)
-            write_to_file(m, "model_diagnostics.mps")
-        end
+        write_mps_file(model=first(model())) == :write_mps_on_no_solve && write_to_file(m, "model_diagnostics.mps")
         false
     end
 end
