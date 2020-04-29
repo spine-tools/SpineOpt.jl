@@ -64,6 +64,10 @@ function generate_variable_indices()
         for n in node(has_state=:value_true)
         for (n, s, t) in node_stochastic_time_indices(node=n)
     )
+    units_on_indices = unique(
+        (unit=u, stochastic_scenario=s, t=t)
+        for (u, s, t) in unit_stochastic_time_indices()
+    )
     unit_flow_indices_rc = RelationshipClass(
         :unit_flow_indices_rc, [:unit, :node, :direction, :stochastic_scenario, :t], unit_flow_indices
     )
@@ -73,10 +77,14 @@ function generate_variable_indices()
     node_state_indices_rc = RelationshipClass(
         :node_state_indices_rc, [:node, :stochastic_scenario, :t], node_state_indices
     )
+    units_on_indices_rc = RelationshipClass(
+        :units_on_indices_rc, [:unit, :stochastic_scenario, :t], units_on_indices
+    )
     @eval begin
         unit_flow_indices_rc = $unit_flow_indices_rc
         connection_flow_indices_rc = $connection_flow_indices_rc
         node_state_indices_rc = $node_state_indices_rc
+        units_on_indices_rc = $units_on_indices_rc
     end
 end
 
