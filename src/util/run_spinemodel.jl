@@ -180,7 +180,6 @@ function rerun_spinemodel(
     @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
         @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
-        @logtime level3 "- [constraint_group_balance]" add_constraint_group_balance!(m)
         @logtime level3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m)
         @logtime level3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
         @logtime level3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
@@ -209,8 +208,8 @@ function rerun_spinemodel(
         @logtime level3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
         @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
         @logtime level3 "- [constraint_user]" add_constraints(m)
+        @logtime level3 "- [setting constraint names]" name_constraints!(m)
     end
-    #@logtime level2 "Writing diagnostics file" write_to_file(m, "model_diagnostics.mps")
     k = 2
     while optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
@@ -236,8 +235,7 @@ function rerun_spinemodel(
 end
 
 function optimize_model!(m::Model)
-    # TODO: perhaps add the option to write the mps for diagnostics as follows
-    # write_to_file(m, "model_diagnostics.mps")
+    write_mps_file(model=first(model())) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     optimize!(m)
@@ -245,6 +243,7 @@ function optimize_model!(m::Model)
         true
     else
         @log true "Unable to find solution (reason: $(termination_status(m)))"
+        write_mps_file(model=first(model())) == :write_mps_on_no_solve && write_to_file(m, "model_diagnostics.mps")
         false
     end
 end
@@ -260,7 +259,7 @@ function save_results!(results, m)
         if value === nothing
             @warn "can't find results for '$(out.name)'"
             continue
-        end        
+        end
         value_ = Dict{NamedTuple,Number}((; k..., t=start(k.t)) => v for (k, v) in value)
         existing = get!(results, out.name, Dict{NamedTuple,Number}())
         merge!(existing, value_)
