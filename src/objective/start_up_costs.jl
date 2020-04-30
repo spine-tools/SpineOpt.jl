@@ -28,9 +28,10 @@ function start_up_costs(m::Model)
         m,
         reduce(
             +,
-            units_started_up[u, t]
-            * start_up_cost[(unit=u, t=t)]
-            for (u, t) in units_on_indices(unit=indices(start_up_cost));
+            units_started_up[u, s, t]
+            * start_up_cost[(unit=u, stochastic_scenario=s, t=t)]
+            * unit_stochastic_scenario_weight(unit=u, stochastic_scenario=s)
+            for (u, s, t) in units_on_indices(unit=indices(start_up_cost));
             init=0
         )
     )
