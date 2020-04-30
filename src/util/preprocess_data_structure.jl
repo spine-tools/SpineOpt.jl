@@ -156,7 +156,7 @@ function _ptdf_values()
         n => Bus(
             number=i,
             name=string(n.name),
-            bustype=(node_opt_type(node=n) == :node_opt_type_reference) ? BusTypes.REF : BusTypes.PV,
+            bustype=(node_opf_type(node=n) == :node_opf_type_reference) ? BusTypes.REF : BusTypes.PV,
             angle=0.0,
             voltage=0.0,
             voltagelimits=(min=0.0, max=0.0),
