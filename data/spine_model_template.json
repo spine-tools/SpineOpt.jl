@@ -36,7 +36,7 @@
         ["constraint_sense", ["\"==\"", "\">=\"", "\"<=\""]],
         ["duration_unit_list", ["\"minute\"", "\"hour\""]],
         ["truth_value_list", ["\"value_false\"", "\"value_true\""]],
-        ["node_opt_type_list", ["\"node_opt_type_reference\"", "\"node_opt_type_normal\""]],
+        ["node_opf_type_list", ["\"node_opf_type_reference\"", "\"node_opf_type_normal\""]],
         ["unit_online_variable_type_list", ["\"unit_online_variable_type_binary\"", "\"unit_online_variable_type_integer\"", "\"unit_online_variable_type_linear\""]]
     ],
     "object_parameters": [
