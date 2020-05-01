@@ -17,7 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function preprocess_data_structure()
+function preprocess_data_structure(log_level)
+    process_connections()
+    check_islands(log_level)
     generate_network_components()
     generate_direction()
     generate_variable_indices()
@@ -120,7 +122,7 @@ function generate_connection_has_ptdf()
             && fix_ratio_out_in_connection_flow(;
                 connection=conn, zip((:node1, :node2), connection__from_node(connection=conn))..., _strict=false
             ) == 1
-        )
+        )        
         connection.parameter_values[conn][:has_ptdf] = SpineInterface.callable(
             is_bidirectional_loseless && all(has_ptdf(node=n) for n in connection__from_node(connection=conn))
         )
@@ -305,4 +307,41 @@ function write_lodfs()
         print(io, "\n")
     end
     close(io)
+end
+
+"""
+Generate additional connection relationships for connection_type=:connection_type_lossless_bidirectional.
+
+For connections with this parameter set, only a connection__from_node and connection__to_node need be set
+and this function creates the additional relationships on the fly
+
+"""
+
+function process_connections()
+    for conn in connection(connection_type=:connection_type_lossless_bidirectional)
+        for to_node in connection__to_node(connection=conn)
+            for from_node in connection__from_node(connection=conn)
+                if !( (connection=conn, node=from_node) in connection__to_node.relationships)
+                    push_default_relationship!(connection__to_node, (connection=conn, node=from_node))
+                    connection__to_node.parameter_values[(conn, from_node)][:connection_conv_cap_to_flow]=SpineInterface.callable(1.0)
+                end
+                if !( (connection=conn, node=to_node) in connection__from_node.relationships)
+                    push_default_relationship!(connection__from_node, (connection=conn, node=to_node))
+                    connection__from_node.parameter_values[(conn, to_node)][:connection_conv_cap_to_flow]=SpineInterface.callable(1.0)
+                end
+                if !( (connection=conn, node1=to_node, node2=from_node) in connection__node__node.relationships)
+                    push_default_relationship!(connection__node__node, (connection=conn, node1=to_node, node2=from_node))
+                    connection__node__node.parameter_values[(conn, to_node, from_node)][:fix_ratio_out_in_connection_flow]=SpineInterface.callable(1.0)
+                else
+                    connection__node__node.parameter_values[(conn, to_node, from_node)][:fix_ratio_out_in_connection_flow]=SpineInterface.callable(1.0)
+                end
+                if !( (connection=conn, node1=from_node, node2=to_node) in connection__node__node.relationships)
+                    push_default_relationship!(connection__node__node, (connection=conn, node1=from_node, node2=to_node))
+                    connection__node__node.parameter_values[(conn, from_node, to_node)][:fix_ratio_out_in_connection_flow]=SpineInterface.callable(1.0)
+                else
+                    connection__node__node.parameter_values[(conn, from_node, to_node)][:fix_ratio_out_in_connection_flow]=SpineInterface.callable(1.0)
+                end
+            end
+        end
+    end
 end

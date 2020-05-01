@@ -82,8 +82,7 @@ function run_spinemodel(
         using_spinedb(url_in, @__MODULE__; upgrade=true)
         generate_missing_items()
     end
-    @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
-    check_islands(log_level)
+    @logtime level2 "Preprocessing data structure..." preprocess_data_structure(log_level)    
     rerun_spinemodel(
         url_out;
         with_optimizer=with_optimizer,
