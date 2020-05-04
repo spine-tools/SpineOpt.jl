@@ -49,13 +49,13 @@ function generate_missing_items()
             export $sym_name
         end
     end
-    d = Dict{Symbol,Array{Pair{Union{ObjectClass,RelationshipClass},AbstractCallable},1}}()
+    d = Dict{Symbol,Array{Pair{Union{ObjectClass,RelationshipClass},AbstractParameterValue},1}}()
     for (class_name, name, default_value) in [template["object_parameters"]; template["relationship_parameters"]]
         sym_name = Symbol(name)
         sym_name in parameters && continue
         push!(missing_items["parameter definitions"], string(class_name, ".", name))
         class = classes[Symbol(class_name)]
-        default_val = callable(db_api.from_database(JSON.json(default_value)))
+        default_val = parameter_value(db_api.from_database(JSON.json(default_value)))
         push!(get!(d, sym_name, []), class => default_val)
     end
     for (sym_name, class_default_values) in d
