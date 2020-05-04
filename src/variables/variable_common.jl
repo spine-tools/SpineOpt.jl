@@ -63,11 +63,9 @@ _value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value
 function save_value!(m::Model, name::Symbol, indices::Function)
     inds = indices()
     var = m.ext[:variables][name]
-    val = m.ext[:values][name] = Dict{eltype(inds),Number}()
-    for ind in inds
-        end_(ind.t) <= end_(current_window) || continue
-        val[ind] = _value(var[ind])
-    end
+    m.ext[:values][name] = Dict(
+        ind => _value(var[ind]) for ind in indices() if end_(ind.t) <= end_(current_window)
+    )
 end
 
 function update_variable!(m::Model, name::Symbol, indices::Function)
@@ -122,6 +120,7 @@ function save_values!(m::Model)
     save_value!(m, :units_shut_down, units_on_indices)
     save_value!(m, :node_slack_pos, node_slack_indices)
     save_value!(m, :node_slack_neg, node_slack_indices)
+    save_value!(m, :node_injection, node_injection_indices)
 end
 
 function update_variables!(m::Model)
