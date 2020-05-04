@@ -118,7 +118,7 @@ function rerun_spinemodel(
         @logtime level3 "- [variable_node_slack_neg]" add_variable_node_slack_neg!(m)
         @logtime level3 "- [variable_node_injection]" add_variable_node_injection!(m)
     end
-    @logtime level3 "Fixing variable values" fix_variables!(m)
+    @logtime level2 "Fixing variable values..." fix_variables!(m)
     @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
         @logtime level3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
@@ -153,7 +153,7 @@ function rerun_spinemodel(
         @logtime level3 "- [constraint_user]" add_constraints(m)
         @logtime level3 "- [setting constraint names]" name_constraints!(m)
     end
-    @logtime level3 "Setting objective function" set_objective!(m)
+    @logtime level2 "Setting objective..." set_objective!(m)
     k = 2
     while optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
@@ -164,11 +164,11 @@ function rerun_spinemodel(
         end
         roll_temporal_structure() || break
         @log level1 "Window $k: $current_window"
-        @logtime level2 "Updating variables" update_variables!(m)
-        @logtime level2 "Fixing variables" fix_variables!(m)
-        @logtime level2 "Updating constraints" update_varying_constraints!(m)
-        @logtime level2 "Updating user constraints" update_constraints(m)
-        @logtime level2 "Updating objective function" update_varying_objective!(m)
+        @logtime level2 "Updating variables..." update_variables!(m)
+        @logtime level2 "Fixing variable values..." fix_variables!(m)
+        @logtime level2 "Updating constraints..." update_varying_constraints!(m)
+        @logtime level2 "Updating user constraints..." update_constraints(m)
+        @logtime level2 "Updating objective..." update_varying_objective!(m)
         k += 1
     end
      @logtime level2 "Writing report..." write_report(results, url_out)
@@ -184,7 +184,7 @@ function optimize_model!(m::Model)
     write_mps_file(model=first(model())) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
-    optimize!(m)
+    @logtime true "Optimizing model..." optimize!(m)
     if termination_status(m) == MOI.OPTIMAL
         true
     else
