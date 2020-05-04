@@ -39,8 +39,14 @@ function connection_flow_indices(;connection=anything, node=anything, direction=
     )
 end
 
-fix_connection_flow_(x) = fix_connection_flow(connection=x.connection, node=x.node, direction=x.direction, t=x.t, _strict=false)
-
-create_variable_connection_flow!(m::Model) = create_variable!(m, :connection_flow, connection_flow_indices; lb=x -> 0)
-save_variable_connection_flow!(m::Model) = save_variable!(m, :connection_flow, connection_flow_indices)
-fix_variable_connection_flow!(m::Model) = fix_variable!(m, :connection_flow, connection_flow_indices, fix_connection_flow_)
+function add_variable_connection_flow!(m::Model)
+    add_variable!(
+        m, 
+        :connection_flow, 
+        connection_flow_indices; 
+        lb=x -> 0, 
+        fix_value=x -> fix_connection_flow(
+            connection=x.connection, node=x.node, direction=x.direction, t=x.t, _strict=false
+        )
+    )
+end

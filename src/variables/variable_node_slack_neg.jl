@@ -16,13 +16,4 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-fix_node_slack_neg(x) = fix_node_slack_neg(node=x.node, t=x.t, _strict=false)
-
-create_variable_node_slack_neg!(m::Model) = create_variable!(
-    m,
-    :node_slack_neg,
-    node_slack_indices;
-    lb=x -> 0
-)
-
-fix_variable_node_slack_neg!(m::Model) = fix_variable!(m, :node_slack_neg, node_slack_indices, fix_node_slack_neg_)
+add_variable_node_slack_neg!(m::Model) = add_variable!(m, :node_slack_neg, node_slack_indices; lb=x -> 0)

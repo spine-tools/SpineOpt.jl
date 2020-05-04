@@ -30,12 +30,4 @@ function node_slack_indices(;node=anything, t=anything)
     )
 end
 
-fix_node_slack_pos(x) = fix_node_slack_pos(node=x.node, t=x.t, _strict=false)
-
-create_variable_node_slack_pos!(m::Model) = create_variable!(
-    m,
-    :node_slack_pos,
-    node_slack_indices;
-    lb=x -> 0
-)
-fix_variable_node_slack_pos!(m::Model) = fix_variable!(m, :node_slack_pos, node_slack_indices, fix_node_slack_pos_)
+add_variable_node_slack_pos!(m::Model) = add_variable!(m, :node_slack_pos, node_slack_indices; lb=x -> 0)

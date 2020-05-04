@@ -98,19 +98,27 @@ function rerun_spinemodel(
     level2 = log_level >= 2
     level3 = log_level >= 3
     results = Dict()
+    m = Model(with_optimizer)
+    m.ext[:variables] = Dict{Symbol,Dict}()
+    m.ext[:variables_definition] = Dict{Symbol,Dict}()
+    m.ext[:values] = Dict{Symbol,Dict}()
+    m.ext[:constraints] = Dict{Symbol,Dict}()
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @log level1 "Window 1: $current_window"
-    @logtime level2 "Initializing model...\n" begin
-        m = Model(with_optimizer)
-        m.ext[:variables] = Dict{Symbol,Dict}()
-        m.ext[:variables_lb] = Dict{Symbol,Any}()
-        m.ext[:variables_ub] = Dict{Symbol,Any}()
-        m.ext[:values] = Dict{Symbol,Dict}()
-        m.ext[:constraints] = Dict{Symbol,Dict}()
-        @logtime level3 "creating variables" create_variables!(m)
-        @logtime level3 "handle fix variables" fix_variables!(m)
-        @logtime level3 "objective function" set_objective!(m)
+    @logtime level2 "Adding variables...\n" begin
+        @logtime level3 "- [variable_units_available]" add_variable_units_available!(m)
+        @logtime level3 "- [variable_units_on]" add_variable_units_on!(m)
+        @logtime level3 "- [variable_units_started_up]" add_variable_units_started_up!(m)
+        @logtime level3 "- [variable_units_shut_down]" add_variable_units_shut_down!(m)
+        @logtime level3 "- [variable_unit_flow]" add_variable_unit_flow!(m)
+        @logtime level3 "- [variable_unit_flow_op]" add_variable_unit_flow_op!(m)
+        @logtime level3 "- [variable_connection_flow]" add_variable_connection_flow!(m)
+        @logtime level3 "- [variable_node_state]" add_variable_node_state!(m)
+        @logtime level3 "- [variable_node_slack_pos]" add_variable_node_slack_pos!(m)
+        @logtime level3 "- [variable_node_slack_neg]" add_variable_node_slack_neg!(m)
+        @logtime level3 "- [variable_node_injection]" add_variable_node_injection!(m)
     end
+    @logtime level3 "Fixing variable values" fix_variables!(m)
     @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
         @logtime level3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
@@ -145,6 +153,7 @@ function rerun_spinemodel(
         @logtime level3 "- [constraint_user]" add_constraints(m)
         @logtime level3 "- [setting constraint names]" name_constraints!(m)
     end
+    @logtime level3 "Setting objective function" set_objective!(m)
     k = 2
     while optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
@@ -155,13 +164,11 @@ function rerun_spinemodel(
         end
         roll_temporal_structure() || break
         @log level1 "Window $k: $current_window"
-        @logtime level2 "Updating model..." begin
-            update_variables!(m)
-            fix_variables!(m)
-            update_varying_objective!(m)
-        end
-        @logtime level2 "Updating varying constraints..." update_varying_constraints!(m)
-        @logtime level2 "Updating user constraints..." update_constraints(m)
+        @logtime level2 "Updating variables" update_variables!(m)
+        @logtime level2 "Fixing variables" fix_variables!(m)
+        @logtime level2 "Updating constraints" update_varying_constraints!(m)
+        @logtime level2 "Updating user constraints" update_constraints(m)
+        @logtime level2 "Updating objective function" update_varying_objective!(m)
         k += 1
     end
      @logtime level2 "Writing report..." write_report(results, url_out)

@@ -30,8 +30,4 @@ function node_injection_indices(;node=anything, t=anything)
     )
 end
 
-create_variable_node_injection!(m::Model) = create_variable!(
-    m,
-    :node_injection,
-    node_injection_indices
-)
+add_variable_node_injection!(m::Model) = add_variable!(m, :node_injection, node_injection_indices)

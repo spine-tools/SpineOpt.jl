@@ -39,7 +39,12 @@ function unit_flow_indices(;unit=anything, node=anything, direction=anything, t=
     )
 end
 
-fix_unit_flow_(x) = fix_unit_flow(unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false)
-
-create_variable_unit_flow!(m::Model) = create_variable!(m, :unit_flow, unit_flow_indices; lb=x -> 0)
-fix_variable_unit_flow!(m::Model) = fix_variable!(m, :unit_flow, unit_flow_indices, fix_unit_flow_)
+function add_variable_unit_flow!(m::Model)
+    add_variable!(
+        m,
+        :unit_flow,
+        unit_flow_indices;
+        lb=x -> 0,
+        fix_value=x -> fix_unit_flow(unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false)
+    )
+end
