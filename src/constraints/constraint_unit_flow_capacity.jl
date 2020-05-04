@@ -18,6 +18,35 @@
 #############################################################################
 
 """
+    constraint_unit_flow_capacity_indices()
+
+Forms the stochastic index set for the `:unit_flow_capacity` constraint.
+Uses stochastic path indices due to potentially different stochastic structures
+between `unit_flow` and `units_on` variables.
+"""
+function constraint_unit_flow_capacity_indices()
+    unit_flow_capacity_indices = []
+    for (u, n, d) in indices(unit_capacity)
+        for t in time_slice(temporal_block=node__temporal_block(node=n))
+            active_scenarios = unit_flow_indices_rc(unit=u, node=n, direction=d, t=t, _compact=true)
+            append!(
+                active_scenarios,
+                units_on_indices_rc(unit=u, t=t_in_t(t_long=t), _compact=true)
+            )
+            unique!(active_scenarios)
+            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
+                push!(
+                    unit_flow_capacity_indices,
+                    (unit=u, node=n, direction=d, stochastic_path=path, t=t)
+                )
+            end
+        end
+    end
+    return unique!(unit_flow_capacity_indices)
+end
+
+
+"""
     add_constraint_unit_flow_capacity!(m::Model)
 
 Limit the maximum in/out `unit_flow` of a `unit` for all `unit_capacity` indices.
