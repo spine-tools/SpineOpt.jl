@@ -25,8 +25,7 @@ Fixed operation costs of units.
 function fixed_om_costs(m)
     @expression(
         m,
-        reduce(
-            +,
+        expr_sum(
             + unit_capacity[(unit=u, node=n, direction=d, t=t)] 
             * number_of_units[(unit=u, t=t)] 
             * fom_cost[(unit=u, t=t)]

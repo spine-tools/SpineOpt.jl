@@ -29,8 +29,7 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
         for t in t_lowest_resolution(x.t for x in connection_flow_indices(connection=conn, node=[n_out, n_in]))
             con = cons[conn, n_out, n_in, t] = sense_constraint(
                 m,
-                + reduce(
-                    +,
+                + expr_sum(
                     connection_flow[conn, n_out, d, t_short] * duration(t_short)
                     for (conn, n_out, d, t_short) in connection_flow_indices(
                         connection=conn, node=n_out, direction=direction(:to_node), t=t_in_t(t_long=t)
@@ -39,8 +38,7 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
                 ),
                 sense,
                 + ratio_out_in[(connection=conn, node1=n_out, node2=n_in, t=t)]
-                * reduce(
-                    +,
+                * expr_sum(
                     connection_flow[conn, n_in, d, t_short]
                     * overlap_duration(t_short, t - connection_flow_delay(connection=conn, node1=n_out, node2=n_in))
                     for (conn, n_in, d, t_short) in connection_flow_indices(

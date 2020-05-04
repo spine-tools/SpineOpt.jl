@@ -33,8 +33,7 @@ function add_constraint_connection_flow_ptdf!(m::Model)
                 + connection_flow[conn, n_to, direction(:to_node), t]
                 - connection_flow[conn, n_to, direction(:from_node), t]
                 ==
-                + reduce(
-                    +,
+                + expr_sum(
                     ptdf(connection=conn, node=n) * node_injection[n, t]
                     for (conn, n) in indices(ptdf; connection=conn);
                     init=0

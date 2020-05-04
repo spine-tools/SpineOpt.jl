@@ -39,36 +39,31 @@ function add_constraint_node_injection!(m::Model)
                     # Self-discharge commodity losses
                     - get(node_state, (n, t_after), 0) * frac_state_loss[(node=n, t=t_after)]
                     # Diffusion of commodity from other nodes to this one
-                    + reduce(
-                        +,
+                    + expr_sum(
                         get(node_state, (n_, t_after), 0) * diff_coeff[(node1=n_, node2=n, t=t_after)]
                         for n_ in node__node(node2=n);
                         init=0
                     )
                     # Diffusion of commodity from this node to other nodes
-                    - reduce(
-                        +,
+                    - expr_sum(
                         get(node_state, (n, t_after), 0) * diff_coeff[(node1=n, node2=n_, t=t_after)]
                         for n_ in node__node(node1=n);
                         init=0
                     )
                     # Commodity flows from units
-                    + reduce(
-                        +,
+                    + expr_sum(
                         unit_flow[u, n, d, t_short]
                         for (u, n, d, t_short) in unit_flow_indices(node=n, direction=direction(:to_node), t=t_in_t(t_long=t_after));
                         init=0
                     )
                     # Commodity flows to units
-                    - reduce(
-                        +,
+                    - expr_sum(
                         unit_flow[u, n, d, t_short]
                         for (u, n, d, t_short) in unit_flow_indices(node=n, direction=direction(:from_node), t=t_in_t(t_long=t_after));
                         init=0
                     )
                     - demand[(node=n, t=t_after)]
-                    - reduce(
-                        +,
+                    - expr_sum(
                         fractional_demand[(node1=ng, node2=n, t=t_after)] * demand[(node=ng, t=t_after)]
                         for ng in node_group__node(node2=n);
                         init=0

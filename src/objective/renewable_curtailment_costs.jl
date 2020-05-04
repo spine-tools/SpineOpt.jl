@@ -25,8 +25,7 @@ Variable operation costs defined on flows.
 function renewable_curtailment_costs(m::Model)
     @expression(
 	    m,
-	    reduce(
-	        +,
+	    expr_sum(
 	        curtailment_ren[n, t] * renewable_curtailment_cost[(node=n)]
 	        for (n, t) in curtailment_ren_indices();
 	        init=0

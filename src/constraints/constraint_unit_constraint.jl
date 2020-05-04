@@ -32,8 +32,7 @@ function add_constraint_unit_constraint!(m::Model)
         for t in t_lowest_resolution(x.t for (u, n) in involved_unit_node for x in unit_flow_indices(unit=u, node=n))
             cons[uc, t] = sense_constraint(
                 m,
-                + reduce(
-                    +,
+                + expr_sum(
                     + unit_flow_op[u, n, d, op, t_short]
                     * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=op, t=t_short)]
                     * duration(t_short)
@@ -43,8 +42,7 @@ function add_constraint_unit_constraint!(m::Model)
                     );
                     init=0
                 )
-                + reduce(
-                    +,
+                + expr_sum(
                     + unit_flow[u, n, d, t_short]
                     * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=1, t=t_short)]
                     * duration(t_short)
@@ -55,8 +53,7 @@ function add_constraint_unit_constraint!(m::Model)
                     if isempty(unit_flow_op_indices(unit=u, node=n, direction=d, t=t_short));
                     init=0
                 )
-                + reduce(
-                    +,
+                + expr_sum(
                     + unit_flow_op[u, n, d, op, t_short]
                     * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=op, t=t_short)]
                     * duration(t_short)
@@ -66,8 +63,7 @@ function add_constraint_unit_constraint!(m::Model)
                     );
                     init=0
                 )
-                + reduce(
-                    +,
+                + expr_sum(
                     + unit_flow[u, n, d, t_short]
                     * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=1, t=t_short)]
                     * duration(t_short)
@@ -78,8 +74,7 @@ function add_constraint_unit_constraint!(m::Model)
                     if isempty(unit_flow_op_indices(unit=u, node=n, direction=d, t=t_short));
                     init=0
                 )
-                + reduce(
-                    +,
+                + expr_sum(
                     + units_on[u, t_short]
                     * units_on_coefficient[(unit_constraint=uc, unit=u, t=t_short)]
                     * duration(t_short)

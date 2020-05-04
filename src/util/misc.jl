@@ -112,3 +112,18 @@ function name_constraints!(m::Model)
         end
     end
 end
+
+"""
+    expr_sum(iter; init::Number)
+
+Sum elements in iter to init in-place, and return the result as a GenericAffExpr.
+"""
+function expr_sum(iter; init::Number)
+    result = AffExpr(init)
+    isempty(iter) && return result
+    result += first(iter)  # NOTE: This is so result has the right type, e.g., `GenericAffExpr{Call,VariableRef}`
+    for item in Iterators.drop(iter, 1)
+        add_to_expression!(result, item)
+    end
+    result
+end
