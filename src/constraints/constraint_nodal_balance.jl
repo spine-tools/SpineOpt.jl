@@ -17,6 +17,50 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
+    constraint_nodal_balance_indices()
+
+Forms the stochastic index set for the `:nodal_balance` constraint.
+"""
+function constraint_nodal_balance_indices()
+    nodal_balance_indices = []
+    for (n, tb) in node__temporal_block()
+        for t_after in time_slice(temporal_block=tb)
+            t_before = first(t_before_t(t_after=t_after))
+            # This `node` on `t_after`
+            active_scenarios = node_stochastic_time_indices_rc(node=n, t=t_after, _compact=true)
+            # This `node` on `t_before`
+            append!(
+                active_scenarios,
+                all_node_stochastic_time_indices_rc(node=n, t=t_before, _compact=true)
+            )
+            # Diffusion from this `node`
+            for (n, n_) in node__node(node1=n)
+                append!(
+                    active_scenarios,
+                    node_stochastic_time_indices_rc(node=n_, t=t_after, _compact=true)
+                )
+            end
+            # Diffusion to this `node`
+            for (n_, n) in node__node(node2=n)
+                append!(
+                    active_scenarios,
+                    node_stochastic_time_indices_rc(node=n_, t=t_after, _compact=true)
+                )
+            end
+            unique!(active_scenarios)
+            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
+                push!(
+                    nodal_balance_indices,
+                    (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
+                )
+            end
+        end
+    end
+    return nodal_balance_indices
+end
+
+
+"""
     add_constraint_nodal_balance!(m::Model)
 
 Balance equation for nodes.
