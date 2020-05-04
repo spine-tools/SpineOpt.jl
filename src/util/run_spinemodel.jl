@@ -40,14 +40,6 @@ function run_spinemodel(
     )
 end
 
-
-function generate_temporal_structure()
-    generate_current_window()
-    generate_time_slice()
-    generate_time_slice_relationships()
-end
-
-
 """
     run_spinemodel(url_in, url_out; <keyword arguments>)
 
@@ -84,20 +76,20 @@ function run_spinemodel(
     end
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     check_islands(log_level)
-    rerun_spinemodel(
+    m = rerun_spinemodel(
         url_out;
         with_optimizer=with_optimizer,
-        cleanup=cleanup,
         add_constraints=add_constraints,
         update_constraints=update_constraints,
         log_level=log_level
-    )
+    )    
+    # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
+    m
 end
 
 function rerun_spinemodel(
         url_out::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
-        cleanup=true,
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
         log_level=3)
@@ -108,20 +100,20 @@ function rerun_spinemodel(
     results = Dict()
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @log level1 "Window 1: $current_window"
-    @logtime level2 "Initializing model..." begin
+    @logtime level2 "Initializing model...\n" begin
         m = Model(with_optimizer)
-        println()
         m.ext[:variables] = Dict{Symbol,Dict}()
         m.ext[:variables_lb] = Dict{Symbol,Any}()
         m.ext[:variables_ub] = Dict{Symbol,Any}()
         m.ext[:values] = Dict{Symbol,Dict}()
         m.ext[:constraints] = Dict{Symbol,Dict}()
-        @logtime level3  "creating variables" create_variables!(m)
-        @logtime level3  "handle fix variables" fix_variables!(m)
-        @logtime level3  "objective function" set_objective!(m)
+        @logtime level3 "creating variables" create_variables!(m)
+        @logtime level3 "handle fix variables" fix_variables!(m)
+        @logtime level3 "objective function" set_objective!(m)
     end
     @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
+        @logtime level3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
         @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
         @logtime level3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m)
         @logtime level3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
@@ -173,8 +165,12 @@ function rerun_spinemodel(
         k += 1
     end
      @logtime level2 "Writing report..." write_report(results, url_out)
-    # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
-    m
+end
+
+function generate_temporal_structure()
+    generate_current_window()
+    generate_time_slice()
+    generate_time_slice_relationships()
 end
 
 function optimize_model!(m::Model)

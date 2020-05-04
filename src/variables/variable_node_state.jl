@@ -23,12 +23,11 @@ A set of tuples for indexing the `node_state` variable. Any filtering options ca
 for `node`, and `t`.
 """
 function node_state_indices(;node=anything, t=anything)
-    inds = NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}[
+    unique(
         (node=n, t=t)
         for (n, tb) in node_state_indices_rc(node=node, _compact=false)
         for t in time_slice(temporal_block=tb, t=t)
-    ]
-    unique!(inds)
+    )
 end
 
 fix_node_state_(x) = fix_node_state(node=x.node, t=x.t, _strict=false)

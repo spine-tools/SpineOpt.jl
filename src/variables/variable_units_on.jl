@@ -24,11 +24,11 @@ A list of `NamedTuple`s corresponding to indices of the `units_on` variable.
 The keyword arguments act as filters for each dimension.
 """
 function units_on_indices(;unit=anything, t=anything)
-    [
+    (
         (unit=u, t=t_)
         for u in intersect(SpineModel.unit(), unit)
         for t_ in t_highest_resolution(x.t for x in unit_flow_indices(unit=u, t=t))
-    ]
+    )
 end
 
 fix_units_on_(x) = fix_units_on(unit=x.unit, t=x.t, _strict=false)

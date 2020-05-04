@@ -32,16 +32,18 @@ function create_variable!(
         m::Model, name::Symbol, indices::Function;
         lb=nothing, ub=nothing, bin=nothing, int=nothing
     )
-    inds = indices()
-    var = m.ext[:variables][name] = Dict{eltype(inds),VariableRef}()
+    var = m.ext[:variables][name] = Dict(
+        ind => _variable(m, name, ind, lb, ub, bin, int) for ind in indices()
+    )
+    history_var = Dict(
+        history_ind => _variable(m, name, history_ind, lb, ub, bin, int)
+        for history_ind in (
+            (; ind..., t=t_history_t[ind.t]) for ind in indices() if end_(ind.t) <= end_(current_window)
+        )
+    )
+    merge!(var, history_var)
     m.ext[:variables_ub][name] = ub
     m.ext[:variables_lb][name] = lb
-    for ind in inds
-        var[ind] = _variable(m, name, ind, lb, ub, bin, int)
-        end_(ind.t) <= end_(current_window) || continue
-        history_ind = (; ind..., t=t_history_t[ind.t])
-        var[history_ind] = _variable(m, name, history_ind, lb, ub, bin, int)
-    end
 end
 
 function fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Function)
@@ -93,12 +95,12 @@ function create_variables!(m::Model)
     create_variable_units_on!(m)
     create_variable_connection_flow!(m)
     create_variable_node_state!(m)
+    create_variable_node_injection!(m)
     create_variable_node_slack_pos!(m)
     create_variable_node_slack_neg!(m)
     create_variable_units_available!(m)
     create_variable_units_started_up!(m)
     create_variable_units_shut_down!(m)
-
 end
 
 function fix_variables!(m::Model)
@@ -118,8 +120,8 @@ function save_values!(m::Model)
     save_value!(m, :units_available, units_on_indices)
     save_value!(m, :units_started_up, units_on_indices)
     save_value!(m, :units_shut_down, units_on_indices)
-    save_value!(m, :node_slack_pos, node_slack_pos_indices)
-    save_value!(m, :node_slack_neg, node_slack_neg_indices)
+    save_value!(m, :node_slack_pos, node_slack_indices)
+    save_value!(m, :node_slack_neg, node_slack_indices)
 end
 
 function update_variables!(m::Model)
@@ -131,6 +133,7 @@ function update_variables!(m::Model)
     update_variable!(m, :units_available, units_on_indices)
     update_variable!(m, :units_started_up, units_on_indices)
     update_variable!(m, :units_shut_down, units_on_indices)
-    update_variable!(m, :node_slack_pos, node_slack_pos_indices)
-    update_variable!(m, :node_slack_neg, node_slack_neg_indices)
+    update_variable!(m, :node_slack_pos, node_slack_indices)
+    update_variable!(m, :node_slack_neg, node_slack_indices)
+    update_variable!(m, :node_injection, node_injection_indices)
 end

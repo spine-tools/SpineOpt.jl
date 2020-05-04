@@ -66,6 +66,11 @@ function generate_variable_indices()
         for n in node(has_state=:value_true)
         for tb in node__temporal_block(node=n)
     )
+    node_slack_indices = unique(
+        (node=n, temporal_block=tb)
+        for n in indices(node_slack_penalty)
+        for tb in node__temporal_block(node=n)
+    )
     unit_flow_indices_rc = RelationshipClass(
         :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices
     )
@@ -75,10 +80,14 @@ function generate_variable_indices()
     node_state_indices_rc = RelationshipClass(
         :node_state_indices_rc, [:node, :temporal_block], node_state_indices
     )
+    node_slack_indices_rc = RelationshipClass(
+        :node_slack_indices_rc, [:node, :temporal_block], node_slack_indices
+    )
     @eval begin
         unit_flow_indices_rc = $unit_flow_indices_rc
         connection_flow_indices_rc = $connection_flow_indices_rc
         node_state_indices_rc = $node_state_indices_rc
+        node_slack_indices_rc = $node_slack_indices_rc
     end
 end
 
@@ -192,6 +201,7 @@ function _ptdf_values()
         (conn, n) => Dict(:ptdf => SpineInterface.callable(ps_ptdf[line.name, bus.number]))
         for (conn, line) in ps_lines_by_connection
         for (n, bus) in ps_busses_by_node
+        if !isapprox(ps_ptdf[line.name, bus.number], 0; atol=node_ptdf_threshold(node=n))
     )
 end
 

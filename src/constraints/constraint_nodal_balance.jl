@@ -22,7 +22,7 @@
 Balance equation for nodes.
 """
 function add_constraint_nodal_balance!(m::Model)
-    @fetch node_state, connection_flow, unit_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
+    @fetch node_state, node_injection, connection_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
     cons = m.ext[:constraints][:nodal_balance] = Dict()
     for (n, tb) in node__temporal_block()
         # Skip nodes that are part of a node group having balance_type_group
@@ -54,24 +54,6 @@ function add_constraint_nodal_balance!(m::Model)
                         for n_ in node__node(node2=n);
                         init = 0
                     )
-                    # Commodity flows from units
-                    + reduce(
-                        +,
-                        unit_flow[u, n, d, t_short]
-                        for (u, n, d, t_short) in unit_flow_indices(
-                            node=n, t=t_in_t(t_long=t_after), direction=direction(:to_node)
-                        );
-                        init=0
-                    )
-                    # Commodity flows to units
-                    - reduce(
-                        +,
-                        unit_flow[u, n, d, t_short]
-                        for (u, n, d, t_short) in unit_flow_indices(
-                            node=n, t=t_in_t(t_long=t_after), direction=direction(:from_node)
-                        );
-                        init=0
-                    )
                     # Commodity flows from connections
                     + reduce(
                         +,
@@ -92,15 +74,8 @@ function add_constraint_nodal_balance!(m::Model)
                         if !(balance_type(node=n) === :balance_type_group && _is_internal(conn, n));
                         init=0
                     )
-                    # Explicit nodal demand
-                    - demand[(node=n, t=t_after)]
-                    # Fractional demand
-                    - reduce(
-                        +,
-                        fractional_demand[(node1=ng, node2=n, t=t_after)] * demand[(node=ng, t=t_after)]
-                        for ng in node_group__node(node2=n);
-                        init=0
-                    )
+                    # net injection
+                    + node_injection[n, t_after]
                     # slack variable - only exists if slack_penalty is defined
                     + get(node_slack_pos, (n, t_after), 0)
                     - get(node_slack_neg, (n, t_after), 0)

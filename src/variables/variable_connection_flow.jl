@@ -30,13 +30,13 @@ The keyword arguments act as filters for each dimension.
 """
 function connection_flow_indices(;connection=anything, node=anything, direction=anything, t=anything)
     node = expand_node_group(node)
-    [
+    (
         (connection=conn, node=n, direction=d, t=t1)
         for (conn, n, d, tb) in connection_flow_indices_rc(
             connection=connection, node=node, direction=direction, _compact=false
         )
         for t1 in time_slice(temporal_block=tb, t=t)
-    ]
+    )
 end
 
 fix_connection_flow_(x) = fix_connection_flow(connection=x.connection, node=x.node, direction=x.direction, t=x.t, _strict=false)
