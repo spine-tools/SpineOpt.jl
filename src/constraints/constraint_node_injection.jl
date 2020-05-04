@@ -19,36 +19,63 @@
 """
     add_constraint_node_injection(m::Model)
 
-Set node injection equal to the net flow injection from units minus the demand. 
+Set the node injection equal to the summation of all 'input' flows but connection's. 
 """
 function add_constraint_node_injection!(m::Model)
-    @fetch node_injection, unit_flow = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:node_injection] = Dict()
-    for (n, t) in node_injection_indices()
-        constr_dict[n, t] = @constraint(
-            m,
-            node_injection[n, t]
-            ==
-            + reduce(
-                +,
-                unit_flow[u, n, d, t_short] * duration(t_short)
-                for (u, n, d, t_short) in unit_flow_indices(node=n, direction=direction(:to_node), t=t_in_t(t_long=t));
-                init=0
-            )
-            - reduce(
-                +,
-                unit_flow[u, n, d, t_short] * duration(t_short)
-                for (u, n, d, t_short) in unit_flow_indices(node=n, direction=direction(:from_node), t=t_in_t(t_long=t));
-                init=0
-            )
-            - demand[(node=n, t=t)]
-            - reduce(
-                +,
-                fractional_demand[(node1=ng, node2=n, t=t)] * demand[(node=ng, t=t)]
-                for ng in node_group__node(node2=n);
-                init=0
-            )
-        )
+    @fetch node_injection, node_state, unit_flow = m.ext[:variables]
+    cons = m.ext[:constraints][:node_injection] = Dict()
+    for (n, tb) in node__temporal_block()
+        for t_after in time_slice(temporal_block=tb)
+            for t_before in t_before_t(t_after=t_after)
+                cons[n, t_before, t_after] = @constraint(
+                    m,
+                    node_injection[n, t_after]
+                    ==
+                    (
+                        + get(node_state, (n, t_before), 0) * state_coeff[(node=n, t=t_before)]
+                        - get(node_state, (n, t_after), 0) * state_coeff[(node=n, t=t_after)]
+                    )
+                    / duration(t_after)
+                    # Self-discharge commodity losses
+                    - get(node_state, (n, t_after), 0) * frac_state_loss[(node=n, t=t_after)]
+                    # Diffusion of commodity from other nodes to this one
+                    + reduce(
+                        +,
+                        get(node_state, (n_, t_after), 0) * diff_coeff[(node1=n_, node2=n, t=t_after)]
+                        for n_ in node__node(node2=n);
+                        init=0
+                    )
+                    # Diffusion of commodity from this node to other nodes
+                    - reduce(
+                        +,
+                        get(node_state, (n, t_after), 0) * diff_coeff[(node1=n, node2=n_, t=t_after)]
+                        for n_ in node__node(node1=n);
+                        init=0
+                    )
+                    # Commodity flows from units
+                    + reduce(
+                        +,
+                        unit_flow[u, n, d, t_short]
+                        for (u, n, d, t_short) in unit_flow_indices(node=n, direction=direction(:to_node), t=t_in_t(t_long=t_after));
+                        init=0
+                    )
+                    # Commodity flows to units
+                    - reduce(
+                        +,
+                        unit_flow[u, n, d, t_short]
+                        for (u, n, d, t_short) in unit_flow_indices(node=n, direction=direction(:from_node), t=t_in_t(t_long=t_after));
+                        init=0
+                    )
+                    - demand[(node=n, t=t_after)]
+                    - reduce(
+                        +,
+                        fractional_demand[(node1=ng, node2=n, t=t_after)] * demand[(node=ng, t=t_after)]
+                        for ng in node_group__node(node2=n);
+                        init=0
+                    )
+                )
+            end
+        end
     end
 end
 

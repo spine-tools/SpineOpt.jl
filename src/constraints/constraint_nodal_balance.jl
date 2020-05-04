@@ -22,65 +22,42 @@
 Balance equation for nodes.
 """
 function add_constraint_nodal_balance!(m::Model)
-    @fetch node_state, node_injection, connection_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
+    @fetch node_injection, connection_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
     cons = m.ext[:constraints][:nodal_balance] = Dict()
     for (n, tb) in node__temporal_block()
         # Skip nodes that are part of a node group having balance_type_group
         any(balance_type(node=ng) === :balance_type_group for ng in node_group__node(node2=n)) && continue
-        for t_after in time_slice(temporal_block=tb)
-            for t_before in t_before_t(t_after=t_after)
-                cons[n, t_before, t_after] = @constraint(
-                    m,
-                    # Change in node commodity content
-                    (
-                        + get(node_state, (n, t_after), 0) * state_coeff[(node=n, t=t_after)]
-                        - get(node_state, (n, t_before), 0) * state_coeff[(node=n, t=t_before)]
+        for t in time_slice(temporal_block=tb)
+            cons[n, t] = @constraint(
+                m,
+                # Net injection
+                + node_injection[n, t]
+                # Commodity flows from connections
+                + reduce(
+                    +,
+                    connection_flow[conn, n, d, t_short]
+                    for (conn, n, d, t_short) in connection_flow_indices(
+                        node=n, t=t_in_t(t_long=t), direction=direction(:to_node)
                     )
-                    / duration(t_after)
-                    ==
-                    # Self-discharge commodity losses
-                    - get(node_state, (n, t_after), 0) * frac_state_loss[(node=n, t=t_after)]
-                    # Diffusion of commodity from this node to other nodes
-                    - reduce(
-                        +,
-                        get(node_state, (n, t_after), 0) * diff_coeff[(node1=n, node2=n_, t=t_after)]
-                        for n_ in node__node(node1=n);
-                        init = 0
-                    )
-                    # Diffusion of commodity from other nodes to this one
-                    + reduce(
-                        +,
-                        get(node_state, (n_, t_after), 0) * diff_coeff[(node1=n_, node2=n, t=t_after)]
-                        for n_ in node__node(node2=n);
-                        init = 0
-                    )
-                    # Commodity flows from connections
-                    + reduce(
-                        +,
-                        connection_flow[conn, n, d, t_short]
-                        for (conn, n, d, t_short) in connection_flow_indices(
-                            node=n, t=t_in_t(t_long=t_after), direction=direction(:to_node)
-                        )
-                        if !(balance_type(node=n) === :balance_type_group && _is_internal(conn, n));
-                        init=0
-                    )
-                    # Commodity flows to connections
-                    - reduce(
-                        +,
-                        connection_flow[conn, n, d, t_short]
-                        for (conn, n, d, t_short) in connection_flow_indices(
-                            node=n, t=t_in_t(t_long=t_after), direction=direction(:from_node)
-                        )
-                        if !(balance_type(node=n) === :balance_type_group && _is_internal(conn, n));
-                        init=0
-                    )
-                    # net injection
-                    + node_injection[n, t_after]
-                    # slack variable - only exists if slack_penalty is defined
-                    + get(node_slack_pos, (n, t_after), 0)
-                    - get(node_slack_neg, (n, t_after), 0)
+                    if !(balance_type(node=n) === :balance_type_group && _is_internal(conn, n));
+                    init=0
                 )
-            end
+                # Commodity flows to connections
+                - reduce(
+                    +,
+                    connection_flow[conn, n, d, t_short]
+                    for (conn, n, d, t_short) in connection_flow_indices(
+                        node=n, t=t_in_t(t_long=t), direction=direction(:from_node)
+                    )
+                    if !(balance_type(node=n) === :balance_type_group && _is_internal(conn, n));
+                    init=0
+                )
+                # slack variable - only exists if slack_penalty is defined
+                + get(node_slack_pos, (n, t), 0)
+                - get(node_slack_neg, (n, t), 0)
+                ==
+                0
+            )
         end
     end
 end
