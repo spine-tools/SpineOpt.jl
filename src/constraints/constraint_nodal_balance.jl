@@ -56,7 +56,7 @@ function constraint_nodal_balance_indices()
             end
         end
     end
-    return nodal_balance_indices
+    return unique!(nodal_balance_indices)
 end
 
 
