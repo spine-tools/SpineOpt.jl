@@ -48,6 +48,7 @@ function constraint_nodal_balance_indices()
                     node_stochastic_time_indices_rc(node=n_, t=t_after, _compact=true)
                 )
             end
+            # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)
             for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
                 push!(
