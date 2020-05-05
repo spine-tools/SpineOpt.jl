@@ -17,6 +17,43 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+"""
+    constraint_min_up_time_indices()
+
+Forms the stochastic index set for the `:min_up_time` constraint. Uses stochastic path
+indices due to potentially different stochastic structures between `units_on` and
+`units_available` variables.
+"""
+function constraint_min_up_time_indices()
+    min_up_time_indices = []
+    for u in indices(min_up_time)
+        node = first(unit__structure_node_rc(unit=u))
+        tb = node__temporal_block(node=node)
+        for t in time_slice(temporal_block=tb)
+            # Current `units_on`
+            active_scenarios = units_on_indices_rc(unit=u, t=t, _compact=true)
+            # `units_started_up` during past time slices
+            append!(
+                active_scenarios,
+                units_on_indices_rc(
+                    unit=u,
+                    t=to_time_slice(TimeSlice(end_(t) - min_up_time(unit=u), end_(t))),
+                    _compact=true
+                )
+            )
+            # Find stochastic paths for `active_scenarios`
+            unique!(active_scenarios)
+            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
+                push!(
+                    min_up_time_indices,
+                    (unit=u, stochastic_path=path, t=t)
+                )
+            end
+        end
+    end
+    return unique!(min_up_time_indices)
+end
+
 
 """
     add_constraint_min_up_time!(m::Model)
@@ -27,19 +64,19 @@ Constraint running by minimum up time.
 function add_constraint_min_up_time!(m::Model)
     @fetch units_on, units_started_up = m.ext[:variables]
     cons = m.ext[:constraints][:min_up_time] = Dict()
-    for u in indices(min_up_time)
-        for (u, t) in units_on_indices(unit=u)
-            cons[u, t] = @constraint( # TODO: Stochastic path indexing required due to time delays, but first we'll have to decide how to determine the stochastic indices of `units`.
-                m,
-                + units_on[u, t]
-                >=
-                + sum(
-                    units_started_up[u, t_past]
-                    for (u, t_past) in units_on_indices(
-                        unit=u, t=to_time_slice(TimeSlice(end_(t) - min_up_time(unit=u), end_(t)))
-                    )
+    for (u, stochastic_path, t) in constraint_min_up_time_indices()
+        cons[u, stochastic_path, t] = @constraint(
+            m,
+            + reduce(+, units_on[u, s, t] for s in stochastic_path; init=0)
+            >=
+            + sum(
+                units_started_up[u, s, t_past]
+                for (u, s, t_past) in units_on_indices(
+                    unit=u,
+                    stochastic_scenario=stochastic_path,
+                    t=to_time_slice(TimeSlice(end_(t) - min_up_time(unit=u), end_(t)))
                 )
             )
-        end
+        )
     end
 end
