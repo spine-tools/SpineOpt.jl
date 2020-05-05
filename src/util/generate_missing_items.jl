@@ -60,9 +60,7 @@ function generate_missing_items()
     end
     for (sym_name, class_default_values) in d
         for (class, default_val) in class_default_values
-            for key in keys(class.parameter_values)
-                class.parameter_values[key][sym_name] = copy(default_val)
-            end
+            class.parameter_defaults[sym_name] = copy(default_val)
         end
         parameter = Parameter(sym_name, first.(class_default_values))
         @eval mod begin

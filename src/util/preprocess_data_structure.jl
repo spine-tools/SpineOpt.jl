@@ -228,7 +228,7 @@ Generate lodf parameter.
 function generate_lodf()
 
     """
-    Given a contingency connection, return a function that given the monitored connection, return the lodf
+    Given a contingency connection, return a function that given the monitored connection, return the lodf.
     """
     function make_lodf_fn(conn_cont)
         n_from, n_to = connection__from_node(connection=conn_cont)
