@@ -55,21 +55,24 @@ Check if `unit_conv_cap_to_flow` is defined.
 function add_constraint_unit_flow_capacity!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][:unit_flow_capacity] = Dict()
-    for (u, n, d) in indices(unit_capacity)
-        for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d)
-            cons[u, n, d, s, t] = @constraint(
-                m,
-                unit_flow[u, n, d, s, t] * duration(t)
-                <=
-                + unit_capacity[(unit=u, node=n, direction=d, t=t)] # TODO: Stochastic parameters
-                * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
-                * reduce(
-                    +,
-                    units_on[u, t_short] * duration(t_short)
-                    for (u, t_short) in units_on_indices(unit=u, t=t_in_t(t_long=t));
-                    init=0
-                )
+    for (u, n, d, stochastic_path, t) in constraint_unit_flow_capacity_indices()
+        cons[u, n, d, stochastic_path, t] = @constraint(
+            m,
+            reduce(
+                +,
+                get(unit_flow, (u, n, d, s, t), 0)
+                for s in stochastic_path;
+                init=0
+            ) * duration(t)
+            <=
+            + unit_capacity[(unit=u, node=n, direction=d, t=t)] # TODO: Stochastic parameters
+            * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
+            * reduce(
+                +,
+                units_on[u, s, t_short] * duration(t_short)
+                for (u, s, t_short) in units_on_indices(unit=u, stochastic_scenario=stochastic_path, t=t_in_t(t_long=t));
+                init=0
             )
-        end
+        )
     end
 end
