@@ -222,13 +222,10 @@ function write_report(results, default_url)
         url = output_db_url(report=rpt, _strict=false)
         url === nothing && (url = default_url)
         url_reports = get!(reports, url, Dict())
-        report = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
-        d = report[out.name] = Dict{NamedTuple,TimeSeries}()
-        for (k, v) in pulldims(value, :t)
-            inds = first.(v)
-            vals = last.(v)
-            d[k] = TimeSeries(inds, vals, false, false)
-        end
+        output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
+        output_params[out.name] = Dict{NamedTuple,TimeSeries}(
+            k => TimeSeries(first.(v), last.(v), false, false) for (k, v) in pulldims(value, :t)
+        )
     end
     for (url, url_reports) in reports
         for (rpt_name, output_params) in url_reports
