@@ -10,6 +10,9 @@
         "unit",
         "unit_constraint"
     ],
+    "objects": [
+        ["model", "instance"]
+    ],
     "relationship_classes": [
         ["commodity_group__commodity", ["commodity", "commodity"]],
         ["commodity_group__node_group", ["commodity", "node"]],
@@ -28,7 +31,8 @@
         ["unit__to_node__unit_constraint", ["unit", "node", "unit_constraint"]],
         ["unit__unit_constraint", ["unit", "unit_constraint"]],
         ["unit_group__commodity_group", ["unit", "commodity"]],
-        ["unit_group__unit", ["unit", "unit"]]
+        ["unit_group__unit", ["unit", "unit"]],
+        ["units_on_resolution",["unit","node"]]
     ],
     "parameter_value_lists": [
         ["balance_type_list", ["\"balance_type_node\"", "\"balance_type_group\"", "\"balance_type_none\""]],

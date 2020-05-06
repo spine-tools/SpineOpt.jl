@@ -71,6 +71,12 @@ function generate_variable_indices()
         for n in indices(node_slack_penalty)
         for tb in node__temporal_block(node=n)
     )
+    units_on_indices = unique(
+        (unit=u, temporal_block=tb)
+        for (ug,n) in units_on_resolution()
+            for u in expand_unit_group(ug)
+            for tb in node__temporal_block(node=n)
+    )
     unit_flow_indices_rc = RelationshipClass(
         :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices
     )
@@ -83,11 +89,15 @@ function generate_variable_indices()
     node_slack_indices_rc = RelationshipClass(
         :node_slack_indices_rc, [:node, :temporal_block], node_slack_indices
     )
+    units_on_indices_rc = RelationshipClass(
+        :units_on_indices_rc, [:unit, :temporal_block], units_on_indices
+    )
     @eval begin
         unit_flow_indices_rc = $unit_flow_indices_rc
         connection_flow_indices_rc = $connection_flow_indices_rc
         node_state_indices_rc = $node_state_indices_rc
         node_slack_indices_rc = $node_slack_indices_rc
+        units_on_indices_rc = $units_on_indices_rc
     end
 end
 

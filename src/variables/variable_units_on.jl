@@ -24,12 +24,14 @@ A list of `NamedTuple`s corresponding to indices of the `units_on` variable.
 The keyword arguments act as filters for each dimension.
 """
 function units_on_indices(;unit=anything, t=anything)
+    unit = expand_unit_group(unit)
     (
-        (unit=u, t=t_)
-        for u in intersect(SpineModel.unit(), unit)
-        for t_ in t_highest_resolution(x.t for x in unit_flow_indices(unit=u, t=t))
+        (unit=u, t=t1)
+        for (u, tb) in units_on_indices_rc(unit=unit, _compact=false)
+        for t1 in time_slice(temporal_block=tb, t=t)
     )
 end
+
 
 units_on_bin(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_binary
 units_on_int(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_integer
