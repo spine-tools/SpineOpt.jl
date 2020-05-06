@@ -29,14 +29,14 @@ function add_constraint_operating_point_sum!(m::Model)
     @fetch unit_flow_op, unit_flow = m.ext[:variables]
     cons = m.ext[:constraints][:operating_point_sum] = Dict()
     for (u, n, d) in indices(operating_points)
-        for (u, n, d, t) in unit_flow_indices(unit=u, node=n, direction=d)
-            cons[u, n, d, t] = @constraint(
+        for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d)
+            cons[u, n, d, s, t] = @constraint(
                 m,
                 unit_flow[u, n, d, s, t]
                 ==
                 + reduce(
                     +,
-                    + unit_flow_op[u, n, d, op, s, t]
+                    unit_flow_op[u, n, d, op, s, t]
                     for op in 1:length(operating_points(unit=u, node=n, direction=d)); #TODO: Stochastic parameters?
                     init=0
                 )
