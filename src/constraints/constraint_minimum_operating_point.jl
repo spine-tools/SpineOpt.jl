@@ -29,7 +29,7 @@ function add_constraint_minimum_operating_point!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][:minimum_operating_point] = Dict()
     for (u, n, d) in indices(minimum_operating_point)
-        for (u, n, d, t) in units_on_indices(unit=u, node=n, direction=d)
+        for (u, n, d, t) in unit_flow_indices(unit=u, node=n, direction=d)
             cons[u, n, d, t] = @constraint(
                 m,
                 unit_flow[u, n, d, t] * duration(t)
