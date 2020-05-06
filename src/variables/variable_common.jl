@@ -16,6 +16,43 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+"""
+    add_variable!(m::Model, name::Symbol, indices::Function; <keyword arguments>)
+
+Add a variable to `m`, with given `name` and indices given by interating over `indices()`.
+
+# Arguments
+
+- `lb::Union{Function,Nothing}=nothing`: given an index, return the lower bound.
+- `ub::Union{Function,Nothing}=nothing`: given an index, return the upper bound.
+- `bin::Union{Function,Nothing}=nothing`: given an index, return whether or not the variable should be binary
+- `int::Union{Function,Nothing}=nothing`: given an index, return whether or not the variable should be integer
+- `fix_value::Union{Function,Nothing}=nothing`: given an index, return a fix value for the variable of nothing
+"""
+function add_variable!(
+        m::Model, 
+        name::Symbol,
+        indices::Function;
+        lb::Union{Function,Nothing}=nothing,
+        ub::Union{Function,Nothing}=nothing,
+        bin::Union{Function,Nothing}=nothing,
+        int::Union{Function,Nothing}=nothing,
+        fix_value::Union{Function,Nothing}=nothing
+    )
+    m.ext[:variables_definition][name] = Dict{Symbol,Union{Function,Nothing}}(
+        :indices => indices, :lb => lb, :ub => ub, :bin => bin, :int => int, :fix_value => fix_value
+    )
+    var = m.ext[:variables][name] = Dict(
+        ind => _variable(m, name, ind, lb, ub, bin, int) for ind in indices()
+    )
+    history_var = Dict(
+        history_ind => _variable(m, name, history_ind, lb, ub, bin, int)
+        for history_ind in (
+            (; ind..., t=t_history_t[ind.t]) for ind in indices() if end_(ind.t) <= end_(current_window)
+        )
+    )
+    merge!(var, history_var)
+end
 
 _base_name(name, ind) = """$(name)[$(join(ind, ", "))]"""
 
@@ -28,21 +65,7 @@ function _variable(m, name, ind, lb, ub, bin, int)
     var
 end
 
-function create_variable!(
-        m::Model, name::Symbol, indices::Function;
-        lb=nothing, ub=nothing, bin=nothing, int=nothing
-    )
-    inds = indices()
-    var = m.ext[:variables][name] = Dict{eltype(inds),VariableRef}()
-    m.ext[:variables_ub][name] = ub
-    m.ext[:variables_lb][name] = lb
-    for ind in inds
-        var[ind] = _variable(m, name, ind, lb, ub, bin, int)
-        end_(ind.t) <= end_(current_window) || continue
-        history_ind = (; ind..., t=t_history_t[ind.t])
-        var[history_ind] = _variable(m, name, history_ind, lb, ub, bin, int)
-    end
-end
+fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Nothing) = nothing
 
 function fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Function)
     var = m.ext[:variables][name]
@@ -61,18 +84,16 @@ _value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value
 function save_value!(m::Model, name::Symbol, indices::Function)
     inds = indices()
     var = m.ext[:variables][name]
-    val = m.ext[:values][name] = Dict{eltype(inds),Number}()
-    for ind in inds
-        end_(ind.t) <= end_(current_window) || continue
-        val[ind] = _value(var[ind])
-    end
+    m.ext[:values][name] = Dict(
+        ind => _value(var[ind]) for ind in indices() if end_(ind.t) <= end_(current_window)
+    )
 end
 
 function update_variable!(m::Model, name::Symbol, indices::Function)
     var = m.ext[:variables][name]
     val = m.ext[:values][name]
-    lb = m.ext[:variables_lb][name]
-    ub = m.ext[:variables_ub][name]
+    lb = m.ext[:variables_definition][name][:lb]
+    ub = m.ext[:variables_definition][name][:ub]
     for ind in indices()
         set_name(var[ind], _base_name(name, ind))
         if is_fixed(var[ind])
@@ -87,50 +108,20 @@ function update_variable!(m::Model, name::Symbol, indices::Function)
     end
 end
 
-function create_variables!(m::Model)
-    create_variable_unit_flow!(m)
-    create_variable_unit_flow_op!(m)
-    create_variable_units_on!(m)
-    create_variable_connection_flow!(m)
-    create_variable_node_state!(m)
-    create_variable_node_slack_pos!(m)
-    create_variable_node_slack_neg!(m)
-    create_variable_units_available!(m)
-    create_variable_units_started_up!(m)
-    create_variable_units_shut_down!(m)
-
-end
-
 function fix_variables!(m::Model)
-    fix_variable_unit_flow!(m)
-    fix_variable_unit_flow_op!(m)
-    fix_variable_units_on!(m)
-    fix_variable_connection_flow!(m)
-    fix_variable_node_state!(m)
+    for (name, definition) in m.ext[:variables_definition]
+        fix_variable!(m, name, definition[:indices], definition[:fix_value])
+    end
 end
 
 function save_values!(m::Model)
-    save_value!(m, :unit_flow, unit_flow_indices)
-    save_value!(m, :unit_flow_op, unit_flow_op_indices)
-    save_value!(m, :connection_flow, connection_flow_indices)
-    save_value!(m, :node_state, node_state_indices)
-    save_value!(m, :units_on, units_on_indices)
-    save_value!(m, :units_available, units_on_indices)
-    save_value!(m, :units_started_up, units_on_indices)
-    save_value!(m, :units_shut_down, units_on_indices)
-    save_value!(m, :node_slack_pos, node_slack_pos_indices)
-    save_value!(m, :node_slack_neg, node_slack_neg_indices)
+    for (name, definition) in m.ext[:variables_definition]
+        save_value!(m, name, definition[:indices])
+    end
 end
 
 function update_variables!(m::Model)
-    update_variable!(m, :unit_flow, unit_flow_indices)
-    update_variable!(m, :unit_flow_op, unit_flow_op_indices)
-    update_variable!(m, :connection_flow, connection_flow_indices)
-    update_variable!(m, :node_state, node_state_indices)
-    update_variable!(m, :units_on, units_on_indices)
-    update_variable!(m, :units_available, units_on_indices)
-    update_variable!(m, :units_started_up, units_on_indices)
-    update_variable!(m, :units_shut_down, units_on_indices)
-    update_variable!(m, :node_slack_pos, node_slack_pos_indices)
-    update_variable!(m, :node_slack_neg, node_slack_neg_indices)
+    for (name, definition) in m.ext[:variables_definition]
+        update_variable!(m, name, definition[:indices])
+    end
 end

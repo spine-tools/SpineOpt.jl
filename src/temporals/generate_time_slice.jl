@@ -174,4 +174,5 @@ function roll_temporal_structure()
     true
 end
 
-# TODO: Currently, the temporal structure seems to be generated for all defined `temporal_blocks` in the database, regardless of whether they actually appear in the model via the `node__temporal_block` relationship.
+# TODO: Currently, the temporal structure seems to be generated for all defined `temporal_blocks` in the database, 
+# regardless of whether they actually appear in the model via the `node__temporal_block` relationship.

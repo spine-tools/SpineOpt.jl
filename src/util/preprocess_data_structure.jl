@@ -27,8 +27,8 @@ end
 
 
 function generate_direction()
-    from_node = Object(:from_node, 1)
-    to_node = Object(:to_node, 2)
+    from_node = Object(:from_node)
+    to_node = Object(:to_node)
     direction = ObjectClass(:direction, [from_node, to_node])
     directions_by_class = Dict(
         unit__from_node => from_node,
@@ -68,6 +68,17 @@ function generate_variable_indices()
         for n in node(has_state=:value_true)
         for tb in node__temporal_block(node=n)
     )
+    node_slack_indices = unique(
+        (node=n, temporal_block=tb)
+        for n in indices(node_slack_penalty)
+        for tb in node__temporal_block(node=n)
+    )
+    units_on_indices = unique(
+        (unit=u, temporal_block=tb)
+        for (ug,n) in units_on_resolution()
+            for u in expand_unit_group(ug)
+            for tb in node__temporal_block(node=n)
+    )
     unit_flow_indices_rc = RelationshipClass(
         :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices
     )
@@ -77,10 +88,18 @@ function generate_variable_indices()
     node_state_indices_rc = RelationshipClass(
         :node_state_indices_rc, [:node, :temporal_block], node_state_indices
     )
+    node_slack_indices_rc = RelationshipClass(
+        :node_slack_indices_rc, [:node, :temporal_block], node_slack_indices
+    )
+    units_on_indices_rc = RelationshipClass(
+        :units_on_indices_rc, [:unit, :temporal_block], units_on_indices
+    )
     @eval begin
         unit_flow_indices_rc = $unit_flow_indices_rc
         connection_flow_indices_rc = $connection_flow_indices_rc
         node_state_indices_rc = $node_state_indices_rc
+        node_slack_indices_rc = $node_slack_indices_rc
+        units_on_indices_rc = $units_on_indices_rc
     end
 end
 
@@ -95,8 +114,8 @@ function generate_node_has_ptdf()
             for c in node__commodity(node=n)
             if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
         )
-        node.parameter_values[n][:has_ptdf] = SpineInterface.callable(!isempty(ptdf_comms))
-        node.parameter_values[n][:node_ptdf_threshold] = SpineInterface.callable(
+        node.parameter_values[n][:has_ptdf] = parameter_value(!isempty(ptdf_comms))
+        node.parameter_values[n][:node_ptdf_threshold] = parameter_value(
             reduce(max, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0.0000001)
         )
     end
@@ -122,8 +141,8 @@ function generate_connection_has_ptdf()
             && fix_ratio_out_in_connection_flow(;
                 connection=conn, zip((:node1, :node2), connection__from_node(connection=conn))..., _strict=false
             ) == 1
-        )        
-        connection.parameter_values[conn][:has_ptdf] = SpineInterface.callable(
+        )
+        connection.parameter_values[conn][:has_ptdf] = parameter_value(
             is_bidirectional_loseless && all(has_ptdf(node=n) for n in connection__from_node(connection=conn))
         )
     end
@@ -140,8 +159,8 @@ function generate_connection_has_lodf()
             for c in commodity(commodity_physics=:commodity_physics_lodf)
             if issubset(connection__from_node(connection=conn), node__commodity(commodity=c))
         )
-        connection.parameter_values[conn][:has_lodf] = SpineInterface.callable(!isempty(lodf_comms))
-        connection.parameter_values[conn][:connnection_lodf_tolerance] = SpineInterface.callable(
+        connection.parameter_values[conn][:has_lodf] = parameter_value(!isempty(lodf_comms))
+        connection.parameter_values[conn][:connnection_lodf_tolerance] = parameter_value(
             reduce(max, (commodity_lodf_tolerance(commodity=c) for c in lodf_comms); init=0.05)
         )
     end
@@ -191,9 +210,10 @@ function _ptdf_values()
     ps_lines = collect(values(ps_lines_by_connection))
     ps_ptdf = PowerSystems.PTDF(ps_lines, ps_busses)
     Dict(
-        (conn, n) => Dict(:ptdf => SpineInterface.callable(ps_ptdf[line.name, bus.number]))
+        (conn, n) => Dict(:ptdf => parameter_value(ps_ptdf[line.name, bus.number]))
         for (conn, line) in ps_lines_by_connection
         for (n, bus) in ps_busses_by_node
+        if !isapprox(ps_ptdf[line.name, bus.number], 0; atol=node_ptdf_threshold(node=n))
     )
 end
 
@@ -220,7 +240,7 @@ Generate lodf parameter.
 function generate_lodf()
 
     """
-    Given a contingency connection, return a function that given the monitored connection, return the lodf
+    Given a contingency connection, return a function that given the monitored connection, return the lodf.
     """
     function make_lodf_fn(conn_cont)
         n_from, n_to = connection__from_node(connection=conn_cont)
@@ -234,7 +254,7 @@ function generate_lodf()
     end
 
     lodf_values = Dict(
-        (conn_cont, conn_mon) => Dict(:lodf => SpineInterface.callable(lodf_trial))
+        (conn_cont, conn_mon) => Dict(:lodf => parameter_value(lodf_trial))
         for (conn_cont, lodf_fn, tolerance) in (
             (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont))
             for conn_cont in connection(connection_contingency=:value_true, has_lodf=true)

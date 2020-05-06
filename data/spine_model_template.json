@@ -10,6 +10,9 @@
         "unit",
         "unit_constraint"
     ],
+    "objects": [
+        ["model", "instance"]
+    ],
     "relationship_classes": [
         ["commodity_group__commodity", ["commodity", "commodity"]],
         ["commodity_group__node_group", ["commodity", "node"]],
@@ -28,7 +31,8 @@
         ["unit__to_node__unit_constraint", ["unit", "node", "unit_constraint"]],
         ["unit__unit_constraint", ["unit", "unit_constraint"]],
         ["unit_group__commodity_group", ["unit", "commodity"]],
-        ["unit_group__unit", ["unit", "unit"]]
+        ["unit_group__unit", ["unit", "unit"]],
+        ["units_on_resolution",["unit","node"]]
     ],
     "parameter_value_lists": [
         ["balance_type_list", ["\"balance_type_node\"", "\"balance_type_group\"", "\"balance_type_none\""]],
@@ -36,7 +40,7 @@
         ["constraint_sense", ["\"==\"", "\">=\"", "\"<=\""]],
         ["duration_unit_list", ["\"minute\"", "\"hour\""]],
         ["truth_value_list", ["\"value_false\"", "\"value_true\""]],
-        ["node_opt_type_list", ["\"node_opt_type_reference\"", "\"node_opt_type_normal\""]],
+        ["node_opf_type_list", ["\"node_opf_type_reference\"", "\"node_opf_type_normal\""]],
         ["unit_online_variable_type_list", ["\"unit_online_variable_type_binary\"", "\"unit_online_variable_type_integer\"", "\"unit_online_variable_type_linear\""]]
     ],
     "object_parameters": [
@@ -51,19 +55,17 @@
         ["connection", "connection_monitored", "value_false", "truth_value_list"],
         ["connection", "connection_reactance", null, null],
         ["connection", "connection_resistance", null, null],
-        ["connection", "has_lodf", "value_false", "truth_value_list"],
-        ["connection", "has_ptdf", "value_false", "truth_value_list"],
         ["model", "duration_unit", "minute", "duration_unit_list"],
         ["model", "model_end", {"type": "date_time", "data": "2000-01-02T00:00:00"}, null],
         ["model", "model_start", {"type": "date_time", "data": "2000-01-01T00:00:00"}, null],
         ["model", "roll_forward", null, null],
+        ["model", "write_mps_file", null, null],
         ["node", "balance_type", "balance_type_node", "balance_type_list"],
         ["node", "demand", 0.0, null],
         ["node", "fix_node_state", null, null],
         ["node", "frac_state_loss", 0.0, null],
-        ["node", "has_ptdf", "value_false", "truth_value_list"],
         ["node", "has_state", "value_false", "truth_value_list"],
-        ["node", "node_opt_type", "node_opt_type_normal", "node_opt_type_list"],
+        ["node", "node_opf_type", "node_opf_type_normal", "node_opf_type_list"],
         ["node", "node_slack_penalty", null, null],
         ["node", "node_state_cap", null, null],
         ["node", "node_state_min", 0.0, null],

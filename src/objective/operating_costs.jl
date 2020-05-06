@@ -24,8 +24,7 @@ function operating_costs(m::Model)
     @fetch unit_flow = m.ext[:variables]
     @expression(
         m,
-        reduce(
-            +,
+        expr_sum(
             unit_flow[u, n, d, t] * duration(t) * operating_cost[(unit=u, node=n, direction=d, t=t)]
             for (u, n, d) in indices(operating_cost)
             for (u, n, d, t) in unit_flow_indices(unit=u, node=n, direction=d);

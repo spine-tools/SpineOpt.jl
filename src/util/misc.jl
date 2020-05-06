@@ -47,15 +47,15 @@ expand_node_group(::Anything) = anything
 expand_commodity_group(::Anything) = anything
 
 function expand_unit_group(ugs::X) where X >: Anything
-    [u for ug in ugs for u in unit_group__unit(unit1=ug, _default=ug)]
+    (u for ug in ugs for u in unit_group__unit(unit1=ug, _default=ug))
 end
 
 function expand_node_group(ngs::X) where X >: Anything
-    [n for ng in ngs for n in node_group__node(node1=ng, _default=ng)]
+    (n for ng in ngs for n in node_group__node(node1=ng, _default=ng))
 end
 
 function expand_commodity_group(cgs::X) where X >: Anything
-    [c for cg in cgs for c in commodity_group__commodity(commodity1=cg, _default=cg)]
+    (c for cg in cgs for c in commodity_group__commodity(commodity1=cg, _default=cg))
 end
 
 macro log(level, msg)
@@ -111,4 +111,19 @@ function name_constraints!(m::Model)
             set_name(con, string(con_key,inds))
         end
     end
+end
+
+"""
+    expr_sum(iter; init::Number)
+
+Sum elements in iter to init in-place, and return the result as a GenericAffExpr.
+"""
+function expr_sum(iter; init::Number)
+    result = AffExpr(init)
+    isempty(iter) && return result
+    result += first(iter)  # NOTE: This is so result has the right type, e.g., `GenericAffExpr{Call,VariableRef}`
+    for item in Iterators.drop(iter, 1)
+        add_to_expression!(result, item)
+    end
+    result
 end

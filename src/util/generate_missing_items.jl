@@ -17,14 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# NOTE: these `MissingItemHandler`s come into play whenever the database is missing some of the stuff
-# SpineModel expects to find in there.
-# The above can happen (i) during development, as we introduce new symbols for novel functionality, and
-# (ii) in production, if the user 'accidentally' deletes something.
-# I believe SpineModel needs this kind of safeguards to be robust.
-# As things stabilize, we should see a correspondance between this
-# and what we find in `spinedb_api.create_new_spine_database(for_spine_model=True)`
-
 function generate_missing_items()
     mod = @__MODULE__
     missing_items = Dict(
@@ -57,20 +49,18 @@ function generate_missing_items()
             export $sym_name
         end
     end
-    d = Dict{Symbol,Array{Pair{Union{ObjectClass,RelationshipClass},AbstractCallable},1}}()
+    d = Dict{Symbol,Array{Pair{Union{ObjectClass,RelationshipClass},AbstractParameterValue},1}}()
     for (class_name, name, default_value) in [template["object_parameters"]; template["relationship_parameters"]]
         sym_name = Symbol(name)
         sym_name in parameters && continue
         push!(missing_items["parameter definitions"], string(class_name, ".", name))
         class = classes[Symbol(class_name)]
-        default_val = callable(db_api.from_database(JSON.json(default_value)))
+        default_val = parameter_value(db_api.from_database(JSON.json(default_value)))
         push!(get!(d, sym_name, []), class => default_val)
     end
     for (sym_name, class_default_values) in d
         for (class, default_val) in class_default_values
-            for key in keys(class.parameter_values)
-                class.parameter_values[key][sym_name] = copy(default_val)
-            end
+            class.parameter_defaults[sym_name] = copy(default_val)
         end
         parameter = Parameter(sym_name, first.(class_default_values))
         @eval mod begin
