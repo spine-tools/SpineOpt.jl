@@ -18,6 +18,48 @@
 #############################################################################
 
 """
+    constraint_connection_flow_ptdf_indices()
+
+Forms the stochastic index set for the `:connection_flow_lodf` constraint.
+Uses stochastic path indices due to potentially different stochastic structures
+between `connection_flow` and `unit_flow` variables.
+"""
+function constraint_connection_flow_ptdf_indices()
+    connection_flow_ptdf_indices = []
+    for conn in connection(connection_monitored=:value_true, has_ptdf=true)
+        node_direction = last(connection__from_node(connection=conn)) # NOTE: always assume that the second (last) node in `connection__from_node` is the 'to' node
+        n_to = node_direction.node
+        direction = node_direction.direction
+        for t in time_slice(temporal_block=node__temporal_block(node=n_to))
+            # `n_to`
+            active_scenarios = connection_flow_indices_rc(
+                connection=conn, node=n_to, direction=direction, t=t, _compact=true
+            )
+            # `n_inj`
+            for (conn, n_inj) in indices(ptdf; connection=conn)
+                append!(
+                    active_scenarios,
+                    map(
+                        x->x.stochastic_scenario,
+                        unit_flow_indices_rc(node=n_inj, t=t_in_t(t_long=t))
+                    )
+                )
+            end
+            # Find stochastic paths for `active_scenarios`
+            unique!(active_scenarios)
+            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
+                push!(
+                    connection_flow_ptdf_indices,
+                    (connection=conn, node=n_to, stochastic_scenario=path, t=t)
+                )
+            end
+        end
+    end
+    return unique!(connection_flow_ptdf_indices)
+end
+
+
+"""
     add_constraint_connection_flow_ptdf(m::Model)
 
 For connection networks with monitored and has_ptdf set to true, set the steady state flow based on PTDFs
@@ -25,51 +67,52 @@ For connection networks with monitored and has_ptdf set to true, set the steady 
 function add_constraint_connection_flow_ptdf!(m::Model)
     @fetch connection_flow, unit_flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:flow_ptdf] = Dict()
-    for conn in connection(connection_monitored=:value_true, has_ptdf=true)
-        for (conn, n_to, d, t) in connection_flow_indices(;
-                connection=conn, last(connection__from_node(connection=conn))...
-            ) # NOTE: always assume that the second (last) node in `connection__from_node` is the 'to' node
-            constr_dict[conn, n_to, t] = @constraint(
-                m,
-                + connection_flow[conn, n_to, direction(:to_node), t]
-                - connection_flow[conn, n_to, direction(:from_node), t]
-                ==
-                + reduce(
-                    +,
-                    + ptdf(connection=conn, node=n_inj)
-                    * (
-                        # explicit node demand
-                        - demand[(node=n_inj, t=t)]
-                        # demand defined by fractional_demand
-                        - reduce(
-                            +,
-                            fractional_demand[(node1=ng, node2=n_inj, t=t)] * demand[(node=ng, t=t)]
-                            for ng in node_group__node(node2=n_inj);
-                            init=0
-                        )
-                        # Flows from units
-                        + reduce(
-                            +,
-                            unit_flow[u, n_inj, d, t_short] * duration(t_short)
-                            for (u, n_inj, d, t_short) in unit_flow_indices(
-                                node=n_inj, direction=direction(:to_node), t=t_in_t(t_long=t)
-                            );
-                            init=0
-                        )
-                        - reduce(
-                            +,
-                            unit_flow[u, n_inj, d, t_short] * duration(t_short)
-                            for (u, n_inj, d, t_short) in unit_flow_indices(
-                                node=n_inj, direction=direction(:from_node), t=t_in_t(t_long=t)
-                            );
-                            init=0
-                        )
-                    )
-                    for (conn, n_inj) in indices(ptdf; connection=conn)
-                    if !isapprox(ptdf(connection=conn, node=n_inj), 0; atol=node_ptdf_threshold(node=n_inj));
-                    init=0
-                )
+    for (conn, n_to, stochastic_path, t) in constraint_connection_flow_ptdf_indices()
+        constr_dict[conn, n_to, stochastic_path, t] = @constraint(
+            m,
+            reduce(
+                +,
+                get(connection_flow, (conn, n_to, direction(:to_node), s, t), 0)
+                - get(connection_flow, (conn, n_to, direction(:from_node), s, t), 0)
+                for s in stochastic_path;
+                init=0
             )
-        end
+            ==
+            + reduce(
+                +,
+                + ptdf(connection=conn, node=n_inj)
+                * (
+                    # explicit node demand
+                    - demand[(node=n_inj, t=t)]
+                    # demand defined by fractional_demand
+                    - reduce(
+                        +,
+                        fractional_demand[(node1=ng, node2=n_inj, t=t)] * demand[(node=ng, t=t)]
+                        for ng in node_group__node(node2=n_inj);
+                        init=0
+                    )
+                    # Flows from units
+                    + reduce(
+                        +,
+                        unit_flow[u, n_inj, d, s, t_short] * duration(t_short)
+                        for (u, n_inj, d, s, t_short) in unit_flow_indices(
+                            node=n_inj, direction=direction(:to_node), stochastic_scenario=stochastic_path, t=t_in_t(t_long=t)
+                        );
+                        init=0
+                    )
+                    - reduce(
+                        +,
+                        unit_flow[u, n_inj, d, s, t_short] * duration(t_short)
+                        for (u, n_inj, d, s, t_short) in unit_flow_indices(
+                            node=n_inj, direction=direction(:from_node), stochastic_scenario=stochastic_path, t=t_in_t(t_long=t)
+                        );
+                        init=0
+                    )
+                )
+                for (conn, n_inj) in indices(ptdf; connection=conn)
+                if !isapprox(ptdf(connection=conn, node=n_inj), 0; atol=node_ptdf_threshold(node=n_inj));
+                init=0
+            )
+        )
     end
 end
