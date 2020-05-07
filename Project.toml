@@ -20,3 +20,4 @@ TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 
 [compat]
 julia = "^1.2"
+JuMP = "0.21.2"
