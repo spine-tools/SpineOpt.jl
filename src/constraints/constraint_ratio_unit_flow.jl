@@ -48,8 +48,8 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
                 )
                 + units_on_coefficient[(unit=u, node1=n1, node2=n2, t=t)]
                 * expr_sum(
-                    units_on[u, t_short] * duration(t_short)
-                    for (u, t_short) in units_on_indices(unit=u, t=t_in_t(t_long=t));
+                    units_on[u, t1] * min(duration(t1), duration(t))
+                    for (u, t1) in units_on_indices(unit=u, t=t_overlaps_t(t));
                     init=0
                 ),
 

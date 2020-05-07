@@ -75,11 +75,11 @@ function add_constraint_unit_constraint!(m::Model)
                     init=0
                 )
                 + expr_sum(
-                    + units_on[u, t_short]
-                    * units_on_coefficient[(unit_constraint=uc, unit=u, t=t_short)]
-                    * duration(t_short)
+                    + units_on[u, t1]
+                    * units_on_coefficient[(unit_constraint=uc, unit=u, t=t1)]
+                    * min(duration(t1),duration(t))
                     for u in unit__unit_constraint(unit_constraint=uc)
-                    for (u, t_short) in units_on_indices(unit=u, t=t_in_t(t_long=t));
+                    for (u, t1) in units_on_indices(unit=u, t=t_overlaps_t(t));
                     init=0
                 ),
                 constraint_sense(unit_constraint=uc),
