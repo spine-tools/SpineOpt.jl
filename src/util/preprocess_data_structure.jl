@@ -18,88 +18,47 @@
 #############################################################################
 
 function preprocess_data_structure()
-    process_connections()    
+    add_connection_relationships()    
     generate_network_components()
     generate_direction()
     generate_variable_indices()
 end
 
+"""
+    add_connection_relationships()
 
-function generate_direction()
-    from_node = Object(:from_node)
-    to_node = Object(:to_node)
-    direction = ObjectClass(:direction, [from_node, to_node])
-    directions_by_class = Dict(
-        unit__from_node => from_node,
-        unit__to_node => to_node,
-        connection__from_node => from_node,
-        connection__to_node => to_node,
-    )
-    for cls in keys(directions_by_class)
-        push!(cls.object_class_names, :direction)
-    end
-    for (cls, d) in directions_by_class
-        map!(rel -> (; rel..., direction=d), cls.relationships, cls.relationships)
-        key_map = Dict(rel => (rel..., d) for rel in keys(cls.parameter_values))
-        for (key, new_key) in key_map
-            cls.parameter_values[new_key] = pop!(cls.parameter_values, key)
-        end
-    end
-    @eval begin
-        direction = $direction
-        export direction
-    end
-end
+Add connection relationships for connection_type=:connection_type_lossless_bidirectional.
 
-function generate_variable_indices()
-    unit_flow_indices = unique(
-        (unit=u, node=n, direction=d, temporal_block=tb)
-        for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
-        for tb in node__temporal_block(node=n)
+For connections with this parameter set, only a connection__from_node and connection__to_node need be set
+and this function creates the additional relationships on the fly.
+"""
+function add_connection_relationships()
+    conn_from_to = [
+        (conn, first(connection__from_node(connection=conn)), first(connection__to_node(connection=conn)))
+        for conn in connection(connection_type=:connection_type_lossless_bidirectional)
+    ]
+    new_connection__from_node_rels = [(connection=conn, node=n) for (conn, _n, n) in conn_from_to]
+    new_connection__to_node_rels = [(connection=conn, node=n) for (conn, n, _n) in conn_from_to]
+    new_connection__node__node_rels = collect(
+        (connection=conn, node1=n1, node2=n2) for (conn, x, y) in conn_from_to for (n1, n2) in ((x, y), (y, x))
     )
-    connection_flow_indices = unique(
-        (connection=conn, node=n, direction=d, temporal_block=tb)
-        for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
-        for tb in node__temporal_block(node=n)
+    add_relationships!(connection__from_node, new_connection__from_node_rels)
+    add_relationships!(connection__to_node, new_connection__to_node_rels)
+    add_relationships!(connection__node__node, new_connection__node__node_rels)
+    value_one = parameter_value(1.0)
+    new_connection__from_node_parameter_values = Dict(
+        (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__from_node_rels
     )
-    node_state_indices = unique(
-        (node=n, temporal_block=tb)
-        for n in node(has_state=:value_true)
-        for tb in node__temporal_block(node=n)
+    new_connection__to_node_parameter_values = Dict(
+        (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__to_node_rels
     )
-    node_slack_indices = unique(
-        (node=n, temporal_block=tb)
-        for n in indices(node_slack_penalty)
-        for tb in node__temporal_block(node=n)
+    new_connection__node__node_parameter_values = Dict(
+        (conn, n1, n2) => Dict(:fix_ratio_out_in_connection_flow => value_one)
+        for (conn, n1, n2) in new_connection__node__node_rels
     )
-    units_on_indices = unique(
-        (unit=u, temporal_block=tb)
-        for (ug,n) in units_on_resolution()
-            for u in expand_unit_group(ug)
-            for tb in node__temporal_block(node=n)
-    )
-    unit_flow_indices_rc = RelationshipClass(
-        :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices
-    )
-    connection_flow_indices_rc = RelationshipClass(
-        :connection_flow_indices_rc, [:connection, :node, :direction, :temporal_block], connection_flow_indices
-    )
-    node_state_indices_rc = RelationshipClass(
-        :node_state_indices_rc, [:node, :temporal_block], node_state_indices
-    )
-    node_slack_indices_rc = RelationshipClass(
-        :node_slack_indices_rc, [:node, :temporal_block], node_slack_indices
-    )
-    units_on_indices_rc = RelationshipClass(
-        :units_on_indices_rc, [:unit, :temporal_block], units_on_indices
-    )
-    @eval begin
-        unit_flow_indices_rc = $unit_flow_indices_rc
-        connection_flow_indices_rc = $connection_flow_indices_rc
-        node_state_indices_rc = $node_state_indices_rc
-        node_slack_indices_rc = $node_slack_indices_rc
-        units_on_indices_rc = $units_on_indices_rc
-    end
+    merge!(connection__from_node.parameter_values, new_connection__from_node_parameter_values)
+    merge!(connection__to_node.parameter_values, new_connection__to_node_parameter_values)
+    merge!(connection__node__node.parameter_values, new_connection__node__node_parameter_values)
 end
 
 # Network stuff
@@ -287,80 +246,79 @@ function generate_network_components()
     # write_lodf_file(model=first(model())) == Symbol(:true) && write_lodfs()
 end
 
-function write_ptdfs()
-    io = open("ptdfs.csv", "w")
-    print(io, "connection,")
-    for n in node(has_ptdf=true)
-        print(io, string(n), ",")
+function generate_direction()
+    from_node = Object(:from_node)
+    to_node = Object(:to_node)
+    direction = ObjectClass(:direction, [from_node, to_node])
+    directions_by_class = Dict(
+        unit__from_node => from_node,
+        unit__to_node => to_node,
+        connection__from_node => from_node,
+        connection__to_node => to_node,
+    )
+    for cls in keys(directions_by_class)
+        push!(cls.object_class_names, :direction)
     end
-    print(io, "\n")
-    for conn in connection(has_ptdf=true)
-        print(io, string(conn), ",")
-        for n in node(has_ptdf=true)
-            print(io, ptdf(connection=conn, node=n), ",")
+    for (cls, d) in directions_by_class
+        map!(rel -> (; rel..., direction=d), cls.relationships, cls.relationships)
+        key_map = Dict(rel => (rel..., d) for rel in keys(cls.parameter_values))
+        for (key, new_key) in key_map
+            cls.parameter_values[new_key] = pop!(cls.parameter_values, key)
         end
-        print(io, "\n")
     end
-    close(io)
+    @eval begin
+        direction = $direction
+        export direction
+    end
 end
 
-function write_lodfs()
-
-    io = open("lodfs.csv", "w")
-    print(io, raw"contingency line,from_node,to node,")
-
-    for conn_mon in connection(connection_monitored=true)
-        print(io, string(conn_mon), ",")
-    end
-    print(io, "\n")
-
-    for conn_cont in connection(connection_contingency=true)
-        n_from, n_to = connection__from_node(connection=conn_cont)
-        print(io, string(conn_cont), ",", string(n_from), ",", string(n_to))
-        for conn_mon_ in connection(connection_monitored=true)
-            print(io, ",")
-            for (conn_cont, conn_mon) in indices(lodf; connection1=conn_cont, connection2=conn_mon_)
-                print(io, lodf(connection1=conn_cont, connection2=conn_mon))
-            end
-        end
-        print(io, "\n")
-    end
-    close(io)
-end
-
-"""
-Generate additional connection relationships for connection_type=:connection_type_lossless_bidirectional.
-
-For connections with this parameter set, only a connection__from_node and connection__to_node need be set
-and this function creates the additional relationships on the fly
-
-"""
-
-function process_connections()
-    for conn in connection(connection_type=:connection_type_lossless_bidirectional)
-        for to_node in connection__to_node(connection=conn)
-            for from_node in connection__from_node(connection=conn)
-                if !( (connection=conn, node=from_node) in connection__to_node.relationships)
-                    push_default_relationship!(connection__to_node, (connection=conn, node=from_node))
-                    connection__to_node.parameter_values[(conn, from_node)][:connection_conv_cap_to_flow]=SpineInterface.callable(1.0)
-                end
-                if !( (connection=conn, node=to_node) in connection__from_node.relationships)
-                    push_default_relationship!(connection__from_node, (connection=conn, node=to_node))
-                    connection__from_node.parameter_values[(conn, to_node)][:connection_conv_cap_to_flow]=SpineInterface.callable(1.0)
-                end
-                if !( (connection=conn, node1=to_node, node2=from_node) in connection__node__node.relationships)
-                    push_default_relationship!(connection__node__node, (connection=conn, node1=to_node, node2=from_node))
-                    connection__node__node.parameter_values[(conn, to_node, from_node)][:fix_ratio_out_in_connection_flow]=SpineInterface.callable(1.0)
-                else
-                    connection__node__node.parameter_values[(conn, to_node, from_node)][:fix_ratio_out_in_connection_flow]=SpineInterface.callable(1.0)
-                end
-                if !( (connection=conn, node1=from_node, node2=to_node) in connection__node__node.relationships)
-                    push_default_relationship!(connection__node__node, (connection=conn, node1=from_node, node2=to_node))
-                    connection__node__node.parameter_values[(conn, from_node, to_node)][:fix_ratio_out_in_connection_flow]=SpineInterface.callable(1.0)
-                else
-                    connection__node__node.parameter_values[(conn, from_node, to_node)][:fix_ratio_out_in_connection_flow]=SpineInterface.callable(1.0)
-                end
-            end
-        end
+function generate_variable_indices()
+    unit_flow_indices = unique(
+        (unit=u, node=n, direction=d, temporal_block=tb)
+        for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
+        for tb in node__temporal_block(node=n)
+    )
+    connection_flow_indices = unique(
+        (connection=conn, node=n, direction=d, temporal_block=tb)
+        for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
+        for tb in node__temporal_block(node=n)
+    )
+    node_state_indices = unique(
+        (node=n, temporal_block=tb)
+        for n in node(has_state=:value_true)
+        for tb in node__temporal_block(node=n)
+    )
+    node_slack_indices = unique(
+        (node=n, temporal_block=tb)
+        for n in indices(node_slack_penalty)
+        for tb in node__temporal_block(node=n)
+    )
+    units_on_indices = unique(
+        (unit=u, temporal_block=tb)
+        for (ug,n) in units_on_resolution()
+            for u in expand_unit_group(ug)
+            for tb in node__temporal_block(node=n)
+    )
+    unit_flow_indices_rc = RelationshipClass(
+        :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices
+    )
+    connection_flow_indices_rc = RelationshipClass(
+        :connection_flow_indices_rc, [:connection, :node, :direction, :temporal_block], connection_flow_indices
+    )
+    node_state_indices_rc = RelationshipClass(
+        :node_state_indices_rc, [:node, :temporal_block], node_state_indices
+    )
+    node_slack_indices_rc = RelationshipClass(
+        :node_slack_indices_rc, [:node, :temporal_block], node_slack_indices
+    )
+    units_on_indices_rc = RelationshipClass(
+        :units_on_indices_rc, [:unit, :temporal_block], units_on_indices
+    )
+    @eval begin
+        unit_flow_indices_rc = $unit_flow_indices_rc
+        connection_flow_indices_rc = $connection_flow_indices_rc
+        node_state_indices_rc = $node_state_indices_rc
+        node_slack_indices_rc = $node_slack_indices_rc
+        units_on_indices_rc = $units_on_indices_rc
     end
 end
