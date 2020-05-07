@@ -39,7 +39,7 @@ Finds and returns all the `stochastic_scenarios` without parents.
 """
 function find_root_scenarios()
     stochastic_tree = parent_stochastic_scenario__child_stochastic_scenario()
-    parents = [x.stochastic_scenario1 for x in stochastic_tree]
+    parents = stochastic_scenario()
     children = [x.stochastic_scenario2 for x in stochastic_tree]
     return setdiff(parents, children)
 end
