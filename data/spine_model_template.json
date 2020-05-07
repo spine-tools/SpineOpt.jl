@@ -10,9 +10,6 @@
         "unit",
         "unit_constraint"
     ],
-    "objects": [
-        ["model", "instance"]
-    ],
     "relationship_classes": [
         ["commodity_group__commodity", ["commodity", "commodity"]],
         ["commodity_group__node_group", ["commodity", "node"]],
