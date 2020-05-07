@@ -17,9 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function preprocess_data_structure(log_level)
-    process_connections()
-    check_islands(log_level)
+function preprocess_data_structure()
+    process_connections()    
     generate_network_components()
     generate_direction()
     generate_variable_indices()

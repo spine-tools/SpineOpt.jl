@@ -19,7 +19,7 @@
 """
     add_constraint_node_injection(m::Model)
 
-Set the node injection equal to the summation of all 'input' flows but connection's. 
+Set the node injection equal to the summation of all 'input' flows but connection's.
 """
 function add_constraint_node_injection!(m::Model)
     @fetch node_injection, node_state, unit_flow = m.ext[:variables]
@@ -32,8 +32,8 @@ function add_constraint_node_injection!(m::Model)
                     node_injection[n, t_after]
                     ==
                     (
-                        + get(node_state, (n, t_before), 0) * state_coeff[(node=n, t=t_before)]
-                        - get(node_state, (n, t_after), 0) * state_coeff[(node=n, t=t_after)]
+                        + get(node_state, (n, t_before), 0) * state_coeff(node=n, t=t_before)
+                        - get(node_state, (n, t_after), 0) * state_coeff(node=n, t=t_after)
                     )
                     / duration(t_after)
                     # Self-discharge commodity losses
@@ -73,4 +73,3 @@ function add_constraint_node_injection!(m::Model)
         end
     end
 end
-
