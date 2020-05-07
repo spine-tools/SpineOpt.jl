@@ -37,7 +37,6 @@ function constraint_connection_flow_lodf_indices()
             active_scenarios = connection_flow_indices_rc(
                 connection=conn_mon,
                 last(connection__from_node(connection=conn_mon))...,
-                direction=direction(),
                 t=t_in_t(t_long=t),
                 _compact=true
             ) # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
@@ -47,7 +46,6 @@ function constraint_connection_flow_lodf_indices()
                 connection_flow_indices_rc(
                     connection=conn_cont,
                     last(connection__from_node(connection=conn_cont))...,
-                    direction=direction(),
                     t=t_in_t(t_long=t),
                     _compact=true
                 ) # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
