@@ -172,6 +172,7 @@ function rerun_spinemodel(
         k += 1
     end
      @logtime level2 "Writing report..." write_report(results, url_out)
+     m
 end
 
 function generate_temporal_structure()

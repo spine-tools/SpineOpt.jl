@@ -32,8 +32,8 @@ function add_constraint_node_injection!(m::Model)
                     node_injection[n, t_after]
                     ==
                     (
-                        + get(node_state, (n, t_before), 0) * state_coeff(node=n, t=t_before)
-                        - get(node_state, (n, t_after), 0) * state_coeff(node=n, t=t_after)
+                        + get(node_state, (n, t_before), 0) * state_coeff[(node=n, t=t_before)]
+                        - get(node_state, (n, t_after), 0) * state_coeff[(node=n, t=t_after)]
                     )
                     / duration(t_after)
                     # Self-discharge commodity losses
