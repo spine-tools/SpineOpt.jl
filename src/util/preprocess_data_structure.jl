@@ -18,6 +18,7 @@
 #############################################################################
 
 function preprocess_data_structure()
+    process_connections()    
     generate_network_components()
     generate_direction()
     generate_variable_indices()
@@ -25,8 +26,8 @@ end
 
 
 function generate_direction()
-    from_node = Object(:from_node, 1)
-    to_node = Object(:to_node, 2)
+    from_node = Object(:from_node)
+    to_node = Object(:to_node)
     direction = ObjectClass(:direction, [from_node, to_node])
     directions_by_class = Dict(
         unit__from_node => from_node,
@@ -66,6 +67,17 @@ function generate_variable_indices()
         for n in node(has_state=:value_true)
         for tb in node__temporal_block(node=n)
     )
+    node_slack_indices = unique(
+        (node=n, temporal_block=tb)
+        for n in indices(node_slack_penalty)
+        for tb in node__temporal_block(node=n)
+    )
+    units_on_indices = unique(
+        (unit=u, temporal_block=tb)
+        for (ug,n) in units_on_resolution()
+            for u in expand_unit_group(ug)
+            for tb in node__temporal_block(node=n)
+    )
     unit_flow_indices_rc = RelationshipClass(
         :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices
     )
@@ -75,10 +87,18 @@ function generate_variable_indices()
     node_state_indices_rc = RelationshipClass(
         :node_state_indices_rc, [:node, :temporal_block], node_state_indices
     )
+    node_slack_indices_rc = RelationshipClass(
+        :node_slack_indices_rc, [:node, :temporal_block], node_slack_indices
+    )
+    units_on_indices_rc = RelationshipClass(
+        :units_on_indices_rc, [:unit, :temporal_block], units_on_indices
+    )
     @eval begin
         unit_flow_indices_rc = $unit_flow_indices_rc
         connection_flow_indices_rc = $connection_flow_indices_rc
         node_state_indices_rc = $node_state_indices_rc
+        node_slack_indices_rc = $node_slack_indices_rc
+        units_on_indices_rc = $units_on_indices_rc
     end
 end
 
@@ -93,9 +113,9 @@ function generate_node_has_ptdf()
             for c in node__commodity(node=n)
             if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
         )
-        node.parameter_values[n][:has_ptdf] = SpineInterface.callable(!isempty(ptdf_comms))
-        node.parameter_values[n][:node_ptdf_threshold] = SpineInterface.callable(
-            reduce(min, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0)
+        node.parameter_values[n][:has_ptdf] = parameter_value(!isempty(ptdf_comms))
+        node.parameter_values[n][:node_ptdf_threshold] = parameter_value(
+            reduce(max, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0.0000001)
         )
     end
     has_ptdf = Parameter(:has_ptdf, [node])
@@ -121,7 +141,7 @@ function generate_connection_has_ptdf()
                 connection=conn, zip((:node1, :node2), connection__from_node(connection=conn))..., _strict=false
             ) == 1
         )
-        connection.parameter_values[conn][:has_ptdf] = SpineInterface.callable(
+        connection.parameter_values[conn][:has_ptdf] = parameter_value(
             is_bidirectional_loseless && all(has_ptdf(node=n) for n in connection__from_node(connection=conn))
         )
     end
@@ -132,15 +152,15 @@ end
 Generate has_lodf and connnection_lodf_tolerance parameters associated to the connection class.
 """
 function generate_connection_has_lodf()
-    for conn in connection(has_ptdf=:value_true)
+    for conn in connection(has_ptdf=true)
         lodf_comms = Tuple(
             c
             for c in commodity(commodity_physics=:commodity_physics_lodf)
             if issubset(connection__from_node(connection=conn), node__commodity(commodity=c))
         )
-        connection.parameter_values[conn][:has_lodf] = SpineInterface.callable(!isempty(lodf_comms))
-        connection.parameter_values[conn][:connnection_lodf_tolerance] = SpineInterface.callable(
-            reduce(min, (commodity_lodf_tolerance(commodity=c) for c in lodf_comms); init=0)
+        connection.parameter_values[conn][:has_lodf] = parameter_value(!isempty(lodf_comms))
+        connection.parameter_values[conn][:connnection_lodf_tolerance] = parameter_value(
+            reduce(max, (commodity_lodf_tolerance(commodity=c) for c in lodf_comms); init=0.05)
         )
     end
     has_lodf = Parameter(:has_lodf, [connection])
@@ -156,7 +176,7 @@ function _ptdf_values()
         n => Bus(
             number=i,
             name=string(n.name),
-            bustype=(node_opt_type(node=n) == :node_opt_type_reference) ? BusTypes.REF : BusTypes.PV,
+            bustype=(node_opf_type(node=n) == :node_opf_type_reference) ? BusTypes.REF : BusTypes.PV,
             angle=0.0,
             voltage=0.0,
             voltagelimits=(min=0.0, max=0.0),
@@ -165,7 +185,7 @@ function _ptdf_values()
             load_zone=LoadZone(nothing),
             ext=Dict{String,Any}()
         )
-        for (i, n) in enumerate(node(has_ptdf=:value_true))
+        for (i, n) in enumerate(node(has_ptdf=true))
     )
     isempty(ps_busses_by_node) && return Dict()
     ps_busses = collect(values(ps_busses_by_node))
@@ -184,14 +204,15 @@ function _ptdf_values()
             rate=0.0,
             anglelimits=(min=0.0, max=0.0)
         )  # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
-        for conn in connection(has_ptdf=:value_true)
+        for conn in connection(has_ptdf=true)
     )
     ps_lines = collect(values(ps_lines_by_connection))
     ps_ptdf = PowerSystems.PTDF(ps_lines, ps_busses)
     Dict(
-        (conn, n) => Dict(:ptdf => SpineInterface.callable(ps_ptdf[line.name, bus.number]))
+        (conn, n) => Dict(:ptdf => parameter_value(ps_ptdf[line.name, bus.number]))
         for (conn, line) in ps_lines_by_connection
         for (n, bus) in ps_busses_by_node
+        if !isapprox(ps_ptdf[line.name, bus.number], 0; atol=node_ptdf_threshold(node=n))
     )
 end
 
@@ -218,7 +239,7 @@ Generate lodf parameter.
 function generate_lodf()
 
     """
-    Given a contingency connection, return a function that given the monitored connection, return the lodf
+    Given a contingency connection, return a function that given the monitored connection, return the lodf.
     """
     function make_lodf_fn(conn_cont)
         n_from, n_to = connection__from_node(connection=conn_cont)
@@ -232,14 +253,14 @@ function generate_lodf()
     end
 
     lodf_values = Dict(
-        (conn_cont, conn_mon) => Dict(:lodf => SpineInterface.callable(lodf_trial))
+        (conn_cont, conn_mon) => Dict(:lodf => parameter_value(lodf_trial))
         for (conn_cont, lodf_fn, tolerance) in (
             (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont))
-            for conn_cont in connection(connection_contingency=:value_true, has_lodf=:value_true)
+            for conn_cont in connection(connection_contingency=:value_true, has_lodf=true)
         )
         for (conn_mon, lodf_trial) in (
             (conn_mon, lodf_fn(conn_mon))
-            for conn_mon in connection(connection_monitored=:value_true, has_lodf=:value_true)
+            for conn_mon in connection(connection_monitored=:value_true, has_lodf=true)
         )
         if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
     )  # NOTE: in my machine, a Dict comprehension is ~4x faster than a Dict built incrementally
@@ -261,22 +282,85 @@ function generate_network_components()
     generate_connection_has_lodf()
     generate_ptdf()
     generate_lodf()
-    write_ptdfs() # NOTE Uncomment this line to write the resulting PTDFs to a csv file
+    # the below needs the parameters write_ptdf_file and write_lodf_file - we can uncomment when we update the template perhaps?
+    # write_ptdf_file(model=first(model())) == Symbol(:true) && write_ptdfs()
+    # write_lodf_file(model=first(model())) == Symbol(:true) && write_lodfs()
 end
 
 function write_ptdfs()
     io = open("ptdfs.csv", "w")
     print(io, "connection,")
-    for n in node(has_ptdf=:value_true)
+    for n in node(has_ptdf=true)
         print(io, string(n), ",")
     end
     print(io, "\n")
-    for conn in connection(has_ptdf=:value_true)
+    for conn in connection(has_ptdf=true)
         print(io, string(conn), ",")
-        for n in node(has_ptdf=:value_true)
+        for n in node(has_ptdf=true)
             print(io, ptdf(connection=conn, node=n), ",")
         end
         print(io, "\n")
     end
     close(io)
+end
+
+function write_lodfs()
+
+    io = open("lodfs.csv", "w")
+    print(io, raw"contingency line,from_node,to node,")
+
+    for conn_mon in connection(connection_monitored=true)
+        print(io, string(conn_mon), ",")
+    end
+    print(io, "\n")
+
+    for conn_cont in connection(connection_contingency=true)
+        n_from, n_to = connection__from_node(connection=conn_cont)
+        print(io, string(conn_cont), ",", string(n_from), ",", string(n_to))
+        for conn_mon_ in connection(connection_monitored=true)
+            print(io, ",")
+            for (conn_cont, conn_mon) in indices(lodf; connection1=conn_cont, connection2=conn_mon_)
+                print(io, lodf(connection1=conn_cont, connection2=conn_mon))
+            end
+        end
+        print(io, "\n")
+    end
+    close(io)
+end
+
+"""
+Generate additional connection relationships for connection_type=:connection_type_lossless_bidirectional.
+
+For connections with this parameter set, only a connection__from_node and connection__to_node need be set
+and this function creates the additional relationships on the fly
+
+"""
+
+function process_connections()
+    for conn in connection(connection_type=:connection_type_lossless_bidirectional)
+        for to_node in connection__to_node(connection=conn)
+            for from_node in connection__from_node(connection=conn)
+                if !( (connection=conn, node=from_node) in connection__to_node.relationships)
+                    push_default_relationship!(connection__to_node, (connection=conn, node=from_node))
+                    connection__to_node.parameter_values[(conn, from_node)][:connection_conv_cap_to_flow]=SpineInterface.callable(1.0)
+                end
+                if !( (connection=conn, node=to_node) in connection__from_node.relationships)
+                    push_default_relationship!(connection__from_node, (connection=conn, node=to_node))
+                    connection__from_node.parameter_values[(conn, to_node)][:connection_conv_cap_to_flow]=SpineInterface.callable(1.0)
+                end
+                if !( (connection=conn, node1=to_node, node2=from_node) in connection__node__node.relationships)
+                    push_default_relationship!(connection__node__node, (connection=conn, node1=to_node, node2=from_node))
+                    connection__node__node.parameter_values[(conn, to_node, from_node)][:fix_ratio_out_in_connection_flow]=SpineInterface.callable(1.0)
+                else
+                    connection__node__node.parameter_values[(conn, to_node, from_node)][:fix_ratio_out_in_connection_flow]=SpineInterface.callable(1.0)
+                end
+                if !( (connection=conn, node1=from_node, node2=to_node) in connection__node__node.relationships)
+                    push_default_relationship!(connection__node__node, (connection=conn, node1=from_node, node2=to_node))
+                    connection__node__node.parameter_values[(conn, from_node, to_node)][:fix_ratio_out_in_connection_flow]=SpineInterface.callable(1.0)
+                else
+                    connection__node__node.parameter_values[(conn, from_node, to_node)][:fix_ratio_out_in_connection_flow]=SpineInterface.callable(1.0)
+                end
+            end
+        end
+    end
 end

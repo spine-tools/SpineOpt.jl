@@ -26,8 +26,7 @@ function start_up_costs(m::Model)
     @fetch units_started_up = m.ext[:variables]
     @expression(
         m,
-        reduce(
-            +,
+        expr_sum(
             start_up_cost[(unit=u, t=t)] * units_started_up[u, t]
             for (u, t) in units_on_indices(unit=indices(start_up_cost));
             init=0

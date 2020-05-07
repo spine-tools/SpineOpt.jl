@@ -34,8 +34,7 @@ function add_constraint_operating_point_sum!(m::Model)
                 m,
                 unit_flow[u, n, d, t]
                 ==
-                + reduce(
-                    +,
+                + expr_sum(
                     + unit_flow_op[u, n, d, op, t]
                     for op in 1:length(operating_points(unit=u, node=n, direction=d));
                     init=0

@@ -31,16 +31,21 @@ The keyword arguments act as filters for each dimension.
 function unit_flow_op_indices(;unit=anything, node=anything, direction=anything, operating_point=anything, t=anything)
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
-    [
-        (unit=u, node=n, direction=d, i=i_, t=t1)
-        for (u_, n_) in indices(operating_points, unit=unit, node=node)
-        for (u, n, d, tb) in unit_flow_indices_rc(unit=u_, node=n_, direction=direction, _compact=false)
+    (
+        (unit=u, node=n, direction=d, i=i, t=t1)
+        for (u, n) in indices(operating_points, unit=unit, node=node)
+        for (u, n, d, tb) in unit_flow_indices_rc(unit=u, node=n, direction=direction, _compact=false)
+        for i in intersect(operating_point, 1:length(operating_points(unit=u, node=n, direction=d)))
         for t1 in time_slice(temporal_block=tb, t=t)
-        for i_ in intersect(operating_point, 1:length(operating_points(unit=u_, node=n_, direction=d)))
-    ]
+    )
 end
 
-fix_unit_flow_op_(x) = fix_unit_flow_op(unit=x.unit, node=x.node, direction=x.direction, i=x.i, t=x.t, _strict=false)
-
-create_variable_unit_flow_op!(m::Model) = create_variable!(m, :unit_flow_op, unit_flow_op_indices; lb=x -> 0)
-fix_variable_unit_flow_op!(m::Model) = fix_variable!(m, :unit_flow_op, unit_flow_op_indices, fix_unit_flow_op_)
+function add_variable_unit_flow_op!(m::Model)
+    add_variable!(
+        m,
+        :unit_flow_op,
+        unit_flow_op_indices;
+        lb=x -> 0,
+        fix_value=x -> fix_unit_flow_op(unit=x.unit, node=x.node, direction=x.direction, i=x.i, t=x.t, _strict=false)
+    )
+end

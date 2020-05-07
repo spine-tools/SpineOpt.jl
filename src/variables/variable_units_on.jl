@@ -24,19 +24,25 @@ A list of `NamedTuple`s corresponding to indices of the `units_on` variable.
 The keyword arguments act as filters for each dimension.
 """
 function units_on_indices(;unit=anything, t=anything)
-    [
-        (unit=u, t=t_)
-        for u in intersect(SpineModel.unit(), unit)
-        for t_ in t_highest_resolution(x.t for x in unit_flow_indices(unit=u, t=t))
-    ]
+    unit = expand_unit_group(unit)
+    (
+        (unit=u, t=t1)
+        for (u, tb) in units_on_indices_rc(unit=unit, _compact=false)
+        for t1 in time_slice(temporal_block=tb, t=t)
+    )
 end
 
-fix_units_on_(x) = fix_units_on(unit=x.unit, t=x.t, _strict=false)
+
 units_on_bin(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_binary
 units_on_int(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_integer
 
-function create_variable_units_on!(m::Model)
-    create_variable!(m, :units_on, units_on_indices; lb=x -> 0, bin=units_on_bin, int=units_on_int)
+function add_variable_units_on!(m::Model)
+    add_variable!(
+    	m,
+    	:units_on, units_on_indices;
+    	lb=x -> 0,
+    	bin=units_on_bin,
+    	int=units_on_int,
+    	fix_value=x -> fix_units_on(unit=x.unit, t=x.t, _strict=false)
+    )
 end
-
-fix_variable_units_on!(m::Model) = fix_variable!(m, :units_on, units_on_indices, fix_units_on_)

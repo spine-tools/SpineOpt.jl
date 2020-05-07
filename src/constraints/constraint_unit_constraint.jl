@@ -32,10 +32,9 @@ function add_constraint_unit_constraint!(m::Model)
         for t in t_lowest_resolution(x.t for (u, n) in involved_unit_node for x in unit_flow_indices(unit=u, node=n))
             cons[uc, t] = sense_constraint(
                 m,
-                + reduce(
-                    +,
-                    + unit_flow_op[u, n, d, op, t_short] 
-                    * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=op, t=t_short)] 
+                + expr_sum(
+                    + unit_flow_op[u, n, d, op, t_short]
+                    * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=op, t=t_short)]
                     * duration(t_short)
                     for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
                     for (u, n, d, op, t_short) in unit_flow_op_indices(
@@ -43,10 +42,9 @@ function add_constraint_unit_constraint!(m::Model)
                     );
                     init=0
                 )
-                + reduce(
-                    +,
-                    + unit_flow[u, n, d, t_short] 
-                    * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=1, t=t_short)] 
+                + expr_sum(
+                    + unit_flow[u, n, d, t_short]
+                    * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=1, t=t_short)]
                     * duration(t_short)
                     for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
                     for (u, n, d, t_short) in unit_flow_indices(
@@ -55,10 +53,9 @@ function add_constraint_unit_constraint!(m::Model)
                     if isempty(unit_flow_op_indices(unit=u, node=n, direction=d, t=t_short));
                     init=0
                 )
-                + reduce(
-                    +,
-                    + unit_flow_op[u, n, d, op, t_short] 
-                    * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=op, t=t_short)] 
+                + expr_sum(
+                    + unit_flow_op[u, n, d, op, t_short]
+                    * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=op, t=t_short)]
                     * duration(t_short)
                     for (u, n) in unit__to_node__unit_constraint(unit_constraint=uc)
                     for (u, n, d, op, t_short) in unit_flow_op_indices(
@@ -66,10 +63,9 @@ function add_constraint_unit_constraint!(m::Model)
                     );
                     init=0
                 )
-                + reduce(
-                    +,
-                    + unit_flow[u, n, d, t_short] 
-                    * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=1, t=t_short)] 
+                + expr_sum(
+                    + unit_flow[u, n, d, t_short]
+                    * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=1, t=t_short)]
                     * duration(t_short)
                     for (u, n) in unit__to_node__unit_constraint(unit_constraint=uc)
                     for (u, n, d, t_short) in unit_flow_indices(
@@ -78,13 +74,12 @@ function add_constraint_unit_constraint!(m::Model)
                     if isempty(unit_flow_op_indices(unit=u, node=n, direction=d, t=t_short));
                     init=0
                 )
-                + reduce(
-                    +,
-                    + units_on[u, t_short] 
-                    * units_on_coefficient[(unit_constraint=uc, unit=u, t=t_short)] 
-                    * duration(t_short)
+                + expr_sum(
+                    + units_on[u, t1]
+                    * units_on_coefficient[(unit_constraint=uc, unit=u, t=t1)]
+                    * min(duration(t1),duration(t))
                     for u in unit__unit_constraint(unit_constraint=uc)
-                    for (u, t_short) in units_on_indices(unit=u, t=t_in_t(t_long=t));
+                    for (u, t1) in units_on_indices(unit=u, t=t_overlaps_t(t));
                     init=0
                 ),
                 constraint_sense(unit_constraint=uc),

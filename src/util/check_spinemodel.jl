@@ -45,6 +45,7 @@ function check_islands(log_level)
             @log     level3 "The network consists of $(n_islands) islands"
             if n_islands > 1
                 @warn "The network of commodity $(c) consists of multiple islands, this may end badly."
+                # add diagnostic option to print island_node which will tell the user which nodes are in which islands
             end
         end
     end
@@ -65,7 +66,7 @@ function islands(c)
     for n in node__commodity(commodity=c)
         visited_d[n] = false
     end
-    
+
     for n in node__commodity(commodity=c)
         if !visited_d[n]
             island_count = island_count + 1

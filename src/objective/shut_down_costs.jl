@@ -26,8 +26,7 @@ function shut_down_costs(m::Model)
     @fetch units_shut_down = m.ext[:variables]
     @expression(
         m,
-        reduce(
-            +,
+        expr_sum(
             shut_down_cost[(unit=u, t=t)] * units_shut_down[u, t]
             for (u, t) in units_on_indices(unit=indices(shut_down_cost));
             init=0

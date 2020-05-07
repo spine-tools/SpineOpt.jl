@@ -22,23 +22,12 @@
 A set of tuples for indexing the `node_state` variable. Any filtering options can be specified
 for `node`, and `t`.
 """
-function node_slack_pos_indices(;node=anything, t=anything)
-    inds = NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}[
-        (node=n, t=t)
-        for n in indices(node_slack_penalty)
-        for (n, tb) in node__temporal_block(node=n, _compact=false)
-        for t in time_slice(temporal_block=tb, t=t)
-    ]
-    unique!(inds)
+function node_slack_indices(;node=anything, t=anything)
+    unique(
+        (node=n, t=t_)
+        for (n, tb) in node_slack_indices_rc(node=node, _compact=false)
+        for t_ in time_slice(temporal_block=tb, t=t)
+    )
 end
 
-fix_node_slack_pos(x) = fix_node_slack_pos(node=x.node, t=x.t, _strict=false)
-node_slack_pos_lb(x) = 0
-
-create_variable_node_slack_pos!(m::Model) = create_variable!(
-    m,
-    :node_slack_pos,
-    node_slack_pos_indices;
-    lb=node_slack_pos_lb
-)
-fix_variable_node_slack_pos!(m::Model) = fix_variable!(m, :node_slack_pos, node_slack_pos_indices, fix_node_slack_pos_)
+add_variable_node_slack_pos!(m::Model) = add_variable!(m, :node_slack_pos, node_slack_indices; lb=x -> 0)

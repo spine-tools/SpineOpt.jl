@@ -29,8 +29,7 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
         for t in t_lowest_resolution(x.t for x in unit_flow_indices(unit=u, node=[n1, n2]))
             cons[u, n1, n2, t] = sense_constraint(
                 m,
-                + reduce(
-                    +,
+                + expr_sum(
                     unit_flow[u, n1, d1, t_short] * duration(t_short)
                     for (u, n1, d1, t_short) in unit_flow_indices(
                         unit=u, node=n1, direction=d1, t=t_in_t(t_long=t)
@@ -40,8 +39,7 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
                 ,
                 sense,
                 + ratio[(unit=u, node1=n1, node2=n2, t=t)]
-                * reduce(
-                    +,
+                * expr_sum(
                     unit_flow[u, n2, d2, t_short] * duration(t_short)
                     for (u, n2, d2, t_short) in unit_flow_indices(
                         unit=u, node=n2, direction=d2, t=t_in_t(t_long=t)
@@ -49,10 +47,9 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
                     init=0
                 )
                 + units_on_coefficient[(unit=u, node1=n1, node2=n2, t=t)]
-                * reduce(
-                    +,
-                    units_on[u, t_short] * duration(t_short)
-                    for (u, t_short) in units_on_indices(unit=u, t=t_in_t(t_long=t));
+                * expr_sum(
+                    units_on[u, t1] * min(duration(t1), duration(t))
+                    for (u, t1) in units_on_indices(unit=u, t=t_overlaps_t(t));
                     init=0
                 ),
 

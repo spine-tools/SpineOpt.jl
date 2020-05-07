@@ -24,14 +24,10 @@ function objective_penalties(m::Model)
     @fetch node_slack_pos, node_slack_neg = m.ext[:variables]
     @expression(
         m,
-        reduce(
-            +,
-            (
-                + node_slack_neg[n, t]
-                + node_slack_pos[n, t]
-            ) * duration(t) * node_slack_penalty[(node=n, t=t)]
+        expr_sum(
+            (node_slack_neg[n, t] + node_slack_pos[n, t]) * duration(t) * node_slack_penalty[(node=n, t=t)]
             for n in indices(node_slack_penalty)
-            for (n, t) in node_slack_pos_indices(node=n);
+            for (n, t) in node_slack_indices(node=n);
             init=0
         )
     )

@@ -16,29 +16,4 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    node_state_indices(filtering_options...)
-
-A set of tuples for indexing the `node_state` variable. Any filtering options can be specified
-for `node`, and `t`.
-"""
-function node_slack_neg_indices(;node=anything, t=anything)
-    inds = NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}[
-        (node=n, t=t)
-        for n in indices(node_slack_penalty)
-        for (n, tb) in node__temporal_block(node=n, _compact=false)
-        for t in time_slice(temporal_block=tb, t=t)
-    ]
-    unique!(inds)
-end
-
-fix_node_slack_neg(x) = fix_node_slack_neg(node=x.node, t=x.t, _strict=false)
-node_slack_neg_lb(x) = 0
-
-create_variable_node_slack_neg!(m::Model) = create_variable!(
-    m,
-    :node_slack_neg,
-    node_slack_neg_indices;
-    lb=node_slack_neg_lb
-)
-fix_variable_node_slack_neg!(m::Model) = fix_variable!(m, :node_slack_neg, node_slack_neg_indices, fix_node_slack_neg_)
+add_variable_node_slack_neg!(m::Model) = add_variable!(m, :node_slack_neg, node_slack_indices; lb=x -> 0)
