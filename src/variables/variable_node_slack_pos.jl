@@ -22,7 +22,7 @@
 A set of tuples for indexing the `node_state` variable. Any filtering options can be specified
 for `node`, `s`, and `t`.
 """
-function node_slack_pos_indices(;node=anything, stochastic_scenario=anything, t=anything)
+function node_slack_indices(;node=anything, stochastic_scenario=anything, t=anything)
     inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
         (node=n, stochastic_scenario=s, t=t)
         for n in filter(n -> n in node, collect(indices(node_slack_penalty)))

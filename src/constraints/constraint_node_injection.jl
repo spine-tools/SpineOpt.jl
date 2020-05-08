@@ -28,9 +28,13 @@ function constraint_node_injection_indices()
     node_injection_indices = []
     for (n, tb) in node__temporal_block()
         for t_after in time_slice(temporal_block=tb)
+            active_scenarios = Array{Object,1}() # Ensure type stability
             t_before = t_before_t(t_after=t_after)
             # `node_state` on `t_after`
-            active_scenarios = node_state_indices_rc(node=n, t=t_after, _compact=true)
+            append!(
+                active_scenarios,
+                node_state_indices_rc(node=n, t=t_after, _compact=true)
+            )
             # `node_state` on `t_before`
             append!(
                 active_scenarios,
@@ -65,7 +69,7 @@ function constraint_node_injection_indices()
             for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
                 push!(
                     node_injection_indices,
-                    (node=n, stochastic_scenario=s, t_before=t_before, t_after=t_after)
+                    (node=n, stochastic_scenario=path, t_before=t_before, t_after=t_after)
                 )
             end
         end

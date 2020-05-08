@@ -23,12 +23,7 @@ A set of tuples for indexing the `node_state` variable. Any filtering options ca
 for `node`, `s`, and `t`.
 """
 function node_state_indices(;node=anything, stochastic_scenario=anything, t=anything)
-    inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
-        (node=n, stochastic_scenario=s, t=t)
-        for n in node(node=node; has_state=:value_true)
-        for (n, s, t) in node_stochastic_time_indices(node=n, stochastic_scenario=stochastic_scenario, t=t)
-    ]
-    unique!(inds)
+    node_state_indices_rc(node=node, stochastic_scenario=stochastic_scenario, t=t, _compact=false)
 end
 
 function add_variable_node_state!(m::Model)

@@ -152,7 +152,6 @@ function run_spinemodel(
 end
 
 function rerun_spinemodel(
-        url_in::String,
         url_out::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
         add_constraints=m -> nothing,
