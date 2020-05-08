@@ -310,7 +310,7 @@ Generates the `node_stochastic_scenario_weight` parameter for easier access to t
 """
 function generate_node_stochastic_scenario_weight(all_stochastic_trees::Dict)
     node_scenario = []
-    parameter_vals = Dict{Tuple{Vararg{Object}},Dict{Symbol,AbstractCallable}}()
+    parameter_vals = Dict{Tuple{Vararg{Object}},Dict{Symbol,AbstractParameterValue}}()
     for (node, structure) in node__stochastic_structure()
         if length(node__stochastic_structure(node=node)) > 1
             error("Node `$(node)` cannot have more than one `stochastic_structure`!")
@@ -318,14 +318,14 @@ function generate_node_stochastic_scenario_weight(all_stochastic_trees::Dict)
         scenarios = keys(all_stochastic_trees[structure])
         for scen in scenarios
             push!(node_scenario, (node=node, stochastic_scenario=scen))
-            parameter_vals[(node, scen)] = Dict{Symbol,AbstractCallable}()
+            parameter_vals[(node, scen)] = Dict{Symbol,AbstractParameterValue}()
             val = all_stochastic_trees[structure][scen].weight
             if isnothing(val)
                 error("`stochastic_structure` `$(structure)` lacks a `weight_relative_to_parent` for `stochastic_scenario` `$(scen)`!")
             end
             push!(
                 parameter_vals[(node, scen)],
-                :node_stochastic_scenario_weight => SpineInterface.ScalarCallable(val)
+                :node_stochastic_scenario_weight => SpineInterface.ScalarParameterValue(val)
             )
         end
     end
