@@ -69,7 +69,8 @@ function add_constraint_connection_flow_ptdf!(m::Model)
             + expr_sum(
                 + get(connection_flow, (conn, n_to, direction(:to_node), s, t), 0)
                 - get(connection_flow, (conn, n_to, direction(:from_node), s, t), 0)
-                for s in stochastic_path
+                for s in stochastic_path;
+                init=0
             )
             ==
             + expr_sum(

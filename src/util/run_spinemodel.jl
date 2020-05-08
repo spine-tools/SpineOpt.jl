@@ -239,12 +239,6 @@ function rerun_spinemodel(
      m
 end
 
-function generate_temporal_structure()
-    generate_current_window()
-    generate_time_slice()
-    generate_time_slice_relationships()
-end
-
 function optimize_model!(m::Model)
     write_mps_file(model=first(model())) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,

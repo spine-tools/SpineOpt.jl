@@ -33,7 +33,7 @@
         ["unit_group__commodity_group", ["unit", "commodity"]],
         ["unit_group__unit", ["unit", "unit"]],
         ["parent_stochastic_scenario__child_stochastic_scenario", ["stochastic_scenario", "stochastic_scenario"]],
-        ["stochastic_structure__stochastic_scenario", ["stochastic_structure", "stochastic_scenario"]]
+        ["stochastic_structure__stochastic_scenario", ["stochastic_structure", "stochastic_scenario"]],
         ["units_on_resolution",["unit","node"]]
     ],
     "parameter_value_lists": [
