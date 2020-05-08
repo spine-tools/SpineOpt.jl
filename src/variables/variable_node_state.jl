@@ -25,18 +25,18 @@ for `node`, `s`, and `t`.
 function node_state_indices(;node=anything, stochastic_scenario=anything, t=anything)
     inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
         (node=n, stochastic_scenario=s, t=t)
-        for (n, s, t) in node_stochastic_time_indices(node=node, stochastic_scenario=stochastic_scenario, t=t)
+        for n in node(node=node; has_state=:value_true)
+        for (n, s, t) in node_stochastic_time_indices(node=n, stochastic_scenario=stochastic_scenario, t=t)
     ]
     unique!(inds)
 end
 
-fix_node_state_(x) = fix_node_state(node=x.node, t=x.t, _strict=false)
-node_state_lb(x) = node_state_min(node=x.node)
-
-create_variable_node_state!(m::Model) = create_variable!(
-    m,
-    :node_state,
-    node_state_indices;
-    lb=node_state_lb
-)
-fix_variable_node_state!(m::Model) = fix_variable!(m, :node_state, node_state_indices, fix_node_state_)
+function add_variable_node_state!(m::Model)
+    add_variable!(
+        m, 
+        :node_state, 
+        node_state_indices; 
+        lb=x -> node_state_min(node=x.node),
+        fix_value=x -> fix_node_state(node=x.node, t=x.t, _strict=false)
+    )
+end

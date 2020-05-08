@@ -25,35 +25,31 @@ function taxes(m::Model)
     @fetch unit_flow = m.ext[:variables]
     @expression(
         m,
-        + reduce(
-            +,
-            unit_flow[u, n, d, s, t] * duration(t)
+        + expr_sum(
+            + unit_flow[u, n, d, s, t] * duration(t)
             * tax_net_unit_flow[(node=n, t=t)]
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for (n,) in indices(tax_net_unit_flow)
             for (u, n, d, s, t) in unit_flow_indices(node=n, direction=direction(:to_node));
             init=0
         )
-        - reduce(
-            +,
-            unit_flow[u, n, d, s, t] * duration(t)
+        - expr_sum(
+            + unit_flow[u, n, d, s, t] * duration(t)
             * tax_net_unit_flow[(node=n, t=t)]
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for (n,) in indices(tax_net_unit_flow)
             for (u, n, d, s, t) in unit_flow_indices(node=n, direction=direction(:from_node));
             init=0
         )
-        + reduce(
-            +,
-            unit_flow[u, n, d, s, t] * duration(t)
+        + expr_sum(
+            + unit_flow[u, n, d, s, t] * duration(t)
             * tax_out_unit_flow[(node=n, t=t)]
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for (n,) in indices(tax_out_unit_flow)
             for (u, n, d, s, t) in unit_flow_indices(node=n, direction=direction(:from_node));
             init=0
         )
-        + reduce(
-            +,
+        + expr_sum(
             unit_flow[u, n, d, s, t] * duration(t)
             * tax_in_unit_flow[(node=n, t=t)]
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]

@@ -140,22 +140,21 @@ function run_spinemodel(
     @logtime level2 "Creating stochastic structure..." generate_stochastic_structure()
     @logtime level2 "Creating variable indices..." generate_variable_indices()
     check_islands(log_level)
-    rerun_spinemodel(
-        url_in,
+    m = rerun_spinemodel(
         url_out;
         with_optimizer=with_optimizer,
-        cleanup=cleanup,
         add_constraints=add_constraints,
         update_constraints=update_constraints,
         log_level=log_level
     )
+    # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
+    m
 end
 
 function rerun_spinemodel(
         url_in::String,
         url_out::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
-        cleanup=true,
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
         log_level=3)
@@ -164,21 +163,29 @@ function rerun_spinemodel(
     level2 = log_level >= 2
     level3 = log_level >= 3
     results = Dict()
+    m = Model(with_optimizer)
+    m.ext[:variables] = Dict{Symbol,Dict}()
+    m.ext[:variables_definition] = Dict{Symbol,Dict}()
+    m.ext[:values] = Dict{Symbol,Dict}()
+    m.ext[:constraints] = Dict{Symbol,Dict}()
     @log level1 "Window 1: $current_window"
-    @logtime level2 "Initializing model..." begin
-        m = Model(with_optimizer)
-        println()
-        m.ext[:variables] = Dict{Symbol,Dict}()
-        m.ext[:variables_lb] = Dict{Symbol,Any}()
-        m.ext[:variables_ub] = Dict{Symbol,Any}()
-        m.ext[:values] = Dict{Symbol,Dict}()
-        m.ext[:constraints] = Dict{Symbol,Dict}()
-        @logtime level3  "creating variables" create_variables!(m)
-        @logtime level3  "handle fix variables" fix_variables!(m)
-        @logtime level3  "objective function" set_objective!(m)
+    @logtime level2 "Adding variables...\n" begin
+        @logtime level3 "- [variable_units_available]" add_variable_units_available!(m)
+        @logtime level3 "- [variable_units_on]" add_variable_units_on!(m)
+        @logtime level3 "- [variable_units_started_up]" add_variable_units_started_up!(m)
+        @logtime level3 "- [variable_units_shut_down]" add_variable_units_shut_down!(m)
+        @logtime level3 "- [variable_unit_flow]" add_variable_unit_flow!(m)
+        @logtime level3 "- [variable_unit_flow_op]" add_variable_unit_flow_op!(m)
+        @logtime level3 "- [variable_connection_flow]" add_variable_connection_flow!(m)
+        @logtime level3 "- [variable_node_state]" add_variable_node_state!(m)
+        @logtime level3 "- [variable_node_slack_pos]" add_variable_node_slack_pos!(m)
+        @logtime level3 "- [variable_node_slack_neg]" add_variable_node_slack_neg!(m)
+        @logtime level3 "- [variable_node_injection]" add_variable_node_injection!(m)
     end
+    @logtime level2 "Fixing variable values..." fix_variables!(m)
     @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
+        @logtime level3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
         @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
         @logtime level3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m)
         @logtime level3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
@@ -210,6 +217,7 @@ function rerun_spinemodel(
         @logtime level3 "- [constraint_user]" add_constraints(m)
         @logtime level3 "- [setting constraint names]" name_constraints!(m)
     end
+    @logtime level2 "Setting objective..." set_objective!(m)
     k = 2
     while optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
@@ -220,25 +228,28 @@ function rerun_spinemodel(
         end
         roll_temporal_structure() || break
         @log level1 "Window $k: $current_window"
-        @logtime level2 "Updating model..." begin
-            update_variables!(m)
-            fix_variables!(m)
-            update_varying_objective!(m)
-        end
-        @logtime level2 "Updating varying constraints..." update_varying_constraints!(m)
+        @logtime level2 "Updating variables..." update_variables!(m)
+        @logtime level2 "Fixing variable values..." fix_variables!(m)
+        @logtime level2 "Updating constraints..." update_varying_constraints!(m)
         @logtime level2 "Updating user constraints..." update_constraints(m)
+        @logtime level2 "Updating objective..." update_varying_objective!(m)
         k += 1
     end
      @logtime level2 "Writing report..." write_report(results, url_out)
-    # TODO: cleanup && notusing_spinedb(url_in, @__MODULE__)
-    m
+     m
+end
+
+function generate_temporal_structure()
+    generate_current_window()
+    generate_time_slice()
+    generate_time_slice_relationships()
 end
 
 function optimize_model!(m::Model)
     write_mps_file(model=first(model())) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
-    optimize!(m)
+    @logtime true "Optimizing model..." optimize!(m)
     if termination_status(m) == MOI.OPTIMAL
         true
     else
@@ -276,13 +287,10 @@ function write_report(results, default_url)
         url = output_db_url(report=rpt, _strict=false)
         url === nothing && (url = default_url)
         url_reports = get!(reports, url, Dict())
-        report = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
-        d = report[out.name] = Dict{NamedTuple,TimeSeries}()
-        for (k, v) in pulldims(value, :t)
-            inds = first.(v)
-            vals = last.(v)
-            d[k] = TimeSeries(inds, vals, false, false)
-        end
+        output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
+        output_params[out.name] = Dict{NamedTuple,TimeSeries}(
+            k => TimeSeries(first.(v), last.(v), false, false) for (k, v) in pulldims(value, :t)
+        )
     end
     for (url, url_reports) in reports
         for (rpt_name, output_params) in url_reports

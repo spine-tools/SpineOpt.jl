@@ -31,9 +31,9 @@ function add_constraint_node_state_capacity!(m::Model)
         for (n, s, t) in node_state_indices(node=n)
             cons[n, s, t] = @constraint(
                 m,
-                node_state[n, s, t]
+                + node_state[n, s, t]
                 <=
-                node_state_cap[(node=n, t=t)] # TODO: Stochastic parameters
+                + node_state_cap[(node=n, t=t)] # TODO: Stochastic parameters
             )
         end
     end

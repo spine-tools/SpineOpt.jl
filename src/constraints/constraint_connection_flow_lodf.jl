@@ -79,8 +79,7 @@ function add_constraint_connection_flow_lodf!(m::Model)
             <=
             (
                 # flow in monitored connection
-                + reduce(
-                    +,
+                + expr_sum(
                     + connection_flow[conn_mon, n_mon_to, direction(:to_node), s, t_short]
                     - connection_flow[conn_mon, n_mon_to, direction(:from_node), s, t_short]
                     for (conn_mon, n_mon_to, d, t_short) in connection_flow_indices(;
@@ -93,8 +92,7 @@ function add_constraint_connection_flow_lodf!(m::Model)
                 )
                 # excess flow due to outage on contingency connection
                 + lodf(connection1=conn_cont, connection2=conn_mon)
-                * reduce(
-                    +,
+                * expr_sum(
                     + connection_flow[conn_cont, n_cont_to, direction(:to_node), s, t_short]
                     - connection_flow[conn_cont, n_cont_to, direction(:from_node), s, t_short]
                     for (conn_cont, n_cont_to, d, t_short) in connection_flow_indices(;

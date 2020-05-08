@@ -61,19 +61,19 @@ function add_constraint_unit_flow_capacity!(m::Model)
     for (u, n, d, stochastic_path, t) in constraint_unit_flow_capacity_indices()
         cons[u, n, d, stochastic_path, t] = @constraint(
             m,
-            reduce(
-                +,
-                get(unit_flow, (u, n, d, s, t), 0)
-                for s in stochastic_path;
+            expr_sum(
+                + unit_flow[u, n, d, s, t]
+                for (u, n, d, s, t) in unit_flow_indices(
+                    unit=u, node=n, direction=d, stochastic_scenario=stochastic_path, t=t
+                );
                 init=0
             ) * duration(t)
             <=
             + unit_capacity[(unit=u, node=n, direction=d, t=t)] # TODO: Stochastic parameters
             * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
-            * reduce(
-                +,
-                units_on[u, s, t_short] * duration(t_short)
-                for (u, s, t_short) in units_on_indices(unit=u, stochastic_scenario=stochastic_path, t=t_in_t(t_long=t));
+            * expr_sum(
+                units_on[u, s, t1] * min(duration(t1),duration(t))
+                for (u, s, t1) in units_on_indices(unit=u, stochastic_scenario=stochastic_path, t=t_overlaps_t(t));
                 init=0
             )
         )

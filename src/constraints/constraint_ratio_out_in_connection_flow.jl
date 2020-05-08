@@ -68,9 +68,8 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
     for (conn, n_out, n_in, stochastic_path, t) in constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
         con = cons[conn, n_out, n_in, t] = sense_constraint(
             m,
-            + reduce(
-                +,
-                connection_flow[conn, n_out, d, s, t_short] * duration(t_short)
+            + expr_sum(
+                + connection_flow[conn, n_out, d, s, t_short] * duration(t_short)
                 for (conn, n_out, d, s, t_short) in connection_flow_indices(
                     connection=conn, node=n_out, direction=direction(:to_node), stochastic_scenario=stochastic_path, t=t_in_t(t_long=t)
                 );
@@ -78,9 +77,8 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
             ),
             sense,
             + ratio_out_in[(connection=conn, node1=n_out, node2=n_in, t=t)]
-            * reduce(
-                +,
-                connection_flow[conn, n_in, d, s, t_short]
+            * expr_sum(
+                + connection_flow[conn, n_in, d, s, t_short]
                 * overlap_duration(t_short, t - connection_flow_delay(connection=conn, node1=n_out, node2=n_in))
                 for (conn, n_in, d, s, t_short) in connection_flow_indices(
                     connection=conn,

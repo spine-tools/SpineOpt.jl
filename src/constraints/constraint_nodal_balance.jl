@@ -16,51 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    constraint_nodal_balance_indices()
-
-Forms the stochastic index set for the `:nodal_balance` constraint.
-Uses stochastic path indices due to potential connections to other `nodes`.
-"""
-function constraint_nodal_balance_indices()
-    nodal_balance_indices = []
-    for (n, tb) in node__temporal_block()
-        for t_after in time_slice(temporal_block=tb)
-            t_before = first(t_before_t(t_after=t_after))
-            # This `node` on `t_after`
-            active_scenarios = node_stochastic_time_indices_rc(node=n, t=t_after, _compact=true)
-            # This `node` on `t_before`
-            append!(
-                active_scenarios,
-                all_node_stochastic_time_indices_rc(node=n, t=t_before, _compact=true)
-            )
-            # Diffusion from this `node`
-            for (n, n_) in node__node(node1=n)
-                append!(
-                    active_scenarios,
-                    node_stochastic_time_indices_rc(node=n_, t=t_after, _compact=true)
-                )
-            end
-            # Diffusion to this `node`
-            for (n_, n) in node__node(node2=n)
-                append!(
-                    active_scenarios,
-                    node_stochastic_time_indices_rc(node=n_, t=t_after, _compact=true)
-                )
-            end
-            # Find stochastic paths for `active_scenarios`
-            unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
-                push!(
-                    nodal_balance_indices,
-                    (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
-                )
-            end
-        end
-    end
-    return unique!(nodal_balance_indices)
-end
-
 
 """
     add_constraint_nodal_balance!(m::Model)
@@ -68,101 +23,38 @@ end
 Balance equation for nodes.
 """
 function add_constraint_nodal_balance!(m::Model)
-    @fetch node_state, connection_flow, unit_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
+    @fetch node_injection, connection_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
     cons = m.ext[:constraints][:nodal_balance] = Dict()
-    for (n, stochastic_path, t_before, t_after) in constraint_nodal_balance_indices()
+    for (n, s, t) in node_stochastic_time_indices()
         # Skip nodes that are part of a node group having balance_type_group
         any(balance_type(node=ng) === :balance_type_group for ng in node_group__node(node2=n)) && continue
-        cons[n, stochastic_path, t_before, t_after] = @constraint(
+        cons[n, s, t] = @constraint(
             m,
-            # Change in node commodity content
-            reduce(
-                +,
-                (
-                    get(node_state, (n, s, t_after), 0) * state_coeff[(node=n, t=t_after)]
-                    - get(node_state, (n, s, t_before), 0) * state_coeff[(node=n, t=t_before)]
-                ) for s in stochastic_path;
-                init = 0
-            )
-            / duration(t_after)
-            ==
-            # Self-discharge commodity losses
-            - reduce(
-                +,
-                get(node_state, (n, s, t_after), 0) * frac_state_loss[(node=n, t=t_after)]
-                for s in stochastic_path;
-                init = 0
-            )
-            # Diffusion of commodity from this node to other nodes
-            - reduce(
-                +,
-                get(node_state, (n, s, t_after), 0) * diff_coeff[(node1=n, node2=n_, t=t_after)]
-                for n_ in node__node(node1=n)
-                for s in stochastic_path;
-                init = 0
-            )
-            # Diffusion of commodity from other nodes to this one
-            + reduce(
-                +,
-                get(node_state, (n_, s, t_after), 0) * diff_coeff[(node1=n_, node2=n, t=t_after)]
-                for n_ in node__node(node2=n)
-                for s in stochastic_path;
-                init = 0
-            )
-            # Commodity flows from units
-            + reduce(
-                +,
-                unit_flow[u, n, d, s, t_short]
-                for (u, n, d, s, t_short) in unit_flow_indices(
-                    node=n, direction=direction(:to_node), stochastic_scenario=stochastic_path, t=t_in_t(t_long=t_after)
-                );
-                init=0
-            )
-            # Commodity flows to units
-            - reduce(
-                +,
-                unit_flow[u, n, d, s, t_short]
-                for (u, n, d, s, t_short) in unit_flow_indices(
-                    node=n, direction=direction(:from_node), stochastic_scenario=stochastic_path, t=t_in_t(t_long=t_after)
-                );
-                init=0
-            )
+            # Net injection
+            + node_injection[n, s, t]
             # Commodity flows from connections
-            + reduce(
-                +,
-                connection_flow[conn, n, d, s, t_short]
-                for (conn, n, d, s, t_short) in connection_flow_indices(
-                    node=n, direction=direction(:to_node), stochastic_scenario=stochastic_path, t=t_in_t(t_long=t_after)
+            + expr_sum(
+                connection_flow[conn, n, d, s, t]
+                for (conn, n, d, s, t) in connection_flow_indices(
+                    node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
                 )
                 if !(balance_type(node=n) === :balance_type_group && _is_internal(conn, n));
                 init=0
             )
             # Commodity flows to connections
-            - reduce(
-                +,
-                connection_flow[conn, n, d, s, t_short]
-                for (conn, n, d, s, t_short) in connection_flow_indices(
-                    node=n, direction=direction(:from_node), stochastic_scenario=stochastic_path, t=t_in_t(t_long=t_after)
+            - expr_sum(
+                connection_flow[conn, n, d, s, t]
+                for (conn, n, d, s, t) in connection_flow_indices(
+                    node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
                 )
                 if !(balance_type(node=n) === :balance_type_group && _is_internal(conn, n));
                 init=0
             )
-            # Explicit nodal demand
-            - demand[(node=n, t=t_after)]
-            # Fractional demand
-            - reduce(
-                +,
-                fractional_demand[(node1=ng, node2=n, t=t_after)] * demand[(node=ng, t=t_after)]
-                for ng in node_group__node(node2=n);
-                init=0
-            )
             # slack variable - only exists if slack_penalty is defined
-            + reduce(
-                +,
-                get(node_slack_pos, (n, s, t_after), 0) - get(node_slack_neg, (n, s, t_after), 0)
-                for s in stochastic_path;
-                init = 0
-            )
+            + get(node_slack_pos, (n, s, t), 0)
+            - get(node_slack_neg, (n, s, t), 0)
+            ==
+            0
         )
     end
 end

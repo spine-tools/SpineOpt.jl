@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function create_variable_units_started_up!(m::Model)
-    create_variable!(m, :units_started_up, units_on_indices; lb=x -> 0, bin=units_on_bin, int=units_on_int)
+function add_variable_units_started_up!(m::Model)
+    add_variable!(m, :units_started_up, units_on_indices; lb=x -> 0, bin=units_on_bin, int=units_on_int)
 end
-

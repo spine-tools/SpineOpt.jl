@@ -66,13 +66,18 @@ function add_constraint_min_down_time!(m::Model)
     for (u, stochastic_path, t) in constraint_min_down_time_indices()
         cons[u, stochastic_path, t] = @constraint(
             m,
-            + reduce(+, units_on[u, s, t] for s in stochastic_path; init=0)
-            <=
-            + reduce(+, units_available[u, s, t] for s in stochastic_path; init=0)
-            - reduce(
-                +,
-                units_shut_down[u, s, t_past]
-                for (u, s, t_past) in units_on_indices(
+            + expr_sum(
+                + units_available[u, s, t]
+                - units_on[u, s, t]
+                for (u, s, t) in units_on_indices(
+                    unit=u, stochastic_scenario=stochastic_path, t=t
+                );
+                init=0
+            )
+            >=
+            + expr_sum(
+                + units_shut_down[u, s_past, t_past]
+                for (u, s_past, t_past) in units_on_indices(
                     unit=u,
                     stochastic_scenario=stochastic_path,
                     t=to_time_slice(TimeSlice(end_(t) - min_down_time(unit=u), end_(t)))

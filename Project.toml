@@ -1,7 +1,7 @@
 name = "SpineModel"
 uuid = "b74cbf36-17f7-11e9-3430-fdc535b30a00"
 authors = ["Spine Project consortium <spine_info@vtt.fi>"]
-version = "0.1.5"
+version = "0.2.0"
 
 [deps]
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
@@ -20,3 +20,4 @@ TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 
 [compat]
 julia = "^1.2"
+JuMP = "0.21.2"

@@ -66,19 +66,25 @@ function add_constraint_minimum_operating_point!(m::Model)
     for (u, n, d, stochastic_path, t) in constraint_minimum_operating_point_indices()
         cons[u, n, d, stochastic_path, t] = @constraint(
             m,
-            reduce(+, get(unit_flow, (u, n, d, s, t), 0) for s in stochastic_path; init=0)
-            >=
-            reduce(
-                +,
-                units_on[u, s, t]
-                * minimum_operating_point[(unit=u, node=n, direction=d, t=t)] # TODO: Stochastic parameters
-                * unit_capacity[(unit=u, node=n, direction=d, t=t)]
-                * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
-                for (u, s, t) in units_on_indices(
-                    unit=u, stochastic_scenario=stochastic_path, t=t_in_t(t_short=t)
+            + expr_sum(
+                + unit_flow[u, n, d, s, t]
+                for (u, n, d, s, t) in unit_flow_indices(
+                    unit=u, node=n, direction=d, stochastic_scenario=stochastic_path, t=t
                 );
                 init=0
             )
+            * duration(t)
+            >=
+            + expr_sum(
+                + units_on[u, s, t1] * min(duration(t), duration(t1))
+                for (u, s, t1) in units_on_indices(
+                    unit=u, stochastic_scenario=stochastic_path, t=t_overlaps_t(t)
+                );
+                init=0
+            )
+            * minimum_operating_point[(unit=u, node=n, direction=d, t=t)]
+            * unit_capacity[(unit=u, node=n, direction=d, t=t)]
+            * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
         )
     end
 end

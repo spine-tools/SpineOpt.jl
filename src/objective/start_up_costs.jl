@@ -26,9 +26,8 @@ function start_up_costs(m::Model)
     @fetch units_started_up = m.ext[:variables]
     @expression(
         m,
-        reduce(
-            +,
-            units_started_up[u, s, t]
+        expr_sum(
+            + units_started_up[u, s, t]
             * start_up_cost[(unit=u, stochastic_scenario=s, t=t)]
             * unit_stochastic_scenario_weight(unit=u, stochastic_scenario=s)
             for (u, s, t) in units_on_indices(unit=indices(start_up_cost));

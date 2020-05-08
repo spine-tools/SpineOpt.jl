@@ -62,14 +62,21 @@ function add_constraint_unit_state_transition!(m::Model)
     for (u, stochastic_path, t_before, t_after) in constraint_unit_state_transition_indices()
         cons[u, stochastic_path, t_before, t_after] = @constraint(
             m,
-            reduce(+, get(units_on, (u, s, t_after), 0) for s in stochastic_path; init=0)
+            expr_sum(
+                + units_on[u, s, t_after]
+                - units_started_up[u, s, t_after]
+                + units_shut_down[u, s, t_after]
+                for (u, s, t_after) in units_on_indices(
+                    unit=u, stochastic_scenario=stochastic_path, t=t_after
+                );
+                init=0
+            )
             ==
-            reduce(
-                +,
-                get(units_on, (u, s, t_before), 0)
-                + get(units_started_up, (u, s, t_after), 0)
-                - get(units_shut_down, (u, s, t_after), 0)
-                for s in stochastic_path;
+            expr_sum(
+                + units_on[u, s, t_before]
+                for (u, s, t_before) in units_on_indices(
+                    unit=u, stochastic_scenario=stochastic_path, t=t_before
+                );
                 init=0
             )
         )

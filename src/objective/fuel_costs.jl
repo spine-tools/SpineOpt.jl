@@ -24,8 +24,7 @@ function fuel_costs(m::Model)
     @fetch unit_flow = m.ext[:variables]
     @expression(
         m,
-        reduce(
-            +,
+        expr_sum(
             unit_flow[u, n, d, s, t] * duration(t)
             * fuel_cost[(unit=u, node=n, direction=d, t=t)]
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]

@@ -31,7 +31,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
         for (conn, n, d, s, t) in connection_flow_indices(connection=conn, node=n, direction=d)
             cons[conn, n, d, s, t] = @constraint(
                 m,
-                connection_flow[conn, n, d, s, t]
+                + connection_flow[conn, n, d, s, t]
                 <=
                 + connection_capacity[(connection=conn, node=n, direction=d, t=t)] # TODO: Stochastic parameters
                 * connection_availability_factor[(connection=conn, t=t)]

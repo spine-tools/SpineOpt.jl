@@ -32,7 +32,7 @@ function add_constraint_operating_point_bounds!(m::Model)
         for (u, n, d, op, s, t) in unit_flow_op_indices(unit=u, node=n, direction=d)
             cons[u, n, d, op, s, t] = @constraint(
                 m,
-                unit_flow_op[u, n, d, op, s, t]
+                + unit_flow_op[u, n, d, op, s, t]
                 <=
                 (
                     + operating_points[(unit=u, node=n, direction=d, i=op)] # TODO: Stochastic parameters?
