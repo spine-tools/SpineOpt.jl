@@ -29,13 +29,13 @@ end
 
 function generate_blocks()
     rp=first(representative_period())
-    block = ObjectClass(:block, [])
     # Create block objects named B1, B2... BN etc.
     block_objects = ObjectLike[]
     for b in 1:representative_blocks(representative_period=rp)
         push!(block_objects, Object(Symbol(string("B", Int(b)))))
     end
-    add_objects!(block, block_objects)
+    #add_objects!(block, block_objects)
+    block = ObjectClass(:block, block_objects)
 
     @eval begin
         block = $block
@@ -163,23 +163,6 @@ function generate_distributions()
         i_win += 1
     end
 
-    io = open("ts_vals.csv", "w")
-    print(io, "window,ts")
-    for r in resource()
-        print(io, string(",", r))
-    end
-    print(io, "\n")
-    for w in window()
-        for ss in window__static_slice[w]
-            print(io, string(w, ",", ss))
-            for r in resource()
-                print(io, string(",", ts_vals[r, ss]))
-            end
-            print(io, "\n")
-        end
-    end
-    close(io)
-
     window_time_interval = 100/length(window__static_slice[first(window())])
     horizon_time_interval = window_time_interval/length(window())
     for r in resource()
@@ -230,4 +213,23 @@ function generate_distributions()
         resource_distribution_window = $resource_distribution_window
     end
     window__static_slice
+end
+
+function write_ts_data(window__static_slice, ts_vals)
+    io = open("ts_vals.csv", "w")
+    print(io, "window,ts")
+    for r in resource()
+        print(io, string(",", r))
+    end
+    print(io, "\n")
+    for w in window()
+        for ss in window__static_slice[w]
+            print(io, string(w, ",", ss))
+            for r in resource()
+                print(io, string(",", ts_vals[r, ss]))
+            end
+            print(io, "\n")
+        end
+    end
+    close(io)
 end
