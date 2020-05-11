@@ -74,7 +74,7 @@ function add_constraint_unit_state_transition!(m::Model)
             ==
             expr_sum(
                 + units_on[u, s, t_before]
-                for (u, s, t_before) in units_on_indices(
+                for (u, s, t_before) in all_unit_stochastic_time_indices( # TODO: Not ideal, but necessary for verifying historical time slice
                     unit=u, stochastic_scenario=stochastic_path, t=t_before
                 );
                 init=0
