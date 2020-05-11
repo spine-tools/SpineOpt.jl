@@ -30,15 +30,15 @@ function constraint_node_injection_indices()
         for t_after in time_slice(temporal_block=tb)
             active_scenarios = Array{Object,1}() # Ensure type stability
             t_before = t_before_t(t_after=t_after)
-            # `node_state` on `t_after`
+            # `node` on `t_after`
             append!(
                 active_scenarios,
-                node_state_indices_rc(node=n, t=t_after, _compact=true)
+                node_stochastic_time_indices_rc(node=n, t=t_after, _compact=true)
             )
-            # `node_state` on `t_before`
+            # `node` on `t_before`
             append!(
                 active_scenarios,
-                node_state_indices_rc(node=n, t=t_before, _compact=true)
+                all_node_stochastic_time_indices_rc(node=n, t=t_before, _compact=true)
             )
             # Diffusion to this `node`
             for (n_, n) in node__node(node2=n)
@@ -54,16 +54,7 @@ function constraint_node_injection_indices()
                     node_state_indices_rc(node=n_, t=t_after, _compact=true)
                 )
             end
-            # Commodity flows to/from `units`
-            append!(
-                active_scenarios,
-                map(
-                    x->x.stochastic_scenario,
-                    unit_flow_indices_rc(
-                        node=n, t=t_after, _compact=true
-                    )
-                )
-            )
+            # Commodity flows to/from `units` aren' needed as they use same structures as the `node`
             # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)
             for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
@@ -74,7 +65,7 @@ function constraint_node_injection_indices()
             end
         end
     end
-    return node_injection_indices
+    return unique!(node_injection_indices)
 end
 
 

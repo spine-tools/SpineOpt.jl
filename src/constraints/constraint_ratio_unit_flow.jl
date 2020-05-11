@@ -50,7 +50,7 @@ function constraint_ratio_unit_flow_indices(ratio, d1, d2)
             end
         end
     end
-    return ratio_unit_flow_indices
+    return unique!(ratio_unit_flow_indices)
 end
 
 
