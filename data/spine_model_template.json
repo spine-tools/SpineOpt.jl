@@ -155,6 +155,6 @@
         ["unit__unit_constraint", "units_on_coefficient", null, null],
         ["unit_group__commodity_group", "max_cum_in_unit_flow_bound", null, null],
         ["stochastic_structure__stochastic_scenario", "stochastic_scenario_end", null, null],
-        ["stochastic_structure__stochastic_scenario", "weight_relative_to_parent", null, null]
+        ["stochastic_structure__stochastic_scenario", "weight_relative_to_parents", null, null]
     ]
 }

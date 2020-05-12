@@ -91,7 +91,7 @@ function generate_stochastic_tree(stochastic_structure::Object, window_start::Da
     scen_weight = Dict()
     for root_scenario in scenarios
         scen_start[root_scenario] = window_start
-        scen_weight[root_scenario] = weight_relative_to_parent(stochastic_structure=stochastic_structure, stochastic_scenario=root_scenario)
+        scen_weight[root_scenario] = weight_relative_to_parents(stochastic_structure=stochastic_structure, stochastic_scenario=root_scenario)
     end
     for scen in scenarios
         if (stochastic_structure=stochastic_structure, stochastic_scenario=scen) in indices(stochastic_scenario_end)
@@ -99,7 +99,7 @@ function generate_stochastic_tree(stochastic_structure::Object, window_start::Da
             children = find_children(scen)
             for child in children
                 scen_start[child] = min(get(scen_start, child, scen_end[scen]), scen_end[scen])
-                child_weight = weight_relative_to_parent(stochastic_structure=stochastic_structure, stochastic_scenario=child) * scen_weight[scen]
+                child_weight = weight_relative_to_parents(stochastic_structure=stochastic_structure, stochastic_scenario=child) * scen_weight[scen]
                 scen_weight[child] = get(scen_weight, child, 0) + child_weight
             end
             append!(scenarios, children)
@@ -321,7 +321,7 @@ function generate_node_stochastic_scenario_weight(all_stochastic_trees::Dict)
             parameter_vals[(node, scen)] = Dict{Symbol,AbstractParameterValue}()
             val = all_stochastic_trees[structure][scen].weight
             if isnothing(val)
-                error("`stochastic_structure` `$(structure)` lacks a `weight_relative_to_parent` for `stochastic_scenario` `$(scen)`!")
+                error("`stochastic_structure` `$(structure)` lacks a `weight_relative_to_parents` for `stochastic_scenario` `$(scen)`!")
             end
             push!(
                 parameter_vals[(node, scen)],
