@@ -26,7 +26,7 @@ between `t_after` and `t_before`.
 """
 function constraint_unit_state_transition_indices()
     unit_state_transition_indices = []
-    for (u, n) in unit__structure_node_rc()
+    for (u, n) in units_on_resolution()
         for t_after in time_slice(temporal_block=node__temporal_block(node=n))
             # `units_on` on `t_after`
             active_scenarios = units_on_indices_rc(unit=u, t=t_after, _compact=true)

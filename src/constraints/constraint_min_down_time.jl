@@ -27,7 +27,7 @@ indices due to potentially different stochastic structures between `units_on` an
 function constraint_min_down_time_indices()
     min_down_time_indices = []
     for u in indices(min_down_time)
-        node = first(unit__structure_node_rc(unit=u))
+        node = first(units_on_resolution(unit=u))
         tb = node__temporal_block(node=node)
         for t in time_slice(temporal_block=tb)
             # Current `units_on` and `units_available`

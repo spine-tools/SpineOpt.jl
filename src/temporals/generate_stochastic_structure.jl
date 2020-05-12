@@ -232,40 +232,6 @@ end
 
 
 """
-    generate_unit__structure_node()
-
-Generates a new RelationshipClass `unit__structure_node` that maps each `unit` to a `node` that defines
-the stochastic and temporal structure of the `units_on` and related variables/parameters.
-"""
-function generate_unit__structure_node() # TODO: This function could be in preprocess data structure?
-    units = unit()
-    imported_temporal_structures = collect(indices(import_temporal_structure))
-    filter!(
-        inds -> import_temporal_structure(unit=inds.unit, node=inds.node, direction=inds.direction) == :value_true,
-        imported_temporal_structures
-    )
-    unit__structure_node = []
-    for u in units
-        temporal_structure = filter(und -> und.unit == u, imported_temporal_structures)
-        if length(temporal_structure) != 1
-            error("Unit `$(u)` must have exactly one `import_temporal_structure` set to `value_true`!")
-        end
-        push!(
-            unit__structure_node,
-            (unit=u, node=first(temporal_structure).node)
-        )
-    end
-    unique!(unit__structure_node)
-    unit__structure_node_rc = RelationshipClass(
-        :unit__structure_node_rc, [:unit, :node], unit__structure_node
-    )
-    @eval begin
-        unit__structure_node_rc = $unit__structure_node_rc
-    end
-end
-
-
-"""
     unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
 
 A list of `NamedTuple`s corresponding to the *current* unit stochastic time indices.
@@ -274,7 +240,7 @@ The keyword arguments act as filters for each dimension.
 function unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
     [
         (unit=u, stochastic_scenario=s, t=t)
-        for (u, n) in unit__structure_node_rc(unit=unit, _compact=false)
+        for (u, n) in units_on_resolution(unit=unit, _compact=false)
         for (n, s, t) in node_stochastic_time_indices(
             node=n,
             stochastic_scenario=stochastic_scenario,
@@ -293,7 +259,7 @@ The keyword arguments act as filters for each dimension.
 function all_unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
     [
         (unit=u, stochastic_scenario=s, t=t)
-        for (u, n) in unit__structure_node_rc(unit=unit, _compact=false)
+        for (u, n) in units_on_resolution(unit=unit, _compact=false)
         for (n, s, t) in all_node_stochastic_time_indices(
             node=n,
             stochastic_scenario=stochastic_scenario,
@@ -349,7 +315,7 @@ The keyword arguments act as filters for each dimension.
 function unit__stochastic_scenario(;unit=anything, stochastic_scenario=anything)
     [
         (unit=u, stochastic_scenario=s)
-        for (u, n) in unit__structure_node_rc(unit=unit, _compact=false)
+        for (u, n) in units_on_resolution(unit=unit, _compact=false)
         for (n, s) in node__stochastic_scenario(node=n, _compact=false)
     ]
 end
@@ -358,14 +324,13 @@ end
 """
     unit_stochastic_scenario_weight(;unit=anything, stochastic_scenario=anything)
 
-A function to access the `node_stochastic_scenario_weight` parameter from the `import_temporal_structure`
-`node` defined for the `unit`.
+A function to access the `node_stochastic_scenario_weight` parameter from the `node` defined for the `unit`.
 """
 function unit_stochastic_scenario_weight(;unit=nothing, stochastic_scenario=nothing)
     if isnothing(unit) || isnothing(stochastic_scenario)
         error("Both a `unit` and `stochastic_scenario` are required to access `unit_stochastic_scenario_weight`!")
     else
-        for (u, n) in unit__structure_node_rc(unit=unit, _compact=false)
+        for (u, n) in units_on_resolution(unit=unit, _compact=false)
             return node_stochastic_scenario_weight(node=n, stochastic_scenario=stochastic_scenario)
         end
     end
