@@ -20,8 +20,8 @@
 """
     constraint_unit_constraint_indices()
 
-Forms the stochastic index set for the `:unit_constraint` constraint for the
-Uses stochastic path indices due to potentially different stochastic structures 
+Forms the stochastic index set for the `:unit_constraint` constraint. Uses
+stochastic path indices due to potentially different stochastic structures 
 between `unit_flow`, `unit_flow_op`, and `units_on` variables.
 """
 function constraint_unit_constraint_indices()
@@ -31,7 +31,7 @@ function constraint_unit_constraint_indices()
             (unit__from_node__unit_constraint(unit_constraint=uc), unit__to_node__unit_constraint(unit_constraint=uc))
         )
         for t in t_lowest_resolution(x.t for (u, n) in involved_unit_node for x in unit_flow_indices(unit=u, node=n))
-            active_scenarios = []
+            active_scenarios = Array{Object,1}() # Type stability
             # `unit_flow` and `unit_flow_op` variables
             for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
                 append!(
