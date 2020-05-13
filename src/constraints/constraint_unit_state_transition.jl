@@ -30,8 +30,12 @@ function constraint_unit_state_transition_indices()
         for t_after in time_slice(temporal_block=node__temporal_block(node=n))
             # `units_on` on `t_after`
             active_scenarios = units_on_indices_rc(unit=u, t=t_after, _compact=true)
-            # `units_on` on `t_before`
-            t_before = first(t_before_t(t_after=t_after))
+            # `units_on` on a valid `t_before`
+            if !isempty(t_before_t(t_after=t_after))
+                t_before = first(t_before_t(t_after=t_after))
+            else
+                t_before = first(to_time_slice(t_after - Minute(duration(t_after))))
+            end
             append!(
                 active_scenarios,
                 units_on_indices_rc(unit=u, t=t_before, _compact=true)
