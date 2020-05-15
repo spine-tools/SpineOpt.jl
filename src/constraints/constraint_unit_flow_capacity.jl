@@ -29,11 +29,17 @@ function constraint_unit_flow_capacity_indices()
     for (u, n, d) in indices(unit_capacity)
         for t in time_slice(temporal_block=node__temporal_block(node=n))
             # Constrained `unit_flow`
-            active_scenarios = unit_flow_indices_rc(unit=u, node=n, direction=d, t=t, _compact=true)
+            active_scenarios = map(
+                inds -> inds.stochastic_scenario,
+                unit_flow_indices(unit=u, node=n, direction=d, t=t)
+            )
             # Relevant `units_on`
             append!(
                 active_scenarios,
-                units_on_indices_rc(unit=u, t=t_in_t(t_long=t), _compact=true)
+                map(
+                    inds -> inds.stochastic_scenario,
+                    units_on_indices(unit=u, t=t_in_t(t_long=t))
+                )
             )
             # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)

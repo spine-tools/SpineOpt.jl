@@ -34,21 +34,25 @@ function constraint_connection_flow_lodf_indices()
         )
         for t in t_lowest_resolution(involved_t)
             # Monitored connection
-            active_scenarios = connection_flow_indices_rc(
-                connection=conn_mon,
-                last(connection__from_node(connection=conn_mon))...,
-                t=t_in_t(t_long=t),
-                _compact=true
-            ) # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
+            active_scenarios = map(
+                inds -> inds.stochastic_scenario,
+                connection_flow_indices(
+                    connection=conn_mon,
+                    last(connection__from_node(connection=conn_mon))...,
+                    t=t_in_t(t_long=t)
+                ) # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
+            )
             # Excess flow due to outage on contingency connection
             append!(
                 active_scenarios,
-                connection_flow_indices_rc(
-                    connection=conn_cont,
-                    last(connection__from_node(connection=conn_cont))...,
-                    t=t_in_t(t_long=t),
-                    _compact=true
-                ) # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
+                map(
+                    inds -> inds.stochastic_scenario,
+                    connection_flow_indices(
+                        connection=conn_cont,
+                        last(connection__from_node(connection=conn_cont))...,
+                        t=t_in_t(t_long=t),
+                    ) # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
+                )
             )
             # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)

@@ -38,25 +38,37 @@ function constraint_node_injection_indices()
             # `node` on `t_after`
             append!(
                 active_scenarios,
-                node_stochastic_time_indices_rc(node=n, t=t_after, _compact=true)
+                map(
+                    inds -> inds.stochastic_scenario,
+                    node_stochastic_time_indices(node=n, t=t_after)
+                )
             )
-            # `node` on `t_before`
+            # `node_state` on `t_before`
             append!(
                 active_scenarios,
-                all_node_stochastic_time_indices_rc(node=n, t=t_before, _compact=true)
+                map(
+                    inds -> inds.stochastic_scenario,
+                    node_state_indices(node=n, t=t_before)
+                )
             )
             # Diffusion to this `node`
             for (n_, n) in node__node(node2=n)
                 append!(
                     active_scenarios,
-                    node_state_indices_rc(node=n_, t=t_after, _compact=true)
+                    map(
+                        inds -> inds.stochastic_scenario,
+                        node_state_indices(node=n_, t=t_after)
+                    )
                 )
             end
             # Diffusion from this `node`
             for (n, n_) in node__node(node1=n)
                 append!(
                     active_scenarios,
-                    node_state_indices_rc(node=n_, t=t_after, _compact=true)
+                    map(
+                        inds -> inds.stochastic_scenario,
+                        node_state_indices(node=n_, t=t_after)
+                    )
                 )
             end
             # Commodity flows to/from `units` aren' needed as they use same structures as the `node`

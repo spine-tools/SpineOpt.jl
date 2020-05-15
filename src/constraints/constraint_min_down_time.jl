@@ -31,14 +31,19 @@ function constraint_min_down_time_indices()
         tb = node__temporal_block(node=node)
         for t in time_slice(temporal_block=tb)
             # Current `units_on` and `units_available`
-            active_scenarios = units_on_indices_rc(unit=u, t=t, _compact=true)
+            active_scenarios = map(
+                inds -> inds.stochastic_scenario,
+                units_on_indices(unit=u, t=t)
+            )
             # `units_shut_down` during past time slices
             append!(
                 active_scenarios,
-                units_on_indices_rc(
-                    unit=u,
-                    t=to_time_slice(TimeSlice(end_(t) - min_down_time(unit=u), end_(t))),
-                    _compact=true
+                map(
+                    inds -> inds.stochastic_scenario,
+                    units_on_indices(
+                        unit=u,
+                        t=to_time_slice(TimeSlice(end_(t) - min_down_time(unit=u), end_(t))),
+                    )
                 )
             )
             # Find stochastic paths for `active_scenarios`

@@ -29,16 +29,25 @@ function constraint_ratio_unit_flow_indices(ratio, d1, d2)
     for (u, n1, n2) in indices(ratio)
         for t in t_lowest_resolution(x.t for x in unit_flow_indices(unit=u, node=[n1, n2]))
             # `unit_flow` for `direction` `d1`
-            active_scenarios = unit_flow_indices_rc(unit=u, node=n1, direction=d1, t=t_in_t(t_long=t), _compact=true)
+            active_scenarios = map(
+                inds -> inds.stochastic_scenario,
+                unit_flow_indices(unit=u, node=n1, direction=d1, t=t_in_t(t_long=t))
+            )
             # `unit_flow` for `direction` `d2`
             append!(
                 active_scenarios,
-                unit_flow_indices_rc(unit=u, node=n2, direction=d2, t=t_in_t(t_long=t), _compact=true)
+                map(
+                    inds -> inds.stochastic_scenario,
+                    unit_flow_indices(unit=u, node=n2, direction=d2, t=t_in_t(t_long=t))
+                )
             )
             # `units_on` with coefficient
             append!(
                 active_scenarios,
-                units_on_indices_rc(unit=u, t=t_in_t(t_long=t), _compact=true)
+                map(
+                    inds -> inds.stochastic_scenario,
+                    units_on_indices(unit=u, t=t_in_t(t_long=t))
+                )
             )
             # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)

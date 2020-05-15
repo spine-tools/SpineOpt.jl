@@ -29,18 +29,23 @@ function constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
     for (conn, n_out, n_in) in indices(ratio_out_in)
         for t in t_lowest_resolution(x.t for x in connection_flow_indices(connection=conn, node=[n_out, n_in]))
             # `to_node` `connection_flow`s
-            active_scenarios = connection_flow_indices_rc(
-                connection=conn, node=n_out, direction=direction(:to_node), t=t_in_t(t_long=t), _compact=true
+            active_scenarios = map(
+                inds -> inds.stochastic_scenario,
+                connection_flow_indices(
+                    connection=conn, node=n_out, direction=direction(:to_node), t=t_in_t(t_long=t)
+                )
             )
             # `from_node` `connection_flow`s with potential `connection_flow_delay`
             append!(
                 active_scenarios,
-                connection_flow_indices_rc(
-                    connection=conn,
-                    node=n_in,
-                    direction=direction(:from_node),
-                    t=to_time_slice(t - connection_flow_delay(connection=conn, node1=n_out, node2=n_in, t=t)),
-                    _compact=true
+                map(
+                    inds -> inds.stochastic_scenario,
+                    connection_flow_indices(
+                        connection=conn,
+                        node=n_in,
+                        direction=direction(:from_node),
+                        t=to_time_slice(t - connection_flow_delay(connection=conn, node1=n_out, node2=n_in, t=t)),
+                    )
                 )
             )
             # Find stochastic paths for `active_scenarios`

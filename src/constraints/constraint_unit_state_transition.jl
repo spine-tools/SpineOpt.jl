@@ -29,7 +29,10 @@ function constraint_unit_state_transition_indices()
     for (u, n) in units_on_resolution()
         for t_after in time_slice(temporal_block=node__temporal_block(node=n))
             # `units_on` on `t_after`
-            active_scenarios = units_on_indices_rc(unit=u, t=t_after, _compact=true)
+            active_scenarios = map(
+                inds -> inds.stochastic_scenario,
+                units_on_indices(unit=u, t=t_after)
+            )
             # `units_on` on a valid `t_before`
             if !isempty(t_before_t(t_after=t_after))
                 t_before = first(t_before_t(t_after=t_after))
@@ -38,7 +41,10 @@ function constraint_unit_state_transition_indices()
             end
             append!(
                 active_scenarios,
-                units_on_indices_rc(unit=u, t=t_before, _compact=true)
+                map(
+                    inds -> inds.stochastic_scenario,
+                    units_on_indices(unit=u, t=t_before)
+                )
             )
             # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)
@@ -78,7 +84,7 @@ function add_constraint_unit_state_transition!(m::Model)
             ==
             expr_sum(
                 + units_on[u, s, t_before]
-                for (u, s, t_before) in all_unit_stochastic_time_indices( # TODO: Not ideal, but necessary for verifying historical time slice
+                for (u, s, t_before) in units_on_indices(
                     unit=u, stochastic_scenario=stochastic_path, t=t_before
                 );
                 init=0

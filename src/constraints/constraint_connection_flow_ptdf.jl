@@ -31,14 +31,20 @@ function constraint_connection_flow_ptdf_indices()
         direction = node_direction.direction
         for t in time_slice(temporal_block=node__temporal_block(node=n_to))
             # `n_to`
-            active_scenarios = connection_flow_indices_rc(
-                connection=conn, node=n_to, direction=direction, t=t, _compact=true
+            active_scenarios = map(
+                inds -> inds.stochastic_scenario,
+                connection_flow_indices(
+                    connection=conn, node=n_to, direction=direction, t=t
+                )
             )
             # `n_inj`
             for (conn, n_inj) in indices(ptdf; connection=conn)
                 append!(
                     active_scenarios,
-                    node_stochastic_time_indices_rc(node=n_inj, t=t, _compact=true)
+                    map(
+                        inds -> inds.stochastic_scenario,
+                        node_stochastic_time_indices(node=n_inj, t=t)
+                    )
                 )
             end
             # Find stochastic paths for `active_scenarios`

@@ -36,14 +36,20 @@ function constraint_unit_constraint_indices()
             for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
                 append!(
                     active_scenarios,
-                    unit_flow_indices_rc(unit=u, node=n, direction=direction(:from_node), t=t_in_t(t_long=t), _compact=true)
+                    map(
+                        inds -> inds.stochastic_scenario,
+                        unit_flow_indices(unit=u, node=n, direction=direction(:from_node), t=t_in_t(t_long=t))
+                    )
                 )
             end
             # `units_on` variables
             for u in unit__unit_constraint(unit_constraint=uc)
                 append!(
                     active_scenarios,
-                    units_on_indices_rc(unit=u, t=t_in_t(t_long=t), _compact=true)
+                    map(
+                        inds -> inds.stochastic_scenario,
+                        units_on_indices(unit=u, t=t_in_t(t_long=t))
+                    )
                 )
             end
             # Find stochastic paths for `active_scenarios`
