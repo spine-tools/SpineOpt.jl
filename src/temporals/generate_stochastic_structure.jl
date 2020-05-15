@@ -168,13 +168,12 @@ end
 
 
 """
-    generate_node_stochastic_time_map(window_start::DateTime)
+    generate_node_stochastic_time_map(all_stochastic_DAGs)
 
 Generates the `node_stochastic_time_map` for all defined `node__stochastic_structure`.
 """
-function generate_node_stochastic_time_map(window_start::DateTime)
+function generate_node_stochastic_time_map(all_stochastic_DAGs)
     node_stochastic_time_map = Dict{NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}, Array{Union{Int64,T} where T<:SpineInterface.AbstractObject,1}}()
-    all_stochastic_DAGs = generate_all_stochastic_DAGs(window_start)
     for (node, structure) in node__stochastic_structure()
         if length(node__stochastic_structure(node=node)) > 1
             error("Node `$(node)` cannot have more than one `stochastic_structure`!")

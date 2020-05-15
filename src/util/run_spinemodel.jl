@@ -48,50 +48,9 @@ function generate_temporal_structure()
 end
 
 
-function generate_variable_indices()
-    unit_flow_indices = unique(
-        (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
-        for (n, s, t) in node_stochastic_time_indices(node=n)
-    )
-    connection_flow_indices = unique(
-        (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
-        for (n, s, t) in node_stochastic_time_indices(node=n)
-    )
-    node_state_indices = unique(
-        (node=n, stochastic_scenario=s, t=t)
-        for n in node(has_state=:value_true)
-        for (n, s, t) in node_stochastic_time_indices(node=n)
-    )
-    units_on_indices = unique(
-        (unit=u, stochastic_scenario=s, t=t)
-        for (u, s, t) in unit_stochastic_time_indices()
-    )
-    unit_flow_indices_rc = RelationshipClass(
-        :unit_flow_indices_rc, [:unit, :node, :direction, :stochastic_scenario, :t], unit_flow_indices
-    )
-    connection_flow_indices_rc = RelationshipClass(
-        :connection_flow_indices_rc, [:connection, :node, :direction, :stochastic_scenario, :t], connection_flow_indices
-    )
-    node_state_indices_rc = RelationshipClass(
-        :node_state_indices_rc, [:node, :stochastic_scenario, :t], node_state_indices
-    )
-    units_on_indices_rc = RelationshipClass(
-        :units_on_indices_rc, [:unit, :stochastic_scenario, :t], units_on_indices
-    )
-    @eval begin
-        unit_flow_indices_rc = $unit_flow_indices_rc
-        connection_flow_indices_rc = $connection_flow_indices_rc
-        node_state_indices_rc = $node_state_indices_rc
-        units_on_indices_rc = $units_on_indices_rc
-    end
-end
-
-
 function generate_stochastic_structure()
     all_stochastic_trees = generate_all_stochastic_trees(start(current_window))
-    generate_node_stochastic_time_indices(all_stochastic_trees)
+    generate_node_stochastic_time_map(all_stochastic_trees)
     generate_node_stochastic_scenario_weight(all_stochastic_trees)
     full_stochastic_paths = find_full_stochastic_paths()
     @eval begin
@@ -137,7 +96,6 @@ function run_spinemodel(
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @logtime level2 "Creating stochastic structure..." generate_stochastic_structure()
-    @logtime level2 "Creating variable indices..." generate_variable_indices()
     check_islands(log_level)
     m = rerun_spinemodel(
         url_out;
