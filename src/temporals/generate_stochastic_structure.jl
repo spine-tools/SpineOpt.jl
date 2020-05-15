@@ -69,223 +69,146 @@ end
 
 
 """
-    active_stochastic_paths(full_stochastic_paths::Array{Array{Object,1},1}, active_scenarios::Union{Array{Object,1},Object})
+    active_stochastic_paths(
+        full_stochastic_paths::Array{Array{Object,1},1},
+        active_scenarios::Union{Array{Object,1},Object}
+    )
 
 Finds all the unique combinations of active `stochastic_scenarios` along valid stochastic paths.
 """
-function active_stochastic_paths(full_stochastic_paths::Array{Array{Object,1},1}, active_scenarios::Union{Array{Object,1},Object})
+function active_stochastic_paths(
+    full_stochastic_paths::Array{Array{Object,1},1},
+    active_scenarios::Union{Array{Object,1},Object}
+)
     unique(map(path -> intersect(path, active_scenarios), full_stochastic_paths))
 end
 
 
 """
-    generate_stochastic_tree(stochastic_structure, window_start)
+    generate_stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
 
-Generates the stochastic tree of a `stochastic_structure` relative to a desired `window_start`
+Generates the stochastic DAG of a `stochastic_structure` relative to a desired `window_start`
 based on the `stochastic_scenario_end` parameters in the `stochastic_structure__stochastic_scenario` relationship.
 """
-function generate_stochastic_tree(stochastic_structure::Object, window_start::DateTime)
+function generate_stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
     scenarios = find_root_scenarios()
     scen_start = Dict()
     scen_end = Dict()
     scen_weight = Dict()
     for root_scenario in scenarios
         scen_start[root_scenario] = window_start
-        scen_weight[root_scenario] = weight_relative_to_parents(stochastic_structure=stochastic_structure, stochastic_scenario=root_scenario)
+        scen_weight[root_scenario] = weight_relative_to_parents(
+            stochastic_structure=stochastic_structure, stochastic_scenario=root_scenario
+        )
     end
     for scen in scenarios
         if (stochastic_structure=stochastic_structure, stochastic_scenario=scen) in indices(stochastic_scenario_end)
-            scen_end[scen] = window_start + stochastic_scenario_end(stochastic_structure=stochastic_structure, stochastic_scenario=scen)
+            scen_end[scen] = window_start + stochastic_scenario_end(
+                stochastic_structure=stochastic_structure, stochastic_scenario=scen
+            )
             children = find_children(scen)
             for child in children
                 scen_start[child] = min(get(scen_start, child, scen_end[scen]), scen_end[scen])
-                child_weight = weight_relative_to_parents(stochastic_structure=stochastic_structure, stochastic_scenario=child) * scen_weight[scen]
+                child_weight = scen_weight[scen] * weight_relative_to_parents(
+                    stochastic_structure=stochastic_structure, stochastic_scenario=child
+                )
                 scen_weight[child] = get(scen_weight, child, 0) + child_weight
             end
             append!(scenarios, children)
         end
     end
-    stochastic_tree = Dict()
+    stochastic_DAG = Dict()
     for scen in scenarios
-        stochastic_tree[scen] = (
+        stochastic_DAG[scen] = (
             start = scen_start[scen],
             end_ = get(scen_end, scen, last(time_slice()).end_.x),
             weight = scen_weight[scen]
         )
     end
-    return stochastic_tree
+    return stochastic_DAG
 end
 
 
 """
-    generate_all_stochastic_trees(window_start::DateTime)
+    generate_all_stochastic_DAG(window_start::DateTime)
 
-Generates the stochastic trees of every `stochastic_structure`.
+Generates the stochastic DAGs of every `stochastic_structure`.
 """
-function generate_all_stochastic_trees(window_start::DateTime)
-    stochastic_trees = Dict()
+function generate_all_stochastic_DAGs(window_start::DateTime)
+    stochastic_DAGs = Dict()
     for structure in stochastic_structure()
-        stochastic_trees[structure] = generate_stochastic_tree(structure, window_start)
+        stochastic_DAGs[structure] = generate_stochastic_tree(structure, window_start)
     end
-    return stochastic_trees
+    return stochastic_DAGs
 end
 
 
 """
-    node_stochastic_time_indices(node::Object, stochastic_tree::Dict)
+    node_stochastic_time_mapping(node::Object, stochastic_DAG::Dict)
 
-Function to generate the `(node, stochastic_scenario, time_slice)` indices
-for a `node` based on a stochastic tree.
+Maps `(node, time_slice)` indices to its set of active `stochastic_scenarios`.
 """
-function node_stochastic_time_indices(node::Object, stochastic_tree::Dict)
-    node__stochastic_scenario__time_slice = []
+function node_stochastic_time_mapping(node::Object, stochastic_DAG::Dict)
+    active_scenario_map = Dict{NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}, Array{Union{Int64,T} where T<:SpineInterface.AbstractObject,1}}()
+    # Active `time_slices`
     for temporal_block in node__temporal_block(node=node)
         for t in time_slice.block_time_slices[temporal_block]
-            scenarios = keys(filter(tree->tree[2].start <= t.start.x < tree[2].end_, stochastic_tree))
-            for scen in scenarios
-                push!(
-                    node__stochastic_scenario__time_slice,
-                    (node=node, stochastic_scenario=scen, t=t)
-                )
-            end
+            active_scenario_map[(node=node, t=t)] = keys(
+                filter(DAG->DAG[2].start <= t.start.x < DAG[2].end_, stochastic_DAG)
+            )
         end
     end
-    return node__stochastic_scenario__time_slice
+    # Historical `time_slices`
+    root = find_root_scenarios()
+    for t in sort(collect(values(t_history_t)))
+        active_scenario_map[(node=node, t=t)] = root
+    end
+    return active_scenario_map
 end
 
 
 """
-    node_stochastic_time_indices_history(node::Object)
+    generate_node_stochastic_time_map(window_start::DateTime)
 
-Function to generate the `(node, stochastic_scenario, time_slice)` indices
-for a `node` for the historical time steps, based on root `stochastic_scenarios`.
+Generates the `node_stochastic_time_map` for all defined `node__stochastic_structure`.
 """
-function node_stochastic_time_indices_history(node::Object)
-    node__stochastic_scenario__time_slice_history = [
-        (node=node, stochastic_scenario=scen, t=t)
-        for scen in find_root_scenarios()
-        for t in sort(collect(values(t_history_t)))
-    ]
-    return node__stochastic_scenario__time_slice_history
-end
-
-
-"""
-    generate_node_stochastic_time_indices(window_start::DateTime)
-
-Generates the `node_stochastic_time_indices_rc` and `all_node_stochastic_time_indices_rc`
-RelationshipClasses to store the stochastic time indices for all `nodes`,
-based on all of the stochastic trees of all defined `stochastic_structures`.
-
-`node_stochastic_time_indices_rc` stores the current active stochastic time steps, while
-`all_node_stochastic_time_indices_rc` also includes the historical time steps.
-"""
-function generate_node_stochastic_time_indices(all_stochastic_trees::Dict)
-    node__stochastic_scenario__t = []
-    node__stochastic_scenario__t_history = []
+function generate_node_stochastic_time_map(window_start::DateTime)
+    node_stochastic_time_map = Dict{NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}, Array{Union{Int64,T} where T<:SpineInterface.AbstractObject,1}}()
+    all_stochastic_DAGs = generate_all_stochastic_DAGs(window_start)
     for (node, structure) in node__stochastic_structure()
         if length(node__stochastic_structure(node=node)) > 1
             error("Node `$(node)` cannot have more than one `stochastic_structure`!")
         end
-        node_stochastic_time = node_stochastic_time_indices(node, all_stochastic_trees[structure])
-        append!(node__stochastic_scenario__t, node_stochastic_time)
-        node_stochastic_time_history = node_stochastic_time_indices_history(node)
-        append!(node__stochastic_scenario__t_history, node_stochastic_time_history)
+        for n in expand_node_group(node)
+            merge!(
+                node_stochastic_time_map,
+                node_stochastic_time_mapping(node, all_stochastic_DAGs[structure])
+            )
+        end
     end
-    unique!(node__stochastic_scenario__t)
-    unique!(node__stochastic_scenario__t_history)
-    node_stochastic_time_indices_rc = RelationshipClass(
-        :node_stochastic_time_indices_rc, [:node, :stochastic_scenario, :t], node__stochastic_scenario__t
-    )
-    all_node_stochastic_time_indices_rc = RelationshipClass(
-        :all_node_stochastic_time_indices_rc,
-        [:node, :stochastic_scenario, :t],
-        unique(vcat(node__stochastic_scenario__t_history, node__stochastic_scenario__t))
-    )
     @eval begin
-        node_stochastic_time_indices_rc = $node_stochastic_time_indices_rc
-        all_node_stochastic_time_indices_rc = $all_node_stochastic_time_indices_rc
+        node_stochastic_time_map = $node_stochastic_time_map
     end
 end
 
 
 """
-    node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
-
-A list of `NamedTuple`s corresponding to the *current* nodal stochastic time indices.
-The keyword arguments act as filters for each dimension.
-"""
-function node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
-    node_stochastic_time_indices_rc(node=node, stochastic_scenario=stochastic_scenario, t=t, _compact=false)    
-end
-
-
-"""
-    all_node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
-
-A list of `NamedTuple`s corresponding to the current and *historical* nodal stochastic time indices.
-The keyword arguments act as filters for each dimension.
-"""
-function all_node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
-    all_node_stochastic_time_indices_rc(node=node, stochastic_scenario=stochastic_scenario, t=t, _compact=false)    
-end
-
-
-"""
-    unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
-
-A list of `NamedTuple`s corresponding to the *current* unit stochastic time indices.
-The keyword arguments act as filters for each dimension.
-"""
-function unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
-    [
-        (unit=u, stochastic_scenario=s, t=t)
-        for (u, n) in units_on_resolution(unit=unit, _compact=false)
-        for (n, s, t) in node_stochastic_time_indices(
-            node=n,
-            stochastic_scenario=stochastic_scenario,
-            t=t
-        )
-    ]
-end
-
-
-"""
-    all_unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
-
-A list of `NamedTuple`s corresponding to the current and *historical* unit stochastic time indices.
-The keyword arguments act as filters for each dimension.
-"""
-function all_unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
-    [
-        (unit=u, stochastic_scenario=s, t=t)
-        for (u, n) in units_on_resolution(unit=unit, _compact=false)
-        for (n, s, t) in all_node_stochastic_time_indices(
-            node=n,
-            stochastic_scenario=stochastic_scenario,
-            t=t
-        )
-    ]
-end
-
-
-"""
-    generate_node_stochastic_scenario_weight(all_stochastic_trees::Dict)
+    generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
 
 Generates the `node_stochastic_scenario_weight` parameter for easier access to the scenario weights.
 """
-function generate_node_stochastic_scenario_weight(all_stochastic_trees::Dict)
+function generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
     node_scenario = []
     parameter_vals = Dict{Tuple{Vararg{Object}},Dict{Symbol,AbstractParameterValue}}()
     for (node, structure) in node__stochastic_structure()
         if length(node__stochastic_structure(node=node)) > 1
             error("Node `$(node)` cannot have more than one `stochastic_structure`!")
         end
-        scenarios = keys(all_stochastic_trees[structure])
+        scenarios = keys(all_stochastic_DAGs[structure])
         for scen in scenarios
             push!(node_scenario, (node=node, stochastic_scenario=scen))
             parameter_vals[(node, scen)] = Dict{Symbol,AbstractParameterValue}()
-            val = all_stochastic_trees[structure][scen].weight
+            val = all_stochastic_DAGs[structure][scen].weight
             if isnothing(val)
                 error("`stochastic_structure` `$(structure)` lacks a `weight_relative_to_parents` for `stochastic_scenario` `$(scen)`!")
             end
