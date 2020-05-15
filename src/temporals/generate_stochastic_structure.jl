@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+
 """
     find_children(stochastic_scenario::Object)
 
@@ -137,59 +138,80 @@ Generates the stochastic DAGs of every `stochastic_structure`.
 function generate_all_stochastic_DAGs(window_start::DateTime)
     stochastic_DAGs = Dict()
     for structure in stochastic_structure()
-        stochastic_DAGs[structure] = generate_stochastic_tree(structure, window_start)
+        stochastic_DAGs[structure] = generate_stochastic_DAG(structure, window_start)
     end
     return stochastic_DAGs
 end
 
 
 """
-    node_stochastic_time_mapping(node::Object, stochastic_DAG::Dict)
+    stochastic_time_mapping(stochastic_DAG::Dict)
 
-Maps `(node, time_slice)` indices to its set of active `stochastic_scenarios`.
+Maps `(stochastic_structure, time_slice)` to their set of active `stochastic_scenarios`.
 """
-function node_stochastic_time_mapping(node::Object, stochastic_DAG::Dict)
-    active_scenario_map = Dict{NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}, Array{Union{Int64,T} where T<:SpineInterface.AbstractObject,1}}()
+function stochastic_time_mapping(stochastic_DAG::Dict)
+    active_scenario_map = Dict{TimeSlice, Array{Union{Int64,T} where T<:SpineInterface.AbstractObject,1}}()
     # Active `time_slices`
-    for temporal_block in node__temporal_block(node=node)
-        for t in time_slice.block_time_slices[temporal_block]
-            active_scenario_map[(node=node, t=t)] = keys(
-                filter(DAG->DAG[2].start <= t.start.x < DAG[2].end_, stochastic_DAG)
-            )
-        end
+    for t in time_slice()
+        active_scenario_map[t] = collect(
+            keys(filter(DAG->DAG[2].start <= t.start.x < DAG[2].end_, stochastic_DAG))
+        )
     end
     # Historical `time_slices`
     root = find_root_scenarios()
     for t in sort(collect(values(t_history_t)))
-        active_scenario_map[(node=node, t=t)] = root
+        active_scenario_map[t] = root
     end
     return active_scenario_map
 end
 
 
 """
-    generate_node_stochastic_time_map(all_stochastic_DAGs)
+    generate_stochastic_time_map(all_stochastic_DAGs)
 
-Generates the `node_stochastic_time_map` for all defined `node__stochastic_structure`.
+Generates the `stochastic_time_map` for all defined `stochastic_structures`.
 """
-function generate_node_stochastic_time_map(all_stochastic_DAGs)
-    node_stochastic_time_map = Dict{NamedTuple{(:node, :t),Tuple{Object,TimeSlice}}, Array{Union{Int64,T} where T<:SpineInterface.AbstractObject,1}}()
-    for (node, structure) in node__stochastic_structure()
-        if length(node__stochastic_structure(node=node)) > 1
-            error("Node `$(node)` cannot have more than one `stochastic_structure`!")
-        end
-        for n in expand_node_group(node)
-            merge!(
-                node_stochastic_time_map,
-                node_stochastic_time_mapping(node, all_stochastic_DAGs[structure])
-            )
-        end
+function generate_stochastic_time_map(all_stochastic_DAGs)
+    stochastic_time_map = Dict{Object, Dict{TimeSlice, Array{Union{Int64,T} where T<:SpineInterface.AbstractObject,1}}}()
+    for structure in stochastic_structure()
+        stochastic_time_map[structure] = stochastic_time_mapping(all_stochastic_DAGs[structure])
     end
     @eval begin
-        node_stochastic_time_map = $node_stochastic_time_map
+        stochastic_time_map = $stochastic_time_map
     end
 end
 
+
+"""
+    node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
+
+Convenience function for accessing the full stochastic time indexing of `nodes`. Keyword arguments allow filtering.
+"""
+function node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
+    unique( # TODO: Write a check for multiple structures
+        (node=n, stochastic_scenario=s, t=t1)
+        for (n, structure) in node__stochastic_structure(node=node, _compact=false)
+        for (n, tb) in node__temporal_block(node=n, temporal_block=temporal_block, _compact=false)
+        for t1 in time_slice(temporal_block=tb, t=t)
+        for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
+    )
+end
+
+
+"""
+    unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
+
+Convenience function for accessing the full stochastic time indexing of `units`. Keyword arguments allow filtering.
+"""
+function unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
+    unique(
+        (unit=u, stochastic_scenario=s, t=t1)
+        for (u, n) in units_on_resolution(unit=unit, _compact=false) # TODO: Write a check for multiple relationships
+        for (n, s, t1) in node_stochastic_time_indices(
+            node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
+        )
+    )
+end
 
 """
     generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)

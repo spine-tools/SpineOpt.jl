@@ -42,15 +42,11 @@ function unit_flow_op_indices(;
     [
         (unit=u, node=n, direction=d, i=i_, stochastic_scenario=s, t=t)
         for (u, n) in indices(operating_points, unit=unit, node=node)
-        for (u, n, d, s, t) in unit_flow_indices_rc(
-            unit=u,
-            node=n,
-            direction=direction,
-            stochastic_scenario=stochastic_scenario,
-            t=t,
-            _compact=false
-        )
+        for (u, n, d, tb) in unit_flow_indices_rc(unit=u, node=n, direction=direction, _compact=false)
         for i_ in intersect(operating_point, 1:length(operating_points(unit=u, node=n, direction=d)))
+        for (n, s, t) in node_stochastic_time_indices(
+            node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+        )
     ]
 end
 

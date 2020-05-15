@@ -38,8 +38,11 @@ function unit_flow_indices(;unit=anything,
     node = expand_node_group(node)
     [
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (u, n, d, s, t) in unit_flow_indices_rc(
-            unit=unit, node=node, direction=direction, stochastic_scenario=stochastic_scenario, t=t, _compact=false
+        for (u, n, d, tb) in unit_flow_indices_rc(
+            unit=unit, node=node, direction=direction, _compact=false
+        )
+        for (n, s, t) in node_stochastic_time_indices(
+            node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     ]
 end
