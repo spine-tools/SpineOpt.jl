@@ -28,10 +28,15 @@ function constraint_unit_state_transition_indices()
     unit_state_transition_indices = []
     for (u, n) in units_on_resolution()
         for t_after in time_slice(temporal_block=node__temporal_block(node=n))
+            # Ensure type stability
+            active_scenarios = Array{Object,1}()
             # `units_on` on `t_after`
-            active_scenarios = map(
-                inds -> inds.stochastic_scenario,
-                units_on_indices(unit=u, t=t_after)
+            append!(
+                active_scenarios,
+                map(
+                    inds -> inds.stochastic_scenario,
+                    units_on_indices(unit=u, t=t_after)
+                )
             )
             # `units_on` on a valid `t_before`
             if !isempty(t_before_t(t_after=t_after))

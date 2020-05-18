@@ -28,10 +28,15 @@ function constraint_unit_flow_capacity_indices()
     unit_flow_capacity_indices = []
     for (u, n, d) in indices(unit_capacity)
         for t in time_slice(temporal_block=node__temporal_block(node=n))
+            # Ensure type stability
+            active_scenarios = Array{Object,1}()
             # Constrained `unit_flow`
-            active_scenarios = map(
-                inds -> inds.stochastic_scenario,
-                unit_flow_indices(unit=u, node=n, direction=d, t=t)
+            append!(
+                active_scenarios,
+                map(
+                    inds -> inds.stochastic_scenario,
+                    unit_flow_indices(unit=u, node=n, direction=d, t=t)
+                )
             )
             # Relevant `units_on`
             append!(

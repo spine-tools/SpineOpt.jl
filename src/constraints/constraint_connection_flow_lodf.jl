@@ -33,14 +33,19 @@ function constraint_connection_flow_lodf_indices()
             for x in connection_flow_indices(; connection=conn, last(connection__from_node(connection=conn))...)
         )
         for t in t_lowest_resolution(involved_t)
+            # Ensure type stability
+            active_scenarios = Array{Object,1}()
             # Monitored connection
-            active_scenarios = map(
-                inds -> inds.stochastic_scenario,
-                connection_flow_indices(
-                    connection=conn_mon,
-                    last(connection__from_node(connection=conn_mon))...,
-                    t=t_in_t(t_long=t)
-                ) # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
+            append!(
+                active_scenarios,
+                map(
+                    inds -> inds.stochastic_scenario,
+                    connection_flow_indices(
+                        connection=conn_mon,
+                        last(connection__from_node(connection=conn_mon))...,
+                        t=t_in_t(t_long=t)
+                    ) # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
+                )
             )
             # Excess flow due to outage on contingency connection
             append!(

@@ -31,11 +31,16 @@ function constraint_minimum_operating_point_indices()
             error("`unit_capacity` must be defined for `($(u), $(n), $(d))` if `minimum_operating_point` is defined!")
         end
         for t in time_slice(temporal_block=node__temporal_block(node=n))
+            # Ensure type stability
+            active_scenarios = Array{Object,1}()
             # Current `unit_flow`
-            active_scenarios = map(
-                inds -> inds.stochastic_scenario,
-                unit_flow_indices(
-                    unit=u, node=n, direction=d, t=t
+            append!(
+                active_scenarios,
+                map(
+                    inds -> inds.stochastic_scenario,
+                    unit_flow_indices(
+                        unit=u, node=n, direction=d, t=t
+                    )
                 )
             )
             # Current `units_on`

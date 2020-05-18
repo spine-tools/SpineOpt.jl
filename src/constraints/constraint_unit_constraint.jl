@@ -31,7 +31,8 @@ function constraint_unit_constraint_indices()
             (unit__from_node__unit_constraint(unit_constraint=uc), unit__to_node__unit_constraint(unit_constraint=uc))
         )
         for t in t_lowest_resolution(x.t for (u, n) in involved_unit_node for x in unit_flow_indices(unit=u, node=n))
-            active_scenarios = Array{Object,1}() # Type stability
+            # Ensure type stability
+            active_scenarios = Array{Object,1}()
             # `unit_flow` and `unit_flow_op` variables
             for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
                 append!(

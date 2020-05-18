@@ -28,10 +28,15 @@ function constraint_ratio_unit_flow_indices(ratio, d1, d2)
     ratio_unit_flow_indices = []
     for (u, n1, n2) in indices(ratio)
         for t in t_lowest_resolution(x.t for x in unit_flow_indices(unit=u, node=[n1, n2]))
+            # Ensure type stability
+            active_scenarios = Array{Object,1}()
             # `unit_flow` for `direction` `d1`
-            active_scenarios = map(
-                inds -> inds.stochastic_scenario,
-                unit_flow_indices(unit=u, node=n1, direction=d1, t=t_in_t(t_long=t))
+            append!(
+                active_scenarios,
+                map(
+                    inds -> inds.stochastic_scenario,
+                    unit_flow_indices(unit=u, node=n1, direction=d1, t=t_in_t(t_long=t))
+                )
             )
             # `unit_flow` for `direction` `d2`
             append!(

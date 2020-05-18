@@ -30,10 +30,15 @@ function constraint_min_down_time_indices()
         node = first(units_on_resolution(unit=u))
         tb = node__temporal_block(node=node)
         for t in time_slice(temporal_block=tb)
+            # Ensure type stability
+            active_scenarios = Array{Object,1}()
             # Current `units_on` and `units_available`
-            active_scenarios = map(
-                inds -> inds.stochastic_scenario,
-                units_on_indices(unit=u, t=t)
+            append!(
+                active_scenarios,
+                map(
+                    inds -> inds.stochastic_scenario,
+                    units_on_indices(unit=u, t=t)
+                )
             )
             # `units_shut_down` during past time slices
             append!(

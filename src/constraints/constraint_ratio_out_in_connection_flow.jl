@@ -28,11 +28,16 @@ function constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
     ratio_out_in_connection_flow_indices = []
     for (conn, n_out, n_in) in indices(ratio_out_in)
         for t in t_lowest_resolution(x.t for x in connection_flow_indices(connection=conn, node=[n_out, n_in]))
+            # Ensure type stability
+            active_scenarios = Array{Object,1}()
             # `to_node` `connection_flow`s
-            active_scenarios = map(
-                inds -> inds.stochastic_scenario,
-                connection_flow_indices(
-                    connection=conn, node=n_out, direction=direction(:to_node), t=t_in_t(t_long=t)
+            append!(
+                active_scenarios,
+                map(
+                    inds -> inds.stochastic_scenario,
+                    connection_flow_indices(
+                        connection=conn, node=n_out, direction=direction(:to_node), t=t_in_t(t_long=t)
+                    )
                 )
             )
             # `from_node` `connection_flow`s with potential `connection_flow_delay`

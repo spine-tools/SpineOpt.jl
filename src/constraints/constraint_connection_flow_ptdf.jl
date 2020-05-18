@@ -30,11 +30,16 @@ function constraint_connection_flow_ptdf_indices()
         n_to = node_direction.node
         direction = node_direction.direction
         for t in time_slice(temporal_block=node__temporal_block(node=n_to))
+            # Ensure type stability
+            active_scenarios = Array{Object,1}()
             # `n_to`
-            active_scenarios = map(
-                inds -> inds.stochastic_scenario,
-                connection_flow_indices(
-                    connection=conn, node=n_to, direction=direction, t=t
+            append!(
+                active_scenarios,
+                map(
+                    inds -> inds.stochastic_scenario,
+                    connection_flow_indices(
+                        connection=conn, node=n_to, direction=direction, t=t
+                    )
                 )
             )
             # `n_inj`

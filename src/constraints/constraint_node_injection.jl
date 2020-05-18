@@ -28,7 +28,8 @@ function constraint_node_injection_indices()
     node_injection_indices = []
     for (n, tb) in node__temporal_block()
         for t_after in time_slice(temporal_block=tb)
-            active_scenarios = Array{Object,1}() # Ensure type stability
+            # Ensure type stability
+            active_scenarios = Array{Object,1}()
             # Find a valid `t_before`
             if !isempty(t_before_t(t_after=t_after))
                 t_before = first(t_before_t(t_after=t_after))
