@@ -22,6 +22,8 @@ function preprocess_data_structure()
     generate_network_components()
     generate_direction()
     generate_variable_indices()
+    expand_node__stochastic_structure()
+    expand_units_on_resolution()
 end
 
 """
@@ -321,5 +323,41 @@ function generate_variable_indices()
         node_state_indices_rc = $node_state_indices_rc
         node_slack_indices_rc = $node_slack_indices_rc
         units_on_indices_rc = $units_on_indices_rc
+    end
+end
+
+
+"""
+    expand_node__stochastic_structure()
+
+Expands the `node__stochastic_structure` `RelationshipClass` for with individual `nodes` in `node_groups`.
+"""
+function expand_node__stochastic_structure()
+    for (node, stochastic_structure) in node__stochastic_structure()
+        expanded_node = expand_node_group(node)
+        if collect(node) != collect(expanded_node)
+            append!( # Using `add_relationships!` breaks this for some reason
+                node_stochastic_structure.relationships,
+                [(node=n, stochastic_structure=stochastic_structure) for n in expanded_node]
+            )
+        end
+    end
+end
+
+
+"""
+    expand_units_on_resolution()
+
+Expands `units_on_resolution` `RelationshipClass` with all individual `units` in `unit_groups`.
+"""
+function expand_units_on_resolution()
+    for (unit, node) in units_on_resolution()
+        expanded_unit = expand_unit_group(unit)
+        if collect(unit) != collect(expanded_unit)
+            append!( # Using `add_relationships!` breaks this for some reason
+                units_on_resolution.relationships,
+                [(unit=u, node=node) for u in expanded_unit]
+            )
+        end
     end
 end
