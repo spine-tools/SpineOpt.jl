@@ -336,8 +336,8 @@ function expand_node__stochastic_structure()
     for (node, stochastic_structure) in node__stochastic_structure()
         expanded_node = expand_node_group(node)
         if collect(node) != collect(expanded_node)
-            append!( # Using `add_relationships!` breaks this for some reason
-                node_stochastic_structure.relationships,
+            add_relationships!(
+                node_stochastic_structure,
                 [(node=n, stochastic_structure=stochastic_structure) for n in expanded_node]
             )
         end
@@ -354,8 +354,8 @@ function expand_units_on_resolution()
     for (unit, node) in units_on_resolution()
         expanded_unit = expand_unit_group(unit)
         if collect(unit) != collect(expanded_unit)
-            append!( # Using `add_relationships!` breaks this for some reason
-                units_on_resolution.relationships,
+            add_relationships!(
+                units_on_resolution,
                 [(unit=u, node=node) for u in expanded_unit]
             )
         end
