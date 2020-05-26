@@ -337,7 +337,7 @@ function expand_node__stochastic_structure()
         expanded_node = expand_node_group(node)
         if collect(node) != collect(expanded_node)
             add_relationships!(
-                node_stochastic_structure,
+                node__stochastic_structure,
                 [(node=n, stochastic_structure=stochastic_structure) for n in expanded_node]
             )
         end
