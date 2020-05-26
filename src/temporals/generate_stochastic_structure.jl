@@ -222,9 +222,6 @@ function generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
     node_scenario = []
     parameter_vals = Dict{Tuple{Vararg{Object}},Dict{Symbol,AbstractParameterValue}}()
     for (node, structure) in node__stochastic_structure()
-        if length(node__stochastic_structure(node=node)) > 1
-            error("Node `$(node)` cannot have more than one `stochastic_structure`!")
-        end
         scenarios = keys(all_stochastic_DAGs[structure])
         for scen in scenarios
             push!(node_scenario, (node=node, stochastic_scenario=scen))
