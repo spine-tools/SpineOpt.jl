@@ -40,6 +40,25 @@ function run_spinemodel(
     )
 end
 
+
+function generate_temporal_structure()
+    generate_current_window()
+    generate_time_slice()
+    generate_time_slice_relationships()
+end
+
+
+function generate_stochastic_structure()
+    all_stochastic_DAGs = generate_all_stochastic_DAGs(start(current_window))
+    generate_stochastic_time_map(all_stochastic_DAGs)
+    generate_node_stochastic_scenario_weight(all_stochastic_DAGs)
+    full_stochastic_paths = find_full_stochastic_paths()
+    @eval begin
+        full_stochastic_paths = $full_stochastic_paths
+    end
+end
+
+
 """
     run_spinemodel(url_in, url_out; <keyword arguments>)
 
@@ -75,7 +94,9 @@ function run_spinemodel(
         generate_missing_items()
     end
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
-    check_islands(log_level)
+    @logtime level2 "Creating temporal structure..." generate_temporal_structure()
+    @logtime level2 "Creating stochastic structure..." generate_stochastic_structure()
+    check_spinemodel(log_level)
     m = rerun_spinemodel(
         url_out;
         with_optimizer=with_optimizer,
@@ -103,7 +124,6 @@ function rerun_spinemodel(
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
     m.ext[:values] = Dict{Symbol,Dict}()
     m.ext[:constraints] = Dict{Symbol,Dict}()
-    @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @log level1 "Window 1: $current_window"
     @logtime level2 "Adding variables...\n" begin
         @logtime level3 "- [variable_units_available]" add_variable_units_available!(m)
@@ -173,12 +193,6 @@ function rerun_spinemodel(
     end
      @logtime level2 "Writing report..." write_report(results, url_out)
      m
-end
-
-function generate_temporal_structure()
-    generate_current_window()
-    generate_time_slice()
-    generate_time_slice_relationships()
 end
 
 function optimize_model!(m::Model)

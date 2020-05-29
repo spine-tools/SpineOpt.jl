@@ -20,14 +20,15 @@
     node_state_indices(filtering_options...)
 
 A set of tuples for indexing the `node_state` variable. Any filtering options can be specified
-for `node`, and `t`.
+for `node`, `s`, and `t`.
 """
-function node_slack_indices(;node=anything, t=anything)
-    unique(
-        (node=n, t=t_)
-        for (n, tb) in node_slack_indices_rc(node=node, _compact=false)
-        for t_ in time_slice(temporal_block=tb, t=t)
-    )
+function node_slack_indices(;node=anything, stochastic_scenario=anything, t=anything)
+    inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
+        (node=n, stochastic_scenario=s, t=t)
+        for n in filter(n -> n in node, collect(indices(node_slack_penalty)))
+        for (n, s, t) in node_stochastic_time_indices(node=n, stochastic_scenario=stochastic_scenario, t=t)
+    ]
+    unique!(inds)
 end
 
 add_variable_node_slack_pos!(m::Model) = add_variable!(m, :node_slack_pos, node_slack_indices; lb=x -> 0)

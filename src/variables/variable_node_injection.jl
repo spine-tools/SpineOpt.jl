@@ -22,12 +22,8 @@
 A set of tuples for indexing the `node_injection` variable. Any filtering options can be specified
 for `node`, and `t`.
 """
-function node_injection_indices(;node=anything, t=anything)
-    unique(
-        (node=n, t=t_)
-        for (n, tb) in node__temporal_block(node=node, _compact=false)
-        for t_ in time_slice(temporal_block=tb, t=t)
-    )
+function node_injection_indices(;node=anything, stochastic_scenario=anything, t=anything)
+    node_stochastic_time_indices(node=node, stochastic_scenario=stochastic_scenario, t=t)
 end
 
 add_variable_node_injection!(m::Model) = add_variable!(m, :node_injection, node_injection_indices)

@@ -18,18 +18,19 @@
 #############################################################################
 
 """
-    units_on_indices(unit=anything, t=anything)
+    units_on_indices(unit=anything, stochastic_scenario=anything, t=anything)
 
 A list of `NamedTuple`s corresponding to indices of the `units_on` variable.
 The keyword arguments act as filters for each dimension.
 """
-function units_on_indices(;unit=anything, t=anything)
-    unit = expand_unit_group(unit)
-    (
-        (unit=u, t=t1)
+function units_on_indices(;unit=anything, stochastic_scenario=anything, t=anything)
+    [
+        (unit=u, stochastic_scenario=s, t=t)
         for (u, tb) in units_on_indices_rc(unit=unit, _compact=false)
-        for t1 in time_slice(temporal_block=tb, t=t)
-    )
+        for (u, s, t) in unit_stochastic_time_indices(
+            unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+        )
+    ]
 end
 
 

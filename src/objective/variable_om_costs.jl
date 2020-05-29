@@ -27,9 +27,10 @@ function variable_om_costs(m::Model)
     @expression(
         m,
         expr_sum(
-            unit_flow[u, n, d, t] * duration(t) * vom_cost[(unit=u, node=n, direction=d, t=t)]
+            + unit_flow[u, n, d, s, t] * duration(t)
+            * vom_cost[(unit=u, node=n, direction=d, t=t)]
             for (u, n, d) in indices(vom_cost)
-            for (u, n, d, t) in unit_flow_indices(unit=u, node=n, direction=d);
+            for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d);
             init=0
         )
     )

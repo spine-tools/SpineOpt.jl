@@ -26,12 +26,23 @@
 #
 
 """
+    check_spinemodel(log_level::Int64)
+
+Runs a number of checks to see if the data provided results in a valid model.
+"""
+function check_spinemodel(log_level::Int64)
+    check_islands(log_level)
+    check_units_on_resolution()
+    check_node__stochastic_structure()
+end
+
+
+"""
     check_islands()
 
 Check network for islands and warn the user if problems.
 
 """
-
 function check_islands(log_level)
 
     level0 = log_level >= 0
@@ -77,6 +88,7 @@ function islands(c)
     island_count, island_node
 end
 
+
 """
     visit()
 
@@ -93,6 +105,7 @@ function visit(n, island_count, visited_d, island_node)
     end
 end
 
+
 """
     check_x()
 
@@ -105,5 +118,51 @@ function check_x()
         if conn_reactance(connection=conn) < 0.0001
             @info "Low reactance may cause problems for line " conn
         end
+    end
+end
+
+
+"""
+    check_units_on_resolution()
+
+Ensures there's exactly one `units_on_resolution` definition per `unit` in the data.
+"""
+function check_units_on_resolution()
+    error_units = []
+    for u in unit()
+        if length(units_on_resolution(unit=u)) != 1
+            push!(error_units, u)
+        end
+    end
+    if !isempty(error_units)
+        error(
+            """
+            Each `unit` must have exactly one `units_on_resolution` defined!
+            - Check `units` $(error_units)
+            """
+        )
+    end
+end
+
+
+"""
+    check_node__stochastic_structure()
+
+Ensures there's exactly one `node__stochastic_structure` definition per `node` in the data.
+"""
+function check_node__stochastic_structure()
+    error_nodes = []
+    for n in node()
+        if length(node__stochastic_structure(node=n)) != 1
+            push!(error_nodes, n)
+        end
+    end
+    if !isempty(error_nodes)
+        error(
+            """
+            Each `node` must have exactly one `node__stochastic_structure` defined!
+            - Check `nodes` $(error_nodes)
+            """
+        )
     end
 end

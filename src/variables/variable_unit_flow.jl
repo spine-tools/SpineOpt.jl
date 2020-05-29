@@ -21,22 +21,30 @@
         unit=anything,
         node=anything,
         direction=anything,
+        s=anything
         t=anything
     )
 
 A list of `NamedTuple`s corresponding to indices of the `unit_flow` variable.
 The keyword arguments act as filters for each dimension.
 """
-function unit_flow_indices(;unit=anything, node=anything, direction=anything, t=anything)
+function unit_flow_indices(;unit=anything,
+    node=anything,
+    direction=anything,
+    stochastic_scenario=anything,
+    t=anything
+)
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
-    (
-        (unit=u, node=n, direction=d, t=t1)
+    [
+        (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
         for (u, n, d, tb) in unit_flow_indices_rc(
             unit=unit, node=node, direction=direction, _compact=false
         )
-        for t1 in time_slice(temporal_block=tb, t=t)
-    )
+        for (n, s, t) in node_stochastic_time_indices(
+            node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+        )
+    ]
 end
 
 function add_variable_unit_flow!(m::Model)
