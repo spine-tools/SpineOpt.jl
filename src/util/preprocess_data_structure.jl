@@ -26,6 +26,22 @@ function preprocess_data_structure()
     expand_units_on_resolution()
 end
 
+
+function generate_unit_investment_temporal_block
+    for u in indices(candidate_units)
+        (candidate_units(unit=u) > 0) && continue
+        if isempty(unit__investment_temporal_block(unit=u))  
+            m = first(model())
+            tb = first(model__default_investment_temporal_block(model=m))
+            if tb == nothing
+                @warn("Model has no model__default_investment_temporal_block defined but unit $(u) has candidate_units > 0 and no unit__investment_temporal_block defined")
+            else
+                add_relationships!(unit__investment_temporal_block, [(unit=u, temporal_block=tb)])
+            end            
+        end        
+    end
+end
+
 """
     add_connection_relationships()
 
@@ -302,6 +318,11 @@ function generate_variable_indices()
             for u in expand_unit_group(ug)
             for tb in node__temporal_block(node=n)
     )
+    units_invested_indices = unique(
+        (unit=u, temporal_block=tb)
+        for (ug,tb) in units_invested__temporal_block()
+            for u in expand_unit_group(ug)            
+    )
     unit_flow_indices_rc = RelationshipClass(
         :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices
     )
@@ -317,12 +338,16 @@ function generate_variable_indices()
     units_on_indices_rc = RelationshipClass(
         :units_on_indices_rc, [:unit, :temporal_block], units_on_indices
     )
+    units_invested_indices_rc = RelationshipClass(
+        :units_invested_indices_rc, [:unit, :temporal_block], units_invested_indices
+    )
     @eval begin
         unit_flow_indices_rc = $unit_flow_indices_rc
         connection_flow_indices_rc = $connection_flow_indices_rc
         node_state_indices_rc = $node_state_indices_rc
         node_slack_indices_rc = $node_slack_indices_rc
         units_on_indices_rc = $units_on_indices_rc
+        units_invested_indices_rc = $units_invested_indices_rc
     end
 end
 

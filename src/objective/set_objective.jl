@@ -32,8 +32,9 @@ function set_objective!(m::Model)
     suc_costs = start_up_costs(m)
     sdc_costs = shut_down_costs(m)
     penalties = objective_penalties(m)
+    invest_costs = investment_costs(m)
     total_discounted_costs = @expression(
-        m, vom_costs + fom_costs + tax_costs + op_costs + suc_costs + sdc_costs + fl_costs + penalties
+        m, vom_costs + fom_costs + tax_costs + op_costs + suc_costs + sdc_costs + fl_costs + penalties + invest_costs
     )
     if total_discounted_costs != 0
         @objective(m, Min, total_discounted_costs)
