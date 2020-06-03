@@ -29,7 +29,7 @@ function generate_missing_items()
     )
     merge!(classes, Dict(class.name => class for class in relationship_class(mod)))
     parameters = Set(param.name for param in parameter(mod))
-    for name in template["object_classes"]
+    for (name,) in template["object_classes"]
         sym_name = Symbol(name)
         sym_name in keys(classes) && continue
         push!(missing_items["object classes"], name)
