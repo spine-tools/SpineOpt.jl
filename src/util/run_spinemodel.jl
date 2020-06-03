@@ -256,7 +256,7 @@ An equivalent dictionary where the given dimensions are pulled from the key to t
 """
 function pulldims(input::Dict{K,V}, dims::Symbol...) where {K<:NamedTuple,V}
     output = Dict()
-    for (key, value) in sort(input)
+    for (key, value) in sort!(OrderedDict(input))
         output_key = (; (k => v for (k, v) in pairs(key) if !(k in dims))...)
         output_value = ((key[dim] for dim in dims)..., value)
         push!(get!(output, output_key, []), output_value)
