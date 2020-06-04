@@ -76,7 +76,8 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 + unit_flow[u, n, d, s, t]
                 for (u, n, d, s, t) in unit_flow_indices(
                     unit=u, node=n, direction=d, stochastic_scenario=stochastic_path, t=t
-                );
+                )
+                    if reserve_node_type(node=n) != :upward_nonspinning;
                 init=0
             ) * duration(t)
             <=

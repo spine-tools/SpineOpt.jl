@@ -16,26 +16,20 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
 """
-    fixed_om_costs(m)
+    ramp_cost_indices(unit=anything, t=anything)
 
-Fixed operation costs of units.
+A list of `NamedTuple`s corresponding to indices of the `units_on` variable.
+The keyword arguments act as filters for each dimension.
 """
-function fixed_om_costs(m,t1)
-    @expression(
-        m,
-        expr_sum(
-            + unit_capacity[(unit=u, node=n, direction=d, t=t)]
-            * number_of_units[(unit=u, t=t)]
-            * fom_cost[(unit=u, t=t)]
-            for (u, n, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for t in time_slice()
-                ##TODO: so this one is summed up for every time-step within the optimization
-                ##This might cause double counting!
-                if end_(t) <= t1;
-            init=0
-        )
-    )
+
+function ramp_cost_indices(;unit=anything, t=anything)
+    [
+        (unit=u, t=t_)
+        for u in intersect(SpineModel.unit(), unit)
+        for t_ in t_highest_resolution(unique(x.t for x in flow_indices(unit=u, t=t)))
+    ]
 end
-#TODO: scenario tree?
+
+create_variable_ramp_cost!(m::Model) = create_variable!(m, :ramp_cost, ramp_cost_indices; lb=x -> 0)
+# fix_variable_flow!(m::Model) = fix_variable!(m, :flow, flow_indices, fix_flow_)

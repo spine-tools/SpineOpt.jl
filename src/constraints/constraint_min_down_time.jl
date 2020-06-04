@@ -24,6 +24,7 @@ Forms the stochastic index set for the `:min_down_time` constraint. Uses stochas
 indices due to potentially different stochastic structures between `units_on` and
 `units_available` variables.
 """
+#TODO: Does this require nonspin_starting_up_indices() to be added here?
 function constraint_min_down_time_indices()
     min_down_time_indices = []
     for u in indices(min_down_time)
@@ -71,7 +72,7 @@ end
 Constraint start-up by minimum down time.
 """
 function add_constraint_min_down_time!(m::Model)
-    @fetch units_on, units_available, units_shut_down = m.ext[:variables]
+    @fetch units_on, units_available, units_shut_down, nonspin_starting_up = m.ext[:variables]
     cons = m.ext[:constraints][:min_down_time] = Dict()
     for (u, stochastic_path, t) in constraint_min_down_time_indices()
         cons[u, stochastic_path, t] = @constraint(
@@ -91,6 +92,16 @@ function add_constraint_min_down_time!(m::Model)
                     unit=u,
                     stochastic_scenario=stochastic_path,
                     t=to_time_slice(TimeSlice(end_(t) - min_down_time(unit=u), end_(t)))
+                );
+                init=0
+            )
+            #TODO: stoachstic path of this correct?
+            + expr_sum(
+                + nonspin_starting_up[u, s_past, t_past]
+                for (u, s_past, t_past) in nonspin_starting_up_indices(
+                    unit=u,
+                    stochastic_scenario=stochastic_path,
+                    t=t_before_t(t_after=t)
                 );
                 init=0
             )

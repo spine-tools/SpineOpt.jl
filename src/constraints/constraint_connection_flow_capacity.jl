@@ -36,6 +36,13 @@ function add_constraint_connection_flow_capacity!(m::Model)
                 + connection_capacity[(connection=conn, node=n, direction=d, t=t)] # TODO: Stochastic parameters
                 * connection_availability_factor[(connection=conn, t=t)]
                 * connection_conv_cap_to_flow[(connection=conn, node=n, direction=d, t=t)]
+                + reduce(
+                    +,
+                    connection_flow[conn, n, d, s, t] #TODO: why did we get of duration here?
+                        for (conn, n, d_reverse, s, t) in connection_flow_indices(connection=conn, node=n, t=t)
+                            if d_reverse != d && is_reserve_node(node=n) == :is_reserve_node_false;
+                    init=0
+                )
             )
         end
     end

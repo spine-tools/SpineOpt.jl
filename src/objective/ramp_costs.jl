@@ -18,24 +18,20 @@
 #############################################################################
 
 """
-    fixed_om_costs(m)
+    ramp_costs(m::Model, t)
 
-Fixed operation costs of units.
+    Calculate ramp costs for each unit.
 """
-function fixed_om_costs(m,t1)
+function ramp_costs(m::Model, t1)
+    @fetch ramp_cost = m.ext[:variables]
     @expression(
         m,
         expr_sum(
-            + unit_capacity[(unit=u, node=n, direction=d, t=t)]
-            * number_of_units[(unit=u, t=t)]
-            * fom_cost[(unit=u, t=t)]
-            for (u, n, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for t in time_slice()
-                ##TODO: so this one is summed up for every time-step within the optimization
-                ##This might cause double counting!
+            + ramp_cost[u, s, t]
+            for (u, s, t) in ramp_cost_indices()
                 if end_(t) <= t1;
             init=0
         )
     )
 end
-#TODO: scenario tree?
+#TODO: add weight scenario tree

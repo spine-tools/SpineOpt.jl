@@ -39,6 +39,8 @@ function add_constraint_nodal_balance!(m::Model)
                     node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
                 )
                 if !(balance_type(node=n) === :balance_type_group && _is_internal(conn, n));
+                    #TODO: what would be the meaning of balance_type(node=n) != :balance_type_group but is internal?
+                    # this should not be allowed I guess?
                 init=0
             )
             # Commodity flows to connections

@@ -18,11 +18,11 @@
 #############################################################################
 
 """
-    variable_om_costs(m::Model)
+    variable_om_costs(m::Model, t1::RefDateTime)
 
 Variable operation costs defined on unit_flows.
 """
-function variable_om_costs(m::Model)
+function variable_om_costs(m::Model, t1)
     @fetch unit_flow = m.ext[:variables]
     @expression(
         m,
@@ -30,8 +30,10 @@ function variable_om_costs(m::Model)
             + unit_flow[u, n, d, s, t] * duration(t)
             * vom_cost[(unit=u, node=n, direction=d, t=t)]
             for (u, n, d) in indices(vom_cost)
-            for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d);
+            for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d)
+                if t <= t1;
             init=0
         )
     )
 end
+#TODO: add weight scenario tree

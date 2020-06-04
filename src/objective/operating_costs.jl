@@ -20,16 +20,17 @@
 """
     operating_costs(m::Model)
 """
-function operating_costs(m::Model)
+function operating_costs(m::Model, t1)
     @fetch unit_flow = m.ext[:variables]
     @expression(
         m,
         expr_sum(
-            unit_flow[u, n, d, s, t] * duration(t) 
+            unit_flow[u, n, d, s, t] * duration(t)
             * operating_cost[(unit=u, node=n, direction=d, t=t)]
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for (u, n, d) in indices(operating_cost)
-            for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d);
+                for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d)
+                    if end_(t) <= t1;
             init=0
         )
     )

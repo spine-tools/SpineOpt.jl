@@ -18,24 +18,22 @@
 #############################################################################
 
 """
-    fixed_om_costs(m)
+    res_proc_costs(m::Model)
 
-Fixed operation costs of units.
+Cost term to account for reserve procurement costs
 """
-function fixed_om_costs(m,t1)
+function res_proc_costs(m::Model,t1)
+    @fetch unit_flow = m.ext[:variables]
     @expression(
         m,
-        expr_sum(
-            + unit_capacity[(unit=u, node=n, direction=d, t=t)]
-            * number_of_units[(unit=u, t=t)]
-            * fom_cost[(unit=u, t=t)]
-            for (u, n, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for t in time_slice()
-                ##TODO: so this one is summed up for every time-step within the optimization
-                ##This might cause double counting!
-                if end_(t) <= t1;
+        reduce(
+            +,
+            unit_flow[u, n, d, s, t] * duration(t) * reserve_procurement_cost[(node=n,t=t)]
+                for n in indices(reserve_procurement_cost) #TODO: changes this to u,n,d indices
+                    for (u, n, d, s, t) in unit_flow_indices(node=n)
+                        if end_(t) <= t1;
             init=0
         )
     )
 end
-#TODO: scenario tree?
+#TODO: add weight scenario tree

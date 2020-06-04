@@ -18,24 +18,20 @@
 #############################################################################
 
 """
-    fixed_om_costs(m)
-
-Fixed operation costs of units.
+    connection_flow_costs(m::Model)
 """
-function fixed_om_costs(m,t1)
+function connection_flow_costs(m::Model,t1)
+    @fetch connection_flow = m.ext[:variables]
     @expression(
         m,
-        expr_sum(
-            + unit_capacity[(unit=u, node=n, direction=d, t=t)]
-            * number_of_units[(unit=u, t=t)]
-            * fom_cost[(unit=u, t=t)]
-            for (u, n, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for t in time_slice()
-                ##TODO: so this one is summed up for every time-step within the optimization
-                ##This might cause double counting!
-                if end_(t) <= t1;
+        reduce(
+            +,
+            connection_flow[conn, n, d, s, t]* duration(t) * connection_flow_cost[(connection=conn,t=t)]
+            for conn in indices(connection_flow_cost)
+                for (conn, n, d, s, t) in connection_flow_indices(connection=conn)
+                    if end_(t) <= t1; #TODO: do we need connection_flow_costs in different directions?
             init=0
         )
     )
 end
-#TODO: scenario tree?
+#TODO: add weight scenario tree

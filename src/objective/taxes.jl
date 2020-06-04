@@ -21,7 +21,7 @@
     taxes(m::Model)
 
 """
-function taxes(m::Model)
+function taxes(m::Model, t1)
     @fetch unit_flow = m.ext[:variables]
     @expression(
         m,
@@ -30,7 +30,8 @@ function taxes(m::Model)
             * tax_net_unit_flow[(node=n, t=t)]
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for (n,) in indices(tax_net_unit_flow)
-            for (u, n, d, s, t) in unit_flow_indices(node=n, direction=direction(:to_node));
+            for (u, n, d, s, t) in unit_flow_indices(node=n, direction=direction(:to_node))
+                if t <= t1;
             init=0
         )
         - expr_sum(
@@ -38,7 +39,8 @@ function taxes(m::Model)
             * tax_net_unit_flow[(node=n, t=t)]
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for (n,) in indices(tax_net_unit_flow)
-            for (u, n, d, s, t) in unit_flow_indices(node=n, direction=direction(:from_node));
+            for (u, n, d, s, t) in unit_flow_indices(node=n, direction=direction(:from_node))
+                if t <= t1;
             init=0
         )
         + expr_sum(
@@ -46,7 +48,8 @@ function taxes(m::Model)
             * tax_out_unit_flow[(node=n, t=t)]
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for (n,) in indices(tax_out_unit_flow)
-            for (u, n, d, s, t) in unit_flow_indices(node=n, direction=direction(:from_node));
+            for (u, n, d, s, t) in unit_flow_indices(node=n, direction=direction(:from_node))
+                if t <= t1;
             init=0
         )
         + expr_sum(
@@ -54,7 +57,8 @@ function taxes(m::Model)
             * tax_in_unit_flow[(node=n, t=t)]
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for (n,) in indices(tax_out_unit_flow)
-            for (u, n, d, s, t) in unit_flow_indices(node=n1, direction=direction(:to_node));
+            for (u, n, d, s, t) in unit_flow_indices(node=n1, direction=direction(:to_node))
+                if t <= t1;
             init=0
         )
     )

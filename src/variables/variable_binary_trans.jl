@@ -17,25 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    fixed_om_costs(m)
 
-Fixed operation costs of units.
 """
-function fixed_om_costs(m,t1)
-    @expression(
-        m,
-        expr_sum(
-            + unit_capacity[(unit=u, node=n, direction=d, t=t)]
-            * number_of_units[(unit=u, t=t)]
-            * fom_cost[(unit=u, t=t)]
-            for (u, n, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for t in time_slice()
-                ##TODO: so this one is summed up for every time-step within the optimization
-                ##This might cause double counting!
-                if end_(t) <= t1;
-            init=0
+    variable_binary_trans(m::Model)
+
+Create the `binary_trans` variable for the model `m`.
+
+This variable enforces unidirectional flow for each timestep.
+
+"""
+function create_binary_trans!(m::Model)
+    KeyType = NamedTuple{(:connection, :node, :direction, :t),Tuple{Object,Object,Object,TimeSlice}}
+    m.ext[:variables][:binary_trans] = Dict{KeyType,Any}(
+        (connection=conn, node=n, direction=d, t=t) => @variable(
+            m, base_name="binary_trans[$conn,$n,$d, $(t.JuMP_name)]", binary=true
         )
+        for (conn, n,c,d,t) in trans_indices()
+            if unitary_trans(connection=conn, node= n, direction=d) == :unitary_trans
     )
 end
-#TODO: scenario tree?

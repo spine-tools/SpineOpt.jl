@@ -18,24 +18,27 @@
 #############################################################################
 
 """
-    fixed_om_costs(m)
+    total_costs(m::Model, t::RefDateTime)
 
-Fixed operation costs of units.
+Expression of all cost terms. t indicates the end of the last timeslice that is
+included in the expression.
 """
-function fixed_om_costs(m,t1)
-    @expression(
-        m,
-        expr_sum(
-            + unit_capacity[(unit=u, node=n, direction=d, t=t)]
-            * number_of_units[(unit=u, t=t)]
-            * fom_cost[(unit=u, t=t)]
-            for (u, n, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for t in time_slice()
-                ##TODO: so this one is summed up for every time-step within the optimization
-                ##This might cause double counting!
-                if end_(t) <= t1;
-            init=0
-        )
-    )
+function total_costs(m,t)
+    vom_costs = variable_om_costs(m,t)
+    fom_costs = fixed_om_costs(m,t)
+    tax_costs = taxes(m,t)
+    op_costs = operating_costs(m,t)
+    fl_costs = fuel_costs(m,t)
+    suc_costs = start_up_costs(m,t)
+    sdc_costs = shut_down_costs(m,t)
+    penalties = objective_penalties(m,t)
+    rmp_costs = ramp_costs(m,t)
+    ren_curt_costs = renewable_curtailment_costs(m,t)
+    conn_flow_costs = connection_flow_costs(m,t)
+    rs_prc_costs = res_proc_costs(m,t)
+    total_costs =
+        vom_costs + fom_costs + tax_costs + op_costs + fl_costs +
+         + suc_costs + sdc_costs+ rmp_costs + penalties + ren_curt_cost +
+            + conn_flow_costs + rs_prc_costs
+    return total_costs
 end
-#TODO: scenario tree?

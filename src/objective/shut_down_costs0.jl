@@ -18,24 +18,20 @@
 #############################################################################
 
 """
-    fixed_om_costs(m)
+    shut_down_costs(m::Model)
 
-Fixed operation costs of units.
+Shutdown cost term for units.
 """
-function fixed_om_costs(m,t1)
+function shut_down_costs(m::Model,t1)
+    @fetch units_shut_down = m.ext[:variables]
     @expression(
         m,
-        expr_sum(
-            + unit_capacity[(unit=u, node=n, direction=d, t=t)]
-            * number_of_units[(unit=u, t=t)]
-            * fom_cost[(unit=u, t=t)]
-            for (u, n, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for t in time_slice()
-                ##TODO: so this one is summed up for every time-step within the optimization
-                ##This might cause double counting!
-                if end_(t) <= t1;
+        reduce(
+            +,
+            shut_down_cost(unit=u) * units_shut_down[u, t]
+            for (u, t) in units_on_indices() if shut_down_cost(unit=u) != nothing && end_(t) <= t1;
             init=0
         )
     )
 end
-#TODO: scenario tree?
+#TODO: add weight scenario tree
