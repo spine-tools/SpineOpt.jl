@@ -43,6 +43,7 @@ export unit_flow_op_indices
 export connection_flow_indices
 export node_state_indices
 export units_on_indices
+export units_invested_indices
 
 include("temporals/generate_time_slice.jl")
 include("temporals/generate_time_slice_relationships.jl")
@@ -62,6 +63,7 @@ include("variables/variable_unit_flow_op.jl")
 include("variables/variable_connection_flow.jl")
 include("variables/variable_node_state.jl")
 include("variables/variable_units_on.jl")
+include("variables/variable_units_invested.jl")
 include("variables/variable_units_available.jl")
 include("variables/variable_units_started_up.jl")
 include("variables/variable_units_shut_down.jl")
@@ -77,6 +79,7 @@ include("objective/operating_costs.jl")
 include("objective/start_up_costs.jl")
 include("objective/shut_down_costs.jl")
 include("objective/fuel_costs.jl")
+include("objective/investment_costs.jl")
 include("objective/objective_penalties.jl")
 
 include("constraints/constraint_max_cum_in_unit_flow_bound.jl")
@@ -98,6 +101,7 @@ include("constraints/constraint_min_up_time.jl")
 include("constraints/constraint_min_down_time.jl")
 include("constraints/constraint_unit_state_transition.jl")
 include("constraints/constraint_unit_constraint.jl")
+include("constraints/constraint_units_invested.jl")
 
 const template = JSON.parsefile(joinpath(dirname(pathof(@__MODULE__)), "..", "data", "spine_model_template.json"))
 

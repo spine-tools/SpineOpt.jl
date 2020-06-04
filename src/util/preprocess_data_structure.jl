@@ -21,23 +21,20 @@ function preprocess_data_structure()
     add_connection_relationships()
     generate_network_components()
     generate_direction()
+    generate_unit_investment_temporal_block()
     generate_variable_indices()
     expand_node__stochastic_structure()
-    expand_units_on_resolution()
+    expand_units_on_resolution()       
 end
 
 
-function generate_unit_investment_temporal_block
-    for u in indices(candidate_units)
-        (candidate_units(unit=u) > 0) && continue
-        if isempty(unit__investment_temporal_block(unit=u))  
+function generate_unit_investment_temporal_block()    
+    for u in indices(candidate_units)        
+        if isempty(unit__investment_temporal_block(unit=u))         
             m = first(model())
-            tb = first(model__default_investment_temporal_block(model=m))
-            if tb == nothing
-                @warn("Model has no model__default_investment_temporal_block defined but unit $(u) has candidate_units > 0 and no unit__investment_temporal_block defined")
-            else
-                add_relationships!(unit__investment_temporal_block, [(unit=u, temporal_block=tb)])
-            end            
+            for tb in model__default_investment_temporal_block(model=m)
+                add_relationships!(unit__investment_temporal_block, [(unit=u, temporal_block=tb)])                
+            end
         end        
     end
 end
@@ -314,14 +311,15 @@ function generate_variable_indices()
     )
     units_on_indices = unique(
         (unit=u, temporal_block=tb)
-        for (ug,n) in units_on_resolution()
+        for (ug, n) in units_on_resolution()
             for u in expand_unit_group(ug)
             for tb in node__temporal_block(node=n)
     )
     units_invested_indices = unique(
         (unit=u, temporal_block=tb)
-        for (ug,tb) in units_invested__temporal_block()
-            for u in expand_unit_group(ug)            
+        for ug in indices(candidate_units)
+        for u in expand_unit_group(ug)            
+        for tb in unit__investment_temporal_block(unit=u)                    
     )
     unit_flow_indices_rc = RelationshipClass(
         :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices

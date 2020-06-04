@@ -125,9 +125,33 @@ function rerun_spinemodel(
     m.ext[:values] = Dict{Symbol,Dict}()
     m.ext[:constraints] = Dict{Symbol,Dict}()
     @log level1 "Window 1: $current_window"
+
+    @info "units_invested" units_invested_indices()
+
+    @info "l0"
+    for ug in indices(candidate_units)
+        @info "l1" ug
+        for u in expand_unit_group(ug)
+            @info "l2" u
+            for tb in unit__investment_temporal_block(unit=u)                    
+                @info "l3" tb
+            end
+        end
+    end
+    
+    inds = unique(
+        (unit=u, temporal_block=tb)
+        for ug in indices(candidate_units)
+        for u in expand_unit_group(ug)            
+        for tb in unit__investment_temporal_block(unit=u)                    
+    )
+
+    @info "inds" inds    
+
     @logtime level2 "Adding variables...\n" begin
         @logtime level3 "- [variable_units_available]" add_variable_units_available!(m)
         @logtime level3 "- [variable_units_on]" add_variable_units_on!(m)
+        @logtime level3 "- [variable_units_invested]" add_variable_units_invested!(m)
         @logtime level3 "- [variable_units_started_up]" add_variable_units_started_up!(m)
         @logtime level3 "- [variable_units_shut_down]" add_variable_units_shut_down!(m)
         @logtime level3 "- [variable_unit_flow]" add_variable_unit_flow!(m)
@@ -165,6 +189,7 @@ function rerun_spinemodel(
         @logtime level3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
         @logtime level3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
         @logtime level3 "- [constraint_units_on]" add_constraint_units_on!(m)
+        @logtime level3 "- [constraint_units_invested]" add_constraint_units_on!(m)
         @logtime level3 "- [constraint_units_available]" add_constraint_units_available!(m)
         @logtime level3 "- [constraint_minimum_operating_point]" add_constraint_minimum_operating_point!(m)
         @logtime level3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)

@@ -18,31 +18,16 @@
 #############################################################################
 
 """
-    units_invested_indices(unit=anything, t=anything)
-
-A list of `NamedTuple`s corresponding to indices of the `units_on` variable.
-The keyword arguments act as filters for each dimension.
+    investment_costs(m::Model)
 """
-
-function units_invested_indices(;unit=anything, stochastic_scenario=anything, t=anything)
-    [
-        (unit=u, stochastic_scenario=s, t=t)
-        for (u, tb) in units_invested_indices_rc(unit=unit, _compact=false)
-        for (u, s, t) in unit_stochastic_time_indices(
-            unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+function investment_costs(m::Model)
+    @fetch units_invested = m.ext[:variables]
+    @expression(
+        m,       
+        + expr_sum(
+            units_invested[u] * unit_investment_cost(unit=u)
+            for u in units_invested_indices();
+            init=0
         )
-    ]
-end
-
-units_invested_int(x) = investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
-
-function add_variable_units_invested!(m::Model)
-    add_variable!(
-    	m,
-    	:units_invested, units_invested_indices;
-    	lb=x -> 0,
-    	int=units_invested_int,
-    	fix_value=x -> fix_units_invested(unit=x.unit, t=x.t, _strict=false)
     )
 end
-
