@@ -125,29 +125,7 @@ function rerun_spinemodel(
     m.ext[:values] = Dict{Symbol,Dict}()
     m.ext[:constraints] = Dict{Symbol,Dict}()
     @log level1 "Window 1: $current_window"
-
-    @info "units_invested" units_invested_indices()
-
-    @info "l0"
-    for ug in indices(candidate_units)
-        @info "l1" ug
-        for u in expand_unit_group(ug)
-            @info "l2" u
-            for tb in unit__investment_temporal_block(unit=u)                    
-                @info "l3" tb
-            end
-        end
-    end
     
-    inds = unique(
-        (unit=u, temporal_block=tb)
-        for ug in indices(candidate_units)
-        for u in expand_unit_group(ug)            
-        for tb in unit__investment_temporal_block(unit=u)                    
-    )
-
-    @info "inds" inds    
-
     @logtime level2 "Adding variables...\n" begin
         @logtime level3 "- [variable_units_available]" add_variable_units_available!(m)
         @logtime level3 "- [variable_units_on]" add_variable_units_on!(m)

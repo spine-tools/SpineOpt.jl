@@ -28,13 +28,13 @@ function units_invested_indices(;unit=anything, stochastic_scenario=anything, t=
     [
         (unit=u, stochastic_scenario=s, t=t)
         for (u, tb) in units_invested_indices_rc(unit=unit, _compact=false)
-        for (u, s, t) in unit_stochastic_time_indices(
+        for (u, s, t) in unit_investment_stochastic_time_indices(
             unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     ]
 end
 
-units_invested_int(x) = investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
+units_invested_int(x) = unit_investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
 
 function add_variable_units_invested!(m::Model)
     add_variable!(
