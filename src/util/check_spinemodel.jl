@@ -20,7 +20,7 @@
 # The functions in this file utilise PowerSystems.jl to calculate
 # power transmission distrivution factors (ptdfs) and line outage
 # distribution factors (lodfs). These are used in the power flow
-# constraints in SpineModel
+# constraints in SpineOpt
 #
 #
 #

@@ -18,7 +18,7 @@
 #############################################################################
 # __precompile__()
 
-module SpineModel
+module SpineOpt
 
 # Load packages
 using JuMP

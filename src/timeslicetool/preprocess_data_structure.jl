@@ -159,7 +159,7 @@ function generate_distributions()
                 (ts_vals[r, ss_ts[t]] < ts_min[r]) && (ts_min[r] = ts_vals[r, ss_ts[t]])
             end
         end
-        SpineModel.roll_temporal_structure() || break
+        SpineOpt.roll_temporal_structure() || break
         i_win += 1
     end
 
