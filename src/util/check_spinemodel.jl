@@ -26,11 +26,11 @@
 #
 
 """
-    check_spinemodel(log_level::Int64)
+    check_spineopt(log_level::Int64)
 
 Runs a number of checks to see if the data provided results in a valid model.
 """
-function check_spinemodel(log_level::Int64)
+function check_spineopt(log_level::Int64)
     check_islands(log_level)
     check_units_on_resolution()
     check_node__stochastic_structure()

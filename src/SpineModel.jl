@@ -32,8 +32,8 @@ using JSON
 using PowerSystems
 
 # Export utility
-export run_spinemodel
-export rerun_spinemodel
+export run_spineopt
+export rerun_spineopt
 export @fetch
 export or
 
@@ -50,11 +50,11 @@ include("temporals/generate_stochastic_structure.jl")
 
 include("util/misc.jl")
 include("util/generate_missing_items.jl")
-include("util/run_spinemodel.jl")
+include("util/run_spineopt.jl")
 include("util/update_model.jl")
 include("util/preprocess_data_structure.jl")
 include("util/postprocess_results.jl")
-include("util/check_spinemodel.jl")
+include("util/check_spineopt.jl")
 
 include("variables/variable_common.jl")
 include("variables/variable_unit_flow.jl")
