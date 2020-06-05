@@ -17,13 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# The functions in this file utilise PowerSystems.jl to calculate
-# power transmission distrivution factors (ptdfs) and line outage
-# distribution factors (lodfs). These are used in the power flow
-# constraints in SpineModel
-#
-#
-#
+# TODO: Check that the stochastic tree is indeed a DAG, with no cycles etc
+
+
+_check(cond, err_msg) = cond || error(err_msg)
 
 """
     check_spinemodel(log_level::Int64)
@@ -31,11 +28,56 @@
 Runs a number of checks to see if the data provided results in a valid model.
 """
 function check_spinemodel(log_level::Int64)
-    check_islands(log_level)
+    check_model_object()
+    check_temporal_block_object()
     check_units_on_resolution()
     check_node__stochastic_structure()
+    check_islands(log_level)
 end
 
+
+function check_model_object()
+    _check(
+        !isempty(model()),
+        "`model` object not found - please create an object of class `model` in your input database"
+    )
+end
+
+function check_temporal_block_object()
+    _check(
+        !isempty(temporal_block()),
+        "`temporal_block` object not found - please create an object of class `temporal_block` in your input database"
+    )
+end
+
+"""
+    check_units_on_resolution()
+
+Ensure there's exactly one `units_on_resolution` definition per `unit` in the data.
+"""
+function check_units_on_resolution()
+    error_units = [u for u in unit() if length(units_on_resolution(unit=u)) != 1]
+    _check(
+        isempty(error_units),
+        "missing `units_on_resolution` relationship for `unit`(s): $(join(error_units, ", ", " and ")) "
+        * "- please check your input db"
+    )
+end
+
+"""
+    check_node__stochastic_structure()
+
+Ensure there's exactly one `node__stochastic_structure` definition per `node` in the data.
+"""
+function check_node__stochastic_structure()
+    error_nodes = [n for n in node() if length(node__stochastic_structure(node=n)) != 1]
+    _check(
+        isempty(error_nodes),
+        "missing `node__stochastic_structure` relationship for `node`(s): $(join(error_nodes, ", ", " and ")) "
+        * "- please check your input db"
+
+    )
+end
 
 """
     check_islands()
@@ -55,7 +97,7 @@ function check_islands(log_level)
             @logtime level3 "Checking network of commodity $(c) for islands" n_islands, island_node = islands(c)
             @log     level3 "The network consists of $(n_islands) islands"
             if n_islands > 1
-                @warn "The network of commodity $(c) consists of multiple islands, this may end badly."
+                @warn "the network of commodity $(c) consists of multiple islands, this may end badly..."
                 # add diagnostic option to print island_node which will tell the user which nodes are in which islands
             end
         end
@@ -121,48 +163,3 @@ function check_x()
     end
 end
 
-
-"""
-    check_units_on_resolution()
-
-Ensures there's exactly one `units_on_resolution` definition per `unit` in the data.
-"""
-function check_units_on_resolution()
-    error_units = []
-    for u in unit()
-        if length(units_on_resolution(unit=u)) != 1
-            push!(error_units, u)
-        end
-    end
-    if !isempty(error_units)
-        error(
-            """
-            Each `unit` must have exactly one `units_on_resolution` defined!
-            - Check `units` $(error_units)
-            """
-        )
-    end
-end
-
-
-"""
-    check_node__stochastic_structure()
-
-Ensures there's exactly one `node__stochastic_structure` definition per `node` in the data.
-"""
-function check_node__stochastic_structure()
-    error_nodes = []
-    for n in node()
-        if length(node__stochastic_structure(node=n)) != 1
-            push!(error_nodes, n)
-        end
-    end
-    if !isempty(error_nodes)
-        error(
-            """
-            Each `node` must have exactly one `node__stochastic_structure` defined!
-            - Check `nodes` $(error_nodes)
-            """
-        )
-    end
-end

@@ -86,17 +86,18 @@ function run_spinemodel(
         cleanup=true,
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
-        log_level=3)
+        log_level=3
+    )
     level2 = log_level >= 2
     @log true "Running Spine Model for $(url_in)..."
     @logtime level2 "Initializing data structure from db..." begin
         using_spinedb(url_in, @__MODULE__; upgrade=true)
         generate_missing_items()
     end
+    check_spinemodel(log_level)
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @logtime level2 "Creating stochastic structure..." generate_stochastic_structure()
-    check_spinemodel(log_level)
     m = rerun_spinemodel(
         url_out;
         with_optimizer=with_optimizer,
