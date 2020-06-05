@@ -163,3 +163,25 @@ function write_lodfs()
     end
     close(io)
 end
+
+"""
+    pulldims(input, dims...)
+
+An equivalent dictionary where the given dimensions are pulled from the key to the value.
+"""
+function pulldims(input::Dict{K,V}, dims::Symbol...) where {K<:NamedTuple,V}
+    output = Dict()
+    for (key, value) in sort!(OrderedDict(input))
+        output_key = (; (k => v for (k, v) in pairs(key) if !(k in dims))...)
+        output_value = ((key[dim] for dim in dims)..., value)
+        push!(get!(output, output_key, []), output_value)
+    end
+    output
+end
+
+"""
+    formulation(d::Dict)
+
+An equivalent dictionary where `JuMP.ConstraintRef` values are replaced by their `String` formulation.
+"""
+formulation(d::Dict{K,JuMP.ConstraintRef}) where {K} = Dict{K,Any}(k => sprint(show, v) for (k, v) in d)

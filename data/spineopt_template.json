@@ -9,8 +9,8 @@
         ["temporal_block", "The temporal strucutre of the optimization model is described through temporal block.", 280376891207703],
         ["unit", "A unit is the place where a conversion of one/many comodities to one/many commodities happens.", 281470681805429],
         ["unit_constraint", "TODO", null],
-        ["stochastic_scenario","TODO", null],
-        ["stochastic_structure","TODO", null]
+        ["stochastic_scenario", "TODO", null],
+        ["stochastic_structure", "TODO", null]
     ],
     "relationship_classes": [
         ["commodity_group__commodity", ["commodity", "commodity"], "Through $(object_class)_group__$(object_class) multiple objects of one $object_class can be zipped together. This enables the use of certain parmaeters on a collection of nodes/connections/units. TODO: the possible uses of groups should be named in the parameter definition" , null], 
@@ -34,7 +34,7 @@
         ["unit_group__unit", ["unit", "unit"], "Through $(object_class)_group__$(object_class) multiple objects of one $object_class can be zipped together. This enables the use of certain parmaeters on a collection of nodes/connections/units. TODO: the possible uses of groups should be named in the parameter definition" , null], 
         ["parent_stochastic_scenario__child_stochastic_scenario", ["stochastic_scenario", "stochastic_scenario"]],
         ["stochastic_structure__stochastic_scenario", ["stochastic_structure", "stochastic_scenario"]],
-        ["units_on_resolution",["unit","node"]]
+        ["units_on_resolution", ["unit", "node"]]
     ],
     "parameter_value_lists": [
         ["balance_type_list", ["\"balance_type_node\"", "\"balance_type_group\"", "\"balance_type_none\""]],

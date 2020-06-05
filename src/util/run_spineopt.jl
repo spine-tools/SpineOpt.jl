@@ -41,24 +41,6 @@ function run_spineopt(
 end
 
 
-function generate_temporal_structure()
-    generate_current_window()
-    generate_time_slice()
-    generate_time_slice_relationships()
-end
-
-
-function generate_stochastic_structure()
-    all_stochastic_DAGs = generate_all_stochastic_DAGs(start(current_window))
-    generate_stochastic_time_map(all_stochastic_DAGs)
-    generate_node_stochastic_scenario_weight(all_stochastic_DAGs)
-    full_stochastic_paths = find_full_stochastic_paths()
-    @eval begin
-        full_stochastic_paths = $full_stochastic_paths
-    end
-end
-
-
 """
     run_spineopt(url_in, url_out; <keyword arguments>)
 
@@ -86,17 +68,18 @@ function run_spineopt(
         cleanup=true,
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
-        log_level=3)
+        log_level=3
+    )
     level2 = log_level >= 2
     @log true "Running SpineOpt for $(url_in)..."
     @logtime level2 "Initializing data structure from db..." begin
         using_spinedb(url_in, @__MODULE__; upgrade=true)
         generate_missing_items()
     end
+    @logtime level2 "Checking data structure..." check_data_structure(log_level)
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @logtime level2 "Creating stochastic structure..." generate_stochastic_structure()
-    check_spineopt(log_level)
     m = rerun_spineopt(
         url_out;
         with_optimizer=with_optimizer,
@@ -175,12 +158,12 @@ function rerun_spineopt(
     end
     @logtime level2 "Setting objective..." set_objective!(m)
     k = 2
-    while optimize_model!(m)
+    while _optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
         @logtime level2 "Saving results..." begin
             postprocess_results!(m)
             save_values!(m)
-            save_results!(results, m)
+            _save_results!(results, m)
         end
         roll_temporal_structure() || break
         @log level1 "Window $k: $current_window"
@@ -191,11 +174,11 @@ function rerun_spineopt(
         @logtime level2 "Updating objective..." update_varying_objective!(m)
         k += 1
     end
-     @logtime level2 "Writing report..." write_report(results, url_out)
+     @logtime level2 "Writing report..." _write_report(results, url_out)
      m
 end
 
-function optimize_model!(m::Model)
+function _optimize_model!(m::Model)
     write_mps_file(model=first(model())) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
@@ -210,11 +193,11 @@ function optimize_model!(m::Model)
 end
 
 """
-    save_results!(results, m)
+    _save_results!(results, m)
 
 Update `results` with results from `m`.
 """
-function save_results!(results, m)
+function _save_results!(results, m)
     for out in output()
         value = get(m.ext[:values], out.name, nothing)
         if value === nothing
@@ -227,7 +210,7 @@ function save_results!(results, m)
     end
 end
 
-function write_report(results, default_url)
+function _write_report(results, default_url)
     reports = Dict()
     for (rpt, out) in report__output()
         value = get(results, out.name, nothing)
@@ -249,24 +232,3 @@ function write_report(results, default_url)
     end
 end
 
-"""
-    pulldims(input, dims...)
-
-An equivalent dictionary where the given dimensions are pulled from the key to the value.
-"""
-function pulldims(input::Dict{K,V}, dims::Symbol...) where {K<:NamedTuple,V}
-    output = Dict()
-    for (key, value) in sort!(OrderedDict(input))
-        output_key = (; (k => v for (k, v) in pairs(key) if !(k in dims))...)
-        output_value = ((key[dim] for dim in dims)..., value)
-        push!(get!(output, output_key, []), output_value)
-    end
-    output
-end
-
-"""
-    formulation(d::Dict)
-
-An equivalent dictionary where `JuMP.ConstraintRef` values are replaced by their `String` formulation.
-"""
-formulation(d::Dict{K,JuMP.ConstraintRef}) where {K} = Dict{K,Any}(k => sprint(show, v) for (k, v) in d)
