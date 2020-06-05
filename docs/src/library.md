@@ -1,6 +1,6 @@
 # Library
 
-Documentation for `SpineModel.jl`.
+Documentation for `SpineOpt.jl`.
 
 ## Contents
 

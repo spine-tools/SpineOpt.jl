@@ -29,7 +29,7 @@ From the Julia REPL, press the key `]` to enter the Pkg-REPL mode, then run
 To upgrade to the most recent version, enter the Pkg-REPL mode and run
 
 ```julia
-(v1.0) pkg> up SpineModel
+(v1.0) pkg> up SpineOpt
 ```
 
 ### Usage
@@ -37,7 +37,7 @@ To upgrade to the most recent version, enter the Pkg-REPL mode and run
 In julia, run
 
 ```
-using SpineModel
+using SpineOpt
 ```
 
 ## Reporting Issues and Contributing
