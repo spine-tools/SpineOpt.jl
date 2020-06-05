@@ -33,6 +33,10 @@ struct TimeSliceSet
     end
 end
 
+struct TOverlapsT
+    list::Array{Tuple{TimeSlice,TimeSlice},1}
+end
+
 """
     time_slice(;temporal_block=anything, t=anything)
 
@@ -47,13 +51,41 @@ An `Array` of time slices *in the model*.
 (h::TimeSliceSet)(temporal_block::Object, s) = [t for t in s if temporal_block in t.blocks]
 (h::TimeSliceSet)(temporal_blocks::Array{Object,1}, s) = [t for blk in temporal_blocks for t in h(blk, s)]
 
+"""
+    t_overlaps_t()
+
+A list of tuples `(t1, t2)` where `t1` and `t2` have some time in common.
+"""
+function (h::TOverlapsT)()
+    h.list
+end
+
+"""
+    t_overlaps_t(t_overlap)
+
+A list of time slices that have some time in common with `t_overlap`
+(or some time in common with any element in `t_overlap` if it's a list).
+"""
+function (h::TOverlapsT)(t_overlap)
+    unique(t2 for (t1, t2) in h.list if t1 in tuple(t_overlap...))
+end
+
+"""
+    t_overlaps_t(t1, t2)
+
+A list of time slices which are in `t1` and have some time in common
+with any of the time slices in `t2` and vice versa.
+"""
+function (h::TOverlapsT)(t1, t2)
+    unique(Iterators.flatten(filter(t -> t[1] in tuple(t1...) && t[2] in tuple(t2...), h.list)))
+end
 
 """
     rolling_windows()
 
 A tuple of start and end time for the main rolling window.
 """
-function generate_current_window()
+function _generate_current_window()
     instance = first(model())
     model_start_ = model_start(model=instance)
     model_end_ = model_end(model=instance)
@@ -66,38 +98,36 @@ function generate_current_window()
     end
 end
 
-
 # Adjuster functions, in case blocks specify their own start and end
-adjusted_start(window_start, window_end, ::Nothing) = window_start
-adjusted_start(window_start, window_end, blk_start::Union{Period,CompoundPeriod}) = window_start + blk_start
-adjusted_start(window_start, window_end, blk_start::DateTime) = max(window_start, blk_start)
+_adjusted_start(window_start, window_end, ::Nothing) = window_start
+_adjusted_start(window_start, window_end, blk_start::Union{Period,CompoundPeriod}) = window_start + blk_start
+_adjusted_start(window_start, window_end, blk_start::DateTime) = max(window_start, blk_start)
 
-adjusted_end(window_start, window_end, ::Nothing) = window_end
-adjusted_end(window_start, window_end, blk_end::Union{Period,CompoundPeriod}) = window_start + blk_end
-adjusted_end(window_start, window_end, blk_end::DateTime) = max(window_start, blk_end)
-
+_adjusted_end(window_start, window_end, ::Nothing) = window_end
+_adjusted_end(window_start, window_end, blk_end::Union{Period,CompoundPeriod}) = window_start + blk_end
+_adjusted_end(window_start, window_end, blk_end::DateTime) = max(window_start, blk_end)
 
 """
-    block_time_intervals(window_start, window_end)
+    _block_time_intervals(window_start, window_end)
 
 A `Dict` mapping temporal blocks to a sorted `Array` of time intervals, i.e., (start, end) tuples.
 """
-function block_time_intervals(window_start, window_end)
+function _block_time_intervals(window_start, window_end)
     d = Dict{Object,Array{Tuple{DateTime,DateTime},1}}()
     for block in temporal_block()
         time_intervals = Array{Tuple{DateTime,DateTime},1}()
-        block_start_ = adjusted_start(window_start, window_end, block_start(temporal_block=block, _strict=false))
-        block_end_ = adjusted_end(window_start, window_end, block_end(temporal_block=block, _strict=false))
-        time_slice_start = block_start_
+        adjusted_start = _adjusted_start(window_start, window_end, block_start(temporal_block=block, _strict=false))
+        adjusted_end = _adjusted_end(window_start, window_end, block_end(temporal_block=block, _strict=false))
+        time_slice_start = adjusted_start
         i = 1
-        while time_slice_start < block_end_
+        while time_slice_start < adjusted_end
             duration = resolution(temporal_block=block, i=i)
             if iszero(duration)
                 error("`resolution` of temporal block `$(block)` cannot be zero!")
             end
             time_slice_end = time_slice_start + duration
-            if time_slice_end > block_end_
-                time_slice_end = block_end_
+            if time_slice_end > adjusted_end
+                time_slice_end = adjusted_end
                 @warn(
                     """
                     the last time slice of temporal block $block has been cut to fit within the optimisation window
@@ -113,8 +143,13 @@ function block_time_intervals(window_start, window_end)
     d
 end
 
+"""
+    _window_time_slices(window_start, window_end)
 
-function time_slices(block_time_intervals)
+A sorted `Array` of `TimeSlices` in the given window.
+"""
+function _window_time_slices(window_start, window_end)
+    block_time_intervals = _block_time_intervals(window_start, window_end)
     inv_block_time_intervals = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
     for (block, time_intervals) in block_time_intervals
         for t in time_intervals
@@ -128,27 +163,18 @@ function time_slices(block_time_intervals)
     sort!(a)
 end
 
-
 """
-    time_slices(window_start, window_end)
-
-A sorted `Array` of `TimeSlices` in the given window.
-"""
-time_slices(window_start, window_end) = time_slices(block_time_intervals(window_start, window_end))
-
-
-"""
-    generate_time_slice()
+    _generate_time_slice()
 
 Create and export a `TimeSliceSet` containing `TimeSlice`s in the current window.
 
 See [@TimeSliceSet()](@ref).
 """
-function generate_time_slice()
+function _generate_time_slice()
     window_start = start(current_window)
     window_end = end_(current_window)
     window_span = window_end - window_start
-    window_time_slices = time_slices(window_start, window_end)
+    window_time_slices = _window_time_slices(window_start, window_end)
     time_slice = TimeSliceSet(window_time_slices)
     t_history_t = Dict(t => t - window_span for t in window_time_slices if end_(t) <= window_end)
     all_time_slices = [sort(collect(values(t_history_t))); window_time_slices]
@@ -163,6 +189,81 @@ function generate_time_slice()
     end
 end
 
+"""
+    _generate_time_slice_relationships()
+
+Create and export convenience functions to access time slice relationships:
+`t_in_t`, `t_preceeds_t`, `t_overlaps_t`...
+"""
+function _generate_time_slice_relationships()
+    t_before_t_list = []
+    t_in_t_list = []
+    t_overlaps_t_list = []
+    # NOTE: splitting the loop into two loops as below makes it ~2 times faster
+    for (i, t_i) in enumerate(all_time_slices)
+        found = false
+        for t_j in all_time_slices[i:end]
+            if before(t_i, t_j)
+                found = true
+                push!(t_before_t_list, (t_before=t_i, t_after=t_j))
+            elseif found
+                break
+            end
+        end
+    end
+    for t_i in all_time_slices
+        found_in = false
+        break_in = false
+        found_overlaps = false
+        break_overlaps = false
+        for t_j in all_time_slices
+            if iscontained(t_i, t_j)
+                found_in = true
+                push!(t_in_t_list, (t_short=t_i, t_long=t_j))
+            elseif found_in
+                break_in = true
+            end
+            if overlaps(t_i, t_j)
+                found_overlaps = true
+                push!(t_overlaps_t_list, tuple(t_i, t_j))
+            elseif found_overlaps
+                break_overlaps = true
+            end
+            if break_in && break_overlaps
+                break
+            end
+        end
+    end
+    unique!(t_in_t_list)
+    unique!(t_overlaps_t_list)
+    t_in_t_excl_list = [(t_short=t1, t_long=t2) for (t1, t2) in t_in_t_list if t1 != t2]
+    t_overlaps_t_excl_list = [(t1, t2) for (t1, t2) in t_overlaps_t_list if t1 != t2]
+    # Create function-like objects
+    t_before_t = RelationshipClass(:t_before_t, [:t_before, :t_after], t_before_t_list)
+    t_in_t = RelationshipClass(:t_in_t, [:t_short, :t_long], t_in_t_list)
+    t_in_t_excl = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_list)
+    t_overlaps_t = TOverlapsT(t_overlaps_t_list)
+    t_overlaps_t_excl = TOverlapsT(t_overlaps_t_excl_list)
+    # Export the function-like objects
+    @eval begin
+        t_before_t = $t_before_t
+        t_in_t = $t_in_t
+        t_in_t_excl = $t_in_t_excl
+        t_overlaps_t = $t_overlaps_t
+        t_overlaps_t_excl = $t_overlaps_t_excl
+        export t_before_t
+        export t_in_t
+        export t_in_t_excl
+        export t_overlaps_t
+        export t_overlaps_t_excl
+    end
+end
+
+function generate_temporal_structure()
+    _generate_current_window()
+    _generate_time_slice()
+    _generate_time_slice_relationships()
+end
 
 function roll_temporal_structure()
     instance = first(model())

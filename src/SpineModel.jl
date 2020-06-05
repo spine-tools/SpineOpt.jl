@@ -35,7 +35,6 @@ using PowerSystems
 export run_spinemodel
 export rerun_spinemodel
 export @fetch
-export or
 
 # Export indices functions
 export unit_flow_indices
@@ -44,17 +43,17 @@ export connection_flow_indices
 export node_state_indices
 export units_on_indices
 
-include("temporals/generate_time_slice.jl")
-include("temporals/generate_time_slice_relationships.jl")
-include("temporals/generate_stochastic_structure.jl")
-
 include("util/misc.jl")
-include("util/generate_missing_items.jl")
 include("util/run_spinemodel.jl")
 include("util/update_model.jl")
-include("util/preprocess_data_structure.jl")
 include("util/postprocess_results.jl")
-include("util/check_spinemodel.jl")
+
+include("data_structure/temporal_structure.jl")
+include("data_structure/stochastic_structure.jl")
+include("data_structure/preprocess_data_structure.jl")
+include("data_structure/generate_missing_items.jl")
+include("data_structure/check_data_structure.jl")
+
 
 include("variables/variable_common.jl")
 include("variables/variable_unit_flow.jl")

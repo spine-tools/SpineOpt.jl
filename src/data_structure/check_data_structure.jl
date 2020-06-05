@@ -23,11 +23,11 @@
 _check(cond, err_msg) = cond || error(err_msg)
 
 """
-    check_spinemodel(log_level::Int64)
+    check_data_structure(log_level::Int64)
 
-Runs a number of checks to see if the data provided results in a valid model.
+Check if the data structure provided from the db results in a valid model.
 """
-function check_spinemodel(log_level::Int64)
+function check_data_structure(log_level::Int64)
     check_model_object()
     check_temporal_block_object()
     check_units_on_resolution()
