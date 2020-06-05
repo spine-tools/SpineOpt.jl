@@ -1,4 +1,4 @@
-# SpineModel.jl
+# SpineOpt.jl
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-project.github.io/Spine-Model/latest/index.html)
 
@@ -46,4 +46,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## License
 
-Spine Model is licensed under GNU Lesser General Public License version 3.0 or later.
+SpineOpt is licensed under GNU Lesser General Public License version 3.0 or later.
