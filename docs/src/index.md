@@ -1,12 +1,12 @@
-# SpineModel.jl
+# SpineOpt.jl
 
-*The Spine Model generator.*
+*The SpineOpt model generator.*
 
-A package to generate and run the Spine Model for energy system integration problems.
+A package to generate and run optimization problems for energy system integration.
 
 ## Package features
 
-- Builds the model entirely from a database using Spine Model specific data structure.
+- Builds the model entirely from a database using SpineOpt specific data structure.
 - Uses `JuMP.jl` to build and solve the optimization model.
 - Writes results to the same input database or to a different one.
 - The model can be extended with additional constraints written in `JuMP`.

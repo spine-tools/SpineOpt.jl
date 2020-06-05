@@ -1,4 +1,4 @@
-using SpineModel
+using SpineOpt
 using SpineInterface
 using JuMP
 using Dates
@@ -15,8 +15,8 @@ function run_timeslicetool(
     )
     @info "reading database"
     using_spinedb(url_in)
-    @info "processing spine model temporal structure"
-    SpineModel.generate_temporal_structure()
+    @info "processing SpineOpt temporal structure"
+    SpineOpt.generate_temporal_structure()
     @info "preprocessing data structure"
     window__static_slice = preprocess_data_structure()
     @info "Initializing model..."

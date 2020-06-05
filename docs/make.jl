@@ -1,7 +1,7 @@
-using Documenter, SpineModel
+using Documenter, SpineOpt
 
 makedocs(
-    sitename = "SpineModel.jl",
+    sitename = "SpineOpt.jl",
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true"
     ),

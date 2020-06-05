@@ -1,4 +1,4 @@
-# SpineModel.jl
+# SpineOpt.jl
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-project.github.io/Spine-Model/latest/index.html)
 
@@ -29,7 +29,7 @@ From the Julia REPL, press the key `]` to enter the Pkg-REPL mode, then run
 To upgrade to the most recent version, enter the Pkg-REPL mode and run
 
 ```julia
-(v1.0) pkg> up SpineModel
+(v1.0) pkg> up SpineOpt
 ```
 
 ### Usage
@@ -37,7 +37,7 @@ To upgrade to the most recent version, enter the Pkg-REPL mode and run
 In julia, run
 
 ```
-using SpineModel
+using SpineOpt
 ```
 
 ## Reporting Issues and Contributing
@@ -46,4 +46,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## License
 
-Spine Model is licensed under GNU Lesser General Public License version 3.0 or later.
+SpineOpt is licensed under GNU Lesser General Public License version 3.0 or later.

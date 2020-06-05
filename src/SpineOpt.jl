@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -18,7 +18,7 @@
 #############################################################################
 # __precompile__()
 
-module SpineModel
+module SpineOpt
 
 # Load packages
 using JuMP
@@ -32,8 +32,8 @@ using JSON
 using PowerSystems
 
 # Export utility
-export run_spinemodel
-export rerun_spinemodel
+export run_spineopt
+export rerun_spineopt
 export @fetch
 
 # Export indices functions
@@ -44,7 +44,7 @@ export node_state_indices
 export units_on_indices
 
 include("util/misc.jl")
-include("util/run_spinemodel.jl")
+include("util/run_spineopt.jl")
 include("util/update_model.jl")
 include("util/postprocess_results.jl")
 
@@ -53,7 +53,6 @@ include("data_structure/stochastic_structure.jl")
 include("data_structure/preprocess_data_structure.jl")
 include("data_structure/generate_missing_items.jl")
 include("data_structure/check_data_structure.jl")
-
 
 include("variables/variable_common.jl")
 include("variables/variable_unit_flow.jl")
@@ -98,6 +97,6 @@ include("constraints/constraint_min_down_time.jl")
 include("constraints/constraint_unit_state_transition.jl")
 include("constraints/constraint_unit_constraint.jl")
 
-const template = JSON.parsefile(joinpath(dirname(pathof(@__MODULE__)), "..", "data", "spine_model_template.json"))
+const template = JSON.parsefile(joinpath(dirname(pathof(@__MODULE__)), "..", "data", "spineopt_template.json"))
 
 end

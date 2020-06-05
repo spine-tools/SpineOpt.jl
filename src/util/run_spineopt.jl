@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -17,19 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-    run_spinemodel(url; <keyword arguments>)
+    run_spineopt(url; <keyword arguments>)
 
-Run the Spine model from `url` and write report to the same `url`.
-Keyword arguments have the same purpose as for [`run_spinemodel`](@ref).
+Run the SpineOpt from `url` and write report to the same `url`.
+Keyword arguments have the same purpose as for [`run_spineopt`](@ref).
 """
-function run_spinemodel(
+function run_spineopt(
         url::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0),
         cleanup=true,
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
         log_level=3)
-    run_spinemodel(
+    run_spineopt(
         url,
         url;
         with_optimizer=with_optimizer,
@@ -42,9 +42,9 @@ end
 
 
 """
-    run_spinemodel(url_in, url_out; <keyword arguments>)
+    run_spineopt(url_in, url_out; <keyword arguments>)
 
-Run the Spine model from `url_in` and write report to `url_out`.
+Run the SpineOpt from `url_in` and write report to `url_out`.
 At least `url_in` must point to valid Spine database.
 A new Spine database is created at `url_out` if it doesn't exist.
 
@@ -52,7 +52,7 @@ A new Spine database is created at `url_out` if it doesn't exist.
 
 **`with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0)`** is the optimizer factory for building the JuMP model.
 
-**`cleanup=true`** tells [`run_spinemodel`](@ref) whether or not convenience functors should be
+**`cleanup=true`** tells [`run_spineopt`](@ref) whether or not convenience functors should be
 set to `nothing` after completion.
 
 **`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window, and allows adding user contraints.
@@ -61,7 +61,7 @@ set to `nothing` after completion.
 
 **`log_level=3`** is the log level.
 """
-function run_spinemodel(
+function run_spineopt(
         url_in::String,
         url_out::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
@@ -71,7 +71,7 @@ function run_spinemodel(
         log_level=3
     )
     level2 = log_level >= 2
-    @log true "Running Spine Model for $(url_in)..."
+    @log true "Running SpineOpt for $(url_in)..."
     @logtime level2 "Initializing data structure from db..." begin
         using_spinedb(url_in, @__MODULE__; upgrade=true)
         generate_missing_items()
@@ -80,7 +80,7 @@ function run_spinemodel(
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @logtime level2 "Creating stochastic structure..." generate_stochastic_structure()
-    m = rerun_spinemodel(
+    m = rerun_spineopt(
         url_out;
         with_optimizer=with_optimizer,
         add_constraints=add_constraints,
@@ -91,7 +91,7 @@ function run_spinemodel(
     m
 end
 
-function rerun_spinemodel(
+function rerun_spineopt(
         url_out::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
         add_constraints=m -> nothing,
