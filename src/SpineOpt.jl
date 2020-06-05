@@ -99,6 +99,6 @@ include("constraints/constraint_min_down_time.jl")
 include("constraints/constraint_unit_state_transition.jl")
 include("constraints/constraint_unit_constraint.jl")
 
-const template = JSON.parsefile(joinpath(dirname(pathof(@__MODULE__)), "..", "data", "spine_model_template.json"))
+const template = JSON.parsefile(joinpath(dirname(pathof(@__MODULE__)), "..", "data", "spineopt_template.json"))
 
 end
