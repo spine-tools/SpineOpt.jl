@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -19,7 +19,7 @@
 """
     run_spinemodel(url; <keyword arguments>)
 
-Run the Spine model from `url` and write report to the same `url`.
+Run the SpineOpt from `url` and write report to the same `url`.
 Keyword arguments have the same purpose as for [`run_spinemodel`](@ref).
 """
 function run_spinemodel(
@@ -62,7 +62,7 @@ end
 """
     run_spinemodel(url_in, url_out; <keyword arguments>)
 
-Run the Spine model from `url_in` and write report to `url_out`.
+Run the SpineOpt from `url_in` and write report to `url_out`.
 At least `url_in` must point to valid Spine database.
 A new Spine database is created at `url_out` if it doesn't exist.
 
@@ -88,7 +88,7 @@ function run_spinemodel(
         update_constraints=m -> nothing,
         log_level=3)
     level2 = log_level >= 2
-    @log true "Running Spine Model for $(url_in)..."
+    @log true "Running SpineOpt for $(url_in)..."
     @logtime level2 "Initializing data structure from db..." begin
         using_spinedb(url_in, @__MODULE__; upgrade=true)
         generate_missing_items()
