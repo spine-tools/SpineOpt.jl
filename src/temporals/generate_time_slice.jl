@@ -165,12 +165,14 @@ end
 
 
 function roll_temporal_structure()
+    process_data_structure_pre_roll()
     instance = first(model())
     end_(current_window) >= model_end(model=instance) && return false
     roll_forward_ = roll_forward(model=instance, _strict=false)
     roll_forward_ === nothing && return false
     roll!(current_window, roll_forward_)
     roll!.(all_time_slices, roll_forward_)
+    process_data_structure_post_roll()
     true
 end
 
