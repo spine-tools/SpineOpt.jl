@@ -1,4 +1,4 @@
-using SpineModel
+using SpineOpt
 
 
 db_url_in = "sqlite:///$(@__DIR__)/data/test_systemA5.sqlite"
