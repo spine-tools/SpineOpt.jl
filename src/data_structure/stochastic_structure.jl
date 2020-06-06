@@ -79,28 +79,28 @@ end
 """
     _stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
 
-Generates the stochastic DAG of a `stochastic_structure` relative to a desired `window_start`
-based on the `stochastic_scenario_end` parameters in the `stochastic_structure__stochastic_scenario` relationship.
+A `Dict` mapping `stochastic_scenario` objects to a `NamedTuple` of (start, end_, weight)
+for the given `stochastic_structure` and `window_start`.
+Aka DAG, that is, a *realized* stochastic structure with all the parameter values in place.
 """
 function _stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
     scenarios = _find_root_scenarios()
-    scen_start = Dict()
+    scen_start = Dict(scen => window_start for scen in scenarios)
     scen_end = Dict()
-    scen_weight = Dict()
-    for root_scenario in scenarios
-        scen_start[root_scenario] = window_start
-        scen_weight[root_scenario] = weight_relative_to_parents(
-            stochastic_structure=stochastic_structure, stochastic_scenario=root_scenario
-        )
-    end
+    scen_weight = Dict(
+        scen => weight_relative_to_parents(stochastic_structure=stochastic_structure, stochastic_scenario=scen)
+        for scen in scenarios
+    )
     for scen in scenarios
-        if (stochastic_structure=stochastic_structure, stochastic_scenario=scen) in indices(stochastic_scenario_end)
-            scen_end[scen] = window_start + stochastic_scenario_end(
-                stochastic_structure=stochastic_structure, stochastic_scenario=scen
-            )
+        scenario_end = stochastic_scenario_end(
+            stochastic_structure=stochastic_structure, stochastic_scenario=scen, _strict=false
+        )
+        if scenario_end !== nothing
+            scenario_end += window_start
+            scen_end[scen] = scenario_end
             children = _find_children(scen)
             for child in children
-                scen_start[child] = min(get(scen_start, child, scen_end[scen]), scen_end[scen])
+                scen_start[child] = min(get(scen_start, child, scenario_end), scenario_end)
                 child_weight = scen_weight[scen] * weight_relative_to_parents(
                     stochastic_structure=stochastic_structure, stochastic_scenario=child
                 )
@@ -109,15 +109,11 @@ function _stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
             append!(scenarios, children)
         end
     end
-    stochastic_DAG = Dict()
-    for scen in scenarios
-        stochastic_DAG[scen] = (
-            start = scen_start[scen],
-            end_ = get(scen_end, scen, last(time_slice()).end_.x),
-            weight = scen_weight[scen]
-        )
-    end
-    return stochastic_DAG
+    last_time = end_(last(time_slice()))
+    Dict(
+        scen => (start=scen_start[scen], end_=get(scen_end, scen, last_time), weight=scen_weight[scen])
+        for scen in scenarios
+    )
 end
 
 
