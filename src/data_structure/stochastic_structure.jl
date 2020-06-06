@@ -71,7 +71,7 @@ function _generate_active_stochastic_paths()
         if !isempty(invalid_children)
             @warn """
             ignoring scenarios: $(join(invalid_children, ", ", " and ")), 
-            as children of $(path[end]), since they're also their ancestors...
+            as children of $(path[end]), since they're also its ancestors...
             """
         end
         isempty(valid_children) && push!(full_path_indices, i)
@@ -166,7 +166,7 @@ end
 """
     node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
 
-Convenience function for accessing the full stochastic time indexing of `nodes`. Keyword arguments allow filtering.
+Stochastic time indexes for `nodes`. Keyword arguments allow filtering.
 """
 function node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
     unique( # TODO: Write a check for multiple structures
@@ -181,7 +181,7 @@ end
 """
     unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
 
-Convenience function for accessing the full stochastic time indexing of `units`. Keyword arguments allow filtering.
+Stochastic time indexes for `units`. Keyword arguments allow filtering.
 """
 function unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
     unique(
@@ -227,32 +227,15 @@ function _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
 end
 
 """
-    unit__stochastic_scenario(;unit=anything, stochastic_scenario=anything, _compact=false)
+    unit_stochastic_scenario_weight(;unit, stochastic_scenario)
 
-A list of `NamedTuple`s corresponding to the `unit`s and their `stochastic_scenario`s.
-The keyword arguments act as filters for each dimension.
+The value of `node_stochastic_scenario_weight` for the `node` associated to `unit`
+as per the `units_on_resolution` relationship.
 """
-function unit__stochastic_scenario(;unit=anything, stochastic_scenario=anything)
-    [
-        (unit=u, stochastic_scenario=s)
-        for (u, n) in units_on_resolution(unit=unit, _compact=false)
-        for (n, s) in node__stochastic_scenario(node=n, _compact=false)
-    ]
-end
-
-"""
-    unit_stochastic_scenario_weight(;unit=anything, stochastic_scenario=anything)
-
-A function to access the `node_stochastic_scenario_weight` parameter from the `node` defined for the `unit`.
-"""
-function unit_stochastic_scenario_weight(;unit=nothing, stochastic_scenario=nothing)
-    if isnothing(unit) || isnothing(stochastic_scenario)
-        error("Both a `unit` and `stochastic_scenario` are required to access `unit_stochastic_scenario_weight`!")
-    else
-        for (u, n) in units_on_resolution(unit=unit, _compact=false)
-            return node_stochastic_scenario_weight(node=n, stochastic_scenario=stochastic_scenario)
-        end
-    end
+function unit_stochastic_scenario_weight(;unit::Object, stochastic_scenario::Object)
+    node_stochastic_scenario_weight(
+        node=first(units_on_resolution(unit=unit)), stochastic_scenario=stochastic_scenario
+    )
 end
 
 function generate_stochastic_structure()
