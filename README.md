@@ -1,43 +1,26 @@
 # SpineOpt.jl
 
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-project.github.io/Spine-Model/latest/index.html)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-project.github.io/SpineOpt.jl/latest/index.html)
 
 A package to run the [Spine](http://www.spine-model.org/) energy system integration model.
 
-## Getting started
+## Compatibility
 
-### Pre-requisites
+This package requires Julia 1.2 or later.
 
-- [julia 1.0](https://julialang.org/)
-- [JuMP](https://github.com/JuliaOpt/JuMP.jl)
-- [Clp](https://github.com/JuliaOpt/Clp.jl)
-- [SpineInterface](https://github.com/Spine-project/SpineInterface.jl)
-
-### Installation
-
-Julia <= 1.1 does not allow to set unregistered packages as dependencies. Until that changes (hopefully pretty soon, see [here](https://github.com/JuliaLang/Pkg.jl/pull/1088)), one needs to install the unregistered dependency, in this case SpineInterface, by hand.
-
-From the Julia REPL, press the key `]` to enter the Pkg-REPL mode, then run
+## Installation
 
 ```julia
-(v1.0) pkg> add https://github.com/Spine-project/SpineInterface.jl.git
-(v1.0) pkg> add https://github.com/Spine-project/Spine-Model.git
+using Pkg
+pkg"registry add https://github.com/Spine-project/SpineJuliaRegistry"
+pkg"add SpineOpt"
 ```
 
-### Upgrading
-
-To upgrade to the most recent version, enter the Pkg-REPL mode and run
+## Usage
 
 ```julia
-(v1.0) pkg> up SpineOpt
-```
-
-### Usage
-
-In julia, run
-
-```
 using SpineOpt
+run_spineopt(<url of your Spine database>)
 ```
 
 ## Reporting Issues and Contributing
