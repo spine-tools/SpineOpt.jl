@@ -220,7 +220,7 @@ function _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
     node__stochastic_scenario = RelationshipClass(
         :node__stochastic_scenario,
         [:node, :stochastic_scenario],
-        [(node=n, stochastic_scenario=scen) for (n, scen) in keys(node_stochastic_scenario_weight_values)]
+        [(node=n, stochastic_scenario=scen) for (n, scen) in keys(node_stochastic_scenario_weight_values)],
         node_stochastic_scenario_weight_values
     )
     node_stochastic_scenario_weight = Parameter(:node_stochastic_scenario_weight, [node__stochastic_scenario])
