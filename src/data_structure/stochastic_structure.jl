@@ -43,15 +43,13 @@ end
 """
     _find_root_scenarios()
 
-Finds and returns all the `stochastic_scenarios` without parents.
+An `Array` of `stochastic_scenario` objects without parents.
 """
 function _find_root_scenarios()
-    stochastic_tree = parent_stochastic_scenario__child_stochastic_scenario()
-    roots = stochastic_scenario()
-    children = [x.stochastic_scenario2 for x in stochastic_tree]
-    return setdiff(roots, children)
+    all_scenarios = stochastic_scenario()
+    children_scenarios = [child for (_parent, child) in parent_stochastic_scenario__child_stochastic_scenario()]
+    setdiff(all_scenarios, children_scenarios)
 end
-
 
 """
     _generate_active_stochastic_paths()
@@ -116,58 +114,43 @@ function _stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
     )
 end
 
-
 """
-    generate_all_stochastic_DAG(window_start::DateTime)
+    _all_stochastic_DAGs(window_start::DateTime)
 
-Generates the stochastic DAGs of every `stochastic_structure`.
+A `Dict` mapping `stochastic_structure` objects to DAGs.
 """
 function _all_stochastic_DAGs(window_start::DateTime)
-    stochastic_DAGs = Dict()
-    for structure in stochastic_structure()
-        stochastic_DAGs[structure] = _stochastic_DAG(structure, window_start)
-    end
-    return stochastic_DAGs
+    Dict(structure => _stochastic_DAG(structure, window_start) for structure in stochastic_structure())
 end
-
 
 """
     _stochastic_time_mapping(stochastic_DAG::Dict)
 
-Maps `(stochastic_structure, time_slice)` to their set of active `stochastic_scenarios`.
+A `Dict` mapping `time_slice` objects to their set of active `stochastic_scenario` objects.
 """
 function _stochastic_time_mapping(stochastic_DAG::Dict)
-    active_scenario_map = Dict{TimeSlice, Array{Union{Int64,T} where T<:SpineInterface.AbstractObject,1}}()
     # Active `time_slices`
-    for t in time_slice()
-        active_scenario_map[t] = collect(
-            keys(filter(DAG->DAG[2].start <= t.start.x < DAG[2].end_, stochastic_DAG))
-        )
-    end
+    scenario_mapping = Dict(
+        t => [scen for (scen, value) in stochastic_DAG if value.start <= start(t) < value.end_]
+        for t in time_slice()
+    )
     # Historical `time_slices`
-    root = _find_root_scenarios()
-    for t in sort(collect(values(t_history_t)))
-        active_scenario_map[t] = root
-    end
-    return active_scenario_map
+    roots = _find_root_scenarios()
+    history_scenario_mapping = Dict(t => roots for t in sort(collect(values(t_history_t))))
+    merge!(scenario_mapping, history_scenario_mapping)
 end
-
 
 """
     _generate_stochastic_time_map(all_stochastic_DAGs)
 
-Generates the `stochastic_time_map` for all defined `stochastic_structures`.
+Generate the `stochastic_time_map` for all defined `stochastic_structures`.
 """
 function _generate_stochastic_time_map(all_stochastic_DAGs)
-    stochastic_time_map = Dict{Object, Dict{TimeSlice, Array{Union{Int64,T} where T<:SpineInterface.AbstractObject,1}}}()
-    for structure in stochastic_structure()
-        stochastic_time_map[structure] = _stochastic_time_mapping(all_stochastic_DAGs[structure])
-    end
+    stochastic_time_map = Dict(structure => _stochastic_time_mapping(DAG) for (structure, DAG) in all_stochastic_DAGs)
     @eval begin
         stochastic_time_map = $stochastic_time_map
     end
 end
-
 
 """
     node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
@@ -203,7 +186,7 @@ end
 """
     _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
 
-Generates the `node_stochastic_scenario_weight` parameter for easier access to the scenario weights.
+Generate the `node_stochastic_scenario_weight` parameter for easier access to the scenario weights.
 """
 function _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
     node_scenario = []
