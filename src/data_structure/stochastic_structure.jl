@@ -17,6 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+"""
+A callable type to retrieve intersections between valid stochastic paths
+and 'active' scenarios.
+"""
 struct StochasticPathFinder
     full_stochastic_paths::Array{Array{Object,1},1}
 end
@@ -62,11 +66,18 @@ function _generate_active_stochastic_paths()
     full_path_indices = []
     for (i, path) in enumerate(paths)
         children = _find_children(path[end])
-        isempty(children) && push!(full_path_indices, i)
-        append!(paths, [vcat(path, child) for child in children])
+        valid_children = setdiff(children, path)
+        invalid_children = setdiff(children, valid_children)
+        if !isempty(invalid_children)
+            @warn """
+            ignoring scenarios: $(join(invalid_children, ", ", " and ")), 
+            as children of $(path[end]), since they're also their ancestors...
+            """
+        end
+        isempty(valid_children) && push!(full_path_indices, i)
+        append!(paths, [vcat(path, child) for child in valid_children])
     end
-    # TODO: `unique!` shouldn't be needed here since relationships are unique in the db.
-    # But we need a check to make sure the stochastic structure is a DAG (no loops)
+    # NOTE: `unique!` shouldn't be needed here since relationships are unique in the db.
     full_stochastic_paths = paths[full_path_indices]
     active_stochastic_paths = StochasticPathFinder(full_stochastic_paths)
     @eval begin
@@ -167,7 +178,6 @@ function node_stochastic_time_indices(;node=anything, stochastic_scenario=anythi
     )
 end
 
-
 """
     unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
 
@@ -216,7 +226,6 @@ function _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
     end
 end
 
-
 """
     unit__stochastic_scenario(;unit=anything, stochastic_scenario=anything, _compact=false)
 
@@ -230,7 +239,6 @@ function unit__stochastic_scenario(;unit=anything, stochastic_scenario=anything)
         for (n, s) in node__stochastic_scenario(node=n, _compact=false)
     ]
 end
-
 
 """
     unit_stochastic_scenario_weight(;unit=anything, stochastic_scenario=anything)

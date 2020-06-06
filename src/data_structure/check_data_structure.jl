@@ -17,8 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# TODO: Check that the stochastic tree is indeed a DAG, with no cycles etc
-
+# NOTE: I see some small problem here, related to doing double work.
+# For example, checking that the stochastic DAGs have no loops requires to generate those DAGs, 
+# but we can't generate them just for checking and then throw them away, can we?
+# So I propose we do that type of checks when we actually generate the corresponding structure.
+# And here, we just perform simpler checks that can be done directly on the contents of the db, 
+# and don't require to build any additional structures.
 
 _check(cond, err_msg) = cond || error(err_msg)
 
@@ -34,7 +38,6 @@ function check_data_structure(log_level::Int64)
     check_node__stochastic_structure()
     check_islands(log_level)
 end
-
 
 function check_model_object()
     _check(
@@ -104,7 +107,6 @@ function check_islands(log_level)
     end
 end
 
-
 """
     islands()
 
@@ -130,7 +132,6 @@ function islands(c)
     island_count, island_node
 end
 
-
 """
     visit()
 
@@ -147,7 +148,6 @@ function visit(n, island_count, visited_d, island_node)
     end
 end
 
-
 """
     check_x()
 
@@ -158,7 +158,7 @@ function check_x()
     @info "Checking reactances"
     for conn in connection()
         if conn_reactance(connection=conn) < 0.0001
-            @info "Low reactance may cause problems for line " conn
+            @info "low reactance may cause problems for line " conn
         end
     end
 end
