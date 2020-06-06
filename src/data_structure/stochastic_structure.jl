@@ -100,27 +100,40 @@ function _stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
         scen => weight_relative_to_parents(stochastic_structure=stochastic_structure, stochastic_scenario=scen)
         for scen in scenarios
     )
+    window_very_end = end_(last(time_slice()))
     for scen in scenarios
-        scenario_end = stochastic_scenario_end(
+        scenario_duration = stochastic_scenario_end(
             stochastic_structure=stochastic_structure, stochastic_scenario=scen, _strict=false
         )
-        if scenario_end !== nothing
-            scenario_end += window_start
-            scen_end[scen] = scenario_end
-            children = _find_children(scen)
-            for child in children
-                scen_start[child] = min(get(scen_start, child, scenario_end), scenario_end)
-                child_weight = scen_weight[scen] * weight_relative_to_parents(
-                    stochastic_structure=stochastic_structure, stochastic_scenario=child
-                )
-                scen_weight[child] = get(scen_weight, child, 0) + child_weight
-            end
-            append!(scenarios, children)
+        if scenario_duration === nothing
+            scen_end[scen] = window_very_end
+            continue
         end
+        scenario_end = window_start + scenario_duration
+        scen_end[scen] = scenario_end
+        children = _find_children(scen)
+        children_relative_weight = Dict(
+            child => weight_relative_to_parents(
+                stochastic_structure=stochastic_structure, stochastic_scenario=child, _strict=false
+            )
+            for child in children
+        )
+        valid_children = [child for (child, weight) in children_relative_weight if weight !== nothing]
+        invalid_children = setdiff(children, valid_children)
+        if !isempty(invalid_children)
+            @warn """
+            prunning scenarios: $(join(invalid_children, ", ", " and ")), from $(stochastic_structure)'s DAG, 
+            since their value of `weight_relative_to_parents` is not specified
+            """
+        end
+        for (child, child_relative_weight) in children_relative_weight
+            scen_start[child] = haskey(scen_start, child) ? min(scen_start[child], scenario_end) : scenario_end
+            scen_weight[child] = get(scen_weight, child, 0) + scen_weight[scen] * child_relative_weight
+        end
+        append!(scenarios, valid_children)
     end
-    last_time = end_(last(time_slice()))
     Dict(
-        scen => (start=scen_start[scen], end_=get(scen_end, scen, last_time), weight=scen_weight[scen])
+        scen => (start=scen_start[scen], end_=scen_end[scen], weight=scen_weight[scen])
         for scen in scenarios
     )
 end
@@ -142,7 +155,7 @@ A `Dict` mapping `time_slice` objects to their set of active `stochastic_scenari
 function _stochastic_time_mapping(stochastic_DAG::Dict)
     # Active `time_slices`
     scenario_mapping = Dict(
-        t => [scen for (scen, value) in stochastic_DAG if value.start <= start(t) < value.end_]
+        t => [scen for (scen, param_vals) in stochastic_DAG if param_vals.start <= start(t) < param_vals.end_]
         for t in time_slice()
     )
     # Historical `time_slices`
@@ -199,25 +212,16 @@ end
 Generate the `node_stochastic_scenario_weight` parameter for easier access to the scenario weights.
 """
 function _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
-    node_scenario = []
-    parameter_vals = Dict{Tuple{Vararg{Object}},Dict{Symbol,AbstractParameterValue}}()
-    for (node, structure) in node__stochastic_structure()
-        scenarios = keys(all_stochastic_DAGs[structure])
-        for scen in scenarios
-            push!(node_scenario, (node=node, stochastic_scenario=scen))
-            parameter_vals[(node, scen)] = Dict{Symbol,AbstractParameterValue}()
-            val = all_stochastic_DAGs[structure][scen].weight
-            if isnothing(val)
-                error("`stochastic_structure` `$(structure)` lacks a `weight_relative_to_parents` for `stochastic_scenario` `$(scen)`!")
-            end
-            push!(
-                parameter_vals[(node, scen)],
-                :node_stochastic_scenario_weight => SpineInterface.ScalarParameterValue(val)
-            )
-        end
-    end
+    node_stochastic_scenario_weight_values = Dict(
+        (node, scen) => Dict(:node_stochastic_scenario_weight => parameter_value(param_vals.weight))
+        for (node, structure) in node__stochastic_structure()
+        for (scen, param_vals) in all_stochastic_DAGs[structure]
+    )
     node__stochastic_scenario = RelationshipClass(
-        :node__stochastic_scenario, [:node, :stochastic_scenario], node_scenario, parameter_vals
+        :node__stochastic_scenario,
+        [:node, :stochastic_scenario],
+        [(node=n, stochastic_scenario=scen) for (n, scen) in keys(node_stochastic_scenario_weight_values)]
+        node_stochastic_scenario_weight_values
     )
     node_stochastic_scenario_weight = Parameter(:node_stochastic_scenario_weight, [node__stochastic_scenario])
     @eval begin
