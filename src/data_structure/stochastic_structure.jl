@@ -32,19 +32,13 @@ function (h::StochasticPathFinder)(active_scenarios::Union{Array{Object,1},Objec
 end
 
 """
-    _find_children(stochastic_scenario::Object)
+    _find_children(parent_scenario::Object)
 
-Finds and returns all the children of a `stochastic_scenario` defined by the 
-`parent_stocahstic_scenario__child_stochastic_scenario` relationship.
+The children of a `parent_scenario` as per the `parent_stochastic_scenario__child_stochastic_scenario` relationship.
 """
-function _find_children(stochastic_scenario::Object)
-    parent_and_children = filter(
-        x->x.stochastic_scenario1==stochastic_scenario,
-        parent_stochastic_scenario__child_stochastic_scenario()
-    )
-    return [x.stochastic_scenario2 for x in parent_and_children]
+function _find_children(parent_scenario::Object)
+    parent_stochastic_scenario__child_stochastic_scenario(stochastic_scenario1=parent_scenario)
 end
-
 
 """
     _find_root_scenarios()
