@@ -55,7 +55,7 @@ function constraint_unit_constraint_indices()
             end
             # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
+            for path in active_stochastic_paths(active_scenarios)
                 push!(
                     unit_constraint_indices,
                     (unit_constraint=uc, stochastic_scenario=path, t=t)

@@ -56,7 +56,7 @@ function constraint_ratio_unit_flow_indices(ratio, d1, d2)
             )
             # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
+            for path in active_stochastic_paths(active_scenarios)
                 push!(
                     ratio_unit_flow_indices,
                     (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)

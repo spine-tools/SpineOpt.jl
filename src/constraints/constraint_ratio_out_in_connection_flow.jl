@@ -55,7 +55,7 @@ function constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
             )
             # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
+            for path in active_stochastic_paths(active_scenarios)
                 push!(
                     ratio_out_in_connection_flow_indices,
                     (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)

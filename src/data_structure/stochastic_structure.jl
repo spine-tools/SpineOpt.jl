@@ -17,14 +17,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+struct StochasticPathFinder
+    full_stochastic_paths::Array{Array{Object,1},1}
+end
 
 """
-    find_children(stochastic_scenario::Object)
+    active_stochastic_paths(active_scenarios::Union{Array{Object,1},Object})
+
+The unique combinations of `active_scenarios` along valid stochastic paths.
+"""
+function (h::StochasticPathFinder)(active_scenarios::Union{Array{Object,1},Object})
+    # TODO: cache these
+    unique(map(path -> intersect(path, active_scenarios), h.full_stochastic_paths))
+end
+
+"""
+    _find_children(stochastic_scenario::Object)
 
 Finds and returns all the children of a `stochastic_scenario` defined by the 
 `parent_stocahstic_scenario__child_stochastic_scenario` relationship.
 """
-function find_children(stochastic_scenario::Object)
+function _find_children(stochastic_scenario::Object)
     parent_and_children = filter(
         x->x.stochastic_scenario1==stochastic_scenario,
         parent_stochastic_scenario__child_stochastic_scenario()
@@ -34,11 +47,11 @@ end
 
 
 """
-    find_root_scenarios()
+    _find_root_scenarios()
 
 Finds and returns all the `stochastic_scenarios` without parents.
 """
-function find_root_scenarios()
+function _find_root_scenarios()
     stochastic_tree = parent_stochastic_scenario__child_stochastic_scenario()
     roots = stochastic_scenario()
     children = [x.stochastic_scenario2 for x in stochastic_tree]
@@ -47,52 +60,36 @@ end
 
 
 """
-    find_full_stochastic_paths()
+    _generate_active_stochastic_paths()
 
-Finds all the unique paths through the `parent_stochastic_scenario__child_stochastic_scenario` tree.
+Find all unique paths through the `parent_stochastic_scenario__child_stochastic_scenario` tree
+and generate the `active_stochastic_paths` callable.
 """
-function find_full_stochastic_paths()
-    root_scenarios = find_root_scenarios()
-    all_paths = [[scen] for scen in root_scenarios]
-    full_paths = Array{Array{Object,1},1}()
-    for path in all_paths
-        children = find_children(path[end])
-        if isempty(children)
-            push!(full_paths, path)
-        else
-            for child in children
-                push!(all_paths, vcat(path, child))
-            end
-        end
+function _generate_active_stochastic_paths()
+    paths = [[root] for root in _find_root_scenarios()]
+    full_path_indices = []
+    for (i, path) in enumerate(paths)
+        children = _find_children(path[end])
+        isempty(children) && push!(full_path_indices, i)
+        append!(paths, [vcat(path, child) for child in children])
     end
-    return unique!(full_paths)
+    # TODO: `unique!` shouldn't be needed here since relationships are unique in the db.
+    # But we need a check to make sure the stochastic structure is a DAG (no loops)
+    full_stochastic_paths = paths[full_path_indices]
+    active_stochastic_paths = StochasticPathFinder(full_stochastic_paths)
+    @eval begin
+        active_stochastic_paths = $active_stochastic_paths
+    end
 end
 
-
 """
-    active_stochastic_paths(
-        full_stochastic_paths::Array{Array{Object,1},1},
-        active_scenarios::Union{Array{Object,1},Object}
-    )
-
-Finds all the unique combinations of active `stochastic_scenarios` along valid stochastic paths.
-"""
-function active_stochastic_paths(
-    full_stochastic_paths::Array{Array{Object,1},1},
-    active_scenarios::Union{Array{Object,1},Object}
-)
-    unique(map(path -> intersect(path, active_scenarios), full_stochastic_paths))
-end
-
-
-"""
-    generate_stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
+    _stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
 
 Generates the stochastic DAG of a `stochastic_structure` relative to a desired `window_start`
 based on the `stochastic_scenario_end` parameters in the `stochastic_structure__stochastic_scenario` relationship.
 """
-function generate_stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
-    scenarios = find_root_scenarios()
+function _stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
+    scenarios = _find_root_scenarios()
     scen_start = Dict()
     scen_end = Dict()
     scen_weight = Dict()
@@ -107,7 +104,7 @@ function generate_stochastic_DAG(stochastic_structure::Object, window_start::Dat
             scen_end[scen] = window_start + stochastic_scenario_end(
                 stochastic_structure=stochastic_structure, stochastic_scenario=scen
             )
-            children = find_children(scen)
+            children = _find_children(scen)
             for child in children
                 scen_start[child] = min(get(scen_start, child, scen_end[scen]), scen_end[scen])
                 child_weight = scen_weight[scen] * weight_relative_to_parents(
@@ -135,21 +132,21 @@ end
 
 Generates the stochastic DAGs of every `stochastic_structure`.
 """
-function generate_all_stochastic_DAGs(window_start::DateTime)
+function _all_stochastic_DAGs(window_start::DateTime)
     stochastic_DAGs = Dict()
     for structure in stochastic_structure()
-        stochastic_DAGs[structure] = generate_stochastic_DAG(structure, window_start)
+        stochastic_DAGs[structure] = _stochastic_DAG(structure, window_start)
     end
     return stochastic_DAGs
 end
 
 
 """
-    stochastic_time_mapping(stochastic_DAG::Dict)
+    _stochastic_time_mapping(stochastic_DAG::Dict)
 
 Maps `(stochastic_structure, time_slice)` to their set of active `stochastic_scenarios`.
 """
-function stochastic_time_mapping(stochastic_DAG::Dict)
+function _stochastic_time_mapping(stochastic_DAG::Dict)
     active_scenario_map = Dict{TimeSlice, Array{Union{Int64,T} where T<:SpineInterface.AbstractObject,1}}()
     # Active `time_slices`
     for t in time_slice()
@@ -158,7 +155,7 @@ function stochastic_time_mapping(stochastic_DAG::Dict)
         )
     end
     # Historical `time_slices`
-    root = find_root_scenarios()
+    root = _find_root_scenarios()
     for t in sort(collect(values(t_history_t)))
         active_scenario_map[t] = root
     end
@@ -167,14 +164,14 @@ end
 
 
 """
-    generate_stochastic_time_map(all_stochastic_DAGs)
+    _generate_stochastic_time_map(all_stochastic_DAGs)
 
 Generates the `stochastic_time_map` for all defined `stochastic_structures`.
 """
-function generate_stochastic_time_map(all_stochastic_DAGs)
+function _generate_stochastic_time_map(all_stochastic_DAGs)
     stochastic_time_map = Dict{Object, Dict{TimeSlice, Array{Union{Int64,T} where T<:SpineInterface.AbstractObject,1}}}()
     for structure in stochastic_structure()
-        stochastic_time_map[structure] = stochastic_time_mapping(all_stochastic_DAGs[structure])
+        stochastic_time_map[structure] = _stochastic_time_mapping(all_stochastic_DAGs[structure])
     end
     @eval begin
         stochastic_time_map = $stochastic_time_map
@@ -214,11 +211,11 @@ function unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anythi
 end
 
 """
-    generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
+    _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
 
 Generates the `node_stochastic_scenario_weight` parameter for easier access to the scenario weights.
 """
-function generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
+function _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
     node_scenario = []
     parameter_vals = Dict{Tuple{Vararg{Object}},Dict{Symbol,AbstractParameterValue}}()
     for (node, structure) in node__stochastic_structure()
@@ -278,11 +275,8 @@ function unit_stochastic_scenario_weight(;unit=nothing, stochastic_scenario=noth
 end
 
 function generate_stochastic_structure()
-    all_stochastic_DAGs = generate_all_stochastic_DAGs(start(current_window))
-    generate_stochastic_time_map(all_stochastic_DAGs)
-    generate_node_stochastic_scenario_weight(all_stochastic_DAGs)
-    full_stochastic_paths = find_full_stochastic_paths()
-    @eval begin
-        full_stochastic_paths = $full_stochastic_paths
-    end
+    all_stochastic_DAGs = _all_stochastic_DAGs(start(current_window))
+    _generate_stochastic_time_map(all_stochastic_DAGs)
+    _generate_node_stochastic_scenario_weight(all_stochastic_DAGs)
+    _generate_active_stochastic_paths()
 end

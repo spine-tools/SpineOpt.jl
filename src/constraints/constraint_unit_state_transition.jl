@@ -53,7 +53,7 @@ function constraint_unit_state_transition_indices()
             )
             # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
+            for path in active_stochastic_paths(active_scenarios)
                 push!(
                     unit_state_transition_indices,
                     (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)

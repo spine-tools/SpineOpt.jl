@@ -61,7 +61,7 @@ function constraint_connection_flow_lodf_indices()
             )
             # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
+            for path in active_stochastic_paths(active_scenarios)
                 push!(
                     connection_flow_lodf_indices,
                     (connection1=conn_cont, connection2=conn_mon, stochastic_path=path, t=t)

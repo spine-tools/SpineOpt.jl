@@ -53,7 +53,7 @@ function constraint_minimum_operating_point_indices()
             )
             # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
+            for path in active_stochastic_paths(active_scenarios)
                 push!(
                     minimum_operating_point_indices,
                     (unit=u, node=n, direction=d, stochastic_path=path, t=t)

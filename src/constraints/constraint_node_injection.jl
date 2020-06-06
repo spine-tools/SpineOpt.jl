@@ -75,7 +75,7 @@ function constraint_node_injection_indices()
             # Commodity flows to/from `units` aren' needed as they use same structures as the `node`
             # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
+            for path in active_stochastic_paths(active_scenarios)
                 push!(
                     node_injection_indices,
                     (node=n, stochastic_scenario=path, t_before=t_before, t_after=t_after)
