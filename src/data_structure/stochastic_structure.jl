@@ -182,7 +182,7 @@ end
 Stochastic time indexes for `nodes`. Keyword arguments allow filtering.
 """
 function node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
-    unique( # TODO: Write a check for multiple structures
+    unique(
         (node=n, stochastic_scenario=s, t=t1)
         for (n, structure) in node__stochastic_structure(node=node, _compact=false)
         for (n, tb) in node__temporal_block(node=n, temporal_block=temporal_block, _compact=false)
@@ -199,7 +199,7 @@ Stochastic time indexes for `units`. Keyword arguments allow filtering.
 function unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
     unique(
         (unit=u, stochastic_scenario=s, t=t1)
-        for (u, n) in units_on_resolution(unit=unit, _compact=false) # TODO: Write a check for multiple relationships
+        for (u, n) in units_on_resolution(unit=unit, _compact=false)
         for (n, s, t1) in node_stochastic_time_indices(
             node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
         )
