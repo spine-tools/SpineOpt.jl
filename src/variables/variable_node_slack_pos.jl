@@ -25,7 +25,7 @@ for `node`, `s`, and `t`.
 function node_slack_indices(;node=anything, stochastic_scenario=anything, t=anything)
     inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
         (node=n, stochastic_scenario=s, t=t)
-        for n in filter(n -> n in node, collect(indices(node_slack_penalty)))
+        for n in intersect(node_with_slack_penalty, node)
         for (n, s, t) in node_stochastic_time_indices(node=n, stochastic_scenario=stochastic_scenario, t=t)
     ]
     unique!(inds)

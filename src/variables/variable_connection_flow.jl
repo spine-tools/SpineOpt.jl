@@ -29,12 +29,12 @@ A list of `NamedTuple`s corresponding to indices of the `connection_flow` variab
 The keyword arguments act as filters for each dimension.
 """
 function connection_flow_indices(
-    ;connection=anything, node=anything, direction=anything, stochastic_scenario=anything, t=anything
-)
+        ;connection=anything, node=anything, direction=anything, stochastic_scenario=anything, t=anything
+    )
     node = expand_node_group(node)
     [   
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (conn, n, d, tb) in connection_flow_indices_rc(
+        for (conn, n, d, tb) in connection__node__direction__temporal_block(
             connection=connection, node=node, direction=direction, _compact=false
         )
         for (n, s, t) in node_stochastic_time_indices(

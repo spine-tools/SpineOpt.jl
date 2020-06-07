@@ -18,12 +18,13 @@
 #############################################################################
 
 function preprocess_data_structure()
+    # NOTE: expand groups first, so we don't need to expand them anywhere else
+    expand_node__stochastic_structure()
+    expand_units_on_resolution()
     add_connection_relationships()
     generate_network_components()
     generate_direction()
-    generate_variable_indices()
-    expand_node__stochastic_structure()
-    expand_units_on_resolution()
+    generate_variable_indexing_support()
 end
 
 """
@@ -275,54 +276,46 @@ function generate_direction()
     end
 end
 
-function generate_variable_indices()
-    unit_flow_indices = unique(
-        (unit=u, node=n, direction=d, temporal_block=tb)
-        for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
-        for tb in node__temporal_block(node=n)
-    )
-    connection_flow_indices = unique(
-        (connection=conn, node=n, direction=d, temporal_block=tb)
-        for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
-        for tb in node__temporal_block(node=n)
-    )
-    node_state_indices = unique(
-        (node=n, temporal_block=tb)
-        for n in node(has_state=:value_true)
-        for tb in node__temporal_block(node=n)
-    )
-    node_slack_indices = unique(
-        (node=n, temporal_block=tb)
-        for n in indices(node_slack_penalty)
-        for tb in node__temporal_block(node=n)
-    )
-    units_on_indices = unique(
-        (unit=u, temporal_block=tb)
-        for (ug,n) in units_on_resolution()
-            for u in expand_unit_group(ug)
+function generate_variable_indexing_support()
+    node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
+    unit__node__direction__temporal_block = RelationshipClass(
+        :unit__node__direction__temporal_block, 
+        [:unit, :node, :direction, :temporal_block], 
+        unique(
+            (unit=u, node=n, direction=d, temporal_block=tb)
+            for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
             for tb in node__temporal_block(node=n)
+        )
     )
-    unit_flow_indices_rc = RelationshipClass(
-        :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices
+    connection__node__direction__temporal_block = RelationshipClass(
+        :connection__node__direction__temporal_block, 
+        [:connection, :node, :direction, :temporal_block], 
+        unique(
+            (connection=conn, node=n, direction=d, temporal_block=tb)
+            for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
+            for tb in node__temporal_block(node=n)
+        )
     )
-    connection_flow_indices_rc = RelationshipClass(
-        :connection_flow_indices_rc, [:connection, :node, :direction, :temporal_block], connection_flow_indices
+    node_with_state__temporal_block = RelationshipClass(
+        :node_with_state__temporal_block, 
+        [:node, :temporal_block], 
+        unique((node=n, temporal_block=tb) for n in node(has_state=:value_true) for tb in node__temporal_block(node=n))
     )
-    node_state_indices_rc = RelationshipClass(
-        :node_state_indices_rc, [:node, :temporal_block], node_state_indices
-    )
-    node_slack_indices_rc = RelationshipClass(
-        :node_slack_indices_rc, [:node, :temporal_block], node_slack_indices
-    )
-    units_on_indices_rc = RelationshipClass(
-        :units_on_indices_rc, [:unit, :temporal_block], units_on_indices
+    unit__temporal_block = RelationshipClass(
+        :unit__temporal_block, 
+        [:unit, :temporal_block], 
+        unique(
+            (unit=u, temporal_block=tb)
+            for (u, n) in units_on_resolution()
+            for tb in node__temporal_block(node=n)
+        )
     )
     @eval begin
-        unit_flow_indices_rc = $unit_flow_indices_rc
-        connection_flow_indices_rc = $connection_flow_indices_rc
-        node_state_indices_rc = $node_state_indices_rc
-        node_slack_indices_rc = $node_slack_indices_rc
-        units_on_indices_rc = $units_on_indices_rc
+        node_with_slack_penalty = $node_with_slack_penalty
+        unit__node__direction__temporal_block = $unit__node__direction__temporal_block
+        connection__node__direction__temporal_block = $connection__node__direction__temporal_block
+        node_with_state__temporal_block = $node_with_state__temporal_block
+        unit__temporal_block = $unit__temporal_block
     end
 end
 
