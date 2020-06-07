@@ -49,7 +49,7 @@ An `Array` of time slices *in the model*.
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = h.block_time_slices[temporal_block]
 (h::TimeSliceSet)(::Anything, s) = s
 (h::TimeSliceSet)(temporal_block::Object, s) = [t for t in s if temporal_block in t.blocks]
-(h::TimeSliceSet)(temporal_blocks::Array{Object,1}, s) = [t for blk in temporal_blocks for t in h(blk, s)]
+(h::TimeSliceSet)(temporal_blocks::Array{T,1}, s) where T = [t for blk in temporal_blocks for t in h(blk, s)]
 
 """
     t_overlaps_t()
