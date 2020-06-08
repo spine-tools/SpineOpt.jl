@@ -143,6 +143,10 @@ function _block_time_intervals(window_start, window_end)
     d
 end
 
+function _model_duration_unit()
+    get(Dict(:minute => Minute, :hour => Hour), duration_unit(model=first(model()), _strict=false), Minute)
+end
+
 """
     _window_time_slices(window_start, window_end)
 
@@ -157,9 +161,7 @@ function _window_time_slices(window_start, window_end)
         end
     end
     instance = first(model())
-    d = Dict(:minute => Minute, :hour => Hour)
-    duration_unit_ = get(d, duration_unit(model=instance, _strict=false), Minute)
-    a = [TimeSlice(t..., blocks...; duration_unit=duration_unit_) for (t, blocks) in inv_block_time_intervals]
+    a = [TimeSlice(t..., blocks...; duration_unit=_model_duration_unit()) for (t, blocks) in inv_block_time_intervals]
     sort!(a)
 end
 
@@ -196,16 +198,16 @@ Create and export convenience functions to access time slice relationships:
 `t_in_t`, `t_preceeds_t`, `t_overlaps_t`...
 """
 function _generate_time_slice_relationships()
-    t_before_t_list = []
-    t_in_t_list = []
-    t_overlaps_t_list = []
+    t_before_t_tuples = []
+    t_in_t_tuples = []
+    t_overlaps_t_tuples = []
     # NOTE: splitting the loop into two loops as below makes it ~2 times faster
     for (i, t_i) in enumerate(all_time_slices)
         found = false
         for t_j in all_time_slices[i:end]
             if before(t_i, t_j)
                 found = true
-                push!(t_before_t_list, (t_before=t_i, t_after=t_j))
+                push!(t_before_t_tuples, (t_before=t_i, t_after=t_j))
             elseif found
                 break
             end
@@ -219,13 +221,13 @@ function _generate_time_slice_relationships()
         for t_j in all_time_slices
             if iscontained(t_i, t_j)
                 found_in = true
-                push!(t_in_t_list, (t_short=t_i, t_long=t_j))
+                push!(t_in_t_tuples, (t_short=t_i, t_long=t_j))
             elseif found_in
                 break_in = true
             end
             if overlaps(t_i, t_j)
                 found_overlaps = true
-                push!(t_overlaps_t_list, tuple(t_i, t_j))
+                push!(t_overlaps_t_tuples, tuple(t_i, t_j))
             elseif found_overlaps
                 break_overlaps = true
             end
@@ -234,16 +236,16 @@ function _generate_time_slice_relationships()
             end
         end
     end
-    unique!(t_in_t_list)
-    unique!(t_overlaps_t_list)
-    t_in_t_excl_list = [(t_short=t1, t_long=t2) for (t1, t2) in t_in_t_list if t1 != t2]
-    t_overlaps_t_excl_list = [(t1, t2) for (t1, t2) in t_overlaps_t_list if t1 != t2]
+    unique!(t_in_t_tuples)
+    unique!(t_overlaps_t_tuples)
+    t_in_t_excl_tuples = [(t_short=t1, t_long=t2) for (t1, t2) in t_in_t_tuples if t1 != t2]
+    t_overlaps_t_excl_tuples = [(t1, t2) for (t1, t2) in t_overlaps_t_tuples if t1 != t2]
     # Create function-like objects
-    t_before_t = RelationshipClass(:t_before_t, [:t_before, :t_after], t_before_t_list)
-    t_in_t = RelationshipClass(:t_in_t, [:t_short, :t_long], t_in_t_list)
-    t_in_t_excl = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_list)
-    t_overlaps_t = TOverlapsT(t_overlaps_t_list)
-    t_overlaps_t_excl = TOverlapsT(t_overlaps_t_excl_list)
+    t_before_t = RelationshipClass(:t_before_t, [:t_before, :t_after], t_before_t_tuples)
+    t_in_t = RelationshipClass(:t_in_t, [:t_short, :t_long], t_in_t_tuples)
+    t_in_t_excl = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_tuples)
+    t_overlaps_t = TOverlapsT(t_overlaps_t_tuples)
+    t_overlaps_t_excl = TOverlapsT(t_overlaps_t_excl_tuples)
     # Export the function-like objects
     @eval begin
         t_before_t = $t_before_t

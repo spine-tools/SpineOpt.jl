@@ -25,48 +25,25 @@ due to potentially different stochastic structures between `unit_flow` and
 `units_on` variables.
 """
 function constraint_ratio_unit_flow_indices(ratio, d1, d2)
-    ratio_unit_flow_indices = []
-    for (u, n1, n2) in indices(ratio)
+    (
+        (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
+        for (u, n1, n2) in indices(ratio)
         for t in t_lowest_resolution(x.t for x in unit_flow_indices(unit=u, node=[n1, n2]))
-            # Ensure type stability
-            active_scenarios = Array{Object,1}()
-            # `unit_flow` for `direction` `d1`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    unit_flow_indices(unit=u, node=n1, direction=d1, t=t_in_t(t_long=t))
-                )
-            )
-            # `unit_flow` for `direction` `d2`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    unit_flow_indices(unit=u, node=n2, direction=d2, t=t_in_t(t_long=t))
-                )
-            )
-            # `units_on` with coefficient
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    units_on_indices(unit=u, t=t_in_t(t_long=t))
-                )
-            )
-            # Find stochastic paths for `active_scenarios`
-            unique!(active_scenarios)
-            for path in active_stochastic_paths(active_scenarios)
-                push!(
-                    ratio_unit_flow_indices,
-                    (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
-                )
-            end
-        end
-    end
-    return unique!(ratio_unit_flow_indices)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_ratio_unit_flow_indices(u, n1, d1, n2, d2, t))
+        )
+    )
 end
 
+function _constraint_ratio_unit_flow_indices(unit, node1, direction1, node2, direction2, t)
+    Iterators.flatten(
+        (
+            unit_flow_indices(unit=unit, node=node1, direction=direction1, t=t_in_t(t_long=t)),
+            unit_flow_indices(unit=unit, node=node2, direction=direction2, t=t_in_t(t_long=t)),
+            units_on_indices(unit=unit, t=t_in_t(t_long=t))
+        )
+    )    
+end
 
 """
     add_constraint_ratio_unit_flow!(m, ratio, sense, d1, d2)

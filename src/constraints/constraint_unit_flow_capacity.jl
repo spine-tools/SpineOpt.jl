@@ -25,40 +25,15 @@ Uses stochastic path indices due to potentially different stochastic structures
 between `unit_flow` and `units_on` variables.
 """
 function constraint_unit_flow_capacity_indices()
-    unit_flow_capacity_indices = []
-    for (u, n, d) in indices(unit_capacity)
+    unique(
+        (unit=u, node=n, direction=d, stochastic_path=path, t=t)
+        for (u, n, d) in indices(unit_capacity)
         for t in time_slice(temporal_block=node__temporal_block(node=n))
-            # Ensure type stability
-            active_scenarios = Array{Object,1}()
-            # Constrained `unit_flow`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    unit_flow_indices(unit=u, node=n, direction=d, t=t)
-                )
-            )
-            # Relevant `units_on`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    units_on_indices(unit=u, t=t_in_t(t_long=t))
-                )
-            )
-            # Find stochastic paths for `active_scenarios`
-            unique!(active_scenarios)
-            for path in active_stochastic_paths(active_scenarios)
-                push!(
-                    unit_flow_capacity_indices,
-                    (unit=u, node=n, direction=d, stochastic_path=path, t=t)
-                )
-            end
-        end
-    end
-    return unique!(unit_flow_capacity_indices)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(u, n, d, t))
+        )
+    )
 end
-
 
 """
     add_constraint_unit_flow_capacity!(m::Model)

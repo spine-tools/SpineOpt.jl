@@ -25,45 +25,20 @@ indices due to potentially different stochastic structures between `units_on` an
 `units_available` variables.
 """
 function constraint_min_up_time_indices()
-    min_up_time_indices = []
-    for u in indices(min_up_time)
-        node = first(units_on_resolution(unit=u))
-        tb = node__temporal_block(node=node)
-        for t in time_slice(temporal_block=tb)
-            # Ensure type stability
-            active_scenarios = Array{Object,1}()
-            # Current `units_on`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    units_on_indices(unit=u, t=t)
-                )
+    unique(
+        (unit=u, stochastic_path=path, t=t)
+        for u in indices(min_up_time)
+        for t in time_slice(temporal_block=node__temporal_block(node=units_on_resolution(unit=u)))
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in units_on_indices(
+                    unit=u, t=vcat(to_time_slice(TimeSlice(end_(t) - min_up_time(unit=u), end_(t))), t),
+                )  # Current `units_on` and `units_available`, plus `units_started_up` during past time slices
             )
-            # `units_started_up` during past time slices
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    units_on_indices(
-                        unit=u,
-                        t=to_time_slice(TimeSlice(end_(t) - min_up_time(unit=u), end_(t))),
-                    )
-                )
-            )
-            # Find stochastic paths for `active_scenarios`
-            unique!(active_scenarios)
-            for path in active_stochastic_paths(active_scenarios)
-                push!(
-                    min_up_time_indices,
-                    (unit=u, stochastic_path=path, t=t)
-                )
-            end
-        end
-    end
-    return unique!(min_up_time_indices)
+        )
+    )
 end
-
 
 """
     add_constraint_min_up_time!(m::Model)

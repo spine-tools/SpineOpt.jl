@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
+# NOTE: always pick the second (last) node in `connection__from_node` as 'to' node
+
 """
     constraint_connection_flow_ptdf_indices()
 
@@ -24,47 +27,29 @@ Uses stochastic path indices due to potentially different stochastic structures
 between `connection_flow` and `node_injection` variables?
 """
 function constraint_connection_flow_ptdf_indices()
-    connection_flow_ptdf_indices = []
-    for conn in connection(connection_monitored=:value_true, has_ptdf=true)
-        node_direction = last(connection__from_node(connection=conn)) # NOTE: always assume that the second (last) node in `connection__from_node` is the 'to' node
-        n_to = node_direction.node
-        direction = node_direction.direction
+    unique(
+        (connection=conn, node=n_to, stochastic_scenario=path, t=t)
+        for conn in connection(connection_monitored=:value_true, has_ptdf=true)
+        for (n_to, d_to) in Iterators.drop(connection__from_node(connection=conn), 1)
         for t in time_slice(temporal_block=node__temporal_block(node=n_to))
-            # Ensure type stability
-            active_scenarios = Array{Object,1}()
-            # `n_to`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    connection_flow_indices(
-                        connection=conn, node=n_to, direction=direction, t=t
-                    )
-                )
-            )
-            # `n_inj`
-            for (conn, n_inj) in indices(ptdf; connection=conn)
-                append!(
-                    active_scenarios,
-                    map(
-                        inds -> inds.stochastic_scenario,
-                        node_stochastic_time_indices(node=n_inj, t=t)
-                    )
-                )
-            end
-            # Find stochastic paths for `active_scenarios`
-            unique!(active_scenarios)
-            for path in active_stochastic_paths(active_scenarios)
-                push!(
-                    connection_flow_ptdf_indices,
-                    (connection=conn, node=n_to, stochastic_scenario=path, t=t)
-                )
-            end
-        end
-    end
-    return unique!(connection_flow_ptdf_indices)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_connection_flow_ptdf_indices(conn, n_to, d_to))
+        )
+    )
 end
 
+function _constraint_connection_flow_ptdf_indices(connection, node_to, direction_to)
+    Iterators.flatten(
+        (
+            connection_flow_indices(connection=connection, node=node_to, direction=direction_to, t=t),  # `n_to`
+            (
+                ind 
+                for (conn, n_inj) in indices(ptdf; connection=connection)
+                for ind in node_stochastic_time_indices(node=n_inj, t=t)
+            )  # `n_inj`
+        )
+    )
+end
 
 """
     add_constraint_connection_flow_ptdf(m::Model)

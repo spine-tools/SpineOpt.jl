@@ -185,3 +185,4 @@ end
 An equivalent dictionary where `JuMP.ConstraintRef` values are replaced by their `String` formulation.
 """
 formulation(d::Dict{K,JuMP.ConstraintRef}) where {K} = Dict{K,Any}(k => sprint(show, v) for (k, v) in d)
+

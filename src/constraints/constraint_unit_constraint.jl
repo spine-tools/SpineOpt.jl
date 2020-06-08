@@ -25,47 +25,45 @@ stochastic path indices due to potentially different stochastic structures
 between `unit_flow`, `unit_flow_op`, and `units_on` variables.
 """
 function constraint_unit_constraint_indices()
-    unit_constraint_indices = []
-    for uc in unit_constraint()
-        involved_unit_node = Iterators.flatten(
-            (unit__from_node__unit_constraint(unit_constraint=uc), unit__to_node__unit_constraint(unit_constraint=uc))
+    unique(
+        (unit_constraint=uc, stochastic_scenario=path, t=t)
+        for uc in unit_constraint()
+        for t in _constraint_unit_constraint_lowest_resolution_t(uc)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_unit_constraint_indices(uc, t))
         )
-        for t in t_lowest_resolution(x.t for (u, n) in involved_unit_node for x in unit_flow_indices(unit=u, node=n))
-            # Ensure type stability
-            active_scenarios = Array{Object,1}()
-            # `unit_flow` and `unit_flow_op` variables
-            for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
-                append!(
-                    active_scenarios,
-                    map(
-                        inds -> inds.stochastic_scenario,
-                        unit_flow_indices(unit=u, node=n, direction=direction(:from_node), t=t_in_t(t_long=t))
-                    )
-                )
-            end
-            # `units_on` variables
-            for u in unit__unit_constraint(unit_constraint=uc)
-                append!(
-                    active_scenarios,
-                    map(
-                        inds -> inds.stochastic_scenario,
-                        units_on_indices(unit=u, t=t_in_t(t_long=t))
-                    )
-                )
-            end
-            # Find stochastic paths for `active_scenarios`
-            unique!(active_scenarios)
-            for path in active_stochastic_paths(active_scenarios)
-                push!(
-                    unit_constraint_indices,
-                    (unit_constraint=uc, stochastic_scenario=path, t=t)
-                )
-            end
-        end
-    end
-    return unique!(unit_constraint_indices)
+    )
 end
 
+function _constraint_unit_constraint_lowest_resolution_t(unit_constraint)
+    t_lowest_resolution(
+        ind.t
+        for unit__node__unit_constraint in (unit__from_node__unit_constraint, unit__to_node__unit_constraint)
+        for (u, n) in unit__node__unit_constraint(unit_constraint=unit_constraint)
+        for ind in unit_flow_indices(unit=u, node=n)
+    )
+end
+
+function _constraint_unit_constraint_unit_flow_indices(unit_constraint, t)
+    (
+        ind
+        for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
+        for ind in unit_flow_indices(unit=u, node=n, direction=direction(:from_node), t=t_in_t(t_long=t))
+    )
+end
+
+function _constraint_unit_constraint_units_on_indices(unit_constraint, t)
+    (ind for u in unit__unit_constraint(unit_constraint=uc) for ind in units_on_indices(unit=u, t=t_in_t(t_long=t)))
+end
+
+function _constraint_unit_constraint_indices(unit_constraint, t)
+    Iterators.flatten(
+        (
+            _constraint_unit_constraint_unit_flow_indices(unit_constraint, t),
+            _constraint_unit_constraint_units_on_indices(unit_constraint, t)
+        )
+    )
+end
 
 """
     add_constraint_unit_constraint(m::Model)

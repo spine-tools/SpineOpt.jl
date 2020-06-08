@@ -25,45 +25,15 @@ Uses stochastic path indices due to potentially different stochastic structures
 between `unit_flow` and `units_on` variables.
 """
 function constraint_minimum_operating_point_indices()
-    minimum_operating_point_indices = []
-    for (u, n, d) in indices(minimum_operating_point)
-        if !in((unit=u, node=n, direction=d), indices(unit_capacity))
-            error("`unit_capacity` must be defined for `($(u), $(n), $(d))` if `minimum_operating_point` is defined!")
-        end
+    unique(
+        (unit=u, node=n, direction=d, stochastic_path=path, t=t)
+        for (u, n, d) in indices(minimum_operating_point)
         for t in time_slice(temporal_block=node__temporal_block(node=n))
-            # Ensure type stability
-            active_scenarios = Array{Object,1}()
-            # Current `unit_flow`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    unit_flow_indices(
-                        unit=u, node=n, direction=d, t=t
-                    )
-                )
-            )
-            # Current `units_on`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    units_on_indices(unit=u, t=t_in_t(t_short=t))
-                )
-            )
-            # Find stochastic paths for `active_scenarios`
-            unique!(active_scenarios)
-            for path in active_stochastic_paths(active_scenarios)
-                push!(
-                    minimum_operating_point_indices,
-                    (unit=u, node=n, direction=d, stochastic_path=path, t=t)
-                )
-            end
-        end
-    end
-    return unique!(minimum_operating_point_indices)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(u, n, d, t))
+        )
+    )
 end
-
 
 """
     add_constraint_minimum_operating_point!(m::Model)

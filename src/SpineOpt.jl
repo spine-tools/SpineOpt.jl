@@ -77,6 +77,7 @@ include("objective/shut_down_costs.jl")
 include("objective/fuel_costs.jl")
 include("objective/objective_penalties.jl")
 
+include("constraints/constraint_common.jl")
 include("constraints/constraint_max_cum_in_unit_flow_bound.jl")
 include("constraints/constraint_unit_flow_capacity.jl")
 include("constraints/constraint_operating_point_bounds.jl")

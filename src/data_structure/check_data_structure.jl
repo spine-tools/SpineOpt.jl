@@ -36,20 +36,21 @@ function check_data_structure(log_level::Int64)
     check_temporal_block_object()
     check_units_on_resolution()
     check_node__stochastic_structure()
+    check_minimum_operating_point_unit_capacity()
     check_islands(log_level)
 end
 
 function check_model_object()
     _check(
         !isempty(model()),
-        "`model` object not found - please create an object of class `model` in your input database"
+        "`model` object not found - you need a `model` object to run Spine Opt"
     )
 end
 
 function check_temporal_block_object()
     _check(
         !isempty(temporal_block()),
-        "`temporal_block` object not found - please create an object of class `temporal_block` in your input database"
+        "`temporal_block` object not found - you need at least one `temporal_block` to run Spine Opt"
     )
 end
 
@@ -62,8 +63,8 @@ function check_units_on_resolution()
     error_units = [u for u in unit() if length(units_on_resolution(unit=u)) != 1]
     _check(
         isempty(error_units),
-        "missing `units_on_resolution` relationship for `unit`(s): $(join(error_units, ", ", " and ")) "
-        * "- please check your input db"
+        "invalid `units_on_resolution` definition for `unit`(s): $(join(error_units, ", ", " and ")) "
+        * "- each `unit` must have exactly one `units_on_resolution` relationship"
     )
 end
 
@@ -76,9 +77,21 @@ function check_node__stochastic_structure()
     error_nodes = [n for n in node() if length(node__stochastic_structure(node=n)) != 1]
     _check(
         isempty(error_nodes),
-        "missing `node__stochastic_structure` relationship for `node`(s): $(join(error_nodes, ", ", " and ")) "
-        * "- please check your input db"
+        "invalid `node__stochastic_structure` definition for `node`(s): $(join(error_nodes, ", ", " and ")) "
+        * "- each `node` must be related to one and only one `stochastic_structure`"
+    )
+end
 
+function check_minimum_operating_point_unit_capacity()
+    error_indices = [
+        (u, n, d) 
+        for (u, n, d) in indices(minimum_operating_point) 
+        if unit_capacity(unit=u, node=n, direction=d) === nothing
+    ]
+    _check(
+        isempty(error_indices),
+        "missing `unit_capacity` value for indices: $(join(error_indices, ", ", " and ")) "
+        * "- `unit_capacity` must be specified where `minimum_operating_point` is"
     )
 end
 
