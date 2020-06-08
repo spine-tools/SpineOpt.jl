@@ -76,8 +76,8 @@ function run_spineopt(
         using_spinedb(url_in, @__MODULE__; upgrade=true)
         generate_missing_items()
     end
-    @logtime level2 "Checking data structure..." check_data_structure(log_level)
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
+    @logtime level2 "Checking data structure..." check_data_structure(log_level)
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @logtime level2 "Creating stochastic structure..." generate_stochastic_structure()
     m = rerun_spineopt(
