@@ -35,16 +35,16 @@ function constraint_unit_constraint_indices()
     )
 end
 
-function _constraint_unit_constraint_lowest_resolution_t(unit_constraint)
+function _constraint_unit_constraint_lowest_resolution_t(uc)
     t_lowest_resolution(
         ind.t
         for unit__node__unit_constraint in (unit__from_node__unit_constraint, unit__to_node__unit_constraint)
-        for (u, n) in unit__node__unit_constraint(unit_constraint=unit_constraint)
+        for (u, n) in unit__node__unit_constraint(unit_constraint=uc)
         for ind in unit_flow_indices(unit=u, node=n)
     )
 end
 
-function _constraint_unit_constraint_unit_flow_indices(unit_constraint, t)
+function _constraint_unit_constraint_unit_flow_indices(uc, t)
     (
         ind
         for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
@@ -52,15 +52,15 @@ function _constraint_unit_constraint_unit_flow_indices(unit_constraint, t)
     )
 end
 
-function _constraint_unit_constraint_units_on_indices(unit_constraint, t)
+function _constraint_unit_constraint_units_on_indices(uc, t)
     (ind for u in unit__unit_constraint(unit_constraint=uc) for ind in units_on_indices(unit=u, t=t_in_t(t_long=t)))
 end
 
-function _constraint_unit_constraint_indices(unit_constraint, t)
+function _constraint_unit_constraint_indices(uc, t)
     Iterators.flatten(
         (
-            _constraint_unit_constraint_unit_flow_indices(unit_constraint, t),
-            _constraint_unit_constraint_units_on_indices(unit_constraint, t)
+            _constraint_unit_constraint_unit_flow_indices(uc, t),
+            _constraint_unit_constraint_units_on_indices(uc, t)
         )
     )
 end
