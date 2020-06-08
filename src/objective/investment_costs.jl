@@ -26,7 +26,7 @@ function investment_costs(m::Model)
         m,       
         + expr_sum(
             units_invested[u, s, t] * unit_investment_cost(unit=u, t=t)
-            for (u, s, t) in units_invested_indices();
+            for (u, s, t) in units_invested_available_indices();
             init=0
         )
     )

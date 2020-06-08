@@ -24,53 +24,12 @@ function preprocess_data_structure()
     generate_unit_investment_temporal_block()
     generate_variable_indices()
     expand_node__stochastic_structure()
-    expand_units_on_resolution()
-    generate_unit_investment_lifetime_rhs()
-    generate_unit_life()
+    expand_units_on_resolution()    
+    generate_unit_investment_temporal_block()
 end
 
-"""
-    generate_unit_investment_lifetime_rhs()
 
-Generate the `unit_investment_lifetime_rhs` parameter which hold the appropriate right hand side value for the 
-unit_investment_lifetime constraint. The RHS value of this constraint depends, on each roll_forward on the 
-life so far of investment units and the duration of the rolling window. This function initialises the parameter_value
-and it gets updated each roll_forward.
-"""
-
-function generate_unit_investment_lifetime_rhs()
-    instance = first(model())
-    model_start_ = model_start(model=instance)    
-    window_start = model_start_
-    window_end = (roll_forward_ === nothing) ? model_end_ : min(model_start_ + roll_forward_, model_end_)
-    window_duration = window_end - window_start    
-    
-    unit_investment_lifetime_rhs = Parameter(:unit_investment_lifetime_rhs, [unit])
-    
-    for u in indices(unit_investment_lifetime)  
-        (unit_investment_lifetime(unit=u) > window_duration) ? rhs_val = window_duration : rhs_val = unit_investment_lifetime(unit=u)        
-        unit.parameter_values[u][:unit_investment_lifetime_rhs] = parameter_value(rhs_val)
-    end
-
-    @eval begin
-        unit_investment_lifetime_rhs = $unit_investment_lifetime_rhs        
-    end
-end
-
-function generate_unit_life()    
-    
-    unit_life = Parameter(:unit_life, [unit])
-    
-    for u in indices(candidate_units)          
-        unit.parameter_values[u][:unit_life] = parameter_value(0)
-    end
-
-    @eval begin
-        unit_life = $unit_life
-    end
-end
-
-function generate_unit_investment_temporal_block()    
+function generate_unit_investment_temporal_block()
     for u in indices(candidate_units)        
         if isempty(unit__investment_temporal_block(unit=u))         
             m = first(model())
@@ -80,6 +39,7 @@ function generate_unit_investment_temporal_block()
         end        
     end
 end
+
 
 """
     add_connection_relationships()
@@ -357,7 +317,7 @@ function generate_variable_indices()
             for u in expand_unit_group(ug)
             for tb in node__temporal_block(node=n)
     )
-    units_invested_indices = unique(
+    units_invested_available_indices = unique(
         (unit=u, temporal_block=tb)
         for ug in indices(candidate_units)
         for u in expand_unit_group(ug)            
@@ -378,8 +338,8 @@ function generate_variable_indices()
     units_on_indices_rc = RelationshipClass(
         :units_on_indices_rc, [:unit, :temporal_block], units_on_indices
     )
-    units_invested_indices_rc = RelationshipClass(
-        :units_invested_indices_rc, [:unit, :temporal_block], units_invested_indices
+    units_invested_available_indices_rc = RelationshipClass(
+        :units_invested_available_indices_rc, [:unit, :temporal_block], units_invested_available_indices
     )
     @eval begin
         unit_flow_indices_rc = $unit_flow_indices_rc
@@ -387,7 +347,7 @@ function generate_variable_indices()
         node_state_indices_rc = $node_state_indices_rc
         node_slack_indices_rc = $node_slack_indices_rc
         units_on_indices_rc = $units_on_indices_rc
-        units_invested_indices_rc = $units_invested_indices_rc
+        units_invested_available_indices_rc = $units_invested_available_indices_rc
     end
 end
 

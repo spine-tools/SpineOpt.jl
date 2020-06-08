@@ -22,8 +22,8 @@
 
 Forms the stochastic index set for the `:units_invested_lifetime()` constraint. 
 """
-function constraint_units_invested_lifetime_indices()
-    units_invested_lifetime_indices = []
+function constraint_unit_lifetime_indices()
+    unit_lifetime_indices = []
     for u in indices(candidate_units)        
         tb = unit__investment_temporal_block(unit=u)
         for t in time_slice(temporal_block=tb)
@@ -52,13 +52,13 @@ function constraint_units_invested_lifetime_indices()
             unique!(active_scenarios)
             for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
                 push!(
-                    units_invested_lifetime_indices,
+                    unit_lifetime_indices,
                     (unit=u, stochastic_path=path, t=t)
                 )
             end
         end
     end
-    return unique!(units_invested_lifetime_indices)
+    return unique!(unit_lifetime_indices)
 end
 
 
@@ -68,10 +68,10 @@ end
 Constraint running by minimum up time.
 """
 
-function add_constraint_units_invested_lifetime!(m::Model)
+function add_constraint_unit_lifetime!(m::Model)
     @fetch units_invested_available, units_invested = m.ext[:variables]
-    cons = m.ext[:constraints][:units_invested_lifetime] = Dict()
-    for (u, stochastic_path, t) in constraint_units_invested_lifetime_indices()        
+    cons = m.ext[:constraints][:unit_lifetime] = Dict()
+    for (u, stochastic_path, t) in constraint_unit_lifetime_indices()        
         cons[u, stochastic_path, t] = @constraint(
             m,
             + expr_sum(
@@ -87,7 +87,7 @@ function add_constraint_units_invested_lifetime!(m::Model)
                 for (u, s_past, t_past) in units_invested_available_indices(
                     unit=u,
                     stochastic_scenario=stochastic_path,
-                    t=to_time_slice(TimeSlice(end_(t) - units_invested_lifetime(unit=u), end_(t)))
+                    t=to_time_slice(TimeSlice(end_(t) - unit_investment_lifetime(unit=u), end_(t)))
                 )
             )
         )

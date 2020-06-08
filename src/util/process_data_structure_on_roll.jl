@@ -36,3 +36,8 @@ function process_data_structure_post_roll()
 end
 
 
+"""
+    process_data_structure_post_roll()
+
+This function is called after each model solve after the temporal structure has been rolled forwards
+"""

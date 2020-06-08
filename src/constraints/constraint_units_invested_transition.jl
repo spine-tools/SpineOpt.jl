@@ -24,10 +24,10 @@ Forms the stochastic index set for the `:unit_state_transition` constraint.
 Uses stochastic path indices due to potentially different stochastic scenarios
 between `t_after` and `t_before`.
 """
-function constraint_unit_state_transition_indices()
-    unit_state_transition_indices = []
-    for (u, n) in units_on_resolution()
-        for t_after in time_slice(temporal_block=node__temporal_block(node=n))
+function constraint_units_invested_transition_indices()
+    units_invested_transition_indices = []
+    for (u, tb) in unit__investment_temporal_block()
+        for t_after in time_slice(temporal_block=tb)
             # Ensure type stability
             active_scenarios = Array{Object,1}()
             # `units_on` on `t_after`
@@ -35,7 +35,7 @@ function constraint_unit_state_transition_indices()
                 active_scenarios,
                 map(
                     inds -> inds.stochastic_scenario,
-                    units_on_indices(unit=u, t=t_after)
+                    units_invested_available_indices(unit=u, t=t_after)
                 )
             )
             # `units_on` on a valid `t_before`
@@ -48,20 +48,20 @@ function constraint_unit_state_transition_indices()
                 active_scenarios,
                 map(
                     inds -> inds.stochastic_scenario,
-                    units_on_indices(unit=u, t=t_before)
+                    units_invested_available_indices(unit=u, t=t_before)
                 )
             )
             # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)
             for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
                 push!(
-                    unit_state_transition_indices,
+                    units_invested_transition_indices,
                     (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
                 )
             end
         end
     end
-    return unique!(unit_state_transition_indices)
+    return unique!(units_invested_transition_indices)
 end
 
 
@@ -71,25 +71,25 @@ end
 This constraint ensures consistency between the variables `units_on`, `units_started_up`
 and `units_shut_down`.
 """
-function add_constraint_unit_state_transition!(m::Model)
-    @fetch units_on, units_started_up, units_shut_down = m.ext[:variables]
-    cons = m.ext[:constraints][:unit_state_transition] = Dict()
-    for (u, stochastic_path, t_before, t_after) in constraint_unit_state_transition_indices()
+function add_constraint_units_invested_transition!(m::Model)
+    @fetch units_invested_available, units_invested, units_mothballed = m.ext[:variables]
+    cons = m.ext[:constraints][:units_invested_transition] = Dict()
+    for (u, stochastic_path, t_before, t_after) in constraint_units_invested_transition_indices()
         cons[u, stochastic_path, t_before, t_after] = @constraint(
             m,
             expr_sum(
-                + units_on[u, s, t_after]
-                - units_started_up[u, s, t_after]
-                + units_shut_down[u, s, t_after]
-                for (u, s, t_after) in units_on_indices(
+                + units_invested_available[u, s, t_after]
+                - units_invested[u, s, t_after]
+                + units_mothballed[u, s, t_after]
+                for (u, s, t_after) in units_invested_available_indices(
                     unit=u, stochastic_scenario=stochastic_path, t=t_after
                 );
                 init=0
             )
             ==
             expr_sum(
-                + units_on[u, s, t_before]
-                for (u, s, t_before) in units_on_indices(
+                + units_invested_available[u, s, t_before]
+                for (u, s, t_before) in units_invested_available_indices(
                     unit=u, stochastic_scenario=stochastic_path, t=t_before
                 );
                 init=0

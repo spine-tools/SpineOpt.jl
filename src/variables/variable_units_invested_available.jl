@@ -18,7 +18,7 @@
 #############################################################################
 
 """
-    units_invested_indices(unit=anything, t=anything)
+    units_invested_available_indices(unit=anything, t=anything)
 
 A list of `NamedTuple`s corresponding to indices of the `units_on` variable.
 The keyword arguments act as filters for each dimension.
@@ -27,7 +27,7 @@ The keyword arguments act as filters for each dimension.
 function units_invested_available_indices(;unit=anything, stochastic_scenario=anything, t=anything)
     [
         (unit=u, stochastic_scenario=s, t=t)
-        for (u, tb) in units_invested_indices_rc(unit=unit, _compact=false)
+        for (u, tb) in units_invested_available_indices_rc(unit=unit, _compact=false)
         for (u, s, t) in unit_investment_stochastic_time_indices(
             unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )

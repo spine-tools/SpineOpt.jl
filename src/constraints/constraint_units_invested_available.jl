@@ -24,13 +24,13 @@
 Limit the units_on by the number of available units.
 """
 
-function add_constraint_units_invested!(m::Model)
-    @fetch units_invested = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:units_invested] = Dict()
-    for (u, s, t) in units_invested_indices()
+function add_constraint_units_invested_available!(m::Model)
+    @fetch units_invested_available = m.ext[:variables]
+    constr_dict = m.ext[:constraints][:units_invested_available] = Dict()
+    for (u, s, t) in units_invested_available_indices()
         constr_dict[u, s, t] = @constraint(
             m,
-            + units_invested[u, s, t]
+            + units_invested_available[u, s, t]
             <=
             + candidate_units[(unit=u, t=t)]
         )
