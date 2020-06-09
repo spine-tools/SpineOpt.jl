@@ -86,6 +86,7 @@
         ["temporal_block", "resolution", {"type": "duration", "data": "1h"}, null, null],
         ["unit", "candidate_units", null, null, "Number of units which may be additionally constructed"],
         ["unit", "fix_units_invested", null, null, "fix the value of the units_invested variable"],
+		["unit", "fix_units_invested_available", null, null, "fix the value of the units_invested_available variable"],																											   
         ["unit", "fix_units_on", null, null, null],
         ["unit", "fom_cost", null, null, null],
         ["unit", "graph_view_position", null, null, null],
@@ -97,6 +98,7 @@
         ["unit", "start_up_cost", null, null, null],
         ["unit", "unit_availability_factor", 1.0, null, null],
         ["unit", "unit_investment_cost", null, null, "Investment cost per unit built"],
+	    ["unit", "unit_investment_lifetime", null, null, "minimum lifetime for investment decisions"],																								  
         ["unit", "unit_investment_variable_type", "unit_investment_variable_type_continuous", "unit_investment_variable_type_list", "Determines whether investment variable is integer or continuous"],
         ["unit_constraint", "constraint_sense", "==", "constraint_sense", "sense of the constraint"],
         ["unit_constraint", "right_hand_side", 0.0, null, "right hand side, constant term of the constraint"]
