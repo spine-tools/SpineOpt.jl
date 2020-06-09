@@ -18,52 +18,29 @@
 #############################################################################
 
 """
-    constraint_unit_state_transition_indices()
+    constraint_units_invested_transition_indices()
 
-Forms the stochastic index set for the `:unit_state_transition` constraint.
+Forms the stochastic index set for the `:units_invested_transition` constraint.
 Uses stochastic path indices due to potentially different stochastic scenarios
 between `t_after` and `t_before`.
 """
-function constraint_units_invested_transition_indices()
-    units_invested_transition_indices = []
-    for (u, tb) in unit__investment_temporal_block()
+function constraint_units_invested_transition_indices()    
+        for (u, tb) in unit__investment_temporal_block()
         for t_after in time_slice(temporal_block=tb)
-            # Ensure type stability
-            active_scenarios = Array{Object,1}()
-            # `units_on` on `t_after`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    units_invested_available_indices(unit=u, t=t_after)
-                )
-            )
-            # `units_on` on a valid `t_before`
-            if !isempty(t_before_t(t_after=t_after))
-                t_before = first(t_before_t(t_after=t_after))
-            else
-                t_before = first(to_time_slice(t_after - Minute(duration(t_after))))
-            end
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    units_invested_available_indices(unit=u, t=t_before)
-                )
-            )
-            # Find stochastic paths for `active_scenarios`
-            unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
-                push!(
-                    units_invested_transition_indices,
-                    (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
-                )
-            end
-        end
-    end
-    return unique!(units_invested_transition_indices)
+        for t_before in _take_one_t_before_t(t_after)
+        @info "stuff" u tb t_after t_before
+        
+    
+    unique(
+        (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (u, tb) in unit__investment_temporal_block()
+        for t_after in time_slice(temporal_block=tb)
+        for t_before in _take_one_t_before_t(t_after)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in units_invested_available_indices(unit=u, t=[t_before, t_after]))
+        )
+    )
 end
-
 
 """
     add_constraint_unit_state_transition!(m::Model)

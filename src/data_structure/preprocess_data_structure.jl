@@ -290,33 +290,6 @@ function generate_direction()
     end
 end
 
-<<<<<<< HEAD:src/util/preprocess_data_structure.jl
-function generate_variable_indices()
-    unit_flow_indices = unique(
-        (unit=u, node=n, direction=d, temporal_block=tb)
-        for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
-        for tb in node__temporal_block(node=n)
-    )
-    connection_flow_indices = unique(
-        (connection=conn, node=n, direction=d, temporal_block=tb)
-        for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
-        for tb in node__temporal_block(node=n)
-    )
-    node_state_indices = unique(
-        (node=n, temporal_block=tb)
-        for n in node(has_state=:value_true)
-        for tb in node__temporal_block(node=n)
-    )
-    node_slack_indices = unique(
-        (node=n, temporal_block=tb)
-        for n in indices(node_slack_penalty)
-        for tb in node__temporal_block(node=n)
-    )
-    units_on_indices = unique(
-        (unit=u, temporal_block=tb)
-        for (ug, n) in units_on_resolution()
-            for u in expand_unit_group(ug)
-=======
 function generate_variable_indexing_support()
     node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
     unit__node__direction__temporal_block = RelationshipClass(
@@ -325,26 +298,9 @@ function generate_variable_indexing_support()
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
             for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
->>>>>>> e2a53a2d4b2e9f7a09a7b28cfb2258704934a02b:src/data_structure/preprocess_data_structure.jl
             for tb in node__temporal_block(node=n)
         )
     )
-<<<<<<< HEAD:src/util/preprocess_data_structure.jl
-    units_invested_available_indices = unique(
-        (unit=u, temporal_block=tb)
-        for ug in indices(candidate_units)
-        for u in expand_unit_group(ug)            
-        for tb in unit__investment_temporal_block(unit=u)                    
-    )
-    unit_flow_indices_rc = RelationshipClass(
-        :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices
-    )
-    connection_flow_indices_rc = RelationshipClass(
-        :connection_flow_indices_rc, [:connection, :node, :direction, :temporal_block], connection_flow_indices
-    )
-    node_state_indices_rc = RelationshipClass(
-        :node_state_indices_rc, [:node, :temporal_block], node_state_indices
-=======
     connection__node__direction__temporal_block = RelationshipClass(
         :connection__node__direction__temporal_block, 
         [:connection, :node, :direction, :temporal_block], 
@@ -353,7 +309,6 @@ function generate_variable_indexing_support()
             for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
             for tb in node__temporal_block(node=n)
         )
->>>>>>> e2a53a2d4b2e9f7a09a7b28cfb2258704934a02b:src/data_structure/preprocess_data_structure.jl
     )
     node_with_state__temporal_block = RelationshipClass(
         :node_with_state__temporal_block, 
@@ -369,24 +324,22 @@ function generate_variable_indexing_support()
             for tb in node__temporal_block(node=n)
         )
     )
+    units_invested_available_indices = unique(
+        (unit=u, temporal_block=tb)
+        for ug in indices(candidate_units)
+        for u in expand_unit_group(ug)            
+        for tb in unit__investment_temporal_block(unit=u)                    
+    )
     units_invested_available_indices_rc = RelationshipClass(
         :units_invested_available_indices_rc, [:unit, :temporal_block], units_invested_available_indices
     )
     @eval begin
-<<<<<<< HEAD:src/util/preprocess_data_structure.jl
-        unit_flow_indices_rc = $unit_flow_indices_rc
-        connection_flow_indices_rc = $connection_flow_indices_rc
-        node_state_indices_rc = $node_state_indices_rc
-        node_slack_indices_rc = $node_slack_indices_rc
-        units_on_indices_rc = $units_on_indices_rc
-        units_invested_available_indices_rc = $units_invested_available_indices_rc
-=======
         node_with_slack_penalty = $node_with_slack_penalty
         unit__node__direction__temporal_block = $unit__node__direction__temporal_block
         connection__node__direction__temporal_block = $connection__node__direction__temporal_block
         node_with_state__temporal_block = $node_with_state__temporal_block
         unit__temporal_block = $unit__temporal_block
->>>>>>> e2a53a2d4b2e9f7a09a7b28cfb2258704934a02b:src/data_structure/preprocess_data_structure.jl
+        units_invested_available_indices_rc = $units_invested_available_indices_rc
     end
 end
 
