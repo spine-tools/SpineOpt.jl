@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -163,3 +163,26 @@ function write_lodfs()
     end
     close(io)
 end
+
+"""
+    pulldims(input, dims...)
+
+An equivalent dictionary where the given dimensions are pulled from the key to the value.
+"""
+function pulldims(input::Dict{K,V}, dims::Symbol...) where {K<:NamedTuple,V}
+    output = Dict()
+    for (key, value) in sort!(OrderedDict(input))
+        output_key = (; (k => v for (k, v) in pairs(key) if !(k in dims))...)
+        output_value = ((key[dim] for dim in dims)..., value)
+        push!(get!(output, output_key, []), output_value)
+    end
+    output
+end
+
+"""
+    formulation(d::Dict)
+
+An equivalent dictionary where `JuMP.ConstraintRef` values are replaced by their `String` formulation.
+"""
+formulation(d::Dict{K,JuMP.ConstraintRef}) where {K} = Dict{K,Any}(k => sprint(show, v) for (k, v) in d)
+

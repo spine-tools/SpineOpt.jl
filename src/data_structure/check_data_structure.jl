@@ -17,25 +17,83 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# The functions in this file utilise PowerSystems.jl to calculate
-# power transmission distrivution factors (ptdfs) and line outage
-# distribution factors (lodfs). These are used in the power flow
-# constraints in SpineModel
-#
-#
-#
+# NOTE: I see some small problem here, related to doing double work.
+# For example, checking that the stochastic DAGs have no loops requires to generate those DAGs, 
+# but we can't generate them just for checking and then throw them away, can we?
+# So I propose we do that type of checks when we actually generate the corresponding structure.
+# And here, we just perform simpler checks that can be done directly on the contents of the db, 
+# and don't require to build any additional structures.
+
+_check(cond, err_msg) = cond || error(err_msg)
 
 """
-    check_spinemodel(log_level::Int64)
+    check_data_structure(log_level::Int64)
 
-Runs a number of checks to see if the data provided results in a valid model.
+Check if the data structure provided from the db results in a valid model.
 """
-function check_spinemodel(log_level::Int64)
-    check_islands(log_level)
+function check_data_structure(log_level::Int64)
+    check_model_object()
+    check_temporal_block_object()
     check_units_on_resolution()
     check_node__stochastic_structure()
+    check_minimum_operating_point_unit_capacity()
+    check_islands(log_level)
 end
 
+function check_model_object()
+    _check(
+        !isempty(model()),
+        "`model` object not found - you need a `model` object to run Spine Opt"
+    )
+end
+
+function check_temporal_block_object()
+    _check(
+        !isempty(temporal_block()),
+        "`temporal_block` object not found - you need at least one `temporal_block` to run Spine Opt"
+    )
+end
+
+"""
+    check_units_on_resolution()
+
+Ensure there's exactly one `units_on_resolution` definition per `unit` in the data.
+"""
+function check_units_on_resolution()
+    error_units = [u for u in unit() if length(units_on_resolution(unit=u)) != 1]
+    _check(
+        isempty(error_units),
+        "invalid `units_on_resolution` definition for `unit`(s): $(join(error_units, ", ", " and ")) "
+        * "- each `unit` must have exactly one `units_on_resolution` relationship"
+    )
+end
+
+"""
+    check_node__stochastic_structure()
+
+Ensure there's exactly one `node__stochastic_structure` definition per `node` in the data.
+"""
+function check_node__stochastic_structure()
+    error_nodes = [n for n in node() if length(node__stochastic_structure(node=n)) != 1]
+    _check(
+        isempty(error_nodes),
+        "invalid `node__stochastic_structure` definition for `node`(s): $(join(error_nodes, ", ", " and ")) "
+        * "- each `node` must be related to one and only one `stochastic_structure`"
+    )
+end
+
+function check_minimum_operating_point_unit_capacity()
+    error_indices = [
+        (u, n, d) 
+        for (u, n, d) in indices(minimum_operating_point) 
+        if unit_capacity(unit=u, node=n, direction=d) === nothing
+    ]
+    _check(
+        isempty(error_indices),
+        "missing `unit_capacity` value for indices: $(join(error_indices, ", ", " and ")) "
+        * "- `unit_capacity` must be specified where `minimum_operating_point` is"
+    )
+end
 
 """
     check_islands()
@@ -55,13 +113,12 @@ function check_islands(log_level)
             @logtime level3 "Checking network of commodity $(c) for islands" n_islands, island_node = islands(c)
             @log     level3 "The network consists of $(n_islands) islands"
             if n_islands > 1
-                @warn "The network of commodity $(c) consists of multiple islands, this may end badly."
+                @warn "the network of commodity $(c) consists of multiple islands, this may end badly..."
                 # add diagnostic option to print island_node which will tell the user which nodes are in which islands
             end
         end
     end
 end
-
 
 """
     islands()
@@ -88,7 +145,6 @@ function islands(c)
     island_count, island_node
 end
 
-
 """
     visit()
 
@@ -105,7 +161,6 @@ function visit(n, island_count, visited_d, island_node)
     end
 end
 
-
 """
     check_x()
 
@@ -116,53 +171,8 @@ function check_x()
     @info "Checking reactances"
     for conn in connection()
         if conn_reactance(connection=conn) < 0.0001
-            @info "Low reactance may cause problems for line " conn
+            @info "low reactance may cause problems for line " conn
         end
     end
 end
 
-
-"""
-    check_units_on_resolution()
-
-Ensures there's exactly one `units_on_resolution` definition per `unit` in the data.
-"""
-function check_units_on_resolution()
-    error_units = []
-    for u in unit()
-        if length(units_on_resolution(unit=u)) != 1
-            push!(error_units, u)
-        end
-    end
-    if !isempty(error_units)
-        error(
-            """
-            Each `unit` must have exactly one `units_on_resolution` defined!
-            - Check `units` $(error_units)
-            """
-        )
-    end
-end
-
-
-"""
-    check_node__stochastic_structure()
-
-Ensures there's exactly one `node__stochastic_structure` definition per `node` in the data.
-"""
-function check_node__stochastic_structure()
-    error_nodes = []
-    for n in node()
-        if length(node__stochastic_structure(node=n)) != 1
-            push!(error_nodes, n)
-        end
-    end
-    if !isempty(error_nodes)
-        error(
-            """
-            Each `node` must have exactly one `node__stochastic_structure` defined!
-            - Check `nodes` $(error_nodes)
-            """
-        )
-    end
-end

@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -25,67 +25,35 @@ Uses stochastic path indices due to dynamics and potentially different stochasti
 structures between this `node` and `nodes` connected via diffusion.
 """
 function constraint_node_injection_indices()
-    node_injection_indices = []
-    for (n, tb) in node__temporal_block()
+    unique(
+        (node=n, stochastic_scenario=path, t_before=t_before, t_after=t_after)
+        for (n, tb) in node__temporal_block()
         for t_after in time_slice(temporal_block=tb)
-            # Ensure type stability
-            active_scenarios = Array{Object,1}()
-            # Find a valid `t_before`
-            if !isempty(t_before_t(t_after=t_after))
-                t_before = first(t_before_t(t_after=t_after))
-            else
-                t_before = first(to_time_slice(t_after - Minute(duration(t_after))))
-            end
-            # `node` on `t_after`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    node_stochastic_time_indices(node=n, t=t_after)
-                )
-            )
-            # `node_state` on `t_before`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    node_state_indices(node=n, t=t_before)
-                )
-            )
-            # Diffusion to this `node`
-            for (n_, n) in node__node(node2=n)
-                append!(
-                    active_scenarios,
-                    map(
-                        inds -> inds.stochastic_scenario,
-                        node_state_indices(node=n_, t=t_after)
-                    )
-                )
-            end
-            # Diffusion from this `node`
-            for (n, n_) in node__node(node1=n)
-                append!(
-                    active_scenarios,
-                    map(
-                        inds -> inds.stochastic_scenario,
-                        node_state_indices(node=n_, t=t_after)
-                    )
-                )
-            end
-            # Commodity flows to/from `units` aren' needed as they use same structures as the `node`
-            # Find stochastic paths for `active_scenarios`
-            unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
-                push!(
-                    node_injection_indices,
-                    (node=n, stochastic_scenario=path, t_before=t_before, t_after=t_after)
-                )
-            end
-        end
-    end
-    return unique!(node_injection_indices)
+        for t_before in _take_one_t_before_t(t_after)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_node_injection_indices(n, t_after, t_before))
+        )
+    )
 end
 
+function _constraint_node_injection_indices(node, t_after, t_before)
+    Iterators.flatten(
+        (
+            node_stochastic_time_indices(node=node, t=t_after),  # `node` on `t_after`
+            node_state_indices(node=node, t=t_before),  # `node_state` on `t_before`
+            (
+                ind
+                for n1 in node__node(node2=node)
+                for ind in node_state_indices(node=n1, t=t_after)
+            ),  # Diffusion to this `node`
+            (
+                ind
+                for n2 in node__node(node1=node)
+                for ind in node_state_indices(node=n2, t=t_after)
+            ),  # Diffusion from this `node`
+        )
+    )
+end
 
 """
     add_constraint_node_injection(m::Model)

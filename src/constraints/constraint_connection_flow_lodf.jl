@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
+# NOTE: always pick the second (last) node in `connection__from_node` as 'to' node
 
 """
     constraint_connection_flow_lodf_indices()
@@ -25,53 +27,36 @@ Uses stochastic path indices due to potentially different stochastic structures
 between `connection_flow` variables.
 """
 function constraint_connection_flow_lodf_indices()
-    connection_flow_lodf_indices = []
-    for (conn_cont, conn_mon) in indices(lodf)
-        involved_t = (
-            x.t
-            for conn in (conn_cont, conn_mon)
-            for x in connection_flow_indices(; connection=conn, last(connection__from_node(connection=conn))...)
+    unique(
+        (connection1=conn_cont, connection2=conn_mon, stochastic_path=path, t=t)
+        for (conn_cont, conn_mon) in indices(lodf)
+        for t in _constraint_connection_flow_lodf_lowest_resolution_t(conn_cont, conn_mon)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_connection_flow_lodf_indices(conn_cont, conn_mon, t))
         )
-        for t in t_lowest_resolution(involved_t)
-            # Ensure type stability
-            active_scenarios = Array{Object,1}()
-            # Monitored connection
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    connection_flow_indices(
-                        connection=conn_mon,
-                        last(connection__from_node(connection=conn_mon))...,
-                        t=t_in_t(t_long=t)
-                    ) # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
-                )
-            )
-            # Excess flow due to outage on contingency connection
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    connection_flow_indices(
-                        connection=conn_cont,
-                        last(connection__from_node(connection=conn_cont))...,
-                        t=t_in_t(t_long=t),
-                    ) # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
-                )
-            )
-            # Find stochastic paths for `active_scenarios`
-            unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
-                push!(
-                    connection_flow_lodf_indices,
-                    (connection1=conn_cont, connection2=conn_mon, stochastic_path=path, t=t)
-                )
-            end
-        end
-    end
-    return unique!(connection_flow_lodf_indices)
+    )
 end
 
+function _constraint_connection_flow_lodf_lowest_resolution_t(conn_cont, conn_mon)
+    t_lowest_resolution(
+        ind.t
+        for conn in (conn_cont, conn_mon)
+        for ind in connection_flow_indices(; connection=conn, last(connection__from_node(connection=conn))...)
+    )
+end
+
+function _constraint_connection_flow_lodf_indices(conn_cont, conn_mon, t)
+    Iterators.flatten(
+        (
+            connection_flow_indices(
+                ; connection=conn_mon, last(connection__from_node(connection=conn_mon))..., t=t_in_t(t_long=t)
+            ),  # Monitored connection
+            connection_flow_indices(
+                ; connection=conn_cont, last(connection__from_node(connection=conn_cont))..., t=t_in_t(t_long=t)
+            )  # Excess flow due to outage on contingency connection
+        )
+    )
+end
 
 """
     add_constraint_connection_flow_lodf!(m::Model)

@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -25,44 +25,17 @@ Uses stochastic path indices due to potentially different stochastic scenarios
 between `t_after` and `t_before`.
 """
 function constraint_unit_state_transition_indices()
-    unit_state_transition_indices = []
-    for (u, n) in units_on_resolution()
+    unique(
+        (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (u, n) in units_on_resolution()
         for t_after in time_slice(temporal_block=node__temporal_block(node=n))
-            # Ensure type stability
-            active_scenarios = Array{Object,1}()
-            # `units_on` on `t_after`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    units_on_indices(unit=u, t=t_after)
-                )
-            )
-            # `units_on` on a valid `t_before`
-            if !isempty(t_before_t(t_after=t_after))
-                t_before = first(t_before_t(t_after=t_after))
-            else
-                t_before = first(to_time_slice(t_after - Minute(duration(t_after))))
-            end
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    units_on_indices(unit=u, t=t_before)
-                )
-            )
-            # Find stochastic paths for `active_scenarios`
-            unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
-                push!(
-                    unit_state_transition_indices,
-                    (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
-                )
-            end
-        end
-    end
-    return unique!(unit_state_transition_indices)
+        for t_before in _take_one_t_before_t(t_after)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in units_on_indices(unit=u, t=[t_before, t_after]))
+        )
+    )
 end
+
 
 
 """

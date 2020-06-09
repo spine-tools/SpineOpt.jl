@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -18,14 +18,14 @@
 #############################################################################
 
 function preprocess_data_structure()
+    # NOTE: expand groups first, so we don't need to expand them anywhere else
+    expand_node__stochastic_structure()
+    expand_units_on_resolution()
     add_connection_relationships()
     generate_network_components()
-    generate_direction()
-    generate_unit_investment_temporal_block()
-    generate_variable_indices()
-    expand_node__stochastic_structure()
-    expand_units_on_resolution()    
-    generate_unit_investment_temporal_block()
+    generate_direction()    
+    generate_variable_indexing_support()   
+    generate_unit_investment_temporal_block()    
 end
 
 
@@ -290,6 +290,7 @@ function generate_direction()
     end
 end
 
+<<<<<<< HEAD:src/util/preprocess_data_structure.jl
 function generate_variable_indices()
     unit_flow_indices = unique(
         (unit=u, node=n, direction=d, temporal_block=tb)
@@ -315,8 +316,20 @@ function generate_variable_indices()
         (unit=u, temporal_block=tb)
         for (ug, n) in units_on_resolution()
             for u in expand_unit_group(ug)
+=======
+function generate_variable_indexing_support()
+    node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
+    unit__node__direction__temporal_block = RelationshipClass(
+        :unit__node__direction__temporal_block, 
+        [:unit, :node, :direction, :temporal_block], 
+        unique(
+            (unit=u, node=n, direction=d, temporal_block=tb)
+            for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
+>>>>>>> e2a53a2d4b2e9f7a09a7b28cfb2258704934a02b:src/data_structure/preprocess_data_structure.jl
             for tb in node__temporal_block(node=n)
+        )
     )
+<<<<<<< HEAD:src/util/preprocess_data_structure.jl
     units_invested_available_indices = unique(
         (unit=u, temporal_block=tb)
         for ug in indices(candidate_units)
@@ -331,23 +344,49 @@ function generate_variable_indices()
     )
     node_state_indices_rc = RelationshipClass(
         :node_state_indices_rc, [:node, :temporal_block], node_state_indices
+=======
+    connection__node__direction__temporal_block = RelationshipClass(
+        :connection__node__direction__temporal_block, 
+        [:connection, :node, :direction, :temporal_block], 
+        unique(
+            (connection=conn, node=n, direction=d, temporal_block=tb)
+            for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
+            for tb in node__temporal_block(node=n)
+        )
+>>>>>>> e2a53a2d4b2e9f7a09a7b28cfb2258704934a02b:src/data_structure/preprocess_data_structure.jl
     )
-    node_slack_indices_rc = RelationshipClass(
-        :node_slack_indices_rc, [:node, :temporal_block], node_slack_indices
+    node_with_state__temporal_block = RelationshipClass(
+        :node_with_state__temporal_block, 
+        [:node, :temporal_block], 
+        unique((node=n, temporal_block=tb) for n in node(has_state=:value_true) for tb in node__temporal_block(node=n))
     )
-    units_on_indices_rc = RelationshipClass(
-        :units_on_indices_rc, [:unit, :temporal_block], units_on_indices
+    unit__temporal_block = RelationshipClass(
+        :unit__temporal_block, 
+        [:unit, :temporal_block], 
+        unique(
+            (unit=u, temporal_block=tb)
+            for (u, n) in units_on_resolution()
+            for tb in node__temporal_block(node=n)
+        )
     )
     units_invested_available_indices_rc = RelationshipClass(
         :units_invested_available_indices_rc, [:unit, :temporal_block], units_invested_available_indices
     )
     @eval begin
+<<<<<<< HEAD:src/util/preprocess_data_structure.jl
         unit_flow_indices_rc = $unit_flow_indices_rc
         connection_flow_indices_rc = $connection_flow_indices_rc
         node_state_indices_rc = $node_state_indices_rc
         node_slack_indices_rc = $node_slack_indices_rc
         units_on_indices_rc = $units_on_indices_rc
         units_invested_available_indices_rc = $units_invested_available_indices_rc
+=======
+        node_with_slack_penalty = $node_with_slack_penalty
+        unit__node__direction__temporal_block = $unit__node__direction__temporal_block
+        connection__node__direction__temporal_block = $connection__node__direction__temporal_block
+        node_with_state__temporal_block = $node_with_state__temporal_block
+        unit__temporal_block = $unit__temporal_block
+>>>>>>> e2a53a2d4b2e9f7a09a7b28cfb2258704934a02b:src/data_structure/preprocess_data_structure.jl
     end
 end
 
