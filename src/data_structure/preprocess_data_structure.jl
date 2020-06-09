@@ -23,9 +23,30 @@ function preprocess_data_structure()
     expand_units_on_resolution()
     add_connection_relationships()
     generate_network_components()
-    generate_direction()
-    generate_variable_indexing_support()
+    generate_direction()    
+    generate_variable_indexing_support()   
+    generate_unit_investment_temporal_block()    
 end
+
+"""
+    generate_unit_investment_temporal_block()
+
+Process the `model__default_investment_temporal_block` relationship.
+
+If a `unit__investment_temporal_block` relationship is not defined, 
+then create one using `model__default_investment_temporal_block`
+"""
+function generate_unit_investment_temporal_block()   
+    for u in indices(candidate_units)        
+        if isempty(unit__investment_temporal_block(unit=u))         
+            m = first(model())
+            for tb in model__default_investment_temporal_block(model=m)
+                add_relationships!(unit__investment_temporal_block, [(unit=u, temporal_block=tb)])                
+            end
+        end        
+    end
+end
+
 
 """
     add_connection_relationships()
@@ -310,12 +331,22 @@ function generate_variable_indexing_support()
             for tb in node__temporal_block(node=n)
         )
     )
+    units_invested_available_indices = unique(
+        (unit=u, temporal_block=tb)
+        for ug in indices(candidate_units)
+        for u in expand_unit_group(ug)            
+        for tb in unit__investment_temporal_block(unit=u)                    
+    )
+    units_invested_available_indices_rc = RelationshipClass(
+        :units_invested_available_indices_rc, [:unit, :temporal_block], units_invested_available_indices
+    )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
         unit__node__direction__temporal_block = $unit__node__direction__temporal_block
         connection__node__direction__temporal_block = $connection__node__direction__temporal_block
         node_with_state__temporal_block = $node_with_state__temporal_block
         unit__temporal_block = $unit__temporal_block
+        units_invested_available_indices_rc = $units_invested_available_indices_rc
     end
 end
 

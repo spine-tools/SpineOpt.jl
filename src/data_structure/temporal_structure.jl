@@ -232,7 +232,7 @@ function _generate_time_slice_relationships()
                 break_overlaps = true
             end
             if break_in && break_overlaps
-                break
+#                break
             end
         end
     end
@@ -272,6 +272,7 @@ function roll_temporal_structure()
     end_(current_window) >= model_end(model=instance) && return false
     roll_forward_ = roll_forward(model=instance, _strict=false)
     roll_forward_ === nothing && return false
+    roll_forward_ == 0 && return false
     roll!(current_window, roll_forward_)
     roll!.(all_time_slices, roll_forward_)
     true

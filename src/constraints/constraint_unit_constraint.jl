@@ -24,7 +24,7 @@ Forms the stochastic index set for the `:unit_constraint` constraint. Uses
 stochastic path indices due to potentially different stochastic structures 
 between `unit_flow`, `unit_flow_op`, and `units_on` variables.
 """
-function constraint_unit_constraint_indices()
+function constraint_unit_constraint_indices()  
     unique(
         (unit_constraint=uc, stochastic_scenario=path, t=t)
         for uc in unit_constraint()
