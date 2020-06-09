@@ -126,6 +126,7 @@ function rerun_spineopt(
     end
     @logtime level2 "Fixing variable values..." fix_variables!(m)
     @logtime level2 "Adding constraints...\n" begin
+        @logtime level3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
         @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
         @logtime level3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
         @logtime level3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
@@ -152,8 +153,7 @@ function rerun_spineopt(
         @logtime level3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
         @logtime level3 "- [constraint_units_on]" add_constraint_units_on!(m)
         @logtime level3 "- [constraint_units_available]" add_constraint_units_available!(m)
-        @logtime level3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)
-        @logtime level3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
+        @logtime level3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)        
         @logtime level3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(m)
         @logtime level3 "- [constraint_minimum_operating_point]" add_constraint_minimum_operating_point!(m)
         @logtime level3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)

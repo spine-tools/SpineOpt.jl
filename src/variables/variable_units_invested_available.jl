@@ -27,7 +27,7 @@ The keyword arguments act as filters for each dimension.
 function units_invested_available_indices(;unit=anything, stochastic_scenario=anything, t=anything)
     [
         (unit=u, stochastic_scenario=s, t=t)
-        for (u, tb) in units_invested_available_indices_rc(unit=unit, _compact=false)
+        for (u, tb) in unit__investment_temporal_block(unit=unit, _compact=false)
         for (u, s, t) in unit_investment_stochastic_time_indices(
             unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
@@ -36,7 +36,23 @@ end
 
 units_invested_available_int(x) = unit_investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
 
+function generate_fix_units_invested_available()
+    for u in indices(candidate_units)        
+        for tb in unit__investment_temporal_block(unit=u)
+            t_after = first(time_slice(temporal_block=tb))            
+            for t_before in _take_one_t_before_t(t_after)                               
+                if fix_units_invested_available(unit=u, t=t_before, _strict=false) === nothing
+                    unit.parameter_values[u][:fix_units_invested_available] = parameter_value(TimeSeries([start(t_before)], [0], false, false))
+                end
+            end
+        end
+    end
+end
+
+
+
 function add_variable_units_invested_available!(m::Model)
+    generate_fix_units_invested_available()
     add_variable!(
     	m,
     	:units_invested_available, units_invested_available_indices;

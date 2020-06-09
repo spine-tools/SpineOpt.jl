@@ -24,13 +24,7 @@ Forms the stochastic index set for the `:units_invested_transition` constraint.
 Uses stochastic path indices due to potentially different stochastic scenarios
 between `t_after` and `t_before`.
 """
-function constraint_units_invested_transition_indices()    
-        for (u, tb) in unit__investment_temporal_block()
-        for t_after in time_slice(temporal_block=tb)
-        for t_before in _take_one_t_before_t(t_after)
-        @info "stuff" u tb t_after t_before
-        
-    
+function constraint_units_invested_transition_indices()        
     unique(
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (u, tb) in unit__investment_temporal_block()
