@@ -94,7 +94,7 @@ function generate_time_slice_relationships()
                 break_overlaps = true
             end
             if break_in && break_overlaps
-                break
+#                break
             end
         end
     end
