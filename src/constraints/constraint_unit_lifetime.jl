@@ -18,7 +18,7 @@
 #############################################################################
 
 """
-    constraint_units_invested_lifetime_indices()
+    constraint_unit_lifetime_indices()
 
 Forms the stochastic index set for the `:units_invested_lifetime()` constraint. 
 """
@@ -41,9 +41,9 @@ end
 
 
 """
-    add_constraint_min_up_time!(m::Model)
+    add_constraint_unit_lifetime!(m::Model)
 
-Constraint running by minimum up time.
+Constrain units_invested_available by the investment lifetime of a unit.
 """
 
 function add_constraint_unit_lifetime!(m::Model)
