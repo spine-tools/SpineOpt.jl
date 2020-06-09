@@ -28,7 +28,14 @@ function preprocess_data_structure()
     generate_unit_investment_temporal_block()    
 end
 
+"""
+    generate_unit_investment_temporal_block()
 
+Process the `model__default_investment_temporal_block` relationship.
+
+If a `unit__investment_temporal_block` relationship is not defined, 
+then create one using `model__default_investment_temporal_block`
+"""
 function generate_unit_investment_temporal_block()   
     for u in indices(candidate_units)        
         if isempty(unit__investment_temporal_block(unit=u))         

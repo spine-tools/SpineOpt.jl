@@ -37,10 +37,10 @@ function constraint_units_invested_transition_indices()
 end
 
 """
-    add_constraint_unit_state_transition!(m::Model)
+    add_constraint_units_invested_transition!(m::Model)
 
-This constraint ensures consistency between the variables `units_on`, `units_started_up`
-and `units_shut_down`.
+This constraint ensures consistency between the variables `units_invested_available`, `units_invested`
+and `units_mothballed`.
 """
 function add_constraint_units_invested_transition!(m::Model)
     @fetch units_invested_available, units_invested, units_mothballed = m.ext[:variables]

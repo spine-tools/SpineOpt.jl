@@ -20,7 +20,7 @@
 """
     units_invested_available_indices(unit=anything, t=anything)
 
-A list of `NamedTuple`s corresponding to indices of the `units_on` variable.
+A list of `NamedTuple`s corresponding to indices of the `units_invested_available` variable.
 The keyword arguments act as filters for each dimension.
 """
 
@@ -36,6 +36,14 @@ end
 
 units_invested_available_int(x) = unit_investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
 
+"""
+    generate_fix_units_invested_available()
+
+If fix_units_invested_available is not defined in the timeslice preceding the first rolling window
+then force it to be zero so that the model doesn't get free investments and the user isn't forced
+to consider this.
+"""
+
 function generate_fix_units_invested_available()
     for u in indices(candidate_units)        
         for tb in unit__investment_temporal_block(unit=u)
@@ -48,7 +56,6 @@ function generate_fix_units_invested_available()
         end
     end
 end
-
 
 
 function add_variable_units_invested_available!(m::Model)

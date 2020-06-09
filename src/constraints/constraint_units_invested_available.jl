@@ -19,9 +19,9 @@
 
 
 """
-    add_constraint_units_on!(m::Model, units_on, units_available)
+    add_constraint_units_invested_available!(m::Model)
 
-Limit the units_on by the number of available units.
+Limit the units_invested_available by the number of investment candidate units.
 """
 
 function add_constraint_units_invested_available!(m::Model)
