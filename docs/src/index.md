@@ -23,7 +23,7 @@ run_spineopt(<url of your Spine database>)
 - Uses `JuMP.jl` to build and solve the optimization model.
 - Writes results to the same input database or to a different one.
 - The model can be extended with additional constraints written in `JuMP`.
-- Supports Julia `1.0`.
+- Supports Julia `1.2`.
 
 
 ## Library outline
