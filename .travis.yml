@@ -34,6 +34,6 @@ before_script: # homebrew for mac
 
 script:
   - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
-  - /home/travis/.julia/conda/3/bin/python -m pip install --user 'git+https://github.com/Spine-project/Spine-Database-API'
+  #- /home/travis/.julia/conda/3/bin/python -m pip install --user 'git+https://github.com/Spine-project/Spine-Database-API'
   - julia --project=docs/ docs/make.jl
 after_success: skip
