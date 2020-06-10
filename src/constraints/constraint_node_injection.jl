@@ -153,6 +153,7 @@ function add_constraint_node_injection!(m::Model)
                 for ng in node_group__node(node2=n);
                 init=0
             )
+            #TODO: fractional_demand etc. are scneario dependent?
         )
     end
 end

@@ -17,14 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
+#TODO: stochastic_path
 """
     constraint_ramp_down(m::Model)
 
 Limit the maximum ramp of `flow` of a `unit` if the parameters
 `ramp_down_limit,unit_capacity,unit_conv_cap_to_flow, minimum_operating_point` exist.
 """
-
+#TODO: rampdown doens't support downwardreserves yet
+#TODO: include later on
 function add_constraint_ramp_down!(m::Model)
     @fetch flow, units_on,  units_shut_down, units_started_up = m.ext[:variables]
     constr_dict = m.ext[:constraints][:ramp_down] = Dict()
@@ -55,5 +56,3 @@ function add_constraint_ramp_down!(m::Model)
         end
     end
 end
-
-update_constraint_ramp_down!(m::Model) = nothing

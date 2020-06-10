@@ -137,6 +137,11 @@ function rerun_spinemodel(
         @logtime level3 "- [variable_node_slack_pos]" add_variable_node_slack_pos!(m)
         @logtime level3 "- [variable_node_slack_neg]" add_variable_node_slack_neg!(m)
         @logtime level3 "- [variable_node_injection]" add_variable_node_injection!(m)
+        @logtime level3 "- [variable_ramp_up_unit_flow]" add_variable_ramp_up_unit_flow!(m)
+        @logtime level3 "- [variable_start_up_unit_flow]" add_variable_start_up_unit_flow!(m)
+        @logtime level3 "- [variable_nonspin_starting_up]"  add_variable_nonspin_starting_up!(m)
+        @warn "Here you need to still extend model values such as GAP etc., and different cost terms"
+        @warn "solver warm start?, duals?"
     end
     @logtime level2 "Fixing variable values..." fix_variables!(m)
     @logtime level2 "Adding constraints...\n" begin
@@ -170,6 +175,13 @@ function rerun_spinemodel(
         @logtime level3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)
         @logtime level3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
         @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
+        @warn "add rampcost" #@logtime level3 "- [constraint_ramp_cost]" add_constraint_ramp_cost!(m)
+        @logtime level3 "- [constraint_split_ramps]" add_constraint_split_ramps!(m)
+        @logtime level3 "- [constraint_ramp_up]" add_constraint_ramp_up!(m)
+        @logtime level3 "- [constraint_max_start_up_ramps]" add_constraint_max_start_up_ramps!(m)
+        @logtime level3 "- [constraint_min_start_up_ramps]" add_constraint_min_start_up_ramps!(m)
+        @logtime level3 "- [constraint_ramp_down]" add_constraint_ramp_down!(m)
+        @logtime level3 "- [constraint_limit_export_brute_force]" add_constraint_limit_export_brute_force!(m)
         @logtime level3 "- [constraint_user]" add_constraints(m)
         @logtime level3 "- [setting constraint names]" name_constraints!(m)
     end
@@ -177,6 +189,7 @@ function rerun_spinemodel(
     k = 2
     while optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
+        @warn "Here you need to still extend model values such as GAP etc., and different cost terms"
         @logtime level2 "Saving results..." begin
             postprocess_results!(m)
             save_values!(m)

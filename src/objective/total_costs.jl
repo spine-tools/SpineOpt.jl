@@ -32,10 +32,10 @@ function total_costs(m,t)
     suc_costs = start_up_costs(m,t)
     sdc_costs = shut_down_costs(m,t)
     penalties = objective_penalties(m,t)
-    rmp_costs = ramp_costs(m,t)
+    @warn "to add" #rmp_costs = ramp_costs(m,t)
     ren_curt_costs = renewable_curtailment_costs(m,t)
-    conn_flow_costs = connection_flow_costs(m,t)
-    rs_prc_costs = res_proc_costs(m,t)
+    @warn "to add" #conn_flow_costs = connection_flow_costs(m,t)
+    @warn "to add" #rs_prc_costs = res_proc_costs(m,t)
     total_costs =
         vom_costs + fom_costs + tax_costs + op_costs + fl_costs +
          + suc_costs + sdc_costs+ rmp_costs + penalties + ren_curt_cost +

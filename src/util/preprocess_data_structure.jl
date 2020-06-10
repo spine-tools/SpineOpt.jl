@@ -302,6 +302,13 @@ function generate_variable_indices()
             for u in expand_unit_group(ug)
             for tb in node__temporal_block(node=n)
     )
+    nonspin_starting_up_indices_rc = unique(
+        (unit=u, node=n, temporal_block=tb)
+        for (u, n, d) in unit__to_node() #TODO change this to (unit_node)
+        for tb in node__temporal_block(node=n)
+            if reserve_node_type(node=n) == :upward_nonspinning
+    )
+
     unit_flow_indices_rc = RelationshipClass(
         :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices
     )
@@ -317,12 +324,16 @@ function generate_variable_indices()
     units_on_indices_rc = RelationshipClass(
         :units_on_indices_rc, [:unit, :temporal_block], units_on_indices
     )
+    nonspin_starting_up_indices_rc = RelationshipClass(
+        :nonspin_starting_up_indices_rc, [:unit, :node, :temporal_block], nonspin_starting_up_indices
+    )
     @eval begin
         unit_flow_indices_rc = $unit_flow_indices_rc
         connection_flow_indices_rc = $connection_flow_indices_rc
         node_state_indices_rc = $node_state_indices_rc
         node_slack_indices_rc = $node_slack_indices_rc
         units_on_indices_rc = $units_on_indices_rc
+        nonspin_starting_up_indices_rc = $nonspin_starting_up_indices_rc
     end
 end
 

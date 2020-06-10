@@ -16,7 +16,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
+#TODO: stochastic_path
+#TODO: define start_up_ramp_costs, ramp_up_costs
+#TODO: leave for now but add later 
 """
     constraint_ramp_cost(m::Model)
 
@@ -59,5 +61,3 @@ function add_constraint_ramp_cost!(m::Model)
         end
     end
 end
-
-update_constraint_ramp_cost!(m::Model) = nothing

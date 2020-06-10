@@ -29,6 +29,8 @@ conng1: conn group of local import to node n
 conng2: conn group of local export from node n
 sum(unit_flow in ug) + sum(connection_flow in conng1) >= sum(connection_flow in conng2)
 """
+
+##TODO keep this one as custom constraint
 function add_constraint_limit_export!(m::Model)
 	@fetch unit_flow, connection_flow = m.ext[:variables]
     cons = m.ext[:constraints][:limit_export] = Dict()
@@ -38,8 +40,8 @@ function add_constraint_limit_export!(m::Model)
 	                m,
 	                + reduce(
 	                    +,
-	                    unit_flow[u, n, c, d, t1] * duration(t1)
-	                    for (u, n, c, d, t1) in unit_flow_indices(node=ng, t=t_in_t(t_long=t), direction=d);
+	                    unit_flow[u, n, d, s, t1] * duration(t1)
+	                    for (u, n, d, s, t1) in unit_flow_indices(node=ng, t=t_in_t(t_long=t), direction=d);
 	                    init=0
 	                )
 	                >=

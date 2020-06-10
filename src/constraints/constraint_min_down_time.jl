@@ -101,7 +101,7 @@ function add_constraint_min_down_time!(m::Model)
                 for (u, s_past, t_past) in nonspin_starting_up_indices(
                     unit=u,
                     stochastic_scenario=stochastic_path,
-                    t=t_before_t(t_after=t)
+                    t=t_before_t(t_after=t) #TODO: check this t_before
                 );
                 init=0
             )
