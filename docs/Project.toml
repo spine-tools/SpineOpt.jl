@@ -1,5 +1,6 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+SpineOpt = "b74cbf36-17f7-11e9-3430-fdc535b30a00"
 
 [compat]
-Documenter = "~0.22"
+Documenter = "0.24"
