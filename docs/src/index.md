@@ -4,6 +4,19 @@
 
 A package to generate and run optimization problems for energy system integration.
 
+```julia
+using Pkg
+pkg"registry add https://github.com/Spine-project/SpineJuliaRegistry"
+pkg"add SpineOpt"
+```
+
+## Usage
+
+```julia
+using SpineOpt
+run_spineopt(<url of your Spine database>)
+```
+
 ## Package features
 
 - Builds the model entirely from a database using SpineOpt specific data structure.
