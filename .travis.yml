@@ -29,7 +29,7 @@ addons:
 before_script: # homebrew for mac
    # install SpineInterface.jl
    # TODO: this is building Conda, PyCall and SpineInterface twice... Maybe we don't need Pkg.build("SpineInterface")?
-   - julia --project=docs/ -e 'using Pkg; pkg"registry add https://github.com/Spine-project/SpineJuliaRegistry"'
+   # - julia --project=docs/ -e 'using Pkg; pkg"registry add https://github.com/Spine-project/SpineJuliaRegistry"'
 #  - if [ $TRAVIS_OS_NAME = osx ]; then brew install gcc; fi
 
 script:
