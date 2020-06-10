@@ -27,9 +27,9 @@ function nonspin_starting_up_indices(;unit=anything, node=anything, stochastic_s
     [
         (unit=u, node=n, stochastic_scenario=s, t=t)
         for (u, n, tb) in nonspin_starting_up_indices_rc(unit=unit, node=node, _compact=false)
-        for (u, n, s, t) in unit_stochastic_time_indices(
-            unit=u, node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
-        )
+        for (u, s, t) in unit_stochastic_time_indices(
+            unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+        ) #TODO: maybe retrieve s information from node to be more robust
     ]
 end
 
@@ -41,7 +41,7 @@ end
 function add_variable_nonspin_starting_up!(m::Model)
     add_variable!(
     	m,
-    	:units_on, nonspin_starting_up_indices;
+    	:nonspin_starting_up, nonspin_starting_up_indices;
     	lb=x -> 0,
     	bin=units_on_bin,
     	int=units_on_int,

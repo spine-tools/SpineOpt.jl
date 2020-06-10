@@ -302,7 +302,7 @@ function generate_variable_indices()
             for u in expand_unit_group(ug)
             for tb in node__temporal_block(node=n)
     )
-    nonspin_starting_up_indices_rc = unique(
+    nonspin_starting_up_indices = unique(
         (unit=u, node=n, temporal_block=tb)
         for (u, n, d) in unit__to_node() #TODO change this to (unit_node)
         for tb in node__temporal_block(node=n)

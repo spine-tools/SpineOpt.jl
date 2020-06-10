@@ -151,6 +151,7 @@ function generate_time_slice()
     window_time_slices = time_slices(window_start, window_end)
     time_slice = TimeSliceSet(window_time_slices)
     t_history_t = Dict(t => t - window_span for t in window_time_slices if end_(t) <= window_end)
+    @warn "We need to include here max(down_time etc...)"
     all_time_slices = [sort(collect(values(t_history_t))); window_time_slices]
     to_time_slice = TimeSliceMap(all_time_slices)
     @eval begin
@@ -174,5 +175,5 @@ function roll_temporal_structure()
     true
 end
 
-# TODO: Currently, the temporal structure seems to be generated for all defined `temporal_blocks` in the database, 
+# TODO: Currently, the temporal structure seems to be generated for all defined `temporal_blocks` in the database,
 # regardless of whether they actually appear in the model via the `node__temporal_block` relationship.

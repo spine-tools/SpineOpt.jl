@@ -27,7 +27,7 @@ between `unit_flow` and `units_on` variables.
 function constraint_unit_flow_capacity_indices()
     unit_flow_capacity_indices = []
     for (u, n, d) in indices(unit_capacity)
-        for t in time_slice(temporal_block=node__temporal_block(node=n))
+        for t in time_slice(temporal_block=node__temporal_block(node=expand_node_group(n)))
             # Ensure type stability
             active_scenarios = Array{Object,1}()
             # Constrained `unit_flow`
@@ -84,7 +84,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
             + unit_capacity[(unit=u, node=n, direction=d, t=t)] # TODO: Stochastic parameters
             * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
             * expr_sum(
-                units_on[u, s, t1] * min(duration(t1),duration(t))
+                units_on[u, s, t1] * min(duration(t1),duration(t)) #TODO: add this for ramps
                 for (u, s, t1) in units_on_indices(unit=u, stochastic_scenario=stochastic_path, t=t_overlaps_t(t));
                 init=0
             )
