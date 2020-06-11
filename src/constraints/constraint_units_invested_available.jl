@@ -36,3 +36,6 @@ function add_constraint_units_invested_available!(m::Model)
         )
     end
 end
+#TODO: units_invested_available or \sum(units_invested)?
+# Candidate units: max amount of units that can be installed over model horizon
+# or max amount of units that can be available at a time?

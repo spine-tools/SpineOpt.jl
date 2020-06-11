@@ -28,6 +28,9 @@ function constraint_unit_flow_capacity_indices()
     unique(
         (unit=u, node=n, direction=d, stochastic_path=path, t=t)
         for (u, n, d) in indices(unit_capacity)
+            #TODO: this doesn't work if we use e.g. a node group to define the capacity
+            #maybe time_slice(temporal_block=node__temporal_block(node=expand_node_group(n))) works?
+            #Concener applies for multiple constraints
         for t in time_slice(temporal_block=node__temporal_block(node=n))
         for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(u, n, d, t))

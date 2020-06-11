@@ -34,6 +34,7 @@ function add_constraint_node_state_capacity!(m::Model)
                 + node_state[n, s, t]
                 <=
                 + node_state_cap[(node=n, t=t)] # TODO: Stochastic parameters
+                #TODO: add investment decisions for storages
             )
         end
     end

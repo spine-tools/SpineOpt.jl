@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+#TODO: can we find an easier way to define the constraint indices?
+# I feel that for unexperienced uses it gets more an more complicated to understand our code
 """
     constraint_node_injection_indices()
 
