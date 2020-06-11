@@ -32,10 +32,13 @@
         ["unit__unit_constraint", ["unit", "unit_constraint"]],
         ["unit_group__commodity_group", ["unit", "commodity"]],
         ["unit_group__unit", ["unit", "unit"], "Through $(object_class)_group__$(object_class) multiple objects of one $object_class can be zipped together. This enables the use of certain parmaeters on a collection of nodes/connections/units. TODO: the possible uses of groups should be named in the parameter definition" , null],
-        ["unit__investment_temporal_block", ["unit", "temporal_block"], "TODO"],
+        ["unit__investment_temporal_block", ["unit", "temporal_block"], "Sets the temporal resolution of investment decisions - overrides `model__default_investment_temporal_block`"],
+        ["unit__investment_stochastic_structure", ["unit", "stochastic_structure"], "Sets the stochastic structure for investment decisions - overrides `model__default_investment_stochastic_structure`. TODO: THIS RELATIONSHIP DOESN'T CURRENTLY APPEAR IN THE MODEL!"],
         ["parent_stochastic_scenario__child_stochastic_scenario", ["stochastic_scenario", "stochastic_scenario"], "Defines the stochastic direct acyclic graph formed by the individual stochastic scenarios by forming parent-child relations between them."],
         ["stochastic_structure__stochastic_scenario", ["stochastic_structure", "stochastic_scenario"], "Defines each stochastic structure by assigning properties to the included stochastic scenarios"],
-        ["units_on_resolution", ["unit", "node"], "Defines the stochastic and temporal structure of units' online/startup/shutdown variables by importing the structure from a designated node"]
+        ["units_on_resolution", ["unit", "node"], "Defines the stochastic and temporal structure of units' online/startup/shutdown variables by importing the structure from a designated node"],
+        ["model__default_investment_temporal_block", ["model", "temporal_block"], "Defines the default temporal block used for investment variables, which will be replaced by more specific definitions"]
+        ["model__default_investment_stochastic_structure", ["model", "stochastic_structure"], "Defines the default stochastic structure used for investment variables, which will be replaced by more specific definitions"]
     ],
     "parameter_value_lists": [
         ["balance_type_list", ["\"balance_type_node\"", "\"balance_type_group\"", "\"balance_type_none\""]],
