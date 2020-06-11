@@ -31,7 +31,8 @@
         ["unit__to_node__unit_constraint", ["unit", "node", "unit_constraint"]],
         ["unit__unit_constraint", ["unit", "unit_constraint"]],
         ["unit_group__commodity_group", ["unit", "commodity"]],
-        ["unit_group__unit", ["unit", "unit"], "Through $(object_class)_group__$(object_class) multiple objects of one $object_class can be zipped together. This enables the use of certain parmaeters on a collection of nodes/connections/units. TODO: the possible uses of groups should be named in the parameter definition" , null], 
+        ["unit_group__unit", ["unit", "unit"], "Through $(object_class)_group__$(object_class) multiple objects of one $object_class can be zipped together. This enables the use of certain parmaeters on a collection of nodes/connections/units. TODO: the possible uses of groups should be named in the parameter definition" , null],
+        ["unit__investment_temporal_block", ["unit", "temporal_block"], "TODO"],
         ["parent_stochastic_scenario__child_stochastic_scenario", ["stochastic_scenario", "stochastic_scenario"], "Defines the stochastic direct acyclic graph formed by the individual stochastic scenarios by forming parent-child relations between them."],
         ["stochastic_structure__stochastic_scenario", ["stochastic_structure", "stochastic_scenario"], "Defines each stochastic structure by assigning properties to the included stochastic scenarios"],
         ["units_on_resolution", ["unit", "node"], "Defines the stochastic and temporal structure of units' online/startup/shutdown variables by importing the structure from a designated node"]
