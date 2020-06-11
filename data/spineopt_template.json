@@ -37,7 +37,7 @@
         ["parent_stochastic_scenario__child_stochastic_scenario", ["stochastic_scenario", "stochastic_scenario"], "Defines the stochastic direct acyclic graph formed by the individual stochastic scenarios by forming parent-child relations between them."],
         ["stochastic_structure__stochastic_scenario", ["stochastic_structure", "stochastic_scenario"], "Defines each stochastic structure by assigning properties to the included stochastic scenarios"],
         ["units_on_resolution", ["unit", "node"], "Defines the stochastic and temporal structure of units' online/startup/shutdown variables by importing the structure from a designated node"],
-        ["model__default_investment_temporal_block", ["model", "temporal_block"], "Defines the default temporal block used for investment variables, which will be replaced by more specific definitions"]
+        ["model__default_investment_temporal_block", ["model", "temporal_block"], "Defines the default temporal block used for investment variables, which will be replaced by more specific definitions"],
         ["model__default_investment_stochastic_structure", ["model", "stochastic_structure"], "Defines the default stochastic structure used for investment variables, which will be replaced by more specific definitions"]
     ],
     "parameter_value_lists": [
