@@ -36,3 +36,16 @@ function add_constraint_units_invested_available!(m::Model)
         )
     end
 end
+
+function add_constraint_mp_units_invested_available!(m::Model)
+    @fetch mp_units_invested_available = m.ext[:variables]
+    constr_dict = m.ext[:constraints][:mp_units_invested_available] = Dict()
+    for (u, s, t) in mp_units_invested_available_indices()
+        constr_dict[u, s, t] = @constraint(
+            m,
+            + mp_units_invested_available[u, s, t]
+            <=
+            + candidate_units[(unit=u, t=t)]
+        )
+    end
+end

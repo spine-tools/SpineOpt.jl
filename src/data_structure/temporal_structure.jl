@@ -192,6 +192,29 @@ function _generate_time_slice()
 end
 
 """
+    _generate_mp_time_slice()
+
+Create and export a `TimeSliceSet` containing `TimeSlice`s in the current master problem window.
+
+See [@TimeSliceSet()](@ref).
+"""
+function _generate_mp_time_slice()
+    instance = first(model())          
+    window_start = start(model_start(model=instance) )
+    window_end = end_(model_end(model=instance) )
+    window_span = window_end - window_start
+    window_time_slices = _window_time_slices(window_start, window_end)
+    mp_time_slice = TimeSliceSet(window_time_slices)            
+    to_mp_time_slice = TimeSliceMap(window_time_slices)
+    @eval begin
+        mp_time_slice = $mp_time_slice
+        to_mp_time_slice = $to_mp_time_slice
+        export mp_time_slice
+        export to_mp_time_slice
+    end
+end
+
+"""
     _generate_time_slice_relationships()
 
 Create and export convenience functions to access time slice relationships:
@@ -264,8 +287,21 @@ end
 function generate_temporal_structure()
     _generate_current_window()
     _generate_time_slice()
+    _generate_mp_time_slice()    
     _generate_time_slice_relationships()
 end
+
+function reset_temporal_structure(k)
+    instance = first(model())
+    end_(current_window) >= model_end(model=instance) && return false
+    roll_forward_ = roll_forward(model=instance, _strict=false)
+    roll_forward_ === nothing && return false
+    roll_forward_ == 0 && return false
+    roll!(current_window, - roll_forward_ * k)
+    roll!.(all_time_slices, - roll_forward_ * k)
+    true
+end
+
 
 function roll_temporal_structure()
     instance = first(model())

@@ -34,6 +34,17 @@ function units_invested_available_indices(;unit=anything, stochastic_scenario=an
     ]
 end
 
+function mp_units_invested_available_indices(;unit=anything, stochastic_scenario=anything, t=anything)
+    [
+        (unit=u, stochastic_scenario=s, t=t)
+        for (u, tb) in unit__investment_temporal_block(unit=unit, _compact=false)
+        for (u, s, t) in mp_unit_investment_stochastic_time_indices(
+            unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+        )
+    ]
+end
+
+
 units_invested_available_int(x) = unit_investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
 
 """
@@ -69,3 +80,12 @@ function add_variable_units_invested_available!(m::Model)
     )
 end
 
+function add_variable_mp_units_invested_available!(m::Model)    
+    add_variable!(
+    	m,
+    	:mp_units_invested_available, mp_units_invested_available_indices;
+    	lb=x -> 0,
+    	int=units_invested_available_int,
+    	fix_value=x -> fix_units_invested_available(unit=x.unit, t=x.t, _strict=false)
+    )
+end

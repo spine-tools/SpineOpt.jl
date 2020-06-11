@@ -163,22 +163,28 @@ function rerun_spineopt(
         @logtime level3 "- [setting constraint names]" name_constraints!(m)
     end
     @logtime level2 "Setting objective..." set_objective!(m)
-    k = 2
-    while _optimize_model!(m)
-        @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @logtime level2 "Saving results..." begin
-            postprocess_results!(m)
-            save_values!(m)
-            _save_results!(results, m)
+    j = 1
+    while _optimize_mp_model!(m)        
+        j > 1 && @logtime level2 "Resetting temporal structure..." reset_temporal_structure(k)
+        k = 2        
+        while _optimize_model!(m)
+            @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
+            @logtime level2 "Saving results..." begin
+                postprocess_results!(m)
+                save_values!(m)
+                _save_results!(results, m)
+            end
+            function_process_benders_data(j)
+            roll_temporal_structure() || break
+            @log level1 "Window $k: $current_window"
+            @logtime level2 "Updating variables..." update_variables!(m)
+            @logtime level2 "Fixing variable values..." fix_variables!(m)
+            @logtime level2 "Updating constraints..." update_varying_constraints!(m)
+            @logtime level2 "Updating user constraints..." update_constraints(m)
+            @logtime level2 "Updating objective..." update_varying_objective!(m)            
+            k += 1
         end
-        roll_temporal_structure() || break
-        @log level1 "Window $k: $current_window"
-        @logtime level2 "Updating variables..." update_variables!(m)
-        @logtime level2 "Fixing variable values..." fix_variables!(m)
-        @logtime level2 "Updating constraints..." update_varying_constraints!(m)
-        @logtime level2 "Updating user constraints..." update_constraints(m)
-        @logtime level2 "Updating objective..." update_varying_objective!(m)
-        k += 1
+        j += 1
     end
      @logtime level2 "Writing report..." _write_report(results, url_out)
      m

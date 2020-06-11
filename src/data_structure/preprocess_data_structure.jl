@@ -25,7 +25,8 @@ function preprocess_data_structure()
     generate_network_components()
     generate_direction()    
     generate_variable_indexing_support()   
-    generate_unit_investment_temporal_block()    
+    generate_unit_investment_temporal_block()
+    generate_benders_iteration()
 end
 
 """
@@ -384,4 +385,34 @@ function expand_units_on_resolution()
             )
         end
     end
+end
+
+"""
+generate_benders_iteration()
+
+Creates the `benders_iteration` object class. Master problem variables have the Benders iteration as an index. A new 
+benders iteration object is pushed on each master problem iteration.
+"""
+function generate_benders_iteration()
+    benders_iteration = ObjectClass(:benders_iteration)
+    
+    @eval begin
+        benders_iteration = $benders_iteration
+        export benders_iteration
+    end    
+end
+
+"""
+generate_subproblem_marginals()
+
+Creates the `benders_iteration` object class. Master problem variables have the Benders iteration as an index. A new 
+benders iteration object is pushed on each master problem iteration.
+"""
+function generate_subproblem_marginals()
+    benders_iteration = ObjectClass(:benders_iteration)
+    
+    @eval begin
+        benders_iteration = $benders_iteration
+        export benders_iteration
+    end    
 end
