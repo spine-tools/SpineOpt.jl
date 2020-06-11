@@ -103,12 +103,35 @@ function rerun_spineopt(
     level3 = log_level >= 3
     results = Dict()
     m = Model(with_optimizer)
+    mp = Model(with_optimizer)
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
     m.ext[:values] = Dict{Symbol,Dict}()
     m.ext[:constraints] = Dict{Symbol,Dict}()
+    m.ext[:marginals] = Dict{Symbol,Dict}()
+
+    mp.ext[:variables] = Dict{Symbol,Dict}()
+    mp.ext[:variables_definition] = Dict{Symbol,Dict}()
+    mp.ext[:values] = Dict{Symbol,Dict}()
+    mp.ext[:constraints] = Dict{Symbol,Dict}()
+    mp.ext[:marginals] = Dict{Symbol,Dict}()
+
+    @logtime level2 "Adding master problem variables...\n" begin                
+        @logtime level3 "- [variable_mp_units_invested]" add_variable_mp_units_invested!(mp)
+        @logtime level3 "- [variable_mp_units_invested_available]" add_variable_mp_units_invested_available!(mp)
+        @logtime level3 "- [variable_mp_units_mothballed]" add_variable_mp_units_mothballed!(mp)
+    end
+
+    @logtime level2 "Adding master problem constraints...\n" begin
+        @logtime level3 "- [constraint_mp_units_invested_cut]" add_constraint_mp_units_invested_cut!(mp)
+        @logtime level3 "- [constraint_mp_objective]" add_constraint_mp_objective!(mp)
+    end
+
+    @logtime level2 "Setting master problem objective..." set_mp_objective!(mp)
+
     @log level1 "Window 1: $current_window"
-    @logtime level2 "Adding variables...\n" begin
+
+    @logtime level2 "Adding problem variables...\n" begin
         @logtime level3 "- [variable_units_available]" add_variable_units_available!(m)
         @logtime level3 "- [variable_units_on]" add_variable_units_on!(m)
         @logtime level3 "- [variable_units_started_up]" add_variable_units_started_up!(m)
@@ -123,8 +146,10 @@ function rerun_spineopt(
         @logtime level3 "- [variable_units_invested]" add_variable_units_invested!(m)
         @logtime level3 "- [variable_units_invested_available]" add_variable_units_invested_available!(m)
         @logtime level3 "- [variable_units_mothballed]" add_variable_units_mothballed!(m)
-    end
-    @logtime level2 "Fixing variable values..." fix_variables!(m)
+    end   
+
+    @logtime level2 "Fixing variable values..." fix_variables!(m) 
+
     @logtime level2 "Adding constraints...\n" begin
         @logtime level3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
         @logtime level3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
@@ -164,30 +189,32 @@ function rerun_spineopt(
     end
     @logtime level2 "Setting objective..." set_objective!(m)
     j = 1
-    while _optimize_mp_model!(m)        
+    while _optimize_mp_model!(mp)        
         j > 1 && @logtime level2 "Resetting temporal structure..." reset_temporal_structure(k)
-        k = 2        
+        k = 2
+        @logtime level2 "Processing master problem solution" process_master_problem_solution(mp)
+             
         while _optimize_model!(m)
             @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
             @logtime level2 "Saving results..." begin
                 postprocess_results!(m)
                 save_values!(m)
                 _save_results!(results, m)
-            end
-            function_process_benders_data(j)
+            end            
             roll_temporal_structure() || break
             @log level1 "Window $k: $current_window"
             @logtime level2 "Updating variables..." update_variables!(m)
             @logtime level2 "Fixing variable values..." fix_variables!(m)
             @logtime level2 "Updating constraints..." update_varying_constraints!(m)
             @logtime level2 "Updating user constraints..." update_constraints(m)
-            @logtime level2 "Updating objective..." update_varying_objective!(m)            
+            @logtime level2 "Updating objective..." update_varying_objective!(m)
             k += 1
         end
-        j += 1
-    end
-     @logtime level2 "Writing report..." _write_report(results, url_out)
-     m
+        @logtime level2 "Processing problem solution" process_subproblem_solution(m, j)
+        j += 1        
+    end    
+    @logtime level2 "Writing report..." _write_report(results, url_out)
+    m
 end
 
 function _optimize_model!(m::Model)
@@ -200,6 +227,20 @@ function _optimize_model!(m::Model)
     else
         @log true "Unable to find solution (reason: $(termination_status(m)))"
         write_mps_file(model=first(model())) == :write_mps_on_no_solve && write_to_file(m, "model_diagnostics.mps")
+        false
+    end
+end
+
+function _optimize_mp_model!(m::Model)
+    write_mps_file(model=first(model())) == :write_mps_always && write_to_file(m, "mp_model_diagnostics.mps")
+    # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
+    # but is not mentioned in the COLUMNS section. We are ignoring it.
+    @logtime true "Optimizing model..." optimize!(m)
+    if termination_status(m) == MOI.OPTIMAL
+        true
+    else
+        @log true "Unable to find solution (reason: $(termination_status(m)))"
+        write_mps_file(model=first(model())) == :write_mps_on_no_solve && write_to_file(m, "mp_model_diagnostics.mps")
         false
     end
 end

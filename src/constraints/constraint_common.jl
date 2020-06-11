@@ -50,3 +50,16 @@ function _constraint_unit_flow_capacity_indices(unit, node, direction, t)
         )
     )
 end
+
+function save_all_marginals(m::Model)
+    save_marginals!(m, :units_available)
+end
+
+function save_marginals!(m::Model, name::Symbol)
+    inds = keys(m.ext[:constraints][name])
+    con = m.ext[:constraints][name]
+
+    m.ext[:marginals][name] = Dict(
+        ind => JuMP.shadow_price(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window)
+    )
+end

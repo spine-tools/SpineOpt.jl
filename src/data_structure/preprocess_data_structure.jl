@@ -26,7 +26,7 @@ function preprocess_data_structure()
     generate_direction()    
     generate_variable_indexing_support()   
     generate_unit_investment_temporal_block()
-    generate_benders_iteration()
+    generate_benders_structure()
 end
 
 """
@@ -388,31 +388,35 @@ function expand_units_on_resolution()
 end
 
 """
-generate_benders_iteration()
-
-Creates the `benders_iteration` object class. Master problem variables have the Benders iteration as an index. A new 
-benders iteration object is pushed on each master problem iteration.
-"""
-function generate_benders_iteration()
-    benders_iteration = ObjectClass(:benders_iteration)
-    
-    @eval begin
-        benders_iteration = $benders_iteration
-        export benders_iteration
-    end    
-end
-
-"""
 generate_subproblem_marginals()
 
 Creates the `benders_iteration` object class. Master problem variables have the Benders iteration as an index. A new 
 benders iteration object is pushed on each master problem iteration.
 """
-function generate_subproblem_marginals()
+function generate_benders_structure()
     benders_iteration = ObjectClass(:benders_iteration)
-    
+
+    current_bi = add_object!(benders_iteration, Symbol(string("bi_1")))   
+        
+    unit__benders_iteration = 
+    RelationshipClass(
+        :unit__benders_iteration, 
+        [:unit, :benders_iteration],
+        []
+    )
+
+    units_available_mv = Parameter(:units_available_mv, [:unit__benders_iteration])
+    units_invested_available_bi = Parameter(:units_invested_available_bi, [:unit__benders_iteration])  
+
     @eval begin
         benders_iteration = $benders_iteration
+        unit__benders_iteration = $unit__benders_iteration
+        units_available_mv = $units_available_mv
+        units_invested_available_bi = $units_invested_available_bi
+        current_bi = $current_bi
         export benders_iteration
+        export unit__benders_iteration
+        export units_available_mv
+        export units_invested_available_bi
     end    
 end

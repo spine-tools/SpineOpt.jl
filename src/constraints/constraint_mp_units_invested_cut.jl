@@ -33,7 +33,10 @@ function add_constraint_mp_units_invested_cut!(m::Model)
             >=
             + sp_objective(benders_iteration=bi)
             - sum(
-                + (mp_units_invested_available[u, t] - units_invested_available_bi[bi, u, s, t] ) * units_available_mv(unit=u, t=t)
+                + ( - mp_units_invested_available[u, t] 
+                    - units_invested_available_bi[bi, u, t]
+                )
+                * units_available_mv(benders_iteration=bi, unit=u, t=t)                
                 for (u, s, t) in mp_units_invested_available_indices()
             )
         )
