@@ -26,10 +26,13 @@ function process_master_problem_solution(mp)
     end 
 end
 
+
 function process_subproblem_solution(m, j)    
     save_sp_marginal_values(m)
-    current_bi = add_benders_iteration(j)
+    save_sp_objective_value_bi(m)
+    current_bi = add_benders_iteration(j)    
 end
+
 
 function add_benders_iteration(j)
     new_bi = add_object!(benders_iteration, Symbol(string("bi_", j)))    
@@ -40,6 +43,7 @@ function add_benders_iteration(j)
     new_bi
 end
 
+
 function save_sp_marginal_values(m)              
     inds = keys(m.ext[:marginals][:units_available])    
     for u in indices(canidate_units)        
@@ -49,6 +53,10 @@ function save_sp_marginal_values(m)
     end
 end
 
+
+function save_sp_objective_value_bi(m)
+    benders_iteration.parameter_values[current_bi][:sp_objective_value_bi] = parameter_value(objective_value(m))
+end
 
 """
     fix_mp_variables_sp(m, j)

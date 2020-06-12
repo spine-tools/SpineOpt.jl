@@ -18,12 +18,13 @@
 #############################################################################
 
 """
-    add_constraint_min_up_time!(m::Model)
+    add_constraint_mp_units_invested_cut!(m::Model)
 
-Constraint running by minimum up time.
+Adds Benders optimality cuts for the units_available constraint. This tells the master problem the mp_objective
+    cost improvement that is possible for an increase in the number of units available for a unit.
 """
 
-function add_constraint_mp_units_invested_cut!(m::Model)
+function add_constraint_mp_units_invested_cuts!(m::Model)
     @fetch mp_objective_lowerbound, units_started_up = m.ext[:variables]
     cons = m.ext[:constraints][:mp_units_invested_cut] = Dict()
     for bi in benders_iteration()
@@ -31,7 +32,7 @@ function add_constraint_mp_units_invested_cut!(m::Model)
             m,
             + mp_objective_lowerbound 
             >=
-            + sp_objective(benders_iteration=bi)
+            + sp_objective_value_bi(benders_iteration=bi)
             - sum(
                 + ( - mp_units_invested_available[u, t] 
                     - units_invested_available_bi[bi, u, t]

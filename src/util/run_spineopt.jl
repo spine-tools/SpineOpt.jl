@@ -128,7 +128,7 @@ function rerun_spineopt(
     end
 
     @logtime level2 "Setting master problem objective..." set_mp_objective!(mp)
-
+    @log level1 "Master Problem Iteration: $current_bi"
     @log level1 "Window 1: $current_window"
 
     @logtime level2 "Adding problem variables...\n" begin
@@ -190,9 +190,16 @@ function rerun_spineopt(
     @logtime level2 "Setting objective..." set_objective!(m)
     j = 1
     while _optimize_mp_model!(mp) # master problem loop       
-        j > 1 && @logtime level2 "Resetting temporal structure..." reset_temporal_structure(k)
         @logtime level2 "Processing master problem solution" process_master_problem_solution(mp)
-        k = 2                    
+        if j > 1
+            @logtime level2 "Resetting sub problem temporal structure..." reset_temporal_structure(k-1)        
+            @logtime level2 "Updating variables..." update_variables!(m)
+            @logtime level2 "Fixing variable values..." fix_variables!(m)
+            @logtime level2 "Updating constraints..." update_varying_constraints!(m)
+            @logtime level2 "Updating user constraints..." update_constraints(m)
+            @logtime level2 "Updating objective..." update_varying_objective!(m)
+        end
+        k = 2
         while _optimize_model!(m) # sub-problem loop
             @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
             @logtime level2 "Saving results..." begin
@@ -208,9 +215,12 @@ function rerun_spineopt(
             @logtime level2 "Updating user constraints..." update_constraints(m)
             @logtime level2 "Updating objective..." update_varying_objective!(m)
             k += 1
-        end
+        end        
         @logtime level2 "Processing problem solution" process_subproblem_solution(m, j)
-        j += 1        
+        j += 1
+        benders_gap = abs(2*(objective_value(m) - objective_value(mp))/(objective_value(m) - objective_value(mp));
+        benders_gap < 0.1 && break
+        @log level1 "Master problem iteration $current_bi complete with Benders Gap $benders_gap"     
     end    
     @logtime level2 "Writing report..." _write_report(results, url_out)
     m
@@ -234,7 +244,7 @@ function _optimize_mp_model!(m::Model)
     write_mps_file(model=first(model())) == :write_mps_always && write_to_file(m, "mp_model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
-    @logtime true "Optimizing model..." optimize!(m)
+    @logtime true "Optimizing Master Problem model..." optimize!(m)
     if termination_status(m) == MOI.OPTIMAL
         true
     else

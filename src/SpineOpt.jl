@@ -49,6 +49,7 @@ include("util/run_spineopt.jl")
 include("util/update_model.jl")
 include("util/postprocess_results.jl")
 
+include("data_structure/benders_data.jl")
 include("data_structure/temporal_structure.jl")
 include("data_structure/stochastic_structure.jl")
 include("data_structure/preprocess_data_structure.jl")
@@ -72,6 +73,7 @@ include("variables/variable_node_slack_neg.jl")
 include("variables/variable_node_injection.jl")
 
 include("objective/set_objective.jl")
+include("objective/set_mp_objective.jl")
 include("objective/variable_om_costs.jl")
 include("objective/fixed_om_costs.jl")
 include("objective/taxes.jl")
@@ -105,6 +107,7 @@ include("constraints/constraint_unit_constraint.jl")
 include("constraints/constraint_units_invested_available.jl")
 include("constraints/constraint_units_invested_transition.jl")
 include("constraints/constraint_unit_lifetime.jl")
+include("constraints/constraint_mp_units_invested_cuts.jl")
 
 const template = JSON.parsefile(joinpath(dirname(pathof(@__MODULE__)), "..", "data", "spineopt_template.json"))
 
