@@ -214,7 +214,7 @@ Stochastic time indexes for `units_invested`. Keyword arguments allow filtering.
 function unit_investment_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
     unique( # TODO: Write a check for multiple structures
         (unit=u, stochastic_scenario=s, t=t1)
-        for structure in model__default_investment_stochastic_structure(model=first(model())) #TODO handle multiple models
+        for (u, structure) in unit__investment_stochastic_structure(unit=unit, _compact=false)
         for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
         for t1 in time_slice(temporal_block=tb, t=t)
         for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)

@@ -24,8 +24,34 @@ function preprocess_data_structure()
     add_connection_relationships()
     generate_network_components()
     generate_direction()    
-    generate_variable_indexing_support()   
-    generate_unit_investment_temporal_block()    
+    generate_variable_indexing_support()
+    generate_investment_relationships()    
+end
+
+function generate_investment_relationships()    
+    generate_unit__investment_temporal_block()
+    generate_unit__investment_stochastic_structure()
+end
+    
+    
+
+"""
+    generate_unit_investment_temporal_block()
+
+Process the `model__default_investment_temporal_block` relationship.
+
+If a `unit__investment_temporal_block` relationship is not defined, 
+then create one using `model__default_investment_temporal_block`
+"""
+function generate_unit__investment_temporal_block()   
+    for u in indices(candidate_units)        
+        if isempty(unit__investment_temporal_block(unit=u))         
+            m = first(model())
+            for tb in model__default_investment_temporal_block(model=m)
+                add_relationships!(unit__investment_temporal_block, [(unit=u, temporal_block=tb)])                
+            end
+        end        
+    end
 end
 
 """
@@ -36,12 +62,12 @@ Process the `model__default_investment_temporal_block` relationship.
 If a `unit__investment_temporal_block` relationship is not defined, 
 then create one using `model__default_investment_temporal_block`
 """
-function generate_unit_investment_temporal_block()   
+function generate_unit__investment_stochastic_structure()
     for u in indices(candidate_units)        
-        if isempty(unit__investment_temporal_block(unit=u))         
-            m = first(model())
-            for tb in model__default_investment_temporal_block(model=m)
-                add_relationships!(unit__investment_temporal_block, [(unit=u, temporal_block=tb)])                
+        if isempty(unit__investment_stochastic_structure(unit=u))         
+            m = first(model()) #TODO: Handle multiple models
+            for ss in model__default_investment_stochastic_structure(model=m)
+                add_relationships!(unit__investment_stochastic_structure, [(unit=u, stochastic_structure=ss)])                
             end
         end        
     end
