@@ -17,6 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+"""
+    preprocess_data_structure()
+
+Preprocesses input data structure for SpineOpt.
+
+Runs a number of other functions processing different aspecs of the input data in sequence.
+"""
 function preprocess_data_structure()
     # NOTE: expand groups first, so we don't need to expand them anywhere else
     expand_node__stochastic_structure()
@@ -28,7 +35,12 @@ function preprocess_data_structure()
     generate_investment_relationships()    
 end
 
-function generate_investment_relationships()    
+"""
+    generate_investment_relationships()
+
+Generates `Relationships` related to modelling investments.
+"""
+function generate_investment_relationships()
     generate_unit__investment_temporal_block()
     generate_unit__investment_stochastic_structure()
 end
@@ -114,7 +126,9 @@ end
 
 # Network stuff
 """
-Generate has_ptdf and node_ptdf_threshold parameters associated to the node class.
+    generate_node_has_ptdf()
+
+Generate `has_ptdf` and `node_ptdf_threshold` parameters associated to the `node` `ObjectClass`.
 """
 function generate_node_has_ptdf()
     for n in node()
@@ -137,7 +151,9 @@ function generate_node_has_ptdf()
 end
 
 """
-Generate has_ptdf parameter associated to the connection class.
+    generate_connection_has_ptdf()
+
+Generate `has_ptdf` parameter associated to the `connection` `ObjectClass`.
 """
 function generate_connection_has_ptdf()
     for conn in connection()
@@ -159,7 +175,9 @@ function generate_connection_has_ptdf()
 end
 
 """
-Generate has_lodf and connnection_lodf_tolerance parameters associated to the connection class.
+    generate_connection_has_lodf()
+
+Generate `has_lodf` and `connnection_lodf_tolerance` parameters associated to the `connection` `ObjectClass`.
 """
 function generate_connection_has_lodf()
     for conn in connection(has_ptdf=true)
@@ -174,13 +192,20 @@ function generate_connection_has_lodf()
         )
     end
     has_lodf = Parameter(:has_lodf, [connection])
-    connnection_lodf_tolerance = Parameter(:connnection_lodf_tolerance, [connection])
+    connnection_lodf_tolerance = Parameter(:connnection_lodf_tolerance, [connection]) # TODO connnection with 3 `n`'s?
     @eval begin
         has_lodf = $has_lodf
         connnection_lodf_tolerance = $connnection_lodf_tolerance
     end
 end
 
+"""
+    _ptdf_values()
+
+Calculates the values of the `ptdf` parameters?
+
+TODO @JodyDillon: Check this docstring!
+"""
 function _ptdf_values()
     ps_busses_by_node = Dict(
         n => Bus(
@@ -227,7 +252,9 @@ function _ptdf_values()
 end
 
 """
-Generate ptdf parameter.
+    generate_ptdf()
+
+Generates the `ptdf` parameter.
 """
 function generate_ptdf()
     ptdf_values = _ptdf_values()
@@ -244,7 +271,9 @@ function generate_ptdf()
 end
 
 """
-Generate lodf parameter.
+    generate_lodf()
+
+Generates the `lodf` parameter.
 """
 function generate_lodf()
 
@@ -286,6 +315,13 @@ function generate_lodf()
     end
 end
 
+"""
+    generate_network_components()
+
+Generates different network related `parameters`.
+
+Runs a number of other functions dealing with different aspects of the network data in sequence.
+"""
 function generate_network_components()
     generate_node_has_ptdf()
     generate_connection_has_ptdf()
@@ -297,6 +333,11 @@ function generate_network_components()
     # write_lodf_file(model=first(model())) == Symbol(:true) && write_lodfs()
 end
 
+"""
+    generate_direction()
+
+Generates the `direction` `ObjectClass` and its relationships.
+"""
 function generate_direction()
     from_node = Object(:from_node)
     to_node = Object(:to_node)
@@ -323,6 +364,11 @@ function generate_direction()
     end
 end
 
+"""
+    generate_variable_indexing_support()
+
+TODO What is the purpose of this function? It clearly generates a number of `RelationshipClasses`, but why?
+"""
 function generate_variable_indexing_support()
     node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
     unit__node__direction__temporal_block = RelationshipClass(

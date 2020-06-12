@@ -18,6 +18,8 @@
 #############################################################################
 
 """
+    StochasticPathFinder
+
 A callable type to retrieve intersections between valid stochastic paths
 and 'active' scenarios.
 """
@@ -258,6 +260,13 @@ function unit_stochastic_scenario_weight(;unit::Object, stochastic_scenario::Obj
     )
 end
 
+"""
+    generate_stochastic_structure()
+
+Preprocesses SpineOpt input data to form the required stochastic structure.
+
+Runs a number of functions processing different aspects of the stochastics in sequence.
+"""
 function generate_stochastic_structure()
     all_stochastic_DAGs = _all_stochastic_DAGs(start(current_window))
     _generate_stochastic_time_map(all_stochastic_DAGs)

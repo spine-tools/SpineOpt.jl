@@ -24,6 +24,11 @@
 # And here, we just perform simpler checks that can be done directly on the contents of the db, 
 # and don't require to build any additional structures.
 
+"""
+    _check(cond, err_msg)
+
+Checks the conditional `cond` and throws an error with a message `err_msg` if `cond` is `false`.
+"""
 _check(cond, err_msg) = cond || error(err_msg)
 
 """
@@ -40,6 +45,11 @@ function check_data_structure(log_level::Int64)
     check_islands(log_level)
 end
 
+"""
+    check_model_object()
+
+Check if at least one `model` object is defined.
+"""
 function check_model_object()
     _check(
         !isempty(model()),
@@ -47,6 +57,11 @@ function check_model_object()
     )
 end
 
+"""
+    check_temporal_block_object()
+
+Check if at least `temporal_block` is defined.
+"""
 function check_temporal_block_object()
     _check(
         !isempty(temporal_block()),
@@ -82,6 +97,11 @@ function check_node__stochastic_structure()
     )
 end
 
+"""
+    check_minimum_operating_point_unit_capacity()
+
+Checks if every defined `minimum_operating_point` parameter has a corresponding `unit_capacity` parameter defined.
+"""
 function check_minimum_operating_point_unit_capacity()
     error_indices = [
         (u, n, d) 
@@ -99,7 +119,6 @@ end
     check_islands()
 
 Check network for islands and warn the user if problems.
-
 """
 function check_islands(log_level)
 
@@ -124,7 +143,6 @@ end
     islands()
 
 Determines the number of islands in a commodity network - used for diagnostic purposes
-
 """
 function islands(c)
     visited_d = Dict{Object,Bool}()
@@ -149,7 +167,6 @@ end
     visit()
 
 Function called recursively to visit nodes in the network to determine number of islands
-
 """
 function visit(n, island_count, visited_d, island_node)
     visited_d[n] = true
@@ -165,7 +182,6 @@ end
     check_x()
 
 Check for low reactance values
-
 """
 function check_x()
     @info "Checking reactances"
@@ -175,4 +191,3 @@ function check_x()
         end
     end
 end
-

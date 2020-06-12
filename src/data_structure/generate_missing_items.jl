@@ -17,6 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+"""
+    generate_missing_items()
+
+Compares the defined sets of `ObjectClass`, `RelationshipClass` and parameter definitions with the
+`spineopt_template.json` and generates missing items.
+"""
 function generate_missing_items()
     mod = @__MODULE__
     missing_items = Dict(

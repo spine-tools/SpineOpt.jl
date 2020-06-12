@@ -43,6 +43,9 @@ end
 An `Array` of time slices *in the model*.
 - `temporal_block` is a temporal block object to filter the result.
 - `t` is a `TimeSlice` or collection of `TimeSlice`s *in the model* to filter the result.
+
+TODO This docstring can be a bit confusing, since the actual struct that `time_slice` refers to is called
+`TimeSliceSet`.
 """
 (h::TimeSliceSet)(;temporal_block=anything, t=anything) = h(temporal_block, t)
 (h::TimeSliceSet)(::Anything, ::Anything) = h.time_slices
@@ -55,6 +58,9 @@ An `Array` of time slices *in the model*.
     t_overlaps_t()
 
 A list of tuples `(t1, t2)` where `t1` and `t2` have some time in common.
+
+TODO This docstring can be a bit confusing since the actual struct that `t_overlaps_t` refers to is called
+`TOverlapsT`.
 """
 function (h::TOverlapsT)()
     h.list
@@ -65,6 +71,9 @@ end
 
 A list of time slices that have some time in common with `t_overlap`
 (or some time in common with any element in `t_overlap` if it's a list).
+
+TODO This docstring can be a bit confusing since the actual struct that `t_overlaps_t` refers to is called
+`TOverlapsT`.
 """
 function (h::TOverlapsT)(t_overlap)
     unique(t2 for (t1, t2) in h.list if t1 in tuple(t_overlap...))
@@ -75,15 +84,19 @@ end
 
 A list of time slices which are in `t1` and have some time in common
 with any of the time slices in `t2` and vice versa.
+
+TODO This docstring can be a bit confusing since the actual struct that `t_overlaps_t` refers to is called
+`TOverlapsT`.
 """
 function (h::TOverlapsT)(t1, t2)
     unique(Iterators.flatten(filter(t -> t[1] in tuple(t1...) && t[2] in tuple(t2...), h.list)))
 end
 
 """
-    rolling_windows()
+    _generate_current_window()
 
-A tuple of start and end time for the main rolling window.
+A `TimeSlice` spanning the current optimization window from the beginning of the current solve until the beginning of
+the next solve or `model_end`, whichever is defined and sooner.
 """
 function _generate_current_window()
     instance = first(model())
@@ -99,10 +112,24 @@ function _generate_current_window()
 end
 
 # Adjuster functions, in case blocks specify their own start and end
+"""
+    _adjuster_start(window_start, window_end, blk_start)
+
+Adjusts the `window_start` based on `temporal_blocks`.
+
+TODO: These functions seem to take `window_end` as input, although it's not used. Also, typing could be stricter.
+"""
 _adjusted_start(window_start, window_end, ::Nothing) = window_start
 _adjusted_start(window_start, window_end, blk_start::Union{Period,CompoundPeriod}) = window_start + blk_start
 _adjusted_start(window_start, window_end, blk_start::DateTime) = max(window_start, blk_start)
 
+"""
+    _adjusted_end(window_start, window_end, blk_end)
+
+Adjusts the `window_end` based on `temporal_blocks`.
+
+TODO: `window_start` and `window_end` always input although not always used? Also, typing could be stricter.
+"""
 _adjusted_end(window_start, window_end, ::Nothing) = window_end
 _adjusted_end(window_start, window_end, blk_end::Union{Period,CompoundPeriod}) = window_start + blk_end
 _adjusted_end(window_start, window_end, blk_end::DateTime) = max(window_start, blk_end)
@@ -143,6 +170,11 @@ function _block_time_intervals(window_start, window_end)
     d
 end
 
+"""
+    _model_duration_unit()
+
+Fetches the `duration_unit` parameter of the first defined `model`, and defaults to `Minute` if not found.
+"""
 function _model_duration_unit()
     get(Dict(:minute => Minute, :hour => Hour), duration_unit(model=first(model()), _strict=false), Minute)
 end
@@ -261,12 +293,24 @@ function _generate_time_slice_relationships()
     end
 end
 
+"""
+    generate_temporal_structure()
+
+Preprocesses the temporal structure for SpineOpt from the provided input data.
+
+Runs a number of functions processing different aspects of the temporal structure in sequence.
+"""
 function generate_temporal_structure()
     _generate_current_window()
     _generate_time_slice()
     _generate_time_slice_relationships()
 end
 
+"""
+    roll_temporal_structure()
+
+Moves the entire temporal structure ahead according to the `roll_forward` parameter.
+"""
 function roll_temporal_structure()
     instance = first(model())
     end_(current_window) >= model_end(model=instance) && return false
