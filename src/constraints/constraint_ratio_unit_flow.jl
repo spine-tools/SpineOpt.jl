@@ -35,6 +35,11 @@ function constraint_ratio_unit_flow_indices(ratio, d1, d2)
     )
 end
 
+"""
+    _constraint_ratio_unit_flow_indices(unit, node1, direction1, node2, direction2, t)
+
+Gather the indices of the relevant `unit_flow` and `units_on` variables.
+"""
 function _constraint_ratio_unit_flow_indices(unit, node1, direction1, node2, direction2, t)
     Iterators.flatten(
         (
@@ -85,51 +90,110 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
     end
 end
 
+"""
+    add_constraint_fix_ratio_out_in_unit_flow!(m::Model)
+
+Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+"""
 function add_constraint_fix_ratio_out_in_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
         m, fix_ratio_out_in_unit_flow, fix_units_on_coefficient_out_in, ==, direction(:to_node), direction(:from_node)
     )
 end
+
+"""
+    add_constraint_max_ratio_out_in_unit_flow!(m::Model)
+
+Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+"""
 function add_constraint_max_ratio_out_in_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
         m, max_ratio_out_in_unit_flow, max_units_on_coefficient_out_in, <=, direction(:to_node), direction(:from_node)
     )
 end
+
+"""
+    add_constraint_min_ratio_out_in_unit_flow!(m::Model)
+
+Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+"""
 function add_constraint_min_ratio_out_in_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
         m, min_ratio_out_in_unit_flow, min_units_on_coefficient_out_in, >=, direction(:to_node), direction(:from_node)
     )
 end
+
+"""
+    add_constraint_fix_ratio_in_in_unit_flow!(m::Model)
+
+Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+"""
 function add_constraint_fix_ratio_in_in_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
         m, fix_ratio_in_in_unit_flow, fix_units_on_coefficient_in_in, ==, direction(:from_node), direction(:from_node)
     )
 end
+
+"""
+    add_constraint_max_ratio_in_in_unit_flow!(m::Model)
+
+Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+"""
 function add_constraint_max_ratio_in_in_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
         m, max_ratio_in_in_unit_flow, max_units_on_coefficient_in_in, <=, direction(:from_node), direction(:from_node)
     )
 end
+
+"""
+    add_constraint_max_ratio_out_in_unit_flow!(m::Model)
+
+Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+"""
 function add_constraint_fix_ratio_out_out_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
         m, fix_ratio_out_out_unit_flow, fix_units_on_coefficient_out_out, ==, direction(:to_node), direction(:to_node)
     )
 end
+
+"""
+    add_constraint_max_ratio_out_out_unit_flow!(m::Model)
+
+Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+"""
 function add_constraint_max_ratio_out_out_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
         m, max_ratio_out_out_unit_flow, max_units_on_coefficient_out_out, <=, direction(:to_node), direction(:to_node)
     )
 end
+
+"""
+    add_constraint_fix_ratio_in_out_unit_flow!(m::Model)
+
+Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+"""
 function add_constraint_fix_ratio_in_out_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
         m, fix_ratio_in_out_unit_flow, fix_units_on_coefficient_in_out, ==, direction(:from_node), direction(:to_node)
     )
 end
+
+"""
+    add_constraint_max_ratio_in_out_unit_flow!(m::Model)
+
+Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+"""
 function add_constraint_max_ratio_in_out_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
         m, max_ratio_in_out_unit_flow, max_units_on_coefficient_in_out, <=, direction(:from_node), direction(:to_node)
     )
 end
+
+"""
+    add_constraint_min_ratio_in_out_unit_flow!(m::Model)
+
+Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+"""
 function add_constraint_min_ratio_in_out_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
         m, min_ratio_in_out_unit_flow, min_units_on_coefficient_in_out, >=, direction(:from_node), direction(:to_node)

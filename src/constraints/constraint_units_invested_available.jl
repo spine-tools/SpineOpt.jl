@@ -23,7 +23,6 @@
 
 Limit the units_invested_available by the number of investment candidate units.
 """
-
 function add_constraint_units_invested_available!(m::Model)
     @fetch units_invested_available = m.ext[:variables]
     constr_dict = m.ext[:constraints][:units_invested_available] = Dict()

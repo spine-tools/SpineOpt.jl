@@ -21,10 +21,9 @@
 """
     add_constraint_operating_point_bounds!(m::Model)
 
-Limit the operating point flow variables to the difference between successive operating points times the capacity of the unit
-
+Limit the operating point flow variables `unit_flow_op` to the difference between successive operating points times
+the capacity of the unit
 """
-
 function add_constraint_operating_point_bounds!(m::Model)
     @fetch unit_flow_op, unit_flow = m.ext[:variables]
     cons = m.ext[:constraints][:operating_point_bounds] = Dict()

@@ -21,8 +21,8 @@
 """
     add_constraint_max_cum_in_unit_flow_bound!(m::Model)
 
-Set upperbound `max_cum_in_flow_bound `to the cumulated inflow
-into a `unit_group ug` if `max_cum_in_unit_flow_bound` exists.
+Set upperbound `max_cum_in_flow_bound `to the cumulated inflow into a `unit_group ug`
+if `max_cum_in_unit_flow_bound` exists.
 """
 function add_constraint_max_cum_in_unit_flow_bound!(m::Model)
     @fetch unit_flow = m.ext[:variables]

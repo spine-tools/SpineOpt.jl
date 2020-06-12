@@ -37,6 +37,12 @@ function constraint_connection_flow_lodf_indices()
     )
 end
 
+"""
+    _constraint_connection_flow_lodf_lowest_resolution_t(conn_cont, conn_mon)
+
+Finds the lowest resolution `t`s between the `connection_flow` variables of the `conn_cont` contingency connection and
+the `conn_mon` monitored connection.
+"""
 function _constraint_connection_flow_lodf_lowest_resolution_t(conn_cont, conn_mon)
     t_lowest_resolution(
         ind.t
@@ -45,6 +51,12 @@ function _constraint_connection_flow_lodf_lowest_resolution_t(conn_cont, conn_mo
     )
 end
 
+"""
+    _constraint_connection_flow_lodf_indices(conn_cont, conn_mon, t)
+
+Gathers the indices of the `connection_flow` variable for the contingency connection `conn_cont` and
+the monitored connection `conn_mon` on time slice `t`.
+"""
 function _constraint_connection_flow_lodf_indices(conn_cont, conn_mon, t)
     Iterators.flatten(
         (

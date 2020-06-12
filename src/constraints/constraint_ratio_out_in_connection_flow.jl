@@ -38,6 +38,11 @@ function constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
     )
 end
 
+"""
+    _constraint_ratio_out_in_connection_flow_indices(connection, node_out, node_in, t)
+
+Gather the `connection_flow` variiable indices for `add_constraint_ratio_out_in_connection_flow!`.
+"""
 function _constraint_ratio_out_in_connection_flow_indices(connection, node_out, node_in, t)
     Iterators.flatten(
         (
@@ -90,6 +95,23 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
     end
 end
 
+"""
+    add_constraint_fix_ratio_out_in_connection_flow!(m::Model)
+
+Calls `add_constraint_ratio_out_in_connection_flow!` using the `fix_ratio_out_in_connection_flow` parameter.
+"""
 add_constraint_fix_ratio_out_in_connection_flow!(m::Model) = add_constraint_ratio_out_in_connection_flow!(m, fix_ratio_out_in_connection_flow, ==)
+
+"""
+    add_constraint_max_ratio_out_in_connection_flow!(m::Model)
+
+Calls `add_constraint_ratio_out_in_connection_flow!` using the `max_ratio_out_in_connection_flow` parameter.
+"""
 add_constraint_max_ratio_out_in_connection_flow!(m::Model) = add_constraint_ratio_out_in_connection_flow!(m, max_ratio_out_in_connection_flow, <=)
+
+"""
+    add_constraint_min_ratio_out_in_connection_flow!(m::Model)
+
+Calls `add_constraint_ratio_out_in_connection_flow!` using the `min_ratio_out_in_connection_flow` parameter.
+"""
 add_constraint_min_ratio_out_in_connection_flow!(m::Model) = add_constraint_ratio_out_in_connection_flow!(m, min_ratio_out_in_connection_flow, >=)

@@ -38,6 +38,12 @@ function constraint_node_injection_indices()
     )
 end
 
+"""
+    _constraint_node_injection_indices(node, t_after, t_before)
+
+Gathers the current `node_stochastic_time_indices` as well as the relevant `node_state_indices` on the previous
+`time_slice` and beyond defined `node__node` relationships for `add_constraint_node_injection!`
+"""
 function _constraint_node_injection_indices(node, t_after, t_before)
     Iterators.flatten(
         (
@@ -58,7 +64,7 @@ function _constraint_node_injection_indices(node, t_after, t_before)
 end
 
 """
-    add_constraint_node_injection(m::Model)
+    add_constraint_node_injection!(m::Model)
 
 Set the node injection equal to the summation of all 'input' flows but connection's.
 """

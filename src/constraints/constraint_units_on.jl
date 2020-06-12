@@ -23,7 +23,6 @@
 
 Limit the units_on by the number of available units.
 """
-
 function add_constraint_units_on!(m::Model)
     @fetch units_on, units_available = m.ext[:variables]
     constr_dict = m.ext[:constraints][:units_on] = Dict()

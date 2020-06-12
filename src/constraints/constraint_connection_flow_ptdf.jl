@@ -38,6 +38,12 @@ function constraint_connection_flow_ptdf_indices()
     )
 end
 
+"""
+    _constraint_connection_flow_ptdf_indices(connection, node_to, direction_to, t)
+
+Gathers the indices of the `connection_flow` and the `node_injection` variables appearing in
+`add_constraint_connection_flow_ptdf!`.
+"""
 function _constraint_connection_flow_ptdf_indices(connection, node_to, direction_to, t)
     Iterators.flatten(
         (
@@ -52,7 +58,7 @@ function _constraint_connection_flow_ptdf_indices(connection, node_to, direction
 end
 
 """
-    add_constraint_connection_flow_ptdf(m::Model)
+    add_constraint_connection_flow_ptdf!(m::Model)
 
 For connection networks with monitored and has_ptdf set to true, set the steady state flow based on PTDFs
 """
