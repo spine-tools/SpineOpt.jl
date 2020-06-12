@@ -189,11 +189,11 @@ function rerun_spineopt(
     end
     @logtime level2 "Setting objective..." set_objective!(m)
     j = 1
-    while _optimize_mp_model!(mp)        
+    while _optimize_mp_model!(mp) # master problem loop       
         j > 1 && @logtime level2 "Resetting temporal structure..." reset_temporal_structure(k)
         @logtime level2 "Processing master problem solution" process_master_problem_solution(mp)
         k = 2                    
-        while _optimize_model!(m)
+        while _optimize_model!(m) # sub-problem loop
             @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
             @logtime level2 "Saving results..." begin
                 postprocess_results!(m)
