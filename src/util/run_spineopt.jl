@@ -102,8 +102,8 @@ function rerun_spineopt(
     level2 = log_level >= 2
     level3 = log_level >= 3
     results = Dict()
-    m = Model(with_optimizer)
-    mp = Model(with_optimizer)
+    m = Model(with_optimizer) # sub problem model
+    mp = Model(with_optimizer) # master problem model
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
     m.ext[:values] = Dict{Symbol,Dict}()
@@ -191,9 +191,8 @@ function rerun_spineopt(
     j = 1
     while _optimize_mp_model!(mp)        
         j > 1 && @logtime level2 "Resetting temporal structure..." reset_temporal_structure(k)
-        k = 2
         @logtime level2 "Processing master problem solution" process_master_problem_solution(mp)
-             
+        k = 2                    
         while _optimize_model!(m)
             @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
             @logtime level2 "Saving results..." begin
