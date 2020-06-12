@@ -55,12 +55,12 @@ function generate_unit__investment_temporal_block()
 end
 
 """
-    generate_unit_investment_temporal_block()
+    generate_unit__investment_stochastic_structure()
 
-Process the `model__default_investment_temporal_block` relationship.
+Process the `model__default_investment_stochastic_structure` relationship.
 
-If a `unit__investment_temporal_block` relationship is not defined, 
-then create one using `model__default_investment_temporal_block`
+If a `unit__investment_stochastic_structure` relationship is not defined, 
+then create one using `model__default_investment_stochastic_structure`
 """
 function generate_unit__investment_stochastic_structure()
     for u in indices(candidate_units)        
