@@ -226,7 +226,7 @@ end
 
 Stochastic time indexes for `units_invested_available` in master problem. Keyword arguments allow filtering.
 """
-function mp_unit_investment_stochastic_time_indicesp(;unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
+function mp_unit_investment_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
     unique( # TODO: Write a check for multiple structures
         (unit=u, stochastic_scenario=s, t=t1)
         for structure in model__default_investment_stochastic_structure(model=first(model())) #TODO handle multiple models

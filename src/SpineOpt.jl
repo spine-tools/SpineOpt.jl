@@ -71,6 +71,7 @@ include("variables/variable_units_shut_down.jl")
 include("variables/variable_node_slack_pos.jl")
 include("variables/variable_node_slack_neg.jl")
 include("variables/variable_node_injection.jl")
+include("variables/variable_mp_objective_lowerbound.jl")
 
 include("objective/set_objective.jl")
 include("objective/set_mp_objective.jl")

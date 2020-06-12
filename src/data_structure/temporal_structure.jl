@@ -200,8 +200,8 @@ See [@TimeSliceSet()](@ref).
 """
 function _generate_mp_time_slice()
     instance = first(model())          
-    window_start = start(model_start(model=instance) )
-    window_end = end_(model_end(model=instance) )
+    window_start = model_start(model=instance)
+    window_end = model_end(model=instance)
     window_span = window_end - window_start
     window_time_slices = _window_time_slices(window_start, window_end)
     mp_time_slice = TimeSliceSet(window_time_slices)            

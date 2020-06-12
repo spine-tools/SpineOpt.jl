@@ -394,9 +394,9 @@ Creates the `benders_iteration` object class. Master problem variables have the 
 benders iteration object is pushed on each master problem iteration.
 """
 function generate_benders_structure()
-    benders_iteration = ObjectClass(:benders_iteration)
-
-    current_bi = add_object!(benders_iteration, Symbol(string("bi_1")))   
+    
+    current_bi = Object(Symbol(string("bi_1")))  
+    benders_iteration = ObjectClass(:benders_iteration,[current_bi])
         
     unit__benders_iteration = 
     RelationshipClass(
@@ -405,8 +405,9 @@ function generate_benders_structure()
         []
     )
 
-    units_available_mv = Parameter(:units_available_mv, [:unit__benders_iteration])
-    units_invested_available_bi = Parameter(:units_invested_available_bi, [:unit__benders_iteration])  
+    units_available_mv = Parameter(:units_available_mv, [unit__benders_iteration])
+    units_invested_available_bi = Parameter(:units_invested_available_bi, [unit__benders_iteration])  
+    sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])  
 
     @eval begin
         benders_iteration = $benders_iteration
@@ -414,9 +415,11 @@ function generate_benders_structure()
         units_available_mv = $units_available_mv
         units_invested_available_bi = $units_invested_available_bi
         current_bi = $current_bi
+        sp_objective_value_bi = $sp_objective_value_bi
         export benders_iteration
         export unit__benders_iteration
         export units_available_mv
         export units_invested_available_bi
+        export sp_objective_value_bi
     end    
 end

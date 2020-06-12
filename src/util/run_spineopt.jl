@@ -117,13 +117,14 @@ function rerun_spineopt(
     mp.ext[:marginals] = Dict{Symbol,Dict}()
 
     @logtime level2 "Adding master problem variables...\n" begin                
+        @logtime level3 "- [variable_mp_objective_lowerbound]" add_variable_mp_objective_lowerbound!(mp)
         @logtime level3 "- [variable_mp_units_invested]" add_variable_mp_units_invested!(mp)
         @logtime level3 "- [variable_mp_units_invested_available]" add_variable_mp_units_invested_available!(mp)
         @logtime level3 "- [variable_mp_units_mothballed]" add_variable_mp_units_mothballed!(mp)
     end
 
     @logtime level2 "Adding master problem constraints...\n" begin
-        @logtime level3 "- [constraint_mp_units_invested_cut]" add_constraint_mp_units_invested_cut!(mp)
+        @logtime level3 "- [constraint_mp_units_invested_cuts]" add_constraint_mp_units_invested_cuts!(mp)
         @logtime level3 "- [constraint_mp_objective]" add_constraint_mp_objective!(mp)
     end
 
@@ -218,9 +219,16 @@ function rerun_spineopt(
         end        
         @logtime level2 "Processing problem solution" process_subproblem_solution(m, j)
         j += 1
-        benders_gap = abs(2*(objective_value(m) - objective_value(mp))/(objective_value(m) - objective_value(mp));
+        benders_gap = abs(2*(objective_value(m) - objective_value(mp))/(objective_value(m) - objective_value(mp)))
         benders_gap < 0.1 && break
-        @log level1 "Master problem iteration $current_bi complete with Benders Gap $benders_gap"     
+        @log level1 "Master problem iteration $(current_bi) complete with Benders Gap $(benders_gap)"
+                
+        @logtime level2 "Updating Master Problem variables..." update_variables!(mp)
+        @logtime level2 "Fixing Master Problem variable values..." fix_variables!(mp)
+        @logtime level2 "Updating Master Problem constraints..." update_varying_constraints!(mp)
+        @logtime level2 "Updating Master Problem user constraints..." update_constraints(mp)
+        @logtime level2 "Updating Master Problem objective..." update_varying_objective!(mp)
+        
     end    
     @logtime level2 "Writing report..." _write_report(results, url_out)
     m

@@ -45,9 +45,9 @@ Limit the units_on by the number of available units.
 function add_constraint_mp_objective!(m::Model)
     @fetch units_on, units_available = m.ext[:variables]
     constr_dict = m.ext[:constraints][:mp_objective] = Dict()    
-    constr_dict] = @constraint(
-            m,
-            + mp_objective_lowerbound
+    constr_dict = @constraint(
+            m,            
+            + mp_objective_lowerbound                
             <=
             + expr_sum(
                 mp_units_invested[u, s, t] * unit_investment_cost(unit=u, t=t)
