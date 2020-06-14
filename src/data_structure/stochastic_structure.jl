@@ -32,7 +32,7 @@ end
 
 The unique combinations of `active_scenarios` along valid stochastic paths.
 """
-function (h::StochasticPathFinder)(active_scenarios::Union{Array{Object,1},Object})
+function (h::StochasticPathFinder)(active_scenarios::Union{Array{T,1},T}) where T
     # TODO: cache these
     unique(map(path -> intersect(path, active_scenarios), h.full_stochastic_paths))
 end
