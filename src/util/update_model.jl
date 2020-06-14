@@ -135,17 +135,6 @@ function JuMP.add_constraint(
     add_constraint(model, realized_con, name)
 end
 
-function update_varying_constraints!(model::Model)
-    for (con_ref, terms) in get(model.ext, :varying_constraint_terms, ())
-        for (var, coef) in terms
-            set_normalized_coefficient(con_ref, var, realize(coef))
-        end
-    end
-    for (con_ref, rhs) in get(model.ext, :varying_constraint_rhs, ())  
-        set_normalized_rhs(con_ref, realize(rhs))
-    end
-end
-
 # add_to_expression!
 function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, call::Call)
     aff.constant += call
@@ -259,4 +248,40 @@ function update_varying_objective!(model::Model)
     for (var, coef) in model.ext[:varying_objective_terms]
         set_objective_coefficient(model, var, realize(coef))
     end    
+end
+
+function update_varying_constraints!(model::Model)
+    for (con_ref, terms) in get(model.ext, :varying_constraint_terms, ())
+        for (var, coef) in terms
+            set_normalized_coefficient(con_ref, var, realize(coef))
+        end
+    end
+    for (con_ref, rhs) in get(model.ext, :varying_constraint_rhs, ())  
+        set_normalized_rhs(con_ref, realize(rhs))
+    end
+end
+
+function update_variable!(m::Model, name::Symbol, indices::Function)
+    var = m.ext[:variables][name]
+    val = m.ext[:values][name]
+    lb = m.ext[:variables_definition][name][:lb]
+    ub = m.ext[:variables_definition][name][:ub]
+    for ind in indices()
+        set_name(var[ind], _base_name(name, ind))
+        if is_fixed(var[ind])
+            unfix(var[ind])
+            lb != nothing && set_lower_bound(var[ind], lb(ind))
+            ub != nothing && set_upper_bound(var[ind], ub(ind))
+        end
+        end_(ind.t) <= end_(current_window) || continue
+        history_ind = (; ind..., t=t_history_t[ind.t])
+        set_name(var[history_ind], _base_name(name, history_ind))
+        fix(var[history_ind], val[ind]; force=true)
+    end
+end
+
+function update_variables!(m::Model)
+    for (name, definition) in m.ext[:variables_definition]
+        update_variable!(m, name, definition[:indices])
+    end
 end

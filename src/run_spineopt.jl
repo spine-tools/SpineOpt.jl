@@ -40,7 +40,6 @@ function run_spineopt(
     )
 end
 
-
 """
     run_spineopt(url_in, url_out; <keyword arguments>)
 
@@ -164,12 +163,12 @@ function rerun_spineopt(
     end
     @logtime level2 "Setting objective..." set_objective!(m)
     k = 2
-    while _optimize_model!(m)
+    while optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
         @logtime level2 "Saving results..." begin
             postprocess_results!(m)
-            save_values!(m)
-            _save_results!(results, m)
+            save_variable_values!(m)
+            save_results!(results, m)
         end
         roll_temporal_structure() || break
         @log level1 "Window $k: $current_window"
@@ -180,11 +179,19 @@ function rerun_spineopt(
         @logtime level2 "Updating objective..." update_varying_objective!(m)
         k += 1
     end
-     @logtime level2 "Writing report..." _write_report(results, url_out)
+     @logtime level2 "Writing report..." write_report(results, url_out)
      m
 end
 
-function _optimize_model!(m::Model)
+function name_constraints!(m::Model)
+    for (con_key, cons) in m.ext[:constraints]
+        for (inds, con) in cons
+            set_name(con, string(con_key,inds))
+        end
+    end
+end
+
+function optimize_model!(m::Model)
     write_mps_file(model=first(model())) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
@@ -198,12 +205,43 @@ function _optimize_model!(m::Model)
     end
 end
 
-"""
-    _save_results!(results, m)
+_fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Nothing) = nothing
 
-Update `results` with results from `m`.
-"""
-function _save_results!(results, m)
+function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Function)
+    var = m.ext[:variables][name]
+    for ind in indices()
+        fix_value_ = fix_value(ind)
+        fix_value_ != nothing && fix(var[ind], fix_value_; force=true)
+        end_(ind.t) <= end_(current_window) || continue
+        history_ind = (; ind..., t=t_history_t[ind.t])
+        fix_value_ = fix_value(history_ind)
+        fix_value_ != nothing && fix(var[history_ind], fix_value_; force=true)
+    end
+end
+
+function fix_variables!(m::Model)
+    for (name, definition) in m.ext[:variables_definition]
+        _fix_variable!(m, name, definition[:indices], definition[:fix_value])
+    end
+end
+
+_variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value(v)) : JuMP.value(v)
+
+function _save_variable_value!(m::Model, name::Symbol, indices::Function)
+    inds = indices()
+    var = m.ext[:variables][name]
+    m.ext[:values][name] = Dict(
+        ind => _variable_value(var[ind]) for ind in indices() if end_(ind.t) <= end_(current_window)
+    )
+end
+
+function save_variable_values!(m::Model)
+    for (name, definition) in m.ext[:variables_definition]
+        _save_variable_value!(m, name, definition[:indices])
+    end
+end
+
+function save_results!(results, m)
     for out in output()
         value = get(m.ext[:values], out.name, nothing)
         if value === nothing
@@ -216,19 +254,32 @@ function _save_results!(results, m)
     end
 end
 
-function _write_report(results, default_url)
+"""
+    _pulldims(input, dims...)
+
+An equivalent dictionary where the given dimensions are pulled from the key to the value.
+"""
+function _pulldims(input::Dict{K,V}, dims::Symbol...) where {K<:NamedTuple,V}
+    result = Dict()
+    for (key, value) in sort!(OrderedDict(input))
+        new_key = (; (k => v for (k, v) in pairs(key) if !(k in dims))...)
+        new_value = ((key[dim] for dim in dims)..., value)
+        push!(get!(result, new_key, []), new_value)
+    end
+    result
+end
+
+function write_report(results, default_url)
     reports = Dict()
     for (rpt, out) in report__output()
         value = get(results, out.name, nothing)
-        if value === nothing
-            continue
-        end
+        value === nothing && continue
         url = output_db_url(report=rpt, _strict=false)
         url === nothing && (url = default_url)
         url_reports = get!(reports, url, Dict())
         output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
         output_params[out.name] = Dict{NamedTuple,TimeSeries}(
-            k => TimeSeries(first.(v), last.(v), false, false) for (k, v) in pulldims(value, :t)
+            k => TimeSeries(first.(v), last.(v), false, false) for (k, v) in _pulldims(value, :t)
         )
     end
     for (url, url_reports) in reports
@@ -237,4 +288,3 @@ function _write_report(results, default_url)
         end
     end
 end
-

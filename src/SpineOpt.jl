@@ -45,9 +45,10 @@ export units_on_indices
 export units_invested_available_indices
 
 include("util/misc.jl")
-include("util/run_spineopt.jl")
 include("util/update_model.jl")
 include("util/postprocess_results.jl")
+
+include("run_spineopt.jl")
 
 include("data_structure/temporal_structure.jl")
 include("data_structure/stochastic_structure.jl")

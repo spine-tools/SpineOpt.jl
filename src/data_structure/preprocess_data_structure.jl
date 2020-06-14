@@ -30,9 +30,9 @@ function preprocess_data_structure()
     expand_units_on_resolution()
     add_connection_relationships()
     generate_network_components()
-    generate_direction()    
+    generate_direction()
     generate_variable_indexing_support()
-    generate_investment_relationships()    
+    generate_investment_relationships()
 end
 
 """
