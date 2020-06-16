@@ -28,12 +28,13 @@
 A list of `NamedTuple`s corresponding to indices of the `unit_flow` variable.
 The keyword arguments act as filters for each dimension.
 """
-function unit_flow_indices(;unit=anything,
-    node=anything,
-    direction=anything,
-    stochastic_scenario=anything,
-    t=anything
-)
+function unit_flow_indices(;
+        unit=anything,
+        node=anything,
+        direction=anything,
+        stochastic_scenario=anything,
+        t=anything
+    )
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
     [

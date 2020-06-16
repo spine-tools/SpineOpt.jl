@@ -72,8 +72,9 @@ end
 		]
 	)
 	db_api.import_data_to_url(url_in; test_data...)
-    m = run_spineopt(url_in)
+    m = run_spineopt(url_in; log_level=0)
     @test length(unit_flow_indices()) == 1
+    u, n, d, s, t = first(unit_flow_indices())
     @test u.name == :test_unit
     @test n.name == :test_node
     @test d.name == :to_node
@@ -81,3 +82,5 @@ end
     @test start(t) == DateTime(2000)
     @test end_(t) == DateTime(2000, 1, 1, 1, 0, 0)
 end
+
+include("constraints.jl")
