@@ -64,6 +64,7 @@ _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.se
 		:object_parameter_values => [
 			["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
 			["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+			["model", "instance", "duration_unit", "hour"],
 			["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
 			["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
 		],
@@ -80,50 +81,93 @@ _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.se
 		_load_template(url_in)
 		db_api.import_data_to_url(url_in; test_data...)
 	    m = run_spineopt(url_in; log_level=0)
-	    t = first(time_slice(temporal_block=node__temporal_block(node=units_on_resolution(unit=unit(:test_unit)))))
-	    key = (unit(:test_unit), stochastic_scenario(:parent), t)
-	    var_units_on = m.ext[:variables][:units_on]
-	    var_units_available = m.ext[:variables][:units_available]
-	    var_u_on = var_units_on[key...]
-	    var_u_av = var_units_available[key...]
-	    expected_con = @build_constraint(var_u_on <= var_u_av)
-	    con_u_on = m.ext[:constraints][:units_on][key]
-	    observed_con = constraint_object(con_u_on)
-	    @test _is_constraint_equal(observed_con, expected_con)
+		var_units_on = m.ext[:variables][:units_on]
+		var_units_available = m.ext[:variables][:units_available]
+	    constraint = m.ext[:constraints][:units_on]
+	    @test length(constraint) == 2
+	    scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+	    time_slices = time_slice(temporal_block=node__temporal_block(node=units_on_resolution(unit=unit(:test_unit))))
+	    @testset for (s, t) in zip(scenarios, time_slices)
+		    key = (unit(:test_unit), s, t)
+		    var_u_on = var_units_on[key...]
+		    var_u_av = var_units_available[key...]
+		    expected_con = @build_constraint(var_u_on <= var_u_av)
+		    con_u_on = constraint[key]
+		    observed_con = constraint_object(con_u_on)
+		    @test _is_constraint_equal(observed_con, expected_con)
+		end
 	end
 	@testset "constraint_units_available" begin
 		# TODO: investments
 		_load_template(url_in)
 		db_api.import_data_to_url(url_in; test_data...)
 		number_of_units = 4
-		db_api.import_data_to_url(url_in; object_parameter_values=[["unit", "test_unit", "number_of_units", number_of_units]])
+		db_api.import_data_to_url(
+			url_in; object_parameter_values=[["unit", "test_unit", "number_of_units", number_of_units]]
+		)
 	    m = run_spineopt(url_in; log_level=0)
-	    t = first(time_slice(temporal_block=node__temporal_block(node=units_on_resolution(unit=unit(:test_unit)))))
-	    key = (unit(:test_unit), stochastic_scenario(:parent), t)
-	    var = m.ext[:variables][:units_available][key...]
-	    expected_con = @build_constraint(var == number_of_units)
-	    con = m.ext[:constraints][:units_available][key]
-	    observed_con = constraint_object(con)
-	    @test _is_constraint_equal(observed_con, expected_con)
+		var_units_available = m.ext[:variables][:units_available]
+	    constraint = m.ext[:constraints][:units_available]
+	    @test length(constraint) == 2
+	    scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+	    time_slices = time_slice(temporal_block=node__temporal_block(node=units_on_resolution(unit=unit(:test_unit))))
+	    @testset for (s, t) in zip(scenarios, time_slices)
+		    key = (unit(:test_unit), s, t)
+		    var = var_units_available[key...]
+		    expected_con = @build_constraint(var == number_of_units)
+		    con = constraint[key]
+		    observed_con = constraint_object(con)
+		    @test _is_constraint_equal(observed_con, expected_con)
+	    end
 	end
 	@testset "constraint_unit_state_transition" begin
 		_load_template(url_in)
 		db_api.import_data_to_url(url_in; test_data...)
 	    m = run_spineopt(url_in; log_level=0)
-	    t1 = last(time_slice(temporal_block=temporal_block(:hourly)))
-	    t0 = first(t_before_t(t_after=t1))
-	    con_key = (unit(:test_unit), [stochastic_scenario(:parent), stochastic_scenario(:child)], t0, t1)
-	    var_t0_key = (unit(:test_unit), stochastic_scenario(:parent), t0)
-	    var_t1_key = (unit(:test_unit), stochastic_scenario(:child), t1)
-	    var_units_on = m.ext[:variables][:units_on]
-	    var_units_started_up = m.ext[:variables][:units_started_up]
-	    var_units_shut_down = m.ext[:variables][:units_shut_down]
-	    var_u_on_t0 = var_units_on[var_t0_key...]
-	    var_u_on_t1 = var_units_on[var_t1_key...]
-	    var_u_su_t1 = var_units_started_up[var_t1_key...]
-	    var_u_sd_t1 = var_units_shut_down[var_t1_key...]
-	    expected_con = @build_constraint(var_u_on_t1 - var_u_on_t0 == var_u_su_t1 - var_u_sd_t1)
-	    observed_con = constraint_object(m.ext[:constraints][:unit_state_transition][con_key])
-	    @test _is_constraint_equal(observed_con, expected_con)
+		var_units_on = m.ext[:variables][:units_on]
+		var_units_started_up = m.ext[:variables][:units_started_up]
+		var_units_shut_down = m.ext[:variables][:units_shut_down]
+	    constraint = m.ext[:constraints][:unit_state_transition]
+	    @test length(constraint) == 2
+	    scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+	    time_slices = time_slice(temporal_block=node__temporal_block(node=units_on_resolution(unit=unit(:test_unit))))
+	    @testset for (s1, t1) in zip(scenarios, time_slices)
+		    t0 = first(t_before_t(t_after=t1))
+		    s0 = first(parent_stochastic_scenario__child_stochastic_scenario(stochastic_scenario2=s1, _default=[s1]))
+		    path = unique([s0, s1])
+		    con_key = (unit(:test_unit), path, t0, t1)
+		    var_key0 = (unit(:test_unit), s0, t0)
+		    var_key1 = (unit(:test_unit), s1, t1)
+		    var_u_on0 = get(var_units_on, var_key0, 0)
+		    var_u_on1 = var_units_on[var_key1...]
+		    var_u_su1 = var_units_started_up[var_key1...]
+		    var_u_sd1 = var_units_shut_down[var_key1...]
+		    expected_con = @build_constraint(var_u_on1 - var_u_on0 == var_u_su1 - var_u_sd1)
+		    observed_con = constraint_object(constraint[con_key])
+		    @test _is_constraint_equal(observed_con, expected_con)
+		end
+	end
+	@testset "constraint_unit_flow_capacity" begin
+		_load_template(url_in)
+		db_api.import_data_to_url(url_in; test_data...)
+		unit_capacity = 100
+		relationship_parameter_values = [["unit__from_node", ["test_unit", "from_node"], "unit_capacity", unit_capacity]]
+		db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
+	    m = run_spineopt(url_in; log_level=0)
+	    constraint = m.ext[:constraints][:unit_flow_capacity]	    
+		var_unit_flow = m.ext[:variables][:unit_flow]
+		var_units_on = m.ext[:variables][:units_on]   
+	    scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+	    time_slices = time_slice(temporal_block=node__temporal_block(node=units_on_resolution(unit=unit(:test_unit))))
+	    @testset for (s, t) in zip(scenarios, time_slices)
+			con_key = (unit(:test_unit), node(:from_node), direction(:from_node), [s], t)
+			var_u_flow_key = (unit(:test_unit), node(:from_node), direction(:from_node), s, t)
+			var_u_on_key = (unit(:test_unit), s, t)
+			var_u_flow = var_unit_flow[var_u_flow_key...]
+			var_u_on = var_units_on[var_u_on_key...]
+		    expected_con = @build_constraint(var_u_flow <= unit_capacity * var_u_on)
+		    observed_con = constraint_object(constraint[con_key])
+		    @test _is_constraint_equal(observed_con, expected_con)
+	    end
 	end
 end
