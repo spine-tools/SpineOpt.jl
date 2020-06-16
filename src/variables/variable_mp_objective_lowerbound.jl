@@ -17,10 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function add_variable_mp_objective_lowerbound!(m::Model)    
-    var = @variable(m, mp_objective_lowerbound, base_name="mp_objective_lowerbound")
-    set_lower_bound(var, 0)    
-    var
+function add_variable_mp_objective_lowerbound!(m::Model)
+    add_variable!(m, :mp_objective_lowerbound, mp_objective_lowerbound_indices; lb=x -> 0)
 end
 
+function mp_objective_lowerbound_indices()
+    first(model())
+end
 
