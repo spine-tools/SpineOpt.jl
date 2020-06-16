@@ -1,7 +1,7 @@
-using Documenter, SpineModel
+using Documenter, SpineOpt
 
 makedocs(
-    sitename = "SpineModel.jl",
+    sitename = "SpineOpt.jl",
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true"
     ),
@@ -12,6 +12,7 @@ makedocs(
 )
 
 deploydocs(
-    repo  = "github.com/Spine-project/Spine-Model.git",
-    versions = ["stable" => "v^", "v#.#"]
+    repo  = "github.com/Spine-project/SpineOpt.jl.git",
+    versions = ["stable" => "v^", "v#.#"],
+    devbranch = "dev",
 )

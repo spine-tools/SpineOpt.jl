@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -27,8 +27,10 @@ function start_up_costs(m::Model)
     @expression(
         m,
         expr_sum(
-            start_up_cost[(unit=u, t=t)] * units_started_up[u, t]
-            for (u, t) in units_on_indices(unit=indices(start_up_cost));
+            + units_started_up[u, s, t]
+            * start_up_cost[(unit=u, stochastic_scenario=s, t=t)]
+            * unit_stochastic_scenario_weight(unit=u, stochastic_scenario=s)
+            for (u, s, t) in units_on_indices(unit=indices(start_up_cost));
             init=0
         )
     )

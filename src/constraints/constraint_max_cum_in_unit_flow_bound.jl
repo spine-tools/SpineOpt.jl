@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -21,21 +21,22 @@
 """
     add_constraint_max_cum_in_unit_flow_bound!(m::Model)
 
-Set upperbound `max_cum_in_flow_bound `to the cumulated inflow
-into a `unit_group ug` if `max_cum_in_unit_flow_bound` exists.
+Set upperbound `max_cum_in_flow_bound `to the cumulated inflow into a `unit_group ug`
+if `max_cum_in_unit_flow_bound` exists.
 """
 function add_constraint_max_cum_in_unit_flow_bound!(m::Model)
     @fetch unit_flow = m.ext[:variables]
     cons = m.ext[:constraints][:max_cum_in_unit_flow_bound] = Dict()
     for (ug,) in indices(max_cum_in_unit_flow_bound)
-        cons[ug] = @constraint(
+        cons[ug] = @constraint( # TODO: How to turn this one into stochastical one? Path indexing over the whole `unit_group`?
             m,
             + sum(
-                unit_flow[u, n, d, t]
-                for (u, n, d, t) in unit_flow_indices(direction=direction(:from_node), unit=ug)
+                unit_flow[u, n, d, s, t]
+                * node_stochastic_weight[(node=n, stochastic_scenario=s)]
+                for (u, n, d, s, t) in unit_flow_indices(direction=direction(:from_node), unit=ug)
             )
             <=
-            + max_cum_in_unit_flow_bound(unit=ug) # TODO: Calling this parameter with brackets `max_cum_in_unit_flow_bound[(unit=ug)]` fails.
+            + max_cum_in_unit_flow_bound(unit=ug) # TODO: Calling this parameter with brackets `max_cum_in_unit_flow_bound[(unit=ug)]` fails. Also stochastics?
         )
     end
 end

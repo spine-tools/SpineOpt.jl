@@ -1,5 +1,5 @@
-name = "SpineModel"
-uuid = "b74cbf36-17f7-11e9-3430-fdc535b30a00"
+name = "SpineOpt"
+uuid = "0d8fc150-4032-4b6e-9540-20efcb304861"
 authors = ["Spine Project consortium <spine_info@vtt.fi>"]
 version = "0.2.0"
 

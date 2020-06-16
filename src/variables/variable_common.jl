@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -65,63 +65,3 @@ function _variable(m, name, ind, lb, ub, bin, int)
     var
 end
 
-fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Nothing) = nothing
-
-function fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Function)
-    var = m.ext[:variables][name]
-    for ind in indices()
-        fix_value_ = fix_value(ind)
-        fix_value_ != nothing && fix(var[ind], fix_value_; force=true)
-        end_(ind.t) <= end_(current_window) || continue
-        history_ind = (; ind..., t=t_history_t[ind.t])
-        fix_value_ = fix_value(history_ind)
-        fix_value_ != nothing && fix(var[history_ind], fix_value_; force=true)
-    end
-end
-
-_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value(v)) : JuMP.value(v)
-
-function save_value!(m::Model, name::Symbol, indices::Function)
-    inds = indices()
-    var = m.ext[:variables][name]
-    m.ext[:values][name] = Dict(
-        ind => _value(var[ind]) for ind in indices() if end_(ind.t) <= end_(current_window)
-    )
-end
-
-function update_variable!(m::Model, name::Symbol, indices::Function)
-    var = m.ext[:variables][name]
-    val = m.ext[:values][name]
-    lb = m.ext[:variables_definition][name][:lb]
-    ub = m.ext[:variables_definition][name][:ub]
-    for ind in indices()
-        set_name(var[ind], _base_name(name, ind))
-        if is_fixed(var[ind])
-            unfix(var[ind])
-            lb != nothing && set_lower_bound(var[ind], lb(ind))
-            ub != nothing && set_upper_bound(var[ind], ub(ind))
-        end
-        end_(ind.t) <= end_(current_window) || continue
-        history_ind = (; ind..., t=t_history_t[ind.t])
-        set_name(var[history_ind], _base_name(name, history_ind))
-        fix(var[history_ind], val[ind]; force=true)
-    end
-end
-
-function fix_variables!(m::Model)
-    for (name, definition) in m.ext[:variables_definition]
-        fix_variable!(m, name, definition[:indices], definition[:fix_value])
-    end
-end
-
-function save_values!(m::Model)
-    for (name, definition) in m.ext[:variables_definition]
-        save_value!(m, name, definition[:indices])
-    end
-end
-
-function update_variables!(m::Model)
-    for (name, definition) in m.ext[:variables_definition]
-        update_variable!(m, name, definition[:indices])
-    end
-end

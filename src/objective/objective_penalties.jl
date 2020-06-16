@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -25,9 +25,10 @@ function objective_penalties(m::Model)
     @expression(
         m,
         expr_sum(
-            (node_slack_neg[n, t] + node_slack_pos[n, t]) * duration(t) * node_slack_penalty[(node=n, t=t)]
-            for n in indices(node_slack_penalty)
-            for (n, t) in node_slack_indices(node=n);
+            ( node_slack_neg[n, s, t] + node_slack_pos[n, s, t]) * duration(t)
+            * node_slack_penalty[(node=n, t=t)]
+            * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
+            for (n, s, t) in node_slack_indices();
             init=0
         )
     )

@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -28,12 +28,13 @@ function add_constraint_node_state_capacity!(m::Model)
     @fetch node_state = m.ext[:variables]
     cons = m.ext[:constraints][:node_state_capacity] = Dict()
     for n in indices(node_state_cap)
-        for (n, t) in node_state_indices(node=n)
-            cons[n, t] = @constraint(
+        for (n, s, t) in node_state_indices(node=n)
+            cons[n, s, t] = @constraint(
                 m,
-                node_state[n, t]
+                + node_state[n, s, t]
                 <=
-                node_state_cap[(node=n, t=t)]
+                + node_state_cap[(node=n, t=t)] # TODO: Stochastic parameters
+                #TODO: add investment decisions for storages
             )
         end
     end

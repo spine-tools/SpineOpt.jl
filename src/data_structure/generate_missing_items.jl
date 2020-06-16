@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -17,6 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+"""
+    generate_missing_items()
+
+Compares the defined sets of `ObjectClass`, `RelationshipClass` and parameter definitions with the
+`spineopt_template.json` and generates missing items.
+"""
 function generate_missing_items()
     mod = @__MODULE__
     missing_items = Dict(
@@ -29,10 +35,11 @@ function generate_missing_items()
     )
     merge!(classes, Dict(class.name => class for class in relationship_class(mod)))
     parameters = Set(param.name for param in parameter(mod))
-    for name in template["object_classes"]
+    for (name,) in template["object_classes"]
         sym_name = Symbol(name)
         sym_name in keys(classes) && continue
         push!(missing_items["object classes"], name)
+        @warn("object class $name does not exist, creating it")
         object_class = classes[sym_name] = ObjectClass(sym_name, [])
         @eval mod begin
             $sym_name = $object_class
@@ -83,7 +90,7 @@ function generate_missing_items()
         @warn """
         Some items are missing from the input database.
         We'll assume sensitive defaults for any missing parameter definitions, and empty collections for any missing classes.
-        Spine Model might still be able to run, but otherwise you'd need to check your input database.
+        SpineOpt might still be able to run, but otherwise you'd need to check your input database.
 
         Missing item list follows:
         $missing_items_str

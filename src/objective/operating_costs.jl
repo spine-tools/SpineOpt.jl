@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -25,9 +25,11 @@ function operating_costs(m::Model)
     @expression(
         m,
         expr_sum(
-            unit_flow[u, n, d, t] * duration(t) * operating_cost[(unit=u, node=n, direction=d, t=t)]
+            unit_flow[u, n, d, s, t] * duration(t) 
+            * operating_cost[(unit=u, node=n, direction=d, t=t)]
+            * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for (u, n, d) in indices(operating_cost)
-            for (u, n, d, t) in unit_flow_indices(unit=u, node=n, direction=d);
+            for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d);
             init=0
         )
     )

@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -28,14 +28,15 @@ function add_constraint_connection_flow_capacity!(m::Model)
     @fetch connection_flow = m.ext[:variables]
     cons = m.ext[:constraints][:connection_flow_capacity] = Dict()
     for (conn, n, d) in indices(connection_capacity)
-        for (conn, n, d, t) in connection_flow_indices(connection=conn, node=n, direction=d)
-            cons[conn, n, d, t] = @constraint(
+        for (conn, n, d, s, t) in connection_flow_indices(connection=conn, node=n, direction=d)
+            cons[conn, n, d, s, t] = @constraint(
                 m,
-                connection_flow[conn, n, d, t]
+                + connection_flow[conn, n, d, s, t]
                 <=
-                + connection_capacity[(connection=conn, node=n, direction=d, t=t)]
+                + connection_capacity[(connection=conn, node=n, direction=d, t=t)] # TODO: Stochastic parameters
                 * connection_availability_factor[(connection=conn, t=t)]
                 * connection_conv_cap_to_flow[(connection=conn, node=n, direction=d, t=t)]
+                #TODO: add investment decissions for connections
             )
         end
     end

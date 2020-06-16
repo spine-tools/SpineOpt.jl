@@ -1,6 +1,6 @@
 # Library
 
-Documentation for `SpineModel.jl`.
+Documentation for `SpineOpt.jl`.
 
 ## Contents
 
@@ -18,8 +18,8 @@ Depth = 3
 ## Public interface
 
 ```@docs
-run_spinemodel(::String, ::String)
-run_spinemodel(::String)
+run_spineopt(::String, ::String)
+run_spineopt(::String)
 ```
 
 
