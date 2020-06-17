@@ -274,9 +274,10 @@ function update_variable!(m::Model, name::Symbol, indices::Function)
             ub != nothing && set_upper_bound(var[ind], ub(ind))
         end
         end_(ind.t) <= end_(current_window) || continue
-        history_ind = (; ind..., t=t_history_t[ind.t])
-        set_name(var[history_ind], _base_name(name, history_ind))
-        fix(var[history_ind], val[ind]; force=true)
+        for history_ind in indices(; ind..., stochastic_scenario=anything, t=t_history_t[ind.t])
+            set_name(var[history_ind], _base_name(name, history_ind))
+            fix(var[history_ind], val[ind]; force=true)
+        end
     end
 end
 

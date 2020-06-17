@@ -215,9 +215,10 @@ function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Fu
         fix_value_ = fix_value(ind)
         fix_value_ != nothing && fix(var[ind], fix_value_; force=true)
         end_(ind.t) <= end_(current_window) || continue
-        history_ind = (; ind..., t=t_history_t[ind.t])
-        fix_value_ = fix_value(history_ind)
-        fix_value_ != nothing && fix(var[history_ind], fix_value_; force=true)
+        for history_ind in indices(; ind..., stochastic_scenario=anything, t=t_history_t[ind.t]) 
+            fix_value_ = fix_value(history_ind)
+            fix_value_ != nothing && fix(var[history_ind], fix_value_; force=true)
+        end
     end
 end
 
