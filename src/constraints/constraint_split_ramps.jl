@@ -25,22 +25,33 @@ Split delta(`unit_flow`) in `ramp_up_unit_flow and` `start_up_unit_flow`. This i
 required to enforce separate limitations on these two ramp types.
 """
 #TODO add scenario tree!!!
-function add_constraint_ramp_up!(m::Model)
-    @fetch unit_flow, ramp_up_unit_flow, start_up_unit_flow = m.ext[:variables]
+function add_constraint_split_ramps!(m::Model)
+    @fetch unit_flow, ramp_up_unit_flow, start_up_unit_flow, nonspin_ramp_up_unit_flow = m.ext[:variables]
+    @warn "stochastic_path still missing"
     constr_dict = m.ext[:constraints][:split_ramp_up] = Dict()
-    for (u, n, d, s, t_before) in ramp_up_unit_flow_indices()
-        for (u, n, d, s, t_after) in unit_flow_indices(unit=u,node=n,commodity=c,direction=d,t=t_before_t(t_before=t_before))
-            constr_dict[u, n, d, s, t_before] = @constraint(
-                m,
-                unit_flow[u, n, d, s, t_after]
-                - unit_flow[u, n, d, s, t_before]
-                #TODO: this needs to sum over u,n,d,
-                #maybe have on unit__to_node relationship has ramps and then only trigger these constraints
-                <=
-                ramp_up_unit_flow[u, n, d, s, t_before]
-                +
-                start_up_unit_flow[u, n, d, s, t_after]
+        # @warn "instead of only ramp_up it should be Iterators.flatten(ramp_up & start_up)"
+        @warn "changed ramp_up from t_before tp t_after"
+        @warn "flows need to be summed over groups!!!!"
+    for (u, n, d, s, t_after) in unique(Iterators.flatten([ramp_up_unit_flow_indices(),start_up_unit_flow_indices(),nonspin_ramp_up_unit_flow_indices()]))
+        constr_dict[u, n, d, s, t_after] = @constraint(
+            m,
+            unit_flow[u, n, d, s, t_after]
+            -
+            expr_sum(
+            + unit_flow[u, n, d, s, t_before]
+                for (u, n, d, s, t_before) in unit_flow_indices(unit=u,node=n,direction=d,stochastic_scenario=s,t=t_before_t(t_after=t_after))
+                if is_reserve_node(node=n) == :is_reserve_node_false;
+                    init=0
             )
-        end
+            #TODO: this needs to sum over u,n,d,
+            #maybe have on unit__to_node relationship has ramps and then only trigger these constraints
+            #only excludes non_spinning reserves from these flows
+            <=
+            get(ramp_up_unit_flow,(u, n, d, s, t_after),0)
+            +
+            get(start_up_unit_flow,(u, n, d, s, t_after),0)
+            +
+            get(nonspin_ramp_up_unit_flow,(u, n, d, s, t_after),0)
+        )
     end
 end

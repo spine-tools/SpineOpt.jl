@@ -31,7 +31,7 @@ function shut_down_costs(m::Model, t1)
             * shut_down_cost[(unit=u, stochastic_scenario=s, t=t)]
             * unit_stochastic_scenario_weight(unit=u, stochastic_scenario=s)
             for (u, s, t) in units_on_indices(unit=indices(shut_down_cost))
-                t <= t1;
+                if end_(t) <= t1;
             init=0
         )
     )

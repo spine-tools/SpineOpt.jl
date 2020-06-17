@@ -22,7 +22,7 @@
 """
 function connection_flow_costs(m::Model,t1)
     @fetch connection_flow = m.ext[:variables]
-    @expression(
+    a = @expression(
         m,
         reduce(
             +,
@@ -33,5 +33,9 @@ function connection_flow_costs(m::Model,t1)
             init=0
         )
     )
+    # @show typeof(a)
+    # @show drop_zeros!(a)
+    # @show a
+    a
 end
 #TODO: add weight scenario tree

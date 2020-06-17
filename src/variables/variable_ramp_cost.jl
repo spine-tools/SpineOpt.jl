@@ -31,5 +31,5 @@ function ramp_cost_indices(;unit=anything, t=anything)
     ]
 end
 
-create_variable_ramp_cost!(m::Model) = create_variable!(m, :ramp_cost, ramp_cost_indices; lb=x -> 0)
+add_variable_ramp_cost!(m::Model) = create_variable!(m, :ramp_cost, ramp_cost_indices; lb=x -> 0)
 # fix_variable_flow!(m::Model) = fix_variable!(m, :flow, flow_indices, fix_flow_)

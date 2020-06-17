@@ -28,6 +28,7 @@ function constraint_ratio_unit_flow_indices(ratio, d1, d2)
     ratio_unit_flow_indices = []
     for (u, n1, n2) in indices(ratio)
         for t in t_lowest_resolution(x.t for x in unit_flow_indices(unit=u, node=[n1, n2]))
+            #NOTE: we're assuming that the ratio constraint follows the resolution of flows
             # Ensure type stability
             active_scenarios = Array{Object,1}()
             # `unit_flow` for `direction` `d1`
@@ -59,7 +60,7 @@ function constraint_ratio_unit_flow_indices(ratio, d1, d2)
             for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
                 push!(
                     ratio_unit_flow_indices,
-                    (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
+                    (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t_overlaps_t(t))
                 )
             end
         end

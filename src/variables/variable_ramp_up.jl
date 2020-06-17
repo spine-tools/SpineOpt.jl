@@ -39,19 +39,22 @@ function ramp_up_unit_flow_indices(;unit=anything,
 )
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
-    [
+    ind = [
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
+        for (u,n,d) in indices(ramp_up_limit)
         for (u, n, d, tb) in unit_flow_indices_rc(
-            unit=unit, node=node, direction=direction, _compact=false
+            unit=intersect(unit,u), node=intersect(node,expand_node_group(n)), direction=intersect(direction,d), _compact=false
         )
         for (n, s, t) in node_stochastic_time_indices(
             node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
-            if (u,n,d) in indices(ramp_up_limit)
+        if reserve_node_type(node=n) != :upward_nonspinning
     ]
+    unique!(ind)
 end
 
 function add_variable_ramp_up_unit_flow!(m::Model)
+    @warn "unique for indices is probably not the most performant, try to reformulate"
     add_variable!(
         m,
         :ramp_up_unit_flow,

@@ -137,11 +137,16 @@ function rerun_spinemodel(
         @logtime level3 "- [variable_node_slack_pos]" add_variable_node_slack_pos!(m)
         @logtime level3 "- [variable_node_slack_neg]" add_variable_node_slack_neg!(m)
         @logtime level3 "- [variable_node_injection]" add_variable_node_injection!(m)
+        @warn "ramp_up variable checks weather non-spinning... find concise solution"
+        @logtime level3 "- [variable_ramp_costs]" add_variable_ramp_costs!(m)
         @logtime level3 "- [variable_ramp_up_unit_flow]" add_variable_ramp_up_unit_flow!(m)
         @logtime level3 "- [variable_start_up_unit_flow]" add_variable_start_up_unit_flow!(m)
+        @warn "change nonspin startup indices"
         @logtime level3 "- [variable_nonspin_starting_up]"  add_variable_nonspin_starting_up!(m)
+        @logtime level3 "- [variable_nonspin_ramp_up_unit_flow]"  add_variable_nonspin_ramp_up_unit_flow!(m)
         @warn "Here you need to still extend model values such as GAP etc., and different cost terms"
         @warn "solver warm start?, duals?"
+        @warn "better naming?"
     end
     @logtime level2 "Fixing variable values..." fix_variables!(m)
     @logtime level2 "Adding constraints...\n" begin
@@ -176,15 +181,21 @@ function rerun_spinemodel(
         @logtime level3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
         @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
         @warn "add rampcost" #@logtime level3 "- [constraint_ramp_cost]" add_constraint_ramp_cost!(m)
+        @logtime level3 "- [constraint_ramp_cost]" add_constraint_ramp_cost!(m)
         @logtime level3 "- [constraint_split_ramps]" add_constraint_split_ramps!(m)
         @logtime level3 "- [constraint_ramp_up]" add_constraint_ramp_up!(m)
-        @logtime level3 "- [constraint_max_start_up_ramps]" add_constraint_max_start_up_ramps!(m)
-        @logtime level3 "- [constraint_min_start_up_ramps]" add_constraint_min_start_up_ramps!(m)
+        @logtime level3 "- [constraint_max_start_up_ramp]" add_constraint_max_start_up_ramp!(m)
+        @logtime level3 "- [constraint_min_start_up_ramp]" add_constraint_min_start_up_ramp!(m)
         @logtime level3 "- [constraint_ramp_down]" add_constraint_ramp_down!(m)
-        @logtime level3 "- [constraint_limit_export_brute_force]" add_constraint_limit_export_brute_force!(m)
+        @warn "add ramp_down"
+        @logtime level3 "- [constraint_max_nonspin_ramp_up]" add_constraint_max_nonspin_ramp_up!(m)
+        @logtime level3 "- [constraint_min_nonspin_ramp_up]" add_constraint_min_nonspin_ramp_up!(m)
+        # @logtime level3 "- [constraint_ramp_down]" add_constraint_ramp_down!(m)
+        @logtime level3 "- [constraint_limit_export_brute_force]" add_constraint_limit_export!(m)
         @logtime level3 "- [constraint_user]" add_constraints(m)
         @logtime level3 "- [setting constraint names]" name_constraints!(m)
     end
+    @logtime level2 "Initialize cost terms..." initialize_cost_terms!(m)
     @logtime level2 "Setting objective..." set_objective!(m)
     k = 2
     while optimize_model!(m)
@@ -193,6 +204,7 @@ function rerun_spinemodel(
         @logtime level2 "Saving results..." begin
             postprocess_results!(m)
             save_values!(m)
+            save_objective_values!(m)
             save_results!(results, m)
         end
         roll_temporal_structure() || break
@@ -202,6 +214,7 @@ function rerun_spinemodel(
         @logtime level2 "Updating constraints..." update_varying_constraints!(m)
         @logtime level2 "Updating user constraints..." update_constraints(m)
         @logtime level2 "Updating objective..." update_varying_objective!(m)
+        @warn "check update_varying_objective"
         k += 1
     end
      @logtime level2 "Writing report..." write_report(results, url_out)
@@ -229,7 +242,7 @@ Update `results` with results from `m`.
 """
 function save_results!(results, m)
     for out in output()
-        value = get(m.ext[:values], out.name, nothing)
+        value = get(merge(m.ext[:values],m.ext[:cost_terms]), out.name, nothing)#
         if value === nothing
             @warn "can't find results for '$(out.name)'"
             continue

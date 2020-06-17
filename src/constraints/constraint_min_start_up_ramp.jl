@@ -25,21 +25,26 @@ reserve ramp can be defined here.
 """
 
 function add_constraint_min_start_up_ramp!(m::Model)
-    @fetch units_started_up, ramp_up_flow, start_up_flow = m.ext[:variables]
+    @fetch units_started_up, start_up_unit_flow = m.ext[:variables]
     cons = m.ext[:constraints][:min_start_up_ramp] = Dict()
     for (u, n, d) in indices(min_startup_ramp) #TODO: add to template and db
             for (u, s, t) in units_on_indices(unit=u)
                     cons[u, n, d, s, t] = @constraint(
                     m,
                     + sum(
-                        start_up_flow[u, n, d, s, t]
-                                for (u, n, d, s, t) in start_up_unit_flow_indices(unit=u, node=n, direction=d, t=t)
+                        start_up_unit_flow[u, n, d, s, t]
+                                for (u, n, d, s, t) in start_up_unit_flow_indices(
+                                        unit=u,
+                                        node=n,
+                                        direction=d,
+                                        stochastic_scenario=s,
+                                        t=t_in_t(t_long=t))
                     )
                     >=
-                    ( units_started_up[u, s, t] + nonspin_starting_up[u, n, s, t])
-                            * min_startup_ramp[(unit=u, node=n, direction=d, t=t)]
-                                 * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
-                                  *unit_capacity[(unit=u, node=n, direction=d, t=t)] #TODO:add scenario parameters
+                    units_started_up[u, s, t]
+                        * min_startup_ramp[(unit=u, node=n, direction=d, t=t)]
+                                * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
+                                        *unit_capacity[(unit=u, node=n, direction=d, t=t)] #TODO:add scenario parameters
                 )
         end
     end

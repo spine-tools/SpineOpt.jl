@@ -18,17 +18,18 @@
 #############################################################################
 #TODO: stochastic_path
 #TODO: define start_up_ramp_costs, ramp_up_costs
-#TODO: leave for now but add later 
+#TODO: leave for now but add later
 """
     constraint_ramp_cost(m::Model)
 
-Limit the maximum in/out `flow` of a `unit` for all `unit_capacity` indices.
-Check if `unit_conv_cap_to_flow` is defined.
+Limit the maximum in/out `unit_flow` of a `unit` for all `unit_capacity` indices.
+Check if `unit_conv_cap_to_unit_flow` is defined.
 """
 function add_constraint_ramp_cost!(m::Model)
-    @fetch ramp_cost, units_started_up, units_shut_down, flow = m.ext[:variables]
+    @fetch ramp_cost, units_started_up, units_shut_down, unit_flow = m.ext[:variables]
     cons = m.ext[:constraints][:ramp_cost] = Dict{NamedTuple,Any}()
     for (u,t) in ramp_cost_indices() ###history needed for
+        @warn "add ramp_costs"
         for (u, c) in indices(ramp_up_costs;unit=u)
             cons[(unit=u, t=t)] = @constraint(
                 m,
@@ -37,9 +38,9 @@ function add_constraint_ramp_cost!(m::Model)
                 + ramp_up_costs(unit=u,commodity=c)
                 * reduce(
                     +,
-                    flow[u1,n1,c1,d1,t1] - flow[u1,n1,c1,d1,t_before] - units_started_up[u,t1]*unit_capacity(unit=u,commodity=c,direction=d1)
-                    for (u1,n1,c1,d1,t1) in flow_indices(unit=u, commodity=c, t=t_in_t(t_long=t))
-                        for (u1,n1,c1,d1,t_before) in flow_indices(unit=u1,node=n1,commodity=c1,direction=d1,t=t_before_t(t_after=t1));
+                    unit_flow[u1,n1,c1,d1,t1] - unit_flow[u1,n1,c1,d1,t_before] - units_started_up[u,t1]*unit_capacity(unit=u,commodity=c,direction=d1)
+                    for (u1,n1,c1,d1,t1) in unit_flow_indices(unit=u, commodity=c, t=t_in_t(t_long=t))
+                        for (u1,n1,c1,d1,t_before) in unit_flow_indices(unit=u1,node=n1,commodity=c1,direction=d1,t=t_before_t(t_after=t1));
                     init=0
                 )
             )
@@ -52,9 +53,9 @@ function add_constraint_ramp_cost!(m::Model)
                 + ramp_down_costs(unit=u,commodity=c)
                 * reduce(
                     +,
-                    flow[u1,n1,c1,d1,t_before] - flow[u1,n1,c1,d1,t1] - units_shut_down[u,t1]*unit_capacity(unit=u,commodity=c,direction=d1)
-                    for (u1,n1,c1,d1,t1) in flow_indices(unit=u, commodity=c, t=t_in_t(t_long=t))
-                        for (u1,n1,c1,d1,t_before) in flow_indices(unit=u1,node=n1,commodity=c1,direction=d1,t=t_before_t(t_after=t1));
+                    unit_flow[u1,n1,c1,d1,t_before] - unit_flow[u1,n1,c1,d1,t1] - units_shut_down[u,t1]*unit_capacity(unit=u,commodity=c,direction=d1)
+                    for (u1,n1,c1,d1,t1) in unit_flow_indices(unit=u, commodity=c, t=t_in_t(t_long=t))
+                        for (u1,n1,c1,d1,t_before) in unit_flow_indices(unit=u1,node=n1,commodity=c1,direction=d1,t=t_before_t(t_after=t1));
                     init=0
                 )
             )

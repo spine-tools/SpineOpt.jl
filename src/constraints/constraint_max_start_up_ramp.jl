@@ -25,18 +25,22 @@ reserve ramp can be defined here.
 """
 #TODO: Good to go for first try; make sure capacities are well defined
 function add_constraint_max_start_up_ramp!(m::Model)
-    @fetch units_started_up, nonspin_starting_up, start_up_unit_flow = m.ext[:variables]
+    @fetch units_started_up, start_up_unit_flow = m.ext[:variables]
     cons = m.ext[:constraints][:max_start_up_ramp] = Dict()
-    for (u, n, d) in indices(max_startup_ramp)
+    @warn "this doesn't work if we use the same parameter for reserves and el"
+    @warn "solution differentiate between start_up _variable and non spin startup variable"
+    @warn "other name for non spin ramp than max_startup_ramp -> starting_up remove "
+    for (u, n, d) in indices(max_startup_ramp) #TODO: this is has node_group of only non-reserves
         for (u, s, t) in units_on_indices(unit=u)
             cons[u, n, d, s, t] = @constraint(
                 m,
                 + sum(
                     start_up_unit_flow[u, n, d, s, t]
-                            for (u, n, d, s, t) in start_up_unit_flow_indices(unit=u, node=n, direction=d, scenario=s, t=t_in_t(t_long=t))
+                            for (u, n, d, s, t) in start_up_unit_flow_indices(
+                                unit=u, node=n, direction=d, stochastic_scenario=s, t=t_in_t(t_long=t))
                 ) #TODO: t_in_t_after of rahter t_short
                 <=
-                    + (units_started_up[u, s, t] + nonspin_starting_up[u, n, s, t])
+                        units_started_up[u, s, t]
                         * max_startup_ramp[(unit=u, node=n, direction=d)]
                         # * max_res_startup_ramp(unit=u, node=n, direction=d, t=t)
                     * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)] *unit_capacity[(unit=u, node=n, direction=d, t=t)]

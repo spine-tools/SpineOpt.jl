@@ -31,7 +31,7 @@ function variable_om_costs(m::Model, t1)
             * vom_cost[(unit=u, node=n, direction=d, t=t)]
             for (u, n, d) in indices(vom_cost)
             for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d)
-                if t <= t1;
+                if end_(t) <= t1;
             init=0
         )
     )

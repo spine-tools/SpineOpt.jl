@@ -27,18 +27,23 @@ Check if `connection_conv_cap_to_flow` is defined.
 function add_constraint_connection_flow_capacity!(m::Model)
     @fetch connection_flow = m.ext[:variables]
     cons = m.ext[:constraints][:connection_flow_capacity] = Dict()
+    @warn "How to incorporate temporal correctly? Stoachstics not straight forward"
+    @warn "Add reservE_node to data"
     for (conn, n, d) in indices(connection_capacity)
-        for (conn, n, d, s, t) in connection_flow_indices(connection=conn, node=n, direction=d)
-            cons[conn, n, d, s, t] = @constraint(
+        for t in time_slice()
+            cons[conn, n, d,t] = @constraint(
                 m,
-                + connection_flow[conn, n, d, s, t]
+                + expr_sum(
+                    connection_flow[conn, n, d, s, t] #TODO: why did we get of duration here?
+                        for (conn, n, d, s, t) in connection_flow_indices(connection=conn, direction=d, node=n, t=t);
+                    init=0
+                )
                 <=
                 + connection_capacity[(connection=conn, node=n, direction=d, t=t)] # TODO: Stochastic parameters
                 * connection_availability_factor[(connection=conn, t=t)]
                 * connection_conv_cap_to_flow[(connection=conn, node=n, direction=d, t=t)]
-                + reduce(
-                    +,
-                    connection_flow[conn, n, d, s, t] #TODO: why did we get of duration here?
+                + expr_sum(
+                    connection_flow[conn, n, d_reverse, s, t] #TODO: why did we get of duration here?
                         for (conn, n, d_reverse, s, t) in connection_flow_indices(connection=conn, node=n, t=t)
                             if d_reverse != d && is_reserve_node(node=n) == :is_reserve_node_false;
                     init=0

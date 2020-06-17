@@ -35,6 +35,7 @@ function add_constraint_limit_export!(m::Model)
 	@fetch unit_flow, connection_flow = m.ext[:variables]
     cons = m.ext[:constraints][:limit_export] = Dict()
 	for ng in indices(limit_export)
+		@warn "move to user_constraints"
 		for (conn, n, d, s, t) in connection_flow_indices(node=ng, direction = direction(:to_node))
 	            cons[n, conn, s, t] = @constraint(
 	                m,

@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-    start_up_unit_flow_indices(
+    nonspin_ramp_up_unit_flow_indices(
         commodity=anything,
         node=anything,
         unit=anything,
@@ -33,8 +33,8 @@ The keyword arguments act as filters for each dimension.
 #only generate if max_start_up_ramp is defined and/or min_start_up_ramp
 #what are the default values?
 # rather model choise use ramps
-### start_up_unit_flow
-function start_up_unit_flow_indices(;unit=anything,
+### nonspin_ramp_up_unit_flow
+function nonspin_ramp_up_unit_flow_indices(;unit=anything,
     node=anything,
     direction=anything,
     stochastic_scenario=anything,
@@ -44,22 +44,19 @@ function start_up_unit_flow_indices(;unit=anything,
     node = expand_node_group(node)
     [
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (u,n,d) in indices(max_startup_ramp)
-        for (u, n, d, tb) in unit_flow_indices_rc(
-            unit=intersect(unit,u), node=intersect(node,expand_node_group(n)), direction=intersect(direction,d), _compact=false
-        )
+        for (u, n, d, tb) in nonspin_ramp_up_unit_flow_indices_rc(unit=unit, node=node, direction=direction, _compact=false)
         for (n, s, t) in node_stochastic_time_indices(
             node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     ]
 end
 
-function add_variable_start_up_unit_flow!(m::Model)
+function add_variable_nonspin_ramp_up_unit_flow!(m::Model)
     add_variable!(
         m,
-        :start_up_unit_flow,
-        start_up_unit_flow_indices;
+        :nonspin_ramp_up_unit_flow,
+        nonspin_ramp_up_unit_flow_indices;
         lb=x -> 0,
-        fix_value=x -> fix_start_up_unit_flow(unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false)
+        fix_value=x -> fix_nonspin_ramp_up_unit_flow(unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false)
     )
 end

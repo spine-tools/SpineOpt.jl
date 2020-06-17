@@ -97,8 +97,8 @@ function add_constraint_min_down_time!(m::Model)
             )
             #TODO: stoachstic path of this correct?
             + expr_sum(
-                + nonspin_starting_up[u, s_past, t_past]
-                for (u, s_past, t_past) in nonspin_starting_up_indices(
+                + nonspin_starting_up[u, n, s_past, t_past]
+                for (u, n, s_past, t_past) in nonspin_starting_up_indices(
                     unit=u,
                     stochastic_scenario=stochastic_path,
                     t=t_before_t(t_after=t) #TODO: check this t_before

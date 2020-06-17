@@ -81,7 +81,7 @@
         ["unit", "min_down_time", null, null],
         ["unit", "min_up_time", null, null],
         ["unit", "number_of_units", 1.0, null],
-        ["unit", "online_variable_type", "unit_online_variable_type_binary", "unit_online_variable_type_list"],
+        ["unit", "online_variable_type", "unit_online_variable_type_linear", "unit_online_variable_type_list"],
         ["unit", "shut_down_cost", null, null],
         ["unit", "start_up_cost", null, null],
         ["unit", "unit_availability_factor", 1.0, null],
