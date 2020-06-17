@@ -25,7 +25,7 @@ due to potentially different stochastic structures between `unit_flow` and
 `units_on` variables.
 """
 function constraint_ratio_unit_flow_indices(ratio, d1, d2)
-    (
+    unique(
         (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (u, n1, n2) in indices(ratio)
         for t in t_lowest_resolution(x.t for x in unit_flow_indices(unit=u, node=[n1, n2]))
@@ -146,6 +146,17 @@ function add_constraint_max_ratio_in_in_unit_flow!(m::Model)
 end
 
 """
+    add_constraint_min_ratio_in_in_unit_flow!(m::Model)
+
+Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+"""
+function add_constraint_min_ratio_in_in_unit_flow!(m::Model)
+    add_constraint_ratio_unit_flow!(
+        m, min_ratio_in_in_unit_flow, min_units_on_coefficient_in_in, >=, direction(:from_node), direction(:from_node)
+    )
+end
+
+"""
     add_constraint_max_ratio_out_in_unit_flow!(m::Model)
 
 Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
@@ -164,6 +175,17 @@ Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `dire
 function add_constraint_max_ratio_out_out_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
         m, max_ratio_out_out_unit_flow, max_units_on_coefficient_out_out, <=, direction(:to_node), direction(:to_node)
+    )
+end
+
+"""
+    add_constraint_min_ratio_out_out_unit_flow!(m::Model)
+
+Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+"""
+function add_constraint_min_ratio_out_out_unit_flow!(m::Model)
+    add_constraint_ratio_unit_flow!(
+        m, min_ratio_out_out_unit_flow, min_units_on_coefficient_out_out, >=, direction(:to_node), direction(:to_node)
     )
 end
 
