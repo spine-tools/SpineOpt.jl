@@ -162,7 +162,7 @@ function _stochastic_time_mapping(stochastic_DAG::Dict)
     )
     # Historical `time_slices`
     roots = _find_root_scenarios()
-    history_scenario_mapping = Dict(t => roots for t in sort(collect(values(t_history_t))))
+    history_scenario_mapping = Dict(t => roots for t in history_time_slice())
     merge!(scenario_mapping, history_scenario_mapping)
 end
 
