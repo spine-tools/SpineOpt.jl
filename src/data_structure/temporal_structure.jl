@@ -41,7 +41,7 @@ struct TimeSliceSet
 end
 
 struct TOverlapsT
-    list::Array{Tuple{TimeSlice,TimeSlice},1}
+    tuples::Array{Tuple{TimeSlice,TimeSlice},1}
 end
 
 """
