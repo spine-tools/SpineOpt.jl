@@ -179,11 +179,13 @@ function _generate_stochastic_time_map(all_stochastic_DAGs)
 end
 
 """
-    node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, t=anything)
+    node_stochastic_time_indices(;<keyword arguments>)
 
 Stochastic time indexes for `nodes`. Keyword arguments allow filtering.
 """
-function node_stochastic_time_indices(;node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
+function node_stochastic_time_indices(;
+        node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
+    )
     unique(
         (node=n, stochastic_scenario=s, t=t1)
         for (n, structure) in node__stochastic_structure(node=node, _compact=false)
@@ -194,11 +196,13 @@ function node_stochastic_time_indices(;node=anything, stochastic_scenario=anythi
 end
 
 """
-    unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, t=anything)
+    unit_stochastic_time_indices(;<keyword arguments>)
 
 Stochastic time indexes for `units`. Keyword arguments allow filtering.
 """
-function unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
+function unit_stochastic_time_indices(;
+        unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
+    )
     unique(
         (unit=u, stochastic_scenario=s, t=t1)
         for (u, n) in units_on_resolution(unit=unit, _compact=false)
@@ -209,12 +213,14 @@ function unit_stochastic_time_indices(;unit=anything, stochastic_scenario=anythi
 end
 
 """
-    unit_investment_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
+    unit_investment_stochastic_time_indices(;<keyword arguments>)
 
 Stochastic time indexes for `units_invested`. Keyword arguments allow filtering.
 """
-function unit_investment_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
-    unique( # TODO: Write a check for multiple structures
+function unit_investment_stochastic_time_indices(;
+        unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
+    )
+    unique(
         (unit=u, stochastic_scenario=s, t=t1)
         for (u, structure) in unit__investment_stochastic_structure(unit=unit, _compact=false)
         for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)

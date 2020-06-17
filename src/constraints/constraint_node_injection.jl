@@ -31,7 +31,7 @@ function constraint_node_injection_indices()
         (node=n, stochastic_scenario=path, t_before=t_before, t_after=t_after)
         for (n, tb) in node__temporal_block()
         for t_after in time_slice(temporal_block=tb)
-        for t_before in _take_one_t_before_t(t_after)
+        for t_before in t_before_t(t_after=t_after)
         for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_node_injection_indices(n, t_after, t_before))
         )

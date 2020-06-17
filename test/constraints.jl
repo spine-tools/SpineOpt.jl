@@ -23,7 +23,6 @@ using Test
 using Dates
 using JuMP
 
-
 function _load_template(url_in)
 	db_api.create_new_spine_database(url_in)
 	template = Dict(Symbol(key) => value for (key, value) in SpineOpt.template)
@@ -31,7 +30,6 @@ function _load_template(url_in)
 end
 
 _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
-
 
 @testset "Generate unit-related constraints" begin
 	url_in = "sqlite:///$(@__DIR__)/test.sqlite"
@@ -83,7 +81,7 @@ _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.se
 	    m = run_spineopt(url_in; log_level=0)
 		var_units_on = m.ext[:variables][:units_on]
 		var_units_available = m.ext[:variables][:units_available]
-	    constraint = m.ext[:constraints][:units_on]
+		constraint = m.ext[:constraints][:units_on]
 	    @test length(constraint) == 2
 	    scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
 	    time_slices = time_slice(temporal_block=temporal_block(:hourly))
@@ -128,22 +126,24 @@ _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.se
 		var_units_started_up = m.ext[:variables][:units_started_up]
 		var_units_shut_down = m.ext[:variables][:units_shut_down]
 	    constraint = m.ext[:constraints][:unit_state_transition]
-	    @test length(constraint) == 2
-	    paths = ([stochastic_scenario(:parent)], [stochastic_scenario(:parent), stochastic_scenario(:child)])
+	    @test length(constraint) == 3
+	    scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+	    s0 = stochastic_scenario(:parent)
 	    time_slices = time_slice(temporal_block=temporal_block(:hourly))
-	    @testset for (path, t1) in zip(paths, time_slices)
-		    t0 = first(t_before_t(t_after=t1))
-		    s0, s1 = (length(path) == 2) ? path : (nothing, path[1])
-		    var_key0 = (unit(:test_unit), s0, t0)
-		    var_key1 = (unit(:test_unit), s1, t1)
-		    var_u_on0 = get(var_units_on, var_key0, 0)
-		    var_u_on1 = var_units_on[var_key1...]
-		    var_u_su1 = var_units_started_up[var_key1...]
-		    var_u_sd1 = var_units_shut_down[var_key1...]
-		    con_key = (unit(:test_unit), path, t0, t1)
-		    expected_con = @build_constraint(var_u_on1 - var_u_on0 == var_u_su1 - var_u_sd1)
-		    observed_con = constraint_object(constraint[con_key])
-		    @test _is_constraint_equal(observed_con, expected_con)
+	    @testset for (s1, t1) in zip(scenarios, time_slices)
+		    path = unique([s0, s1])
+			var_key1 = (unit(:test_unit), s1, t1)
+			var_u_on1 = var_units_on[var_key1...]
+			var_u_su1 = var_units_started_up[var_key1...]
+			var_u_sd1 = var_units_shut_down[var_key1...]
+		    @testset for t0 in t_before_t(t_after=t1)
+			    var_key0 = (unit(:test_unit), s0, t0)
+			    var_u_on0 = get(var_units_on, var_key0, 0)
+			    con_key = (unit(:test_unit), path, t0, t1)
+			    expected_con = @build_constraint(var_u_on1 - var_u_on0 == var_u_su1 - var_u_sd1)
+			    observed_con = constraint_object(constraint[con_key])
+			    @test _is_constraint_equal(observed_con, expected_con)
+			end
 		end
 	end
 	@testset "constraint_unit_flow_capacity" begin
