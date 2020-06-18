@@ -136,7 +136,7 @@
         ["unit__from_node", "graph_view_position", null, null, null],
         ["unit__from_node", "minimum_operating_point", null, null, null],
         ["unit__from_node", "operating_cost", null, null, null],
-        ["unit__from_node", "operating_points_from", null, null, null],
+        ["unit__from_node", "operating_points", null, null, null],
         ["unit__from_node", "unit_capacity", null, null, null],
         ["unit__from_node", "unit_conv_cap_to_flow", 1.0, null, null],
         ["unit__from_node", "vom_cost", null, null, null],
