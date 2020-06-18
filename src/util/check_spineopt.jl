@@ -20,17 +20,17 @@
 # The functions in this file utilise PowerSystems.jl to calculate
 # power transmission distrivution factors (ptdfs) and line outage
 # distribution factors (lodfs). These are used in the power flow
-# constraints in SpineModel
+# constraints in spineopt
 #
 #
 #
 
 """
-    check_spinemodel(log_level::Int64)
+    check_spineopt(log_level::Int64)
 
 Runs a number of checks to see if the data provided results in a valid model.
 """
-function check_spinemodel(log_level::Int64)
+function check_spineopt(log_level::Int64)
     check_islands(log_level)
     check_units_on_resolution()
     check_node__stochastic_structure()

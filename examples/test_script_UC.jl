@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 # Export contents of database into the current session
-using SpineModel
+using SpineOpt
 # using MOI #necessary?
 using SpineInterface
 try
@@ -35,7 +35,7 @@ url_out = "sqlite:///C:\\Users\\u0122387\\Documents\\EUsysflex\\project_C1_conve
 # url_out = "sqlite:///C:\\Users\\u0122387\\Documents\\EUsysflex\\project_C1\\.spinetoolbox\\items\\a_da_uncoord_out\\confirm_result_2.sqlite"
 # include("C:\\Users\\u0122387\\Desktop\\SpineModel\\model\\examples/test_script_UC_user_constraints.jl")
 
-m = run_spinemodel(url_in, url_out; with_optimizer=SpineModel.JuMP.with_optimizer(Gurobi.Optimizer,MIPGap=0.0001,TimeLimit=600), cleanup=true)
+m = run_spineopt(url_in, url_out; with_optimizer=SpineOpt.JuMP.with_optimizer(Gurobi.Optimizer,MIPGap=0.0001,TimeLimit=600), cleanup=true)
 
 # Show active variables and constraints
 println("*** Active constraints: ***")
