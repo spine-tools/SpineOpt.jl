@@ -26,8 +26,8 @@ between `unit_flow` and `units_on` variables.
 """
 function constraint_unit_flow_capacity_indices()
     unit_flow_capacity_indices = []
-    for (u, n, d) in indices(unit_capacity)
-        for t in time_slice(temporal_block=node__temporal_block(node=expand_node_group(n)))
+    for (u, ng, d) in indices(unit_capacity)
+        for t in time_slice(temporal_block=node__temporal_block(node=expand_node_group(ng)))
             # Ensure type stability
             active_scenarios = Array{Object,1}()
             # Constrained `unit_flow`
@@ -35,7 +35,7 @@ function constraint_unit_flow_capacity_indices()
                 active_scenarios,
                 map(
                     inds -> inds.stochastic_scenario,
-                    unit_flow_indices(unit=u, node=n, direction=d, t=t)
+                    unit_flow_indices(unit=u, node=ng, direction=d, t=t)
                 )
             )
             # Relevant `units_on`
@@ -51,7 +51,7 @@ function constraint_unit_flow_capacity_indices()
             for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
                 push!(
                     unit_flow_capacity_indices,
-                    (unit=u, node=n, direction=d, stochastic_path=path, t=t)
+                    (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
                 )
             end
         end
@@ -69,20 +69,24 @@ Check if `unit_conv_cap_to_flow` is defined.
 function add_constraint_unit_flow_capacity!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][:unit_flow_capacity] = Dict()
-    for (u, n, d, stochastic_path, t) in constraint_unit_flow_capacity_indices()
-        cons[u, n, d, stochastic_path, t] = @constraint(
+    for (u, ng, d, stochastic_path, t) in constraint_unit_flow_capacity_indices()
+        cons[u, ng, d, stochastic_path, t] = @constraint(
             m,
             expr_sum(
                 + unit_flow[u, n, d, s, t]
-                for (u, n, d, s, t) in unit_flow_indices(
-                    unit=u, node=n, direction=d, stochastic_scenario=stochastic_path, t=t
-                )
-                    if reserve_node_type(node=n) != :upward_nonspinning;
+                for (u, n, d, s, t) in setdiff(
+                    unit_flow_indices(
+                    unit=u, node=ng, direction=d, stochastic_scenario=stochastic_path, t=t
+                    ),
+                    nonspin_ramp_up_unit_flow_indices(
+                    unit=u, node=ng, direction=d, stochastic_scenario=stochastic_path, t=t
+                    )
+                    );
                 init=0
             ) * duration(t)
             <=
-            + unit_capacity[(unit=u, node=n, direction=d, t=t)] # TODO: Stochastic parameters
-            * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
+            + unit_capacity[(unit=u, node=ng, direction=d, t=t)] # TODO: Stochastic parameters
+            * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, t=t)]
             * expr_sum(
                 units_on[u, s, t1] * min(duration(t1),duration(t)) #TODO: add this for ramps
                 for (u, s, t1) in units_on_indices(unit=u, stochastic_scenario=stochastic_path, t=t_overlaps_t(t));

@@ -18,7 +18,7 @@
 #############################################################################
 #COPY from unit_state_transition"
 """
-    constraint_ramp_up_unit_unit_flow_indices()
+    constraint_ramp_up_indices()
 
 Forms the stochastic index set for the `:ramp_up` constraint.
 Uses stochastic path indices due to potentially different stochastic scenarios
@@ -26,8 +26,8 @@ between `t_after` and `t_before`.
 """
 function constraint_ramp_up_indices()
     constraint_indices = []
-    for (u, n, d) in indices(ramp_up_limit)
-        for t in t_lowest_resolution(x.t for x in ramp_up_unit_flow_indices(unit=u,node=n,direction=d))
+    for (u, ng, d) in indices(ramp_up_limit)
+        for t in t_lowest_resolution(x.t for x in ramp_up_unit_flow_indices(unit=u,node=ng,direction=d))
             #NOTE: we're assuming that the ramp constraint follows the resolution of flows
             # Ensure type stability
             active_scenarios = Array{Object,1}()
@@ -36,7 +36,7 @@ function constraint_ramp_up_indices()
                 active_scenarios,
                 map(
                     inds -> inds.stochastic_scenario,
-                    ramp_up_unit_flow_indices(unit=u, node=n, direction=d, t=t_in_t(t_long=t))
+                    ramp_up_unit_flow_indices(unit=u, node=ng, direction=d, t=t_in_t(t_long=t))
                 )
             )
             # `units_on`
@@ -52,7 +52,7 @@ function constraint_ramp_up_indices()
             for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
                 push!(
                     constraint_indices,
-                    (unit=u, node=n, direction=d, stochastic_path=path, t=t)
+                    (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
                 )
             end
         end
@@ -70,13 +70,13 @@ Limit the maximum ramp of `ramp_up_unit_flow` of a `unit` or `unit_group` if the
 function add_constraint_ramp_up!(m::Model)
     @fetch units_on,  units_started_up, ramp_up_unit_flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:ramp_up] = Dict()
-    for (u, n, d, s, t) in constraint_ramp_up_indices()
-        constr_dict[u, n, d, s, t] = @constraint(
+    for (u, ng, d, s, t) in constraint_ramp_up_indices()
+        constr_dict[u, ng, d, s, t] = @constraint(
             m,
             + sum(
                 ramp_up_unit_flow[u, n, d, s, t]
                         for (u, n, d, s, t) in ramp_up_unit_flow_indices(
-                            unit=u, node=n, direction = d, t=t, stochastic_scenario=s)
+                            unit=u, node=ng, direction = d, t=t, stochastic_scenario=s)
             )
             <=
             + sum(
@@ -85,10 +85,9 @@ function add_constraint_ramp_up!(m::Model)
                         unit=u, stochastic_scenario=s, t=t_overlaps_t(t)
                             )
                 )
-                 * ramp_up_limit[(unit=u, node=n, direction=d, t=t, stochastic_scenario=s)]
-                    *unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t, stochastic_scenario=s)]
-                        *unit_capacity[(unit=u, node=n, direction=d, t=t, stochastic_scenario=s)]
-                 #TODO add scenario parameter values
+                 * ramp_up_limit[(unit=u, node=ng, direction=d, t=t, stochastic_scenario=s)]
+                    *unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, t=t, stochastic_scenario=s)]
+                        *unit_capacity[(unit=u, node=ng, direction=d, t=t, stochastic_scenario=s)]
         )
     end
 end

@@ -48,7 +48,6 @@ function ramp_up_unit_flow_indices(;unit=anything,
         for (n, s, t) in node_stochastic_time_indices(
             node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
-        if reserve_node_type(node=n) != :upward_nonspinning
     ]
     unique!(ind)
 end

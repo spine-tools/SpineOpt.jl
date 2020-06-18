@@ -26,8 +26,8 @@ due to potentially different stochastic structures between `unit_flow` and
 """
 function constraint_ratio_unit_flow_indices(ratio, d1, d2)
     ratio_unit_flow_indices = []
-    for (u, n1, n2) in indices(ratio)
-        for t in t_lowest_resolution(x.t for x in unit_flow_indices(unit=u, node=[n1, n2]))
+    for (u, ng1, ng2) in indices(ratio)
+        for t in t_lowest_resolution(x.t for x in unit_flow_indices(unit=u, node=[ng1, ng2]))
             #NOTE: we're assuming that the ratio constraint follows the resolution of flows
             # Ensure type stability
             active_scenarios = Array{Object,1}()
@@ -36,7 +36,7 @@ function constraint_ratio_unit_flow_indices(ratio, d1, d2)
                 active_scenarios,
                 map(
                     inds -> inds.stochastic_scenario,
-                    unit_flow_indices(unit=u, node=n1, direction=d1, t=t_in_t(t_long=t))
+                    unit_flow_indices(unit=u, node=ng1, direction=d1, t=t_in_t(t_long=t))
                 )
             )
             # `unit_flow` for `direction` `d2`
@@ -44,7 +44,7 @@ function constraint_ratio_unit_flow_indices(ratio, d1, d2)
                 active_scenarios,
                 map(
                     inds -> inds.stochastic_scenario,
-                    unit_flow_indices(unit=u, node=n2, direction=d2, t=t_in_t(t_long=t))
+                    unit_flow_indices(unit=u, node=ng2, direction=d2, t=t_in_t(t_long=t))
                 )
             )
             # `units_on` with coefficient
@@ -60,7 +60,7 @@ function constraint_ratio_unit_flow_indices(ratio, d1, d2)
             for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
                 push!(
                     ratio_unit_flow_indices,
-                    (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t_overlaps_t(t))
+                    (unit=u, node1=ng1, node2=ng2, stochastic_path=path, t=t_overlaps_t(t))
                 )
             end
         end
@@ -77,27 +77,27 @@ Ratio of `unit_flow` variables.
 function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, sense, d1, d2)
     @fetch unit_flow, units_on = m.ext[:variables]
     cons = m.ext[:constraints][ratio.name] = Dict()
-    for (u, n1, n2, stochastic_path, t) in constraint_ratio_unit_flow_indices(ratio, d1, d2)
-        cons[u, n1, n2, stochastic_path, t] = sense_constraint(
+    for (u, ng1, ng2, stochastic_path, t) in constraint_ratio_unit_flow_indices(ratio, d1, d2)
+        cons[u, ng1, ng2, stochastic_path, t] = sense_constraint(
             m,
             + expr_sum(
                 unit_flow[u, n1, d1, s, t_short] * duration(t_short)
                 for (u, n1, d1, s, t_short) in unit_flow_indices(
-                    unit=u, node=n1, direction=d1, stochastic_scenario=stochastic_path, t=t_in_t(t_long=t)
+                    unit=u, node=ng1, direction=d1, stochastic_scenario=stochastic_path, t=t_in_t(t_long=t)
                 );
                 init=0
             )
             ,
             sense,
-            + ratio[(unit=u, node1=n1, node2=n2, t=t)]
+            + ratio[(unit=u, node1=ng1, node2=ng2, t=t)]
             * expr_sum(
                 unit_flow[u, n2, d2, s, t_short] * duration(t_short)
                 for (u, n2, d2, s, t_short) in unit_flow_indices(
-                    unit=u, node=n2, direction=d2, stochastic_scenario=stochastic_path, t=t_in_t(t_long=t)
+                    unit=u, node=ng2, direction=d2, stochastic_scenario=stochastic_path, t=t_in_t(t_long=t)
                 );
                 init=0
             )
-            + units_on_coefficient[(unit=u, node1=n1, node2=n2, t=t)]
+            + units_on_coefficient[(unit=u, node1=ng1, node2=ng2, t=t)]
             * expr_sum(
                 units_on[u, s, t1] * min(duration(t1), duration(t))
                 for (u, s, t1) in units_on_indices(

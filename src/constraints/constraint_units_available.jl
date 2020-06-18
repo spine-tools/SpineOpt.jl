@@ -32,7 +32,7 @@ function add_constraint_units_available!(m::Model)
             m,
             + units_available[u, s, t]
             ==
-            + number_of_units[(unit=u, t=t)] * unit_availability_factor[(unit=u, t=t)] # TODO: Stochastic parameters
+            + number_of_units[(unit=u, t=t, s=s)] * unit_availability_factor[(unit=u, t=t, s=s)] # TODO: Stochastic parameters
         )
     end
 end

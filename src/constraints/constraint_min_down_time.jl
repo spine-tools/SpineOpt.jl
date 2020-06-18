@@ -52,6 +52,17 @@ function constraint_min_down_time_indices()
                     )
                 )
             )
+            # `nonspin_starting_up` during past time slices
+            append!(
+                active_scenarios,
+                map(
+                    inds -> inds.stochastic_scenario,
+                    nonspin_starting_up_indices(
+                        unit=u,
+                        t=t_before_t(t_after=t),
+                    )
+                )
+            )
             # Find stochastic paths for `active_scenarios`
             unique!(active_scenarios)
             for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)

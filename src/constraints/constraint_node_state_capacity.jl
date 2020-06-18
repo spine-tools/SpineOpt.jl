@@ -27,13 +27,13 @@ if it exists.
 function add_constraint_node_state_capacity!(m::Model)
     @fetch node_state = m.ext[:variables]
     cons = m.ext[:constraints][:node_state_capacity] = Dict()
-    for n in indices(node_state_cap)
-        for (n, s, t) in node_state_indices(node=n)
-            cons[n, s, t] = @constraint(
+    for ng in indices(node_state_cap)
+        for (ng, s, t) in node_state_indices(node=ng)
+            cons[ng, s, t] = @constraint(
                 m,
-                + node_state[n, s, t]
+                + node_state[ng, s, t]
                 <=
-                + node_state_cap[(node=n, t=t)] # TODO: Stochastic parameters
+                + node_state_cap[(node=ng, t=t)] # TODO: Stochastic parameters
             )
         end
     end

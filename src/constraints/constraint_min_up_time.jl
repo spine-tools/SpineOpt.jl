@@ -86,6 +86,7 @@ function add_constraint_min_up_time!(m::Model)
                 init=0
             )
             >=
+            # TODO:
             # + expr_sum(
             #     + nonspin_shutting_down[u, n, s, t]
             #     for (u, n, s, t) in nonspin_shutting_down_indices(

@@ -16,7 +16,48 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+"""
+    constraint_max_start_up_ramp_indices()
 
+Forms the stochastic index set for the `:max_start_up_ramp` constraint.
+Uses stochastic path indices due to potentially different stochastic scenarios
+between `t_after` and `t_before`.
+"""
+function constraint_max_start_up_ramp_indices()
+    constraint_indices = []
+    for (u, n, d) in indices(max_startup_ramp)
+        for t in t_lowest_resolution(x.t for x in start_up_unit_flow_indices(unit=u,node=n,direction=d))
+            #NOTE: we're assuming that the ramp constraint follows the resolution of flows
+            # Ensure type stability
+            active_scenarios = Array{Object,1}()
+            # `start_up_unit_flow` for `direction` `d`
+            append!(
+                active_scenarios,
+                map(
+                    inds -> inds.stochastic_scenario,
+                    start_up_unit_flow_indices(unit=u, node=n, direction=d, t=t_in_t(t_long=t))
+                )
+            )
+            # `units_started_up`
+            append!(
+                active_scenarios,
+                map(
+                    inds -> inds.stochastic_scenario,
+                    units_on_indices(unit=u, t=t_in_t(t_long=t))
+                )
+            )
+            # Find stochastic paths for `active_scenarios`
+            unique!(active_scenarios)
+            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
+                push!(
+                    constraint_indices,
+                    (unit=u, node=n, direction=d, stochastic_path=path, t=t)
+                )
+            end
+        end
+    end
+    return unique!(constraint_indices)
+end
 """
     add_constraint_max_start_up_ramp!(m::Model)
 
@@ -27,25 +68,22 @@ reserve ramp can be defined here.
 function add_constraint_max_start_up_ramp!(m::Model)
     @fetch units_started_up, start_up_unit_flow = m.ext[:variables]
     cons = m.ext[:constraints][:max_start_up_ramp] = Dict()
-    @warn "this doesn't work if we use the same parameter for reserves and el"
-    @warn "solution differentiate between start_up _variable and non spin startup variable"
-    @warn "other name for non spin ramp than max_startup_ramp -> starting_up remove "
-    for (u, n, d) in indices(max_startup_ramp) #TODO: this is has node_group of only non-reserves
-        for (u, s, t) in units_on_indices(unit=u)
-            cons[u, n, d, s, t] = @constraint(
-                m,
-                + sum(
-                    start_up_unit_flow[u, n, d, s, t]
-                            for (u, n, d, s, t) in start_up_unit_flow_indices(
-                                unit=u, node=n, direction=d, stochastic_scenario=s, t=t_in_t(t_long=t))
-                ) #TODO: t_in_t_after of rahter t_short
-                <=
-                        units_started_up[u, s, t]
-                        * max_startup_ramp[(unit=u, node=n, direction=d)]
-                        # * max_res_startup_ramp(unit=u, node=n, direction=d, t=t)
-                    * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)] *unit_capacity[(unit=u, node=n, direction=d, t=t)]
-            #TODO how does this work with the capacities? ... separate capacity for mFRR?
+    for (u, ng, d, s, t) in constraint_max_start_up_ramp_indices()
+        cons[u, ng, d, s, t] = @constraint(
+            m,
+            + sum(
+                start_up_unit_flow[u, n, d, s, t]
+                        for (u, n, d, s, t) in start_up_unit_flow_indices(
+                            unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(t_long=t))
             )
-        end
+            <=
+            + sum(
+                units_started_up[u, s, t]
+                        for (u, s, t) in units_on_indices(unit=u, stochastic_scenario=s, t=t_overlaps_t(t))
+            )
+                * max_startup_ramp[(unit=u, node=ng, direction=d)]
+                    * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, t=t)]
+                        *unit_capacity[(unit=u, node=ng, direction=d, t=t)]
+        )
     end
 end

@@ -35,11 +35,6 @@ function nonspin_starting_up_indices(;unit=anything, node=anything, stochastic_s
     ]
 end
 
-
-# can be borrowed from units on:
-# units_on_bin(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_binary
-# units_on_int(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_integer
-
 function add_variable_nonspin_starting_up!(m::Model)
     add_variable!(
     	m,
@@ -50,31 +45,3 @@ function add_variable_nonspin_starting_up!(m::Model)
     	fix_value=x -> fix_nonspin_starting_up(unit=x.unit, node=x.node, t=x.t, _strict=false)
     )
 end
-
-# """
-#     nonspin_starting_up_indices(unit=anything, t=anything)
-#
-# A list of `NamedTuple`s corresponding to indices of the `units_on` variable.
-# The keyword arguments act as filters for each dimension.
-# """
-# function nonspin_starting_up_indices(;unit=anything, t=anything, node=anything)
-#     [
-#         (unit=u, node=n, t=t_)
-#             for u_ in intersect(SpineModel.unit(),unit)
-#                 for (u,c,d) in filter(x -> x.unit in u_,collect(indices(max_res_startup_ramp)))
-#                     for n in intersect(SpineModel.node(), node)
-#                         for t_ in t_highest_resolution(unique(x.t for x in flow_indices(unit=u, node=n, t=t)))
-#                             if reserve_node_type(node=n) == :upward_nonspinning
-#     ]
-# end
-#
-# fix_nonspin_starting_up_(x) = fix_nonspin_starting_up(unit=x.unit, node=x.node, t=x.t, _strict=false)
-#
-# nonspin_starting_up_bin(x) = online_variable_type(unit=x.unit) == :binary
-# nonspin_starting_up_int(x) = online_variable_type(unit=x.unit) == :integer
-#
-# function create_variable_nonspin_starting_up!(m::Model)
-#     create_variable!(m, :nonspin_starting_up, nonspin_starting_up_indices; lb=x -> 0, bin=nonspin_starting_up_bin, int=nonspin_starting_up_int)
-# end
-#
-# fix_variable_nonspin_starting_up!(m::Model) = fix_variable!(m, :nonspin_starting_up, nonspin_starting_up_indices, fix_nonspin_starting_up_)

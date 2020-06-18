@@ -26,13 +26,15 @@ function fixed_om_costs(m,t1)
     @expression(
         m,
         expr_sum(
-            + unit_capacity[(unit=u, node=n, direction=d, t=t)]
+            + unit_capacity[(unit=u, node=ng, direction=d, t=t)]
             * number_of_units[(unit=u, t=t)]
             * fom_cost[(unit=u, t=t)]
-            for (u, n, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for t in time_slice()
+            * duration(t)
+            for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))
+            for (u, s, t) in units_on_indices()
                 ##TODO: so this one is summed up for every time-step within the optimization
                 ##This might cause double counting!
+                #rapleaced with units_on_indices; add stochastics
                 if end_(t) <= t1;
             init=0
         )

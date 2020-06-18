@@ -16,42 +16,83 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
-
+# """
+#     constraint_split_ramps_indices()
+#
+# Forms the stochastic index set for the `:split_ramps` constraint.
+# Uses stochastic path indices due to potentially different stochastic scenarios
+# between `t_after` and `t_before`.
+# """
+# function constraint_split_ramps_indices()
+#     constraint_indices = []
+#     for (u, n, d, s, t_after) in unique(Iterators.flatten([ramp_up_unit_flow_indices(),start_up_unit_flow_indices(),nonspin_ramp_up_unit_flow_indices()]))
+#         # Ensure type stability
+#         active_scenarios = Array{Object,1}()
+#         # `unit_flow` for `direction` `d`, t=t_after
+#         append!(
+#             active_scenarios,
+#             map(
+#                 inds -> inds.stochastic_scenario,
+#                 unit_flow_indices(unit=u, node=n, direction=d, t=t_after)
+#             )
+#         )
+#         # `unit_flow` for `direction` `d`
+#         append!(
+#             active_scenarios,
+#             map(
+#                 inds -> inds.stochastic_scenario,
+#                 unit_flow_indices(unit=u, node=n, direction=d, t=t_before_t(t_after=t_after))
+#             )
+#         )
+#         # Find stochastic paths for `active_scenarios`
+#         unique!(active_scenarios)
+#         for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
+#             push!(
+#                 constraint_indices,
+#                 (unit=u, node=n, direction=d, stochastic_path=path, t=t_after)
+#             )
+#         end
+#     end
+#     return unique!(constraint_indices)
+# end
 """
     add_constraint_split_ramps!(m::Model)
 
 Split delta(`unit_flow`) in `ramp_up_unit_flow and` `start_up_unit_flow`. This is
 required to enforce separate limitations on these two ramp types.
 """
-#TODO add scenario tree!!!
 function add_constraint_split_ramps!(m::Model)
     @fetch unit_flow, ramp_up_unit_flow, start_up_unit_flow, nonspin_ramp_up_unit_flow = m.ext[:variables]
-    @warn "stochastic_path still missing"
+    #TODO: ask Topi how this one would be properly done with stochastics
     constr_dict = m.ext[:constraints][:split_ramp_up] = Dict()
-        # @warn "instead of only ramp_up it should be Iterators.flatten(ramp_up & start_up)"
-        @warn "changed ramp_up from t_before tp t_after"
-        @warn "flows need to be summed over groups!!!!"
-    for (u, n, d, s, t_after) in unique(Iterators.flatten([ramp_up_unit_flow_indices(),start_up_unit_flow_indices(),nonspin_ramp_up_unit_flow_indices()]))
-        constr_dict[u, n, d, s, t_after] = @constraint(
+    for (u, n, d, s_after, t_after) in unique(Iterators.flatten([ramp_up_unit_flow_indices(),start_up_unit_flow_indices(),nonspin_ramp_up_unit_flow_indices()]))
+        for (u, n, d, s_before, t_before) in unit_flow_indices(unit=u,node=n,direction=d,t=t_before_t(t_after=t_after))
+        constr_dict[u, n, d, [s_after,s_before],t_before, t_after] = @constraint(
             m,
-            unit_flow[u, n, d, s, t_after]
+            expr_sum(
+            + unit_flow[u, n, d, s, t_after]
+                for (u, n, d, s, t_after) in unit_flow_indices(
+                    unit=u,node=n,direction=d,stochastic_scenario=s_after,t=t_after
+                    );
+                    init=0
+            )
             -
             expr_sum(
             + unit_flow[u, n, d, s, t_before]
-                for (u, n, d, s, t_before) in unit_flow_indices(unit=u,node=n,direction=d,stochastic_scenario=s,t=t_before_t(t_after=t_after))
+                for (u, n, d, s, t_before) in unit_flow_indices(
+                    unit=u,node=n,direction=d,stochastic_scenario=s_before,t=t_before
+                    )
                 if is_reserve_node(node=n) == :is_reserve_node_false;
                     init=0
             )
-            #TODO: this needs to sum over u,n,d,
-            #maybe have on unit__to_node relationship has ramps and then only trigger these constraints
-            #only excludes non_spinning reserves from these flows
             <=
-            get(ramp_up_unit_flow,(u, n, d, s, t_after),0)
+
+            get(ramp_up_unit_flow,(u, n, d, s_after, t_after),0)
             +
-            get(start_up_unit_flow,(u, n, d, s, t_after),0)
+            get(start_up_unit_flow,(u, n, d, s_after, t_after),0)
             +
-            get(nonspin_ramp_up_unit_flow,(u, n, d, s, t_after),0)
+            get(nonspin_ramp_up_unit_flow,(u, n, d, s_after, t_after),0)
         )
+    end
     end
 end

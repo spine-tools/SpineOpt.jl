@@ -137,11 +137,9 @@ function rerun_spinemodel(
         @logtime level3 "- [variable_node_slack_pos]" add_variable_node_slack_pos!(m)
         @logtime level3 "- [variable_node_slack_neg]" add_variable_node_slack_neg!(m)
         @logtime level3 "- [variable_node_injection]" add_variable_node_injection!(m)
-        @warn "ramp_up variable checks weather non-spinning... find concise solution"
-        @logtime level3 "- [variable_ramp_costs]" add_variable_ramp_costs!(m)
+        #TODO: @logtime level3 "- [variable_ramp_costs]" add_variable_ramp_costs!(m)
         @logtime level3 "- [variable_ramp_up_unit_flow]" add_variable_ramp_up_unit_flow!(m)
         @logtime level3 "- [variable_start_up_unit_flow]" add_variable_start_up_unit_flow!(m)
-        @warn "change nonspin startup indices"
         @logtime level3 "- [variable_nonspin_starting_up]"  add_variable_nonspin_starting_up!(m)
         @logtime level3 "- [variable_nonspin_ramp_up_unit_flow]"  add_variable_nonspin_ramp_up_unit_flow!(m)
         @warn "Here you need to still extend model values such as GAP etc., and different cost terms"
@@ -180,17 +178,14 @@ function rerun_spinemodel(
         @logtime level3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)
         @logtime level3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
         @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
-        @warn "add rampcost" #@logtime level3 "- [constraint_ramp_cost]" add_constraint_ramp_cost!(m)
-        @logtime level3 "- [constraint_ramp_cost]" add_constraint_ramp_cost!(m)
+        #TODO:@logtime level3 "- [constraint_ramp_cost]" add_constraint_ramp_cost!(m)
         @logtime level3 "- [constraint_split_ramps]" add_constraint_split_ramps!(m)
         @logtime level3 "- [constraint_ramp_up]" add_constraint_ramp_up!(m)
         @logtime level3 "- [constraint_max_start_up_ramp]" add_constraint_max_start_up_ramp!(m)
         @logtime level3 "- [constraint_min_start_up_ramp]" add_constraint_min_start_up_ramp!(m)
-        @logtime level3 "- [constraint_ramp_down]" add_constraint_ramp_down!(m)
-        @warn "add ramp_down"
+        #TODO: @logtime level3 "- [constraint_ramp_down]" add_constraint_ramp_down!(m)
         @logtime level3 "- [constraint_max_nonspin_ramp_up]" add_constraint_max_nonspin_ramp_up!(m)
         @logtime level3 "- [constraint_min_nonspin_ramp_up]" add_constraint_min_nonspin_ramp_up!(m)
-        # @logtime level3 "- [constraint_ramp_down]" add_constraint_ramp_down!(m)
         @logtime level3 "- [constraint_limit_export_brute_force]" add_constraint_limit_export!(m)
         @logtime level3 "- [constraint_user]" add_constraints(m)
         @logtime level3 "- [setting constraint names]" name_constraints!(m)
