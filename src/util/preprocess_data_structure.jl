@@ -308,7 +308,6 @@ function generate_variable_indices()
         for n in expand_node_group(ng)
         for tb in node__temporal_block(node=n)
     )
-    @warn "change this to (unit,node) reserve_type"
     unit_flow_indices_rc = RelationshipClass(
         :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices
     )

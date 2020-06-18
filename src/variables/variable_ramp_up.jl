@@ -53,7 +53,8 @@ function ramp_up_unit_flow_indices(;unit=anything,
 end
 
 function add_variable_ramp_up_unit_flow!(m::Model)
-    @warn "unique for indices is probably not the most performant, try to reformulate"
+    #TODO:"unique for indices is probably not the most performant, try to reformulate"
+    # reconsider moving this to preprocessing
     add_variable!(
         m,
         :ramp_up_unit_flow,

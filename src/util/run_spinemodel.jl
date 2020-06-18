@@ -142,9 +142,6 @@ function rerun_spinemodel(
         @logtime level3 "- [variable_start_up_unit_flow]" add_variable_start_up_unit_flow!(m)
         @logtime level3 "- [variable_nonspin_starting_up]"  add_variable_nonspin_starting_up!(m)
         @logtime level3 "- [variable_nonspin_ramp_up_unit_flow]"  add_variable_nonspin_ramp_up_unit_flow!(m)
-        @warn "Here you need to still extend model values such as GAP etc., and different cost terms"
-        @warn "solver warm start?, duals?"
-        @warn "better naming?"
     end
     @logtime level2 "Fixing variable values..." fix_variables!(m)
     @logtime level2 "Adding constraints...\n" begin
@@ -195,7 +192,6 @@ function rerun_spinemodel(
     k = 2
     while optimize_model!(m)
         @log level1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @warn "Here you need to still extend model values such as GAP etc., and different cost terms"
         @logtime level2 "Saving results..." begin
             postprocess_results!(m)
             save_values!(m)
@@ -209,7 +205,6 @@ function rerun_spinemodel(
         @logtime level2 "Updating constraints..." update_varying_constraints!(m)
         @logtime level2 "Updating user constraints..." update_constraints(m)
         @logtime level2 "Updating objective..." update_varying_objective!(m)
-        @warn "check update_varying_objective"
         k += 1
     end
      @logtime level2 "Writing report..." write_report(results, url_out)
