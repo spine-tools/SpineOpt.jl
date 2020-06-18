@@ -17,19 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-    run_spinemodel(url; <keyword arguments>)
+    run_spineopt(url; <keyword arguments>)
 
 Run the Spine model from `url` and write report to the same `url`.
-Keyword arguments have the same purpose as for [`run_spinemodel`](@ref).
+Keyword arguments have the same purpose as for [`run_spineopt`](@ref).
 """
-function run_spinemodel(
+function run_spineopt(
         url::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0),
         cleanup=true,
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
         log_level=3)
-    run_spinemodel(
+    run_spineopt(
         url,
         url;
         with_optimizer=with_optimizer,
@@ -60,7 +60,7 @@ end
 
 
 """
-    run_spinemodel(url_in, url_out; <keyword arguments>)
+    run_spineopt(url_in, url_out; <keyword arguments>)
 
 Run the Spine model from `url_in` and write report to `url_out`.
 At least `url_in` must point to valid Spine database.
@@ -70,7 +70,7 @@ A new Spine database is created at `url_out` if it doesn't exist.
 
 **`with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0)`** is the optimizer factory for building the JuMP model.
 
-**`cleanup=true`** tells [`run_spinemodel`](@ref) whether or not convenience functors should be
+**`cleanup=true`** tells [`run_spineopt`](@ref) whether or not convenience functors should be
 set to `nothing` after completion.
 
 **`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window, and allows adding user contraints.
@@ -79,7 +79,7 @@ set to `nothing` after completion.
 
 **`log_level=3`** is the log level.
 """
-function run_spinemodel(
+function run_spineopt(
         url_in::String,
         url_out::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
@@ -96,8 +96,8 @@ function run_spinemodel(
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     @logtime level2 "Creating temporal structure..." generate_temporal_structure()
     @logtime level2 "Creating stochastic structure..." generate_stochastic_structure()
-    check_spinemodel(log_level)
-    m = rerun_spinemodel(
+    check_spineopt(log_level)
+    m = rerun_spineopt(
         url_out;
         with_optimizer=with_optimizer,
         add_constraints=add_constraints,
@@ -108,7 +108,7 @@ function run_spinemodel(
     m
 end
 
-function rerun_spinemodel(
+function rerun_spineopt(
         url_out::String;
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
         add_constraints=m -> nothing,
