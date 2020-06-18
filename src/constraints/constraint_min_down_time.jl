@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -26,56 +26,23 @@ indices due to potentially different stochastic structures between `units_on` an
 """
 #TODO: Does this require nonspin_starting_up_indices() to be added here?
 function constraint_min_down_time_indices()
-    min_down_time_indices = []
-    for u in indices(min_down_time)
-        node = first(units_on_resolution(unit=u))
-        tb = node__temporal_block(node=node)
-        for t in time_slice(temporal_block=tb)
-            # Ensure type stability
-            active_scenarios = Array{Object,1}()
-            # Current `units_on` and `units_available`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    units_on_indices(unit=u, t=t)
-                )
+    unique(
+        (unit=u, stochastic_path=path, t=t)
+        for u in indices(min_down_time)
+        for t in time_slice(temporal_block=node__temporal_block(node=units_on_resolution(unit=u)))
+        for path in active_stochastic_paths(
+            unique(
+                [ind.stochastic_scenario
+                for ind in units_on_indices(
+                    unit=u, t=vcat(to_time_slice(TimeSlice(end_(t) - min_down_time(unit=u), end_(t))), t))],
+                [ind.stochastic_scenario
+                for ind in nonspin_starting_up_indices(
+                    unit=u, t=t_before_t(t_after=t))]
+                )  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
             )
-            # `units_shut_down` during past time slices
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    units_on_indices(
-                        unit=u,
-                        t=to_time_slice(TimeSlice(end_(t) - min_down_time(unit=u), end_(t))),
-                    )
-                )
-            )
-            # `nonspin_starting_up` during past time slices
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    nonspin_starting_up_indices(
-                        unit=u,
-                        t=t_before_t(t_after=t),
-                    )
-                )
-            )
-            # Find stochastic paths for `active_scenarios`
-            unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
-                push!(
-                    min_down_time_indices,
-                    (unit=u, stochastic_path=path, t=t)
-                )
-            end
-        end
-    end
-    return unique!(min_down_time_indices)
+        )
+    )
 end
-
 
 """
     add_constraint_min_down_time!(m::Model)

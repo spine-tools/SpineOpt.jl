@@ -26,13 +26,13 @@ The keyword arguments act as filters for each dimension.
 function nonspin_starting_up_indices(;unit=anything, node=anything, stochastic_scenario=anything, t=anything)
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
-    [
+    unique!([
         (unit=u, node=n, stochastic_scenario=s, t=t)
         for (u, n, d, tb) in nonspin_ramp_up_unit_flow_indices_rc(unit=unit, node=node, _compact=false)
         for (u, s, t) in unit_stochastic_time_indices(
             unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         ) #TODO: maybe retrieve s information from node to be more robust
-    ]
+    ])
 end
 
 function add_variable_nonspin_starting_up!(m::Model)

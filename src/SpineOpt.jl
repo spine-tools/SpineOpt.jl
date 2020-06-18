@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -35,7 +35,6 @@ using PowerSystems
 export run_spineopt
 export rerun_spineopt
 export @fetch
-export or
 
 # Export indices functions
 export unit_flow_indices
@@ -43,18 +42,19 @@ export unit_flow_op_indices
 export connection_flow_indices
 export node_state_indices
 export units_on_indices
-
-include("temporals/generate_time_slice.jl")
-include("temporals/generate_time_slice_relationships.jl")
-include("temporals/generate_stochastic_structure.jl")
+export units_invested_available_indices
 
 include("util/misc.jl")
-include("util/generate_missing_items.jl")
-include("run_spineopt.jl")
 include("util/update_model.jl")
-include("util/preprocess_data_structure.jl")
 include("util/postprocess_results.jl")
-include("util/check_spineopt.jl")
+
+include("run_spineopt.jl")
+
+include("data_structure/temporal_structure.jl")
+include("data_structure/stochastic_structure.jl")
+include("data_structure/preprocess_data_structure.jl")
+include("data_structure/generate_missing_items.jl")
+include("data_structure/check_data_structure.jl")
 
 include("variables/variable_common.jl")
 include("variables/variable_unit_flow.jl")
@@ -62,6 +62,9 @@ include("variables/variable_unit_flow_op.jl")
 include("variables/variable_connection_flow.jl")
 include("variables/variable_node_state.jl")
 include("variables/variable_units_on.jl")
+include("variables/variable_units_invested.jl")
+include("variables/variable_units_invested_available.jl")
+include("variables/variable_units_mothballed.jl")
 include("variables/variable_units_available.jl")
 include("variables/variable_units_started_up.jl")
 include("variables/variable_units_shut_down.jl")
@@ -81,6 +84,7 @@ include("objective/operating_costs.jl")
 include("objective/start_up_costs.jl")
 include("objective/shut_down_costs.jl")
 include("objective/fuel_costs.jl")
+include("objective/investment_costs.jl")
 include("objective/objective_penalties.jl")
 include("objective/total_costs.jl")
 include("objective/renewable_curtailment_costs.jl")
@@ -88,6 +92,7 @@ include("objective/connection_flow_costs.jl")
 include("objective/save_objective_terms.jl")
 include("objective/res_proc_costs.jl")
 
+include("constraints/constraint_common.jl")
 include("constraints/constraint_max_cum_in_unit_flow_bound.jl")
 include("constraints/constraint_unit_flow_capacity.jl")
 include("constraints/constraint_operating_point_bounds.jl")
@@ -107,6 +112,9 @@ include("constraints/constraint_min_up_time.jl")
 include("constraints/constraint_min_down_time.jl")
 include("constraints/constraint_unit_state_transition.jl")
 include("constraints/constraint_unit_constraint.jl")
+include("constraints/constraint_units_invested_available.jl")
+include("constraints/constraint_units_invested_transition.jl")
+include("constraints/constraint_unit_lifetime.jl")
 #TODO: include("constraints/constraint_ramp_cost.jl")
 include("constraints/constraint_split_ramps.jl")
 include("constraints/constraint_ramp_up.jl")
@@ -115,7 +123,6 @@ include("constraints/constraint_min_start_up_ramp.jl")
 #TODO: include("constraints/constraint_ramp_down.jl")
 include("constraints/constraint_max_nonspin_ramp_up.jl")
 include("constraints/constraint_min_nonspin_ramp_up.jl")
-#include("constraints/.jl")
 
 const template = JSON.parsefile(joinpath(dirname(pathof(@__MODULE__)), "..", "data", "spineopt_template.json"))
 

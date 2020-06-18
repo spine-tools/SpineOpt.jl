@@ -17,34 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-Create the variables for the model
-"""
-
-function create_variables!(m)
-
-        var = m.ext[:variables][:d_error] = Dict{Tuple, JuMP.VariableRef}()
-        for (r, b) in resource__block()
-                var[r, b] = @variable(m,
-                    base_name="d_error[$(r), $(b)]",
-                    lower_bound=0
-                )
-        end
-
-    var = m.ext[:variables][:selected] = Dict{Object, JuMP.VariableRef}()
-    for w in window()
-            var[w] = @variable(m,
-                    base_name="selected[$w]",
-                    binary=true
-            )
-    end
-
-    var = m.ext[:variables][:weight] = Dict{Object, JuMP.VariableRef}()
-    for w in window()
-            var[w] = @variable(m,
-                base_name="weight[$w]",
-                lower_bound=0
-            )
-    end
-
+function add_variable_units_invested!(m::Model)
+    add_variable!(m, :units_invested, units_invested_available_indices; lb=x -> 0, int=units_invested_available_int)
 end
+

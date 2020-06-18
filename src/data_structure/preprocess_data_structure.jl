@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -17,14 +17,74 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+"""
+    preprocess_data_structure()
+
+Preprocesses input data structure for SpineOpt.
+
+Runs a number of other functions processing different aspecs of the input data in sequence.
+"""
 function preprocess_data_structure()
+    # NOTE: expand groups first, so we don't need to expand them anywhere else
+    expand_node__stochastic_structure()
+    expand_units_on_resolution()
     add_connection_relationships()
     generate_network_components()
     generate_direction()
-    generate_variable_indices()
-    expand_node__stochastic_structure()
-    expand_units_on_resolution()
+    generate_variable_indexing_support()
+    generate_investment_relationships()
 end
+
+"""
+    generate_investment_relationships()
+
+Generates `Relationships` related to modelling investments.
+"""
+function generate_investment_relationships()
+    generate_unit__investment_temporal_block()
+    generate_unit__investment_stochastic_structure()
+end
+    
+    
+
+"""
+    generate_unit_investment_temporal_block()
+
+Process the `model__default_investment_temporal_block` relationship.
+
+If a `unit__investment_temporal_block` relationship is not defined, 
+then create one using `model__default_investment_temporal_block`
+"""
+function generate_unit__investment_temporal_block()   
+    for u in indices(candidate_units)        
+        if isempty(unit__investment_temporal_block(unit=u))         
+            m = first(model())
+            for tb in model__default_investment_temporal_block(model=m)
+                add_relationships!(unit__investment_temporal_block, [(unit=u, temporal_block=tb)])                
+            end
+        end        
+    end
+end
+
+"""
+    generate_unit__investment_stochastic_structure()
+
+Process the `model__default_investment_stochastic_structure` relationship.
+
+If a `unit__investment_stochastic_structure` relationship is not defined, 
+then create one using `model__default_investment_stochastic_structure`
+"""
+function generate_unit__investment_stochastic_structure()
+    for u in indices(candidate_units)        
+        if isempty(unit__investment_stochastic_structure(unit=u))         
+            m = first(model()) #TODO: Handle multiple models
+            for ss in model__default_investment_stochastic_structure(model=m)
+                add_relationships!(unit__investment_stochastic_structure, [(unit=u, stochastic_structure=ss)])                
+            end
+        end        
+    end
+end
+
 
 """
     add_connection_relationships()
@@ -66,7 +126,9 @@ end
 
 # Network stuff
 """
-Generate has_ptdf and node_ptdf_threshold parameters associated to the node class.
+    generate_node_has_ptdf()
+
+Generate `has_ptdf` and `node_ptdf_threshold` parameters associated to the `node` `ObjectClass`.
 """
 function generate_node_has_ptdf()
     for n in node()
@@ -89,7 +151,9 @@ function generate_node_has_ptdf()
 end
 
 """
-Generate has_ptdf parameter associated to the connection class.
+    generate_connection_has_ptdf()
+
+Generate `has_ptdf` parameter associated to the `connection` `ObjectClass`.
 """
 function generate_connection_has_ptdf()
     for conn in connection()
@@ -111,7 +175,9 @@ function generate_connection_has_ptdf()
 end
 
 """
-Generate has_lodf and connnection_lodf_tolerance parameters associated to the connection class.
+    generate_connection_has_lodf()
+
+Generate `has_lodf` and `connnection_lodf_tolerance` parameters associated to the `connection` `ObjectClass`.
 """
 function generate_connection_has_lodf()
     for conn in connection(has_ptdf=true)
@@ -126,13 +192,20 @@ function generate_connection_has_lodf()
         )
     end
     has_lodf = Parameter(:has_lodf, [connection])
-    connnection_lodf_tolerance = Parameter(:connnection_lodf_tolerance, [connection])
+    connnection_lodf_tolerance = Parameter(:connnection_lodf_tolerance, [connection]) # TODO connnection with 3 `n`'s?
     @eval begin
         has_lodf = $has_lodf
         connnection_lodf_tolerance = $connnection_lodf_tolerance
     end
 end
 
+"""
+    _ptdf_values()
+
+Calculates the values of the `ptdf` parameters?
+
+TODO @JodyDillon: Check this docstring!
+"""
 function _ptdf_values()
     ps_busses_by_node = Dict(
         n => Bus(
@@ -179,7 +252,9 @@ function _ptdf_values()
 end
 
 """
-Generate ptdf parameter.
+    generate_ptdf()
+
+Generates the `ptdf` parameter.
 """
 function generate_ptdf()
     ptdf_values = _ptdf_values()
@@ -196,7 +271,9 @@ function generate_ptdf()
 end
 
 """
-Generate lodf parameter.
+    generate_lodf()
+
+Generates the `lodf` parameter.
 """
 function generate_lodf()
 
@@ -238,6 +315,13 @@ function generate_lodf()
     end
 end
 
+"""
+    generate_network_components()
+
+Generates different network related `parameters`.
+
+Runs a number of other functions dealing with different aspects of the network data in sequence.
+"""
 function generate_network_components()
     generate_node_has_ptdf()
     generate_connection_has_ptdf()
@@ -249,6 +333,11 @@ function generate_network_components()
     # write_lodf_file(model=first(model())) == Symbol(:true) && write_lodfs()
 end
 
+"""
+    generate_direction()
+
+Generates the `direction` `ObjectClass` and its relationships.
+"""
 function generate_direction()
     from_node = Object(:from_node)
     to_node = Object(:to_node)
@@ -275,63 +364,70 @@ function generate_direction()
     end
 end
 
-function generate_variable_indices()
-    unit_flow_indices = unique(
-        (unit=u, node=n, direction=d, temporal_block=tb)
-        for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
-        for tb in node__temporal_block(node=n)
-    )
-    connection_flow_indices = unique(
-        (connection=conn, node=n, direction=d, temporal_block=tb)
-        for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
-        for tb in node__temporal_block(node=n)
-    )
-    node_state_indices = unique(
-        (node=n, temporal_block=tb)
-        for n in node(has_state=:value_true)
-        for tb in node__temporal_block(node=n)
-    )
-    node_slack_indices = unique(
-        (node=n, temporal_block=tb)
-        for n in indices(node_slack_penalty)
-        for tb in node__temporal_block(node=n)
-    )
-    units_on_indices = unique(
-        (unit=u, temporal_block=tb)
-        for (ug,n) in units_on_resolution()
-            for u in expand_unit_group(ug)
+"""
+    generate_variable_indexing_support()
+
+TODO What is the purpose of this function? It clearly generates a number of `RelationshipClasses`, but why?
+"""
+function generate_variable_indexing_support()
+    node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
+    unit__node__direction__temporal_block = RelationshipClass(
+        :unit__node__direction__temporal_block, 
+        [:unit, :node, :direction, :temporal_block], 
+        unique(
+            (unit=u, node=n, direction=d, temporal_block=tb)
+            for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
             for tb in node__temporal_block(node=n)
+        )
     )
+    connection__node__direction__temporal_block = RelationshipClass(
+        :connection__node__direction__temporal_block, 
+        [:connection, :node, :direction, :temporal_block], 
+        unique(
+            (connection=conn, node=n, direction=d, temporal_block=tb)
+            for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
+            for tb in node__temporal_block(node=n)
+        )
+    )
+    node_with_state__temporal_block = RelationshipClass(
+        :node_with_state__temporal_block, 
+        [:node, :temporal_block], 
+        unique((node=n, temporal_block=tb) for n in node(has_state=:value_true) for tb in node__temporal_block(node=n))
+    )
+    unit__temporal_block = RelationshipClass(
+        :unit__temporal_block, 
+        [:unit, :temporal_block], 
+        unique(
+            (unit=u, temporal_block=tb)
+            for (u, n) in units_on_resolution()
+            for tb in node__temporal_block(node=n)
+        )
+    )
+    units_invested_available_indices = unique(
+        (unit=u, temporal_block=tb)
+        for ug in indices(candidate_units)
+        for u in expand_unit_group(ug)            
+        for tb in unit__investment_temporal_block(unit=u)                    
+    )
+    units_invested_available_indices_rc = RelationshipClass(
+        :units_invested_available_indices_rc, [:unit, :temporal_block], units_invested_available_indices
     nonspin_ramp_up_unit_flow_indices = unique(
         (unit=u, node=n, direction=d,temporal_block=tb)
         for (u,ng,d) in indices(max_res_startup_ramp)
         for n in expand_node_group(ng)
         for tb in node__temporal_block(node=n)
     )
-    unit_flow_indices_rc = RelationshipClass(
-        :unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], unit_flow_indices
-    )
-    connection_flow_indices_rc = RelationshipClass(
-        :connection_flow_indices_rc, [:connection, :node, :direction, :temporal_block], connection_flow_indices
-    )
-    node_state_indices_rc = RelationshipClass(
-        :node_state_indices_rc, [:node, :temporal_block], node_state_indices
-    )
-    node_slack_indices_rc = RelationshipClass(
-        :node_slack_indices_rc, [:node, :temporal_block], node_slack_indices
-    )
-    units_on_indices_rc = RelationshipClass(
-        :units_on_indices_rc, [:unit, :temporal_block], units_on_indices
     )
     nonspin_ramp_up_unit_flow_indices_rc = RelationshipClass(
         :nonspin_ramp_up_unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], nonspin_ramp_up_unit_flow_indices
     )
     @eval begin
-        unit_flow_indices_rc = $unit_flow_indices_rc
-        connection_flow_indices_rc = $connection_flow_indices_rc
-        node_state_indices_rc = $node_state_indices_rc
-        node_slack_indices_rc = $node_slack_indices_rc
-        units_on_indices_rc = $units_on_indices_rc
+        node_with_slack_penalty = $node_with_slack_penalty
+        unit__node__direction__temporal_block = $unit__node__direction__temporal_block
+        connection__node__direction__temporal_block = $connection__node__direction__temporal_block
+        node_with_state__temporal_block = $node_with_state__temporal_block
+        unit__temporal_block = $unit__temporal_block
+        units_invested_available_indices_rc = $units_invested_available_indices_rc
         nonspin_ramp_up_unit_flow_indices_rc = $nonspin_ramp_up_unit_flow_indices_rc
     end
 end

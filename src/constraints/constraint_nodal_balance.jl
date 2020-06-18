@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -16,7 +16,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
+#TODO: support nodal balance sense
+#TODO: as proposed in the wiki on groups: We should be able to support
+# a) node_balance for node group and NO balance for underlying node
+# b) node_balance for node group AND balance for underlying node
 """
     add_constraint_nodal_balance!(m::Model)
 
@@ -64,12 +67,17 @@ function add_constraint_nodal_balance!(m::Model)
 end
 
 """
-Determine whether or not a connection is internal to a node group, in the sense that it only connects nodes within that group.
+    _is_internal(conn, ng)
+
+Determine whether or not a `connection` is internal to a `node_group`, in the sense that it only connects `nodes`
+within that `node_group`.
 """
 _is_internal(conn, ng) = issubset(_connection_nodes(conn), node_group__node(node1=ng))
 
 """
-An iterator over all nodes of a connection.
+    _connection_nodes(conn)
+
+An iterator over all `nodes` of a `connection`.
 """
 _connection_nodes(conn) = (
     n

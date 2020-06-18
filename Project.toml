@@ -1,7 +1,7 @@
 name = "SpineOpt"
-uuid = "b74cbf36-17f7-11e9-3430-fdc535b30a00"
+uuid = "0d8fc150-4032-4b6e-9540-20efcb304861"
 authors = ["Spine Project consortium <spine_info@vtt.fi>"]
-version = "0.2.0"
+version = "0.3.0"
 
 [deps]
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"

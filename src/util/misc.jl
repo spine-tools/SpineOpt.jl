@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
-# Spine Model is free software: you can redistribute it and/or modify
+# SpineOpt is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Spine Model is distributed in the hope that it will be useful,
+# SpineOpt is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -92,19 +92,6 @@ function sense_constraint(m, lhs, sense::Symbol, rhs)
         @constraint(m, lhs <= rhs)
     else
         @constraint(m, lhs == rhs)
-    end
-end
-
-"""
-    name_constraints!(m::Model)
-
-Sets constraint names for more useful diagnostic output
-"""
-function name_constraints!(m::Model)
-    for (con_key, cons) in m.ext[:constraints]
-        for (inds, con) in cons
-            set_name(con, string(con_key,inds))
-        end
     end
 end
 

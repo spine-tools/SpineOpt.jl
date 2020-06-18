@@ -17,27 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
 """
-    add_constraint_operating_point_sum!(m::Model)
+    _constraint_unit_flow_capacity_indices(unit, node, direction, t)
 
-Limit the operating point flow variables to the difference between successive operating points times the capacity of the unit
+An iterator that concatenates `unit_flow_indices` and `units_on_indices` for the given inputs.
 """
-function add_constraint_operating_point_sum!(m::Model)
-    @fetch unit_flow_op, unit_flow = m.ext[:variables]
-    cons = m.ext[:constraints][:operating_point_sum] = Dict()
-    for (u, n, d) in indices(operating_points)
-        for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d)
-            cons[u, n, d, s, t] = @constraint(
-                m,
-                + unit_flow[u, n, d, s, t]
-                ==
-                + expr_sum(
-                    + unit_flow_op[u, n, d, op, s, t]
-                    for op in 1:length(operating_points(unit=u, node=n, direction=d));
-                    init=0
-                )
-            )
-        end
-    end
+function _constraint_unit_flow_capacity_indices(unit, node, direction, t)
+    Iterators.flatten(
+        (
+            unit_flow_indices(unit=unit, node=node, direction=direction, t=t), 
+            units_on_indices(unit=unit, t=t_in_t(t_long=t))
+        )
+    )
 end
