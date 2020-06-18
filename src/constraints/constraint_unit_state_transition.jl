@@ -36,7 +36,6 @@ function constraint_unit_state_transition_indices()
     )
 end
 
-
 """
     add_constraint_unit_state_transition!(m::Model)
 
