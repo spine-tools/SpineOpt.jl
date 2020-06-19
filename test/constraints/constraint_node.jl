@@ -29,35 +29,35 @@
 			["unit", "unit_ab"],
 			["connection", "connection_bc"],
 			["connection", "connection_ca"],
-			["node", "test_node_a"],
-			["node", "test_node_b"],
-			["node", "test_node_c"],
-			["node", "test_group_node_bc"],
+			["node", "node_a"],
+			["node", "node_b"],
+			["node", "node_c"],
+			["node", "node_group_bc"],
 			["stochastic_scenario", "parent"],
 			["stochastic_scenario", "child"],
 		],
 		:relationships => [
-			["units_on_resolution", ["unit_ab", "test_node_a"]],
-			["unit__from_node", ["unit_ab", "test_node_a"]],
-			["unit__to_node", ["unit_ab", "test_node_b"]],
-			["connection__from_node", ["connection_bc", "test_node_b"]],
-			["connection__to_node", ["connection_bc", "test_node_c"]],
-			["connection__from_node", ["connection_ca", "test_node_c"]],
-			["connection__to_node", ["connection_ca", "test_node_a"]],
-			["node__temporal_block", ["test_node_a", "two_hourly"]],
-			["node__temporal_block", ["test_node_b", "hourly"]],
-			["node__temporal_block", ["test_node_c", "hourly"]],
-			["node__temporal_block", ["test_group_node_bc", "hourly"]],
-			["node__stochastic_structure", ["test_node_a", "deterministic"]],
-			["node__stochastic_structure", ["test_node_b", "stochastic"]],
-			["node__stochastic_structure", ["test_node_c", "stochastic"]],
-			["node__stochastic_structure", ["test_group_node_bc", "stochastic"]],
+			["units_on_resolution", ["unit_ab", "node_a"]],
+			["unit__from_node", ["unit_ab", "node_a"]],
+			["unit__to_node", ["unit_ab", "node_b"]],
+			["connection__from_node", ["connection_bc", "node_b"]],
+			["connection__to_node", ["connection_bc", "node_c"]],
+			["connection__from_node", ["connection_ca", "node_c"]],
+			["connection__to_node", ["connection_ca", "node_a"]],
+			["node__temporal_block", ["node_a", "two_hourly"]],
+			["node__temporal_block", ["node_b", "hourly"]],
+			["node__temporal_block", ["node_c", "hourly"]],
+			["node__temporal_block", ["node_group_bc", "hourly"]],
+			["node__stochastic_structure", ["node_a", "deterministic"]],
+			["node__stochastic_structure", ["node_b", "stochastic"]],
+			["node__stochastic_structure", ["node_c", "stochastic"]],
+			["node__stochastic_structure", ["node_group_bc", "stochastic"]],
 			["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
 			["stochastic_structure__stochastic_scenario", ["stochastic", "parent"]],
 			["stochastic_structure__stochastic_scenario", ["stochastic", "child"]],
 			["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "child"]],
-			["node_group__node", ["test_group_node_bc", "test_node_b"]],
-			["node_group__node", ["test_group_node_bc", "test_node_c"]],
+			["node_group__node", ["node_group_bc", "node_b"]],
+			["node_group__node", ["node_group_bc", "node_c"]],
 		],
 		:object_parameter_values => [
 			["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
@@ -65,7 +65,7 @@
 			["model", "instance", "duration_unit", "hour"],
 			["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
 			["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
-        	["node", "test_group_node_bc", "balance_type", "balance_type_group"],
+        	["node", "node_group_bc", "balance_type", "balance_type_group"],
 		],
 		:relationship_parameter_values => [
 			[
@@ -80,7 +80,7 @@
 		_load_template(url_in)
 		db_api.import_data_to_url(url_in; test_data...)
 		object_parameter_values = [
-        	["node", "test_node_a", "node_slack_penalty", 0.5],
+        	["node", "node_a", "node_slack_penalty", 0.5],
         ]
         db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
 		m = run_spineopt(url_in; log_level=0)
@@ -91,8 +91,8 @@
 		constraint = m.ext[:constraints][:nodal_balance]
 		@test length(constraint) == 3
 		conn = connection(:connection_ca)
-		# test_node_a
-		n = node(:test_node_a)
+		# node_a
+		n = node(:node_a)
 		key_tail = (stochastic_scenario(:parent), time_slice(temporal_block=temporal_block(:two_hourly))[1])
 		node_key = (n, key_tail...)
 		conn_key = (conn, n, direction(:to_node), key_tail...)
@@ -104,15 +104,15 @@
 		con = constraint[node_key]
 		observed_con = constraint_object(con)
 		@test _is_constraint_equal(observed_con, expected_con)
-		# test_group_node_bc
-		n = node(:test_group_node_bc)
+		# node_group_bc
+		n = node(:node_group_bc)
 		scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
 		time_slices = time_slice(temporal_block=temporal_block(:hourly))
 		@testset for (s, t) in zip(scenarios, time_slices)
-			var_n_inj = var_node_injection[node(:test_group_node_bc), s, t]
-			var_conn_flow = var_connection_flow[conn, node(:test_node_c), direction(:from_node), s, t]
+			var_n_inj = var_node_injection[node(:node_group_bc), s, t]
+			var_conn_flow = var_connection_flow[conn, node(:node_c), direction(:from_node), s, t]
 			expected_con = @build_constraint(var_n_inj - var_conn_flow == 0)
-			con = constraint[node(:test_group_node_bc), s, t]
+			con = constraint[node(:node_group_bc), s, t]
 			observed_con = constraint_object(con)
 			@test _is_constraint_equal(observed_con, expected_con)
 		end
@@ -133,25 +133,25 @@
 		_load_template(url_in)
 		db_api.import_data_to_url(url_in; test_data...)
 		relationships = [
-			["node__node", ["test_node_b", "test_node_c"]], ["node__node", ["test_node_c", "test_node_b"]]
+			["node__node", ["node_b", "node_c"]], ["node__node", ["node_c", "node_b"]]
 		]
 		object_parameter_values = [
-			["node", "test_node_a", "demand", demand_a],
-			["node", "test_node_b", "demand", demand_b],
-			["node", "test_node_c", "demand", demand_c],
-			["node", "test_group_node_bc", "demand", demand_group],
-			["node", "test_node_b", "has_state", "value_true"],
-			["node", "test_node_c", "has_state", "value_true"],
-	        ["node", "test_node_b", "frac_state_loss", frac_state_loss_b],
-	        ["node", "test_node_c", "frac_state_loss", frac_state_loss_c],
-	        ["node", "test_node_b", "state_coeff", state_coeff_b],
-	        ["node", "test_node_c", "state_coeff", state_coeff_c],
+			["node", "node_a", "demand", demand_a],
+			["node", "node_b", "demand", demand_b],
+			["node", "node_c", "demand", demand_c],
+			["node", "node_group_bc", "demand", demand_group],
+			["node", "node_b", "has_state", "value_true"],
+			["node", "node_c", "has_state", "value_true"],
+	        ["node", "node_b", "frac_state_loss", frac_state_loss_b],
+	        ["node", "node_c", "frac_state_loss", frac_state_loss_c],
+	        ["node", "node_b", "state_coeff", state_coeff_b],
+	        ["node", "node_c", "state_coeff", state_coeff_c],
 	    ]
 		relationship_parameter_values = [
-	        ["node__node", ["test_node_b", "test_node_c"], "diff_coeff", diff_coeff_bc],
-	        ["node__node", ["test_node_c", "test_node_b"], "diff_coeff", diff_coeff_cb],
-			["node_group__node", ["test_group_node_bc", "test_node_b"], "fractional_demand", fractional_demand_b],
-			["node_group__node", ["test_group_node_bc", "test_node_c"], "fractional_demand", fractional_demand_c],
+	        ["node__node", ["node_b", "node_c"], "diff_coeff", diff_coeff_bc],
+	        ["node__node", ["node_c", "node_b"], "diff_coeff", diff_coeff_cb],
+			["node_group__node", ["node_group_bc", "node_b"], "fractional_demand", fractional_demand_b],
+			["node_group__node", ["node_group_bc", "node_c"], "fractional_demand", fractional_demand_c],
 		]
 		db_api.import_data_to_url(
 			url_in; 
@@ -166,13 +166,13 @@
 		constraint = m.ext[:constraints][:node_injection]
 		@test length(constraint) == 11
 		u = unit(:unit_ab)
-		# test_node_a
-		n = node(:test_node_a)
+		# node_a
+		n = node(:node_a)
 		s = stochastic_scenario(:parent)
 		time_slices = time_slice(temporal_block=temporal_block(:two_hourly))
 		@testset for t1 in time_slices
 			var_n_inj = var_node_injection[n, s, t1]
-			var_u_flow = var_unit_flow[u, node(:test_node_a), direction(:from_node), s, t1]
+			var_u_flow = var_unit_flow[u, node(:node_a), direction(:from_node), s, t1]
 			expected_con = @build_constraint(var_n_inj + var_u_flow + demand_a == 0)
 			@testset for t0 in t_before_t(t_after=t1)
 				con = constraint[n, [s], t0, t1]
@@ -180,13 +180,13 @@
 				@test _is_constraint_equal(observed_con, expected_con)
 			end
 		end
-		# test_group_node_bc
-		n = node(:test_group_node_bc)
+		# node_group_bc
+		n = node(:node_group_bc)
 		scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
 		time_slices = time_slice(temporal_block=temporal_block(:hourly))
 		@testset for (s, t1) in zip(scenarios, time_slices)
 			var_n_inj = var_node_injection[n, s, t1]
-			var_u_flow = var_unit_flow[u, node(:test_node_b), direction(:to_node), s, t1]
+			var_u_flow = var_unit_flow[u, node(:node_b), direction(:to_node), s, t1]
 			expected_con = @build_constraint(var_n_inj - var_u_flow + demand_group == 0)
 			@testset for t0 in t_before_t(t_after=t1)
 				con = constraint[n, [s], t0, t1]
@@ -194,17 +194,17 @@
 				@test _is_constraint_equal(observed_con, expected_con)
 			end
 		end
-		# test_node_b
-		n = node(:test_node_b)
+		# node_b
+		n = node(:node_b)
 		s0 = stochastic_scenario(:parent)
 		scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
 		time_slices = time_slice(temporal_block=temporal_block(:hourly))
 		@testset for (s1, t1) in zip(scenarios, time_slices)
 			path = unique([s0, s1])
 			var_n_st_b1 = var_node_state[n, s1, t1]
-			var_n_st_c1 = var_node_state[node(:test_node_c), s1, t1]
+			var_n_st_c1 = var_node_state[node(:node_c), s1, t1]
 			var_n_inj = var_node_injection[n, s1, t1]
-			var_u_flow = var_unit_flow[u, node(:test_node_b), direction(:to_node), s1, t1]
+			var_u_flow = var_unit_flow[u, node(:node_b), direction(:to_node), s1, t1]
 			@testset for t0 in t_before_t(t_after=t1)
 				var_n_st_b0 = get(var_node_state, (n, s0, t0), 0)
 				expected_con = @build_constraint(
@@ -222,15 +222,15 @@
 				@test _is_constraint_equal(observed_con, expected_con)
 			end
 		end
-		# test_node_c
-		n = node(:test_node_c)
+		# node_c
+		n = node(:node_c)
 		s0 = stochastic_scenario(:parent)
 		scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
 		time_slices = time_slice(temporal_block=temporal_block(:hourly))
 		@testset for (s1, t1) in zip(scenarios, time_slices)
 			path = unique([s0, s1])
 			var_n_st_c1 = var_node_state[n, s1, t1]
-			var_n_st_b1 = var_node_state[node(:test_node_b), s1, t1]
+			var_n_st_b1 = var_node_state[node(:node_b), s1, t1]
 			var_n_inj = var_node_injection[n, s1, t1]
 			@testset for t0 in t_before_t(t_after=t1)
 				var_n_st_c0 = get(var_node_state, (n, s0, t0), 0)
@@ -252,15 +252,12 @@
 	@testset "constraint_node_state_capacity" begin
 		_load_template(url_in)
 		db_api.import_data_to_url(url_in; test_data...)
-		node_capacity = Dict(
-			"test_node_b" => 120,
-			"test_node_c" => 400,
-		)
+		node_capacity = Dict("node_b" => 120, "node_c" => 400)
 		object_parameter_values = [
-			["node", "test_node_b", "node_state_cap", node_capacity["test_node_b"]],
-			["node", "test_node_c", "node_state_cap", node_capacity["test_node_c"]],
-			["node", "test_node_b", "has_state", "value_true"],
-			["node", "test_node_c", "has_state", "value_true"],
+			["node", "node_b", "node_state_cap", node_capacity["node_b"]],
+			["node", "node_c", "node_state_cap", node_capacity["node_c"]],
+			["node", "node_b", "has_state", "value_true"],
+			["node", "node_c", "has_state", "value_true"],
 		]
 		db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
 		m = run_spineopt(url_in; log_level=0)
