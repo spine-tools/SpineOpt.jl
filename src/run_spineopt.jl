@@ -159,7 +159,7 @@ function rerun_spineopt(
         @logtime level3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
         @logtime level3 "- [constraint_units_on]" add_constraint_units_on!(m)
         @logtime level3 "- [constraint_units_available]" add_constraint_units_available!(m)
-        @logtime level3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)        
+        @logtime level3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)
         @logtime level3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(m)
         @logtime level3 "- [constraint_minimum_operating_point]" add_constraint_minimum_operating_point!(m)
         @logtime level3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)
@@ -168,11 +168,11 @@ function rerun_spineopt(
         #TODO:@logtime level3 "- [constraint_ramp_cost]" add_constraint_ramp_cost!(m)
         @logtime level3 "- [constraint_split_ramps]" add_constraint_split_ramps!(m)
         @logtime level3 "- [constraint_ramp_up]" add_constraint_ramp_up!(m)
-        @logtime level3 "- [constraint_max_start_up_ramp]" add_constraint_max_start_up_ramp!(m)
-        @logtime level3 "- [constraint_min_start_up_ramp]" add_constraint_min_start_up_ramp!(m)
-        #TODO: @logtime level3 "- [constraint_ramp_down]" add_constraint_ramp_down!(m)
-        @logtime level3 "- [constraint_max_nonspin_ramp_up]" add_constraint_max_nonspin_ramp_up!(m)
-        @logtime level3 "- [constraint_min_nonspin_ramp_up]" add_constraint_min_nonspin_ramp_up!(m)
+        # @logtime level3 "- [constraint_max_start_up_ramp]" add_constraint_max_start_up_ramp!(m)
+        # @logtime level3 "- [constraint_min_start_up_ramp]" add_constraint_min_start_up_ramp!(m)
+        # #TODO: @logtime level3 "- [constraint_ramp_down]" add_constraint_ramp_down!(m)
+        # @logtime level3 "- [constraint_max_nonspin_ramp_up]" add_constraint_max_nonspin_ramp_up!(m)
+        # @logtime level3 "- [constraint_min_nonspin_ramp_up]" add_constraint_min_nonspin_ramp_up!(m)
         @logtime level3 "- [constraint_user]" add_constraints(m)
         @logtime level3 "- [setting constraint names]" name_constraints!(m)
     end
@@ -213,7 +213,7 @@ function optimize_model!(m::Model)
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @logtime true "Optimizing model..." optimize!(m)
-    if termination_status(m) == MOI.OPTIMAL
+    if termination_status(m) == MOI.OPTIMAL ||  termination_status(m) == MOI.TIME_LIMIT
         true
     else
         @log true "Unable to find solution (reason: $(termination_status(m)))"
@@ -230,7 +230,7 @@ function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Fu
         fix_value_ = fix_value(ind)
         fix_value_ != nothing && fix(var[ind], fix_value_; force=true)
         end_(ind.t) <= end_(current_window) || continue
-        for history_ind in indices(; ind..., stochastic_scenario=anything, t=t_history_t[ind.t]) 
+        for history_ind in indices(; ind..., stochastic_scenario=anything, t=t_history_t[ind.t])
             fix_value_ = fix_value(history_ind)
             fix_value_ != nothing && fix(var[history_ind], fix_value_; force=true)
         end

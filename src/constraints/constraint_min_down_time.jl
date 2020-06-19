@@ -32,12 +32,14 @@ function constraint_min_down_time_indices()
         for t in time_slice(temporal_block=node__temporal_block(node=units_on_resolution(unit=u)))
         for path in active_stochastic_paths(
             unique(
-                [ind.stochastic_scenario
-                for ind in units_on_indices(
-                    unit=u, t=vcat(to_time_slice(TimeSlice(end_(t) - min_down_time(unit=u), end_(t))), t))],
-                [ind.stochastic_scenario
-                for ind in nonspin_starting_up_indices(
-                    unit=u, t=t_before_t(t_after=t))]
+                ind.stochastic_scenario
+                for ind in Iterators.flatten(
+                    (units_on_indices(
+                    unit=u, t=vcat(to_time_slice(TimeSlice(end_(t) - min_down_time(unit=u), end_(t))), t)
+                    ),
+                    nonspin_starting_up_indices(
+                    unit=u, t=t_before_t(t_after=t))
+                    )
                 )  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
             )
         )

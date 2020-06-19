@@ -24,40 +24,26 @@ Uses stochastic path indices due to potentially different stochastic scenarios
 between `t_after` and `t_before`.
 """
 function constraint_max_start_up_ramp_indices()
-    constraint_indices = []
-    for (u, n, d) in indices(max_startup_ramp)
-        for t in t_lowest_resolution(x.t for x in start_up_unit_flow_indices(unit=u,node=n,direction=d))
-            #NOTE: we're assuming that the ramp constraint follows the resolution of flows
-            # Ensure type stability
-            active_scenarios = Array{Object,1}()
-            # `start_up_unit_flow` for `direction` `d`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    start_up_unit_flow_indices(unit=u, node=n, direction=d, t=t_in_t(t_long=t))
+    unique(
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
+            for (u, ng, d) in indices(max_startup_ramp)
+            for t in t_lowest_resolution(t for t in time_slice(temporal_block=node__temporal_block(node=expand_node_group(ng))))
+                #How to deal with groups correctly?
+            for path in active_stochastic_paths(
+                unique(
+                    ind.stochastic_scenario
+                    for ind in Iterators.flatten(
+                        (units_on_indices(
+                        unit=u, t=t),
+                        start_up_unit_flow_indices(
+                        unit=u, node=ng, direction=d, t=t)
+                        )
+                    )  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
                 )
             )
-            # `units_started_up`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    units_on_indices(unit=u, t=t_in_t(t_long=t))
-                )
-            )
-            # Find stochastic paths for `active_scenarios`
-            unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
-                push!(
-                    constraint_indices,
-                    (unit=u, node=n, direction=d, stochastic_path=path, t=t)
-                )
-            end
-        end
-    end
-    return unique!(constraint_indices)
+    )
 end
+
 """
     add_constraint_max_start_up_ramp!(m::Model)
 

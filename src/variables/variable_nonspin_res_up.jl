@@ -29,8 +29,8 @@ function nonspin_starting_up_indices(;unit=anything, node=anything, stochastic_s
     unique!([
         (unit=u, node=n, stochastic_scenario=s, t=t)
         for (u, n, d, tb) in nonspin_ramp_up_unit_flow_indices_rc(unit=unit, node=node, _compact=false)
-        for (u, s, t) in unit_stochastic_time_indices(
-            unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+        for (u, s, t) in units_on_indices(
+            unit=u, stochastic_scenario=stochastic_scenario, t=t
         ) #TODO: maybe retrieve s information from node to be more robust
     ])
 end

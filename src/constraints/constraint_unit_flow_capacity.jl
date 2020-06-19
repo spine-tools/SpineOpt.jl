@@ -26,13 +26,13 @@ between `unit_flow` and `units_on` variables.
 """
 function constraint_unit_flow_capacity_indices()
     unique(
-        (unit=u, node=n, direction=d, stochastic_path=path, t=t)
-        for (u, n, d) in indices(unit_capacity)
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
+        for (u, ng, d) in indices(unit_capacity)
         # TODO: do we need to expand groups here? We still get the 'groups' out of `indices(unit_capacity)`,
         # and then we feed them to `unit_flow_indices` in the constraint below (at which point they get expanded).
-        for t in time_slice(temporal_block=node__temporal_block(node=n))
+        for t in time_slice(temporal_block=node__temporal_block(node=expand_node_group(ng)))
         for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(u, n, d, t))
+            unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(u, ng, d, t))
         )
     )
 end
@@ -65,8 +65,9 @@ function add_constraint_unit_flow_capacity!(m::Model)
             + unit_capacity[(unit=u, node=ng, direction=d, t=t)] # TODO: Stochastic parameters
             * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, t=t)]
             * expr_sum(
-                units_on[u, s, t1] * min(duration(t1),duration(t)) #TODO: add this for ramps
-                for (u, s, t1) in units_on_indices(unit=u, stochastic_scenario=stochastic_path, t=t_overlaps_t(t));
+                units_on[u, s, t1] * min(duration(t1),duration(t))
+                for (u, s, t1) in units_on_indices(unit=u, stochastic_scenario=stochastic_path, t=t_in_t(t_long=t));
+                    #This should be:t=t_overlaps_t(t), but broken for now!
                 init=0
             )
         )

@@ -20,34 +20,19 @@
     constraint_connection_flow_capacity_indices()
 
 Forms the stochastic index set for the `:connection_flow_capacity` constraint.
-Uses stochastic path indices due to potentially different stochastic structures
-between `connection_flow` variables.
+Uses stochastic path indices of the `connection_flow` variables.
 """
 function constraint_connection_flow_capacity_indices()
-    connection_flow_capacity_indices = []
-    for (conn, n, d) in indices(connection_capacity)
-        for t in t_lowest_resolution(x.t for x in connection_flow_indices(connection=conn,node=n,direction=d))
-            # Ensure type stability
-            active_scenarios = Array{Object,1}()
-            # Constrained `connection_flow`
-            append!(
-                active_scenarios,
-                map(
-                    inds -> inds.stochastic_scenario,
-                    connection_flow_indices(connection=conn, node=n, direction=d, t=t)
-                )
-            )
-            # Find stochastic paths for `active_scenarios`
-            unique!(active_scenarios)
-            for path in active_stochastic_paths(full_stochastic_paths, active_scenarios)
-                push!(
-                    connection_flow_capacity_indices,
-                    (connection=conn, node=n, direction=d, stochastic_path=path, t=t)
-                )
-            end
-        end
-    end
-    return unique!(connection_flow_capacity_indices)
+    unique(
+        (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
+        for (c, ng, d) in indices(connection_capacity)
+        # TODO: do we need to expand groups here? We still get the 'groups' out of `indices(connection_capacity)`,
+        # and then we feed them to `connection_flow_indices` in the constraint below (at which point they get expanded).
+        for t in time_slice(temporal_block=node__temporal_block(node=expand_node_group(ng))) #expand node_group?
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in connection_flow_indices(connection=c, node=ng, direction=d, t=t))
+        )
+    )
 end
 
 """
