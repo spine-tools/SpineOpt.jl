@@ -57,3 +57,4 @@ end
 include("data_structure/check_data_structure.jl")
 include("constraints/constraint_unit.jl")
 include("constraints/constraint_node.jl")
+include("constraints/constraint_connection.jl")
