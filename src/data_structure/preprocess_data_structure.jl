@@ -28,9 +28,11 @@ function preprocess_data_structure()
     # NOTE: expand groups first, so we don't need to expand them anywhere else
     expand_node__stochastic_structure()
     expand_units_on_resolution()
+    # NOTE: generate direction before calling `generate_network_components`,
+    # so calls to `connection__from_node` don't corrupt lookup cache
+    generate_direction()
     add_connection_relationships()
     generate_network_components()
-    generate_direction()
     generate_variable_indexing_support()
     generate_investment_relationships()
 end
@@ -159,16 +161,23 @@ function generate_connection_has_ptdf()
     for conn in connection()
         is_bidirectional = (
             length(connection__from_node(connection=conn)) == 2
-            && Set(connection__from_node(connection=conn)) == Set(connection__to_node(connection=conn))
+            && isempty(
+                symdiff(
+                    (x.node for x in connection__from_node(connection=conn)),
+                    (x.node for x in connection__to_node(connection=conn))
+                )
+            )
         )
         is_bidirectional_loseless = (
             is_bidirectional
             && fix_ratio_out_in_connection_flow(;
-                connection=conn, zip((:node1, :node2), connection__from_node(connection=conn))..., _strict=false
+                connection=conn, 
+                zip((:node1, :node2), (x.node for x in connection__from_node(connection=conn)))..., 
+                _strict=false
             ) == 1
         )
         connection.parameter_values[conn][:has_ptdf] = parameter_value(
-            is_bidirectional_loseless && all(has_ptdf(node=n) for n in connection__from_node(connection=conn))
+            is_bidirectional_loseless && all(has_ptdf(node=x.node) for x in connection__from_node(connection=conn))
         )
     end
     push!(has_ptdf.classes, connection)
@@ -232,7 +241,7 @@ function _ptdf_values()
             available=true,
             activepower_flow=0.0,
             reactivepower_flow=0.0,
-            arc=Arc((ps_busses_by_node[n] for n in connection__from_node(connection=conn))...),
+            arc=Arc((ps_busses_by_node[x.node] for x in connection__from_node(connection=conn))...),
             r=connection_resistance(connection=conn),
             x=max(connection_reactance(connection=conn), 0.00001),
             b=(from=0.0, to=0.0),
@@ -302,7 +311,7 @@ function generate_lodf()
             for conn_mon in connection(connection_monitored=:value_true, has_lodf=true)
         )
         if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
-    )  # NOTE: in my machine, a Dict comprehension is ~4x faster than a Dict built incrementally
+    )
     lodf_rel_cls = RelationshipClass(
         :lodf_connection__connection,
         [:connection1, :connection2],
@@ -422,6 +431,8 @@ function generate_variable_indexing_support()
     end
 end
 
+
+# TODO: These two below need to change when we finally get to rationalize groups 
 
 """
     expand_node__stochastic_structure()
