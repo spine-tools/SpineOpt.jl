@@ -95,15 +95,15 @@ function add_constraint_node_injection!(m::Model)
             )
             # Diffusion of commodity from other nodes to this one
             + expr_sum(
-                get(node_state, (n_, s, t_after), 0) * diff_coeff[(node1=n_, node2=n, t=t_after)]
-                for n_ in node__node(node2=n)
+                get(node_state, (other_n, s, t_after), 0) * diff_coeff[(node1=other_n, node2=n, t=t_after)]
+                for other_n in node__node(node2=n)
                 for s in stochastic_path;
                 init=0
             )
             # Diffusion of commodity from this node to other nodes
             - expr_sum(
-                get(node_state, (n, s, t_after), 0) * diff_coeff[(node1=n, node2=n_, t=t_after)]
-                for n_ in node__node(node1=n)
+                get(node_state, (n, s, t_after), 0) * diff_coeff[(node1=n, node2=other_n, t=t_after)]
+                for other_n in node__node(node1=n)
                 for s in stochastic_path;
                 init=0
             )

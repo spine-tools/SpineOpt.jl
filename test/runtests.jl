@@ -32,5 +32,28 @@ function _load_template(url_in)
 	db_api.import_data_to_url(url_in; template...)
 end
 
+"""
+	_dismember_constraint(constraint)
+
+Show the given constraint in an organized way.
+Useful for writing tests.
+"""
+function _dismember_constraint(constraint)
+	for k in sort(collect(keys(constraint)))
+		@show k
+		con_obj = constraint_object(constraint[k])
+		_dismember_constraint_object(con_obj)
+		println()
+	end
+end
+
+function _dismember_constraint_object(con_obj)
+	for t in con_obj.func.terms
+		@show t
+	end
+	@show con_obj.set
+end
+
 include("data_structure/check_data_structure.jl")
 include("constraints/constraint_unit.jl")
+include("constraints/constraint_node.jl")

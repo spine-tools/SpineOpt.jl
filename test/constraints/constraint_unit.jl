@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+# TODO: fix_units_on, fix_unit_flow
+
 @testset "unit-based constraints" begin
 	url_in = "sqlite:///$(@__DIR__)/test.sqlite"
 	test_data = Dict(
