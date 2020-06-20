@@ -146,7 +146,6 @@
 		var_connection_flow = m.ext[:variables][:connection_flow]
 		var_node_injection = m.ext[:variables][:node_injection]
 		constraint = m.ext[:constraints][:flow_ptdf]
-		_dismember_constraint(constraint)
 		@test length(constraint) == 5
 		@testset for (conn_name, n_to_name, n_inj_name, scen_names, t_block) in (
 				(:connection_ab, :node_b, :node_b, (:parent,), :two_hourly),

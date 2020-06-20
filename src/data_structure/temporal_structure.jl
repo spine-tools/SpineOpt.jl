@@ -153,7 +153,7 @@ function _time_interval_blocks(window_start, window_end)
         while time_slice_start < adjusted_end
             duration = resolution(temporal_block=block, i=i)
             if iszero(duration)
-                # FIXME: Move this to a check...
+                # TODO: Try to move this to a check...
                 error("`resolution` of temporal block `$(block)` cannot be zero!")
             end
             time_slice_end = time_slice_start + duration
