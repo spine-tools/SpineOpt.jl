@@ -16,35 +16,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    run_spineopt(url; <keyword arguments>)
-
-Run the SpineOpt from `url` and write report to the same `url`.
-Keyword arguments have the same purpose as for [`run_spineopt`](@ref).
-"""
-function run_spineopt(
-        url::String;
-        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0),
-        cleanup=true,
-        add_constraints=m -> nothing,
-        update_constraints=m -> nothing,
-        log_level=3)
-    run_spineopt(
-        url,
-        url;
-        with_optimizer=with_optimizer,
-        cleanup=cleanup,
-        add_constraints=add_constraints,
-        update_constraints=update_constraints,
-        log_level=log_level
-    )
-end
 
 """
-    run_spineopt(url_in, url_out; <keyword arguments>)
+    run_spineopt(url_in, [url_out=url_in]; <keyword arguments>)
 
-Run the SpineOpt from `url_in` and write report to `url_out`.
-At least `url_in` must point to valid Spine database.
+Run SpineOpt from `url_in` and write report to `url_out`.
 A new Spine database is created at `url_out` if it doesn't exist.
 
 # Keyword arguments
@@ -62,7 +38,8 @@ set to `nothing` after completion.
 """
 function run_spineopt(
         url_in::String,
-        url_out::String;
+        url_out::String=url_in;
+        upgrade=false,
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
         cleanup=true,
         add_constraints=m -> nothing,
@@ -72,7 +49,7 @@ function run_spineopt(
     level2 = log_level >= 2
     @log true "Running SpineOpt for $(url_in)..."
     @logtime level2 "Initializing data structure from db..." begin
-        using_spinedb(url_in, @__MODULE__; upgrade=true)
+        using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
         generate_missing_items()
     end
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
