@@ -31,11 +31,15 @@ struct TimeSliceSet
             end
         end
         block_time_slice_map = Dict(block => TimeSliceMap(time_slices) for (block, time_slices) in block_time_slices)
-        boundary_time_slices = unique(
-            Iterators.flatten((first(time_slices), last(time_slices)) for time_slices in values(block_time_slices))
+        # Find eventual gaps in between temporal blocks
+        solids = [(first(time_slices), last(time_slices)) for time_slices in values(block_time_slices)]
+        sort!(solids)
+        gaps = ((from, to) for ((_x, from), (to, _y)) in zip(solids[1:end - 1], solids[2:end]) if from < to)
+        # Create bridge time slice map. We need one bridge per gap.
+        bridge_time_slice_map = Dict(
+            Object("bridge_from_$(from)_to_$(to)") => TimeSliceMap([from, to]) for (from, to) in gaps
         )
-        sort!(boundary_time_slices)
-        block_time_slice_map[Object(:gap_filler)] = TimeSliceMap(boundary_time_slices)
+        merge!(block_time_slice_map, bridge_time_slice_map)
         new(time_slices, block_time_slices, block_time_slice_map)
     end
 end
