@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-@testset "Check data structure" begin
+@testset "check data structure" begin
 	url_in = "sqlite:///$(@__DIR__)/test.sqlite"
 	_load_template(url_in)
 	# TODO: Once we get our error messages right, we should use:

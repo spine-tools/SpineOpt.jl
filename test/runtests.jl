@@ -55,6 +55,7 @@ function _dismember_constraint_object(con_obj)
 end
 
 include("data_structure/check_data_structure.jl")
+include("data_structure/temporal_structure.jl")
 include("constraints/constraint_unit.jl")
 include("constraints/constraint_node.jl")
 include("constraints/constraint_connection.jl")
