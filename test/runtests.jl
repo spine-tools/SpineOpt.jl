@@ -40,18 +40,24 @@ Useful for writing tests.
 """
 function _dismember_constraint(constraint)
 	for k in sort(collect(keys(constraint)))
-		@show k
+		println("key: ", k)
 		con_obj = constraint_object(constraint[k])
 		_dismember_constraint_object(con_obj)
-		println()
 	end
 end
 
 function _dismember_constraint_object(con_obj)
-	for t in con_obj.func.terms
-		@show t
+	_dismember_function(con_obj.func)
+	println("set: ", con_obj.set)
+	println()
+end
+
+function _dismember_function(func)
+	for (k, term) in enumerate(func.terms)
+		println("term $k: ", term)
 	end
-	@show con_obj.set
+	println("term constant: ", func.constant)
+	println()
 end
 
 include("data_structure/check_data_structure.jl")
@@ -59,3 +65,4 @@ include("data_structure/temporal_structure.jl")
 include("constraints/constraint_unit.jl")
 include("constraints/constraint_node.jl")
 include("constraints/constraint_connection.jl")
+include("objective/objective.jl")

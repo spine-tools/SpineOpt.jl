@@ -158,8 +158,8 @@ function rerun_spineopt(
         @logtime level2 "Updating objective..." update_varying_objective!(m)
         k += 1
     end
-     @logtime level2 "Writing report..." write_report(results, url_out)
-     m
+    @logtime level2 "Writing report..." write_report(results, url_out)
+    m
 end
 
 function name_constraints!(m::Model)

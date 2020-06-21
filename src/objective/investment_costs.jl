@@ -23,7 +23,7 @@
 function investment_costs(m::Model)
     @fetch units_invested = m.ext[:variables]
     @expression(
-        m,       
+        m,
         + expr_sum(
             units_invested[u, s, t] * unit_investment_cost[(unit=u, t=t)]
             for (u,) in indices(unit_investment_cost)
