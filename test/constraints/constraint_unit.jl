@@ -351,12 +351,12 @@
 				s_set, t_set = scenarios[h:h + tail_hours - 1], time_slices[h:h + tail_hours - 1]
 				s, t = s_set[1], t_set[1]
 				path = reverse(unique(s_set))
-				key = (unit(:unit_ab), path, t)
 				var_u_on_key = (unit(:unit_ab), s, t)
 				var_u_on = var_units_on[var_u_on_key...]
 				vars_u_su = [var_units_started_up[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
 				expected_con = @build_constraint(var_u_on >= sum(vars_u_su))
-				observed_con = constraint_object(constraint[key])
+				con_key = (unit(:unit_ab), path, t)
+				observed_con = constraint_object(constraint[con_key])
 				@test _is_constraint_equal(observed_con, expected_con)
 			end
 		end
@@ -394,13 +394,13 @@
 				s_set, t_set = scenarios[h:h + tail_hours - 1], time_slices[h:h + tail_hours - 1]
 				s, t = s_set[1], t_set[1]
 				path = reverse(unique(s_set))
-				key = (unit(:unit_ab), path, t)
 				var_u_av_on_key = (unit(:unit_ab), s, t)
 				var_u_av = var_units_available[var_u_av_on_key...]
 				var_u_on = var_units_on[var_u_av_on_key...]
 				vars_u_sd = [var_units_shut_down[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
 				expected_con = @build_constraint(var_u_av - var_u_on >= sum(vars_u_sd))
-				observed_con = constraint_object(constraint[key])
+				con_key = (unit(:unit_ab), path, t)
+				observed_con = constraint_object(constraint[con_key])
 				@test _is_constraint_equal(observed_con, expected_con)
 			end
 		end

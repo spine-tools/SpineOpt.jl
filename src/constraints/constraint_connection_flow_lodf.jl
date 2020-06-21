@@ -88,7 +88,7 @@ function add_constraint_connection_flow_lodf!(m::Model)
                 + expr_sum(
                     + connection_flow[conn_mon, n_mon_to, direction(:to_node), s, t_short]
                     - connection_flow[conn_mon, n_mon_to, direction(:from_node), s, t_short]
-                    for (conn_mon, n_mon_to, d, t_short) in connection_flow_indices(;
+                    for (conn_mon, n_mon_to, d, s, t_short) in connection_flow_indices(;
                         connection=conn_mon, 
                         last(connection__from_node(connection=conn_mon))...,
                         stochastic_scenario=stochastic_path,
@@ -101,7 +101,7 @@ function add_constraint_connection_flow_lodf!(m::Model)
                 * expr_sum(
                     + connection_flow[conn_cont, n_cont_to, direction(:to_node), s, t_short]
                     - connection_flow[conn_cont, n_cont_to, direction(:from_node), s, t_short]
-                    for (conn_cont, n_cont_to, d, t_short) in connection_flow_indices(;
+                    for (conn_cont, n_cont_to, d, s, t_short) in connection_flow_indices(;
                         connection=conn_cont, 
                         last(connection__from_node(connection=conn_cont))...,
                         stochastic_scenario=stochastic_path,

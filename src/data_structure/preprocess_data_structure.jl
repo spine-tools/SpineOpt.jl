@@ -274,7 +274,6 @@ function _ptdf_values()
         (conn, n) => Dict(:ptdf => parameter_value(ps_ptdf[line.name, bus.number]))
         for (conn, line) in ps_lines_by_connection
         for (n, bus) in ps_busses_by_node
-        if !isapprox(ps_ptdf[line.name, bus.number], 0; atol=node_ptdf_threshold(node=n))
     )
 end
 

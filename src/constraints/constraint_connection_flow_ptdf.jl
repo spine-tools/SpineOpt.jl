@@ -64,7 +64,7 @@ For connection networks with monitored and has_ptdf set to true, set the steady 
 """
 function add_constraint_connection_flow_ptdf!(m::Model)
     @fetch connection_flow, node_injection = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:flow_ptdf] = Dict()
+    constr_dict = m.ext[:constraints][:connection_flow_ptdf] = Dict()
     for (conn, n_to, stochastic_path, t) in constraint_connection_flow_ptdf_indices()
         constr_dict[conn, n_to, stochastic_path, t] = @constraint(
             m,
@@ -78,9 +78,8 @@ function add_constraint_connection_flow_ptdf!(m::Model)
             + expr_sum(
                 ptdf(connection=conn, node=n) * node_injection[n, s, t]
                 for (conn, n) in indices(ptdf; connection=conn)
-                for (n, s, t) in node_injection_indices(
-                    node=n, stochastic_scenario=stochastic_path, t=t
-                );
+                for (n, s, t) in node_injection_indices(node=n, stochastic_scenario=stochastic_path, t=t)
+                if !isapprox(ptdf(connection=conn, node=n), 0; atol=node_ptdf_threshold(node=n));
                 init=0
             )
         )
