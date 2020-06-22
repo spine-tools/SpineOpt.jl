@@ -68,12 +68,16 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
     @fetch connection_flow = m.ext[:variables]
     cons = m.ext[:constraints][ratio_out_in.name] = Dict()
     for (conn, ng_out, ng_in, stochastic_path, t) in constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
-        con = cons[conn, ng_out, ng_in, t] = sense_constraint(
+        con = cons[conn, ng_out, ng_in, stochastic_path, t] = sense_constraint(
             m,
             + expr_sum(
                 + connection_flow[conn, n_out, d, s, t_short] * duration(t_short)
                 for (conn, n_out, d, s, t_short) in connection_flow_indices(
-                    connection=conn, node=ng_out, direction=direction(:to_node), stochastic_scenario=stochastic_path, t=t_in_t(t_long=t)
+                    connection=conn, 
+                    node=ng_out, 
+                    direction=direction(:to_node), 
+                    stochastic_scenario=stochastic_path, 
+                    t=t_in_t(t_long=t)
                 );
                 init=0
             ),
@@ -100,18 +104,24 @@ end
 
 Calls `add_constraint_ratio_out_in_connection_flow!` using the `fix_ratio_out_in_connection_flow` parameter.
 """
-add_constraint_fix_ratio_out_in_connection_flow!(m::Model) = add_constraint_ratio_out_in_connection_flow!(m, fix_ratio_out_in_connection_flow, ==)
+function add_constraint_fix_ratio_out_in_connection_flow!(m::Model)
+    add_constraint_ratio_out_in_connection_flow!(m, fix_ratio_out_in_connection_flow, ==)
+end
 
 """
     add_constraint_max_ratio_out_in_connection_flow!(m::Model)
 
 Calls `add_constraint_ratio_out_in_connection_flow!` using the `max_ratio_out_in_connection_flow` parameter.
 """
-add_constraint_max_ratio_out_in_connection_flow!(m::Model) = add_constraint_ratio_out_in_connection_flow!(m, max_ratio_out_in_connection_flow, <=)
+function add_constraint_max_ratio_out_in_connection_flow!(m::Model)
+    add_constraint_ratio_out_in_connection_flow!(m, max_ratio_out_in_connection_flow, <=)
+end
 
 """
     add_constraint_min_ratio_out_in_connection_flow!(m::Model)
 
 Calls `add_constraint_ratio_out_in_connection_flow!` using the `min_ratio_out_in_connection_flow` parameter.
 """
-add_constraint_min_ratio_out_in_connection_flow!(m::Model) = add_constraint_ratio_out_in_connection_flow!(m, min_ratio_out_in_connection_flow, >=)
+function add_constraint_min_ratio_out_in_connection_flow!(m::Model)
+    add_constraint_ratio_out_in_connection_flow!(m, min_ratio_out_in_connection_flow, >=)
+end

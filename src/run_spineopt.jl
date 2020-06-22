@@ -16,29 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    run_spineopt(url; <keyword arguments>)
-
-Run the SpineOpt from `url` and write report to the same `url`.
-Keyword arguments have the same purpose as for [`run_spineopt`](@ref).
-"""
-function run_spineopt(
-        url::String;
-        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0),
-        cleanup=true,
-        add_constraints=m -> nothing,
-        update_constraints=m -> nothing,
-        log_level=3)
-    run_spineopt(
-        url,
-        url;
-        with_optimizer=with_optimizer,
-        cleanup=cleanup,
-        add_constraints=add_constraints,
-        update_constraints=update_constraints,
-        log_level=log_level
-    )
-end
 
 """
     run_spineopt(url_in, url_out; <keyword arguments>)
@@ -62,7 +39,8 @@ set to `nothing` after completion.
 """
 function run_spineopt(
         url_in::String,
-        url_out::String;
+        url_out::String=url_in;
+        upgrade=false,
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
         cleanup=true,
         add_constraints=m -> nothing,
@@ -72,7 +50,7 @@ function run_spineopt(
     level2 = log_level >= 2
     @log true "Running SpineOpt for $(url_in)..."
     @logtime level2 "Initializing data structure from db..." begin
-        using_spinedb(url_in, @__MODULE__; upgrade=true)
+        using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
         generate_missing_items()
     end
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
@@ -122,7 +100,7 @@ function rerun_spineopt(
         @logtime level3 "- [variable_units_invested]" add_variable_units_invested!(m)
         @logtime level3 "- [variable_units_invested_available]" add_variable_units_invested_available!(m)
         @logtime level3 "- [variable_units_mothballed]" add_variable_units_mothballed!(m)
-        #TODO: @logtime level3 "- [variable_ramp_costs]" add_variable_ramp_costs!(m)
+        # TODO: @logtime level3 "- [variable_ramp_costs]" add_variable_ramp_costs!(m)
         @logtime level3 "- [variable_ramp_up_unit_flow]" add_variable_ramp_up_unit_flow!(m)
         @logtime level3 "- [variable_start_up_unit_flow]" add_variable_start_up_unit_flow!(m)
         @logtime level3 "- [variable_nonspin_starting_up]"  add_variable_nonspin_starting_up!(m)
@@ -165,14 +143,14 @@ function rerun_spineopt(
         @logtime level3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)
         @logtime level3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
         @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
-        #TODO:@logtime level3 "- [constraint_ramp_cost]" add_constraint_ramp_cost!(m)
+        # TODO: @logtime level3 "- [constraint_ramp_cost]" add_constraint_ramp_cost!(m)
         @logtime level3 "- [constraint_split_ramps]" add_constraint_split_ramps!(m)
         @logtime level3 "- [constraint_ramp_up]" add_constraint_ramp_up!(m)
-        # @logtime level3 "- [constraint_max_start_up_ramp]" add_constraint_max_start_up_ramp!(m)
-        # @logtime level3 "- [constraint_min_start_up_ramp]" add_constraint_min_start_up_ramp!(m)
-        # #TODO: @logtime level3 "- [constraint_ramp_down]" add_constraint_ramp_down!(m)
-        # @logtime level3 "- [constraint_max_nonspin_ramp_up]" add_constraint_max_nonspin_ramp_up!(m)
-        # @logtime level3 "- [constraint_min_nonspin_ramp_up]" add_constraint_min_nonspin_ramp_up!(m)
+        # TODO: @logtime level3 "- [constraint_max_start_up_ramp]" add_constraint_max_start_up_ramp!(m)
+        # TODO: @logtime level3 "- [constraint_min_start_up_ramp]" add_constraint_min_start_up_ramp!(m)
+        # TODO: @logtime level3 "- [constraint_ramp_down]" add_constraint_ramp_down!(m)
+        # TODO: @logtime level3 "- [constraint_max_nonspin_ramp_up]" add_constraint_max_nonspin_ramp_up!(m)
+        # TODO: @logtime level3 "- [constraint_min_nonspin_ramp_up]" add_constraint_min_nonspin_ramp_up!(m)
         @logtime level3 "- [constraint_user]" add_constraints(m)
         @logtime level3 "- [setting constraint names]" name_constraints!(m)
     end
@@ -184,7 +162,7 @@ function rerun_spineopt(
         @logtime level2 "Saving results..." begin
             postprocess_results!(m)
             save_variable_values!(m)
-            save_objective_values!(m)
+            # FIXME: save_objective_values!(m)
             save_results!(results, m)
         end
         roll_temporal_structure() || break

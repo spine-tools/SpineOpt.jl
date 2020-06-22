@@ -155,15 +155,15 @@ end
 A `Dict` mapping `time_slice` objects to their set of active `stochastic_scenario` objects.
 """
 function _stochastic_time_mapping(stochastic_DAG::Dict)
-    # Active `time_slices`
-    scenario_mapping = Dict(
+    # Window `time_slices`
+    window_scenario_mapping = Dict(
         t => [scen for (scen, param_vals) in stochastic_DAG if param_vals.start <= start(t) < param_vals.end_]
         for t in time_slice()
     )
-    # Historical `time_slices`
+    # History `time_slices`
     roots = _find_root_scenarios()
     history_scenario_mapping = Dict(t => roots for t in history_time_slice())
-    merge!(scenario_mapping, history_scenario_mapping)
+    merge!(window_scenario_mapping, history_scenario_mapping)
 end
 
 """
@@ -228,7 +228,6 @@ function unit_investment_stochastic_time_indices(;
         for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
     )
 end
-
 
 """
     _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)

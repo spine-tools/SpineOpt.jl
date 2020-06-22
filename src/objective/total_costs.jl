@@ -25,16 +25,5 @@ included in the expression.
 """
 
 function total_costs(m,t)
-    total_cost = sum(
-            + eval(cost_terms)(m,t)
-            for cost_terms in filter(x -> x != :total_costs, keys(m.ext[:cost_terms]))
-        )
-    # for name in filter(x -> x != total_costs, keys(m.ext[:cost_terms])
-    #     total_cost += name(m,t)
-    # end
-    # # total_costs =
-    # #     vom_costs + fom_costs + tax_costs + op_costs + fl_costs +
-    # #      + suc_costs + sdc_costs#+ rmp_costs + penalties + ren_curt_cost #+
-    # #         #TODO: + conn_flow_costs + rs_prc_costs
-    # return total_costs
+    sum(eval(cost_terms)(m, t) for cost_terms in filter(x -> x != :total_costs, keys(m.ext[:cost_terms])))
 end

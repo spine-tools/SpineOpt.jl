@@ -29,7 +29,7 @@ function ramp_costs(m::Model, t1)
         expr_sum(
             + ramp_cost[u, s, t]
             for (u, s, t) in ramp_cost_indices()
-                if end_(t) <= t1;
+            if end_(t) <= t1;
             init=0
         )
     )

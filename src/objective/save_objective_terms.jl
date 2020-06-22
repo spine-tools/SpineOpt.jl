@@ -31,13 +31,14 @@ function initialize_cost_terms!(m::Model)
         :taxes,
         :operating_costs,
         :fuel_costs,
+        :investment_costs,
         :start_up_costs,
         :shut_down_costs,
         :objective_penalties,
         :connection_flow_costs,
         :renewable_curtailment_costs,
         :res_proc_costs,
-        #TODO::ramp_costs,
+        # TODO: :ramp_costs,
         :total_costs
     ]
     for cost_term in cost_terms

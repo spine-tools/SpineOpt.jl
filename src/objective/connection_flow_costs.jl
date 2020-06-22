@@ -22,20 +22,16 @@
 """
 function connection_flow_costs(m::Model,t1)
     @fetch connection_flow = m.ext[:variables]
-    a = @expression(
+    @expression(
         m,
         reduce(
             +,
             connection_flow[conn, n, d, s, t]* duration(t) * connection_flow_cost[(connection=conn,t=t)]
             for conn in indices(connection_flow_cost)
-                for (conn, n, d, s, t) in connection_flow_indices(connection=conn)
-                    if end_(t) <= t1; #TODO: do we need connection_flow_costs in different directions?
+            for (conn, n, d, s, t) in connection_flow_indices(connection=conn)
+            if end_(t) <= t1;  # TODO: do we need connection_flow_costs in different directions?
             init=0
         )
     )
-    # @show typeof(a)
-    # @show drop_zeros!(a)
-    # @show a
-    a
 end
-#TODO: add weight scenario tree
+# TODO: add weight scenario tree

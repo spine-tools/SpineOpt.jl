@@ -29,11 +29,11 @@ function res_proc_costs(m::Model,t1)
         reduce(
             +,
             unit_flow[u, n, d, s, t] * duration(t) * reserve_procurement_cost[(node=n,t=t)]
-                for n in indices(reserve_procurement_cost) #TODO: changes this to u,n,d indices
-                    for (u, n, d, s, t) in unit_flow_indices(node=n)
-                        if end_(t) <= t1;
+            for n in indices(reserve_procurement_cost)  # TODO: change this to (u, n, d) indices
+            for (u, n, d, s, t) in unit_flow_indices(node=n)
+            if end_(t) <= t1;
             init=0
         )
     )
 end
-#TODO: add weight scenario tree
+# TODO: add weight scenario tree

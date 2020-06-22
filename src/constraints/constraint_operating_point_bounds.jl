@@ -25,7 +25,7 @@ Limit the operating point flow variables `unit_flow_op` to the difference betwee
 the capacity of the unit
 """
 function add_constraint_operating_point_bounds!(m::Model)
-    @fetch unit_flow_op, unit_flow = m.ext[:variables]
+    @fetch unit_flow_op = m.ext[:variables]
     cons = m.ext[:constraints][:operating_point_bounds] = Dict()
     for (u, n, d) in indices(unit_capacity)
         for (u, n, d, op, s, t) in unit_flow_op_indices(unit=u, node=n, direction=d)

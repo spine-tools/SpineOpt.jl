@@ -31,11 +31,15 @@ struct TimeSliceSet
             end
         end
         block_time_slice_map = Dict(block => TimeSliceMap(time_slices) for (block, time_slices) in block_time_slices)
-        boundary_time_slices = unique(
-            Iterators.flatten((first(time_slices), last(time_slices)) for time_slices in values(block_time_slices))
+        # Find eventual gaps in between temporal blocks
+        solids = [(first(time_slices), last(time_slices)) for time_slices in values(block_time_slices)]
+        sort!(solids)
+        gaps = ((from, to) for ((_x, from), (to, _y)) in zip(solids[1:end - 1], solids[2:end]) if from < to)
+        # Create bridge time slice map. We need one bridge per gap.
+        bridge_time_slice_map = Dict(
+            Object("bridge_from_$(from)_to_$(to)") => TimeSliceMap([from, to]) for (from, to) in gaps
         )
-        sort!(boundary_time_slices)
-        block_time_slice_map[Object(:gap_filler)] = TimeSliceMap(boundary_time_slices)
+        merge!(block_time_slice_map, bridge_time_slice_map)
         new(time_slices, block_time_slices, block_time_slice_map)
     end
 end
@@ -45,14 +49,11 @@ struct TOverlapsT
 end
 
 """
-    time_slice(;temporal_block=anything, t=anything)
+    (::TimeSliceSet)(;temporal_block=anything, t=anything)
 
 An `Array` of time slices *in the model*.
 - `temporal_block` is a temporal block object to filter the result.
 - `t` is a `TimeSlice` or collection of `TimeSlice`s *in the model* to filter the result.
-
-TODO This docstring can be a bit confusing, since the actual struct that `time_slice` refers to is called
-`TimeSliceSet`.
 """
 (h::TimeSliceSet)(;temporal_block=anything, t=anything) = h(temporal_block, t)
 (h::TimeSliceSet)(::Anything, ::Anything) = h.time_slices
@@ -91,6 +92,15 @@ function (h::TOverlapsT)(t1, t2)
 end
 
 """
+    _model_duration_unit()
+
+Fetches the `duration_unit` parameter of the first defined `model`, and defaults to `Minute` if not found.
+"""
+function _model_duration_unit(instance=first(model()))
+    get(Dict(:minute => Minute, :hour => Hour), duration_unit(model=instance, _strict=false), Minute)
+end
+
+"""
     _generate_current_window()
 
 A `TimeSlice` spanning the current optimization window from the beginning of the current solve until the beginning of
@@ -103,7 +113,7 @@ function _generate_current_window()
     roll_forward_ = roll_forward(model=instance, _strict=false)
     window_start = model_start_
     window_end = (roll_forward_ === nothing) ? model_end_ : min(model_start_ + roll_forward_, model_end_)
-    current_window = TimeSlice(window_start, window_end)
+    current_window = TimeSlice(window_start, window_end; duration_unit=_model_duration_unit(instance))
     @eval begin
         current_window = $current_window
     end
@@ -143,7 +153,7 @@ function _time_interval_blocks(window_start, window_end)
         while time_slice_start < adjusted_end
             duration = resolution(temporal_block=block, i=i)
             if iszero(duration)
-                # FIXME: Move this to a check...
+                # TODO: Try to move this to a check...
                 error("`resolution` of temporal block `$(block)` cannot be zero!")
             end
             time_slice_end = time_slice_start + duration
@@ -161,15 +171,6 @@ function _time_interval_blocks(window_start, window_end)
         end
     end
     blocks_by_time_interval
-end
-
-"""
-    _model_duration_unit()
-
-Fetches the `duration_unit` parameter of the first defined `model`, and defaults to `Minute` if not found.
-"""
-function _model_duration_unit()
-    get(Dict(:minute => Minute, :hour => Hour), duration_unit(model=first(model()), _strict=false), Minute)
 end
 
 """
@@ -196,10 +197,10 @@ See [@TimeSliceSet()](@ref).
 function _generate_time_slice()
     window_start = start(current_window)
     window_end = end_(current_window)
-    window_span = window_end - window_start
     window_time_slices = _window_time_slices(window_start, window_end)
     time_slice = TimeSliceSet(window_time_slices)
     i = findlast(t -> end_(t) <= window_end, window_time_slices)
+    window_span = window_end - window_start
     history_time_slices = [t - window_span for t in window_time_slices[1:i]] 
     history_time_slice = TimeSliceSet(history_time_slices)
     t_history_t = Dict(zip(window_time_slices, history_time_slices))
@@ -211,6 +212,12 @@ function _generate_time_slice()
     end
 end
 
+"""
+    to_time_slice(t::TimeSlice...)
+
+An `Array` of `TimeSlice`s *in the model* overlapping the given `t`
+(where `t` may not be in model).
+"""
 function to_time_slice(t::TimeSlice...)
     unique(
         Iterators.flatten(

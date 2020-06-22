@@ -31,6 +31,7 @@ function add_constraint_nodal_balance!(m::Model)
     for (n, s, t) in node_stochastic_time_indices()
         # Skip nodes that are part of a node group having balance_type_group
         (any(balance_type(node=ng) === :balance_type_group for ng in node_group__node(node2=n)) || (nodal_balance_sense(node=n) == :none)) && continue
+        internal_nodes = (balance_type(node=n) === :balance_type_group) ? node_group__node(node1=n) : []
         cons[n, s, t] = sense_constraint(
             m,
             # Net injection
@@ -41,9 +42,7 @@ function add_constraint_nodal_balance!(m::Model)
                 for (conn, n, d, s, t) in connection_flow_indices(
                     node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
                 )
-                if !(balance_type(node=n) === :balance_type_group && _is_internal(conn, n));
-                    #TODO: what would be the meaning of balance_type(node=n) != :balance_type_group but is internal?
-                    # this should not be allowed I guess? I think !(_is_internal) should be sufficient
+                if !issubset(_connection_nodes(conn), internal_nodes);
                 init=0
             )
             # Commodity flows to connections
@@ -52,7 +51,7 @@ function add_constraint_nodal_balance!(m::Model)
                 for (conn, n, d, s, t) in connection_flow_indices(
                     node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
                 )
-                if !(balance_type(node=n) === :balance_type_group && _is_internal(conn, n));
+                if !issubset(_connection_nodes(conn), internal_nodes);
                 init=0
             )
             # slack variable - only exists if slack_penalty is defined
@@ -65,14 +64,6 @@ function add_constraint_nodal_balance!(m::Model)
         )
     end
 end
-
-"""
-    _is_internal(conn, ng)
-
-Determine whether or not a `connection` is internal to a `node_group`, in the sense that it only connects `nodes`
-within that `node_group`.
-"""
-_is_internal(conn, ng) = issubset(_connection_nodes(conn), node_group__node(node1=ng))
 
 """
     _connection_nodes(conn)

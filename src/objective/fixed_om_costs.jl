@@ -22,7 +22,7 @@
 
 Fixed operation costs of units.
 """
-function fixed_om_costs(m,t1)
+function fixed_om_costs(m, t1)
     @expression(
         m,
         expr_sum(
@@ -31,11 +31,8 @@ function fixed_om_costs(m,t1)
             * fom_cost[(unit=u, t=t)]
             * duration(t)
             for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for (u, s, t) in units_on_indices()
-                ##TODO: so this one is summed up for every time-step within the optimization
-                ##This might cause double counting!
-                #rapleaced with units_on_indices; add stochastics
-                if end_(t) <= t1;
+            for t in unique(ind.t for ind in units_on_indices(unit=u))
+            if end_(t) <= t1;
             init=0
         )
     )
