@@ -18,22 +18,22 @@
 #############################################################################
 
 @testset "check data structure" begin
-	url_in = "sqlite:///$(@__DIR__)/test.sqlite"
-	_load_template(url_in)
-	# TODO: Once we get our error messages right, we should use:
-	# @test_throws ErrorException("...exception message...") m = run_spineopt(url_in; log_level=0)
-	# to make sure that the test passes for the good reasons.
+    url_in = "sqlite:///$(@__DIR__)/test.sqlite"
+    _load_template(url_in)
+    # TODO: Once we get our error messages right, we should use:
+    # @test_throws ErrorException("...exception message...") m = run_spineopt(url_in; log_level=0)
+    # to make sure that the test passes for the good reasons.
     @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
-	db_api.import_data_to_url(url_in; objects=[["model", "instance"]])
+    db_api.import_data_to_url(url_in; objects=[["model", "instance"]])
     @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
-	db_api.import_data_to_url(
-		url_in; 
-		objects=[["temporal_block", "test_temporal_block"], ["unit", "test_unit"], ["node", "test_node"]]
-	)
+    db_api.import_data_to_url(
+        url_in; 
+        objects=[["temporal_block", "test_temporal_block"], ["unit", "test_unit"], ["node", "test_node"]]
+    )
     @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
-	db_api.import_data_to_url(
-		url_in; 
-		relationships=[["units_on_resolution", ["test_unit", "test_node"]]]
-	)
+    db_api.import_data_to_url(
+        url_in; 
+        relationships=[["units_on_resolution", ["test_unit", "test_node"]]]
+    )
     @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
 end

@@ -27,43 +27,43 @@ using PyCall
 _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
 
 function _load_template(url_in)
-	db_api.create_new_spine_database(url_in)
-	template = Dict(Symbol(key) => value for (key, value) in SpineOpt.template)
-	db_api.import_data_to_url(url_in; template...)
+    db_api.create_new_spine_database(url_in)
+    template = Dict(Symbol(key) => value for (key, value) in SpineOpt.template)
+    db_api.import_data_to_url(url_in; template...)
 end
 
 """
-	_dismember_constraint(constraint)
+    _dismember_constraint(constraint)
 
 Show the given constraint in an organized way.
 Useful for writing tests.
 """
 function _dismember_constraint(constraint)
-	for k in sort(collect(keys(constraint)))
-		println("key: ", k)
-		con_obj = constraint_object(constraint[k])
-		_dismember_constraint_object(con_obj)
-	end
+    for k in sort(collect(keys(constraint)))
+        println("key: ", k)
+        con_obj = constraint_object(constraint[k])
+        _dismember_constraint_object(con_obj)
+    end
 end
 
 function _dismember_constraint_object(con_obj)
-	_dismember_function(con_obj.func)
-	println("set: ", con_obj.set)
-	println()
+    _dismember_function(con_obj.func)
+    println("set: ", con_obj.set)
+    println()
 end
 
 function _dismember_function(func)
-	for (k, term) in enumerate(func.terms)
-		println("term $k: ", term)
-	end
-	println("term constant: ", func.constant)
+    for (k, term) in enumerate(func.terms)
+        println("term $k: ", term)
+    end
+    println("term constant: ", func.constant)
 end
 
 @testset begin
-	include("data_structure/check_data_structure.jl")
-	include("data_structure/temporal_structure.jl")
-	include("constraints/constraint_unit.jl")
-	include("constraints/constraint_node.jl")
-	include("constraints/constraint_connection.jl")
-	include("objective/objective.jl")
+    include("data_structure/check_data_structure.jl")
+    include("data_structure/temporal_structure.jl")
+    include("constraints/constraint_unit.jl")
+    include("constraints/constraint_node.jl")
+    include("constraints/constraint_connection.jl")
+    include("objective/objective.jl")
 end
