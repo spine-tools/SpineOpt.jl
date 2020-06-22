@@ -23,8 +23,7 @@
 Compares the defined sets of `ObjectClass`, `RelationshipClass` and parameter definitions with the
 `spineopt_template.json` and generates missing items.
 """
-function generate_missing_items()
-    mod = @__MODULE__
+function generate_missing_items(mod=@__MODULE__)
     missing_items = Dict(
         "object classes" => String[],
         "relationship classes" => String[],
