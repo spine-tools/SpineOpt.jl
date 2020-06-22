@@ -1,9 +1,0 @@
-for ramps:
-- rathe than having reserve flow versus ramp_flow
-
-assign flow of reserves to be <= than ramp and then so forth?
-
-TO Do for reserves:
-- add stochastic path for ramps
-- reproduce results with current design
-- make prettier e.g. with reconsidering ramps.. groups
