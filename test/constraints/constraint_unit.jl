@@ -117,6 +117,8 @@
 	@testset "constraint_unit_state_transition" begin
 		_load_template(url_in)
 		db_api.import_data_to_url(url_in; test_data...)
+		object_parameter_values = [["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"]]
+		db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
 		m = run_spineopt(url_in; log_level=0)
 		var_units_on = m.ext[:variables][:units_on]
 		var_units_started_up = m.ext[:variables][:units_started_up]
@@ -193,7 +195,7 @@
 			observed_con = constraint_object(constraint[con_key])
 			@test _is_constraint_equal(observed_con, expected_con)
 		end
-	end
+	end	
 	@testset "constraint_operating_point_bounds" begin
 		_load_template(url_in)
 		db_api.import_data_to_url(url_in; test_data...)

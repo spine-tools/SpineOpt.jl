@@ -18,9 +18,10 @@
 #############################################################################
 
 """
-    run_spineopt(url_in, [url_out=url_in]; <keyword arguments>)
+    run_spineopt(url_in, url_out; <keyword arguments>)
 
-Run SpineOpt from `url_in` and write report to `url_out`.
+Run the SpineOpt from `url_in` and write report to `url_out`.
+At least `url_in` must point to valid Spine database.
 A new Spine database is created at `url_out` if it doesn't exist.
 
 # Keyword arguments
@@ -99,6 +100,11 @@ function rerun_spineopt(
         @logtime level3 "- [variable_units_invested]" add_variable_units_invested!(m)
         @logtime level3 "- [variable_units_invested_available]" add_variable_units_invested_available!(m)
         @logtime level3 "- [variable_units_mothballed]" add_variable_units_mothballed!(m)
+        # TODO: @logtime level3 "- [variable_ramp_costs]" add_variable_ramp_costs!(m)
+        @logtime level3 "- [variable_ramp_up_unit_flow]" add_variable_ramp_up_unit_flow!(m)
+        @logtime level3 "- [variable_start_up_unit_flow]" add_variable_start_up_unit_flow!(m)
+        @logtime level3 "- [variable_nonspin_starting_up]"  add_variable_nonspin_starting_up!(m)
+        @logtime level3 "- [variable_nonspin_ramp_up_unit_flow]"  add_variable_nonspin_ramp_up_unit_flow!(m)
     end
     @logtime level2 "Fixing variable values..." fix_variables!(m)
     @logtime level2 "Adding constraints...\n" begin
@@ -131,15 +137,24 @@ function rerun_spineopt(
         @logtime level3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
         @logtime level3 "- [constraint_units_on]" add_constraint_units_on!(m)
         @logtime level3 "- [constraint_units_available]" add_constraint_units_available!(m)
-        @logtime level3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)        
+        @logtime level3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)
         @logtime level3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(m)
         @logtime level3 "- [constraint_minimum_operating_point]" add_constraint_minimum_operating_point!(m)
         @logtime level3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)
         @logtime level3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
         @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
+        # TODO: @logtime level3 "- [constraint_ramp_cost]" add_constraint_ramp_cost!(m)
+        @logtime level3 "- [constraint_split_ramps]" add_constraint_split_ramps!(m)
+        @logtime level3 "- [constraint_ramp_up]" add_constraint_ramp_up!(m)
+        @logtime level3 "- [constraint_max_start_up_ramp]" add_constraint_max_start_up_ramp!(m)
+        @logtime level3 "- [constraint_min_start_up_ramp]" add_constraint_min_start_up_ramp!(m)
+        # TODO: @logtime level3 "- [constraint_ramp_down]" add_constraint_ramp_down!(m)
+        @logtime level3 "- [constraint_max_nonspin_ramp_up]" add_constraint_max_nonspin_ramp_up!(m)
+        @logtime level3 "- [constraint_min_nonspin_ramp_up]" add_constraint_min_nonspin_ramp_up!(m)
         @logtime level3 "- [constraint_user]" add_constraints(m)
         @logtime level3 "- [setting constraint names]" name_constraints!(m)
     end
+    @logtime level2 "Initialize cost terms..." initialize_cost_terms!(m)
     @logtime level2 "Setting objective..." set_objective!(m)
     k = 2
     while optimize_model!(m)
@@ -147,6 +162,7 @@ function rerun_spineopt(
         @logtime level2 "Saving results..." begin
             postprocess_results!(m)
             save_variable_values!(m)
+            # FIXME: save_objective_values!(m)
             save_results!(results, m)
         end
         roll_temporal_structure() || break
@@ -158,8 +174,8 @@ function rerun_spineopt(
         @logtime level2 "Updating objective..." update_varying_objective!(m)
         k += 1
     end
-    @logtime level2 "Writing report..." write_report(results, url_out)
-    m
+     @logtime level2 "Writing report..." write_report(results, url_out)
+     m
 end
 
 function name_constraints!(m::Model)
@@ -175,7 +191,7 @@ function optimize_model!(m::Model)
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @logtime true "Optimizing model..." optimize!(m)
-    if termination_status(m) == MOI.OPTIMAL
+    if termination_status(m) == MOI.OPTIMAL ||  termination_status(m) == MOI.TIME_LIMIT
         true
     else
         @log true "Unable to find solution (reason: $(termination_status(m)))"
@@ -192,7 +208,7 @@ function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Fu
         fix_value_ = fix_value(ind)
         fix_value_ != nothing && fix(var[ind], fix_value_; force=true)
         end_(ind.t) <= end_(current_window) || continue
-        for history_ind in indices(; ind..., stochastic_scenario=anything, t=t_history_t[ind.t]) 
+        for history_ind in indices(; ind..., stochastic_scenario=anything, t=t_history_t[ind.t])
             fix_value_ = fix_value(history_ind)
             fix_value_ != nothing && fix(var[history_ind], fix_value_; force=true)
         end
@@ -223,7 +239,7 @@ end
 
 function save_results!(results, m)
     for out in output()
-        value = get(m.ext[:values], out.name, nothing)
+        value = get(merge(m.ext[:values],m.ext[:cost_terms]), out.name, nothing)#
         if value === nothing
             @warn "can't find results for '$(out.name)'"
             continue

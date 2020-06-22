@@ -57,12 +57,13 @@ function _dismember_function(func)
 		println("term $k: ", term)
 	end
 	println("term constant: ", func.constant)
-	println()
 end
 
-include("data_structure/check_data_structure.jl")
-include("data_structure/temporal_structure.jl")
-include("constraints/constraint_unit.jl")
-include("constraints/constraint_node.jl")
-include("constraints/constraint_connection.jl")
-include("objective/objective.jl")
+@testset begin
+	include("data_structure/check_data_structure.jl")
+	include("data_structure/temporal_structure.jl")
+	include("constraints/constraint_unit.jl")
+	include("constraints/constraint_node.jl")
+	include("constraints/constraint_connection.jl")
+	include("objective/objective.jl")
+end

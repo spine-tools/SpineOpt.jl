@@ -44,8 +44,11 @@ and `units_shut_down`.
 """
 function add_constraint_unit_state_transition!(m::Model)
     @fetch units_on, units_started_up, units_shut_down = m.ext[:variables]
+    # TODO: add support for units that start_up over multiple timesteps?
+    # TODO: use :integer, :binary, :linear as parameter values -> reusable for other pruposes
     cons = m.ext[:constraints][:unit_state_transition] = Dict()
     for (u, stochastic_path, t_before, t_after) in constraint_unit_state_transition_indices()
+        online_variable_type(unit=u) === :unit_online_variable_type_linear && continue
         cons[u, stochastic_path, t_before, t_after] = @constraint(
             m,
             expr_sum(

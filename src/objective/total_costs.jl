@@ -1,14 +1,14 @@
 #############################################################################
 # Copyright (C) 2017 - 2018  Spine Project
 #
-# This file is part of SpineOpt.
+# This file is part of Spine Model.
 #
-# SpineOpt is free software: you can redistribute it and/or modify
+# Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# SpineOpt is distributed in the hope that it will be useful,
+# Spine Model is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Lesser General Public License for more details.
@@ -18,20 +18,12 @@
 #############################################################################
 
 """
-    fuel_costs(m::Model)
+    total_costs(m::Model, t::RefDateTime)
+
+Expression of all cost terms. t indicates the end of the last timeslice that is
+included in the expression.
 """
-function fuel_costs(m::Model, t1)
-    @fetch unit_flow = m.ext[:variables]
-    @expression(
-        m,
-        expr_sum(
-            unit_flow[u, n, d, s, t] * duration(t)
-            * fuel_cost[(unit=u, node=ng, direction=d, t=t)]
-            * node_stochastic_scenario_weight(node=ng, stochastic_scenario=s)
-            for (u, ng, d) in indices(fuel_cost)
-            for (u, n, d, s, t) in unit_flow_indices(unit=u, node=ng, direction=d)
-            if end_(t) <= t1;
-            init=0
-        )
-    )
+
+function total_costs(m,t)
+    sum(eval(cost_terms)(m, t) for cost_terms in filter(x -> x != :total_costs, keys(m.ext[:cost_terms])))
 end

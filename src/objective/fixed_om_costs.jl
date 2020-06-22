@@ -22,16 +22,19 @@
 
 Fixed operation costs of units.
 """
-function fixed_om_costs(m)
+function fixed_om_costs(m, t1)
     @expression(
         m,
         expr_sum(
-            + unit_capacity[(unit=u, node=n, direction=d, t=t)] 
-            * number_of_units[(unit=u, t=t)] 
+            + unit_capacity[(unit=u, node=ng, direction=d, t=t)]
+            * number_of_units[(unit=u, t=t)]
             * fom_cost[(unit=u, t=t)]
-            for (u, n, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for t in time_slice();
+            * duration(t)
+            for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))
+            for t in unique(ind.t for ind in units_on_indices(unit=u))
+            if end_(t) <= t1;
             init=0
         )
     )
 end
+#TODO: scenario tree?

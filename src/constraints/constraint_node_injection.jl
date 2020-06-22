@@ -71,39 +71,41 @@ Set the node injection equal to the summation of all 'input' flows but connectio
 function add_constraint_node_injection!(m::Model)
     @fetch node_injection, node_state, unit_flow = m.ext[:variables]
     cons = m.ext[:constraints][:node_injection] = Dict()
-    for (n, stochastic_path, t_before, t_after) in constraint_node_injection_indices()
-        cons[n, stochastic_path, t_before, t_after] = @constraint(
+    #TODO: We need to include both: storages that are defined on ng and storage that are defined
+    #on internal nodes
+    for (ng, stochastic_path, t_before, t_after) in constraint_node_injection_indices()
+        cons[ng, stochastic_path, t_before, t_after] = @constraint(
             m,
             + expr_sum(
-                + node_injection[n, s, t_after]
-                for (n, s, t_after) in node_injection_indices(
-                    node=n, stochastic_scenario=stochastic_path, t=t_after
+                + node_injection[ng, s, t_after]
+                for (ng, s, t_after) in node_injection_indices(
+                    node=ng, stochastic_scenario=stochastic_path, t=t_after
                 );
                 init=0
             )
             ==
             + expr_sum(
                 (
-                    + get(node_state, (n, s, t_before), 0) * state_coeff[(node=n, t=t_before)]
-                    - get(node_state, (n, s, t_after), 0) * state_coeff[(node=n, t=t_after)]
+                    + get(node_state, (ng, s, t_before), 0) * state_coeff[(node=ng, t=t_before)]
+                    - get(node_state, (ng, s, t_after), 0) * state_coeff[(node=ng, t=t_after)]
                 )
                 / duration(t_after)
                 # Self-discharge commodity losses
-                - get(node_state, (n, s, t_after), 0) * frac_state_loss[(node=n, t=t_after)]
+                - get(node_state, (ng, s, t_after), 0) * frac_state_loss[(node=ng, t=t_after)]
                 for s in stochastic_path;
                 init=0
             )
             # Diffusion of commodity from other nodes to this one
             + expr_sum(
-                get(node_state, (other_n, s, t_after), 0) * diff_coeff[(node1=other_n, node2=n, t=t_after)]
-                for other_n in node__node(node2=n)
+                get(node_state, (other_node, s, t_after), 0) * diff_coeff[(node1=other_node, node2=ng, t=t_after)]
+                for other_node in node__node(node2=ng)
                 for s in stochastic_path;
                 init=0
             )
             # Diffusion of commodity from this node to other nodes
             - expr_sum(
-                get(node_state, (n, s, t_after), 0) * diff_coeff[(node1=n, node2=other_n, t=t_after)]
-                for other_n in node__node(node1=n)
+                get(node_state, (ng, s, t_after), 0) * diff_coeff[(node1=ng, node2=other_node, t=t_after)]
+                for other_node in node__node(node1=ng)
                 for s in stochastic_path;
                 init=0
             )
@@ -111,7 +113,7 @@ function add_constraint_node_injection!(m::Model)
             + expr_sum(
                 unit_flow[u, n, d, s, t_short]
                 for (u, n, d, s, t_short) in unit_flow_indices(
-                    node=n, direction=direction(:to_node), stochastic_scenario=stochastic_path, t=t_in_t(t_long=t_after)
+                    node=ng, direction=direction(:to_node), stochastic_scenario=stochastic_path, t=t_in_t(t_long=t_after)
                 );
                 init=0
             )
@@ -119,16 +121,17 @@ function add_constraint_node_injection!(m::Model)
             - expr_sum(
                 unit_flow[u, n, d, s, t_short]
                 for (u, n, d, s, t_short) in unit_flow_indices(
-                    node=n, direction=direction(:from_node), stochastic_scenario=stochastic_path, t=t_in_t(t_long=t_after)
+                    node=ng, direction=direction(:from_node), stochastic_scenario=stochastic_path, t=t_in_t(t_long=t_after)
                 );
                 init=0
             )
-            - demand[(node=n, t=t_after)]
+            - demand[(node=ng, t=t_after)]
             - expr_sum(
-                fractional_demand[(node1=ng, node2=n, t=t_after)] * demand[(node=ng, t=t_after)]
-                for ng in node_group__node(node2=n);
+                fractional_demand[(node1=ng_, node2=ng, t=t_after)] * demand[(node=ng_, t=t_after)]
+                for ng_ in node_group__node(node2=ng);
                 init=0
             )
+            #TODO: fractional_demand etc. are scneario dependent?
         )
     end
 end

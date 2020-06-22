@@ -22,7 +22,7 @@
 
 Startup cost term for units.
 """
-function start_up_costs(m::Model)
+function start_up_costs(m::Model, t1)
     @fetch units_started_up = m.ext[:variables]
     @expression(
         m,
@@ -30,7 +30,8 @@ function start_up_costs(m::Model)
             + units_started_up[u, s, t]
             * start_up_cost[(unit=u, stochastic_scenario=s, t=t)]
             * unit_stochastic_scenario_weight(unit=u, stochastic_scenario=s)
-            for (u, s, t) in units_on_indices(unit=indices(start_up_cost));
+            for (u, s, t) in units_on_indices(unit=indices(start_up_cost))
+            if end_(t) <= t1;
             init=0
         )
     )

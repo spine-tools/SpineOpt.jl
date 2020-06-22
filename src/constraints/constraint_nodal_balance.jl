@@ -30,9 +30,9 @@ function add_constraint_nodal_balance!(m::Model)
     cons = m.ext[:constraints][:nodal_balance] = Dict()
     for (n, s, t) in node_stochastic_time_indices()
         # Skip nodes that are part of a node group having balance_type_group
-        any(balance_type(node=ng) === :balance_type_group for ng in node_group__node(node2=n)) && continue
+        (any(balance_type(node=ng) === :balance_type_group for ng in node_group__node(node2=n)) || (nodal_balance_sense(node=n) == :none)) && continue
         internal_nodes = (balance_type(node=n) === :balance_type_group) ? node_group__node(node1=n) : []
-        cons[n, s, t] = @constraint(
+        cons[n, s, t] = sense_constraint(
             m,
             # Net injection
             + node_injection[n, s, t]
@@ -57,7 +57,9 @@ function add_constraint_nodal_balance!(m::Model)
             # slack variable - only exists if slack_penalty is defined
             + get(node_slack_pos, (n, s, t), 0)
             - get(node_slack_neg, (n, s, t), 0)
-            ==
+            ,
+            eval(nodal_balance_sense(node=n))
+            ,
             0
         )
     end

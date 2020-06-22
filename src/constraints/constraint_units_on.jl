@@ -19,7 +19,7 @@
 
 
 """
-    add_constraint_units_on!(m::Model, units_on, units_available)
+    add_constraint_units_on!(m::Model)
 
 Limit the units_on by the number of available units.
 """

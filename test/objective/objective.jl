@@ -78,7 +78,9 @@
 			relationship_parameter_values=relationship_parameter_values
 		)
 		m = run_spineopt(url_in; log_level=0)
-		expected_obj = AffExpr(unit_capacity * number_of_units * fom_cost * length(time_slice()))
+		t_count = length(time_slice(temporal_block=temporal_block(:two_hourly)))
+		duration = 2
+		expected_obj = AffExpr(unit_capacity * number_of_units * fom_cost * duration * t_count)
 		observed_obj = objective_function(m)
 		@test observed_obj == expected_obj
 	end

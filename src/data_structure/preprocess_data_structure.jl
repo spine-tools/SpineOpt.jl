@@ -367,8 +367,8 @@ TODO What is the purpose of this function? It clearly generates a number of `Rel
 function generate_variable_indexing_support()
     node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
     unit__node__direction__temporal_block = RelationshipClass(
-        :unit__node__direction__temporal_block, 
-        [:unit, :node, :direction, :temporal_block], 
+        :unit__node__direction__temporal_block,
+        [:unit, :node, :direction, :temporal_block],
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
             for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
@@ -376,8 +376,8 @@ function generate_variable_indexing_support()
         )
     )
     connection__node__direction__temporal_block = RelationshipClass(
-        :connection__node__direction__temporal_block, 
-        [:connection, :node, :direction, :temporal_block], 
+        :connection__node__direction__temporal_block,
+        [:connection, :node, :direction, :temporal_block],
         unique(
             (connection=conn, node=n, direction=d, temporal_block=tb)
             for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
@@ -385,13 +385,13 @@ function generate_variable_indexing_support()
         )
     )
     node_with_state__temporal_block = RelationshipClass(
-        :node_with_state__temporal_block, 
-        [:node, :temporal_block], 
+        :node_with_state__temporal_block,
+        [:node, :temporal_block],
         unique((node=n, temporal_block=tb) for n in node(has_state=:value_true) for tb in node__temporal_block(node=n))
     )
     unit__temporal_block = RelationshipClass(
-        :unit__temporal_block, 
-        [:unit, :temporal_block], 
+        :unit__temporal_block,
+        [:unit, :temporal_block],
         unique(
             (unit=u, temporal_block=tb)
             for (u, n) in units_on_resolution()
@@ -401,11 +401,20 @@ function generate_variable_indexing_support()
     units_invested_available_indices = unique(
         (unit=u, temporal_block=tb)
         for ug in indices(candidate_units)
-        for u in expand_unit_group(ug)            
-        for tb in unit__investment_temporal_block(unit=u)                    
+        for u in expand_unit_group(ug)
+        for tb in unit__investment_temporal_block(unit=u)
     )
     units_invested_available_indices_rc = RelationshipClass(
         :units_invested_available_indices_rc, [:unit, :temporal_block], units_invested_available_indices
+    )
+    nonspin_ramp_up_unit_flow_indices = unique(
+        (unit=u, node=n, direction=d, temporal_block=tb)
+        for (u, ng, d) in indices(max_res_startup_ramp)
+        for n in expand_node_group(ng)
+        for tb in node__temporal_block(node=n)
+    )
+    nonspin_ramp_up_unit_flow_indices_rc = RelationshipClass(
+        :nonspin_ramp_up_unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], nonspin_ramp_up_unit_flow_indices
     )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
@@ -414,6 +423,7 @@ function generate_variable_indexing_support()
         node_with_state__temporal_block = $node_with_state__temporal_block
         unit__temporal_block = $unit__temporal_block
         units_invested_available_indices_rc = $units_invested_available_indices_rc
+        nonspin_ramp_up_unit_flow_indices_rc = $nonspin_ramp_up_unit_flow_indices_rc
     end
 end
 
