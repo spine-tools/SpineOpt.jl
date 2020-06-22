@@ -1,16 +1,16 @@
 {
     "object_classes": [
-        ["commodity", "Goods or products that can be consumed, produced, traded, e.g. Electrciity, Oil, Gas, Water ...", 281473533932880],
-        ["connection", "Transfer of commodities from one node to another node, e.g. El.Line, Gaspipeline ...", 280378317271233],
-        ["model", "Model entity describes the model horizon and the optimization method TODO: add opt methods", 281107035648412],
-        ["node", "A node brings all other entities such as units, connections, commodities into play through the balance equation. Nodes connected to a temporal block describe the resolution of the energy balance. Moreover, a node can represent a storage, if specified. At the moment we only support a singleton model object", 280740554077951],
-        ["output", "Variable names defined in output are returned back to the database after the model run, if they have a relationship to a report object", 280743406202948],
-        ["report", "The report is written back to a specified db after ", 281108461711708],
-        ["stochastic_scenario", "TODO", null],
-        ["stochastic_structure", "TODO", null],
-        ["temporal_block", "The temporal strucutre of the optimization model is described through temporal block.", 280376891207703],
-        ["unit", "A unit is the place where a conversion of one/many comodities to one/many commodities happens.", 281470681805429],
-        ["unit_constraint", "TODO", null]
+        ["commodity", "A good or product that can be consumed, produced, traded. E.g., electricity, oil, gas, water...", 281473533932880],
+        ["connection", "A transfer of commodities between nodes. E.g. electricity line, gas pipeline...", 280378317271233],
+        ["model", "An instance of SpineOpt, that specifies general parameters such as the temporal horizon.", 281107035648412],
+        ["node", "A universal aggregator of commodify flows over units and connections, with storage capabilities.", 280740554077951],
+        ["output", "A variable name from SpineOpt that can be included in a report.", 280743406202948],
+        ["report", "A results report from a particular SpineOpt run, including the value of specific variables.", 281108461711708],
+        ["stochastic_scenario", "A scenario for stochastic optimisation in SpineOpt.", null],
+        ["stochastic_structure", "A group of stochastic scenarios that represent a structure.", null],
+        ["temporal_block", "A length of time with a particular resolution.", 280376891207703],
+        ["unit", "A conversion of one/many comodities between nodes.", 281470681805429],
+        ["unit_constraint", "A constraint over the flows of a specific unit.", null]
     ],
     "relationship_classes": [
         ["commodity_group__commodity", ["commodity", "commodity"], "Through $(object_class)_group__$(object_class) multiple objects of one $object_class can be zipped together. This enables the use of certain parmaeters on a collection of nodes/connections/units. TODO: the possible uses of groups should be named in the parameter definition"],
