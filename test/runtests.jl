@@ -68,4 +68,5 @@ end
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")
     include("objective/objective.jl")
+    include("run_spineopt.jl")
 end
