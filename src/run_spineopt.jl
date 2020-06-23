@@ -84,6 +84,7 @@ function rerun_spineopt(
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
     m.ext[:values] = Dict{Symbol,Dict}()
     m.ext[:constraints] = Dict{Symbol,Dict}()
+    m.ext[:objective_terms] = Dict(term => Dict() for term in [objective_terms(); :total_costs])
     @log level1 "Window 1: $current_window"
     @logtime level2 "Adding variables...\n" begin
         @logtime level3 "- [variable_units_available]" add_variable_units_available!(m)
@@ -154,7 +155,6 @@ function rerun_spineopt(
         @logtime level3 "- [constraint_user]" add_constraints(m)
         @logtime level3 "- [setting constraint names]" name_constraints!(m)
     end
-    @logtime level2 "Initialize cost terms..." initialize_cost_terms!(m)
     @logtime level2 "Setting objective..." set_objective!(m)
     k = 2
     while optimize_model!(m)
@@ -162,7 +162,7 @@ function rerun_spineopt(
         @logtime level2 "Saving results..." begin
             postprocess_results!(m)
             save_variable_values!(m)
-            # FIXME: save_objective_values!(m)
+            save_objective_values!(m)
             save_results!(results, m)
         end
         roll_temporal_structure() || break
@@ -237,9 +237,24 @@ function save_variable_values!(m::Model)
     end
 end
 
+"""
+    save_objective_values!(m::Model)
+
+Save objective values into ad-hoc dictionaries.
+
+Note that only time_slices within the current window are taken into account.
+"""
+function save_objective_values!(m::Model)
+    ind = (model=first(model()), t=current_window)
+    for term in keys(m.ext[:objective_terms])
+        func = eval(term)
+        m.ext[:objective_terms][term][ind] = value(realize(func(m, end_(ind.t))))
+    end
+end
+
 function save_results!(results, m)
     for out in output()
-        value = get(merge(m.ext[:values],m.ext[:cost_terms]), out.name, nothing)#
+        value = get(merge(m.ext[:values], m.ext[:objective_terms]), out.name, nothing)
         if value === nothing
             @warn "can't find results for '$(out.name)'"
             continue

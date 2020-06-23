@@ -26,8 +26,7 @@ function connection_flow_costs(m::Model,t1)
     @fetch connection_flow = m.ext[:variables]
     @expression(
         m,
-        reduce(
-            +,
+        expr_sum(
             connection_flow[conn, n, d, s, t]* duration(t) * connection_flow_cost[(connection=conn,t=t)]
             for conn in indices(connection_flow_cost)
             for (conn, n, d, s, t) in connection_flow_indices(connection=conn)

@@ -17,14 +17,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    total_costs(m::Model, t::RefDateTime)
-
-Expression of all cost terms.
-
-t indicates the end of the last timeslice that is included in the expression.
-"""
-
-function total_costs(m,t)
-    sum(eval(cost_terms)(m, t) for cost_terms in filter(x -> x != :total_costs, keys(m.ext[:cost_terms])))
+function objective_terms()
+    [
+        :variable_om_costs,
+        :fixed_om_costs,
+        :taxes,
+        :operating_costs,
+        :fuel_costs,
+        :investment_costs,
+        :start_up_costs,
+        :shut_down_costs,
+        :objective_penalties,
+        :connection_flow_costs,
+        :renewable_curtailment_costs,
+        :res_proc_costs,
+        # TODO: :ramp_costs,
+    ]
 end
+
+"""
+    total_costs(m::Model, t::DateTime)
+
+Expression corresponding to the sume of all cost terms for given model, and up until the given date time.
+"""
+total_costs(m, t) = sum(eval(term)(m, t) for term in objective_terms())

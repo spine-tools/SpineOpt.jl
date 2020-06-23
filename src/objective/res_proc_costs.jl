@@ -26,8 +26,7 @@ function res_proc_costs(m::Model,t1)
     @fetch unit_flow = m.ext[:variables]
     @expression(
         m,
-        reduce(
-            +,
+        expr_sum(
             unit_flow[u, n, d, s, t] * duration(t) * reserve_procurement_cost[(node=n,t=t)]
             for n in indices(reserve_procurement_cost)  # TODO: change this to (u, n, d) indices
             for (u, n, d, s, t) in unit_flow_indices(node=n)
