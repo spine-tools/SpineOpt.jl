@@ -22,6 +22,7 @@
 
 Create an expression for unit ramp costs.
 """
+# TODO: this
 function ramp_costs(m::Model, t1)
     @fetch ramp_cost = m.ext[:variables]
     @expression(
@@ -34,4 +35,3 @@ function ramp_costs(m::Model, t1)
         )
     )
 end
-#TODO: add weight scenario tree
