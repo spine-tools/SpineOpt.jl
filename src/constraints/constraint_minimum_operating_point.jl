@@ -20,9 +20,10 @@
 """
     constraint_minimum_operating_point_indices()
 
-Forms the stochastic index set for the `:minimum_operating_point` constraint.
-Uses stochastic path indices due to potentially different stochastic structures
-between `unit_flow` and `units_on` variables.
+Form the stochastic index set for the `:minimum_operating_point` constraint.
+
+Uses stochastic path indices due to potentially different stochastic structures between
+`unit_flow` and `units_on` variables.
 """
 function constraint_minimum_operating_point_indices()
     unique(

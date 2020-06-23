@@ -20,9 +20,9 @@
 """
     constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
 
-Forms the stochastic index set for the `:ratio_out_in_connection_flow` constraint
-for the desired `ratio_out_in`. Uses stochastic path indices due to potentially
-different stochastic structures between `connection_flow` variables.
+Form the stochastic index set for the `:ratio_out_in_connection_flow` constraint for the desired `ratio_out_in`.
+    
+Uses stochastic path indices due to potentially different stochastic structures between `connection_flow` variables.
 """
 function constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
     unique(
@@ -102,7 +102,7 @@ end
 """
     add_constraint_fix_ratio_out_in_connection_flow!(m::Model)
 
-Calls `add_constraint_ratio_out_in_connection_flow!` using the `fix_ratio_out_in_connection_flow` parameter.
+Call `add_constraint_ratio_out_in_connection_flow!` using the `fix_ratio_out_in_connection_flow` parameter.
 """
 function add_constraint_fix_ratio_out_in_connection_flow!(m::Model)
     add_constraint_ratio_out_in_connection_flow!(m, fix_ratio_out_in_connection_flow, ==)
@@ -111,7 +111,7 @@ end
 """
     add_constraint_max_ratio_out_in_connection_flow!(m::Model)
 
-Calls `add_constraint_ratio_out_in_connection_flow!` using the `max_ratio_out_in_connection_flow` parameter.
+Call `add_constraint_ratio_out_in_connection_flow!` using the `max_ratio_out_in_connection_flow` parameter.
 """
 function add_constraint_max_ratio_out_in_connection_flow!(m::Model)
     add_constraint_ratio_out_in_connection_flow!(m, max_ratio_out_in_connection_flow, <=)
@@ -120,7 +120,7 @@ end
 """
     add_constraint_min_ratio_out_in_connection_flow!(m::Model)
 
-Calls `add_constraint_ratio_out_in_connection_flow!` using the `min_ratio_out_in_connection_flow` parameter.
+Call `add_constraint_ratio_out_in_connection_flow!` using the `min_ratio_out_in_connection_flow` parameter.
 """
 function add_constraint_min_ratio_out_in_connection_flow!(m::Model)
     add_constraint_ratio_out_in_connection_flow!(m, min_ratio_out_in_connection_flow, >=)

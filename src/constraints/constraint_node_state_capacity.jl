@@ -17,12 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
 """
     add_constraint_node_state_capacity!(m::Model)
 
-Limit the maximum value of a `node_state` variable under `node_state_cap`,
-if it exists.
+Limit the maximum value of a `node_state` variable under `node_state_cap`, if it exists.
 """
 function add_constraint_node_state_capacity!(m::Model)
     @fetch node_state = m.ext[:variables]

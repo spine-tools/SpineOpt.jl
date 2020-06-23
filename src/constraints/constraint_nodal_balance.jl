@@ -20,6 +20,7 @@
 #TODO: as proposed in the wiki on groups: We should be able to support
 # a) node_balance for node group and NO balance for underlying node
 # b) node_balance for node group AND balance for underlying node
+
 """
     add_constraint_nodal_balance!(m::Model)
 

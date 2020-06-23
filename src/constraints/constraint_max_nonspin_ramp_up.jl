@@ -20,7 +20,8 @@
 """
     constraint_max_nonspin_ramp_up_indices()
 
-Forms the stochastic index set for the `:max_nonspin_start_up_ramp` constraint.
+Form the stochastic index set for the `:max_nonspin_start_up_ramp` constraint.
+
 Uses stochastic path indices due to potentially different stochastic scenarios
 between `t_after` and `t_before`.
 """
@@ -48,8 +49,9 @@ end
 """
     add_constraint_max_nonspin_start_up_ramp!(m::Model)
 
-Limit the maximum ramp at the start up of a unit. For reserves the max non-spinning
-reserve ramp can be defined here.
+Limit the maximum ramp at the start up of a unit.
+
+For reserves the max non-spinning reserve ramp can be defined here.
 """
 function add_constraint_max_nonspin_ramp_up!(m::Model)
     @fetch nonspin_ramp_up_unit_flow, nonspin_starting_up = m.ext[:variables]

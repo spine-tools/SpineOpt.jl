@@ -20,8 +20,9 @@
 """
     constraint_min_up_time_indices()
 
-Forms the stochastic index set for the `:min_up_time` constraint. Uses stochastic path
-indices due to potentially different stochastic structures between `units_on` and
+Form the stochastic index set for the `:min_up_time` constraint.
+    
+Uses stochastic path indices due to potentially different stochastic structures between `units_on` and
 `units_available` variables.
 """
 function constraint_min_up_time_indices()
@@ -43,7 +44,7 @@ end
 """
     add_constraint_min_up_time!(m::Model)
 
-Constraint running by minimum up time.
+Constrain running by minimum up time.
 """
 
 function add_constraint_min_up_time!(m::Model)

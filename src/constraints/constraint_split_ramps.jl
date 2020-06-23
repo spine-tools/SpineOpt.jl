@@ -16,14 +16,14 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
 """
     constraint_split_ramps_indices()
 
-Forms the stochastic index set for the `:split_ramps` constraint.
-Uses stochastic path indices due to potentially different stochastic scenarios
-between `t_after` and `t_before`.
-"""
+Form the stochastic index set for the `:split_ramps` constraint.
 
+Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
+"""
 function constraint_split_ramps_indices()
     unique(
         (unit=u, node=n, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
@@ -39,15 +39,16 @@ function constraint_split_ramps_indices()
         )
     )
 end
+
 """
     add_constraint_split_ramps!(m::Model)
 
-Split delta(`unit_flow`) in `ramp_up_unit_flow and` `start_up_unit_flow`. This is
-required to enforce separate limitations on these two ramp types.
+Split delta(`unit_flow`) in `ramp_up_unit_flow and` `start_up_unit_flow`.
+
+This is required to enforce separate limitations on these two ramp types.
 """
 function add_constraint_split_ramps!(m::Model)
     @fetch unit_flow, ramp_up_unit_flow, start_up_unit_flow, nonspin_ramp_up_unit_flow = m.ext[:variables]
-    #TODO: ask Topi how this one would be properly done with stochastics
     constr_dict = m.ext[:constraints][:split_ramp_up] = Dict()
     for (u, n, d, s_path, t_before, t_after) in constraint_split_ramps_indices()
         constr_dict[u, n, d, s_path,t_before, t_after] = @constraint(

@@ -22,9 +22,10 @@
 """
     constraint_node_injection_indices()
 
-Forms the stochastic index set for the `:node_injection` constraint.
-Uses stochastic path indices due to dynamics and potentially different stochastic
-structures between this `node` and `nodes` connected via diffusion.
+Form the stochastic index set for the `:node_injection` constraint.
+
+Uses stochastic path indices due to dynamics and potentially different stochastic structures between this
+`node` and `nodes` connected via diffusion.
 """
 function constraint_node_injection_indices()
     unique(
@@ -41,7 +42,7 @@ end
 """
     _constraint_node_injection_indices(node, t_after, t_before)
 
-Gathers the current `node_stochastic_time_indices` as well as the relevant `node_state_indices` on the previous
+Gather the current `node_stochastic_time_indices` as well as the relevant `node_state_indices` on the previous
 `time_slice` and beyond defined `node__node` relationships for `add_constraint_node_injection!`
 """
 function _constraint_node_injection_indices(node, t_after, t_before)

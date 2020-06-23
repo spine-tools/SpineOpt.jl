@@ -16,12 +16,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
 """
     constraint_min_start_up_ramp_indices()
 
 Forms the stochastic index set for the `:min_start_up_ramp` constraint.
-Uses stochastic path indices due to potentially different stochastic scenarios
-between `t_after` and `t_before`.
+
+Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
 """
 function constraint_min_start_up_ramp_indices()
     unique(
@@ -43,11 +44,13 @@ function constraint_min_start_up_ramp_indices()
             )
     )
 end
+
 """
     add_constraint_min_start_up_ramp!(m::Model)
 
-Limit the minimum ramp at the start up of a unit. For reserves the min non-spinning
-reserve ramp can be defined here.
+Limit the minimum ramp at the start up of a unit.
+
+For reserves the min non-spinning reserve ramp can be defined here.
 """
 function add_constraint_min_start_up_ramp!(m::Model)
     @fetch units_started_up, start_up_unit_flow = m.ext[:variables]

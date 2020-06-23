@@ -17,12 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 #COPY from unit_state_transition"
+
 """
     constraint_ramp_up_indices()
 
-Forms the stochastic index set for the `:ramp_up` constraint.
-Uses stochastic path indices due to potentially different stochastic scenarios
-between `t_after` and `t_before`.
+Form the stochastic index set for the `:ramp_up` constraint.
+
+Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
 """
 function constraint_ramp_up_indices()
     unique(
@@ -51,7 +52,6 @@ end
 Limit the maximum ramp of `ramp_up_unit_flow` of a `unit` or `unit_group` if the parameters
 `ramp_up_limit`,`unit_capacity`,`unit_conv_cap_to_unit_flow` exist.
 """
-
 function add_constraint_ramp_up!(m::Model)
     @fetch units_on,  units_started_up, ramp_up_unit_flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:ramp_up] = Dict()

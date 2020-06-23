@@ -22,9 +22,9 @@
 """
     constraint_connection_flow_lodf_indices()
 
-Forms the stochastic index set for the `:connection_flow_lodf` constraint.
-Uses stochastic path indices due to potentially different stochastic structures
-between `connection_flow` variables.
+Form the stochastic index set for the `:connection_flow_lodf` constraint.
+
+Uses stochastic path indices due to potentially different stochastic structures between `connection_flow` variables.
 """
 function constraint_connection_flow_lodf_indices()
     unique(
@@ -40,7 +40,7 @@ end
 """
     _constraint_connection_flow_lodf_lowest_resolution_t(conn_cont, conn_mon)
 
-Finds the lowest resolution `t`s between the `connection_flow` variables of the `conn_cont` contingency connection and
+Find the lowest resolution `t`s between the `connection_flow` variables of the `conn_cont` contingency connection and
 the `conn_mon` monitored connection.
 """
 function _constraint_connection_flow_lodf_lowest_resolution_t(conn_cont, conn_mon)
@@ -54,7 +54,7 @@ end
 """
     _constraint_connection_flow_lodf_indices(conn_cont, conn_mon, t)
 
-Gathers the indices of the `connection_flow` variable for the contingency connection `conn_cont` and
+Gather the indices of the `connection_flow` variable for the contingency connection `conn_cont` and
 the monitored connection `conn_mon` on time slice `t`.
 """
 function _constraint_connection_flow_lodf_indices(conn_cont, conn_mon, t)

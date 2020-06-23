@@ -20,9 +20,9 @@
 """
     constraint_unit_state_transition_indices()
 
-Forms the stochastic index set for the `:unit_state_transition` constraint.
-Uses stochastic path indices due to potentially different stochastic scenarios
-between `t_after` and `t_before`.
+Form the stochastic index set for the `:unit_state_transition` constraint.
+
+Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
 """
 function constraint_unit_state_transition_indices()
     unique(
@@ -39,8 +39,7 @@ end
 """
     add_constraint_unit_state_transition!(m::Model)
 
-This constraint ensures consistency between the variables `units_on`, `units_started_up`
-and `units_shut_down`.
+Ensure consistency between the variables `units_on`, `units_started_up` and `units_shut_down`.
 """
 function add_constraint_unit_state_transition!(m::Model)
     @fetch units_on, units_started_up, units_shut_down = m.ext[:variables]

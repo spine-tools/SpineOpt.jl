@@ -16,10 +16,12 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
 """
     constraint_max_start_up_ramp_indices()
 
-Forms the stochastic index set for the `:max_start_up_ramp` constraint.
+Form the stochastic index set for the `:max_start_up_ramp` constraint.
+    
 Uses stochastic path indices due to potentially different stochastic scenarios
 between `t_after` and `t_before`.
 """

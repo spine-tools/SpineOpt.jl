@@ -16,10 +16,12 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
 """
     constraint_connection_flow_capacity_indices()
 
-Forms the stochastic index set for the `:connection_flow_capacity` constraint.
+Form the stochastic index set for the `:connection_flow_capacity` constraint.
+
 Uses stochastic path indices of the `connection_flow` variables.
 """
 function constraint_connection_flow_capacity_indices()
@@ -39,6 +41,7 @@ end
     add_constraint_connection_flow_capacity!(m::Model)
 
 Limit the maximum in/out `connection_flow` of a `connection` for all `connection_flow_capacity` indices.
+
 Check if `connection_conv_cap_to_flow` is defined.
 """
 function add_constraint_connection_flow_capacity!(m::Model)

@@ -17,11 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
 """
     add_constraint_operating_point_sum!(m::Model)
 
-Limit the operating point flow variables to the difference between successive operating points times the capacity of the unit
+Limit the operating point flow variables to the difference between successive operating points
+times the capacity of the unit.
 """
 function add_constraint_operating_point_sum!(m::Model)
     @fetch unit_flow_op, unit_flow = m.ext[:variables]

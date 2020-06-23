@@ -20,8 +20,9 @@
 """
     constraint_min_down_time_indices()
 
-Forms the stochastic index set for the `:min_down_time` constraint. Uses stochastic path
-indices due to potentially different stochastic structures between `units_on` and
+Form the stochastic index set for the `:min_down_time` constraint.
+    
+Uses stochastic path indices due to potentially different stochastic structures between `units_on` and
 `units_available` variables.
 """
 #TODO: Does this require nonspin_starting_up_indices() to be added here?
@@ -49,7 +50,7 @@ end
 """
     add_constraint_min_down_time!(m::Model)
 
-Constraint start-up by minimum down time.
+Constrain start-up by minimum down time.
 """
 function add_constraint_min_down_time!(m::Model)
     @fetch units_on, units_available, units_shut_down, nonspin_starting_up = m.ext[:variables]

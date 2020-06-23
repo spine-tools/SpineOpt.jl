@@ -21,6 +21,7 @@
     constraint_unit_flow_capacity_indices()
 
 Forms the stochastic index set for the `:unit_flow_capacity` constraint.
+
 Uses stochastic path indices due to potentially different stochastic structures
 between `unit_flow` and `units_on` variables.
 """
@@ -41,6 +42,7 @@ end
     add_constraint_unit_flow_capacity!(m::Model)
 
 Limit the maximum in/out `unit_flow` of a `unit` for all `unit_capacity` indices.
+
 Check if `unit_conv_cap_to_flow` is defined.
 """
 function add_constraint_unit_flow_capacity!(m::Model)

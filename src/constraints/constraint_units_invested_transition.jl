@@ -20,9 +20,9 @@
 """
     constraint_units_invested_transition_indices()
 
-Forms the stochastic index set for the `:units_invested_transition` constraint.
-Uses stochastic path indices due to potentially different stochastic scenarios
-between `t_after` and `t_before`.
+Form the stochastic index set for the `:units_invested_transition` constraint.
+
+Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
 """
 function constraint_units_invested_transition_indices()
     unique(
@@ -39,8 +39,7 @@ end
 """
     add_constraint_units_invested_transition!(m::Model)
 
-This constraint ensures consistency between the variables `units_invested_available`, `units_invested`
-and `units_mothballed`.
+Ensure consistency between the variables `units_invested_available`, `units_invested` and `units_mothballed`.
 """
 function add_constraint_units_invested_transition!(m::Model)
     @fetch units_invested_available, units_invested, units_mothballed = m.ext[:variables]

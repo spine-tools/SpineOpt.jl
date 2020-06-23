@@ -16,12 +16,14 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
 """
     constraint_ratio_unit_flow_indices(ratio, d1, d2)
 
-Forms the stochastic index set for the `:ratio_unit_flow` constraint for the
-desired `ratio` and direction pair `d1` and `d2`. Uses stochastic path indices
-due to potentially different stochastic structures between `unit_flow` and
+Form the stochastic index set for the `:ratio_unit_flow` constraint for the desired `ratio` and direction pair
+`d1` and `d2`.
+
+Uses stochastic path indices due to potentially different stochastic structures between `unit_flow` and
 `units_on` variables.
 """
 function constraint_ratio_unit_flow_indices(ratio, d1, d2)
@@ -93,7 +95,7 @@ end
 """
     add_constraint_fix_ratio_out_in_unit_flow!(m::Model)
 
-Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+Call `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
 """
 function add_constraint_fix_ratio_out_in_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
@@ -104,7 +106,7 @@ end
 """
     add_constraint_max_ratio_out_in_unit_flow!(m::Model)
 
-Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+Call `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
 """
 function add_constraint_max_ratio_out_in_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
@@ -115,7 +117,7 @@ end
 """
     add_constraint_min_ratio_out_in_unit_flow!(m::Model)
 
-Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+Call `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
 """
 function add_constraint_min_ratio_out_in_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
@@ -126,7 +128,7 @@ end
 """
     add_constraint_fix_ratio_in_in_unit_flow!(m::Model)
 
-Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+Call `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
 """
 function add_constraint_fix_ratio_in_in_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
@@ -137,7 +139,7 @@ end
 """
     add_constraint_max_ratio_in_in_unit_flow!(m::Model)
 
-Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+Call `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
 """
 function add_constraint_max_ratio_in_in_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
@@ -148,7 +150,7 @@ end
 """
     add_constraint_min_ratio_in_in_unit_flow!(m::Model)
 
-Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+Call `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
 """
 function add_constraint_min_ratio_in_in_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
@@ -159,7 +161,7 @@ end
 """
     add_constraint_max_ratio_out_in_unit_flow!(m::Model)
 
-Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+Call `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
 """
 function add_constraint_fix_ratio_out_out_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
@@ -170,7 +172,7 @@ end
 """
     add_constraint_max_ratio_out_out_unit_flow!(m::Model)
 
-Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+Call `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
 """
 function add_constraint_max_ratio_out_out_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
@@ -181,7 +183,7 @@ end
 """
     add_constraint_min_ratio_out_out_unit_flow!(m::Model)
 
-Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+Call `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
 """
 function add_constraint_min_ratio_out_out_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
@@ -192,7 +194,7 @@ end
 """
     add_constraint_fix_ratio_in_out_unit_flow!(m::Model)
 
-Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+Call `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
 """
 function add_constraint_fix_ratio_in_out_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
@@ -203,7 +205,7 @@ end
 """
     add_constraint_max_ratio_in_out_unit_flow!(m::Model)
 
-Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+Call `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
 """
 function add_constraint_max_ratio_in_out_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
@@ -214,7 +216,7 @@ end
 """
     add_constraint_min_ratio_in_out_unit_flow!(m::Model)
 
-Calls `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
+Call `add_constraint_ratio_unit_flow!` with the appropriate parameter and `directions`.
 """
 function add_constraint_min_ratio_in_out_unit_flow!(m::Model)
     add_constraint_ratio_unit_flow!(
