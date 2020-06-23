@@ -50,7 +50,7 @@ Limit the maximum ramp at the start up of a unit.
 For reserves the max non-spinning reserve ramp can be defined here.
 """
 function add_constraint_max_nonspin_ramp_up!(m::Model)
-    @fetch nonspin_ramp_up_unit_flow, nonspin_starting_up = m.ext[:variables]
+    @fetch nonspin_ramp_up_unit_flow, nonspin_units_starting_up = m.ext[:variables]
     cons = m.ext[:constraints][:max_nonspin_start_up_ramp] = Dict()
     for (u, ng, d, s_path, t) in constraint_max_nonspin_ramp_up_indices()
         cons[u, ng, d, s_path, t] = @constraint(
@@ -63,11 +63,11 @@ function add_constraint_max_nonspin_ramp_up!(m::Model)
             )
             <=
             + expr_sum(
-                nonspin_starting_up[u, n, s, t]
+                nonspin_units_starting_up[u, n, s, t]
                 * max_res_startup_ramp[(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)]
                 * unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)]
-                for (u, n, s, t) in nonspin_starting_up_indices(
+                for (u, n, s, t) in nonspin_units_starting_up_indices(
                     unit=u, node=ng, stochastic_scenario=s_path, t=t_overlaps_t(t)
                 );
                 init=0

@@ -18,12 +18,12 @@
 #############################################################################
 
 """
-    nonspin_starting_up_indices(unit=anything, stochastic_scenario=anything, t=anything)
+    nonspin_units_starting_up_indices(unit=anything, stochastic_scenario=anything, t=anything)
 
-A list of `NamedTuple`s corresponding to indices of the `units_on` variable where the keyword arguments act as filters
-for each dimension.
+A list of `NamedTuple`s corresponding to indices of the `nonspin_units_starting_up` variable 
+where the keyword arguments act as filters for each dimension.
 """
-function nonspin_starting_up_indices(;unit=anything, node=anything, stochastic_scenario=anything, t=anything)
+function nonspin_units_starting_up_indices(;unit=anything, node=anything, stochastic_scenario=anything, t=anything)
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
     unique(
@@ -37,18 +37,18 @@ function nonspin_starting_up_indices(;unit=anything, node=anything, stochastic_s
 end
 
 """
-    add_variable_nonspin_starting_up!(m::Model)
+    add_variable_nonspin_units_starting_up!(m::Model)
 
-Add `nonspin_starting_up` variables to model `m`.
+Add `nonspin_units_starting_up` variables to model `m`.
 """
-function add_variable_nonspin_starting_up!(m::Model)
+function add_variable_nonspin_units_starting_up!(m::Model)
     add_variable!(
     	m,
-    	:nonspin_starting_up, 
-        nonspin_starting_up_indices;
+    	:nonspin_units_starting_up, 
+        nonspin_units_starting_up_indices;
     	lb=x -> 0,
     	bin=units_on_bin,
     	int=units_on_int,
-    	fix_value=x -> fix_nonspin_starting_up(unit=x.unit, node=x.node, t=x.t, _strict=false)
+    	fix_value=x -> fix_nonspin_units_starting_up(unit=x.unit, node=x.node, t=x.t, _strict=false)
     )
 end

@@ -104,7 +104,7 @@ function rerun_spineopt(
         # TODO: @logtime level3 "- [variable_ramp_costs]" add_variable_ramp_costs!(m)
         @logtime level3 "- [variable_ramp_up_unit_flow]" add_variable_ramp_up_unit_flow!(m)
         @logtime level3 "- [variable_start_up_unit_flow]" add_variable_start_up_unit_flow!(m)
-        @logtime level3 "- [variable_nonspin_starting_up]"  add_variable_nonspin_starting_up!(m)
+        @logtime level3 "- [variable_nonspin_units_starting_up]"  add_variable_nonspin_units_starting_up!(m)
         @logtime level3 "- [variable_nonspin_ramp_up_unit_flow]"  add_variable_nonspin_ramp_up_unit_flow!(m)
     end
     @logtime level2 "Fixing variable values..." fix_variables!(m)

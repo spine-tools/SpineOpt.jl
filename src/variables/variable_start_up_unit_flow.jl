@@ -25,8 +25,8 @@
         t=anything
     )
 
-A list of `NamedTuple`s corresponding to indices of the `flow` variable where the keyword arguments act as filters
-for each dimension.
+A list of `NamedTuple`s corresponding to indices of the `start_up_unit_flow` variable 
+where the keyword arguments act as filters for each dimension.
 """
 # TODO: improve generation
 # only generate if max_start_up_ramp is defined and/or min_start_up_ramp
