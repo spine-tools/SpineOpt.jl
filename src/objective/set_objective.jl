@@ -21,7 +21,9 @@
     set_objective!(m::Model)
 
 Minimize the total discounted costs, corresponding to the sum over all
-cost terms. Unless defined otherwise this expression executed until the last time_slice
+cost terms.
+
+Unless defined otherwise this expression executed until the last time_slice
 """
 # TODO: Rethink this concept; Should we really evaluate until the very least time_slice,
 # if multiple temporal_block end at different points in time

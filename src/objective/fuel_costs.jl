@@ -19,6 +19,8 @@
 
 """
     fuel_costs(m::Model)
+
+Create an expression for fuel costs of units.
 """
 function fuel_costs(m::Model, t1)
     @fetch unit_flow = m.ext[:variables]

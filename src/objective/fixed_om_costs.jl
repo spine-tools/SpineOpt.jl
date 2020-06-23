@@ -20,7 +20,7 @@
 """
     fixed_om_costs(m)
 
-Fixed operation costs of units.
+Create an expression for fixed operation costs of units.
 """
 function fixed_om_costs(m, t1)
     @expression(

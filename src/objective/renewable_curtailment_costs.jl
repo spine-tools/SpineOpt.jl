@@ -20,7 +20,7 @@
 """
     renewable_curtailment_costs(m::Model)
 
-Costs on the curtailment of renewables.
+Create an expression for curtailment costs of renewables.
 """
 function renewable_curtailment_costs(m::Model,t1)
     @fetch unit_flow = m.ext[:variables]

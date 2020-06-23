@@ -19,6 +19,8 @@
 
 """
     operating_costs(m::Model)
+
+Create an expression for variable unit operating costs.
 """
 function operating_costs(m::Model, t1)
     @fetch unit_flow = m.ext[:variables]

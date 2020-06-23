@@ -19,6 +19,8 @@
 
 """
     investment_costs(m::Model)
+
+Create and expression for unit investment costs.
 """
 function investment_costs(m::Model, t1)
     @fetch units_invested = m.ext[:variables]

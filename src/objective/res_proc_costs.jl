@@ -20,7 +20,7 @@
 """
     res_proc_costs(m::Model)
 
-Cost term to account for reserve procurement costs
+Add expression for reserve procurement costs.
 """
 function res_proc_costs(m::Model,t1)
     @fetch unit_flow = m.ext[:variables]

@@ -19,6 +19,8 @@
 
 """
     connection_flow_costs(m::Model)
+
+Create an expression for `connection_flow` costs.
 """
 function connection_flow_costs(m::Model,t1)
     @fetch connection_flow = m.ext[:variables]

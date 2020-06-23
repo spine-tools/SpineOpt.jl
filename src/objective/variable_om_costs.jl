@@ -20,7 +20,7 @@
 """
     variable_om_costs(m::Model, t1::RefDateTime)
 
-Variable operation costs defined on unit_flows.
+Create an expression for unit_flow variable operation costs.
 """
 function variable_om_costs(m::Model, t1)
     @fetch unit_flow = m.ext[:variables]

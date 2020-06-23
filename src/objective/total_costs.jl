@@ -20,8 +20,9 @@
 """
     total_costs(m::Model, t::RefDateTime)
 
-Expression of all cost terms. t indicates the end of the last timeslice that is
-included in the expression.
+Expression of all cost terms.
+
+t indicates the end of the last timeslice that is included in the expression.
 """
 
 function total_costs(m,t)

@@ -50,6 +50,7 @@ end
     save_objective_values!(m::Model)
 
 Save all cost values to previously initialized Dict m.ext[:cost_terms] after optimization.
+
 Not that only time_slices within the current window are taken into account.
 """
 function save_objective_values!(m::Model)

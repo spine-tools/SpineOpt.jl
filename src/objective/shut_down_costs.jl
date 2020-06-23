@@ -20,7 +20,7 @@
 """
     shut_down_costs(m::Model)
 
-Shutdown cost term for units.
+Create an expression for unit shutdown costs.
 """
 function shut_down_costs(m::Model, t1)
     @fetch units_shut_down = m.ext[:variables]

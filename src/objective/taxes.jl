@@ -20,6 +20,7 @@
 """
     taxes(m::Model)
 
+Create an expression for unit taxes.
 """
 function taxes(m::Model, t1)
     @fetch unit_flow = m.ext[:variables]

@@ -19,6 +19,8 @@
 
 """
     objective_penalties(m::Model)
+
+Create an expression for objective penalties.
 """
 # TODO: find a better name for this; objective penalities is not self-speaking
 function objective_penalties(m::Model, t1)

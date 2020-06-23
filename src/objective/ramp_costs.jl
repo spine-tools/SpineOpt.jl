@@ -20,7 +20,7 @@
 """
     ramp_costs(m::Model, t)
 
-    Calculate ramp costs for each unit.
+Create an expression for unit ramp costs.
 """
 function ramp_costs(m::Model, t1)
     @fetch ramp_cost = m.ext[:variables]
