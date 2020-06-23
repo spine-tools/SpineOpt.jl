@@ -27,7 +27,7 @@
 """
     _check(cond, err_msg)
 
-Checks the conditional `cond` and throws an error with a message `err_msg` if `cond` is `false`.
+Check the conditional `cond` and throws an error with a message `err_msg` if `cond` is `false`.
 """
 _check(cond, err_msg) = cond || error(err_msg)
 
@@ -100,7 +100,7 @@ end
 """
     check_minimum_operating_point_unit_capacity()
 
-Checks if every defined `minimum_operating_point` parameter has a corresponding `unit_capacity` parameter defined.
+Check if every defined `minimum_operating_point` parameter has a corresponding `unit_capacity` parameter defined.
 """
 function check_minimum_operating_point_unit_capacity()
     error_indices = [
@@ -142,7 +142,7 @@ end
 """
     islands()
 
-Determines the number of islands in a commodity network - used for diagnostic purposes
+Determine the number of islands in a commodity network - used for diagnostic purposes.
 """
 function islands(c)
     visited_d = Dict{Object,Bool}()
@@ -166,7 +166,7 @@ end
 """
     visit()
 
-Function called recursively to visit nodes in the network to determine number of islands
+Recursively visit nodes in the network to determine number of islands.
 """
 function visit(n, island_count, visited_d, island_node)
     visited_d[n] = true
@@ -181,7 +181,7 @@ end
 """
     check_x()
 
-Check for low reactance values
+Check for low reactance values.
 """
 function check_x()
     @info "Checking reactances"

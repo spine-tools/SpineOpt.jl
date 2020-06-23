@@ -30,7 +30,7 @@ end
 """
     active_stochastic_paths(active_scenarios::Union{Array{Object,1},Object})
 
-The unique combinations of `active_scenarios` along valid stochastic paths.
+Find the unique combinations of `active_scenarios` along valid stochastic paths.
 """
 function (h::StochasticPathFinder)(active_scenarios::Union{Array{T,1},T}) where T
     # TODO: cache these
@@ -49,7 +49,7 @@ end
 """
     _find_root_scenarios()
 
-An `Array` of `stochastic_scenario` objects without parents.
+Find the `stochastic_scenario` objects without parents.
 """
 function _find_root_scenarios()
     all_scenarios = stochastic_scenario()
@@ -92,6 +92,7 @@ end
 
 A `Dict` mapping `stochastic_scenario` objects to a `NamedTuple` of (start, end_, weight)
 for the given `stochastic_structure` and `window_start`.
+
 Aka DAG, that is, a *realized* stochastic structure with all the parameter values in place.
 """
 function _stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
@@ -181,7 +182,7 @@ end
 """
     node_stochastic_time_indices(;<keyword arguments>)
 
-Stochastic time indexes for `nodes`. Keyword arguments allow filtering.
+Stochastic time indexes for `nodes` with keyword arguments that allow filtering.
 """
 function node_stochastic_time_indices(;
         node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
@@ -198,7 +199,7 @@ end
 """
     unit_stochastic_time_indices(;<keyword arguments>)
 
-Stochastic time indexes for `units`. Keyword arguments allow filtering.
+Stochastic time indexes for `units` with keyword arguments that allow filtering.
 """
 function unit_stochastic_time_indices(;
         unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
@@ -215,7 +216,7 @@ end
 """
     unit_investment_stochastic_time_indices(;<keyword arguments>)
 
-Stochastic time indexes for `units_invested`. Keyword arguments allow filtering.
+Stochastic time indexes for `units_invested` with keyword arguments that allow filtering.
 """
 function unit_investment_stochastic_time_indices(;
         unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything

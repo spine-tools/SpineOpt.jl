@@ -52,6 +52,7 @@ end
     (::TimeSliceSet)(;temporal_block=anything, t=anything)
 
 An `Array` of time slices *in the model*.
+
 - `temporal_block` is a temporal block object to filter the result.
 - `t` is a `TimeSlice` or collection of `TimeSlice`s *in the model* to filter the result.
 """
@@ -94,7 +95,7 @@ end
 """
     _model_duration_unit()
 
-Fetches the `duration_unit` parameter of the first defined `model`, and defaults to `Minute` if not found.
+Fetch the `duration_unit` parameter of the first defined `model`, and defaults to `Minute` if not found.
 """
 function _model_duration_unit(instance=first(model()))
     get(Dict(:minute => Minute, :hour => Hour), duration_unit(model=instance, _strict=false), Minute)
@@ -123,7 +124,7 @@ end
 """
     _adjuster_start(window_start, window_end, blk_start)
 
-Adjusts the `window_start` based on `temporal_blocks`.
+Adjust the `window_start` based on `temporal_blocks`.
 """
 _adjusted_start(window_start, ::Nothing) = window_start
 _adjusted_start(window_start, blk_start::Union{Period,CompoundPeriod}) = window_start + blk_start
@@ -132,7 +133,7 @@ _adjusted_start(window_start, blk_start::DateTime) = max(window_start, blk_start
 """
     _adjusted_end(window_start, window_end, blk_end)
 
-Adjusts the `window_end` based on `temporal_blocks`.
+Adjust the `window_end` based on `temporal_blocks`.
 """
 _adjusted_end(window_start, window_end, ::Nothing) = window_end
 _adjusted_end(window_start, window_end, blk_end::Union{Period,CompoundPeriod}) = window_start + blk_end
@@ -215,8 +216,7 @@ end
 """
     to_time_slice(t::TimeSlice...)
 
-An `Array` of `TimeSlice`s *in the model* overlapping the given `t`
-(where `t` may not be in model).
+An `Array` of `TimeSlice`s *in the model* overlapping the given `t` (where `t` may not be in model).
 """
 function to_time_slice(t::TimeSlice...)
     unique(
@@ -231,8 +231,9 @@ end
 """
     _generate_time_slice_relationships()
 
-Create and export convenience functions to access time slice relationships:
-`t_in_t`, `t_preceeds_t`, `t_overlaps_t`...
+Create and export convenience functions to access time slice relationships.
+
+E.g. `t_in_t`, `t_preceeds_t`, `t_overlaps_t`...
 """
 function _generate_time_slice_relationships()
     all_time_slices = Iterators.flatten((history_time_slice(), time_slice()))
@@ -277,7 +278,7 @@ end
 """
     generate_temporal_structure()
 
-Preprocesses the temporal structure for SpineOpt from the provided input data.
+Preprocess the temporal structure for SpineOpt from the provided input data.
 
 Runs a number of functions processing different aspects of the temporal structure in sequence.
 """
@@ -290,7 +291,7 @@ end
 """
     roll_temporal_structure()
 
-Moves the entire temporal structure ahead according to the `roll_forward` parameter.
+Move the entire temporal structure ahead according to the `roll_forward` parameter.
 """
 function roll_temporal_structure()
     instance = first(model())

@@ -20,7 +20,7 @@
 """
     preprocess_data_structure()
 
-Preprocesses input data structure for SpineOpt.
+Preprocess input data structure for SpineOpt.
 
 Runs a number of other functions processing different aspecs of the input data in sequence.
 """
@@ -42,7 +42,7 @@ end
 """
     expand_node__stochastic_structure()
 
-Expands the `node__stochastic_structure` `RelationshipClass` for with individual `nodes` in `node_groups`.
+Expand the `node__stochastic_structure` `RelationshipClass` for with individual `nodes` in `node_groups`.
 """
 function expand_node__stochastic_structure()
     for (node, stochastic_structure) in node__stochastic_structure()
@@ -60,7 +60,7 @@ end
 """
     expand_units_on_resolution()
 
-Expands `units_on_resolution` `RelationshipClass` with all individual `units` in `unit_groups`.
+Expand `units_on_resolution` `RelationshipClass` with all individual `units` in `unit_groups`.
 """
 function expand_units_on_resolution()
     for (unit, node) in units_on_resolution()
@@ -77,7 +77,7 @@ end
 """
     generate_direction()
 
-Generates the `direction` `ObjectClass` and its relationships.
+Generate the `direction` `ObjectClass` and its relationships.
 """
 function generate_direction()
     from_node = Object(:from_node)
@@ -229,7 +229,7 @@ end
 """
     _ptdf_values()
 
-Calculates the values of the `ptdf` parameters?
+Calculate the values of the `ptdf` parameters?
 
 TODO @JodyDillon: Check this docstring!
 """
@@ -280,7 +280,7 @@ end
 """
     generate_ptdf()
 
-Generates the `ptdf` parameter.
+Generate the `ptdf` parameter.
 """
 function generate_ptdf()
     ptdf_values = _ptdf_values()
@@ -299,10 +299,9 @@ end
 """
     generate_lodf()
 
-Generates the `lodf` parameter.
+Generate the `lodf` parameter.
 """
 function generate_lodf()
-
     """
     Given a contingency connection, return a function that given the monitored connection, return the lodf.
     """
@@ -344,7 +343,7 @@ end
 """
     generate_network_components()
 
-Generates different network related `parameters`.
+Generate different network related `parameters`.
 
 Runs a number of other functions dealing with different aspects of the network data in sequence.
 """
@@ -430,7 +429,7 @@ end
 """
     generate_investment_relationships()
 
-Generates `Relationships` related to modelling investments.
+Generate `Relationships` related to modelling investments.
 """
 function generate_investment_relationships()
     generate_unit__investment_temporal_block()
