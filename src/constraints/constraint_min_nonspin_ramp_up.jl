@@ -30,20 +30,17 @@ function constraint_min_nonspin_ramp_up_indices()
         for (u, ng, d) in indices(min_res_startup_ramp)
         for t in time_slice(temporal_block=node__temporal_block(node=expand_node_group(ng)))
         for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in Iterators.flatten(
-            (nonspin_ramp_up_unit_flow_indices(
-                unit=unit()[3],
-                node=ng,
-                direction=d,
-                t=t),
-            nonspin_units_starting_up_indices(
-                unit=unit()[3],
-                node=ng,
-                t=t))
-            ))
+            unique(
+                ind.stochastic_scenario for ind in Iterators.flatten(
+                (
+                    nonspin_ramp_up_unit_flow_indices(unit=u, node=ng, direction=d, t=t),
+                    nonspin_units_starting_up_indices(unit=u, node=ng, t=t))
+                )
+            )
         )
     )
 end
+
 
 """
     add_constraint_min_nonspin_ramp_up!(m::Model)

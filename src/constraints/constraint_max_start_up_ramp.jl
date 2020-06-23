@@ -22,16 +22,13 @@
 
 Form the stochastic index set for the `:max_start_up_ramp` constraint.
     
-Uses stochastic path indices due to potentially different stochastic scenarios
-between `t_after` and `t_before`.
+Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
 """
 function constraint_max_start_up_ramp_indices()
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(max_startup_ramp)
-        for t in t_lowest_resolution(
-            t for t in time_slice(temporal_block=node__temporal_block(node=expand_node_group(ng)))
-        )
+        for t in t_lowest_resolution(time_slice(temporal_block=node__temporal_block(node=expand_node_group(ng))))
         # How to deal with groups correctly?
         for path in active_stochastic_paths(
             unique(
