@@ -516,5 +516,121 @@
             end
         end
     end
+    @testset "constraint_max_nonspin_start_up_ramp" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        max_res_startup_ramp = 0.5
+        unit_capacity = 200
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+        ]
+        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
+        m = run_spineopt(url_in; log_level=0)
+        var_nonspin_ramp_up_unit_flow = m.ext[:variables][:nonspin_ramp_up_unit_flow]
+        var_nonspin_units_starting_up = m.ext[:variables][:nonspin_units_starting_up]
+        constraint = m.ext[:constraints][:max_nonspin_start_up_ramp]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            var_ns_ru_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
+            var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
+            var_ns_ru_u_flow = var_nonspin_ramp_up_unit_flow[var_ns_ru_u_flow_key...]
+            var_ns_su = var_nonspin_units_starting_up[var_ns_su_key...]
+            con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
+            expected_con = @build_constraint(var_ns_ru_u_flow <= unit_capacity * max_res_startup_ramp * var_ns_su)
+            observed_con = constraint_object(constraint[con_key])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_min_nonspin_start_up_ramp" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        max_res_startup_ramp = 0.5
+        min_res_startup_ramp = 0.25
+        unit_capacity = 200
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "min_res_startup_ramp", min_res_startup_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+        ]
+        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
+        m = run_spineopt(url_in; log_level=0)
+        var_nonspin_ramp_up_unit_flow = m.ext[:variables][:nonspin_ramp_up_unit_flow]
+        var_nonspin_units_starting_up = m.ext[:variables][:nonspin_units_starting_up]
+        constraint = m.ext[:constraints][:min_nonspin_start_up_ramp]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            var_ns_ru_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
+            var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
+            var_ns_ru_u_flow = var_nonspin_ramp_up_unit_flow[var_ns_ru_u_flow_key...]
+            var_ns_su = var_nonspin_units_starting_up[var_ns_su_key...]
+            con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
+            expected_con = @build_constraint(var_ns_ru_u_flow >= unit_capacity * min_res_startup_ramp * var_ns_su)
+            observed_con = constraint_object(constraint[con_key])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_max_start_up_ramp" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        max_startup_ramp = 0.4
+        unit_capacity = 200
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+        ]
+        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
+        m = run_spineopt(url_in; log_level=0)
+        var_start_up_unit_flow = m.ext[:variables][:start_up_unit_flow]
+        var_units_started_up = m.ext[:variables][:units_started_up]
+        constraint = m.ext[:constraints][:max_start_up_ramp]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            var_su_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
+            var_u_su_key = (unit(:unit_ab), s, t)
+            var_su_u_flow = var_start_up_unit_flow[var_su_u_flow_key...]
+            var_u_su = var_units_started_up[var_u_su_key...]
+            con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
+            expected_con = @build_constraint(var_su_u_flow <= unit_capacity * max_startup_ramp * var_u_su)
+            observed_con = constraint_object(constraint[con_key])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_min_start_up_ramp" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        max_startup_ramp = 0.4
+        min_startup_ramp = 0.2
+        unit_capacity = 200
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "min_startup_ramp", min_startup_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+        ]
+        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
+        m = run_spineopt(url_in; log_level=0)
+        var_start_up_unit_flow = m.ext[:variables][:start_up_unit_flow]
+        var_units_started_up = m.ext[:variables][:units_started_up]
+        constraint = m.ext[:constraints][:min_start_up_ramp]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            var_su_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
+            var_u_su_key = (unit(:unit_ab), s, t)
+            var_su_u_flow = var_start_up_unit_flow[var_su_u_flow_key...]
+            var_u_su = var_units_started_up[var_u_su_key...]
+            con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
+            expected_con = @build_constraint(var_su_u_flow >= unit_capacity * min_startup_ramp * var_u_su)
+            observed_con = constraint_object(constraint[con_key])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
 end
 
