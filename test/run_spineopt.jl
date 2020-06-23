@@ -21,7 +21,7 @@ module Y
 using SpineInterface
 end
 
-@testset "run_spineopt simple rolling" begin
+@testset "run_spineopt" begin
     url_in = "sqlite:///$(@__DIR__)/test.sqlite"
     url_out = "sqlite:///$(@__DIR__)/test_out.sqlite"
     test_data = Dict(
@@ -49,16 +49,19 @@ end
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
-            ["node", "node_b", "demand", 100],
         ],
     )
-    @testset "fixed_om_costs" begin
+    @testset "rolling" begin
         _load_template(url_in)
         db_api.import_data_to_url(url_in; test_data...)
         db_api.create_new_spine_database(url_out)
-        unit_capacity = 100
-        fom_cost = 125
-        object_parameter_values = [["unit", "unit_ab", "fom_cost", fom_cost]]
+        unit_capacity = 50
+        index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
+        fom_cost_data = [100 * k for k in 0:23]
+        fom_cost = Dict("type" => "time_series", "data" => PyVector(fom_cost_data), "index" => index)
+        demand_data = [2 * k for k in 0:23]
+        demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
+        object_parameter_values = [["unit", "unit_ab", "fom_cost", fom_cost], ["node", "node_b", "demand", demand]]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity]]
         db_api.import_data_to_url(
             url_in; 
@@ -74,10 +77,10 @@ end
             direction=Y.direction(:to_node), 
             stochastic_scenario=Y.stochastic_scenario(:parent)
         )
-        @testset for h in 0:23
-            t1 = DateTime(2000, 1, 1, h)
+        @testset for (k, d) in enumerate(demand_data)
+            t1 = DateTime(2000, 1, 1, k - 1)
             t = TimeSlice(t1, t1 + Hour(1))
-            @test Y.unit_flow(; key..., t=t) == unit_capacity
+            @test Y.unit_flow(; key..., t=t) == d
         end
     end
 end
