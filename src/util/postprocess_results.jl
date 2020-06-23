@@ -16,13 +16,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
 """
     postprocess_results!(m::Model)
 
 Perform calculations on the model outputs and save them to the ext.values dict.
 bases on contents of report__output
 """
-
 function postprocess_results!(m::Model)
     outputs = [Symbol(x[2]) for x in report__output()]
 
