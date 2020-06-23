@@ -38,7 +38,7 @@ function add_constraint_operating_point_bounds!(m::Model)
                 )
                 * unit_capacity[(unit=u, node=n, direction=d, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
-                #TODO: extend to investment functionality ? (is that even possible)
+                # TODO: extend to investment functionality ? (is that even possible)
             )
         end
     end

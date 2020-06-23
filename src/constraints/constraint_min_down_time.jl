@@ -35,11 +35,11 @@ function constraint_min_down_time_indices()
             unique(
                 ind.stochastic_scenario
                 for ind in Iterators.flatten(
-                    (units_on_indices(
-                    unit=u, t=vcat(to_time_slice(TimeSlice(end_(t) - min_down_time(unit=u), end_(t))), t)
-                    ),
-                    nonspin_starting_up_indices(
-                    unit=u, t=t_before_t(t_after=t))
+                    (
+                        units_on_indices(
+                            unit=u, t=vcat(to_time_slice(TimeSlice(end_(t) - min_down_time(unit=u), end_(t))), t)
+                        ),
+                        nonspin_starting_up_indices(unit=u, t=t_before_t(t_after=t))
                     )
                 )  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
             )
@@ -61,9 +61,7 @@ function add_constraint_min_down_time!(m::Model)
             + expr_sum(
                 + units_available[u, s, t]
                 - units_on[u, s, t]
-                for (u, s, t) in units_on_indices(
-                    unit=u, stochastic_scenario=stochastic_path, t=t
-                );
+                for (u, s, t) in units_on_indices(unit=u, stochastic_scenario=stochastic_path, t=t);
                 init=0
             )
             >=
@@ -76,13 +74,13 @@ function add_constraint_min_down_time!(m::Model)
                 );
                 init=0
             )
-            #TODO: stoachstic path of this correct?
+            # TODO: stochastic path of this correct?
             + expr_sum(
                 + nonspin_starting_up[u, n, s_past, t_past]
                 for (u, n, s_past, t_past) in nonspin_starting_up_indices(
                     unit=u,
                     stochastic_scenario=stochastic_path,
-                    t=t_before_t(t_after=t) #TODO: check this t_before
+                    t=t_before_t(t_after=t) # TODO: check this t_before
                 );
                 init=0
             )

@@ -48,18 +48,14 @@ Gather the current `node_stochastic_time_indices` as well as the relevant `node_
 function _constraint_node_injection_indices(node, t_after, t_before)
     Iterators.flatten(
         (
-            node_stochastic_time_indices(node=node, t=t_after),  # `node` on `t_after`
-            node_state_indices(node=node, t=t_before),  # `node_state` on `t_before`
-            (
-                ind
-                for n1 in node__node(node2=node)
-                for ind in node_state_indices(node=n1, t=t_after)
-            ),  # Diffusion to this `node`
-            (
-                ind
-                for n2 in node__node(node1=node)
-                for ind in node_state_indices(node=n2, t=t_after)
-            ),  # Diffusion from this `node`
+            # `node` on `t_after`
+            node_stochastic_time_indices(node=node, t=t_after),
+            # `node_state` on `t_before`
+            node_state_indices(node=node, t=t_before),
+             # Diffusion to this `node`
+            (ind for n1 in node__node(node2=node) for ind in node_state_indices(node=n1, t=t_after)),
+            # Diffusion from this `node`
+            (ind for n2 in node__node(node1=node) for ind in node_state_indices(node=n2, t=t_after)),
         )
     )
 end
@@ -72,8 +68,7 @@ Set the node injection equal to the summation of all 'input' flows but connectio
 function add_constraint_node_injection!(m::Model)
     @fetch node_injection, node_state, unit_flow = m.ext[:variables]
     cons = m.ext[:constraints][:node_injection] = Dict()
-    #TODO: We need to include both: storages that are defined on ng and storage that are defined
-    #on internal nodes
+    # TODO: We need to include both: storages that are defined on ng and storage that are defined on internal nodes
     for (ng, stochastic_path, t_before, t_after) in constraint_node_injection_indices()
         cons[ng, stochastic_path, t_before, t_after] = @constraint(
             m,
@@ -132,7 +127,7 @@ function add_constraint_node_injection!(m::Model)
                 for ng_ in node_group__node(node2=ng);
                 init=0
             )
-            #TODO: fractional_demand etc. are scneario dependent?
+            # TODO: fractional_demand etc. are scenario dependent?
         )
     end
 end

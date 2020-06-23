@@ -55,7 +55,8 @@ Add `units_on` variables to model `m`.
 function add_variable_units_on!(m::Model)
     add_variable!(
     	m,
-    	:units_on, units_on_indices;
+    	:units_on, 
+        units_on_indices;
     	lb=x -> 0,
     	bin=units_on_bin,
     	int=units_on_int,

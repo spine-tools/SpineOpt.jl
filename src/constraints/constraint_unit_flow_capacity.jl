@@ -54,22 +54,21 @@ function add_constraint_unit_flow_capacity!(m::Model)
             expr_sum(
                 + unit_flow[u, n, d, s, t]
                 for (u, n, d, s, t) in setdiff(
-                    unit_flow_indices(
-                    unit=u, node=ng, direction=d, stochastic_scenario=stochastic_path, t=t
-                    ),
+                    unit_flow_indices(unit=u, node=ng, direction=d, stochastic_scenario=stochastic_path, t=t),
                     nonspin_ramp_up_unit_flow_indices(
-                    unit=u, node=ng, direction=d, stochastic_scenario=stochastic_path, t=t
+                        unit=u, node=ng, direction=d, stochastic_scenario=stochastic_path, t=t
                     )
-                    );
+                );
                 init=0
             ) * duration(t)
             <=
             + unit_capacity[(unit=u, node=ng, direction=d, t=t)] # TODO: Stochastic parameters
             * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, t=t)]
             * expr_sum(
-                units_on[u, s, t1] * min(duration(t1),duration(t))
-                for (u, s, t1) in units_on_indices(unit=u, stochastic_scenario=stochastic_path, t=t_in_t(t_long=t));
-                    #This should be:t=t_overlaps_t(t), but broken for now!
+                units_on[u, s, t1] * min(duration(t1), duration(t))
+                for (u, s, t1) in units_on_indices(
+                    unit=u, stochastic_scenario=stochastic_path, t=t_overlaps_t(t)
+                );
                 init=0
             )
         )

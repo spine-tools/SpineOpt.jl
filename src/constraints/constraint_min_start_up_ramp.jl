@@ -27,21 +27,17 @@ Uses stochastic path indices due to potentially different stochastic scenarios b
 function constraint_min_start_up_ramp_indices()
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-            for (u, ng, d) in indices(min_startup_ramp)
-            for t in t_lowest_resolution(t for t in time_slice(temporal_block=node__temporal_block(node=expand_node_group(ng))))
-                #How to deal with groups correctly?
-            for path in active_stochastic_paths(
-                unique(
-                    ind.stochastic_scenario
-                    for ind in Iterators.flatten(
-                        (units_on_indices(
-                        unit=u, t=t),
-                        start_up_unit_flow_indices(
-                        unit=u, node=ng, direction=d, t=t)
-                        )
-                    )  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
-                )
+        for (u, ng, d) in indices(min_startup_ramp)
+        for t in t_lowest_resolution(time_slice(temporal_block=node__temporal_block(node=expand_node_group(ng))))
+        # How to deal with groups correctly?
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in Iterators.flatten(
+                    (units_on_indices(unit=u, t=t), start_up_unit_flow_indices(unit=u, node=ng, direction=d, t=t))
+                )  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
             )
+        )
     )
 end
 
@@ -60,17 +56,18 @@ function add_constraint_min_start_up_ramp!(m::Model)
             m,
             + sum(
                 start_up_unit_flow[u, n, d, s, t]
-                        for (u, n, d, s, t) in start_up_unit_flow_indices(
-                            unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(t_long=t))
+                for (u, n, d, s, t) in start_up_unit_flow_indices(
+                    unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(t_long=t)
+                )
             )
             >=
             + sum(
                 units_started_up[u, s, t]
-                        for (u, s, t) in units_on_indices(unit=u, stochastic_scenario=s, t=t_overlaps_t(t))
+                for (u, s, t) in units_on_indices(unit=u, stochastic_scenario=s, t=t_overlaps_t(t))
             )
-                * min_startup_ramp[(unit=u, node=ng, direction=d)]
-                    * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, t=t)]
-                        *unit_capacity[(unit=u, node=ng, direction=d, t=t)]
+            * min_startup_ramp[(unit=u, node=ng, direction=d)]
+            * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, t=t)]
+            * unit_capacity[(unit=u, node=ng, direction=d, t=t)]
         )
     end
 end

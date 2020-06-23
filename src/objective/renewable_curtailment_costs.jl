@@ -27,11 +27,7 @@ function renewable_curtailment_costs(m::Model,t1)
     @expression(
         m,
         expr_sum(
-            (
-                unit_capacity[(unit=u, node=n, direction=d,t=t)]
-                * avail_factor[(unit=u,t=t)]
-                - unit_flow[u, n, d, s, t]
-            )
+            (unit_capacity[(unit=u, node=n, direction=d,t=t)] * avail_factor[(unit=u,t=t)] - unit_flow[u, n, d, s, t])
             * duration(t)
             * renewable_curtailment_cost[(unit=u, t=t)]
             for u in indices(curtailment_cost)

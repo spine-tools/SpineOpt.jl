@@ -28,31 +28,27 @@
 A list of `NamedTuple`s corresponding to indices of the `flow` variable where the keyword arguments act as filters
 for each dimension.
 """
-### ramp_up_unit_flow
-#TODO: only generate if ramp_limit is defined
-#TODO: better improve to unit_parameter: use_ramps_true
-function ramp_up_unit_flow_indices(;unit=anything,
-    node=anything,
-    direction=anything,
-    stochastic_scenario=anything,
-    t=anything
-)
+# ramp_up_unit_flow
+# TODO: only generate if ramp_limit is defined
+# TODO: better improve to unit_parameter: use_ramps_true
+function ramp_up_unit_flow_indices(;
+        unit=anything, node=anything, direction=anything, stochastic_scenario=anything, t=anything
+    )
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
-    unique([
+    unique(
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
         for (u,ng,d) in indices(ramp_up_limit)
-        for unit in intersect(unit,u)
-        for node in intersect(node,expand_node_group(ng))
-        for direction in intersect(direction,d)
+        for unit in intersect(unit, u)
+        for node in intersect(node, expand_node_group(ng))
+        for direction in intersect(direction, d)
         for (u, n, d, s, t) in setdiff(
-            unit_flow_indices(
-            unit=unit, node=node, direction=direction,
-            stochastic_scenario=stochastic_scenario, t=t),
+            unit_flow_indices(unit=unit, node=node, direction=direction, stochastic_scenario=stochastic_scenario, t=t),
             nonspin_ramp_up_unit_flow_indices(
-            unit=unit, node=node, direction=direction, stochastic_scenario=stochastic_scenario, t=t
+                unit=unit, node=node, direction=direction, stochastic_scenario=stochastic_scenario, t=t
             )
-        )])
+        )
+    )
 end
 
 """
@@ -61,7 +57,7 @@ end
 Add `ramp_up_unit_flow` variables to model `m`.
 """
 function add_variable_ramp_up_unit_flow!(m::Model)
-    #TODO:"unique for indices is probably not the most performant, try to reformulate"
+    # TODO: "unique for indices is probably not the most performant, try to reformulate"
     # reconsider moving this to preprocessing
     add_variable!(
         m,

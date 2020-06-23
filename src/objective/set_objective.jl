@@ -29,9 +29,9 @@ Unless defined otherwise this expression executed until the last time_slice
 # if multiple temporal_block end at different points in time
 function set_objective!(m::Model;t=end_(last(time_slice())))
     total_discounted_costs = total_costs(m,t)
-        if total_discounted_costs != 0
-            @objective(m, Min, total_discounted_costs)
-        else
-            @warn "zero objective"
-        end
+    if total_discounted_costs != 0
+        @objective(m, Min, total_discounted_costs)
+    else
+        @warn "zero objective"
+    end
 end

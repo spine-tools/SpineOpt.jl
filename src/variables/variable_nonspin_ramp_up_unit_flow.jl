@@ -44,7 +44,9 @@ function nonspin_ramp_up_unit_flow_indices(;unit=anything,
     node = expand_node_group(node)
     [
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (u, n, d, tb) in nonspin_ramp_up_unit_flow_indices_rc(unit=unit, node=node, direction=direction, _compact=false)
+        for (u, n, d, tb) in nonspin_ramp_up_unit_flow_indices_rc(
+            unit=unit, node=node, direction=direction, _compact=false
+        )
         for (n, s, t) in node_stochastic_time_indices(
             node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
@@ -62,6 +64,8 @@ function add_variable_nonspin_ramp_up_unit_flow!(m::Model)
         :nonspin_ramp_up_unit_flow,
         nonspin_ramp_up_unit_flow_indices;
         lb=x -> 0,
-        fix_value=x -> fix_nonspin_ramp_up_unit_flow(unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false)
+        fix_value=x -> fix_nonspin_ramp_up_unit_flow(
+            unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false
+        )
     )
 end

@@ -53,7 +53,9 @@ function fix_initial_units_invested_available()
             t_after = first(time_slice(temporal_block=tb))            
             for t_before in t_before_t(t_after=t_after)                               
                 if fix_units_invested_available(unit=u, t=t_before, _strict=false) === nothing
-                    unit.parameter_values[u][:fix_units_invested_available] = parameter_value(TimeSeries([start(t_before)], [0], false, false))
+                    unit.parameter_values[u][:fix_units_invested_available] = parameter_value(
+                        TimeSeries([start(t_before)], [0], false, false)
+                    )
                 end
             end
         end
@@ -69,7 +71,8 @@ function add_variable_units_invested_available!(m::Model)
     fix_initial_units_invested_available()
     add_variable!(
     	m,
-    	:units_invested_available, units_invested_available_indices;
+    	:units_invested_available, 
+        units_invested_available_indices;
     	lb=x -> 0,
     	int=units_invested_available_int,
     	fix_value=x -> fix_units_invested_available(unit=x.unit, t=x.t, _strict=false)

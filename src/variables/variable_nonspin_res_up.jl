@@ -26,13 +26,12 @@ for each dimension.
 function nonspin_starting_up_indices(;unit=anything, node=anything, stochastic_scenario=anything, t=anything)
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
-    unique!([
+    unique(
         (unit=u, node=n, stochastic_scenario=s, t=t)
         for (u, n, d, tb) in nonspin_ramp_up_unit_flow_indices_rc(unit=unit, node=node, _compact=false)
-        for (u, s, t) in units_on_indices(
-            unit=u, stochastic_scenario=stochastic_scenario, t=t
-        ) #TODO: maybe retrieve s information from node to be more robust
-    ])
+        for (u, s, t) in units_on_indices(unit=u, stochastic_scenario=stochastic_scenario, t=t) 
+        # TODO: maybe retrieve s information from node to be more robust
+    )
 end
 
 """
@@ -43,7 +42,8 @@ Add `nonspin_starting_up` variables to model `m`.
 function add_variable_nonspin_starting_up!(m::Model)
     add_variable!(
     	m,
-    	:nonspin_starting_up, nonspin_starting_up_indices;
+    	:nonspin_starting_up, 
+        nonspin_starting_up_indices;
     	lb=x -> 0,
     	bin=units_on_bin,
     	int=units_on_int,

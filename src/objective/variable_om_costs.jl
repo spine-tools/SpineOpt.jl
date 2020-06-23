@@ -37,4 +37,4 @@ function variable_om_costs(m::Model, t1)
         )
     )
 end
-#TODO: add weight scenario tree
+# TODO: add weight scenario tree
