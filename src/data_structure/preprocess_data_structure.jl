@@ -391,29 +391,17 @@ function generate_variable_indexing_support()
     unit__temporal_block = RelationshipClass(
         :unit__temporal_block,
         [:unit, :temporal_block],
+        unique((unit=u, temporal_block=tb) for (u, n) in units_on_resolution() for tb in node__temporal_block(node=n))
+    )
+    nonspin_ramp_up_unit__node__direction__temporal_block = RelationshipClass(
+        :nonspin_ramp_up_unit__node__direction__temporal_block, 
+        [:unit, :node, :direction, :temporal_block], 
         unique(
-            (unit=u, temporal_block=tb)
-            for (u, n) in units_on_resolution()
+            (unit=u, node=n, direction=d, temporal_block=tb)
+            for (u, ng, d) in indices(max_res_startup_ramp)
+            for n in expand_node_group(ng)
             for tb in node__temporal_block(node=n)
         )
-    )
-    units_invested_available_indices = unique(
-        (unit=u, temporal_block=tb)
-        for ug in indices(candidate_units)
-        for u in expand_unit_group(ug)
-        for tb in unit__investment_temporal_block(unit=u)
-    )
-    units_invested_available_indices_rc = RelationshipClass(
-        :units_invested_available_indices_rc, [:unit, :temporal_block], units_invested_available_indices
-    )
-    nonspin_ramp_up_unit_flow_indices = unique(
-        (unit=u, node=n, direction=d, temporal_block=tb)
-        for (u, ng, d) in indices(max_res_startup_ramp)
-        for n in expand_node_group(ng)
-        for tb in node__temporal_block(node=n)
-    )
-    nonspin_ramp_up_unit_flow_indices_rc = RelationshipClass(
-        :nonspin_ramp_up_unit_flow_indices_rc, [:unit, :node, :direction, :temporal_block], nonspin_ramp_up_unit_flow_indices
     )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
@@ -421,8 +409,7 @@ function generate_variable_indexing_support()
         connection__node__direction__temporal_block = $connection__node__direction__temporal_block
         node_with_state__temporal_block = $node_with_state__temporal_block
         unit__temporal_block = $unit__temporal_block
-        units_invested_available_indices_rc = $units_invested_available_indices_rc
-        nonspin_ramp_up_unit_flow_indices_rc = $nonspin_ramp_up_unit_flow_indices_rc
+        nonspin_ramp_up_unit__node__direction__temporal_block = $nonspin_ramp_up_unit__node__direction__temporal_block
     end
 end
 

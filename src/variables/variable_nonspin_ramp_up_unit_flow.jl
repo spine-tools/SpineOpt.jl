@@ -28,23 +28,20 @@
 A list of `NamedTuple`s corresponding to indices of the `flow` variable where the keyword arguments act as filters
 for each dimension.
 """
-#TODO:
-#TODO: improve generation
-#only generate if max_start_up_ramp is defined and/or min_start_up_ramp
-#what are the default values?
+# TODO:
+# TODO: improve generation
+# only generate if max_start_up_ramp is defined and/or min_start_up_ramp
+# what are the default values?
 # rather model choise use ramps
 ### nonspin_ramp_up_unit_flow
-function nonspin_ramp_up_unit_flow_indices(;unit=anything,
-    node=anything,
-    direction=anything,
-    stochastic_scenario=anything,
-    t=anything
-)
+function nonspin_ramp_up_unit_flow_indices(;
+        unit=anything, node=anything, direction=anything, stochastic_scenario=anything, t=anything
+    )
     unit = expand_unit_group(unit)
     node = expand_node_group(node)
     [
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (u, n, d, tb) in nonspin_ramp_up_unit_flow_indices_rc(
+        for (u, n, d, tb) in nonspin_ramp_up_unit__node__direction__temporal_block(
             unit=unit, node=node, direction=direction, _compact=false
         )
         for (n, s, t) in node_stochastic_time_indices(
