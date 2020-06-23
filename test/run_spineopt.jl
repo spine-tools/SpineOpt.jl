@@ -55,20 +55,24 @@ end
         _load_template(url_in)
         db_api.import_data_to_url(url_in; test_data...)
         db_api.create_new_spine_database(url_out)
-        unit_capacity = 50
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
-        fom_cost_data = [100 * k for k in 0:23]
-        fom_cost = Dict("type" => "time_series", "data" => PyVector(fom_cost_data), "index" => index)
+        vom_cost_data = [100 * k for k in 0:23]
+        vom_cost = Dict("type" => "time_series", "data" => PyVector(vom_cost_data), "index" => index)
         demand_data = [2 * k for k in 0:23]
         demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
-        object_parameter_values = [["unit", "unit_ab", "fom_cost", fom_cost], ["node", "node_b", "demand", demand]]
-        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity]]
+        unit_capacity = demand
+        object_parameter_values = [["node", "node_b", "demand", demand]]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity], 
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost]
+        ]
         db_api.import_data_to_url(
             url_in; 
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
         m = run_spineopt(url_in, url_out; log_level=0)
+        con = m.ext[:constraints][:unit_flow_capacity]
         using_spinedb(url_out, Y)
         key = (
             report=Y.report(:report_x), 
