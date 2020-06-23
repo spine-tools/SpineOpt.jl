@@ -20,8 +20,8 @@
 """
     nonspin_starting_up_indices(unit=anything, stochastic_scenario=anything, t=anything)
 
-A list of `NamedTuple`s corresponding to indices of the `units_on` variable.
-The keyword arguments act as filters for each dimension.
+A list of `NamedTuple`s corresponding to indices of the `units_on` variable where the keyword arguments act as filters
+for each dimension.
 """
 function nonspin_starting_up_indices(;unit=anything, node=anything, stochastic_scenario=anything, t=anything)
     unit = expand_unit_group(unit)
@@ -35,6 +35,11 @@ function nonspin_starting_up_indices(;unit=anything, node=anything, stochastic_s
     ])
 end
 
+"""
+    add_variable_nonspin_starting_up!(m::Model)
+
+Add `nonspin_starting_up` variables to model `m`.
+"""
 function add_variable_nonspin_starting_up!(m::Model)
     add_variable!(
     	m,

@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
 """
     node_state_indices(filtering_options...)
 
@@ -31,4 +32,9 @@ function node_slack_indices(;node=anything, stochastic_scenario=anything, t=anyt
     unique!(inds)
 end
 
+"""
+    add_variable_node_slack_pos!(m::Model)
+
+Add `node_slack_pos` variables to model `m`.
+"""
 add_variable_node_slack_pos!(m::Model) = add_variable!(m, :node_slack_pos, node_slack_indices; lb=x -> 0)

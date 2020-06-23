@@ -50,6 +50,11 @@ function unit_flow_op_indices(;
     ]
 end
 
+"""
+    add_variable_unit_flow_op!(m::Model)
+
+Add `unit_flow_op` variables to model `m`.
+"""
 function add_variable_unit_flow_op!(m::Model)
     add_variable!(
         m,

@@ -20,8 +20,8 @@
 """
     units_on_indices(unit=anything, stochastic_scenario=anything, t=anything)
 
-A list of `NamedTuple`s corresponding to indices of the `units_on` variable.
-The keyword arguments act as filters for each dimension.
+A list of `NamedTuple`s corresponding to indices of the `units_on` variable where the keyword arguments act as filters
+for each dimension.
 """
 function units_on_indices(;unit=anything, stochastic_scenario=anything, t=anything)
     [
@@ -33,10 +33,25 @@ function units_on_indices(;unit=anything, stochastic_scenario=anything, t=anythi
     ]
 end
 
+"""
+    units_on_bin(x)
 
+Check if unit online variable type is defined as a binary.
+"""
 units_on_bin(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_binary
+
+"""
+    units_on_int(x)
+
+Check if unit online variable type is defined as an integer.
+"""
 units_on_int(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_integer
 
+"""
+    add_variable_units_on!(m::Model)
+
+Add `units_on` variables to model `m`.
+"""
 function add_variable_units_on!(m::Model)
     add_variable!(
     	m,

@@ -17,6 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+"""
+    add_variable_units_mothballed!(m::Model)
+
+Add `units_mothballed` variables to model `m`.
+"""
 function add_variable_units_mothballed!(m::Model)
     add_variable!(m, :units_mothballed, units_invested_available_indices; lb=x -> 0, int=units_invested_available_int)
 end

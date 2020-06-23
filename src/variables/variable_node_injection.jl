@@ -16,14 +16,19 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
 """
     node_injection_indices(filtering_options...)
 
-A set of tuples for indexing the `node_injection` variable. Any filtering options can be specified
-for `node`, and `t`.
+A set of tuples for indexing the `node_injection` variable where filtering options can be specified for `node`, and `t`.
 """
 function node_injection_indices(;node=anything, stochastic_scenario=anything, t=anything)
     node_stochastic_time_indices(node=node, stochastic_scenario=stochastic_scenario, t=t)
 end
 
+"""
+    add_variable_node_injection!(m::Model)
+
+Add `node_injection` variables to model `m`.
+"""
 add_variable_node_injection!(m::Model) = add_variable!(m, :node_injection, node_injection_indices)

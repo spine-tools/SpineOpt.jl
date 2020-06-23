@@ -25,8 +25,8 @@
         t=anything
     )
 
-A list of `NamedTuple`s corresponding to indices of the `unit_flow` variable.
-The keyword arguments act as filters for each dimension.
+A list of `NamedTuple`s corresponding to indices of the `unit_flow` variable where the keyword arguments act as filters
+for each dimension.
 """
 function unit_flow_indices(;
         unit=anything,
@@ -48,6 +48,11 @@ function unit_flow_indices(;
     ]
 end
 
+"""
+    add_variable_unit_flow!(m::Model)
+
+Add `unit_flow` variables to model `m`.
+"""
 function add_variable_unit_flow!(m::Model)
     add_variable!(
         m,

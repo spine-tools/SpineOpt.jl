@@ -25,8 +25,8 @@
         t=anything
     )
 
-A list of `NamedTuple`s corresponding to indices of the `flow` variable.
-The keyword arguments act as filters for each dimension.
+A list of `NamedTuple`s corresponding to indices of the `flow` variable where the keyword arguments act as filters
+for each dimension.
 """
 ### ramp_up_unit_flow
 #TODO: only generate if ramp_limit is defined
@@ -55,6 +55,11 @@ function ramp_up_unit_flow_indices(;unit=anything,
         )])
 end
 
+"""
+    add_variable_ramp_up_unit_flow!(m::Model)
+
+Add `ramp_up_unit_flow` variables to model `m`.
+"""
 function add_variable_ramp_up_unit_flow!(m::Model)
     #TODO:"unique for indices is probably not the most performant, try to reformulate"
     # reconsider moving this to preprocessing

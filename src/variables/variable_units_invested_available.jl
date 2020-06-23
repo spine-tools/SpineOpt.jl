@@ -20,10 +20,9 @@
 """
     units_invested_available_indices(unit=anything, t=anything)
 
-A list of `NamedTuple`s corresponding to indices of the `units_invested_available` variable.
-The keyword arguments act as filters for each dimension.
+A list of `NamedTuple`s corresponding to indices of the `units_invested_available` variable where
+the keyword arguments act as filters for each dimension.
 """
-
 function units_invested_available_indices(;unit=anything, stochastic_scenario=anything, t=anything)
     [
         (unit=u, stochastic_scenario=s, t=t)
@@ -34,6 +33,11 @@ function units_invested_available_indices(;unit=anything, stochastic_scenario=an
     ]
 end
 
+"""
+    units_invested_available_int(x)
+
+Check if unit investment variable type is defined to be an integer.
+"""
 units_invested_available_int(x) = unit_investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
 
 """
@@ -56,7 +60,11 @@ function fix_initial_units_invested_available()
     end
 end
 
+"""
+    add_variable_units_invested_available!(m::Model)
 
+Add `units_invested_available` variables to model `m`.
+"""
 function add_variable_units_invested_available!(m::Model)
     fix_initial_units_invested_available()
     add_variable!(
