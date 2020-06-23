@@ -45,7 +45,7 @@ struct TimeSliceSet
 end
 
 struct TOverlapsT
-    tuples::Array{Tuple{TimeSlice,TimeSlice},1}
+    mapping::Dict{TimeSlice,Array{TimeSlice,1}}
 end
 
 """
@@ -64,32 +64,12 @@ An `Array` of time slices *in the model*.
 (h::TimeSliceSet)(temporal_blocks::Array{T,1}, s) where T = [t for blk in temporal_blocks for t in h(blk, s)]
 
 """
-    (::TOverlapsT)()
+    (::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
 
-A list of tuples `(t1, t2)` where `t1` and `t2` have some time in common.
+A list of time slices that have some time in common with `t` or any time slice in `t`.
 """
-function (h::TOverlapsT)()
-    h.tuples
-end
-
-"""
-    (::TOverlapsT)(t_overlap)
-
-A list of time slices that have some time in common with `t_overlap`
-(or some time in common with any element in `t_overlap` if it's a list).
-"""
-function (h::TOverlapsT)(t_overlap)
-    unique(t2 for (t1, t2) in h.tuples if t1 in tuple(t_overlap...))
-end
-
-"""
-    (::TOverlapsT)(t1, t2)
-
-A list of time slices which are in `t1` and have some time in common
-with any of the time slices in `t2` and vice versa.
-"""
-function (h::TOverlapsT)(t1, t2)
-    unique(Iterators.flatten(filter(t -> t[1] in tuple(t1...) && t[2] in tuple(t2...), h.tuples)))
+function (h::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
+    unique(overlapping_t for s in t for overlapping_t in get(h.mapping, s, ()))
 end
 
 """
@@ -238,29 +218,28 @@ E.g. `t_in_t`, `t_preceeds_t`, `t_overlaps_t`...
 function _generate_time_slice_relationships()
     all_time_slices = Iterators.flatten((history_time_slice(), time_slice()))
     duration_unit = _model_duration_unit()
-    following_time_slices = Dict(t => to_time_slice(t + duration_unit(duration(t))) for t in all_time_slices)
-    overlapping_time_slices = Dict(t => to_time_slice(t) for t in all_time_slices)
+    t_follows_t_mapping = Dict(t => to_time_slice(t + duration_unit(duration(t))) for t in all_time_slices)
+    t_overlaps_t_maping = Dict(t => to_time_slice(t) for t in all_time_slices)
+    t_overlaps_t_excl_mapping = Dict(t => setdiff(overlapping_t, t) for (t, overlapping_t) in t_overlaps_t_maping)
     t_before_t_tuples = unique(
         (t_before=t_before, t_after=t_after)
-        for (t_before, following) in following_time_slices
+        for (t_before, following) in t_follows_t_mapping
         for t_after in following
         if before(t_before, t_after)
     )
     t_in_t_tuples = unique(
         (t_short=t_short, t_long=t_long)
-        for (t_short, overlapping) in overlapping_time_slices
+        for (t_short, overlapping) in t_overlaps_t_maping
         for t_long in overlapping
         if iscontained(t_short, t_long)
     )
     t_in_t_excl_tuples = [(t_short=t1, t_long=t2) for (t1, t2) in t_in_t_tuples if t1 != t2]
-    t_overlaps_t_tuples = unique((t1, t2) for (t1, overlapping) in overlapping_time_slices for t2 in overlapping)
-    t_overlaps_t_excl_tuples = [(t1, t2) for (t1, t2) in t_overlaps_t_tuples if t1 != t2]
     # Create and export the function-like objects
     t_before_t = RelationshipClass(:t_before_t, [:t_before, :t_after], t_before_t_tuples)
     t_in_t = RelationshipClass(:t_in_t, [:t_short, :t_long], t_in_t_tuples)
     t_in_t_excl = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_tuples)
-    t_overlaps_t = TOverlapsT(t_overlaps_t_tuples)
-    t_overlaps_t_excl = TOverlapsT(t_overlaps_t_excl_tuples)
+    t_overlaps_t = TOverlapsT(t_overlaps_t_maping)
+    t_overlaps_t_excl = TOverlapsT(t_overlaps_t_excl_mapping)
     @eval begin
         t_before_t = $t_before_t
         t_in_t = $t_in_t
