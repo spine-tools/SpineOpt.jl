@@ -1,6 +1,7 @@
 ## Documentation: http://docs.travis-ci.com/user/languages/julia/
 language: julia
 codecov: true
+coveralls: true
 os:
   - linux
   # - osx
@@ -38,4 +39,4 @@ script:
   
 after_success:
   - julia -e 'using Pkg; Pkg.test("SpineOpt", coverage=true)'
-  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder()); Coveralls.submit(process_folder())'
