@@ -393,6 +393,16 @@ function generate_variable_indexing_support()
         [:unit, :temporal_block],
         unique((unit=u, temporal_block=tb) for (u, n) in units_on_resolution() for tb in node__temporal_block(node=n))
     )
+    start_up_unit__node__direction__temporal_block = RelationshipClass(
+        :start_up_unit__node__direction__temporal_block, 
+        [:unit, :node, :direction, :temporal_block], 
+        unique(
+            (unit=u, node=n, direction=d, temporal_block=tb)
+            for (u, ng, d) in indices(max_startup_ramp)
+            for n in expand_node_group(ng)
+            for tb in node__temporal_block(node=n)
+        )
+    )
     nonspin_ramp_up_unit__node__direction__temporal_block = RelationshipClass(
         :nonspin_ramp_up_unit__node__direction__temporal_block, 
         [:unit, :node, :direction, :temporal_block], 
@@ -403,13 +413,29 @@ function generate_variable_indexing_support()
             for tb in node__temporal_block(node=n)
         )
     )
+    ramp_up_unit__node__direction__temporal_block = RelationshipClass(
+        :ramp_up_unit__node__direction__temporal_block, 
+        [:unit, :node, :direction, :temporal_block], 
+        unique(
+            (unit=u, node=n, direction=d, temporal_block=tb)
+            for (u, ng, d) in indices(ramp_up_limit)
+            for n in expand_node_group(ng)
+            for tb in node__temporal_block(node=n)
+            for (u, n, d, tb) in setdiff(
+                unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb),
+                nonspin_ramp_up_unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb)
+            )
+        )
+    )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
         unit__node__direction__temporal_block = $unit__node__direction__temporal_block
         connection__node__direction__temporal_block = $connection__node__direction__temporal_block
         node_with_state__temporal_block = $node_with_state__temporal_block
         unit__temporal_block = $unit__temporal_block
+        start_up_unit__node__direction__temporal_block = $start_up_unit__node__direction__temporal_block
         nonspin_ramp_up_unit__node__direction__temporal_block = $nonspin_ramp_up_unit__node__direction__temporal_block
+        ramp_up_unit__node__direction__temporal_block = $ramp_up_unit__node__direction__temporal_block
     end
 end
 
