@@ -36,7 +36,7 @@ function constraint_min_nonspin_ramp_up_indices()
                 node=ng,
                 direction=d,
                 t=t),
-            nonspin_starting_up_indices(
+            nonspin_units_starting_up_indices(
                 unit=unit()[3],
                 node=ng,
                 t=t))
@@ -53,7 +53,7 @@ Limit the minimum ramp at the start up of a unit.
 For reserves the min non-spinning reserve ramp can be defined here.
 """
 function add_constraint_min_nonspin_ramp_up!(m::Model)
-    @fetch nonspin_ramp_up_unit_flow, nonspin_starting_up = m.ext[:variables]
+    @fetch nonspin_ramp_up_unit_flow, nonspin_units_starting_up = m.ext[:variables]
     cons = m.ext[:constraints][:min_nonspin_start_up_ramp] = Dict()
     for (u, ng, d, s, t) in constraint_min_nonspin_ramp_up_indices()
         cons[u, ng, d, s, t] = @constraint(

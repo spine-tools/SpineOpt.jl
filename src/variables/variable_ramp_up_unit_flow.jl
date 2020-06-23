@@ -25,8 +25,8 @@
         t=anything
     )
 
-A list of `NamedTuple`s corresponding to indices of the `flow` variable where the keyword arguments act as filters
-for each dimension.
+A list of `NamedTuple`s corresponding to indices of the `ramp_up_unit_flow` variable 
+where the keyword arguments act as filters for each dimension.
 """
 # ramp_up_unit_flow
 # TODO: only generate if ramp_limit is defined

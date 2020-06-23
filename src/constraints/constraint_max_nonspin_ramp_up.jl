@@ -35,7 +35,7 @@ function constraint_max_nonspin_ramp_up_indices()
                 ind.stochastic_scenario for ind in Iterators.flatten(
                 (
                     nonspin_ramp_up_unit_flow_indices(unit=u, node=ng, direction=d, t=t),
-                    nonspin_starting_up_indices(unit=u, node=ng, t=t))
+                    nonspin_units_starting_up_indices(unit=u, node=ng, t=t))
                 )
             )
         )
