@@ -89,7 +89,6 @@ include("objective/objective_penalties.jl")
 include("objective/total_costs.jl")
 include("objective/renewable_curtailment_costs.jl")
 include("objective/connection_flow_costs.jl")
-include("objective/save_objective_terms.jl")
 include("objective/res_proc_costs.jl")
 
 include("constraints/constraint_common.jl")
