@@ -232,7 +232,6 @@
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(temporal_block=temporal_block(:hourly))
         observed_obj = objective_function(m)
-        _dismember_function(observed_obj)
         expected_obj = connection_flow_cost * sum(connection_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices))
         @test observed_obj == expected_obj
     end

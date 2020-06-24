@@ -1,11 +1,12 @@
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 SpineInterface = "0cda1612-498a-11e9-3c92-77fa82595a4f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-julia = "^1.2"
 JuMP = "0.21.2"
 SpineInterface = "0.2.1"
+julia = "^1.2"
