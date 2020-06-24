@@ -165,6 +165,14 @@ function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, new_var:
     add_to_expression!(aff, new_coef, new_var)
 end
 
+function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, coef::_Constant, other::Call)
+    add_to_expression!(aff, coef * other)
+end
+
+function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, other::Call, coef::_Constant)
+    add_to_expression!(aff, coef, other)
+end
+
 function JuMP.add_to_expression!(
         aff::GenericAffExpr{Call,VariableRef}, coef::_Constant, other::GenericAffExpr{Call,VariableRef}
     )

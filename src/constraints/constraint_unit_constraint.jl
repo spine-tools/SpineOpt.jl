@@ -158,15 +158,13 @@ function add_constraint_unit_constraint!(m::Model)
             + expr_sum(
                 + units_on[u, s, t1]
                 * units_on_coefficient[(unit_constraint=uc, unit=u, t=t1)]
-                * min(duration(t1),duration(t))
+                * min(duration(t1), duration(t))
                 for u in unit__unit_constraint(unit_constraint=uc)
-                for (u, s, t1) in units_on_indices(
-                    unit=u, stochastic_scenario=stochastic_path, t=t_overlaps_t(t)
-                );
+                for (u, s, t1) in units_on_indices(unit=u, stochastic_scenario=stochastic_path, t=t_overlaps_t(t));
                 init=0
             ),
             constraint_sense(unit_constraint=uc),
-            + right_hand_side(unit_constraint=uc, t=t),
+            + right_hand_side[(unit_constraint=uc, t=t)],
         )
     end
 end

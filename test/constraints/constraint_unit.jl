@@ -632,5 +632,123 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+    @testset "constraint_unit_constraint" begin
+        @testset for sense in ("==", ">=", "<=")
+            _load_template(url_in)
+            db_api.import_data_to_url(url_in; test_data...)
+            rhs = 40
+            unit_flow_coefficient_a = 25
+            unit_flow_coefficient_b = 30
+            units_on_coefficient = 20
+            objects = [["unit_constraint", "constraint_x"]]
+            relationships = [
+                ["unit__from_node__unit_constraint", ["unit_ab", "node_a", "constraint_x"]],
+                ["unit__to_node__unit_constraint", ["unit_ab", "node_b", "constraint_x"]],
+                ["unit__unit_constraint", ["unit_ab", "constraint_x"]]
+            ]
+            object_parameter_values = [
+                ["unit_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
+                ["unit_constraint", "constraint_x", "right_hand_side", rhs],
+            ]
+            relationship_parameter_values = [
+                [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
+                [relationships[2]..., "unit_flow_coefficient", unit_flow_coefficient_b],
+                [relationships[3]..., "units_on_coefficient", units_on_coefficient]
+            ]
+            db_api.import_data_to_url(
+                url_in; 
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values
+            )
+            m = run_spineopt(url_in; log_level=0)
+            var_unit_flow = m.ext[:variables][:unit_flow]
+            var_units_on = m.ext[:variables][:units_on]
+            constraint = m.ext[:constraints][:unit_constraint]
+            @test length(constraint) == 1
+            key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
+            key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
+            s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
+            t1h1, t1h2 = time_slice(temporal_block=temporal_block(:hourly))
+            t2h = time_slice(temporal_block=temporal_block(:two_hourly))[1]
+            expected_con_ref = SpineOpt.sense_constraint(
+                m,
+                + unit_flow_coefficient_a 
+                * (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2])
+                + 2 * unit_flow_coefficient_b * var_unit_flow[key_b..., s_parent, t2h]
+                + units_on_coefficient
+                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]),
+                Symbol(sense),
+                rhs
+            )
+            expected_con = constraint_object(expected_con_ref)
+            con_key = (unit_constraint(:constraint_x), [s_parent, s_child], t2h)
+            observed_con = constraint_object(constraint[con_key])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_unit_constraint_with_operating_segments" begin
+        @testset for sense in ("==", ">=", "<=")
+            _load_template(url_in)
+            db_api.import_data_to_url(url_in; test_data...)
+            rhs = 40
+            unit_flow_coefficient_a = 25
+            unit_flow_coefficient_b = 30
+            units_on_coefficient = 20
+            points = [0.1, 0.5, 1.0]
+            operating_points = Dict("type" => "array", "data" => PyVector(points))
+            objects = [["unit_constraint", "constraint_x"]]
+            relationships = [
+                ["unit__from_node__unit_constraint", ["unit_ab", "node_a", "constraint_x"]],
+                ["unit__to_node__unit_constraint", ["unit_ab", "node_b", "constraint_x"]],
+                ["unit__unit_constraint", ["unit_ab", "constraint_x"]]
+            ]
+            object_parameter_values = [
+                ["unit_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
+                ["unit_constraint", "constraint_x", "right_hand_side", rhs],
+            ]
+            relationship_parameter_values = [
+                ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
+                ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
+                [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
+                [relationships[2]..., "unit_flow_coefficient", unit_flow_coefficient_b],
+                [relationships[3]..., "units_on_coefficient", units_on_coefficient]
+            ]
+            db_api.import_data_to_url(
+                url_in; 
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values
+            )
+            m = run_spineopt(url_in; log_level=0)
+            var_unit_flow_op = m.ext[:variables][:unit_flow_op]
+            var_units_on = m.ext[:variables][:units_on]
+            constraint = m.ext[:constraints][:unit_constraint]
+            @test length(constraint) == 1
+            key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
+            key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
+            s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
+            t1h1, t1h2 = time_slice(temporal_block=temporal_block(:hourly))
+            t2h = time_slice(temporal_block=temporal_block(:two_hourly))[1]
+            expected_con_ref = SpineOpt.sense_constraint(
+                m,
+                + unit_flow_coefficient_a 
+                * sum(
+                    var_unit_flow_op[key_a..., i, s_parent, t1h1] + var_unit_flow_op[key_a..., i, s_child, t1h2]
+                    for i in 1:3
+                )
+                + 2 * sum(unit_flow_coefficient_b * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
+                + units_on_coefficient
+                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]),
+                Symbol(sense),
+                rhs
+            )
+            expected_con = constraint_object(expected_con_ref)
+            con_key = (unit_constraint(:constraint_x), [s_parent, s_child], t2h)
+            observed_con = constraint_object(constraint[con_key])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
 end
-
