@@ -47,9 +47,8 @@ Check if `unit_conv_cap_to_flow` is defined.
 """
 function add_constraint_unit_flow_capacity!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
-    cons = m.ext[:constraints][:unit_flow_capacity] = Dict()
-    for (u, ng, d, stochastic_path, t) in constraint_unit_flow_capacity_indices()
-        cons[u, ng, d, stochastic_path, t] = @constraint(
+    m.ext[:constraints][:unit_flow_capacity] = Dict(
+        (u, ng, d, stochastic_path, t) => @constraint(
             m,
             expr_sum(
                 + unit_flow[u, n, d, s, t]
@@ -60,7 +59,8 @@ function add_constraint_unit_flow_capacity!(m::Model)
                     )
                 );
                 init=0
-            ) * duration(t)
+            ) 
+            * duration(t)
             <=
             + unit_capacity[(unit=u, node=ng, direction=d, t=t)] # TODO: Stochastic parameters
             * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, t=t)]
@@ -72,5 +72,6 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 init=0
             )
         )
-    end
+        for (u, ng, d, stochastic_path, t) in constraint_unit_flow_capacity_indices()
+    )
 end

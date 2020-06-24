@@ -59,9 +59,8 @@ Ratio of `unit_flow` variables.
 """
 function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, sense, d1, d2)
     @fetch unit_flow, units_on = m.ext[:variables]
-    cons = m.ext[:constraints][ratio.name] = Dict()
-    for (u, ng1, ng2, stochastic_path, t) in constraint_ratio_unit_flow_indices(ratio, d1, d2)
-        cons[u, ng1, ng2, stochastic_path, t] = sense_constraint(
+    m.ext[:constraints][ratio.name] = Dict(
+        (u, ng1, ng2, stochastic_path, t) => sense_constraint(
             m,
             + expr_sum(
                 unit_flow[u, n1, d1, s, t_short] * duration(t_short)
@@ -87,9 +86,10 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
                     unit=u, stochastic_scenario=stochastic_path, t=t_overlaps_t(t)
                 );
                 init=0
-            ),
+            )
         )
-    end
+        for (u, ng1, ng2, stochastic_path, t) in constraint_ratio_unit_flow_indices(ratio, d1, d2)
+    )
 end
 
 """

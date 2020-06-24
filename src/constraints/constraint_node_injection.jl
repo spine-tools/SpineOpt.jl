@@ -67,10 +67,9 @@ Set the node injection equal to the summation of all 'input' flows but connectio
 """
 function add_constraint_node_injection!(m::Model)
     @fetch node_injection, node_state, unit_flow = m.ext[:variables]
-    cons = m.ext[:constraints][:node_injection] = Dict()
     # TODO: We need to include both: storages that are defined on ng and storage that are defined on internal nodes
-    for (ng, stochastic_path, t_before, t_after) in constraint_node_injection_indices()
-        cons[ng, stochastic_path, t_before, t_after] = @constraint(
+    m.ext[:constraints][:node_injection] = Dict(
+        (ng, stochastic_path, t_before, t_after) => @constraint(
             m,
             + expr_sum(
                 + node_injection[ng, s, t_after]
@@ -129,5 +128,6 @@ function add_constraint_node_injection!(m::Model)
             )
             # TODO: fractional_demand etc. are scenario dependent?
         )
-    end
+        for (ng, stochastic_path, t_before, t_after) in constraint_node_injection_indices()
+    )
 end

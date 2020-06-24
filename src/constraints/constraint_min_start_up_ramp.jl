@@ -50,9 +50,8 @@ For reserves the min non-spinning reserve ramp can be defined here.
 """
 function add_constraint_min_start_up_ramp!(m::Model)
     @fetch units_started_up, start_up_unit_flow = m.ext[:variables]
-    cons = m.ext[:constraints][:min_start_up_ramp] = Dict()
-    for (u, ng, d, s, t) in constraint_min_start_up_ramp_indices()
-        cons[u, ng, d, s, t] = @constraint(
+    m.ext[:constraints][:min_start_up_ramp] = Dict(
+        (u, ng, d, s, t) => @constraint(
             m,
             + sum(
                 start_up_unit_flow[u, n, d, s, t]
@@ -69,5 +68,6 @@ function add_constraint_min_start_up_ramp!(m::Model)
             * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, t=t)]
             * unit_capacity[(unit=u, node=ng, direction=d, t=t)]
         )
-    end
+        for (u, ng, d, s, t) in constraint_min_start_up_ramp_indices()
+    )
 end

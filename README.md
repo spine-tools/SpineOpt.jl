@@ -5,7 +5,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/Spine-project/SpineOpt.jl/badge.svg?branch=dev)](https://coveralls.io/github/Spine-project/SpineOpt.jl?branch=dev)
 [![codecov](https://codecov.io/gh/Spine-project/SpineOpt.jl/branch/dev/graph/badge.svg)](https://codecov.io/gh/Spine-project/SpineOpt.jl)
 
-A package to run the [Spine](http://www.spine-model.org/) energy system integration model.
+A package to run an energy system integration model called Spine Opt.
 
 ## Compatibility
 

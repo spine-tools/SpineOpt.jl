@@ -51,9 +51,8 @@ For reserves the max non-spinning reserve ramp can be defined here.
 """
 function add_constraint_max_nonspin_ramp_up!(m::Model)
     @fetch nonspin_ramp_up_unit_flow, nonspin_units_starting_up = m.ext[:variables]
-    cons = m.ext[:constraints][:max_nonspin_start_up_ramp] = Dict()
-    for (u, ng, d, s_path, t) in constraint_max_nonspin_ramp_up_indices()
-        cons[u, ng, d, s_path, t] = @constraint(
+    m.ext[:constraints][:max_nonspin_start_up_ramp] = Dict(
+        (u, ng, d, s_path, t) => @constraint(
             m,
             + sum(
                 nonspin_ramp_up_unit_flow[u, n, d, s, t]
@@ -73,5 +72,6 @@ function add_constraint_max_nonspin_ramp_up!(m::Model)
                 init=0
             )
         )
-    end
+        for (u, ng, d, s_path, t) in constraint_max_nonspin_ramp_up_indices()
+    )
 end

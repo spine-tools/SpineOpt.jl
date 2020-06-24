@@ -52,9 +52,8 @@ This is required to enforce separate limitations on these two ramp types.
 """
 function add_constraint_split_ramps!(m::Model)
     @fetch unit_flow, ramp_up_unit_flow, start_up_unit_flow, nonspin_ramp_up_unit_flow = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:split_ramp_up] = Dict()
-    for (u, n, d, s_path, t_before, t_after) in constraint_split_ramps_indices()
-        constr_dict[u, n, d, s_path,t_before, t_after] = @constraint(
+    m.ext[:constraints][:split_ramp_up] = Dict(
+        (u, n, d, s_path, t_before, t_after) => @constraint(
             m,
             expr_sum(
                 + unit_flow[u, n, d, s, t_after]
@@ -80,5 +79,6 @@ function add_constraint_split_ramps!(m::Model)
                 init=0
             )
         )
-    end
+        for (u, n, d, s_path, t_before, t_after) in constraint_split_ramps_indices()
+    )
 end

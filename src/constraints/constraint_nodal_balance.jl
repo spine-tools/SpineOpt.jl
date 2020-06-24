@@ -28,13 +28,8 @@ Balance equation for nodes.
 """
 function add_constraint_nodal_balance!(m::Model)
     @fetch node_injection, connection_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
-    cons = m.ext[:constraints][:nodal_balance] = Dict()
-    for (n, s, t) in node_stochastic_time_indices()
-        nodal_balance_sense(node=n) == :none && continue
-        # Skip nodes that are part of a node group having balance_type_group
-        any(balance_type(node=ng) === :balance_type_group for ng in node_group__node(node2=n)) && continue
-        internal_nodes = (balance_type(node=n) === :balance_type_group) ? node_group__node(node1=n) : []
-        cons[n, s, t] = sense_constraint(
+    m.ext[:constraints][:nodal_balance] = Dict(
+        (n, s, t) => sense_constraint(
             m,
             # Net injection
             + node_injection[n, s, t]
@@ -64,15 +59,23 @@ function add_constraint_nodal_balance!(m::Model)
             ,
             0
         )
-    end
+        for (n, internal_nodes, s, t) in (
+            (n, _internal_nodes(n), s, t)
+            for (n, s, t) in node_stochastic_time_indices()
+            if nodal_balance_sense(node=n) !== :none
+            && all(balance_type(node=ng) !== :balance_type_group for ng in node_group__node(node2=n))
+        )
+    )
 end
+
+_internal_nodes(n::Object) = balance_type(node=n) === :balance_type_group ? node_group__node(node1=n) : []
 
 """
     _connection_nodes(conn)
 
 An iterator over all `nodes` of a `connection`.
 """
-_connection_nodes(conn) = (
+_connection_nodes(conn::Object) = (
     n
     for connection__node in (connection__from_node, connection__to_node)
     for n in connection__node(connection=conn, direction=anything)

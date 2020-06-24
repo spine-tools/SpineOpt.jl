@@ -66,9 +66,8 @@ Ratio of `connection_flow` variables.
 """
 function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, sense)
     @fetch connection_flow = m.ext[:variables]
-    cons = m.ext[:constraints][ratio_out_in.name] = Dict()
-    for (conn, ng_out, ng_in, stochastic_path, t) in constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
-        con = cons[conn, ng_out, ng_in, stochastic_path, t] = sense_constraint(
+    m.ext[:constraints][ratio_out_in.name] = Dict(
+        (conn, ng_out, ng_in, stochastic_path, t) => sense_constraint(
             m,
             + expr_sum(
                 + connection_flow[conn, n_out, d, s, t_short] * duration(t_short)
@@ -96,7 +95,8 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
                 init=0
             )
         )
-    end
+        for (conn, ng_out, ng_in, stochastic_path, t) in constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
+    )
 end
 
 """

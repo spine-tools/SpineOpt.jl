@@ -53,26 +53,25 @@ Limit the maximum ramp of `ramp_up_unit_flow` of a `unit` or `unit_group` if the
 `ramp_up_limit`,`unit_capacity`,`unit_conv_cap_to_unit_flow` exist.
 """
 function add_constraint_ramp_up!(m::Model)
-    @fetch units_on,  units_started_up, ramp_up_unit_flow = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:ramp_up] = Dict()
-    for (u, ng, d, s, t) in constraint_ramp_up_indices()
-        constr_dict[u, ng, d, s, t] = @constraint(
+    @fetch units_on, units_started_up, ramp_up_unit_flow = m.ext[:variables]
+    m.ext[:constraints][:ramp_up] = Dict(
+        (u, ng, d, s, t) => @constraint(
             m,
             + sum(
                 ramp_up_unit_flow[u, n, d, s, t]
-                        for (u, n, d, s, t) in ramp_up_unit_flow_indices(
-                            unit=u, node=ng, direction = d, t=t, stochastic_scenario=s)
+                for (u, n, d, s, t) in ramp_up_unit_flow_indices(
+                    unit=u, node=ng, direction = d, t=t, stochastic_scenario=s
+                )
             )
             <=
             + sum(
                 units_on[u, s, t] - units_started_up[u, s, t]
-                    for (u,s,t) in units_on_indices(
-                        unit=u, stochastic_scenario=s, t=t_overlaps_t(t)
-                            )
-                )
-                 * ramp_up_limit[(unit=u, node=ng, direction=d, t=t, stochastic_scenario=s)]
-                    *unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, t=t, stochastic_scenario=s)]
-                        *unit_capacity[(unit=u, node=ng, direction=d, t=t, stochastic_scenario=s)]
+                for (u,s,t) in units_on_indices(unit=u, stochastic_scenario=s, t=t_overlaps_t(t))
+            )
+            * ramp_up_limit[(unit=u, node=ng, direction=d, t=t, stochastic_scenario=s)]
+            * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, t=t, stochastic_scenario=s)]
+            * unit_capacity[(unit=u, node=ng, direction=d, t=t, stochastic_scenario=s)]
         )
-    end
+        for (u, ng, d, s, t) in constraint_ramp_up_indices()
+    )
 end

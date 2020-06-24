@@ -25,21 +25,20 @@ the capacity of the unit.
 """
 function add_constraint_operating_point_bounds!(m::Model)
     @fetch unit_flow_op = m.ext[:variables]
-    cons = m.ext[:constraints][:operating_point_bounds] = Dict()
-    for (u, n, d) in indices(unit_capacity)
-        for (u, n, d, op, s, t) in unit_flow_op_indices(unit=u, node=n, direction=d)
-            cons[u, n, d, op, s, t] = @constraint(
-                m,
-                + unit_flow_op[u, n, d, op, s, t]
-                <=
-                (
-                    + operating_points[(unit=u, node=n, direction=d, i=op)] # TODO: Stochastic parameters?
-                    - ((op > 1) ? operating_points[(unit=u, node=n, direction=d, i=op - 1)] : 0)
-                )
-                * unit_capacity[(unit=u, node=n, direction=d, t=t)]
-                * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
-                # TODO: extend to investment functionality ? (is that even possible)
+    m.ext[:constraints][:operating_point_bounds] = Dict(
+        (u, n, d, op, s, t) => @constraint(
+            m,
+            + unit_flow_op[u, n, d, op, s, t]
+            <=
+            (
+                + operating_points[(unit=u, node=n, direction=d, i=op)]  # TODO: Stochastic parameters?
+                - ((op > 1) ? operating_points[(unit=u, node=n, direction=d, i=op - 1)] : 0)
             )
-        end
-    end
+            * unit_capacity[(unit=u, node=n, direction=d, t=t)]
+            * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
+            # TODO: extend to investment functionality ? (is that even possible)
+        )
+        for (u, n, d) in indices(unit_capacity)
+        for (u, n, d, op, s, t) in unit_flow_op_indices(unit=u, node=n, direction=d)
+    )
 end

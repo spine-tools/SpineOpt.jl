@@ -93,9 +93,8 @@ Custom constraint for `units`.
 """
 function add_constraint_unit_constraint!(m::Model)
     @fetch unit_flow_op, unit_flow, units_on = m.ext[:variables]
-    cons = m.ext[:constraints][:unit_constraint] = Dict()
-    for (uc, stochastic_path, t) in constraint_unit_constraint_indices()
-        cons[uc, stochastic_path, t] = sense_constraint(
+    m.ext[:constraints][:unit_constraint] = Dict(
+        (uc, stochastic_path, t) => sense_constraint(
             m,
             + expr_sum(
                 + unit_flow_op[u, n, d, op, s, t_short]
@@ -166,5 +165,6 @@ function add_constraint_unit_constraint!(m::Model)
             constraint_sense(unit_constraint=uc),
             + right_hand_side[(unit_constraint=uc, t=t)],
         )
-    end
+        for (uc, stochastic_path, t) in constraint_unit_constraint_indices()
+    )
 end
