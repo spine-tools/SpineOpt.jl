@@ -145,7 +145,7 @@ function rerun_spineopt(
         @logtime level3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
         @logtime level3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
         # TODO: @logtime level3 "- [constraint_ramp_cost]" add_constraint_ramp_cost!(m)
-        @logtime level3 "- [constraint_split_ramps]" add_constraint_split_ramps!(m)
+        @logtime level3 "- [constraint_split_ramp_up]" add_constraint_split_ramp_up!(m)
         @logtime level3 "- [constraint_ramp_up]" add_constraint_ramp_up!(m)
         @logtime level3 "- [constraint_max_start_up_ramp]" add_constraint_max_start_up_ramp!(m)
         @logtime level3 "- [constraint_min_start_up_ramp]" add_constraint_min_start_up_ramp!(m)

@@ -29,18 +29,14 @@ function constraint_ramp_up_indices()
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(ramp_up_limit)
-        for t in t_lowest_resolution(t for t in time_slice(temporal_block=node__temporal_block(node=expand_node_group(ng))))
+        for t in t_lowest_resolution(time_slice(temporal_block=node__temporal_block(node=expand_node_group(ng))))
         # How to deal with groups correctly?
         for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario
                 for ind in Iterators.flatten(
-                    (units_on_indices(
-                    unit=u, t=t),
-                    ramp_up_unit_flow_indices(
-                    unit=u, node=ng, direction=d, t=t_before_t(t_after=t))
-                    )
-                )  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
+                    (units_on_indices(unit=u, t=t), ramp_up_unit_flow_indices(unit=u, node=ng, direction=d, t=t))
+                )
             )
         )
     )

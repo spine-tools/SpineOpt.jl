@@ -18,13 +18,13 @@
 #############################################################################
 
 """
-    constraint_split_ramps_indices()
+    constraint_split_ramp_up_indices()
 
-Form the stochastic index set for the `:split_ramps` constraint.
+Form the stochastic index set for the `:split_ramp_up` constraint.
 
 Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
 """
-function constraint_split_ramps_indices()
+function constraint_split_ramp_up_indices()
     unique(
         (unit=u, node=n, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (u, n, d, s, t_after) in unique(
@@ -32,7 +32,7 @@ function constraint_split_ramps_indices()
                 (ramp_up_unit_flow_indices(), start_up_unit_flow_indices(), nonspin_ramp_up_unit_flow_indices())
             )
         )
-        for (u, n, d, s, t_before) in unit_flow_indices(unit=u,node=n,direction=d,t=t_before_t(t_after=t_after))
+        for t_before in t_before_t(t_after=t_after)
         for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario for ind in unit_flow_indices(
@@ -44,13 +44,13 @@ function constraint_split_ramps_indices()
 end
 
 """
-    add_constraint_split_ramps!(m::Model)
+    add_constraint_split_ramp_up!(m::Model)
 
 Split delta(`unit_flow`) in `ramp_up_unit_flow and` `start_up_unit_flow`.
 
 This is required to enforce separate limitations on these two ramp types.
 """
-function add_constraint_split_ramps!(m::Model)
+function add_constraint_split_ramp_up!(m::Model)
     @fetch unit_flow, ramp_up_unit_flow, start_up_unit_flow, nonspin_ramp_up_unit_flow = m.ext[:variables]
     m.ext[:constraints][:split_ramp_up] = Dict(
         (u, n, d, s_path, t_before, t_after) => @constraint(
@@ -58,27 +58,27 @@ function add_constraint_split_ramps!(m::Model)
             expr_sum(
                 + unit_flow[u, n, d, s, t_after]
                 for (u, n, d, s, t_after) in unit_flow_indices(
-                    unit=u,node=n,direction=d,stochastic_scenario=s_path,t=t_after
+                    unit=u, node=n, direction=d, stochastic_scenario=s_path, t=t_after
                 );
                 init=0
             )
             - expr_sum(
-            + unit_flow[u, n, d, s, t_before]
+                + unit_flow[u, n, d, s, t_before]
                 for (u, n, d, s, t_before) in unit_flow_indices(
-                    unit=u,node=n,direction=d,stochastic_scenario=s_path,t=t_before
+                    unit=u, node=n, direction=d, stochastic_scenario=s_path, t=t_before
                 )
-                if is_reserve_node(node=n) == :is_reserve_node_false;
+                if is_reserve_node(node=n) === :value_false;
                 init=0
             )
             <=
             expr_sum(
-                + get(ramp_up_unit_flow,(u, n, d, s, t_after), 0)
-                + get(start_up_unit_flow,(u, n, d, s, t_after), 0)
-                + get(nonspin_ramp_up_unit_flow,(u, n, d, s, t_after), 0)
+                + get(ramp_up_unit_flow, (u, n, d, s, t_after), 0)
+                + get(start_up_unit_flow, (u, n, d, s, t_after), 0)
+                + get(nonspin_ramp_up_unit_flow, (u, n, d, s, t_after), 0)
                 for s in s_path;
                 init=0
             )
         )
-        for (u, n, d, s_path, t_before, t_after) in constraint_split_ramps_indices()
+        for (u, n, d, s_path, t_before, t_after) in constraint_split_ramp_up_indices()
     )
 end
