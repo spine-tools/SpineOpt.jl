@@ -30,8 +30,8 @@ function preprocess_data_structure()
     expand_units_on_resolution()
     # NOTE: generate direction before calling `generate_network_components`,
     # so calls to `connection__from_node` don't corrupt lookup cache
-    generate_direction()
     add_connection_relationships()
+    generate_direction()
     generate_network_components()
     generate_variable_indexing_support()
     generate_investment_relationships()
@@ -75,37 +75,6 @@ function expand_units_on_resolution()
 end
 
 """
-    generate_direction()
-
-Generate the `direction` `ObjectClass` and its relationships.
-"""
-function generate_direction()
-    from_node = Object(:from_node)
-    to_node = Object(:to_node)
-    direction = ObjectClass(:direction, [from_node, to_node])
-    directions_by_class = Dict(
-        unit__from_node => from_node,
-        unit__to_node => to_node,
-        connection__from_node => from_node,
-        connection__to_node => to_node,
-    )
-    for cls in keys(directions_by_class)
-        push!(cls.object_class_names, :direction)
-    end
-    for (cls, d) in directions_by_class
-        map!(rel -> (; rel..., direction=d), cls.relationships, cls.relationships)
-        key_map = Dict(rel => (rel..., d) for rel in keys(cls.parameter_values))
-        for (key, new_key) in key_map
-            cls.parameter_values[new_key] = pop!(cls.parameter_values, key)
-        end
-    end
-    @eval begin
-        direction = $direction
-        export direction
-    end
-end
-
-"""
     add_connection_relationships()
 
 Add connection relationships for connection_type=:connection_type_lossless_bidirectional.
@@ -141,6 +110,37 @@ function add_connection_relationships()
     merge!(connection__from_node.parameter_values, new_connection__from_node_parameter_values)
     merge!(connection__to_node.parameter_values, new_connection__to_node_parameter_values)
     merge!(connection__node__node.parameter_values, new_connection__node__node_parameter_values)
+end
+
+"""
+    generate_direction()
+
+Generate the `direction` `ObjectClass` and its relationships.
+"""
+function generate_direction()
+    from_node = Object(:from_node)
+    to_node = Object(:to_node)
+    direction = ObjectClass(:direction, [from_node, to_node])
+    directions_by_class = Dict(
+        unit__from_node => from_node,
+        unit__to_node => to_node,
+        connection__from_node => from_node,
+        connection__to_node => to_node,
+    )
+    for cls in keys(directions_by_class)
+        push!(cls.object_class_names, :direction)
+    end
+    for (cls, d) in directions_by_class
+        map!(rel -> (; rel..., direction=d), cls.relationships, cls.relationships)
+        key_map = Dict(rel => (rel..., d) for rel in keys(cls.parameter_values))
+        for (key, new_key) in key_map
+            cls.parameter_values[new_key] = pop!(cls.parameter_values, key)
+        end
+    end
+    @eval begin
+        direction = $direction
+        export direction
+    end
 end
 
 # Network stuff

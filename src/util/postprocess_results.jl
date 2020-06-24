@@ -25,32 +25,78 @@ bases on contents of report__output
 """
 function postprocess_results!(m::Model)
     outputs = [Symbol(x[2]) for x in report__output()]
-
-    if :connection_avg_throughflow in outputs
-        save_connection_avg_throughflow!(m)
+    fns! = Dict(:connection_avg_throughflow => save_connection_avg_throughflow!)
+    for (_report, output) in report__output()
+        fn! = get(fns!, output.name, nothing)
+        fn! === nothing || fn!(m)
     end
 end
 
-# TODO: Try and refactor this to account for different time resolution in connection nodes
 function save_connection_avg_throughflow!(m::Model)
     @fetch connection_flow = m.ext[:variables]
-    val = m.ext[:values][:connection_avg_throughflow] = Dict{NamedTuple{(:connection, :t),Tuple{Object,TimeSlice}},Number}()
-
-    for conn in connection(connection_monitored=:value_true, has_ptdf=true)
-        for (conn, n_to, d, t) in connection_flow_indices(;
-                connection=conn, last(connection__from_node(connection=conn))...
-            ) # NOTE: always assume that the second (last) node in `connection__from_node` is the 'to' node
-            end_(t) <= end_(current_window) || continue
-            for (conn, n_from, d, t) in connection_flow_indices(;
-                    connection=conn, first(connection__from_node(connection=conn))...
+    m.ext[:values][:connection_avg_throughflow] = Dict(
+        (connection=conn, stochastic_path=stochastic_path, t=t) => 0.5 * (
+            + sum(
+                JuMP.value(connection_flow[conn, n_to, d, s, t])
+                for (conn, n_to, d, s, t) in connection_flow_indices(
+                    connection=conn, 
+                    node=n_to, 
+                    direction=direction(:to_node), 
+                    stochastic_scenario=stochastic_path, 
+                    t=t_in_t(t_long=t)
                 )
-                val[(connection=conn, t=t)] = (
-                    + JuMP.value(connection_flow[conn, n_to, direction(:to_node), t])
-                    - JuMP.value(connection_flow[conn, n_to, direction(:from_node), t])
-                    - JuMP.value(connection_flow[conn, n_from, direction(:to_node), t])
-                    + JuMP.value(connection_flow[conn, n_from, direction(:from_node), t])
-                ) / 2
-            end
-        end
-    end
+            )
+            - sum(
+                JuMP.value(connection_flow[conn, n_to, d, s, t])
+                for (conn, n_to, d, s, t) in connection_flow_indices(
+                    connection=conn, 
+                    node=n_to, 
+                    direction=direction(:from_node), 
+                    stochastic_scenario=stochastic_path, 
+                    t=t_in_t(t_long=t)
+                )
+            )
+            - sum(
+                JuMP.value(connection_flow[conn, n_from, d, s, t])
+                for (conn, n_from, d, s, t) in connection_flow_indices(
+                    connection=conn, 
+                    node=n_from, 
+                    direction=direction(:to_node), 
+                    stochastic_scenario=stochastic_path, 
+                    t=t_in_t(t_long=t)
+                )
+            )
+            + sum(
+                JuMP.value(connection_flow[conn, n_from, d, s, t])
+                for (conn, n_from, d, s, t) in connection_flow_indices(
+                    connection=conn, 
+                    node=n_from, 
+                    direction=direction(:from_node), 
+                    stochastic_scenario=stochastic_path, 
+                    t=t_in_t(t_long=t)
+                )
+            )
+        )
+        for (conn, n_from, n_to) in (
+            (
+                conn, 
+                first(connection__from_node(connection=conn, direction=anything)),
+                last(connection__from_node(connection=conn, direction=anything))
+            )
+            for conn in connection(connection_monitored=:value_true, has_ptdf=true)
+        )  # NOTE: we always assume that the second (last) node in `connection__from_node` is the 'to' node
+        for t in t_lowest_resolution(x.t for x in connection_flow_indices(connection=conn, node=[n_from, n_to]))
+        for stochastic_path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _connection_avg_throughflow_indices(conn, n_from, n_to, t))
+        )
+    )
+end
+
+function _connection_avg_throughflow_indices(conn, n_from, n_to, t)
+    Iterators.flatten(
+        (
+            connection_flow_indices(connection=conn, node=n_to, direction=direction(:to_node), t=t_in_t(t_long=t)),
+            connection_flow_indices(connection=conn, node=n_from, direction=direction(:from_node), t=t_in_t(t_long=t))
+        )
+    )
 end

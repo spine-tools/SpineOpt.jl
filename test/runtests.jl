@@ -69,5 +69,6 @@ end
     include("constraints/constraint_connection.jl")
     include("objective/objective.jl")
     include("util/misc.jl")
+    include("util/postprocess_results.jl")
     include("run_spineopt.jl")
 end
