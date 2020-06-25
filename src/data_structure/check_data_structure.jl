@@ -130,7 +130,7 @@ function check_islands(log_level)
     for c in commodity()
         if commodity_physics(commodity=c) in (:commodity_physics_ptdf, :commodity_physics_lodf)
             @logtime level3 "Checking network of commodity $(c) for islands" n_islands, island_node = islands(c)
-            @log     level3 "The network consists of $(n_islands) islands"
+            @log level3 "The network consists of $(n_islands) islands"
             if n_islands > 1
                 @warn "the network of commodity $(c) consists of multiple islands, this may end badly..."
                 # add diagnostic option to print island_node which will tell the user which nodes are in which islands
@@ -174,20 +174,6 @@ function visit(n, island_count, visited_d, island_node)
     for (conn, n2) in connection__node__node(node1=n)
         if !visited_d[n2]
             visit(n2, island_count, visited_d, island_node)
-        end
-    end
-end
-
-"""
-    check_x()
-
-Check for low reactance values.
-"""
-function check_x()
-    @info "Checking reactances"
-    for conn in connection()
-        if conn_reactance(connection=conn) < 0.0001
-            @info "low reactance may cause problems for line " conn
         end
     end
 end

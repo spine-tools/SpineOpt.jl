@@ -442,9 +442,7 @@ Generate `Relationships` related to modelling investments.
 function generate_investment_relationships()
     generate_unit__investment_temporal_block()
     generate_unit__investment_stochastic_structure()
-end
-    
-    
+end 
 
 """
     generate_unit_investment_temporal_block()
@@ -476,7 +474,7 @@ then create one using `model__default_investment_stochastic_structure`
 function generate_unit__investment_stochastic_structure()
     for u in indices(candidate_units)        
         if isempty(unit__investment_stochastic_structure(unit=u))         
-            m = first(model()) #TODO: Handle multiple models
+            m = first(model()) # TODO: Handle multiple models
             for ss in model__default_investment_stochastic_structure(model=m)
                 add_relationships!(unit__investment_stochastic_structure, [(unit=u, stochastic_structure=ss)])                
             end
