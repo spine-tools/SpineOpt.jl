@@ -30,7 +30,7 @@ function constraint_min_down_time_indices()
     unique(
         (unit=u, stochastic_path=path, t=t)
         for u in indices(min_down_time)
-        for t in time_slice(temporal_block=node__temporal_block(node=units_on_resolution(unit=u)))
+        for t in time_slice(temporal_block=units_on__temporal_block(unit=u))
         for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario

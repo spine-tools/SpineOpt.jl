@@ -33,9 +33,10 @@
             ["stochastic_scenario", "child"],
         ],
         :relationships => [
-            ["units_on_resolution", ["unit_ab", "node_a"]],
             ["unit__from_node", ["unit_ab", "node_a"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
+            ["units_on__temporal_block", ["unit_ab", "two_hourly"]],
+            ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
             ["node__temporal_block", ["node_a", "two_hourly"]],
             ["node__temporal_block", ["node_b", "hourly"]],
             ["node__stochastic_structure", ["node_a", "deterministic"]],

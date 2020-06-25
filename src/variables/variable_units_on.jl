@@ -26,7 +26,7 @@ for each dimension.
 function units_on_indices(;unit=anything, stochastic_scenario=anything, t=anything)
     [
         (unit=u, stochastic_scenario=s, t=t)
-        for (u, tb) in unit__temporal_block(unit=unit, _compact=false)
+        for (u, tb) in units_on__temporal_block(unit=unit, _compact=false)
         for (u, s, t) in unit_stochastic_time_indices(
             unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )

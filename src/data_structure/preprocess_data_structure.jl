@@ -27,7 +27,7 @@ Runs a number of other functions processing different aspecs of the input data i
 function preprocess_data_structure()
     # NOTE: expand groups first, so we don't need to expand them anywhere else
     expand_node__stochastic_structure()
-    expand_units_on_resolution()
+    expand_unit__stochastic_structure()
     # NOTE: generate direction before calling `generate_network_components`,
     # so calls to `connection__from_node` don't corrupt lookup cache
     add_connection_relationships()
@@ -56,19 +56,18 @@ function expand_node__stochastic_structure()
     end
 end
 
-
 """
-    expand_units_on_resolution()
+    expand_unit__stochastic_structure()
 
-Expand `units_on_resolution` `RelationshipClass` with all individual `units` in `unit_groups`.
+Expand the `units_on__stochastic_structure` `RelationshipClass` for with individual `units` in `unit_groups`.
 """
-function expand_units_on_resolution()
-    for (unit, node) in units_on_resolution()
+function expand_unit__stochastic_structure()
+    for (unit, stochastic_structure) in units_on__stochastic_structure()
         expanded_unit = expand_unit_group(unit)
         if collect(unit) != collect(expanded_unit)
             add_relationships!(
-                units_on_resolution,
-                [(unit=u, node=node) for u in expanded_unit]
+                units_on__stochastic_structure,
+                [(unit=u, stochastic_structure=stochastic_structure) for u in expanded_unit]
             )
         end
     end
@@ -388,11 +387,6 @@ function generate_variable_indexing_support()
         [:node, :temporal_block],
         unique((node=n, temporal_block=tb) for n in node(has_state=:value_true) for tb in node__temporal_block(node=n))
     )
-    unit__temporal_block = RelationshipClass(
-        :unit__temporal_block,
-        [:unit, :temporal_block],
-        unique((unit=u, temporal_block=tb) for (u, n) in units_on_resolution() for tb in node__temporal_block(node=n))
-    )
     start_up_unit__node__direction__temporal_block = RelationshipClass(
         :start_up_unit__node__direction__temporal_block, 
         [:unit, :node, :direction, :temporal_block], 
@@ -434,7 +428,6 @@ function generate_variable_indexing_support()
         unit__node__direction__temporal_block = $unit__node__direction__temporal_block
         connection__node__direction__temporal_block = $connection__node__direction__temporal_block
         node_with_state__temporal_block = $node_with_state__temporal_block
-        unit__temporal_block = $unit__temporal_block
         start_up_unit__node__direction__temporal_block = $start_up_unit__node__direction__temporal_block
         nonspin_ramp_up_unit__node__direction__temporal_block = $nonspin_ramp_up_unit__node__direction__temporal_block
         ramp_up_unit__node__direction__temporal_block = $ramp_up_unit__node__direction__temporal_block

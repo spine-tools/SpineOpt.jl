@@ -206,10 +206,10 @@ function unit_stochastic_time_indices(;
     )
     unique(
         (unit=u, stochastic_scenario=s, t=t1)
-        for (u, n) in units_on_resolution(unit=unit, _compact=false)
-        for (n, s, t1) in node_stochastic_time_indices(
-            node=n, stochastic_scenario=stochastic_scenario, temporal_block=temporal_block, t=t
-        )
+        for (u, structure) in units_on__stochastic_structure(unit=unit, _compact=false)
+        for (u, tb) in units_on__temporal_block(unit=u, temporal_block=temporal_block, _compact=false)
+        for t1 in time_slice(temporal_block=tb, t=t)
+        for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
     )
 end
 
@@ -255,15 +255,27 @@ function _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
 end
 
 """
-    unit_stochastic_scenario_weight(;unit, stochastic_scenario)
+    _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
 
-The value of `node_stochastic_scenario_weight` for the `node` associated to `unit`
-as per the `units_on_resolution` relationship.
+Generate the `unit_stochastic_scenario_weight` parameter for easier access to the scenario weights.
 """
-function unit_stochastic_scenario_weight(;unit::Object, stochastic_scenario::Object)
-    node_stochastic_scenario_weight(
-        node=first(units_on_resolution(unit=unit)), stochastic_scenario=stochastic_scenario
+function _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
+    unit_stochastic_scenario_weight_values = Dict(
+        (unit, scen) => Dict(:unit_stochastic_scenario_weight => parameter_value(param_vals.weight))
+        for (unit, structure) in units_on__stochastic_structure()
+        for (scen, param_vals) in all_stochastic_DAGs[structure]
     )
+    unit__stochastic_scenario = RelationshipClass(
+        :unit__stochastic_scenario,
+        [:unit, :stochastic_scenario],
+        [(unit=u, stochastic_scenario=scen) for (u, scen) in keys(unit_stochastic_scenario_weight_values)],
+        unit_stochastic_scenario_weight_values
+    )
+    unit_stochastic_scenario_weight = Parameter(:unit_stochastic_scenario_weight, [unit__stochastic_scenario])
+    @eval begin
+        unit__stochastic_scenario = $unit__stochastic_scenario
+        unit_stochastic_scenario_weight = $unit_stochastic_scenario_weight
+    end
 end
 
 """
@@ -277,5 +289,6 @@ function generate_stochastic_structure()
     all_stochastic_DAGs = _all_stochastic_DAGs(start(current_window))
     _generate_stochastic_time_map(all_stochastic_DAGs)
     _generate_node_stochastic_scenario_weight(all_stochastic_DAGs)
+    _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs)
     _generate_active_stochastic_paths()
 end

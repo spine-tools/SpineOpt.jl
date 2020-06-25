@@ -37,9 +37,10 @@
             ["stochastic_scenario", "child"],
         ],
         :relationships => [
-            ["units_on_resolution", ["unit_ab", "node_a"]],
             ["unit__from_node", ["unit_ab", "node_a"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
+            ["units_on__temporal_block", ["unit_ab", "two_hourly"]],
+            ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
             ["connection__from_node", ["connection_bc", "node_b"]],
             ["connection__to_node", ["connection_bc", "node_c"]],
             ["connection__from_node", ["connection_ca", "node_c"]],

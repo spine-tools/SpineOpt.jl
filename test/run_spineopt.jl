@@ -36,8 +36,9 @@ end
             ["output", "unit_flow"]
         ],
         :relationships => [
-            ["units_on_resolution", ["unit_ab", "node_b"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
+            ["units_on__temporal_block", ["unit_ab", "hourly"]],
+            ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
             ["node__temporal_block", ["node_b", "hourly"]],
             ["node__stochastic_structure", ["node_b", "deterministic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],

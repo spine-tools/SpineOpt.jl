@@ -33,7 +33,8 @@
     @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
     db_api.import_data_to_url(
         url_in; 
-        relationships=[["units_on_resolution", ["test_unit", "test_node"]]]
+        objects=[["stochastic_structure", "test_stochastic_structure"]],
+        relationships=[["node__stochastic_structure", ["test_node", "test_stochastic_structure"]]]
     )
     @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
 end

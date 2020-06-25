@@ -39,8 +39,8 @@ Check if the data structure provided from the db results in a valid model.
 function check_data_structure(log_level::Int64)
     check_model_object()
     check_temporal_block_object()
-    check_units_on_resolution()
     check_node__stochastic_structure()
+    check_unit__stochastic_structure()
     check_minimum_operating_point_unit_capacity()
     check_islands(log_level)
 end
@@ -70,20 +70,6 @@ function check_temporal_block_object()
 end
 
 """
-    check_units_on_resolution()
-
-Ensure there's exactly one `units_on_resolution` definition per `unit` in the data.
-"""
-function check_units_on_resolution()
-    error_units = [u for u in unit() if length(units_on_resolution(unit=u)) != 1]
-    _check(
-        isempty(error_units),
-        "invalid `units_on_resolution` definition for `unit`(s): $(join(error_units, ", ", " and ")) "
-        * "- each `unit` must have exactly one `units_on_resolution` relationship"
-    )
-end
-
-"""
     check_node__stochastic_structure()
 
 Ensure there's exactly one `node__stochastic_structure` definition per `node` in the data.
@@ -94,6 +80,20 @@ function check_node__stochastic_structure()
         isempty(error_nodes),
         "invalid `node__stochastic_structure` definition for `node`(s): $(join(error_nodes, ", ", " and ")) "
         * "- each `node` must be related to one and only one `stochastic_structure`"
+    )
+end
+
+"""
+    check_unit__stochastic_structure()
+
+Ensure there's exactly one `units_on__stochastic_structure` definition per `unit` in the data.
+"""
+function check_unit__stochastic_structure()
+    error_units = [u for u in unit() if length(units_on__stochastic_structure(unit=u)) != 1]
+    _check(
+        isempty(error_units),
+        "invalid `units_on__stochastic_structure` definition for `unit`(s): $(join(error_units, ", ", " and ")) "
+        * "- each `unit` must be related to one and only one `stochastic_structure`"
     )
 end
 
