@@ -31,7 +31,7 @@ function objective_terms()
         :connection_flow_costs,
         :renewable_curtailment_costs,
         :res_proc_costs,
-        # TODO: :ramp_costs,
+        :ramp_costs,
     ]
 end
 

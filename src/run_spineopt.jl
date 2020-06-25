@@ -237,6 +237,10 @@ function save_variable_values!(m::Model)
     end
 end
 
+
+_value(v::GenericAffExpr) = JuMP.value
+_value(v) = v
+
 """
     save_objective_values!(m::Model)
 
@@ -248,7 +252,7 @@ function save_objective_values!(m::Model)
     ind = (model=first(model()), t=current_window)
     for term in keys(m.ext[:objective_terms])
         func = eval(term)
-        m.ext[:objective_terms][term][ind] = value(realize(func(m, end_(ind.t))))
+        m.ext[:objective_terms][term][ind] = _value(realize(func(m, end_(ind.t))))
     end
 end
 

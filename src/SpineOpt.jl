@@ -90,6 +90,7 @@ include("objective/total_costs.jl")
 include("objective/renewable_curtailment_costs.jl")
 include("objective/connection_flow_costs.jl")
 include("objective/res_proc_costs.jl")
+include("objective/ramp_costs.jl")
 
 include("constraints/constraint_common.jl")
 include("constraints/constraint_max_cum_in_unit_flow_bound.jl")

@@ -24,14 +24,5 @@ Create an expression for unit ramp costs.
 """
 # TODO: this
 function ramp_costs(m::Model, t1)
-    @fetch ramp_cost = m.ext[:variables]
-    @expression(
-        m,
-        expr_sum(
-            + ramp_cost[u, s, t]
-            for (u, s, t) in ramp_cost_indices()
-            if end_(t) <= t1;
-            init=0
-        )
-    )
+    @expression(m, 0)
 end
