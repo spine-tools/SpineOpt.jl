@@ -40,6 +40,74 @@ end
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
         ]
     )
+    @testset "zero_resolution" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        object_parameter_values = [
+            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
+            ["temporal_block", "block_a", "resolution", 0]
+        ]
+        db_api.import_data_to_url(
+            url_in; 
+            object_parameter_values=object_parameter_values
+        )
+        using_spinedb(url_in, SpineOpt)
+        err_msg = "`resolution` of temporal block `block_a` cannot be zero!"
+        @test_throws ErrorException(err_msg) SpineOpt.generate_temporal_structure()
+    end
+    @testset "block_start" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        objects = [["temporal_block", "block_c"]]
+        relationships = [["node__temporal_block", ["only_node", "block_c"]]]
+        object_parameter_values = [
+            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-03T00:00:00")],
+            ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1D")],
+            ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "1D")],
+            ["temporal_block", "block_c", "resolution", Dict("type" => "duration", "data" => "1D")],
+            ["temporal_block", "block_a", "block_start", Dict("type" => "duration", "data" => "1D")],
+            ["temporal_block", "block_b", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T15:36:00")],
+            ["temporal_block", "block_c", "block_start", nothing],
+        ]
+        db_api.import_data_to_url(
+            url_in; 
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values
+        )
+        using_spinedb(url_in, SpineOpt)
+        SpineOpt.generate_temporal_structure()
+        @test start(first(time_slice(temporal_block=temporal_block(:block_a)))) == DateTime("2000-01-02T00:00:00")
+        @test start(first(time_slice(temporal_block=temporal_block(:block_b)))) == DateTime("2000-01-01T15:36:00")
+        @test start(first(time_slice(temporal_block=temporal_block(:block_c)))) == DateTime("2000-01-01T00:00:00")
+    end
+    @testset "block_end" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        objects = [["temporal_block", "block_c"]]
+        relationships = [["node__temporal_block", ["only_node", "block_c"]]]
+        object_parameter_values = [
+            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-03T00:00:00")],
+            ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1D")],
+            ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "1D")],
+            ["temporal_block", "block_c", "resolution", Dict("type" => "duration", "data" => "1D")],
+            ["temporal_block", "block_a", "block_end", Dict("type" => "duration", "data" => "1D")],
+            ["temporal_block", "block_b", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T15:36:00")],
+            ["temporal_block", "block_c", "block_end", nothing],
+        ]
+        db_api.import_data_to_url(
+            url_in; 
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values
+        )
+        using_spinedb(url_in, SpineOpt)
+        SpineOpt.generate_temporal_structure()
+        @test end_(last(time_slice(temporal_block=temporal_block(:block_a)))) == DateTime("2000-01-02T00:00:00")
+        @test end_(last(time_slice(temporal_block=temporal_block(:block_b)))) == DateTime("2000-01-01T15:36:00")
+        @test end_(last(time_slice(temporal_block=temporal_block(:block_c)))) == DateTime("2000-01-03T00:00:00")
+    end
+
     @testset "one_two_four_even" begin
         _load_template(url_in)
         db_api.import_data_to_url(url_in; test_data...)
