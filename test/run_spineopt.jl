@@ -107,10 +107,14 @@ end
         _load_template(url_in)
         db_api.import_data_to_url(url_in; test_data...)
         demand = 100
+        vom_cost = 50
         objects = [["output", "unknown_output"]]
         relationships = [["report__output", ["report_x", "unknown_output"]]]
         object_parameter_values = [["node", "node_b", "demand", demand]]
-        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand]]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost]
+        ]
         db_api.import_data_to_url(
             url_in; 
             objects=objects,

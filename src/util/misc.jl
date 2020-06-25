@@ -63,16 +63,6 @@ function expand_node_group(ngs::X) where X >: Anything
 end
 
 """
-    expand_commodity_group(cgs::X) where X >: Anything
-
-Expand `commodity_group` `cgs` into an `Array` of included `commodities`.
-"""
-expand_commodity_group(::Anything) = anything
-function expand_commodity_group(cgs::X) where X >: Anything
-    (c for cg in cgs for c in commodity_group__commodity(commodity1=cg, _default=cg))
-end
-
-"""
     log(level, msg)
 
 TODO: Print stuff?
