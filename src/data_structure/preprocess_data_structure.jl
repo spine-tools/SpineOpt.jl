@@ -27,17 +27,17 @@ Runs a number of other functions processing different aspecs of the input data i
 function preprocess_data_structure()
     # NOTE: expand groups first, so we don't need to expand them anywhere else
     expand_node__stochastic_structure()
-    expand_unit__stochastic_structure()
+    expand_units_on__stochastic_structure()
     # NOTE: generate direction before calling `generate_network_components`,
     # so calls to `connection__from_node` don't corrupt lookup cache
     add_connection_relationships()
     generate_direction()
     generate_network_components()
     generate_variable_indexing_support()
-    generate_investment_relationships()
+    expand_default_investment_relationships()
 end
 
-# TODO: These two below need to change when we finally get to rationalize groups 
+# TODO: These two below might need to change when we finally get to rationalize groups 
 
 """
     expand_node__stochastic_structure()
@@ -45,32 +45,30 @@ end
 Expand the `node__stochastic_structure` `RelationshipClass` for with individual `nodes` in `node_groups`.
 """
 function expand_node__stochastic_structure()
-    for (node, stochastic_structure) in node__stochastic_structure()
-        expanded_node = expand_node_group(node)
-        if collect(node) != collect(expanded_node)
-            add_relationships!(
-                node__stochastic_structure,
-                [(node=n, stochastic_structure=stochastic_structure) for n in expanded_node]
-            )
-        end
-    end
+    add_relationships!(
+        node__stochastic_structure,
+        [
+            (node=n, stochastic_structure=stochastic_structure) 
+            for (ng, stochastic_structure) in node__stochastic_structure()
+            for n in expand_node_group(ng)
+        ]
+    )
 end
 
 """
-    expand_unit__stochastic_structure()
+    expand_units_on__stochastic_structure()
 
 Expand the `units_on__stochastic_structure` `RelationshipClass` for with individual `units` in `unit_groups`.
 """
-function expand_unit__stochastic_structure()
-    for (unit, stochastic_structure) in units_on__stochastic_structure()
-        expanded_unit = expand_unit_group(unit)
-        if collect(unit) != collect(expanded_unit)
-            add_relationships!(
-                units_on__stochastic_structure,
-                [(unit=u, stochastic_structure=stochastic_structure) for u in expanded_unit]
-            )
-        end
-    end
+function expand_units_on__stochastic_structure()
+    add_relationships!(
+        units_on__stochastic_structure,
+        [
+            (unit=u, stochastic_structure=stochastic_structure) 
+            for (ug, stochastic_structure) in units_on__stochastic_structure()
+            for u in expand_unit_group(ug)
+        ]
+    )
 end
 
 """
@@ -435,49 +433,51 @@ function generate_variable_indexing_support()
 end
 
 """
-    generate_investment_relationships()
+    expand_default_investment_relationships()
 
 Generate `Relationships` related to modelling investments.
 """
-function generate_investment_relationships()
-    generate_unit__investment_temporal_block()
-    generate_unit__investment_stochastic_structure()
+function expand_default_investment_relationships()
+    expand_unit__default_investment_temporal_block()
+    expand_unit__default_investment_stochastic_structure()
 end 
 
 """
-    generate_unit_investment_temporal_block()
+    expand_unit__default_investment_temporal_block()
 
 Process the `model__default_investment_temporal_block` relationship.
 
 If a `unit__investment_temporal_block` relationship is not defined, 
 then create one using `model__default_investment_temporal_block`
 """
-function generate_unit__investment_temporal_block()   
-    for u in indices(candidate_units)        
-        if isempty(unit__investment_temporal_block(unit=u))         
-            m = first(model())
-            for tb in model__default_investment_temporal_block(model=m)
-                add_relationships!(unit__investment_temporal_block, [(unit=u, temporal_block=tb)])                
-            end
-        end        
-    end
+function expand_unit__default_investment_temporal_block()
+    add_relationships!(
+        unit__investment_temporal_block, 
+        [
+            (unit=u, temporal_block=tb)
+            for u in setdiff(indices(candidate_units), unit__investment_temporal_block(temporal_block=anything))
+            for tb in model__default_investment_temporal_block(model=first(model()))
+        ]
+    )
 end
 
 """
-    generate_unit__investment_stochastic_structure()
+    expand_unit__default_investment_stochastic_structure()
 
 Process the `model__default_investment_stochastic_structure` relationship.
 
 If a `unit__investment_stochastic_structure` relationship is not defined, 
 then create one using `model__default_investment_stochastic_structure`
 """
-function generate_unit__investment_stochastic_structure()
-    for u in indices(candidate_units)        
-        if isempty(unit__investment_stochastic_structure(unit=u))         
-            m = first(model()) # TODO: Handle multiple models
-            for ss in model__default_investment_stochastic_structure(model=m)
-                add_relationships!(unit__investment_stochastic_structure, [(unit=u, stochastic_structure=ss)])                
-            end
-        end        
-    end
+function expand_unit__default_investment_stochastic_structure()
+    add_relationships!(
+        unit__investment_stochastic_structure, 
+        [
+            (unit=u, stochastic_structure=ss)
+            for u in setdiff(
+                indices(candidate_units), unit__investment_stochastic_structure(stochastic_structure=anything)
+            )
+            for ss in model__default_investment_stochastic_structure(model=first(model()))
+        ]
+    )
 end
