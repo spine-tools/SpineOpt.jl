@@ -20,9 +20,9 @@
 """
     constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
 
-Forms the stochastic index set for the `:ratio_out_in_connection_flow` constraint
-for the desired `ratio_out_in`. Uses stochastic path indices due to potentially
-different stochastic structures between `connection_flow` variables.
+Form the stochastic index set for the `:ratio_out_in_connection_flow` constraint for the desired `ratio_out_in`.
+    
+Uses stochastic path indices due to potentially different stochastic structures between `connection_flow` variables.
 """
 function constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
     unique(
@@ -66,52 +66,62 @@ Ratio of `connection_flow` variables.
 """
 function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, sense)
     @fetch connection_flow = m.ext[:variables]
-    cons = m.ext[:constraints][ratio_out_in.name] = Dict()
-    for (conn, n_out, n_in, stochastic_path, t) in constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
-        con = cons[conn, n_out, n_in, t] = sense_constraint(
+    m.ext[:constraints][ratio_out_in.name] = Dict(
+        (conn, ng_out, ng_in, stochastic_path, t) => sense_constraint(
             m,
             + expr_sum(
                 + connection_flow[conn, n_out, d, s, t_short] * duration(t_short)
                 for (conn, n_out, d, s, t_short) in connection_flow_indices(
-                    connection=conn, node=n_out, direction=direction(:to_node), stochastic_scenario=stochastic_path, t=t_in_t(t_long=t)
+                    connection=conn, 
+                    node=ng_out, 
+                    direction=direction(:to_node), 
+                    stochastic_scenario=stochastic_path, 
+                    t=t_in_t(t_long=t)
                 );
                 init=0
             ),
             sense,
-            + ratio_out_in[(connection=conn, node1=n_out, node2=n_in, t=t)]
+            + ratio_out_in[(connection=conn, node1=ng_out, node2=ng_in, t=t)]
             * expr_sum(
                 + connection_flow[conn, n_in, d, s, t_short]
-                * overlap_duration(t_short, t - connection_flow_delay(connection=conn, node1=n_out, node2=n_in))
+                * overlap_duration(t_short, t - connection_flow_delay(connection=conn, node1=ng_out, node2=ng_in))
                 for (conn, n_in, d, s, t_short) in connection_flow_indices(
                     connection=conn,
-                    node=n_in,
+                    node=ng_in,
                     direction=direction(:from_node),
                     stochastic_scenario=stochastic_path,
-                    t=to_time_slice(t - connection_flow_delay(connection=conn, node1=n_out, node2=n_in, t=t))
+                    t=to_time_slice(t - connection_flow_delay(connection=conn, node1=ng_out, node2=ng_in, t=t))
                 );
                 init=0
             )
         )
-    end
+        for (conn, ng_out, ng_in, stochastic_path, t) in constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
+    )
 end
 
 """
     add_constraint_fix_ratio_out_in_connection_flow!(m::Model)
 
-Calls `add_constraint_ratio_out_in_connection_flow!` using the `fix_ratio_out_in_connection_flow` parameter.
+Call `add_constraint_ratio_out_in_connection_flow!` using the `fix_ratio_out_in_connection_flow` parameter.
 """
-add_constraint_fix_ratio_out_in_connection_flow!(m::Model) = add_constraint_ratio_out_in_connection_flow!(m, fix_ratio_out_in_connection_flow, ==)
+function add_constraint_fix_ratio_out_in_connection_flow!(m::Model)
+    add_constraint_ratio_out_in_connection_flow!(m, fix_ratio_out_in_connection_flow, ==)
+end
 
 """
     add_constraint_max_ratio_out_in_connection_flow!(m::Model)
 
-Calls `add_constraint_ratio_out_in_connection_flow!` using the `max_ratio_out_in_connection_flow` parameter.
+Call `add_constraint_ratio_out_in_connection_flow!` using the `max_ratio_out_in_connection_flow` parameter.
 """
-add_constraint_max_ratio_out_in_connection_flow!(m::Model) = add_constraint_ratio_out_in_connection_flow!(m, max_ratio_out_in_connection_flow, <=)
+function add_constraint_max_ratio_out_in_connection_flow!(m::Model)
+    add_constraint_ratio_out_in_connection_flow!(m, max_ratio_out_in_connection_flow, <=)
+end
 
 """
     add_constraint_min_ratio_out_in_connection_flow!(m::Model)
 
-Calls `add_constraint_ratio_out_in_connection_flow!` using the `min_ratio_out_in_connection_flow` parameter.
+Call `add_constraint_ratio_out_in_connection_flow!` using the `min_ratio_out_in_connection_flow` parameter.
 """
-add_constraint_min_ratio_out_in_connection_flow!(m::Model) = add_constraint_ratio_out_in_connection_flow!(m, min_ratio_out_in_connection_flow, >=)
+function add_constraint_min_ratio_out_in_connection_flow!(m::Model)
+    add_constraint_ratio_out_in_connection_flow!(m, min_ratio_out_in_connection_flow, >=)
+end

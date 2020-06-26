@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
 """
     add_constraint_max_cum_in_unit_flow_bound!(m::Model)
 
@@ -26,9 +25,8 @@ if `max_cum_in_unit_flow_bound` exists.
 """
 function add_constraint_max_cum_in_unit_flow_bound!(m::Model)
     @fetch unit_flow = m.ext[:variables]
-    cons = m.ext[:constraints][:max_cum_in_unit_flow_bound] = Dict()
-    for (ug,) in indices(max_cum_in_unit_flow_bound)
-        cons[ug] = @constraint( # TODO: How to turn this one into stochastical one? Path indexing over the whole `unit_group`?
+    m.ext[:constraints][:max_cum_in_unit_flow_bound] = Dict(
+        ug => @constraint( # TODO: How to turn this one into stochastical one? Path indexing over the whole `unit_group`?
             m,
             + sum(
                 unit_flow[u, n, d, s, t]
@@ -38,5 +36,6 @@ function add_constraint_max_cum_in_unit_flow_bound!(m::Model)
             <=
             + max_cum_in_unit_flow_bound(unit=ug) # TODO: Calling this parameter with brackets `max_cum_in_unit_flow_bound[(unit=ug)]` fails. Also stochastics?
         )
-    end
+        for (ug,) in indices(max_cum_in_unit_flow_bound)
+    )
 end

@@ -22,65 +22,53 @@ using SpineInterface
 using Test
 using Dates
 using JuMP
+using PyCall
 
+_is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
 
 function _load_template(url_in)
-	db_api.create_new_spine_database(url_in)
-	template = Dict(Symbol(key) => value for (key, value) in SpineOpt.template)
-	db_api.import_data_to_url(url_in; template...)
+    db_api.create_new_spine_database(url_in)
+    template = Dict(Symbol(key) => value for (key, value) in SpineOpt.template)
+    db_api.import_data_to_url(url_in; template...)
 end
 
-@testset "Check data structure" begin
-	url_in = "sqlite:///$(@__DIR__)/test.sqlite"
-	_load_template(url_in)
-	# TODO: Once we get our error messages right, we should use:
-	# @test_throws ErrorException("...exception message...") m = run_spineopt(url_in; log_level=0)
-	# to make sure that the test passes for the good reasons.
-    @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
-	db_api.import_data_to_url(url_in; objects=[["model", "instance"]])
-    @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
-	db_api.import_data_to_url(
-		url_in; 
-		objects=[["temporal_block", "test_temporal_block"], ["unit", "test_unit"], ["node", "test_node"]]
-	)
-    @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
-	db_api.import_data_to_url(
-		url_in; 
-		relationships=[["units_on_resolution", ["test_unit", "test_node"]]]
-	)
-    @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
+"""
+    _dismember_constraint(constraint)
+
+Show the given constraint in an organized way.
+Useful for writing tests.
+"""
+function _dismember_constraint(constraint)
+    for k in sort(collect(keys(constraint)))
+        println("key: ", k)
+        con_obj = constraint_object(constraint[k])
+        _dismember_constraint_object(con_obj)
+    end
 end
 
-@testset "Generate unit_flow variables" begin
-	url_in = "sqlite:///$(@__DIR__)/test.sqlite"
-	_load_template(url_in)
-	test_data = Dict(
-		:objects => [
-			["model", "instance"], 
-			["temporal_block", "test_temporal_block"],
-			["stochastic_structure", "test_stochastic_structure"],
-			["unit", "test_unit"],
-			["node", "test_node"],
-			["stochastic_scenario", "test_stochastic_scenario"]
-		],
-		:relationships => [
-			["units_on_resolution", ["test_unit", "test_node"]],
-			["unit__to_node", ["test_unit", "test_node"]],
-			["node__temporal_block", ["test_node", "test_temporal_block"]],
-			["node__stochastic_structure", ["test_node", "test_stochastic_structure"]],
-			["stochastic_structure__stochastic_scenario", ["test_stochastic_structure", "test_stochastic_scenario"]],
-		]
-	)
-	db_api.import_data_to_url(url_in; test_data...)
-    m = run_spineopt(url_in; log_level=0)
-    @test length(unit_flow_indices()) == 1
-    u, n, d, s, t = first(unit_flow_indices())
-    @test u.name == :test_unit
-    @test n.name == :test_node
-    @test d.name == :to_node
-    @test s.name == :test_stochastic_scenario
-    @test start(t) == DateTime(2000)
-    @test end_(t) == DateTime(2000, 1, 1, 1, 0, 0)
+function _dismember_constraint_object(con_obj)
+    _dismember_function(con_obj.func)
+    println("set: ", con_obj.set)
+    println()
 end
 
-include("constraints.jl")
+function _dismember_function(func)
+    for (k, term) in enumerate(func.terms)
+        println("term $k: ", term)
+    end
+    println("term constant: ", func.constant)
+end
+
+@testset begin
+    include("data_structure/check_data_structure.jl")
+    include("data_structure/preprocess_data_structure.jl")
+    include("data_structure/generate_missing_items.jl")
+    include("data_structure/temporal_structure.jl")
+    include("constraints/constraint_unit.jl")
+    include("constraints/constraint_node.jl")
+    include("constraints/constraint_connection.jl")
+    include("objective/objective.jl")
+    include("util/misc.jl")
+    include("util/postprocess_results.jl")
+    include("run_spineopt.jl")
+end

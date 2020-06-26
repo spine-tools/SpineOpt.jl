@@ -20,15 +20,22 @@
 """
     renewable_curtailment_costs(m::Model)
 
-Variable operation costs defined on flows.
+Create an expression for curtailment costs of renewables.
 """
-function renewable_curtailment_costs(m::Model)
+function renewable_curtailment_costs(m::Model,t1)
+    @fetch unit_flow = m.ext[:variables]
     @expression(
-	    m,
-	    expr_sum(
-	        curtailment_ren[n, t] * renewable_curtailment_cost[(node=n)]
-	        for (n, t) in curtailment_ren_indices();
-	        init=0
-	    )
-	)
+        m,
+        expr_sum(
+            (unit_capacity[(unit=u, node=n, direction=d,t=t)] * avail_factor[(unit=u,t=t)] - unit_flow[u, n, d, s, t])
+            * duration(t)
+            * renewable_curtailment_cost[(unit=u, t=t)]
+            for u in indices(curtailment_cost)
+            for (u, n, d) in indices(unit_capacity; unit=u)
+            for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d)
+            if end_(t) <= t1;
+            init=0
+        )
+    )
 end
+# TODO: add weight scenario tree

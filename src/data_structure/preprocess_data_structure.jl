@@ -20,71 +20,56 @@
 """
     preprocess_data_structure()
 
-Preprocesses input data structure for SpineOpt.
+Preprocess input data structure for SpineOpt.
 
 Runs a number of other functions processing different aspecs of the input data in sequence.
 """
 function preprocess_data_structure()
     # NOTE: expand groups first, so we don't need to expand them anywhere else
     expand_node__stochastic_structure()
-    expand_units_on_resolution()
+    expand_units_on__stochastic_structure()
+    # NOTE: generate direction before calling `generate_network_components`,
+    # so calls to `connection__from_node` don't corrupt lookup cache
     add_connection_relationships()
-    generate_network_components()
     generate_direction()
+    generate_network_components()
     generate_variable_indexing_support()
-    generate_investment_relationships()
+    expand_default_investment_relationships()
+end
+
+# TODO: These two below might need to change when we finally get to rationalize groups 
+
+"""
+    expand_node__stochastic_structure()
+
+Expand the `node__stochastic_structure` `RelationshipClass` for with individual `nodes` in `node_groups`.
+"""
+function expand_node__stochastic_structure()
+    add_relationships!(
+        node__stochastic_structure,
+        [
+            (node=n, stochastic_structure=stochastic_structure) 
+            for (ng, stochastic_structure) in node__stochastic_structure()
+            for n in expand_node_group(ng)
+        ]
+    )
 end
 
 """
-    generate_investment_relationships()
+    expand_units_on__stochastic_structure()
 
-Generates `Relationships` related to modelling investments.
+Expand the `units_on__stochastic_structure` `RelationshipClass` for with individual `units` in `unit_groups`.
 """
-function generate_investment_relationships()
-    generate_unit__investment_temporal_block()
-    generate_unit__investment_stochastic_structure()
+function expand_units_on__stochastic_structure()
+    add_relationships!(
+        units_on__stochastic_structure,
+        [
+            (unit=u, stochastic_structure=stochastic_structure) 
+            for (ug, stochastic_structure) in units_on__stochastic_structure()
+            for u in expand_unit_group(ug)
+        ]
+    )
 end
-    
-    
-
-"""
-    generate_unit_investment_temporal_block()
-
-Process the `model__default_investment_temporal_block` relationship.
-
-If a `unit__investment_temporal_block` relationship is not defined, 
-then create one using `model__default_investment_temporal_block`
-"""
-function generate_unit__investment_temporal_block()   
-    for u in indices(candidate_units)        
-        if isempty(unit__investment_temporal_block(unit=u))         
-            m = first(model())
-            for tb in model__default_investment_temporal_block(model=m)
-                add_relationships!(unit__investment_temporal_block, [(unit=u, temporal_block=tb)])                
-            end
-        end        
-    end
-end
-
-"""
-    generate_unit__investment_stochastic_structure()
-
-Process the `model__default_investment_stochastic_structure` relationship.
-
-If a `unit__investment_stochastic_structure` relationship is not defined, 
-then create one using `model__default_investment_stochastic_structure`
-"""
-function generate_unit__investment_stochastic_structure()
-    for u in indices(candidate_units)        
-        if isempty(unit__investment_stochastic_structure(unit=u))         
-            m = first(model()) #TODO: Handle multiple models
-            for ss in model__default_investment_stochastic_structure(model=m)
-                add_relationships!(unit__investment_stochastic_structure, [(unit=u, stochastic_structure=ss)])                
-            end
-        end        
-    end
-end
-
 
 """
     add_connection_relationships()
@@ -124,6 +109,37 @@ function add_connection_relationships()
     merge!(connection__node__node.parameter_values, new_connection__node__node_parameter_values)
 end
 
+"""
+    generate_direction()
+
+Generate the `direction` `ObjectClass` and its relationships.
+"""
+function generate_direction()
+    from_node = Object(:from_node)
+    to_node = Object(:to_node)
+    direction = ObjectClass(:direction, [from_node, to_node])
+    directions_by_class = Dict(
+        unit__from_node => from_node,
+        unit__to_node => to_node,
+        connection__from_node => from_node,
+        connection__to_node => to_node,
+    )
+    for cls in keys(directions_by_class)
+        push!(cls.object_class_names, :direction)
+    end
+    for (cls, d) in directions_by_class
+        map!(rel -> (; rel..., direction=d), cls.relationships, cls.relationships)
+        key_map = Dict(rel => (rel..., d) for rel in keys(cls.parameter_values))
+        for (key, new_key) in key_map
+            cls.parameter_values[new_key] = pop!(cls.parameter_values, key)
+        end
+    end
+    @eval begin
+        direction = $direction
+        export direction
+    end
+end
+
 # Network stuff
 """
     generate_node_has_ptdf()
@@ -159,16 +175,24 @@ function generate_connection_has_ptdf()
     for conn in connection()
         is_bidirectional = (
             length(connection__from_node(connection=conn)) == 2
-            && Set(connection__from_node(connection=conn)) == Set(connection__to_node(connection=conn))
+            && isempty(
+                symdiff(
+                    connection__from_node(connection=conn, direction=anything),
+                    connection__to_node(connection=conn, direction=anything)
+                )
+            )
         )
         is_bidirectional_loseless = (
             is_bidirectional
             && fix_ratio_out_in_connection_flow(;
-                connection=conn, zip((:node1, :node2), connection__from_node(connection=conn))..., _strict=false
+                connection=conn, 
+                zip((:node1, :node2), connection__from_node(connection=conn, direction=anything))..., 
+                _strict=false
             ) == 1
         )
         connection.parameter_values[conn][:has_ptdf] = parameter_value(
-            is_bidirectional_loseless && all(has_ptdf(node=n) for n in connection__from_node(connection=conn))
+            is_bidirectional_loseless 
+            && all(has_ptdf(node=n) for n in connection__from_node(connection=conn, direction=anything))
         )
     end
     push!(has_ptdf.classes, connection)
@@ -184,7 +208,7 @@ function generate_connection_has_lodf()
         lodf_comms = Tuple(
             c
             for c in commodity(commodity_physics=:commodity_physics_lodf)
-            if issubset(connection__from_node(connection=conn), node__commodity(commodity=c))
+            if issubset(connection__from_node(connection=conn, direction=anything), node__commodity(commodity=c))
         )
         connection.parameter_values[conn][:has_lodf] = parameter_value(!isempty(lodf_comms))
         connection.parameter_values[conn][:connnection_lodf_tolerance] = parameter_value(
@@ -202,7 +226,7 @@ end
 """
     _ptdf_values()
 
-Calculates the values of the `ptdf` parameters?
+Calculate the values of the `ptdf` parameters?
 
 TODO @JodyDillon: Check this docstring!
 """
@@ -232,7 +256,7 @@ function _ptdf_values()
             available=true,
             activepower_flow=0.0,
             reactivepower_flow=0.0,
-            arc=Arc((ps_busses_by_node[n] for n in connection__from_node(connection=conn))...),
+            arc=Arc((ps_busses_by_node[n] for n in connection__from_node(connection=conn, direction=anything))...),
             r=connection_resistance(connection=conn),
             x=max(connection_reactance(connection=conn), 0.00001),
             b=(from=0.0, to=0.0),
@@ -247,14 +271,13 @@ function _ptdf_values()
         (conn, n) => Dict(:ptdf => parameter_value(ps_ptdf[line.name, bus.number]))
         for (conn, line) in ps_lines_by_connection
         for (n, bus) in ps_busses_by_node
-        if !isapprox(ps_ptdf[line.name, bus.number], 0; atol=node_ptdf_threshold(node=n))
     )
 end
 
 """
     generate_ptdf()
 
-Generates the `ptdf` parameter.
+Generate the `ptdf` parameter.
 """
 function generate_ptdf()
     ptdf_values = _ptdf_values()
@@ -273,15 +296,14 @@ end
 """
     generate_lodf()
 
-Generates the `lodf` parameter.
+Generate the `lodf` parameter.
 """
 function generate_lodf()
-
     """
     Given a contingency connection, return a function that given the monitored connection, return the lodf.
     """
     function make_lodf_fn(conn_cont)
-        n_from, n_to = connection__from_node(connection=conn_cont)
+        n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
         denom = 1 - (ptdf(connection=conn_cont, node=n_from) - ptdf(connection=conn_cont, node=n_to))
         is_tail = isapprox(denom, 0; atol=0.001)
         if is_tail
@@ -302,7 +324,7 @@ function generate_lodf()
             for conn_mon in connection(connection_monitored=:value_true, has_lodf=true)
         )
         if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
-    )  # NOTE: in my machine, a Dict comprehension is ~4x faster than a Dict built incrementally
+    )
     lodf_rel_cls = RelationshipClass(
         :lodf_connection__connection,
         [:connection1, :connection2],
@@ -318,7 +340,7 @@ end
 """
     generate_network_components()
 
-Generates different network related `parameters`.
+Generate different network related `parameters`.
 
 Runs a number of other functions dealing with different aspects of the network data in sequence.
 """
@@ -334,37 +356,6 @@ function generate_network_components()
 end
 
 """
-    generate_direction()
-
-Generates the `direction` `ObjectClass` and its relationships.
-"""
-function generate_direction()
-    from_node = Object(:from_node)
-    to_node = Object(:to_node)
-    direction = ObjectClass(:direction, [from_node, to_node])
-    directions_by_class = Dict(
-        unit__from_node => from_node,
-        unit__to_node => to_node,
-        connection__from_node => from_node,
-        connection__to_node => to_node,
-    )
-    for cls in keys(directions_by_class)
-        push!(cls.object_class_names, :direction)
-    end
-    for (cls, d) in directions_by_class
-        map!(rel -> (; rel..., direction=d), cls.relationships, cls.relationships)
-        key_map = Dict(rel => (rel..., d) for rel in keys(cls.parameter_values))
-        for (key, new_key) in key_map
-            cls.parameter_values[new_key] = pop!(cls.parameter_values, key)
-        end
-    end
-    @eval begin
-        direction = $direction
-        export direction
-    end
-end
-
-"""
     generate_variable_indexing_support()
 
 TODO What is the purpose of this function? It clearly generates a number of `RelationshipClasses`, but why?
@@ -372,8 +363,8 @@ TODO What is the purpose of this function? It clearly generates a number of `Rel
 function generate_variable_indexing_support()
     node_with_slack_penalty = ObjectClass(:node_with_slack_penalty, collect(indices(node_slack_penalty)))
     unit__node__direction__temporal_block = RelationshipClass(
-        :unit__node__direction__temporal_block, 
-        [:unit, :node, :direction, :temporal_block], 
+        :unit__node__direction__temporal_block,
+        [:unit, :node, :direction, :temporal_block],
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
             for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
@@ -381,8 +372,8 @@ function generate_variable_indexing_support()
         )
     )
     connection__node__direction__temporal_block = RelationshipClass(
-        :connection__node__direction__temporal_block, 
-        [:connection, :node, :direction, :temporal_block], 
+        :connection__node__direction__temporal_block,
+        [:connection, :node, :direction, :temporal_block],
         unique(
             (connection=conn, node=n, direction=d, temporal_block=tb)
             for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
@@ -390,70 +381,103 @@ function generate_variable_indexing_support()
         )
     )
     node_with_state__temporal_block = RelationshipClass(
-        :node_with_state__temporal_block, 
-        [:node, :temporal_block], 
+        :node_with_state__temporal_block,
+        [:node, :temporal_block],
         unique((node=n, temporal_block=tb) for n in node(has_state=:value_true) for tb in node__temporal_block(node=n))
     )
-    unit__temporal_block = RelationshipClass(
-        :unit__temporal_block, 
-        [:unit, :temporal_block], 
+    start_up_unit__node__direction__temporal_block = RelationshipClass(
+        :start_up_unit__node__direction__temporal_block, 
+        [:unit, :node, :direction, :temporal_block], 
         unique(
-            (unit=u, temporal_block=tb)
-            for (u, n) in units_on_resolution()
+            (unit=u, node=n, direction=d, temporal_block=tb)
+            for (u, ng, d) in indices(max_startup_ramp)
+            for n in expand_node_group(ng)
             for tb in node__temporal_block(node=n)
         )
     )
-    units_invested_available_indices = unique(
-        (unit=u, temporal_block=tb)
-        for ug in indices(candidate_units)
-        for u in expand_unit_group(ug)            
-        for tb in unit__investment_temporal_block(unit=u)                    
+    nonspin_ramp_up_unit__node__direction__temporal_block = RelationshipClass(
+        :nonspin_ramp_up_unit__node__direction__temporal_block, 
+        [:unit, :node, :direction, :temporal_block], 
+        unique(
+            (unit=u, node=n, direction=d, temporal_block=tb)
+            for (u, ng, d) in indices(max_res_startup_ramp)
+            for n in expand_node_group(ng)
+            for tb in node__temporal_block(node=n)
+        )
     )
-    units_invested_available_indices_rc = RelationshipClass(
-        :units_invested_available_indices_rc, [:unit, :temporal_block], units_invested_available_indices
+    ramp_up_unit__node__direction__temporal_block = RelationshipClass(
+        :ramp_up_unit__node__direction__temporal_block, 
+        [:unit, :node, :direction, :temporal_block], 
+        unique(
+            (unit=u, node=n, direction=d, temporal_block=tb)
+            for (u, ng, d) in indices(ramp_up_limit)
+            for n in expand_node_group(ng)
+            for tb in node__temporal_block(node=n)
+            for (u, n, d, tb) in setdiff(
+                unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb, _compact=false),
+                nonspin_ramp_up_unit__node__direction__temporal_block(
+                    unit=u, node=n, direction=d, temporal_block=tb, _compact=false
+                )
+            )
+        )
     )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
         unit__node__direction__temporal_block = $unit__node__direction__temporal_block
         connection__node__direction__temporal_block = $connection__node__direction__temporal_block
         node_with_state__temporal_block = $node_with_state__temporal_block
-        unit__temporal_block = $unit__temporal_block
-        units_invested_available_indices_rc = $units_invested_available_indices_rc
+        start_up_unit__node__direction__temporal_block = $start_up_unit__node__direction__temporal_block
+        nonspin_ramp_up_unit__node__direction__temporal_block = $nonspin_ramp_up_unit__node__direction__temporal_block
+        ramp_up_unit__node__direction__temporal_block = $ramp_up_unit__node__direction__temporal_block
     end
 end
 
+"""
+    expand_default_investment_relationships()
+
+Generate `Relationships` related to modelling investments.
+"""
+function expand_default_investment_relationships()
+    expand_unit__default_investment_temporal_block()
+    expand_unit__default_investment_stochastic_structure()
+end 
 
 """
-    expand_node__stochastic_structure()
+    expand_unit__default_investment_temporal_block()
 
-Expands the `node__stochastic_structure` `RelationshipClass` for with individual `nodes` in `node_groups`.
+Process the `model__default_investment_temporal_block` relationship.
+
+If a `unit__investment_temporal_block` relationship is not defined, 
+then create one using `model__default_investment_temporal_block`
 """
-function expand_node__stochastic_structure()
-    for (node, stochastic_structure) in node__stochastic_structure()
-        expanded_node = expand_node_group(node)
-        if collect(node) != collect(expanded_node)
-            add_relationships!(
-                node__stochastic_structure,
-                [(node=n, stochastic_structure=stochastic_structure) for n in expanded_node]
-            )
-        end
-    end
+function expand_unit__default_investment_temporal_block()
+    add_relationships!(
+        unit__investment_temporal_block, 
+        [
+            (unit=u, temporal_block=tb)
+            for u in setdiff(indices(candidate_units), unit__investment_temporal_block(temporal_block=anything))
+            for tb in model__default_investment_temporal_block(model=first(model()))
+        ]
+    )
 end
 
-
 """
-    expand_units_on_resolution()
+    expand_unit__default_investment_stochastic_structure()
 
-Expands `units_on_resolution` `RelationshipClass` with all individual `units` in `unit_groups`.
+Process the `model__default_investment_stochastic_structure` relationship.
+
+If a `unit__investment_stochastic_structure` relationship is not defined, 
+then create one using `model__default_investment_stochastic_structure`
 """
-function expand_units_on_resolution()
-    for (unit, node) in units_on_resolution()
-        expanded_unit = expand_unit_group(unit)
-        if collect(unit) != collect(expanded_unit)
-            add_relationships!(
-                units_on_resolution,
-                [(unit=u, node=node) for u in expanded_unit]
+function expand_unit__default_investment_stochastic_structure()
+    add_relationships!(
+        unit__investment_stochastic_structure, 
+        [
+            (unit=u, stochastic_structure=ss)
+            for u in setdiff(
+                indices(candidate_units), unit__investment_stochastic_structure(stochastic_structure=anything)
             )
-        end
-    end
+            for ss in model__default_investment_stochastic_structure(model=first(model()))
+        ]
+    )
 end

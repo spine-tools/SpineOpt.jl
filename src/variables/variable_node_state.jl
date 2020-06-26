@@ -16,10 +16,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
 """
     node_state_indices(filtering_options...)
 
-A set of tuples for indexing the `node_state` variable. Any filtering options can be specified
+A set of tuples for indexing the `node_state` variable where filtering options can be specified
 for `node`, `s`, and `t`.
 """
 function node_state_indices(;node=anything, stochastic_scenario=anything, t=anything)
@@ -32,6 +33,11 @@ function node_state_indices(;node=anything, stochastic_scenario=anything, t=anyt
     )
 end
 
+"""
+    add_variable_node_state!(m::Model)
+
+Add `node_state` variables to model `m`.
+"""
 function add_variable_node_state!(m::Model)
     add_variable!(
         m, 

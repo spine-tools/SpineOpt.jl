@@ -43,6 +43,11 @@ function connection_flow_indices(
     ]
 end
 
+"""
+    add_variable_connection_flow!(m::Model)
+
+Add `connection_flow` variables to model `m`.
+"""
 function add_variable_connection_flow!(m::Model)
     add_variable!(
         m, 

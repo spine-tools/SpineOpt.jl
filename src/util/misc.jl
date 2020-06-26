@@ -42,21 +42,31 @@ macro fetch(expr)
     esc(Expr(:(=), keys, values))
 end
 
+"""
+    expand_unit_group(ugs::X) where X >: Anything
+
+Expand `unit_group` `ugs` into an `Array` of included `units`.
+"""
 expand_unit_group(::Anything) = anything
 function expand_unit_group(ugs::X) where X >: Anything
     (u for ug in ugs for u in unit_group__unit(unit1=ug, _default=ug))
 end
 
+"""
+    expand_node_group(ngs::X) where X >: Anything
+
+Expand `node_group` `ngs` into an `Array` of included `nodes`.
+"""
 expand_node_group(::Anything) = anything
 function expand_node_group(ngs::X) where X >: Anything
     (n for ng in ngs for n in node_group__node(node1=ng, _default=ng))
 end
 
-expand_commodity_group(::Anything) = anything
-function expand_commodity_group(cgs::X) where X >: Anything
-    (c for cg in cgs for c in commodity_group__commodity(commodity1=cg, _default=cg))
-end
+"""
+    log(level, msg)
 
+TODO: Print stuff?
+"""
 macro log(level, msg)
     quote
         if $(esc(level))
@@ -65,6 +75,11 @@ macro log(level, msg)
     end
 end
 
+"""
+    logtime(level, msg, expr)
+
+TODO: Logs time taken by commands?
+"""
 macro logtime(level, msg, expr)
     quote
         if $(esc(level))
@@ -75,6 +90,11 @@ macro logtime(level, msg, expr)
     end
 end
 
+"""
+    msgtime(msg, expr)
+
+TODO: Prints stuff with time?
+"""
 macro msgtime(msg, expr)
     quote
         printstyled($(esc(msg)); bold=true)
@@ -82,9 +102,11 @@ macro msgtime(msg, expr)
     end
 end
 
-sense_constraint(m, lhs, sense::typeof(<=), rhs) = @constraint(m, lhs <= rhs)
-sense_constraint(m, lhs, sense::typeof(==), rhs) = @constraint(m, lhs == rhs)
-sense_constraint(m, lhs, sense::typeof(>=), rhs) = @constraint(m, lhs >= rhs)
+"""
+    sense_constraint(m, lhs, sense::Symbol, rhs)
+
+Create a JuMP constraint with the desired left-hand-side `lhs`, `sense`, and right-hand-side `rhs`.
+"""
 function sense_constraint(m, lhs, sense::Symbol, rhs)
     if sense == :>=
         @constraint(m, lhs >= rhs)
@@ -94,6 +116,9 @@ function sense_constraint(m, lhs, sense::Symbol, rhs)
         @constraint(m, lhs == rhs)
     end
 end
+sense_constraint(m, lhs, sense::typeof(<=), rhs) = @constraint(m, lhs <= rhs)
+sense_constraint(m, lhs, sense::typeof(==), rhs) = @constraint(m, lhs == rhs)
+sense_constraint(m, lhs, sense::typeof(>=), rhs) = @constraint(m, lhs >= rhs)
 
 """
     expr_sum(iter; init::Number)
@@ -110,6 +135,11 @@ function expr_sum(iter; init::Number)
     result
 end
 
+"""
+    write_ptdfs()
+
+Write `ptdf` parameter values to a `ptdfs.csv` file.
+"""
 function write_ptdfs()
     io = open("ptdfs.csv", "w")
     print(io, "connection,")
@@ -127,22 +157,24 @@ function write_ptdfs()
     close(io)
 end
 
-function write_lodfs()
+"""
+    write_lodfs()
 
+Write `lodf` parameter values to a `lodsfs.csv` file.
+"""
+function write_lodfs()
     io = open("lodfs.csv", "w")
     print(io, raw"contingency line,from_node,to node,")
-
-    for conn_mon in connection(connection_monitored=true)
+    for conn_mon in connection(connection_monitored=:value_true)
         print(io, string(conn_mon), ",")
     end
     print(io, "\n")
-
-    for conn_cont in connection(connection_contingency=true)
-        n_from, n_to = connection__from_node(connection=conn_cont)
+    for conn_cont in connection(connection_contingency=:value_true)
+        n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
         print(io, string(conn_cont), ",", string(n_from), ",", string(n_to))
-        for conn_mon_ in connection(connection_monitored=true)
+        for conn_mon in connection(connection_monitored=:value_true)
             print(io, ",")
-            for (conn_cont, conn_mon) in indices(lodf; connection1=conn_cont, connection2=conn_mon_)
+            for (conn_cont, conn_mon) in indices(lodf; connection1=conn_cont, connection2=conn_mon)
                 print(io, lodf(connection1=conn_cont, connection2=conn_mon))
             end
         end

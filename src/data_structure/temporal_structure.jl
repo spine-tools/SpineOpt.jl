@@ -22,6 +22,7 @@ import Dates: CompoundPeriod
 struct TimeSliceSet
     time_slices::Array{TimeSlice,1}
     block_time_slices::Dict{Object,Array{TimeSlice,1}}
+    block_time_slice_map::Dict{Object,TimeSliceMap}
     function TimeSliceSet(time_slices)
         block_time_slices = Dict{Object,Array{TimeSlice,1}}()
         for t in time_slices
@@ -29,23 +30,31 @@ struct TimeSliceSet
                 push!(get!(block_time_slices, block, []), t)
             end
         end
-        new(time_slices, block_time_slices)
+        block_time_slice_map = Dict(block => TimeSliceMap(time_slices) for (block, time_slices) in block_time_slices)
+        # Find eventual gaps in between temporal blocks
+        solids = [(first(time_slices), last(time_slices)) for time_slices in values(block_time_slices)]
+        sort!(solids)
+        gaps = ((from, to) for ((_x, from), (to, _y)) in zip(solids[1:end - 1], solids[2:end]) if from < to)
+        # Create bridge time slice map. We need one bridge per gap.
+        bridge_time_slice_map = Dict(
+            Object("bridge_from_$(from)_to_$(to)") => TimeSliceMap([from, to]) for (from, to) in gaps
+        )
+        merge!(block_time_slice_map, bridge_time_slice_map)
+        new(time_slices, block_time_slices, block_time_slice_map)
     end
 end
 
 struct TOverlapsT
-    list::Array{Tuple{TimeSlice,TimeSlice},1}
+    mapping::Dict{TimeSlice,Array{TimeSlice,1}}
 end
 
 """
-    time_slice(;temporal_block=anything, t=anything)
+    (::TimeSliceSet)(;temporal_block=anything, t=anything)
 
 An `Array` of time slices *in the model*.
+
 - `temporal_block` is a temporal block object to filter the result.
 - `t` is a `TimeSlice` or collection of `TimeSlice`s *in the model* to filter the result.
-
-TODO This docstring can be a bit confusing, since the actual struct that `time_slice` refers to is called
-`TimeSliceSet`.
 """
 (h::TimeSliceSet)(;temporal_block=anything, t=anything) = h(temporal_block, t)
 (h::TimeSliceSet)(::Anything, ::Anything) = h.time_slices
@@ -55,41 +64,21 @@ TODO This docstring can be a bit confusing, since the actual struct that `time_s
 (h::TimeSliceSet)(temporal_blocks::Array{T,1}, s) where T = [t for blk in temporal_blocks for t in h(blk, s)]
 
 """
-    t_overlaps_t()
+    (::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
 
-A list of tuples `(t1, t2)` where `t1` and `t2` have some time in common.
-
-TODO This docstring can be a bit confusing since the actual struct that `t_overlaps_t` refers to is called
-`TOverlapsT`.
+A list of time slices that have some time in common with `t` or any time slice in `t`.
 """
-function (h::TOverlapsT)()
-    h.list
+function (h::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
+    unique(overlapping_t for s in t for overlapping_t in get(h.mapping, s, ()))
 end
 
 """
-    t_overlaps_t(t_overlap)
+    _model_duration_unit()
 
-A list of time slices that have some time in common with `t_overlap`
-(or some time in common with any element in `t_overlap` if it's a list).
-
-TODO This docstring can be a bit confusing since the actual struct that `t_overlaps_t` refers to is called
-`TOverlapsT`.
+Fetch the `duration_unit` parameter of the first defined `model`, and defaults to `Minute` if not found.
 """
-function (h::TOverlapsT)(t_overlap)
-    unique(t2 for (t1, t2) in h.list if t1 in tuple(t_overlap...))
-end
-
-"""
-    t_overlaps_t(t1, t2)
-
-A list of time slices which are in `t1` and have some time in common
-with any of the time slices in `t2` and vice versa.
-
-TODO This docstring can be a bit confusing since the actual struct that `t_overlaps_t` refers to is called
-`TOverlapsT`.
-"""
-function (h::TOverlapsT)(t1, t2)
-    unique(Iterators.flatten(filter(t -> t[1] in tuple(t1...) && t[2] in tuple(t2...), h.list)))
+function _model_duration_unit(instance=first(model()))
+    get(Dict(:minute => Minute, :hour => Hour), duration_unit(model=instance, _strict=false), Minute)
 end
 
 """
@@ -105,7 +94,7 @@ function _generate_current_window()
     roll_forward_ = roll_forward(model=instance, _strict=false)
     window_start = model_start_
     window_end = (roll_forward_ === nothing) ? model_end_ : min(model_start_ + roll_forward_, model_end_)
-    current_window = TimeSlice(window_start, window_end)
+    current_window = TimeSlice(window_start, window_end; duration_unit=_model_duration_unit(instance))
     @eval begin
         current_window = $current_window
     end
@@ -115,41 +104,37 @@ end
 """
     _adjuster_start(window_start, window_end, blk_start)
 
-Adjusts the `window_start` based on `temporal_blocks`.
-
-TODO: These functions seem to take `window_end` as input, although it's not used. Also, typing could be stricter.
+Adjust the `window_start` based on `temporal_blocks`.
 """
-_adjusted_start(window_start, window_end, ::Nothing) = window_start
-_adjusted_start(window_start, window_end, blk_start::Union{Period,CompoundPeriod}) = window_start + blk_start
-_adjusted_start(window_start, window_end, blk_start::DateTime) = max(window_start, blk_start)
+_adjusted_start(window_start, ::Nothing) = window_start
+_adjusted_start(window_start, blk_start::Union{Period,CompoundPeriod}) = window_start + blk_start
+_adjusted_start(window_start, blk_start::DateTime) = max(window_start, blk_start)
 
 """
     _adjusted_end(window_start, window_end, blk_end)
 
-Adjusts the `window_end` based on `temporal_blocks`.
-
-TODO: `window_start` and `window_end` always input although not always used? Also, typing could be stricter.
+Adjust the `window_end` based on `temporal_blocks`.
 """
 _adjusted_end(window_start, window_end, ::Nothing) = window_end
 _adjusted_end(window_start, window_end, blk_end::Union{Period,CompoundPeriod}) = window_start + blk_end
 _adjusted_end(window_start, window_end, blk_end::DateTime) = max(window_start, blk_end)
 
 """
-    _block_time_intervals(window_start, window_end)
+    _time_interval_blocks(window_start, window_end)
 
-A `Dict` mapping temporal blocks to a sorted `Array` of time intervals, i.e., (start, end) tuples.
+A `Dict` mapping 'pre-time_slices' (i.e., (start, end) tuples) to an Array of temporal blocks where found.
 """
-function _block_time_intervals(window_start, window_end)
-    d = Dict{Object,Array{Tuple{DateTime,DateTime},1}}()
-    for block in temporal_block()
-        time_intervals = Array{Tuple{DateTime,DateTime},1}()
-        adjusted_start = _adjusted_start(window_start, window_end, block_start(temporal_block=block, _strict=false))
+function _time_interval_blocks(window_start, window_end)
+    blocks_by_time_interval = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
+    for block in unique(tb for (_n, tb) in node__temporal_block())
+        adjusted_start = _adjusted_start(window_start, block_start(temporal_block=block, _strict=false))
         adjusted_end = _adjusted_end(window_start, window_end, block_end(temporal_block=block, _strict=false))
         time_slice_start = adjusted_start
         i = 1
         while time_slice_start < adjusted_end
             duration = resolution(temporal_block=block, i=i)
             if iszero(duration)
+                # TODO: Try to move this to a check...
                 error("`resolution` of temporal block `$(block)` cannot be zero!")
             end
             time_slice_end = time_slice_start + duration
@@ -161,22 +146,12 @@ function _block_time_intervals(window_start, window_end)
                     """
                 )
             end
-            push!(time_intervals, (time_slice_start, time_slice_end))
+            push!(get!(blocks_by_time_interval, (time_slice_start, time_slice_end), Array{Object,1}()), block)
             time_slice_start = time_slice_end
             i += 1
         end
-        d[block] = time_intervals
     end
-    d
-end
-
-"""
-    _model_duration_unit()
-
-Fetches the `duration_unit` parameter of the first defined `model`, and defaults to `Minute` if not found.
-"""
-function _model_duration_unit()
-    get(Dict(:minute => Minute, :hour => Hour), duration_unit(model=first(model()), _strict=false), Minute)
+    blocks_by_time_interval
 end
 
 """
@@ -185,16 +160,12 @@ end
 A sorted `Array` of `TimeSlices` in the given window.
 """
 function _window_time_slices(window_start, window_end)
-    block_time_intervals = _block_time_intervals(window_start, window_end)
-    inv_block_time_intervals = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
-    for (block, time_intervals) in block_time_intervals
-        for t in time_intervals
-            push!(get!(inv_block_time_intervals, t, Array{Object,1}()), block)
-        end
-    end
     instance = first(model())
-    a = [TimeSlice(t..., blocks...; duration_unit=_model_duration_unit()) for (t, blocks) in inv_block_time_intervals]
-    sort!(a)
+    window_time_slices = [
+        TimeSlice(t..., blocks...; duration_unit=_model_duration_unit())
+        for (t, blocks) in _time_interval_blocks(window_start, window_end)
+    ]
+    sort!(window_time_slices)
 end
 
 """
@@ -207,78 +178,68 @@ See [@TimeSliceSet()](@ref).
 function _generate_time_slice()
     window_start = start(current_window)
     window_end = end_(current_window)
-    window_span = window_end - window_start
     window_time_slices = _window_time_slices(window_start, window_end)
     time_slice = TimeSliceSet(window_time_slices)
-    t_history_t = Dict(t => t - window_span for t in window_time_slices if end_(t) <= window_end)
-    all_time_slices = [sort(collect(values(t_history_t))); window_time_slices]
-    to_time_slice = TimeSliceMap(all_time_slices)
+    i = findlast(t -> end_(t) <= window_end, window_time_slices)
+    window_span = window_end - window_start
+    history_time_slices = [t - window_span for t in window_time_slices[1:i]] 
+    history_time_slice = TimeSliceSet(history_time_slices)
+    t_history_t = Dict(zip(window_time_slices, history_time_slices))
     @eval begin
         time_slice = $time_slice
-        to_time_slice = $to_time_slice
+        history_time_slice = $history_time_slice
         t_history_t = $t_history_t
-        all_time_slices = $all_time_slices
         export time_slice
-        export to_time_slice
     end
+end
+
+"""
+    to_time_slice(t::TimeSlice...)
+
+An `Array` of `TimeSlice`s *in the model* overlapping the given `t` (where `t` may not be in model).
+"""
+function to_time_slice(t::TimeSlice...)
+    unique(
+        Iterators.flatten(
+            t_map(t...)
+            for t_set in (time_slice, history_time_slice)
+            for t_map in values(t_set.block_time_slice_map)
+        )
+    )
 end
 
 """
     _generate_time_slice_relationships()
 
-Create and export convenience functions to access time slice relationships:
-`t_in_t`, `t_preceeds_t`, `t_overlaps_t`...
+Create and export convenience functions to access time slice relationships.
+
+E.g. `t_in_t`, `t_preceeds_t`, `t_overlaps_t`...
 """
 function _generate_time_slice_relationships()
-    t_before_t_tuples = []
-    t_in_t_tuples = []
-    t_overlaps_t_tuples = []
-    # NOTE: splitting the loop into two loops as below makes it ~2 times faster
-    for (i, t_i) in enumerate(all_time_slices)
-        found = false
-        for t_j in all_time_slices[i:end]
-            if before(t_i, t_j)
-                found = true
-                push!(t_before_t_tuples, (t_before=t_i, t_after=t_j))
-            elseif found
-                break
-            end
-        end
-    end
-    for t_i in all_time_slices
-        found_in = false
-        break_in = false
-        found_overlaps = false
-        break_overlaps = false
-        for t_j in all_time_slices
-            if iscontained(t_i, t_j)
-                found_in = true
-                push!(t_in_t_tuples, (t_short=t_i, t_long=t_j))
-            elseif found_in
-                break_in = true
-            end
-            if overlaps(t_i, t_j)
-                found_overlaps = true
-                push!(t_overlaps_t_tuples, tuple(t_i, t_j))
-            elseif found_overlaps
-                break_overlaps = true
-            end
-            if break_in && break_overlaps
-#                break
-            end
-        end
-    end
-    unique!(t_in_t_tuples)
-    unique!(t_overlaps_t_tuples)
+    all_time_slices = Iterators.flatten((history_time_slice(), time_slice()))
+    duration_unit = _model_duration_unit()
+    t_follows_t_mapping = Dict(t => to_time_slice(t + duration_unit(duration(t))) for t in all_time_slices)
+    t_overlaps_t_maping = Dict(t => to_time_slice(t) for t in all_time_slices)
+    t_overlaps_t_excl_mapping = Dict(t => setdiff(overlapping_t, t) for (t, overlapping_t) in t_overlaps_t_maping)
+    t_before_t_tuples = unique(
+        (t_before=t_before, t_after=t_after)
+        for (t_before, following) in t_follows_t_mapping
+        for t_after in following
+        if before(t_before, t_after)
+    )
+    t_in_t_tuples = unique(
+        (t_short=t_short, t_long=t_long)
+        for (t_short, overlapping) in t_overlaps_t_maping
+        for t_long in overlapping
+        if iscontained(t_short, t_long)
+    )
     t_in_t_excl_tuples = [(t_short=t1, t_long=t2) for (t1, t2) in t_in_t_tuples if t1 != t2]
-    t_overlaps_t_excl_tuples = [(t1, t2) for (t1, t2) in t_overlaps_t_tuples if t1 != t2]
-    # Create function-like objects
+    # Create and export the function-like objects
     t_before_t = RelationshipClass(:t_before_t, [:t_before, :t_after], t_before_t_tuples)
     t_in_t = RelationshipClass(:t_in_t, [:t_short, :t_long], t_in_t_tuples)
     t_in_t_excl = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_tuples)
-    t_overlaps_t = TOverlapsT(t_overlaps_t_tuples)
-    t_overlaps_t_excl = TOverlapsT(t_overlaps_t_excl_tuples)
-    # Export the function-like objects
+    t_overlaps_t = TOverlapsT(t_overlaps_t_maping)
+    t_overlaps_t_excl = TOverlapsT(t_overlaps_t_excl_mapping)
     @eval begin
         t_before_t = $t_before_t
         t_in_t = $t_in_t
@@ -296,7 +257,7 @@ end
 """
     generate_temporal_structure()
 
-Preprocesses the temporal structure for SpineOpt from the provided input data.
+Preprocess the temporal structure for SpineOpt from the provided input data.
 
 Runs a number of functions processing different aspects of the temporal structure in sequence.
 """
@@ -309,7 +270,7 @@ end
 """
     roll_temporal_structure()
 
-Moves the entire temporal structure ahead according to the `roll_forward` parameter.
+Move the entire temporal structure ahead according to the `roll_forward` parameter.
 """
 function roll_temporal_structure()
     instance = first(model())
@@ -318,9 +279,7 @@ function roll_temporal_structure()
     roll_forward_ === nothing && return false
     roll_forward_ == 0 && return false
     roll!(current_window, roll_forward_)
-    roll!.(all_time_slices, roll_forward_)
+    roll!.(time_slice(), roll_forward_)
+    roll!.(history_time_slice(), roll_forward_)
     true
 end
-
-# TODO: Currently, the temporal structure seems to be generated for all defined `temporal_blocks` in the database, 
-# regardless of whether they actually appear in the model via the `node__temporal_block` relationship.

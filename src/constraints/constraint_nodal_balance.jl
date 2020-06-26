@@ -20,6 +20,7 @@
 #TODO: as proposed in the wiki on groups: We should be able to support
 # a) node_balance for node group and NO balance for underlying node
 # b) node_balance for node group AND balance for underlying node
+
 """
     add_constraint_nodal_balance!(m::Model)
 
@@ -27,11 +28,8 @@ Balance equation for nodes.
 """
 function add_constraint_nodal_balance!(m::Model)
     @fetch node_injection, connection_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
-    cons = m.ext[:constraints][:nodal_balance] = Dict()
-    for (n, s, t) in node_stochastic_time_indices()
-        # Skip nodes that are part of a node group having balance_type_group
-        any(balance_type(node=ng) === :balance_type_group for ng in node_group__node(node2=n)) && continue
-        cons[n, s, t] = @constraint(
+    m.ext[:constraints][:nodal_balance] = Dict(
+        (n, s, t) => sense_constraint(
             m,
             # Net injection
             + node_injection[n, s, t]
@@ -41,7 +39,7 @@ function add_constraint_nodal_balance!(m::Model)
                 for (conn, n, d, s, t) in connection_flow_indices(
                     node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
                 )
-                if !(balance_type(node=n) === :balance_type_group && _is_internal(conn, n));
+                if !issubset(_connection_nodes(conn), internal_nodes);
                 init=0
             )
             # Commodity flows to connections
@@ -50,32 +48,34 @@ function add_constraint_nodal_balance!(m::Model)
                 for (conn, n, d, s, t) in connection_flow_indices(
                     node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
                 )
-                if !(balance_type(node=n) === :balance_type_group && _is_internal(conn, n));
+                if !issubset(_connection_nodes(conn), internal_nodes);
                 init=0
             )
             # slack variable - only exists if slack_penalty is defined
             + get(node_slack_pos, (n, s, t), 0)
             - get(node_slack_neg, (n, s, t), 0)
-            ==
+            ,
+            eval(nodal_balance_sense(node=n))
+            ,
             0
         )
-    end
+        for (n, internal_nodes, s, t) in (
+            (n, _internal_nodes(n), s, t)
+            for (n, s, t) in node_stochastic_time_indices()
+            if nodal_balance_sense(node=n) !== :none
+            && all(balance_type(node=ng) !== :balance_type_group for ng in node_group__node(node2=n))
+        )
+    )
 end
 
-"""
-    _is_internal(conn, ng)
-
-Determine whether or not a `connection` is internal to a `node_group`, in the sense that it only connects `nodes`
-within that `node_group`.
-"""
-_is_internal(conn, ng) = issubset(_connection_nodes(conn), node_group__node(node1=ng))
+_internal_nodes(n::Object) = balance_type(node=n) === :balance_type_group ? node_group__node(node1=n) : []
 
 """
     _connection_nodes(conn)
 
 An iterator over all `nodes` of a `connection`.
 """
-_connection_nodes(conn) = (
+_connection_nodes(conn::Object) = (
     n
     for connection__node in (connection__from_node, connection__to_node)
     for n in connection__node(connection=conn, direction=anything)

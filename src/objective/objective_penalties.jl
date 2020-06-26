@@ -19,16 +19,20 @@
 
 """
     objective_penalties(m::Model)
+
+Create an expression for objective penalties.
 """
-function objective_penalties(m::Model)
+# TODO: find a better name for this; objective penalities is not self-speaking
+function objective_penalties(m::Model, t1)
     @fetch node_slack_pos, node_slack_neg = m.ext[:variables]
     @expression(
         m,
         expr_sum(
-            ( node_slack_neg[n, s, t] + node_slack_pos[n, s, t]) * duration(t)
+            (node_slack_neg[n, s, t] + node_slack_pos[n, s, t]) * duration(t)
             * node_slack_penalty[(node=n, t=t)]
-            * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
-            for (n, s, t) in node_slack_indices();
+            * node_stochastic_scenario_weight(node=n, stochastic_scenario=s)
+            for (n, s, t) in node_slack_indices()
+            if end_(t) <= t1;
             init=0
         )
     )

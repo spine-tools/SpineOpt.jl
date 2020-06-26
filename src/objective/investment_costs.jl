@@ -19,14 +19,18 @@
 
 """
     investment_costs(m::Model)
+
+Create and expression for unit investment costs.
 """
-function investment_costs(m::Model)
+function investment_costs(m::Model, t1)
     @fetch units_invested = m.ext[:variables]
     @expression(
-        m,       
+        m,
         + expr_sum(
-            units_invested[u, s, t] * unit_investment_cost(unit=u, t=t)
-            for (u, s, t) in units_invested_available_indices();
+            units_invested[u, s, t] * unit_investment_cost[(unit=u, t=t)]
+            for (u,) in indices(unit_investment_cost)
+            for (u, s, t) in units_invested_available_indices(unit=u)
+            if end_(t) <= t1;
             init=0
         )
     )

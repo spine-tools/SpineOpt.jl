@@ -20,15 +20,16 @@
 """
     constraint_min_up_time_indices()
 
-Forms the stochastic index set for the `:min_up_time` constraint. Uses stochastic path
-indices due to potentially different stochastic structures between `units_on` and
+Form the stochastic index set for the `:min_up_time` constraint.
+    
+Uses stochastic path indices due to potentially different stochastic structures between `units_on` and
 `units_available` variables.
 """
 function constraint_min_up_time_indices()
     unique(
         (unit=u, stochastic_path=path, t=t)
         for u in indices(min_up_time)
-        for t in time_slice(temporal_block=node__temporal_block(node=units_on_resolution(unit=u)))
+        for t in time_slice(temporal_block=units_on__temporal_block(unit=u))
         for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario
@@ -43,14 +44,13 @@ end
 """
     add_constraint_min_up_time!(m::Model)
 
-Constraint running by minimum up time.
+Constrain running by minimum up time.
 """
 
 function add_constraint_min_up_time!(m::Model)
-    @fetch units_on, units_started_up = m.ext[:variables]
-    cons = m.ext[:constraints][:min_up_time] = Dict()
-    for (u, stochastic_path, t) in constraint_min_up_time_indices()
-        cons[u, stochastic_path, t] = @constraint(
+    @fetch units_on, units_started_up= m.ext[:variables] #, nonspin_shutting_down
+    m.ext[:constraints][:min_up_time] = Dict(
+        (u, stochastic_path, t) => @constraint(
             m,
             + expr_sum(
                 + units_on[u, s, t]
@@ -60,6 +60,16 @@ function add_constraint_min_up_time!(m::Model)
                 init=0
             )
             >=
+            # TODO:
+            # + expr_sum(
+            #     + nonspin_shutting_down[u, n, s, t]
+            #     for (u, n, s, t) in nonspin_shutting_down_indices(
+            #         unit=u,
+            #         stochastic_scenario=stochastic_path,
+            #         t=t_before_t(t_after=t_before_t(t_after=t))
+            #         );
+            #         init=0
+            # )
             + sum(
                 + units_started_up[u, s_past, t_past]
                 for (u, s_past, t_past) in units_on_indices(
@@ -69,5 +79,6 @@ function add_constraint_min_up_time!(m::Model)
                 )
             )
         )
-    end
+        for (u, stochastic_path, t) in constraint_min_up_time_indices()
+    )
 end

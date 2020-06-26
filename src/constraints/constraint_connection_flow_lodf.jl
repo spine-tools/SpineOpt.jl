@@ -22,9 +22,9 @@
 """
     constraint_connection_flow_lodf_indices()
 
-Forms the stochastic index set for the `:connection_flow_lodf` constraint.
-Uses stochastic path indices due to potentially different stochastic structures
-between `connection_flow` variables.
+Form the stochastic index set for the `:connection_flow_lodf` constraint.
+
+Uses stochastic path indices due to potentially different stochastic structures between `connection_flow` variables.
 """
 function constraint_connection_flow_lodf_indices()
     unique(
@@ -40,7 +40,7 @@ end
 """
     _constraint_connection_flow_lodf_lowest_resolution_t(conn_cont, conn_mon)
 
-Finds the lowest resolution `t`s between the `connection_flow` variables of the `conn_cont` contingency connection and
+Find the lowest resolution `t`s between the `connection_flow` variables of the `conn_cont` contingency connection and
 the `conn_mon` monitored connection.
 """
 function _constraint_connection_flow_lodf_lowest_resolution_t(conn_cont, conn_mon)
@@ -54,7 +54,7 @@ end
 """
     _constraint_connection_flow_lodf_indices(conn_cont, conn_mon, t)
 
-Gathers the indices of the `connection_flow` variable for the contingency connection `conn_cont` and
+Gather the indices of the `connection_flow` variable for the contingency connection `conn_cont` and
 the monitored connection `conn_mon` on time slice `t`.
 """
 function _constraint_connection_flow_lodf_indices(conn_cont, conn_mon, t)
@@ -77,9 +77,8 @@ Limit the post contingency flow on monitored connection mon to conn_emergency_ca
 """
 function add_constraint_connection_flow_lodf!(m::Model)
     @fetch connection_flow = m.ext[:variables]
-    cons = m.ext[:constraints][:connection_flow_lodf] = Dict()
-    for (conn_cont, conn_mon, stochastic_path, t) in constraint_connection_flow_lodf_indices()
-        cons[conn_cont, conn_mon, stochastic_path, t] = @constraint(
+    m.ext[:constraints][:connection_flow_lodf] = Dict(
+        (conn_cont, conn_mon, stochastic_path, t) => @constraint(
             m,
             - 1
             <=
@@ -88,7 +87,7 @@ function add_constraint_connection_flow_lodf!(m::Model)
                 + expr_sum(
                     + connection_flow[conn_mon, n_mon_to, direction(:to_node), s, t_short]
                     - connection_flow[conn_mon, n_mon_to, direction(:from_node), s, t_short]
-                    for (conn_mon, n_mon_to, d, t_short) in connection_flow_indices(;
+                    for (conn_mon, n_mon_to, d, s, t_short) in connection_flow_indices(;
                         connection=conn_mon, 
                         last(connection__from_node(connection=conn_mon))...,
                         stochastic_scenario=stochastic_path,
@@ -101,7 +100,7 @@ function add_constraint_connection_flow_lodf!(m::Model)
                 * expr_sum(
                     + connection_flow[conn_cont, n_cont_to, direction(:to_node), s, t_short]
                     - connection_flow[conn_cont, n_cont_to, direction(:from_node), s, t_short]
-                    for (conn_cont, n_cont_to, d, t_short) in connection_flow_indices(;
+                    for (conn_cont, n_cont_to, d, s, t_short) in connection_flow_indices(;
                         connection=conn_cont, 
                         last(connection__from_node(connection=conn_cont))...,
                         stochastic_scenario=stochastic_path,
@@ -119,5 +118,6 @@ function add_constraint_connection_flow_lodf!(m::Model)
             <=
             + 1
         )
-    end
+        for (conn_cont, conn_mon, stochastic_path, t) in constraint_connection_flow_lodf_indices()
+    )
 end

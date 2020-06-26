@@ -1,8 +1,11 @@
 # SpineOpt.jl
 
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-project.github.io/SpineOpt.jl/latest/index.html)
+[![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-project.github.io/SpineOpt.jl/latest/index.html)
+[![Build Status](https://travis-ci.com/Spine-project/SpineOpt.jl.svg?branch=dev)](https://travis-ci.com/Spine-project/SpineOpt.jl)
+[![Coverage Status](https://coveralls.io/repos/github/Spine-project/SpineOpt.jl/badge.svg?branch=dev)](https://coveralls.io/github/Spine-project/SpineOpt.jl?branch=dev)
+[![codecov](https://codecov.io/gh/Spine-project/SpineOpt.jl/branch/dev/graph/badge.svg)](https://codecov.io/gh/Spine-project/SpineOpt.jl)
 
-A package to run the [Spine](http://www.spine-model.org/) energy system integration model.
+A package to run an energy system integration model called Spine Opt.
 
 ## Compatibility
 
@@ -20,7 +23,7 @@ pkg"add SpineOpt"
 
 ```julia
 using SpineOpt
-run_spineopt(<url of your Spine database>)
+run_spineopt("...url of a SpineOpt database...")
 ```
 
 ## Reporting Issues and Contributing

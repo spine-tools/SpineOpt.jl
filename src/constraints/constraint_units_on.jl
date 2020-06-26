@@ -17,21 +17,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
 """
-    add_constraint_units_on!(m::Model, units_on, units_available)
+    add_constraint_units_on!(m::Model)
 
 Limit the units_on by the number of available units.
 """
 function add_constraint_units_on!(m::Model)
     @fetch units_on, units_available = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:units_on] = Dict()
-    for (u, s, t) in units_on_indices()
-        constr_dict[u, s, t] = @constraint(
+    m.ext[:constraints][:units_on] = Dict(
+        (u, s, t) => @constraint(
             m,
             + units_on[u, s, t]
             <=
             + units_available[u, s, t]
         )
-    end
+        for (u, s, t) in units_on_indices()
+    )
 end

@@ -17,25 +17,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
 """
     add_constraint_node_state_capacity!(m::Model)
 
-Limit the maximum value of a `node_state` variable under `node_state_cap`,
-if it exists.
+Limit the maximum value of a `node_state` variable under `node_state_cap`, if it exists.
 """
 function add_constraint_node_state_capacity!(m::Model)
     @fetch node_state = m.ext[:variables]
-    cons = m.ext[:constraints][:node_state_capacity] = Dict()
-    for n in indices(node_state_cap)
-        for (n, s, t) in node_state_indices(node=n)
-            cons[n, s, t] = @constraint(
-                m,
-                + node_state[n, s, t]
-                <=
-                + node_state_cap[(node=n, t=t)] # TODO: Stochastic parameters
-                #TODO: add investment decisions for storages
-            )
-        end
-    end
+    m.ext[:constraints][:node_state_capacity] = Dict(
+        (ng, s, t) => @constraint(
+            m,
+            + node_state[ng, s, t]
+            <=
+            + node_state_cap[(node=ng, t=t)] # TODO: Stochastic parameters
+            # TODO: add investment decisions for storages
+        )
+        for ng in indices(node_state_cap)
+        for (ng, s, t) in node_state_indices(node=ng)
+    )
 end

@@ -22,21 +22,14 @@
 
 Minimize the total discounted costs, corresponding to the sum over all
 cost terms.
+
+Unless defined otherwise this expression executed until the last time_slice
 """
-function set_objective!(m::Model)
-    vom_costs = variable_om_costs(m)
-    fom_costs = fixed_om_costs(m)
-    tax_costs = taxes(m)
-    op_costs = operating_costs(m)
-    fl_costs = fuel_costs(m)
-    suc_costs = start_up_costs(m)
-    sdc_costs = shut_down_costs(m)
-    penalties = objective_penalties(m)
-    invest_costs = investment_costs(m)
-    total_discounted_costs = @expression(
-        m, vom_costs + fom_costs + tax_costs + op_costs + suc_costs + sdc_costs + fl_costs + penalties + invest_costs
-    )
-    if total_discounted_costs != 0
+# TODO: Rethink this concept; Should we really evaluate until the very least time_slice,
+# if multiple temporal_block end at different points in time
+function set_objective!(m::Model; t=end_(last(time_slice())))
+    total_discounted_costs = total_costs(m, t)
+    if !iszero(total_discounted_costs)
         @objective(m, Min, total_discounted_costs)
     else
         @warn "zero objective"

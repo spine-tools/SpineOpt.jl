@@ -27,7 +27,7 @@
 """
     _check(cond, err_msg)
 
-Checks the conditional `cond` and throws an error with a message `err_msg` if `cond` is `false`.
+Check the conditional `cond` and throws an error with a message `err_msg` if `cond` is `false`.
 """
 _check(cond, err_msg) = cond || error(err_msg)
 
@@ -39,8 +39,8 @@ Check if the data structure provided from the db results in a valid model.
 function check_data_structure(log_level::Int64)
     check_model_object()
     check_temporal_block_object()
-    check_units_on_resolution()
     check_node__stochastic_structure()
+    check_unit__stochastic_structure()
     check_minimum_operating_point_unit_capacity()
     check_islands(log_level)
 end
@@ -70,20 +70,6 @@ function check_temporal_block_object()
 end
 
 """
-    check_units_on_resolution()
-
-Ensure there's exactly one `units_on_resolution` definition per `unit` in the data.
-"""
-function check_units_on_resolution()
-    error_units = [u for u in unit() if length(units_on_resolution(unit=u)) != 1]
-    _check(
-        isempty(error_units),
-        "invalid `units_on_resolution` definition for `unit`(s): $(join(error_units, ", ", " and ")) "
-        * "- each `unit` must have exactly one `units_on_resolution` relationship"
-    )
-end
-
-"""
     check_node__stochastic_structure()
 
 Ensure there's exactly one `node__stochastic_structure` definition per `node` in the data.
@@ -98,9 +84,23 @@ function check_node__stochastic_structure()
 end
 
 """
+    check_unit__stochastic_structure()
+
+Ensure there's exactly one `units_on__stochastic_structure` definition per `unit` in the data.
+"""
+function check_unit__stochastic_structure()
+    error_units = [u for u in unit() if length(units_on__stochastic_structure(unit=u)) != 1]
+    _check(
+        isempty(error_units),
+        "invalid `units_on__stochastic_structure` definition for `unit`(s): $(join(error_units, ", ", " and ")) "
+        * "- each `unit` must be related to one and only one `stochastic_structure`"
+    )
+end
+
+"""
     check_minimum_operating_point_unit_capacity()
 
-Checks if every defined `minimum_operating_point` parameter has a corresponding `unit_capacity` parameter defined.
+Check if every defined `minimum_operating_point` parameter has a corresponding `unit_capacity` parameter defined.
 """
 function check_minimum_operating_point_unit_capacity()
     error_indices = [
@@ -130,7 +130,7 @@ function check_islands(log_level)
     for c in commodity()
         if commodity_physics(commodity=c) in (:commodity_physics_ptdf, :commodity_physics_lodf)
             @logtime level3 "Checking network of commodity $(c) for islands" n_islands, island_node = islands(c)
-            @log     level3 "The network consists of $(n_islands) islands"
+            @log level3 "The network consists of $(n_islands) islands"
             if n_islands > 1
                 @warn "the network of commodity $(c) consists of multiple islands, this may end badly..."
                 # add diagnostic option to print island_node which will tell the user which nodes are in which islands
@@ -142,7 +142,7 @@ end
 """
     islands()
 
-Determines the number of islands in a commodity network - used for diagnostic purposes
+Determine the number of islands in a commodity network - used for diagnostic purposes.
 """
 function islands(c)
     visited_d = Dict{Object,Bool}()
@@ -166,7 +166,7 @@ end
 """
     visit()
 
-Function called recursively to visit nodes in the network to determine number of islands
+Recursively visit nodes in the network to determine number of islands.
 """
 function visit(n, island_count, visited_d, island_node)
     visited_d[n] = true
@@ -174,20 +174,6 @@ function visit(n, island_count, visited_d, island_node)
     for (conn, n2) in connection__node__node(node1=n)
         if !visited_d[n2]
             visit(n2, island_count, visited_d, island_node)
-        end
-    end
-end
-
-"""
-    check_x()
-
-Check for low reactance values
-"""
-function check_x()
-    @info "Checking reactances"
-    for conn in connection()
-        if conn_reactance(connection=conn) < 0.0001
-            @info "low reactance may cause problems for line " conn
         end
     end
 end

@@ -47,15 +47,25 @@ function add_variable!(
     )
     history_var = Dict(
         history_ind => _variable(m, name, history_ind, lb, ub, bin, int)
-        for history_ind in (
-            (; ind..., t=t_history_t[ind.t]) for ind in indices() if end_(ind.t) <= end_(current_window)
-        )
+        for ind in indices()
+        if end_(ind.t) <= end_(current_window)  
+        for history_ind in indices(; ind..., stochastic_scenario=anything, t=t_history_t[ind.t])
     )
     merge!(var, history_var)
 end
 
+"""
+    _base_name(name, ind)
+
+Create JuMP `base_name` from `name` and `ind`.
+"""
 _base_name(name, ind) = """$(name)[$(join(ind, ", "))]"""
 
+"""
+    _variable(m, name, ind, lb, ub, bin, int)
+
+Create a JuMP variable with the input properties.
+"""
 function _variable(m, name, ind, lb, ub, bin, int)
     var = @variable(m, base_name=_base_name(name, ind))
     lb != nothing && set_lower_bound(var, lb(ind))

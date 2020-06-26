@@ -16,4 +16,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+
+"""
+    add_variable_node_slack_neg!(m::Model)
+
+Add `node_slack_neg` variables to model `m`.
+"""
 add_variable_node_slack_neg!(m::Model) = add_variable!(m, :node_slack_neg, node_slack_indices; lb=x -> 0)

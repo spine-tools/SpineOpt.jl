@@ -18,26 +18,6 @@
 #############################################################################
 
 """
-	_nonempty_t_before_t(t_after)
-
-A guaranteed non-empty `Array` of `TimeSlice`s that come `before` the given `t_after`.
-"""
-function _nonempty_t_before_t(t_after)
-	std_t_before_t = t_before_t(t_after=t_after)
-	isempty(std_t_before_t) || return std_t_before_t
-    duration_unit = _model_duration_unit()
-    to_time_slice(t_after - duration_unit(duration(t_after)))
-end
-
-"""
-	_take_one_t_before_t(t_after)
-
-An iterator that produces the first `TimeSlice` that comes `before` the given `t_after`
-"""
-_take_one_t_before_t(t_after) = Iterators.take(_nonempty_t_before_t(t_after), 1)
-
-
-"""
     _constraint_unit_flow_capacity_indices(unit, node, direction, t)
 
 An iterator that concatenates `unit_flow_indices` and `units_on_indices` for the given inputs.

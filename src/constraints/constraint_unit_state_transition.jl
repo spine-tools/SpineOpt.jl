@@ -20,34 +20,33 @@
 """
     constraint_unit_state_transition_indices()
 
-Forms the stochastic index set for the `:unit_state_transition` constraint.
-Uses stochastic path indices due to potentially different stochastic scenarios
-between `t_after` and `t_before`.
+Form the stochastic index set for the `:unit_state_transition` constraint.
+
+Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
 """
 function constraint_unit_state_transition_indices()
     unique(
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, n) in units_on_resolution()
-        for t_after in time_slice(temporal_block=node__temporal_block(node=n))
-        for t_before in _take_one_t_before_t(t_after)
+        for u in unit()
+        for t_after in time_slice(temporal_block=units_on__temporal_block(unit=u))
+        for t_before in t_before_t(t_after=t_after)
         for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in units_on_indices(unit=u, t=[t_before, t_after]))
         )
     )
 end
 
-
 """
     add_constraint_unit_state_transition!(m::Model)
 
-This constraint ensures consistency between the variables `units_on`, `units_started_up`
-and `units_shut_down`.
+Ensure consistency between the variables `units_on`, `units_started_up` and `units_shut_down`.
 """
 function add_constraint_unit_state_transition!(m::Model)
     @fetch units_on, units_started_up, units_shut_down = m.ext[:variables]
-    cons = m.ext[:constraints][:unit_state_transition] = Dict()
-    for (u, stochastic_path, t_before, t_after) in constraint_unit_state_transition_indices()
-        cons[u, stochastic_path, t_before, t_after] = @constraint(
+    # TODO: add support for units that start_up over multiple timesteps?
+    # TODO: use :integer, :binary, :linear as parameter values -> reusable for other pruposes
+    m.ext[:constraints][:unit_state_transition] = Dict(
+        (u, stochastic_path, t_before, t_after) => @constraint(
             m,
             expr_sum(
                 + units_on[u, s, t_after]
@@ -63,5 +62,7 @@ function add_constraint_unit_state_transition!(m::Model)
                 init=0
             )
         )
-    end
+        for (u, stochastic_path, t_before, t_after) in constraint_unit_state_transition_indices()
+        if online_variable_type(unit=u) !== :unit_online_variable_type_linear
+    )
 end

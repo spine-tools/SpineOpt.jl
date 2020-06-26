@@ -19,17 +19,20 @@
 
 """
     fuel_costs(m::Model)
+
+Create an expression for fuel costs of units.
 """
-function fuel_costs(m::Model)
+function fuel_costs(m::Model, t1)
     @fetch unit_flow = m.ext[:variables]
     @expression(
         m,
         expr_sum(
             unit_flow[u, n, d, s, t] * duration(t)
-            * fuel_cost[(unit=u, node=n, direction=d, t=t)]
-            * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
-            for (u, n, d) in indices(fuel_cost)
-            for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d);
+            * fuel_cost[(unit=u, node=ng, direction=d, t=t)]
+            * node_stochastic_scenario_weight(node=ng, stochastic_scenario=s)
+            for (u, ng, d) in indices(fuel_cost)
+            for (u, n, d, s, t) in unit_flow_indices(unit=u, node=ng, direction=d)
+            if end_(t) <= t1;
             init=0
         )
     )

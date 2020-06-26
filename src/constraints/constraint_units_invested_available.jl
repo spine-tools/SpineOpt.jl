@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-
 """
     add_constraint_units_invested_available!(m::Model)
 
@@ -25,16 +24,16 @@ Limit the units_invested_available by the number of investment candidate units.
 """
 function add_constraint_units_invested_available!(m::Model)
     @fetch units_invested_available = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:units_invested_available] = Dict()
-    for (u, s, t) in units_invested_available_indices()
-        constr_dict[u, s, t] = @constraint(
+    m.ext[:constraints][:units_invested_available] = Dict(
+        (u, s, t) => @constraint(
             m,
             + units_invested_available[u, s, t]
             <=
             + candidate_units[(unit=u, t=t)]
         )
-    end
+        for (u, s, t) in units_invested_available_indices()
+    )
 end
-#TODO: units_invested_available or \sum(units_invested)?
+# TODO: units_invested_available or \sum(units_invested)?
 # Candidate units: max amount of units that can be installed over model horizon
 # or max amount of units that can be available at a time?
