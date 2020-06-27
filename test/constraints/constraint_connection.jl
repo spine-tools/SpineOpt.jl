@@ -334,7 +334,7 @@
                 m = run_spineopt(url_in; log_level=0)
                 var_connection_flow = m.ext[:variables][:connection_flow]
                 constraint = m.ext[:constraints][Symbol(ratio)]
-                @test length(constraint) == 6
+                @test length(constraint) == 2
                 conn = connection(:connection_ab)
                 n_from = node(:node_a)
                 n_to = node(:node_b)
