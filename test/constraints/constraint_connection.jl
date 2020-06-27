@@ -346,26 +346,6 @@
                     reverse(SpineOpt.history_time_slice(temporal_block=temporal_block(:hourly)))
                 ]
                 s_to = stochastic_scenario(:parent)
-                @testset for (i, t_to) in enumerate(reverse(time_slice(temporal_block=temporal_block(:hourly))))
-                    coeffs = (1 - rem_minutes_delay, rem_minutes_delay)
-                    s_set = scenarios_from[i + h_delay: i + h_delay + 1]
-                    t_set = time_slices_from[i + h_delay: i + h_delay + 1]
-                    vars_conn_flow_from = (
-                        var_connection_flow[conn, n_from, d_from, s_from, t_from] 
-                        for (s_from, t_from) in zip(s_set, t_set)
-                    )
-                    expected_con_ref = SpineOpt.sense_constraint(
-                        m,
-                        0,
-                        sense,
-                        flow_ratio * sum(c * v for (c, v) in zip(coeffs, vars_conn_flow_from))
-                    )
-                    expected_con = constraint_object(expected_con_ref)
-                    path = reverse(unique(s_set))
-                    con_key = (conn, n_to, n_from, path, t_to)
-                    observed_con = constraint_object(constraint[con_key])
-                    @test _is_constraint_equal(observed_con, expected_con)                    
-                end
                 @testset for (j, t_to) in enumerate(reverse(time_slice(temporal_block=temporal_block(:two_hourly))))
                     coeffs = (1 - rem_minutes_delay, 1, rem_minutes_delay)
                     i = 2 * j - 1
