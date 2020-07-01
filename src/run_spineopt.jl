@@ -238,7 +238,7 @@ function save_variable_values!(m::Model)
 end
 
 
-_value(v::GenericAffExpr) = JuMP.value
+_value(v::GenericAffExpr) = JuMP.value(v)
 _value(v) = v
 
 """
