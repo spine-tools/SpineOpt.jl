@@ -38,7 +38,7 @@
         ["unit__to_node", ["unit", "node"], null],
         ["unit__to_node__unit_constraint", ["unit", "node", "unit_constraint"], null],
         ["unit__unit_constraint", ["unit", "unit_constraint"], null],
-        ["unit__commodity", ["unit", "commodity"], null],
+        ["unit__commodity", ["unit", "commodity"], null]
     ],
     "parameter_value_lists": [
         ["balance_type_list", ["\"balance_type_node\"", "\"balance_type_group\"", "\"balance_type_none\""]],
