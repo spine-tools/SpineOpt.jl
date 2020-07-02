@@ -25,7 +25,6 @@ Preprocess input data structure for SpineOpt.
 Runs a number of other functions processing different aspecs of the input data in sequence.
 """
 function preprocess_data_structure()
-    # NOTE: expand groups first, so we don't need to expand them anywhere else
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
     # NOTE: generate direction before calling `generate_network_components`,
@@ -50,7 +49,7 @@ function expand_node__stochastic_structure()
         [
             (node=n, stochastic_structure=stochastic_structure) 
             for (ng, stochastic_structure) in node__stochastic_structure()
-            for n in expand_node_group(ng)
+            for n in members(ng)
         ]
     )
 end
@@ -66,7 +65,7 @@ function expand_units_on__stochastic_structure()
         [
             (unit=u, stochastic_structure=stochastic_structure) 
             for (ug, stochastic_structure) in units_on__stochastic_structure()
-            for u in expand_unit_group(ug)
+            for u in members(ug)
         ]
     )
 end
@@ -391,7 +390,7 @@ function generate_variable_indexing_support()
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
             for (u, ng, d) in indices(max_startup_ramp)
-            for n in expand_node_group(ng)
+            for n in members(ng)
             for tb in node__temporal_block(node=n)
         )
     )
@@ -401,7 +400,7 @@ function generate_variable_indexing_support()
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
             for (u, ng, d) in indices(max_res_startup_ramp)
-            for n in expand_node_group(ng)
+            for n in members(ng)
             for tb in node__temporal_block(node=n)
         )
     )
@@ -411,7 +410,7 @@ function generate_variable_indexing_support()
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
             for (u, ng, d) in indices(ramp_up_limit)
-            for n in expand_node_group(ng)
+            for n in members(ng)
             for tb in node__temporal_block(node=n)
             for (u, n, d, tb) in setdiff(
                 unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb, _compact=false),
