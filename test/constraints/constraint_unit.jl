@@ -258,7 +258,6 @@
         class = "unit__node__node"
         relationship = ["unit_ab", "node_a", "node_b"]
         senses_by_prefix = Dict("min" => >=, "fix" => ==, "max" => <=)
-        directions_by_prefix = Dict("in" => direction(:from_node), "out" => direction(:to_node))
         classes_by_prefix = Dict("in" => "unit__from_node", "out" => "unit__to_node")
         @testset for (p, a, b) in (
                 ("min", "in", "in"),
@@ -298,6 +297,7 @@
             path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
             t_long = first(time_slice(temporal_block=temporal_block(:two_hourly)))
             t_short1, t_short2 = time_slice(temporal_block=temporal_block(:hourly))
+            directions_by_prefix = Dict("in" => direction(:from_node), "out" => direction(:to_node))
             d_a = directions_by_prefix[a]
             d_b = directions_by_prefix[b]
             var_u_flow_b_key = (unit(:unit_ab), node(:node_b), d_b, stochastic_scenario(:parent), t_long)
