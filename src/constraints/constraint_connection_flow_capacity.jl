@@ -50,7 +50,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
         (conn, ng, d, s, t) => @constraint(
             m,
             + expr_sum(
-                connection_flow[conn, n, d, s, t] * duration(t)
+                connection_flow[conn, n, d, s, t]
                 for (conn, n, d, s, t) in connection_flow_indices(
                     connection=conn, direction=d, node=ng, stochastic_scenario=s, t=t_in_t(t_long=t)
                 );
@@ -61,7 +61,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
             * connection_availability_factor[(connection=conn, stochastic_scenario=s, t=t)]
             * connection_conv_cap_to_flow[(connection=conn, node=ng, direction=d, stochastic_scenario=s, t=t)]
             + expr_sum(
-                connection_flow[conn, n, d_reverse, s, t] * duration(t)
+                connection_flow[conn, n, d_reverse, s, t]
                 for (conn, n, d_reverse, s, t) in connection_flow_indices(
                     connection=conn, node=ng, stochastic_scenario=s, t=t_in_t(t_long=t)
                 )
