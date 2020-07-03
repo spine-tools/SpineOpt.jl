@@ -63,7 +63,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
                 for (conn, n, d_reverse, s, t) in connection_flow_indices(
                     connection=conn, node=ng, stochastic_scenario=s, t=t_in_t(t_long=t)
                 )
-                if d_reverse != d && is_reserve_node(node=n) == :is_reserve_node_false;
+                if d_reverse != d && is_reserve_node(node=n) == :value_false;
                 init=0
             )
         )
