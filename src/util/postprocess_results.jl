@@ -83,7 +83,7 @@ function save_connection_avg_throughflow!(m::Model)
                 first(connection__from_node(connection=conn, direction=anything)),
                 last(connection__from_node(connection=conn, direction=anything))
             )
-            for conn in connection(connection_monitored=:value_true, has_ptdf=true)
+            for conn in connection(connection_monitored=true, has_ptdf=true)
         )  # NOTE: we always assume that the second (last) node in `connection__from_node` is the 'to' node
         for t in t_lowest_resolution(x.t for x in connection_flow_indices(connection=conn, node=[n_from, n_to]))
         for stochastic_path in active_stochastic_paths(

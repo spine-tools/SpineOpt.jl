@@ -30,7 +30,7 @@ Uses stochastic path indices due to potentially different stochastic structures 
 function constraint_connection_flow_ptdf_indices()
     unique(
         (connection=conn, node=n_to, stochastic_scenario=path, t=t)
-        for conn in connection(connection_monitored=:value_true, has_ptdf=true)
+        for conn in connection(connection_monitored=true, has_ptdf=true)
         for (n_to, d_to) in Iterators.drop(connection__from_node(connection=conn), 1)
         for t in time_slice(temporal_block=node__temporal_block(node=n_to))
         for path in active_stochastic_paths(

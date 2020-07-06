@@ -67,7 +67,7 @@ function add_constraint_split_ramp_up!(m::Model)
                 for (u, n, d, s, t_before) in unit_flow_indices(
                     unit=u, node=n, direction=d, stochastic_scenario=s_path, t=t_before
                 )
-                if is_reserve_node(node=n) === :value_false;
+                if !is_reserve_node(node=n);
                 init=0
             )
             <=

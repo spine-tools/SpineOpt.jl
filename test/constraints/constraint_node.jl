@@ -141,8 +141,8 @@
             ["node", "node_b", "demand", demand_b],
             ["node", "node_c", "demand", demand_c],
             ["node", "node_group_bc", "demand", demand_group],
-            ["node", "node_b", "has_state", "value_true"],
-            ["node", "node_c", "has_state", "value_true"],
+            ["node", "node_b", "has_state", true],
+            ["node", "node_c", "has_state", true],
             ["node", "node_b", "frac_state_loss", frac_state_loss_b],
             ["node", "node_c", "frac_state_loss", frac_state_loss_c],
             ["node", "node_b", "state_coeff", state_coeff_b],
@@ -257,8 +257,8 @@
         object_parameter_values = [
             ["node", "node_b", "node_state_cap", node_capacity["node_b"]],
             ["node", "node_c", "node_state_cap", node_capacity["node_c"]],
-            ["node", "node_b", "has_state", "value_true"],
-            ["node", "node_c", "has_state", "value_true"],
+            ["node", "node_b", "has_state", true],
+            ["node", "node_c", "has_state", true],
         ]
         db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0)
