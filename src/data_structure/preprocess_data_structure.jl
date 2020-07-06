@@ -36,8 +36,6 @@ function preprocess_data_structure()
     expand_default_investment_relationships()
 end
 
-# TODO: These two below might need to change when we finally get to rationalize groups 
-
 """
     expand_node__stochastic_structure()
 

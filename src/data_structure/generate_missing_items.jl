@@ -24,6 +24,7 @@ Compare the defined sets of `ObjectClass`, `RelationshipClass` and parameter def
 `spineopt_template.json` and generates missing items.
 """
 function generate_missing_items(mod=@__MODULE__)
+    template = _template()
     missing_items = Dict(
         "object classes" => String[],
         "relationship classes" => String[],
