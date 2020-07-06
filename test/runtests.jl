@@ -28,7 +28,7 @@ _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.se
 
 function _load_template(url_in)
     db_api.create_new_spine_database(url_in)
-    template = Dict(Symbol(key) => value for (key, value) in SpineOpt.template)
+    template = Dict(Symbol(key) => value for (key, value) in SpineOpt._template())
     db_api.import_data_to_url(url_in; template...)
 end
 

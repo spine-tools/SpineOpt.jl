@@ -57,9 +57,8 @@
             ["stochastic_structure__stochastic_scenario", ["stochastic", "parent"]],
             ["stochastic_structure__stochastic_scenario", ["stochastic", "child"]],
             ["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "child"]],
-            ["node_group__node", ["node_group_bc", "node_b"]],
-            ["node_group__node", ["node_group_bc", "node_c"]],
         ],
+        :object_groups => [["node", "node_group_bc", ["node_b", "node_c"]]],
         :object_parameter_values => [
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
@@ -147,12 +146,12 @@
             ["node", "node_c", "frac_state_loss", frac_state_loss_c],
             ["node", "node_b", "state_coeff", state_coeff_b],
             ["node", "node_c", "state_coeff", state_coeff_c],
+            ["node", "node_b", "fractional_demand", fractional_demand_b],
+            ["node", "node_c", "fractional_demand", fractional_demand_c],
         ]
         relationship_parameter_values = [
             ["node__node", ["node_b", "node_c"], "diff_coeff", diff_coeff_bc],
             ["node__node", ["node_c", "node_b"], "diff_coeff", diff_coeff_cb],
-            ["node_group__node", ["node_group_bc", "node_b"], "fractional_demand", fractional_demand_b],
-            ["node_group__node", ["node_group_bc", "node_c"], "fractional_demand", fractional_demand_c],
         ]
         db_api.import_data_to_url(
             url_in; 

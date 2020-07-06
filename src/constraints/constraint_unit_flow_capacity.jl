@@ -29,9 +29,7 @@ function constraint_unit_flow_capacity_indices()
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(unit_capacity)
-        # TODO: do we need to expand groups here? We still get the 'groups' out of `indices(unit_capacity)`,
-        # and then we feed them to `unit_flow_indices` in the constraint below (at which point they get expanded).
-        for t in time_slice(temporal_block=node__temporal_block(node=expand_node_group(ng)))
+        for t in time_slice(temporal_block=node__temporal_block(node=members(ng)))
         for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(u, ng, d, t))
         )

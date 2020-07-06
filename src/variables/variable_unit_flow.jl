@@ -35,8 +35,8 @@ function unit_flow_indices(;
         stochastic_scenario=anything,
         t=anything
     )
-    unit = expand_unit_group(unit)
-    node = expand_node_group(node)
+    unit = members(unit)
+    node = members(node)
     [
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
         for (u, n, d, tb) in unit__node__direction__temporal_block(

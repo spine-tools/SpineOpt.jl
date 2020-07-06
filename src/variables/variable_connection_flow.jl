@@ -31,7 +31,7 @@ The keyword arguments act as filters for each dimension.
 function connection_flow_indices(
         ;connection=anything, node=anything, direction=anything, stochastic_scenario=anything, t=anything
     )
-    node = expand_node_group(node)
+    node = members(node)
     [   
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
         for (conn, n, d, tb) in connection__node__direction__temporal_block(

@@ -37,8 +37,8 @@ for each dimension.
 function nonspin_ramp_up_unit_flow_indices(;
         unit=anything, node=anything, direction=anything, stochastic_scenario=anything, t=anything
     )
-    unit = expand_unit_group(unit)
-    node = expand_node_group(node)
+    unit = members(unit)
+    node = members(node)
     [
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
         for (u, n, d, tb) in nonspin_ramp_up_unit__node__direction__temporal_block(

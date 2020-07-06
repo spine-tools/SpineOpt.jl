@@ -43,26 +43,6 @@ macro fetch(expr)
 end
 
 """
-    expand_unit_group(ugs::X) where X >: Anything
-
-Expand `unit_group` `ugs` into an `Array` of included `units`.
-"""
-expand_unit_group(::Anything) = anything
-function expand_unit_group(ugs::X) where X >: Anything
-    (u for ug in ugs for u in unit_group__unit(unit1=ug, _default=ug))
-end
-
-"""
-    expand_node_group(ngs::X) where X >: Anything
-
-Expand `node_group` `ngs` into an `Array` of included `nodes`.
-"""
-expand_node_group(::Anything) = anything
-function expand_node_group(ngs::X) where X >: Anything
-    (n for ng in ngs for n in node_group__node(node1=ng, _default=ng))
-end
-
-"""
     log(level, msg)
 
 TODO: Print stuff?

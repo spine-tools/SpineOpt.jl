@@ -48,3 +48,42 @@
     @test fix_ratio_out_in_connection_flow(connection=conn_ab, node1=n_a, node2=n_b) == 1
     @test fix_ratio_out_in_connection_flow(connection=conn_ab, node1=n_b, node2=n_a) == 1
 end
+@testset "expand groups" begin
+    url_in = "sqlite:///$(@__DIR__)/test.sqlite"
+    test_data = Dict(
+        :objects => [
+            ["stochastic_structure", "ss"], 
+            ["node", "node_group_ab"], 
+            ["node", "node_a"], 
+            ["node", "node_b"],
+            ["unit", "unit_group_ab"], 
+            ["unit", "unit_a"], 
+            ["unit", "unit_b"]
+        ],
+        :object_groups => [
+            ["node", "node_group_ab", ["node_a", "node_b"]], ["unit", "unit_group_ab", ["unit_a", "unit_b"]]
+        ],
+        :relationships => [
+            ["node__stochastic_structure", ["node_group_ab", "ss"]], 
+            ["units_on__stochastic_structure", ["unit_group_ab", "ss"]], 
+        ]
+    )
+    _load_template(url_in)
+    db_api.import_data_to_url(url_in; test_data...)
+    using_spinedb(url_in, SpineOpt)
+    n_a = node(:node_a)
+    n_b = node(:node_b)
+    ng_ab = node(:node_group_ab)
+    u_a = unit(:unit_a)
+    u_b = unit(:unit_b)
+    ug_ab = unit(:unit_group_ab)
+    ss = stochastic_structure(:ss)
+    @test node__stochastic_structure() == [(node=ng_ab, stochastic_structure=ss)]
+    @test units_on__stochastic_structure() == [(unit=ug_ab, stochastic_structure=ss)]
+    SpineOpt.expand_node__stochastic_structure()
+    SpineOpt.expand_units_on__stochastic_structure()
+    @test length(node__stochastic_structure()) == 3
+    @test length(units_on__stochastic_structure()) == 3
+    @test all((node=n, stochastic_structure=ss) in node__stochastic_structure() for n in (ng_ab, n_a, n_b))
+    @test all((unit=u, stochastic_structure=ss) in units_on__stochastic_structure() for u in (ug_ab, u_a, u_b))
+end
