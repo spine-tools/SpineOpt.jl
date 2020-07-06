@@ -28,9 +28,7 @@ function constraint_connection_flow_capacity_indices()
     unique(
         (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
         for (c, ng, d) in indices(connection_capacity)
-        # TODO: do we need to expand groups here? We still get the 'groups' out of `indices(connection_capacity)`,
-        # and then we feed them to `connection_flow_indices` in the constraint below (at which point they get expanded).
-        for t in time_slice(temporal_block=node__temporal_block(node=expand_node_group(ng))) #expand node_group?
+        for t in time_slice(temporal_block=node__temporal_block(node=members(ng)))
         for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in connection_flow_indices(connection=c, node=ng, direction=d, t=t))
         )
