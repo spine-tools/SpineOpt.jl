@@ -54,7 +54,7 @@
                 ["model", "instance", "duration_unit", "hour"],
                 ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
                 ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
-                ["connection", "connection_ab", "connection_monitored", "value_true"],
+                ["connection", "connection_ab", "connection_monitored", true],
                 ["connection", "connection_ab", "connection_reactance", 0.1],
                 ["connection", "connection_ab", "connection_resistance", 0.9],
                 ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],

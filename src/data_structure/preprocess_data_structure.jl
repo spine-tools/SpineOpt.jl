@@ -314,11 +314,11 @@ function generate_lodf()
         (conn_cont, conn_mon) => Dict(:lodf => parameter_value(lodf_trial))
         for (conn_cont, lodf_fn, tolerance) in (
             (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont))
-            for conn_cont in connection(connection_contingency=:value_true, has_lodf=true)
+            for conn_cont in connection(connection_contingency=true, has_lodf=true)
         )
         for (conn_mon, lodf_trial) in (
             (conn_mon, lodf_fn(conn_mon))
-            for conn_mon in connection(connection_monitored=:value_true, has_lodf=true)
+            for conn_mon in connection(connection_monitored=true, has_lodf=true)
         )
         if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
     )
@@ -380,7 +380,7 @@ function generate_variable_indexing_support()
     node_with_state__temporal_block = RelationshipClass(
         :node_with_state__temporal_block,
         [:node, :temporal_block],
-        unique((node=n, temporal_block=tb) for n in node(has_state=:value_true) for tb in node__temporal_block(node=n))
+        unique((node=n, temporal_block=tb) for n in node(has_state=true) for tb in node__temporal_block(node=n))
     )
     start_up_unit__node__direction__temporal_block = RelationshipClass(
         :start_up_unit__node__direction__temporal_block, 
