@@ -63,6 +63,5 @@ function add_constraint_unit_state_transition!(m::Model)
             )
         )
         for (u, stochastic_path, t_before, t_after) in constraint_unit_state_transition_indices()
-        if online_variable_type(unit=u) !== :unit_online_variable_type_linear
     )
 end
