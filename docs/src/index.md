@@ -1,7 +1,7 @@
 # SpineOpt.jl
 
 This package provides the ability to generate and run the Spine energy system integration model
-(in short, *Spine Opt*)
+(in short, *SpineOpt*)
 from databases having the appropriate structure.
 `SpineOpt` uses [`SpineInterface`](https://github.com/Spine-project/SpineInterface.jl)
 to gain access to the contents of the database,
@@ -32,19 +32,19 @@ Once `SpineOpt` is installed, to use it in your programs you just need to say:
 julia> using SpineOpt
 ```
 
-To generate and run Spine Opt for a database, say:
+To generate and run SpineOpt for a database, say:
 
 ```julia
-julia> run_spineopt("...url of a Spine Opt database...")
+julia> run_spineopt("...url of a SpineOpt database...")
 ```
 
-In what follows, we demonstrate how to setup a database for a simple Spine Opt
+In what follows, we demonstrate how to setup a database for a simple SpineOpt
 **using only SpineOpt.jl**.
 However, please note that
 **the recomended way of creating, populating, and maintaining Spine databases is through 
 [Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox).**
 
-### Creating a Spine Opt database
+### Creating a SpineOpt database
 
 Create a new Spine database by running:
 
@@ -68,19 +68,19 @@ julia> db_api.import_data_to_url(url_in; template...)
 ```
 
 This will insert a predefined set of object classes, relationship classes,
-and parameter definitions required by Spine Opt to run,
+and parameter definitions required by SpineOpt to run,
 as well as sensitive default values for those parameters.
 
 ### Defining the model structure
 
-The first step in defining a Spine Opt is to create the objects and relationships
+The first step in defining a SpineOpt is to create the objects and relationships
 that specify the model structure.
 
 
 #### Defining the model object
 
-The **model** object in Spine Opt is an abstraction that represents the model itself.
-Every Spine Opt database needs to have exactly one **model** object.
+The **model** object in SpineOpt is an abstraction that represents the model itself.
+Every SpineOpt database needs to have exactly one **model** object.
 Let's create one for our database by running:
 
 ```julia
@@ -90,7 +90,7 @@ julia> db_api.import_data_to_url(url; objects=[["model", "quick_start"]])
 
 #### Defining the spatial structure
 
-To specify the spatial structure for Spine Opt, you need to define **node**, **unit**, and **connection** objects,
+To specify the spatial structure for SpineOpt, you need to define **node**, **unit**, and **connection** objects,
 together with the relationships that define their interactions.
 You can think of the **node** as sort-of an 'aggregator',
 whereas the **unit** and the **connection** are sort-of 'devices' installed in between **nodes**.
@@ -133,7 +133,7 @@ and from *power_plant* into *electricity_node*.
 
 #### Defining the temporal structure
 
-To specify the temporal structure for Spine Opt, you need to define **temporal_block** objects.
+To specify the temporal structure for SpineOpt, you need to define **temporal_block** objects.
 Think of a **temporal_block** as a distinctive way of 'slicing' time across the model horizon.
 
 To link the temporal structure to the spatial structure, 
@@ -162,7 +162,7 @@ for each 'time-slice' comprised in *hourly\_temporal_block*.
 
 #### Defining the stochastic structure
 
-To specify the stochastic structure for Spine Opt, 
+To specify the stochastic structure for SpineOpt, 
 you need to define **stochastic_scenario** and **stochastic_structure** objects,
 together with **stochastic\_structure__stochastic\_scenario** relationships
 (and optionally, **parent\_stochastic\_scenario__child\_stochastic\_scenario** relationships).
@@ -194,7 +194,7 @@ julia> db_api.import_data_to_url(url; objects=objects, relationships=relationshi
 
 ### Specifying the model behavior
 
-The second step in defining a Spine Opt is to specify the object and parameter values
+The second step in defining a SpineOpt is to specify the object and parameter values
 that dictate the model behavior.
 
 TO BE CONTINUED...

@@ -124,6 +124,6 @@ include("constraints/constraint_min_start_up_ramp.jl")
 include("constraints/constraint_max_nonspin_ramp_up.jl")
 include("constraints/constraint_min_nonspin_ramp_up.jl")
 
-const template = JSON.parsefile(joinpath(dirname(pathof(@__MODULE__)), "..", "data", "spineopt_template.json"))
+_template() = JSON.parsefile(joinpath(dirname(pathof(@__MODULE__)), "..", "data", "spineopt_template.json"))
 
 end

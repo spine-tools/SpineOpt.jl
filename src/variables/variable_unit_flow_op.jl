@@ -37,8 +37,8 @@ function unit_flow_op_indices(;
         stochastic_scenario=anything,
         t=anything
     )
-    unit = expand_unit_group(unit)
-    node = expand_node_group(node)
+    unit = members(unit)
+    node = members(node)
     [
         (unit=u, node=n, direction=d, i=i, stochastic_scenario=s, t=t)
         for (u, n) in indices(operating_points, unit=unit, node=node)

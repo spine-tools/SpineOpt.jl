@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-#TODO: support nodal balance sense
-#TODO: as proposed in the wiki on groups: We should be able to support
+# TODO: support nodal balance sense
+# TODO: as proposed in the wiki on groups: We should be able to support
 # a) node_balance for node group and NO balance for underlying node
 # b) node_balance for node group AND balance for underlying node
 
@@ -63,12 +63,12 @@ function add_constraint_nodal_balance!(m::Model)
             (n, _internal_nodes(n), s, t)
             for (n, s, t) in node_stochastic_time_indices()
             if nodal_balance_sense(node=n) !== :none
-            && all(balance_type(node=ng) !== :balance_type_group for ng in node_group__node(node2=n))
+            && all(balance_type(node=ng) !== :balance_type_group for ng in groups(n))
         )
     )
 end
 
-_internal_nodes(n::Object) = balance_type(node=n) === :balance_type_group ? node_group__node(node1=n) : []
+_internal_nodes(n::Object) = balance_type(node=n) === :balance_type_group ? members(n) : []
 
 """
     _connection_nodes(conn)
