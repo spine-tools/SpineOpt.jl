@@ -62,11 +62,11 @@ function add_constraint_min_start_up_ramp!(m::Model)
             >=
             + sum(
                 units_started_up[u, s, t]
+                * min_startup_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)]
+                * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)]
                 for (u, s, t) in units_on_indices(unit=u, stochastic_scenario=s, t=t_overlaps_t(t))
             )
-            * min_startup_ramp[(unit=u, node=ng, direction=d)]
-            * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, t=t)]
-            * unit_capacity[(unit=u, node=ng, direction=d, t=t)]
         )
         for (u, ng, d, s, t) in constraint_min_start_up_ramp_indices()
     )
