@@ -50,12 +50,12 @@ Constrain running by minimum up time.
 function add_constraint_min_up_time!(m::Model)
     @fetch units_on, units_started_up= m.ext[:variables] #, nonspin_shutting_down
     m.ext[:constraints][:min_up_time] = Dict(
-        (u, stochastic_path, t) => @constraint(
+        (u, s, t) => @constraint(
             m,
             + expr_sum(
                 + units_on[u, s, t]
                 for (u, s, t) in units_on_indices(
-                    unit=u, stochastic_scenario=stochastic_path, t=t
+                    unit=u, stochastic_scenario=s, t=t
                 );
                 init=0
             )
@@ -65,7 +65,7 @@ function add_constraint_min_up_time!(m::Model)
             #     + nonspin_shutting_down[u, n, s, t]
             #     for (u, n, s, t) in nonspin_shutting_down_indices(
             #         unit=u,
-            #         stochastic_scenario=stochastic_path,
+            #         stochastic_scenario=s,
             #         t=t_before_t(t_after=t_before_t(t_after=t))
             #         );
             #         init=0
@@ -74,11 +74,11 @@ function add_constraint_min_up_time!(m::Model)
                 + units_started_up[u, s_past, t_past]
                 for (u, s_past, t_past) in units_on_indices(
                     unit=u,
-                    stochastic_scenario=stochastic_path,
+                    stochastic_scenario=s,
                     t=to_time_slice(TimeSlice(end_(t) - min_up_time(unit=u), end_(t)))
                 )
             )
         )
-        for (u, stochastic_path, t) in constraint_min_up_time_indices()
+        for (u, s, t) in constraint_min_up_time_indices()
     )
 end
