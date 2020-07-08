@@ -31,11 +31,11 @@ function add_constraint_operating_point_bounds!(m::Model)
             + unit_flow_op[u, n, d, op, s, t]
             <=
             (
-                + operating_points[(unit=u, node=n, direction=d, i=op)]  # TODO: Stochastic parameters?
-                - ((op > 1) ? operating_points[(unit=u, node=n, direction=d, i=op - 1)] : 0)
+                + operating_points[(unit=u, node=n, direction=d, stochastic_scenario=s, i=op)]
+                - ((op > 1) ? operating_points[(unit=u, node=n, direction=d, stochastic_scenario=s, i=op - 1)] : 0)
             )
-            * unit_capacity[(unit=u, node=n, direction=d, t=t)]
-            * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, t=t)]
+            * unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)]
+            * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)]
             # TODO: extend to investment functionality ? (is that even possible)
         )
         for (u, n, d) in indices(unit_capacity)
