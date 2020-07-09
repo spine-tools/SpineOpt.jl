@@ -67,7 +67,7 @@ Ratio of `connection_flow` variables.
 function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, sense)
     @fetch connection_flow = m.ext[:variables]
     m.ext[:constraints][ratio_out_in.name] = Dict(
-        (conn, ng_out, ng_in, stochastic_path, t) => sense_constraint(
+        (conn, ng_out, ng_in, s, t) => sense_constraint(
             m,
             + expr_sum(
                 + connection_flow[conn, n_out, d, s, t_short] * duration(t_short)
@@ -75,13 +75,17 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
                     connection=conn, 
                     node=ng_out, 
                     direction=direction(:to_node), 
-                    stochastic_scenario=stochastic_path, 
+                    stochastic_scenario=s, 
                     t=t_in_t(t_long=t)
                 );
                 init=0
             ),
             sense,
-            + ratio_out_in[(connection=conn, node1=ng_out, node2=ng_in, t=t)]
+            +expr_sum(
+                ratio_out_in[(connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, t=t)]
+                for s in s;
+                init=0
+            ) / length(s)
             * expr_sum(
                 + connection_flow[conn, n_in, d, s, t_short]
                 * overlap_duration(t_short, t - connection_flow_delay(connection=conn, node1=ng_out, node2=ng_in))
@@ -89,13 +93,13 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
                     connection=conn,
                     node=ng_in,
                     direction=direction(:from_node),
-                    stochastic_scenario=stochastic_path,
+                    stochastic_scenario=s,
                     t=to_time_slice(t - connection_flow_delay(connection=conn, node1=ng_out, node2=ng_in, t=t))
                 );
                 init=0
             )
         )
-        for (conn, ng_out, ng_in, stochastic_path, t) in constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
+        for (conn, ng_out, ng_in, s, t) in constraint_ratio_out_in_connection_flow_indices(ratio_out_in)
     )
 end
 
