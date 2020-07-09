@@ -81,11 +81,11 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
                 init=0
             ),
             sense,
-            +expr_sum(
+            #+ expr_sum( TODO: This is required for stochastic parameters, but currently throws an error.
                 ratio_out_in[(connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, t=t)]
-                for s in s;
-                init=0
-            ) / length(s)
+            #    for s in s;
+            #    init=0
+            #) / length(s)
             * expr_sum(
                 + connection_flow[conn, n_in, d, s, t_short]
                 * overlap_duration(t_short, t - connection_flow_delay(connection=conn, node1=ng_out, node2=ng_in))
