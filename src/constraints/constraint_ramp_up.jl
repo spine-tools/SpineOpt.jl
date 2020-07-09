@@ -61,12 +61,12 @@ function add_constraint_ramp_up!(m::Model)
             )
             <=
             + sum(
-                units_on[u, s, t] - units_started_up[u, s, t]
+                (units_on[u, s, t] - units_started_up[u, s, t])
+                * ramp_up_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)]
+                * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)]
                 for (u,s,t) in units_on_indices(unit=u, stochastic_scenario=s, t=t_overlaps_t(t))
             )
-            * ramp_up_limit[(unit=u, node=ng, direction=d, t=t, stochastic_scenario=s)]
-            * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, t=t, stochastic_scenario=s)]
-            * unit_capacity[(unit=u, node=ng, direction=d, t=t, stochastic_scenario=s)]
         )
         for (u, ng, d, s, t) in constraint_ramp_up_indices()
     )
