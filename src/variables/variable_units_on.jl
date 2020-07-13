@@ -61,6 +61,8 @@ function add_variable_units_on!(m::Model)
     	lb=x -> 0,
     	bin=units_on_bin,
     	int=units_on_int,
-    	fix_value=x -> fix_units_on(unit=x.unit, stochastic_scenario=x.s, analysis_time=t0, t=x.t, _strict=false)
+    	fix_value=x -> fix_units_on(
+            unit=x.unit, stochastic_scenario=x.stochastic_scenario, analysis_time=t0, t=x.t, _strict=false
+        )
     )
 end
