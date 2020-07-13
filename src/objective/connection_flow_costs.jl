@@ -24,11 +24,12 @@ Create an expression for `connection_flow` costs.
 """
 function connection_flow_costs(m::Model,t1)
     @fetch connection_flow = m.ext[:variables]
+    t0 = start(current_window)
     @expression(
         m,
         expr_sum(
             connection_flow[conn, n, d, s, t] * duration(t)
-            * connection_flow_cost[(connection=conn, stochastic_scenario=s, t=t)]
+            * connection_flow_cost[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for conn in indices(connection_flow_cost)
             for (conn, n, d, s, t) in connection_flow_indices(connection=conn)
