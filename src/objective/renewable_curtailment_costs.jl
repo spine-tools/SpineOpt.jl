@@ -24,14 +24,15 @@ Create an expression for curtailment costs of renewables.
 """
 function renewable_curtailment_costs(m::Model,t1)
     @fetch unit_flow = m.ext[:variables]
+    t0 = start(current_window)
     @expression(
         m,
         expr_sum(
-            renewable_curtailment_cost[(unit=u, stochastic_scenario=s, t=t)]
+            renewable_curtailment_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             * (
-                unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)]
-                * unit_availability_factor[(unit=u, stochastic_scenario=s, t=t)]
+                unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
                 - unit_flow[u, n, d, s, t]
             ) * duration(t)
             for u in indices(curtailment_cost)

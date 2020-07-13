@@ -53,6 +53,7 @@ units_on_int(x) = online_variable_type(unit=x.unit) == :unit_online_variable_typ
 Add `units_on` variables to model `m`.
 """
 function add_variable_units_on!(m::Model)
+    t0 = start(current_window)
     add_variable!(
     	m,
     	:units_on, 
@@ -60,6 +61,6 @@ function add_variable_units_on!(m::Model)
     	lb=x -> 0,
     	bin=units_on_bin,
     	int=units_on_int,
-    	fix_value=x -> fix_units_on(unit=x.unit, t=x.t, _strict=false)
+    	fix_value=x -> fix_units_on(unit=x.unit, stochastic_scenario=x.s, analysis_time=t0, t=x.t, _strict=false)
     )
 end
