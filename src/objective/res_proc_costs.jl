@@ -24,11 +24,12 @@ Add expression for reserve procurement costs.
 """
 function res_proc_costs(m::Model,t1)
     @fetch unit_flow = m.ext[:variables]
+    t0 = start(current_window)
     @expression(
         m,
         expr_sum(
             unit_flow[u, n, d, s, t] * duration(t)
-            * reserve_procurement_cost[(node=n, stochastic_scenario=s, t=t)]
+            * reserve_procurement_cost[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for n in indices(reserve_procurement_cost)  # TODO: change this to (u, n, d) indices
             for (u, n, d, s, t) in unit_flow_indices(node=n)
