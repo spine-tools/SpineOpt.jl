@@ -166,7 +166,7 @@
         ["unit__node__node", "max_ratio_out_out_unit_flow", null, null, "Maximum ratio between two `unit_flows` going from the `unit` into the two `nodes`."],
         ["unit__node__node", "max_units_on_coefficient_in_in", 0.0, null, "Optional coefficient for the `units_on` variable impacting the `max_ratio_in_in_unit_flow` constraint."],
         ["unit__node__node", "max_units_on_coefficient_in_out", 0.0, null, "Optional coefficient for the `units_on` variable impacting the `max_ratio_in_out_unit_flow` constraint."],
-        ["unit__node__node", "max_units_on_coefficient_out_in", 0.0, null, "Optional coefficient for the `units_on` variable impacting the `max_ratio_out_in_unit_flow` constraint.",
+        ["unit__node__node", "max_units_on_coefficient_out_in", 0.0, null, "Optional coefficient for the `units_on` variable impacting the `max_ratio_out_in_unit_flow` constraint."],
         ["unit__node__node", "max_units_on_coefficient_out_out", 0.0, null, "Optional coefficient for the `units_on` variable impacting the `max_ratio_out_out_unit_flow` constraint."],
         ["unit__node__node", "min_ratio_in_in_unit_flow", null, null, "Minimum ratio between two `unit_flows` coming into the `unit` from the two `nodes`."],
         ["unit__node__node", "min_ratio_in_out_unit_flow", null, null, "Minimum ratio between an incoming `unit_flow` from the first `node` and an outgoing `unit_flow` to the second `node`."],
