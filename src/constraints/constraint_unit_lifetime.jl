@@ -47,12 +47,12 @@ Constrain units_invested_available by the investment lifetime of a unit.
 function add_constraint_unit_lifetime!(m::Model)
     @fetch units_invested_available, units_invested = m.ext[:variables]
     m.ext[:constraints][:unit_lifetime] = Dict(
-        (u, stochastic_path, t) => @constraint(
+        (u, s, t) => @constraint(
             m,
             + expr_sum(
                 + units_invested_available[u, s, t]
                 for (u, s, t) in units_invested_available_indices(
-                    unit=u, stochastic_scenario=stochastic_path, t=t
+                    unit=u, stochastic_scenario=s, t=t
                 );
                 init=0
             )
@@ -61,11 +61,11 @@ function add_constraint_unit_lifetime!(m::Model)
                 + units_invested[u, s_past, t_past]
                 for (u, s_past, t_past) in units_invested_available_indices(
                     unit=u,
-                    stochastic_scenario=stochastic_path,
+                    stochastic_scenario=s,
                     t=to_time_slice(TimeSlice(end_(t) - unit_investment_lifetime(unit=u), end_(t)))
                 )
             )
         )
-        for (u, stochastic_path, t) in constraint_unit_lifetime_indices()
+        for (u, s, t) in constraint_unit_lifetime_indices()
     )
 end
