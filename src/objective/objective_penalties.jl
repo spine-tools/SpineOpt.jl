@@ -29,8 +29,8 @@ function objective_penalties(m::Model, t1)
         m,
         expr_sum(
             (node_slack_neg[n, s, t] + node_slack_pos[n, s, t]) * duration(t)
-            * node_slack_penalty[(node=n, t=t)]
-            * node_stochastic_scenario_weight(node=n, stochastic_scenario=s)
+            * node_slack_penalty[(node=n, stochastic_scenario=s, t=t)]
+            * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for (n, s, t) in node_slack_indices()
             if end_(t) <= t1;
             init=0

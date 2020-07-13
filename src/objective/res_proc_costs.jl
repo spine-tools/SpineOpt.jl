@@ -27,7 +27,9 @@ function res_proc_costs(m::Model,t1)
     @expression(
         m,
         expr_sum(
-            unit_flow[u, n, d, s, t] * duration(t) * reserve_procurement_cost[(node=n,t=t)]
+            unit_flow[u, n, d, s, t] * duration(t)
+            * reserve_procurement_cost[(node=n, stochastic_scenario=s, t=t)]
+            * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for n in indices(reserve_procurement_cost)  # TODO: change this to (u, n, d) indices
             for (u, n, d, s, t) in unit_flow_indices(node=n)
             if end_(t) <= t1;
@@ -35,4 +37,3 @@ function res_proc_costs(m::Model,t1)
         )
     )
 end
-# TODO: add weight scenario tree

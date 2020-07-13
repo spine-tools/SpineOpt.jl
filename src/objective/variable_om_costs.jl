@@ -28,7 +28,7 @@ function variable_om_costs(m::Model, t1)
         m,
         expr_sum(
             + unit_flow[u, n, d, s, t] * duration(t)
-            * vom_cost[(unit=u, node=n, direction=d, t=t)]
+            * vom_cost[(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)]
             * node_stochastic_scenario_weight(node=n, stochastic_scenario=s)
             for (u, n, d) in indices(vom_cost)
             for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d)
@@ -37,4 +37,3 @@ function variable_om_costs(m::Model, t1)
         )
     )
 end
-# TODO: add weight scenario tree

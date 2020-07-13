@@ -27,9 +27,13 @@ function renewable_curtailment_costs(m::Model,t1)
     @expression(
         m,
         expr_sum(
-            (unit_capacity[(unit=u, node=n, direction=d,t=t)] * unit_availability_factor[(unit=u,t=t)] - unit_flow[u, n, d, s, t])
-            * duration(t)
-            * renewable_curtailment_cost[(unit=u, t=t)]
+            renewable_curtailment_cost[(unit=u, stochastic_scenario=s, t=t)]
+            * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
+            * (
+                unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)]
+                * unit_availability_factor[(unit=u, stochastic_scenario=s, t=t)]
+                - unit_flow[u, n, d, s, t]
+            ) * duration(t)
             for u in indices(curtailment_cost)
             for (u, n, d) in indices(unit_capacity; unit=u)
             for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d)
@@ -38,4 +42,3 @@ function renewable_curtailment_costs(m::Model,t1)
         )
     )
 end
-# TODO: add weight scenario tree

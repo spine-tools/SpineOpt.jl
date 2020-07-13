@@ -28,8 +28,8 @@ function operating_costs(m::Model, t1)
         m,
         expr_sum(
             unit_flow[u, n, d, s, t] * duration(t)
-            * operating_cost[(unit=u, node=ng, direction=d, t=t)]  # op_cost(ng) = sum(op_cost(n))
-            * node_stochastic_scenario_weight(node=ng, stochastic_scenario=s)
+            * operating_cost[(unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)]  # op_cost(ng) = sum(op_cost(n))
+            * node_stochastic_scenario_weight[(node=ng, stochastic_scenario=s)]
             for (u, ng, d) in indices(operating_cost)
             for (u, n, d, s, t) in unit_flow_indices(unit=u, node=ng, direction=d)
             if end_(t) <= t1;
