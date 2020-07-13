@@ -63,6 +63,9 @@ end
     add_constraint_ratio_out_in_connection_flow!(m, ratio_out_in, sense)
 
 Ratio of `connection_flow` variables.
+
+Note that the `<sense>_ratio_<directions>_connection_flow` parameter uses the stochastic dimensions of the second
+<direction>!
 """
 function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, sense)
     @fetch connection_flow = m.ext[:variables]
@@ -81,13 +84,9 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
                 init=0
             ),
             sense,
-            #+ expr_sum( TODO: This is required for stochastic parameters, but currently throws an error.
-                ratio_out_in[(connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, t=t)]
-            #    for s in s;
-            #    init=0
-            #) / length(s)
-            * expr_sum(
+            + expr_sum(
                 + connection_flow[conn, n_in, d, s, t_short]
+                * ratio_out_in[(connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, t=t)]
                 * overlap_duration(t_short, t - connection_flow_delay(connection=conn, node1=ng_out, node2=ng_in))
                 for (conn, n_in, d, s, t_short) in connection_flow_indices(
                     connection=conn,

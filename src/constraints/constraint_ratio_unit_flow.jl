@@ -56,6 +56,9 @@ end
     add_constraint_ratio_unit_flow!(m, ratio, sense, d1, d2)
 
 Ratio of `unit_flow` variables.
+
+Note that the `<sense>_ratio_<directions>_unit_flow` parameter uses the stochastic dimensions of the second
+<direction>!
 """
 function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, sense, d1, d2)
     @fetch unit_flow, units_on = m.ext[:variables]
@@ -71,13 +74,9 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
             )
             ,
             sense,
-            #+ expr_sum( TODO: This is required for stochastic parameters, but currently throws an error.
-                ratio[(unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, t=t)]
-            #    for s in s;
-            #    init=0
-            #) / length(s)
-            * expr_sum(
+            + expr_sum(
                 unit_flow[u, n2, d2, s, t_short] * duration(t_short)
+                * ratio[(unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, t=t)]
                 for (u, n2, d2, s, t_short) in unit_flow_indices(
                     unit=u, node=ng2, direction=d2, stochastic_scenario=s, t=t_in_t(t_long=t)
                 );
