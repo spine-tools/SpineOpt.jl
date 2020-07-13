@@ -197,7 +197,7 @@
         ["unit__to_node", "vom_cost", null, null, "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."],
         ["unit__to_node__unit_constraint", "graph_view_position", null, null, null],
         ["unit__to_node__unit_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `unit_constraint`?"],
-        ["unit__unit_constraint", "units_on_coefficient", null, null, "Coefficient of a `units_on` variable for a custom `unit_constraint`?"],
+        ["unit__unit_constraint", "units_on_coefficient", 0.0, null, "Coefficient of a `units_on` variable for a custom `unit_constraint`?"],
         ["unit__commodity", "max_cum_in_unit_flow_bound", null, null, "Set a maximum cumulative upped bound for a `unit_flow`?"]
     ]
 }
