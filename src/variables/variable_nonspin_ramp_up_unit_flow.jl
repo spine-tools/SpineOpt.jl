@@ -56,13 +56,20 @@ end
 Add `nonspin_ramp_up_unit_flow` variables to model `m`.
 """
 function add_variable_nonspin_ramp_up_unit_flow!(m::Model)
+    t0 = start(current_window)
     add_variable!(
         m,
         :nonspin_ramp_up_unit_flow,
         nonspin_ramp_up_unit_flow_indices;
         lb=x -> 0,
         fix_value=x -> fix_nonspin_ramp_up_unit_flow(
-            unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false
+            unit=x.unit,
+            node=x.node,
+            direction=x.direction,
+            stochastic_scenario=x.stochastic_scenario,
+            analysis_time=t0,
+            t=x.t,
+            _strict=false
         )
     )
 end

@@ -44,6 +44,7 @@ number_of_unit, unit_conv_cap_to_flow, unit_availability_factor` exist.
 """
 function add_constraint_minimum_operating_point!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
+    t0 = start(current_window)
     m.ext[:constraints][:minimum_operating_point] = Dict(
         (u, ng, d, s, t) => @constraint(
             m,
@@ -58,9 +59,9 @@ function add_constraint_minimum_operating_point!(m::Model)
             >=
             + expr_sum(
                 + units_on[u, s, t1] * min(duration(t), duration(t1))
-                * minimum_operating_point[(unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)]
-                * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)]
-                * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)]
+                * minimum_operating_point[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for (u, s, t1) in units_on_indices(
                     unit=u, stochastic_scenario=s, t=t_overlaps_t(t)
                 );

@@ -50,6 +50,7 @@ Limit the maximum ramp of `ramp_up_unit_flow` of a `unit` or `unit_group` if the
 """
 function add_constraint_ramp_up!(m::Model)
     @fetch units_on, units_started_up, ramp_up_unit_flow = m.ext[:variables]
+    t0 = start(current_window)
     m.ext[:constraints][:ramp_up] = Dict(
         (u, ng, d, s, t) => @constraint(
             m,
@@ -62,9 +63,9 @@ function add_constraint_ramp_up!(m::Model)
             <=
             + sum(
                 (units_on[u, s, t] - units_started_up[u, s, t])
-                * ramp_up_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)]
-                * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)]
-                * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, t=t)]
+                * ramp_up_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for (u,s,t) in units_on_indices(unit=u, stochastic_scenario=s, t=t_overlaps_t(t))
             )
         )
