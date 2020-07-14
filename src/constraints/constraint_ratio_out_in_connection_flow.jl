@@ -69,6 +69,7 @@ Note that the `<sense>_ratio_<directions>_connection_flow` parameter uses the st
 """
 function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, sense)
     @fetch connection_flow = m.ext[:variables]
+    t0 = start(current_window)
     m.ext[:constraints][ratio_out_in.name] = Dict(
         (conn, ng_out, ng_in, s, t) => sense_constraint(
             m,
@@ -86,7 +87,9 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
             sense,
             + expr_sum(
                 + connection_flow[conn, n_in, d, s, t_short]
-                * ratio_out_in[(connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, t=t)]
+                * ratio_out_in[(
+                    connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, analysis_time=t0, t=t
+                )]
                 * overlap_duration(t_short, t - connection_flow_delay(connection=conn, node1=ng_out, node2=ng_in))
                 for (conn, n_in, d, s, t_short) in connection_flow_indices(
                     connection=conn,
