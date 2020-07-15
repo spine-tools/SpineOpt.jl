@@ -290,9 +290,6 @@ end
 Roll a `TimeSliceSet` in time by a period specified by `forward`.
 """
 function roll_time_slice_set!(tss::TimeSliceSet, forward::Union{Period,CompoundPeriod})
-    roll!.(tss.time_slices, forward)
-    for key in keys(tss.block_time_slice_map)
-        roll!(tss.block_time_slice_map[key], forward)
-    end
-    tss
+    roll!.(values(tss.block_time_slice_map), forward)
+    nothing
 end
