@@ -279,7 +279,20 @@ function roll_temporal_structure()
     roll_forward_ === nothing && return false
     roll_forward_ == 0 && return false
     roll!(current_window, roll_forward_)
-    roll!.(time_slice(), roll_forward_)
-    roll!.(history_time_slice(), roll_forward_)
+    roll_time_slice_set!(time_slice, roll_forward_)
+    roll_time_slice_set!(history_time_slice, roll_forward_)
     true
+end
+
+"""
+    roll_time_slice_set!(tss::TimeSliceSet, forward::Union{Period,CompoundPeriod})
+
+Roll a `TimeSliceSet` in time by a period specified by `forward`.
+"""
+function roll_time_slice_set!(tss::TimeSliceSet, forward::Union{Period,CompoundPeriod})
+    roll!.(tss.time_slices, forward)
+    for key in keys(tss.block_time_slice_map)
+        roll!(tss.block_time_slice_map[key], forward)
+    end
+    tss
 end
