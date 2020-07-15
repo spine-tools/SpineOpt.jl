@@ -30,7 +30,7 @@
         ["unit__from_node", ["unit", "node"], "Defines the `nodes` the `unit` can take input from, and holds most `unit_flow` variable specific parameters."],
         ["unit__from_node__unit_constraint", ["unit", "node", "unit_constraint"], "Defines which input `unit_flows` are included in the `unit_constraint`, and holds their parameters?"],
         ["unit__node__node", ["unit", "node", "node"], null],
-        ["unit__commodity", ["unit", "commodity"], null]
+        ["unit__commodity", ["unit", "commodity"], null],
         ["units_on__stochastic_structure", ["unit", "stochastic_structure"], "Defines which specific `stochastic_structure` is used for the `units_on` variable of the `unit`. Only one `stocahstic_structure` is permitted per `unit`."],
         ["units_on__temporal_block", ["unit", "temporal_block"], "Defines which specific `temporal_blocks` are used by the `units_on` variable of the `unit`."],
         ["unit__investment_stochastic_structure", ["unit", "stochastic_structure"], "Sets the stochastic structure for investment decisions - overrides `model__default_investment_stochastic_structure`. TODO: THIS RELATIONSHIP DOESN'T CURRENTLY APPEAR IN THE MODEL!"],
