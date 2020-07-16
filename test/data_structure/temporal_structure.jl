@@ -289,4 +289,30 @@ end
         @test _is_time_slice_equal(SpineOpt.to_time_slice(bc1)[1], b2)
         @test _is_time_slice_equal(SpineOpt.to_time_slice(bc2)[1], b2)
     end
+    @testset "to_time_slice with rolling" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        object_parameter_values = [
+            ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2001-01-01T00:00:00")],
+            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2003-01-01T00:00:00")],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1Y")],
+            ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "6M")],
+            ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "6M")],
+        ]
+        db_api.import_data_to_url(
+            url_in; object_parameter_values=object_parameter_values
+        )
+        using_spinedb(url_in, SpineOpt)
+        SpineOpt.generate_temporal_structure()
+        a1, a2 = time_slice(temporal_block=temporal_block(:block_a))
+        t1 = TimeSlice(DateTime(2001, 1), DateTime(2001, 6))
+        t2 = TimeSlice(DateTime(2001, 7), DateTime(2001, 12))
+        @test _is_time_slice_equal(SpineOpt.to_time_slice(t1)[1], a1)
+        @test _is_time_slice_equal(SpineOpt.to_time_slice(t2)[1], a2)
+        SpineOpt.roll_temporal_structure()
+        t1 = TimeSlice(DateTime(2002, 1), DateTime(2002, 6))
+        t2 = TimeSlice(DateTime(2002, 7), DateTime(2002, 12))
+        @test _is_time_slice_equal(SpineOpt.to_time_slice(t1)[1], a1)
+        @test _is_time_slice_equal(SpineOpt.to_time_slice(t2)[1], a2)
+    end
 end
