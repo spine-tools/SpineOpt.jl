@@ -435,19 +435,19 @@ end
 Generate `Relationships` related to modelling investments.
 """
 function expand_default_investment_relationships()
-    expand_unit__default_investment_temporal_block()
-    expand_unit__default_investment_stochastic_structure()
+    expand_model__default_investment_temporal_block()
+    expand_model__default_investment_stochastic_structure()
 end 
 
 """
-    expand_unit__default_investment_temporal_block()
+    expand_model__default_investment_temporal_block()
 
 Process the `model__default_investment_temporal_block` relationship.
 
 If a `unit__investment_temporal_block` relationship is not defined, 
 then create one using `model__default_investment_temporal_block`
 """
-function expand_unit__default_investment_temporal_block()
+function expand_model__default_investment_temporal_block()
     add_relationships!(
         unit__investment_temporal_block, 
         [
@@ -459,14 +459,14 @@ function expand_unit__default_investment_temporal_block()
 end
 
 """
-    expand_unit__default_investment_stochastic_structure()
+    expand_model__default_investment_stochastic_structure()
 
 Process the `model__default_investment_stochastic_structure` relationship.
 
 If a `unit__investment_stochastic_structure` relationship is not defined, 
 then create one using `model__default_investment_stochastic_structure`
 """
-function expand_unit__default_investment_stochastic_structure()
+function expand_model__default_investment_stochastic_structure()
     add_relationships!(
         unit__investment_stochastic_structure, 
         [
