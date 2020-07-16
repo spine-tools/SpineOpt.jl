@@ -33,7 +33,7 @@ function preprocess_data_structure()
     generate_direction()
     generate_network_components()
     generate_variable_indexing_support()
-    expand_default_investment_relationships()
+    expand_model_default_relationships()
 end
 
 """
@@ -430,24 +430,26 @@ function generate_variable_indexing_support()
 end
 
 """
-    expand_default_investment_relationships()
+    expand_model_default_relationships()
 
-Generate `Relationships` related to modelling investments.
+Generate model default `temporal_block` and `stochastic_structure` relationships for non-specified cases.
 """
-function expand_default_investment_relationships()
-    expand_unit__default_investment_temporal_block()
-    expand_unit__default_investment_stochastic_structure()
+function expand_model_default_relationships()
+    expand_model__default_temporal_block()
+    expand_model__default_stochastic_structure()
+    expand_model__default_investment_temporal_block()
+    expand_model__default_investment_stochastic_structure()
 end 
 
 """
-    expand_unit__default_investment_temporal_block()
+    expand_model__default_investment_temporal_block()
 
 Process the `model__default_investment_temporal_block` relationship.
 
 If a `unit__investment_temporal_block` relationship is not defined, 
 then create one using `model__default_investment_temporal_block`
 """
-function expand_unit__default_investment_temporal_block()
+function expand_model__default_investment_temporal_block()
     add_relationships!(
         unit__investment_temporal_block, 
         [
@@ -459,14 +461,14 @@ function expand_unit__default_investment_temporal_block()
 end
 
 """
-    expand_unit__default_investment_stochastic_structure()
+    expand_model__default_investment_stochastic_structure()
 
 Process the `model__default_investment_stochastic_structure` relationship.
 
 If a `unit__investment_stochastic_structure` relationship is not defined, 
 then create one using `model__default_investment_stochastic_structure`
 """
-function expand_unit__default_investment_stochastic_structure()
+function expand_model__default_investment_stochastic_structure()
     add_relationships!(
         unit__investment_stochastic_structure, 
         [
@@ -476,5 +478,55 @@ function expand_unit__default_investment_stochastic_structure()
             )
             for ss in model__default_investment_stochastic_structure(model=first(model()))
         ]
+    )
+end
+
+"""
+    expand_model__default_stochastic_structure()
+
+Expand the `model__default_stochastic_structure` relationship to all `nodes` without `node__stochastic_structure`
+and `units_on` without `units_on__stochastic_structure`.
+"""
+function expand_model__default_stochastic_structure()
+    add_relationships!(
+        node__stochastic_structure,
+        unique(
+            (node=n, stochastic_structure=ss)
+            for n in setdiff(node(), node__stochastic_structure(stochastic_structure=anything))
+            for ss in model__default_stochastic_structure(model=first(model()))
+        )
+    )
+    add_relationships!(
+        units_on__stochastic_structure,
+        unique(
+            (unit=u, stochastic_structure=ss)
+            for u in setdiff(unit(), units_on__stochastic_structure(stochastic_structure=anything))
+            for ss in model__default_stochastic_structure(model=first(model()))
+        )
+    )
+end
+
+"""
+    expand_model__default_temporal_block()
+
+Expand the `model__default_temporal_block` relationship to all `nodes` without `node__temporal_block`
+and `units_on` without `units_on_temporal_block`.
+"""
+function expand_model__default_temporal_block()
+    add_relationships!(
+        node__temporal_block,
+        unique(
+            (node=n, temporal_block=tb)
+            for n in setdiff(node(), node__temporal_block(temporal_block=anything))
+            for tb in model__default_temporal_block(model=first(model()))
+        )
+    )
+    add_relationships!(
+        units_on__temporal_block,
+        unique(
+            (unit=u, temporal_block=tb)
+            for u in setdiff(unit(), units_on__temporal_block(temporal_block=anything))
+            for tb in model__default_temporal_block(model=first(model()))
+        )
     )
 end
