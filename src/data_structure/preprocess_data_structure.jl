@@ -27,13 +27,13 @@ Runs a number of other functions processing different aspecs of the input data i
 function preprocess_data_structure()
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
+    expand_model_default_relationships()
     # NOTE: generate direction before calling `generate_network_components`,
     # so calls to `connection__from_node` don't corrupt lookup cache
     add_connection_relationships()
     generate_direction()
     generate_network_components()
     generate_variable_indexing_support()
-    expand_model_default_relationships()
 end
 
 """
