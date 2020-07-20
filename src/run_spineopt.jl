@@ -174,7 +174,7 @@ function rerun_spineopt(
         @logtime level2 "Updating objective..." update_varying_objective!(m)
         k += 1
     end
-     @logtime level2 "Writing report..." write_report(results, url_out)
+     @logtime level2 "Writing report..." write_report(m, results, url_out)
      m
 end
 
@@ -284,7 +284,7 @@ function _pulldims(input::Dict{K,V}, dims::Symbol...) where {K<:NamedTuple,V}
     result
 end
 
-function write_report(results, default_url)
+function write_report(model, results, default_url)
     reports = Dict()
     for (rpt, out) in report__output()
         value = get(results, out.name, nothing)
@@ -293,7 +293,9 @@ function write_report(results, default_url)
         url === nothing && (url = default_url)
         url_reports = get!(reports, url, Dict())
         output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
-        output_params[out.name] = Dict{NamedTuple,TimeSeries}(
+        parameter_name = out.name
+        parameter_name in keys(model.ext[:objective_terms]) && (parameter_name = Symbol("objective-$(out.name)"))
+        output_params[parameter_name] = Dict{NamedTuple,TimeSeries}(
             k => TimeSeries(first.(v), last.(v), false, false) for (k, v) in _pulldims(value, :t)
         )
     end
