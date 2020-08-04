@@ -6,8 +6,12 @@ makedocs(
         prettyurls = get(ENV, "CI", nothing) == "true"
     ),
     pages = [
-        "Home" => "index.md",
-        "Library" => "library.md",
+        "Getting Started" => "gettingstarted.md",
+        "Advanced Usage" => "advancedusage.md",
+        "Mathematical formulation" => Any[
+        "Objective" => "Mathematicalformulation\\objectivefunction.md",
+        "Constraints" => "Mathematicalformulation\\constraints.md"
+        ]
     ]
 )
 
