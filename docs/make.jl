@@ -1,5 +1,5 @@
 using Documenter, SpineOpt
-
+include("$(@__DIR__)\\src\\write_systemcomponents.jl")
 makedocs(
     sitename = "SpineOpt.jl",
     format = Documenter.HTML(
@@ -7,6 +7,7 @@ makedocs(
     ),
     pages = [
         "Getting Started" => "gettingstarted.md",
+        "System Components" => "systemcomponents.md",
         "Advanced Usage" => "advancedusage.md",
         "Mathematical formulation" => Any[
         "Objective" => "Mathematicalformulation\\objectivefunction.md",

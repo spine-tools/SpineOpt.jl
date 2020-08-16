@@ -1,5 +1,13 @@
-# Objective Function
+```math
+\begin{aligned}
+& ProductionCost = \sum_{timesteps} test \\
+\end{aligned}
+```
 
-## Fuel costs
+```math
+\newcommand{\vflow}[1]{flow} 
+```
 
-## ...
+```math
+\vflow
+```

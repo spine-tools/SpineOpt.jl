@@ -1,6 +1,7 @@
 # Getting started
 
 ## Introduction
+*[Spineopt]: longer text
 
 This provides the ability to generate and run the Spine energy system integration model
 (in short, *SpineOpt*)
@@ -70,7 +71,7 @@ that specify the model structure.
 The **model** object in SpineOpt is an abstraction that represents the model itself.
 Every SpineOpt database needs to have exactly one **model** object.
 
-One way to add a model object to "example.db" using the **Stacked view** in SpineToolbox is to right-click the *object_class* model and select "Add objects" from the drop-down menu. By adding the object name "quick_start", we have 
+One way to add a model object to "example.db" using the **Stacked view** in SpineToolbox is to right-click the *object_class* model and select "Add objects" from the drop-down menu. By adding the object name "quick_start", we have
 now created a new model object. For reference, these steps are described in more detail [here](https://spine-toolbox.readthedocs.io/en/master/data_store_form/adding_data.html#adding-object-classes).
 
 The model object holds general information about the optimization. The whole range of functionalities is later explained in *ref* *TODO: how to cross-ref?*, but for this example we will
@@ -86,14 +87,14 @@ together with the relationships that define their interactions.
 
 Commodities are any kind of tradable good. These goods can for instance be electricity, heat, gas, and water.
 
-Nodes provide the locational information of such commodities. They can be understood as spatial aggregators. In combination with units and connections, they 
+Nodes provide the locational information of such commodities. They can be understood as spatial aggregators. In combination with units and connections, they
 form the energy network.
 
 Units in SpineOpt represent any kind of conversion process. As one example, a unit can represent a power plant the converts the flow of a commodity fuel into an electricity and/or heat flow.
 
 Connections on the other hand describe the transport of goods from one location to another. Electricity lines and gas pipelines are examples of such connections.
 
-Let's add some **units** and **nodes** to our database to start building our model. We proceed by adding the objects "gas_import", "power_plant" of type "unit" and 
+Let's add some **units** and **nodes** to our database to start building our model. We proceed by adding the objects "gas_import", "power_plant" of type "unit" and
 "gas_node" and "electricity_node" of type "node", following the same methodology as we did above for our object "quick_start" of type "model".
 
 To specify how these **units** and **nodes** may interact with each other,
@@ -191,7 +192,7 @@ Pages = ["library.md"]
 Depth = 5
 ```
 
-## Qucik start guide 
+## Qucik start guide
 
 ### System components
 
@@ -202,7 +203,7 @@ Depth = 5
 ### Node objects
 
 **Ref to temporal_block stoachtsic strucutre**
-** Link to advanced usage storages ** 
+** Link to advanced usage storages **
 
 ### Unit objects
 
