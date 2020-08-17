@@ -61,7 +61,10 @@ end
             ["unit", "unit_b"]
         ],
         :object_groups => [
-            ["node", "node_group_ab", ["node_a", "node_b"]], ["unit", "unit_group_ab", ["unit_a", "unit_b"]]
+            ["node", "node_group_ab", "node_a"], 
+            ["node", "node_group_ab", "node_b"], 
+            ["unit", "unit_group_ab", "unit_a"],
+            ["unit", "unit_group_ab", "unit_b"]
         ],
         :relationships => [
             ["node__stochastic_structure", ["node_group_ab", "ss"]], 
