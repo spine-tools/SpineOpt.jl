@@ -54,11 +54,20 @@ end
 Add `unit_flow` variables to model `m`.
 """
 function add_variable_unit_flow!(m::Model)
+    t0 = start(current_window)
     add_variable!(
         m,
         :unit_flow,
         unit_flow_indices;
         lb=x -> 0,
-        fix_value=x -> fix_unit_flow(unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false)
+        fix_value=x -> fix_unit_flow(
+            unit=x.unit,
+            node=x.node,
+            direction=x.direction,
+            stochastic_scenario=x.stochastic_scenario,
+            analysis_time=t0,
+            t=x.t,
+            _strict=false
+        )
     )
 end

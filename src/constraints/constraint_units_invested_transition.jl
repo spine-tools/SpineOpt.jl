@@ -44,7 +44,7 @@ Ensure consistency between the variables `units_invested_available`, `units_inve
 function add_constraint_units_invested_transition!(m::Model)
     @fetch units_invested_available, units_invested, units_mothballed = m.ext[:variables]
     m.ext[:constraints][:units_invested_transition] = Dict(
-        (u, stochastic_path, t_before, t_after) => @constraint(
+        (u, s, t_before, t_after) => @constraint(
             m,
             expr_sum(
                 + units_invested_available[u, s, t_after]
@@ -53,7 +53,7 @@ function add_constraint_units_invested_transition!(m::Model)
                 # TODO: +units_decomissioned[u, s, t_after]
                 # TODO: -units_demothballed[u,s,t_after] ...
                 for (u, s, t_after) in units_invested_available_indices(
-                    unit=u, stochastic_scenario=stochastic_path, t=t_after
+                    unit=u, stochastic_scenario=s, t=t_after
                 );
                 init=0
             )
@@ -61,11 +61,11 @@ function add_constraint_units_invested_transition!(m::Model)
             expr_sum(
                 + units_invested_available[u, s, t_before]
                 for (u, s, t_before) in units_invested_available_indices(
-                    unit=u, stochastic_scenario=stochastic_path, t=t_before
+                    unit=u, stochastic_scenario=s, t=t_before
                 );
                 init=0
             )
         )
-        for (u, stochastic_path, t_before, t_after) in constraint_units_invested_transition_indices()
+        for (u, s, t_before, t_after) in constraint_units_invested_transition_indices()
     )
 end

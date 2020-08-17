@@ -39,11 +39,16 @@ end
 Add `node_state` variables to model `m`.
 """
 function add_variable_node_state!(m::Model)
+    t0 = start(current_window)
     add_variable!(
         m, 
         :node_state, 
         node_state_indices; 
-        lb=x -> node_state_min(node=x.node),
-        fix_value=x -> fix_node_state(node=x.node, t=x.t, _strict=false)
+        lb=x -> node_state_min(
+            node=x.node, stochastic_scenario=x.stochastic_scenario, analysis_time=t0, t=x.t, _strict=false
+        ),
+        fix_value=x -> fix_node_state(
+            node=x.node, stochastic_scenario=x.stochastic_scenario, analysis_time=t0, t=x.t, _strict=false
+        )
     )
 end

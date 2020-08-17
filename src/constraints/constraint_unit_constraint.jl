@@ -93,33 +93,38 @@ Custom constraint for `units`.
 """
 function add_constraint_unit_constraint!(m::Model)
     @fetch unit_flow_op, unit_flow, units_on = m.ext[:variables]
+    t0 = start(current_window)
     m.ext[:constraints][:unit_constraint] = Dict(
-        (uc, stochastic_path, t) => sense_constraint(
+        (uc, s, t) => sense_constraint(
             m,
             + expr_sum(
                 + unit_flow_op[u, n, d, op, s, t_short]
-                * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=op, t=t_short)]
+                * unit_flow_coefficient[(
+                    unit=u, node=n, unit_constraint=uc, i=op, stochastic_scenario=s, analysis_time=t0, t=t_short
+                )]
                 * duration(t_short)
                 for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
                 for (u, n, d, op, s, t_short) in unit_flow_op_indices(
                     unit=u,
                     node=n,
                     direction=direction(:from_node),
-                    stochastic_scenario=stochastic_path,
+                    stochastic_scenario=s,
                     t=t_in_t(t_long=t)
                 );
                 init=0
             )
             + expr_sum(
                 + unit_flow[u, n, d, s, t_short]
-                * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=1, t=t_short)]
+                * unit_flow_coefficient[(
+                    unit=u, node=n, unit_constraint=uc, i=1, stochastic_scenario=s, analysis_time=t0, t=t_short
+                )]
                 * duration(t_short)
                 for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     unit=u,
                     node=n,
                     direction=direction(:from_node),
-                    stochastic_scenario=stochastic_path,
+                    stochastic_scenario=s,
                     t=t_in_t(t_long=t)
                 )
                 if isempty(unit_flow_op_indices(unit=u, node=n, direction=d, t=t_short));
@@ -127,28 +132,32 @@ function add_constraint_unit_constraint!(m::Model)
             )
             + expr_sum(
                 + unit_flow_op[u, n, d, op, s, t_short]
-                * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=op, t=t_short)]
+                * unit_flow_coefficient[(
+                    unit=u, node=n, unit_constraint=uc, i=op, stochastic_scenario=s, analysis_time=t0, t=t_short
+                )]
                 * duration(t_short)
                 for (u, n) in unit__to_node__unit_constraint(unit_constraint=uc)
                 for (u, n, d, op, s, t_short) in unit_flow_op_indices(
                     unit=u,
                     node=n,
                     direction=direction(:to_node),
-                    stochastic_scenario=stochastic_path,
+                    stochastic_scenario=s,
                     t=t_in_t(t_long=t)
                 );
                 init=0
             )
             + expr_sum(
                 + unit_flow[u, n, d, s, t_short]
-                * unit_flow_coefficient[(unit=u, node=n, unit_constraint=uc, i=1, t=t_short)]
+                * unit_flow_coefficient[(
+                    unit=u, node=n, unit_constraint=uc, i=1, stochastic_scenario=s, analysis_time=t0, t=t_short
+                )]
                 * duration(t_short)
                 for (u, n) in unit__to_node__unit_constraint(unit_constraint=uc)
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     unit=u,
                     node=n,
                     direction=direction(:to_node),
-                    stochastic_scenario=stochastic_path,
+                    stochastic_scenario=s,
                     t=t_in_t(t_long=t)
                 )
                 if isempty(unit_flow_op_indices(unit=u, node=n, direction=d, t=t_short));
@@ -156,15 +165,21 @@ function add_constraint_unit_constraint!(m::Model)
             )
             + expr_sum(
                 + units_on[u, s, t1]
-                * units_on_coefficient[(unit_constraint=uc, unit=u, t=t1)]
+                * units_on_coefficient[(
+                    unit_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1
+                )]
                 * min(duration(t1), duration(t))
                 for u in unit__unit_constraint(unit_constraint=uc)
-                for (u, s, t1) in units_on_indices(unit=u, stochastic_scenario=stochastic_path, t=t_overlaps_t(t));
+                for (u, s, t1) in units_on_indices(unit=u, stochastic_scenario=s, t=t_overlaps_t(t));
                 init=0
             ),
             constraint_sense(unit_constraint=uc),
-            + right_hand_side[(unit_constraint=uc, t=t)],
+            + expr_sum(
+                right_hand_side[(unit_constraint=uc, stochastic_scenario=s, analysis_time=t0, t=t)]
+                for s in s;
+                init=0
+            ) / length(s)
         )
-        for (uc, stochastic_path, t) in constraint_unit_constraint_indices()
+        for (uc, s, t) in constraint_unit_constraint_indices()
     )
 end

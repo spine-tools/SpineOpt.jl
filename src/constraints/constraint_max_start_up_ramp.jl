@@ -50,6 +50,7 @@ reserve ramp can be defined here.
 # TODO: Good to go for first try; make sure capacities are well defined
 function add_constraint_max_start_up_ramp!(m::Model)
     @fetch units_started_up, start_up_unit_flow = m.ext[:variables]
+    t0 = start(current_window)
     m.ext[:constraints][:max_start_up_ramp] = Dict(
         (u, ng, d, s, t) => @constraint(
             m,
@@ -62,11 +63,11 @@ function add_constraint_max_start_up_ramp!(m::Model)
             <=
             + sum(
                 units_started_up[u, s, t]
+                * max_startup_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for (u, s, t) in units_on_indices(unit=u, stochastic_scenario=s, t=t_overlaps_t(t))
             )
-            * max_startup_ramp[(unit=u, node=ng, direction=d)]
-            * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, t=t)]
-            * unit_capacity[(unit=u, node=ng, direction=d, t=t)]
         )
         for (u, ng, d, s, t) in constraint_max_start_up_ramp_indices()
     )

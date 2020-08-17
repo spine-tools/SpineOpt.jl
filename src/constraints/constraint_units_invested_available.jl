@@ -24,12 +24,13 @@ Limit the units_invested_available by the number of investment candidate units.
 """
 function add_constraint_units_invested_available!(m::Model)
     @fetch units_invested_available = m.ext[:variables]
+    t0 = start(current_window)
     m.ext[:constraints][:units_invested_available] = Dict(
         (u, s, t) => @constraint(
             m,
             + units_invested_available[u, s, t]
             <=
-            + candidate_units[(unit=u, t=t)]
+            + candidate_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
         )
         for (u, s, t) in units_invested_available_indices()
     )

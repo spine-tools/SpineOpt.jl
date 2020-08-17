@@ -29,7 +29,7 @@ Uses stochastic path indices due to potentially different stochastic structures 
 """
 function constraint_connection_flow_ptdf_indices()
     unique(
-        (connection=conn, node=n_to, stochastic_scenario=path, t=t)
+        (connection=conn, node=n_to, stochastic_path=path, t=t)
         for conn in connection(connection_monitored=true, has_ptdf=true)
         for (n_to, d_to) in Iterators.drop(connection__from_node(connection=conn), 1)
         for t in time_slice(temporal_block=node__temporal_block(node=n_to))
@@ -66,23 +66,23 @@ For connection networks with monitored and has_ptdf set to true, set the steady 
 function add_constraint_connection_flow_ptdf!(m::Model)
     @fetch connection_flow, node_injection = m.ext[:variables]
     m.ext[:constraints][:connection_flow_ptdf] = Dict(
-        (conn, n_to, stochastic_path, t) => @constraint(
+        (conn, n_to, s, t) => @constraint(
             m,
             + expr_sum(
                 + get(connection_flow, (conn, n_to, direction(:to_node), s, t), 0)
                 - get(connection_flow, (conn, n_to, direction(:from_node), s, t), 0)
-                for s in stochastic_path;
+                for s in s;
                 init=0
             )
             ==
             + expr_sum(
                 ptdf(connection=conn, node=n) * node_injection[n, s, t]
                 for (conn, n) in indices(ptdf; connection=conn)
-                for (n, s, t) in node_injection_indices(node=n, stochastic_scenario=stochastic_path, t=t)
+                for (n, s, t) in node_injection_indices(node=n, stochastic_scenario=s, t=t)
                 if !isapprox(ptdf(connection=conn, node=n), 0; atol=node_ptdf_threshold(node=n));
                 init=0
             )
         )
-        for (conn, n_to, stochastic_path, t) in constraint_connection_flow_ptdf_indices()
+        for (conn, n_to, s, t) in constraint_connection_flow_ptdf_indices()
     )
 end
