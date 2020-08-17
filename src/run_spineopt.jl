@@ -55,8 +55,6 @@ function run_spineopt(
     end
     @logtime level2 "Preprocessing data structure..." preprocess_data_structure()
     @logtime level2 "Checking data structure..." check_data_structure(log_level)
-    @logtime level2 "Creating temporal structure..." generate_temporal_structure()
-    @logtime level2 "Creating stochastic structure..." generate_stochastic_structure()
     m = rerun_spineopt(
         url_out;
         with_optimizer=with_optimizer,
@@ -80,11 +78,14 @@ function rerun_spineopt(
     level3 = log_level >= 3
     results = Dict()
     m = Model(with_optimizer)
+    m.ext[:instance] = first(model())
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
     m.ext[:values] = Dict{Symbol,Dict}()
     m.ext[:constraints] = Dict{Symbol,Dict}()
-    m.ext[:objective_terms] = Dict(term => Dict() for term in [objective_terms(); :total_costs])
+    m.ext[:objective_terms] = Dict(term => Dict() for term in [objective_terms(); :total_costs])    
+    @logtime level2 "Creating temporal structure..." generate_temporal_structure!(m)
+    @logtime level2 "Creating stochastic structure..." generate_stochastic_structure()
     @log level1 "Window 1: $current_window"
     @logtime level2 "Adding variables...\n" begin
         @logtime level3 "- [variable_units_available]" add_variable_units_available!(m)
