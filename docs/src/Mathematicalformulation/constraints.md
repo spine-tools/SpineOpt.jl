@@ -2,6 +2,8 @@
 
 ## Balance constraint
 
+### Nodal balance
+
 In **SpineOpt** (nodes)[#node] are the place, where an energy balance is enforced. As universal aggregators,
 they are the glue that brings all components of the energy system together. The energy balance is enforced by the following constraint:
 
@@ -22,6 +24,7 @@ they are the glue that brings all components of the energy system together. The 
 TODO: remove node_slack position -> can be handled with an additional unit?\\
 TODO: Explain node group/ "is internal" properly
 
+### Node injection
 The node injection itself represents all local production and consumption, represented by the sum of all $unit_{flows}$:
 
 ```math
@@ -36,6 +39,7 @@ The node injection itself represents all local production and consumption, repre
 & \forall (n,s,t) \in ind(node_{stochastic\_time})
 \end{aligned}
 ```
+### Node injection w storage capability
 
 If a node is to represent a storage, the constraint translates to:
 
@@ -56,12 +60,24 @@ node_{state}(n2,s,t)\\
 & - \sum_{\substack{(u,n',d_{out},s,t) \in ind(unit_{flow}): \\ d_{out} == :from\_node}}
  unit_{flow}(u,n',d_{out},s,t)\\
 & - demand(n,s,t)\\
-& \forall (n,s,t) \in ind(node_{stochastic\_time})
+& \forall (n,s,t) \in ind(node_{stochastic\_time}) : has\_state(n)\\
 \end{aligned}
 ```
+### Node state capacity
 
-node state capacity:
+To limit the storage content, the $node_{state}$ variable needs be constrained by the following equation:
 
+```math
+\begin{aligned}
+& node_{state}(n, s, t)\\
+& <= p_{node_{state\_cap}} \\
+& \forall (n,s,t) \in ind(node_{stochastic\_time}) : has\_state(n)\\
+\end{aligned}
+```
+The discharging and charging behavior of storage nodes can be described through unit(s), representing the link between the storage node and the supply node.
+Note that the dis-/charging efficiencies and capacities are properties of these units. See [Define unit/technology capacity](#Define-unit/technology-capacity) and [Conversion constraint](#Fixed-ratio-between-output-and-input-unit_{flow}s)
+
+TODO: investment storages
 ## Unit operation
 
 ### Static constraints
@@ -76,8 +92,9 @@ In the most general form of the equation, two node groups are defined (an input 
 and a linear relationship is expressed between both node groups. Note that whenever the relationship is specified between groups of multiple nodes,
 there remains a degree of freedom regarding the composition of the input node flows within group $ng_{in}$  and the output node flows within group $ng_{out}$.
 
-##### Fixed ratio between output and input `unit_flow`s: Parameter `fix_ratio_out_in_unit_flow(unit__node__node= u, ng_out, ng_in)`
+##### Fixed ratio between output and input $unit_{flow}$s
 
+The constrained given below enforces a fixed ratio between outgoing and incoming $unit_{flows}$. The constrained is only triggered, if the parameter `p_{fix_ratio_out_in_unit_flow(unit__node__node= u, ng_out, ng_in)}` is defined.
 ```math
 \begin{aligned}
 & \sum_{\substack{(u,n,d,s,t_{out}) \in ind(unit_{flow}): \\ (u,n,d,t_{out}) \, \in \, (u,ng_{out},:from\_node,t)}} unit_{flow}(u,n,d,s,t_{out}) \cdot \Delta t_{out} \\
@@ -221,9 +238,60 @@ This constraint can be extended to the use reserves. See [Reserve constraints](#
 
 #### Ramping constraints
 
-%ramp_up/down
-%start_up/shutdown ramp
+These constraints induce a bound on the rate of change of a
+flow of certain commodity. There are many different possible formulations of ramping constraints. In **SpineOpt**, the change in flow rate is first decomposed into its contributing elements.
 
+```math
+\begin{aligned}
+& + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{flow}(u,n,d,s,t_{after}) \\
+& - \sum_{\substack{(u,n,d,s,t_{before}) \in ind(unit_{flow}): \\ (u,n,d,t_{before}) \, \in \, (u,n,d,t_{before})} !is\_reserve(n)} unit_{flow}(u,n,d,s,t_{before}) \\
+& ==  \\
+& + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{ramp\_up\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{ramp\_up\_flow}(u,n,d,s,t_{after})  \\
+& + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{start\_up\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{start\_up\_flow}(u,n,d,s,t_{after}) \\
+& + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{non-spinn\_up\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{non-spinn\_up\_flow}(u,n,d,s,t_{after}) \\
+& - \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{ramp\_down\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{ramp\_down\_flow}(u,n,d,s,t_{after}) \\
+& - \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{shut\_down\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{shut\_down\_flow}(u,n,d,s,t_{after}) \\
+& - \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{non-spinn\_down\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{non-spinn\_down\_flow}(u,n,d,s,t_{after}) \\
+& \forall (u,n,d,s,t_{after}) \in ind(\\
+& unit_{ramp\_\{up,down\}\_flow},\\
+& unit_{start\_up\_flow},\\
+& unit_{shut\_down\_flow},\\
+& unit_{non-spinn\_\{up,down\}\_flow}) \\
+& \forall t_{before} \in t\_before\_t(t_{after}) : t_{before} \in ind(unit_{flow}) \\
+\end{aligned}
+```
+
+##### Constraint on upwards ramp_up
+```math
+\begin{aligned}
+& + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{ramp\_up\_flow}): \\ (u,n,d) \, \in \, (u,ng,d)}} unit_{ramp\_up\_flow}(u,n,d,s,t)  \\
+& <= \\
+& + \sum_{\substack{(u,s,t') \in ind(units_{on}): \\ (u,s,t') \, \in \, (u,s,t)}}
+ (units_{on}(u,s,t')
+ - units_{started\_up}(u,s,t')) \\
+& \cdot p_{ramp\_up\_limit}(u,ng,d,s,t) \\
+& \cdot p_{unit\_capacity}(u,ng,d,t) \\
+& \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
+& \forall (u,n,d) \in ind(p_{ramp\_up\_limit})\\
+& \forall t \in timeslices, \forall s \in stochasticpath\\
+\end{aligned}
+```
+#### Constraint on upward start up ramp_up
+```math
+\begin{aligned}
+& + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{start\_up\_flow}): \\ (u,n,d) \, \in \, (u,ng,d)}} unit_{start\_up\_flow}(u,n,d,s,t)  \\
+& <= \\
+& + \sum_{\substack{(u,s,t') \in ind(units_{on}): \\ (u,s,t') \, \in \, (u,s,t)}}
+units_{started\_up}(u,s,t')) \\
+& \cdot p_{max\_startup\_ramp}(u,ng,d,s,t) \\
+& \cdot p_{unit\_capacity}(u,ng,d,t) \\
+& \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
+& \forall (u,n,d) \in ind(p_{max\_startup\_ramp})\\
+& \forall t \in timeslices, \forall s \in stochasticpath\\
+\end{aligned}
+```
+
+TODO: add ramp down, shutdown ramp etc.
 #### Reserve constraints
 
 %minimum up time

@@ -47,6 +47,7 @@ export units_invested_available_indices
 include("util/misc.jl")
 include("util/update_model.jl")
 include("util/postprocess_results.jl")
+include("util/writing_modelfile.jl")
 
 include("run_spineopt.jl")
 

@@ -106,9 +106,9 @@ function add_constraint_node_injection!(m::Model)
             + expr_sum(
                 unit_flow[u, n, d, s, t_short]
                 for (u, n, d, s, t_short) in unit_flow_indices(
-                    node=n, 
-                    direction=direction(:to_node), 
-                    stochastic_scenario=stochastic_path, 
+                    node=n,
+                    direction=direction(:to_node),
+                    stochastic_scenario=stochastic_path,
                     t=t_in_t(t_long=t_after)
                 );
                 init=0
@@ -117,18 +117,18 @@ function add_constraint_node_injection!(m::Model)
             - expr_sum(
                 unit_flow[u, n, d, s, t_short]
                 for (u, n, d, s, t_short) in unit_flow_indices(
-                    node=n, 
-                    direction=direction(:from_node), 
-                    stochastic_scenario=stochastic_path, 
+                    node=n,
+                    direction=direction(:from_node),
+                    stochastic_scenario=stochastic_path,
                     t=t_in_t(t_long=t_after)
                 );
                 init=0
             )
             - demand[(node=n, t=t_after)]
-            - expr_sum(
-                fractional_demand[(node=n, t=t_after)] * demand[(node=ng, t=t_after)] for ng in groups(n);
-                init=0
-            )
+            # - expr_sum(
+            #     fractional_demand[(node=n, t=t_after)] * demand[(node=ng, t=t_after)] for ng in groups(n);
+            #     init=0
+            # )
             # TODO: fractional_demand etc. are scenario dependent?
         )
         for (n, stochastic_path, t_before, t_after) in constraint_node_injection_indices()
