@@ -49,13 +49,20 @@ end
 Add `connection_flow` variables to model `m`.
 """
 function add_variable_connection_flow!(m::Model)
+    t0 = start(current_window)
     add_variable!(
         m, 
         :connection_flow, 
         connection_flow_indices; 
         lb=x -> 0, 
         fix_value=x -> fix_connection_flow(
-            connection=x.connection, node=x.node, direction=x.direction, t=x.t, _strict=false
+            connection=x.connection,
+            node=x.node,
+            direction=x.direction,
+            stochastic_scenario=x.stochastic_scenario,
+            analysis_time=t0,
+            t=x.t,
+            _strict=false
         )
     )
 end

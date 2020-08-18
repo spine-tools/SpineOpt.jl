@@ -262,7 +262,9 @@ Generate the `unit_stochastic_scenario_weight` parameter for easier access to th
 function _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
     unit_stochastic_scenario_weight_values = Dict(
         (unit, scen) => Dict(:unit_stochastic_scenario_weight => parameter_value(param_vals.weight))
-        for (unit, structure) in units_on__stochastic_structure()
+        for (unit, structure) in Iterators.flatten(
+            (units_on__stochastic_structure(), unit__investment_stochastic_structure())
+        )
         for (scen, param_vals) in all_stochastic_DAGs[structure]
     )
     unit__stochastic_scenario = RelationshipClass(

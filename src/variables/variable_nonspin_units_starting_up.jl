@@ -40,6 +40,7 @@ end
 Add `nonspin_units_starting_up` variables to model `m`.
 """
 function add_variable_nonspin_units_starting_up!(m::Model)
+    t0 = start(current_window)
     add_variable!(
     	m,
     	:nonspin_units_starting_up, 
@@ -47,6 +48,13 @@ function add_variable_nonspin_units_starting_up!(m::Model)
     	lb=x -> 0,
     	bin=units_on_bin,
     	int=units_on_int,
-    	fix_value=x -> fix_nonspin_units_starting_up(unit=x.unit, node=x.node, t=x.t, _strict=false)
+    	fix_value=x -> fix_nonspin_units_starting_up(
+            unit=x.unit,
+            node=x.node,
+            stochastic_scenario=x.stochastic_scenario,
+            analysis_time=t0,
+            t=x.t,
+            _strict=false
+        )
     )
 end

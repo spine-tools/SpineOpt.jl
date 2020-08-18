@@ -234,9 +234,9 @@ function _ptdf_values()
             name=string(n.name),
             bustype=(node_opf_type(node=n) == :node_opf_type_reference) ? BusTypes.REF : BusTypes.PV,
             angle=0.0,
-            voltage=0.0,
-            voltagelimits=(min=0.0, max=0.0),
-            basevoltage=nothing,
+            magnitude=0.0,
+            voltage_limits=(min=0.0, max=0.0),
+            base_voltage=nothing,
             area=nothing,
             load_zone=LoadZone(nothing),
             ext=Dict{String,Any}()
@@ -251,14 +251,14 @@ function _ptdf_values()
         conn => Line(;
             name=string(conn.name),
             available=true,
-            activepower_flow=0.0,
-            reactivepower_flow=0.0,
+            active_power_flow=0.0,
+            reactive_power_flow=0.0,
             arc=Arc((ps_busses_by_node[n] for n in connection__from_node(connection=conn, direction=anything))...),
             r=connection_resistance(connection=conn),
             x=max(connection_reactance(connection=conn), 0.00001),
             b=(from=0.0, to=0.0),
             rate=0.0,
-            anglelimits=(min=0.0, max=0.0)
+            angle_limits=(min=0.0, max=0.0)
         )  # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
         for conn in connection(has_ptdf=true)
     )

@@ -29,7 +29,7 @@ Uses stochastic path indices due to dynamics and potentially different stochasti
 """
 function constraint_node_injection_indices()
     unique(
-        (node=n, stochastic_scenario=path, t_before=t_before, t_after=t_after)
+        (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (n, tb) in node__temporal_block()
         for t_after in time_slice(temporal_block=tb)
         for t_before in t_before_t(t_after=t_after)
@@ -67,39 +67,53 @@ Set the node injection equal to the summation of all 'input' flows but connectio
 """
 function add_constraint_node_injection!(m::Model)
     @fetch node_injection, node_state, unit_flow = m.ext[:variables]
+    t0 = start(current_window)
     # TODO: We need to include both: storages that are defined on n and storage that are defined on internal nodes
     m.ext[:constraints][:node_injection] = Dict(
-        (n, stochastic_path, t_before, t_after) => @constraint(
+        (n, s, t_before, t_after) => @constraint(
             m,
             + expr_sum(
                 + node_injection[n, s, t_after]
-                for (n, s, t) in node_injection_indices(node=n, stochastic_scenario=stochastic_path, t=t_after);
+                + demand[(node=n, stocahstic_scenario=s, analysis_time=t0, t=t_after)]
+                for (n, s, t) in node_injection_indices(node=n, stochastic_scenario=s, t=t_after);
+                init=0
+            )
+            + expr_sum(
+                fractional_demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)]
+                * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t_after)]
+                for (n, s, t) in node_injection_indices(node=n, stochastic_scenario=s, t=t_after)
+                for ng in groups(n);
                 init=0
             )
             ==
             + expr_sum(
                 (
-                    + get(node_state, (n, s, t_before), 0) * state_coeff[(node=n, t=t_before)]
-                    - get(node_state, (n, s, t_after), 0) * state_coeff[(node=n, t=t_after)]
+                    + get(node_state, (n, s, t_before), 0)
+                    * state_coeff[(node=n, stochastic_scenario=s, analysis_time=t0, t=t_before)]
+                    - get(node_state, (n, s, t_after), 0)
+                    * state_coeff[(node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)]
                 )
                 / duration(t_after)
                 # Self-discharge commodity losses
-                - get(node_state, (n, s, t_after), 0) * frac_state_loss[(node=n, t=t_after)]
-                for s in stochastic_path;
+                - get(node_state, (n, s, t_after), 0) 
+                * frac_state_loss[(node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)]
+                for s in s;
                 init=0
             )
             # Diffusion of commodity from other nodes to this one
             + expr_sum(
-                get(node_state, (other_node, s, t_after), 0) * diff_coeff[(node1=other_node, node2=n, t=t_after)]
+                get(node_state, (other_node, s, t_after), 0)
+                * diff_coeff[(node1=other_node, node2=n, stochastic_scenario=s, analysis_time=t0, t=t_after)]
                 for other_node in node__node(node2=n)
-                for s in stochastic_path;
+                for s in s;
                 init=0
             )
             # Diffusion of commodity from this node to other nodes
             - expr_sum(
-                get(node_state, (n, s, t_after), 0) * diff_coeff[(node1=n, node2=other_node, t=t_after)]
+                get(node_state, (n, s, t_after), 0)
+                * diff_coeff[(node1=n, node2=other_node, stochastic_scenario=s, analysis_time=t0, t=t_after)]
                 for other_node in node__node(node1=n)
-                for s in stochastic_path;
+                for s in s;
                 init=0
             )
             # Commodity flows from units
@@ -108,7 +122,7 @@ function add_constraint_node_injection!(m::Model)
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     node=n, 
                     direction=direction(:to_node), 
-                    stochastic_scenario=stochastic_path, 
+                    stochastic_scenario=s, 
                     t=t_in_t(t_long=t_after)
                 );
                 init=0
@@ -119,18 +133,12 @@ function add_constraint_node_injection!(m::Model)
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     node=n, 
                     direction=direction(:from_node), 
-                    stochastic_scenario=stochastic_path, 
+                    stochastic_scenario=s, 
                     t=t_in_t(t_long=t_after)
                 );
                 init=0
             )
-            - demand[(node=n, t=t_after)]
-            - expr_sum(
-                fractional_demand[(node=n, t=t_after)] * demand[(node=ng, t=t_after)] for ng in groups(n);
-                init=0
-            )
-            # TODO: fractional_demand etc. are scenario dependent?
         )
-        for (n, stochastic_path, t_before, t_after) in constraint_node_injection_indices()
+        for (n, s, t_before, t_after) in constraint_node_injection_indices()
     )
 end

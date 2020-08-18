@@ -53,19 +53,19 @@ This is required to enforce separate limitations on these two ramp types.
 function add_constraint_split_ramp_up!(m::Model)
     @fetch unit_flow, ramp_up_unit_flow, start_up_unit_flow, nonspin_ramp_up_unit_flow = m.ext[:variables]
     m.ext[:constraints][:split_ramp_up] = Dict(
-        (u, n, d, s_path, t_before, t_after) => @constraint(
+        (u, n, d, s, t_before, t_after) => @constraint(
             m,
             expr_sum(
                 + unit_flow[u, n, d, s, t_after]
                 for (u, n, d, s, t_after) in unit_flow_indices(
-                    unit=u, node=n, direction=d, stochastic_scenario=s_path, t=t_after
+                    unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after
                 );
                 init=0
             )
             - expr_sum(
                 + unit_flow[u, n, d, s, t_before]
                 for (u, n, d, s, t_before) in unit_flow_indices(
-                    unit=u, node=n, direction=d, stochastic_scenario=s_path, t=t_before
+                    unit=u, node=n, direction=d, stochastic_scenario=s, t=t_before
                 )
                 if !is_reserve_node(node=n);
                 init=0
@@ -75,10 +75,10 @@ function add_constraint_split_ramp_up!(m::Model)
                 + get(ramp_up_unit_flow, (u, n, d, s, t_after), 0)
                 + get(start_up_unit_flow, (u, n, d, s, t_after), 0)
                 + get(nonspin_ramp_up_unit_flow, (u, n, d, s, t_after), 0)
-                for s in s_path;
+                for s in s;
                 init=0
             )
         )
-        for (u, n, d, s_path, t_before, t_after) in constraint_split_ramp_up_indices()
+        for (u, n, d, s, t_before, t_after) in constraint_split_ramp_up_indices()
     )
 end
