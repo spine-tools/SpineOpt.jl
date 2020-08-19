@@ -59,7 +59,7 @@ function taxes(m::Model, t1)
             * tax_in_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for (n,) in indices(tax_out_unit_flow)
-            for (u, n, d, s, t) in unit_flow_indices(m; node=n1, direction=direction(:to_node))
+            for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:to_node))
             if end_(t) <= t1;
             init=0
         )

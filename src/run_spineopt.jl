@@ -129,6 +129,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     # TODO: @timelog log_level 3 "- [constraint_ramp_down]" add_constraint_ramp_down!(m)
     @timelog log_level 3 "- [constraint_max_nonspin_ramp_up]" add_constraint_max_nonspin_ramp_up!(m)
     @timelog log_level 3 "- [constraint_min_nonspin_ramp_up]" add_constraint_min_nonspin_ramp_up!(m)
+    @timelog log_level 3 "- [constraint_res_minimum_node_state]" add_constraint_res_minimum_node_state!(m)
     @timelog log_level 3 "- [constraint_user]" add_constraints(m)
     # Name constraints
     for (con_key, cons) in m.ext[:constraints]
