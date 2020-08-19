@@ -39,7 +39,7 @@ function add_constraint_nodal_balance!(m::Model)
                 for (conn, n, d, s, t) in connection_flow_indices(
                     node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
                 )
-                if !issubset(_connection_nodes(conn), internal_nodes);
+                if isempty(intersect(_connection_nodes(conn), internal_nodes));
                 init=0
             )
             # Commodity flows to connections
@@ -48,7 +48,7 @@ function add_constraint_nodal_balance!(m::Model)
                 for (conn, n, d, s, t) in connection_flow_indices(
                     node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
                 )
-                if !issubset(_connection_nodes(conn), internal_nodes);
+                if isempty(intersect(_connection_nodes(conn), internal_nodes));
                 init=0
             )
             # slack variable - only exists if slack_penalty is defined
@@ -63,7 +63,6 @@ function add_constraint_nodal_balance!(m::Model)
             (n, _internal_nodes(n), s, t)
             for (n, s, t) in node_stochastic_time_indices()
             if nodal_balance_sense(node=n) !== :none
-            && all(balance_type(node=ng) !== :balance_type_group for ng in groups(n))
         )
     )
 end

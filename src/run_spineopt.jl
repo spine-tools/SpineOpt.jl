@@ -152,6 +152,7 @@ function rerun_spineopt(
         # TODO: @logtime level3 "- [constraint_ramp_down]" add_constraint_ramp_down!(m)
         @logtime level3 "- [constraint_max_nonspin_ramp_up]" add_constraint_max_nonspin_ramp_up!(m)
         @logtime level3 "- [constraint_min_nonspin_ramp_up]" add_constraint_min_nonspin_ramp_up!(m)
+        @logtime level3 "- [constraint_res_minimum_node_state]" add_constraint_res_minimum_node_state!(m)
         @logtime level3 "- [constraint_user]" add_constraints(m)
         @logtime level3 "- [setting constraint names]" name_constraints!(m)
     end

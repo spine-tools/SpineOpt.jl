@@ -77,6 +77,7 @@
         ["node", "graph_view_position", null, null, null],
         ["node", "has_state", false, "boolean_value_list", "A boolean flag for whether a `node` has a `node_state` variable."],
         ["node", "is_reserve_node", false, "boolean_value_list", "A boolean flag for a `reserve_node`?"],
+        ["node", "minimum_reserve_activation_time", null, null, "Duration a certain reserve product needs to be online/available"],
         ["node", "nodal_balance_sense", "==", "constraint_sense", "A selector for `nodal_balance` constraint sense."],
         ["node", "node_opf_type", "node_opf_type_normal", "node_opf_type_list", "A selector for `node_opf_type`?"],
         ["node", "node_slack_penalty", null, null, "A penalty cost for `node_slack_pos` and `node_slack_neg` variables. The slack variables won't be included in the model unless there's a cost defined for them."],
