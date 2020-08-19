@@ -124,6 +124,6 @@ end
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        @test_logs (:warn, "can't find results for 'unknown_output'") run_spineopt(url_in, url_out; log_level=0)
+        @test_logs (:warn, "can't find a value for 'unknown_output'") run_spineopt(url_in, url_out; log_level=0)
     end
 end
