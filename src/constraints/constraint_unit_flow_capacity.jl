@@ -25,13 +25,13 @@ Forms the stochastic index set for the `:unit_flow_capacity` constraint.
 Uses stochastic path indices due to potentially different stochastic structures
 between `unit_flow` and `units_on` variables.
 """
-function constraint_unit_flow_capacity_indices()
+function constraint_unit_flow_capacity_indices(m)
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(unit_capacity)
-        for t in time_slice(temporal_block=node__temporal_block(node=members(ng)))
+        for t in time_slice(m; temporal_block=node__temporal_block(node=members(ng)))
         for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(u, ng, d, t))
+            unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(m, u, ng, d, t))
         )
     )
 end
@@ -45,16 +45,16 @@ Check if `unit_conv_cap_to_flow` is defined.
 """
 function add_constraint_unit_flow_capacity!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
-    t0 = start(current_window)
+    t0 = start(current_window(m))
     m.ext[:constraints][:unit_flow_capacity] = Dict(
         (u, ng, d, s, t) => @constraint(
             m,
             expr_sum(
                 + unit_flow[u, n, d, s, t]
                 for (u, n, d, s, t) in setdiff(
-                    unit_flow_indices(unit=u, node=ng, direction=d, stochastic_scenario=s, t=t),
+                    unit_flow_indices(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t),
                     nonspin_ramp_up_unit_flow_indices(
-                        unit=u, node=ng, direction=d, stochastic_scenario=s, t=t
+                        m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t
                     )
                 );
                 init=0
@@ -65,10 +65,10 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 units_on[u, s, t1] * min(duration(t1), duration(t))
                 * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for (u, s, t1) in units_on_indices(unit=u, stochastic_scenario=s, t=t_overlaps_t(t));
+                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0
             )
         )
-        for (u, ng, d, s, t) in constraint_unit_flow_capacity_indices()
+        for (u, ng, d, s, t) in constraint_unit_flow_capacity_indices(m)
     )
 end

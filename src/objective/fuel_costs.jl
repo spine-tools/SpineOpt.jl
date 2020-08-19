@@ -24,7 +24,7 @@ Create an expression for fuel costs of units.
 """
 function fuel_costs(m::Model, t1)
     @fetch unit_flow = m.ext[:variables]
-    t0 = start(current_window)
+    t0 = start(current_window(m))
     @expression(
         m,
         expr_sum(
@@ -32,7 +32,7 @@ function fuel_costs(m::Model, t1)
             * fuel_cost[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
             * node_stochastic_scenario_weight[(node=ng, stochastic_scenario=s)]
             for (u, ng, d) in indices(fuel_cost)
-            for (u, n, d, s, t) in unit_flow_indices(unit=u, node=ng, direction=d)
+            for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d)
             if end_(t) <= t1;
             init=0
         )

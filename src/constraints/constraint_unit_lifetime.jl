@@ -22,16 +22,14 @@
 
 Form the stochastic index set for the `:units_invested_lifetime()` constraint. 
 """
-function constraint_unit_lifetime_indices()
-    t0 = start(current_window)
+function constraint_unit_lifetime_indices(m)
+    t0 = start(current_window(m))
     unique(
         (unit=u, stochastic_path=path, t=t)
         for u in indices(unit_investment_lifetime)
-        for t in time_slice(temporal_block=unit__investment_temporal_block(unit=u))
-        for (u, s, t) in units_invested_available_indices(unit=u, t=t)
-        for path in active_stochastic_paths(
-            _constraint_unit_lifetime_indices(u, s, t0, t)
-        )
+        for t in time_slice(m; temporal_block=unit__investment_temporal_block(unit=u))
+        for (u, s, t) in units_invested_available_indices(m; unit=u, t=t)
+        for path in active_stochastic_paths(_constraint_unit_lifetime_indices(m, u, s, t0, t))
     )
 end
 
@@ -41,13 +39,14 @@ end
 Gathers the `stochastic_scenario` indices of the `units_invested_available` variable on past time slices determined
 by the `unit_investment_lifetime` parameter.
 """
-function _constraint_unit_lifetime_indices(u, s, t0, t)
+function _constraint_unit_lifetime_indices(m, u, s, t0, t)
     t_past_and_present = to_time_slice(
-        TimeSlice(end_(t) - unit_investment_lifetime(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t))
+        m; 
+        t=TimeSlice(end_(t) - unit_investment_lifetime(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t))
     )
     unique(
         ind.stochastic_scenario
-        for ind in units_invested_available_indices(unit=u, t=t_past_and_present)
+        for ind in units_invested_available_indices(m; unit=u, t=t_past_and_present)
     )
 end
 
@@ -58,25 +57,25 @@ Constrain units_invested_available by the investment lifetime of a unit.
 """
 function add_constraint_unit_lifetime!(m::Model)
     @fetch units_invested_available, units_invested = m.ext[:variables]
-    t0 = start(current_window)
+    t0 = start(current_window(m))
     m.ext[:constraints][:unit_lifetime] = Dict(
         (u, s, t) => @constraint(
             m,
             + expr_sum(
                 + units_invested_available[u, s, t]
-                for (u, s, t) in units_invested_available_indices(
-                    unit=u, stochastic_scenario=s, t=t
-                );
+                for (u, s, t) in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0
             )
             >=
             + sum(
                 + units_invested[u, s_past, t_past]
                 for (u, s_past, t_past) in units_invested_available_indices(
+                    m;
                     unit=u,
                     stochastic_scenario=s,
                     t=to_time_slice(
-                        TimeSlice(
+                        m;
+                        t=TimeSlice(
                             end_(t) - unit_investment_lifetime(unit=u, stochastic_scenario=s, analysis_time=t0, t=t),
                             end_(t)
                         )
@@ -84,6 +83,6 @@ function add_constraint_unit_lifetime!(m::Model)
                 )
             )
         )
-        for (u, s, t) in constraint_unit_lifetime_indices()
+        for (u, s, t) in constraint_unit_lifetime_indices(m)
     )
 end

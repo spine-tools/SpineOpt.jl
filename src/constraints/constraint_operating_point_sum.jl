@@ -37,6 +37,6 @@ function add_constraint_operating_point_sum!(m::Model)
             )
         )
         for (u, n, d) in indices(operating_points)
-        for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d)
+        for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=n, direction=d)
     )
 end

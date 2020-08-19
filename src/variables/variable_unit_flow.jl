@@ -28,12 +28,8 @@
 A list of `NamedTuple`s corresponding to indices of the `unit_flow` variable where the keyword arguments act as filters
 for each dimension.
 """
-function unit_flow_indices(;
-        unit=anything,
-        node=anything,
-        direction=anything,
-        stochastic_scenario=anything,
-        t=anything
+function unit_flow_indices(
+        m::Model; unit=anything, node=anything, direction=anything, stochastic_scenario=anything, t=anything
     )
     unit = members(unit)
     node = members(node)
@@ -43,7 +39,7 @@ function unit_flow_indices(;
             unit=unit, node=node, direction=direction, _compact=false
         )
         for (n, s, t) in node_stochastic_time_indices(
-            node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     ]
 end
@@ -54,7 +50,7 @@ end
 Add `unit_flow` variables to model `m`.
 """
 function add_variable_unit_flow!(m::Model)
-    t0 = start(current_window)
+    t0 = start(current_window(m))
     add_variable!(
         m,
         :unit_flow,

@@ -24,7 +24,7 @@ Preprocess input data structure for SpineOpt.
 
 Runs a number of other functions processing different aspecs of the input data in sequence.
 """
-function preprocess_data_structure()
+function preprocess_data_structure(; log_level=3)
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
     expand_model_default_relationships()

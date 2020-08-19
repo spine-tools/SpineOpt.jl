@@ -13,6 +13,7 @@
         ["unit_constraint", "A constraint over the flows of a specific unit.", null]
     ],
     "relationship_classes": [
+        ["model__temporal_block", ["model", "temporal_block"], "TODO"],
         ["connection__from_node", ["connection", "node"], "Defines the `nodes` the `connection` can take input from, and holds most `connection_flow` variable specific parameters."],
         ["connection__node__node", ["connection", "node", "node"], "Holds parameters spanning multiple `connection_flow` variables to and from multiple `nodes`."],
         ["connection__to_node", ["connection", "node"], "Defines the `nodes` the `connection` can output to, and holds most `connection_flow` variable specific parameters."],
@@ -150,6 +151,7 @@
         ["unit__from_node", "unit_capacity", null, null, "Maximum `unit_flow` capacity of a single 'sub_unit' of the `unit`."],
         ["unit__from_node", "unit_conv_cap_to_flow", 1.0, null, "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."],
         ["unit__from_node", "vom_cost", null, null, "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."],
+        ["unit__from_node", "res_start_up_cost", null, null, "TODO"],
         ["unit__from_node__unit_constraint", "graph_view_position", null, null, null],
         ["unit__from_node__unit_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `unit_constraint`?"],
         ["unit__node__node", "fix_ratio_in_in_unit_flow", null, null, "Fix the ratio between two `unit_flows` coming into the `unit` from the two `nodes`."],
@@ -195,6 +197,7 @@
         ["unit__to_node", "unit_capacity", null, null, "Maximum `unit_flow` capacity of a single 'sub_unit' of the `unit`."],
         ["unit__to_node", "unit_conv_cap_to_flow", 1.0, null, "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."],
         ["unit__to_node", "vom_cost", null, null, "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."],
+        ["unit__to_node", "res_start_up_cost", null, null, "TODO"],
         ["unit__to_node__unit_constraint", "graph_view_position", null, null, null],
         ["unit__to_node__unit_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `unit_constraint`?"],
         ["unit__unit_constraint", "units_on_coefficient", 0.0, null, "Coefficient of a `units_on` variable for a custom `unit_constraint`?"],

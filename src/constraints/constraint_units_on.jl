@@ -31,6 +31,6 @@ function add_constraint_units_on!(m::Model)
             <=
             + units_available[u, s, t]
         )
-        for (u, s, t) in units_on_indices()
+        for (u, s, t) in units_on_indices(m)
     )
 end

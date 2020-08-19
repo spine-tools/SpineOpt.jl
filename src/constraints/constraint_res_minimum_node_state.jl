@@ -25,18 +25,27 @@ Form the stochastic index set for the `:minimum_node_state` constraint.
 Uses stochastic path indices due to potentially different stochastic structures between
 `unit_flow` and `units_on` variables.
 """
-function constraint_res_minimum_node_state_indices()
+function constraint_res_minimum_node_state_indices(m)
     unique(
         (node=n_stor, stochastic_path=path, t=t)
-        for (u, n_stor, d, s, t) in unit_flow_indices() if has_state(node=n_stor)
-        for (u, n_aFRR, d, s, t) in unit_flow_indices(unit=u,node=collect(indices(minimum_reserve_activation_time)),t=t)
+        for (u, n_stor, d, s, t) in unit_flow_indices(m)
+        if has_state(node=n_stor)
+        for (u, n_aFRR, d, s, t) in unit_flow_indices(m; unit=u, node=indices(minimum_reserve_activation_time), t=t)
         for path in active_stochastic_paths(
-            unique(Iterators.flatten(([ind.stochastic_scenario for ind in node_state_indices(node=n_stor, t=t)],
-            [ind.stochastic_scenario for ind in unit_flow_indices(unit=u,node=n_aFRR, direction=d, t=t)]))
-        )
+            unique(
+                ind.stochastic_scenario 
+                for ind in Iterators.flatten(
+                    (
+                        node_state_indices(m; node=n_stor, t=t),
+                        unit_flow_indices(m; unit=u, node=n_aFRR, direction=d, t=t)
+                    )
+                )
+            )
         )
     )
 end
+
+_div(x::Period, y::Period) = Minute(x) / Minute(y)
 
 """
     add_constraint_res_minimum_node_state!(m::Model)
@@ -46,27 +55,43 @@ res_activation_time` exist.
 """
 function add_constraint_res_minimum_node_state!(m::Model)
     @fetch unit_flow, node_state = m.ext[:variables]
-    t0 = start(current_window)
+    t0 = start(current_window(m))
     m.ext[:constraints][:res_minimum_node_state] = Dict(
         (n_stor, s, t_after) => @constraint(
             m,
-            sum(
-                node_state[n_stor,s,t_before]
-                for (n_stor,s,t_before) in node_state_indices(node=n_stor,stochastic_scenario=s,t=t_before_t(t_after=t_after))
-                    )
+            expr_sum(
+                node_state[n_stor, s, t_before]
+                for (n_stor, s, t_before) in node_state_indices(
+                    m; node=n_stor, stochastic_scenario=s, t=t_before_t(m; t_after=t_after)
+                );
+                init=0
+            )
             >=
-            node_state_min[(node=n_stor,stochastic_scenario=s,analysis_time=t0, t=t_after)]
+            node_state_min[(node=n_stor, stochastic_scenario=s, analysis_time=t0, t=t_after)]
             + expr_sum(
-                unit_flow[u,n_res,d,s,t_after]
-                * 1/fix_ratio_out_in_unit_flow[(unit=u,node1=n_conv,node2=n_stor,stochastic_scenario=s,analysis_time=t0, t=t_after)]
-                * duration(t_after) * (duration(TimeSlice(start(t_after) ,start(t_after) +minimum_reserve_activation_time[(node=n_res,stochastic_scenario=s,analysis_time=t0, t=t_after)].value))/duration(TimeSlice(start(t_after),end_(t_after))))
-                    for (u, n_stor, d, s, t_after) in unit_flow_indices(node=n_stor, direction=direction(:from_node),stochastic_scenario=s,t=t_after)
-                    for (u, n_res, d, s, t_after) in unit_flow_indices(unit=u,node= collect(indices(minimum_reserve_activation_time)),t=t_after, direction=direction(:to_node))
-                    for (u, n_conv, n_stor) in indices(fix_ratio_out_in_unit_flow;unit=u,node2=n_stor) #this only works if only theres only 1 conventional commodity
-                        if is_reserve_node(node=n_res) && minimum_reserve_activation_time[(node=n_res,stochastic_scenario=s,analysis_time=t0, t=t_after)].value != nothing; #this is an additional sanity check
-                    init=0
+                unit_flow[u, n_res, d, s, t_after]
+                * duration(t_after)
+                * _div(
+                    minimum_reserve_activation_time[(node=n_res, stochastic_scenario=s, analysis_time=t0, t=t_after)],
+                    end_(t_after) - start(t_after)
+                )
+                / fix_ratio_out_in_unit_flow[
+                    (unit=u, node1=n_conv, node2=n_stor, stochastic_scenario=s, analysis_time=t0, t=t_after)
+                ]
+                for (u, n_stor, d, s, t_after) in unit_flow_indices(
+                    m; node=n_stor, direction=direction(:from_node), stochastic_scenario=s, t=t_after
+                )
+                for (u, n_res, d, s, t_after) in unit_flow_indices(
+                    m; unit=u, node=indices(minimum_reserve_activation_time), direction=direction(:to_node), t=t_after
+                )
+                # NOTE: the below only works if only theres only 1 conventional commodity
+                for (u, n_conv, n_stor) in indices(fix_ratio_out_in_unit_flow; unit=u, node2=n_stor)
+                if is_reserve_node(node=n_res) && minimum_reserve_activation_time[
+                    (node=n_res, stochastic_scenario=s, analysis_time=t0, t=t_after)
+                ] !== nothing;  # NOTE: this is an additional sanity check
+                init=0
             )
         )
-        for (n_stor, s, t_after) in constraint_res_minimum_node_state_indices()
+        for (n_stor, s, t_after) in constraint_res_minimum_node_state_indices(m)
     )
 end

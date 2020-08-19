@@ -23,12 +23,12 @@
 A set of tuples for indexing the `node_state` variable where filtering options can be specified
 for `node`, `s`, and `t`.
 """
-function node_state_indices(;node=anything, stochastic_scenario=anything, t=anything)
+function node_state_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything)
     unique(
         (node=n, stochastic_scenario=s, t=t)
         for (n, tb) in node_with_state__temporal_block(node=node, _compact=false)
         for (n, s, t) in node_stochastic_time_indices(
-            node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     )
 end
@@ -39,7 +39,7 @@ end
 Add `node_state` variables to model `m`.
 """
 function add_variable_node_state!(m::Model)
-    t0 = start(current_window)
+    t0 = start(current_window(m))
     add_variable!(
         m, 
         :node_state, 

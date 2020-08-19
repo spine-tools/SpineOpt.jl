@@ -23,7 +23,7 @@
 Add `units_invested` variables to model `m`.
 """
 function add_variable_units_invested!(m::Model)
-    t0 = start(current_window)
+    t0 = start(current_window(m))
     add_variable!(
         m,
         :units_invested,
