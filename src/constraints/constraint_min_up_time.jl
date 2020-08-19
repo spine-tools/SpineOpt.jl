@@ -25,32 +25,28 @@ Form the stochastic index set for the `:min_up_time` constraint.
 Uses stochastic path indices due to potentially different stochastic structures between `units_on` and
 `units_started_up` variables on past time slices.
 """
-function constraint_min_up_time_indices()
-    t0 = start(current_window)
+function constraint_min_up_time_indices(m)
+    t0 = start(current_window(m))
     unique(
         (unit=u, stochastic_path=path, t=t)
         for u in indices(min_up_time)
-        for t in time_slice(temporal_block=units_on__temporal_block(unit=u))
-        for (u, s, t) in units_on_indices(unit=u, t=t)
-        for path in active_stochastic_paths(
-            _constraint_min_up_time_indices(u, s, t0, t)
-        )
+        for t in time_slice(m; temporal_block=units_on__temporal_block(unit=u))
+        for (u, s, t) in units_on_indices(m; unit=u, t=t)
+        for path in active_stochastic_paths(_constraint_min_up_time_indices(m, u, s, t0, t))
     )
 end
 
 """
-    _constraint_min_up_time_indices(u, s, t0, t)
+    _constraint_min_up_time_indices(m, u, s, t0, t)
 
 Gather the `stochastic_scenario` indices of the `units_started_up` variable on past time slices.
 """
-function _constraint_min_up_time_indices(u, s, t0, t)
+function _constraint_min_up_time_indices(m, u, s, t0, t)
     t_past_and_present = to_time_slice(
-        TimeSlice(end_(t) - min_up_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t))
+        m; 
+        t=TimeSlice(end_(t) - min_up_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t))
     )
-    unique(
-        ind.stochastic_scenario
-        for ind in units_on_indices(unit=u, t=t_past_and_present)
-    )
+    unique(ind.stochastic_scenario for ind in units_on_indices(m; unit=u, t=t_past_and_present))
 end
 
 """
@@ -61,39 +57,31 @@ Constrain running by minimum up time.
 
 function add_constraint_min_up_time!(m::Model)
     @fetch units_on, units_started_up= m.ext[:variables] #, nonspin_shutting_down
-    t0 = start(current_window)
+    t0 = start(current_window(m))
     m.ext[:constraints][:min_up_time] = Dict(
         (u, s, t) => @constraint(
             m,
             + expr_sum(
                 + units_on[u, s, t]
-                for (u, s, t) in units_on_indices(
-                    unit=u, stochastic_scenario=s, t=t
-                );
+                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0
             )
             >=
-            # TODO:
-            # + expr_sum(
-            #     + nonspin_shutting_down[u, n, s, t]
-            #     for (u, n, s, t) in nonspin_shutting_down_indices(
-            #         unit=u,
-            #         stochastic_scenario=s,
-            #         t=t_before_t(t_after=t_before_t(t_after=t))
-            #         );
-            #         init=0
-            # )
             + sum(
                 + units_started_up[u, s_past, t_past]
                 for (u, s_past, t_past) in units_on_indices(
+                    m; 
                     unit=u,
                     stochastic_scenario=s,
                     t=to_time_slice(
-                        TimeSlice(end_(t) - min_up_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t))
+                        m; 
+                        t=TimeSlice(
+                            end_(t) - min_up_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)
+                        )
                     )
                 )
             )
         )
-        for (u, s, t) in constraint_min_up_time_indices()
+        for (u, s, t) in constraint_min_up_time_indices(m)
     )
 end

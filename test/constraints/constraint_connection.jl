@@ -36,6 +36,8 @@
             ["stochastic_scenario", "child"],
         ],
         :relationships => [
+            ["model__temporal_block", ["instance", "hourly"]],
+            ["model__temporal_block", ["instance", "two_hourly"]],
             ["connection__from_node", ["connection_ab", "node_a"]],
             ["connection__to_node", ["connection_ab", "node_b"]],
             ["connection__from_node", ["connection_bc", "node_b"]],
@@ -82,7 +84,7 @@
         constraint = m.ext[:constraints][:connection_flow_capacity]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
             var_conn_flow = var_connection_flow[key...]
@@ -158,7 +160,7 @@
             n_to = node(n_to_name)
             n_inj = node(n_inj_name)
             scenarios = (stochastic_scenario(s) for s in scen_names)
-            time_slices = time_slice(temporal_block=temporal_block(t_block))
+            time_slices = time_slice(m; temporal_block=temporal_block(t_block))
             @testset for (s, t) in zip(scenarios, time_slices)
                 var_conn_flow_to = var_connection_flow[conn, n_to, direction(:to_node), s, t]
                 var_conn_flow_from = var_connection_flow[conn, n_to, direction(:from_node), s, t]
@@ -238,8 +240,8 @@
         d_from = direction(:from_node)
         s_parent = stochastic_scenario(:parent)
         s_child = stochastic_scenario(:child)
-        t1h1, t1h2 = time_slice(temporal_block=temporal_block(:hourly))
-        t2h = time_slice(temporal_block=temporal_block(:two_hourly))[1]
+        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
+        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         # connection_ab
         conn_mon = connection(:connection_ab)
         n_mon_to = node(:node_b)
@@ -342,11 +344,11 @@
                 d_to = direction(:to_node)
                 scenarios_from = [repeat([stochastic_scenario(:child)], 3); repeat([stochastic_scenario(:parent)], 5)]
                 time_slices_from = [
-                    reverse(time_slice(temporal_block=temporal_block(:hourly)));
-                    reverse(SpineOpt.history_time_slice(temporal_block=temporal_block(:hourly)))
+                    reverse(time_slice(m; temporal_block=temporal_block(:hourly)));
+                    reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
                 ]
                 s_to = stochastic_scenario(:parent)
-                @testset for (j, t_to) in enumerate(reverse(time_slice(temporal_block=temporal_block(:two_hourly))))
+                @testset for (j, t_to) in enumerate(reverse(time_slice(m; temporal_block=temporal_block(:two_hourly))))
                     coeffs = (1 - rem_minutes_delay, 1, rem_minutes_delay)
                     i = 2 * j - 1
                     s_set = scenarios_from[i + h_delay: i + h_delay + 2]

@@ -22,11 +22,11 @@
 
 An iterator that concatenates `unit_flow_indices` and `units_on_indices` for the given inputs.
 """
-function _constraint_unit_flow_capacity_indices(unit, node, direction, t)
+function _constraint_unit_flow_capacity_indices(m, unit, node, direction, t)
     Iterators.flatten(
         (
-            unit_flow_indices(unit=unit, node=node, direction=direction, t=t), 
-            units_on_indices(unit=unit, t=t_in_t(t_long=t))
+            unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t), 
+            units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t))
         )
     )
 end

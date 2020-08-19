@@ -25,13 +25,13 @@ Form the stochastic index set for the `:minimum_operating_point` constraint.
 Uses stochastic path indices due to potentially different stochastic structures between
 `unit_flow` and `units_on` variables.
 """
-function constraint_minimum_operating_point_indices()
+function constraint_minimum_operating_point_indices(m)
     unique(
         (unit=u, node=n, direction=d, stochastic_path=path, t=t)
         for (u, n, d) in indices(minimum_operating_point)
-        for t in time_slice(temporal_block=node__temporal_block(node=n))
+        for t in time_slice(m; temporal_block=node__temporal_block(node=n))
         for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(u, n, d, t))
+            unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(m, u, n, d, t))
         )
     )
 end
@@ -44,14 +44,13 @@ number_of_unit, unit_conv_cap_to_flow, unit_availability_factor` exist.
 """
 function add_constraint_minimum_operating_point!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
-    t0 = start(current_window)
+    t0 = start(current_window(m))
     m.ext[:constraints][:minimum_operating_point] = Dict(
         (u, ng, d, s, t) => @constraint(
             m,
             + expr_sum(
                 + unit_flow[u, n, d, s, t]
-                for (u, n, d, s, t) in unit_flow_indices(
-                    unit=u, node=ng, direction=d, stochastic_scenario=s, t=t
+                for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t
                 );
                 init=0
             )
@@ -62,12 +61,11 @@ function add_constraint_minimum_operating_point!(m::Model)
                 * minimum_operating_point[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for (u, s, t1) in units_on_indices(
-                    unit=u, stochastic_scenario=s, t=t_overlaps_t(t)
+                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
                 );
                 init=0
             )
         )
-        for (u, ng, d, s, t) in constraint_minimum_operating_point_indices()
+        for (u, ng, d, s, t) in constraint_minimum_operating_point_indices(m)
     )
 end

@@ -24,14 +24,16 @@ Form the stochastic index set for the `:units_invested_transition` constraint.
 
 Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
 """
-function constraint_units_invested_transition_indices()
+function constraint_units_invested_transition_indices(m)
     unique(
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (u, tb) in unit__investment_temporal_block()
-        for t_after in time_slice(temporal_block=tb)
-        for t_before in t_before_t(t_after=t_after)
+        for t_after in time_slice(m; temporal_block=tb)
+        for t_before in t_before_t(m; t_after=t_after)
         for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in units_invested_available_indices(unit=u, t=[t_before, t_after]))
+            unique(
+                ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=[t_before, t_after])
+            )
         )
     )
 end
@@ -52,20 +54,16 @@ function add_constraint_units_invested_transition!(m::Model)
                 + units_mothballed[u, s, t_after]
                 # TODO: +units_decomissioned[u, s, t_after]
                 # TODO: -units_demothballed[u,s,t_after] ...
-                for (u, s, t_after) in units_invested_available_indices(
-                    unit=u, stochastic_scenario=s, t=t_after
-                );
+                for (u, s, t_after) in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t_after);
                 init=0
             )
             ==
             expr_sum(
                 + units_invested_available[u, s, t_before]
-                for (u, s, t_before) in units_invested_available_indices(
-                    unit=u, stochastic_scenario=s, t=t_before
-                );
+                for (u, s, t_before) in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t_before);
                 init=0
             )
         )
-        for (u, s, t_before, t_after) in constraint_units_invested_transition_indices()
+        for (u, s, t_before, t_after) in constraint_units_invested_transition_indices(m)
     )
 end

@@ -13,6 +13,7 @@
         ["unit_constraint", "A constraint over the flows of a specific unit.", null]
     ],
     "relationship_classes": [
+        ["model__temporal_block", ["model", "temporal_block"], "TODO"],
         ["connection__from_node", ["connection", "node"], "Defines the `nodes` the `connection` can take input from, and holds most `connection_flow` variable specific parameters."],
         ["connection__node__node", ["connection", "node", "node"], "Holds parameters spanning multiple `connection_flow` variables to and from multiple `nodes`."],
         ["connection__to_node", ["connection", "node"], "Defines the `nodes` the `connection` can output to, and holds most `connection_flow` variable specific parameters."],

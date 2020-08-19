@@ -29,7 +29,8 @@
 A list of `NamedTuple`s corresponding to indices of the `unit_flow` variable.
 The keyword arguments act as filters for each dimension.
 """
-function unit_flow_op_indices(;
+function unit_flow_op_indices(
+        m::Model; 
         unit=anything,
         node=anything,
         direction=anything,
@@ -45,7 +46,7 @@ function unit_flow_op_indices(;
         for (u, n, d, tb) in unit__node__direction__temporal_block(unit=u, node=n, direction=direction, _compact=false)
         for i in intersect(i, 1:length(operating_points(unit=u, node=n, direction=d)))
         for (n, s, t) in node_stochastic_time_indices(
-            node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     ]
 end
@@ -56,7 +57,7 @@ end
 Add `unit_flow_op` variables to model `m`.
 """
 function add_variable_unit_flow_op!(m::Model)
-    t0 = start(current_window)
+    t0 = start(current_window(m))
     add_variable!(
         m,
         :unit_flow_op,

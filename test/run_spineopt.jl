@@ -39,6 +39,7 @@ end
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["units_on__temporal_block", ["unit_ab", "hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
+            ["model__temporal_block", ["instance", "hourly"]],
             ["node__temporal_block", ["node_b", "hourly"]],
             ["node__stochastic_structure", ["node_b", "deterministic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
@@ -104,7 +105,7 @@ end
         m = run_spineopt(url_in, url_out; log_level=0)
         @test termination_status(m) == JuMP.MathOptInterface.INFEASIBLE
     end
-    @testset "unknown ouput" begin
+    @testset "unknown output" begin
         _load_template(url_in)
         db_api.import_data_to_url(url_in; test_data...)
         demand = 100

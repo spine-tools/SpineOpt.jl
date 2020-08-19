@@ -43,27 +43,27 @@ macro fetch(expr)
 end
 
 """
-    log(level, msg)
+    log(level, threshold, msg)
 
 TODO: Print stuff?
 """
-macro log(level, msg)
+macro log(level, threshold, msg)
     quote
-        if $(esc(level))
+        if $(esc(level)) >= $(esc(threshold))
             printstyled($(esc(msg)), "\n"; bold=true)
         end
     end
 end
 
 """
-    logtime(level, msg, expr)
+    timelog(level, threshold, msg, expr)
 
 TODO: Logs time taken by commands?
 """
-macro logtime(level, msg, expr)
+macro timelog(level, threshold, msg, expr)
     quote
-        if $(esc(level))
-            @msgtime $(esc(msg)) $(esc(expr))
+        if $(esc(level)) >= $(esc(threshold))
+            @timemsg $(esc(msg)) $(esc(expr))
         else
             $(esc(expr))
         end
@@ -71,11 +71,11 @@ macro logtime(level, msg, expr)
 end
 
 """
-    msgtime(msg, expr)
+    timemsg(msg, expr)
 
 TODO: Prints stuff with time?
 """
-macro msgtime(msg, expr)
+macro timemsg(msg, expr)
     quote
         printstyled($(esc(msg)); bold=true)
         @time $(esc(expr))

@@ -37,6 +37,7 @@
             :relationships => [
                 ["connection__from_node", ["connection_ab", "node_a"]],
                 ["connection__to_node", ["connection_ab", "node_b"]],
+                ["model__temporal_block", ["instance", "hourly"]],
                 ["node__temporal_block", ["node_a", "hourly"]],
                 ["node__temporal_block", ["node_b", "hourly"]],
                 ["node__stochastic_structure", ["node_a", "stochastic"]],
@@ -76,7 +77,7 @@
         m = run_spineopt(url_in; log_level=0)
         connection_avg_throughflow = m.ext[:values][:connection_avg_throughflow]
         @test length(connection_avg_throughflow) == 2
-        t1, t2 = time_slice(temporal_block=temporal_block(:hourly))
+        t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
         key1 = (connection=connection(:connection_ab), stochastic_path=[stochastic_scenario(:parent)], t=t1)
         key2 = (connection=connection(:connection_ab), stochastic_path=[stochastic_scenario(:child)], t=t2)
         @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100

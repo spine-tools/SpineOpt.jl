@@ -209,8 +209,8 @@ function _generate_time_slice_relationships!(m::Model)
     instance = m.ext[:instance]
     all_time_slices = Iterators.flatten((history_time_slice(m), time_slice(m)))
     duration_unit = _model_duration_unit(instance)
-    t_follows_t_mapping = Dict(t => to_time_slice(t + duration_unit(duration(t))) for t in all_time_slices)
-    t_overlaps_t_maping = Dict(t => to_time_slice(t) for t in all_time_slices)
+    t_follows_t_mapping = Dict(t => to_time_slice(m, t=t + duration_unit(duration(t))) for t in all_time_slices)
+    t_overlaps_t_maping = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
     t_overlaps_t_excl_mapping = Dict(t => setdiff(overlapping_t, t) for (t, overlapping_t) in t_overlaps_t_maping)
     t_before_t_tuples = unique(
         (t_before=t_before, t_after=t_after)
@@ -257,7 +257,7 @@ Move the entire temporal structure ahead according to the `roll_forward` paramet
 function roll_temporal_structure!(m::Model)
     instance = m.ext[:instance]
     temp_struct = m.ext[:temporal_structure]
-    end_(current_window) >= model_end(model=instance) && return false
+    end_(temp_struct[:current_window]) >= model_end(model=instance) && return false
     roll_forward_ = roll_forward(model=instance, _strict=false)
     roll_forward_ in (nothing, 0) && return false
     roll!(temp_struct[:current_window], roll_forward_)
@@ -267,21 +267,21 @@ function roll_temporal_structure!(m::Model)
 end
 
 current_window(m::Model) = m.ext[:temporal_structure][:current_window]
-time_slice(;m::Model, kwargs...) = m.ext[:temporal_structure][:time_slice](;kwargs...)
-history_time_slice(;m::Model, kwargs...) = m.ext[:temporal_structure][:history_time_slice](;kwargs...)
-t_history_t(;m::Model, t::TimeSlice) = m.ext[:temporal_structure][:t_history_t][t]
-t_before_t(;m::Model, kwargs...) = m.ext[:temporal_structure][:t_before_t](;kwargs...)
-t_in_t(;m::Model, kwargs...) = m.ext[:temporal_structure][:t_in_t](;kwargs...)
-t_in_t_excl(;m::Model, kwargs...) = m.ext[:temporal_structure][:t_in_t_excl](;kwargs...)
-t_overlaps_t(;m::Model, kwargs...) = m.ext[:temporal_structure][:t_overlaps_t](;kwargs...)
-t_overlaps_t_excl(;m::Model, kwargs...) = m.ext[:temporal_structure][:t_overlaps_t_excl](;kwargs...)
+time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:time_slice](;kwargs...)
+history_time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:history_time_slice](;kwargs...)
+t_history_t(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_history_t][t]
+t_before_t(m::Model; kwargs...) = m.ext[:temporal_structure][:t_before_t](;kwargs...)
+t_in_t(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t](;kwargs...)
+t_in_t_excl(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t_excl](;kwargs...)
+t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t](t)
+t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t_excl](t)
 
 """
     to_time_slice(t::TimeSlice...)
 
 An `Array` of `TimeSlice`s *in the model* overlapping the given `t` (where `t` may not be in model).
 """
-function to_time_slice(;m::Model, t::TimeSlice)
+function to_time_slice(m::Model; t::TimeSlice)
     temp_struct = m.ext[:temporal_structure]
     unique(
         Iterators.flatten(
