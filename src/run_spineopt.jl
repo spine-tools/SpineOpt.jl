@@ -260,7 +260,7 @@ end
 """
 Write report from given outputs into the db.
 """
-function write_report(model, results, default_url)
+function write_report(model, outputs, default_url)
     reports = Dict()
     for (rpt, out) in report__output()
         value = get(outputs, out.name, nothing)
