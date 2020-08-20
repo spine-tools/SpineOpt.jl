@@ -260,7 +260,7 @@ end
 """
 Write report from given outputs into the db.
 """
-function write_report(outputs, default_url)
+function write_report(model, results, default_url)
     reports = Dict()
     for (rpt, out) in report__output()
         value = get(outputs, out.name, nothing)
@@ -269,8 +269,10 @@ function write_report(outputs, default_url)
         url === nothing && (url = default_url)
         url_reports = get!(reports, url, Dict())
         output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
-        output_params[out.name] = Dict{NamedTuple,TimeSeries}(
-            k => TimeSeries(first.(v), last.(v), false, false) for (k, v) in _pullinds(value, :t)
+        parameter_name = out.name
+        parameter_name in keys(model.ext[:objective_terms]) && (parameter_name = Symbol("objective-$(out.name)"))
+        output_params[parameter_name] = Dict{NamedTuple,TimeSeries}(
+            k => TimeSeries(first.(v), last.(v), false, false) for (k, v) in _pulldims(value, :t)
         )
     end
     for (url, url_reports) in reports
@@ -348,6 +350,6 @@ function rerun_spineopt(
         update_model!(m; update_constraints=update_constraints, log_level=log_level)
         k += 1
     end
-    @timelog log_level 2 "Writing report..." write_report(outputs, url_out)
+    @timelog log_level 2 "Writing report..." write_report(m, outputs, url_out)
     m
 end
