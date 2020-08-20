@@ -71,11 +71,6 @@ function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Fu
             fix_value_ != nothing && fix(var[history_ind], fix_value_; force=true)
         end
     end
-<<<<<<< src/run_spineopt.jl
-     @logtime level2 "Writing report..." write_report(m, results, url_out)
-     m
-=======
->>>>>>> src/run_spineopt.jl
 end
 
 """
@@ -240,9 +235,6 @@ function _pullinds(input::Dict{K,V}, inds::Symbol...) where {K<:NamedTuple,V}
     result
 end
 
-<<<<<<< src/run_spineopt.jl
-function write_report(model, results, default_url)
-=======
 """
 Save a model results: first postprocess results, then save variables and objective values, and finally save outputs
 """
@@ -268,8 +260,7 @@ end
 """
 Write report from given outputs into the db.
 """
-function write_report(model, outputs, default_url)
->>>>>>> src/run_spineopt.jl
+function write_report(model, results, default_url)
     reports = Dict()
     for (rpt, out) in report__output()
         value = get(outputs, out.name, nothing)
@@ -278,15 +269,10 @@ function write_report(model, outputs, default_url)
         url === nothing && (url = default_url)
         url_reports = get!(reports, url, Dict())
         output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
-<<<<<<< src/run_spineopt.jl
         parameter_name = out.name
         parameter_name in keys(model.ext[:objective_terms]) && (parameter_name = Symbol("objective-$(out.name)"))
         output_params[parameter_name] = Dict{NamedTuple,TimeSeries}(
             k => TimeSeries(first.(v), last.(v), false, false) for (k, v) in _pulldims(value, :t)
-=======
-        output_params[out.name] = Dict{NamedTuple,TimeSeries}(
-            k => TimeSeries(first.(v), last.(v), false, false) for (k, v) in _pullinds(value, :t)
->>>>>>> src/run_spineopt.jl
         )
     end
     for (url, url_reports) in reports
