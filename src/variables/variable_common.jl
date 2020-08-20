@@ -43,13 +43,13 @@ function add_variable!(
         :indices => indices, :lb => lb, :ub => ub, :bin => bin, :int => int, :fix_value => fix_value
     )
     var = m.ext[:variables][name] = Dict(
-        ind => _variable(m, name, ind, lb, ub, bin, int) for ind in indices()
+        ind => _variable(m, name, ind, lb, ub, bin, int) for ind in indices(m)
     )
     history_var = Dict(
         history_ind => _variable(m, name, history_ind, lb, ub, bin, int)
-        for ind in indices()
-        if end_(ind.t) <= end_(current_window)  
-        for history_ind in indices(; ind..., stochastic_scenario=anything, t=t_history_t[ind.t])
+        for ind in indices(m)
+        if end_(ind.t) <= end_(current_window(m))  
+        for history_ind in indices(m; ind..., stochastic_scenario=anything, t=t_history_t(m; t=ind.t))
     )
     merge!(var, history_var)
 end

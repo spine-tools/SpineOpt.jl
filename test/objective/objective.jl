@@ -37,6 +37,8 @@
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["units_on__temporal_block", ["unit_ab", "two_hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
+            ["model__temporal_block", ["instance", "two_hourly"]],
+            ["model__temporal_block", ["instance", "hourly"]],
             ["node__temporal_block", ["node_a", "two_hourly"]],
             ["node__temporal_block", ["node_b", "hourly"]],
             ["node__stochastic_structure", ["node_a", "deterministic"]],
@@ -79,7 +81,7 @@
             relationship_parameter_values=relationship_parameter_values
         )
         m = run_spineopt(url_in; log_level=0)
-        t_count = length(time_slice(temporal_block=temporal_block(:two_hourly)))
+        t_count = length(time_slice(m; temporal_block=temporal_block(:two_hourly)))
         duration = 2
         expected_obj = AffExpr(unit_capacity * number_of_units * fom_cost * duration * t_count)
         observed_obj = objective_function(m)
@@ -95,7 +97,7 @@
         unit_flow = m.ext[:variables][:unit_flow]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         observed_obj = objective_function(m)
         expected_obj = fuel_cost * sum(unit_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices))
         @test observed_obj == expected_obj
@@ -117,7 +119,7 @@
         m = run_spineopt(url_in; log_level=0)
         units_invested = m.ext[:variables][:units_invested]
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         observed_obj = objective_function(m)
         expected_obj = (
             unit_investment_cost * sum(units_invested[unit(:unit_ab), s, t] for (s, t) in zip(scenarios, time_slices))
@@ -141,8 +143,8 @@
         n_b = node(:node_b)
         s_parent = stochastic_scenario(:parent)
         s_child = stochastic_scenario(:child)
-        t1h1, t1h2 = time_slice(temporal_block=temporal_block(:hourly))
-        t2h = time_slice(temporal_block=temporal_block(:two_hourly))[1]
+        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
+        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         observed_obj = objective_function(m)
         expected_obj = (
             + 2 * node_a_slack_penalty * node_slack_neg[n_a, s_parent, t2h]
@@ -164,7 +166,7 @@
         unit_flow = m.ext[:variables][:unit_flow]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         observed_obj = objective_function(m)
         expected_obj = operating_cost * sum(unit_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices))
         @test observed_obj == expected_obj
@@ -179,7 +181,7 @@
         units_shut_down = m.ext[:variables][:units_shut_down]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         s_parent = stochastic_scenario(:parent)
-        t2h = time_slice(temporal_block=temporal_block(:two_hourly))[1]
+        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         observed_obj = objective_function(m)
         expected_obj = shut_down_cost * units_shut_down[unit(:unit_ab), s_parent, t2h]
         @test observed_obj == expected_obj
@@ -194,7 +196,7 @@
         units_started_up = m.ext[:variables][:units_started_up]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         s_parent = stochastic_scenario(:parent)
-        t2h = time_slice(temporal_block=temporal_block(:two_hourly))[1]
+        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         observed_obj = objective_function(m)
         expected_obj = start_up_cost * units_started_up[unit(:unit_ab), s_parent, t2h]
         @test observed_obj == expected_obj
@@ -209,7 +211,7 @@
         unit_flow = m.ext[:variables][:unit_flow]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         observed_obj = objective_function(m)
         expected_obj = vom_cost * sum(unit_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices))
         @test observed_obj == expected_obj
@@ -231,7 +233,7 @@
         connection_flow = m.ext[:variables][:connection_flow]
         key = (connection(:connection_ab), node(:node_b), direction(:to_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         observed_obj = objective_function(m)
         expected_obj = connection_flow_cost * sum(connection_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices))
         @test observed_obj == expected_obj

@@ -18,21 +18,20 @@
 #############################################################################
 
 """
-    operating_costs(m::Model)
+    start_up_costs(m::Model)
 
-Create an expression for variable unit operating costs.
+Create an expression for unit startup costs.
 """
-function operating_costs(m::Model, t1)
-    @fetch unit_flow = m.ext[:variables]
-    t0 = start(current_window(m))
+function res_start_up_costs(m::Model, t1)
+    @fetch nonspin_units_starting_up = m.ext[:variables]
     @expression(
         m,
         expr_sum(
-            unit_flow[u, n, d, s, t] * duration(t)
-            * operating_cost[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]  # op_cost(ng) = sum(op_cost(n))
-            * node_stochastic_scenario_weight[(node=ng, stochastic_scenario=s)]
-            for (u, ng, d) in indices(operating_cost)
-            for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d)
+            + nonspin_units_starting_up[u, n, s, t]
+            * res_start_up_cost[(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)]
+            * unit_stochastic_scenario_weight(unit=u, stochastic_scenario=s)
+            for (u, n ,d) in indices(res_start_up_cost)
+            for (u, n, s, t) in nonspin_units_starting_up_indices(unit=u, node=n)
             if end_(t) <= t1;
             init=0
         )

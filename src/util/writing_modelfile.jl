@@ -18,23 +18,19 @@
 #############################################################################
 
 """
-    operating_costs(m::Model)
+function writing_modelfile(m::Model; file_name="model")
 
-Create an expression for variable unit operating costs.
+Write model file for Model `m`. Objective, constraints and variable bounds are reported.
+    Optional argument is keyword `:file_name`.
 """
-function operating_costs(m::Model, t1)
-    @fetch unit_flow = m.ext[:variables]
-    t0 = start(current_window(m))
-    @expression(
-        m,
-        expr_sum(
-            unit_flow[u, n, d, s, t] * duration(t)
-            * operating_cost[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]  # op_cost(ng) = sum(op_cost(n))
-            * node_stochastic_scenario_weight[(node=ng, stochastic_scenario=s)]
-            for (u, ng, d) in indices(operating_cost)
-            for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d)
-            if end_(t) <= t1;
-            init=0
-        )
-    )
+function writing_modelfile(m::JuMP.Model; file_name="model")
+    model_string = "$m"
+    model_string = replace(model_string, s"+ " => "\n\t+ ")
+    model_string = replace(model_string, s"- " => "\n\t- ")
+    model_string = replace(model_string, s">= " => "\n\t\t>= ")
+    model_string = replace(model_string, s"== " => "\n\t\t== ")
+    model_string = replace(model_string, s"<= " => "\n\t\t<= ")
+    open(joinpath(@__DIR__, "$(file_name).so_model"), "w") do file
+    write(file, model_string)
+    end
 end

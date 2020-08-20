@@ -34,8 +34,8 @@ for each dimension.
 # what are the default values?
 # rather model choise use ramps
 ### nonspin_ramp_up_unit_flow
-function nonspin_ramp_up_unit_flow_indices(;
-        unit=anything, node=anything, direction=anything, stochastic_scenario=anything, t=anything
+function nonspin_ramp_up_unit_flow_indices(
+        m::Model; unit=anything, node=anything, direction=anything, stochastic_scenario=anything, t=anything
     )
     unit = members(unit)
     node = members(node)
@@ -45,7 +45,7 @@ function nonspin_ramp_up_unit_flow_indices(;
             unit=unit, node=node, direction=direction, _compact=false
         )
         for (n, s, t) in node_stochastic_time_indices(
-            node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     ]
 end
@@ -56,13 +56,20 @@ end
 Add `nonspin_ramp_up_unit_flow` variables to model `m`.
 """
 function add_variable_nonspin_ramp_up_unit_flow!(m::Model)
+    t0 = start(current_window(m))
     add_variable!(
         m,
         :nonspin_ramp_up_unit_flow,
         nonspin_ramp_up_unit_flow_indices;
         lb=x -> 0,
         fix_value=x -> fix_nonspin_ramp_up_unit_flow(
-            unit=x.unit, node=x.node, direction=x.direction, t=x.t, _strict=false
+            unit=x.unit,
+            node=x.node,
+            direction=x.direction,
+            stochastic_scenario=x.stochastic_scenario,
+            analysis_time=t0,
+            t=x.t,
+            _strict=false
         )
     )
 end

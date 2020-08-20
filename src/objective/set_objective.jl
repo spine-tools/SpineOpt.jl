@@ -25,10 +25,10 @@ cost terms.
 
 Unless defined otherwise this expression executed until the last time_slice
 """
-# TODO: Rethink this concept; Should we really evaluate until the very least time_slice,
+# TODO: Rethink this concept; Should we really evaluate until the very last time_slice,
 # if multiple temporal_block end at different points in time
-function set_objective!(m::Model; t=end_(last(time_slice())))
-    total_discounted_costs = total_costs(m, t)
+function set_objective!(m::Model)
+    total_discounted_costs = total_costs(m, end_(last(time_slice(m))))
     if !iszero(total_discounted_costs)
         @objective(m, Min, total_discounted_costs)
     else

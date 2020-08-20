@@ -24,17 +24,17 @@ Create an expression for unit_flow variable operation costs.
 """
 function variable_om_costs(m::Model, t1)
     @fetch unit_flow = m.ext[:variables]
+    t0 = start(current_window(m))
     @expression(
         m,
         expr_sum(
             + unit_flow[u, n, d, s, t] * duration(t)
-            * vom_cost[(unit=u, node=n, direction=d, t=t)]
-            * node_stochastic_scenario_weight(node=n, stochastic_scenario=s)
+            * vom_cost[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for (u, n, d) in indices(vom_cost)
-            for (u, n, d, s, t) in unit_flow_indices(unit=u, node=n, direction=d)
-                if end_(t) <= t1;
+            for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=n, direction=d)
+            if end_(t) <= t1;
             init=0
         )
     )
 end
-# TODO: add weight scenario tree

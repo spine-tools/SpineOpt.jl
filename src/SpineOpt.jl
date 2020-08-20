@@ -47,6 +47,7 @@ export units_invested_available_indices
 include("util/misc.jl")
 include("util/update_model.jl")
 include("util/postprocess_results.jl")
+include("util/writing_modelfile.jl")
 
 include("run_spineopt.jl")
 
@@ -91,6 +92,7 @@ include("objective/renewable_curtailment_costs.jl")
 include("objective/connection_flow_costs.jl")
 include("objective/res_proc_costs.jl")
 include("objective/ramp_costs.jl")
+include("objective/res_start_up_costs.jl")
 
 include("constraints/constraint_common.jl")
 include("constraints/constraint_max_cum_in_unit_flow_bound.jl")
@@ -123,6 +125,7 @@ include("constraints/constraint_min_start_up_ramp.jl")
 #TODO: include("constraints/constraint_ramp_down.jl")
 include("constraints/constraint_max_nonspin_ramp_up.jl")
 include("constraints/constraint_min_nonspin_ramp_up.jl")
+include("constraints/constraint_res_minimum_node_state.jl")
 
 _template() = JSON.parsefile(joinpath(dirname(pathof(@__MODULE__)), "..", "data", "spineopt_template.json"))
 
