@@ -33,7 +33,8 @@ end
             ["node", "node_b"],
             ["stochastic_scenario", "parent"],
             ["report", "report_x"],
-            ["output", "unit_flow"]
+            ["output", "unit_flow"],
+            ["output", "variable_om_costs"]
         ],
         :relationships => [
             ["unit__to_node", ["unit_ab", "node_b"]],
@@ -44,6 +45,7 @@ end
             ["node__stochastic_structure", ["node_b", "deterministic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
             ["report__output", ["report_x", "unit_flow"]],
+            ["report__output", ["report_x", "variable_om_costs"]],
         ],
         :object_parameter_values => [
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
@@ -78,17 +80,19 @@ end
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:constraints][:unit_flow_capacity]
         using_spinedb(url_out, Y)
-        key = (
+        cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+        flow_key = (
             report=Y.report(:report_x), 
             unit=Y.unit(:unit_ab), 
             node=Y.node(:node_b), 
             direction=Y.direction(:to_node), 
             stochastic_scenario=Y.stochastic_scenario(:parent)
         )
-        @testset for (k, d) in enumerate(demand_data)
+        @testset for (k, (c, d)) in enumerate(zip(vom_cost_data, demand_data))
             t1 = DateTime(2000, 1, 1, k - 1)
             t = TimeSlice(t1, t1 + Hour(1))
-            @test Y.unit_flow(; key..., t=t) == d
+            @test Y.objective_variable_om_costs(; cost_key..., t=t) == c * d
+            @test Y.unit_flow(; flow_key..., t=t) == d
         end
     end
     @testset "unfeasible" begin

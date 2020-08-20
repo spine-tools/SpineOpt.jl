@@ -27,7 +27,6 @@ function create_model(with_optimizer)
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
     m.ext[:values] = Dict{Symbol,Dict}()
     m.ext[:constraints] = Dict{Symbol,Dict}()
-    m.ext[:objective_terms] = Dict(term => Dict() for term in [objective_terms(); :total_costs])
     m
 end
 
@@ -200,39 +199,35 @@ Save the value of the objective terms in a model.
 """
 function save_objective_values!(m::Model)
     ind = (model=m.ext[:instance], t=current_window(m))
-    for term in keys(m.ext[:objective_terms])
-        func = eval(term)
-        m.ext[:objective_terms][term][ind] = _value(realize(func(m, end_(ind.t))))
+    for name in [objective_terms(); :total_costs]
+        func = eval(name)
+        m.ext[:values][name] = Dict(ind => _value(realize(func(m, end_(ind.t)))))
     end
 end
+
+"""
+Drop keys from a `NamedTuple`.
+"""
+_drop_key(x::NamedTuple, key::Symbol...) = (; (k => v for (k, v) in pairs(x) if !(k in key))...)
 
 """
 Save the outputs of a model into a dictionary.
 """
 function save_outputs!(outputs, m)
     for out in output()
-        value = get(merge(m.ext[:values], m.ext[:objective_terms]), out.name, nothing)
+        value = get(m.ext[:values], out.name, nothing)
         if value === nothing
             @warn "can't find a value for '$(out.name)'"
             continue
         end
-        value_ = Dict{NamedTuple,Number}((; k..., t=start(k.t)) => v for (k, v) in value)
-        existing = get!(outputs, out.name, Dict{NamedTuple,Number}())
-        merge!(existing, value_)
+        existing = get!(outputs, out.name, Dict{NamedTuple,Any}())
+        for (k, v) in value
+            new_k = _drop_key(k, :t)
+            ts = get!(existing, new_k, TimeSeries([], [], false, false))
+            push!(ts.indexes, start(k.t))
+            push!(ts.values, v)
+        end
     end
-end
-
-"""
-Move some indices from the value to the key of a dictionary.
-"""
-function _pullinds(input::Dict{K,V}, inds::Symbol...) where {K<:NamedTuple,V}
-    result = Dict()
-    for (key, value) in sort!(OrderedDict(input))
-        new_key = (; (k => v for (k, v) in pairs(key) if !(k in inds))...)
-        new_value = ((key[ind] for ind in inds)..., value)
-        push!(get!(result, new_key, []), new_value)
-    end
-    result
 end
 
 """
@@ -265,15 +260,12 @@ function write_report(model, outputs, default_url)
     for (rpt, out) in report__output()
         value = get(outputs, out.name, nothing)
         value === nothing && continue
-        url = output_db_url(report=rpt, _strict=false)
-        url === nothing && (url = default_url)
+        output_url = output_db_url(report=rpt, _strict=false)
+        url = output_url !== nothing ? output_url : default_url
         url_reports = get!(reports, url, Dict())
         output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
-        parameter_name = out.name
-        parameter_name in keys(model.ext[:objective_terms]) && (parameter_name = Symbol("objective-$(out.name)"))
-        output_params[parameter_name] = Dict{NamedTuple,TimeSeries}(
-            k => TimeSeries(first.(v), last.(v), false, false) for (k, v) in _pullinds(value, :t)
-        )
+        parameter_name = out.name in objective_terms() ? Symbol("objective_", out.name) : out.name
+        output_params[parameter_name] = value
     end
     for (url, url_reports) in reports
         for (rpt_name, output_params) in url_reports

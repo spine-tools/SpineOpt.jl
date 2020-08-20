@@ -170,26 +170,14 @@ Generate `has_ptdf` parameter associated to the `connection` `ObjectClass`.
 """
 function generate_connection_has_ptdf()
     for conn in connection()
-        is_bidirectional = (
-            length(connection__from_node(connection=conn)) == 2
-            && isempty(
-                symdiff(
-                    connection__from_node(connection=conn, direction=anything),
-                    connection__to_node(connection=conn, direction=anything)
-                )
-            )
-        )
-        is_bidirectional_loseless = (
-            is_bidirectional
-            && fix_ratio_out_in_connection_flow(;
-                connection=conn, 
-                zip((:node1, :node2), connection__from_node(connection=conn, direction=anything))..., 
-                _strict=false
-            ) == 1
-        )
+        from_nodes = connection__from_node(connection=conn, direction=anything)
+        to_nodes = connection__to_node(connection=conn, direction=anything)
+        is_bidirectional = length(from_nodes) == 2 && isempty(symdiff(from_nodes, to_nodes))
+        is_loseless = fix_ratio_out_in_connection_flow(;
+            connection=conn, zip((:node1, :node2), from_nodes)..., _strict=false
+        ) == 1
         connection.parameter_values[conn][:has_ptdf] = parameter_value(
-            is_bidirectional_loseless 
-            && all(has_ptdf(node=n) for n in connection__from_node(connection=conn, direction=anything))
+            is_bidirectional && is_loseless && all(has_ptdf(node=n) for n in from_nodes)
         )
     end
     push!(has_ptdf.classes, connection)
