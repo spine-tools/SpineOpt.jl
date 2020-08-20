@@ -260,7 +260,7 @@ end
 """
 Write report from given outputs into the db.
 """
-function write_report(model, results, default_url)
+function write_report(model, outputs, default_url)
     reports = Dict()
     for (rpt, out) in report__output()
         value = get(outputs, out.name, nothing)
@@ -272,7 +272,7 @@ function write_report(model, results, default_url)
         parameter_name = out.name
         parameter_name in keys(model.ext[:objective_terms]) && (parameter_name = Symbol("objective-$(out.name)"))
         output_params[parameter_name] = Dict{NamedTuple,TimeSeries}(
-            k => TimeSeries(first.(v), last.(v), false, false) for (k, v) in _pulldims(value, :t)
+            k => TimeSeries(first.(v), last.(v), false, false) for (k, v) in _pullinds(value, :t)
         )
     end
     for (url, url_reports) in reports
