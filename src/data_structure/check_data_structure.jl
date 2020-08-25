@@ -40,6 +40,7 @@ function check_data_structure(; log_level=3)
     check_model_object()
     check_temporal_block_object()
     check_node_object()
+    check_model__temporal_block()
     check_node__temporal_block()
     check_node__stochastic_structure()
     check_unit__stochastic_structure()
@@ -80,6 +81,18 @@ function check_node_object()
     _check(
         !isempty(node()),
         "`node` object not found - you need at least one `node` to run SpineOpt"
+    )
+end
+
+"""
+    check_model__temporal_block()
+
+Check if at least one `model__temporal_block` relationship is defined.
+"""
+function check_model__temporal_block()
+    _check(
+        !isempty(model__temporal_block()),
+        "`model__temporal_block` relationship not found - you need at least one such relationship to run SpineOpt"
     )
 end
 
