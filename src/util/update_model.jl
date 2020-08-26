@@ -23,10 +23,6 @@
 # so we're able to automatically update them later, in `update_varying_constraints!`.
 # We extend @objective in a similar way.
 
-import DataStructures: OrderedDict
-import LinearAlgebra: UniformScaling
-import JuMP: MOI, MOIU
-
 _Constant = Union{Number,UniformScaling}
 
 abstract type CallSet <: MOI.AbstractScalarSet end

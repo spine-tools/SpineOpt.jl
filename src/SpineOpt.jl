@@ -31,6 +31,11 @@ using Suppressor
 using JSON
 using PowerSystems
 
+import Dates: CompoundPeriod
+import DataStructures: OrderedDict
+import LinearAlgebra: UniformScaling
+import JuMP: MOI, MOIU
+
 # Export utility
 export run_spineopt
 export rerun_spineopt

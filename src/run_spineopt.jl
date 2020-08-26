@@ -220,12 +220,10 @@ function save_outputs!(outputs, m)
             @warn "can't find a value for '$(out.name)'"
             continue
         end
-        existing = get!(outputs, out.name, Dict{NamedTuple,Any}())
+        existing = get!(outputs, out.name, Dict{NamedTuple,OrderedDict}())
         for (k, v) in value
             new_k = _drop_key(k, :t)
-            ts = get!(existing, new_k, TimeSeries([], [], false, false))
-            push!(ts.indexes, start(k.t))
-            push!(ts.values, v)
+            push!(get!(existing, new_k, OrderedDict()), start(k.t) => v)
         end
     end
 end
@@ -252,20 +250,30 @@ function update_model!(m; update_constraints=m -> nothing, log_level=3)
     @timelog log_level 2 "Updating objective..." update_varying_objective!(m)
 end
 
+function _sortvalues!(x::Dict)
+    for k in keys(x)
+        sort!(x[k])
+    end
+    x
+end
+
 """
 Write report from given outputs into the db.
 """
 function write_report(model, outputs, default_url)
     reports = Dict()
     for (rpt, out) in report__output()
-        value = get(outputs, out.name, nothing)
-        value === nothing && continue
+        d = get(outputs, out.name, nothing)
+        d === nothing && continue
+        _sortvalues!(d)
         output_url = output_db_url(report=rpt, _strict=false)
         url = output_url !== nothing ? output_url : default_url
         url_reports = get!(reports, url, Dict())
         output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
         parameter_name = out.name in objective_terms() ? Symbol("objective_", out.name) : out.name
-        output_params[parameter_name] = value
+        output_params[parameter_name] = Dict(
+            k => TimeSeries(collect(keys(v)), collect(values(v)), false, false) for (k, v) in d
+        )
     end
     for (url, url_reports) in reports
         for (rpt_name, output_params) in url_reports

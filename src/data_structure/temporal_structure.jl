@@ -17,8 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-import Dates: CompoundPeriod
-
 struct TimeSliceSet
     time_slices::Array{TimeSlice,1}
     block_time_slices::Dict{Object,Array{TimeSlice,1}}
