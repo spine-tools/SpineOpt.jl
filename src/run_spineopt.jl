@@ -220,10 +220,10 @@ function save_outputs!(outputs, m)
             @warn "can't find a value for '$(out.name)'"
             continue
         end
-        existing = get!(outputs, out.name, Dict{NamedTuple,OrderedDict}())
+        existing = get!(outputs, out.name, Dict{NamedTuple,Dict}())
         for (k, v) in value
             new_k = _drop_key(k, :t)
-            push!(get!(existing, new_k, OrderedDict()), start(k.t) => v)
+            push!(get!(existing, new_k, Dict{DateTime,Any}()), start(k.t) => v)
         end
     end
 end
@@ -250,13 +250,6 @@ function update_model!(m; update_constraints=m -> nothing, log_level=3)
     @timelog log_level 2 "Updating objective..." update_varying_objective!(m)
 end
 
-function _sortvalues!(x::Dict)
-    for k in keys(x)
-        sort!(x[k])
-    end
-    x
-end
-
 """
 Write report from given outputs into the db.
 """
@@ -265,7 +258,6 @@ function write_report(model, outputs, default_url)
     for (rpt, out) in report__output()
         d = get(outputs, out.name, nothing)
         d === nothing && continue
-        _sortvalues!(d)
         output_url = output_db_url(report=rpt, _strict=false)
         url = output_url !== nothing ? output_url : default_url
         url_reports = get!(reports, url, Dict())
