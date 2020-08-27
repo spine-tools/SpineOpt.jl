@@ -302,7 +302,8 @@ function run_spineopt(
         cleanup=true,
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
-        log_level=3
+        log_level=3,
+        optimize=true
     )
     @log log_level 0 "Running SpineOpt for $(url_in)..."
     @timelog log_level 2 "Initializing data structure from db..." begin
@@ -316,7 +317,8 @@ function run_spineopt(
         with_optimizer=with_optimizer,
         add_constraints=add_constraints,
         update_constraints=update_constraints,
-        log_level=log_level
+        log_level=log_level,
+        optimize=optimize
     )
 end
 
@@ -325,7 +327,8 @@ function rerun_spineopt(
         with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
-        log_level=3
+        log_level=3,
+        optimize=true
     )
     outputs = Dict()
     m = create_model(with_optimizer)
@@ -334,7 +337,7 @@ function rerun_spineopt(
     @log log_level 1 "Window 1: $(current_window(m))"
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
     k = 2
-    while optimize_model!(m; log_level=log_level)
+    while optimize && optimize_model!(m; log_level=log_level)
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
         @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || break
