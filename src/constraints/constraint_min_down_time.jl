@@ -21,7 +21,7 @@
     constraint_min_down_time_indices()
 
 Form the stochastic index set for the `:min_down_time` constraint.
-    
+
 Uses stochastic path indices due to potentially different stochastic structures between `units_on`,
 `units_available`, `units_shut_down`, and `nonspin_units_starting_up` variables on past time slices.
 """
@@ -79,11 +79,11 @@ function add_constraint_min_down_time!(m::Model)
             + expr_sum(
                 + units_shut_down[u, s_past, t_past]
                 for (u, s_past, t_past) in units_on_indices(
-                    m; 
+                    m;
                     unit=u,
                     stochastic_scenario=s,
                     t=to_time_slice(
-                        m; 
+                        m;
                         t=TimeSlice(
                             end_(t) - min_down_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)
                         )
@@ -92,12 +92,12 @@ function add_constraint_min_down_time!(m::Model)
                 init=0
             )
             + expr_sum(
-                + nonspin_units_starting_up[u, n, s_past, t_past]
-                for (u, n, s_past, t_past) in nonspin_units_starting_up_indices(
-                    m; 
+                + nonspin_units_starting_up[u, n, s, t]
+                for (u, n, s, t) in nonspin_units_starting_up_indices(
+                    m;
                     unit=u,
-                    stochastic_scenario=s,
-                    t=t_before_t(m; t_after=t) # TODO: check this t_before
+                    s=s,
+                    t=t
                 );
                 init=0
             )
