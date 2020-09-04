@@ -95,3 +95,4 @@ function add_constraint_res_minimum_node_state!(m::Model)
         for (n_stor, s, t_after) in constraint_res_minimum_node_state_indices(m)
     )
 end
+#TODO: only for upward reserves? add downwards

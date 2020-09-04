@@ -21,7 +21,7 @@
     constraint_min_up_time_indices()
 
 Form the stochastic index set for the `:min_up_time` constraint.
-    
+
 Uses stochastic path indices due to potentially different stochastic structures between `units_on` and
 `units_started_up` variables on past time slices.
 """
@@ -43,7 +43,7 @@ Gather the `stochastic_scenario` indices of the `units_started_up` variable on p
 """
 function _constraint_min_up_time_indices(m, u, s, t0, t)
     t_past_and_present = to_time_slice(
-        m; 
+        m;
         t=TimeSlice(end_(t) - min_up_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t))
     )
     unique(ind.stochastic_scenario for ind in units_on_indices(m; unit=u, t=t_past_and_present))
@@ -56,7 +56,7 @@ Constrain running by minimum up time.
 """
 
 function add_constraint_min_up_time!(m::Model)
-    @fetch units_on, units_started_up= m.ext[:variables] #, nonspin_shutting_down
+    @fetch units_on, units_started_up = m.ext[:variables] #, nonspin_units_shutting_down
     t0 = start(current_window(m))
     m.ext[:constraints][:min_up_time] = Dict(
         (u, s, t) => @constraint(
@@ -66,15 +66,25 @@ function add_constraint_min_up_time!(m::Model)
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0
             )
+            # - expr_sum(
+            #     + nonspin_units_shutting_down[u, n, s, t]
+            #     for (u, n, s, t) in nonspin_units_shutting_down_indices(
+            #         m;
+            #         unit=u,
+            #         stochastic_scenario=s,
+            #         t=t
+            #     );
+            #     init=0
+            # )
             >=
             + sum(
                 + units_started_up[u, s_past, t_past]
                 for (u, s_past, t_past) in units_on_indices(
-                    m; 
+                    m;
                     unit=u,
                     stochastic_scenario=s,
                     t=to_time_slice(
-                        m; 
+                        m;
                         t=TimeSlice(
                             end_(t) - min_up_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)
                         )
