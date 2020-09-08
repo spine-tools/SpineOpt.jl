@@ -46,12 +46,12 @@ end
 """
     add_constraint_split_ramp_down!(m::Model)
 
-Split delta(`unit_flow`) in `ramp_down_unit_flow and` `start_up_unit_flow`.
+Split delta(`unit_flow`) in `ramp_down_unit_flow and` `shut_down_unit_flow`.
 
 This is required to enforce separate limitations on these two ramp types.
 """
 function add_constraint_split_ramp_down!(m::Model)
-    @fetch unit_flow, ramp_down_unit_flow, start_up_unit_flow, nonspin_ramp_down_unit_flow = m.ext[:variables]
+    @fetch unit_flow, ramp_down_unit_flow, shut_down_unit_flow, nonspin_ramp_down_unit_flow = m.ext[:variables]
     m.ext[:constraints][:split_ramp_down] = Dict(
         (u, n, d, s, t_before, t_after) => @constraint(
             m,
@@ -59,7 +59,8 @@ function add_constraint_split_ramp_down!(m::Model)
                 + unit_flow[u, n, d, s, t_before]
                 for (u, n, d, s, t_after) in unit_flow_indices(
                     m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_before
-                );
+                )
+                if !is_reserve_node(node=n);
                 init=0
             )
             - expr_sum(
@@ -81,7 +82,7 @@ function add_constraint_split_ramp_down!(m::Model)
             <=
             expr_sum(
                 + get(ramp_down_unit_flow, (u, n, d, s, t_after), 0)
-                + get(shut_up_unit_flow, (u, n, d, s, t_after), 0)
+                + get(shut_down_unit_flow, (u, n, d, s, t_after), 0)
                 + get(nonspin_ramp_down_unit_flow, (u, n, d, s, t_after), 0)
                 for s in s;
                 init=0

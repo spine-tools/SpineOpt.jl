@@ -63,14 +63,17 @@ function add_constraint_ramp_down!(m::Model)
             <=
             + sum(
                 (units_on[u, s, t] - units_started_up[u, s, t]
-                -
-                expr_sum(
-                    nonspin_units_shutting_down[u,n,s,t]
-                    for (u, n, s, t) in nonspin_ramp_down_indices(
-                        m; unit=u, direction = d, t=t, stochastic_scenario=s
+                - expr_sum(
+                    + nonspin_units_shutting_down[u, n, s, t]
+                    for (u, n, s, t) in nonspin_units_shutting_down_indices(
+                        m;
+                        unit=u,
+                        stochastic_scenario=s,
+                        t=t
                     )
-                    if is_reserve_node(node=n) && downward_reserve(node=n)
-                        ;init=0) ##TODO: add nonspinn shutting down, for all downwards connected to this unit
+                    if is_reserve_node(node=n) && downward_reserve(node=n);
+                    init=0 
+                ))
                 * ramp_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
