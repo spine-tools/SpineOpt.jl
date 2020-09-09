@@ -45,7 +45,7 @@ Check if `unit_conv_cap_to_flow` is defined.
 """
 function add_constraint_unit_flow_capacity!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     m.ext[:constraints][:unit_flow_capacity] = Dict(
         (u, ng, d, s, t) => @constraint(
             m,

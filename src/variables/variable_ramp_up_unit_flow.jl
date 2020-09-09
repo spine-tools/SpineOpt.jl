@@ -50,7 +50,7 @@ end
 Add `ramp_up_unit_flow` variables to model `m`.
 """
 function add_variable_ramp_up_unit_flow!(m::Model)
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     add_variable!(
         m,
         :ramp_up_unit_flow,

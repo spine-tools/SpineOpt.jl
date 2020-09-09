@@ -54,7 +54,7 @@ If instantaneous power needs to be constrained as well, defining the `connection
 """
 function add_constraint_connection_flow_capacity!(m::Model)
     @fetch connection_flow = m.ext[:variables]
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     m.ext[:constraints][:connection_flow_capacity] = Dict(
         (conn, ng, d, s, t) => @constraint(
             m,

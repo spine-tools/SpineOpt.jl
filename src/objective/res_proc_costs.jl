@@ -24,7 +24,7 @@ Add expression for reserve procurement costs.
 """
 function res_proc_costs(m::Model,t1)
     @fetch unit_flow = m.ext[:variables]
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     @expression(
         m,
         expr_sum(

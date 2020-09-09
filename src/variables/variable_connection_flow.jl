@@ -49,7 +49,7 @@ end
 Add `connection_flow` variables to model `m`.
 """
 function add_variable_connection_flow!(m::Model)
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     add_variable!(
         m, 
         :connection_flow, 

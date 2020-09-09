@@ -50,7 +50,7 @@ Limit the maximum ramp of `ramp_up_unit_flow` of a `unit` or `unit_group` if the
 """
 function add_constraint_ramp_up!(m::Model)
     @fetch units_on, units_started_up, ramp_up_unit_flow = m.ext[:variables]
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     m.ext[:constraints][:ramp_up] = Dict(
         (u, ng, d, s, t) => @constraint(
             m,

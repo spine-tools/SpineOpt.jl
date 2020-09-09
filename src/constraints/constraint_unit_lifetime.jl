@@ -23,7 +23,7 @@
 Form the stochastic index set for the `:units_invested_lifetime()` constraint. 
 """
 function constraint_unit_lifetime_indices(m)
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     unique(
         (unit=u, stochastic_path=path, t=t)
         for u in indices(unit_investment_lifetime)
@@ -57,7 +57,7 @@ Constrain units_invested_available by the investment lifetime of a unit.
 """
 function add_constraint_unit_lifetime!(m::Model)
     @fetch units_invested_available, units_invested = m.ext[:variables]
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     m.ext[:constraints][:unit_lifetime] = Dict(
         (u, s, t) => @constraint(
             m,

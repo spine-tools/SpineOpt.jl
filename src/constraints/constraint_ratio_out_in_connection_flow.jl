@@ -25,7 +25,7 @@ Form the stochastic index set for the `:ratio_out_in_connection_flow` constraint
 Uses stochastic path indices due to potentially different stochastic structures between `connection_flow` variables.
 """
 function constraint_ratio_out_in_connection_flow_indices(m, ratio_out_in)
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     unique(
         (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
         for (conn, n_out, n_in) in indices(ratio_out_in)
@@ -80,7 +80,7 @@ Note that the `<sense>_ratio_<directions>_connection_flow` parameter uses the st
 """
 function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, sense)
     @fetch connection_flow = m.ext[:variables]
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     m.ext[:constraints][ratio_out_in.name] = Dict(
         (conn, ng_out, ng_in, s, t) => sense_constraint(
             m,
