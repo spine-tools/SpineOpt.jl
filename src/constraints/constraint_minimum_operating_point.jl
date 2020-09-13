@@ -44,7 +44,7 @@ number_of_unit, unit_conv_cap_to_flow, unit_availability_factor` exist.
 """
 function add_constraint_minimum_operating_point!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     m.ext[:constraints][:minimum_operating_point] = Dict(
         (u, ng, d, s, t) => @constraint(
             m,

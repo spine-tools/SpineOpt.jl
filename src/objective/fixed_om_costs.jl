@@ -23,7 +23,7 @@
 Create an expression for fixed operation costs of units.
 """
 function fixed_om_costs(m, t1)
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     @expression(
         m,
         expr_sum(

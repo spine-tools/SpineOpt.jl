@@ -42,7 +42,7 @@ end
 Add `nonspin_units_starting_up` variables to model `m`.
 """
 function add_variable_nonspin_units_starting_up!(m::Model)
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     add_variable!(
     	m,
     	:nonspin_units_starting_up, 

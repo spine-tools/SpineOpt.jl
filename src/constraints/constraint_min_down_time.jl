@@ -27,7 +27,7 @@ Uses stochastic path indices due to potentially different stochastic structures 
 """
 #TODO: Does this require nonspin_units_starting_up_indices() to be added here?
 function constraint_min_down_time_indices(m)
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     unique(
         (unit=u, stochastic_path=path, t=t)
         for u in indices(min_down_time)
@@ -65,7 +65,7 @@ Constrain start-up by minimum down time.
 """
 function add_constraint_min_down_time!(m::Model)
     @fetch units_on, units_available, units_shut_down, nonspin_units_starting_up = m.ext[:variables]
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     m.ext[:constraints][:min_down_time] = Dict(
         (u, s, t) => @constraint(
             m,

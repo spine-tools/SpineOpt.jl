@@ -79,7 +79,7 @@ Limit the post contingency flow on monitored connection mon to conn_emergency_ca
 """
 function add_constraint_connection_flow_lodf!(m::Model)
     @fetch connection_flow = m.ext[:variables]
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     m.ext[:constraints][:connection_flow_lodf] = Dict(
         (conn_cont, conn_mon, s, t) => @constraint(
             m,
