@@ -1,7 +1,7 @@
 name = "SpineOpt"
 uuid = "0d8fc150-4032-4b6e-9540-20efcb304861"
 authors = ["Spine Project consortium <spine_info@vtt.fi>"]
-version = "0.4.1"
+version = "0.4.2"
 
 [deps]
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
@@ -21,5 +21,5 @@ TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 [compat]
 julia = "^1.2"
 JuMP = "0.21.2"
-SpineInterface = "0.3.5"
+SpineInterface = "0.3.6"
 PowerSystems = "0.26.0"
