@@ -205,6 +205,28 @@ function _generate_time_slice!(m::Model)
 end
 
 """
+    _determine_required_history(m::Model)
+
+Determines the required length of the included history based on parameter values that impose delays.
+"""
+function _determine_required_history(instance::Object)
+    delay_params = [
+        min_up_time,
+        min_down_time,
+        #connection_flow_delay,
+        unit_investment_lifetime,
+    ]
+    required_history = _model_duration_unit(instance)(1) # Dynamics always require at least 1 duration unit of history.
+    for param in delay_params
+        max_param = maximum(param)
+        if max_param != SpineInterface.NothingParameterValue()
+            required_history = max(required_history, maximum(param))
+        end
+    end
+    return required_history
+end
+
+"""
     _generate_time_slice_relationships!(m::Model)
 
 Create and export convenience functions to access time slice relationships.
