@@ -53,7 +53,7 @@ units_on_int(x) = online_variable_type(unit=x.unit) == :unit_online_variable_typ
 Add `units_on` variables to model `m`.
 """
 function add_variable_units_on!(m::Model)
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     add_variable!(
     	m,
     	:units_on, 

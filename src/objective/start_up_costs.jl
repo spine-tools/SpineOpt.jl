@@ -24,7 +24,7 @@ Create an expression for unit startup costs.
 """
 function start_up_costs(m::Model, t1)
     @fetch units_started_up = m.ext[:variables]
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     @expression(
         m,
         expr_sum(

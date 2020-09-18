@@ -26,7 +26,7 @@ Uses stochastic path indices due to potentially different stochastic structures 
 `units_started_up` variables on past time slices.
 """
 function constraint_min_up_time_indices(m)
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     unique(
         (unit=u, stochastic_path=path, t=t)
         for u in indices(min_up_time)
@@ -56,8 +56,9 @@ Constrain running by minimum up time.
 """
 
 function add_constraint_min_up_time!(m::Model)
+    @fetch units_on, units_started_up= m.ext[:variables] #, nonspin_shutting_down
+    t0 = startref(current_window(m))
     @fetch units_on, units_started_up, nonspin_units_shutting_down = m.ext[:variables]
-    t0 = start(current_window(m))
     m.ext[:constraints][:min_up_time] = Dict(
         (u, s, t) => @constraint(
             m,

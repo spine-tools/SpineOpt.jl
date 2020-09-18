@@ -24,7 +24,7 @@ Limit the units_online by the number of available units.
 """
 function add_constraint_units_available!(m::Model)
     @fetch units_available, units_invested_available = m.ext[:variables]
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     m.ext[:constraints][:units_available] = Dict(
         (u, s, t) => @constraint(
             m,

@@ -69,7 +69,7 @@ Add `units_invested_available` variables to model `m`.
 """
 function add_variable_units_invested_available!(m::Model)
     fix_initial_units_invested_available(m)
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     add_variable!(
     	m,
     	:units_invested_available, 
