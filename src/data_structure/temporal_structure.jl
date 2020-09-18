@@ -17,10 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+struct GapBridger
+    gaps::Array{TimeSlice,1}
+    bridges::Array{TimeSlice,1}
+end
+
 struct TimeSliceSet
     time_slices::Array{TimeSlice,1}
     block_time_slices::Dict{Object,Array{TimeSlice,1}}
-    block_time_slice_map::Dict{Object,TimeSliceMap}
+    gap_bridger::GapBridger
     function TimeSliceSet(time_slices)
         block_time_slices = Dict{Object,Array{TimeSlice,1}}()
         for t in time_slices
@@ -28,17 +33,18 @@ struct TimeSliceSet
                 push!(get!(block_time_slices, block, []), t)
             end
         end
-        block_time_slice_map = Dict(block => TimeSliceMap(time_slices) for (block, time_slices) in block_time_slices)
         # Find eventual gaps in between temporal blocks
         solids = [(first(time_slices), last(time_slices)) for time_slices in values(block_time_slices)]
         sort!(solids)
-        gaps = ((from, to) for ((_x, from), (to, _y)) in zip(solids[1:end - 1], solids[2:end]) if from < to)
-        # Create bridge time slice map. We need one bridge per gap.
-        bridge_time_slice_map = Dict(
-            Object("bridge_from_$(from)_to_$(to)") => TimeSliceMap([from, to]) for (from, to) in gaps
+        gap_bounds = (
+            (last_, next_first)
+            for ((first_, last_), (next_first, next_last)) in zip(solids[1:end - 1], solids[2:end])
+            if end_(last_) < start(next_first)
         )
-        merge!(block_time_slice_map, bridge_time_slice_map)
-        new(time_slices, block_time_slices, block_time_slice_map)
+        gaps = [TimeSlice(end_(last_), start(next_first)) for (last_, next_first) in gap_bounds]
+        bridges = [last_ for (last_, next_first) in gap_bounds]  # NOTE: The 'bridge' is just the last time slice in the previous block
+        gap_bridger = GapBridger(gaps, bridges)
+        new(time_slices, block_time_slices, gap_bridger)
     end
 end
 
@@ -76,7 +82,9 @@ end
 Roll a `TimeSliceSet` in time by a period specified by `forward`.
 """
 function _roll_time_slice_set!(t_set::TimeSliceSet, forward::Union{Period,CompoundPeriod})
-    roll!.(values(t_set.block_time_slice_map), forward)
+    roll!.(t_set.time_slices, forward)
+    roll!.(values(t_set.gap_bridger.gaps), forward)
+    roll!.(values(t_set.gap_bridger.bridges), forward)
     nothing
 end
 
@@ -207,7 +215,7 @@ function _generate_time_slice_relationships!(m::Model)
     instance = m.ext[:instance]
     all_time_slices = Iterators.flatten((history_time_slice(m), time_slice(m)))
     duration_unit = _model_duration_unit(instance)
-    t_follows_t_mapping = Dict(t => to_time_slice(m, t=t + duration_unit(duration(t))) for t in all_time_slices)
+    t_follows_t_mapping = Dict(t => to_time_slice(m, t=TimeSlice(end_(t), end_(t) + Minute(1))) for t in all_time_slices)
     t_overlaps_t_maping = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
     t_overlaps_t_excl_mapping = Dict(t => setdiff(overlapping_t, t) for (t, overlapping_t) in t_overlaps_t_maping)
     t_before_t_tuples = unique(
@@ -231,6 +239,19 @@ function _generate_time_slice_relationships!(m::Model)
     temp_struct[:t_overlaps_t] = TOverlapsT(t_overlaps_t_maping)
     temp_struct[:t_overlaps_t_excl] = TOverlapsT(t_overlaps_t_excl_mapping)
 end
+
+"""
+Find indices in `source` that overlap `t` and return values for those indices in `target`.
+Used by `to_time_slice`.
+"""
+function _to_time_slice(target::Array{TimeSlice,1}, source::Array{TimeSlice,1}, t::TimeSlice)
+    isempty(source) && return []
+    (start(t) < end_(source[end]) && end_(t) > start(source[1])) || return []
+    a = searchsortedfirst(source, start(t); lt=(x, y) -> end_(x) <= y)
+    b = searchsortedfirst(source, end_(t); lt=(x, y) -> start(x) < y) - 1
+    target[a:b]
+end
+_to_time_slice(time_slices::Array{TimeSlice,1}, t::TimeSlice) = _to_time_slice(time_slices, time_slices, t)
 
 # API
 """
@@ -281,11 +302,13 @@ An `Array` of `TimeSlice`s *in the model* overlapping the given `t` (where `t` m
 """
 function to_time_slice(m::Model; t::TimeSlice)
     temp_struct = m.ext[:temporal_structure]
-    unique(
-        Iterators.flatten(
-            t_map(t...)
-            for t_set in (temp_struct[:time_slice], temp_struct[:history_time_slice])
-            for t_map in values(t_set.block_time_slice_map)
-        )
+    t_sets = (temp_struct[:time_slice], temp_struct[:history_time_slice])
+    in_blocks = (
+        s
+        for t_set in t_sets
+        for time_slices in values(t_set.block_time_slices)
+        for s in _to_time_slice(time_slices, t)
     )
+    in_gaps = (s for t_set in t_sets for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t))
+    unique(Iterators.flatten((in_blocks, in_gaps)))
 end

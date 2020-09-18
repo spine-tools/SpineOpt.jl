@@ -124,7 +124,6 @@ end
         @test end_(last(time_slice(m; temporal_block=temporal_block(:block_b)))) == DateTime("2000-01-01T15:36:00")
         @test end_(last(time_slice(m; temporal_block=temporal_block(:block_c)))) == DateTime("2000-01-03T00:00:00")
     end
-
     @testset "one_two_four_even" begin
         _load_template(url_in)
         db_api.import_data_to_url(url_in; test_data...)
