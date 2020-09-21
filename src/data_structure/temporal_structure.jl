@@ -202,7 +202,7 @@ function _generate_time_slice!(m::Model)
     history_time_slices = [t - window_span for t in window_time_slices[1:i]]
     while window_span < required_history_duration
         window_span += window_span
-        append!([t - window_span for t in window_time_slices[1:i]], history_time_slices)
+        append!(history_time_slices, [t - window_span for t in window_time_slices[1:i]])
     end
     filter!(t -> end_(t) >= window_start - required_history_duration, history_time_slices)
     m.ext[:temporal_structure][:time_slice] = TimeSliceSet(window_time_slices)
