@@ -249,7 +249,7 @@ function JuMP.set_objective_function(model::Model, func::GenericAffExpr{Call,Var
 end
 
 function update_varying_objective!(model::Model)
-    for (var, coef) in model.ext[:varying_objective_terms]
+    for (var, coef) in get(model.ext, :varying_objective_terms, ())
         set_objective_coefficient(model, var, realize(coef))
     end    
 end
