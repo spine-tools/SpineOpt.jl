@@ -197,8 +197,14 @@ function _generate_time_slice!(m::Model)
     window_end = end_(window)
     window_time_slices = _window_time_slices(instance, window_start, window_end)
     i = findlast(t -> end_(t) <= window_end, window_time_slices)
+    required_history_duration = _determine_required_history_duration(instance)
     window_span = window_end - window_start
-    history_time_slices = [t - window_span for t in window_time_slices[1:i]] 
+    history_time_slices = [t - window_span for t in window_time_slices[1:i]]
+    while window_span < required_history_duration
+        window_span += window_span
+        append!([t - window_span for t in window_time_slices[1:i]], history_time_slices)
+    end
+    filter!(t -> end_(t) >= window_start - required_history_duration, history_time_slices)
     m.ext[:temporal_structure][:time_slice] = TimeSliceSet(window_time_slices)
     m.ext[:temporal_structure][:history_time_slice] = TimeSliceSet(history_time_slices)
     m.ext[:temporal_structure][:t_history_t] = Dict(zip(window_time_slices, history_time_slices))
@@ -213,7 +219,7 @@ function _determine_required_history_duration(instance::Object)
     delay_params = [
         min_up_time,
         min_down_time,
-        #connection_flow_delay,
+        #connection_flow_delay, # TODO: For some reason, the default value comes up as `0 Months`, which causes issues.
         unit_investment_lifetime,
     ]
     required_history = _model_duration_unit(instance)(1) # Dynamics always require at least 1 duration unit of history.

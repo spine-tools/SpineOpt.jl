@@ -48,7 +48,7 @@ function add_variable!(
     history_var = Dict(
         history_ind => _variable(m, name, history_ind, lb, ub, bin, int)
         for ind in indices(m)
-        if end_(ind.t) <= end_(current_window(m))  
+        if ind.t in keys(m.ext[:temporal_structure][:t_history_t])
         for history_ind in indices(m; ind..., stochastic_scenario=anything, t=t_history_t(m; t=ind.t))
     )
     merge!(var, history_var)
