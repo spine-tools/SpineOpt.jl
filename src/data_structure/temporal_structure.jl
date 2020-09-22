@@ -198,11 +198,11 @@ function _generate_time_slice!(m::Model)
     window_time_slices = _window_time_slices(instance, window_start, window_end)
     i = findlast(t -> end_(t) <= window_end, window_time_slices)
     required_history_duration = _determine_required_history_duration(instance)
-    window_span = window_end - window_start
+    window_span = window_displacement = window_end - window_start
     history_time_slices = [t - window_span for t in window_time_slices[1:i]]
-    while window_span < required_history_duration
-        window_span += window_span
-        append!(history_time_slices, [t - window_span for t in window_time_slices[1:i]])
+    while window_displacement < required_history_duration
+        window_displacement += window_span
+        prepend!(history_time_slices, [t - window_displacement for t in window_time_slices[1:i]])
     end
     filter!(t -> end_(t) >= window_start - required_history_duration, history_time_slices)
     m.ext[:temporal_structure][:time_slice] = TimeSliceSet(window_time_slices)
