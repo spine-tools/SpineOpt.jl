@@ -435,10 +435,7 @@ function generate_variable_indexing_support()
             for n in members(ng)
             for tb in node__temporal_block(node=n)
             for (u, n, d, tb) in setdiff(
-                unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb, _compact=false),
-                nonspin_ramp_down_unit__node__direction__temporal_block(
-                    unit=u, node=n, direction=d, temporal_block=tb, _compact=false
-                )
+                unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb, _compact=false)
             )
         )
     )

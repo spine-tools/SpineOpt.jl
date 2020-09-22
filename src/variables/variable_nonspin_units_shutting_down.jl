@@ -28,7 +28,7 @@ function nonspin_units_shutting_down_indices(
     )
     unique(
         (unit=u, node=n, stochastic_scenario=s, t=t)
-        for (u, n, d, s, t) in nonspin_ramp_up_unit_flow_indices(
+        for (u, n, d, s, t) in nonspin_ramp_down_unit_flow_indices(
             m; unit=unit, node=node, stochastic_scenario=stochastic_scenario, t=t
         )
         for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t)

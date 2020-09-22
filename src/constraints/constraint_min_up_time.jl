@@ -56,9 +56,8 @@ Constrain running by minimum up time.
 """
 
 function add_constraint_min_up_time!(m::Model)
-    @fetch units_on, units_started_up= m.ext[:variables] #, nonspin_shutting_down
-    t0 = startref(current_window(m))
     @fetch units_on, units_started_up, nonspin_units_shutting_down = m.ext[:variables]
+    t0 = startref(current_window(m))
     m.ext[:constraints][:min_up_time] = Dict(
         (u, s, t) => @constraint(
             m,

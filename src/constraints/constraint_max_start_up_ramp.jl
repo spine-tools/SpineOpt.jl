@@ -27,7 +27,10 @@ Uses stochastic path indices due to potentially different stochastic scenarios b
 function constraint_max_start_up_ramp_indices(m)
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(max_startup_ramp)
+        for (u, ng, d) in intersect(
+                                indices(max_startup_ramp),
+                                indices(unit_capacity)
+                                )
         for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng))))
         # How to deal with groups correctly?
         for path in active_stochastic_paths(

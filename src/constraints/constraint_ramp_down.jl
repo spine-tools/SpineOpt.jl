@@ -49,7 +49,7 @@ Limit the maximum ramp of `ramp_down_unit_flow` of a `unit` or `unit_group` if t
 `ramp_down_limit`,`unit_capacity`,`unit_conv_cap_to_unit_flow` exist.
 """
 function add_constraint_ramp_down!(m::Model)
-    @fetch units_on, units_started_up, ramp_down_unit_flow = m.ext[:variables]
+    @fetch units_on, units_started_up, ramp_down_unit_flow, nonspin_units_shutting_down = m.ext[:variables]
     t0 = start(current_window(m))
     m.ext[:constraints][:ramp_down] = Dict(
         (u, ng, d, s, t) => @constraint(
@@ -72,7 +72,7 @@ function add_constraint_ramp_down!(m::Model)
                         t=t
                     )
                     if is_reserve_node(node=n) && downward_reserve(node=n);
-                    init=0 
+                    init=0
                 ))
                 * ramp_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]

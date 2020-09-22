@@ -74,7 +74,7 @@ function add_constraint_node_injection!(m::Model)
             m,
             + expr_sum(
                 + node_injection[n, s, t_after]
-                + demand[(node=n, stocahstic_scenario=s, analysis_time=t0, t=t_after)]
+                + demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)]
                 for (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t_after);
                 init=0
             )
