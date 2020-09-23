@@ -95,6 +95,45 @@ end
             @test Y.unit_flow(; flow_key..., t=t) == d
         end
     end
+    @testset "rolling without varying terms" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        db_api.create_new_spine_database(url_out)
+        index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
+        vom_cost = 1200
+        demand = 24
+        unit_capacity = demand
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1h")]
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity], 
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost]
+        ]
+        db_api.import_data_to_url(
+            url_in; 
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in, url_out; log_level=0)
+        con = m.ext[:constraints][:unit_flow_capacity]
+        using_spinedb(url_out, Y)
+        cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+        flow_key = (
+            report=Y.report(:report_x), 
+            unit=Y.unit(:unit_ab), 
+            node=Y.node(:node_b), 
+            direction=Y.direction(:to_node), 
+            stochastic_scenario=Y.stochastic_scenario(:parent)
+        )
+        timestamps = collect(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2))
+        @testset for (t0, t1) in zip(timestamps[1:end - 1], timestamps[2:end])
+            t = TimeSlice(t0, t1)
+            @test Y.objective_variable_om_costs(; cost_key..., t=t) == vom_cost * demand
+            @test Y.unit_flow(; flow_key..., t=t) == demand
+        end
+    end
     @testset "unfeasible" begin
         _load_template(url_in)
         db_api.import_data_to_url(url_in; test_data...)
