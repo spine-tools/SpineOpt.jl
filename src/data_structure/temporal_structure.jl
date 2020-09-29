@@ -205,9 +205,29 @@ function _generate_time_slice!(m::Model)
 end
 
 """
-    _generate_time_slice_relationships!(m::Model)
+    _generate_mp_time_slice()
 
-Create and export convenience functions to access time slice relationships.
+Create and export a `TimeSliceSet` containing `TimeSlice`s in the current master problem window.
+
+"""
+function _generate_mp_time_slice()
+    instance = first(model())          
+    window_start = model_start(model=instance)
+    window_end = model_end(model=instance)
+    window_span = window_end - window_start
+    window_time_slices = _window_time_slices(window_start, window_end)
+    mp_time_slice = TimeSliceSet(window_time_slices)            
+    to_mp_time_slice = TimeSliceMap(window_time_slices)
+    @eval begin
+        mp_time_slice = $mp_time_slice
+        to_mp_time_slice = $to_mp_time_slice
+        export mp_time_slice
+        export to_mp_time_slice
+    end
+end
+
+"""
+    _generate_time_slice_relationships()
 
 E.g. `t_in_t`, `t_preceeds_t`, `t_overlaps_t`...
 """
@@ -265,8 +285,10 @@ function generate_temporal_structure!(m::Model)
     m.ext[:temporal_structure] = Dict()
     _generate_current_window!(m::Model)
     _generate_time_slice!(m::Model)
+    _generate_mp_time_slice()
     _generate_time_slice_relationships!(m::Model)
 end
+
 
 """
     roll_temporal_structure!(m::Model)
@@ -282,6 +304,22 @@ function roll_temporal_structure!(m::Model)
     roll!(temp_struct[:current_window], roll_forward_)
     _roll_time_slice_set!(temp_struct[:time_slice], roll_forward_)
     _roll_time_slice_set!(temp_struct[:history_time_slice], roll_forward_)
+    true
+end
+
+
+"""
+    reset_temporal_structure!(m::Model, k)
+
+Rewind the temporal structure - essentially, rolling it backwards k times.
+"""
+function reset_temporal_structure(m::Model, k)
+    end_(current_window) >= model_end(model=m) && return false
+    roll_forward_ = roll_forward(model=m, _strict=false)
+    roll_forward_ === nothing && return false
+    roll_forward_ == 0 && return false
+    roll!(current_window, - roll_forward_ * k)
+    roll!.(all_time_slices, - roll_forward_ * k)
     true
 end
 

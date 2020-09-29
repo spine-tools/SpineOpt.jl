@@ -38,6 +38,19 @@ function constraint_units_invested_transition_indices(m)
     )
 end
 
+function constraint_mp_units_invested_transition_indices()        
+    unique(
+        (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (u, tb) in unit__investment_temporal_block()
+        for t_after in mp_time_slice(temporal_block=tb)
+        for t_before in _take_one_t_before_t(t_after)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in mp_units_invested_available_indices(unit=u, t=[t_before, t_after]))
+        )
+    )
+end
+
+
 """
     add_constraint_units_invested_transition!(m::Model)
 
@@ -66,4 +79,32 @@ function add_constraint_units_invested_transition!(m::Model)
         )
         for (u, s, t_before, t_after) in constraint_units_invested_transition_indices(m)
     )
+end
+
+
+function add_constraint_mp_units_invested_transition!(m::Model)
+    @fetch mp_units_invested_available, mp_units_invested, mp_units_mothballed = m.ext[:variables]
+    cons = m.ext[:constraints][:mp_units_invested_transition] = Dict()
+    for (u, stochastic_path, t_before, t_after) in constraint_mp_units_invested_transition_indices()
+        cons[u, stochastic_path, t_before, t_after] = @constraint(
+            m,
+            expr_sum(
+                + mp_units_invested_available[u, s, t_after]
+                - mp_units_invested[u, s, t_after]
+                + mp_units_mothballed[u, s, t_after]
+                for (u, s, t_after) in mp_units_invested_available_indices(
+                    unit=u, stochastic_scenario=stochastic_path, t=t_after
+                );
+                init=0
+            )
+            ==
+            expr_sum(
+                + mp_units_invested_available[u, s, t_before]
+                for (u, s, t_before) in mp_units_invested_available_indices(
+                    unit=u, stochastic_scenario=stochastic_path, t=t_before
+                );
+                init=0
+            )
+        )
+    end
 end

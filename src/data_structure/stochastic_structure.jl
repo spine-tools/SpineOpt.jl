@@ -232,6 +232,23 @@ function unit_investment_stochastic_time_indices(
     )
 end
 
+
+"""
+    unit_investment_stochastic_time_indices_mp(;unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
+
+Stochastic time indexes for `units_invested_available` in master problem. Keyword arguments allow filtering.
+"""
+function mp_unit_investment_stochastic_time_indices(;unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything)
+    unique( # TODO: Write a check for multiple structures
+        (unit=u, stochastic_scenario=s, t=t1)
+        for (u, structure) in unit__investment_stochastic_structure(unit=unit, _compact=false)
+        for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
+        for t1 in mp_time_slice(temporal_block=tb, t=t)
+        for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
+    )
+end
+
+
 """
     _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
 

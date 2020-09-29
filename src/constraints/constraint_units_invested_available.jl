@@ -18,23 +18,45 @@
 #############################################################################
 
 """
-    add_constraint_units_invested_available!(m::Model)
+    add_constraint_units_available!(m::Model)
 
-Limit the units_invested_available by the number of investment candidate units.
+Limit the units_online by the number of available units.
 """
-function add_constraint_units_invested_available!(m::Model)
-    @fetch units_invested_available = m.ext[:variables]
+function add_constraint_units_available!(m::Model)
+    @fetch units_available, units_invested_available = m.ext[:variables]
     t0 = startref(current_window(m))
-    m.ext[:constraints][:units_invested_available] = Dict(
+    m.ext[:constraints][:units_available] = Dict(
         (u, s, t) => @constraint(
             m,
-            + units_invested_available[u, s, t]
-            <=
-            + candidate_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+            + units_available[u, s, t]
+            ==
+            + unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * ( 
+                + number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+                + expr_sum(
+                    units_invested_available[u, s, t1] 
+                    for (u, s, t1) in units_invested_available_indices(
+                        m; unit=u, stochastic_scenario=s,  t=t_in_t(m; t_short=t)
+                    );
+                    init=0
+                )
+            )
         )
-        for (u, s, t) in units_invested_available_indices(m)
+        for (u, s, t) in units_on_indices(m)
     )
 end
-# TODO: units_invested_available or \sum(units_invested)?
-# Candidate units: max amount of units that can be installed over model horizon
-# or max amount of units that can be available at a time?
+
+
+function add_constraint_mp_units_invested_available!(m::Model)
+    @fetch mp_units_invested_available = m.ext[:variables]
+    constr_dict = m.ext[:constraints][:mp_units_invested_available] = Dict()
+    for (u, s, t) in mp_units_invested_available_indices()
+        constr_dict[u, s, t] = @constraint(
+            m,
+            + mp_units_invested_available[u, s, t]
+            <=
+            + candidate_units[(unit=u, t=t)]
+        )
+    end
+end
+

@@ -33,7 +33,8 @@ function preprocess_data_structure(; log_level=3)
     add_connection_relationships()
     generate_direction()
     generate_network_components()
-    generate_variable_indexing_support()
+    generate_variable_indexing_support()        
+    generate_benders_structure()
 end
 
 """
@@ -494,6 +495,7 @@ function expand_model__default_stochastic_structure()
     )
 end
 
+
 """
     expand_model__default_temporal_block()
 
@@ -517,4 +519,42 @@ function expand_model__default_temporal_block()
             for tb in model__default_temporal_block(model=first(model()))
         )
     )
+end
+
+
+"""
+generate_subproblem_marginals()
+
+Creates the `benders_iteration` object class. Master problem variables have the Benders iteration as an index. A new 
+benders iteration object is pushed on each master problem iteration.
+"""
+function generate_benders_structure()
+    
+    current_bi = Object(Symbol(string("bi_1")))  
+    benders_iteration = ObjectClass(:benders_iteration,[current_bi])
+        
+    unit__benders_iteration = 
+    RelationshipClass(
+        :unit__benders_iteration, 
+        [:unit, :benders_iteration],
+        []
+    )
+
+    units_available_mv = Parameter(:units_available_mv, [unit__benders_iteration])
+    units_invested_available_bi = Parameter(:units_invested_available_bi, [unit__benders_iteration])  
+    sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])  
+
+    @eval begin
+        benders_iteration = $benders_iteration
+        unit__benders_iteration = $unit__benders_iteration
+        units_available_mv = $units_available_mv
+        units_invested_available_bi = $units_invested_available_bi
+        current_bi = $current_bi
+        sp_objective_value_bi = $sp_objective_value_bi
+        export benders_iteration
+        export unit__benders_iteration
+        export units_available_mv
+        export units_invested_available_bi
+        export sp_objective_value_bi
+    end    
 end

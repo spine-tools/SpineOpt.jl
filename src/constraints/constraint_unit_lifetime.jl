@@ -33,6 +33,7 @@ function constraint_unit_lifetime_indices(m)
     )
 end
 
+
 """
     _constraint_unit_lifetime_indices(u, s, t0, t)
 
@@ -49,6 +50,24 @@ function _constraint_unit_lifetime_indices(m, u, s, t0, t)
         for ind in units_invested_available_indices(m; unit=u, t=t_past_and_present)
     )
 end
+
+
+function constraint_mp_unit_lifetime_indices()
+    unique(
+        (unit=u, stochastic_path=path, t=t)
+        for u in indices(unit_investment_lifetime)
+        for t in mp_time_slice(temporal_block=unit__investment_temporal_block(unit=u))
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in mp_units_invested_available_indices(
+                    unit=u, t=vcat(to_mp_time_slice(TimeSlice(end_(t) - unit_investment_lifetime(unit=u), end_(t))), t),
+                )  
+            )
+        )
+    )
+end
+
 
 """
     add_constraint_unit_lifetime!(m::Model)
@@ -85,4 +104,31 @@ function add_constraint_unit_lifetime!(m::Model)
         )
         for (u, s, t) in constraint_unit_lifetime_indices(m)
     )
+end
+
+
+function add_constraint_mp_unit_lifetime!(m::Model)
+    @fetch mp_units_invested_available, mp_units_invested = m.ext[:variables]
+    cons = m.ext[:constraints][:mp_unit_lifetime] = Dict()
+    for (u, stochastic_path, t) in constraint_mp_unit_lifetime_indices()        
+        cons[u, stochastic_path, t] = @constraint(
+            m,
+            + expr_sum(
+                + mp_units_invested_available[u, s, t]
+                for (u, s, t) in mp_units_invested_available_indices(
+                    unit=u, stochastic_scenario=stochastic_path, t=t
+                );
+                init=0
+            )
+            >=
+            + sum(
+                + mp_units_invested[u, s_past, t_past]
+                for (u, s_past, t_past) in mp_units_invested_available_indices(
+                    unit=u,
+                    stochastic_scenario=stochastic_path,
+                    t=to_mp_time_slice(TimeSlice(end_(t) - unit_investment_lifetime(unit=u), end_(t)))
+                )
+            )
+        )
+    end
 end
