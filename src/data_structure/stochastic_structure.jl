@@ -163,29 +163,10 @@ function _stochastic_time_mapping(stochastic_DAG::Dict, m::Model...)
         for x in m
         for t in time_slice(x)
     )
-    # History `time_slices`, very similar procedure to `_generate_time_slice()`
-    for x in m
-        instance = x.ext[:instance]
-        window = current_window(x)
-        window_start = start(window)
-        window_end = end_(window)
-        repeating_time_slices = filter(t -> end_(t) <= window_end, time_slice(x))
-        required_history_duration = _determine_required_history_duration(instance)
-        window_span = window_end - window_start
-        window_displacement = typeof(window_span)(0) # Empty `Period` of `window_span`'s type.
-        while window_displacement < required_history_duration
-            merge!(
-                scenario_mapping,
-                Dict(
-                    t - window_span - window_displacement => scenario_mapping[t]
-                    for t in repeating_time_slices
-                    if end_(t) - window_span - window_displacement >= window_start - required_history_duration
-                )
-            )
-            window_displacement += window_span
-        end
-    end
-    return scenario_mapping
+    # History `time_slices`
+    roots = _find_root_scenarios()
+    history_scenario_mapping = Dict(t => roots for x in m for t in history_time_slice(x))
+    merge!(scenario_mapping, history_scenario_mapping)
 end
 
 """
