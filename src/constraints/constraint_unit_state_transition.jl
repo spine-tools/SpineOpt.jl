@@ -46,7 +46,7 @@ function add_constraint_unit_state_transition!(m::Model)
     # TODO: add support for units that start_up over multiple timesteps?
     # TODO: use :integer, :binary, :linear as parameter values -> reusable for other pruposes
     m.ext[:constraints][:unit_state_transition] = Dict(
-        (u, s, t_before, t_after) => @constraint(
+        (unit=u, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             expr_sum(
                 + units_on[u, s, t_after]

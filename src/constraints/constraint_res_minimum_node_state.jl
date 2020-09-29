@@ -57,7 +57,7 @@ function add_constraint_res_minimum_node_state!(m::Model)
     @fetch unit_flow, node_state = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:res_minimum_node_state] = Dict(
-        (n_stor, s, t_after) => @constraint(
+        (node=n_stor, stochastic_path=s, t=t_after) => @constraint(
             m,
             expr_sum(
                 node_state[n_stor, s, t_before]

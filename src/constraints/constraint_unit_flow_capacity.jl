@@ -47,7 +47,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:unit_flow_capacity] = Dict(
-        (u, ng, d, s, t) => @constraint(
+        (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             expr_sum(
                 + unit_flow[u, n, d, s, t]

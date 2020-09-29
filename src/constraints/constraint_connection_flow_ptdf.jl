@@ -66,7 +66,7 @@ For connection networks with monitored and has_ptdf set to true, set the steady 
 function add_constraint_connection_flow_ptdf!(m::Model)
     @fetch connection_flow, node_injection = m.ext[:variables]
     m.ext[:constraints][:connection_flow_ptdf] = Dict(
-        (conn, n_to, s, t) => @constraint(
+        (connection=conn, node=n_to, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
                 + get(connection_flow, (conn, n_to, direction(:to_node), s, t), 0)

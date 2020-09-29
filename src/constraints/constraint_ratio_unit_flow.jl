@@ -64,7 +64,7 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
     @fetch unit_flow, units_on = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][ratio.name] = Dict(
-        (u, ng1, ng2, s, t) => sense_constraint(
+        (unit=u, node1=ng1, node2=ng2, stochastic_path=s, t=t) => sense_constraint(
             m,
             + expr_sum(
                 unit_flow[u, n1, d1, s, t_short] * duration(t_short)

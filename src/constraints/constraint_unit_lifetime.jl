@@ -59,7 +59,7 @@ function add_constraint_unit_lifetime!(m::Model)
     @fetch units_invested_available, units_invested = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:unit_lifetime] = Dict(
-        (u, s, t) => @constraint(
+        (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
                 + units_invested_available[u, s, t]

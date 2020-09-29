@@ -70,7 +70,7 @@ function add_constraint_node_injection!(m::Model)
     t0 = startref(current_window(m))
     # TODO: We need to include both: storages that are defined on n and storage that are defined on internal nodes
     m.ext[:constraints][:node_injection] = Dict(
-        (n, s, t_before, t_after) => @constraint(
+        (node=n, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             + expr_sum(
                 + node_injection[n, s, t_after]

@@ -53,7 +53,7 @@ function add_constraint_max_nonspin_ramp_up!(m::Model)
     @fetch nonspin_ramp_up_unit_flow, nonspin_units_starting_up = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:max_nonspin_start_up_ramp] = Dict(
-        (u, ng, d, s, t) => @constraint(
+        (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + sum(
                 nonspin_ramp_up_unit_flow[u, n, d, s, t]

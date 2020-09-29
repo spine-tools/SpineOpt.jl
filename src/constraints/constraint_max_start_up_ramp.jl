@@ -55,7 +55,7 @@ function add_constraint_max_start_up_ramp!(m::Model)
     @fetch units_started_up, start_up_unit_flow = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:max_start_up_ramp] = Dict(
-        (u, ng, d, s, t) => @constraint(
+        (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + sum(
                 start_up_unit_flow[u, n, d, s, t]

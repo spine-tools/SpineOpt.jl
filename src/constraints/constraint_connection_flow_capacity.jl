@@ -56,7 +56,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
     @fetch connection_flow = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:connection_flow_capacity] = Dict(
-        (conn, ng, d, s, t) => @constraint(
+        (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
                 connection_flow[conn, n, d, s, t] * duration(t)

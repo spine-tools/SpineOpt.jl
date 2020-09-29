@@ -82,7 +82,7 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
     @fetch connection_flow = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][ratio_out_in.name] = Dict(
-        (conn, ng_out, ng_in, s, t) => sense_constraint(
+        (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=s, t=t) => sense_constraint(
             m,
             + expr_sum(
                 + connection_flow[conn, n_out, d, s, t_short] * duration(t_short)

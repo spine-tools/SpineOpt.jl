@@ -53,7 +53,7 @@ This is required to enforce separate limitations on these two ramp types.
 function add_constraint_split_ramp_up!(m::Model)
     @fetch unit_flow, ramp_up_unit_flow, start_up_unit_flow, nonspin_ramp_up_unit_flow = m.ext[:variables]
     m.ext[:constraints][:split_ramp_up] = Dict(
-        (u, n, d, s, t_before, t_after) => @constraint(
+        (unit=u, node=n, direction=d, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             expr_sum(
                 + unit_flow[u, n, d, s, t_after]

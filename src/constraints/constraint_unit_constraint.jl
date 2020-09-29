@@ -27,7 +27,7 @@ between `unit_flow`, `unit_flow_op`, and `units_on` variables.
 """
 function constraint_unit_constraint_indices(m)  
     unique(
-        (unit_constraint=uc, stochastic_scenario=path, t=t)
+        (unit_constraint=uc, stochastic_path=path, t=t)
         for uc in unit_constraint()
         for t in _constraint_unit_constraint_lowest_resolution_t(m, uc)
         for path in active_stochastic_paths(
@@ -99,7 +99,7 @@ function add_constraint_unit_constraint!(m::Model)
     @fetch unit_flow_op, unit_flow, units_on = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:unit_constraint] = Dict(
-        (uc, s, t) => sense_constraint(
+        (unit_constraint=uc, stochastic_path=s, t=t) => sense_constraint(
             m,
             + expr_sum(
                 + unit_flow_op[u, n, d, op, s, t_short]

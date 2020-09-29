@@ -28,7 +28,7 @@ Uses stochastic path indices due to potentially different stochastic structures 
 """
 function constraint_connection_flow_lodf_indices(m)
     unique(
-        (connection1=conn_cont, connection2=conn_mon, stochastic_path=path, t=t)
+        (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=path, t=t)
         for (conn_cont, conn_mon) in indices(lodf)
         for t in _constraint_connection_flow_lodf_lowest_resolution_t(m, conn_cont, conn_mon)
         for path in active_stochastic_paths(
@@ -81,7 +81,7 @@ function add_constraint_connection_flow_lodf!(m::Model)
     @fetch connection_flow = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:connection_flow_lodf] = Dict(
-        (conn_cont, conn_mon, s, t) => @constraint(
+        (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=s, t=t) => @constraint(
             m,
             - 1
             <=

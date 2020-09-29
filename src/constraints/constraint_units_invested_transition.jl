@@ -46,7 +46,7 @@ Ensure consistency between the variables `units_invested_available`, `units_inve
 function add_constraint_units_invested_transition!(m::Model)
     @fetch units_invested_available, units_invested, units_mothballed = m.ext[:variables]
     m.ext[:constraints][:units_invested_transition] = Dict(
-        (u, s, t_before, t_after) => @constraint(
+        (unit=u, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             expr_sum(
                 + units_invested_available[u, s, t_after]

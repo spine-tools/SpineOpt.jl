@@ -27,7 +27,7 @@ function add_constraint_operating_point_bounds!(m::Model)
     @fetch unit_flow_op = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:operating_point_bounds] = Dict(
-        (u, n, d, op, s, t) => @constraint(
+        (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t) => @constraint(
             m,
             + unit_flow_op[u, n, d, op, s, t]
             <=

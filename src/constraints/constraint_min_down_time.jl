@@ -67,7 +67,7 @@ function add_constraint_min_down_time!(m::Model)
     @fetch units_on, units_available, units_shut_down, nonspin_units_starting_up = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:min_down_time] = Dict(
-        (u, s, t) => @constraint(
+        (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
                 + units_available[u, s, t]
