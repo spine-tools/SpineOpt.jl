@@ -226,7 +226,7 @@ function _determine_required_history_duration(instance::Object)
     delay_params = [
         min_up_time,
         min_down_time,
-        #connection_flow_delay, # TODO: For some reason, the default value comes up as `0 Months`, which causes issues.
+        connection_flow_delay,
         unit_investment_lifetime,
     ]
     required_history = _model_duration_unit(instance)(1) # Dynamics always require at least 1 duration unit of history.
