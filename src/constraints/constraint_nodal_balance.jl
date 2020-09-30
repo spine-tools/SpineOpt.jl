@@ -39,7 +39,7 @@ function add_constraint_nodal_balance!(m::Model)
                 for (conn, n, d, s, t) in connection_flow_indices(
                     m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
                 )
-                if !issubset(_connection_nodes(conn, internal_nodes), internal_nodes);
+                if !issubset(_connection_nodes(conn), internal_nodes);
                 init=0
             )
             # Commodity flows to connections
@@ -48,7 +48,7 @@ function add_constraint_nodal_balance!(m::Model)
                 for (conn, n, d, s, t) in connection_flow_indices(
                     m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
                 )
-                if !issubset(_connection_nodes(conn, internal_nodes), internal_nodes);
+                if !issubset(_connection_nodes(conn), internal_nodes);
                 init=0
             )
             # slack variable - only exists if slack_penalty is defined
@@ -60,7 +60,7 @@ function add_constraint_nodal_balance!(m::Model)
             0
         )
         for (n, internal_nodes, s, t) in (
-            (n, _internal_nodes(n), s, t)
+            (n, members(n), s, t)
             for (n, s, t) in node_stochastic_time_indices(m)
             if nodal_balance_sense(node=n) !== :none
             && all(balance_type(node=ng) !== :balance_type_group for ng in groups(n))
@@ -68,14 +68,14 @@ function add_constraint_nodal_balance!(m::Model)
     )
 end
 
-_internal_nodes(n::Object) = members(n)
-
 """
     _connection_nodes(conn)
 
 An iterator over all `nodes` of a `connection`.
 """
-_connection_nodes(conn::Object, internal_nodes::Array{Object,1}) = (
+_connection_nodes(conn::Object) = (
     n
-    for n in (connection__node__node(connection=conn,node2=internal_nodes)... , connection__node__node(connection=conn,node1=internal_nodes)...)
+    for connection__node in (connection__from_node, connection__to_node)
+    for n in connection__node(connection=conn, direction=anything)
 )
+
