@@ -277,10 +277,10 @@ function update_variable!(m::Model, name::Symbol, indices::Function)
             lb != nothing && set_lower_bound(var[ind], lb(ind))
             ub != nothing && set_upper_bound(var[ind], ub(ind))
         end
-        if ind.t in keys(m.ext[:temporal_structure][:t_history_t])
-            for history_ind in indices(m; ind..., t=t_history_t(m; t=ind.t))
-                fix(var[history_ind], val[ind]; force=true)
-            end
+        history_t = t_history_t(m; t=ind.t)
+        history_t === nothing && continue
+        for history_ind in indices(m; ind..., t=history_t)
+            fix(var[history_ind], val[ind]; force=true)
         end
     end
 end

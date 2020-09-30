@@ -323,7 +323,7 @@ end
 current_window(m::Model) = m.ext[:temporal_structure][:current_window]
 time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:time_slice](;kwargs...)
 history_time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:history_time_slice](;kwargs...)
-t_history_t(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_history_t][t]
+t_history_t(m::Model; t::TimeSlice) = get(m.ext[:temporal_structure][:t_history_t], t, nothing)
 t_before_t(m::Model; kwargs...) = m.ext[:temporal_structure][:t_before_t](;kwargs...)
 t_in_t(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t](;kwargs...)
 t_in_t_excl(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t_excl](;kwargs...)
