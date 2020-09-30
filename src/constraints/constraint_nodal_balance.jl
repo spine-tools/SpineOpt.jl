@@ -60,13 +60,15 @@ function add_constraint_nodal_balance!(m::Model)
             0
         )
         for (n, internal_nodes, s, t) in (
-            (n, members(n), s, t)
+            (n, _internal_nodes(n), s, t)
             for (n, s, t) in node_stochastic_time_indices(m)
             if nodal_balance_sense(node=n) !== :none
             && all(balance_type(node=ng) !== :balance_type_group for ng in groups(n))
         )
     )
 end
+
+_internal_nodes(n::Object) = setdiff(members(n), n)
 
 """
     _connection_nodes(conn)
