@@ -56,11 +56,11 @@ Uses stochastic path indices due to potentially different stochastic scenarios b
 Keyword arguments can be used to filter the resulting Array.
 """
 function constraint_unit_state_transition_indices(
-    m::Model; stochastic_path=anything, t_before=anything, t_after=anything
+    m::Model; unit=unit(), stochastic_path=anything, t_before=anything, t_after=anything
 )
     unique(
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for u in unit() #210 This line prevents filtering over unit!
+        for u in unit
         for t_after in time_slice(m; temporal_block=units_on__temporal_block(unit=u), t=t_after)
         for (t_before, t_after) in t_before_t(m; t_before=t_before, t_after=t_after, _compact=false)
         for path in active_stochastic_paths(

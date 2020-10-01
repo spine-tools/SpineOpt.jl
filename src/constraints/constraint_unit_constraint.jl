@@ -125,10 +125,12 @@ Form the stochastic indexing Array for the `:unit_constraint` constraint.
 Uses stochastic path indices due to potentially different stochastic structures between `unit_flow`, `unit_flow_op`,
 and `units_on` variables. Keyword arguments can be used to filter the resulting Array.
 """
-function constraint_unit_constraint_indices(m::Model; stochastic_path=anything, t=anything)  
+function constraint_unit_constraint_indices(
+    m::Model; unit_constraint=unit_constraint(), stochastic_path=anything, t=anything
+)
     unique(
         (unit_constraint=uc, stochastic_path=path, t=t)
-        for uc in unit_constraint() #210 This line prevents filtering over unit_constraint!
+        for uc in unit_constraint
         for t in _constraint_unit_constraint_lowest_resolution_t(m, uc, t)
         for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_unit_constraint_indices(m, uc, t))
