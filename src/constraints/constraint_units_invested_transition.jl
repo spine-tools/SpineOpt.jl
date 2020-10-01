@@ -18,27 +18,6 @@
 #############################################################################
 
 """
-    constraint_units_invested_transition_indices()
-
-Form the stochastic index set for the `:units_invested_transition` constraint.
-
-Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
-"""
-function constraint_units_invested_transition_indices(m)
-    unique(
-        (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, tb) in unit__investment_temporal_block()
-        for t_after in time_slice(m; temporal_block=tb)
-        for t_before in t_before_t(m; t_after=t_after)
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=[t_before, t_after])
-            )
-        )
-    )
-end
-
-"""
     add_constraint_units_invested_transition!(m::Model)
 
 Ensure consistency between the variables `units_invested_available`, `units_invested` and `units_mothballed`.
@@ -65,5 +44,30 @@ function add_constraint_units_invested_transition!(m::Model)
             )
         )
         for (u, s, t_before, t_after) in constraint_units_invested_transition_indices(m)
+    )
+end
+
+"""
+    constraint_units_invested_transition_indices(m::Model; filtering_options...)
+
+Form the stochastic indexing Array for the `:units_invested_transition` constraint.
+
+Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
+Keyword arguments can be used to filter the resulting array.
+"""
+function constraint_units_invested_transition_indices(
+    m::Model; unit=anything, stochastic_path=anything, t_before=anything, t_after=anything
+)
+    unique(
+        (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (u, tb) in unit__investment_temporal_block(unit=unit, _compact=false)
+        for t_after in time_slice(m; temporal_block=tb, t=t_after)
+        for (t_before, t_after) in t_before_t(m; t_before=t_before, t_after=t_after, _compact=false)
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=[t_before, t_after])
+            )
+        )
+        if path == stochastic_path || path in stochastic_path
     )
 end

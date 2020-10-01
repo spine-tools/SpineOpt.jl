@@ -17,47 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# NOTE: always pick the second (last) node in `connection__from_node` as 'to' node
-
-"""
-    constraint_connection_flow_ptdf_indices()
-
-Form the stochastic index set for the `:connection_flow_lodf` constraint.
-
-Uses stochastic path indices due to potentially different stochastic structures between
-`connection_flow` and `node_injection` variables?
-"""
-function constraint_connection_flow_ptdf_indices(m)
-    unique(
-        (connection=conn, node=n_to, stochastic_path=path, t=t)
-        for conn in connection(connection_monitored=true, has_ptdf=true)
-        for (n_to, d_to) in Iterators.drop(connection__from_node(connection=conn), 1)
-        for t in time_slice(m; temporal_block=node__temporal_block(node=n_to))
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_connection_flow_ptdf_indices(m, conn, n_to, d_to, t))
-        )
-    )
-end
-
-"""
-    _constraint_connection_flow_ptdf_indices(connection, node_to, direction_to, t)
-
-Gather the indices of the `connection_flow` and the `node_injection` variables appearing in
-`add_constraint_connection_flow_ptdf!`.
-"""
-function _constraint_connection_flow_ptdf_indices(m, connection, node_to, direction_to, t)
-    Iterators.flatten(
-        (
-            connection_flow_indices(m; connection=connection, node=node_to, direction=direction_to, t=t),  # `n_to`
-            (
-                ind 
-                for (conn, n_inj) in indices(ptdf; connection=connection)
-                for ind in node_stochastic_time_indices(m; node=n_inj, t=t)
-            )  # `n_inj`
-        )
-    )
-end
-
 """
     add_constraint_connection_flow_ptdf!(m::Model)
 
@@ -84,5 +43,49 @@ function add_constraint_connection_flow_ptdf!(m::Model)
             )
         )
         for (conn, n_to, s, t) in constraint_connection_flow_ptdf_indices(m)
+    )
+end
+
+# NOTE: always pick the second (last) node in `connection__from_node` as 'to' node
+
+"""
+    constraint_connection_flow_ptdf_indices(m::Model; filtering_options...)
+
+Form the stochastic indexing Array for the `:connection_flow_lodf` constraint.
+
+Uses stochastic path indices due to potentially different stochastic structures between
+`connection_flow` and `node_injection` variables? Keyword arguments can be used for filtering the resulting Array.
+"""
+function constraint_connection_flow_ptdf_indices(
+    m::Model; node=anything, stochastic_path=anything, t=anything
+)
+    unique(
+        (connection=conn, node=n_to, stochastic_path=path, t=t)
+        for conn in connection(connection_monitored=true, has_ptdf=true) #210 This line prevents filtering over `connection`!
+        for (n_to, d_to) in Iterators.drop(connection__from_node(connection=conn, node=node), 1)
+        for t in time_slice(m; temporal_block=node__temporal_block(node=n_to), t=t)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_connection_flow_ptdf_indices(m, conn, n_to, d_to, t))
+        )
+        if path == stochastic_path || path in stochastic_path
+    )
+end
+
+"""
+    _constraint_connection_flow_ptdf_indices(connection, node_to, direction_to, t)
+
+Gather the indices of the `connection_flow` and the `node_injection` variables appearing in
+`add_constraint_connection_flow_ptdf!`.
+"""
+function _constraint_connection_flow_ptdf_indices(m, connection, node_to, direction_to, t)
+    Iterators.flatten(
+        (
+            connection_flow_indices(m; connection=connection, node=node_to, direction=direction_to, t=t),  # `n_to`
+            (
+                ind 
+                for (conn, n_inj) in indices(ptdf; connection=connection)
+                for ind in node_stochastic_time_indices(m; node=n_inj, t=t)
+            )  # `n_inj`
+        )
     )
 end

@@ -18,25 +18,6 @@
 #############################################################################
 
 """
-    constraint_unit_flow_capacity_indices()
-
-Forms the stochastic index set for the `:unit_flow_capacity` constraint.
-
-Uses stochastic path indices due to potentially different stochastic structures
-between `unit_flow` and `units_on` variables.
-"""
-function constraint_unit_flow_capacity_indices(m)
-    unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(unit_capacity)
-        for t in time_slice(m; temporal_block=node__temporal_block(node=members(ng)))
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(m, u, ng, d, t))
-        )
-    )
-end
-
-"""
     add_constraint_unit_flow_capacity!(m::Model)
 
 Limit the maximum in/out `unit_flow` of a `unit` for all `unit_capacity` indices.
@@ -70,5 +51,28 @@ function add_constraint_unit_flow_capacity!(m::Model)
             )
         )
         for (u, ng, d, s, t) in constraint_unit_flow_capacity_indices(m)
+    )
+end
+
+"""
+    constraint_unit_flow_capacity_indices(m::Model; filtering_options...)
+
+Forms the stochastic indexing Array for the `:unit_flow_capacity` constraint.
+
+Uses stochastic path indices due to potentially different stochastic structures between `unit_flow` and `units_on`
+variables. Keyword arguments can be used to filter the resulting Array.
+"""
+function constraint_unit_flow_capacity_indices(
+    m::Model; unit=anything, node=anything, direction=anything, stochastic_path=anything, t=anything
+)
+    unique(
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
+        for (u, ng, d) in indices(unit_capacity)
+        if u in unit && ng in node && d in direction
+        for t in time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(m, u, ng, d, t))
+        )
+        if path == stochastic_path || path in stochastic_path
     )
 end

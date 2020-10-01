@@ -18,79 +18,6 @@
 #############################################################################
 
 """
-    constraint_unit_constraint_indices()
-
-Form the stochastic index set for the `:unit_constraint` constraint.
-    
-Uses stochastic path indices due to potentially different stochastic structures 
-between `unit_flow`, `unit_flow_op`, and `units_on` variables.
-"""
-function constraint_unit_constraint_indices(m)  
-    unique(
-        (unit_constraint=uc, stochastic_path=path, t=t)
-        for uc in unit_constraint()
-        for t in _constraint_unit_constraint_lowest_resolution_t(m, uc)
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_unit_constraint_indices(m, uc, t))
-        )
-    )
-end
-
-"""
-    _constraint_unit_constraint_lowest_resolution_t(m, uc)
-
-Find the lowest temporal resolution amoung the `unit_flow` variables appearing in the `unit_constraint`.
-"""
-function _constraint_unit_constraint_lowest_resolution_t(m, uc)
-    t_lowest_resolution(
-        ind.t
-        for unit__node__unit_constraint in (unit__from_node__unit_constraint, unit__to_node__unit_constraint)
-        for (u, n) in unit__node__unit_constraint(unit_constraint=uc)
-        for ind in unit_flow_indices(m; unit=u, node=n)
-    )
-end
-
-"""
-    _constraint_unit_constraint_unit_flow_indices(uc, t)
-
-Gather the `unit_flow` variable indices appearing in `add_constraint_unit_constraint!`.
-"""
-function _constraint_unit_constraint_unit_flow_indices(m, uc, t)
-    (
-        ind
-        for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
-        for ind in unit_flow_indices(m; unit=u, node=n, direction=direction(:from_node), t=t_in_t(m; t_long=t))
-    )
-end
-
-"""
-    _constraint_unit_constraint_units_on_indices(uc, t)
-
-Gather the `units_on` variable indices appearing in `add_constraint_unit_constraint!`.
-"""
-function _constraint_unit_constraint_units_on_indices(m, uc, t)
-    (
-        ind 
-        for u in unit__unit_constraint(unit_constraint=uc) 
-        for ind in units_on_indices(m; unit=u, t=t_in_t(m; t_long=t))
-    )
-end
-
-"""
-    _constraint_unit_constraint_indices(uc, t)
-
-Gather the `unit_flow` and `units_on` variables appearing in `add_constraint_unit_constraint!`.
-"""
-function _constraint_unit_constraint_indices(m, uc, t)
-    Iterators.flatten(
-        (
-            _constraint_unit_constraint_unit_flow_indices(m, uc, t),
-            _constraint_unit_constraint_units_on_indices(m, uc, t)
-        )
-    )
-end
-
-"""
     add_constraint_unit_constraint!(m::Model)
 
 Custom constraint for `units`.
@@ -187,5 +114,79 @@ function add_constraint_unit_constraint!(m::Model)
             ) / length(s)
         )
         for (uc, s, t) in constraint_unit_constraint_indices(m)
+    )
+end
+
+"""
+    constraint_unit_constraint_indices(m::Model; filtering_options...)
+
+Form the stochastic indexing Array for the `:unit_constraint` constraint.
+    
+Uses stochastic path indices due to potentially different stochastic structures between `unit_flow`, `unit_flow_op`,
+and `units_on` variables. Keyword arguments can be used to filter the resulting Array.
+"""
+function constraint_unit_constraint_indices(m::Model; stochastic_path=anything, t=anything)  
+    unique(
+        (unit_constraint=uc, stochastic_path=path, t=t)
+        for uc in unit_constraint() #210 This line prevents filtering over unit_constraint!
+        for t in _constraint_unit_constraint_lowest_resolution_t(m, uc, t)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_unit_constraint_indices(m, uc, t))
+        )
+        if path == stochastic_path || path in stochastic_path
+    )
+end
+
+"""
+    _constraint_unit_constraint_lowest_resolution_t(m, uc, t)
+
+Find the lowest temporal resolution amoung the `unit_flow` variables appearing in the `unit_constraint`.
+"""
+function _constraint_unit_constraint_lowest_resolution_t(m, uc, t)
+    t_lowest_resolution(
+        ind.t
+        for unit__node__unit_constraint in (unit__from_node__unit_constraint, unit__to_node__unit_constraint)
+        for (u, n) in unit__node__unit_constraint(unit_constraint=uc)
+        for ind in unit_flow_indices(m; unit=u, node=n, t=t)
+    )
+end
+
+"""
+    _constraint_unit_constraint_unit_flow_indices(uc, t)
+
+Gather the `unit_flow` variable indices appearing in `add_constraint_unit_constraint!`.
+"""
+function _constraint_unit_constraint_unit_flow_indices(m, uc, t)
+    (
+        ind
+        for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
+        for ind in unit_flow_indices(m; unit=u, node=n, direction=direction(:from_node), t=t_in_t(m; t_long=t))
+    )
+end
+
+"""
+    _constraint_unit_constraint_units_on_indices(uc, t)
+
+Gather the `units_on` variable indices appearing in `add_constraint_unit_constraint!`.
+"""
+function _constraint_unit_constraint_units_on_indices(m, uc, t)
+    (
+        ind 
+        for u in unit__unit_constraint(unit_constraint=uc) 
+        for ind in units_on_indices(m; unit=u, t=t_in_t(m; t_long=t))
+    )
+end
+
+"""
+    _constraint_unit_constraint_indices(uc, t)
+
+Gather the `unit_flow` and `units_on` variables appearing in `add_constraint_unit_constraint!`.
+"""
+function _constraint_unit_constraint_indices(m, uc, t)
+    Iterators.flatten(
+        (
+            _constraint_unit_constraint_unit_flow_indices(m, uc, t),
+            _constraint_unit_constraint_units_on_indices(m, uc, t)
+        )
     )
 end
