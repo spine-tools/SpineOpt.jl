@@ -341,4 +341,35 @@ end
         @test _is_time_slice_equal(to_time_slice(m; t=t1)[1], a1)
         @test _is_time_slice_equal(to_time_slice(m; t=t2)[1], a2)
     end
+    @testset "history" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        objects = [("unit", "unitA")]
+        object_parameter_values = [
+            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T03:00:00")],
+            ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1h")],
+            ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "2h")],
+            ["unit", "unitA", "min_up_time", Dict("type" => "duration", "data" => "4h")]
+        ]
+        db_api.import_data_to_url(
+            url_in; objects=objects, object_parameter_values=object_parameter_values
+        )
+        using_spinedb(url_in, SpineOpt)
+        m = _model()
+        generate_temporal_structure!(m)
+        expected_history_time_slice = [
+            TimeSlice(DateTime(1999, 12, 31, 18), DateTime(1999, 12, 31, 20), temporal_block(:block_b)),
+            TimeSlice(DateTime(1999, 12, 31, 19), DateTime(1999, 12, 31, 20), temporal_block(:block_a)),
+            TimeSlice(DateTime(1999, 12, 31, 20), DateTime(1999, 12, 31, 21), temporal_block(:block_a), temporal_block(:block_b)),
+            TimeSlice(DateTime(1999, 12, 31, 21), DateTime(1999, 12, 31, 22), temporal_block(:block_a)),
+            TimeSlice(DateTime(1999, 12, 31, 21), DateTime(1999, 12, 31, 23), temporal_block(:block_b)),
+            TimeSlice(DateTime(1999, 12, 31, 22), DateTime(1999, 12, 31, 23), temporal_block(:block_a)),
+            TimeSlice(DateTime(1999, 12, 31, 23), DateTime(2000, 1, 1, 00), temporal_block(:block_a), temporal_block(:block_b)),
+        ]
+        @test length(history_time_slice(m)) === 7
+        @testset for (te, to) in zip(expected_history_time_slice, history_time_slice(m))
+            @test te == to
+        end
+    end
 end
+
