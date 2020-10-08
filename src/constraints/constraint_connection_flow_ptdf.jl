@@ -67,7 +67,7 @@ function constraint_connection_flow_ptdf_indices(
         (connection=conn, node=n_to, stochastic_path=path, t=t)
         for conn in connection
         if connection_monitored(connection=conn) && has_ptdf(connection=conn)
-        for (n_to, d_to) in Iterators.drop(connection__from_node(connection=conn, node=node), 1)
+        for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn, node=node; _compact=false), 1)
         for t in time_slice(m; temporal_block=node__temporal_block(node=n_to), t=t)
         for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_connection_flow_ptdf_indices(m, conn, n_to, d_to, t))
