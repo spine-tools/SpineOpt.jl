@@ -90,7 +90,7 @@
             var_conn_flow = var_connection_flow[key...]
             expected_con = @build_constraint(var_conn_flow <= connection_capacity)
             con_key = (connection(:connection_ab), node(:node_a), direction(:from_node), [s], t)
-            observed_con = constraint_object(constraint[con_key])
+            observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
@@ -367,7 +367,7 @@
                     expected_con = constraint_object(expected_con_ref)
                     path = reverse(unique(s_set))
                     con_key = (conn, n_to, n_from, path, t_to)
-                    observed_con = constraint_object(constraint[con_key])
+                    observed_con = constraint_object(constraint[con_key...])
                     @test _is_constraint_equal(observed_con, expected_con)                    
                 end
             end

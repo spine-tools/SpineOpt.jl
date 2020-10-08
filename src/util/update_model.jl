@@ -270,16 +270,16 @@ function update_variable!(m::Model, name::Symbol, indices::Function)
     val = m.ext[:values][name]
     lb = m.ext[:variables_definition][name][:lb]
     ub = m.ext[:variables_definition][name][:ub]
-    for ind in indices(m)
+    for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
         set_name(var[ind], _base_name(name, ind))
         if is_fixed(var[ind])
             unfix(var[ind])
             lb != nothing && set_lower_bound(var[ind], lb(ind))
             ub != nothing && set_upper_bound(var[ind], ub(ind))
         end
-        end_(ind.t) <= end_(current_window(m)) || continue
-        for history_ind in indices(m; ind..., stochastic_scenario=anything, t=t_history_t(m; t=ind.t))
-            set_name(var[history_ind], _base_name(name, history_ind))
+        history_t = t_history_t(m; t=ind.t)
+        history_t === nothing && continue
+        for history_ind in indices(m; ind..., t=history_t)
             fix(var[history_ind], val[ind]; force=true)
         end
     end

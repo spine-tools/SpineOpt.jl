@@ -18,33 +18,6 @@
 #############################################################################
 
 """
-    constraint_max_start_up_ramp_indices()
-
-Form the stochastic index set for the `:max_start_up_ramp` constraint.
-    
-Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
-"""
-function constraint_max_start_up_ramp_indices(m)
-    unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(max_startup_ramp)
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng))))
-        # How to deal with groups correctly?
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in Iterators.flatten(
-                    (
-                        units_on_indices(m; unit=u, t=t), 
-                        start_up_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t)
-                    )
-                )  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
-            )
-        )
-    )
-end
-
-"""
     add_constraint_max_start_up_ramp!(m::Model)
 
 Limit the maximum ramp at the start up of a unit. For reserves the max non-spinning
@@ -55,7 +28,7 @@ function add_constraint_max_start_up_ramp!(m::Model)
     @fetch units_started_up, start_up_unit_flow = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:max_start_up_ramp] = Dict(
-        (u, ng, d, s, t) => @constraint(
+        (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + sum(
                 start_up_unit_flow[u, n, d, s, t]
@@ -73,5 +46,37 @@ function add_constraint_max_start_up_ramp!(m::Model)
             )
         )
         for (u, ng, d, s, t) in constraint_max_start_up_ramp_indices(m)
+    )
+end
+
+"""
+    constraint_max_start_up_ramp_indices(m::Model; filtering_options...)
+
+Form the stochastic indexing Array for the `:max_start_up_ramp` constraint.
+    
+Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
+Keyword arguments can be used to filter the resulting Array.
+"""
+function constraint_max_start_up_ramp_indices(
+    m::Model; unit=anything, node=anything, direction=anything, stochastic_path=anything, t=anything
+)
+    unique(
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
+        for (u, ng, d) in indices(max_startup_ramp)
+        if u in unit && ng in node && d in direction
+        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t))
+        # How to deal with groups correctly?
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in Iterators.flatten(
+                    (
+                        units_on_indices(m; unit=u, t=t), 
+                        start_up_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t)
+                    )
+                )  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
+            )
+        )
+        if path == stochastic_path || path in stochastic_path
     )
 end
