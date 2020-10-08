@@ -229,14 +229,9 @@ function _determine_required_history_duration(instance::Object)
         connection_flow_delay,
         unit_investment_lifetime,
     ]
-    required_history = _model_duration_unit(instance)(1) # Dynamics always require at least 1 duration unit of history.
-    for param in delay_params
-        max_param = maximum_parameter_value(param)
-        if max_param != SpineInterface.NothingParameterValue()
-            required_history = max(required_history, max_param)
-        end
-    end
-    return required_history
+    max_vals = (maximum_parameter_value(p) for p in delay_params)
+    init = _model_duration_unit(instance)(1) # Dynamics always require at least 1 duration unit of history.
+    reduce(max, (val for val in max_vals if val !== nothing); init=init)
 end
 
 """
