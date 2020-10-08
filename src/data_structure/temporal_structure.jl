@@ -197,22 +197,18 @@ function _generate_time_slice!(m::Model)
     window_start = start(window)
     window_end = end_(window)
     window_time_slices = _window_time_slices(instance, window_start, window_end)
-    i = findlast(t -> end_(t) <= window_end, window_time_slices)
     required_history_duration = _determine_required_history_duration(instance)
     window_span = window_end - window_start
-    window_displacement = typeof(window_span)(0) # Empty `Period` of `window_span`'s type.
+    history_roll_count = div(Minute(required_history_duration), Minute(window_span))
     history_time_slices = Array{TimeSlice,1}()
-    while window_displacement < required_history_duration
-        prepend!(
-            history_time_slices,
-            [
-                t - window_span - window_displacement
-                for t in window_time_slices[1:i]
-                if end_(t) - window_span - window_displacement >= window_start - required_history_duration
-            ]
-        )
-        window_displacement += window_span
+    history_window_time_slices = window_time_slices .- window_span
+    for k in 1:history_roll_count
+        prepend!(history_time_slices, history_window_time_slices)
+        history_window_time_slices .-= window_span
     end
+    history_start = window_start - required_history_duration
+    j = searchsortedfirst(history_window_time_slices, history_start; lt=(x, y) -> end_(x) < y)
+    prepend!(history_time_slices, history_window_time_slices[j:end])
     m.ext[:temporal_structure][:time_slice] = TimeSliceSet(window_time_slices)
     m.ext[:temporal_structure][:history_time_slice] = TimeSliceSet(history_time_slices)
     m.ext[:temporal_structure][:t_history_t] = Dict(zip(history_time_slices .+ window_span, history_time_slices))

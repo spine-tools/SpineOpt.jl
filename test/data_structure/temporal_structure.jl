@@ -346,7 +346,8 @@ end
         db_api.import_data_to_url(url_in; test_data...)
         objects = [("unit", "unitA")]
         object_parameter_values = [
-            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T03:00:00")],
+            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T04:00:00")],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "3h")],
             ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["unit", "unitA", "min_up_time", Dict("type" => "duration", "data" => "4h")]
@@ -357,14 +358,16 @@ end
         using_spinedb(url_in, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
+        block_a = temporal_block(:block_a)
+        block_b = temporal_block(:block_b)
         expected_history_time_slice = [
-            TimeSlice(DateTime(1999, 12, 31, 18), DateTime(1999, 12, 31, 20), temporal_block(:block_b)),
-            TimeSlice(DateTime(1999, 12, 31, 19), DateTime(1999, 12, 31, 20), temporal_block(:block_a)),
-            TimeSlice(DateTime(1999, 12, 31, 20), DateTime(1999, 12, 31, 21), temporal_block(:block_a), temporal_block(:block_b)),
-            TimeSlice(DateTime(1999, 12, 31, 21), DateTime(1999, 12, 31, 22), temporal_block(:block_a)),
-            TimeSlice(DateTime(1999, 12, 31, 21), DateTime(1999, 12, 31, 23), temporal_block(:block_b)),
-            TimeSlice(DateTime(1999, 12, 31, 22), DateTime(1999, 12, 31, 23), temporal_block(:block_a)),
-            TimeSlice(DateTime(1999, 12, 31, 23), DateTime(2000, 1, 1, 00), temporal_block(:block_a), temporal_block(:block_b)),
+            TimeSlice(DateTime(1999, 12, 31, 18), DateTime(1999, 12, 31, 20), block_b),
+            TimeSlice(DateTime(1999, 12, 31, 19), DateTime(1999, 12, 31, 20), block_a),
+            TimeSlice(DateTime(1999, 12, 31, 20), DateTime(1999, 12, 31, 21), block_a, block_b),
+            TimeSlice(DateTime(1999, 12, 31, 21), DateTime(1999, 12, 31, 22), block_a),
+            TimeSlice(DateTime(1999, 12, 31, 21), DateTime(1999, 12, 31, 23), block_b),
+            TimeSlice(DateTime(1999, 12, 31, 22), DateTime(1999, 12, 31, 23), block_a),
+            TimeSlice(DateTime(1999, 12, 31, 23), DateTime(2000, 1, 1, 00), block_a, block_b),
         ]
         @test length(history_time_slice(m)) === 7
         @testset for (te, to) in zip(expected_history_time_slice, history_time_slice(m))
@@ -372,4 +375,3 @@ end
         end
     end
 end
-
