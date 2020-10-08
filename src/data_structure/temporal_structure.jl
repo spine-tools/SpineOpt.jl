@@ -223,14 +223,14 @@ end
 Returns the required length of the included history based on parameter values that impose delays as a `Dates.Period`.
 """
 function _determine_required_history_duration(instance::Object)
-    delay_params = [
+    delay_params = (
         min_up_time,
         min_down_time,
         connection_flow_delay,
         unit_investment_lifetime,
-    ]
+    )
     max_vals = (maximum_parameter_value(p) for p in delay_params)
-    init = _model_duration_unit(instance)(1) # Dynamics always require at least 1 duration unit of history.
+    init = _model_duration_unit(instance)(1)  # Dynamics always require at least 1 duration unit of history
     reduce(max, (val for val in max_vals if val !== nothing); init=init)
 end
 
