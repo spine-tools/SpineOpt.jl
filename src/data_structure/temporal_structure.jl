@@ -197,29 +197,30 @@ function _generate_time_slice!(m::Model)
     window_start = start(window)
     window_end = end_(window)
     window_time_slices = _window_time_slices(instance, window_start, window_end)
-    required_history_duration = _determine_required_history_duration(instance)
-    window_span = window_end - window_start
-    history_roll_count = div(Minute(required_history_duration), Minute(window_span))
     history_time_slices = Array{TimeSlice,1}()
-    history_window_time_slices = window_time_slices .- window_span
-    for k in 1:history_roll_count
+    required_history_duration = _required_history_duration(instance)
+    window_duration = window_end - window_start
+    history_window_count = div(Minute(required_history_duration), Minute(window_duration))
+    i = searchsortedlast(window_time_slices, window_end; lt=(x, y) -> x < start(y))
+    history_window_time_slices = window_time_slices[1:i] .- window_duration
+    for k in 1:history_window_count
         prepend!(history_time_slices, history_window_time_slices)
-        history_window_time_slices .-= window_span
+        history_window_time_slices .-= window_duration
     end
     history_start = window_start - required_history_duration
     j = searchsortedfirst(history_window_time_slices, history_start; lt=(x, y) -> end_(x) < y)
     prepend!(history_time_slices, history_window_time_slices[j:end])
     m.ext[:temporal_structure][:time_slice] = TimeSliceSet(window_time_slices)
     m.ext[:temporal_structure][:history_time_slice] = TimeSliceSet(history_time_slices)
-    m.ext[:temporal_structure][:t_history_t] = Dict(zip(history_time_slices .+ window_span, history_time_slices))
+    m.ext[:temporal_structure][:t_history_t] = Dict(zip(history_time_slices .+ window_duration, history_time_slices))
 end
 
 """
-    _determine_required_history_duration(m::Model)
+    _required_history_duration(m::Model)
 
-Returns the required length of the included history based on parameter values that impose delays as a `Dates.Period`.
+The required length of the included history based on parameter values that impose delays as a `Dates.Period`.
 """
-function _determine_required_history_duration(instance::Object)
+function _required_history_duration(instance::Object)
     delay_params = (
         min_up_time,
         min_down_time,
