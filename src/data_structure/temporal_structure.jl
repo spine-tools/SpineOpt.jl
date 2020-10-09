@@ -201,7 +201,7 @@ function _generate_time_slice!(m::Model)
     required_history_duration = _required_history_duration(instance)
     window_duration = window_end - window_start
     history_window_count = div(Minute(required_history_duration), Minute(window_duration))
-    i = searchsortedlast(window_time_slices, window_end; lt=(x, y) -> x < start(y))
+    i = findlast(t -> end_(t) <= window_end, window_time_slices)
     history_window_time_slices = window_time_slices[1:i] .- window_duration
     for k in 1:history_window_count
         prepend!(history_time_slices, history_window_time_slices)
