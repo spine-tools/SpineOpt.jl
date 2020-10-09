@@ -208,8 +208,8 @@ function _generate_time_slice!(m::Model)
         history_window_time_slices .-= window_duration
     end
     history_start = window_start - required_history_duration
-    j = searchsortedfirst(history_window_time_slices, history_start; lt=(x, y) -> end_(x) < y)
-    prepend!(history_time_slices, history_window_time_slices[j:end])
+    filter!(t -> end_(t) > history_start, history_window_time_slices)
+    prepend!(history_time_slices, history_window_time_slices)
     m.ext[:temporal_structure][:time_slice] = TimeSliceSet(window_time_slices)
     m.ext[:temporal_structure][:history_time_slice] = TimeSliceSet(history_time_slices)
     m.ext[:temporal_structure][:t_history_t] = Dict(zip(history_time_slices .+ window_duration, history_time_slices))

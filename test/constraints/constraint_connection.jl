@@ -351,8 +351,10 @@
                 @testset for (j, t_to) in enumerate(reverse(time_slice(m; temporal_block=temporal_block(:two_hourly))))
                     coeffs = (1 - rem_minutes_delay, 1, rem_minutes_delay)
                     i = 2 * j - 1
-                    s_set = scenarios_from[i + h_delay: i + h_delay + 2]
-                    t_set = time_slices_from[i + h_delay: i + h_delay + 2]
+                    a = i + h_delay
+                    b = min(a + 2, length(time_slices_from))
+                    s_set = scenarios_from[a:b]
+                    t_set = time_slices_from[a:b]
                     vars_conn_flow_from = (
                         var_connection_flow[conn, n_from, d_from, s_from, t_from] 
                         for (s_from, t_from) in zip(s_set, t_set)
@@ -368,7 +370,7 @@
                     path = reverse(unique(s_set))
                     con_key = (conn, n_to, n_from, path, t_to)
                     observed_con = constraint_object(constraint[con_key...])
-                    @test _is_constraint_equal(observed_con, expected_con)                    
+                    @test _is_constraint_equal(observed_con, expected_con)
                 end
             end
         end

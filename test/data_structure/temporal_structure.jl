@@ -361,15 +361,13 @@ end
         block_a = temporal_block(:block_a)
         block_b = temporal_block(:block_b)
         expected_history_time_slice = [
-            TimeSlice(DateTime(1999, 12, 31, 18), DateTime(1999, 12, 31, 20), block_b),
-            TimeSlice(DateTime(1999, 12, 31, 19), DateTime(1999, 12, 31, 20), block_a),
             TimeSlice(DateTime(1999, 12, 31, 20), DateTime(1999, 12, 31, 21), block_a, block_b),
             TimeSlice(DateTime(1999, 12, 31, 21), DateTime(1999, 12, 31, 22), block_a),
             TimeSlice(DateTime(1999, 12, 31, 21), DateTime(1999, 12, 31, 23), block_b),
             TimeSlice(DateTime(1999, 12, 31, 22), DateTime(1999, 12, 31, 23), block_a),
             TimeSlice(DateTime(1999, 12, 31, 23), DateTime(2000, 1, 1, 00), block_a, block_b),
         ]
-        @test length(history_time_slice(m)) === 7
+        @test length(history_time_slice(m)) === 5
         @testset for (te, to) in zip(expected_history_time_slice, history_time_slice(m))
             @test te == to
         end
