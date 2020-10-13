@@ -18,33 +18,6 @@
 #############################################################################
 
 """
-    constraint_min_shut_down_ramp_indices()
-
-Forms the stochastic index set for the `:min_shut_down_ramp` constraint.
-
-Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
-"""
-function constraint_min_shut_down_ramp_indices(m)
-    unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(min_shutdown_ramp)
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng))))
-        # How to deal with groups correctly?
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in Iterators.flatten(
-                    (
-                        units_on_indices(m; unit=u, t=t),
-                        shut_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t)
-                    )
-                )  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
-            )
-        )
-    )
-end
-
-"""
     add_constraint_min_shut_down_ramp!(m::Model)
 
 Limit the minimum ramp at the shut down of a unit.
@@ -53,9 +26,9 @@ For reserves the min non-spinning reserve ramp can be defined here.
 """
 function add_constraint_min_shut_down_ramp!(m::Model)
     @fetch units_shut_down, shut_down_unit_flow = m.ext[:variables]
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     m.ext[:constraints][:min_shut_down_ramp] = Dict(
-        (u, ng, d, s, t) => @constraint(
+        (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + sum(
                 shut_down_unit_flow[u, n, d, s, t]
@@ -73,5 +46,37 @@ function add_constraint_min_shut_down_ramp!(m::Model)
             )
         )
         for (u, ng, d, s, t) in constraint_min_shut_down_ramp_indices(m)
+    )
+end
+
+"""
+    constraint_min_shut_down_ramp_indices(m::Model; filtering_options...)
+
+Forms the stochastic index set for the `:min_shut_down_ramp` constraint.
+
+Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
+Keyword arguments can be used to filter the resulting Array.
+"""
+function constraint_min_shut_down_ramp_indices(
+    m::Model; unit=anything, node=anything, direction=anything, stochastic_path=anything, t=anything
+)
+    unique(
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
+        for (u, ng, d) in indices(min_shutdown_ramp)
+        if u in unit && ng in node && d in direction
+        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t))
+        # How to deal with groups correctly?
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in Iterators.flatten(
+                    (
+                        units_on_indices(m; unit=u, t=t),
+                        shut_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t)
+                    )
+                )  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
+            )
+        )
+        if path == stochastic_path || path in stochastic_path
     )
 end

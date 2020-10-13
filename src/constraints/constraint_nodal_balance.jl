@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-# TODO: support nodal balance sense
 # TODO: as proposed in the wiki on groups: We should be able to support
 # a) node_balance for node group and NO balance for underlying node
 # b) node_balance for node group AND balance for underlying node
@@ -80,4 +79,3 @@ _connection_nodes(conn::Object) = (
     for connection__node in (connection__from_node, connection__to_node)
     for n in connection__node(connection=conn, direction=anything)
 )
-

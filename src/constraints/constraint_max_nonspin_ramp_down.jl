@@ -18,31 +18,6 @@
 #############################################################################
 
 """
-    constraint_max_nonspin_ramp_down_indices()
-
-Form the stochastic index set for the `:max_nonspin_shut_down_ramp` constraint.
-
-Uses stochastic path indices due to potentially different stochastic scenarios
-between `t_after` and `t_before`.
-"""
-function constraint_max_nonspin_ramp_down_indices(m)
-    unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(max_res_shutdown_ramp)
-        for t in time_slice(m; temporal_block=node__temporal_block(node=members(ng)))
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario for ind in Iterators.flatten(
-                (
-                    nonspin_ramp_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
-                    nonspin_units_shutting_down_indices(m; unit=u, node=ng, t=t))
-                )
-            )
-        )
-    )
-end
-
-"""
     add_constraint_max_nonspin_shut_down_ramp!(m::Model)
 
 Limit the maximum ramp at the shut down of a unit.
@@ -51,9 +26,9 @@ For reserves the max non-spinning reserve ramp can be defined here.
 """
 function add_constraint_max_nonspin_ramp_down!(m::Model)
     @fetch nonspin_ramp_down_unit_flow, nonspin_units_shutting_down = m.ext[:variables]
-    t0 = start(current_window(m))
+    t0 = startref(current_window(m))
     m.ext[:constraints][:max_nonspin_shut_down_ramp] = Dict(
-        (u, ng, d, s, t) => @constraint(
+        (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + sum(
                 nonspin_ramp_down_unit_flow[u, n, d, s, t]
@@ -74,5 +49,34 @@ function add_constraint_max_nonspin_ramp_down!(m::Model)
             )
         )
         for (u, ng, d, s, t) in constraint_max_nonspin_ramp_down_indices(m)
+    )
+end
+
+"""
+    constraint_max_nonspin_ramp_down_indices(m::Model; filtering_options...)
+
+Form the stochastic index set for the `:max_nonspin_shut_down_ramp` constraint.
+
+Uses stochastic path indices due to potentially different stochastic scenarios
+between `t_after` and `t_before`.
+"""
+function constraint_max_nonspin_ramp_down_indices(
+    m::Model; unit=anything, node=anything, direction=anything, stochastic_path=anything, t=anything
+)
+    unique(
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
+        for (u, ng, d) in indices(max_res_shutdown_ramp)
+        if u in unit && ng in node && d in direction
+        for t in time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t)
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario for ind in Iterators.flatten(
+                (
+                    nonspin_ramp_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
+                    nonspin_units_shutting_down_indices(m; unit=u, node=ng, t=t))
+                )
+            )
+        )
+        if path == stochastic_path || path in stochastic_path
     )
 end
