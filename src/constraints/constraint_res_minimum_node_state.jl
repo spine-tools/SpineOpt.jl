@@ -18,36 +18,6 @@
 #############################################################################
 
 """
-    constraint_minimum_node_state_indices()
-
-Form the stochastic index set for the `:minimum_node_state` constraint.
-
-Uses stochastic path indices due to potentially different stochastic structures between
-`unit_flow` and `units_on` variables.
-"""
-function constraint_res_minimum_node_state_indices(m)
-    unique(
-        (node=n_stor, stochastic_path=path, t=t)
-        for (u, n_aFRR, d, s, t) in unit_flow_indices(m; node=indices(minimum_reserve_activation_time))
-        for (u, n_stor, d, s, t) in unit_flow_indices(m; unit=u,t=t)
-        if has_state(node=n_stor)
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in Iterators.flatten(
-                    (
-                        node_state_indices(m; node=n_stor, t=t),
-                        unit_flow_indices(m; unit=u, node=n_aFRR, direction=d, t=t)
-                    )
-                )
-            )
-        )
-    )
-end
-
-_div(x::Period, y::Period) = Minute(x) / Minute(y)
-
-"""
     add_constraint_res_minimum_node_state!(m::Model)
 
 Limit the `node_state` of a `node` if the parameters `node_state_min,
@@ -57,7 +27,7 @@ function add_constraint_res_minimum_node_state!(m::Model)
     @fetch unit_flow, node_state = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:res_minimum_node_state] = Dict(
-        (n_stor, s, t_after) => @constraint(
+        (node=n_stor, stochastic_path=s, t=t_after) => @constraint(
             m,
             expr_sum(
                 node_state[n_stor, s, t_before]
@@ -96,3 +66,34 @@ function add_constraint_res_minimum_node_state!(m::Model)
     )
 end
 #TODO: only for upward reserves? add downwards
+
+_div(x::Period, y::Period) = Minute(x) / Minute(y)
+
+"""
+    constraint_minimum_node_state_indices(m::Model; filtering_options...)
+
+Form the stochastic indexing Array for the `:minimum_node_state` constraint.
+
+Uses stochastic path indices due to potentially different stochastic structures between
+`unit_flow` and `units_on` variables. Keyword arguments can be used to filter the resulting Array.
+"""
+function constraint_res_minimum_node_state_indices(m::Model; node=anything, stochastic_path=anything, t=anything)
+    unique(
+        (node=n_stor, stochastic_path=path, t=t)
+        for (u, n_aFRR, d, s, t) in unit_flow_indices(m; node=indices(minimum_reserve_activation_time), t=t)
+        for (u, n_stor, d, s, t) in unit_flow_indices(m; unit=u, node=node, t=t)
+        if has_state(node=n_stor)
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in Iterators.flatten(
+                    (
+                        node_state_indices(m; node=n_stor, t=t),
+                        unit_flow_indices(m; unit=u, node=n_aFRR, direction=d, t=t)
+                    )
+                )
+            )
+        )
+        if path == stochastic_path || path in stochastic_path
+    )
+end

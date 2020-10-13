@@ -64,14 +64,9 @@ Fix a variable to the values specified by the `fix_value` parameter function, if
 _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Nothing) = nothing
 function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Function)
     var = m.ext[:variables][name]
-    for ind in indices(m)
+    for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
         fix_value_ = fix_value(ind)
-        fix_value_ != nothing && fix(var[ind], fix_value_; force=true)
-        end_(ind.t) <= end_(current_window(m)) || continue
-        for history_ind in indices(m; ind..., stochastic_scenario=anything, t=t_history_t(m; t=ind.t))
-            fix_value_ = fix_value(history_ind)
-            fix_value_ != nothing && fix(var[history_ind], fix_value_; force=true)
-        end
+        fix_value_ != nothing && !isnan(fix_value_) && fix(var[ind], fix_value_; force=true)
     end
 end
 
@@ -185,7 +180,9 @@ Save the value of a variable in a model.
 function _save_variable_value!(m::Model, name::Symbol, indices::Function)
     var = m.ext[:variables][name]
     m.ext[:values][name] = Dict(
-        ind => _variable_value(var[ind]) for ind in indices(m) if end_(ind.t) <= end_(current_window(m))
+        ind => _variable_value(var[ind])
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+        if end_(ind.t) <= end_(current_window(m))
     )
 end
 

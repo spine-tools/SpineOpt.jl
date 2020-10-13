@@ -26,7 +26,7 @@ function add_constraint_node_state_capacity!(m::Model)
     @fetch node_state = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:node_state_capacity] = Dict(
-        (ng, s, t) => @constraint(
+        (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
             + node_state[ng, s, t]
             <=

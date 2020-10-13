@@ -42,7 +42,8 @@ struct TimeSliceSet
             if end_(last_) < start(next_first)
         )
         gaps = [TimeSlice(end_(last_), start(next_first)) for (last_, next_first) in gap_bounds]
-        bridges = [last_ for (last_, next_first) in gap_bounds]  # NOTE: The 'bridge' is just the last time slice in the previous block
+        # NOTE: For convention, the last time slice in the preceding block becomes the 'bridge'
+        bridges = [last_ for (last_, next_first) in gap_bounds]
         gap_bridger = GapBridger(gaps, bridges)
         new(time_slices, block_time_slices, gap_bridger)
     end
@@ -196,12 +197,39 @@ function _generate_time_slice!(m::Model)
     window_start = start(window)
     window_end = end_(window)
     window_time_slices = _window_time_slices(instance, window_start, window_end)
+    history_time_slices = Array{TimeSlice,1}()
+    required_history_duration = _required_history_duration(instance)
+    window_duration = window_end - window_start
+    history_window_count = div(Minute(required_history_duration), Minute(window_duration))
     i = findlast(t -> end_(t) <= window_end, window_time_slices)
-    window_span = window_end - window_start
-    history_time_slices = [t - window_span for t in window_time_slices[1:i]] 
+    history_window_time_slices = window_time_slices[1:i] .- window_duration
+    for k in 1:history_window_count
+        prepend!(history_time_slices, history_window_time_slices)
+        history_window_time_slices .-= window_duration
+    end
+    history_start = window_start - required_history_duration
+    filter!(t -> end_(t) > history_start, history_window_time_slices)
+    prepend!(history_time_slices, history_window_time_slices)
     m.ext[:temporal_structure][:time_slice] = TimeSliceSet(window_time_slices)
     m.ext[:temporal_structure][:history_time_slice] = TimeSliceSet(history_time_slices)
-    m.ext[:temporal_structure][:t_history_t] = Dict(zip(window_time_slices, history_time_slices))
+    m.ext[:temporal_structure][:t_history_t] = Dict(zip(history_time_slices .+ window_duration, history_time_slices))
+end
+
+"""
+    _required_history_duration(m::Model)
+
+The required length of the included history based on parameter values that impose delays as a `Dates.Period`.
+"""
+function _required_history_duration(instance::Object)
+    delay_params = (
+        min_up_time,
+        min_down_time,
+        connection_flow_delay,
+        unit_investment_lifetime,
+    )
+    max_vals = (maximum_parameter_value(p) for p in delay_params)
+    init = _model_duration_unit(instance)(1)  # Dynamics always require at least 1 duration unit of history
+    reduce(max, (val for val in max_vals if val !== nothing); init=init)
 end
 
 """
@@ -288,7 +316,7 @@ end
 current_window(m::Model) = m.ext[:temporal_structure][:current_window]
 time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:time_slice](;kwargs...)
 history_time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:history_time_slice](;kwargs...)
-t_history_t(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_history_t][t]
+t_history_t(m::Model; t::TimeSlice) = get(m.ext[:temporal_structure][:t_history_t], t, nothing)
 t_before_t(m::Model; kwargs...) = m.ext[:temporal_structure][:t_before_t](;kwargs...)
 t_in_t(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t](;kwargs...)
 t_in_t_excl(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t_excl](;kwargs...)

@@ -26,7 +26,7 @@ function add_constraint_units_available!(m::Model)
     @fetch units_available, units_invested_available = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:units_available] = Dict(
-        (u, s, t) => @constraint(
+        (unit=u, stochastic_scenario=s, t=t) => @constraint(
             m,
             + units_available[u, s, t]
             ==

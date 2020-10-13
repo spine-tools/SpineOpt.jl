@@ -18,28 +18,6 @@
 #############################################################################
 
 """
-    constraint_connection_flow_capacity_indices()
-
-Form the stochastic index set for the `:connection_flow_capacity` constraint.
-
-Uses stochastic path indices of the `connection_flow` variables. Only the lowest resolution time slices are included,
-as the `:connection_flow_capacity` is used to constrain the "average power" of the `connection`
-instead of "instantaneous power".
-"""
-function constraint_connection_flow_capacity_indices(m)
-    unique(
-        (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
-        for (c, ng, d) in indices(connection_capacity)
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng))))
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario for ind in connection_flow_indices(m; connection=c, node=ng, direction=d, t=t)
-            )
-        )
-    )
-end
-
-"""
     add_constraint_connection_flow_capacity!(m::Model)
 
 Limit the maximum in/out `connection_flow` of a `connection` for all `connection_flow_capacity` indices.
@@ -56,7 +34,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
     @fetch connection_flow = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:connection_flow_capacity] = Dict(
-        (conn, ng, d, s, t) => @constraint(
+        (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
                 connection_flow[conn, n, d, s, t] * duration(t)
@@ -86,5 +64,30 @@ function add_constraint_connection_flow_capacity!(m::Model)
             )
         )
         for (conn, ng, d, s, t) in constraint_connection_flow_capacity_indices(m)
+    )
+end
+
+"""
+    constraint_connection_flow_capacity_indices(m::Model; filtering_options...)
+
+Form the stochastic index array for the `:connection_flow_capacity` constraint.
+
+Uses stochastic path indices of the `connection_flow` variables. Only the lowest resolution time slices are included,
+as the `:connection_flow_capacity` is used to constrain the "average power" of the `connection`
+instead of "instantaneous power". Keyword arguments can be used to filter the resulting 
+"""
+function constraint_connection_flow_capacity_indices(
+    m::Model; connection=anything, node=anything, direction=anything, stochastic_path=anything, t=anything
+)
+    unique(
+        (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
+        for (c, ng, d) in indices(connection_capacity; connection=connection, node=node, direction=direction)
+        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t))
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario for ind in connection_flow_indices(m; connection=c, node=ng, direction=d, t=t)
+            )
+        )
+        if path == stochastic_path || path in stochastic_path
     )
 end

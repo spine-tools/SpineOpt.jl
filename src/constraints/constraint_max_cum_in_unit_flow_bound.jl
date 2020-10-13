@@ -26,7 +26,7 @@ if `max_cum_in_unit_flow_bound` exists.
 function add_constraint_max_cum_in_unit_flow_bound!(m::Model)
     @fetch unit_flow = m.ext[:variables]
     m.ext[:constraints][:max_cum_in_unit_flow_bound] = Dict(
-        ug => @constraint( # TODO: How to turn this one into stochastical one? Path indexing over the whole `unit_group`?
+        (unit_group=ug,) => @constraint( # TODO: How to turn this one into stochastical one? Path indexing over the whole `unit_group`?
             m,
             + sum(
                 unit_flow[u, n, d, s, t]
