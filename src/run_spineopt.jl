@@ -219,6 +219,7 @@ function save_outputs!(outputs, m)
         end
         existing = get!(outputs, out.name, Dict{NamedTuple,Dict}())
         for (k, v) in value
+            end_(k.t) <= model_start(model=m.ext[:instance]) && continue
             new_k = _drop_key(k, :t)
             push!(get!(existing, new_k, Dict{DateTime,Any}()), start(k.t) => v)
         end
