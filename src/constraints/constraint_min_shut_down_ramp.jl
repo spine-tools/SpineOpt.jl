@@ -69,7 +69,7 @@ function constraint_min_shut_down_ramp_indices(
         for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario
-                for ind in Iterators.flatten(
+                for ind in Iterators.flatten( #as we're walking through all indices anyways - why not retrieve the time_slices from here?
                     (
                         units_on_indices(m; unit=u, t=t),
                         shut_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t)

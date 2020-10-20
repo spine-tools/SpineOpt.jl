@@ -23,13 +23,16 @@ function writing_modelfile(m::Model; file_name="model")
 Write model file for Model `m`. Objective, constraints and variable bounds are reported.
     Optional argument is keyword `:file_name`.
 """
-function writing_modelfile(m::JuMP.Model; file_name="model")
+function writing_modelfile(m::SpineOpt.Model; file_name="model")
     model_string = "$m"
     model_string = replace(model_string, s"+ " => "\n\t+ ")
     model_string = replace(model_string, s"- " => "\n\t- ")
     model_string = replace(model_string, s">= " => "\n\t\t>= ")
     model_string = replace(model_string, s"== " => "\n\t\t== ")
     model_string = replace(model_string, s"<= " => "\n\t\t<= ")
+    model_string = replace(model_string, s": -" => ":\n\t- ")
+    model_string = replace(model_string, s": +" => ":\n\t+ ")
+    model_string = replace(model_string, s": " => ": \n\t")
     open(joinpath(@__DIR__, "$(file_name).so_model"), "w") do file
     write(file, model_string)
     end

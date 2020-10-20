@@ -49,10 +49,10 @@ function add_constraint_res_minimum_node_state!(m::Model)
                     (unit=u, node1=n_conv, node2=n_stor, stochastic_scenario=s, analysis_time=t0, t=t_after)
                 ]
                 for (u, n_stor, d, s, t_after) in unit_flow_indices(
-                    m; node=n_stor, direction=direction(:from_node), stochastic_scenario=s, t=t_after
+                    m; node=n_stor, direction=direction(:from_node), stochastic_scenario=s, t=t_in_t(m;t_long=t_after)
                 )
                 for (u, n_res, d, s, t_after) in unit_flow_indices(
-                    m; unit=u, node=indices(minimum_reserve_activation_time), direction=direction(:to_node), t=t_after
+                    m; unit=u, node=indices(minimum_reserve_activation_time), direction=direction(:to_node), t=t_in_t(m;t_long=t_after)
                 )
                 # NOTE: the below only works if only theres only 1 conventional commodity
                 for (u, n_conv, n_stor) in indices(fix_ratio_out_in_unit_flow; unit=u, node2=n_stor)
@@ -65,7 +65,7 @@ function add_constraint_res_minimum_node_state!(m::Model)
         for (n_stor, s, t_after) in constraint_res_minimum_node_state_indices(m)
     )
 end
-#TODO: only for upward reserves? add downwards
+#TODO: only for upward reserves? add downward res constraint
 
 _div(x::Period, y::Period) = Minute(x) / Minute(y)
 
@@ -80,6 +80,7 @@ Uses stochastic path indices due to potentially different stochastic structures 
 function constraint_res_minimum_node_state_indices(m::Model; node=anything, stochastic_path=anything, t=anything)
     unique(
         (node=n_stor, stochastic_path=path, t=t)
+        #TODO: make this more instuitive
         for (u, n_aFRR, d, s, t) in unit_flow_indices(m; node=indices(minimum_reserve_activation_time), t=t)
         for (u, n_stor, d, s, t) in unit_flow_indices(m; unit=u, node=node, t=t)
         if has_state(node=n_stor)

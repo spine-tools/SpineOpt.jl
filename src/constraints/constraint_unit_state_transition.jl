@@ -63,6 +63,7 @@ function constraint_unit_state_transition_indices(
         for u in unit
         for t_after in time_slice(m; temporal_block=units_on__temporal_block(unit=u), t=t_after)
         for (t_before, t_after) in t_before_t(m; t_before=t_before, t_after=t_after, _compact=false)
+            if t_before in time_slice(m; temporal_block=units_on__temporal_block(unit=u))
         for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in units_on_indices(m; unit=u, t=[t_before, t_after]))
         )
