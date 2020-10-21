@@ -29,6 +29,73 @@ function add_mp_variables!(m; log_level=3)
 end
 
 
+"""
+Initialise Master Problem.
+"""
+function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
+    @timelog log_level 2 "Adding variables...\n" add_mp_variables!(m; log_level=log_level)
+    @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
+    @timelog log_level 2 "Adding constraints...\n" add_mp_constraints!(
+        m; add_constraints=add_constraints, log_level=log_level
+    )
+    @timelog log_level 2 "Setting objective..." set_mp_objective!(m)
+end
 
+
+"""
+Add SpineOpt master problem constraints to the given model.
+"""
+function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
+    @logtime level3 "- [constraint_mp_units_invested_cuts]" add_constraint_mp_units_invested_cuts!(m)
+    @logtime level3 "- [constraint_mp_objective]" add_constraint_mp_objective!(m)
+
+    # Name constraints
+    for (con_key, cons) in m.ext[:constraints]
+        for (inds, con) in cons
+            set_name(con, string(con_key,inds))
+        end
+    end
+end
+
+function rerun_spineopt_mp(
+    url_out::String;
+    with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+    add_constraints=m -> nothing,
+    update_constraints=m -> nothing,
+    log_level=3,
+    optimize=true
+)
+outputs = Dict()
+mp = create_model(with_optimizer)
+m = create_model(with_optimizer)
+@timelog log_level 2 "Creating master problem temporal structure..." generate_temporal_structure!(mp)
+@timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
+@timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure(mp)
+@timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)    
+@log log_level 1 "Window 1: $(current_window(m))"
+init_model!(m; add_constraints=add_constraints, log_level=log_level)
+init_model!(mp; add_constraints=add_constraints, log_level=log_level)
+
+j = 1
+while _optimize_mp_model!(mp) # master problem loop       
+    @logtime level2 "Processing master problem solution" process_master_problem_solution(mp)
+    if j > 1  
+        @timelog level2 "Resetting sub problem temporal structure..." reset_temporal_structure(k-1)        
+        update_model!(m; update_constraints=update_constraints, log_level=log_level)            
+    end 
+    k = 2
+    while optimize && optimize_model!(m; log_level=log_level)
+        @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
+        @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
+        @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || break
+        @log log_level 1 "Window $k: $(current_window(m))"
+        update_model!(m; update_constraints=update_constraints, log_level=log_level)
+        k += 1
+    end        
+    
+end
+@timelog log_level 2 "Writing report..." write_report(m, outputs, url_out)
+m
+end
 
 
