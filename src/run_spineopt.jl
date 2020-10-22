@@ -18,6 +18,82 @@
 #############################################################################
 
 """
+    run_spineopt(url_in, url_out; <keyword arguments>)
+
+Run the SpineOpt from `url_in` and write report to `url_out`.
+At least `url_in` must point to valid Spine database.
+A new Spine database is created at `url_out` if it doesn't exist.
+
+# Keyword arguments
+
+**`with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0)`** is the optimizer factory for building the JuMP model.
+
+**`cleanup=true`** tells [`run_spineopt`](@ref) whether or not convenience functors should be
+set to `nothing` after completion.
+
+**`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window, and allows adding user contraints.
+
+**`update_constraints=m -> nothing`** is called in windows 2 to the last, and allows updating contraints added by `add_constraints`.
+
+**`log_level=3`** is the log level.
+"""
+function run_spineopt(
+        url_in::String,
+        url_out::String=url_in;
+        upgrade=false,
+        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+        cleanup=true,
+        add_constraints=m -> nothing,
+        update_constraints=m -> nothing,
+        log_level=3,
+        optimize=true
+    )
+    @log log_level 0 "Running SpineOpt for $(url_in)..."
+    @timelog log_level 2 "Initializing data structure from db..." begin
+        using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
+        generate_missing_items()
+    end
+    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
+    @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
+    rerun_spineopt(
+        url_out;
+        with_optimizer=with_optimizer,
+        add_constraints=add_constraints,
+        update_constraints=update_constraints,
+        log_level=log_level,
+        optimize=optimize
+    )
+end
+
+function rerun_spineopt(
+        url_out::String;
+        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+        add_constraints=m -> nothing,
+        update_constraints=m -> nothing,
+        log_level=3,
+        optimize=true
+    )
+    outputs = Dict()
+    m = create_model(with_optimizer)
+    @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
+    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
+    @log log_level 1 "Window 1: $(current_window(m))"
+    init_model!(m; add_constraints=add_constraints, log_level=log_level)
+    k = 2
+    while optimize && optimize_model!(m; log_level=log_level)
+        @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
+        @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
+        @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || break
+        @log log_level 1 "Window $k: $(current_window(m))"
+        update_model!(m; update_constraints=update_constraints, log_level=log_level)
+        k += 1
+    end
+    @timelog log_level 2 "Writing report..." write_report(m, outputs, url_out)
+    m
+end
+
+
+"""
 A JuMP `Model` for SpineOpt.
 """
 function create_model(with_optimizer)
@@ -274,121 +350,5 @@ function write_report(model, outputs, default_url)
             write_parameters(output_params, url; report=string(rpt_name))
         end
     end
-end
-
-"""
-    run_spineopt(url_in, url_out; <keyword arguments>)
-
-Run the SpineOpt from `url_in` and write report to `url_out`.
-At least `url_in` must point to valid Spine database.
-A new Spine database is created at `url_out` if it doesn't exist.
-
-# Keyword arguments
-
-**`with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0)`** is the optimizer factory for building the JuMP model.
-
-**`cleanup=true`** tells [`run_spineopt`](@ref) whether or not convenience functors should be
-set to `nothing` after completion.
-
-**`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window, and allows adding user contraints.
-
-**`update_constraints=m -> nothing`** is called in windows 2 to the last, and allows updating contraints added by `add_constraints`.
-
-**`log_level=3`** is the log level.
-"""
-function run_spineopt(
-        url_in::String,
-        url_out::String=url_in;
-        upgrade=false,
-        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
-        cleanup=true,
-        add_constraints=m -> nothing,
-        update_constraints=m -> nothing,
-        log_level=3,
-        optimize=true
-    )
-    @log log_level 0 "Running SpineOpt for $(url_in)..."
-    @timelog log_level 2 "Initializing data structure from db..." begin
-        using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
-        generate_missing_items()
-    end
-    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
-    @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
-    rerun_spineopt(
-        url_out;
-        with_optimizer=with_optimizer,
-        add_constraints=add_constraints,
-        update_constraints=update_constraints,
-        log_level=log_level,
-        optimize=optimize
-    )
-end
-
-function rerun_spineopt(
-        url_out::String;
-        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
-        add_constraints=m -> nothing,
-        update_constraints=m -> nothing,
-        log_level=3,
-        optimize=true
-    )
-    outputs = Dict()
-    m = create_model(with_optimizer)
-    @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
-    @log log_level 1 "Window 1: $(current_window(m))"
-    init_model!(m; add_constraints=add_constraints, log_level=log_level)
-    k = 2
-    while optimize && optimize_model!(m; log_level=log_level)
-        @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
-        @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || break
-        @log log_level 1 "Window $k: $(current_window(m))"
-        update_model!(m; update_constraints=update_constraints, log_level=log_level)
-        k += 1
-    end
-    @timelog log_level 2 "Writing report..." write_report(m, outputs, url_out)
-    m
-end
-
-function rerun_spineopt_mp(
-        url_out::String;
-        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
-        add_constraints=m -> nothing,
-        update_constraints=m -> nothing,
-        log_level=3,
-        optimize=true
-    )
-    outputs = Dict()
-    mp = create_model(with_optimizer)
-    m = create_model(with_optimizer)
-    @timelog log_level 2 "Creating master problem temporal structure..." generate_temporal_structure!(mp)
-    @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure(mp)
-    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)    
-    @log log_level 1 "Window 1: $(current_window(m))"
-    init_model!(m; add_constraints=add_constraints, log_level=log_level)
-    init_model!(mp; add_constraints=add_constraints, log_level=log_level)
-    
-    j = 1
-    while _optimize_mp_model!(mp) # master problem loop       
-        @logtime level2 "Processing master problem solution" process_master_problem_solution(mp)
-        if j > 1  
-            @timelog level2 "Resetting sub problem temporal structure..." reset_temporal_structure(k-1)        
-            update_model!(m; update_constraints=update_constraints, log_level=log_level)            
-        end 
-        k = 2
-        while optimize && optimize_model!(m; log_level=log_level)
-            @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-            @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
-            @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || break
-            @log log_level 1 "Window $k: $(current_window(m))"
-            update_model!(m; update_constraints=update_constraints, log_level=log_level)
-            k += 1
-        end        
-        
-    end
-    @timelog log_level 2 "Writing report..." write_report(m, outputs, url_out)
-    m
 end
 
