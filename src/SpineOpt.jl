@@ -29,7 +29,7 @@ using TimeZones
 using SpineInterface
 using Suppressor
 using JSON
-#using PowerSystems
+using PowerSystems
 
 import Dates: CompoundPeriod
 import DataStructures: OrderedDict
