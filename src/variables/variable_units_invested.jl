@@ -23,6 +23,16 @@
 Add `units_invested` variables to model `m`.
 """
 function add_variable_units_invested!(m::Model)
-    add_variable!(m, :units_invested, units_invested_available_indices; lb=x -> 0, int=units_invested_available_int)
+    t0 = startref(current_window(m))
+    add_variable!(
+        m,
+        :units_invested,
+        units_invested_available_indices;
+        lb=x -> 0,
+        fix_value=x -> fix_units_invested(
+            unit=x.unit, stochastic_scenario=x.stochastic_scenario, analysis_time=t0, t=x.t, _strict=false
+        ),
+        int=units_invested_available_int
+    )
 end
 

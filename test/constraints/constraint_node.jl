@@ -37,6 +37,8 @@
             ["stochastic_scenario", "child"],
         ],
         :relationships => [
+            ["model__temporal_block", ["instance", "hourly"]],
+            ["model__temporal_block", ["instance", "two_hourly"]],
             ["unit__from_node", ["unit_ab", "node_a"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["units_on__temporal_block", ["unit_ab", "two_hourly"]],
@@ -58,7 +60,7 @@
             ["stochastic_structure__stochastic_scenario", ["stochastic", "child"]],
             ["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "child"]],
         ],
-        :object_groups => [["node", "node_group_bc", ["node_b", "node_c"]]],
+        :object_groups => [["node", "node_group_bc", "node_b"], ["node", "node_group_bc", "node_c"]],
         :object_parameter_values => [
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
@@ -93,7 +95,7 @@
         conn = connection(:connection_ca)
         # node_a
         n = node(:node_a)
-        key_tail = (stochastic_scenario(:parent), time_slice(temporal_block=temporal_block(:two_hourly))[1])
+        key_tail = (stochastic_scenario(:parent), time_slice(m; temporal_block=temporal_block(:two_hourly))[1])
         node_key = (n, key_tail...)
         conn_key = (conn, n, direction(:to_node), key_tail...)
         var_n_inj = var_node_injection[node_key...]
@@ -101,13 +103,13 @@
         var_n_sl_neg = var_node_slack_neg[node_key...]
         var_conn_flow = var_connection_flow[conn_key...]
         expected_con = @build_constraint(var_n_inj + var_conn_flow + var_n_sl_pos - var_n_sl_neg == 0)
-        con = constraint[node_key]
+        con = constraint[node_key...]
         observed_con = constraint_object(con)
         @test _is_constraint_equal(observed_con, expected_con)
         # node_group_bc
         n = node(:node_group_bc)
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             var_n_inj = var_node_injection[node(:node_group_bc), s, t]
             var_conn_flow = var_connection_flow[conn, node(:node_c), direction(:from_node), s, t]
@@ -169,12 +171,12 @@
         # node_a
         n = node(:node_a)
         s = stochastic_scenario(:parent)
-        time_slices = time_slice(temporal_block=temporal_block(:two_hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
         @testset for t1 in time_slices
             var_n_inj = var_node_injection[n, s, t1]
             var_u_flow = var_unit_flow[u, node(:node_a), direction(:from_node), s, t1]
             expected_con = @build_constraint(var_n_inj + var_u_flow + demand_a == 0)
-            @testset for t0 in t_before_t(t_after=t1)
+            @testset for t0 in t_before_t(m; t_after=t1)
                 con = constraint[n, [s], t0, t1]
                 observed_con = constraint_object(con)
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -183,12 +185,12 @@
         # node_group_bc
         n = node(:node_group_bc)
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t1) in zip(scenarios, time_slices)
             var_n_inj = var_node_injection[n, s, t1]
             var_u_flow = var_unit_flow[u, node(:node_b), direction(:to_node), s, t1]
             expected_con = @build_constraint(var_n_inj - var_u_flow + demand_group == 0)
-            @testset for t0 in t_before_t(t_after=t1)
+            @testset for t0 in t_before_t(m; t_after=t1)
                 con = constraint[n, [s], t0, t1]
                 observed_con = constraint_object(con)
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -198,14 +200,14 @@
         n = node(:node_b)
         s0 = stochastic_scenario(:parent)
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s1, t1) in zip(scenarios, time_slices)
             path = unique([s0, s1])
             var_n_st_b1 = var_node_state[n, s1, t1]
             var_n_st_c1 = var_node_state[node(:node_c), s1, t1]
             var_n_inj = var_node_injection[n, s1, t1]
             var_u_flow = var_unit_flow[u, node(:node_b), direction(:to_node), s1, t1]
-            @testset for t0 in t_before_t(t_after=t1)
+            @testset for t0 in t_before_t(m; t_after=t1)
                 var_n_st_b0 = get(var_node_state, (n, s0, t0), 0)
                 expected_con = @build_constraint(
                     var_n_inj 
@@ -226,13 +228,13 @@
         n = node(:node_c)
         s0 = stochastic_scenario(:parent)
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s1, t1) in zip(scenarios, time_slices)
             path = unique([s0, s1])
             var_n_st_c1 = var_node_state[n, s1, t1]
             var_n_st_b1 = var_node_state[node(:node_b), s1, t1]
             var_n_inj = var_node_injection[n, s1, t1]
-            @testset for t0 in t_before_t(t_after=t1)
+            @testset for t0 in t_before_t(m; t_after=t1)
                 var_n_st_c0 = get(var_node_state, (n, s0, t0), 0)
                 expected_con = @build_constraint(
                     var_n_inj 
@@ -265,14 +267,14 @@
         constraint = m.ext[:constraints][:node_state_capacity]
         @test length(constraint) == 4
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             @testset for (name, cap) in node_capacity
                 n = node(Symbol(name))
                 key = (n, s, t)
                 var_n_st = var_node_state[key...]
                 expected_con = @build_constraint(var_n_st <= cap)
-                con = constraint[key]
+                con = constraint[key...]
                 observed_con = constraint_object(con)
                 @test _is_constraint_equal(observed_con, expected_con)
             end

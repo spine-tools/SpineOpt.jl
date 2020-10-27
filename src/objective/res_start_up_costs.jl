@@ -18,20 +18,20 @@
 #############################################################################
 
 """
-    shut_down_costs(m::Model)
+    start_up_costs(m::Model)
 
-Create an expression for unit shutdown costs.
+Create an expression for unit startup costs.
 """
-function shut_down_costs(m::Model, t1)
-    @fetch units_shut_down = m.ext[:variables]
-    t0 = startref(current_window(m))
+function res_start_up_costs(m::Model, t1)
+    @fetch nonspin_units_starting_up = m.ext[:variables]
     @expression(
         m,
         expr_sum(
-            + units_shut_down[u, s, t]
-            * shut_down_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * unit_stochastic_scenario_weight[(unit=u, stochastic_scenario=s)]
-            for (u, s, t) in units_on_indices(m; unit=indices(shut_down_cost))
+            + nonspin_units_starting_up[u, n, s, t]
+            * res_start_up_cost[(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)]
+            * unit_stochastic_scenario_weight(unit=u, stochastic_scenario=s)
+            for (u, n ,d) in indices(res_start_up_cost)
+            for (u, n, s, t) in nonspin_units_starting_up_indices(m;unit=u, node=n)
             if end_(t) <= t1;
             init=0
         )

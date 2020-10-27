@@ -35,6 +35,8 @@
             ["stochastic_scenario", "child"],
         ],
         :relationships => [
+            ["model__temporal_block", ["instance", "hourly"]],
+            ["model__temporal_block", ["instance", "two_hourly"]],
             ["units_on__temporal_block", ["unit_ab", "hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "stochastic"]],
             ["unit__from_node", ["unit_ab", "node_a"]],
@@ -73,13 +75,13 @@
         constraint = m.ext[:constraints][:units_on]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (unit(:unit_ab), s, t)
             var_u_on = var_units_on[key...]
             var_u_av = var_units_available[key...]
             expected_con = @build_constraint(var_u_on <= var_u_av)
-            con_u_on = constraint[key]
+            con_u_on = constraint[key...]
             observed_con = constraint_object(con_u_on)
             @test _is_constraint_equal(observed_con, expected_con)
         end
@@ -104,13 +106,13 @@
         constraint = m.ext[:constraints][:units_available]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (unit(:unit_ab), s, t)
             var_u_av = var_units_available[key...]
             var_u_inv_av = var_units_invested_available[key...]
             expected_con = @build_constraint(var_u_av - var_u_inv_av == number_of_units)
-            con = constraint[key]
+            con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
@@ -128,19 +130,19 @@
         @test length(constraint) == 3
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s1, t1) in zip(scenarios, time_slices)
             path = unique([s0, s1])
             var_key1 = (unit(:unit_ab), s1, t1)
             var_u_on1 = var_units_on[var_key1...]
             var_u_su1 = var_units_started_up[var_key1...]
             var_u_sd1 = var_units_shut_down[var_key1...]
-            @testset for t0 in t_before_t(t_after=t1)
+            @testset for t0 in t_before_t(m; t_after=t1)
                 var_key0 = (unit(:unit_ab), s0, t0)
                 var_u_on0 = get(var_units_on, var_key0, 0)
                 con_key = (unit(:unit_ab), path, t0, t1)
                 expected_con = @build_constraint(var_u_on1 - var_u_on0 == var_u_su1 - var_u_sd1)
-                observed_con = constraint_object(constraint[con_key])
+                observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
@@ -157,7 +159,7 @@
         constraint = m.ext[:constraints][:unit_flow_capacity]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             var_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
             var_u_on_key = (unit(:unit_ab), s, t)
@@ -165,7 +167,7 @@
             var_u_on = var_units_on[var_u_on_key...]
             con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
             expected_con = @build_constraint(var_u_flow <= unit_capacity * var_u_on)
-            observed_con = constraint_object(constraint[con_key])
+            observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
@@ -185,7 +187,7 @@
         constraint = m.ext[:constraints][:minimum_operating_point]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             var_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
             var_u_on_key = (unit(:unit_ab), s, t)
@@ -193,7 +195,7 @@
             var_u_on = var_units_on[var_u_on_key...]
             con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
             expected_con = @build_constraint(var_u_flow >= minimum_operating_point * unit_capacity * var_u_on)
-            observed_con = constraint_object(constraint[con_key])
+            observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end    
@@ -214,13 +216,13 @@
         constraint = m.ext[:constraints][:operating_point_bounds]
         @test length(constraint) == 6
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             @testset for (i, delta) in enumerate(deltas)
                 key = (unit(:unit_ab), node(:node_a), direction(:from_node), i, s, t)
                 var_u_flow_op = var_unit_flow_op[key...]
                 expected_con = @build_constraint(var_u_flow_op <= delta * unit_capacity)
-                observed_con = constraint_object(constraint[key])
+                observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
@@ -241,14 +243,14 @@
         constraint = m.ext[:constraints][:operating_point_sum]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             subkey = (unit(:unit_ab), node(:node_a), direction(:from_node))
             key = (subkey..., s, t)
             var_u_flow = var_unit_flow[key...]
             vars_u_flow_op = [var_unit_flow_op[(subkey..., i, s, t)...] for i in 1:length(points)]
             expected_con = @build_constraint(var_u_flow == sum(vars_u_flow_op))
-            observed_con = constraint_object(constraint[key])
+            observed_con = constraint_object(constraint[key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
@@ -295,8 +297,8 @@
             constraint = m.ext[:constraints][Symbol(ratio)]
             @test length(constraint) == 1
             path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
-            t_long = first(time_slice(temporal_block=temporal_block(:two_hourly)))
-            t_short1, t_short2 = time_slice(temporal_block=temporal_block(:hourly))
+            t_long = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+            t_short1, t_short2 = time_slice(m; temporal_block=temporal_block(:hourly))
             directions_by_prefix = Dict("in" => direction(:from_node), "out" => direction(:to_node))
             d_a = directions_by_prefix[a]
             d_b = directions_by_prefix[b]
@@ -318,7 +320,7 @@
                 2 * flow_ratio * var_u_flow_b + units_on_coeff * (var_u_on_a1 + var_u_on_a2)
             )
             expected_con = constraint_object(expected_con_ref)
-            observed_con = constraint_object(constraint[con_key])
+            observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
@@ -341,14 +343,14 @@
                 stochastic_structure=stochastic_structure(:stochastic), 
                 stochastic_scenario=stochastic_scenario(:parent)
             )
-            head_hours = length(time_slice(temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            head_hours = length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
             tail_hours = round(Minute(min_up_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours); repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(temporal_block=temporal_block(:hourly)));
-                reverse(SpineOpt.history_time_slice(temporal_block=temporal_block(:hourly)))
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)));
+                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
             ][1:head_hours + tail_hours]
             @testset for h in 1:length(constraint)
                 s_set, t_set = scenarios[h:h + tail_hours - 1], time_slices[h:h + tail_hours - 1]
@@ -359,7 +361,7 @@
                 vars_u_su = [var_units_started_up[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
                 expected_con = @build_constraint(var_u_on >= sum(vars_u_su))
                 con_key = (unit(:unit_ab), path, t)
-                observed_con = constraint_object(constraint[con_key])
+                observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
@@ -384,14 +386,14 @@
                 stochastic_structure=stochastic_structure(:stochastic), 
                 stochastic_scenario=stochastic_scenario(:parent)
             )
-            head_hours = length(time_slice(temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            head_hours = length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
             tail_hours = round(Minute(min_down_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours); repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(temporal_block=temporal_block(:hourly)));
-                reverse(SpineOpt.history_time_slice(temporal_block=temporal_block(:hourly)))
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)));
+                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
             ][1:head_hours + tail_hours]
             @testset for h in 1:length(constraint)
                 s_set, t_set = scenarios[h:h + tail_hours - 1], time_slices[h:h + tail_hours - 1]
@@ -403,7 +405,7 @@
                 vars_u_sd = [var_units_shut_down[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
                 expected_con = @build_constraint(var_u_av - var_u_on >= sum(vars_u_sd))
                 con_key = (unit(:unit_ab), path, t)
-                observed_con = constraint_object(constraint[con_key])
+                observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
@@ -423,12 +425,12 @@
         constraint = m.ext[:constraints][:units_invested_available]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (unit(:unit_ab), s, t)
             var = var_units_invested_available[key...]
             expected_con = @build_constraint(var <= candidate_units)
-            con = constraint[key]
+            con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
@@ -451,19 +453,19 @@
         @test length(constraint) == 3
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s1, t1) in zip(scenarios, time_slices)
             path = unique([s0, s1])
             var_key1 = (unit(:unit_ab), s1, t1)
             var_u_inv_av1 = var_units_invested_available[var_key1...]
             var_u_inv_1 = var_units_invested[var_key1...]
             var_u_moth_1 = var_units_mothballed[var_key1...]
-            @testset for t0 in t_before_t(t_after=t1)
+            @testset for t0 in t_before_t(m; t_after=t1)
                 var_key0 = (unit(:unit_ab), s0, t0)
                 var_u_inv_av0 = get(var_units_invested_available, var_key0, 0)
                 con_key = (unit(:unit_ab), path, t0, t1)
                 expected_con = @build_constraint(var_u_inv_av1 - var_u_inv_1 + var_u_moth_1 == var_u_inv_av0)
-                observed_con = constraint_object(constraint[con_key])
+                observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
@@ -494,14 +496,14 @@
                 stochastic_structure=stochastic_structure(:stochastic), 
                 stochastic_scenario=stochastic_scenario(:parent)
             )
-            head_hours = length(time_slice(temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            head_hours = length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
             tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours); repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(temporal_block=temporal_block(:hourly)));
-                reverse(SpineOpt.history_time_slice(temporal_block=temporal_block(:hourly)))
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)));
+                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
             ][1:head_hours + tail_hours]
             @testset for h in 1:length(constraint)
                 s_set, t_set = scenarios[h:h + tail_hours - 1], time_slices[h:h + tail_hours - 1]
@@ -512,7 +514,7 @@
                 var_u_inv_av = var_units_invested_available[var_u_inv_av_key...]
                 vars_u_inv = [var_units_invested[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
                 expected_con = @build_constraint(var_u_inv_av >= sum(vars_u_inv))
-                observed_con = constraint_object(constraint[key])
+                observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
@@ -533,7 +535,7 @@
         constraint = m.ext[:constraints][:max_nonspin_start_up_ramp]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             var_ns_ru_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
             var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
@@ -541,7 +543,7 @@
             var_ns_su = var_nonspin_units_starting_up[var_ns_su_key...]
             con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
             expected_con = @build_constraint(var_ns_ru_u_flow <= unit_capacity * max_res_startup_ramp * var_ns_su)
-            observed_con = constraint_object(constraint[con_key])
+            observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
@@ -563,7 +565,7 @@
         constraint = m.ext[:constraints][:min_nonspin_start_up_ramp]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             var_ns_ru_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
             var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
@@ -571,7 +573,7 @@
             var_ns_su = var_nonspin_units_starting_up[var_ns_su_key...]
             con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
             expected_con = @build_constraint(var_ns_ru_u_flow >= unit_capacity * min_res_startup_ramp * var_ns_su)
-            observed_con = constraint_object(constraint[con_key])
+            observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
@@ -591,7 +593,7 @@
         constraint = m.ext[:constraints][:max_start_up_ramp]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             var_su_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
             var_u_su_key = (unit(:unit_ab), s, t)
@@ -599,7 +601,7 @@
             var_u_su = var_units_started_up[var_u_su_key...]
             con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
             expected_con = @build_constraint(var_su_u_flow <= unit_capacity * max_startup_ramp * var_u_su)
-            observed_con = constraint_object(constraint[con_key])
+            observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
@@ -621,7 +623,7 @@
         constraint = m.ext[:constraints][:min_start_up_ramp]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             var_su_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
             var_u_su_key = (unit(:unit_ab), s, t)
@@ -629,7 +631,7 @@
             var_u_su = var_units_started_up[var_u_su_key...]
             con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
             expected_con = @build_constraint(var_su_u_flow >= unit_capacity * min_startup_ramp * var_u_su)
-            observed_con = constraint_object(constraint[con_key])
+            observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
@@ -650,7 +652,7 @@
         constraint = m.ext[:constraints][:ramp_up]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             var_ru_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
             var_u_on_key = (unit(:unit_ab), s, t)
@@ -659,7 +661,7 @@
             var_u_su = var_units_started_up[var_u_on_key...]
             expected_con = @build_constraint(var_ru_u_flow <= unit_capacity * ramp_up_limit * (var_u_on - var_u_su))
             con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
-            observed_con = constraint_object(constraint[con_key])
+            observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
@@ -684,19 +686,19 @@
         key_head = (unit(:unit_ab), node(:node_a), direction(:from_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s1, t1) in zip(scenarios, time_slices)
             path = unique([s0, s1])
             var_key1 = (key_head..., s1, t1)
             var_u_flow1 = var_unit_flow[var_key1...]
             var_su_u_flow1 = var_start_up_unit_flow[var_key1...]
             var_ru_u_flow1 = var_ramp_up_unit_flow[var_key1...]
-            @testset for t0 in t_before_t(t_after=t1)
+            @testset for t0 in t_before_t(m; t_after=t1)
                 var_key0 = (key_head..., s0, t0)
                 var_u_flow0 = get(var_unit_flow, var_key0, 0)
                 con_key = (key_head..., path, t0, t1)
                 expected_con = @build_constraint(var_u_flow1 - var_u_flow0 <= var_su_u_flow1 + var_ru_u_flow1)
-                observed_con = constraint_object(constraint[con_key])
+                observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
@@ -722,19 +724,19 @@
         key_head = (unit(:unit_ab), node(:node_a), direction(:from_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(temporal_block=temporal_block(:hourly))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s1, t1) in zip(scenarios, time_slices)
             path = unique([s0, s1])
             var_key1 = (key_head..., s1, t1)
             var_u_flow1 = var_unit_flow[var_key1...]
             var_su_u_flow1 = var_start_up_unit_flow[var_key1...]
             var_ns_ru_u_flow1 = var_nonspin_ramp_up_unit_flow[var_key1...]
-            @testset for t0 in t_before_t(t_after=t1)
+            @testset for t0 in t_before_t(m; t_after=t1)
                 var_key0 = (key_head..., s0, t0)
                 var_u_flow0 = get(var_unit_flow, var_key0, 0)
                 con_key = (key_head..., path, t0, t1)
                 expected_con = @build_constraint(var_u_flow1 - var_u_flow0 <= var_su_u_flow1 + var_ns_ru_u_flow1)
-                observed_con = constraint_object(constraint[con_key])
+                observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
@@ -777,8 +779,8 @@
             key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
             key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-            t1h1, t1h2 = time_slice(temporal_block=temporal_block(:hourly))
-            t2h = time_slice(temporal_block=temporal_block(:two_hourly))[1]
+            t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
+            t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             expected_con_ref = SpineOpt.sense_constraint(
                 m,
                 + unit_flow_coefficient_a 
@@ -791,7 +793,7 @@
             )
             expected_con = constraint_object(expected_con_ref)
             con_key = (unit_constraint(:constraint_x), [s_parent, s_child], t2h)
-            observed_con = constraint_object(constraint[con_key])
+            observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
@@ -837,8 +839,8 @@
             key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
             key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-            t1h1, t1h2 = time_slice(temporal_block=temporal_block(:hourly))
-            t2h = time_slice(temporal_block=temporal_block(:two_hourly))[1]
+            t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
+            t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             expected_con_ref = SpineOpt.sense_constraint(
                 m,
                 + unit_flow_coefficient_a 
@@ -854,7 +856,7 @@
             )
             expected_con = constraint_object(expected_con_ref)
             con_key = (unit_constraint(:constraint_x), [s_parent, s_child], t2h)
-            observed_con = constraint_object(constraint[con_key])
+            observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end

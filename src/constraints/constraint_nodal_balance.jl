@@ -29,7 +29,7 @@ Balance equation for nodes.
 function add_constraint_nodal_balance!(m::Model)
     @fetch node_injection, connection_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
     m.ext[:constraints][:nodal_balance] = Dict(
-        (n, s, t) => sense_constraint(
+        (node=n, stochastic_scenario=s, t=t) => sense_constraint(
             m,
             # Net injection
             + node_injection[n, s, t]
@@ -37,7 +37,7 @@ function add_constraint_nodal_balance!(m::Model)
             + expr_sum(
                 connection_flow[conn, n, d, s, t]
                 for (conn, n, d, s, t) in connection_flow_indices(
-                    node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
+                    m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
                 )
                 if !issubset(_connection_nodes(conn), internal_nodes);
                 init=0
@@ -46,7 +46,7 @@ function add_constraint_nodal_balance!(m::Model)
             - expr_sum(
                 connection_flow[conn, n, d, s, t]
                 for (conn, n, d, s, t) in connection_flow_indices(
-                    node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
+                    m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
                 )
                 if !issubset(_connection_nodes(conn), internal_nodes);
                 init=0
@@ -61,14 +61,14 @@ function add_constraint_nodal_balance!(m::Model)
         )
         for (n, internal_nodes, s, t) in (
             (n, _internal_nodes(n), s, t)
-            for (n, s, t) in node_stochastic_time_indices()
+            for (n, s, t) in node_stochastic_time_indices(m)
             if nodal_balance_sense(node=n) !== :none
             # && all(balance_type(node=ng) !== :balance_type_group for ng in groups(n))
         )
     )
 end
 
-_internal_nodes(n::Object) = balance_type(node=n) === :balance_type_group ? members(n) : []
+_internal_nodes(n::Object) = setdiff(members(n), n)
 
 """
     _connection_nodes(conn)
@@ -80,3 +80,4 @@ _connection_nodes(conn::Object) = (
     for connection__node in (connection__from_node, connection__to_node)
     for n in connection__node(connection=conn, direction=anything)
 )
+

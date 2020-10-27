@@ -23,15 +23,16 @@
 Create an expression for fixed operation costs of units.
 """
 function fixed_om_costs(m, t1)
+    t0 = startref(current_window(m))
     @expression(
         m,
         expr_sum(
-            + unit_capacity[(unit=u, node=ng, direction=d, t=t)]
-            * number_of_units[(unit=u, t=t)]
-            * fom_cost[(unit=u, t=t)]
+            + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * fom_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * duration(t)
             for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for t in unique(ind.t for ind in units_on_indices(unit=u))
+            for (u, s, t) in units_on_indices(m; unit=u)
             if end_(t) <= t1;
             init=0
         )

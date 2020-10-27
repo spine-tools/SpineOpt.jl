@@ -24,14 +24,15 @@ Create an expression for variable unit operating costs.
 """
 function operating_costs(m::Model, t1)
     @fetch unit_flow = m.ext[:variables]
+    t0 = startref(current_window(m))
     @expression(
         m,
         expr_sum(
             unit_flow[u, n, d, s, t] * duration(t)
-            * operating_cost[(unit=u, node=ng, direction=d, t=t)]  # op_cost(ng) = sum(op_cost(n))
-            * node_stochastic_scenario_weight(node=ng, stochastic_scenario=s)
+            * operating_cost[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]  # op_cost(ng) = sum(op_cost(n))
+            * node_stochastic_scenario_weight[(node=ng, stochastic_scenario=s)]
             for (u, ng, d) in indices(operating_cost)
-            for (u, n, d, s, t) in unit_flow_indices(unit=u, node=ng, direction=d)
+            for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d)
             if end_(t) <= t1;
             init=0
         )

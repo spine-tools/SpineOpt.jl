@@ -36,15 +36,16 @@ _check(cond, err_msg) = cond || error(err_msg)
 
 Check if the data structure provided from the db results in a valid model.
 """
-function check_data_structure(log_level::Int64)
+function check_data_structure(; log_level=3)
     check_model_object()
     check_temporal_block_object()
     check_node_object()
+    check_model__temporal_block()
     check_node__temporal_block()
     check_node__stochastic_structure()
     check_unit__stochastic_structure()
     check_minimum_operating_point_unit_capacity()
-    check_islands(log_level)
+    check_islands(; log_level=log_level)
 end
 
 """
@@ -80,6 +81,18 @@ function check_node_object()
     _check(
         !isempty(node()),
         "`node` object not found - you need at least one `node` to run SpineOpt"
+    )
+end
+
+"""
+    check_model__temporal_block()
+
+Check if at least one `model__temporal_block` relationship is defined.
+"""
+function check_model__temporal_block()
+    _check(
+        !isempty(model__temporal_block()),
+        "`model__temporal_block` relationship not found - you need at least one such relationship to run SpineOpt"
     )
 end
 
@@ -146,17 +159,11 @@ end
 
 Check network for islands and warn the user if problems.
 """
-function check_islands(log_level)
-
-    level0 = log_level >= 0
-    level1 = log_level >= 1
-    level2 = log_level >= 2
-    level3 = log_level >= 3
-
+function check_islands(; log_level=3)
     for c in commodity()
         if commodity_physics(commodity=c) in (:commodity_physics_ptdf, :commodity_physics_lodf)
-            @logtime level3 "Checking network of commodity $(c) for islands" n_islands, island_node = islands(c)
-            @log level3 "The network consists of $(n_islands) islands"
+            @timelog log_level 3 "Checking network of commodity $(c) for islands" n_islands, island_node = islands(c)
+            @log log_level 3 "The network consists of $(n_islands) islands"
             if n_islands > 1
                 @warn "the network of commodity $(c) consists of multiple islands, this may end badly..."
                 # add diagnostic option to print island_node which will tell the user which nodes are in which islands

@@ -24,7 +24,7 @@ Preprocess input data structure for SpineOpt.
 
 Runs a number of other functions processing different aspecs of the input data in sequence.
 """
-function preprocess_data_structure()
+function preprocess_data_structure(; log_level=3)
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
     expand_model_default_relationships()
@@ -170,26 +170,14 @@ Generate `has_ptdf` parameter associated to the `connection` `ObjectClass`.
 """
 function generate_connection_has_ptdf()
     for conn in connection()
-        is_bidirectional = (
-            length(connection__from_node(connection=conn)) == 2
-            && isempty(
-                symdiff(
-                    connection__from_node(connection=conn, direction=anything),
-                    connection__to_node(connection=conn, direction=anything)
-                )
-            )
-        )
-        is_bidirectional_loseless = (
-            is_bidirectional
-            && fix_ratio_out_in_connection_flow(;
-                connection=conn, 
-                zip((:node1, :node2), connection__from_node(connection=conn, direction=anything))..., 
-                _strict=false
-            ) == 1
-        )
+        from_nodes = connection__from_node(connection=conn, direction=anything)
+        to_nodes = connection__to_node(connection=conn, direction=anything)
+        is_bidirectional = length(from_nodes) == 2 && isempty(symdiff(from_nodes, to_nodes))
+        is_loseless = fix_ratio_out_in_connection_flow(;
+            connection=conn, zip((:node1, :node2), from_nodes)..., _strict=false
+        ) == 1
         connection.parameter_values[conn][:has_ptdf] = parameter_value(
-            is_bidirectional_loseless 
-            && all(has_ptdf(node=n) for n in connection__from_node(connection=conn, direction=anything))
+            is_bidirectional && is_loseless && all(has_ptdf(node=n) for n in from_nodes)
         )
     end
     push!(has_ptdf.classes, connection)
@@ -234,9 +222,9 @@ function _ptdf_values()
             name=string(n.name),
             bustype=(node_opf_type(node=n) == :node_opf_type_reference) ? BusTypes.REF : BusTypes.PV,
             angle=0.0,
-            voltage=0.0,
-            voltagelimits=(min=0.0, max=0.0),
-            basevoltage=nothing,
+            magnitude=0.0,
+            voltage_limits=(min=0.0, max=0.0),
+            base_voltage=nothing,
             area=nothing,
             load_zone=LoadZone(nothing),
             ext=Dict{String,Any}()
@@ -251,14 +239,14 @@ function _ptdf_values()
         conn => Line(;
             name=string(conn.name),
             available=true,
-            activepower_flow=0.0,
-            reactivepower_flow=0.0,
+            active_power_flow=0.0,
+            reactive_power_flow=0.0,
             arc=Arc((ps_busses_by_node[n] for n in connection__from_node(connection=conn, direction=anything))...),
             r=connection_resistance(connection=conn),
             x=max(connection_reactance(connection=conn), 0.00001),
             b=(from=0.0, to=0.0),
             rate=0.0,
-            anglelimits=(min=0.0, max=0.0)
+            angle_limits=(min=0.0, max=0.0)
         )  # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
         for conn in connection(has_ptdf=true)
     )

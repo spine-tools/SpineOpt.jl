@@ -23,12 +23,12 @@
 A list of `NamedTuple`s corresponding to indices of the `units_on` variable where the keyword arguments act as filters
 for each dimension.
 """
-function units_on_indices(;unit=anything, stochastic_scenario=anything, t=anything)
+function units_on_indices(m::Model; unit=anything, stochastic_scenario=anything, t=anything)
     [
         (unit=u, stochastic_scenario=s, t=t)
         for (u, tb) in units_on__temporal_block(unit=unit, _compact=false)
         for (u, s, t) in unit_stochastic_time_indices(
-            unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+            m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     ]
 end
@@ -53,6 +53,7 @@ units_on_int(x) = online_variable_type(unit=x.unit) == :unit_online_variable_typ
 Add `units_on` variables to model `m`.
 """
 function add_variable_units_on!(m::Model)
+    t0 = startref(current_window(m))
     add_variable!(
     	m,
     	:units_on, 
@@ -60,6 +61,8 @@ function add_variable_units_on!(m::Model)
     	lb=x -> 0,
     	bin=units_on_bin,
     	int=units_on_int,
-    	fix_value=x -> fix_units_on(unit=x.unit, t=x.t, _strict=false)
+    	fix_value=x -> fix_units_on(
+            unit=x.unit, stochastic_scenario=x.stochastic_scenario, analysis_time=t0, t=x.t, _strict=false
+        )
     )
 end

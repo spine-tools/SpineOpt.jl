@@ -32,6 +32,7 @@ function objective_terms()
         :renewable_curtailment_costs,
         :res_proc_costs,
         :ramp_costs,
+        :res_start_up_costs
     ]
 end
 

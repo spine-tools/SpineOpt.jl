@@ -88,14 +88,14 @@ function _generate_active_stochastic_paths()
 end
 
 """
-    _stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
+    _stochastic_DAG(stochastic_structure::Object, window_start::DateTime, window_very_end::DateTime)
 
 A `Dict` mapping `stochastic_scenario` objects to a `NamedTuple` of (start, end_, weight)
-for the given `stochastic_structure` and `window_start`.
+for the given `stochastic_structure`.
 
 Aka DAG, that is, a *realized* stochastic structure with all the parameter values in place.
 """
-function _stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
+function _stochastic_DAG(stochastic_structure::Object, window_start::DateTime, window_very_end::DateTime)
     scenarios = _find_root_scenarios()
     scen_start = Dict(scen => window_start for scen in scenarios)
     scen_end = Dict()
@@ -103,7 +103,6 @@ function _stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
         scen => weight_relative_to_parents(stochastic_structure=stochastic_structure, stochastic_scenario=scen)
         for scen in scenarios
     )
-    window_very_end = end_(last(time_slice()))
     for scen in scenarios
         scenario_duration = stochastic_scenario_end(
             stochastic_structure=stochastic_structure, stochastic_scenario=scen, _strict=false
@@ -142,38 +141,41 @@ function _stochastic_DAG(stochastic_structure::Object, window_start::DateTime)
 end
 
 """
-    _all_stochastic_DAGs(window_start::DateTime)
+    _all_stochastic_DAGs(m::Model...)
 
-A `Dict` mapping `stochastic_structure` objects to DAGs.
+A `Dict` mapping `stochastic_structure` objects to DAGs for the given models.
 """
-function _all_stochastic_DAGs(window_start::DateTime)
-    Dict(structure => _stochastic_DAG(structure, window_start) for structure in stochastic_structure())
+function _all_stochastic_DAGs(m::Model...)
+    window_start = minimum(start(current_window(x)) for x in m)
+    window_very_end = maximum(end_(last(time_slice(x))) for x in m)
+    Dict(structure => _stochastic_DAG(structure, window_start, window_very_end) for structure in stochastic_structure())
 end
 
 """
-    _stochastic_time_mapping(stochastic_DAG::Dict)
+    _stochastic_time_mapping(stochastic_DAG::Dict, m::Model...)
 
 A `Dict` mapping `time_slice` objects to their set of active `stochastic_scenario` objects.
 """
-function _stochastic_time_mapping(stochastic_DAG::Dict)
+function _stochastic_time_mapping(stochastic_DAG::Dict, m::Model...)
     # Window `time_slices`
-    window_scenario_mapping = Dict(
+    scenario_mapping = Dict(
         t => [scen for (scen, param_vals) in stochastic_DAG if param_vals.start <= start(t) < param_vals.end_]
-        for t in time_slice()
+        for x in m
+        for t in time_slice(x)
     )
     # History `time_slices`
     roots = _find_root_scenarios()
-    history_scenario_mapping = Dict(t => roots for t in history_time_slice())
-    merge!(window_scenario_mapping, history_scenario_mapping)
+    history_scenario_mapping = Dict(t => roots for x in m for t in history_time_slice(x))
+    merge!(scenario_mapping, history_scenario_mapping)
 end
 
 """
-    _generate_stochastic_time_map(all_stochastic_DAGs)
+    _generate_stochastic_time_map(all_stochastic_DAGs, m...)
 
 Generate the `stochastic_time_map` for all defined `stochastic_structures`.
 """
-function _generate_stochastic_time_map(all_stochastic_DAGs)
-    stochastic_time_map = Dict(structure => _stochastic_time_mapping(DAG) for (structure, DAG) in all_stochastic_DAGs)
+function _generate_stochastic_time_map(all_stochastic_DAGs, m...)
+    stochastic_time_map = Dict(structure => _stochastic_time_mapping(DAG, m...) for (structure, DAG) in all_stochastic_DAGs)
     @eval begin
         stochastic_time_map = $stochastic_time_map
     end
@@ -184,14 +186,14 @@ end
 
 Stochastic time indexes for `nodes` with keyword arguments that allow filtering.
 """
-function node_stochastic_time_indices(;
-        node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
+function node_stochastic_time_indices(
+        m::Model; node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
     )
     unique(
         (node=n, stochastic_scenario=s, t=t1)
         for (n, structure) in node__stochastic_structure(node=node, _compact=false)
         for (n, tb) in node__temporal_block(node=n, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(temporal_block=tb, t=t)
+        for t1 in time_slice(m; temporal_block=tb, t=t)
         for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
     )
 end
@@ -201,14 +203,14 @@ end
 
 Stochastic time indexes for `units` with keyword arguments that allow filtering.
 """
-function unit_stochastic_time_indices(;
-        unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
+function unit_stochastic_time_indices(
+        m::Model; unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
     )
     unique(
         (unit=u, stochastic_scenario=s, t=t1)
         for (u, structure) in units_on__stochastic_structure(unit=unit, _compact=false)
         for (u, tb) in units_on__temporal_block(unit=u, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(temporal_block=tb, t=t)
+        for t1 in time_slice(m; temporal_block=tb, t=t)
         for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
     )
 end
@@ -218,14 +220,14 @@ end
 
 Stochastic time indexes for `units_invested` with keyword arguments that allow filtering.
 """
-function unit_investment_stochastic_time_indices(;
-        unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
+function unit_investment_stochastic_time_indices(
+        m::Model; unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
     )
     unique(
         (unit=u, stochastic_scenario=s, t=t1)
         for (u, structure) in unit__investment_stochastic_structure(unit=unit, _compact=false)
         for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(temporal_block=tb, t=t)
+        for t1 in time_slice(m; temporal_block=tb, t=t)
         for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
     )
 end
@@ -262,7 +264,9 @@ Generate the `unit_stochastic_scenario_weight` parameter for easier access to th
 function _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
     unit_stochastic_scenario_weight_values = Dict(
         (unit, scen) => Dict(:unit_stochastic_scenario_weight => parameter_value(param_vals.weight))
-        for (unit, structure) in units_on__stochastic_structure()
+        for (unit, structure) in Iterators.flatten(
+            (units_on__stochastic_structure(), unit__investment_stochastic_structure())
+        )
         for (scen, param_vals) in all_stochastic_DAGs[structure]
     )
     unit__stochastic_scenario = RelationshipClass(
@@ -279,15 +283,13 @@ function _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
 end
 
 """
-    generate_stochastic_structure()
+    generate_stochastic_structure(m::Model)
 
-Preprocesses SpineOpt input data to form the required stochastic structure.
-
-Runs a number of functions processing different aspects of the stochastics in sequence.
+Generate stochastic structure for the given model.
 """
-function generate_stochastic_structure()
-    all_stochastic_DAGs = _all_stochastic_DAGs(start(current_window))
-    _generate_stochastic_time_map(all_stochastic_DAGs)
+function generate_stochastic_structure(m::Model...)
+    all_stochastic_DAGs = _all_stochastic_DAGs(m...)
+    _generate_stochastic_time_map(all_stochastic_DAGs, m...)
     _generate_node_stochastic_scenario_weight(all_stochastic_DAGs)
     _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs)
     _generate_active_stochastic_paths()
