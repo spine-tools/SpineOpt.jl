@@ -48,6 +48,12 @@ A constraint over the flows of a specific unit.
 
 ## relationship_classes
 
+### `model__temporal_block`
+
+**Relates object classes:** `model,temporal_block`
+
+TODO
+
 ### `connection__from_node`
 
 **Relates object classes:** `connection,node`
@@ -400,6 +406,12 @@ A boolean flag for whether a `node` has a `node_state` variable.
 
 A boolean flag for a `reserve_node`?
 
+### `minimum_reserve_activation_time`
+
+**Object class:** [`node`](#node)
+
+Duration a certain reserve product needs to be online/available
+
 ### `nodal_balance_sense`
 
 **Object class:** [`node`](#node)
@@ -458,17 +470,23 @@ Represents the `commodity` content of a `node_state` variable in respect to the 
 
 **Object class:** [`node`](#node)
 
+**Default value:** `0.0`
+
 Tax costs for incoming `unit_flows` on this `node`. E.g. EUR/MWh.
 
 ### `tax_net_unit_flow`
 
 **Object class:** [`node`](#node)
 
+**Default value:** `0.0`
+
 Tax costs for net incoming and outgoing `unit_flows` on this `node`. Incoming flows accrue positive net taxes, and outgoing flows accrue negative net taxes.
 
 ### `tax_out_unit_flow`
 
 **Object class:** [`node`](#node)
+
+**Default value:** `0.0`
 
 Tax costs for outgoing `unit_flows` from this `node`. E.g. EUR/MWh.
 
@@ -860,6 +878,12 @@ Optional coefficient for `unit_capacity` unit conversions in the case the `unit_
 
 Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh.
 
+### `res_start_up_cost`
+
+**Relationship class**: [`unit__from_node`](#unit__from_node)
+
+TODO
+
 ### `graph_view_position`
 
 **Relationship class**: [`unit__from_node__unit_constraint`](#unit__from_node__unit_constraint)
@@ -1154,6 +1178,12 @@ Optional coefficient for `unit_capacity` unit conversions in the case the `unit_
 
 Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh.
 
+### `res_start_up_cost`
+
+**Relationship class**: [`unit__to_node`](#unit__to_node)
+
+TODO
+
 ### `graph_view_position`
 
 **Relationship class**: [`unit__to_node__unit_constraint`](#unit__to_node__unit_constraint)
@@ -1184,41 +1214,71 @@ Set a maximum cumulative upped bound for a `unit_flow`?
 
 ### `balance_type_list`
 
-**Values**: `balance_type_node`, `balance_type_group`, `balance_type_none`
+**Value**: `balance_type_node`
+
+**Value**: `balance_type_group`
+
+**Value**: `balance_type_none`
 
 ### `boolean_value_list`
 
-**Values**: `true`, `false`
+**Value**: `true`
+
+**Value**: `false`
 
 ### `commodity_physics_list`
 
-**Values**: `commodity_physics_ptdf`, `commodity_physics_lodf`, `commodity_physics_none`
+**Value**: `commodity_physics_ptdf`
+
+**Value**: `commodity_physics_lodf`
+
+**Value**: `commodity_physics_none`
 
 ### `constraint_sense_list`
 
-**Values**: `==`, `>=`, `<=`
+**Value**: `==`
+
+**Value**: `>=`
+
+**Value**: `<=`
 
 ### `duration_unit_list`
 
-**Values**: `minute`, `hour`
+**Value**: `minute`
+
+**Value**: `hour`
 
 ### `node_opf_type_list`
 
-**Values**: `node_opf_type_reference`, `node_opf_type_normal`
+**Value**: `node_opf_type_normal`
+
+**Value**: `node_opf_type_reference`
 
 ### `unit_investment_variable_type_list`
 
-**Values**: `unit_investment_variable_type_integer`, `unit_investment_variable_type_continuous`
+**Value**: `unit_investment_variable_type_integer`
+
+**Value**: `unit_investment_variable_type_continuous`
 
 ### `unit_online_variable_type_list`
 
-**Values**: `unit_online_variable_type_binary`, `unit_online_variable_type_integer`, `unit_online_variable_type_linear`
+**Value**: `unit_online_variable_type_binary`
+
+**Value**: `unit_online_variable_type_integer`
+
+**Value**: `unit_online_variable_type_linear`
 
 ### `connection_type_list`
 
-**Values**: `connection_type_normal`, `connection_type_lossless_bidirectional`
+**Value**: `connection_type_normal`
+
+**Value**: `connection_type_lossless_bidirectional`
 
 ### `write_mps_file_list`
 
-**Values**: `write_mps_on_no_solve`, `write_mps_always`, `write_mps_never`
+**Value**: `write_mps_on_no_solve`
+
+**Value**: `write_mps_always`
+
+**Value**: `write_mps_never`
 

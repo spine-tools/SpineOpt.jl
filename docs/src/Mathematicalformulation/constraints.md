@@ -236,69 +236,138 @@ units_{started\_up}(u,s,t') \\
 This constraint can be extended to the use reserves. See [Reserve constraints](#reserve_constraints)
 
 
-#### Ramping constraints
+#### Ramping and reserve constraints
 
-These constraints induce a bound on the rate of change of a
-flow of certain commodity. There are many different possible formulations of ramping constraints. In **SpineOpt**, the change in flow rate is first decomposed into its contributing elements.
+To include ramping and reserve constraints, it is a pre requisit that minimum operation points and maximum capacity constraints are enforced as described above.
+
+For dispatchable units, additional ramping constraints can be introduced. First, the upward ramp of a unit is split into online, start-up and non-spinning ramping contributions.
 
 ```math
 \begin{aligned}
-& + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{flow}(u,n,d,s,t_{after}) \\
-& - \sum_{\substack{(u,n,d,s,t_{before}) \in ind(unit_{flow}): \\ (u,n,d,t_{before}) \, \in \, (u,n,d,t_{before})} !is\_reserve(n)} unit_{flow}(u,n,d,s,t_{before}) \\
-& ==  \\
+& + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})\\ !is\_reserve(n)}} unit_{flow}(u,n,d,s,t_{after}) \\
+& + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})\\ is\_reserve(n) \&\& upward\_reserve(n)}} unit_{flow}(u,n,d,s,t_{after}) \\
+& - \sum_{\substack{(u,n,d,s,t_{before}) \in ind(unit_{flow}): \\ (u,n,d,t_{before}) \, \in \, (u,n,d,t_{before})\\ !is\_reserve(n)}} unit_{flow}(u,n,d,s,t_{before}) \\
+& <=  \\
 & + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{ramp\_up\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{ramp\_up\_flow}(u,n,d,s,t_{after})  \\
 & + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{start\_up\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{start\_up\_flow}(u,n,d,s,t_{after}) \\
 & + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{non-spinn\_up\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{non-spinn\_up\_flow}(u,n,d,s,t_{after}) \\
-& - \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{ramp\_down\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{ramp\_down\_flow}(u,n,d,s,t_{after}) \\
-& - \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{shut\_down\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{shut\_down\_flow}(u,n,d,s,t_{after}) \\
-& - \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{non-spinn\_down\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{non-spinn\_down\_flow}(u,n,d,s,t_{after}) \\
 & \forall (u,n,d,s,t_{after}) \in ind(\\
-& unit_{ramp\_\{up,down\}\_flow},\\
+& unit_{ramp\_\{up\}\_flow},\\
 & unit_{start\_up\_flow},\\
+& unit_{non-spinn\_\{up\}\_flow}) \\
+& \forall t_{before} \in t\_before\_t(t_{after}) : t_{before} \in ind(unit_{flow}) \\
+\end{aligned}
+```
+Similarly, the downward ramp of a unit is split into online, shut-down and non-spinning downward ramping contributions.
+
+```math
+\begin{aligned}
+& + \sum_{\substack{(u,n,d,s,t_{before}) \in ind(unit_{flow}): \\ (u,n,d,t_{before}) \, \in \, (u,n,d,t_{before})\\ !is\_reserve(n)}} unit_{flow}(u,n,d,s,t_{before}) \\
+& - \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after}) \\ !is\_reserve(n)}} unit_{flow}(u,n,d,s,t_{after}) \\
+& + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after}) \\ is\_reserve(n) \&\& downward\_reserve(n)}} unit_{flow}(u,n,d,s,t_{after}) \\
+& <=  \\
+& \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{ramp\_down\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{ramp\_down\_flow}(u,n,d,s,t_{after}) \\
+& \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{shut\_down\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{shut\_down\_flow}(u,n,d,s,t_{after}) \\
+& \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{non-spinn\_down\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{non-spinn\_down\_flow}(u,n,d,s,t_{after}) \\
+& \forall (u,n,d,s,t_{after}) \in ind(\\
+& unit_{ramp\_\{down\}\_flow},\\
 & unit_{shut\_down\_flow},\\
-& unit_{non-spinn\_\{up,down\}\_flow}) \\
+& unit_{non-spinn\_\{down\}\_flow}) \\
 & \forall t_{before} \in t\_before\_t(t_{after}) : t_{before} \in ind(unit_{flow}) \\
 \end{aligned}
 ```
 
-##### Constraint on upwards ramp_up
+##### Constraint on spinning upwards ramp_up
+The online ramp up ability of a unit can be constraint by the [`ramp_up_limit`](@ref), expressed as a share of the [`unit_capacity`](@ref). With this constraint, ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced.
+
 ```math
 \begin{aligned}
 & + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{ramp\_up\_flow}): \\ (u,n,d) \, \in \, (u,ng,d)}} unit_{ramp\_up\_flow}(u,n,d,s,t)  \\
 & <= \\
-& + \sum_{\substack{(u,s,t') \in ind(units_{on}): \\ (u,s,t') \, \in \, (u,s,t)}}
+& + \sum_{\substack{(u,s,t') \in ind(units_{on}): \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}}
  (units_{on}(u,s,t')
  - units_{started\_up}(u,s,t')) \\
 & \cdot p_{ramp\_up\_limit}(u,ng,d,s,t) \\
 & \cdot p_{unit\_capacity}(u,ng,d,t) \\
 & \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
-& \forall (u,n,d) \in ind(p_{ramp\_up\_limit})\\
-& \forall t \in timeslices, \forall s \in stochasticpath\\
+& \forall (u,ng,d,s,t) \in ind(constraint\_ramp\_up)\\
 \end{aligned}
 ```
 #### Constraint on upward start up ramp_up
+
+This constraint enforces a limit on the unit ramp during startup process. Usually, we consider only non-balancing commodities. However, it is possible to include them through by adding them to the ramp defininf node `ng`.
 ```math
 \begin{aligned}
 & + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{start\_up\_flow}): \\ (u,n,d) \, \in \, (u,ng,d)}} unit_{start\_up\_flow}(u,n,d,s,t)  \\
 & <= \\
-& + \sum_{\substack{(u,s,t') \in ind(units_{on}): \\ (u,s,t') \, \in \, (u,s,t)}}
-units_{started\_up}(u,s,t')) \\
+& + \sum_{\substack{(u,s,t') \in ind(units_{on}): \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}}
 & \cdot p_{max\_startup\_ramp}(u,ng,d,s,t) \\
 & \cdot p_{unit\_capacity}(u,ng,d,t) \\
 & \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
-& \forall (u,n,d) \in ind(p_{max\_startup\_ramp})\\
-& \forall t \in timeslices, \forall s \in stochasticpath\\
+& \forall (u,ng,d,s,t) \in ind(constraint\_start\_up\_ramp)\\
+\end{aligned}
+```
+#### Constraint on upward non-spinning start up ramps
+
+For non-spinning reserves, offline units can be scheduled for reserve provision if they have recovered their minimum down time. If nonspinning reserves are used the minimum down-time constraint becomes:
+
+```math
+\begin{aligned}
+& units_{available}(u,s,t) \\
+& - units_{on}(u,s,t) \\
+& >= \sum_{\substack{(u,s,t') \in ind(units_{on}): \\ t' >=t-p_{min\_down\_time} && t' <= t}}
+units_{shut\_down}(u,s,t') \\
+& \sum_{\substack{(u,n,s,t) \in ind(nonspin\_units_{starting\_up}): \\ t \in t\_overlaps\_t(t) \\ (u,s) \in (u,s)}}
+  nonspin\_units_{starting\_up}(u,n,s,t)
+& \forall (u,s,t) \in ind(units_{on})\\
+\end{aligned}
+```
+TODO: add correct forall, how to simplify?
+
+The ramp a non-spinning unit can provide is constraint through the [max_res_startup_ramp](@ref).
+
+```math
+\begin{aligned}
+& + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{non-spinn\_\{up\}\_flow}): \\ (u,n,d,s,t)  \in (u,n,d,s,t)}} unit_{non-spinn\_\{up\}\_flow}(u,n,d,s,t)  \\
+& <= \\
+& + \sum_{\substack{(u,n,s,t) \in ind(nonspin\_units_{starting\_up}): \\ (u,n,s,t)  \in (u,n,s,t)}} nonspin\_units_{starting\_up}(u,n,s,t)  \\
+& \cdot p_{max\_res\_startup\_ramp}(u,ng,d,s,t) \\
+& \cdot p_{unit\_capacity}(u,ng,d,t) \\
+& \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
+& \forall (u,ng,d,s,t) \in ind(constraint\_max\_nonspin\_ramp)\\
+\end{aligned}
+```
+##### Constraint on spinning downward ramps
+
+```math
+\begin{aligned}
+& + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{ramp\_down\_flow}): \\ (u,n,d) \, \in \, (u,ng,d)}} unit_{ramp\_down\_flow}(u,n,d,s,t)  \\
+& <= \\
+& + \sum_{\substack{(u,s,t') \in ind(units_{on}): \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}}
+ (units_{on}(u,s,t')
+ - units_{started\_up}(u,s,t')) \\
+& \cdot p_{ramp\_down\_limit}(u,ng,d,s,t) \\
+& \cdot p_{unit\_capacity}(u,ng,d,t) \\
+& \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
+& \forall (u,ng,d,s,t) \in ind(constraint\_ramp\_down)\\
 \end{aligned}
 ```
 
-TODO: add ramp down, shutdown ramp etc.
-#### Reserve constraints
+#### Constraint on downward shut-down ramps
+#### Constraint on downward non-spinning shut-down ramps
 
-%minimum up time
+[comment]: <> (TODO:
+%substract non-spinning downward; make this an energy not power balance (add delat t)
+%minimum up time (extended)
 %minimum down time (extended)
-
 %constraints max/min non spin ramp up
 % constraint res minimum node state
+%add specifics on how to define e.g. nodal balance, connection capacities for %balancing capacities
+%todo add new downward equations
+%add additional constraints on unit capacity)
+
+#### Reserve constraints
+
 ### Bounds on commodity flows
 
 ## Network constraints

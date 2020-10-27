@@ -46,8 +46,14 @@ function writing_systemcomponentsfile(pj::Dict; file_name="systemcomponents.md")
     for k in ["parameter_value_lists" ,]
         push!(system_string,"## $(k)\n\n")
         for j in 1:length(pj[k])
-            push!(system_string,"### `$(pj[k][j][1])`\n\n")
-            pj[k][j][2] != nothing && push!(system_string,"**Values**: `$(join([pj[k][j][2]...],repeat(["`, `",],length(pj[k][j][2])-1)...))`\n\n")
+        #unique([x[1] for x in pj["parameter_value_lists" ,]])
+            if j > 1 && pj[k][j][1] == pj[k][j-1][1]
+                pj[k][j][2] != nothing && push!(system_string,"**Value**: `$(pj[k][j][2])`\n\n")
+            else
+                push!(system_string,"### `$(pj[k][j][1])`\n\n")
+                pj[k][j][2] != nothing && push!(system_string,"**Value**: `$(pj[k][j][2])`\n\n")
+            end
+
         end
     end
 
