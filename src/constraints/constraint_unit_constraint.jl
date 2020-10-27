@@ -23,7 +23,7 @@
 Custom constraint for `units`.
 """
 function add_constraint_unit_constraint!(m::Model)
-    @fetch unit_flow_op, unit_flow, units_on = m.ext[:variables]
+    @fetch unit_flow_op, unit_flow, units_on, units_started_up = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:unit_constraint] = Dict(
         (unit_constraint=uc, stochastic_path=s, t=t) => sense_constraint(
@@ -101,6 +101,14 @@ function add_constraint_unit_constraint!(m::Model)
             + expr_sum(
                 + units_on[u, s, t1]
                 * units_on_coefficient[(unit_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)]
+                * min(duration(t1), duration(t))
+                for u in unit__unit_constraint(unit_constraint=uc)
+                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
+                init=0
+            )
+            + expr_sum(
+                + units_started_up[u, s, t1]
+                * units_startup_coefficient[(unit_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)]
                 * min(duration(t1), duration(t))
                 for u in unit__unit_constraint(unit_constraint=uc)
                 for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
