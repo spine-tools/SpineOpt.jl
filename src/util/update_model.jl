@@ -265,13 +265,13 @@ function update_varying_constraints!(model::Model)
     end
 end
 
-function update_variable!(m::Model, name::Symbol, indices::Function)
+function update_variable!(m::Model, name::Symbol, indices::Function; update_names=false)
     var = m.ext[:variables][name]
     val = m.ext[:values][name]
     lb = m.ext[:variables_definition][name][:lb]
     ub = m.ext[:variables_definition][name][:ub]
     for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-        set_name(var[ind], _base_name(name, ind))
+        update_names && set_name(var[ind], _base_name(name, ind))
         if is_fixed(var[ind])
             unfix(var[ind])
             lb != nothing && set_lower_bound(var[ind], lb(ind))
