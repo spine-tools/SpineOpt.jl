@@ -378,3 +378,93 @@ function to_time_slice(m::Model; t::TimeSlice)
     in_gaps = (s for t_set in t_sets for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t))
     unique(Iterators.flatten((in_blocks, in_gaps)))
 end
+
+"""
+    node_time_indices(m::Model;<keyword arguments>)
+
+Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword arguments that allow filtering.
+"""
+function node_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
+    unique(
+        (node=n, t=t1)
+        for (n, tb) in node__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
+        for t1 in time_slice(m; temporal_block=tb, t=t)
+    )
+end
+
+"""
+    node_dynamic_time_indices(m::Model;<keyword arguments>)
+
+Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` with keyword arguments that allow filtering.
+"""
+function node_dynamic_time_indices(
+    m::Model; node=anything, t_before=anything, t_after=anything
+)
+    unique(
+        (node=n, t_before=tb, t_after=ta)
+        for (n, ta) in node_time_indices(m; node=node, t=t_after)
+        for (n, tb) in node_time_indices(
+            m; t=map(t->t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
+        )
+    )
+end
+
+"""
+    unit_time_indices(m::Model;<keyword arguments>)
+
+Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` online variables unit with filter keywords.
+"""
+function unit_time_indices(m::Model; unit=anything, temporal_block=anything, t=anything)
+    unique(
+        (unit=u, t=t1)
+        for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
+        for t1 in time_slice(m; temporal_block=tb, t=t)
+    )
+end
+
+"""
+    unit_dynamic_time_indices(m::Model;<keyword arguments>)
+
+Generate an `Array` of all valid `(unit, t_before, t_after)` `NamedTuples` for `unit` online variables filter keywords.
+"""
+function unit_dynamic_time_indices(m::Model; unit=anything, t_before=anything, t_after=anything)
+    unique(
+        (unit=u, t_before=tb, t_after=ta)
+        for (u, ta) in unit_time_indices(m; unit=unit, t=t_after)
+        for (u, tb) in unit_time_indices(
+            m; t=map(t->t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
+        )
+    )
+end
+
+"""
+    unit_investment_time_indices(m::Model;<keyword arguments>)
+
+Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` investment variables with filter keywords.
+"""
+function unit_investment_time_indices(
+        m::Model; unit=anything, temporal_block=anything, t=anything
+    )
+    unique(
+        (unit=u, t=t1)
+        for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
+        for t1 in time_slice(m; temporal_block=tb, t=t)
+    )
+end
+
+"""
+    unit_investment_dynamic_time_indices(m::Model;<keyword arguments>)
+
+Generate an `Array` of all valid `(unit, t_before, t_after)` `NamedTuples` for `unit` investment variables with filters.
+"""
+function unit_investment_dynamic_time_indices(
+        m::Model; unit=anything, t_before=anything, t_after=anything
+    )
+    unique(
+        (unit=u, t_before=tb, t_after=ta)
+        for (u, ta) in unit_investment_time_indices(m; unit=unit, t=t_after)
+        for (u, tb) in unit_investment_time_indices(
+            m; t=map(t->t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
+        )
+    )
+end
