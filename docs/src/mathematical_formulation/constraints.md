@@ -293,9 +293,9 @@ The online ramp up ability of a unit can be constraint by the [`ramp_up_limit`](
 & \forall (u,ng,d,s,t) \in ind(constraint\_ramp\_up)\\
 \end{aligned}
 ```
-#### Constraint on upward start up ramp_up
+##### Constraint on upward start up ramp_up
 
-This constraint enforces a limit on the unit ramp during startup process. Usually, we consider only non-balancing commodities. However, it is possible to include them through by adding them to the ramp defininf node `ng`.
+This constraint enforces a limit on the unit ramp during startup process. Usually, we consider only non-balancing commodities. However, it is possible to include them, by adding them to the ramp defining node `ng`.
 ```math
 \begin{aligned}
 & + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{start\_up\_flow}): \\ (u,n,d) \, \in \, (u,ng,d)}} unit_{start\_up\_flow}(u,n,d,s,t)  \\
@@ -307,7 +307,7 @@ This constraint enforces a limit on the unit ramp during startup process. Usuall
 & \forall (u,ng,d,s,t) \in ind(constraint\_start\_up\_ramp)\\
 \end{aligned}
 ```
-#### Constraint on upward non-spinning start up ramps
+##### Constraint on upward non-spinning start up ramps
 
 For non-spinning reserves, offline units can be scheduled for reserve provision if they have recovered their minimum down time. If nonspinning reserves are used the minimum down-time constraint becomes:
 
@@ -315,7 +315,7 @@ For non-spinning reserves, offline units can be scheduled for reserve provision 
 \begin{aligned}
 & units_{available}(u,s,t) \\
 & - units_{on}(u,s,t) \\
-& >= \sum_{\substack{(u,s,t') \in ind(units_{on}): \\ t' >=t-p_{min\_down\_time} && t' <= t}}
+& >= \sum_{\substack{(u,s,t') \in ind(units_{on}): \\ t' >t-p_{min\_down\_time} && t' <= t}}
 units_{shut\_down}(u,s,t') \\
 & \sum_{\substack{(u,n,s,t) \in ind(nonspin\_units_{starting\_up}): \\ t \in t\_overlaps\_t(t) \\ (u,s) \in (u,s)}}
   nonspin\_units_{starting\_up}(u,n,s,t)
@@ -324,7 +324,7 @@ units_{shut\_down}(u,s,t') \\
 ```
 TODO: add correct forall, how to simplify?
 
-The ramp a non-spinning unit can provide is constraint through the [max_res_startup_ramp](@ref).
+The ramp a non-spinning unit can provide is constraint through the [`max_res_startup_ramp`](@ref).
 
 ```math
 \begin{aligned}
@@ -353,8 +353,57 @@ The ramp a non-spinning unit can provide is constraint through the [max_res_star
 \end{aligned}
 ```
 
-#### Constraint on downward shut-down ramps
-#### Constraint on downward non-spinning shut-down ramps
+##### Constraint on downward shut-down ramps
+This constraint enforces a limit on the unit ramp during shutdown process. Usually, we consider only non-balancing commodities. However, it is possible to include them, by adding them to the ramp defining node `ng`.
+```math
+\begin{aligned}
+& + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{shut\_down\_flow}): \\ (u,n,d) \, \in \, (u,ng,d)}} unit_{shut\_down\_flow}(u,n,d,s,t)  \\
+& <= \\
+& + \sum_{\substack{(u,s,t') \in ind(units_{on}): \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}} units_{shut\_down}(u,s,t') \\
+& \cdot p_{max\_shutdown\_ramp}(u,ng,d,s,t) \\
+& \cdot p_{unit\_capacity}(u,ng,d,t) \\
+& \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
+& \forall (u,ng,d,s,t) \in ind(constraint\_shut\_down\_ramp)\\
+\end{aligned}
+```
+##### Constraint on downward non-spinning shut-down ramps
+For non-spinning downward reserves, online units can be scheduled for reserve provision through shut down if they have recovered their minimum up time. If nonspinning reserves are used the minimum up-time constraint becomes:
+```math
+\begin{aligned}
+& units_{on}(u,s,t) \\
+& >= \sum_{\substack{(u,s,t') \in ind(units_{on}): \\ t' >t-p_{min\_up\_time} && t' <= t}}
+units_{started\_up}(u,s,t') \\
+& \sum_{\substack{(u,n,s,t) \in ind(nonspin\_units_{shutting\_down}): \\ t \in t\_overlaps\_t(t) \\ (u,s) \in (u,s)}}
+  nonspin\_units_{shutting\_down}(u,n,s,t) \\
+& \forall (u,s,t) \in ind(units_{on})\\
+\end{aligned}
+```
+TODO: add correct forall, how to simplify?
+
+The ramp a non-spinning unit can provide is constraint through the [`max_res_shutdown_ramp`](@ref).
+
+```math
+\begin{aligned}
+& + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{non-spinn\_\{down\}\_flow}): \\ (u,n,d,s,t)  \in (u,n,d,s,t)}} unit_{non-spinn\_\{down\}\_flow}(u,n,d,s,t)  \\
+& <= \\
+& + \sum_{\substack{(u,n,s,t) \in ind(nonspin\_units_{shutting\_down}): \\ (u,n,s,t)  \in (u,n,s,t)}} nonspin\_units_{shutting\_down}(u,n,s,t)  \\
+& \cdot p_{max\_res\_shutdown\_ramp}(u,ng,d,s,t) \\
+& \cdot p_{unit\_capacity}(u,ng,d,t) \\
+& \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
+& \forall (u,ng,d,s,t) \in ind(constraint\_max\_nonspin\_ramp)\\
+\end{aligned}
+```
+##### Constraint on minimum node state for reserve provision
+Storage nodes can also contribute to the provision of reserves. The amount of balancing contributions is limited by the ramps of the sotrage unit (see above) and by the node state:
+```math
+\begin{aligned}
+& node_{state}(n_{stor}, s, t)\\
+& >= p_{node_{state\_min}} \\
+& + \sum_{\substack{(u,n_{res},d,s,t) \in ind(unit_{flow}): \\ u \in ind(unit_{flow};n=n_{stor}) \\ is\_reserve\_node(n_{res}) }} unit_{flow}(u,n_{res},d,s,t)  \\
+& \cdot p_{minimum\_reserve\_activation\_time}(n_{res}) \\
+& \forall (n_{stor},s,t) \in ind(node_{stochastic\_time}) : has\_state(n)\\
+\end{aligned}
+```
 
 [comment]: <> (TODO:
 %substract non-spinning downward; make this an energy not power balance (add delat t)

@@ -6,12 +6,12 @@ makedocs(
         prettyurls = get(ENV, "CI", nothing) == "true"
     ),
     pages = [
-        "Getting Started" => "gettingstarted.md",
-        "System Components" => "systemcomponents.md",
-        "Advanced Usage" => "advancedusage.md",
+        "Getting Started" => "getting_started.md",
+        "System Components" => "system_components.md",
+        "Advanced Usage" => "advanced_usage.md",
         "Mathematical formulation" => Any[
-        "Objective" => "Mathematicalformulation\\objectivefunction.md",
-        "Constraints" => "Mathematicalformulation\\constraints.md"
+        "Objective" => "mathematical_formulation\\objective_function.md",
+        "Constraints" => "mathematical_formulation\\constraints.md"
         ]
     ]
 )
