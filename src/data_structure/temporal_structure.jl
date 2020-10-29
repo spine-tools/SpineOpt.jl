@@ -422,6 +422,7 @@ function unit_time_indices(m::Model; unit=anything, temporal_block=anything, t=a
     )
 end
 
+
 """
     unit_dynamic_time_indices(m::Model;<keyword arguments>)
 
@@ -452,6 +453,17 @@ function unit_investment_time_indices(
     )
 end
 
+
+function mp_unit_investment_time_indices(
+    m::Model; unit=anything, temporal_block=anything, t=anything
+)
+unique(
+    (unit=u, t=t1)
+    for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
+    for t1 in mp_time_slice(m; temporal_block=tb, t=t)
+)
+end
+
 """
     unit_investment_dynamic_time_indices(m::Model;<keyword arguments>)
 
@@ -467,4 +479,17 @@ function unit_investment_dynamic_time_indices(
             m; t=map(t->t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
         )
     )
+end
+
+
+function mp_unit_investment_dynamic_time_indices(
+    m::Model; unit=anything, t_before=anything, t_after=anything
+)
+unique(
+    (unit=u, t_before=tb, t_after=ta)
+    for (u, ta) in mp_unit_investment_time_indices(m; unit=unit, t=t_after)
+    for (u, tb) in mp_unit_investment_time_indices(
+        m; t=map(t->t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
+    )
+)
 end

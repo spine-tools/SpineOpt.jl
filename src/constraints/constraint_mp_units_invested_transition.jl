@@ -25,17 +25,24 @@ Form the stochastic index set for the `:units_invested_transition` constraint.
 Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
 """
 
-function constraint_mp_units_invested_transition_indices()        
+
+function constraint_mp_units_invested_transition_indices(
+    m::Model; unit=anything, stochastic_path=anything, t_before=anything, t_after=anything
+)
     unique(
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, tb) in unit__investment_temporal_block()
-        for t_after in mp_time_slice(temporal_block=tb)
-        for t_before in _take_one_t_before_t(t_after)
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in mp_units_invested_available_indices(unit=u, t=[t_before, t_after]))
+        for (u, t_before, t_after) in mp_unit_investment_dynamic_time_indices(
+            m; unit=unit, t_before=t_before, t_after=t_after
         )
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario for ind in mp_units_invested_available_indices(m; unit=u, t=[t_before, t_after])
+            )
+        )
+        if path == stochastic_path || path in stochastic_path
     )
 end
+
 
 
 """
