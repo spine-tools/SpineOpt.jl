@@ -2,7 +2,7 @@ using JSON
 s="$(@__DIR__)\\..\\..\\data\\spineopt_template.json"
 parsed_json = JSON.parsefile(s)
 pj=parsed_json
-function writing_systemcomponentsfile(pj::Dict; file_name="systemcomponents.md")
+function writing_systemcomponentsfile(pj::Dict; file_name="system_components.md")
     system_string=[]
     push!(system_string,"# System Components\n\n")
     for k in ["object_classes",]
