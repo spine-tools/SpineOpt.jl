@@ -207,9 +207,8 @@ function unit_stochastic_time_indices(
     )
     unique(
         (unit=u, stochastic_scenario=s, t=t1)
-        for (u, structure) in units_on__stochastic_structure(unit=unit, _compact=false)
-        for (u, tb) in units_on__temporal_block(unit=u, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(m; temporal_block=tb, t=t)
+        for (u, t1) in unit_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
+        for structure in units_on__stochastic_structure(unit=u)
         for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
     )
 end
@@ -224,9 +223,8 @@ function unit_investment_stochastic_time_indices(
     )
     unique(
         (unit=u, stochastic_scenario=s, t=t1)
-        for (u, structure) in unit__investment_stochastic_structure(unit=unit, _compact=false)
-        for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(m; temporal_block=tb, t=t)
+        for (u, t1) in unit_investment_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
+        for structure in unit__investment_stochastic_structure(unit=u)
         for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
     )
 end
