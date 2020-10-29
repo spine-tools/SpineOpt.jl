@@ -17,17 +17,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+
 """
 A JuMP `Model` for SpineOpt.
 """
-function create_model(with_optimizer)
-    m = Model(with_optimizer)
+function create_model(with_optimizer, use_direct_model=false)
+    
+    m = use_direct_model ? direct_model(with_optimizer) : Model(with_optimizer)     
     m.ext[:instance] = first(model())
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
     m.ext[:values] = Dict{Symbol,Dict}()
     m.ext[:constraints] = Dict{Symbol,Dict}()
     m
+
 end
 
 """
@@ -301,7 +304,8 @@ function run_spineopt(
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
         log_level=3,
-        optimize=true
+        optimize=true,
+        use_direct_model=false
     )
     @log log_level 0 "Running SpineOpt for $(url_in)..."
     @timelog log_level 2 "Initializing data structure from db..." begin
@@ -316,7 +320,8 @@ function run_spineopt(
         add_constraints=add_constraints,
         update_constraints=update_constraints,
         log_level=log_level,
-        optimize=optimize
+        optimize=optimize,
+        use_direct_model=use_direct_model
     )
 end
 
@@ -326,10 +331,11 @@ function rerun_spineopt(
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
         log_level=3,
-        optimize=true
+        optimize=true,
+        use_direct_model=false
     )
     outputs = Dict()
-    m = create_model(with_optimizer)
+    m = create_model(with_optimizer, use_direct_model)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
     @log log_level 1 "Window 1: $(current_window(m))"
