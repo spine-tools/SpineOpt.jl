@@ -340,3 +340,16 @@ function to_time_slice(m::Model; t::TimeSlice)
     in_gaps = (s for t_set in t_sets for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t))
     unique(Iterators.flatten((in_blocks, in_gaps)))
 end
+
+"""
+    node_time_indices(m;<keyword arguments>)
+
+Generate `node` time indexes with keyword arguments that allow filtering.
+"""
+function node_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
+    unique(
+        (node=n, t=t1)
+        for (n, tb) in node__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
+        for t1 in time_slice(m; temporal_block=tb, t=t)
+    )
+end
