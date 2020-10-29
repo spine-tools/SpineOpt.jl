@@ -182,7 +182,7 @@ function _generate_stochastic_time_map(all_stochastic_DAGs, m...)
 end
 
 """
-    node_stochastic_time_indices(;<keyword arguments>)
+    node_stochastic_time_indices(m;<keyword arguments>)
 
 Stochastic time indexes for `nodes` with keyword arguments that allow filtering.
 """
@@ -191,9 +191,8 @@ function node_stochastic_time_indices(
     )
     unique(
         (node=n, stochastic_scenario=s, t=t1)
-        for (n, structure) in node__stochastic_structure(node=node, _compact=false)
-        for (n, tb) in node__temporal_block(node=n, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(m; temporal_block=tb, t=t)
+        for (n, t1) in node_time_indices(m; node=node, temporal_block=temporal_block, t=t)
+        for structure in node__stochastic_structure(node=n)
         for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
     )
 end
