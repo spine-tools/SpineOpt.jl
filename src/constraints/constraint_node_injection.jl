@@ -117,9 +117,10 @@ function constraint_node_injection_indices(
 )
     unique(
         (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (n, tb) in node__temporal_block(node=node, _compact=false)
-        for t_after in time_slice(m; temporal_block=tb, t=t_after)
-        for (t_before, t_after) in t_before_t(m; t_before=t_before, t_after=t_after, _compact=false)
+        for (n, t_after) in node_time_indices(m; node=node)
+        for (n, t_before) in node_time_indices(
+            m; node=n, t=t_before_t(m; t_before=t_before, t_after=t_after, _compact=false)[1]
+        )
         for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_node_injection_indices(m, n, t_after, t_before))
         )
@@ -136,7 +137,7 @@ Gather the current `node_stochastic_time_indices` as well as the relevant `node_
 function _constraint_node_injection_indices(m, node, t_after, t_before)
     Iterators.flatten(
         (
-            # `node` on `t_after`
+            # `node` on `t_after`, this needs to be included regardless of whether the `node` has a `node_state`
             node_stochastic_time_indices(m; node=node, t=t_after),
             # `node_state` on `t_before`
             node_state_indices(m; node=node, t=t_before),
