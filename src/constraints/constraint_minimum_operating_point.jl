@@ -18,25 +18,6 @@
 #############################################################################
 
 """
-    constraint_minimum_operating_point_indices()
-
-Form the stochastic index set for the `:minimum_operating_point` constraint.
-
-Uses stochastic path indices due to potentially different stochastic structures between
-`unit_flow` and `units_on` variables.
-"""
-function constraint_minimum_operating_point_indices(m)
-    unique(
-        (unit=u, node=n, direction=d, stochastic_path=path, t=t)
-        for (u, n, d) in indices(minimum_operating_point)
-        for t in time_slice(m; temporal_block=node__temporal_block(node=n))
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(m, u, n, d, t))
-        )
-    )
-end
-
-"""
     add_constraint_minimum_operating_point!(m::Model)
 
 Limit the maximum in/out `unit_flow` of a `unit` if the parameters `unit_capacity,
@@ -46,7 +27,7 @@ function add_constraint_minimum_operating_point!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:minimum_operating_point] = Dict(
-        (u, ng, d, s, t) => @constraint(
+        (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
                 + unit_flow[u, n, d, s, t]
@@ -67,5 +48,28 @@ function add_constraint_minimum_operating_point!(m::Model)
             )
         )
         for (u, ng, d, s, t) in constraint_minimum_operating_point_indices(m)
+    )
+end
+
+"""
+    constraint_minimum_operating_point_indices(m::Model; filtering_options...)
+
+Form the stochastic indexing Array for the `:minimum_operating_point` constraint.
+
+Uses stochastic path indices due to potentially different stochastic structures between
+`unit_flow` and `units_on` variables. Keyword arguments can be used to filter the resulting Array.
+"""
+function constraint_minimum_operating_point_indices(
+    m::Model; unit=anything, node=anything, direction=anything, stochastic_path=anything, t=anything
+)
+    unique(
+        (unit=u, node=n, direction=d, stochastic_path=path, t=t)
+        for (u, n, d) in indices(minimum_operating_point)
+        if u in unit && n in node && d in direction
+        for t in time_slice(m; temporal_block=node__temporal_block(node=n), t=t)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(m, u, n, d, t))
+        )
+        if path == stochastic_path || path in stochastic_path
     )
 end

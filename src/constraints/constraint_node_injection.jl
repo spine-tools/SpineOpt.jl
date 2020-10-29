@@ -17,49 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-#TODO: can we find an easier way to define the constraint indices?
-# I feel that for unexperienced uses it gets more an more complicated to understand our code
-"""
-    constraint_node_injection_indices()
-
-Form the stochastic index set for the `:node_injection` constraint.
-
-Uses stochastic path indices due to dynamics and potentially different stochastic structures between this
-`node` and `nodes` connected via diffusion.
-"""
-function constraint_node_injection_indices(m)
-    unique(
-        (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (n, tb) in node__temporal_block()
-        for t_after in time_slice(m; temporal_block=tb)
-        for t_before in t_before_t(m; t_after=t_after)
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_node_injection_indices(m, n, t_after, t_before))
-        )
-    )
-end
-
-"""
-    _constraint_node_injection_indices(node, t_after, t_before)
-
-Gather the current `node_stochastic_time_indices` as well as the relevant `node_state_indices` on the previous
-`time_slice` and beyond defined `node__node` relationships for `add_constraint_node_injection!`
-"""
-function _constraint_node_injection_indices(m, node, t_after, t_before)
-    Iterators.flatten(
-        (
-            # `node` on `t_after`
-            node_stochastic_time_indices(m; node=node, t=t_after),
-            # `node_state` on `t_before`
-            node_state_indices(m; node=node, t=t_before),
-             # Diffusion to this `node`
-            (ind for n1 in node__node(node2=node) for ind in node_state_indices(m; node=n1, t=t_after)),
-            # Diffusion from this `node`
-            (ind for n2 in node__node(node1=node) for ind in node_state_indices(m; node=n2, t=t_after)),
-        )
-    )
-end
-
 """
     add_constraint_node_injection!(m::Model)
 
@@ -70,7 +27,7 @@ function add_constraint_node_injection!(m::Model)
     t0 = startref(current_window(m))
     # TODO: We need to include both: storages that are defined on n and storage that are defined on internal nodes
     m.ext[:constraints][:node_injection] = Dict(
-        (n, s, t_before, t_after) => @constraint(
+        (node=n, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             + expr_sum(
                 + node_injection[n, s, t_after]
@@ -142,5 +99,51 @@ function add_constraint_node_injection!(m::Model)
             )
         )
         for (n, s, t_before, t_after) in constraint_node_injection_indices(m)
+    )
+end
+
+#TODO: can we find an easier way to define the constraint indices?
+# I feel that for unexperienced uses it gets more an more complicated to understand our code
+"""
+    constraint_node_injection_indices(m::Model; filtering_options...)
+
+Form the stochastic indexing Array for the `:node_injection` constraint.
+
+Uses stochastic path indices due to dynamics and potentially different stochastic structures between this
+`node` and `nodes` connected via diffusion. Keyword arguments can be used to filter the resulting Array.
+"""
+function constraint_node_injection_indices(
+    m::Model; node=anything, stochastic_path=anything, t_before=anything, t_after=anything
+)
+    unique(
+        (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (n, tb) in node__temporal_block(node=node, _compact=false)
+        for t_after in time_slice(m; temporal_block=tb, t=t_after)
+        for (t_before, t_after) in t_before_t(m; t_before=t_before, t_after=t_after, _compact=false)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_node_injection_indices(m, n, t_after, t_before))
+        )
+        if path == stochastic_path || path in stochastic_path
+    )
+end
+
+"""
+    _constraint_node_injection_indices(node, t_after, t_before)
+
+Gather the current `node_stochastic_time_indices` as well as the relevant `node_state_indices` on the previous
+`time_slice` and beyond defined `node__node` relationships for `add_constraint_node_injection!`
+"""
+function _constraint_node_injection_indices(m, node, t_after, t_before)
+    Iterators.flatten(
+        (
+            # `node` on `t_after`
+            node_stochastic_time_indices(m; node=node, t=t_after),
+            # `node_state` on `t_before`
+            node_state_indices(m; node=node, t=t_before),
+             # Diffusion to this `node`
+            (ind for n1 in node__node(node2=node) for ind in node_state_indices(m; node=n1, t=t_after)),
+            # Diffusion from this `node`
+            (ind for n2 in node__node(node1=node) for ind in node_state_indices(m; node=n2, t=t_after)),
+        )
     )
 end

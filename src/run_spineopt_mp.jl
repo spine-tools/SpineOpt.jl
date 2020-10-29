@@ -38,31 +38,33 @@ set to `nothing` after completion.
 **`log_level=3`** is the log level.
 """
 function run_spineopt_mp(
-        url_in::String,
-        url_out::String=url_in;
-        upgrade=false,
-        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
-        cleanup=true,
-        add_constraints=m -> nothing,
-        update_constraints=m -> nothing,
-        log_level=3,
-        optimize=true
-    )
-    @log log_level 0 "Running Decomposed SpineOpt for $(url_in)..."
-    @timelog log_level 2 "Initializing data structure from db..." begin
-        using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
-        generate_missing_items()
-    end
-    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
-    @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
-    rerun_spineopt_mp(
-        url_out;
-        with_optimizer=with_optimizer,
-        add_constraints=add_constraints,
-        update_constraints=update_constraints,
-        log_level=log_level,
-        optimize=optimize
-    )
+    url_in::String,
+    url_out::String=url_in;
+    upgrade=false,
+    with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+    cleanup=true,
+    add_constraints=m -> nothing,
+    update_constraints=m -> nothing,
+    log_level=3,
+    optimize=true,
+    use_direct_model=false
+)
+@log log_level 0 "Running SpineOpt for $(url_in)..."
+@timelog log_level 2 "Initializing data structure from db..." begin
+    using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
+    generate_missing_items()
+end
+@timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
+@timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
+rerun_spineopt(
+    url_out;
+    with_optimizer=with_optimizer,
+    add_constraints=add_constraints,
+    update_constraints=update_constraints,
+    log_level=log_level,
+    optimize=optimize,
+    use_direct_model=use_direct_model
+)
 end
 
 function rerun_spineopt_mp(
@@ -71,11 +73,12 @@ function rerun_spineopt_mp(
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
-    optimize=true
+    optimize=true,
+    use_direct_model=false
 )
 outputs = Dict()
-mp = create_model(with_optimizer)
-m = create_model(with_optimizer)
+mp = create_model(with_optimizer, use_direct_model)
+m = create_model(with_optimizer, use_direct_model)
 # @timelog log_level 2 "Creating master problem temporal structure..." generate_temporal_structure!(mp)
 @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
 #@timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure(mp)

@@ -158,7 +158,7 @@ A `Dict` mapping `time_slice` objects to their set of active `stochastic_scenari
 """
 function _stochastic_time_mapping(stochastic_DAG::Dict, m::Model...)
     # Window `time_slices`
-    window_scenario_mapping = Dict(
+    scenario_mapping = Dict(
         t => [scen for (scen, param_vals) in stochastic_DAG if param_vals.start <= start(t) < param_vals.end_]
         for x in m
         for t in time_slice(x)
@@ -166,7 +166,7 @@ function _stochastic_time_mapping(stochastic_DAG::Dict, m::Model...)
     # History `time_slices`
     roots = _find_root_scenarios()
     history_scenario_mapping = Dict(t => roots for x in m for t in history_time_slice(x))
-    merge!(window_scenario_mapping, history_scenario_mapping)
+    merge!(scenario_mapping, history_scenario_mapping)
 end
 
 """

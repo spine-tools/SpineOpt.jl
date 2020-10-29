@@ -18,11 +18,11 @@
 #############################################################################
 
 """
-    _constraint_unit_flow_capacity_indices(unit, node, direction, t)
+    _constraint_unit_flow_capacity_indices(m::Model, unit, node, direction, t)
 
 An iterator that concatenates `unit_flow_indices` and `units_on_indices` for the given inputs.
 """
-function _constraint_unit_flow_capacity_indices(m, unit, node, direction, t)
+function _constraint_unit_flow_capacity_indices(m::Model, unit, node, direction, t)
     Iterators.flatten(
         (
             unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t), 

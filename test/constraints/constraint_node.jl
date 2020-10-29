@@ -103,7 +103,7 @@
         var_n_sl_neg = var_node_slack_neg[node_key...]
         var_conn_flow = var_connection_flow[conn_key...]
         expected_con = @build_constraint(var_n_inj + var_conn_flow + var_n_sl_pos - var_n_sl_neg == 0)
-        con = constraint[node_key]
+        con = constraint[node_key...]
         observed_con = constraint_object(con)
         @test _is_constraint_equal(observed_con, expected_con)
         # node_group_bc
@@ -274,7 +274,7 @@
                 key = (n, s, t)
                 var_n_st = var_node_state[key...]
                 expected_con = @build_constraint(var_n_st <= cap)
-                con = constraint[key]
+                con = constraint[key...]
                 observed_con = constraint_object(con)
                 @test _is_constraint_equal(observed_con, expected_con)
             end

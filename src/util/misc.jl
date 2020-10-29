@@ -26,6 +26,13 @@ function Base.getindex(d::Dict{K,VariableRef}, key::ObjectLike...) where {J,K<:R
     Base.getindex(d, NamedTuple{J}(key))
 end
 
+_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
+_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
+
+function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V<:ConstraintRef}
+    Base.getindex(d, NamedTuple{J}(key))
+end
+
 """
     @fetch x, y, ... = d
 

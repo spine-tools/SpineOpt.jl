@@ -18,6 +18,7 @@
 #############################################################################
 
 """
+<<<<<<< HEAD
     constraint_unit_lifetime_indices()
 
 Form the stochastic index set for the `:units_invested_lifetime()` constraint. 
@@ -70,6 +71,8 @@ end
 
 
 """
+=======
+>>>>>>> 11d1a5d4bb5841ef349d93e2ba389b0f2df7d46a
     add_constraint_unit_lifetime!(m::Model)
 
 Constrain units_invested_available by the investment lifetime of a unit.
@@ -78,7 +81,7 @@ function add_constraint_unit_lifetime!(m::Model)
     @fetch units_invested_available, units_invested = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:unit_lifetime] = Dict(
-        (u, s, t) => @constraint(
+        (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
                 + units_invested_available[u, s, t]
@@ -106,6 +109,7 @@ function add_constraint_unit_lifetime!(m::Model)
     )
 end
 
+<<<<<<< HEAD
 
 function add_constraint_mp_unit_lifetime!(m::Model)
     @fetch mp_units_invested_available, mp_units_invested = m.ext[:variables]
@@ -131,4 +135,42 @@ function add_constraint_mp_unit_lifetime!(m::Model)
             )
         )
     end
+=======
+"""
+    constraint_unit_lifetime_indices(m::Model; filtering_options...)
+
+Form the stochastic indexing Array for the `:units_invested_lifetime()` constraint. 
+
+Uses stochastic path indexing due to the potentially different stochastic structures between present and past time.
+Keyword arguments can be used to filther the resulting Array.
+"""
+function constraint_unit_lifetime_indices(m::Model; unit=anything, stochastic_path=anything, t=anything)
+    t0 = startref(current_window(m))
+    unique(
+        (unit=u, stochastic_path=path, t=t)
+        for u in indices(unit_investment_lifetime)
+        if u in unit
+        for t in time_slice(m; temporal_block=unit__investment_temporal_block(unit=u), t=t)
+        for (u, s, t) in units_invested_available_indices(m; unit=u, t=t)
+        for path in active_stochastic_paths(_constraint_unit_lifetime_indices(m, u, s, t0, t))
+        if path == stochastic_path || path in stochastic_path
+    )
+end
+
+"""
+    _constraint_unit_lifetime_indices(u, s, t0, t)
+
+Gathers the `stochastic_scenario` indices of the `units_invested_available` variable on past time slices determined
+by the `unit_investment_lifetime` parameter.
+"""
+function _constraint_unit_lifetime_indices(m, u, s, t0, t)
+    t_past_and_present = to_time_slice(
+        m; 
+        t=TimeSlice(end_(t) - unit_investment_lifetime(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t))
+    )
+    unique(
+        ind.stochastic_scenario
+        for ind in units_invested_available_indices(m; unit=u, t=t_past_and_present)
+    )
+>>>>>>> 11d1a5d4bb5841ef349d93e2ba389b0f2df7d46a
 end

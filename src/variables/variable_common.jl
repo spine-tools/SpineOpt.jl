@@ -43,15 +43,9 @@ function add_variable!(
         :indices => indices, :lb => lb, :ub => ub, :bin => bin, :int => int, :fix_value => fix_value
     )
     var = m.ext[:variables][name] = Dict(
-        ind => _variable(m, name, ind, lb, ub, bin, int) for ind in indices(m)
+        ind => _variable(m, name, ind, lb, ub, bin, int) 
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
     )
-    history_var = Dict(
-        history_ind => _variable(m, name, history_ind, lb, ub, bin, int)
-        for ind in indices(m)
-        if end_(ind.t) <= end_(current_window(m))  
-        for history_ind in indices(m; ind..., stochastic_scenario=anything, t=t_history_t(m; t=ind.t))
-    )
-    merge!(var, history_var)
 end
 
 """
@@ -59,7 +53,7 @@ end
 
 Create JuMP `base_name` from `name` and `ind`.
 """
-_base_name(name, ind) = """$(name)[$(join(ind, ", "))]"""
+_base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 
 """
     _variable(m, name, ind, lb, ub, bin, int)

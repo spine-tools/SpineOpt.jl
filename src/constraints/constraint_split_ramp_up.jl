@@ -18,32 +18,6 @@
 #############################################################################
 
 """
-    constraint_split_ramp_up_indices()
-
-Form the stochastic index set for the `:split_ramp_up` constraint.
-
-Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
-"""
-function constraint_split_ramp_up_indices(m)
-    unique(
-        (unit=u, node=n, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, n, d, s, t_after) in unique(
-            Iterators.flatten(
-                (ramp_up_unit_flow_indices(m), start_up_unit_flow_indices(m), nonspin_ramp_up_unit_flow_indices(m))
-            )
-        )
-        for t_before in t_before_t(m; t_after=t_after)
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario for ind in unit_flow_indices(
-                    m; unit=u, node=n, direction=d, t=[t_before, t_after]
-                )
-            )
-        )
-    )
-end
-
-"""
     add_constraint_split_ramp_up!(m::Model)
 
 Split delta(`unit_flow`) in `ramp_up_unit_flow and` `start_up_unit_flow`.
@@ -53,7 +27,7 @@ This is required to enforce separate limitations on these two ramp types.
 function add_constraint_split_ramp_up!(m::Model)
     @fetch unit_flow, ramp_up_unit_flow, start_up_unit_flow, nonspin_ramp_up_unit_flow = m.ext[:variables]
     m.ext[:constraints][:split_ramp_up] = Dict(
-        (u, n, d, s, t_before, t_after) => @constraint(
+        (unit=u, node=n, direction=d, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             expr_sum(
                 + unit_flow[u, n, d, s, t_after]
@@ -80,5 +54,45 @@ function add_constraint_split_ramp_up!(m::Model)
             )
         )
         for (u, n, d, s, t_before, t_after) in constraint_split_ramp_up_indices(m)
+    )
+end
+
+"""
+    constraint_split_ramp_up_indices(m::Model; filtering_options...)
+
+Form the stochastic indexing Array for the `:split_ramp_up` constraint.
+
+Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
+Keyword arguments can be used to filter the resulting Array.
+"""
+function constraint_split_ramp_up_indices(
+    m::Model;
+    unit=anything,
+    node=anything,
+    direction=anything,
+    stochastic_path=anything,
+    t_before=anything,
+    t_after=anything
+)
+    unique(
+        (unit=u, node=n, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (u, n, d, s, t_after) in unique(
+            Iterators.flatten(
+                (
+                    ramp_up_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after),
+                    start_up_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after),
+                    nonspin_ramp_up_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after)
+                )
+            )
+        )
+        for (t_before, t_after) in t_before_t(m; t_before=t_before, t_after=t_after, _compact=false)
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario for ind in unit_flow_indices(
+                    m; unit=u, node=n, direction=d, t=[t_before, t_after]
+                )
+            )
+        )
+        if path == stochastic_path || path in stochastic_path
     )
 end
