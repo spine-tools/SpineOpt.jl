@@ -117,10 +117,7 @@ function constraint_node_injection_indices(
 )
     unique(
         (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (n, t_after) in node_time_indices(m; node=node)
-        for (n, t_before) in node_time_indices(
-            m; node=n, t=t_before_t(m; t_before=t_before, t_after=t_after, _compact=false)[1]
-        )
+        for (n, t_before, t_after) in node_dynamic_time_indices(m; node=node)
         for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_node_injection_indices(m, n, t_after, t_before))
         )
@@ -129,7 +126,7 @@ function constraint_node_injection_indices(
 end
 
 """
-    _constraint_node_injection_indices(node, t_after, t_before)
+    _constraint_node_injection_indices(m, node, t_after, t_before)
 
 Gather the current `node_stochastic_time_indices` as well as the relevant `node_state_indices` on the previous
 `time_slice` and beyond defined `node__node` relationships for `add_constraint_node_injection!`
