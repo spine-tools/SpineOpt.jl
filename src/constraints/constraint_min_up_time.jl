@@ -68,7 +68,6 @@ function constraint_min_up_time_indices(m::Model; unit=anything, stochastic_path
         (unit=u, stochastic_path=path, t=t)
         for u in indices(min_up_time)
         if u in unit
-        for t in time_slice(m; temporal_block=units_on__temporal_block(unit=u), t=t)
         for (u, s, t) in units_on_indices(m; unit=u, t=t)
         for path in active_stochastic_paths(_constraint_min_up_time_indices(m, u, s, t0, t))
         if path == stochastic_path || path in stochastic_path
