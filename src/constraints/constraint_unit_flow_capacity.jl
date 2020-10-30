@@ -69,7 +69,7 @@ function constraint_unit_flow_capacity_indices(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(unit_capacity)
         if u in unit && ng in node && d in direction
-        for t in time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t)
+        for (n, t) in node_time_indices(m; node=members(ng), t=t)
         for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(m, u, ng, d, t))
         )
