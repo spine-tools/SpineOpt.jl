@@ -77,7 +77,7 @@ function rerun_spineopt(
         use_direct_model=false
     )
     outputs = Dict()
-    m = create_model(with_optimizer, use_direct_model)
+    m = create_model(with_optimizer, use_direct_model, :spineopt_operations)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
     @log log_level 1 "Window 1: $(current_window(m))"
@@ -99,10 +99,11 @@ end
 """
 A JuMP `Model` for SpineOpt.
 """
-function create_model(with_optimizer, use_direct_model=false)
+function create_model(with_optimizer, use_direct_model=false, model_type=:spineopt_operations
+    )
     
     m = use_direct_model ? direct_model(with_optimizer) : Model(with_optimizer)     
-    m.ext[:instance] = first(model())
+    m.ext[:instance] = first(model(model_type=:model_type))
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
     m.ext[:values] = Dict{Symbol,Dict}()
@@ -220,6 +221,8 @@ end
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
 function init_model!(m; add_constraints=m -> nothing, log_level=3)
+    
+    @timelog log_level 2 "Preprocessing model data structure...\n" preprocess_model_data_structure(m)
     @timelog log_level 2 "Adding variables...\n" add_variables!(m; log_level=log_level)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(
@@ -232,15 +235,15 @@ end
 Optimize the given model. If an optimal solution is found, return `true`, otherwise return `false`.
 """
 function optimize_model!(m::Model; log_level=3)
-    write_mps_file(model=first(model())) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
+    write_mps_file(model=m.ext[:instance]) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
-    @timelog log_level 0 "Optimizing model..." optimize!(m)
+    @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
     if termination_status(m) == MOI.OPTIMAL ||  termination_status(m) == MOI.TIME_LIMIT
         true
     else
         @log log_level 0 "Unable to find solution (reason: $(termination_status(m)))"
-        write_mps_file(model=first(model())) == :write_mps_on_no_solve && write_to_file(m, "model_diagnostics.mps")
+        write_mps_file(model=m.ext[:instance]) == :write_mps_on_no_solve && write_to_file(m, "model_diagnostics.mps")
         false
     end
 end

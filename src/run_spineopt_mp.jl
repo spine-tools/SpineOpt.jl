@@ -77,15 +77,15 @@ function rerun_spineopt_mp(
     use_direct_model=false
 )
 outputs = Dict()
-mp = create_model(with_optimizer, use_direct_model)
-m = create_model(with_optimizer, use_direct_model)
-# @timelog log_level 2 "Creating master problem temporal structure..." generate_temporal_structure!(mp)
-@timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
-#@timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure(mp)
-@timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)    
+mp = create_model(with_optimizer, use_direct_model,:spineopt_master)
+m = create_model(with_optimizer, use_direct_model,:spineopt_operations)
+@timelog log_level 2 "Creating master problem temporal structure..." generate_temporal_structure!(mp)
+@timelog log_level 2 "Creating operations problem temporal structure..." generate_temporal_structure!(m)
+@timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure(mp)
+@timelog log_level 2 "Creating operations problem stochastic structure..." generate_stochastic_structure(m)    
 @log log_level 1 "Window 1: $(current_window(m))"
 init_model!(m; add_constraints=add_constraints, log_level=log_level)
-init_model!(mp; add_constraints=add_constraints, log_level=log_level)
+init_model!(mp; add_constraints=add_mp_constraints, log_level=log_level)
 
 j = 1
 k = 1
@@ -104,7 +104,7 @@ while _optimize_mp_model!(mp) # master problem loop
         update_model!(m; update_constraints=update_constraints, log_level=log_level)
         k += 1
     end        
-    
+    update_mp_model!(m; update_constraints=update_constraints, log_level=log_level)
 end
 @timelog log_level 2 "Writing report..." write_report(m, outputs, url_out)
 m
@@ -127,6 +127,7 @@ end
 Initialise Master Problem.
 """
 function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
+    @timelog log_level 2 "Preprocessing model data structure...\n" preprocess_model_data_structure(m)
     @timelog log_level 2 "Adding variables...\n" add_mp_variables!(m; log_level=log_level)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_mp_constraints!(
@@ -152,4 +153,14 @@ function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
 end
 
 
-
+"""
+Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
+"""
+function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
+    @timelog log_level 2 "Adding MP variables...\n" add_mp_variables!(m; log_level=log_level)
+    @timelog log_level 2 "Fixing MP variable values..." fix_variables!(m)
+    @timelog log_level 2 "Adding MP constraints...\n" add_mp_constraints!(
+        m; add_constraints=add_constraints, log_level=log_level
+    )
+    @timelog log_level 2 "Setting MP objective..." set_mp_objective!(m)
+end

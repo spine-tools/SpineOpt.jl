@@ -239,19 +239,27 @@ Create and export a `TimeSliceSet` containing `TimeSlice`s in the current master
 
 """
 function _generate_mp_time_slice()
-    instance = first(model())          
+    instance = m.ext[:instance]
     window_start = model_start(model=instance)
     window_end = model_end(model=instance)
     window_span = window_end - window_start
-    window_time_slices = _window_time_slices(window_start, window_end)
-    mp_time_slice = TimeSliceSet(window_time_slices)            
-    to_mp_time_slice = TimeSliceMap(window_time_slices)
-    @eval begin
-        mp_time_slice = $mp_time_slice
-        to_mp_time_slice = $to_mp_time_slice
-        export mp_time_slice
-        export to_mp_time_slice
+    window_time_slices = _window_time_slices(instance, window_start, window_end)       
+    history_time_slices = Array{TimeSlice,1}()
+    required_history_duration = _required_history_duration(instance)
+    window_duration = window_end - window_start
+    history_window_count = div(Minute(required_history_duration), Minute(window_duration))
+    i = findlast(t -> end_(t) <= window_end, window_time_slices)
+    history_window_time_slices = window_time_slices[1:i] .- window_duration
+    for k in 1:history_window_count
+        prepend!(history_time_slices, history_window_time_slices)
+        history_window_time_slices .-= window_duration
     end
+    history_start = window_start - required_history_duration
+    filter!(t -> end_(t) > history_start, history_window_time_slices)
+    prepend!(history_time_slices, history_window_time_slices)
+    m.ext[:temporal_structure][:time_slice] = TimeSliceSet(window_time_slices)
+    m.ext[:temporal_structure][:history_time_slice] = TimeSliceSet(history_time_slices)
+    m.ext[:temporal_structure][:t_history_t] = Dict(zip(history_time_slices .+ window_duration, history_time_slices))
 end
 
 """
@@ -313,7 +321,7 @@ function generate_temporal_structure!(m::Model)
     m.ext[:temporal_structure] = Dict()
     _generate_current_window!(m::Model)
     _generate_time_slice!(m::Model)
-    _generate_mp_time_slice()
+    _generate_mp_time_slice(m::Model)
     _generate_time_slice_relationships!(m::Model)
 end
 
