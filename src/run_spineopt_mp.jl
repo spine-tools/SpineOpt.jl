@@ -147,6 +147,7 @@ function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(m)
     @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
     @timelog log_level 3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)
+    @timelog log_level 3 "= [add_constraint_mp_objective]" add_constraint_mp_objective!(m)
 
     # Name constraints
     for (con_key, cons) in m.ext[:constraints]
