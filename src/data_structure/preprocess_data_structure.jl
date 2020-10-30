@@ -444,10 +444,10 @@ then create one using `model__default_investment_temporal_block`
 """
 function expand_model__default_investment_temporal_block(m)
     add_relationships!(
-        unit__investment_temporal_block, 
+        model__unit__investment_temporal_block, 
         [
-            (unit=u, temporal_block=tb)
-            for u in setdiff(indices(candidate_units), unit__investment_temporal_block(temporal_block=anything))
+            (model=m.ext[:instance], unit=u, temporal_block=tb)
+            for u in setdiff(indices(candidate_units), model__unit__investment_temporal_block(model=m.ext[:instance], temporal_block=anything))
             for tb in model__default_investment_temporal_block(model=m.ext[:instance])
         ]
     )
@@ -463,11 +463,11 @@ then create one using `model__default_investment_stochastic_structure`
 """
 function expand_model__default_investment_stochastic_structure(m)
     add_relationships!(
-        unit__investment_stochastic_structure, 
+        model__unit__investment_stochastic_structure, 
         [
-            (unit=u, stochastic_structure=ss)
+            (model=m.ext[:instance], unit=u, stochastic_structure=ss)
             for u in setdiff(
-                indices(candidate_units), unit__investment_stochastic_structure(stochastic_structure=anything)
+                indices(candidate_units), model__unit__investment_stochastic_structure(model=m.ext[:instance], stochastic_structure=anything)
             )
             for ss in model__default_investment_stochastic_structure(model=m.ext[:instance])
         ]

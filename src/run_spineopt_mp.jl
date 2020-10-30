@@ -54,8 +54,7 @@ function run_spineopt_mp(
     using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
     generate_missing_items()
 end
-@timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
-rerun_spineopt(
+rerun_spineopt_mp(
     url_out;
     with_optimizer=with_optimizer,
     add_constraints=add_constraints,
@@ -80,9 +79,10 @@ mp = create_model(with_optimizer, use_direct_model,:spineopt_master)
 m = create_model(with_optimizer, use_direct_model,:spineopt_operations)
 @timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(m)
 @timelog log_level 2 "Preprocessing master problem model specific data structure...\n" preprocess_model_data_structure(mp)
+@timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
 @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
-@timelog log_level 2 "Creating master problem temporal structure..." generate_temporal_structure!(mp)
 @timelog log_level 2 "Creating operations problem temporal structure..." generate_temporal_structure!(m)
+@timelog log_level 2 "Creating master problem temporal structure..." generate_temporal_structure!(mp)
 @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure(mp)
 @timelog log_level 2 "Creating operations problem stochastic structure..." generate_stochastic_structure(m)    
 @log log_level 1 "Window 1: $(current_window(m))"
@@ -91,10 +91,10 @@ init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
 
 j = 1
 k = 1
-while _optimize_mp_model!(mp) # master problem loop       
-    @logtime level2 "Processing master problem solution" process_master_problem_solution(mp)
+while _optimize_mp_model!(mp) && j < 3 # master problem loop
+    @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)
     if j > 1  
-        @timelog level2 "Resetting sub problem temporal structure..." reset_temporal_structure(k-1)        
+        @timelog log_level 2 "Resetting sub problem temporal structure..." reset_temporal_structure(k-1)        
         update_model!(m; update_constraints=update_constraints, log_level=log_level)            
     end 
     k = 2
@@ -105,36 +105,37 @@ while _optimize_mp_model!(mp) # master problem loop
         @log log_level 1 "Window $k: $(current_window(m))"
         update_model!(m; update_constraints=update_constraints, log_level=log_level)
         k += 1
-    end        
+    end
+    process_subproblem_solution(mp, j)
     update_mp_model!(m; update_constraints=update_constraints, log_level=log_level)
+    j += 1
 end
 @timelog log_level 2 "Writing report..." write_report(m, outputs, url_out)
 m
 end
 
 
+"""
+Initialize the given model for SpineOpt Master Problem: add variables, fix the necessary variables, add constraints and set objective.
+"""
+function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
+    @timelog log_level 2 "Adding MP variables...\n" add_mp_variables!(m; log_level=log_level)
+    @timelog log_level 2 "Fixing MP variable values..." fix_variables!(m)
+    @timelog log_level 2 "Adding MP constraints...\n" add_mp_constraints!(
+        m; add_constraints=add_constraints, log_level=log_level
+    )
+    @timelog log_level 2 "Setting MP objective..." set_mp_objective!(m)
+end
+
 
 """
 Add SpineOpt Master Problem variables to the given model.
 """
 function add_mp_variables!(m; log_level=3)
-    @timelog level3 "- [variable_mp_objective_lowerbound]" add_variable_mp_objective_lowerbound!(m)
-    @timelog level3 "- [variable_mp_units_invested]" add_variable_units_invested!(m)
-    @timelog level3 "- [variable_mp_units_invested_available]" add_variable_units_invested_available!(m)
-    @timelog level3 "- [variable_mp_units_mothballed]" add_variable_units_mothballed!(m)
-end
-
-
-"""
-Initialise Master Problem.
-"""
-function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)    
-    @timelog log_level 2 "Adding variables...\n" add_mp_variables!(m; log_level=log_level)
-    @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
-    @timelog log_level 2 "Adding constraints...\n" add_mp_constraints!(
-        m; add_constraints=add_constraints, log_level=log_level
-    )
-    @timelog log_level 2 "Setting objective..." set_mp_objective!(m)
+    @timelog log_level 3 "- [variable_mp_objective_lowerbound]" add_variable_mp_objective_lowerbound!(m)
+    @timelog log_level 3 "- [variable_mp_units_invested]" add_variable_units_invested!(m)
+    @timelog log_level 3 "- [variable_mp_units_invested_available]" add_variable_units_invested_available!(m)
+    @timelog log_level 3 "- [variable_mp_units_mothballed]" add_variable_units_mothballed!(m)
 end
 
 
@@ -142,8 +143,8 @@ end
 Add SpineOpt master problem constraints to the given model.
 """
 function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
-    @logtime level3 "- [constraint_mp_units_invested_cuts]" add_constraint_mp_units_invested_cuts!(m)
-    @logtime level3 "- [constraint_mp_objective]" add_constraint_mp_objective!(m)
+    @timelog log_level 3 "- [constraint_mp_units_invested_cuts]" add_constraint_mp_units_invested_cuts!(m)
+    @timelog log_level 3 "- [constraint_mp_objective]" add_constraint_mp_objective!(m)
 
     @timelog log_level 3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(m)
     @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
@@ -157,26 +158,3 @@ function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
         end
     end
 end
-
-
-"""
-Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
-"""
-function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
-    @timelog log_level 2 "Adding MP variables...\n" add_mp_variables!(m; log_level=log_level)
-    @timelog log_level 2 "Fixing MP variable values..." fix_variables!(m)
-    @timelog log_level 2 "Adding MP constraints...\n" add_mp_constraints!(
-        m; add_constraints=add_constraints, log_level=log_level
-    )
-    @timelog log_level 2 "Setting MP objective..." set_mp_objective!(m)
-end
-
-
-"""
-Unfix investment variables so they can be solved in Master Problem.
-"""
-
-function unfix_mp_variables(
-    _unfix_variable!(m::Model, name::Symbol, indices::Function)
-)
-

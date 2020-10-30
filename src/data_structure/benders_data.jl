@@ -27,7 +27,7 @@ function process_master_problem_solution(mp)
 end
 
 
-function process_subproblem_solution(m, j)    
+function process_subproblem_solution(m, j)
     save_sp_marginal_values(m)
     save_sp_objective_value_bi(m)    
     current_bi = add_benders_iteration(j)    

@@ -53,8 +53,7 @@ function run_spineopt(
     @timelog log_level 2 "Initializing data structure from db..." begin
         using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
         generate_missing_items()
-    end
-    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)    
+    end    
     rerun_spineopt(
         url_out;
         with_optimizer=with_optimizer,
@@ -78,6 +77,7 @@ function rerun_spineopt(
     outputs = Dict()
     m = create_model(with_optimizer, use_direct_model, :spineopt_operations)
     @timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(m)
+    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)    
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
@@ -222,9 +222,8 @@ end
 """
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
-function init_model!(m; add_constraints=m -> nothing, log_level=3)
+function init_model!(m; add_constraints=m -> nothing, log_level=3)    
     
-    @timelog log_level 2 "Preprocessing model specific data structure...\n" preprocess_model_data_structure(m)
     @timelog log_level 2 "Adding variables...\n" add_variables!(m; log_level=log_level)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(

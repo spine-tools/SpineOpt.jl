@@ -32,7 +32,11 @@ Minimize the total error between target and representative distributions.
 function set_mp_objective!(m::Model)
     @fetch mp_objective_lowerbound = m.ext[:variables]
     @objective(m, Min,
-        + mp_objective_lowerbound
+        + expr_sum(
+            mp_objective_lowerbound[t]            
+            for t in mp_objective_lowerbound_indices(m);            
+            init=0
+        )
     )
 end
 
@@ -43,11 +47,15 @@ end
 Limit the units_on by the number of available units.
 """
 function add_constraint_mp_objective!(m::Model)
-    @fetch units_available = m.ext[:variables]
+    @fetch units_invested = m.ext[:variables]
     constr_dict = m.ext[:constraints][:mp_objective] = Dict()    
     constr_dict = @constraint(
             m,            
-            + mp_objective_lowerbound                
+            + expr_sum(
+                mp_objective_lowerbound[t]            
+                for t in mp_objective_lowerbound_indices(m);            
+                init=0
+            )
             <=
             + expr_sum(
                 units_invested[u, s, t] * unit_investment_cost(unit=u, t=t)

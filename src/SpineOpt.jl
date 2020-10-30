@@ -39,6 +39,8 @@ import JuMP: MOI, MOIU
 # Export utility
 export run_spineopt
 export rerun_spineopt
+export run_spineopt_mp
+export rerun_spineopt_mp
 export @fetch
 
 # Export indices functions
@@ -55,6 +57,7 @@ include("util/postprocess_results.jl")
 include("util/write_information_files.jl")
 
 include("run_spineopt.jl")
+include("run_spineopt_mp.jl")
 
 include("data_structure/benders_data.jl")
 include("data_structure/temporal_structure.jl")

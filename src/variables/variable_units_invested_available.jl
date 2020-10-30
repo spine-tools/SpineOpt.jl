@@ -26,27 +26,9 @@ the keyword arguments act as filters for each dimension.
 function units_invested_available_indices(m::Model; unit=anything, stochastic_scenario=anything, t=anything)
     [
         (unit=u, stochastic_scenario=s, t=t)
-        for (u, tb) in unit__investment_temporal_block(unit=unit, _compact=false)
+        for (u, tb) in model__unit__investment_temporal_block(model=m.ext[:instance], unit=unit, _compact=false)
         for (u, s, t) in unit_investment_stochastic_time_indices(
             m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
-        )
-    ]
-end
-
-
-"""
-    mp_units_invested_available_indices(unit=anything, stochastic_scenario=anything, t=anything)
-
-    A list of `NamedTuple`s corresponding to indices of the `mp_units_invested_available` variable where
-    the keyword arguments act as filters for each dimension.
-"""
-
-function mp_units_invested_available_indices(;unit=anything, stochastic_scenario=anything, t=anything)
-    [
-        (unit=u, stochastic_scenario=s, t=t)
-        for (u, tb) in unit__investment_temporal_block(unit=unit, _compact=false)
-        for (u, s, t) in mp_unit_investment_stochastic_time_indices(
-            unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     ]
 end
@@ -96,15 +78,5 @@ function add_variable_units_invested_available!(m::Model)
     	fix_value=x -> fix_units_invested_available(
             unit=x.unit, stochastic_scenario=x.stochastic_scenario, analysis_time=t0, t=x.t, _strict=false
         )
-    )
-end
-
-function add_variable_mp_units_invested_available!(m::Model)    
-    add_variable!(
-    	m,
-    	:mp_units_invested_available, mp_units_invested_available_indices;
-    	lb=x -> 0,
-    	int=units_invested_available_int,
-    	fix_value=x -> fix_units_invested_available(unit=x.unit, t=x.t, _strict=false)
     )
 end

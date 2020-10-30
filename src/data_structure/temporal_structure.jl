@@ -426,21 +426,11 @@ function unit_investment_time_indices(
     )
     unique(
         (unit=u, t=t1)
-        for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
+        for (u, tb) in model__unit__investment_temporal_block(model=m.ext[:instance], unit=unit, temporal_block=temporal_block, _compact=false)
         for t1 in time_slice(m; temporal_block=tb, t=t)
     )
 end
 
-
-function mp_unit_investment_time_indices(
-    m::Model; unit=anything, temporal_block=anything, t=anything
-)
-unique(
-    (unit=u, t=t1)
-    for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
-    for t1 in mp_time_slice(m; temporal_block=tb, t=t)
-)
-end
 
 """
     unit_investment_dynamic_time_indices(m::Model;<keyword arguments>)
