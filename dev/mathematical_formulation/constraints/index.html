@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Constraints · SpineOpt.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">SpineOpt.jl</span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../getting_started/">Getting Started</a></li><li><a class="tocitem" href="../../system_components/">System Components</a></li><li><a class="tocitem" href="../../advanced_usage/">Advanced Usage</a></li><li><span class="tocitem">Mathematical formulation</span><ul><li><a class="tocitem" href="../objective_function/">Objective</a></li><li class="is-active"><a class="tocitem" href>Constraints</a><ul class="internal"><li><a class="tocitem" href="#Balance-constraint-1"><span>Balance constraint</span></a></li><li><a class="tocitem" href="#Unit-operation-1"><span>Unit operation</span></a></li><li><a class="tocitem" href="#Network-constraints-1"><span>Network constraints</span></a></li><li><a class="tocitem" href="#Investments-1"><span>Investments</span></a></li><li><a class="tocitem" href="#User-constraints-1"><span>User constraints</span></a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Mathematical formulation</a></li><li class="is-active"><a href>Constraints</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Constraints</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/Spine-project/SpineOpt.jl/blob/master/docs/src/mathematical_formulation/constraints.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Constraints-1"><a class="docs-heading-anchor" href="#Constraints-1">Constraints</a><a class="docs-heading-anchor-permalink" href="#Constraints-1" title="Permalink"></a></h1><h2 id="Balance-constraint-1"><a class="docs-heading-anchor" href="#Balance-constraint-1">Balance constraint</a><a class="docs-heading-anchor-permalink" href="#Balance-constraint-1" title="Permalink"></a></h2><h3 id="Nodal-balance-1"><a class="docs-heading-anchor" href="#Nodal-balance-1">Nodal balance</a><a class="docs-heading-anchor-permalink" href="#Nodal-balance-1" title="Permalink"></a></h3><p>In <strong>SpineOpt</strong> (nodes)[#node] are the place, where an energy balance is enforced. As universal aggregators, they are the glue that brings all components of the energy system together. The energy balance is enforced by the following constraint:</p><div>\[\begin{aligned}
+&amp; node_{injection}(n,s,t) \\
+&amp; + \sum_{\substack{(conn,n&#39;,d_{in},s,t) \in ind(connection_{flow}): \\ d_{out} == :to\_node}}
+ connection_{flow}(conn,n&#39;,d_{in},s,t)\\
+&amp; - \sum_{\substack{(conn,n&#39;,d_{out},s,t) \in ind(connection_{flow}): \\ d_{out} == :from\_node}}
+ connection_{flow}(conn,n&#39;,d_{out},s,t)\\
+% &amp; + node_{slack\_pos}(n,s,t) \\
+% &amp; - node_{slack\_neg}(n,s,t) \\
+&amp; \{&gt;=,==,&lt;=\} \\
+&amp; 0 \\
+&amp; \forall (n,s,t) \in ind(node_{stochastic\_time})
+\end{aligned}\]</div><p>TODO: remove node_slack position -&gt; can be handled with an additional unit?\
+TODO: Explain node group/ &quot;is internal&quot; properly</p><h3 id="Node-injection-1"><a class="docs-heading-anchor" href="#Node-injection-1">Node injection</a><a class="docs-heading-anchor-permalink" href="#Node-injection-1" title="Permalink"></a></h3><p>The node injection itself represents all local production and consumption, represented by the sum of all <span>$unit_{flows}$</span>:</p><div>\[\begin{aligned}
+&amp; node_{injection}(n,s,t) \\
+&amp; == \\
+&amp; + \sum_{\substack{(u,n&#39;,d_{in},s,t) \in ind(unit_{flow}): \\ d_{out} == :to\_node}}
+ unit_{flow}(u,n&#39;,d_{in},s,t)\\
+&amp; - \sum_{\substack{(u,n&#39;,d_{out},s,t) \in ind(unit_{flow}): \\ d_{out} == :from\_node}}
+ unit_{flow}(u,n&#39;,d_{out},s,t)\\
+&amp; - demand(n,s,t)\\
+&amp; \forall (n,s,t) \in ind(node_{stochastic\_time})
+\end{aligned}\]</div><h3 id="Node-injection-w-storage-capability-1"><a class="docs-heading-anchor" href="#Node-injection-w-storage-capability-1">Node injection w storage capability</a><a class="docs-heading-anchor-permalink" href="#Node-injection-w-storage-capability-1" title="Permalink"></a></h3><p>If a node is to represent a storage, the constraint translates to:</p><div>\[\begin{aligned}
+&amp; node_{injection}(n,s,t) \\
+&amp; == \\
+&amp; (node_{state}(n, s, t\_before)\\
+&amp; - node_{state}(n, s, t) \cdot p_{state\_coeff}(n, t)) \\
+&amp;   \cdot \Delta(t\_after) \\
+&amp;  - node_{state}(n, s, t) \cdot p_{frac\_state\_loss}(n, t) \\
+&amp;  + \sum_{\substack{(n2,s,t) \in ind(node_{state}): \\ \exists diff\_coeff(n2,n)}}
+node_{state}(n2,s,t)\\
+&amp; - \sum_{\substack{(n2,s,t) \in ind(node_{state}): \\ \exists diff\_coeff(n,n2)}}
+node_{state}(n2,s,t)\\
+&amp; + \sum_{\substack{(u,n&#39;,d_{in},s,t) \in ind(unit_{flow}): \\ d_{out} == :to\_node}}
+ unit_{flow}(u,n&#39;,d_{in},s,t)\\
+&amp; - \sum_{\substack{(u,n&#39;,d_{out},s,t) \in ind(unit_{flow}): \\ d_{out} == :from\_node}}
+ unit_{flow}(u,n&#39;,d_{out},s,t)\\
+&amp; - demand(n,s,t)\\
+&amp; \forall (n,s,t) \in ind(node_{stochastic\_time}) : has\_state(n)\\
+\end{aligned}\]</div><h3 id="Node-state-capacity-1"><a class="docs-heading-anchor" href="#Node-state-capacity-1">Node state capacity</a><a class="docs-heading-anchor-permalink" href="#Node-state-capacity-1" title="Permalink"></a></h3><p>To limit the storage content, the <span>$node_{state}$</span> variable needs be constrained by the following equation:</p><div>\[\begin{aligned}
+&amp; node_{state}(n, s, t)\\
+&amp; &lt;= p_{node_{state\_cap}} \\
+&amp; \forall (n,s,t) \in ind(node_{stochastic\_time}) : has\_state(n)\\
+\end{aligned}\]</div><p>The discharging and charging behavior of storage nodes can be described through unit(s), representing the link between the storage node and the supply node. Note that the dis-/charging efficiencies and capacities are properties of these units. See <a href="#Define-unit/technology-capacity">Define unit/technology capacity</a> and <a href="#Fixed-ratio-between-output-and-input-unit_{flow}s">Conversion constraint</a></p><p>TODO: investment storages</p><h2 id="Unit-operation-1"><a class="docs-heading-anchor" href="#Unit-operation-1">Unit operation</a><a class="docs-heading-anchor-permalink" href="#Unit-operation-1" title="Permalink"></a></h2><h3 id="Static-constraints-1"><a class="docs-heading-anchor" href="#Static-constraints-1">Static constraints</a><a class="docs-heading-anchor-permalink" href="#Static-constraints-1" title="Permalink"></a></h3><h4 id="Conversion-constraint-/-limiting-flow-shares-inprocess-/-relationship-in-process-1"><a class="docs-heading-anchor" href="#Conversion-constraint-/-limiting-flow-shares-inprocess-/-relationship-in-process-1">Conversion constraint / limiting flow shares inprocess / relationship in process</a><a class="docs-heading-anchor-permalink" href="#Conversion-constraint-/-limiting-flow-shares-inprocess-/-relationship-in-process-1" title="Permalink"></a></h4><p>Between the different flows, relationships can be imposed. The most simple relationship is a linear relationship between input and output nodes/node groups (similar to TIMES EQ PTRANS). Whenever there is only a single input node and a single output node, this relationship relates to the notion of an efficiency. This equation can for instance also be used to relate emissions to input primary fuel flows. In the most general form of the equation, two node groups are defined (an input node group <span>$ng_{in}$</span> and an output node group <span>$ng_{out}$</span>), and a linear relationship is expressed between both node groups. Note that whenever the relationship is specified between groups of multiple nodes, there remains a degree of freedom regarding the composition of the input node flows within group <span>$ng_{in}$</span>  and the output node flows within group <span>$ng_{out}$</span>.</p><h5 id="Fixed-ratio-between-output-and-input-unit_{flow}s-1"><a class="docs-heading-anchor" href="#Fixed-ratio-between-output-and-input-unit_{flow}s-1">Fixed ratio between output and input <span>$unit_{flow}$</span>s</a><a class="docs-heading-anchor-permalink" href="#Fixed-ratio-between-output-and-input-unit_{flow}s-1" title="Permalink"></a></h5><p>The constrained given below enforces a fixed ratio between outgoing and incoming <span>$unit_{flows}$</span>. The constrained is only triggered, if the parameter <code>p_{fix_ratio_out_in_unit_flow(unit__node__node= u, ng_out, ng_in)}</code> is defined.</p><div>\[\begin{aligned}
+&amp; \sum_{\substack{(u,n,d,s,t_{out}) \in ind(unit_{flow}): \\ (u,n,d,t_{out}) \, \in \, (u,ng_{out},:from\_node,t)}} unit_{flow}(u,n,d,s,t_{out}) \cdot \Delta t_{out} \\
+&amp; == p_{fix\_ratio\_out\_in\_unit_{flow}}(u,ng_{out},ng_{in},t) \\
+&amp; \cdot \sum_{\substack{(u,n,d,s,t_{in}) \in ind(unit_{flow}):\\ (u,n,d,t_{in}) \in (u,ng_{in},:to\_node,t)}} unit_{flow}(u,n,d,s,t_{in}) \cdot \Delta t_{in} \\
+&amp; \forall (u, ng_{out}, ng_{in}) \in ind(p_{fix\_ratio\_out\_in\_unit_{flow}}), \forall t \in timeslices, \forall s \in stochasticpath
+\end{aligned}\]</div><p>This constraint can be extended by a right-hand side constant associated with the <span>$units_{on}$</span> status of the unit <span>$u$</span>.</p><div>\[\begin{aligned}
+&amp; \sum_{\substack{(u,n,d,s,t_{out}) \in ind(unit_{flow}): \\ (u,n,d,s,t_{out}) \, \in \, (u,ng_{out},:from\_node,s,t)}} unit_{flow}(u,n,d,s,t_{out}) \cdot \Delta t_{out} \\
+&amp; ==  p_{fix\_ratio\_out\_in\_unit_{flow}}(u,ng_{out},ng_{in},t) \\ &amp; \cdot \sum_{\substack{(u,n,d,s,t_{in}) \in ind(unit_{flow}):\\ (u,n,d,s,t_{in}) \in (u,ng_{in},:to\_node,s,t)}} unit_{flow}(u,n,d,s,t_{in}) \cdot \Delta t_{in} \\
+&amp; + p_{coeff_{units_{on}}}(u,ng_{out},ng_{in},t) \\
+&amp; \sum_{\substack{(u,s,t_{units_{on}}) \in ind(units_{on}):\\ &amp; (u,s,t_{units_{on}} \in (u,s,t)}} units_{on}(u,s,t_{units_{on}}) \cdot \\
+&amp; \min(\Delta t_{units_{on}},\Delta t) \\
+&amp; \forall (u, ng_{out}, ng_{in}) \in ind(p_{fix\_ratio\_out\_in\_unit_{flow}}), \\
+&amp; \forall t \in timeslices, \forall s \in stochasticpath
+\end{aligned}\]</div><p>TO DO: add other ratio cases max,min, outout,inin</p><h4 id="Define-unit/technology-capacity-1"><a class="docs-heading-anchor" href="#Define-unit/technology-capacity-1">Define unit/technology capacity</a><a class="docs-heading-anchor-permalink" href="#Define-unit/technology-capacity-1" title="Permalink"></a></h4><p>In a multi-commodity setting, there can be different commodities entering/leaving a certain technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.), emissions, or other commodities (e.g., water, steel). The capacity of the unit must be specified for at least one of the connected nodes, and induces a constraint on the maximum commodity flows to this location in each time step. When desirable, the capacity can be specified for a number of nodes. Note that the capacity can be specified both for input and output nodes.</p><div>\[\begin{aligned}
+&amp; \sum_{\substack{(u,n,d,s,t&#39;) \in ind(unit_{flow}): \\ (u,n,d,t&#39;) \, \in \, (u,ng,d,t)}} unit_{flow}(u,n,d,s,t&#39;) \cdot \Delta t&#39; \\
+&amp; &lt;= p_{unit\_capacity}(u,ng,d,t) \\
+&amp;  \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
+&amp;  \cdot \sum_{\substack{(u,s,t_{units_{on}}) \in ind(units_{on}):\\ \\ &amp; (u,\Delta t_{units_{on}} \in (u,t)}} units_{on}(u,s,t_{units_{on}}) \cdot \min(t_{units_{on}},\Delta t) \\
+&amp; \forall (u,ng,d) \in ind(p_{unit\_capacity}), \forall t \in timeslices, \forall s \in stochasticpath
+\end{aligned}\]</div><h3 id="Dynamic-constraints-1"><a class="docs-heading-anchor" href="#Dynamic-constraints-1">Dynamic constraints</a><a class="docs-heading-anchor-permalink" href="#Dynamic-constraints-1" title="Permalink"></a></h3><h4 id="Commitment-constraints-1"><a class="docs-heading-anchor" href="#Commitment-constraints-1">Commitment constraints</a><a class="docs-heading-anchor-permalink" href="#Commitment-constraints-1" title="Permalink"></a></h4><p>For modeling certain technologies/units, it is important to not only have <span>$unit_{flow}$</span> variables of different commodities, but also model the online (&quot;commitment&quot;) status of the unit/technology at every time step. Therefore, an additional variable <span>$units_{on}$</span> is introduced. This variable represents the number of online units of that technology (for a normal unit commitment model, this variable might be a binary, for investment planning purposes, this might also be an integer or even a continuous variable). Commitment variables will be introduced by the following constraints (with corresponding parameters):</p><ul><li>constraint on <code>units_on</code></li><li>constraint on <code>units_available</code></li><li>constraint on the unit state transition</li><li>constraint on the minimum operating point</li><li>constraint on minimum down time</li><li>constraint on minimum up time</li><li>constraint on ramp rates</li></ul><p>(TODO: add references to julia constraints and chapters in docs)</p><h5 id="Constraint-on-units_on-and-units_available-1"><a class="docs-heading-anchor" href="#Constraint-on-units_on-and-units_available-1">Constraint on <code>units_on</code> and <code>units_available</code></a><a class="docs-heading-anchor-permalink" href="#Constraint-on-units_on-and-units_available-1" title="Permalink"></a></h5><p>The number of online units need to be restricted to the number of available units:</p><div>\[\begin{aligned}
+&amp;  units_{on}(u,s,t) \\
+&amp; &lt;= units_{available}(u,s,t) \\
+&amp; \forall (u,s,t) \in ind(units_{on})
+\end{aligned}\]</div><p>The number of available units itself is constrained by the parameter <span>$p_{number\_of\_units}$</span> and the variable number of invested unit ()<span>$units_{invested\_available}$</span>):</p><div>\[\begin{aligned}
+&amp; units_{available}(u,s,t) \\
+&amp; == p_{unit_{availability\_factor}}(u,s,t) \\
+&amp; \cdot (p_{number\_of\_units}(u,s,t) \\
+&amp; + \sum_{(u,s,t) in ind(units_{invested\_available})} units_{invested\_available}(u,s,t) ) \\
+&amp; \forall (u,s,t) \in ind(units_{available})
+\end{aligned}\]</div><p>The investment formulation is described in chapter <a href="#Investments">Investments</a>. (TODO)</p><p>The units on status is furtheron constraint by shutting down and starting up actions. This transition is defined as follows:</p><div>\[\begin{aligned}
+&amp; units_{on}(u,s,t_{after}) \\
+&amp; - units_{started\_up}(u,s,t_{after}) \\
+&amp; + units_{shut\_down}(u,s,t_{after}) \\
+&amp; == units_{on}(u,s,t_{before}) \\
+&amp; \forall (u,s,t_{after}) \in ind(units_{on}), \\
+&amp; \forall t_{before} \in t\_before\_t(t_{after}) : t_{before} \in ind(units_{on}),\\
+\end{aligned}\]</div><h5 id="Constraint-on-minimum-operating-point-1"><a class="docs-heading-anchor" href="#Constraint-on-minimum-operating-point-1">Constraint on minimum operating point</a><a class="docs-heading-anchor-permalink" href="#Constraint-on-minimum-operating-point-1" title="Permalink"></a></h5><p>The minimum operating point of a unit can be based on the <span>$unit_{flow}$</span>&#39;s of input or output nodes/node groups ng:</p><div>\[\begin{aligned}
+&amp; \sum_{\substack{(u,n,d,s,t&#39;) \in ind(unit_{flow}): \\ (u,n,d,t&#39;) \, \in \, (u,ng,d,t)}} unit_{flow}(u,n,d,s,t&#39;) \cdot \Delta t&#39; \\
+&amp; &gt;= p_{minimum\_operating\_point}(u,ng,d,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,t) \\
+&amp;  \cdot \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
+&amp;  \cdot \sum_{\substack{(u,s,t_{units_{on}}) \in ind(units_{on}):\\ \\ &amp; (u,\Delta t_{units_{on}} \in (u,t)}} units_{on}(u,s,t_{units_{on}}) \cdot \min(t_{units_{on}},\Delta t) \\
+&amp; \forall (u,ng,d) \in ind(p_{minimum\_operating\_point}), \forall t \in timeslices, \forall s \in stochasticpath
+\end{aligned}\]</div><h5 id="Minimum-down-time-(basic-version)-1"><a class="docs-heading-anchor" href="#Minimum-down-time-(basic-version)-1">Minimum down time (basic version)</a><a class="docs-heading-anchor-permalink" href="#Minimum-down-time-(basic-version)-1" title="Permalink"></a></h5><div>\[\begin{aligned}
+&amp; units_{available}(u,s,t) \\
+&amp; - units_{on}(u,s,t) \\
+&amp; &gt;= \sum_{\substack{(u,s,t&#39;) \in ind(units_{on}): \\ t&#39; &gt;=t-p_{min\_down\_time} &amp;&amp; t&#39; &lt;= t}}
+units_{shut\_down}(u,s,t&#39;) \\
+&amp; \forall (u,s,t) \in ind(units_{on})\\
+\end{aligned}\]</div><p>This constraint can be extended to the use reserves. See <a href="#reserve_constraints">Reserve constraints</a></p><h5 id="Minimum-up-time-(basic-version)-1"><a class="docs-heading-anchor" href="#Minimum-up-time-(basic-version)-1">Minimum up time (basic version)</a><a class="docs-heading-anchor-permalink" href="#Minimum-up-time-(basic-version)-1" title="Permalink"></a></h5><div>\[\begin{aligned}
+&amp; units_{on}(u,s,t) \\
+&amp; &gt;= \sum_{\substack{(u,s,t&#39;) \in ind(units_{on}): \\ t&#39; &gt;=t-p_{min\_up\_time} &amp;&amp; t&#39; &lt;= t}}
+units_{started\_up}(u,s,t&#39;) \\
+&amp; \forall (u,s,t) \in ind(units_{on})\\
+\end{aligned}\]</div><p>This constraint can be extended to the use reserves. See <a href="#reserve_constraints">Reserve constraints</a></p><h4 id="Ramping-and-reserve-constraints-1"><a class="docs-heading-anchor" href="#Ramping-and-reserve-constraints-1">Ramping and reserve constraints</a><a class="docs-heading-anchor-permalink" href="#Ramping-and-reserve-constraints-1" title="Permalink"></a></h4><p>To include ramping and reserve constraints, it is a pre requisit that minimum operation points and maximum capacity constraints are enforced as described above.</p><p>For dispatchable units, additional ramping constraints can be introduced. First, the upward ramp of a unit is split into online, start-up and non-spinning ramping contributions.</p><div>\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})\\ !is\_reserve(n)}} unit_{flow}(u,n,d,s,t_{after}) \\
+&amp; + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})\\ is\_reserve(n) \&amp;\&amp; upward\_reserve(n)}} unit_{flow}(u,n,d,s,t_{after}) \\
+&amp; - \sum_{\substack{(u,n,d,s,t_{before}) \in ind(unit_{flow}): \\ (u,n,d,t_{before}) \, \in \, (u,n,d,t_{before})\\ !is\_reserve(n)}} unit_{flow}(u,n,d,s,t_{before}) \\
+&amp; &lt;=  \\
+&amp; + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{ramp\_up\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{ramp\_up\_flow}(u,n,d,s,t_{after})  \\
+&amp; + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{start\_up\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{start\_up\_flow}(u,n,d,s,t_{after}) \\
+&amp; + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{non-spinn\_up\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{non-spinn\_up\_flow}(u,n,d,s,t_{after}) \\
+&amp; \forall (u,n,d,s,t_{after}) \in ind(\\
+&amp; unit_{ramp\_\{up\}\_flow},\\
+&amp; unit_{start\_up\_flow},\\
+&amp; unit_{non-spinn\_\{up\}\_flow}) \\
+&amp; \forall t_{before} \in t\_before\_t(t_{after}) : t_{before} \in ind(unit_{flow}) \\
+\end{aligned}\]</div><p>Similarly, the downward ramp of a unit is split into online, shut-down and non-spinning downward ramping contributions.</p><div>\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t_{before}) \in ind(unit_{flow}): \\ (u,n,d,t_{before}) \, \in \, (u,n,d,t_{before})\\ !is\_reserve(n)}} unit_{flow}(u,n,d,s,t_{before}) \\
+&amp; - \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after}) \\ !is\_reserve(n)}} unit_{flow}(u,n,d,s,t_{after}) \\
+&amp; + \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after}) \\ is\_reserve(n) \&amp;\&amp; downward\_reserve(n)}} unit_{flow}(u,n,d,s,t_{after}) \\
+&amp; &lt;=  \\
+&amp; \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{ramp\_down\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{ramp\_down\_flow}(u,n,d,s,t_{after}) \\
+&amp; \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{shut\_down\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{shut\_down\_flow}(u,n,d,s,t_{after}) \\
+&amp; \sum_{\substack{(u,n,d,s,t_{after}) \in ind(unit_{non-spinn\_down\_flow}): \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} unit_{non-spinn\_down\_flow}(u,n,d,s,t_{after}) \\
+&amp; \forall (u,n,d,s,t_{after}) \in ind(\\
+&amp; unit_{ramp\_\{down\}\_flow},\\
+&amp; unit_{shut\_down\_flow},\\
+&amp; unit_{non-spinn\_\{down\}\_flow}) \\
+&amp; \forall t_{before} \in t\_before\_t(t_{after}) : t_{before} \in ind(unit_{flow}) \\
+\end{aligned}\]</div><h5 id="Constraint-on-spinning-upwards-ramp_up-1"><a class="docs-heading-anchor" href="#Constraint-on-spinning-upwards-ramp_up-1">Constraint on spinning upwards ramp_up</a><a class="docs-heading-anchor-permalink" href="#Constraint-on-spinning-upwards-ramp_up-1" title="Permalink"></a></h5><p>The online ramp up ability of a unit can be constraint by the <a href="mathematical_formulation/@ref"><code>ramp_up_limit</code></a>, expressed as a share of the <a href="mathematical_formulation/@ref"><code>unit_capacity</code></a>. With this constraint, ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced.</p><div>\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{ramp\_up\_flow}): \\ (u,n,d) \, \in \, (u,ng,d)}} unit_{ramp\_up\_flow}(u,n,d,s,t)  \\
+&amp; &lt;= \\
+&amp; + \sum_{\substack{(u,s,t&#39;) \in ind(units_{on}): \\ (u,s) \in (u,s) \\ t&#39;\in t\_overlap\_t(t)}}
+ (units_{on}(u,s,t&#39;)
+ - units_{started\_up}(u,s,t&#39;)) \\
+&amp; \cdot p_{ramp\_up\_limit}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,t) \\
+&amp; \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
+&amp; \forall (u,ng,d,s,t) \in ind(constraint\_ramp\_up)\\
+\end{aligned}\]</div><h5 id="Constraint-on-upward-start-up-ramp_up-1"><a class="docs-heading-anchor" href="#Constraint-on-upward-start-up-ramp_up-1">Constraint on upward start up ramp_up</a><a class="docs-heading-anchor-permalink" href="#Constraint-on-upward-start-up-ramp_up-1" title="Permalink"></a></h5><p>This constraint enforces a limit on the unit ramp during startup process. Usually, we consider only non-balancing commodities. However, it is possible to include them, by adding them to the ramp defining node <code>ng</code>.</p><div>\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{start\_up\_flow}): \\ (u,n,d) \, \in \, (u,ng,d)}} unit_{start\_up\_flow}(u,n,d,s,t)  \\
+&amp; &lt;= \\
+&amp; + \sum_{\substack{(u,s,t&#39;) \in ind(units_{on}): \\ (u,s) \in (u,s) \\ t&#39;\in t\_overlap\_t(t)}}
+&amp; \cdot p_{max\_startup\_ramp}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,t) \\
+&amp; \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
+&amp; \forall (u,ng,d,s,t) \in ind(constraint\_start\_up\_ramp)\\
+\end{aligned}\]</div><h5 id="Constraint-on-upward-non-spinning-start-up-ramps-1"><a class="docs-heading-anchor" href="#Constraint-on-upward-non-spinning-start-up-ramps-1">Constraint on upward non-spinning start up ramps</a><a class="docs-heading-anchor-permalink" href="#Constraint-on-upward-non-spinning-start-up-ramps-1" title="Permalink"></a></h5><p>For non-spinning reserves, offline units can be scheduled for reserve provision if they have recovered their minimum down time. If nonspinning reserves are used the minimum down-time constraint becomes:</p><div>\[\begin{aligned}
+&amp; units_{available}(u,s,t) \\
+&amp; - units_{on}(u,s,t) \\
+&amp; &gt;= \sum_{\substack{(u,s,t&#39;) \in ind(units_{on}): \\ t&#39; &gt;t-p_{min\_down\_time} &amp;&amp; t&#39; &lt;= t}}
+units_{shut\_down}(u,s,t&#39;) \\
+&amp; \sum_{\substack{(u,n,s,t) \in ind(nonspin\_units_{starting\_up}): \\ t \in t\_overlaps\_t(t) \\ (u,s) \in (u,s)}}
+  nonspin\_units_{starting\_up}(u,n,s,t)
+&amp; \forall (u,s,t) \in ind(units_{on})\\
+\end{aligned}\]</div><p>TODO: add correct forall, how to simplify?</p><p>The ramp a non-spinning unit can provide is constraint through the <a href="mathematical_formulation/@ref"><code>max_res_startup_ramp</code></a>.</p><div>\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{non-spinn\_\{up\}\_flow}): \\ (u,n,d,s,t)  \in (u,n,d,s,t)}} unit_{non-spinn\_\{up\}\_flow}(u,n,d,s,t)  \\
+&amp; &lt;= \\
+&amp; + \sum_{\substack{(u,n,s,t) \in ind(nonspin\_units_{starting\_up}): \\ (u,n,s,t)  \in (u,n,s,t)}} nonspin\_units_{starting\_up}(u,n,s,t)  \\
+&amp; \cdot p_{max\_res\_startup\_ramp}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,t) \\
+&amp; \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
+&amp; \forall (u,ng,d,s,t) \in ind(constraint\_max\_nonspin\_ramp)\\
+\end{aligned}\]</div><h5 id="Constraint-on-spinning-downward-ramps-1"><a class="docs-heading-anchor" href="#Constraint-on-spinning-downward-ramps-1">Constraint on spinning downward ramps</a><a class="docs-heading-anchor-permalink" href="#Constraint-on-spinning-downward-ramps-1" title="Permalink"></a></h5><div>\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{ramp\_down\_flow}): \\ (u,n,d) \, \in \, (u,ng,d)}} unit_{ramp\_down\_flow}(u,n,d,s,t)  \\
+&amp; &lt;= \\
+&amp; + \sum_{\substack{(u,s,t&#39;) \in ind(units_{on}): \\ (u,s) \in (u,s) \\ t&#39;\in t\_overlap\_t(t)}}
+ (units_{on}(u,s,t&#39;)
+ - units_{started\_up}(u,s,t&#39;)) \\
+&amp; \cdot p_{ramp\_down\_limit}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,t) \\
+&amp; \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
+&amp; \forall (u,ng,d,s,t) \in ind(constraint\_ramp\_down)\\
+\end{aligned}\]</div><h5 id="Constraint-on-downward-shut-down-ramps-1"><a class="docs-heading-anchor" href="#Constraint-on-downward-shut-down-ramps-1">Constraint on downward shut-down ramps</a><a class="docs-heading-anchor-permalink" href="#Constraint-on-downward-shut-down-ramps-1" title="Permalink"></a></h5><p>This constraint enforces a limit on the unit ramp during shutdown process. Usually, we consider only non-balancing commodities. However, it is possible to include them, by adding them to the ramp defining node <code>ng</code>.</p><div>\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{shut\_down\_flow}): \\ (u,n,d) \, \in \, (u,ng,d)}} unit_{shut\_down\_flow}(u,n,d,s,t)  \\
+&amp; &lt;= \\
+&amp; + \sum_{\substack{(u,s,t&#39;) \in ind(units_{on}): \\ (u,s) \in (u,s) \\ t&#39;\in t\_overlap\_t(t)}} units_{shut\_down}(u,s,t&#39;) \\
+&amp; \cdot p_{max\_shutdown\_ramp}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,t) \\
+&amp; \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
+&amp; \forall (u,ng,d,s,t) \in ind(constraint\_shut\_down\_ramp)\\
+\end{aligned}\]</div><h5 id="Constraint-on-downward-non-spinning-shut-down-ramps-1"><a class="docs-heading-anchor" href="#Constraint-on-downward-non-spinning-shut-down-ramps-1">Constraint on downward non-spinning shut-down ramps</a><a class="docs-heading-anchor-permalink" href="#Constraint-on-downward-non-spinning-shut-down-ramps-1" title="Permalink"></a></h5><p>For non-spinning downward reserves, online units can be scheduled for reserve provision through shut down if they have recovered their minimum up time. If nonspinning reserves are used the minimum up-time constraint becomes:</p><div>\[\begin{aligned}
+&amp; units_{on}(u,s,t) \\
+&amp; &gt;= \sum_{\substack{(u,s,t&#39;) \in ind(units_{on}): \\ t&#39; &gt;t-p_{min\_up\_time} &amp;&amp; t&#39; &lt;= t}}
+units_{started\_up}(u,s,t&#39;) \\
+&amp; \sum_{\substack{(u,n,s,t) \in ind(nonspin\_units_{shutting\_down}): \\ t \in t\_overlaps\_t(t) \\ (u,s) \in (u,s)}}
+  nonspin\_units_{shutting\_down}(u,n,s,t) \\
+&amp; \forall (u,s,t) \in ind(units_{on})\\
+\end{aligned}\]</div><p>TODO: add correct forall, how to simplify?</p><p>The ramp a non-spinning unit can provide is constraint through the <a href="mathematical_formulation/@ref"><code>max_res_shutdown_ramp</code></a>.</p><div>\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in ind(unit_{non-spinn\_\{down\}\_flow}): \\ (u,n,d,s,t)  \in (u,n,d,s,t)}} unit_{non-spinn\_\{down\}\_flow}(u,n,d,s,t)  \\
+&amp; &lt;= \\
+&amp; + \sum_{\substack{(u,n,s,t) \in ind(nonspin\_units_{shutting\_down}): \\ (u,n,s,t)  \in (u,n,s,t)}} nonspin\_units_{shutting\_down}(u,n,s,t)  \\
+&amp; \cdot p_{max\_res\_shutdown\_ramp}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,t) \\
+&amp; \cdot p_{conversion\_capacity\_to\_unit_{flow}}(u,ng,d,t) \\
+&amp; \forall (u,ng,d,s,t) \in ind(constraint\_max\_nonspin\_ramp)\\
+\end{aligned}\]</div><h5 id="Constraint-on-minimum-node-state-for-reserve-provision-1"><a class="docs-heading-anchor" href="#Constraint-on-minimum-node-state-for-reserve-provision-1">Constraint on minimum node state for reserve provision</a><a class="docs-heading-anchor-permalink" href="#Constraint-on-minimum-node-state-for-reserve-provision-1" title="Permalink"></a></h5><p>Storage nodes can also contribute to the provision of reserves. The amount of balancing contributions is limited by the ramps of the sotrage unit (see above) and by the node state:</p><div>\[\begin{aligned}
+&amp; node_{state}(n_{stor}, s, t)\\
+&amp; &gt;= p_{node_{state\_min}} \\
+&amp; + \sum_{\substack{(u,n_{res},d,s,t) \in ind(unit_{flow}): \\ u \in ind(unit_{flow};n=n_{stor}) \\ is\_reserve\_node(n_{res}) }} unit_{flow}(u,n_{res},d,s,t)  \\
+&amp; \cdot p_{minimum\_reserve\_activation\_time}(n_{res}) \\
+&amp; \forall (n_{stor},s,t) \in ind(node_{stochastic\_time}) : has\_state(n)\\
+\end{aligned}\]</div><p>[comment]: &lt;&gt; (TODO: %substract non-spinning downward; make this an energy not power balance (add delat t) %minimum up time (extended) %minimum down time (extended) %constraints max/min non spin ramp up % constraint res minimum node state %add specifics on how to define e.g. nodal balance, connection capacities for %balancing capacities %todo add new downward equations %add additional constraints on unit capacity)</p><h4 id="Reserve-constraints-1"><a class="docs-heading-anchor" href="#Reserve-constraints-1">Reserve constraints</a><a class="docs-heading-anchor-permalink" href="#Reserve-constraints-1" title="Permalink"></a></h4><h3 id="Bounds-on-commodity-flows-1"><a class="docs-heading-anchor" href="#Bounds-on-commodity-flows-1">Bounds on commodity flows</a><a class="docs-heading-anchor-permalink" href="#Bounds-on-commodity-flows-1" title="Permalink"></a></h3><h2 id="Network-constraints-1"><a class="docs-heading-anchor" href="#Network-constraints-1">Network constraints</a><a class="docs-heading-anchor-permalink" href="#Network-constraints-1" title="Permalink"></a></h2><h3 id="Network-representation-1"><a class="docs-heading-anchor" href="#Network-representation-1">Network representation</a><a class="docs-heading-anchor-permalink" href="#Network-representation-1" title="Permalink"></a></h3><h3 id="Connection-capacity-bounds-1"><a class="docs-heading-anchor" href="#Connection-capacity-bounds-1">Connection capacity bounds</a><a class="docs-heading-anchor-permalink" href="#Connection-capacity-bounds-1" title="Permalink"></a></h3><h2 id="Investments-1"><a class="docs-heading-anchor" href="#Investments-1">Investments</a><a class="docs-heading-anchor-permalink" href="#Investments-1" title="Permalink"></a></h2><h3 id="Capacity-transfer-1"><a class="docs-heading-anchor" href="#Capacity-transfer-1">Capacity transfer</a><a class="docs-heading-anchor-permalink" href="#Capacity-transfer-1" title="Permalink"></a></h3><h3 id="Early-retirement-of-capacity-1"><a class="docs-heading-anchor" href="#Early-retirement-of-capacity-1">Early retirement of capacity</a><a class="docs-heading-anchor-permalink" href="#Early-retirement-of-capacity-1" title="Permalink"></a></h3><h2 id="User-constraints-1"><a class="docs-heading-anchor" href="#User-constraints-1">User constraints</a><a class="docs-heading-anchor-permalink" href="#User-constraints-1" title="Permalink"></a></h2></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../objective_function/">« Objective</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Friday 30 October 2020 09:30">Friday 30 October 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
