@@ -160,6 +160,18 @@ function fix_variables!(m::Model)
     end
 end
 
+
+"""
+Unfix a variable previously fixed to values specified by the `fix_value` parameter function.
+"""
+function _unfix_variable!(m::Model, name::Symbol, indices::Function)
+    var = m.ext[:variables][name]
+    for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+        unfix(var[ind])        
+    end
+end
+
+
 """
 Add SpineOpt constraints to the given model.
 """
@@ -222,7 +234,7 @@ Initialize the given model for SpineOpt: add variables, fix the necessary variab
 """
 function init_model!(m; add_constraints=m -> nothing, log_level=3)
     
-    @timelog log_level 2 "Preprocessing model data structure...\n" preprocess_model_data_structure(m)
+    @timelog log_level 2 "Preprocessing model specific data structure...\n" preprocess_model_data_structure(m)
     @timelog log_level 2 "Adding variables...\n" add_variables!(m; log_level=log_level)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(

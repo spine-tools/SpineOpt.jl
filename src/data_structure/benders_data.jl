@@ -19,8 +19,8 @@
 
 function process_master_problem_solution(mp)    
     for u in indices(canidate_units)
-        time_indices = [start(inds.t) for inds in mp_units_invested_available_indices(unit=u)] 
-        vals = [m.ext[:values][:mp_units_invested_available][inds] for inds in mp_units_invested_available_indices(unit=u)] 
+        time_indices = [start(inds.t) for inds in units_invested_available_indices(mp; unit=u)] 
+        vals = [m.ext[:values][:mp_units_invested_available][inds] for inds in units_invested_available_indices(mp; unit=u)] 
         unit.parameter_values[u][:fix_units_invested_available] = parameter_value(TimeSeries(time_indices, vals, false, false))
         unit__benders_iteration.parameter_values[(unit=u, benders_iteration=current_bi)][:units_invested_available_bi] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end 
@@ -31,8 +31,15 @@ function process_subproblem_solution(m, j)
     save_sp_marginal_values(m)
     save_sp_objective_value_bi(m)    
     current_bi = add_benders_iteration(j)    
+    unfix_mp_variables()
 end
 
+
+function unfix_mp_variables()    
+    for u in indices(canidate_units)    
+        unit.parameter_values[u][:fix_units_invested_available] = unit.parameter_values[u][:starting_fix_units_invested_available]    
+    end 
+end
 
 function add_benders_iteration(j)
     new_bi = add_object!(benders_iteration, Symbol(string("bi_", j)))    

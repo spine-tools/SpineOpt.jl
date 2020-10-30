@@ -547,6 +547,11 @@ function generate_benders_structure()
     units_available_mv = Parameter(:units_available_mv, [unit__benders_iteration])
     units_invested_available_bi = Parameter(:units_invested_available_bi, [unit__benders_iteration])  
     sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])  
+    starting_fix_units_invested_available = Parameter(:starting_fix_units_invested_available, [unit])
+
+    for u in indices(canidate_units)    
+        unit.parameter_values[u][:starting_fix_units_invested_available] = unit.parameter_values[u][:fix_units_invested_available]
+    end 
 
     @eval begin
         benders_iteration = $benders_iteration
@@ -555,10 +560,12 @@ function generate_benders_structure()
         units_invested_available_bi = $units_invested_available_bi
         current_bi = $current_bi
         sp_objective_value_bi = $sp_objective_value_bi
+        starting_fix_units_invested_available = $starting_fix_units_invested_available
         export benders_iteration
         export unit__benders_iteration
         export units_available_mv
         export units_invested_available_bi
         export sp_objective_value_bi
+        export starting_fix_units_invested_available
     end    
 end

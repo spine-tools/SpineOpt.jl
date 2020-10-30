@@ -16,29 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-"""
-    constraint_unit_lifetime_indices(u, s, t0, t)
-
-Gathers the `stochastic_scenario` indices of the `units_invested_available` variable on past time slices determined
-by the `unit_investment_lifetime` parameter.
-"""
-
-
-function constraint_mp_unit_lifetime_indices()
-    unique(
-        (unit=u, stochastic_path=path, t=t)
-        for u in indices(unit_investment_lifetime)
-        for t in mp_time_slice(temporal_block=unit__investment_temporal_block(unit=u))
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in mp_units_invested_available_indices(
-                    unit=u, t=vcat(to_mp_time_slice(TimeSlice(end_(t) - unit_investment_lifetime(unit=u), end_(t))), t),
-                )  
-            )
-        )
-    )
-end
 
 
 """
@@ -71,4 +48,29 @@ function add_constraint_mp_unit_lifetime!(m::Model)
             )
         )
     end
+end
+
+
+"""
+    constraint_unit_lifetime_indices(u, s, t0, t)
+
+Gathers the `stochastic_scenario` indices of the `units_invested_available` variable on past time slices determined
+by the `unit_investment_lifetime` parameter.
+"""
+
+
+function constraint_mp_unit_lifetime_indices()
+    unique(
+        (unit=u, stochastic_path=path, t=t)
+        for u in indices(unit_investment_lifetime)
+        for t in time_slice(temporal_block=unit__investment_temporal_block(unit=u))
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in mp_units_invested_available_indices(
+                    unit=u, t=vcat(to_time_slice(TimeSlice(end_(t) - unit_investment_lifetime(unit=u), end_(t))), t),
+                )  
+            )
+        )
+    )
 end

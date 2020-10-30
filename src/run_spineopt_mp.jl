@@ -85,7 +85,7 @@ m = create_model(with_optimizer, use_direct_model,:spineopt_operations)
 @timelog log_level 2 "Creating operations problem stochastic structure..." generate_stochastic_structure(m)    
 @log log_level 1 "Window 1: $(current_window(m))"
 init_model!(m; add_constraints=add_constraints, log_level=log_level)
-init_model!(mp; add_constraints=add_mp_constraints, log_level=log_level)
+init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
 
 j = 1
 k = 1
@@ -117,9 +117,9 @@ Add SpineOpt Master Problem variables to the given model.
 """
 function add_mp_variables!(m; log_level=3)
     @timelog level3 "- [variable_mp_objective_lowerbound]" add_variable_mp_objective_lowerbound!(m)
-    @timelog level3 "- [variable_mp_units_invested]" add_variable_mp_units_invested!(m)
-    @timelog level3 "- [variable_mp_units_invested_available]" add_variable_mp_units_invested_available!(m)
-    @timelog level3 "- [variable_mp_units_mothballed]" add_variable_mp_units_mothballed!(m)
+    @timelog level3 "- [variable_mp_units_invested]" add_variable_units_invested!(m)
+    @timelog level3 "- [variable_mp_units_invested_available]" add_variable_units_invested_available!(m)
+    @timelog level3 "- [variable_mp_units_mothballed]" add_variable_units_mothballed!(m)
 end
 
 
@@ -127,7 +127,7 @@ end
 Initialise Master Problem.
 """
 function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
-    @timelog log_level 2 "Preprocessing model data structure...\n" preprocess_model_data_structure(m)
+    @timelog log_level 2 "Preprocessing model specific data structure...\n" preprocess_model_data_structure(m)
     @timelog log_level 2 "Adding variables...\n" add_mp_variables!(m; log_level=log_level)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_mp_constraints!(
@@ -143,6 +143,10 @@ Add SpineOpt master problem constraints to the given model.
 function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @logtime level3 "- [constraint_mp_units_invested_cuts]" add_constraint_mp_units_invested_cuts!(m)
     @logtime level3 "- [constraint_mp_objective]" add_constraint_mp_objective!(m)
+
+    @timelog log_level 3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(m)
+    @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
+    @timelog log_level 3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)
 
     # Name constraints
     for (con_key, cons) in m.ext[:constraints]
@@ -164,3 +168,13 @@ function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
     )
     @timelog log_level 2 "Setting MP objective..." set_mp_objective!(m)
 end
+
+
+"""
+Unfix investment variables so they can be solved in Master Problem.
+"""
+
+function unfix_mp_variables(
+    _unfix_variable!(m::Model, name::Symbol, indices::Function)
+)
+
