@@ -60,9 +60,9 @@ function constraint_units_invested_transition_indices(
 )
     unique(
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, tb) in unit__investment_temporal_block(unit=unit, _compact=false)
-        for t_after in time_slice(m; temporal_block=tb, t=t_after)
-        for (t_before, t_after) in t_before_t(m; t_before=t_before, t_after=t_after, _compact=false)
+        for (u, t_before, t_after) in unit_investment_dynamic_time_indices(
+            m; unit=unit, t_before=t_before, t_after=t_after
+        )
         for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=[t_before, t_after])

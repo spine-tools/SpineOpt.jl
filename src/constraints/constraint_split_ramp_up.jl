@@ -85,7 +85,7 @@ function constraint_split_ramp_up_indices(
                 )
             )
         )
-        for (t_before, t_after) in t_before_t(m; t_before=t_before, t_after=t_after, _compact=false)
+        for (n, t_before, t_after) in node_dynamic_time_indices(m; node=n, t_before=t_before, t_after=t_after)
         for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario for ind in unit_flow_indices(

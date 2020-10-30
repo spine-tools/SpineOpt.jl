@@ -49,14 +49,11 @@ to consider this.
 """
 function fix_initial_units_invested_available(m)
     for u in indices(candidate_units)        
-        for tb in unit__investment_temporal_block(unit=u)
-            t_after = first(time_slice(m; temporal_block=tb))            
-            for t_before in t_before_t(m; t_after=t_after)                               
-                if fix_units_invested_available(unit=u, t=t_before, _strict=false) === nothing
-                    unit.parameter_values[u][:fix_units_invested_available] = parameter_value(
-                        TimeSeries([start(t_before)], [0], false, false)
-                    )
-                end
+        for (u, t_before, t_after) in unit_investment_dynamic_time_indices(m; unit=u)
+            if fix_units_invested_available(unit=u, t=t_before, _strict=false) === nothing
+                unit.parameter_values[u][:fix_units_invested_available] = parameter_value(
+                    TimeSeries([start(t_before)], [0], false, false)
+                )
             end
         end
     end
