@@ -366,7 +366,7 @@ function node_dynamic_time_indices(
         (node=n, t_before=tb, t_after=ta)
         for (n, ta) in node_time_indices(m; node=node, t=t_after)
         for (n, tb) in node_time_indices(
-            m; t=map(t->t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
+            m; node=n, t=map(t->t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
         )
     )
 end
@@ -394,7 +394,7 @@ function unit_dynamic_time_indices(m::Model; unit=anything, t_before=anything, t
         (unit=u, t_before=tb, t_after=ta)
         for (u, ta) in unit_time_indices(m; unit=unit, t=t_after)
         for (u, tb) in unit_time_indices(
-            m; t=map(t->t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
+            m; unit=u, t=map(t->t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
         )
     )
 end
@@ -426,7 +426,7 @@ function unit_investment_dynamic_time_indices(
         (unit=u, t_before=tb, t_after=ta)
         for (u, ta) in unit_investment_time_indices(m; unit=unit, t=t_after)
         for (u, tb) in unit_investment_time_indices(
-            m; t=map(t->t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
+            m; unit=u, t=map(t->t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
         )
     )
 end
