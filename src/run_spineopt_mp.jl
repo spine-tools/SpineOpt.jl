@@ -55,7 +55,6 @@ function run_spineopt_mp(
     generate_missing_items()
 end
 @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
-@timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
 rerun_spineopt(
     url_out;
     with_optimizer=with_optimizer,
@@ -79,6 +78,9 @@ function rerun_spineopt_mp(
 outputs = Dict()
 mp = create_model(with_optimizer, use_direct_model,:spineopt_master)
 m = create_model(with_optimizer, use_direct_model,:spineopt_operations)
+@timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(m)
+@timelog log_level 2 "Preprocessing master problem model specific data structure...\n" preprocess_model_data_structure(mp)
+@timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
 @timelog log_level 2 "Creating master problem temporal structure..." generate_temporal_structure!(mp)
 @timelog log_level 2 "Creating operations problem temporal structure..." generate_temporal_structure!(m)
 @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure(mp)
@@ -126,8 +128,7 @@ end
 """
 Initialise Master Problem.
 """
-function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
-    @timelog log_level 2 "Preprocessing model specific data structure...\n" preprocess_model_data_structure(m)
+function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)    
     @timelog log_level 2 "Adding variables...\n" add_mp_variables!(m; log_level=log_level)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_mp_constraints!(
@@ -147,7 +148,7 @@ function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(m)
     @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
     @timelog log_level 3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)
-    @timelog log_level 3 "= [add_constraint_mp_objective]" add_constraint_mp_objective!(m)
+    
 
     # Name constraints
     for (con_key, cons) in m.ext[:constraints]

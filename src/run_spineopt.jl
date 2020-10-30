@@ -54,8 +54,7 @@ function run_spineopt(
         using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
         generate_missing_items()
     end
-    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
-    @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
+    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)    
     rerun_spineopt(
         url_out;
         with_optimizer=with_optimizer,
@@ -78,6 +77,8 @@ function rerun_spineopt(
     )
     outputs = Dict()
     m = create_model(with_optimizer, use_direct_model, :spineopt_operations)
+    @timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(m)
+    @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
     @log log_level 1 "Window 1: $(current_window(m))"
@@ -103,7 +104,7 @@ function create_model(with_optimizer, use_direct_model=false, model_type=:spineo
     )
     
     m = use_direct_model ? direct_model(with_optimizer) : Model(with_optimizer)     
-    m.ext[:instance] = first(model(model_type=:model_type))
+    m.ext[:instance] = first(model(model_type=model_type))
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
     m.ext[:values] = Dict{Symbol,Dict}()
@@ -157,17 +158,6 @@ Fix all variables in the given model to the values computed by the corresponding
 function fix_variables!(m::Model)
     for (name, definition) in m.ext[:variables_definition]
         _fix_variable!(m, name, definition[:indices], definition[:fix_value])
-    end
-end
-
-
-"""
-Unfix a variable previously fixed to values specified by the `fix_value` parameter function.
-"""
-function _unfix_variable!(m::Model, name::Symbol, indices::Function)
-    var = m.ext[:variables][name]
-    for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-        unfix(var[ind])        
     end
 end
 

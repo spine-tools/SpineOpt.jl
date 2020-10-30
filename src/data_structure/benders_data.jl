@@ -18,7 +18,7 @@
 #############################################################################
 
 function process_master_problem_solution(mp)    
-    for u in indices(canidate_units)
+    for u in indices(candidate_units)
         time_indices = [start(inds.t) for inds in units_invested_available_indices(mp; unit=u)] 
         vals = [m.ext[:values][:mp_units_invested_available][inds] for inds in units_invested_available_indices(mp; unit=u)] 
         unit.parameter_values[u][:fix_units_invested_available] = parameter_value(TimeSeries(time_indices, vals, false, false))
@@ -36,10 +36,15 @@ end
 
 
 function unfix_mp_variables()    
-    for u in indices(canidate_units)    
-        unit.parameter_values[u][:fix_units_invested_available] = unit.parameter_values[u][:starting_fix_units_invested_available]    
-    end 
+    for u in indices(candidate_units)
+        if haskey(unit.parameter_values[u], starting_fix_units_invested_available)
+            unit.parameter_values[u][:fix_units_invested_available] = unit.parameter_values[u][:starting_fix_units_invested_available]
+        else
+            delete(unit.parameter_values[u], fix_units_invested_available)
+        end
+    end
 end
+
 
 function add_benders_iteration(j)
     new_bi = add_object!(benders_iteration, Symbol(string("bi_", j)))    
@@ -53,7 +58,7 @@ end
 
 function save_sp_marginal_values(m)              
     inds = keys(m.ext[:marginals][:units_available])    
-    for u in indices(canidate_units)        
+    for u in indices(candidate_units)        
         time_indices = [start(ind.t) for ind in inds if ind.u == u] 
         vals = [m.ext[:marginals][:units_available][ind] for ind in inds if ind.u == u]
         unit__benders_iteration.parameter_values[(unit=u, benders_iteration=current_bi)][:units_available_mv] = parameter_value(TimeSeries(time_indices, vals, false, false))

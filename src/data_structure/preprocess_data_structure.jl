@@ -448,7 +448,7 @@ function expand_model__default_investment_temporal_block(m)
         [
             (unit=u, temporal_block=tb)
             for u in setdiff(indices(candidate_units), unit__investment_temporal_block(temporal_block=anything))
-            for tb in model__default_investment_temporal_block(model=m.ext["instance"])
+            for tb in model__default_investment_temporal_block(model=m.ext[:instance])
         ]
     )
 end
@@ -549,8 +549,10 @@ function generate_benders_structure()
     sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])  
     starting_fix_units_invested_available = Parameter(:starting_fix_units_invested_available, [unit])
 
-    for u in indices(canidate_units)    
-        unit.parameter_values[u][:starting_fix_units_invested_available] = unit.parameter_values[u][:fix_units_invested_available]
+    for u in indices(candidate_units)
+        if haskey(unit.parameter_values[u], :fix_units_invested_available)
+            unit.parameter_values[u][:starting_fix_units_invested_available] = unit.parameter_values[u][:fix_units_invested_available]        
+        end
     end 
 
     @eval begin
