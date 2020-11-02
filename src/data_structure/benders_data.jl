@@ -17,10 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function process_master_problem_solution(mp)    
+function process_master_problem_solution(mp)
     for u in indices(candidate_units)
         time_indices = [start(inds.t) for inds in units_invested_available_indices(mp; unit=u)] 
-        vals = [m.ext[:values][:mp_units_invested_available][inds] for inds in units_invested_available_indices(mp; unit=u)] 
+        vals = [mp.ext[:values][:units_invested_available][inds] for inds in units_invested_available_indices(mp; unit=u)] 
         unit.parameter_values[u][:fix_units_invested_available] = parameter_value(TimeSeries(time_indices, vals, false, false))
         unit__benders_iteration.parameter_values[(unit=u, benders_iteration=current_bi)][:units_invested_available_bi] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end 

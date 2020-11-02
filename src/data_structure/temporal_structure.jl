@@ -449,3 +449,13 @@ function unit_investment_dynamic_time_indices(
         )
     )
 end
+
+
+"""
+    master_time_index(m::Model)
+
+Return the first timeslice of the model when a variable is global in scope within the optimisation model
+"""
+function master_time_index(m::Model)      
+    (t = first(time_slice(m)))
+end

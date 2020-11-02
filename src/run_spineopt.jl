@@ -259,6 +259,7 @@ _variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, J
 Save the value of a variable in a model.
 """
 function _save_variable_value!(m::Model, name::Symbol, indices::Function)
+    @info name
     var = m.ext[:variables][name]
     m.ext[:values][name] = Dict(
         ind => _variable_value(var[ind])

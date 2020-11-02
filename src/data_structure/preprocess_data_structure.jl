@@ -533,7 +533,10 @@ Creates the `benders_iteration` object class. Master problem variables have the 
 benders iteration object is pushed on each master problem iteration.
 """
 function generate_benders_structure()
-    
+   
+    # check that units_invested_available exists as an output and add it if not       
+    #add_object!(output, Object(Symbol("units_invested_available")))
+
     current_bi = Object(Symbol(string("bi_1")))  
     benders_iteration = ObjectClass(:benders_iteration,[current_bi])
         
@@ -545,14 +548,23 @@ function generate_benders_structure()
     )
 
     units_available_mv = Parameter(:units_available_mv, [unit__benders_iteration])
-    units_invested_available_bi = Parameter(:units_invested_available_bi, [unit__benders_iteration])  
+    units_invested_available_bi = Parameter(:units_invested_available_bi, [unit__benders_iteration])    
+    
+    for u in indices(candidate_units)
+        unit__benders_iteration.parameter_values[(u, current_bi)] = Dict()
+        unit__benders_iteration.parameter_values[(u, current_bi)][:units_invested_available_bi] = parameter_value(0)
+        unit__benders_iteration.parameter_values[(u, current_bi)][:units_available_mv] = parameter_value(0)
+    end    
+
     sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])  
+    benders_iteration.parameter_values[current_bi]=Dict()
+    benders_iteration.parameter_values[current_bi][:sp_objective_value_bi] = parameter_value(0)
     starting_fix_units_invested_available = Parameter(:starting_fix_units_invested_available, [unit])
 
     for u in indices(candidate_units)
         if haskey(unit.parameter_values[u], :fix_units_invested_available)
             unit.parameter_values[u][:starting_fix_units_invested_available] = unit.parameter_values[u][:fix_units_invested_available]        
-        end
+        end        
     end 
 
     @eval begin
