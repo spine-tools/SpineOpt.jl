@@ -25,7 +25,8 @@ using JuMP
 using PyCall
 
 import SpineOpt: time_slice, to_time_slice, history_time_slice, t_in_t, t_before_t, t_overlaps_t,
-    generate_temporal_structure!, roll_temporal_structure!
+    generate_temporal_structure!, roll_temporal_structure!, unit_dynamic_time_indices,
+    unit_investment_dynamic_time_indices, node_dynamic_time_indices
 
 _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
 

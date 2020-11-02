@@ -166,7 +166,7 @@
         var_unit_flow = m.ext[:variables][:unit_flow]
         var_node_state = m.ext[:variables][:node_state]
         constraint = m.ext[:constraints][:node_injection]
-        @test length(constraint) == 11
+        @test length(constraint) == 7
         u = unit(:unit_ab)
         # node_a
         n = node(:node_a)
@@ -176,7 +176,7 @@
             var_n_inj = var_node_injection[n, s, t1]
             var_u_flow = var_unit_flow[u, node(:node_a), direction(:from_node), s, t1]
             expected_con = @build_constraint(var_n_inj + var_u_flow + demand_a == 0)
-            @testset for t0 in t_before_t(m; t_after=t1)
+            @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=n, t_after=t1)
                 con = constraint[n, [s], t0, t1]
                 observed_con = constraint_object(con)
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -190,7 +190,7 @@
             var_n_inj = var_node_injection[n, s, t1]
             var_u_flow = var_unit_flow[u, node(:node_b), direction(:to_node), s, t1]
             expected_con = @build_constraint(var_n_inj - var_u_flow + demand_group == 0)
-            @testset for t0 in t_before_t(m; t_after=t1)
+            @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=n, t_after=t1)
                 con = constraint[n, [s], t0, t1]
                 observed_con = constraint_object(con)
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -207,7 +207,7 @@
             var_n_st_c1 = var_node_state[node(:node_c), s1, t1]
             var_n_inj = var_node_injection[n, s1, t1]
             var_u_flow = var_unit_flow[u, node(:node_b), direction(:to_node), s1, t1]
-            @testset for t0 in t_before_t(m; t_after=t1)
+            @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=n, t_after=t1)
                 var_n_st_b0 = get(var_node_state, (n, s0, t0), 0)
                 expected_con = @build_constraint(
                     var_n_inj 
@@ -234,7 +234,7 @@
             var_n_st_c1 = var_node_state[n, s1, t1]
             var_n_st_b1 = var_node_state[node(:node_b), s1, t1]
             var_n_inj = var_node_injection[n, s1, t1]
-            @testset for t0 in t_before_t(m; t_after=t1)
+            @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=n, t_after=t1)
                 var_n_st_c0 = get(var_node_state, (n, s0, t0), 0)
                 expected_con = @build_constraint(
                     var_n_inj 

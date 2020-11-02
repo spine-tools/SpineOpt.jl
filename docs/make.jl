@@ -1,5 +1,8 @@
-using Documenter, SpineOpt
-include("$(@__DIR__)\\src\\write_systemcomponents.jl")
+using Documenter
+using SpineOpt
+
+SpineOpt.write_system_components_file(joinpath(@__DIR__, "src", "system_components.md"))
+
 makedocs(
     sitename = "SpineOpt.jl",
     format = Documenter.HTML(
@@ -10,8 +13,8 @@ makedocs(
         "System Components" => "system_components.md",
         "Advanced Usage" => "advanced_usage.md",
         "Mathematical formulation" => Any[
-        "Objective" => "mathematical_formulation\\objective_function.md",
-        "Constraints" => "mathematical_formulation\\constraints.md"
+            "Objective" => joinpath("mathematical_formulation", "objective_function.md"),
+            "Constraints" => joinpath("mathematical_formulation", "constraints.md")
         ]
     ]
 )
