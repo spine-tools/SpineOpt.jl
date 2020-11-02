@@ -157,6 +157,7 @@ function _time_interval_blocks(instance::Object, window_start::DateTime, window_
             time_slice_end = time_slice_start + duration
             if time_slice_end > adjusted_end
                 time_slice_end = adjusted_end
+                # TODO: Try removing this to a once-off check as if true, this warning appears each time a timeslice is used
                 @warn(
                     """
                     the last time slice of temporal block $block has been cut to fit within the optimisation window
@@ -426,7 +427,7 @@ function unit_investment_time_indices(
     )
     unique(
         (unit=u, t=t1)
-        for (u, tb) in model__unit__investment_temporal_block(model=m.ext[:instance], unit=unit, temporal_block=temporal_block, _compact=false)
+        for (model, u, tb) in model__unit__investment_temporal_block(model=m.ext[:instance], unit=unit, temporal_block=temporal_block, _compact=false)
         for t1 in time_slice(m; temporal_block=tb, t=t)
     )
 end
@@ -447,17 +448,4 @@ function unit_investment_dynamic_time_indices(
             m; unit=u, t=map(t->t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
         )
     )
-end
-
-
-function mp_unit_investment_dynamic_time_indices(
-    m::Model; unit=anything, t_before=anything, t_after=anything
-)
-unique(
-    (unit=u, t_before=tb, t_after=ta)
-    for (u, ta) in mp_unit_investment_time_indices(m; unit=unit, t=t_after)
-    for (u, tb) in mp_unit_investment_time_indices(
-        m; t=map(t->t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
-    )
-)
 end

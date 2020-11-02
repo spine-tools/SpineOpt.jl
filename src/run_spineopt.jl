@@ -79,7 +79,7 @@ function rerun_spineopt(
     @timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(m)
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)    
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
-    @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
+    @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)    
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
     @log log_level 1 "Window 1: $(current_window(m))"
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
@@ -110,6 +110,7 @@ function create_model(with_optimizer, use_direct_model=false, model_type=:spineo
     m.ext[:values] = Dict{Symbol,Dict}()
     m.ext[:constraints] = Dict{Symbol,Dict}()
     m.ext[:marginals] = Dict{Symbol,Dict}()
+    m.ext[:stochastic_time_map] = Dict{Object,Dict}() 
     m
 
 end

@@ -77,14 +77,16 @@ function rerun_spineopt_mp(
 outputs = Dict()
 mp = create_model(with_optimizer, use_direct_model,:spineopt_master)
 m = create_model(with_optimizer, use_direct_model,:spineopt_operations)
+all_models = (m, mp)
 @timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(m)
 @timelog log_level 2 "Preprocessing master problem model specific data structure...\n" preprocess_model_data_structure(mp)
 @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
 @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
 @timelog log_level 2 "Creating operations problem temporal structure..." generate_temporal_structure!(m)
 @timelog log_level 2 "Creating master problem temporal structure..." generate_temporal_structure!(mp)
-@timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure(mp)
-@timelog log_level 2 "Creating operations problem stochastic structure..." generate_stochastic_structure(m)    
+@timelog log_level 2 "Creating general stochastic structure..." all_stochastic_DAGs = generate_general_stochastic_structure(all_models...)
+@timelog log_level 2 "Creating operations problem stochastic structure..." generate_model_specific_stochastic_structure(all_stochastic_DAGs, m)    
+@timelog log_level 2 "Creating master problem stochastic structure..." generate_model_specific_stochastic_structure(all_stochastic_DAGs, mp)
 @log log_level 1 "Window 1: $(current_window(m))"
 init_model!(m; add_constraints=add_constraints, log_level=log_level)
 init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
@@ -133,6 +135,27 @@ Add SpineOpt Master Problem variables to the given model.
 """
 function add_mp_variables!(m; log_level=3)
     @timelog log_level 3 "- [variable_mp_objective_lowerbound]" add_variable_mp_objective_lowerbound!(m)
+
+    print(history_time_slice(m))
+#=
+    for (model, u, tb) in model__unit__investment_temporal_block(model=m.ext[:instance],  _compact=false)
+        @info model u tb
+        for (u, t1) in unit_investment_time_indices(m; unit=u, temporal_block=tb, t=anything)
+            @info u t1
+            for structure in model__unit__investment_stochastic_structure(model=m.ext[:instance], unit=u)
+                @info structure
+                for s in intersect(m.ext[:stochastic_time_map][structure][t1], anything)
+                    @info s
+                end
+            end
+        end
+    end
+=#
+for (u, ss, t) in unit_investment_stochastic_time_indices(m)
+    @info u ss t
+end
+
+
     @timelog log_level 3 "- [variable_mp_units_invested]" add_variable_units_invested!(m)
     @timelog log_level 3 "- [variable_mp_units_invested_available]" add_variable_units_invested_available!(m)
     @timelog log_level 3 "- [variable_mp_units_mothballed]" add_variable_units_mothballed!(m)
