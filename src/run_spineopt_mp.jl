@@ -135,27 +135,6 @@ Add SpineOpt Master Problem variables to the given model.
 """
 function add_mp_variables!(m; log_level=3)
     @timelog log_level 3 "- [variable_mp_objective_lowerbound]" add_variable_mp_objective_lowerbound!(m)
-
-    print(history_time_slice(m))
-#=
-    for (model, u, tb) in model__unit__investment_temporal_block(model=m.ext[:instance],  _compact=false)
-        @info model u tb
-        for (u, t1) in unit_investment_time_indices(m; unit=u, temporal_block=tb, t=anything)
-            @info u t1
-            for structure in model__unit__investment_stochastic_structure(model=m.ext[:instance], unit=u)
-                @info structure
-                for s in intersect(m.ext[:stochastic_time_map][structure][t1], anything)
-                    @info s
-                end
-            end
-        end
-    end
-=#
-for (u, ss, t) in unit_investment_stochastic_time_indices(m)
-    @info u ss t
-end
-
-
     @timelog log_level 3 "- [variable_mp_units_invested]" add_variable_units_invested!(m)
     @timelog log_level 3 "- [variable_mp_units_invested_available]" add_variable_units_invested_available!(m)
     @timelog log_level 3 "- [variable_mp_units_mothballed]" add_variable_units_mothballed!(m)
