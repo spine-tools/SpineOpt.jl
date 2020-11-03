@@ -225,8 +225,7 @@ end
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
 function init_model!(m; add_constraints=m -> nothing, log_level=3)        
-    @timelog log_level 2 "Identifying outputs...\n" identify_outputs(m)
-    @info m.ext[:outputs]
+    @timelog log_level 2 "Identifying outputs...\n" identify_outputs(m)    
     @timelog log_level 2 "Adding variables...\n" add_variables!(m; log_level=log_level)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(
@@ -260,8 +259,7 @@ _variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, J
 """
 Save the value of a variable in a model.
 """
-function _save_variable_value!(m::Model, name::Symbol, indices::Function)
-    @info name
+function _save_variable_value!(m::Model, name::Symbol, indices::Function)    
     var = m.ext[:variables][name]
     m.ext[:values][name] = Dict(
         ind => _variable_value(var[ind])

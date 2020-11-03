@@ -97,7 +97,7 @@ while optimize_model!(mp) && j < 3 # master problem loop
     @timelog log_level 2 "Saving master problem results..." save_mp_model_results!(outputs, mp)
     @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)    
     if j > 1  
-        @timelog log_level 2 "Resetting sub problem temporal structure..." reset_temporal_structure(k-1)        
+        @timelog log_level 2 "Resetting sub problem temporal structure..." reset_temporal_structure(mp, k-1)        
         update_model!(m; update_constraints=update_constraints, log_level=log_level)            
     end 
     k = 2
@@ -109,7 +109,7 @@ while optimize_model!(mp) && j < 3 # master problem loop
         update_model!(m; update_constraints=update_constraints, log_level=log_level)
         k += 1
     end
-    update_mp_model!(mp; update_constraints=update_constraints, log_level=log_level)   
+    update_model!(mp; update_constraints=update_constraints, log_level=log_level)   
     j += 1
 end
 @timelog log_level 2 "Writing report..." write_report(m, outputs, url_out)

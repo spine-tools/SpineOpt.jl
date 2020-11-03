@@ -321,11 +321,11 @@ end
 Rewind the temporal structure - essentially, rolling it backwards k times.
 """
 function reset_temporal_structure(m::Model, k)
-    end_(current_window) >= model_end(model=m) && return false
+    end_(current_window(m)) >= model_end(model=m.ext[:instance]) && return false
     roll_forward_ = roll_forward(model=m, _strict=false)
     roll_forward_ === nothing && return false
     roll_forward_ == 0 && return false
-    roll!(current_window, - roll_forward_ * k)
+    roll!(current_window(m), - roll_forward_ * k)
     roll!.(all_time_slices, - roll_forward_ * k)
     true
 end
