@@ -121,6 +121,8 @@ end
 Initialize the given model for SpineOpt Master Problem: add variables, fix the necessary variables, add constraints and set objective.
 """
 function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
+    @timelog log_level 2 "Identifying MP outputs...\n" identify_outputs(m)
+    @info m.ext[:outputs]
     @timelog log_level 2 "Adding MP variables...\n" add_mp_variables!(m; log_level=log_level)
     @timelog log_level 2 "Fixing MP variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding MP constraints...\n" add_mp_constraints!(
@@ -145,9 +147,9 @@ end
 Add SpineOpt master problem constraints to the given model.
 """
 function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
+    
     @timelog log_level 3 "- [constraint_mp_units_invested_cuts]" add_constraint_mp_units_invested_cuts!(m)
     @timelog log_level 3 "- [constraint_mp_objective]" add_constraint_mp_objective!(m)
-
     @timelog log_level 3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(m)
     @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
     @timelog log_level 3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)
@@ -163,7 +165,6 @@ end
 
 
 function save_mp_model_results!(outputs, m)    
-    save_variable_values!(m)
-    save_objective_values!(m)
-    save_outputs!(outputs, m)    
+    save_variable_values!(m)    
+    save_outputs!(m)    
 end

@@ -19,7 +19,11 @@
 
 add_variable_mp_objective_lowerbound!(m::Model) = add_variable!(m, :mp_objective_lowerbound, mp_objective_lowerbound_indices;)
 
-function mp_objective_lowerbound_indices(m::Model; t=anything)
-    (t = first(time_slice(m)))
-end
 
+function mp_objective_lowerbound_indices(m::Model; t=anything)          
+    (
+        (model=m1, t=t1) 
+        for m1 in m.ext[:instance]
+        for t1 in first(time_slice(m))
+    )
+end

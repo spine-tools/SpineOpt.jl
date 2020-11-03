@@ -111,6 +111,7 @@ function create_model(with_optimizer, use_direct_model=false, model_type=:spineo
     m.ext[:constraints] = Dict{Symbol,Dict}()
     m.ext[:marginals] = Dict{Symbol,Dict}()
     m.ext[:stochastic_time_map] = Dict{Object,Dict}() 
+    m.ext[:outputs] = Dict()
     m
 
 end
@@ -223,8 +224,9 @@ end
 """
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
-function init_model!(m; add_constraints=m -> nothing, log_level=3)    
-    
+function init_model!(m; add_constraints=m -> nothing, log_level=3)        
+    @timelog log_level 2 "Identifying outputs...\n" identify_outputs(m)
+    @info m.ext[:outputs]
     @timelog log_level 2 "Adding variables...\n" add_variables!(m; log_level=log_level)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(
@@ -299,14 +301,14 @@ _drop_key(x::NamedTuple, key::Symbol...) = (; (k => v for (k, v) in pairs(x) if 
 """
 Save the outputs of a model into a dictionary.
 """
-function save_outputs!(outputs, m)
-    for out in output()
-        value = get(m.ext[:values], out.name, nothing)
+function save_outputs!(m)
+    for (name, out) in m.ext[:outputs]
+        value = get(m.ext[:values], name, nothing)
         if value === nothing
             @warn "can't find a value for '$(out.name)'"
             continue
         end
-        existing = get!(outputs, out.name, Dict{NamedTuple,Dict}())
+        existing = get!(m.ext[:outputs], name, Dict{NamedTuple,Dict}())
         for (k, v) in value
             end_(k.t) <= model_start(model=m.ext[:instance]) && continue
             new_k = _drop_key(k, :t)
@@ -322,7 +324,7 @@ function save_model_results!(outputs, m)
     postprocess_results!(m)
     save_variable_values!(m)
     save_objective_values!(m)
-    save_outputs!(outputs, m)
+    save_outputs!(m)
 end
 
 """
@@ -342,21 +344,33 @@ Write report from given outputs into the db.
 """
 function write_report(model, outputs, default_url)
     reports = Dict()
-    for (rpt, out) in report__output()
-        d = get(outputs, out.name, nothing)
-        d === nothing && continue
-        output_url = output_db_url(report=rpt, _strict=false)
-        url = output_url !== nothing ? output_url : default_url
-        url_reports = get!(reports, url, Dict())
-        output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
-        parameter_name = out.name in objective_terms() ? Symbol("objective_", out.name) : out.name
-        output_params[parameter_name] = Dict(
-            k => TimeSeries(collect(keys(v)), collect(values(v)), false, false) for (k, v) in d
-        )
+    
+    for rpt in model__report(model=model.ext[:instance])
+        for out in report__output(report=rpt)
+            d = get(outputs, out.name, nothing)
+            d === nothing && continue
+            output_url = output_db_url(report=rpt, _strict=false)
+            url = output_url !== nothing ? output_url : default_url
+            url_reports = get!(reports, url, Dict())
+            output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
+            parameter_name = out.name in objective_terms() ? Symbol("objective_", out.name) : out.name
+            output_params[parameter_name] = Dict(
+                k => TimeSeries(collect(keys(v)), collect(values(v)), false, false) for (k, v) in d
+            )
+        end
     end
     for (url, url_reports) in reports
         for (rpt_name, output_params) in url_reports
             write_parameters(output_params, url; report=string(rpt_name))
+        end
+    end
+end
+
+
+function identify_outputs(m::Model)
+    for r in model__report(model=m.ext[:instance])
+        for o in report__output(report=r)            
+            get!(m.ext[:outputs], o.name, Dict{NamedTuple,Dict}())
         end
     end
 end

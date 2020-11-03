@@ -452,10 +452,10 @@ end
 
 
 """
-    master_time_index(m::Model)
+    trivial_index(m::Model)
 
 Return the first timeslice of the model when a variable is global in scope within the optimisation model
 """
-function master_time_index(m::Model)      
-    (t = first(time_slice(m)))
+function trivial_index(m::Model; t=anything)      
+    ((t = first(time_slice(m)),))
 end

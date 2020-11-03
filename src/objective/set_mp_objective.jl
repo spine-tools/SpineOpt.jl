@@ -33,8 +33,8 @@ function set_mp_objective!(m::Model)
     @fetch mp_objective_lowerbound = m.ext[:variables]
     @objective(m, Min,
         + expr_sum(
-            mp_objective_lowerbound[t]            
-            for t in mp_objective_lowerbound_indices(m);            
+            mp_objective_lowerbound[model, t]            
+            for (model, t) in mp_objective_lowerbound_indices(m);            
             init=0
         )
     )
@@ -52,8 +52,8 @@ function add_constraint_mp_objective!(m::Model)
     constr_dict = @constraint(
             m,            
             + expr_sum(
-                mp_objective_lowerbound[t]            
-                for t in mp_objective_lowerbound_indices(m);            
+                mp_objective_lowerbound[model, t]            
+                for (model, t) in mp_objective_lowerbound_indices(m);            
                 init=0
             )
             <=
