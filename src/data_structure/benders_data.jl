@@ -39,7 +39,7 @@ end
 function process_subproblem_solution(m, j)
     save_sp_marginal_values(m)
     save_sp_objective_value_bi(m)    
-    current_bi = add_benders_iteration(j)    
+    current_bi = add_benders_iteration(j+1)    
     unfix_mp_variables()
 end
 
@@ -65,7 +65,8 @@ function add_benders_iteration(j)
 end
 
 
-function save_sp_marginal_values(m)              
+function save_sp_marginal_values(m)
+    save_marginals!(m, :units_available)           
     inds = keys(m.ext[:marginals][:units_available])    
     for u in indices(candidate_units)        
         time_indices = [start(ind.t) for ind in inds if ind.u == u] 

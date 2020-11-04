@@ -40,6 +40,6 @@ function save_marginals!(m::Model, name::Symbol)
     con = m.ext[:constraints][name]
 
     m.ext[:marginals][name] = Dict(
-        ind => JuMP.shadow_price(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window)
+        ind => JuMP.shadow_price(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window(m))
     )
 end

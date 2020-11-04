@@ -74,46 +74,49 @@ function rerun_spineopt_mp(
     optimize=true,
     use_direct_model=false
 )
-outputs = Dict()
-mp = create_model(with_optimizer, use_direct_model,:spineopt_master)
-m = create_model(with_optimizer, use_direct_model,:spineopt_operations)
-all_models = (m, mp)
-@timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(m)
-@timelog log_level 2 "Preprocessing master problem model specific data structure...\n" preprocess_model_data_structure(mp)
-@timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
-@timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
-@timelog log_level 2 "Creating operations problem temporal structure..." generate_temporal_structure!(m)
-@timelog log_level 2 "Creating master problem temporal structure..." generate_temporal_structure!(mp)
-@timelog log_level 2 "Creating general stochastic structure..." all_stochastic_DAGs = generate_general_stochastic_structure(all_models...)
-@timelog log_level 2 "Creating operations problem stochastic structure..." generate_model_specific_stochastic_structure(all_stochastic_DAGs, m)    
-@timelog log_level 2 "Creating master problem stochastic structure..." generate_model_specific_stochastic_structure(all_stochastic_DAGs, mp)
-@log log_level 1 "Window 1: $(current_window(m))"
-init_model!(m; add_constraints=add_constraints, log_level=log_level)
-init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
+    outputs = Dict()
+    mp = create_model(with_optimizer, use_direct_model,:spineopt_master)
+    m = create_model(with_optimizer, use_direct_model,:spineopt_operations)
+    all_models = (m, mp)
+    #all_models = (m,)
+    @timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(m)
+    @timelog log_level 2 "Preprocessing master problem model specific data structure...\n" preprocess_model_data_structure(mp)
+    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
+    @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
+    @timelog log_level 2 "Creating operations problem temporal structure..." generate_temporal_structure!(m)
+    @timelog log_level 2 "Creating master problem temporal structure..." generate_temporal_structure!(mp)
+    @timelog log_level 2 "Creating general stochastic structure..." all_stochastic_DAGs = generate_general_stochastic_structure(all_models...)
+    @timelog log_level 2 "Creating operations problem stochastic structure..." generate_model_specific_stochastic_structure(all_stochastic_DAGs, m)    
+    @timelog log_level 2 "Creating master problem stochastic structure..." generate_model_specific_stochastic_structure(all_stochastic_DAGs, mp)
+    @log log_level 1 "Window 1: $(current_window(m))"
+    init_model!(m; add_constraints=add_constraints, log_level=log_level)
+    init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
 
-j = 1
-k = 1
-while optimize_model!(mp) && j < 3 # master problem loop
-    @timelog log_level 2 "Saving master problem results..." save_mp_model_results!(outputs, mp)
-    @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)    
-    if j > 1  
-        @timelog log_level 2 "Resetting sub problem temporal structure..." reset_temporal_structure(mp, k-1)        
-        update_model!(m; update_constraints=update_constraints, log_level=log_level)            
-    end 
-    k = 2
-    while optimize && optimize_model!(m; log_level=log_level)
-        @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
-        @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || break
-        @log log_level 1 "Window $k: $(current_window(m))"
-        update_model!(m; update_constraints=update_constraints, log_level=log_level)
-        k += 1
+    j = 1
+    k = 1
+    while optimize_model!(mp) && j < 3 # master problem loop
+        @timelog log_level 2 "Saving master problem results..." save_mp_model_results!(outputs, mp)
+        @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)    
+       if j > 1  
+            @timelog log_level 2 "Resetting sub problem temporal structure..." reset_temporal_structure(mp, k-1)        
+            update_model!(m; update_constraints=update_constraints, log_level=log_level)            
+        end
+        k = 2
+        while optimize && optimize_model!(m; log_level=log_level)
+            @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
+            @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
+            @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || break
+            @log log_level 1 "Window $k: $(current_window(m))"
+            update_model!(m; update_constraints=update_constraints, log_level=log_level)
+            k += 1
+        end
+        @timelog log_level 2 "Processing operational problem solution..." process_subproblem_solution(m, j)
+        update_model!(mp; update_constraints=update_constraints, log_level=log_level)   
+        @timelog log_level 2 "Updating MP cuts..." update_mp_constraints!(mp; log_level=3)   
+        j += 1
     end
-    update_model!(mp; update_constraints=update_constraints, log_level=log_level)   
-    j += 1
-end
-@timelog log_level 2 "Writing report..." write_report(m, outputs, url_out)
-m
+    @timelog log_level 2 "Writing report..." write_report(m, outputs, url_out)
+    m
 end
 
 
@@ -121,8 +124,7 @@ end
 Initialize the given model for SpineOpt Master Problem: add variables, fix the necessary variables, add constraints and set objective.
 """
 function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
-    @timelog log_level 2 "Identifying MP outputs...\n" identify_outputs(m)
-    @info m.ext[:outputs]
+    @timelog log_level 2 "Identifying MP outputs...\n" identify_outputs(m)    
     @timelog log_level 2 "Adding MP variables...\n" add_mp_variables!(m; log_level=log_level)
     @timelog log_level 2 "Fixing MP variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding MP constraints...\n" add_mp_constraints!(
@@ -160,6 +162,20 @@ function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
         for (inds, con) in cons
             set_name(con, string(con_key,inds))
         end
+    end
+end
+
+
+"""
+Update (readd) SpineOpt master problem constraints that involve new objects (update doesn't work).
+"""
+function update_mp_constraints!(m; log_level=3)
+    
+    @timelog log_level 3 "- [constraint_mp_units_invested_cuts]" add_constraint_mp_units_invested_cuts!(m)
+    
+    # Name constraints
+    for (inds, con) in in m.ext[:constraints][:mp_units_invested_cut]        
+        set_name(con, string(con_key,inds))        
     end
 end
 

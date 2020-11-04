@@ -27,7 +27,7 @@ cost terms.
 """
     set_objective!(m::Model)
 
-Minimize the total error between target and representative distributions.
+Minimize total costs
 """
 function set_mp_objective!(m::Model)
     @fetch mp_objective_lowerbound = m.ext[:variables]
