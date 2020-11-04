@@ -46,6 +46,7 @@ function add_variable!(
         ind => _variable(m, name, ind, lb, ub, bin, int) 
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
     )
+    ( (bin != nothing) || (int != nothing) ) && push!(m.ext[:integer_variables], name)
 end
 
 """
@@ -69,3 +70,47 @@ function _variable(m, name, ind, lb, ub, bin, int)
     var
 end
 
+
+function relax_integer_vars(m::Model)
+    for name in m.ext[:integer_variables]
+        def = m.ext[:variables_definition][name]        
+        bin = def[:bin]
+        int = def[:int]
+        var = m.ext[:variables][name]
+        for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))            
+            if end_(ind.t) <= end_(current_window(m))
+                @info name ind var _variable_value(var) typeof(ind) typeof(var)
+                fix(var[ind], _variable_value(var[ind]); force=true)
+            end
+            bin != nothing && bin(ind) && unset_binary(var)
+            int != nothing && int(ind) && unset_integer(var)
+        end
+    end
+end
+
+
+function unrelax_integer_vars(m::Model)
+    for name in m.ext[:integer_variables]
+        def = m.ext[:variables_definition][name]        
+        bin = def[:bin]
+        int = def[:int]
+        indices = def[:indices]
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+            var = m.ext[:variables][name]
+            bin != nothing && bin(ind) && set_binary(var[ind])
+            int != nothing && int(ind) && set_integer(var[ind])
+        end        
+    end
+    refix_integer_variables(m)                    
+end
+
+
+"""
+Refix all integer and binary variables to original fix_values that were previously fixed to obtain dual solution
+"""
+function refix_integer_variables!(m::Model)
+    for name in m.ext[:integer_variables]    
+        definition = m.ext[:variables_definition][name]
+        _fix_variable!(m, name, definition[:indices], definition[:fix_value])
+    end
+end

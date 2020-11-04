@@ -112,6 +112,7 @@ function create_model(with_optimizer, use_direct_model=false, model_type=:spineo
     m.ext[:marginals] = Dict{Symbol,Dict}()
     m.ext[:stochastic_time_map] = Dict{Object,Dict}() 
     m.ext[:outputs] = Dict()
+    m.ext[:integer_variables] = []
     m
 
 end
@@ -237,12 +238,18 @@ end
 """
 Optimize the given model. If an optimal solution is found, return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3)
+function optimize_model!(m::Model; log_level=3, calculate_duals=false)
     write_mps_file(model=m.ext[:instance]) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
-    if termination_status(m) == MOI.OPTIMAL ||  termination_status(m) == MOI.TIME_LIMIT
+    if termination_status(m) == MOI.OPTIMAL ||  termination_status(m) == MOI.TIME_LIMIT        
+        @info m.ext[:integer_variables]
+        if calculate_duals
+            relax_integer_vars(m)
+            @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
+            unrelax_integer_vars(m)            
+        end
         true
     else
         @log log_level 0 "Unable to find solution (reason: $(termination_status(m)))"

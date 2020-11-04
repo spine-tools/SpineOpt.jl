@@ -102,7 +102,7 @@ function rerun_spineopt_mp(
             update_model!(m; update_constraints=update_constraints, log_level=log_level)            
         end
         k = 2
-        while optimize && optimize_model!(m; log_level=log_level)
+        while optimize && optimize_model!(m; log_level=log_level, calculate_duals=true)
             @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
             @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
             @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || break
