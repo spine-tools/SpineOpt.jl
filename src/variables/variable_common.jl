@@ -79,11 +79,11 @@ function relax_integer_vars(m::Model)
         var = m.ext[:variables][name]
         for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))            
             if end_(ind.t) <= end_(current_window(m))
-                @info name ind var _variable_value(var) typeof(ind) typeof(var)
+                @info name ind var typeof(ind) typeof(var)                
                 fix(var[ind], _variable_value(var[ind]); force=true)
             end
-            bin != nothing && bin(ind) && unset_binary(var)
-            int != nothing && int(ind) && unset_integer(var)
+            bin != nothing && bin(ind) && unset_binary(var[ind])
+            int != nothing && int(ind) && unset_integer(var[ind])
         end
     end
 end
