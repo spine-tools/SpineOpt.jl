@@ -246,9 +246,8 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false)
     if termination_status(m) == MOI.OPTIMAL ||  termination_status(m) == MOI.TIME_LIMIT        
         @info m.ext[:integer_variables]
         if calculate_duals
-            relax_integer_vars(m)
-            @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
-            unrelax_integer_vars(m)            
+            @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
+            @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)            
         end
         true
     else
@@ -283,6 +282,7 @@ function save_variable_values!(m::Model)
         _save_variable_value!(m, name, definition[:indices])
     end
 end
+
 
 _value(v::GenericAffExpr) = JuMP.value(v)
 _value(v) = v
@@ -337,6 +337,9 @@ Update the given model for the next window in the rolling horizon: update variab
 update constraints and update objective.
 """
 function update_model!(m; update_constraints=m -> nothing, log_level=3)
+    # The below is needed here because we remove the integer constraints to get a dual solution and then need to re-add them for the next write_mps_on_no_solve
+    # we can only do this once we have saved the solution
+    @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
     @timelog log_level 2 "Updating variables..." update_variables!(m)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
@@ -377,5 +380,64 @@ function identify_outputs(m::Model)
         for o in report__output(report=r)            
             get!(m.ext[:outputs], o.name, Dict{NamedTuple,Dict}())
         end
+    end
+end
+
+
+
+"""
+Save the value of all variables in a model.
+"""
+function save_integer_values!(m::Model)
+    for name in m.ext[:integer_variables]
+        _save_variable_value!(m, name, m.ext[:variables_definition][name][:indices])
+    end
+end
+
+
+function relax_integer_vars(m::Model)
+    save_integer_values!(m)
+    for name in m.ext[:integer_variables]
+        def = m.ext[:variables_definition][name]        
+        bin = def[:bin]
+        int = def[:int]
+        var = m.ext[:variables][name]
+        for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))            
+            if end_(ind.t) <= end_(current_window(m))                
+                fix(var[ind], m.ext[:values][name][ind]; force=true)                                
+            end
+            bin != nothing && bin(ind) && unset_binary(var[ind])
+            int != nothing && int(ind) && unset_integer(var[ind])
+        end
+    end
+end
+
+
+function unrelax_integer_vars(m::Model)
+    for name in m.ext[:integer_variables]
+        def = m.ext[:variables_definition][name]        
+        bin = def[:bin]
+        int = def[:int]
+        indices = def[:indices]
+        var = m.ext[:variables][name]
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+            if end_(ind.t) <= end_(current_window(m))                
+                # TODO: the following will reset variable bounds - need to make sure this is ok
+                unfix(var[ind])                
+                bin != nothing && bin(ind) && set_binary(var[ind])
+                int != nothing && int(ind) && set_integer(var[ind])
+            end
+        end        
+    end    
+end
+
+
+"""
+Refix all integer and binary variables to original fix_values that were previously fixed to obtain dual solution
+"""
+function refix_integer_variables!(m::Model)
+    for name in m.ext[:integer_variables]    
+        definition = m.ext[:variables_definition][name]
+        _fix_variable!(m, name, definition[:indices], definition[:fix_value])
     end
 end
