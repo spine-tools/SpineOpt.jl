@@ -47,7 +47,7 @@ function run_spineopt(
         update_constraints=m -> nothing,
         log_level=3,
         optimize=true,
-        use_direct_model=false
+        use_direct_model=false        
     )
     @log log_level 0 "Running SpineOpt for $(url_in)..."
     @timelog log_level 2 "Initializing data structure from db..." begin
@@ -61,7 +61,7 @@ function run_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
-        use_direct_model=use_direct_model
+        use_direct_model=use_direct_model        
     )
 end
 
@@ -72,7 +72,7 @@ function rerun_spineopt(
         update_constraints=m -> nothing,
         log_level=3,
         optimize=true,
-        use_direct_model=false
+        use_direct_model=false        
     )
     outputs = Dict()
     m = create_model(with_optimizer, use_direct_model, :spineopt_operations)
@@ -383,18 +383,6 @@ function identify_outputs(m::Model)
     end
 end
 
-
-
-"""
-Save the value of all variables in a model.
-"""
-function save_integer_values!(m::Model)
-    for name in m.ext[:integer_variables]
-        _save_variable_value!(m, name, m.ext[:variables_definition][name][:indices])
-    end
-end
-
-
 function relax_integer_vars(m::Model)
     save_integer_values!(m)
     for name in m.ext[:integer_variables]
@@ -421,9 +409,7 @@ function unrelax_integer_vars(m::Model)
         indices = def[:indices]
         var = m.ext[:variables][name]
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            if end_(ind.t) <= end_(current_window(m))                
-                # TODO: the following will reset variable bounds - need to make sure this is ok
-                unfix(var[ind])                
+            if end_(ind.t) <= end_(current_window(m))                                
                 bin != nothing && bin(ind) && set_binary(var[ind])
                 int != nothing && int(ind) && set_integer(var[ind])
             end
@@ -433,11 +419,10 @@ end
 
 
 """
-Refix all integer and binary variables to original fix_values that were previously fixed to obtain dual solution
+Save the value of all binary and integer variables so they can be fixed to obtain a dual solution
 """
-function refix_integer_variables!(m::Model)
-    for name in m.ext[:integer_variables]    
-        definition = m.ext[:variables_definition][name]
-        _fix_variable!(m, name, definition[:indices], definition[:fix_value])
+function save_integer_values!(m::Model)
+    for name in m.ext[:integer_variables]
+        _save_variable_value!(m, name, m.ext[:variables_definition][name][:indices])
     end
 end

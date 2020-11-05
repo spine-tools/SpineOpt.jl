@@ -38,25 +38,25 @@ end
 
 function process_subproblem_solution(m, j)
     save_sp_marginal_values(m)
-    save_sp_objective_value_bi(m)    
-    current_bi = add_benders_iteration(j+1)    
+    save_sp_objective_value_bi(m)        
     unfix_mp_variables()
 end
 
 
 function unfix_mp_variables()    
     for u in indices(candidate_units)
-        if haskey(unit.parameter_values[u], starting_fix_units_invested_available)
+        if haskey(unit.parameter_values[u], :starting_fix_units_invested_available)
             unit.parameter_values[u][:fix_units_invested_available] = unit.parameter_values[u][:starting_fix_units_invested_available]
         else
-            delete(unit.parameter_values[u], fix_units_invested_available)
+            delete!(unit.parameter_values[u], :fix_units_invested_available)
         end
     end
 end
 
 
 function add_benders_iteration(j)
-    new_bi = add_object!(benders_iteration, Symbol(string("bi_", j)))    
+    new_bi = Object(Symbol(string("bi_", j)))
+    add_object!(benders_iteration, new_bi)    
     add_relationships!(
         unit__benders_iteration,
         [(unit=u, benders_iteration=new_bi) for u in indices(candidate_units)]
@@ -69,9 +69,9 @@ function save_sp_marginal_values(m)
     save_marginals!(m, :units_available)           
     inds = keys(m.ext[:marginals][:units_available])    
     for u in indices(candidate_units)        
-        time_indices = [start(ind.t) for ind in inds if ind.u == u] 
-        vals = [m.ext[:marginals][:units_available][ind] for ind in inds if ind.u == u]
-        unit__benders_iteration.parameter_values[(unit=u, benders_iteration=current_bi)][:units_available_mv] = parameter_value(TimeSeries(time_indices, vals, false, false))
+        time_indices = [start(ind.t) for ind in inds if ind.unit == u] 
+        vals = [m.ext[:marginals][:units_available][ind] for ind in inds if ind.unit == u]
+        unit__benders_iteration.parameter_values[(u, current_bi)][:units_available_mv] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
 end
 

@@ -94,10 +94,12 @@ function rerun_spineopt_mp(
 
     j = 1
     k = 1
-    while optimize_model!(mp) && j < 3 # master problem loop
+    while true
+        @log log_level 0 "Starting Master Problem iteration $j"
+        (optimize_model!(mp) && j < 3) || break   # master problem loop
         @timelog log_level 2 "Saving master problem results..." save_mp_model_results!(outputs, mp)
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)    
-       if j > 1  
+        if j > 1  
             @timelog log_level 2 "Resetting sub problem temporal structure..." reset_temporal_structure(mp, k-1)        
             update_model!(m; update_constraints=update_constraints, log_level=log_level)            
         end
@@ -105,18 +107,19 @@ function rerun_spineopt_mp(
         while optimize && optimize_model!(m; log_level=log_level, calculate_duals=true)
             @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
             @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
-            @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || break
+            @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || @timelog log_level 2 " ... Rolling complete\n" break
             @log log_level 1 "Window $k: $(current_window(m))"
             update_model!(m; update_constraints=update_constraints, log_level=log_level)
             k += 1
         end
         @timelog log_level 2 "Processing operational problem solution..." process_subproblem_solution(m, j)
         update_model!(mp; update_constraints=update_constraints, log_level=log_level)   
-        @timelog log_level 2 "Updating MP cuts..." update_mp_constraints!(mp; log_level=3)   
+        @timelog log_level 2 "Add MP cuts..." add_mp_cuts!(mp; log_level=3)   
         j += 1
+        current_bi = add_benders_iteration(j)            
     end
     @timelog log_level 2 "Writing report..." write_report(m, outputs, url_out)
-    m
+    m    
 end
 
 
@@ -169,13 +172,14 @@ end
 """
 Update (readd) SpineOpt master problem constraints that involve new objects (update doesn't work).
 """
-function update_mp_constraints!(m; log_level=3)
+function add_mp_cuts!(m; log_level=3)
     
-    @timelog log_level 3 "- [constraint_mp_units_invested_cuts]" add_constraint_mp_units_invested_cuts!(m)
+    @timelog log_level 3 " - [constraint_mp_units_invested_cuts]" add_constraint_mp_units_invested_cuts!(m)
     
     # Name constraints
-    for (inds, con) in in m.ext[:constraints][:mp_units_invested_cut]        
-        set_name(con, string(con_key,inds))        
+    cons = m.ext[:constraints][:mp_units_invested_cut]
+    for (inds, con) in cons
+        set_name(con, string(:mp_units_invested_cut,inds))        
     end
 end
 
