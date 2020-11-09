@@ -575,6 +575,7 @@ function generate_benders_structure()
         current_bi = $current_bi
         sp_objective_value_bi = $sp_objective_value_bi
         starting_fix_units_invested_available = $starting_fix_units_invested_available
+        export current_bi
         export benders_iteration
         export unit__benders_iteration
         export units_available_mv

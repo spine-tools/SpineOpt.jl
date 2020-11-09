@@ -93,30 +93,32 @@ function rerun_spineopt_mp(
     init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
 
     j = 1
-    k = 1
+    k = 1    
     while true
+        global current_bi     
         @log log_level 0 "Starting Master Problem iteration $j"
+        j > 1 && (current_bi = add_benders_iteration(j))                
         (optimize_model!(mp) && j < 3) || break   # master problem loop
         @timelog log_level 2 "Saving master problem results..." save_mp_model_results!(outputs, mp)
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)    
-        if j > 1  
-            @timelog log_level 2 "Resetting sub problem temporal structure..." reset_temporal_structure(mp, k-1)        
+        if j > 1              
+            @timelog log_level 2 "Resetting sub problem temporal structure. Rewinding $(k-1) times..." reset_temporal_structure(mp, k-1)
+            @log log_level 1 "Window 1: $(current_window(m))"
             update_model!(m; update_constraints=update_constraints, log_level=log_level)            
         end
-        k = 2
+        k = 1
         while optimize && optimize_model!(m; log_level=log_level, calculate_duals=true)
             @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
             @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
             @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || @timelog log_level 2 " ... Rolling complete\n" break
-            @log log_level 1 "Window $k: $(current_window(m))"
+            @log log_level 1 "Operations window $(k+1), benders iteration $j : $(current_window(m))"
             update_model!(m; update_constraints=update_constraints, log_level=log_level)
             k += 1
         end
         @timelog log_level 2 "Processing operational problem solution..." process_subproblem_solution(m, j)
         update_model!(mp; update_constraints=update_constraints, log_level=log_level)   
-        @timelog log_level 2 "Add MP cuts..." add_mp_cuts!(mp; log_level=3)   
-        j += 1
-        current_bi = add_benders_iteration(j)            
+        @timelog log_level 2 "Add MP cuts..." add_mp_cuts!(mp; log_level=3)           
+        j += 1               
     end
     @timelog log_level 2 "Writing report..." write_report(m, outputs, url_out)
     m    
@@ -151,9 +153,8 @@ end
 """
 Add SpineOpt master problem constraints to the given model.
 """
-function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
+function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)   
     
-    @timelog log_level 3 "- [constraint_mp_units_invested_cuts]" add_constraint_mp_units_invested_cuts!(m)
     @timelog log_level 3 "- [constraint_mp_objective]" add_constraint_mp_objective!(m)
     @timelog log_level 3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(m)
     @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)

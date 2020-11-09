@@ -243,8 +243,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false)
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
-    if termination_status(m) == MOI.OPTIMAL ||  termination_status(m) == MOI.TIME_LIMIT        
-        @info m.ext[:integer_variables]
+    if termination_status(m) == MOI.OPTIMAL ||  termination_status(m) == MOI.TIME_LIMIT                
         if calculate_duals
             @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
             @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)            
@@ -287,6 +286,7 @@ end
 _value(v::GenericAffExpr) = JuMP.value(v)
 _value(v) = v
 
+
 """
 Save the value of the objective terms in a model.
 """
@@ -296,6 +296,19 @@ function save_objective_values!(m::Model)
         func = eval(name)
         m.ext[:values][name] = Dict(ind => _value(realize(func(m, end_(ind.t)))))
     end
+end
+
+
+"""
+Save the value of the objective terms in a model.
+"""
+function save_objective_values!(m::Model)
+    ind = (model=m.ext[:instance], t=current_window(m))    
+    for name in [objective_terms(); :total_costs]
+        func = eval(name)
+        m.ext[:values][name] = Dict(ind => _value(realize(func(m, end_(ind.t)))))        
+    end    
+    m.ext[:values][:total_costs] = Dict(ind => _value(realize(total_costs(m, end_(ind.t)))))    
 end
 
 """
@@ -329,6 +342,7 @@ function save_model_results!(outputs, m)
     postprocess_results!(m)
     save_variable_values!(m)
     save_objective_values!(m)
+    save_marginal_values!(m)    
     save_outputs!(m)
 end
 
@@ -341,10 +355,10 @@ function update_model!(m; update_constraints=m -> nothing, log_level=3)
     # we can only do this once we have saved the solution
     @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
     @timelog log_level 2 "Updating variables..." update_variables!(m)
-    @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
-    @timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
-    @timelog log_level 2 "Updating user constraints..." update_constraints(m)
-    @timelog log_level 2 "Updating objective..." update_varying_objective!(m)
+    #@timelog log_level 2 "Fixing variable values..." fix_variables!(m)
+    #@timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
+    #@timelog log_level 2 "Updating user constraints..." update_constraints(m)
+    #@timelog log_level 2 "Updating objective..." update_varying_objective!(m)
 end
 
 """
@@ -382,6 +396,7 @@ function identify_outputs(m::Model)
         end
     end
 end
+
 
 function relax_integer_vars(m::Model)
     save_integer_values!(m)
@@ -425,4 +440,19 @@ function save_integer_values!(m::Model)
     for name in m.ext[:integer_variables]
         _save_variable_value!(m, name, m.ext[:variables_definition][name][:indices])
     end
+end
+
+
+function save_marginal_values!(m::Model)
+    save_marginal_value!(m, :units_available)
+end
+
+
+function save_marginal_value!(m::Model, name::Symbol)
+    inds = keys(m.ext[:constraints][name])
+    con = m.ext[:constraints][name]
+
+    m.ext[:marginals][name] = Dict(
+        ind => JuMP.dual(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window(m))
+    )
 end

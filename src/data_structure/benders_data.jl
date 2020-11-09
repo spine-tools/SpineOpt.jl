@@ -18,6 +18,7 @@
 #############################################################################
 
 function process_master_problem_solution(mp)
+    @info "processing master problem solution for current_bi" current_bi
     for u in indices(candidate_units)
         time_indices = [start(inds.t) 
             for inds in units_invested_available_indices(mp; unit=u)
@@ -65,8 +66,7 @@ function add_benders_iteration(j)
 end
 
 
-function save_sp_marginal_values(m)
-    save_marginals!(m, :units_available)           
+function save_sp_marginal_values(m)    
     inds = keys(m.ext[:marginals][:units_available])    
     for u in indices(candidate_units)        
         time_indices = [start(ind.t) for ind in inds if ind.unit == u] 
@@ -77,6 +77,10 @@ end
 
 
 function save_sp_objective_value_bi(m)
-    benders_iteration.parameter_values[current_bi][:sp_objective_value_bi] = parameter_value(objective_value(m))
+    total_sp_objective_value = 0
+    for (ind, value) in m.ext[:values][:total_costs]
+        total_sp_objective_value += value
+    end
+    benders_iteration.parameter_values[current_bi]=Dict(:sp_objective_value_bi => parameter_value(total_sp_objective_value))   
 end
 

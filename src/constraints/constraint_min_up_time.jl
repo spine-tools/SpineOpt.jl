@@ -51,7 +51,7 @@ function add_constraint_min_up_time!(m::Model)
             )
         )
         for (u, s, t) in constraint_min_up_time_indices(m)
-    )
+    )    
 end
 
 """

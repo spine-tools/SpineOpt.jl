@@ -109,11 +109,11 @@ function _generate_current_window!(m::Model)
     model_start_ = model_start(model=instance)
     model_end_ = model_end(model=instance)
     roll_forward_ = roll_forward(model=instance, _strict=false)
-    window_start = model_start_
-    window_end = (roll_forward_ === nothing) ? model_end_ : min(model_start_ + roll_forward_, model_end_)
+    window_start = model_start_    
+    window_end = (roll_forward_ === nothing) ? model_end_ : min(model_start_ + roll_forward_, model_end_)    
     m.ext[:temporal_structure][:current_window] = TimeSlice(
         window_start, window_end; duration_unit=_model_duration_unit(instance)
-    )
+    )    
 end
 
 # Adjuster functions, in case blocks specify their own start and end
