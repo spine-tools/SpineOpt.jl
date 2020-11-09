@@ -149,9 +149,12 @@ Fix a variable to the values specified by the `fix_value` parameter function, if
 _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Nothing) = nothing
 function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Function)
     var = m.ext[:variables][name]
-    for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+    bin = m.ext[:variables_definition][name][:bin]
+    int = m.ext[:variables_definition][name][:int]            
+    for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))        
         fix_value_ = fix_value(ind)
         fix_value_ != nothing && !isnan(fix_value_) && fix(var[ind], fix_value_; force=true)
+        fix_value_ != nothing && @info "fix details" name ind fix_value(ind)
     end
 end
 
@@ -291,18 +294,6 @@ _value(v) = v
 Save the value of the objective terms in a model.
 """
 function save_objective_values!(m::Model)
-    ind = (model=m.ext[:instance], t=current_window(m))
-    for name in [objective_terms(); :total_costs]
-        func = eval(name)
-        m.ext[:values][name] = Dict(ind => _value(realize(func(m, end_(ind.t)))))
-    end
-end
-
-
-"""
-Save the value of the objective terms in a model.
-"""
-function save_objective_values!(m::Model)
     ind = (model=m.ext[:instance], t=current_window(m))    
     for name in [objective_terms(); :total_costs]
         func = eval(name)
@@ -355,27 +346,28 @@ function update_model!(m; update_constraints=m -> nothing, log_level=3)
     # we can only do this once we have saved the solution
     @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
     @timelog log_level 2 "Updating variables..." update_variables!(m)
-    #@timelog log_level 2 "Fixing variable values..." fix_variables!(m)
-    #@timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
-    #@timelog log_level 2 "Updating user constraints..." update_constraints(m)
-    #@timelog log_level 2 "Updating objective..." update_varying_objective!(m)
+    @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
+    @timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
+    @timelog log_level 2 "Updating user constraints..." update_constraints(m)
+    @timelog log_level 2 "Updating objective..." update_varying_objective!(m)
 end
 
 """
 Write report from given outputs into the db.
 """
-function write_report(model, outputs, default_url)
+function write_report(model, default_url)
     reports = Dict()
-    
+    outputs = Dict()
+
     for rpt in model__report(model=model.ext[:instance])
         for out in report__output(report=rpt)
-            d = get(outputs, out.name, nothing)
+            d = get!(model.ext[:outputs], out.name, nothing)
             d === nothing && continue
             output_url = output_db_url(report=rpt, _strict=false)
             url = output_url !== nothing ? output_url : default_url
             url_reports = get!(reports, url, Dict())
             output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
-            parameter_name = out.name in objective_terms() ? Symbol("objective_", out.name) : out.name
+            parameter_name = out.name in objective_terms() ? Symbol("objective_", out.name) : out.name            
             output_params[parameter_name] = Dict(
                 k => TimeSeries(collect(keys(v)), collect(values(v)), false, false) for (k, v) in d
             )

@@ -120,7 +120,7 @@ function rerun_spineopt_mp(
         @timelog log_level 2 "Add MP cuts..." add_mp_cuts!(mp; log_level=3)           
         j += 1               
     end
-    @timelog log_level 2 "Writing report..." write_report(m, outputs, url_out)
+    @timelog log_level 2 "Writing report..." write_report(m, url_out)
     m    
 end
 
@@ -131,6 +131,7 @@ Initialize the given model for SpineOpt Master Problem: add variables, fix the n
 function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 2 "Identifying MP outputs...\n" identify_outputs(m)    
     @timelog log_level 2 "Adding MP variables...\n" add_mp_variables!(m; log_level=log_level)
+    @info unit.parameter_values[unit()[5]][:fix_units_invested_available]
     @timelog log_level 2 "Fixing MP variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding MP constraints...\n" add_mp_constraints!(
         m; add_constraints=add_constraints, log_level=log_level
