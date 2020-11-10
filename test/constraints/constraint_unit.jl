@@ -137,7 +137,7 @@
             var_u_on1 = var_units_on[var_key1...]
             var_u_su1 = var_units_started_up[var_key1...]
             var_u_sd1 = var_units_shut_down[var_key1...]
-            @testset for t0 in t_before_t(m; t_after=t1)
+            @testset for t0 in [x for x in t_before_t(m; t_after=t1) if x in time_slices]
                 var_key0 = (unit(:unit_ab), s0, t0)
                 var_u_on0 = get(var_units_on, var_key0, 0)
                 con_key = (unit(:unit_ab), path, t0, t1)
@@ -366,7 +366,7 @@
             end
         end
     end
-    ### min up time with non spinning reserves
+    ### min up time with non-spinning reserves
     @testset "constraint_min_up_time" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_up_minutes in (60, 120, 210)
@@ -376,11 +376,16 @@
             object_parameter_values = [
                 ["unit", "unit_ab", "min_up_time", min_up_time], ["model", "instance", "model_end", model_end],
             ]
-            db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_ab", "node_b"], "max_res_shutdown_ramp", 1]
+            ]
+            db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values,relationship_parameter_values=relationship_parameter_values)
             m = run_spineopt(url_in; log_level=0)
             var_units_on = m.ext[:variables][:units_on]
+            @show var_units_on
             var_units_started_up = m.ext[:variables][:units_started_up]
             var_nonspin_units_shutting_down = m.ext[:variables][:nonspin_units_shutting_down]
+            @show var_nonspin_units_shutting_down
             constraint = m.ext[:constraints][:min_up_time]
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
@@ -403,11 +408,13 @@
                 var_u_on_key = (unit(:unit_ab), s, t)
                 var_u_on = var_units_on[var_u_on_key...]
                 vars_u_su = [var_units_started_up[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
-                var_ns_sd_key = (unit(:unit_ab), node(:node_a), s, t)
+                var_ns_sd_key = (unit(:unit_ab), node(:node_b), s, t)
                 var_ns_sd = var_nonspin_units_shutting_down[var_ns_sd_key...]
-                expected_con = @build_constraint(var_u_on >= sum(vars_u_su) + sum(var_ns_sd))
+                expected_con = @build_constraint(var_u_on - var_ns_sd >= sum(vars_u_su))
+                @show expected_con
                 con_key = (unit(:unit_ab), path, t)
                 observed_con = constraint_object(constraint[con_key...])
+                @show observed_con
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
@@ -498,7 +505,7 @@
                 vars_u_sd = [var_units_shut_down[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
                 var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
                 var_ns_su = var_nonspin_units_starting_up[var_ns_su_key...]
-                expected_con = @build_constraint(var_u_av - var_u_on >= sum(vars_u_sd)+sum(var_ns_su))
+                expected_con = @build_constraint(var_u_av - var_u_on >= sum(vars_u_sd)+var_ns_su)
                 con_key = (unit(:unit_ab), path, t)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -858,7 +865,7 @@
         @testset for (s, t) in zip(scenarios, time_slices)
             var_ns_rd_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
             var_ns_sd_key = (unit(:unit_ab), node(:node_a), s, t)
-            var_ns_rd_u_flow = var_nonspin_ramp_down_unit_flow [var_ns_rd_u_flow_key...]
+            var_ns_rd_u_flow = var_nonspin_ramp_down_unit_flow[var_ns_rd_u_flow_key...]
             var_ns_sd = var_nonspin_units_shutting_down[var_ns_sd_key...]
             con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
             expected_con = @build_constraint(var_ns_rd_u_flow <= unit_capacity * max_res_shutdown_ramp * var_ns_sd)
