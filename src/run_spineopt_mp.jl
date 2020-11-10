@@ -114,11 +114,13 @@ function rerun_spineopt_mp(
             @log log_level 1 "Operations window $(k+1), benders iteration $j : $(current_window(m))"
             update_model!(m; update_constraints=update_constraints, log_level=log_level)
             k += 1
+            break
         end
         @timelog log_level 2 "Processing operational problem solution..." process_subproblem_solution(m, j)
         update_model!(mp; update_constraints=update_constraints, log_level=log_level)   
         @timelog log_level 2 "Add MP cuts..." add_mp_cuts!(mp; log_level=3)           
-        j += 1               
+        j += 1
+        break               
     end
     @timelog log_level 2 "Writing report..." write_report(m, url_out)
     m    
@@ -187,6 +189,6 @@ end
 
 
 function save_mp_model_results!(outputs, m)    
-    save_variable_values!(m)    
+    save_variable_values!(m)        
     save_outputs!(m)    
 end

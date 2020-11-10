@@ -314,7 +314,7 @@ function save_outputs!(m)
     for (name, out) in m.ext[:outputs]
         value = get(m.ext[:values], name, nothing)
         if value === nothing
-            @warn "can't find a value for '$(out.name)'"
+            @warn "can't find a value for '$(name)'"
             continue
         end
         existing = get!(m.ext[:outputs], name, Dict{NamedTuple,Dict}())
@@ -435,16 +435,20 @@ function save_integer_values!(m::Model)
 end
 
 
-function save_marginal_values!(m::Model)
-    save_marginal_value!(m, :units_available)
+function save_marginal_values!(m::Model)    
+    for (constraint_name, con) in m.ext[:constraints]
+        output_name = Symbol(string("constraint_", constraint_name))
+        if haskey(m.ext[:outputs], output_name)            
+            _save_marginal_value!(m, constraint_name, output_name)
+        end
+    end    
 end
 
 
-function save_marginal_value!(m::Model, name::Symbol)
-    inds = keys(m.ext[:constraints][name])
-    con = m.ext[:constraints][name]
-
-    m.ext[:marginals][name] = Dict(
+function _save_marginal_value!(m::Model, constraint_name::Symbol, output_name::Symbol)    
+    con = m.ext[:constraints][constraint_name]
+    inds = keys(con) 
+    m.ext[:values][output_name] = Dict(
         ind => JuMP.dual(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window(m))
     )
 end

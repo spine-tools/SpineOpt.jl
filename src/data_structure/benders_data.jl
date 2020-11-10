@@ -66,11 +66,11 @@ function add_benders_iteration(j)
 end
 
 
-function save_sp_marginal_values(m)    
-    inds = keys(m.ext[:marginals][:units_available])    
+function save_sp_marginal_values(m)        
+    inds = keys(m.ext[:values][:constraint_units_available])    
     for u in indices(candidate_units)        
         time_indices = [start(ind.t) for ind in inds if ind.unit == u] 
-        vals = [m.ext[:marginals][:units_available][ind] for ind in inds if ind.unit == u]
+        vals = [m.ext[:values][:constraint_units_available][ind] for ind in inds if ind.unit == u]
         unit__benders_iteration.parameter_values[(u, current_bi)][:units_available_mv] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
 end
