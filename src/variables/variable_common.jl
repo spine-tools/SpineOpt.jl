@@ -53,7 +53,7 @@ end
 
 Create JuMP `base_name` from `name` and `ind`.
 """
-_base_name(name, ind) = """$(name)[$(join(ind, ", "))]"""
+_base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 
 """
     _variable(m, name, ind, lb, ub, bin, int)

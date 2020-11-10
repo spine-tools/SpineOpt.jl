@@ -127,7 +127,7 @@
         var_units_started_up = m.ext[:variables][:units_started_up]
         var_units_shut_down = m.ext[:variables][:units_shut_down]
         constraint = m.ext[:constraints][:unit_state_transition]
-        @test length(constraint) == 3
+        @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -137,10 +137,10 @@
             var_u_on1 = var_units_on[var_key1...]
             var_u_su1 = var_units_started_up[var_key1...]
             var_u_sd1 = var_units_shut_down[var_key1...]
-            @testset for t0 in [x for x in t_before_t(m; t_after=t1) if x in time_slices]
-                var_key0 = (unit(:unit_ab), s0, t0)
+            @testset for (u, t0, t1) in unit_dynamic_time_indices(m; unit=unit(:unit_ab), t_after=t1)
+                var_key0 = (u, s0, t0)
                 var_u_on0 = get(var_units_on, var_key0, 0)
-                con_key = (unit(:unit_ab), path, t0, t1)
+                con_key = (u, path, t0, t1)
                 expected_con = @build_constraint(var_u_on1 - var_u_on0 == var_u_su1 - var_u_sd1)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -553,7 +553,7 @@
         var_units_invested = m.ext[:variables][:units_invested]
         var_units_mothballed = m.ext[:variables][:units_mothballed]
         constraint = m.ext[:constraints][:units_invested_transition]
-        @test length(constraint) == 3
+        @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -563,10 +563,10 @@
             var_u_inv_av1 = var_units_invested_available[var_key1...]
             var_u_inv_1 = var_units_invested[var_key1...]
             var_u_moth_1 = var_units_mothballed[var_key1...]
-            @testset for t0 in t_before_t(m; t_after=t1)
-                var_key0 = (unit(:unit_ab), s0, t0)
+            @testset for (u, t0, t1) in unit_investment_dynamic_time_indices(m; unit=unit(:unit_ab), t_after=t1)
+                var_key0 = (u, s0, t0)
                 var_u_inv_av0 = get(var_units_invested_available, var_key0, 0)
-                con_key = (unit(:unit_ab), path, t0, t1)
+                con_key = (u, path, t0, t1)
                 expected_con = @build_constraint(var_u_inv_av1 - var_u_inv_1 + var_u_moth_1 == var_u_inv_av0)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -785,7 +785,7 @@
         var_start_up_unit_flow = m.ext[:variables][:start_up_unit_flow]
         var_ramp_up_unit_flow = m.ext[:variables][:ramp_up_unit_flow]
         constraint = m.ext[:constraints][:split_ramp_up]
-        @test length(constraint) == 3
+        @test length(constraint) == 2
         key_head = (unit(:unit_ab), node(:node_a), direction(:from_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
@@ -796,7 +796,7 @@
             var_u_flow1 = var_unit_flow[var_key1...]
             var_su_u_flow1 = var_start_up_unit_flow[var_key1...]
             var_ru_u_flow1 = var_ramp_up_unit_flow[var_key1...]
-            @testset for t0 in t_before_t(m; t_after=t1)
+            @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=node(:node_a), t_after=t1)
                 var_key0 = (key_head..., s0, t0)
                 var_u_flow0 = get(var_unit_flow, var_key0, 0)
                 con_key = (key_head..., path, t0, t1)
@@ -823,7 +823,7 @@
         var_start_up_unit_flow = m.ext[:variables][:start_up_unit_flow]
         var_nonspin_ramp_up_unit_flow = m.ext[:variables][:nonspin_ramp_up_unit_flow]
         constraint = m.ext[:constraints][:split_ramp_up]
-        @test length(constraint) == 3
+        @test length(constraint) == 2
         key_head = (unit(:unit_ab), node(:node_a), direction(:from_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
@@ -834,7 +834,7 @@
             var_u_flow1 = var_unit_flow[var_key1...]
             var_su_u_flow1 = var_start_up_unit_flow[var_key1...]
             var_ns_ru_u_flow1 = var_nonspin_ramp_up_unit_flow[var_key1...]
-            @testset for t0 in t_before_t(m; t_after=t1)
+            @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=node(:node_a), t_after=t1)
                 var_key0 = (key_head..., s0, t0)
                 var_u_flow0 = get(var_unit_flow, var_key0, 0)
                 con_key = (key_head..., path, t0, t1)
@@ -1076,6 +1076,7 @@
             unit_flow_coefficient_a = 25
             unit_flow_coefficient_b = 30
             units_on_coefficient = 20
+            units_started_up_coefficient = 35
             objects = [["unit_constraint", "constraint_x"]]
             relationships = [
                 ["unit__from_node__unit_constraint", ["unit_ab", "node_a", "constraint_x"]],
@@ -1089,7 +1090,8 @@
             relationship_parameter_values = [
                 [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
                 [relationships[2]..., "unit_flow_coefficient", unit_flow_coefficient_b],
-                [relationships[3]..., "units_on_coefficient", units_on_coefficient]
+                [relationships[3]..., "units_on_coefficient", units_on_coefficient],
+                [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient]
             ]
             db_api.import_data_to_url(
                 url_in; 
@@ -1101,6 +1103,7 @@
             m = run_spineopt(url_in; log_level=0)
             var_unit_flow = m.ext[:variables][:unit_flow]
             var_units_on = m.ext[:variables][:units_on]
+            var_units_started_up = m.ext[:variables][:units_started_up]
             constraint = m.ext[:constraints][:unit_constraint]
             @test length(constraint) == 1
             key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
@@ -1114,7 +1117,9 @@
                 * (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2])
                 + 2 * unit_flow_coefficient_b * var_unit_flow[key_b..., s_parent, t2h]
                 + units_on_coefficient
-                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]),
+                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
+                + units_started_up_coefficient
+                * (var_units_started_up[unit(:unit_ab), s_parent, t1h1] + var_units_started_up[unit(:unit_ab), s_child, t1h2]),
                 Symbol(sense),
                 rhs
             )
@@ -1132,6 +1137,7 @@
             unit_flow_coefficient_a = 25
             unit_flow_coefficient_b = 30
             units_on_coefficient = 20
+            units_started_up_coefficient = 35
             points = [0.1, 0.5, 1.0]
             operating_points = Dict("type" => "array", "data" => PyVector(points))
             objects = [["unit_constraint", "constraint_x"]]
@@ -1149,7 +1155,8 @@
                 ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
                 [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
                 [relationships[2]..., "unit_flow_coefficient", unit_flow_coefficient_b],
-                [relationships[3]..., "units_on_coefficient", units_on_coefficient]
+                [relationships[3]..., "units_on_coefficient", units_on_coefficient],
+                [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient]
             ]
             db_api.import_data_to_url(
                 url_in; 
@@ -1161,6 +1168,7 @@
             m = run_spineopt(url_in; log_level=0)
             var_unit_flow_op = m.ext[:variables][:unit_flow_op]
             var_units_on = m.ext[:variables][:units_on]
+            var_units_started_up = m.ext[:variables][:units_started_up]
             constraint = m.ext[:constraints][:unit_constraint]
             @test length(constraint) == 1
             key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
@@ -1177,7 +1185,9 @@
                 )
                 + 2 * sum(unit_flow_coefficient_b * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
                 + units_on_coefficient
-                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]),
+                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
+                + units_started_up_coefficient
+                * (var_units_started_up[unit(:unit_ab), s_parent, t1h1] + var_units_started_up[unit(:unit_ab), s_child, t1h2]),
                 Symbol(sense),
                 rhs
             )

@@ -38,7 +38,7 @@ function add_constraint_nodal_balance!(m::Model)
                 for (conn, n, d, s, t) in connection_flow_indices(
                     m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
                 )
-                if !issubset(_connection_nodes(conn), internal_nodes);
+                if !issubset(_connection_nodes(conn, n), internal_nodes);
                 init=0
             )
             # Commodity flows to connections
@@ -47,7 +47,7 @@ function add_constraint_nodal_balance!(m::Model)
                 for (conn, n, d, s, t) in connection_flow_indices(
                     m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
                 )
-                if !issubset(_connection_nodes(conn), internal_nodes);
+                if !issubset(_connection_nodes(conn, n), internal_nodes);
                 init=0
             )
             # slack variable - only exists if slack_penalty is defined
@@ -70,12 +70,13 @@ end
 _internal_nodes(n::Object) = setdiff(members(n), n)
 
 """
-    _connection_nodes(conn)
+    _connection_nodes(connection, node)
 
-An iterator over all `nodes` of a `connection`.
+An iterator over all nodes of given `connection` that have the commodity as given `node`.
 """
-_connection_nodes(conn::Object) = (
+_connection_nodes(connection, node) = (
     n
     for connection__node in (connection__from_node, connection__to_node)
-    for n in connection__node(connection=conn, direction=anything)
+    for n in connection__node(connection=connection, direction=anything)
+    if node__commodity(node=node) == node__commodity(node=n)
 )

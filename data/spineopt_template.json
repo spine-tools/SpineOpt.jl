@@ -94,7 +94,7 @@
         ["node", "has_state", false, "boolean_value_list", "A boolean flag for whether a `node` has a `node_state` variable."],
         ["node", "is_reserve_node", false, "boolean_value_list", "A boolean flag for a `reserve_node`?"],
         ["node", "minimum_reserve_activation_time", null, null, "Duration a certain reserve product needs to be online/available"],
-        ["node", "nodal_balance_sense", "==", "constraint_sense", "A selector for `nodal_balance` constraint sense."],
+        ["node", "nodal_balance_sense", "==", "constraint_sense_list", "A selector for `nodal_balance` constraint sense."],
         ["node", "node_opf_type", "node_opf_type_normal", "node_opf_type_list", "A selector for `node_opf_type`?"],
         ["node", "node_slack_penalty", null, null, "A penalty cost for `node_slack_pos` and `node_slack_neg` variables. The slack variables won't be included in the model unless there's a cost defined for them."],
         ["node", "node_state_cap", null, null, "The maximum permitted value for a `node_state` variable."],
@@ -230,8 +230,9 @@
         ["unit__to_node", "unit_conv_cap_to_flow", 1.0, null, "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."],
         ["unit__to_node", "vom_cost", null, null, "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."],
         ["unit__to_node__unit_constraint", "graph_view_position", null, null, null],
-        ["unit__to_node__unit_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `unit_constraint`?"],
-        ["unit__unit_constraint", "units_on_coefficient", 0.0, null, "Coefficient of a `units_on` variable for a custom `unit_constraint`?"],
+        ["unit__to_node__unit_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `unit_constraint`."],
+        ["unit__unit_constraint", "units_on_coefficient", 0.0, null, "Coefficient of a `units_on` variable for a custom `unit_constraint`."],
+        ["unit__unit_constraint", "units_started_up_coefficient", 0.0, null, "Coefficient of a `units_started_up` variable for a custom `unit_constraint`."],
         ["unit__commodity", "max_cum_in_unit_flow_bound", null, null, "Set a maximum cumulative upped bound for a `unit_flow`?"]
     ]
 }

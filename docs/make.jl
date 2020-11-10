@@ -1,4 +1,7 @@
-using Documenter, SpineOpt
+using Documenter
+using SpineOpt
+
+SpineOpt.write_system_components_file(joinpath(@__DIR__, "src", "system_components.md"))
 
 makedocs(
     sitename = "SpineOpt.jl",
@@ -6,8 +9,13 @@ makedocs(
         prettyurls = get(ENV, "CI", nothing) == "true"
     ),
     pages = [
-        "Home" => "index.md",
-        "Library" => "library.md",
+        "Getting Started" => "getting_started.md",
+        "System Components" => "system_components.md",
+        "Advanced Usage" => "advanced_usage.md",
+        "Mathematical formulation" => Any[
+            "Objective" => joinpath("mathematical_formulation", "objective_function.md"),
+            "Constraints" => joinpath("mathematical_formulation", "constraints.md")
+        ]
     ]
 )
 
