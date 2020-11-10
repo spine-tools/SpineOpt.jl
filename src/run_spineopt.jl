@@ -333,7 +333,8 @@ function save_model_results!(outputs, m)
     postprocess_results!(m)
     save_variable_values!(m)
     save_objective_values!(m)
-    save_marginal_values!(m)    
+    save_marginal_values!(m)
+    save_bound_marginal_values!(m)
     save_outputs!(m)
 end
 
@@ -392,14 +393,17 @@ end
 
 function relax_integer_vars(m::Model)
     save_integer_values!(m)
-    for name in m.ext[:integer_variables]
+    fix_vars = [:units_on, :units_invested]
+    for name in m.ext[:integer_variables]        
         def = m.ext[:variables_definition][name]        
         bin = def[:bin]
         int = def[:int]
         var = m.ext[:variables][name]
         for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))            
-            if end_(ind.t) <= end_(current_window(m))                
-                fix(var[ind], m.ext[:values][name][ind]; force=true)                                
+            if name in fix_vars
+                if end_(ind.t) <= end_(current_window(m))                
+                    fix(var[ind], m.ext[:values][name][ind]; force=true)                                
+                end
             end
             bin != nothing && bin(ind) && unset_binary(var[ind])
             int != nothing && int(ind) && unset_integer(var[ind])
@@ -450,5 +454,26 @@ function _save_marginal_value!(m::Model, constraint_name::Symbol, output_name::S
     inds = keys(con) 
     m.ext[:values][output_name] = Dict(
         ind => JuMP.dual(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window(m))
+    )
+end
+
+
+function save_bound_marginal_values!(m::Model)    
+    for (variable_name, con) in m.ext[:variables]
+        output_name = Symbol(string("bound_", variable_name))
+        if haskey(m.ext[:outputs], output_name)            
+            _save_bound_marginal_value!(m, variable_name, output_name)
+        end
+    end    
+end
+
+
+function _save_bound_marginal_value!(m::Model, variable_name::Symbol, output_name::Symbol)    
+    var = m.ext[:variables][variable_name]    
+    indices = m.ext[:variables_definition][variable_name][:indices]
+    m.ext[:values][output_name] = Dict(
+        ind => JuMP.reduced_cost(var[ind])
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+        if end_(ind.t) <= end_(current_window(m))
     )
 end

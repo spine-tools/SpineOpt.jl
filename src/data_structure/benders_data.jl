@@ -33,6 +33,7 @@ function process_master_problem_solution(mp)
             unit__benders_iteration.parameter_values[(u, current_bi)] = Dict()
         end
         unit__benders_iteration.parameter_values[(u, current_bi)][:units_invested_available_bi] = parameter_value(TimeSeries(time_indices, vals, false, false))
+        @info "master problem solution for $(u.name) for iteration $current_bi" unit.parameter_values[u][:fix_units_invested_available] 
     end 
 end
 

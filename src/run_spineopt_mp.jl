@@ -101,7 +101,9 @@ function rerun_spineopt_mp(
         (optimize_model!(mp) && j < 3) || break   # master problem loop
         @timelog log_level 2 "Saving master problem results..." save_mp_model_results!(outputs, mp)
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)    
-        if j > 1              
+        if j == 1              
+            @timelog log_level 2 "Fixing variable values..." fix_variables!(m)            
+        else
             @timelog log_level 2 "Resetting sub problem temporal structure. Rewinding $(k-1) times..." reset_temporal_structure(mp, k-1)
             @log log_level 1 "Window 1: $(current_window(m))"
             update_model!(m; update_constraints=update_constraints, log_level=log_level)            
@@ -120,7 +122,7 @@ function rerun_spineopt_mp(
         update_model!(mp; update_constraints=update_constraints, log_level=log_level)   
         @timelog log_level 2 "Add MP cuts..." add_mp_cuts!(mp; log_level=3)           
         j += 1
-        break               
+        break
     end
     @timelog log_level 2 "Writing report..." write_report(m, url_out)
     m    
