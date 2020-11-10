@@ -17,8 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function process_master_problem_solution(mp)
-    @info "processing master problem solution for current_bi" current_bi
+function process_master_problem_solution(mp)    
     for u in indices(candidate_units)
         time_indices = [start(inds.t) 
             for inds in units_invested_available_indices(mp; unit=u)
@@ -32,8 +31,7 @@ function process_master_problem_solution(mp)
         if !haskey(unit__benders_iteration.parameter_values, (u, current_bi))
             unit__benders_iteration.parameter_values[(u, current_bi)] = Dict()
         end
-        unit__benders_iteration.parameter_values[(u, current_bi)][:units_invested_available_bi] = parameter_value(TimeSeries(time_indices, vals, false, false))
-        @info "master problem solution for $(u.name) for iteration $current_bi" unit.parameter_values[u][:fix_units_invested_available] 
+        unit__benders_iteration.parameter_values[(u, current_bi)][:units_invested_available_bi] = parameter_value(TimeSeries(time_indices, vals, false, false))        
     end 
 end
 
@@ -71,7 +69,7 @@ function save_sp_marginal_values(m)
     inds = keys(m.ext[:values][:constraint_units_available])    
     for u in indices(candidate_units)        
         time_indices = [start(ind.t) for ind in inds if ind.unit == u] 
-        vals = [m.ext[:values][:constraint_units_available][ind] for ind in inds if ind.unit == u]
+        vals = [m.ext[:values][:bound_units_on][ind] for ind in inds if ind.unit == u]
         unit__benders_iteration.parameter_values[(u, current_bi)][:units_available_mv] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
 end

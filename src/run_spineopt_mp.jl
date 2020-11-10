@@ -115,14 +115,12 @@ function rerun_spineopt_mp(
             @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || @timelog log_level 2 " ... Rolling complete\n" break
             @log log_level 1 "Operations window $(k+1), benders iteration $j : $(current_window(m))"
             update_model!(m; update_constraints=update_constraints, log_level=log_level)
-            k += 1
-            break
+            k += 1            
         end
         @timelog log_level 2 "Processing operational problem solution..." process_subproblem_solution(m, j)
         update_model!(mp; update_constraints=update_constraints, log_level=log_level)   
         @timelog log_level 2 "Add MP cuts..." add_mp_cuts!(mp; log_level=3)           
-        j += 1
-        break
+        j += 1        
     end
     @timelog log_level 2 "Writing report..." write_report(m, url_out)
     m    
@@ -134,8 +132,7 @@ Initialize the given model for SpineOpt Master Problem: add variables, fix the n
 """
 function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 2 "Identifying MP outputs...\n" identify_outputs(m)    
-    @timelog log_level 2 "Adding MP variables...\n" add_mp_variables!(m; log_level=log_level)
-    @info unit.parameter_values[unit()[5]][:fix_units_invested_available]
+    @timelog log_level 2 "Adding MP variables...\n" add_mp_variables!(m; log_level=log_level)    
     @timelog log_level 2 "Fixing MP variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding MP constraints...\n" add_mp_constraints!(
         m; add_constraints=add_constraints, log_level=log_level

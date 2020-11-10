@@ -153,8 +153,7 @@ function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Fu
     int = m.ext[:variables_definition][name][:int]            
     for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))        
         fix_value_ = fix_value(ind)
-        fix_value_ != nothing && !isnan(fix_value_) && fix(var[ind], fix_value_; force=true)
-        fix_value_ != nothing && @info "fix details" name ind fix_value(ind)
+        fix_value_ != nothing && !isnan(fix_value_) && fix(var[ind], fix_value_; force=true)        
     end
 end
 
