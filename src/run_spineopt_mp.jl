@@ -38,36 +38,39 @@ set to `nothing` after completion.
 **`log_level=3`** is the log level.
 """
 function run_spineopt_mp(
-    url_in::String,
-    url_out::String=url_in;
-    upgrade=false,
-    with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
-    cleanup=true,
-    add_constraints=m -> nothing,
-    update_constraints=m -> nothing,
-    log_level=3,
-    optimize=true,
-    use_direct_model=false
-)
-@log log_level 0 "Running SpineOpt for $(url_in)..."
-@timelog log_level 2 "Initializing data structure from db..." begin
-    using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
-    generate_missing_items()
-end
-rerun_spineopt_mp(
-    url_out;
-    with_optimizer=with_optimizer,
-    add_constraints=add_constraints,
-    update_constraints=update_constraints,
-    log_level=log_level,
-    optimize=optimize,
-    use_direct_model=use_direct_model
-)
+        url_in::String,
+        url_out::String=url_in;
+        upgrade=false,
+        mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+        lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
+        cleanup=true,
+        add_constraints=m -> nothing,
+        update_constraints=m -> nothing,
+        log_level=3,
+        optimize=true,
+        use_direct_model=false
+    )
+    @log log_level 0 "Running SpineOpt for $(url_in)..."
+    @timelog log_level 2 "Initializing data structure from db..." begin
+        using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
+        generate_missing_items()
+    end
+    rerun_spineopt_mp(
+        url_out;
+        mip_solver=mip_solver,
+        lp_solver=lp_solver,
+        add_constraints=add_constraints,
+        update_constraints=update_constraints,
+        log_level=log_level,
+        optimize=optimize,
+        use_direct_model=use_direct_model
+    )
 end
 
 function rerun_spineopt_mp(
     url_out::String;
-    with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+    mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+    lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
@@ -75,8 +78,10 @@ function rerun_spineopt_mp(
     use_direct_model=false
 )
     outputs = Dict()
-    mp = create_model(with_optimizer, use_direct_model,:spineopt_master)
-    m = create_model(with_optimizer, use_direct_model,:spineopt_operations)
+    @info "Creating MP model"
+    mp = create_model(mip_solver, use_direct_model,:spineopt_master)
+    @info "Creating SP model"
+    m = create_model(mip_solver, use_direct_model,:spineopt_operations)
     all_models = (m, mp)
     #all_models = (m,)
     @timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(m)
@@ -98,7 +103,7 @@ function rerun_spineopt_mp(
         global current_bi     
         @log log_level 0 "Starting Master Problem iteration $j"
         j > 1 && (current_bi = add_benders_iteration(j))                
-        (optimize_model!(mp) && j < 3) || break   # master problem loop
+        (optimize_model!(mp, mip_solver=mip_solver, lp_solver=lp_solver) && j < 3) || break   # master problem loop
         @timelog log_level 2 "Saving master problem results..." save_mp_model_results!(outputs, mp)
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)    
         if j == 1              
@@ -106,14 +111,17 @@ function rerun_spineopt_mp(
         else
             @timelog log_level 2 "Resetting sub problem temporal structure. Rewinding $(k-1) times..." reset_temporal_structure(mp, k-1)
             @log log_level 1 "Window 1: $(current_window(m))"
+            set_optimizer(m, mip_solver)
             update_model!(m; update_constraints=update_constraints, log_level=log_level)            
         end
         k = 1
-        while optimize && optimize_model!(m; log_level=log_level, calculate_duals=true)
+        while optimize && optimize_model!(m; mip_solver=mip_solver, lp_solver=lp_solver, log_level=log_level, calculate_duals=true)
             @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
             @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
             @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || @timelog log_level 2 " ... Rolling complete\n" break
             @log log_level 1 "Operations window $(k+1), benders iteration $j : $(current_window(m))"
+            # we have to do this here because to early and we can't access the solution and too late, we can't add integers/binaries
+            set_optimizer(m, mip_solver)
             update_model!(m; update_constraints=update_constraints, log_level=log_level)
             k += 1            
         end

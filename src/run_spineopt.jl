@@ -41,7 +41,8 @@ function run_spineopt(
         url_in::String,
         url_out::String=url_in;
         upgrade=false,
-        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+        mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+        lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
         cleanup=true,
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
@@ -56,7 +57,8 @@ function run_spineopt(
     end    
     rerun_spineopt(
         url_out;
-        with_optimizer=with_optimizer,
+        mip_solver=mip_solver,
+        lp_solver=lp_solver,
         add_constraints=add_constraints,
         update_constraints=update_constraints,
         log_level=log_level,
@@ -67,7 +69,8 @@ end
 
 function rerun_spineopt(
         url_out::String;
-        with_optimizer=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+        mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+        lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
         add_constraints=m -> nothing,
         update_constraints=m -> nothing,
         log_level=3,
@@ -75,7 +78,7 @@ function rerun_spineopt(
         use_direct_model=false        
     )
     outputs = Dict()
-    m = create_model(with_optimizer, use_direct_model, :spineopt_operations)
+    m = create_model(mip_solver, use_direct_model, :spineopt_operations)
     @timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(m)
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)    
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
@@ -84,7 +87,7 @@ function rerun_spineopt(
     @log log_level 1 "Window 1: $(current_window(m))"
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
     k = 2
-    while optimize && optimize_model!(m; log_level=log_level)
+    while optimize && optimize_model!(m; log_level=log_level, mip_solver=mip_solver, lp_solver=lp_solver)
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
         @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || break
@@ -100,10 +103,10 @@ end
 """
 A JuMP `Model` for SpineOpt.
 """
-function create_model(with_optimizer, use_direct_model=false, model_type=:spineopt_operations
+function create_model(mip_solver, use_direct_model=false, model_type=:spineopt_operations
     )
     
-    m = use_direct_model ? direct_model(with_optimizer) : Model(with_optimizer)     
+    m = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)
     m.ext[:instance] = first(model(model_type=model_type))
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
@@ -240,14 +243,15 @@ end
 """
 Optimize the given model. If an optimal solution is found, return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false)
+function optimize_model!(m::Model; log_level=3, calculate_duals=false, mip_solver, lp_solver)    
     write_mps_file(model=m.ext[:instance]) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
     if termination_status(m) == MOI.OPTIMAL ||  termination_status(m) == MOI.TIME_LIMIT                
         if calculate_duals
-            @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
+            @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)            
+            @timelog log_level 0 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
             @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)            
         end
         true
@@ -343,7 +347,7 @@ update constraints and update objective.
 """
 function update_model!(m; update_constraints=m -> nothing, log_level=3)
     # The below is needed here because we remove the integer constraints to get a dual solution and then need to re-add them for the next write_mps_on_no_solve
-    # we can only do this once we have saved the solution
+    # we can only do this once we have saved the solution    
     @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
     @timelog log_level 2 "Updating variables..." update_variables!(m)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
