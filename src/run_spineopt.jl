@@ -54,17 +54,35 @@ function run_spineopt(
     @timelog log_level 2 "Initializing data structure from db..." begin
         using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
         generate_missing_items()
-    end    
-    rerun_spineopt(
-        url_out;
-        mip_solver=mip_solver,
-        lp_solver=lp_solver,
-        add_constraints=add_constraints,
-        update_constraints=update_constraints,
-        log_level=log_level,
-        optimize=optimize,
-        use_direct_model=use_direct_model        
-    )
+    end
+    
+    # High-level algorithm selection. For now, selecting based on defined model types, but may want more robust system in future
+    
+    master_problem_model = first(model(model_type=:spineopt_master))    
+    
+    if master_problem_model==nothing
+        rerun_spineopt(
+            url_out;
+            mip_solver=mip_solver,
+            lp_solver=lp_solver,
+            add_constraints=add_constraints,
+            update_constraints=update_constraints,
+            log_level=log_level,
+            optimize=optimize,
+            use_direct_model=use_direct_model        
+        )
+    else
+        rerun_spineopt_mp(
+            url_out;
+            mip_solver=mip_solver,
+            lp_solver=lp_solver,
+            add_constraints=add_constraints,
+            update_constraints=update_constraints,
+            log_level=log_level,
+            optimize=optimize,
+            use_direct_model=use_direct_model
+        )
+    end
 end
 
 function rerun_spineopt(
@@ -77,8 +95,10 @@ function rerun_spineopt(
         optimize=true,
         use_direct_model=false        
     )
-    outputs = Dict()
+    outputs = Dict()    
+
     m = create_model(mip_solver, use_direct_model, :spineopt_operations)
+
     @timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(m)
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)    
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
@@ -108,6 +128,7 @@ function create_model(mip_solver, use_direct_model=false, model_type=:spineopt_o
     
     m = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)
     m.ext[:instance] = first(model(model_type=model_type))
+    m.ext[:instance] == nothing && error("No model of type $model_type defined")
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
     m.ext[:values] = Dict{Symbol,Dict}()

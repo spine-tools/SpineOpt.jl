@@ -77,11 +77,9 @@ function rerun_spineopt_mp(
     optimize=true,
     use_direct_model=false
 )
-    outputs = Dict()
-    @info "Creating MP model"
-    mp = create_model(mip_solver, use_direct_model,:spineopt_master)
-    @info "Creating SP model"
-    m = create_model(mip_solver, use_direct_model,:spineopt_operations)
+    outputs = Dict()    
+    mp = create_model(mip_solver, use_direct_model, :spineopt_master)
+    m = create_model(mip_solver, use_direct_model, :spineopt_operations)
     all_models = (m, mp)
     #all_models = (m,)
     @timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(m)
