@@ -439,7 +439,10 @@ If a `unit__investment_temporal_block` relationship is not defined, then create 
 if it is not already defined.
 """
 function expand_model__default_investment_temporal_block()
-    add_relationships!(model__temporal_block, model__default_investment_temporal_block())
+    add_relationships!(
+        model__temporal_block,
+        [(model=m, temporal_block=tb) for (m, tb) in model__default_investment_temporal_block()]
+    )
     add_relationships!(
         unit__investment_temporal_block, 
         [
@@ -460,7 +463,10 @@ If a `unit__investment_stochastic_structure` relationship is not defined, then c
 relationship if it is not already defined.
 """
 function expand_model__default_investment_stochastic_structure()
-    add_relationships!(model__stochastic_structure, model__default_investment_stochastic_structure())
+    add_relationships!(
+        model__stochastic_structure,
+        [(model=m, stochastic_structure=ss) for (m, ss) in model__default_investment_stochastic_structure()]
+    )
     add_relationships!(
         unit__investment_stochastic_structure, 
         [
@@ -481,7 +487,10 @@ and `units_on` without `units_on__stochastic_structure`. Similarly, add the corr
 relationship if it not already defined.
 """
 function expand_model__default_stochastic_structure()
-    add_relationships!(model__stochastic_structure, model__default_stochastic_structure())
+    add_relationships!(
+        model__stochastic_structure,
+        [(model=m, stochastic_structure=ss) for (m, ss) in model__default_stochastic_structure()]
+    )
     add_relationships!(
         node__stochastic_structure,
         unique(
@@ -507,7 +516,10 @@ Expand the `model__default_temporal_block` relationship to all `nodes` without `
 and `units_on` without `units_on_temporal_block`.
 """
 function expand_model__default_temporal_block()
-    add_relationships!(model__temporal_block, model__default_temporal_block())
+    add_relationships!(
+        model__temporal_block,
+        [(model=m, temporal_block=tb) for (m, tb) in model__default_temporal_block()]
+    )
     add_relationships!(
         node__temporal_block,
         unique(
