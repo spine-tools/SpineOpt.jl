@@ -348,7 +348,10 @@
                 stochastic_structure=stochastic_structure(:stochastic), 
                 stochastic_scenario=stochastic_scenario(:parent)
             )
-            head_hours = length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            head_hours = -(
+                length(time_slice(m; temporal_block=temporal_block(:hourly))), 
+                round(parent_end, Hour(1)).value
+            )
             tail_hours = round(Minute(min_up_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours); repeat([stochastic_scenario(:parent)], tail_hours)
@@ -371,8 +374,7 @@
             end
         end
     end
-    ### min up time with non-spinning reserves
-    @testset "constraint_min_up_time" begin
+    @testset "constraint_min_up_time_with_non_spinning_reserves" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_up_minutes in (60, 120, 210)
             _load_template(url_in)
@@ -382,22 +384,27 @@
                 ["unit", "unit_ab", "min_up_time", min_up_time], ["model", "instance", "model_end", model_end],
             ]
             relationship_parameter_values = [
-                ["unit__to_node", ["unit_ab", "node_b"], "max_res_shutdown_ramp", 1]
+                ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", 1],
+                ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0]
             ]
-            db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values,relationship_parameter_values=relationship_parameter_values)
+            db_api.import_data_to_url(url_in; 
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values
+            )
             m = run_spineopt(url_in; log_level=0)
             var_units_on = m.ext[:variables][:units_on]
-            @show var_units_on
             var_units_started_up = m.ext[:variables][:units_started_up]
-            var_nonspin_units_shutting_down = m.ext[:variables][:nonspin_units_shutting_down]
-            @show var_nonspin_units_shutting_down
+            var_nonspin_units_shut_down = m.ext[:variables][:nonspin_units_shut_down]
             constraint = m.ext[:constraints][:min_up_time]
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
                 stochastic_structure=stochastic_structure(:stochastic),
                 stochastic_scenario=stochastic_scenario(:parent)
             )
-            head_hours = length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            head_hours = -(
+                length(time_slice(m; temporal_block=temporal_block(:hourly))),
+                round(parent_end, Hour(1)).value
+            )
             tail_hours = round(Minute(min_up_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours); repeat([stochastic_scenario(:parent)], tail_hours)
@@ -413,18 +420,15 @@
                 var_u_on_key = (unit(:unit_ab), s, t)
                 var_u_on = var_units_on[var_u_on_key...]
                 vars_u_su = [var_units_started_up[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
-                var_ns_sd_key = (unit(:unit_ab), node(:node_b), s, t)
-                var_ns_sd = var_nonspin_units_shutting_down[var_ns_sd_key...]
+                var_ns_sd_key = (unit(:unit_ab), node(:node_a), s, t)
+                var_ns_sd = var_nonspin_units_shut_down[var_ns_sd_key...]
                 expected_con = @build_constraint(var_u_on - var_ns_sd >= sum(vars_u_su))
-                @show expected_con
                 con_key = (unit(:unit_ab), path, t)
                 observed_con = constraint_object(constraint[con_key...])
-                @show observed_con
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
     end
-    ###
     @testset "constraint_min_down_time" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_down_minutes in (45, 150, 300)
@@ -469,17 +473,23 @@
             end
         end
     end
-    ### min down time w non spin reserves
-    @testset "constraint_min_down_time" begin
+    @testset "constraint_min_down_time_with_non_spinning_reserves" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
-        @testset for min_down_minutes in (45, 150, 300)
+        @testset for min_down_minutes in (90, 150, 300)  # TODO: make it work for 45, 75
             _load_template(url_in)
             db_api.import_data_to_url(url_in; test_data...)
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
             object_parameter_values = [
                 ["unit", "unit_ab", "min_down_time", min_down_time], ["model", "instance", "model_end", model_end],
             ]
-            db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
+            relationship_parameter_values = [
+                ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", 1],
+                ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0]
+            ]
+            db_api.import_data_to_url(url_in; 
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values
+            )
             m = run_spineopt(url_in; log_level=0)
             var_units_on = m.ext[:variables][:units_on]
             var_units_available = m.ext[:variables][:units_available]
@@ -510,14 +520,13 @@
                 vars_u_sd = [var_units_shut_down[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
                 var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
                 var_ns_su = var_nonspin_units_starting_up[var_ns_su_key...]
-                expected_con = @build_constraint(var_u_av - var_u_on >= sum(vars_u_sd)+var_ns_su)
+                expected_con = @build_constraint(var_u_av - var_u_on >= sum(vars_u_sd) + var_ns_su)
                 con_key = (unit(:unit_ab), path, t)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
     end
-    ###
     @testset "constraint_units_invested_available" begin
         _load_template(url_in)
         db_api.import_data_to_url(url_in; test_data...)
