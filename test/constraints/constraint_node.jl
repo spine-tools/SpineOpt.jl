@@ -39,6 +39,8 @@
         :relationships => [
             ["model__temporal_block", ["instance", "hourly"]],
             ["model__temporal_block", ["instance", "two_hourly"]],
+            ["model__stochastic_structure", ["instance", "deterministic"]],
+            ["model__stochastic_structure", ["instance", "stochastic"]],
             ["unit__from_node", ["unit_ab", "node_a"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
             ["units_on__temporal_block", ["unit_ab", "two_hourly"]],
