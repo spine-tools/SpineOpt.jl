@@ -42,7 +42,7 @@ function add_constraint_min_nonspin_ramp_up!(m::Model)
                 * min_res_startup_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for (u, n, s, t) in nonspin_units_starting_up_indices(
+                for (u, n, s, t) in nonspin_units_started_up_indices(
                     m; unit=u, node=ng, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
                 );
                 init=0
@@ -73,7 +73,7 @@ function constraint_min_nonspin_ramp_up_indices(
                 ind.stochastic_scenario for ind in Iterators.flatten(
                 (
                     nonspin_ramp_up_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
-                    nonspin_units_starting_up_indices(m; unit=u, node=ng, t=t))
+                    nonspin_units_started_up_indices(m; unit=u, node=ng, t=t))
                 )
             )
         )

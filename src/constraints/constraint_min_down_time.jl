@@ -51,7 +51,7 @@ function add_constraint_min_down_time!(m::Model)
             )
             + expr_sum(
                 + nonspin_units_started_up[u, n, s, t]
-                for (u, n, s, t) in nonspin_units_starting_up_indices(m; unit=u, stochastic_scenario=s, t=t);
+                for (u, n, s, t) in nonspin_units_started_up_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0
             )
         )
@@ -68,7 +68,7 @@ Uses stochastic path indices due to potentially different stochastic structures 
 `units_available`, `units_shut_down`, and `nonspin_units_started_up` variables on past time slices.
 Keyword arguments can be used to filter the resulting Array.
 """
-#TODO: Does this require nonspin_units_starting_up_indices() to be added here?
+#TODO: Does this require nonspin_units_started_up_indices() to be added here?
 function constraint_min_down_time_indices(m::Model; unit=anything, stochastic_path=anything, t=anything)
     t0 = startref(current_window(m))
     unique(
@@ -96,7 +96,7 @@ function _constraint_min_down_time_indices(m, u, s, t0, t)
         for ind in Iterators.flatten(
             (
                 units_on_indices(m; unit=u, t=t_past_and_present),
-                nonspin_units_starting_up_indices(m; unit=u, t=t_before_t(m; t_after=t))
+                nonspin_units_started_up_indices(m; unit=u, t=t_before_t(m; t_after=t))
             )
         )
     )

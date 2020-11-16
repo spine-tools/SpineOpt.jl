@@ -494,7 +494,7 @@
             var_units_on = m.ext[:variables][:units_on]
             var_units_available = m.ext[:variables][:units_available]
             var_units_shut_down = m.ext[:variables][:units_shut_down]
-            var_nonspin_units_starting_up = m.ext[:variables][:nonspin_units_started_up]
+            var_nonspin_units_started_up = m.ext[:variables][:nonspin_units_started_up]
             constraint = m.ext[:constraints][:min_down_time]
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
@@ -519,7 +519,7 @@
                 var_u_on = var_units_on[var_u_av_on_key...]
                 vars_u_sd = [var_units_shut_down[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
                 var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
-                var_ns_su = var_nonspin_units_starting_up[var_ns_su_key...]
+                var_ns_su = var_nonspin_units_started_up[var_ns_su_key...]
                 expected_con = @build_constraint(var_u_av - var_u_on >= sum(vars_u_sd) + var_ns_su)
                 con_key = (unit(:unit_ab), path, t)
                 observed_con = constraint_object(constraint[con_key...])
@@ -648,7 +648,7 @@
         db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
         m = run_spineopt(url_in; log_level=0)
         var_nonspin_ramp_up_unit_flow = m.ext[:variables][:nonspin_ramp_up_unit_flow]
-        var_nonspin_units_starting_up = m.ext[:variables][:nonspin_units_started_up]
+        var_nonspin_units_started_up = m.ext[:variables][:nonspin_units_started_up]
         constraint = m.ext[:constraints][:max_nonspin_start_up_ramp]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -657,7 +657,7 @@
             var_ns_ru_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
             var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
             var_ns_ru_u_flow = var_nonspin_ramp_up_unit_flow[var_ns_ru_u_flow_key...]
-            var_ns_su = var_nonspin_units_starting_up[var_ns_su_key...]
+            var_ns_su = var_nonspin_units_started_up[var_ns_su_key...]
             con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
             expected_con = @build_constraint(var_ns_ru_u_flow <= unit_capacity * max_res_startup_ramp * var_ns_su)
             observed_con = constraint_object(constraint[con_key...])
@@ -678,7 +678,7 @@
         db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
         m = run_spineopt(url_in; log_level=0)
         var_nonspin_ramp_up_unit_flow = m.ext[:variables][:nonspin_ramp_up_unit_flow]
-        var_nonspin_units_starting_up = m.ext[:variables][:nonspin_units_started_up]
+        var_nonspin_units_started_up = m.ext[:variables][:nonspin_units_started_up]
         constraint = m.ext[:constraints][:min_nonspin_start_up_ramp]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -687,7 +687,7 @@
             var_ns_ru_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
             var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
             var_ns_ru_u_flow = var_nonspin_ramp_up_unit_flow[var_ns_ru_u_flow_key...]
-            var_ns_su = var_nonspin_units_starting_up[var_ns_su_key...]
+            var_ns_su = var_nonspin_units_started_up[var_ns_su_key...]
             con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
             expected_con = @build_constraint(var_ns_ru_u_flow >= unit_capacity * min_res_startup_ramp * var_ns_su)
             observed_con = constraint_object(constraint[con_key...])
