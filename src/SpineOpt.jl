@@ -84,7 +84,7 @@ include("variables/variable_nonspin_ramp_up_unit_flow.jl")
 include("variables/variable_shut_down_unit_flow.jl")
 include("variables/variable_ramp_down_unit_flow.jl")
 include("variables/variable_nonspin_ramp_down_unit_flow.jl")
-include("variables/variable_nonspin_units_shutting_down.jl")
+include("variables/variable_nonspin_units_shut_down.jl")
 
 include("objective/set_objective.jl")
 include("objective/variable_om_costs.jl")

@@ -18,12 +18,12 @@
 #############################################################################
 
 """
-    nonspin_units_shutting_down_indices(unit=anything, stochastic_scenario=anything, t=anything)
+    nonspin_units_shut_down_indices(unit=anything, stochastic_scenario=anything, t=anything)
 
-A list of `NamedTuple`s corresponding to indices of the `nonspin_units_shutting_down` variable
+A list of `NamedTuple`s corresponding to indices of the `nonspin_units_shut_down` variable
 where the keyword arguments act as filters for each dimension.
 """
-function nonspin_units_shutting_down_indices(
+function nonspin_units_shut_down_indices(
         m::Model; unit=anything, node=anything, stochastic_scenario=anything, t=anything
     )
     unique(
@@ -37,20 +37,20 @@ function nonspin_units_shutting_down_indices(
 end
 
 """
-    add_variable_nonspin_units_shutting_down!(m::Model)
+    add_variable_nonspin_units_shut_down!(m::Model)
 
-Add `nonspin_units_shutting_down` variables to model `m`.
+Add `nonspin_units_shut_down` variables to model `m`.
 """
-function add_variable_nonspin_units_shutting_down!(m::Model)
+function add_variable_nonspin_units_shut_down!(m::Model)
     t0 = start(current_window(m))
     add_variable!(
     	m,
-    	:nonspin_units_shutting_down,
-        nonspin_units_shutting_down_indices;
+    	:nonspin_units_shut_down,
+        nonspin_units_shut_down_indices;
     	lb=x -> 0,
     	bin=units_on_bin,
     	int=units_on_int,
-    	fix_value=x -> fix_nonspin_units_shutting_down(
+    	fix_value=x -> fix_nonspin_units_shut_down(
             unit=x.unit,
             node=x.node,
             stochastic_scenario=x.stochastic_scenario,

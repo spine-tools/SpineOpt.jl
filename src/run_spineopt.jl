@@ -54,7 +54,7 @@ function add_variables!(m; log_level=3)
     @timelog log_level 3 "- [variable_nonspin_ramp_up_unit_flow]"  add_variable_nonspin_ramp_up_unit_flow!(m)
     @timelog log_level 3 "- [variable_ramp_down_unit_flow]" add_variable_ramp_down_unit_flow!(m)
     @timelog log_level 3 "- [variable_shut_down_unit_flow]" add_variable_shut_down_unit_flow!(m)
-    @timelog log_level 3 "- [variable_nonspin_units_shutting_down]"  add_variable_nonspin_units_shutting_down!(m)
+    @timelog log_level 3 "- [variable_nonspin_units_shut_down]"  add_variable_nonspin_units_shut_down!(m)
     @timelog log_level 3 "- [variable_nonspin_ramp_down_unit_flow]"  add_variable_nonspin_ramp_down_unit_flow!(m)
 end
 

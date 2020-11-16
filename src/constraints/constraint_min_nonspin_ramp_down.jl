@@ -25,7 +25,7 @@ Limit the minimum ramp at the shutdown of a unit.
 For reserves the min non-spinning reserve ramp can be defined here.
 """
 function add_constraint_min_nonspin_ramp_down!(m::Model)
-    @fetch nonspin_ramp_down_unit_flow, nonspin_units_shutting_down = m.ext[:variables]
+    @fetch nonspin_ramp_down_unit_flow, nonspin_units_shut_down = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:min_nonspin_shut_down_ramp] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
@@ -38,11 +38,11 @@ function add_constraint_min_nonspin_ramp_down!(m::Model)
             )
             >=
             + expr_sum(
-                nonspin_units_shutting_down[u, n, s, t]
+                nonspin_units_shut_down[u, n, s, t]
                 * min_res_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for (u, n, s, t) in nonspin_units_shutting_down_indices(
+                for (u, n, s, t) in nonspin_units_shut_down_indices(
                     m; unit=u, node=ng, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
                 );
                 init=0
@@ -73,7 +73,7 @@ function constraint_min_nonspin_ramp_down_indices(
                 ind.stochastic_scenario for ind in Iterators.flatten(
                 (
                     nonspin_ramp_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
-                    nonspin_units_shutting_down_indices(m; unit=u, node=ng, t=t))
+                    nonspin_units_shut_down_indices(m; unit=u, node=ng, t=t))
                 )
             )
         )

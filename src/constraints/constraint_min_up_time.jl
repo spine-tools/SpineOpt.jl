@@ -24,7 +24,7 @@ Constrain running by minimum up time.
 """
 
 function add_constraint_min_up_time!(m::Model)
-    @fetch units_on, units_started_up, nonspin_units_shutting_down = m.ext[:variables]
+    @fetch units_on, units_started_up, nonspin_units_shut_down = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:min_up_time] = Dict(
         (unit=u, stochastic_path=s, t=t) => @constraint(
@@ -35,8 +35,8 @@ function add_constraint_min_up_time!(m::Model)
                 init=0
             )
             - expr_sum(
-                + nonspin_units_shutting_down[u, n, s, t]
-                for (u, n, s, t) in nonspin_units_shutting_down_indices(
+                + nonspin_units_shut_down[u, n, s, t]
+                for (u, n, s, t) in nonspin_units_shut_down_indices(
                     m;
                     unit=u,
                     stochastic_scenario=s,
