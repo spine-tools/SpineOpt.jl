@@ -112,9 +112,7 @@ This is deduced from the `model__stochastic_structure` and `node__stochastic_str
 """
 function check_model__node__stochastic_structure()
     errors = [
-        (m,n)
-        for m in model()
-        for n in node()
+        (m,n) for m in model() for n in node()
         if length(intersect(node__stochastic_structure(node=n), model__stochastic_structure(model=m))) != 1
     ]
     _check(
@@ -134,9 +132,7 @@ This is deduced from the `model__stochastic_strucutre` and `units_on__stochastic
 """
 function check_model__unit__stochastic_structure()
     errors = [
-        (m,u)
-        for m in model()
-        for u in unit()
+        (m,u) for m in model() for u in unit()
         if length(intersect(units_on__stochastic_structure(unit=u), model__stochastic_structure(model=m))) != 1
     ]
     _check(
