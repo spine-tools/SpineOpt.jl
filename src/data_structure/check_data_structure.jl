@@ -40,10 +40,9 @@ function check_data_structure(; log_level=3)
     check_model_object()
     check_temporal_block_object()
     check_node_object()
-    check_model__temporal_block()
-    check_node__temporal_block()
-    check_node__stochastic_structure()
-    check_unit__stochastic_structure()
+    check_model__node__temporal_block()
+    check_model__node__stochastic_structure()
+    check_model__unit__stochastic_structure()
     check_minimum_operating_point_unit_capacity()
     check_islands(; log_level=log_level)
 end
@@ -85,54 +84,62 @@ function check_node_object()
 end
 
 """
-    check_model__temporal_block()
+    check_model__node__temporal_block()
 
-Check if at least one `model__temporal_block` relationship is defined.
+Check that each `node` has at least one `temporal_block` connected to it in each `model`.
 """
-function check_model__temporal_block()
+function check_model__node__temporal_block()
+    errors = [
+        (m,n)
+        for m in model()
+        for n in node()
+        if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m)))
+    ]
     _check(
-        !isempty(model__temporal_block()),
-        "`model__temporal_block` relationship not found - you need at least one such relationship to run SpineOpt"
+        isempty(errors),
+        "invalid `node__temporal_block` or `model__temporal_block` definitions for `(model, node)` pair(s):
+        $(join(errors, ", ", " and ")) "
+        * "- each `node` must be related to at least one `temporal_block` per `model`"
     )
 end
 
 """
-    check_node__temporal_block()
+    check_model__node__stochastic_structure()
 
-Check if at least one `node__temporal_block` relationship is defined.
+Ensure there's exactly one `stochastic_structure` active per `node` per `model`.
+
+This is deduced from the `model__stochastic_structure` and `node__stochastic_structure` relationships.
 """
-function check_node__temporal_block()
+function check_model__node__stochastic_structure()
+    errors = [
+        (m,n) for m in model() for n in node()
+        if length(intersect(node__stochastic_structure(node=n), model__stochastic_structure(model=m))) != 1
+    ]
     _check(
-        !isempty(node__temporal_block()),
-        "`node__temporal_block` relationship not found - you need at least one such relationship to run SpineOpt"
+        isempty(errors),
+        "invalid `node__stochastic_structure` or `model__stochastic_structure` definitions for `(model, node)` pair(s):
+        $(join(errors, ", ", " and ")) "
+        * "- each `node` must be related to one and only one `stochastic_structure` per `model`"
     )
 end
 
 """
-    check_node__stochastic_structure()
+    check_model__unit__stochastic_structure()
 
-Ensure there's exactly one `node__stochastic_structure` definition per `node` in the data.
+Ensure there's exactly one `stochastic_structure` active per `unit` per `model`.
+
+This is deduced from the `model__stochastic_strucutre` and `units_on__stochastic_structure` relationships.
 """
-function check_node__stochastic_structure()
-    error_nodes = [n for n in node() if length(node__stochastic_structure(node=n)) != 1]
+function check_model__unit__stochastic_structure()
+    errors = [
+        (m,u) for m in model() for u in unit()
+        if length(intersect(units_on__stochastic_structure(unit=u), model__stochastic_structure(model=m))) != 1
+    ]
     _check(
-        isempty(error_nodes),
-        "invalid `node__stochastic_structure` definition for `node`(s): $(join(error_nodes, ", ", " and ")) "
-        * "- each `node` must be related to one and only one `stochastic_structure`"
-    )
-end
-
-"""
-    check_unit__stochastic_structure()
-
-Ensure there's exactly one `units_on__stochastic_structure` definition per `unit` in the data.
-"""
-function check_unit__stochastic_structure()
-    error_units = [u for u in unit() if length(units_on__stochastic_structure(unit=u)) != 1]
-    _check(
-        isempty(error_units),
-        "invalid `units_on__stochastic_structure` definition for `unit`(s): $(join(error_units, ", ", " and ")) "
-        * "- each `unit` must be related to one and only one `stochastic_structure`"
+        isempty(errors),
+        "invalid `units_on__stochastic_structure` or `model__stochastic_structure` definitions for `(model, unit)`
+        pair(s): $(join(errors, ", ", " and ")) "
+        * "- each `unit` must be related to one and only one `stochastic_structure` per `model`"
     )
 end
 
