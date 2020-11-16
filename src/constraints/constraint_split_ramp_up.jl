@@ -95,16 +95,7 @@ function constraint_split_ramp_up_indices(
                 )
             )
         )
-        for (t_before, t_after) in t_before_t(m; t_before=t_before, t_after=t_after, _compact=false)
-            if t_before in unique(
-                Iterators.flatten(
-                        (
-                        ramp_up_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after),
-                        start_up_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after),
-                        nonspin_ramp_up_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after)
-                        )
-                        )
-                    ) ## this works but it's really gross
+        for (n, t_before, t_after) in node_dynamic_time_indices(m; node=n, t_before=t_before, t_after=t_after)
         for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario for ind in unit_flow_indices(
