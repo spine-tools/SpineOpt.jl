@@ -28,13 +28,17 @@
     @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
     db_api.import_data_to_url(
         url_in; 
-        objects=[["temporal_block", "test_temporal_block"], ["unit", "test_unit"], ["node", "test_node"]]
+        objects=[["temporal_block", "test_temporal_block"], ["unit", "test_unit"], ["node", "test_node"]],
+        relationships=[["model__temporal_block", ["instance", "test_temporal_block"]]]
     )
     @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
     db_api.import_data_to_url(
         url_in; 
         objects=[["stochastic_structure", "test_stochastic_structure"]],
-        relationships=[["node__stochastic_structure", ["test_node", "test_stochastic_structure"]]]
+        relationships=[
+            ["node__stochastic_structure", ["test_node", "test_stochastic_structure"]],
+            ["model__stochastic_structure", ["instance", "test_stochastic_structure"]]
+        ]
     )
     @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
 end

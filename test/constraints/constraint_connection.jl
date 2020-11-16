@@ -38,6 +38,8 @@
         :relationships => [
             ["model__temporal_block", ["instance", "hourly"]],
             ["model__temporal_block", ["instance", "two_hourly"]],
+            ["model__stochastic_structure", ["instance", "deterministic"]],
+            ["model__stochastic_structure", ["instance", "stochastic"]],
             ["connection__from_node", ["connection_ab", "node_a"]],
             ["connection__to_node", ["connection_ab", "node_b"]],
             ["connection__from_node", ["connection_bc", "node_b"]],

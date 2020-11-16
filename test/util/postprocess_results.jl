@@ -38,6 +38,7 @@
                 ["connection__from_node", ["connection_ab", "node_a"]],
                 ["connection__to_node", ["connection_ab", "node_b"]],
                 ["model__temporal_block", ["instance", "hourly"]],
+                ["model__stochastic_structure", ["instance", "stochastic"]],
                 ["node__temporal_block", ["node_a", "hourly"]],
                 ["node__temporal_block", ["node_b", "hourly"]],
                 ["node__stochastic_structure", ["node_a", "stochastic"]],
