@@ -36,9 +36,9 @@ function process_master_problem_solution(mp)
 end
 
 
-function process_subproblem_solution(m, j)
+function process_subproblem_solution(m, mp, j)
     save_sp_marginal_values(m)
-    save_sp_objective_value_bi(m)        
+    save_sp_objective_value_bi(m, mp)        
     unfix_mp_variables()
 end
 
@@ -75,11 +75,30 @@ function save_sp_marginal_values(m)
 end
 
 
-function save_sp_objective_value_bi(m)
+function save_sp_objective_value_bi(m, mp)      
     total_sp_objective_value = 0
     for (ind, value) in m.ext[:values][:total_costs]
         total_sp_objective_value += value
     end
-    benders_iteration.parameter_values[current_bi]=Dict(:sp_objective_value_bi => parameter_value(total_sp_objective_value))   
+    benders_iteration.parameter_values[current_bi]=Dict(:sp_objective_value_bi => parameter_value(total_sp_objective_value))     
+    
+    total_mp_investment_costs = 0
+    for (ind, value) in mp.ext[:values][:investment_costs]
+        total_mp_investment_costs += value
+    end
+
+    objective_upper_bound = total_sp_objective_value + total_mp_investment_costs
+    mp.ext[:objective_upper_bound] = objective_upper_bound
+
+    objective_lower_bound = 0
+    for (ind, value) in mp.ext[:values][:mp_objective_lowerbound]
+        objective_lower_bound += value
+    end
+
+    mp.ext[:objective_lower_bound] = objective_lower_bound
+
+    mp.ext[:benders_gap] = (2 * (objective_upper_bound - objective_lower_bound)) /
+                                         (objective_upper_bound + objective_lower_bound)    
+
 end
 

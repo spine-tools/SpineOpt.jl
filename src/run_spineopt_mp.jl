@@ -80,6 +80,7 @@ function rerun_spineopt_mp(
     outputs = Dict()    
     mp = create_model(mip_solver, use_direct_model, :spineopt_master)
     m = create_model(mip_solver, use_direct_model, :spineopt_operations)
+    m.ext[:is_sub_problem] = true
     all_models = (m, mp)
     #all_models = (m,)
     @timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(m)
@@ -95,13 +96,15 @@ function rerun_spineopt_mp(
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
     init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
 
+    max_benders_iterations = max_iterations(model=mp.ext[:instance])    
+    
     j = 1
     k = 1    
     while true
         global current_bi     
         @log log_level 0 "Starting Master Problem iteration $j"
         j > 1 && (current_bi = add_benders_iteration(j))                
-        (optimize_model!(mp, mip_solver=mip_solver, lp_solver=lp_solver) && j < 3) || break   # master problem loop
+        (optimize_model!(mp, mip_solver=mip_solver, lp_solver=lp_solver) && j <= max_benders_iterations) || break   # master problem loop
         @timelog log_level 2 "Saving master problem results..." save_mp_model_results!(outputs, mp)
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)    
         if j == 1              
@@ -123,7 +126,12 @@ function rerun_spineopt_mp(
             update_model!(m; update_constraints=update_constraints, log_level=log_level)
             k += 1            
         end
-        @timelog log_level 2 "Processing operational problem solution..." process_subproblem_solution(m, j)
+        @timelog log_level 2 "Processing operational problem solution..." process_subproblem_solution(m, mp, j)
+
+        @log log_level 1 "Benders iteration $j complete. Objective upper bound: $(mp.ext[:objective_upper_bound]); Objective lower bound: $(mp.ext[:objective_lower_bound]); Gap: $(mp.ext[:benders_gap])"
+        
+        mp.ext[:benders_gap] <= max_gap(model=mp.ext[:instance]) && @timelog log_level 1 "Benders tolerance satisfied, terminating..." break
+
         update_model!(mp; update_constraints=update_constraints, log_level=log_level)   
         @timelog log_level 2 "Add MP cuts..." add_mp_cuts!(mp; log_level=3)           
         j += 1        
@@ -194,6 +202,7 @@ end
 
 
 function save_mp_model_results!(outputs, m)    
-    save_variable_values!(m)        
-    save_outputs!(m)    
+    save_variable_values!(m)
+    save_objective_values!(m)        
+    save_outputs!(m)
 end

@@ -57,11 +57,7 @@ function add_constraint_mp_objective!(m::Model)
                 init=0
             )
             >=
-            + expr_sum(
-                units_invested[u, s, t] * unit_investment_cost(unit=u, t=t)
-                for (u, s, t) in units_invested_available_indices(m);
-                init=0
-            )
+            + total_costs(m, end_(last(time_slice(m))))                        
         )
     
 end

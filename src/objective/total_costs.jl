@@ -17,23 +17,49 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function objective_terms()
-    [
-        :variable_om_costs,
-        :fixed_om_costs,
-        :taxes,
-        :operating_costs,
-        :fuel_costs,
-        :investment_costs,
-        :start_up_costs,
-        :shut_down_costs,
-        :objective_penalties,
-        :connection_flow_costs,
-        :renewable_curtailment_costs,
-        :res_proc_costs,
-        :ramp_costs,
-        :res_start_up_costs
-    ]
+function objective_terms(m::Model)
+    # if we have a decomposed structure, master problem costs (investments) should not be included 
+    if model_type(model=m.ext[:instance]) == :spineopt_operations
+        if m.ext[:is_subproblem]
+            [
+                :variable_om_costs,
+                :fixed_om_costs,
+                :taxes,
+                :operating_costs,
+                :fuel_costs,
+            #    :investment_costs,
+                :start_up_costs,
+                :shut_down_costs,
+                :objective_penalties,
+                :connection_flow_costs,
+                :renewable_curtailment_costs,
+                :res_proc_costs,
+                :ramp_costs,
+                :res_start_up_costs
+            ]
+        else
+            [
+                :variable_om_costs,
+                :fixed_om_costs,
+                :taxes,
+                :operating_costs,
+                :fuel_costs,
+                :investment_costs,
+                :start_up_costs,
+                :shut_down_costs,
+                :objective_penalties,
+                :connection_flow_costs,
+                :renewable_curtailment_costs,
+                :res_proc_costs,
+                :ramp_costs,
+                :res_start_up_costs
+            ]
+        end
+    elseif model_type(model=m.ext[:instance]) == :spineopt_master
+        [           
+            :investment_costs         
+        ]    
+    end
 end
 
 """
@@ -41,4 +67,4 @@ end
 
 Expression corresponding to the sume of all cost terms for given model, and up until the given date time.
 """
-total_costs(m, t) = sum(eval(term)(m, t) for term in objective_terms())
+total_costs(m, t) = sum(eval(term)(m, t) for term in objective_terms(m))

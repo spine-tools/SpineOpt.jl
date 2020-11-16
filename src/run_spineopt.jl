@@ -136,6 +136,10 @@ function create_model(mip_solver, use_direct_model=false, model_type=:spineopt_o
     m.ext[:stochastic_time_map] = Dict{Object,Dict}() 
     m.ext[:outputs] = Dict()
     m.ext[:integer_variables] = []
+    m.ext[:is_subproblem] = false
+    m.ext[:objective_lower_bound] = 0.0
+    m.ext[:objective_upper_bound] = 0.0
+    m.ext[:benders_gap] = 0.0  
     m
 
 end
@@ -319,11 +323,10 @@ Save the value of the objective terms in a model.
 """
 function save_objective_values!(m::Model)
     ind = (model=m.ext[:instance], t=current_window(m))    
-    for name in [objective_terms(); :total_costs]
+    for name in [objective_terms(m); :total_costs]
         func = eval(name)
         m.ext[:values][name] = Dict(ind => _value(realize(func(m, end_(ind.t)))))        
-    end    
-    m.ext[:values][:total_costs] = Dict(ind => _value(realize(total_costs(m, end_(ind.t)))))    
+    end
 end
 
 """
@@ -335,7 +338,7 @@ _drop_key(x::NamedTuple, key::Symbol...) = (; (k => v for (k, v) in pairs(x) if 
 Save the outputs of a model into a dictionary.
 """
 function save_outputs!(m)
-    for (name, out) in m.ext[:outputs]
+    for (name, out) in m.ext[:outputs]        
         value = get(m.ext[:values], name, nothing)
         if value === nothing
             @warn "can't find a value for '$(name)'"
@@ -392,7 +395,7 @@ function write_report(model, default_url)
             url = output_url !== nothing ? output_url : default_url
             url_reports = get!(reports, url, Dict())
             output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
-            parameter_name = out.name in objective_terms() ? Symbol("objective_", out.name) : out.name            
+            parameter_name = out.name in objective_terms(model) ? Symbol("objective_", out.name) : out.name            
             output_params[parameter_name] = Dict(
                 k => TimeSeries(collect(keys(v)), collect(values(v)), false, false) for (k, v) in d
             )
