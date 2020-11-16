@@ -56,22 +56,9 @@ function run_spineopt(
         generate_missing_items()
     end
     
-    # High-level algorithm selection. For now, selecting based on defined model types, but may want more robust system in future
+    # High-level algorithm selection. For now, selecting based on defined model types, but may want more robust system in future     
     
-    master_problem_model = first(model(model_type=:spineopt_master))    
-    
-    if master_problem_model==nothing
-        rerun_spineopt(
-            url_out;
-            mip_solver=mip_solver,
-            lp_solver=lp_solver,
-            add_constraints=add_constraints,
-            update_constraints=update_constraints,
-            log_level=log_level,
-            optimize=optimize,
-            use_direct_model=use_direct_model        
-        )
-    else
+    if length(model(model_type=:spineopt_master)) > 0 
         rerun_spineopt_mp(
             url_out;
             mip_solver=mip_solver,
@@ -82,7 +69,18 @@ function run_spineopt(
             optimize=optimize,
             use_direct_model=use_direct_model
         )
-    end
+    else
+        rerun_spineopt(
+            url_out;
+            mip_solver=mip_solver,
+            lp_solver=lp_solver,
+            add_constraints=add_constraints,
+            update_constraints=update_constraints,
+            log_level=log_level,
+            optimize=optimize,
+            use_direct_model=use_direct_model        
+        )
+    end   
 end
 
 function rerun_spineopt(
@@ -103,11 +101,12 @@ function rerun_spineopt(
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)    
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)    
-    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
+    @timelog log_level 2 "Creating general stochastic structure..." all_stochastic_DAGs = generate_general_stochastic_structure(m)
+    @timelog log_level 2 "Creating operations problem stochastic structure..." generate_model_specific_stochastic_structure(all_stochastic_DAGs, m)    
     @log log_level 1 "Window 1: $(current_window(m))"
-    init_model!(m; add_constraints=add_constraints, log_level=log_level)
+    calculate_duals = init_model!(m; add_constraints=add_constraints, log_level=log_level)
     k = 2
-    while optimize && optimize_model!(m; log_level=log_level, mip_solver=mip_solver, lp_solver=lp_solver)
+    while optimize && optimize_model!(m; log_level=log_level, mip_solver=mip_solver, lp_solver=lp_solver, calculate_duals=calculate_duals)
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
         @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || break
@@ -115,7 +114,7 @@ function rerun_spineopt(
         update_model!(m; update_constraints=update_constraints, log_level=log_level)
         k += 1
     end
-    @timelog log_level 2 "Writing report..." write_report(m, outputs, url_out)
+    @timelog log_level 2 "Writing report..." write_report(m, url_out)
     m
 end
 
@@ -252,13 +251,14 @@ end
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
 function init_model!(m; add_constraints=m -> nothing, log_level=3)        
-    @timelog log_level 2 "Identifying outputs...\n" identify_outputs(m)    
+    @timelog log_level 2 "Identifying outputs...\n" calculate_duals = identify_outputs(m)    
     @timelog log_level 2 "Adding variables...\n" add_variables!(m; log_level=log_level)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(
         m; add_constraints=add_constraints, log_level=log_level
     )
     @timelog log_level 2 "Setting objective..." set_objective!(m)
+    calculate_duals
 end
 
 """
@@ -407,11 +407,16 @@ end
 
 
 function identify_outputs(m::Model)
+    calculate_duals = false
     for r in model__report(model=m.ext[:instance])
         for o in report__output(report=r)            
             get!(m.ext[:outputs], o.name, Dict{NamedTuple,Dict}())
+            s_name = lowercase(String(o.name))
+            length(s_name) >= 6 && (SubString(s_name,1,6) == "bound_" && (calculate_duals = true))
+            length(s_name) >= 11 && (SubString(s_name,1,11) == "constraint_" && (calculate_duals = true))
         end
     end
+    calculate_duals
 end
 
 
