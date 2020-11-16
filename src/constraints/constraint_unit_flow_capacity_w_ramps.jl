@@ -27,15 +27,17 @@ that the resolution of the commitment variable is lower or equal than the resolu
 Check if `unit_conv_cap_to_flow` is defined.
 """
 function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
+    return
+    # FIXME: MethodError: no method matching isless(::SpineInterface.OperatorCall{typeof(-)}, ::SpineInterface.IdentityCall{Float64})
     @fetch unit_flow, units_on, units_started_up, units_shut_down = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:unit_flow_capacity_w_ramp] = constraint = Dict()
     for (u, ng, d, s, t_before, t_after) in constraint_unit_flow_capacity_w_ramp_indices(m)
-        d = first(
+        cutout = first(
             end_(t_before) - start(t)
             for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before))
         )
-        if min_up_time(unit=u) > d
+        if min_up_time(unit=u) != nothing && min_up_time(unit=u) > cutout
             constraint[(unit=u, node=ng, direction=d, stochastic_path=s, t=t_before)] = @constraint(
                 m,
                 expr_sum(
@@ -94,7 +96,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                 )
             )
         else
-            ###part1
+            # Part 1
             constraint[(unit=u, node=ng, direction=d, stochastic_path=s, t=t_before, i=1)] = @constraint(
                 m,
                 expr_sum(
@@ -156,7 +158,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     init=0
                 )
             )
-            ### part2
+            # Part 2
             constraint[(unit=u, node=ng, direction=d, stochastic_path=s, t=t_before, i=2)] = @constraint(
                 m,
                 expr_sum(
