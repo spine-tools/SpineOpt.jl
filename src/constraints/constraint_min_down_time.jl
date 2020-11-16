@@ -29,8 +29,7 @@ function add_constraint_min_down_time!(m::Model)
         (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
-                + units_available[u, s, t]
-                - units_on[u, s, t]
+                + units_available[u, s, t] - units_on[u, s, t]
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0
             )
@@ -52,12 +51,7 @@ function add_constraint_min_down_time!(m::Model)
             )
             + expr_sum(
                 + nonspin_units_starting_up[u, n, s, t]
-                for (u, n, s, t) in nonspin_units_starting_up_indices(
-                    m;
-                    unit=u,
-                    stochastic_scenario=s,
-                    t=t
-                );
+                for (u, n, s, t) in nonspin_units_starting_up_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0
             )
         )
