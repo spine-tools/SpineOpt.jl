@@ -23,11 +23,11 @@
 Create an expression for unit startup costs.
 """
 function res_start_up_costs(m::Model, t1)
-    @fetch nonspin_units_starting_up = m.ext[:variables]
+    @fetch nonspin_units_started_up = m.ext[:variables]
     @expression(
         m,
         expr_sum(
-            + nonspin_units_starting_up[u, n, s, t]
+            + nonspin_units_started_up[u, n, s, t]
             * res_start_up_cost[(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)]
             * unit_stochastic_scenario_weight(unit=u, stochastic_scenario=s)
             for (u, n ,d) in indices(res_start_up_cost)

@@ -25,7 +25,7 @@ Limit the minimum ramp at the start up of a unit.
 For reserves the min non-spinning reserve ramp can be defined here.
 """
 function add_constraint_min_nonspin_ramp_up!(m::Model)
-    @fetch nonspin_ramp_up_unit_flow, nonspin_units_starting_up = m.ext[:variables]
+    @fetch nonspin_ramp_up_unit_flow, nonspin_units_started_up = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:min_nonspin_start_up_ramp] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
@@ -38,7 +38,7 @@ function add_constraint_min_nonspin_ramp_up!(m::Model)
             )
             >=
             + expr_sum(
-                nonspin_units_starting_up[u, n, s, t]
+                nonspin_units_started_up[u, n, s, t]
                 * min_res_startup_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]

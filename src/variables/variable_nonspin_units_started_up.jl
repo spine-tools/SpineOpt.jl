@@ -20,7 +20,7 @@
 """
     nonspin_units_starting_up_indices(unit=anything, stochastic_scenario=anything, t=anything)
 
-A list of `NamedTuple`s corresponding to indices of the `nonspin_units_starting_up` variable 
+A list of `NamedTuple`s corresponding to indices of the `nonspin_units_started_up` variable 
 where the keyword arguments act as filters for each dimension.
 """
 function nonspin_units_starting_up_indices(
@@ -39,13 +39,13 @@ end
 """
     add_variable_nonspin_units_starting_up!(m::Model)
 
-Add `nonspin_units_starting_up` variables to model `m`.
+Add `nonspin_units_started_up` variables to model `m`.
 """
 function add_variable_nonspin_units_starting_up!(m::Model)
     t0 = startref(current_window(m))
     add_variable!(
     	m,
-    	:nonspin_units_starting_up, 
+    	:nonspin_units_started_up, 
         nonspin_units_starting_up_indices;
     	lb=x -> 0,
     	bin=units_on_bin,
