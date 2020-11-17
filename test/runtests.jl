@@ -26,7 +26,8 @@ using PyCall
 
 import SpineOpt: time_slice, to_time_slice, history_time_slice, t_in_t, t_before_t, t_overlaps_t,
     generate_temporal_structure!, roll_temporal_structure!, unit_dynamic_time_indices,
-    unit_investment_dynamic_time_indices, node_dynamic_time_indices
+    unit_investment_dynamic_time_indices, node_dynamic_time_indices, node_stochastic_time_indices,
+    unit_stochastic_time_indices
 
 _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
 
@@ -68,6 +69,7 @@ end
     include("data_structure/preprocess_data_structure.jl")
     include("data_structure/generate_missing_items.jl")
     include("data_structure/temporal_structure.jl")
+    include("data_structure/stochastic_structure.jl")
     include("constraints/constraint_unit.jl")
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")
