@@ -30,6 +30,7 @@ using SpineInterface
 using Suppressor
 using JSON
 using PowerSystems
+using Printf
 
 import Dates: CompoundPeriod
 import DataStructures: OrderedDict

@@ -128,7 +128,7 @@ function rerun_spineopt_mp(
         end
         @timelog log_level 2 "Processing operational problem solution..." process_subproblem_solution(m, mp, j)
 
-        @log log_level 1 "Benders iteration $j complete. Objective upper bound: $(mp.ext[:objective_upper_bound]); Objective lower bound: $(mp.ext[:objective_lower_bound]); Gap: $(mp.ext[:benders_gap])"
+        @log log_level 1 "Benders iteration $j complete. Objective upper bound: $(@sprintf("%.5e",mp.ext[:objective_upper_bound])); Objective lower bound: $(@sprintf("%.5e",mp.ext[:objective_lower_bound])); Gap: $(@sprintf("%1.4f",mp.ext[:benders_gap]*100))%"
         
         mp.ext[:benders_gap] <= max_gap(model=mp.ext[:instance]) && @timelog log_level 1 "Benders tolerance satisfied, terminating..." break
 
