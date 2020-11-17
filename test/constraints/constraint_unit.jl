@@ -215,6 +215,7 @@
         db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
         m = run_spineopt(url_in; log_level=0)
         var_unit_flow_op = m.ext[:variables][:unit_flow_op]
+        var_unit_availability = m.ext[:variables][:units_available]
         constraint = m.ext[:constraints][:operating_point_bounds]
         @test length(constraint) == 6
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -223,7 +224,8 @@
             @testset for (i, delta) in enumerate(deltas)
                 key = (unit(:unit_ab), node(:node_a), direction(:from_node), i, s, t)
                 var_u_flow_op = var_unit_flow_op[key...]
-                expected_con = @build_constraint(var_u_flow_op <= delta * unit_capacity)
+                var_u_availability = var_unit_availability[unit(:unit_ab), s, t]
+                expected_con = @build_constraint(var_u_flow_op <= delta * unit_capacity * var_u_availability)
                 observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
