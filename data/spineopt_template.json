@@ -6,14 +6,15 @@
         ["node", "A universal aggregator of commodify flows over units and connections, with storage capabilities.", 280740554077951],
         ["output", "A variable name from SpineOpt that can be included in a report.", 280743406202948],
         ["report", "A results report from a particular SpineOpt run, including the value of specific variables.", 281108461711708],
-        ["stochastic_scenario", "A scenario for stochastic optimisation in SpineOpt.", null],
-        ["stochastic_structure", "A group of stochastic scenarios that represent a structure.", null],
+        ["stochastic_scenario", "A scenario for stochastic optimisation in SpineOpt.", 280743389491710],
+        ["stochastic_structure", "A group of stochastic scenarios that represent a structure.", 281470681806146],
         ["temporal_block", "A length of time with a particular resolution.", 280376891207703],
         ["unit", "A conversion of one/many comodities between nodes.", 281470681805429],
-        ["unit_constraint", "A constraint over the flows of a specific unit.", null]
+        ["unit_constraint", "A constraint over the flows of a specific unit.", 281473533931636]
     ],
     "relationship_classes": [
-        ["model__temporal_block", ["model", "temporal_block"], "TODO"],
+        ["model__temporal_block", ["model", "temporal_block"], "Defines which `temporal_block`s are included in which `model`s."],
+        ["model__stochastic_structure", ["model", "stochastic_structure"], "Defines which `stochastic_structure`s are included in which `model`s." ], 
         ["connection__from_node", ["connection", "node"], "Defines the `nodes` the `connection` can take input from, and holds most `connection_flow` variable specific parameters."],
         ["connection__node__node", ["connection", "node", "node"], "Holds parameters spanning multiple `connection_flow` variables to and from multiple `nodes`."],
         ["connection__to_node", ["connection", "node"], "Defines the `nodes` the `connection` can output to, and holds most `connection_flow` variable specific parameters."],
@@ -94,7 +95,7 @@
         ["node", "has_state", false, "boolean_value_list", "A boolean flag for whether a `node` has a `node_state` variable."],
         ["node", "is_reserve_node", false, "boolean_value_list", "A boolean flag for a `reserve_node`?"],
         ["node", "minimum_reserve_activation_time", null, null, "Duration a certain reserve product needs to be online/available"],
-        ["node", "nodal_balance_sense", "==", "constraint_sense", "A selector for `nodal_balance` constraint sense."],
+        ["node", "nodal_balance_sense", "==", "constraint_sense_list", "A selector for `nodal_balance` constraint sense."],
         ["node", "node_opf_type", "node_opf_type_normal", "node_opf_type_list", "A selector for `node_opf_type`?"],
         ["node", "node_slack_penalty", null, null, "A penalty cost for `node_slack_pos` and `node_slack_neg` variables. The slack variables won't be included in the model unless there's a cost defined for them."],
         ["node", "node_state_cap", null, null, "The maximum permitted value for a `node_state` variable."],
@@ -214,8 +215,9 @@
         ["unit__to_node", "vom_cost", null, null, "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."],
         ["unit__to_node", "res_start_up_cost", null, null, "TODO"],
         ["unit__to_node__unit_constraint", "graph_view_position", null, null, null],
-        ["unit__to_node__unit_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `unit_constraint`?"],
-        ["unit__unit_constraint", "units_on_coefficient", 0.0, null, "Coefficient of a `units_on` variable for a custom `unit_constraint`?"],
+        ["unit__to_node__unit_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `unit_constraint`."],
+        ["unit__unit_constraint", "units_on_coefficient", 0.0, null, "Coefficient of a `units_on` variable for a custom `unit_constraint`."],
+        ["unit__unit_constraint", "units_started_up_coefficient", 0.0, null, "Coefficient of a `units_started_up` variable for a custom `unit_constraint`."],
         ["unit__commodity", "max_cum_in_unit_flow_bound", null, null, "Set a maximum cumulative upped bound for a `unit_flow`?"]
     ]
 }
