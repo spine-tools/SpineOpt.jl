@@ -101,8 +101,7 @@ function rerun_spineopt(
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)    
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)    
-    @timelog log_level 2 "Creating general stochastic structure..." all_stochastic_DAGs = generate_general_stochastic_structure(m)
-    @timelog log_level 2 "Creating operations problem stochastic structure..." generate_model_specific_stochastic_structure(all_stochastic_DAGs, m)    
+    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)    
     @log log_level 1 "Window 1: $(current_window(m))"
     calculate_duals = init_model!(m; add_constraints=add_constraints, log_level=log_level)
     k = 2
