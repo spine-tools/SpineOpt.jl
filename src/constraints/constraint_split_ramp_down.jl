@@ -56,25 +56,25 @@ function add_constraint_split_ramp_down!(m::Model)
         (u, n, d, s, t_before, t_after) => @constraint(
             m,
             + expr_sum(
-                + unit_flow[u, n, d, s, t_after]
+                + unit_flow[u, n, d, s, t_before]
                 for (u, n, d, s, t_before) in unit_flow_indices(
-                    m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after
+                    m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_before
                 )
                 if !is_reserve_node(node=n);
                 init=0
             )
             - expr_sum(
                 + unit_flow[u, n, d, s, t_after]
-                for (u, n, d, s, t_before) in unit_flow_indices(
+                for (u, n, d, s, t_after) in unit_flow_indices(
                     m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after
                 )
                 if is_reserve_node(node=n) && downward_reserve(node=n);
                 init=0
             )
-            - expr_sum(
-                + unit_flow[u, n, d, s, t_before]
+            + expr_sum(
+                + unit_flow[u, n, d, s, t_after]
                 for (u, n, d, s, t_after) in unit_flow_indices(
-                    m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_before
+                    m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after
                 )
                 if !is_reserve_node(node=n);
                 init=0
