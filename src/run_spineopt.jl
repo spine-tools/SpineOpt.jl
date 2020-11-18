@@ -126,8 +126,8 @@ function create_model(mip_solver, use_direct_model=false, model_type=:spineopt_o
     )
     
     m = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)
-    m.ext[:instance] = first(model(model_type=model_type))
-    m.ext[:instance] == nothing && error("No model of type $model_type defined")
+    length(model(model_type=model_type)) == 0 && error("No model of type $model_type defined")
+    m.ext[:instance] = first(model(model_type=model_type))    
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
     m.ext[:values] = Dict{Symbol,Dict}()

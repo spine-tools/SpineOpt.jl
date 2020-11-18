@@ -25,7 +25,7 @@ end
 
 function _model(model_type=:spineopt_operations)
     m = Model()
-    m.ext[:instance] = first(model(model_type=:model_type))
+    m.ext[:instance] = first(model(model_type=model_type))
     m
 end
 
@@ -45,7 +45,7 @@ end
             ["node__temporal_block", ["only_node", "block_b"]],
         ],
         :object_parameter_values => [
-            ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
+            ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],            
         ]
     )
     @testset "zero_resolution" begin

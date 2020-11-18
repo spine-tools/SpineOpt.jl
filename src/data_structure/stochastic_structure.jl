@@ -251,17 +251,19 @@ function _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
 end
 
 """
-    _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
+    _generate_unit_stochastic_scenario_weight(m::Model, all_stochastic_DAGs::Dict)
 
 Generate the `unit_stochastic_scenario_weight` parameter for easier access to the scenario weights.
 """
-function _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
+function _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict, models::Model...)
+           
     unit_stochastic_scenario_weight_values = Dict(
         (unit, scen) => Dict(:unit_stochastic_scenario_weight => parameter_value(param_vals.weight))
+        for m in models
         for (unit, structure) in Iterators.flatten(
-            (units_on__stochastic_structure(), unit__investment_stochastic_structure())
-        )
-        for (scen, param_vals) in all_stochastic_DAGs[structure]
+            (units_on__stochastic_structure(), model__unit__investment_stochastic_structure(model=m.ext[:instance]))
+        )        
+        for (scen, param_vals) in all_stochastic_DAGs[structure]        
     )
     unit__stochastic_scenario = RelationshipClass(
         :unit__stochastic_scenario,
@@ -270,6 +272,7 @@ function _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
         unit_stochastic_scenario_weight_values
     )
     unit_stochastic_scenario_weight = Parameter(:unit_stochastic_scenario_weight, [unit__stochastic_scenario])
+    
     @eval begin
         unit__stochastic_scenario = $unit__stochastic_scenario
         unit_stochastic_scenario_weight = $unit_stochastic_scenario_weight
@@ -285,7 +288,7 @@ Generate stochastic structure for the given model.
 function generate_general_stochastic_structure(m::Model...)
     all_stochastic_DAGs = _all_stochastic_DAGs(m...)    
     _generate_node_stochastic_scenario_weight(all_stochastic_DAGs)
-    _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs)
+    _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs, m...)
     _generate_active_stochastic_paths()
     all_stochastic_DAGs
 end
