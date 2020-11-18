@@ -220,10 +220,12 @@ function unit_investment_stochastic_time_indices(
     unique(
         (unit=u, stochastic_scenario=s, t=t1)
         for (u, t1) in unit_investment_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
-        for structure in model__unit__investment_stochastic_structure(model=m.ext[:instance], unit=u)
-        for s in intersect(m.ext[:stochastic_time_map][structure][t1], stochastic_scenario)
+        for structure in unit__investment_stochastic_structure(unit=u)
+        if structure in model__stochastic_structure(model=m.ext[:instance])
+        for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
     )
 end
+
 
 
 """
@@ -250,20 +252,21 @@ function _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict)
     end
 end
 
-"""
-    _generate_unit_stochastic_scenario_weight(m::Model, all_stochastic_DAGs::Dict)
 
-Generate the `unit_stochastic_scenario_weight` parameter for easier access to the scenario weights.
 """
-function _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict, models::Model...)
-           
+    _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict, m...)
+
+Generate the `unit_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
+"""
+function _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict, m...)
     unit_stochastic_scenario_weight_values = Dict(
         (unit, scen) => Dict(:unit_stochastic_scenario_weight => parameter_value(param_vals.weight))
-        for m in models
         for (unit, structure) in Iterators.flatten(
-            (units_on__stochastic_structure(), model__unit__investment_stochastic_structure(model=m.ext[:instance]))
-        )        
-        for (scen, param_vals) in all_stochastic_DAGs[structure]        
+            (units_on__stochastic_structure(), unit__investment_stochastic_structure())
+        )
+        for x in m
+        if structure in model__stochastic_structure(model=x.ext[:instance])
+        for (scen, param_vals) in all_stochastic_DAGs[structure]
     )
     unit__stochastic_scenario = RelationshipClass(
         :unit__stochastic_scenario,
@@ -272,12 +275,12 @@ function _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict, mo
         unit_stochastic_scenario_weight_values
     )
     unit_stochastic_scenario_weight = Parameter(:unit_stochastic_scenario_weight, [unit__stochastic_scenario])
-    
     @eval begin
         unit__stochastic_scenario = $unit__stochastic_scenario
         unit_stochastic_scenario_weight = $unit_stochastic_scenario_weight
     end
 end
+
 
 
 """
@@ -286,11 +289,11 @@ end
 Generate stochastic structure for the given model.
 """
 function generate_general_stochastic_structure(m::Model...)
-    all_stochastic_DAGs = _all_stochastic_DAGs(m...)    
-    _generate_node_stochastic_scenario_weight(all_stochastic_DAGs)
+    all_stochastic_DAGs = _all_stochastic_DAGs(m...)
+    _generate_stochastic_time_map(all_stochastic_DAGs, m...)
+    _generate_node_stochastic_scenario_weight(all_stochastic_DAGs, m...)
     _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs, m...)
     _generate_active_stochastic_paths()
-    all_stochastic_DAGs
 end
 
 """

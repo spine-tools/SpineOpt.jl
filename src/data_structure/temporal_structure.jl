@@ -427,7 +427,7 @@ function unit_investment_time_indices(
     )
     unique(
         (unit=u, t=t1)
-        for (model, u, tb) in model__unit__investment_temporal_block(model=m.ext[:instance], unit=unit, temporal_block=temporal_block, _compact=false)
+        for (model, u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
         for t1 in time_slice(m; temporal_block=tb, t=t)
     )
 end

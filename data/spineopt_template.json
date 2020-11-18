@@ -22,10 +22,7 @@
         ["model__default_stochastic_structure", ["model", "stochastic_structure"], "Defines the default stochastic structure used for model variables, which will be replaced by more specific definitions"],
         ["model__default_temporal_block", ["model", "temporal_block"], "Defines the default temporal block used for model variables, which will be replaced by more specific definitions"],
         ["model__default_investment_stochastic_structure", ["model", "stochastic_structure"], "Defines the default stochastic structure used for investment variables, which will be replaced by more specific definitions"],
-        ["model__default_investment_temporal_block", ["model", "temporal_block"], "Defines the default temporal block used for investment variables, which will be replaced by more specific definitions"],
-		["model__unit__investment_stochastic_structure", ["model", "unit", "stochastic_structure"], "determines the stochastic structure for unit investments in a particular model. Overrides `model__default_investment_stochastic_structure`."],
-        ["model__unit__investment_temporal_block", ["model", "unit", "temporal_block"], "determines the temporal structure for unit investments in a particular model. Overrides `model__default_investment_temporal_block`."],
-		
+        ["model__default_investment_temporal_block", ["model", "temporal_block"], "Defines the default temporal block used for investment variables, which will be replaced by more specific definitions"],		
         ["node__commodity", ["node", "commodity"], "Define a `commodity` for a `node`. Only a single `commodity` is permitted per `node`"],
         ["node__node", ["node", "node"], "Holds parameters for direct interactions between two `nodes`, e.g. `node_state` diffusion coefficients."],
         ["node__stochastic_structure", ["node", "stochastic_structure"], "Defines which specific `stochastic_structure` is used by the `node` and all `flow` variables associated with it. Only one `stochastic_structure` is permitted per `node`."],

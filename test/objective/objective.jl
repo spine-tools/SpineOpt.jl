@@ -112,8 +112,8 @@
             ["unit", "unit_ab", "candidate_units", candidate_units]
         ]
         relationships = [
-            ["model__unit__investment_temporal_block", ["instance", "unit_ab", "hourly"]],
-            ["model__unit__investment_stochastic_structure", ["instance", "unit_ab", "stochastic"]],
+            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
         db_api.import_data_to_url(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0)
