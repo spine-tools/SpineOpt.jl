@@ -26,7 +26,7 @@ the keyword arguments act as filters for each dimension.
 function units_invested_available_indices(m::Model; unit=anything, stochastic_scenario=anything, t=anything)
     [
         (unit=u, stochastic_scenario=s, t=t)
-        for (model, u, tb) in unit__investment_temporal_block(unit=unit, _compact=false)
+        for (u, tb) in unit__investment_temporal_block(unit=unit, _compact=false)
         for (u, s, t) in unit_investment_stochastic_time_indices(
             m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )

@@ -155,22 +155,25 @@ function _all_stochastic_DAGs(m::Model...)
     )
 end
 
+
 """
     _stochastic_time_mapping(stochastic_DAG::Dict, m::Model...)
 
 A `Dict` mapping `time_slice` objects to their set of active `stochastic_scenario` objects.
 """
-function _stochastic_time_mapping(stochastic_DAG::Dict, m::Model)
+function _stochastic_time_mapping(stochastic_DAG::Dict, m::Model...)
     # Window `time_slices`
     scenario_mapping = Dict(
         t => [scen for (scen, param_vals) in stochastic_DAG if param_vals.start <= start(t) < param_vals.end_]
-        for t in time_slice(m)
+        for x in m
+        for t in time_slice(x)
     )
     # History `time_slices`
     roots = _find_root_scenarios()
-    history_scenario_mapping = Dict(t => roots for t in history_time_slice(m))
+    history_scenario_mapping = Dict(t => roots for x in m for t in history_time_slice(x))
     merge!(scenario_mapping, history_scenario_mapping)
 end
+
 
 """
     _generate_stochastic_time_map(all_stochastic_DAGs, m...)
@@ -300,21 +303,12 @@ end
 """
     generate_master_stochastic_structure(m::Model)
 
-Generate stochastic structure for the given model.
+Generate stochastic structure all models.
 """
-function generate_general_stochastic_structure(m::Model...)
+function generate_stochastic_structure(m::Model...)
     all_stochastic_DAGs = _all_stochastic_DAGs(m...)
     _generate_stochastic_time_map(all_stochastic_DAGs, m...)
     _generate_node_stochastic_scenario_weight(all_stochastic_DAGs, m...)
     _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs, m...)
     _generate_active_stochastic_paths()
-end
-
-"""
-    generate_model_specific_stochastic_structure(m::Model)
-
-Generate stochastic structure for the given model.
-"""
-function generate_model_specific_stochastic_structure(all_stochastic_DAGs, m::Model)
-    _generate_stochastic_time_map(all_stochastic_DAGs, m)
 end

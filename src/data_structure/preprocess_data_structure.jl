@@ -25,6 +25,7 @@ Preprocess input data structure for SpineOpt.
 Runs a number of other functions processing different aspecs of the input data in sequence.
 """
 function preprocess_data_structure(; log_level=3)
+    expand_model_default_relationships()
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()    
     # NOTE: generate direction before calling `generate_network_components`,
@@ -38,7 +39,7 @@ end
 
 
 function preprocess_model_data_structure(m::Model; log_level=3)
-    expand_model_default_relationships(m)
+    
 end
 
 """

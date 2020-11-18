@@ -29,7 +29,7 @@
 
 Check the conditional `cond` and throws an error with a message `err_msg` if `cond` is `false`.
 """
-_check(cond, err_msg) = cond || error(err_msg)
+_check(cond, err_msg) = cond || @warn(err_msg)
 
 """
     check_data_structure(log_level::Int64)
