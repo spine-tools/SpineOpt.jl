@@ -427,66 +427,85 @@ end
 
 Generate model default `temporal_block` and `stochastic_structure` relationships for non-specified cases.
 """
-function expand_model_default_relationships(m)
-    expand_model__default_temporal_block(m)
-    expand_model__default_stochastic_structure(m)
-    expand_model__default_investment_temporal_block(m)
-    expand_model__default_investment_stochastic_structure(m)
+function expand_model_default_relationships()
+    expand_model__default_temporal_block()
+    expand_model__default_stochastic_structure()
+    expand_model__default_investment_temporal_block()
+    expand_model__default_investment_stochastic_structure()
 end 
+
+
 
 """
     expand_model__default_investment_temporal_block()
 
 Process the `model__default_investment_temporal_block` relationship.
 
-If a `unit__investment_temporal_block` relationship is not defined, 
-then create one using `model__default_investment_temporal_block`
+If a `unit__investment_temporal_block` relationship is not defined, then create one using
+`model__default_investment_temporal_block`. Similarly, add the corresponding `model__temporal_block` relationship
+if it is not already defined.
 """
-function expand_model__default_investment_temporal_block(m)
+function expand_model__default_investment_temporal_block()
+    add_relationships!(
+        model__temporal_block,
+        [(model=m, temporal_block=tb) for (m, tb) in model__default_investment_temporal_block()]
+    )
     add_relationships!(
         unit__investment_temporal_block, 
         [
-            (model=m.ext[:instance], unit=u, temporal_block=tb)
+            (unit=u, temporal_block=tb)
             for u in setdiff(indices(candidate_units), unit__investment_temporal_block(temporal_block=anything))
-            for tb in model__default_investment_temporal_block(model=m.ext[:instance])
+            for tb in model__default_investment_temporal_block(model=anything)
         ]
     )
 end
+
 
 """
     expand_model__default_investment_stochastic_structure()
 
 Process the `model__default_investment_stochastic_structure` relationship.
 
-If a `unit__investment_stochastic_structure` relationship is not defined, 
-then create one using `model__default_investment_stochastic_structure`
+If a `unit__investment_stochastic_structure` relationship is not defined, then create one using
+`model__default_investment_stochastic_structure`. Similarly, add the corresponding `model__stochastic_structure`
+relationship if it is not already defined.
 """
-function expand_model__default_investment_stochastic_structure(m)
+function expand_model__default_investment_stochastic_structure()
+    add_relationships!(
+        model__stochastic_structure,
+        [(model=m, stochastic_structure=ss) for (m, ss) in model__default_investment_stochastic_structure()]
+    )
     add_relationships!(
         unit__investment_stochastic_structure, 
         [
-            (model=m.ext[:instance], unit=u, stochastic_structure=ss)
+            (unit=u, stochastic_structure=ss)
             for u in setdiff(
                 indices(candidate_units), unit__investment_stochastic_structure(stochastic_structure=anything)
             )
-            for ss in model__default_investment_stochastic_structure(model=m.ext[:instance])
+            for ss in model__default_investment_stochastic_structure(model=anything)
         ]
     )
 end
+
 
 """
     expand_model__default_stochastic_structure()
 
 Expand the `model__default_stochastic_structure` relationship to all `nodes` without `node__stochastic_structure`
-and `units_on` without `units_on__stochastic_structure`.
+and `units_on` without `units_on__stochastic_structure`. Similarly, add the corresponding `model__stochastic_structure`
+relationship if it not already defined.
 """
-function expand_model__default_stochastic_structure(m)
+function expand_model__default_stochastic_structure()
+    add_relationships!(
+        model__stochastic_structure,
+        [(model=m, stochastic_structure=ss) for (m, ss) in model__default_stochastic_structure()]
+    )
     add_relationships!(
         node__stochastic_structure,
         unique(
             (node=n, stochastic_structure=ss)
             for n in setdiff(node(), node__stochastic_structure(stochastic_structure=anything))
-            for ss in model__default_stochastic_structure(model=m.ext[:instance])
+            for ss in model__default_stochastic_structure(model=anything)
         )
     )
     add_relationships!(
@@ -494,7 +513,7 @@ function expand_model__default_stochastic_structure(m)
         unique(
             (unit=u, stochastic_structure=ss)
             for u in setdiff(unit(), units_on__stochastic_structure(stochastic_structure=anything))
-            for ss in model__default_stochastic_structure(model=m.ext[:instance])
+            for ss in model__default_stochastic_structure(model=anything)
         )
     )
 end
@@ -506,13 +525,17 @@ end
 Expand the `model__default_temporal_block` relationship to all `nodes` without `node__temporal_block`
 and `units_on` without `units_on_temporal_block`.
 """
-function expand_model__default_temporal_block(m)
+function expand_model__default_temporal_block()
+    add_relationships!(
+        model__temporal_block,
+        [(model=m, temporal_block=tb) for (m, tb) in model__default_temporal_block()]
+    )
     add_relationships!(
         node__temporal_block,
         unique(
             (node=n, temporal_block=tb)
             for n in setdiff(node(), node__temporal_block(temporal_block=anything))
-            for tb in model__default_temporal_block(model=m.ext[:instance])
+            for tb in model__default_temporal_block(model=anything)
         )
     )
     add_relationships!(
@@ -520,7 +543,7 @@ function expand_model__default_temporal_block(m)
         unique(
             (unit=u, temporal_block=tb)
             for u in setdiff(unit(), units_on__temporal_block(temporal_block=anything))
-            for tb in model__default_temporal_block(model=m.ext[:instance])
+            for tb in model__default_temporal_block(model=anything)
         )
     )
 end

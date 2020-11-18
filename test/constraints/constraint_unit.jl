@@ -36,7 +36,9 @@
         ],
         :relationships => [
             ["model__temporal_block", ["instance", "hourly"]],
-            ["model__temporal_block", ["instance", "two_hourly"]],            
+            ["model__temporal_block", ["instance", "two_hourly"]],
+            ["model__stochastic_structure", ["instance", "deterministic"]],
+            ["model__stochastic_structure", ["instance", "stochastic"]],
             ["units_on__temporal_block", ["unit_ab", "hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "stochastic"]],
             ["unit__from_node", ["unit_ab", "node_a"]],
@@ -215,6 +217,7 @@
         db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
         m = run_spineopt(url_in; log_level=0)
         var_unit_flow_op = m.ext[:variables][:unit_flow_op]
+        var_unit_availability = m.ext[:variables][:units_available]
         constraint = m.ext[:constraints][:operating_point_bounds]
         @test length(constraint) == 6
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -223,7 +226,8 @@
             @testset for (i, delta) in enumerate(deltas)
                 key = (unit(:unit_ab), node(:node_a), direction(:from_node), i, s, t)
                 var_u_flow_op = var_unit_flow_op[key...]
-                expected_con = @build_constraint(var_u_flow_op <= delta * unit_capacity)
+                var_u_availability = var_unit_availability[unit(:unit_ab), s, t]
+                expected_con = @build_constraint(var_u_flow_op <= delta * unit_capacity * var_u_availability)
                 observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
@@ -751,6 +755,7 @@
             unit_flow_coefficient_a = 25
             unit_flow_coefficient_b = 30
             units_on_coefficient = 20
+            units_started_up_coefficient = 35
             objects = [["unit_constraint", "constraint_x"]]
             relationships = [
                 ["unit__from_node__unit_constraint", ["unit_ab", "node_a", "constraint_x"]],
@@ -764,7 +769,8 @@
             relationship_parameter_values = [
                 [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
                 [relationships[2]..., "unit_flow_coefficient", unit_flow_coefficient_b],
-                [relationships[3]..., "units_on_coefficient", units_on_coefficient]
+                [relationships[3]..., "units_on_coefficient", units_on_coefficient],
+                [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient]
             ]
             db_api.import_data_to_url(
                 url_in; 
@@ -776,6 +782,7 @@
             m = run_spineopt(url_in; log_level=0)
             var_unit_flow = m.ext[:variables][:unit_flow]
             var_units_on = m.ext[:variables][:units_on]
+            var_units_started_up = m.ext[:variables][:units_started_up]
             constraint = m.ext[:constraints][:unit_constraint]
             @test length(constraint) == 1
             key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
@@ -789,7 +796,9 @@
                 * (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2])
                 + 2 * unit_flow_coefficient_b * var_unit_flow[key_b..., s_parent, t2h]
                 + units_on_coefficient
-                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]),
+                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
+                + units_started_up_coefficient
+                * (var_units_started_up[unit(:unit_ab), s_parent, t1h1] + var_units_started_up[unit(:unit_ab), s_child, t1h2]),
                 Symbol(sense),
                 rhs
             )
@@ -807,6 +816,7 @@
             unit_flow_coefficient_a = 25
             unit_flow_coefficient_b = 30
             units_on_coefficient = 20
+            units_started_up_coefficient = 35
             points = [0.1, 0.5, 1.0]
             operating_points = Dict("type" => "array", "data" => PyVector(points))
             objects = [["unit_constraint", "constraint_x"]]
@@ -824,7 +834,8 @@
                 ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
                 [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
                 [relationships[2]..., "unit_flow_coefficient", unit_flow_coefficient_b],
-                [relationships[3]..., "units_on_coefficient", units_on_coefficient]
+                [relationships[3]..., "units_on_coefficient", units_on_coefficient],
+                [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient]
             ]
             db_api.import_data_to_url(
                 url_in; 
@@ -836,6 +847,7 @@
             m = run_spineopt(url_in; log_level=0)
             var_unit_flow_op = m.ext[:variables][:unit_flow_op]
             var_units_on = m.ext[:variables][:units_on]
+            var_units_started_up = m.ext[:variables][:units_started_up]
             constraint = m.ext[:constraints][:unit_constraint]
             @test length(constraint) == 1
             key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
@@ -852,7 +864,9 @@
                 )
                 + 2 * sum(unit_flow_coefficient_b * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
                 + units_on_coefficient
-                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]),
+                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
+                + units_started_up_coefficient
+                * (var_units_started_up[unit(:unit_ab), s_parent, t1h1] + var_units_started_up[unit(:unit_ab), s_child, t1h2]),
                 Symbol(sense),
                 rhs
             )

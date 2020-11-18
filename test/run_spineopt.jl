@@ -41,6 +41,7 @@ end
             ["units_on__temporal_block", ["unit_ab", "hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
             ["model__temporal_block", ["instance", "hourly"]],
+            ["model__stochastic_structure", ["instance", "deterministic"]],
             ["node__temporal_block", ["node_b", "hourly"]],
             ["node__stochastic_structure", ["node_b", "deterministic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
