@@ -32,8 +32,8 @@ function add_constraint_mp_units_invested_cuts!(m::Model)
             + mp_objective_lowerbound[m1, t1]
             >=            
             + sp_objective_value_bi(benders_iteration=bi)
-            - expr_sum(
-                + (  units_invested_available[u, s, t] 
+            + expr_sum(
+                + (  + units_invested_available[u, s, t] 
                     - units_invested_available_bi(benders_iteration=bi, unit=u, t=t)
                 )
                 * units_available_mv(benders_iteration=bi, unit=u, t=t)                
