@@ -1037,7 +1037,7 @@
                 var_key0 = (key_head..., s0, t0)
                 var_u_flow0 = get(var_unit_flow, var_key0, 0)
                 con_key = (key_head..., path, t0, t1)
-                expected_con = @build_constraint(var_u_flow1 - var_u_flow0 <= var_sd_u_flow1 + var_ru_u_flow1)
+                expected_con = @build_constraint(var_u_flow1 + var_u_flow0 <= var_sd_u_flow1 + var_ru_u_flow1)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
@@ -1075,7 +1075,7 @@
                 var_key0 = (key_head..., s0, t0)
                 var_u_flow0 = get(var_unit_flow, var_key0, 0)
                 con_key = (key_head..., path, t0, t1)
-                expected_con = @build_constraint(var_u_flow1 - var_u_flow0 <= var_sd_u_flow1 + var_ns_rd_u_flow1)
+                expected_con = @build_constraint(var_u_flow1 + var_u_flow0 <= var_sd_u_flow1 + var_ns_rd_u_flow1)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
