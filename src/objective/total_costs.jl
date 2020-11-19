@@ -30,9 +30,9 @@ function objective_terms()
         :objective_penalties,
         :connection_flow_costs,
         :renewable_curtailment_costs,
-        :res_proc_costs,
+        #:res_proc_costs,
         :ramp_costs,
-        :res_start_up_costs
+        #:res_start_up_costs
     ]
 end
 

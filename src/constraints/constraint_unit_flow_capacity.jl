@@ -25,28 +25,25 @@ Limit the maximum in/out `unit_flow` of a `unit` for all `unit_capacity` indices
 Check if `unit_conv_cap_to_flow` is defined.
 """
 function add_constraint_unit_flow_capacity!(m::Model)
-    @fetch unit_flow, units_on = m.ext[:variables]
+    @fetch unit_flow, units_on, units_started_up, units_shut_down = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:unit_flow_capacity] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             expr_sum(
-                + unit_flow[u, n, d, s, t]
-                for (u, n, d, s, t) in setdiff(
-                    unit_flow_indices(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t),
-                    nonspin_ramp_up_unit_flow_indices(
-                        m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t
-                    )
+                + unit_flow[u, n, d, s, t] *duration(t)
+                for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m;t_long=t)
                 );
                 init=0
-            ) 
+            )
             * duration(t)
             <=
             + expr_sum(
-                units_on[u, s, t1] * min(duration(t1), duration(t))
+                (units_on[u, s, t1]) * min(duration(t1), duration(t)) # - units_started_up[u, s, t1] - units_shut_down[u, s, t2])
                 * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
+                    #for (u, s, t2) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_before_t(m; t_before=t1));
                 init=0
             )
         )
@@ -69,7 +66,7 @@ function constraint_unit_flow_capacity_indices(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(unit_capacity)
         if u in unit && ng in node && d in direction
-        for (n, t) in node_time_indices(m; node=members(ng), t=t)
+        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t))
         for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(m, u, ng, d, t))
         )

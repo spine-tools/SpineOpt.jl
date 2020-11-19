@@ -45,7 +45,7 @@ function expand_node__stochastic_structure()
     add_relationships!(
         node__stochastic_structure,
         [
-            (node=n, stochastic_structure=stochastic_structure) 
+            (node=n, stochastic_structure=stochastic_structure)
             for (ng, stochastic_structure) in node__stochastic_structure()
             for n in members(ng)
         ]
@@ -61,7 +61,7 @@ function expand_units_on__stochastic_structure()
     add_relationships!(
         units_on__stochastic_structure,
         [
-            (unit=u, stochastic_structure=stochastic_structure) 
+            (unit=u, stochastic_structure=stochastic_structure)
             for (ug, stochastic_structure) in units_on__stochastic_structure()
             for u in members(ug)
         ]
@@ -371,8 +371,8 @@ function generate_variable_indexing_support()
         unique((node=n, temporal_block=tb) for n in node(has_state=true) for tb in node__temporal_block(node=n))
     )
     start_up_unit__node__direction__temporal_block = RelationshipClass(
-        :start_up_unit__node__direction__temporal_block, 
-        [:unit, :node, :direction, :temporal_block], 
+        :start_up_unit__node__direction__temporal_block,
+        [:unit, :node, :direction, :temporal_block],
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
             for (u, ng, d) in indices(max_startup_ramp)
@@ -381,8 +381,8 @@ function generate_variable_indexing_support()
         )
     )
     nonspin_ramp_up_unit__node__direction__temporal_block = RelationshipClass(
-        :nonspin_ramp_up_unit__node__direction__temporal_block, 
-        [:unit, :node, :direction, :temporal_block], 
+        :nonspin_ramp_up_unit__node__direction__temporal_block,
+        [:unit, :node, :direction, :temporal_block],
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
             for (u, ng, d) in indices(max_res_startup_ramp)
@@ -391,18 +391,51 @@ function generate_variable_indexing_support()
         )
     )
     ramp_up_unit__node__direction__temporal_block = RelationshipClass(
-        :ramp_up_unit__node__direction__temporal_block, 
-        [:unit, :node, :direction, :temporal_block], 
+        :ramp_up_unit__node__direction__temporal_block,
+        [:unit, :node, :direction, :temporal_block],
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
             for (u, ng, d) in indices(ramp_up_limit)
             for n in members(ng)
             for tb in node__temporal_block(node=n)
+            for (u, n, d, tb) in #setdiff(
+                unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb, _compact=false)#,
+                # nonspin_ramp_up_unit__node__direction__temporal_block(
+                #     unit=u, node=n, direction=d, temporal_block=tb, _compact=false
+                # )
+            # )
+        )
+    )
+    shut_down_unit__node__direction__temporal_block = RelationshipClass(
+        :shut_down_unit__node__direction__temporal_block,
+        [:unit, :node, :direction, :temporal_block],
+        unique(
+            (unit=u, node=n, direction=d, temporal_block=tb)
+            for (u, ng, d) in indices(max_shutdown_ramp)
+            for n in members(ng)
+            for tb in node__temporal_block(node=n)
+        )
+    )
+    nonspin_ramp_down_unit__node__direction__temporal_block = RelationshipClass(
+        :nonspin_ramp_down_unit__node__direction__temporal_block,
+        [:unit, :node, :direction, :temporal_block],
+        unique(
+            (unit=u, node=n, direction=d, temporal_block=tb)
+            for (u, ng, d) in indices(max_res_shutdown_ramp)
+            for n in members(ng)
+            for tb in node__temporal_block(node=n)
+        )
+    )
+    ramp_down_unit__node__direction__temporal_block = RelationshipClass(
+        :ramp_down_unit__node__direction__temporal_block,
+        [:unit, :node, :direction, :temporal_block],
+        unique(
+            (unit=u, node=n, direction=d, temporal_block=tb)
+            for (u, ng, d) in indices(ramp_down_limit)
+            for n in members(ng)
+            for tb in node__temporal_block(node=n)
             for (u, n, d, tb) in setdiff(
-                unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb, _compact=false),
-                nonspin_ramp_up_unit__node__direction__temporal_block(
-                    unit=u, node=n, direction=d, temporal_block=tb, _compact=false
-                )
+                unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb, _compact=false)
             )
         )
     )
@@ -414,6 +447,9 @@ function generate_variable_indexing_support()
         start_up_unit__node__direction__temporal_block = $start_up_unit__node__direction__temporal_block
         nonspin_ramp_up_unit__node__direction__temporal_block = $nonspin_ramp_up_unit__node__direction__temporal_block
         ramp_up_unit__node__direction__temporal_block = $ramp_up_unit__node__direction__temporal_block
+        shut_down_unit__node__direction__temporal_block = $shut_down_unit__node__direction__temporal_block
+        nonspin_ramp_down_unit__node__direction__temporal_block = $nonspin_ramp_down_unit__node__direction__temporal_block
+        ramp_down_unit__node__direction__temporal_block = $ramp_down_unit__node__direction__temporal_block
     end
 end
 
@@ -427,7 +463,7 @@ function expand_model_default_relationships()
     expand_model__default_stochastic_structure()
     expand_model__default_investment_temporal_block()
     expand_model__default_investment_stochastic_structure()
-end 
+end
 
 """
     expand_model__default_investment_temporal_block()
