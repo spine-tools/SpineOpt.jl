@@ -18,7 +18,7 @@
 #############################################################################
 
 @testset "add connection relationships" begin
-    url_in = "sqlite:///$(@__DIR__)/test.sqlite"
+    url_in = "sqlite://"
     test_data = Dict(
         :objects => [["connection", "connection_ab"], ["node", "node_a"], ["node", "node_b"]],
         :relationships => [
@@ -29,9 +29,9 @@
             ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"]
         ]
     )
-    _load_template(url_in)
-    db_api.import_data_to_url(url_in; test_data...)
-    using_spinedb(url_in, SpineOpt)
+    db_map = _load_test_data(url_in, test_data)
+    db_map.commit_session("Add test data")
+    using_spinedb(db_map, SpineOpt)
     SpineOpt.add_connection_relationships()
     conn_ab = connection(:connection_ab)
     n_a = node(:node_a)
@@ -49,7 +49,7 @@
     @test fix_ratio_out_in_connection_flow(connection=conn_ab, node1=n_b, node2=n_a) == 1
 end
 @testset "expand groups" begin
-    url_in = "sqlite:///$(@__DIR__)/test.sqlite"
+    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["stochastic_structure", "ss"], 
@@ -71,9 +71,9 @@ end
             ["units_on__stochastic_structure", ["unit_group_ab", "ss"]], 
         ]
     )
-    _load_template(url_in)
-    db_api.import_data_to_url(url_in; test_data...)
-    using_spinedb(url_in, SpineOpt)
+    db_map = _load_test_data(url_in, test_data)
+    db_map.commit_session("Add test data")
+    using_spinedb(db_map, SpineOpt)
     n_a = node(:node_a)
     n_b = node(:node_b)
     ng_ab = node(:node_group_ab)

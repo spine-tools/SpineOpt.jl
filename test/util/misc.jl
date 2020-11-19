@@ -20,7 +20,7 @@
 import DelimitedFiles: readdlm
 
 @testset "misc" begin
-    url_in = "sqlite:///$(@__DIR__)/test.sqlite"
+    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"], 
@@ -77,8 +77,7 @@ import DelimitedFiles: readdlm
         conn_emergency_cap_ab = 80
         conn_emergency_cap_bc = 100
         conn_emergency_cap_ca = 150
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
@@ -122,14 +121,14 @@ import DelimitedFiles: readdlm
             ["connection__from_node", ["connection_bc", "node_b"], "connection_emergency_capacity", conn_emergency_cap_bc],
             ["connection__from_node", ["connection_ca", "node_c"], "connection_emergency_capacity", conn_emergency_cap_ca],
         ]
-        db_api.import_data_to_url(
-            url_in; 
+        db_api.import_data(
+            db_map; 
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        using_spinedb(url_in, SpineOpt)
+        using_spinedb(db_map, SpineOpt)
         SpineOpt.generate_direction()
         SpineOpt.generate_network_components()
         SpineOpt.write_ptdfs()

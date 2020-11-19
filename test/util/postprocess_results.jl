@@ -19,7 +19,7 @@
 
 @testset "postprocess_results" begin
     @testset "save_connection_avg_throughflow" begin
-        url_in = "sqlite:///$(@__DIR__)/test.sqlite"
+        url_in = "sqlite://"
         test_data = Dict(
             :objects => [
                 ["model", "instance"], 
@@ -73,9 +73,9 @@
                 ]
             ]
         )
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
-        m = run_spineopt(url_in; log_level=0)
+        db_map = _load_test_data(url_in, test_data)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map, "sqlite://"; log_level=0)
         connection_avg_throughflow = m.ext[:values][:connection_avg_throughflow]
         @test length(connection_avg_throughflow) == 2
         t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))

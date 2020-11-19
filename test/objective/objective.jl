@@ -18,7 +18,7 @@
 #############################################################################
 
 @testset "objective" begin
-    url_in = "sqlite:///$(@__DIR__)/test.sqlite"
+    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"], 
@@ -67,8 +67,7 @@
         ]
     )
     @testset "fixed_om_costs" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         unit_capacity = 100
         number_of_units = 4
         fom_cost = 125
@@ -77,12 +76,13 @@
             ["unit", "unit_ab", "fom_cost", fom_cost]
         ]
         relationship_parameter_values = [["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]]
-        db_api.import_data_to_url(
-            url_in; 
+        db_api.import_data(
+            db_map; 
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        m = run_spineopt(url_in; log_level=0)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         t_count = length(time_slice(m; temporal_block=temporal_block(:two_hourly)))
         duration = 2
         expected_obj = AffExpr(unit_capacity * number_of_units * fom_cost * duration * t_count)
@@ -90,12 +90,12 @@
         @test observed_obj == expected_obj
     end
     @testset "fuel_costs" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         fuel_cost = 125
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "fuel_cost", fuel_cost]]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         unit_flow = m.ext[:variables][:unit_flow]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -105,8 +105,7 @@
         @test observed_obj == expected_obj
     end
     @testset "investment_costs" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         unit_investment_cost = 1000
         candidate_units = 3
         object_parameter_values = [
@@ -117,8 +116,9 @@
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
-        db_api.import_data_to_url(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         units_invested = m.ext[:variables][:units_invested]
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -129,16 +129,16 @@
         @test observed_obj == expected_obj
     end
     @testset "objective_penalties" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         node_a_slack_penalty = 0.6
         node_b_slack_penalty = 0.4
         object_parameter_values = [
             ["node", "node_a", "node_slack_penalty", node_a_slack_penalty],
             ["node", "node_b", "node_slack_penalty", node_b_slack_penalty],
         ]
-        db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         node_slack_neg = m.ext[:variables][:node_slack_neg]
         node_slack_pos = m.ext[:variables][:node_slack_pos]
         n_a = node(:node_a)
@@ -159,12 +159,12 @@
         @test observed_obj == expected_obj
     end
     @testset "operating_costs" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         operating_cost = 180
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "operating_cost", operating_cost]]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         unit_flow = m.ext[:variables][:unit_flow]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -174,12 +174,12 @@
         @test observed_obj == expected_obj
     end
     @testset "shut_down_costs" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         shut_down_cost = 180
         object_parameter_values = [["unit", "unit_ab", "shut_down_cost", shut_down_cost]]
-        db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         units_shut_down = m.ext[:variables][:units_shut_down]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         s_parent = stochastic_scenario(:parent)
@@ -189,12 +189,12 @@
         @test observed_obj == expected_obj
     end
     @testset "start_up_costs" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         start_up_cost = 220
         object_parameter_values = [["unit", "unit_ab", "start_up_cost", start_up_cost]]
-        db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         units_started_up = m.ext[:variables][:units_started_up]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         s_parent = stochastic_scenario(:parent)
@@ -204,12 +204,12 @@
         @test observed_obj == expected_obj
     end
     @testset "vom_cost" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         vom_cost = 150
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost]]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         unit_flow = m.ext[:variables][:unit_flow]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -219,19 +219,19 @@
         @test observed_obj == expected_obj
     end
     @testset "connection_flow_costs" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         connection_flow_cost = 185
         objects = [["connection", "connection_ab"]]
         relationships = [["connection__to_node", ["connection_ab", "node_b"]]]
         object_parameter_values = [["connection", "connection_ab", "connection_flow_cost", connection_flow_cost]]
-        db_api.import_data_to_url(
-            url_in; 
+        db_api.import_data(
+            db_map; 
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values
         )
-        m = run_spineopt(url_in; log_level=0)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         connection_flow = m.ext[:variables][:connection_flow]
         key = (connection(:connection_ab), node(:node_b), direction(:to_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
