@@ -25,7 +25,7 @@ Limit the minimum ramp at the start up of a unit.
 For reserves the min non-spinning reserve ramp can be defined here.
 """
 function add_constraint_min_nonspin_ramp_up!(m::Model)
-    @fetch nonspin_ramp_up_unit_flow, nonspin_units_starting_up = m.ext[:variables]
+    @fetch nonspin_ramp_up_unit_flow, nonspin_units_started_up = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:min_nonspin_start_up_ramp] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
@@ -38,11 +38,11 @@ function add_constraint_min_nonspin_ramp_up!(m::Model)
             )
             >=
             + expr_sum(
-                nonspin_units_starting_up[u, n, s, t]
+                nonspin_units_started_up[u, n, s, t]
                 * min_res_startup_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for (u, n, s, t) in nonspin_units_starting_up_indices(
+                for (u, n, s, t) in nonspin_units_started_up_indices(
                     m; unit=u, node=ng, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
                 );
                 init=0
@@ -67,13 +67,13 @@ function constraint_min_nonspin_ramp_up_indices(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(min_res_startup_ramp)
         if u in unit && ng in node && d in direction
-        for (n, t) in node_time_indices(m; node=members(ng), t=t)
+        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t))
         for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario for ind in Iterators.flatten(
                 (
                     nonspin_ramp_up_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
-                    nonspin_units_starting_up_indices(m; unit=u, node=ng, t=t))
+                    nonspin_units_started_up_indices(m; unit=u, node=ng, t=t))
                 )
             )
         )

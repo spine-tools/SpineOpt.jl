@@ -24,5 +24,27 @@ Create an expression for unit ramp costs.
 """
 # TODO: this
 function ramp_costs(m::Model, t1)
-    @expression(m, 0)
+    @fetch ramp_up_unit_flow, ramp_down_unit_flow = m.ext[:variables]
+    t0 = start(current_window(m))
+    @expression(
+        m,
+        expr_sum(
+            ramp_up_unit_flow[u, n, d, s, t] * duration(t)
+            * ramp_up_cost[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]  # op_cost(ng) = sum(op_cost(n))
+            * node_stochastic_scenario_weight[(node=ng, stochastic_scenario=s)]
+            for (u, ng, d) in indices(ramp_up_cost)
+            for (u, n, d, s, t) in ramp_up_unit_flow_indices(m; unit=u, node=ng, direction=d)
+            if end_(t) <= t1;
+            init=0
+        )
+        + expr_sum(
+            ramp_down_unit_flow[u, n, d, s, t] * duration(t)
+            * ramp_down_cost[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]  # op_cost(ng) = sum(op_cost(n))
+            * node_stochastic_scenario_weight[(node=ng, stochastic_scenario=s)]
+            for (u, ng, d) in indices(ramp_down_cost)
+            for (u, n, d, s, t) in ramp_down_unit_flow_indices(m; unit=u, node=ng, direction=d)
+            if end_(t) <= t1;
+            init=0
+        )
+    )
 end

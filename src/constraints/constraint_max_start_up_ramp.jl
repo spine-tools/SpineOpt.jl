@@ -20,8 +20,7 @@
 """
     add_constraint_max_start_up_ramp!(m::Model)
 
-Limit the maximum ramp at the start up of a unit. For reserves the max non-spinning
-reserve ramp can be defined here.
+Limit the maximum ramp at the start up of a unit.
 """
 # TODO: Good to go for first try; make sure capacities are well defined
 function add_constraint_max_start_up_ramp!(m::Model)

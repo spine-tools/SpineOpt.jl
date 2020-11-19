@@ -217,18 +217,19 @@
         db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
         m = run_spineopt(url_in; log_level=0)
         var_unit_flow_op = m.ext[:variables][:unit_flow_op]
-        var_unit_availability = m.ext[:variables][:units_available]
+        var_units_avail = m.ext[:variables][:units_available]
         constraint = m.ext[:constraints][:operating_point_bounds]
         @test length(constraint) == 6
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             @testset for (i, delta) in enumerate(deltas)
-                key = (unit(:unit_ab), node(:node_a), direction(:from_node), i, s, t)
-                var_u_flow_op = var_unit_flow_op[key...]
-                var_u_availability = var_unit_availability[unit(:unit_ab), s, t]
-                expected_con = @build_constraint(var_u_flow_op <= delta * unit_capacity * var_u_availability)
-                observed_con = constraint_object(constraint[key...])
+                var_u_flow_op_key = (unit(:unit_ab), node(:node_a), direction(:from_node), i, s, t)
+                var_us_avail_key = (unit(:unit_ab), s, t)
+                var_u_flow_op = var_unit_flow_op[var_u_flow_op_key...]
+                var_us_avail = var_units_avail[var_us_avail_key...]
+                expected_con = @build_constraint(var_u_flow_op - delta * var_us_avail * unit_capacity <= 0)
+                observed_con = constraint_object(constraint[var_u_flow_op_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
@@ -349,7 +350,10 @@
                 stochastic_structure=stochastic_structure(:stochastic), 
                 stochastic_scenario=stochastic_scenario(:parent)
             )
-            head_hours = length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            head_hours = -(
+                length(time_slice(m; temporal_block=temporal_block(:hourly))), 
+                round(parent_end, Hour(1)).value
+            )
             tail_hours = round(Minute(min_up_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours); repeat([stochastic_scenario(:parent)], tail_hours)
@@ -366,6 +370,61 @@
                 var_u_on = var_units_on[var_u_on_key...]
                 vars_u_su = [var_units_started_up[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
                 expected_con = @build_constraint(var_u_on >= sum(vars_u_su))
+                con_key = (unit(:unit_ab), path, t)
+                observed_con = constraint_object(constraint[con_key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+    @testset "constraint_min_up_time_with_non_spinning_reserves" begin
+        model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
+        @testset for min_up_minutes in (60, 120, 210)
+            _load_template(url_in)
+            db_api.import_data_to_url(url_in; test_data...)
+            min_up_time = Dict("type" => "duration", "data" => string(min_up_minutes, "m"))
+            object_parameter_values = [
+                ["unit", "unit_ab", "min_up_time", min_up_time], ["model", "instance", "model_end", model_end],
+            ]
+            relationship_parameter_values = [
+                ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", 1],
+                ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0]
+            ]
+            db_api.import_data_to_url(url_in; 
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values
+            )
+            m = run_spineopt(url_in; log_level=0)
+            var_units_on = m.ext[:variables][:units_on]
+            var_units_started_up = m.ext[:variables][:units_started_up]
+            var_nonspin_units_shut_down = m.ext[:variables][:nonspin_units_shut_down]
+            constraint = m.ext[:constraints][:min_up_time]
+            @test length(constraint) == 5
+            parent_end = stochastic_scenario_end(
+                stochastic_structure=stochastic_structure(:stochastic),
+                stochastic_scenario=stochastic_scenario(:parent)
+            )
+            head_hours = -(
+                length(time_slice(m; temporal_block=temporal_block(:hourly))),
+                round(parent_end, Hour(1)).value
+            )
+            tail_hours = round(Minute(min_up_minutes), Hour(1)).value
+            scenarios = [
+                repeat([stochastic_scenario(:child)], head_hours); repeat([stochastic_scenario(:parent)], tail_hours)
+            ]
+            time_slices = [
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)));
+                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+            ][1:head_hours + tail_hours]
+            @testset for h in 1:length(constraint)
+                s_set, t_set = scenarios[h:h + tail_hours - 1], time_slices[h:h + tail_hours - 1]
+                s, t = s_set[1], t_set[1]
+                path = reverse(unique(s_set))
+                var_u_on_key = (unit(:unit_ab), s, t)
+                var_u_on = var_units_on[var_u_on_key...]
+                vars_u_su = [var_units_started_up[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
+                var_ns_sd_key = (unit(:unit_ab), node(:node_a), s, t)
+                var_ns_sd = var_nonspin_units_shut_down[var_ns_sd_key...]
+                expected_con = @build_constraint(var_u_on - var_ns_sd >= sum(vars_u_su))
                 con_key = (unit(:unit_ab), path, t)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -415,7 +474,61 @@
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
-    end    
+    end
+    @testset "constraint_min_down_time_with_non_spinning_reserves" begin
+        model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
+        @testset for min_down_minutes in (90, 150, 300)  # TODO: make it work for 45, 75
+            _load_template(url_in)
+            db_api.import_data_to_url(url_in; test_data...)
+            min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
+            object_parameter_values = [
+                ["unit", "unit_ab", "min_down_time", min_down_time], ["model", "instance", "model_end", model_end],
+            ]
+            relationship_parameter_values = [
+                ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", 1],
+                ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0]
+            ]
+            db_api.import_data_to_url(url_in; 
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values
+            )
+            m = run_spineopt(url_in; log_level=0)
+            var_units_on = m.ext[:variables][:units_on]
+            var_units_available = m.ext[:variables][:units_available]
+            var_units_shut_down = m.ext[:variables][:units_shut_down]
+            var_nonspin_units_started_up = m.ext[:variables][:nonspin_units_started_up]
+            constraint = m.ext[:constraints][:min_down_time]
+            @test length(constraint) == 5
+            parent_end = stochastic_scenario_end(
+                stochastic_structure=stochastic_structure(:stochastic),
+                stochastic_scenario=stochastic_scenario(:parent)
+            )
+            head_hours = length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            tail_hours = round(Minute(min_down_minutes), Hour(1)).value
+            scenarios = [
+                repeat([stochastic_scenario(:child)], head_hours); repeat([stochastic_scenario(:parent)], tail_hours)
+            ]
+            time_slices = [
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)));
+                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+            ][1:head_hours + tail_hours]
+            @testset for h in 1:length(constraint)
+                s_set, t_set = scenarios[h:h + tail_hours - 1], time_slices[h:h + tail_hours - 1]
+                s, t = s_set[1], t_set[1]
+                path = reverse(unique(s_set))
+                var_u_av_on_key = (unit(:unit_ab), s, t)
+                var_u_av = var_units_available[var_u_av_on_key...]
+                var_u_on = var_units_on[var_u_av_on_key...]
+                vars_u_sd = [var_units_shut_down[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
+                var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
+                var_ns_su = var_nonspin_units_started_up[var_ns_su_key...]
+                expected_con = @build_constraint(var_u_av - var_u_on >= sum(vars_u_sd) + var_ns_su)
+                con_key = (unit(:unit_ab), path, t)
+                observed_con = constraint_object(constraint[con_key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
     @testset "constraint_units_invested_available" begin
         _load_template(url_in)
         db_api.import_data_to_url(url_in; test_data...)
@@ -537,7 +650,7 @@
         db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
         m = run_spineopt(url_in; log_level=0)
         var_nonspin_ramp_up_unit_flow = m.ext[:variables][:nonspin_ramp_up_unit_flow]
-        var_nonspin_units_starting_up = m.ext[:variables][:nonspin_units_starting_up]
+        var_nonspin_units_started_up = m.ext[:variables][:nonspin_units_started_up]
         constraint = m.ext[:constraints][:max_nonspin_start_up_ramp]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -546,7 +659,7 @@
             var_ns_ru_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
             var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
             var_ns_ru_u_flow = var_nonspin_ramp_up_unit_flow[var_ns_ru_u_flow_key...]
-            var_ns_su = var_nonspin_units_starting_up[var_ns_su_key...]
+            var_ns_su = var_nonspin_units_started_up[var_ns_su_key...]
             con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
             expected_con = @build_constraint(var_ns_ru_u_flow <= unit_capacity * max_res_startup_ramp * var_ns_su)
             observed_con = constraint_object(constraint[con_key...])
@@ -567,7 +680,7 @@
         db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
         m = run_spineopt(url_in; log_level=0)
         var_nonspin_ramp_up_unit_flow = m.ext[:variables][:nonspin_ramp_up_unit_flow]
-        var_nonspin_units_starting_up = m.ext[:variables][:nonspin_units_starting_up]
+        var_nonspin_units_started_up = m.ext[:variables][:nonspin_units_started_up]
         constraint = m.ext[:constraints][:min_nonspin_start_up_ramp]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -576,7 +689,7 @@
             var_ns_ru_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
             var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
             var_ns_ru_u_flow = var_nonspin_ramp_up_unit_flow[var_ns_ru_u_flow_key...]
-            var_ns_su = var_nonspin_units_starting_up[var_ns_su_key...]
+            var_ns_su = var_nonspin_units_started_up[var_ns_su_key...]
             con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
             expected_con = @build_constraint(var_ns_ru_u_flow >= unit_capacity * min_res_startup_ramp * var_ns_su)
             observed_con = constraint_object(constraint[con_key...])
@@ -747,6 +860,230 @@
             end
         end
     end
+    ###
+    @testset "constraint_max_nonspin_ramp_down_unit_flow" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        max_res_shutdown_ramp = 0.5
+        unit_capacity = 200
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+        ]
+        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
+        m = run_spineopt(url_in; log_level=0)
+        var_nonspin_ramp_down_unit_flow = m.ext[:variables][:nonspin_ramp_down_unit_flow]
+        var_nonspin_units_shut_down = m.ext[:variables][:nonspin_units_shut_down]
+        constraint = m.ext[:constraints][:max_nonspin_shut_down_ramp]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            var_ns_rd_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
+            var_ns_sd_key = (unit(:unit_ab), node(:node_a), s, t)
+            var_ns_rd_u_flow = var_nonspin_ramp_down_unit_flow[var_ns_rd_u_flow_key...]
+            var_ns_sd = var_nonspin_units_shut_down[var_ns_sd_key...]
+            con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
+            expected_con = @build_constraint(var_ns_rd_u_flow <= unit_capacity * max_res_shutdown_ramp * var_ns_sd)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_min_nonspin_shut_down_ramp" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        max_res_shutdown_ramp = 0.5
+        min_res_shutdown_ramp = 0.25
+        unit_capacity = 200
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "min_res_shutdown_ramp", min_res_shutdown_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+        ]
+        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
+        m = run_spineopt(url_in; log_level=0)
+        var_nonspin_ramp_down_unit_flow = m.ext[:variables][:nonspin_ramp_down_unit_flow]
+        var_nonspin_units_shut_down = m.ext[:variables][:nonspin_units_shut_down]
+        constraint = m.ext[:constraints][:min_nonspin_shut_down_ramp]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            var_ns_rd_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
+            var_ns_sd_key = (unit(:unit_ab), node(:node_a), s, t)
+            var_ns_rd_u_flow = var_nonspin_ramp_down_unit_flow[var_ns_rd_u_flow_key...]
+            var_ns_sd = var_nonspin_units_shut_down[var_ns_sd_key...]
+            con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
+            expected_con = @build_constraint(var_ns_rd_u_flow >= unit_capacity * min_res_shutdown_ramp * var_ns_sd)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_max_shut_down_ramp" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        max_shutdown_ramp = 0.4
+        unit_capacity = 200
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+        ]
+        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
+        m = run_spineopt(url_in; log_level=0)
+        var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
+        var_units_shut_down = m.ext[:variables][:units_shut_down]
+        constraint = m.ext[:constraints][:max_shut_down_ramp]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            var_sd_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
+            var_u_sd_key = (unit(:unit_ab), s, t)
+            var_sd_u_flow = var_shut_down_unit_flow[var_sd_u_flow_key...]
+            var_u_sd = var_units_shut_down[var_u_sd_key...]
+            con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
+            expected_con = @build_constraint(var_sd_u_flow <= unit_capacity * max_shutdown_ramp * var_u_sd)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_min_shut_down_ramp" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        max_shutdown_ramp = 0.4
+        min_shutdown_ramp = 0.2
+        unit_capacity = 200
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "min_shutdown_ramp", min_shutdown_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+        ]
+        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
+        m = run_spineopt(url_in; log_level=0)
+        var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
+        var_units_shut_down = m.ext[:variables][:units_shut_down]
+        constraint = m.ext[:constraints][:min_shut_down_ramp]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            var_sd_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
+            var_u_sd_key = (unit(:unit_ab), s, t)
+            var_sd_u_flow = var_shut_down_unit_flow[var_sd_u_flow_key...]
+            var_u_sd = var_units_shut_down[var_u_sd_key...]
+            con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
+            expected_con = @build_constraint(var_sd_u_flow >= unit_capacity * min_shutdown_ramp * var_u_sd)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_ramp_down" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        ramp_down_limit = 0.8
+        unit_capacity = 200
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "ramp_down_limit", ramp_down_limit],
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+        ]
+        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
+        m = run_spineopt(url_in; log_level=0)
+        var_ramp_down_unit_flow = m.ext[:variables][:ramp_down_unit_flow]
+        var_units_on = m.ext[:variables][:units_on]
+        var_units_shut_down = m.ext[:variables][:units_shut_down]
+        constraint = m.ext[:constraints][:ramp_down]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            var_ru_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
+            var_u_on_key = (unit(:unit_ab), s, t)
+            var_rd_u_flow = var_ramp_down_unit_flow[var_ru_u_flow_key...]
+            var_u_on = var_units_on[var_u_on_key...]
+            var_u_sd = var_units_shut_down[var_u_on_key...]
+            expected_con = @build_constraint(var_rd_u_flow <= unit_capacity * ramp_down_limit * (var_u_on - var_u_sd))
+            con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_split_ramp_down" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        ramp_down_limit = 0.8
+        max_shutdown_ramp = 0.4
+        unit_capacity = 200
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "ramp_down_limit", ramp_down_limit],
+            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+        ]
+        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
+        m = run_spineopt(url_in; log_level=0)
+        var_unit_flow = m.ext[:variables][:unit_flow]
+        var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
+        var_ramp_down_unit_flow = m.ext[:variables][:ramp_down_unit_flow]
+        constraint = m.ext[:constraints][:split_ramp_down]
+        @test length(constraint) == 3
+        key_head = (unit(:unit_ab), node(:node_a), direction(:from_node))
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        s0 = stochastic_scenario(:parent)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s1, t1) in zip(scenarios, time_slices)
+            path = unique([s0, s1])
+            var_key1 = (key_head..., s1, t1)
+            var_u_flow1 = var_unit_flow[var_key1...]
+            var_sd_u_flow1 = var_shut_down_unit_flow[var_key1...]
+            var_ru_u_flow1 = var_ramp_down_unit_flow[var_key1...]
+            @testset for t0 in t_before_t(m; t_after=t1)
+                var_key0 = (key_head..., s0, t0)
+                var_u_flow0 = get(var_unit_flow, var_key0, 0)
+                con_key = (key_head..., path, t0, t1)
+                expected_con = @build_constraint(var_u_flow1 + var_u_flow0 <= var_sd_u_flow1 + var_ru_u_flow1)
+                observed_con = constraint_object(constraint[con_key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+    @testset "constraint_split_ramp_down_with_nonspin_units" begin
+        _load_template(url_in)
+        db_api.import_data_to_url(url_in; test_data...)
+        max_shutdown_ramp = 0.4
+        max_res_shutdown_ramp = 0.5
+        unit_capacity = 200
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+        ]
+        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
+        m = run_spineopt(url_in; log_level=0)
+        var_unit_flow = m.ext[:variables][:unit_flow]
+        var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
+        var_nonspin_ramp_down_unit_flow = m.ext[:variables][:nonspin_ramp_down_unit_flow]
+        constraint = m.ext[:constraints][:split_ramp_down]
+        @test length(constraint) == 3
+        key_head = (unit(:unit_ab), node(:node_a), direction(:from_node))
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        s0 = stochastic_scenario(:parent)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s1, t1) in zip(scenarios, time_slices)
+            path = unique([s0, s1])
+            var_key1 = (key_head..., s1, t1)
+            var_u_flow1 = var_unit_flow[var_key1...]
+            var_sd_u_flow1 = var_shut_down_unit_flow[var_key1...]
+            var_ns_rd_u_flow1 = var_nonspin_ramp_down_unit_flow[var_key1...]
+            @testset for t0 in t_before_t(m; t_after=t1)
+                var_key0 = (key_head..., s0, t0)
+                var_u_flow0 = get(var_unit_flow, var_key0, 0)
+                con_key = (key_head..., path, t0, t1)
+                expected_con = @build_constraint(var_u_flow1 + var_u_flow0 <= var_sd_u_flow1 + var_ns_rd_u_flow1)
+                observed_con = constraint_object(constraint[con_key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+    ###
     @testset "constraint_unit_constraint" begin
         @testset for sense in ("==", ">=", "<=")
             _load_template(url_in)
@@ -875,5 +1212,5 @@
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
-    end   
+    end
 end

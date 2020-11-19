@@ -207,7 +207,7 @@ function constraint_ratio_unit_flow_indices(
         (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (u, n1, n2) in indices(ratio)
         if u in unit && n1 in node1 && n2 in node2
-        for t in t_lowest_resolution(x.t for x in unit_flow_indices(m; unit=u, node=[n1, n2], t=t))
+        for t in t_lowest_resolution(x.t for x in unit_flow_indices(m; unit=u, node=[members(n1)..., members(n2)...], t=t))
         for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_ratio_unit_flow_indices(m, u, n1, d1, n2, d2, t))
         )

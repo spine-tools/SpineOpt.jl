@@ -33,7 +33,17 @@ function add_constraint_split_ramp_up!(m::Model)
                 + unit_flow[u, n, d, s, t_after]
                 for (u, n, d, s, t_after) in unit_flow_indices(
                     m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after
-                );
+                )
+                if !is_reserve_node(node=n);
+                init=0
+            )
+            +
+            expr_sum(
+                + unit_flow[u, n, d, s, t_after]
+                for (u, n, d, s, t_after) in unit_flow_indices(
+                    m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after
+                )
+                if is_reserve_node(node=n)  && upward_reserve(node=n);
                 init=0
             )
             - expr_sum(
