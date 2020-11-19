@@ -449,13 +449,3 @@ function unit_investment_dynamic_time_indices(
         )
     )
 end
-
-
-"""
-    trivial_index(m::Model)
-
-Return the first timeslice of the model when a variable is global in scope within the optimisation model
-"""
-function trivial_index(m::Model; t=anything)      
-    ((t = first(time_slice(m)),))
-end
