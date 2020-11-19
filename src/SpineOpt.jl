@@ -143,10 +143,6 @@ include("constraints/constraint_min_nonspin_ramp_up.jl")
 include("constraints/constraint_res_minimum_node_state.jl")
 
 include("constraints/constraint_mp_units_invested_cuts.jl")
-#include("constraints/constraint_mp_unit_lifetime.jl")
-#include("constraints/constraint_mp_units_invested_available.jl")
-#include("constraints/constraint_mp_units_invested_transition.jl")
-
 
 _template() = JSON.parsefile(joinpath(dirname(pathof(@__MODULE__)), "..", "data", "spineopt_template.json"))
 
