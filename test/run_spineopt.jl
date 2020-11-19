@@ -47,6 +47,7 @@ end
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
             ["report__output", ["report_x", "unit_flow"]],
             ["report__output", ["report_x", "variable_om_costs"]],
+            ["model__report", ["instance", "report_x"]],
         ],
         :object_parameter_values => [
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],

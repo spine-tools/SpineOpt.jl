@@ -17,16 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    _constraint_unit_flow_capacity_indices(m::Model, unit, node, direction, t)
+add_variable_mp_objective_lowerbound!(m::Model) = add_variable!(m, :mp_objective_lowerbound, mp_objective_lowerbound_indices;)
 
-An iterator that concatenates `unit_flow_indices` and `units_on_indices` for the given inputs.
-"""
-function _constraint_unit_flow_capacity_indices(m::Model, unit, node, direction, t)
-    Iterators.flatten(
-        (
-            unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t), 
-            units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t))
-        )
+
+function mp_objective_lowerbound_indices(m::Model; t=anything)          
+    (
+        (model=m1, t=t1) 
+        for m1 in m.ext[:instance]
+        for t1 in first(time_slice(m))
     )
 end

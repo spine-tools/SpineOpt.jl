@@ -109,11 +109,11 @@ function _generate_current_window!(m::Model)
     model_start_ = model_start(model=instance)
     model_end_ = model_end(model=instance)
     roll_forward_ = roll_forward(model=instance, _strict=false)
-    window_start = model_start_
-    window_end = (roll_forward_ === nothing) ? model_end_ : min(model_start_ + roll_forward_, model_end_)
+    window_start = model_start_    
+    window_end = (roll_forward_ === nothing) ? model_end_ : min(model_start_ + roll_forward_, model_end_)    
     m.ext[:temporal_structure][:current_window] = TimeSlice(
         window_start, window_end; duration_unit=_model_duration_unit(instance)
-    )
+    )    
 end
 
 # Adjuster functions, in case blocks specify their own start and end
@@ -157,6 +157,7 @@ function _time_interval_blocks(instance::Object, window_start::DateTime, window_
             time_slice_end = time_slice_start + duration
             if time_slice_end > adjusted_end
                 time_slice_end = adjusted_end
+                # TODO: Try removing this to a once-off check as if true, this warning appears each time a timeslice is used
                 @warn(
                     """
                     the last time slice of temporal block $block has been cut to fit within the optimisation window
@@ -232,10 +233,9 @@ function _required_history_duration(instance::Object)
     reduce(max, (val for val in max_vals if val !== nothing); init=init)
 end
 
-"""
-    _generate_time_slice_relationships!(m::Model)
 
-Create and export convenience functions to access time slice relationships.
+"""
+    _generate_time_slice_relationships()
 
 E.g. `t_in_t`, `t_preceeds_t`, `t_overlaps_t`...
 """
@@ -296,6 +296,7 @@ function generate_temporal_structure!(m::Model)
     _generate_time_slice_relationships!(m::Model)
 end
 
+
 """
     roll_temporal_structure!(m::Model)
 
@@ -310,6 +311,22 @@ function roll_temporal_structure!(m::Model)
     roll!(temp_struct[:current_window], roll_forward_)
     _roll_time_slice_set!(temp_struct[:time_slice], roll_forward_)
     _roll_time_slice_set!(temp_struct[:history_time_slice], roll_forward_)
+    true
+end
+
+
+"""
+    reset_temporal_structure!(m::Model, k)
+
+Rewind the temporal structure - essentially, rolling it backwards k times.
+"""
+function reset_temporal_structure(m::Model, k)
+    end_(current_window(m)) >= model_end(model=m.ext[:instance]) && return false
+    roll_forward_ = roll_forward(model=m, _strict=false)
+    roll_forward_ === nothing && return false
+    roll_forward_ == 0 && return false
+    roll!(current_window(m), - roll_forward_ * k)
+    roll!.(all_time_slices, - roll_forward_ * k)
     true
 end
 
@@ -384,6 +401,7 @@ function unit_time_indices(m::Model; unit=anything, temporal_block=anything, t=a
     )
 end
 
+
 """
     unit_dynamic_time_indices(m::Model;<keyword arguments>)
 
@@ -413,6 +431,7 @@ function unit_investment_time_indices(
         for t1 in time_slice(m; temporal_block=tb, t=t)
     )
 end
+
 
 """
     unit_investment_dynamic_time_indices(m::Model;<keyword arguments>)

@@ -77,10 +77,12 @@ end
 Check if at least one `node` is defined.
 """
 function check_node_object()
-    _check(
-        !isempty(node()),
-        "`node` object not found - you need at least one `node` to run SpineOpt"
-    )
+    for m in model(model_type=:spineopt_operations)
+        _check(
+            !isempty(node()),
+            "`node` object not found - you need at least one `node` to run a SpineOpt Operations Model"
+        )
+    end
 end
 
 """
@@ -91,7 +93,7 @@ Check that each `node` has at least one `temporal_block` connected to it in each
 function check_model__node__temporal_block()
     errors = [
         (m,n)
-        for m in model()
+        for m in model(model_type=:spineopt_operations)
         for n in node()
         if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m)))
     ]
@@ -112,7 +114,7 @@ This is deduced from the `model__stochastic_structure` and `node__stochastic_str
 """
 function check_model__node__stochastic_structure()
     errors = [
-        (m,n) for m in model() for n in node()
+        (m,n) for m in model(model_type=:spineopt_operations) for n in node()
         if length(intersect(node__stochastic_structure(node=n), model__stochastic_structure(model=m))) != 1
     ]
     _check(
@@ -132,7 +134,7 @@ This is deduced from the `model__stochastic_strucutre` and `units_on__stochastic
 """
 function check_model__unit__stochastic_structure()
     errors = [
-        (m,u) for m in model() for u in unit()
+        (m,u) for m in model(model_type=:spineopt_operations) for u in unit()
         if length(intersect(units_on__stochastic_structure(unit=u), model__stochastic_structure(model=m))) != 1
     ]
     _check(

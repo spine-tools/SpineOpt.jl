@@ -46,6 +46,7 @@ function add_variable!(
         ind => _variable(m, name, ind, lb, ub, bin, int) 
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
     )
+    ( (bin != nothing) || (int != nothing) ) && push!(m.ext[:integer_variables], name)
 end
 
 """
@@ -68,4 +69,3 @@ function _variable(m, name, ind, lb, ub, bin, int)
     int != nothing && int(ind) && set_integer(var)
     var
 end
-

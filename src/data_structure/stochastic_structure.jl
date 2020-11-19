@@ -155,6 +155,7 @@ function _all_stochastic_DAGs(m::Model...)
     )
 end
 
+
 """
     _stochastic_time_mapping(stochastic_DAG::Dict, m::Model...)
 
@@ -172,6 +173,7 @@ function _stochastic_time_mapping(stochastic_DAG::Dict, m::Model...)
     history_scenario_mapping = Dict(t => roots for x in m for t in history_time_slice(x))
     merge!(scenario_mapping, history_scenario_mapping)
 end
+
 
 """
     _generate_stochastic_time_map(all_stochastic_DAGs, m...)
@@ -239,6 +241,8 @@ function unit_investment_stochastic_time_indices(
     )
 end
 
+
+
 """
     _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict, m...)
 
@@ -264,6 +268,7 @@ function _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict, m.
         node_stochastic_scenario_weight = $node_stochastic_scenario_weight
     end
 end
+
 
 """
     _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict, m...)
@@ -293,10 +298,12 @@ function _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict, m.
     end
 end
 
-"""
-    generate_stochastic_structure(m::Model)
 
-Generate stochastic structure for the given model.
+
+"""
+    generate_master_stochastic_structure(m::Model)
+
+Generate stochastic structure all models.
 """
 function generate_stochastic_structure(m::Model...)
     all_stochastic_DAGs = _all_stochastic_DAGs(m...)

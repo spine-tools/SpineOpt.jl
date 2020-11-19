@@ -33,11 +33,13 @@ function units_invested_available_indices(m::Model; unit=anything, stochastic_sc
     ]
 end
 
+
 """
     units_invested_available_int(x)
 
 Check if unit investment variable type is defined to be an integer.
 """
+
 units_invested_available_int(x) = unit_investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
 
 """
@@ -48,13 +50,10 @@ then force it to be zero so that the model doesn't get free investments and the 
 to consider this.
 """
 function fix_initial_units_invested_available(m)
-    for u in indices(candidate_units)        
-        for (u, t_before, t_after) in unit_investment_dynamic_time_indices(m; unit=u)
-            if fix_units_invested_available(unit=u, t=t_before, _strict=false) === nothing
-                unit.parameter_values[u][:fix_units_invested_available] = parameter_value(
-                    TimeSeries([start(t_before)], [0], false, false)
-                )
-            end
+    for u in indices(candidate_units)
+        t=last(history_time_slice(m))        
+        if fix_units_invested_available(unit=u, t=t, _strict=false) === nothing
+            unit.parameter_values[u][:fix_units_invested_available] = parameter_value(TimeSeries([start(t)] , [0], false, false))
         end
     end
 end
@@ -64,7 +63,8 @@ end
 
 Add `units_invested_available` variables to model `m`.
 """
-function add_variable_units_invested_available!(m::Model)
+function add_variable_units_invested_available!(m::Model)    
+    # fix units_invested_available to zero in the timestep before the investment window to prevent "free" investments
     fix_initial_units_invested_available(m)
     t0 = startref(current_window(m))
     add_variable!(
@@ -78,4 +78,3 @@ function add_variable_units_invested_available!(m::Model)
         )
     )
 end
-

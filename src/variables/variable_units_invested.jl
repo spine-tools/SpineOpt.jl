@@ -35,4 +35,3 @@ function add_variable_units_invested!(m::Model)
         int=units_invested_available_int
     )
 end
-
