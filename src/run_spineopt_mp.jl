@@ -104,7 +104,7 @@ function rerun_spineopt_mp(
         if j == 1              
             @timelog log_level 2 "Fixing variable values..." fix_variables!(m)            
         else
-            @timelog log_level 2 "Resetting sub problem temporal structure. Rewinding $(k-1) times..." reset_temporal_structure(mp, k-1)
+            @timelog log_level 2 "Resetting sub problem temporal structure. Rewinding $(k-1) times..." reset_temporal_structure(m, k-1)
             @log log_level 1 "Window 1: $(current_window(m))"
             set_optimizer(m, mip_solver)
             update_model!(m; update_constraints=update_constraints, log_level=log_level)            
