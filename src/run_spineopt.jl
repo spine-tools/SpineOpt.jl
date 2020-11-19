@@ -38,8 +38,8 @@ set to `nothing` after completion.
 **`log_level=3`** is the log level.
 """
 function run_spineopt(
-        url_in::String,
-        url_out::String=url_in;
+        url_in::Union{String,SpineInterface.PyObject},
+        url_out::Union{String,SpineInterface.PyObject}=url_in;
         upgrade=false,
         mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
         lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
@@ -84,7 +84,7 @@ function run_spineopt(
 end
 
 function rerun_spineopt(
-        url_out::String;
+        url_out::Union{String,SpineInterface.PyObject};
         mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
         lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
         add_constraints=m -> nothing,
