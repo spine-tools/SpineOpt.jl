@@ -36,34 +36,43 @@ function add_constraint_connection_flow_capacity!(m::Model)
     m.ext[:constraints][:connection_flow_capacity] = Dict(
         (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
+            +expr_sum(
                 connection_flow[conn, n, d, s, t] * duration(t)
-                for (conn, n, d, s, t) in connection_flow_indices(
-                    m; connection=conn, direction=d, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                for
+                (conn, n, d, s, t) in connection_flow_indices(
+                    m;
+                    connection=conn,
+                    direction=d,
+                    node=ng,
+                    stochastic_scenario=s,
+                    t=t_in_t(m; t_long=t),
                 );
-                init=0
-            )
-            - connection_capacity[
-                (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
-            ]
-            * connection_availability_factor[
-                (connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)
-            ]
-            * connection_conv_cap_to_flow[
-                (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
-            ]
-            * duration(t)
-            <=
-            + expr_sum(
+                init=0,
+            ) -
+            connection_capacity[(connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
+            connection_availability_factor[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] *
+            connection_conv_cap_to_flow[(
+                connection=conn,
+                node=ng,
+                direction=d,
+                stochastic_scenario=s,
+                analysis_time=t0,
+                t=t,
+            )] *
+            duration(t) <=
+            +expr_sum(
                 connection_flow[conn, n, d_reverse, s, t] * duration(t)
-                for (conn, n, d_reverse, s, t) in connection_flow_indices(
-                    m; connection=conn, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t)
-                )
-                if d_reverse != d && !is_reserve_node(node=n);
-                init=0
+                for
+                (conn, n, d_reverse, s, t) in connection_flow_indices(
+                    m;
+                    connection=conn,
+                    node=ng,
+                    stochastic_scenario=s,
+                    t=t_in_t(m; t_long=t),
+                ) if d_reverse != d && !is_reserve_node(node=n);
+                init=0,
             )
-        )
-        for (conn, ng, d, s, t) in constraint_connection_flow_capacity_indices(m)
+        ) for (conn, ng, d, s, t) in constraint_connection_flow_capacity_indices(m)
     )
 end
 
@@ -77,17 +86,20 @@ as the `:connection_flow_capacity` is used to constrain the "average power" of t
 instead of "instantaneous power". Keyword arguments can be used to filter the resulting 
 """
 function constraint_connection_flow_capacity_indices(
-    m::Model; connection=anything, node=anything, direction=anything, stochastic_path=anything, t=anything
+    m::Model;
+    connection=anything,
+    node=anything,
+    direction=anything,
+    stochastic_path=anything,
+    t=anything,
 )
     unique(
         (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
         for (c, ng, d) in indices(connection_capacity; connection=connection, node=node, direction=direction)
         for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t))
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario for ind in connection_flow_indices(m; connection=c, node=ng, direction=d, t=t)
-            )
-        )
-        if path == stochastic_path || path in stochastic_path
+        for
+        path in active_stochastic_paths(unique(
+            ind.stochastic_scenario for ind in connection_flow_indices(m; connection=c, node=ng, direction=d, t=t)
+        )) if path == stochastic_path || path in stochastic_path
     )
 end

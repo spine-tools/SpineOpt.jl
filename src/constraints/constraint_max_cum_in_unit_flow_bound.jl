@@ -28,14 +28,10 @@ function add_constraint_max_cum_in_unit_flow_bound!(m::Model)
     m.ext[:constraints][:max_cum_in_unit_flow_bound] = Dict(
         (unit_group=ug,) => @constraint( # TODO: How to turn this one into stochastical one? Path indexing over the whole `unit_group`?
             m,
-            + sum(
-                unit_flow[u, n, d, s, t]
-                * node_stochastic_weight[(node=n, stochastic_scenario=s)]
+            +sum(
+                unit_flow[u, n, d, s, t] * node_stochastic_weight[(node=n, stochastic_scenario=s)]
                 for (u, n, d, s, t) in unit_flow_indices(direction=direction(:from_node), unit=ug)
-            )
-            <=
-            + max_cum_in_unit_flow_bound(unit=ug) # TODO: Calling this parameter with brackets `max_cum_in_unit_flow_bound[(unit=ug)]` fails. Also stochastics?
-        )
-        for (ug,) in indices(max_cum_in_unit_flow_bound)
+            ) <= +max_cum_in_unit_flow_bound(unit=ug) # TODO: Calling this parameter with brackets `max_cum_in_unit_flow_bound[(unit=ug)]` fails. Also stochastics?
+        ) for (ug,) in indices(max_cum_in_unit_flow_bound)
     )
 end

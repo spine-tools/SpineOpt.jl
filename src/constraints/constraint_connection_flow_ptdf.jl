@@ -27,22 +27,19 @@ function add_constraint_connection_flow_ptdf!(m::Model)
     m.ext[:constraints][:connection_flow_ptdf] = Dict(
         (connection=conn, node=n_to, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
-                + get(connection_flow, (conn, n_to, direction(:to_node), s, t), 0)
-                - get(connection_flow, (conn, n_to, direction(:from_node), s, t), 0)
-                for s in s;
-                init=0
+            +expr_sum(
+                +get(connection_flow, (conn, n_to, direction(:to_node), s, t), 0) -
+                get(connection_flow, (conn, n_to, direction(:from_node), s, t), 0) for s in s;
+                init=0,
+            ) ==
+            +expr_sum(
+                ptdf(connection=conn, node=n) * node_injection[n, s, t] for (conn, n) in indices(ptdf; connection=conn)
+                for
+                (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t) if
+                !isapprox(ptdf(connection=conn, node=n), 0; atol=node_ptdf_threshold(node=n));
+                init=0,
             )
-            ==
-            + expr_sum(
-                ptdf(connection=conn, node=n) * node_injection[n, s, t]
-                for (conn, n) in indices(ptdf; connection=conn)
-                for (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t)
-                if !isapprox(ptdf(connection=conn, node=n), 0; atol=node_ptdf_threshold(node=n));
-                init=0
-            )
-        )
-        for (conn, n_to, s, t) in constraint_connection_flow_ptdf_indices(m)
+        ) for (conn, n_to, s, t) in constraint_connection_flow_ptdf_indices(m)
     )
 end
 
@@ -61,18 +58,17 @@ function constraint_connection_flow_ptdf_indices(
     connection=connection(connection_monitored=true, has_ptdf=true),
     node=anything,
     stochastic_path=anything,
-    t=anything
+    t=anything,
 )
     unique(
         (connection=conn, node=n_to, stochastic_path=path, t=t)
-        for conn in connection
-        if connection_monitored(connection=conn) && has_ptdf(connection=conn)
+        for conn in connection if connection_monitored(connection=conn) && has_ptdf(connection=conn)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn, node=node; _compact=false), 1)
         for (n_to, t) in node_time_indices(m; node=n_to, t=t)
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_connection_flow_ptdf_indices(m, conn, n_to, d_to, t))
-        )
-        if path == stochastic_path || path in stochastic_path
+        for
+        path in active_stochastic_paths(unique(
+            ind.stochastic_scenario for ind in _constraint_connection_flow_ptdf_indices(m, conn, n_to, d_to, t)
+        )) if path == stochastic_path || path in stochastic_path
     )
 end
 
@@ -83,14 +79,11 @@ Gather the indices of the `connection_flow` and the `node_injection` variables a
 `add_constraint_connection_flow_ptdf!`.
 """
 function _constraint_connection_flow_ptdf_indices(m, connection, node_to, direction_to, t)
-    Iterators.flatten(
+    Iterators.flatten((
+        connection_flow_indices(m; connection=connection, node=node_to, direction=direction_to, t=t),  # `n_to`
         (
-            connection_flow_indices(m; connection=connection, node=node_to, direction=direction_to, t=t),  # `n_to`
-            (
-                ind 
-                for (conn, n_inj) in indices(ptdf; connection=connection)
-                for ind in node_stochastic_time_indices(m; node=n_inj, t=t)
-            )  # `n_inj`
-        )
-    )
+            ind for (conn, n_inj) in indices(ptdf; connection=connection)
+            for ind in node_stochastic_time_indices(m; node=n_inj, t=t)
+        ),  # `n_inj`
+    ))
 end

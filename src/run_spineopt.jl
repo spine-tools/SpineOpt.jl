@@ -38,27 +38,27 @@ set to `nothing` after completion.
 **`log_level=3`** is the log level.
 """
 function run_spineopt(
-        url_in::Union{String,SpineInterface.PyObject},
-        url_out::Union{String,SpineInterface.PyObject}=url_in;
-        upgrade=false,
-        mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
-        lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
-        cleanup=true,
-        add_constraints=m -> nothing,
-        update_constraints=m -> nothing,
-        log_level=3,
-        optimize=true,
-        use_direct_model=false        
-    )
+    url_in::Union{String,SpineInterface.PyObject},
+    url_out::Union{String,SpineInterface.PyObject}=url_in;
+    upgrade=false,
+    mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+    lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
+    cleanup=true,
+    add_constraints=m -> nothing,
+    update_constraints=m -> nothing,
+    log_level=3,
+    optimize=true,
+    use_direct_model=false,
+)
     @log log_level 0 "Running SpineOpt for $(url_in)..."
     @timelog log_level 2 "Initializing data structure from db..." begin
         using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
         generate_missing_items()
     end
-    
+
     # High-level algorithm selection. For now, selecting based on defined model types, but may want more robust system in future     
-    
-    if length(model(model_type=:spineopt_master)) > 0 
+
+    if length(model(model_type=:spineopt_master)) > 0
         rerun_spineopt_mp(
             url_out;
             mip_solver=mip_solver,
@@ -67,7 +67,7 @@ function run_spineopt(
             update_constraints=update_constraints,
             log_level=log_level,
             optimize=optimize,
-            use_direct_model=use_direct_model
+            use_direct_model=use_direct_model,
         )
     else
         rerun_spineopt(
@@ -78,34 +78,42 @@ function run_spineopt(
             update_constraints=update_constraints,
             log_level=log_level,
             optimize=optimize,
-            use_direct_model=use_direct_model        
+            use_direct_model=use_direct_model,
         )
-    end   
+    end
 end
 
 function rerun_spineopt(
-        url_out::Union{String,SpineInterface.PyObject};
-        mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
-        lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
-        add_constraints=m -> nothing,
-        update_constraints=m -> nothing,
-        log_level=3,
-        optimize=true,
-        use_direct_model=false        
-    )
-    outputs = Dict()    
+    url_out::Union{String,SpineInterface.PyObject};
+    mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+    lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
+    add_constraints=m -> nothing,
+    update_constraints=m -> nothing,
+    log_level=3,
+    optimize=true,
+    use_direct_model=false,
+)
+    outputs = Dict()
 
     m = create_model(mip_solver, use_direct_model, :spineopt_operations)
 
-    @timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(m)
-    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)    
+    @timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(
+        m,
+    )
+    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
-    @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)    
-    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)    
+    @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
+    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
     @log log_level 1 "Window 1: $(current_window(m))"
     calculate_duals = init_model!(m; add_constraints=add_constraints, log_level=log_level)
     k = 2
-    while optimize && optimize_model!(m; log_level=log_level, mip_solver=mip_solver, lp_solver=lp_solver, calculate_duals=calculate_duals)
+    while optimize && optimize_model!(
+        m;
+        log_level=log_level,
+        mip_solver=mip_solver,
+        lp_solver=lp_solver,
+        calculate_duals=calculate_duals,
+    )
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
         @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) || break
@@ -121,24 +129,23 @@ end
 """
 A JuMP `Model` for SpineOpt.
 """
-function create_model(mip_solver, use_direct_model=false, model_type=:spineopt_operations
-    )
-    
+function create_model(mip_solver, use_direct_model=false, model_type=:spineopt_operations)
+
     m = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)
     length(model(model_type=model_type)) == 0 && error("No model of type $model_type defined")
-    m.ext[:instance] = first(model(model_type=model_type))    
+    m.ext[:instance] = first(model(model_type=model_type))
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
     m.ext[:values] = Dict{Symbol,Dict}()
     m.ext[:constraints] = Dict{Symbol,Dict}()
     m.ext[:marginals] = Dict{Symbol,Dict}()
-    m.ext[:stochastic_time_map] = Dict{Object,Dict}() 
+    m.ext[:stochastic_time_map] = Dict{Object,Dict}()
     m.ext[:outputs] = Dict()
     m.ext[:integer_variables] = []
     m.ext[:is_subproblem] = false
     m.ext[:objective_lower_bound] = 0.0
     m.ext[:objective_upper_bound] = 0.0
-    m.ext[:benders_gap] = 0.0  
+    m.ext[:benders_gap] = 0.0
     m
 
 end
@@ -164,12 +171,12 @@ function add_variables!(m; log_level=3)
     @timelog log_level 3 "- [variable_units_mothballed]" add_variable_units_mothballed!(m)
     @timelog log_level 3 "- [variable_ramp_up_unit_flow]" add_variable_ramp_up_unit_flow!(m)
     @timelog log_level 3 "- [variable_start_up_unit_flow]" add_variable_start_up_unit_flow!(m)
-    @timelog log_level 3 "- [variable_nonspin_units_started_up]"  add_variable_nonspin_units_started_up!(m)
-    @timelog log_level 3 "- [variable_nonspin_ramp_up_unit_flow]"  add_variable_nonspin_ramp_up_unit_flow!(m)
+    @timelog log_level 3 "- [variable_nonspin_units_started_up]" add_variable_nonspin_units_started_up!(m)
+    @timelog log_level 3 "- [variable_nonspin_ramp_up_unit_flow]" add_variable_nonspin_ramp_up_unit_flow!(m)
     @timelog log_level 3 "- [variable_ramp_down_unit_flow]" add_variable_ramp_down_unit_flow!(m)
     @timelog log_level 3 "- [variable_shut_down_unit_flow]" add_variable_shut_down_unit_flow!(m)
-    @timelog log_level 3 "- [variable_nonspin_units_shut_down]"  add_variable_nonspin_units_shut_down!(m)
-    @timelog log_level 3 "- [variable_nonspin_ramp_down_unit_flow]"  add_variable_nonspin_ramp_down_unit_flow!(m)
+    @timelog log_level 3 "- [variable_nonspin_units_shut_down]" add_variable_nonspin_units_shut_down!(m)
+    @timelog log_level 3 "- [variable_nonspin_ramp_down_unit_flow]" add_variable_nonspin_ramp_down_unit_flow!(m)
 end
 
 """
@@ -179,10 +186,10 @@ _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Nothing) = 
 function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Function)
     var = m.ext[:variables][name]
     bin = m.ext[:variables_definition][name][:bin]
-    int = m.ext[:variables_definition][name][:int]            
-    for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))        
+    int = m.ext[:variables_definition][name][:int]
+    for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
         fix_value_ = fix_value(ind)
-        fix_value_ != nothing && !isnan(fix_value_) && fix(var[ind], fix_value_; force=true)        
+        fix_value_ != nothing && !isnan(fix_value_) && fix(var[ind], fix_value_; force=true)
     end
 end
 
@@ -222,9 +229,15 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_fix_ratio_in_out_unit_flow]" add_constraint_fix_ratio_in_out_unit_flow!(m)
     @timelog log_level 3 "- [constraint_max_ratio_in_out_unit_flow]" add_constraint_max_ratio_in_out_unit_flow!(m)
     @timelog log_level 3 "- [constraint_min_ratio_in_out_unit_flow]" add_constraint_min_ratio_in_out_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_fix_ratio_out_in_connection_flow]" add_constraint_fix_ratio_out_in_connection_flow!(m)
-    @timelog log_level 3 "- [constraint_max_ratio_out_in_connection_flow]" add_constraint_max_ratio_out_in_connection_flow!(m)
-    @timelog log_level 3 "- [constraint_min_ratio_out_in_connection_flow]" add_constraint_min_ratio_out_in_connection_flow!(m)
+    @timelog log_level 3 "- [constraint_fix_ratio_out_in_connection_flow]" add_constraint_fix_ratio_out_in_connection_flow!(
+        m,
+    )
+    @timelog log_level 3 "- [constraint_max_ratio_out_in_connection_flow]" add_constraint_max_ratio_out_in_connection_flow!(
+        m,
+    )
+    @timelog log_level 3 "- [constraint_min_ratio_out_in_connection_flow]" add_constraint_min_ratio_out_in_connection_flow!(
+        m,
+    )
     @timelog log_level 3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)
     @timelog log_level 3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
     @timelog log_level 3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
@@ -253,7 +266,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     # Name constraints
     for (con_key, cons) in m.ext[:constraints]
         for (inds, con) in cons
-            set_name(con, string(con_key,inds))
+            set_name(con, string(con_key, inds))
         end
     end
 end
@@ -261,12 +274,14 @@ end
 """
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
-function init_model!(m; add_constraints=m -> nothing, log_level=3)        
-    @timelog log_level 2 "Identifying outputs...\n" calculate_duals = identify_outputs(m)    
+function init_model!(m; add_constraints=m -> nothing, log_level=3)
+    @timelog log_level 2 "Identifying outputs...\n" calculate_duals = identify_outputs(m)
     @timelog log_level 2 "Adding variables...\n" add_variables!(m; log_level=log_level)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(
-        m; add_constraints=add_constraints, log_level=log_level
+        m;
+        add_constraints=add_constraints,
+        log_level=log_level,
     )
     @timelog log_level 2 "Setting objective..." set_objective!(m)
     calculate_duals
@@ -275,16 +290,16 @@ end
 """
 Optimize the given model. If an optimal solution is found, return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, mip_solver, lp_solver)    
+function optimize_model!(m::Model; log_level=3, calculate_duals=false, mip_solver, lp_solver)
     write_mps_file(model=m.ext[:instance]) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
-    if termination_status(m) == MOI.OPTIMAL ||  termination_status(m) == MOI.TIME_LIMIT                
+    if termination_status(m) == MOI.OPTIMAL || termination_status(m) == MOI.TIME_LIMIT
         if calculate_duals
-            @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)            
+            @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
             @timelog log_level 0 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
-            @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)            
+            @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
         end
         true
     else
@@ -302,12 +317,12 @@ _variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, J
 """
 Save the value of a variable in a model.
 """
-function _save_variable_value!(m::Model, name::Symbol, indices::Function)    
+function _save_variable_value!(m::Model, name::Symbol, indices::Function)
     var = m.ext[:variables][name]
     m.ext[:values][name] = Dict(
         ind => _variable_value(var[ind])
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-        if end_(ind.t) <= end_(current_window(m))
+        for
+        ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if end_(ind.t) <= end_(current_window(m))
     )
 end
 
@@ -329,10 +344,10 @@ _value(v) = v
 Save the value of the objective terms in a model.
 """
 function save_objective_values!(m::Model)
-    ind = (model=m.ext[:instance], t=current_window(m))    
+    ind = (model=m.ext[:instance], t=current_window(m))
     for name in [objective_terms(m); :total_costs]
         func = eval(name)
-        m.ext[:values][name] = Dict(ind => _value(realize(func(m, end_(ind.t)))))        
+        m.ext[:values][name] = Dict(ind => _value(realize(func(m, end_(ind.t)))))
     end
 end
 
@@ -345,7 +360,7 @@ _drop_key(x::NamedTuple, key::Symbol...) = (; (k => v for (k, v) in pairs(x) if 
 Save the outputs of a model into a dictionary.
 """
 function save_outputs!(m)
-    for (name, out) in m.ext[:outputs]        
+    for (name, out) in m.ext[:outputs]
         value = get(m.ext[:values], name, nothing)
         if value === nothing
             @warn "can't find a value for '$(name)'"
@@ -402,10 +417,9 @@ function write_report(model, default_url)
             url = output_url !== nothing ? output_url : default_url
             url_reports = get!(reports, url, Dict())
             output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
-            parameter_name = out.name in objective_terms(model) ? Symbol("objective_", out.name) : out.name            
-            output_params[parameter_name] = Dict(
-                k => TimeSeries(collect(keys(v)), collect(values(v)), false, false) for (k, v) in d
-            )
+            parameter_name = out.name in objective_terms(model) ? Symbol("objective_", out.name) : out.name
+            output_params[parameter_name] =
+                Dict(k => TimeSeries(collect(keys(v)), collect(values(v)), false, false) for (k, v) in d)
         end
     end
     for (url, url_reports) in reports
@@ -419,11 +433,11 @@ end
 function identify_outputs(m::Model)
     calculate_duals = false
     for r in model__report(model=m.ext[:instance])
-        for o in report__output(report=r)            
+        for o in report__output(report=r)
             get!(m.ext[:outputs], o.name, Dict{NamedTuple,Dict}())
             s_name = lowercase(String(o.name))
-            length(s_name) >= 6 && (SubString(s_name,1,6) == "bound_" && (calculate_duals = true))
-            length(s_name) >= 11 && (SubString(s_name,1,11) == "constraint_" && (calculate_duals = true))
+            length(s_name) >= 6 && (SubString(s_name, 1, 6) == "bound_" && (calculate_duals = true))
+            length(s_name) >= 11 && (SubString(s_name, 1, 11) == "constraint_" && (calculate_duals = true))
         end
     end
     calculate_duals
@@ -433,15 +447,15 @@ end
 function relax_integer_vars(m::Model)
     save_integer_values!(m)
     fix_vars = [:units_on, :units_invested]
-    for name in m.ext[:integer_variables]        
-        def = m.ext[:variables_definition][name]        
+    for name in m.ext[:integer_variables]
+        def = m.ext[:variables_definition][name]
         bin = def[:bin]
         int = def[:int]
         var = m.ext[:variables][name]
-        for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))            
+        for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))
             if name in fix_vars
-                if end_(ind.t) <= end_(current_window(m))                
-                    fix(var[ind], m.ext[:values][name][ind]; force=true)                                
+                if end_(ind.t) <= end_(current_window(m))
+                    fix(var[ind], m.ext[:values][name][ind]; force=true)
                 end
             end
             bin != nothing && bin(ind) && unset_binary(var[ind])
@@ -453,18 +467,18 @@ end
 
 function unrelax_integer_vars(m::Model)
     for name in m.ext[:integer_variables]
-        def = m.ext[:variables_definition][name]        
+        def = m.ext[:variables_definition][name]
         bin = def[:bin]
         int = def[:int]
         indices = def[:indices]
         var = m.ext[:variables][name]
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            if end_(ind.t) <= end_(current_window(m))                                
+            if end_(ind.t) <= end_(current_window(m))
                 bin != nothing && bin(ind) && set_binary(var[ind])
                 int != nothing && int(ind) && set_integer(var[ind])
             end
-        end        
-    end    
+        end
+    end
 end
 
 
@@ -478,41 +492,40 @@ function save_integer_values!(m::Model)
 end
 
 
-function save_marginal_values!(m::Model)    
+function save_marginal_values!(m::Model)
     for (constraint_name, con) in m.ext[:constraints]
         output_name = Symbol(string("constraint_", constraint_name))
-        if haskey(m.ext[:outputs], output_name)            
+        if haskey(m.ext[:outputs], output_name)
             _save_marginal_value!(m, constraint_name, output_name)
         end
-    end    
+    end
 end
 
 
-function _save_marginal_value!(m::Model, constraint_name::Symbol, output_name::Symbol)    
+function _save_marginal_value!(m::Model, constraint_name::Symbol, output_name::Symbol)
     con = m.ext[:constraints][constraint_name]
-    inds = keys(con) 
-    m.ext[:values][output_name] = Dict(
-        ind => JuMP.dual(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window(m))
-    )
+    inds = keys(con)
+    m.ext[:values][output_name] =
+        Dict(ind => JuMP.dual(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window(m)))
 end
 
 
-function save_bound_marginal_values!(m::Model)    
+function save_bound_marginal_values!(m::Model)
     for (variable_name, con) in m.ext[:variables]
         output_name = Symbol(string("bound_", variable_name))
-        if haskey(m.ext[:outputs], output_name)            
+        if haskey(m.ext[:outputs], output_name)
             _save_bound_marginal_value!(m, variable_name, output_name)
         end
-    end    
+    end
 end
 
 
-function _save_bound_marginal_value!(m::Model, variable_name::Symbol, output_name::Symbol)    
-    var = m.ext[:variables][variable_name]    
+function _save_bound_marginal_value!(m::Model, variable_name::Symbol, output_name::Symbol)
+    var = m.ext[:variables][variable_name]
     indices = m.ext[:variables_definition][variable_name][:indices]
     m.ext[:values][output_name] = Dict(
         ind => JuMP.reduced_cost(var[ind])
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-        if end_(ind.t) <= end_(current_window(m))
+        for
+        ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if end_(ind.t) <= end_(current_window(m))
     )
 end

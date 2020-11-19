@@ -28,34 +28,33 @@ function add_constraint_min_down_time!(m::Model)
     m.ext[:constraints][:min_down_time] = Dict(
         (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
-                + units_available[u, s, t] - units_on[u, s, t]
+            +expr_sum(
+                +units_available[u, s, t] - units_on[u, s, t]
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
-                init=0
-            )
-            >=
-            + expr_sum(
-                + units_shut_down[u, s_past, t_past]
-                for (u, s_past, t_past) in units_on_indices(
+                init=0,
+            ) >=
+            +expr_sum(
+                +units_shut_down[u, s_past, t_past]
+                for
+                (u, s_past, t_past) in units_on_indices(
                     m;
                     unit=u,
                     stochastic_scenario=s,
                     t=to_time_slice(
                         m;
                         t=TimeSlice(
-                            end_(t) - min_down_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)
-                        )
-                    )
+                            end_(t) - min_down_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t),
+                            end_(t),
+                        ),
+                    ),
                 );
-                init=0
-            )
-            + expr_sum(
-                + nonspin_units_started_up[u, n, s, t]
+                init=0,
+            ) + expr_sum(
+                +nonspin_units_started_up[u, n, s, t]
                 for (u, n, s, t) in nonspin_units_started_up_indices(m; unit=u, stochastic_scenario=s, t=t);
-                init=0
+                init=0,
             )
-        )
-        for (u, s, t) in constraint_min_down_time_indices(m)
+        ) for (u, s, t) in constraint_min_down_time_indices(m)
     )
 end
 
@@ -72,12 +71,11 @@ Keyword arguments can be used to filter the resulting Array.
 function constraint_min_down_time_indices(m::Model; unit=anything, stochastic_path=anything, t=anything)
     t0 = startref(current_window(m))
     unique(
-        (unit=u, stochastic_path=path, t=t)
-        for u in indices(min_down_time)
-        if u in unit
+        (unit=u, stochastic_path=path, t=t) for u in indices(min_down_time) if u in unit
         for (u, s, t) in units_on_indices(m; unit=u, t=t)
-        for path in active_stochastic_paths(_constraint_min_down_time_indices(m, u, s, t0, t))
-        if path == stochastic_path || path in stochastic_path
+        for
+        path in active_stochastic_paths(_constraint_min_down_time_indices(m, u, s, t0, t)) if
+        path == stochastic_path || path in stochastic_path
     )
 end
 
@@ -89,15 +87,14 @@ Gathers the `stochastic_scenario` indices of `units_on` and `nonspin_units_start
 function _constraint_min_down_time_indices(m, u, s, t0, t)
     t_past_and_present = to_time_slice(
         m;
-        t=TimeSlice(end_(t) - min_down_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t))
+        t=TimeSlice(end_(t) - min_down_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)),
     )
     unique(
         ind.stochastic_scenario
-        for ind in Iterators.flatten(
-            (
-                units_on_indices(m; unit=u, t=t_past_and_present),
-                nonspin_units_started_up_indices(m; unit=u, t=t_before_t(m; t_after=t))
-            )
-        )
+        for
+        ind in Iterators.flatten((
+            units_on_indices(m; unit=u, t=t_past_and_present),
+            nonspin_units_started_up_indices(m; unit=u, t=t_before_t(m; t_after=t)),
+        ))
     )
 end
