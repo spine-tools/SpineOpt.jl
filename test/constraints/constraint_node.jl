@@ -18,7 +18,7 @@
 #############################################################################
 
 @testset "node-based constraints" begin
-    url_in = "sqlite:///$(@__DIR__)/test.sqlite"
+    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"], 
@@ -81,13 +81,13 @@
         ]
     )
     @testset "constraint_nodal_balance" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         object_parameter_values = [
             ["node", "node_a", "node_slack_penalty", 0.5],
         ]
-        db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_node_injection = m.ext[:variables][:node_injection]
         var_connection_flow = m.ext[:variables][:connection_flow]
         var_node_slack_pos = m.ext[:variables][:node_slack_pos]
@@ -134,8 +134,7 @@
         state_coeff_c = 0.8
         diff_coeff_bc = 0.2
         diff_coeff_cb = 0.3
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         relationships = [
             ["node__node", ["node_b", "node_c"]], ["node__node", ["node_c", "node_b"]]
         ]
@@ -157,13 +156,14 @@
             ["node__node", ["node_b", "node_c"], "diff_coeff", diff_coeff_bc],
             ["node__node", ["node_c", "node_b"], "diff_coeff", diff_coeff_cb],
         ]
-        db_api.import_data_to_url(
-            url_in; 
+        db_api.import_data(
+            db_map; 
             relationships=relationships, 
             object_parameter_values=object_parameter_values, 
             relationship_parameter_values=relationship_parameter_values
         )
-        m = run_spineopt(url_in; log_level=0)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_node_injection = m.ext[:variables][:node_injection]
         var_unit_flow = m.ext[:variables][:unit_flow]
         var_node_state = m.ext[:variables][:node_state]
@@ -254,8 +254,7 @@
         end
     end
     @testset "constraint_node_state_capacity" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         node_capacity = Dict("node_b" => 120, "node_c" => 400)
         object_parameter_values = [
             ["node", "node_b", "node_state_cap", node_capacity["node_b"]],
@@ -263,8 +262,9 @@
             ["node", "node_b", "has_state", true],
             ["node", "node_c", "has_state", true],
         ]
-        db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_node_state = m.ext[:variables][:node_state]
         constraint = m.ext[:constraints][:node_state_capacity]
         @test length(constraint) == 4

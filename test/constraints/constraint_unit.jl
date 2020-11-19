@@ -20,7 +20,7 @@
 # TODO: fix_units_on, fix_unit_flow
 
 @testset "unit-based constraints" begin
-    url_in = "sqlite:///$(@__DIR__)/test.sqlite"
+    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"], 
@@ -69,9 +69,9 @@
         ]
     )
     @testset "constraint_units_on" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
-        m = run_spineopt(url_in; log_level=0)
+        db_map = _load_test_data(url_in, test_data)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_units_on = m.ext[:variables][:units_on]
         var_units_available = m.ext[:variables][:units_available]
         constraint = m.ext[:constraints][:units_on]
@@ -89,8 +89,7 @@
         end
     end
     @testset "constraint_units_available" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         number_of_units = 4        
         candidate_units = 3
         object_parameter_values = [
@@ -101,8 +100,9 @@
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
-        db_api.import_data_to_url(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_units_available = m.ext[:variables][:units_available]
         var_units_invested_available = m.ext[:variables][:units_invested_available]
         constraint = m.ext[:constraints][:units_available]
@@ -120,11 +120,11 @@
         end
     end
     @testset "constraint_unit_state_transition" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         object_parameter_values = [["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"]]
-        db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_units_on = m.ext[:variables][:units_on]
         var_units_started_up = m.ext[:variables][:units_started_up]
         var_units_shut_down = m.ext[:variables][:units_shut_down]
@@ -150,12 +150,12 @@
         end
     end
     @testset "constraint_unit_flow_capacity" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         unit_capacity = 100
         relationship_parameter_values = [["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_unit_flow = m.ext[:variables][:unit_flow]
         var_units_on = m.ext[:variables][:units_on]
         constraint = m.ext[:constraints][:unit_flow_capacity]
@@ -174,16 +174,16 @@
         end
     end
     @testset "constraint_minimum_operating_point" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         unit_capacity = 100
         minimum_operating_point = 0.25
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
             ["unit__from_node", ["unit_ab", "node_a"], "minimum_operating_point", minimum_operating_point]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_unit_flow = m.ext[:variables][:unit_flow]
         var_units_on = m.ext[:variables][:units_on]
         constraint = m.ext[:constraints][:minimum_operating_point]
@@ -202,8 +202,7 @@
         end
     end    
     @testset "constraint_operating_point_bounds" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:length(points)]]
@@ -212,8 +211,9 @@
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
             ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_unit_flow_op = m.ext[:variables][:unit_flow_op]
         var_units_avail = m.ext[:variables][:units_available]
         constraint = m.ext[:constraints][:operating_point_bounds]
@@ -233,16 +233,16 @@
         end
     end
     @testset "constraint_operating_point_sum" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
         operating_points = Dict("type" => "array", "data" => PyVector(points))
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_unit_flow = m.ext[:variables][:unit_flow]
         var_unit_flow_op = m.ext[:variables][:unit_flow_op]
         constraint = m.ext[:constraints][:operating_point_sum]
@@ -280,8 +280,7 @@
                 ("fix", "out", "out"),
                 ("max", "out", "out"),
             )
-            _load_template(url_in)
-            db_api.import_data_to_url(url_in; test_data...)
+            db_map = _load_test_data(url_in, test_data)
             ratio = join([p, "ratio", a, b, "unit_flow"], "_")
             coeff = join([p, "units_on_coefficient", a, b], "_")
             relationships = [
@@ -293,10 +292,11 @@
                 [class, relationship, ratio, flow_ratio], [class, relationship, coeff, units_on_coeff]
             ]
             sense = senses_by_prefix[p]
-            db_api.import_data_to_url(
-                url_in; relationships=relationships, relationship_parameter_values=relationship_parameter_values
+            db_api.import_data(
+                db_map; relationships=relationships, relationship_parameter_values=relationship_parameter_values
             )
-            m = run_spineopt(url_in; log_level=0)
+            db_map.commit_session("Add test data")
+            m = run_spineopt(db_map; log_level=0, optimize=false)
             var_unit_flow = m.ext[:variables][:unit_flow]
             var_units_on = m.ext[:variables][:units_on]
             constraint = m.ext[:constraints][Symbol(ratio)]
@@ -332,14 +332,14 @@
     @testset "constraint_min_up_time" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_up_minutes in (60, 120, 210)
-            _load_template(url_in)
-            db_api.import_data_to_url(url_in; test_data...)
+            db_map = _load_test_data(url_in, test_data)
             min_up_time = Dict("type" => "duration", "data" => string(min_up_minutes, "m"))
             object_parameter_values = [
                 ["unit", "unit_ab", "min_up_time", min_up_time], ["model", "instance", "model_end", model_end],
             ]
-            db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
-            m = run_spineopt(url_in; log_level=0)
+            db_api.import_data(db_map; object_parameter_values=object_parameter_values)
+            db_map.commit_session("Add test data")
+            m = run_spineopt(db_map; log_level=0, optimize=false)
             var_units_on = m.ext[:variables][:units_on]
             var_units_started_up = m.ext[:variables][:units_started_up]
             constraint = m.ext[:constraints][:min_up_time]
@@ -377,8 +377,7 @@
     @testset "constraint_min_up_time_with_non_spinning_reserves" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_up_minutes in (60, 120, 210)
-            _load_template(url_in)
-            db_api.import_data_to_url(url_in; test_data...)
+            db_map = _load_test_data(url_in, test_data)
             min_up_time = Dict("type" => "duration", "data" => string(min_up_minutes, "m"))
             object_parameter_values = [
                 ["unit", "unit_ab", "min_up_time", min_up_time], ["model", "instance", "model_end", model_end],
@@ -387,11 +386,12 @@
                 ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", 1],
                 ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0]
             ]
-            db_api.import_data_to_url(url_in; 
+            db_api.import_data(db_map; 
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            m = run_spineopt(url_in; log_level=0)
+            db_map.commit_session("Add test data")
+            m = run_spineopt(db_map; log_level=0, optimize=false)
             var_units_on = m.ext[:variables][:units_on]
             var_units_started_up = m.ext[:variables][:units_started_up]
             var_nonspin_units_shut_down = m.ext[:variables][:nonspin_units_shut_down]
@@ -432,14 +432,14 @@
     @testset "constraint_min_down_time" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_down_minutes in (45, 150, 300)
-            _load_template(url_in)
-            db_api.import_data_to_url(url_in; test_data...)
+            db_map = _load_test_data(url_in, test_data)
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
             object_parameter_values = [
                 ["unit", "unit_ab", "min_down_time", min_down_time], ["model", "instance", "model_end", model_end],
             ]
-            db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
-            m = run_spineopt(url_in; log_level=0)
+            db_api.import_data(db_map; object_parameter_values=object_parameter_values)
+            db_map.commit_session("Add test data")
+            m = run_spineopt(db_map; log_level=0, optimize=false)
             var_units_on = m.ext[:variables][:units_on]
             var_units_available = m.ext[:variables][:units_available]
             var_units_shut_down = m.ext[:variables][:units_shut_down]
@@ -476,8 +476,7 @@
     @testset "constraint_min_down_time_with_non_spinning_reserves" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_down_minutes in (90, 150, 300)  # TODO: make it work for 45, 75
-            _load_template(url_in)
-            db_api.import_data_to_url(url_in; test_data...)
+            db_map = _load_test_data(url_in, test_data)
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
             object_parameter_values = [
                 ["unit", "unit_ab", "min_down_time", min_down_time], ["model", "instance", "model_end", model_end],
@@ -486,11 +485,12 @@
                 ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", 1],
                 ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0]
             ]
-            db_api.import_data_to_url(url_in; 
+            db_api.import_data(db_map; 
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            m = run_spineopt(url_in; log_level=0)
+            db_map.commit_session("Add test data")
+            m = run_spineopt(db_map; log_level=0, optimize=false)
             var_units_on = m.ext[:variables][:units_on]
             var_units_available = m.ext[:variables][:units_available]
             var_units_shut_down = m.ext[:variables][:units_shut_down]
@@ -528,16 +528,16 @@
         end
     end
     @testset "constraint_units_invested_available" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         candidate_units = 7
         object_parameter_values = [["unit", "unit_ab", "candidate_units", candidate_units]]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
-        db_api.import_data_to_url(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_units_invested_available = m.ext[:variables][:units_invested_available]
         constraint = m.ext[:constraints][:units_invested_available]
         @test length(constraint) == 2
@@ -553,16 +553,16 @@
         end
     end
     @testset "constraint_units_invested_transition" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         candidate_units = 4
         object_parameter_values = [["unit", "unit_ab", "candidate_units", candidate_units]]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
-        db_api.import_data_to_url(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_units_invested_available = m.ext[:variables][:units_invested_available]
         var_units_invested = m.ext[:variables][:units_invested]
         var_units_mothballed = m.ext[:variables][:units_mothballed]
@@ -591,8 +591,7 @@
         candidate_units = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
-            _load_template(url_in)
-            db_api.import_data_to_url(url_in; test_data...)
+            db_map = _load_test_data(url_in, test_data)
             unit_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["unit", "unit_ab", "candidate_units", candidate_units],
@@ -603,8 +602,9 @@
                 ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
                 ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
             ]
-            db_api.import_data_to_url(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-            m = run_spineopt(url_in; log_level=0)
+            db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+            db_map.commit_session("Add test data")
+            m = run_spineopt(db_map; log_level=0, optimize=false)
             var_units_invested_available = m.ext[:variables][:units_invested_available]
             var_units_invested = m.ext[:variables][:units_invested]
             constraint = m.ext[:constraints][:unit_lifetime]
@@ -637,16 +637,16 @@
         end
     end
     @testset "constraint_max_nonspin_start_up_ramp" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         max_res_startup_ramp = 0.5
         unit_capacity = 200
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_nonspin_ramp_up_unit_flow = m.ext[:variables][:nonspin_ramp_up_unit_flow]
         var_nonspin_units_started_up = m.ext[:variables][:nonspin_units_started_up]
         constraint = m.ext[:constraints][:max_nonspin_start_up_ramp]
@@ -665,8 +665,7 @@
         end
     end
     @testset "constraint_min_nonspin_start_up_ramp" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         max_res_startup_ramp = 0.5
         min_res_startup_ramp = 0.25
         unit_capacity = 200
@@ -675,8 +674,9 @@
             ["unit__from_node", ["unit_ab", "node_a"], "min_res_startup_ramp", min_res_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_nonspin_ramp_up_unit_flow = m.ext[:variables][:nonspin_ramp_up_unit_flow]
         var_nonspin_units_started_up = m.ext[:variables][:nonspin_units_started_up]
         constraint = m.ext[:constraints][:min_nonspin_start_up_ramp]
@@ -695,16 +695,16 @@
         end
     end
     @testset "constraint_max_start_up_ramp" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         max_startup_ramp = 0.4
         unit_capacity = 200
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_start_up_unit_flow = m.ext[:variables][:start_up_unit_flow]
         var_units_started_up = m.ext[:variables][:units_started_up]
         constraint = m.ext[:constraints][:max_start_up_ramp]
@@ -723,8 +723,7 @@
         end
     end
     @testset "constraint_min_start_up_ramp" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         max_startup_ramp = 0.4
         min_startup_ramp = 0.2
         unit_capacity = 200
@@ -733,8 +732,9 @@
             ["unit__from_node", ["unit_ab", "node_a"], "min_startup_ramp", min_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_start_up_unit_flow = m.ext[:variables][:start_up_unit_flow]
         var_units_started_up = m.ext[:variables][:units_started_up]
         constraint = m.ext[:constraints][:min_start_up_ramp]
@@ -753,16 +753,16 @@
         end
     end
     @testset "constraint_ramp_up" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         ramp_up_limit = 0.8
         unit_capacity = 200
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "ramp_up_limit", ramp_up_limit],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_ramp_up_unit_flow = m.ext[:variables][:ramp_up_unit_flow]
         var_units_on = m.ext[:variables][:units_on]
         var_units_started_up = m.ext[:variables][:units_started_up]
@@ -783,8 +783,7 @@
         end
     end
     @testset "constraint_split_ramp_up" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         ramp_up_limit = 0.8
         max_startup_ramp = 0.4
         unit_capacity = 200
@@ -793,8 +792,9 @@
             ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_unit_flow = m.ext[:variables][:unit_flow]
         var_start_up_unit_flow = m.ext[:variables][:start_up_unit_flow]
         var_ramp_up_unit_flow = m.ext[:variables][:ramp_up_unit_flow]
@@ -821,8 +821,7 @@
         end
     end
     @testset "constraint_split_ramp_up_with_nonspin_units" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         max_startup_ramp = 0.4
         max_res_startup_ramp = 0.5
         unit_capacity = 200
@@ -831,8 +830,9 @@
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_unit_flow = m.ext[:variables][:unit_flow]
         var_start_up_unit_flow = m.ext[:variables][:start_up_unit_flow]
         var_nonspin_ramp_up_unit_flow = m.ext[:variables][:nonspin_ramp_up_unit_flow]
@@ -860,16 +860,16 @@
     end
     ###
     @testset "constraint_max_nonspin_ramp_down_unit_flow" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         max_res_shutdown_ramp = 0.5
         unit_capacity = 200
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_nonspin_ramp_down_unit_flow = m.ext[:variables][:nonspin_ramp_down_unit_flow]
         var_nonspin_units_shut_down = m.ext[:variables][:nonspin_units_shut_down]
         constraint = m.ext[:constraints][:max_nonspin_shut_down_ramp]
@@ -888,8 +888,7 @@
         end
     end
     @testset "constraint_min_nonspin_shut_down_ramp" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         max_res_shutdown_ramp = 0.5
         min_res_shutdown_ramp = 0.25
         unit_capacity = 200
@@ -898,8 +897,9 @@
             ["unit__from_node", ["unit_ab", "node_a"], "min_res_shutdown_ramp", min_res_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_nonspin_ramp_down_unit_flow = m.ext[:variables][:nonspin_ramp_down_unit_flow]
         var_nonspin_units_shut_down = m.ext[:variables][:nonspin_units_shut_down]
         constraint = m.ext[:constraints][:min_nonspin_shut_down_ramp]
@@ -918,16 +918,16 @@
         end
     end
     @testset "constraint_max_shut_down_ramp" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         max_shutdown_ramp = 0.4
         unit_capacity = 200
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
         var_units_shut_down = m.ext[:variables][:units_shut_down]
         constraint = m.ext[:constraints][:max_shut_down_ramp]
@@ -946,8 +946,7 @@
         end
     end
     @testset "constraint_min_shut_down_ramp" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         max_shutdown_ramp = 0.4
         min_shutdown_ramp = 0.2
         unit_capacity = 200
@@ -956,8 +955,9 @@
             ["unit__from_node", ["unit_ab", "node_a"], "min_shutdown_ramp", min_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
         var_units_shut_down = m.ext[:variables][:units_shut_down]
         constraint = m.ext[:constraints][:min_shut_down_ramp]
@@ -976,16 +976,16 @@
         end
     end
     @testset "constraint_ramp_down" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         ramp_down_limit = 0.8
         unit_capacity = 200
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "ramp_down_limit", ramp_down_limit],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_ramp_down_unit_flow = m.ext[:variables][:ramp_down_unit_flow]
         var_units_on = m.ext[:variables][:units_on]
         var_units_shut_down = m.ext[:variables][:units_shut_down]
@@ -1006,8 +1006,7 @@
         end
     end
     @testset "constraint_split_ramp_down" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         ramp_down_limit = 0.8
         max_shutdown_ramp = 0.4
         unit_capacity = 200
@@ -1016,8 +1015,9 @@
             ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_unit_flow = m.ext[:variables][:unit_flow]
         var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
         var_ramp_down_unit_flow = m.ext[:variables][:ramp_down_unit_flow]
@@ -1044,8 +1044,7 @@
         end
     end
     @testset "constraint_split_ramp_down_with_nonspin_units" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         max_shutdown_ramp = 0.4
         max_res_shutdown_ramp = 0.5
         unit_capacity = 200
@@ -1054,8 +1053,9 @@
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_unit_flow = m.ext[:variables][:unit_flow]
         var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
         var_nonspin_ramp_down_unit_flow = m.ext[:variables][:nonspin_ramp_down_unit_flow]
@@ -1084,8 +1084,7 @@
     ###
     @testset "constraint_unit_constraint" begin
         @testset for sense in ("==", ">=", "<=")
-            _load_template(url_in)
-            db_api.import_data_to_url(url_in; test_data...)
+            db_map = _load_test_data(url_in, test_data)
             rhs = 40
             unit_flow_coefficient_a = 25
             unit_flow_coefficient_b = 30
@@ -1107,14 +1106,15 @@
                 [relationships[3]..., "units_on_coefficient", units_on_coefficient],
                 [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient]
             ]
-            db_api.import_data_to_url(
-                url_in; 
+            db_api.import_data(
+                db_map; 
                 objects=objects,
                 relationships=relationships,
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            m = run_spineopt(url_in; log_level=0)
+            db_map.commit_session("Add test data")
+            m = run_spineopt(db_map; log_level=0, optimize=false)
             var_unit_flow = m.ext[:variables][:unit_flow]
             var_units_on = m.ext[:variables][:units_on]
             var_units_started_up = m.ext[:variables][:units_started_up]
@@ -1145,8 +1145,7 @@
     end
     @testset "constraint_unit_constraint_with_operating_segments" begin
         @testset for sense in ("==", ">=", "<=")
-            _load_template(url_in)
-            db_api.import_data_to_url(url_in; test_data...)
+            db_map = _load_test_data(url_in, test_data)
             rhs = 40
             unit_flow_coefficient_a = 25
             unit_flow_coefficient_b = 30
@@ -1172,14 +1171,15 @@
                 [relationships[3]..., "units_on_coefficient", units_on_coefficient],
                 [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient]
             ]
-            db_api.import_data_to_url(
-                url_in; 
+            db_api.import_data(
+                db_map; 
                 objects=objects,
                 relationships=relationships,
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values
             )
-            m = run_spineopt(url_in; log_level=0)
+            db_map.commit_session("Add test data")
+            m = run_spineopt(db_map; log_level=0, optimize=false)
             var_unit_flow_op = m.ext[:variables][:unit_flow_op]
             var_units_on = m.ext[:variables][:units_on]
             var_units_started_up = m.ext[:variables][:units_started_up]

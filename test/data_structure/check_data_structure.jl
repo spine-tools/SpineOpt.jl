@@ -18,27 +18,34 @@
 #############################################################################
 
 @testset "check data structure" begin
-    url_in = "sqlite:///$(@__DIR__)/test.sqlite"
-    _load_template(url_in)
+    url_in = "sqlite://"
+    db_map = _load_test_data(url_in, Dict())
+    db_map.commit_session("Add test data")
     # TODO: Once we get our error messages right, we should use:
-    # @test_throws ErrorException("...exception message...") m = run_spineopt(url_in; log_level=0)
+    # @test_throws ErrorException("...exception message...")
     # to make sure that the test passes for the good reasons.
-    @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
-    db_api.import_data_to_url(url_in; objects=[["model", "instance"]])
-    @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
-    db_api.import_data_to_url(
-        url_in; 
+    @test_throws ErrorException m = run_spineopt(db_map; log_level=0, optimize=false)
+    db_map = _load_test_data(url_in, Dict())
+    db_api.import_data(db_map; objects=[["model", "instance"]])
+    db_map.commit_session("Add test data")
+    @test_throws ErrorException m = run_spineopt(db_map; log_level=0, optimize=false)
+    db_map = _load_test_data(url_in, Dict())
+    db_api.import_data(
+        db_map; 
         objects=[["temporal_block", "test_temporal_block"], ["unit", "test_unit"], ["node", "test_node"]],
         relationships=[["model__temporal_block", ["instance", "test_temporal_block"]]]
     )
-    @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
-    db_api.import_data_to_url(
-        url_in; 
+    db_map.commit_session("Add test data")
+    @test_throws ErrorException m = run_spineopt(db_map; log_level=0, optimize=false)
+    db_map = _load_test_data(url_in, Dict())
+    db_api.import_data(
+        db_map; 
         objects=[["stochastic_structure", "test_stochastic_structure"]],
         relationships=[
             ["node__stochastic_structure", ["test_node", "test_stochastic_structure"]],
             ["model__stochastic_structure", ["instance", "test_stochastic_structure"]]
         ]
     )
-    @test_throws ErrorException m = run_spineopt(url_in; log_level=0)
+    db_map.commit_session("Add test data")
+    @test_throws ErrorException m = run_spineopt(db_map; log_level=0, optimize=false)
 end

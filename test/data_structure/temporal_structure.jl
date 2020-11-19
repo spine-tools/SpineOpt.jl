@@ -30,7 +30,7 @@ function _model()
 end
 
 @testset "temporal structure" begin
-    url_in = "sqlite:///$(@__DIR__)/test.sqlite"
+    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"], 
@@ -49,24 +49,22 @@ end
         ]
     )
     @testset "zero_resolution" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         object_parameter_values = [
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
             ["temporal_block", "block_a", "resolution", 0]
         ]
-        db_api.import_data_to_url(
-            url_in; 
+        db_api.import_data(
+            db_map; 
             object_parameter_values=object_parameter_values
         )
-        using_spinedb(url_in, SpineOpt)
+        using_spinedb(db_map, SpineOpt)
         err_msg = "`resolution` of temporal block `block_a` cannot be zero!"
         m = _model()
         @test_throws ErrorException(err_msg) generate_temporal_structure!(m)
     end
     @testset "block_start" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         objects = [["temporal_block", "block_c"]]
         relationships = [
             ["model__temporal_block", ["instance", "block_c"]],
@@ -81,13 +79,13 @@ end
             ["temporal_block", "block_b", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T15:36:00")],
             ["temporal_block", "block_c", "block_start", nothing],
         ]
-        db_api.import_data_to_url(
-            url_in; 
+        db_api.import_data(
+            db_map; 
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values
         )
-        using_spinedb(url_in, SpineOpt)
+        using_spinedb(db_map, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
         @test start(first(time_slice(m; temporal_block=temporal_block(:block_a)))) == DateTime("2000-01-02T00:00:00")
@@ -95,8 +93,7 @@ end
         @test start(first(time_slice(m; temporal_block=temporal_block(:block_c)))) == DateTime("2000-01-01T00:00:00")
     end
     @testset "block_end" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         objects = [["temporal_block", "block_c"]]        
         relationships = [
             ["model__temporal_block", ["instance", "block_c"]],
@@ -111,13 +108,13 @@ end
             ["temporal_block", "block_b", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T15:36:00")],
             ["temporal_block", "block_c", "block_end", nothing],
         ]
-        db_api.import_data_to_url(
-            url_in; 
+        db_api.import_data(
+            db_map; 
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values
         )
-        using_spinedb(url_in, SpineOpt)
+        using_spinedb(db_map, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
         @test end_(last(time_slice(m; temporal_block=temporal_block(:block_a)))) == DateTime("2000-01-02T00:00:00")
@@ -125,8 +122,7 @@ end
         @test end_(last(time_slice(m; temporal_block=temporal_block(:block_c)))) == DateTime("2000-01-03T00:00:00")
     end
     @testset "one_two_four_even" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         objects = [["temporal_block", "block_c"]]        
         relationships = [
             ["model__temporal_block", ["instance", "block_c"]],
@@ -138,10 +134,10 @@ end
             ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "2Y")],
             ["temporal_block", "block_c", "resolution", Dict("type" => "duration", "data" => "4Y")],
         ]
-        db_api.import_data_to_url(
-            url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
+        db_api.import_data(
+            db_map; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
         )
-        using_spinedb(url_in, SpineOpt)
+        using_spinedb(db_map, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
         observed_ts_a = time_slice(m; temporal_block=temporal_block(:block_a))
@@ -200,15 +196,14 @@ end
         @test _is_time_slice_set_equal(t_overlaps_t(m; t=c1), expected_t_overlaps_t_c1)
     end
     @testset "two_three_uneven" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         object_parameter_values = [
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2006-01-01T00:00:00")],
             ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "2Y")],
             ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "3Y")],
         ]
-        db_api.import_data_to_url(url_in; object_parameter_values=object_parameter_values)
-        using_spinedb(url_in, SpineOpt)
+        db_api.import_data(db_map; object_parameter_values=object_parameter_values)
+        using_spinedb(db_map, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
         observed_ts_a = time_slice(m; temporal_block=temporal_block(:block_a))
@@ -251,8 +246,7 @@ end
         @test _is_time_slice_set_equal(t_overlaps_t(m; t=b2), expected_t_overlaps_t_b2)
     end
     @testset "gaps" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         objects = [["temporal_block", "block_c"]]
         relationships = [
             ["model__temporal_block", ["instance", "block_c"]],
@@ -269,10 +263,10 @@ end
             ["temporal_block", "block_b", "block_end", Dict("type" => "duration", "data" => "6Y")],
             ["temporal_block", "block_c", "block_end", Dict("type" => "duration", "data" => "10Y")],
         ]
-        db_api.import_data_to_url(
-            url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
+        db_api.import_data(
+            db_map; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
         )
-        using_spinedb(url_in, SpineOpt)
+        using_spinedb(db_map, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
         observed_ts_a = time_slice(m; temporal_block=temporal_block(:block_a))
@@ -315,8 +309,7 @@ end
         @test _is_time_slice_equal(to_time_slice(m; t=bc2)[1], b2)
     end
     @testset "to_time_slice with rolling" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         object_parameter_values = [
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2001-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2003-01-01T00:00:00")],
@@ -324,10 +317,10 @@ end
             ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "6M")],
             ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "6M")],
         ]
-        db_api.import_data_to_url(
-            url_in; object_parameter_values=object_parameter_values
+        db_api.import_data(
+            db_map; object_parameter_values=object_parameter_values
         )
-        using_spinedb(url_in, SpineOpt)
+        using_spinedb(db_map, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
         a1, a2 = time_slice(m; temporal_block=temporal_block(:block_a))
@@ -342,8 +335,7 @@ end
         @test _is_time_slice_equal(to_time_slice(m; t=t2)[1], a2)
     end
     @testset "history" begin
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         objects = [("unit", "unitA")]
         object_parameter_values = [
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T04:00:00")],
@@ -352,10 +344,10 @@ end
             ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["unit", "unitA", "min_up_time", Dict("type" => "duration", "data" => "4h")]
         ]
-        db_api.import_data_to_url(
-            url_in; objects=objects, object_parameter_values=object_parameter_values
+        db_api.import_data(
+            db_map; objects=objects, object_parameter_values=object_parameter_values
         )
-        using_spinedb(url_in, SpineOpt)
+        using_spinedb(db_map, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
         block_a = temporal_block(:block_a)

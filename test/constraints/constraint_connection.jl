@@ -18,7 +18,7 @@
 #############################################################################
 
 @testset "connection-based constraints" begin
-    url_in = "sqlite:///$(@__DIR__)/test.sqlite"
+    url_in = "sqlite://"
     test_data = Dict(
         :objects => [
             ["model", "instance"], 
@@ -75,13 +75,13 @@
     )
     @testset "constraint_connection_flow_capacity" begin
         connection_capacity = 200
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         relationship_parameter_values = [
             ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity]
         ]
-        db_api.import_data_to_url(url_in; relationship_parameter_values=relationship_parameter_values)
-        m = run_spineopt(url_in; log_level=0)
+        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
         constraint = m.ext[:constraints][:connection_flow_capacity]
         @test length(constraint) == 2
@@ -100,8 +100,7 @@
         # TODO: node_ptdf_threshold
         conn_r = 0.9
         conn_x = 0.1
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
@@ -141,14 +140,15 @@
             ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
         ]
-        db_api.import_data_to_url(
-            url_in; 
+        db_api.import_data(
+            db_map; 
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        m = run_spineopt(url_in; log_level=0)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
         var_node_injection = m.ext[:variables][:node_injection]
         constraint = m.ext[:constraints][:connection_flow_ptdf]
@@ -180,8 +180,7 @@
         conn_emergency_cap_ab = 80
         conn_emergency_cap_bc = 100
         conn_emergency_cap_ca = 150
-        _load_template(url_in)
-        db_api.import_data_to_url(url_in; test_data...)
+        db_map = _load_test_data(url_in, test_data)
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
@@ -225,14 +224,15 @@
             ["connection__from_node", ["connection_bc", "node_b"], "connection_emergency_capacity", conn_emergency_cap_bc],
             ["connection__from_node", ["connection_ca", "node_c"], "connection_emergency_capacity", conn_emergency_cap_ca],
         ]
-        db_api.import_data_to_url(
-            url_in; 
+        db_api.import_data(
+            db_map; 
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        m = run_spineopt(url_in; log_level=0)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
         constraint = m.ext[:constraints][:connection_flow_lodf]
         @test length(constraint) == 3
@@ -321,21 +321,21 @@
             h_delay = div(conn_flow_minutes_delay, 60)
             rem_minutes_delay = (conn_flow_minutes_delay % 60) / 60
             @testset for p in ("min", "fix", "max")
-                _load_template(url_in)
-                db_api.import_data_to_url(url_in; test_data...)
+                db_map = _load_test_data(url_in, test_data)
                 sense = senses_by_prefix[p]
                 ratio = string(p, "_ratio_out_in_connection_flow")
                 relationship_parameter_values = [
                     [class, relationship, "connection_flow_delay", connection_flow_delay],
                     [class, relationship, ratio, flow_ratio]
                 ]
-                db_api.import_data_to_url(
-                    url_in; 
+                db_api.import_data(
+                    db_map; 
                     relationships=relationships, 
                     object_parameter_values=object_parameter_values,
                     relationship_parameter_values=relationship_parameter_values
                 )
-                m = run_spineopt(url_in; log_level=0)
+                db_map.commit_session("Add test data")
+                m = run_spineopt(db_map; log_level=0, optimize=false)
                 var_connection_flow = m.ext[:variables][:connection_flow]
                 constraint = m.ext[:constraints][Symbol(ratio)]
                 @test length(constraint) == 2

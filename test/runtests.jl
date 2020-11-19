@@ -31,10 +31,12 @@ import SpineOpt: time_slice, to_time_slice, history_time_slice, t_in_t, t_before
 
 _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
 
-function _load_template(url_in)
-    db_api.create_new_spine_database(url_in)
-    template = Dict(Symbol(key) => value for (key, value) in SpineOpt._template())
-    db_api.import_data_to_url(url_in; template...)
+function _load_test_data(db_url, test_data)
+    db_map = db_api.QuickDatabaseMapping(db_url; create=true)
+    data = Dict(Symbol(key) => value for (key, value) in SpineOpt._template())
+    merge!(data, test_data)
+    db_api.import_data(db_map; data...)
+    db_map
 end
 
 """
