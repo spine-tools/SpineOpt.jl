@@ -372,7 +372,8 @@ _drop_key(x::NamedTuple, key::Symbol...) = (; (k => v for (k, v) in pairs(x) if 
 Save the outputs of a model into a dictionary.
 """
 function save_outputs!(m)
-    for (name, out) in m.ext[:outputs]
+    for r in model__report(model=m.ext[:instance]), o in report__output(report=r)
+        name = o.name
         value = get(m.ext[:values], name, nothing)
         if value === nothing
             @warn "can't find a value for '$(name)'"
