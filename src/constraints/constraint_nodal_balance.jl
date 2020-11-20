@@ -31,38 +31,39 @@ function add_constraint_nodal_balance!(m::Model)
         (node=n, stochastic_scenario=s, t=t) => sense_constraint(
             m,
             # Net injection
-            + node_injection[n, s, t]
+            +node_injection[n, s, t]
             # Commodity flows from connections
-            + expr_sum(
+            +
+            expr_sum(
                 connection_flow[conn, n, d, s, t]
-                for (conn, n, d, s, t) in connection_flow_indices(
-                    m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
-                )
-                if !issubset(_connection_nodes(conn, n), internal_nodes);
-                init=0
+                for
+                (conn, n, d, s, t) in
+                connection_flow_indices(m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t) if
+                !issubset(_connection_nodes(conn, n), internal_nodes);
+                init=0,
             )
             # Commodity flows to connections
-            - expr_sum(
+            -
+            expr_sum(
                 connection_flow[conn, n, d, s, t]
-                for (conn, n, d, s, t) in connection_flow_indices(
-                    m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
-                )
-                if !issubset(_connection_nodes(conn, n), internal_nodes);
-                init=0
+                for
+                (conn, n, d, s, t) in
+                connection_flow_indices(m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t) if
+                !issubset(_connection_nodes(conn, n), internal_nodes);
+                init=0,
             )
             # slack variable - only exists if slack_penalty is defined
-            + get(node_slack_pos, (n, s, t), 0)
-            - get(node_slack_neg, (n, s, t), 0)
-            ,
-            eval(nodal_balance_sense(node=n))
-            ,
-            0
+            +
+            get(node_slack_pos, (n, s, t), 0) - get(node_slack_neg, (n, s, t), 0),
+            eval(nodal_balance_sense(node=n)),
+            0,
         )
-        for (n, internal_nodes, s, t) in (
-            (n, _internal_nodes(n), s, t)
-            for (n, s, t) in node_stochastic_time_indices(m)
-            if nodal_balance_sense(node=n) !== :none
-            && all(balance_type(node=ng) !== :balance_type_group for ng in groups(n))
+        for
+        (n, internal_nodes, s, t) in (
+            (n, _internal_nodes(n), s, t) for
+            (n, s, t) in node_stochastic_time_indices(m) if
+            nodal_balance_sense(node=n) !== :none &&
+            all(balance_type(node=ng) !== :balance_type_group for ng in groups(n))
         )
     )
 end
@@ -75,8 +76,7 @@ _internal_nodes(n::Object) = setdiff(members(n), n)
 An iterator over all nodes of given `connection` that have the commodity as given `node`.
 """
 _connection_nodes(connection, node) = (
-    n
-    for connection__node in (connection__from_node, connection__to_node)
-    for n in connection__node(connection=connection, direction=anything)
-    if node__commodity(node=node) == node__commodity(node=n)
+    n for connection__node in (connection__from_node, connection__to_node) for
+    n in connection__node(connection=connection, direction=anything) if
+    node__commodity(node=node) == node__commodity(node=n)
 )

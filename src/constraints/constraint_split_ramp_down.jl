@@ -27,19 +27,16 @@ Uses stochastic path indices due to potentially different stochastic scenarios b
 function constraint_split_ramp_down_indices(m)
     unique(
         (unit=u, node=n, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, n, d, s, t_after) in unique(
-            Iterators.flatten(
-                (ramp_down_unit_flow_indices(m), start_up_unit_flow_indices(m), nonspin_ramp_down_unit_flow_indices(m))
-            )
-        )
-        for t_before in t_before_t(m; t_after=t_after)
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario for ind in unit_flow_indices(
-                    m; unit=u, node=n, direction=d, t=[t_before, t_after]
-                )
-            )
-        )
+        for
+        (u, n, d, s, t_after) in unique(Iterators.flatten((
+            ramp_down_unit_flow_indices(m),
+            start_up_unit_flow_indices(m),
+            nonspin_ramp_down_unit_flow_indices(m),
+        ))) for t_before in t_before_t(m; t_after=t_after)
+        for
+        path in active_stochastic_paths(unique(
+            ind.stochastic_scenario for ind in unit_flow_indices(m; unit=u, node=n, direction=d, t=[t_before, t_after])
+        ))
     )
 end
 
@@ -55,39 +52,33 @@ function add_constraint_split_ramp_down!(m::Model)
     m.ext[:constraints][:split_ramp_down] = Dict(
         (u, n, d, s, t_before, t_after) => @constraint(
             m,
-            + expr_sum(
-                + unit_flow[u, n, d, s, t_before]
-                for (u, n, d, s, t_before) in unit_flow_indices(
-                    m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_before
-                )
-                if !is_reserve_node(node=n);
-                init=0
+            +expr_sum(
+                +unit_flow[u, n, d, s, t_before]
+                for
+                (u, n, d, s, t_before) in
+                unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_before) if
+                !is_reserve_node(node=n);
+                init=0,
+            ) - expr_sum(
+                +unit_flow[u, n, d, s, t_after]
+                for
+                (u, n, d, s, t_after) in
+                unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after) if
+                is_reserve_node(node=n) && downward_reserve(node=n);
+                init=0,
+            ) + expr_sum(
+                +unit_flow[u, n, d, s, t_after]
+                for
+                (u, n, d, s, t_after) in
+                unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after) if
+                !is_reserve_node(node=n);
+                init=0,
+            ) <= expr_sum(
+                +get(ramp_down_unit_flow, (u, n, d, s, t_after), 0) +
+                get(shut_down_unit_flow, (u, n, d, s, t_after), 0) +
+                get(nonspin_ramp_down_unit_flow, (u, n, d, s, t_after), 0) for s in s;
+                init=0,
             )
-            - expr_sum(
-                + unit_flow[u, n, d, s, t_after]
-                for (u, n, d, s, t_after) in unit_flow_indices(
-                    m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after
-                )
-                if is_reserve_node(node=n) && downward_reserve(node=n);
-                init=0
-            )
-            + expr_sum(
-                + unit_flow[u, n, d, s, t_after]
-                for (u, n, d, s, t_after) in unit_flow_indices(
-                    m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after
-                )
-                if !is_reserve_node(node=n);
-                init=0
-            )
-            <=
-            expr_sum(
-                + get(ramp_down_unit_flow, (u, n, d, s, t_after), 0)
-                + get(shut_down_unit_flow, (u, n, d, s, t_after), 0)
-                + get(nonspin_ramp_down_unit_flow, (u, n, d, s, t_after), 0)
-                for s in s;
-                init=0
-            )
-        )
-        for (u, n, d, s, t_before, t_after) in constraint_split_ramp_down_indices(m)
+        ) for (u, n, d, s, t_before, t_after) in constraint_split_ramp_down_indices(m)
     )
 end

@@ -31,12 +31,10 @@ Minimize total costs
 """
 function set_mp_objective!(m::Model)
     @fetch mp_objective_lowerbound = m.ext[:variables]
-    @objective(m, Min,
-        + expr_sum(
-            mp_objective_lowerbound[model, t]            
-            for (model, t) in mp_objective_lowerbound_indices(m);            
-            init=0
-        )
+    @objective(
+        m,
+        Min,
+        +expr_sum(mp_objective_lowerbound[model, t] for (model, t) in mp_objective_lowerbound_indices(m); init=0)
     )
 end
 
@@ -48,16 +46,11 @@ Limit the units_on by the number of available units.
 """
 function add_constraint_mp_objective!(m::Model)
     @fetch units_invested, mp_objective_lowerbound = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:mp_objective] = Dict()    
+    constr_dict = m.ext[:constraints][:mp_objective] = Dict()
     constr_dict = @constraint(
-            m,            
-            + expr_sum(
-                mp_objective_lowerbound[model, t]            
-                for (model, t) in mp_objective_lowerbound_indices(m);            
-                init=0
-            )
-            >=
-            + total_costs(m, end_(last(time_slice(m))))                        
-        )
-    
+        m,
+        +expr_sum(mp_objective_lowerbound[model, t] for (model, t) in mp_objective_lowerbound_indices(m); init=0) >=
+        +total_costs(m, end_(last(time_slice(m))))
+    )
+
 end

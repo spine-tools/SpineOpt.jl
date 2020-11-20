@@ -30,20 +30,15 @@ function add_constraint_unit_state_transition!(m::Model)
         (unit=u, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             expr_sum(
-                + units_on[u, s, t_after]
-                - units_started_up[u, s, t_after]
-                + units_shut_down[u, s, t_after]
+                +units_on[u, s, t_after] - units_started_up[u, s, t_after] + units_shut_down[u, s, t_after]
                 for (u, s, t_after) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
-                init=0
-            )
-            ==
-            expr_sum(
-                + units_on[u, s, t_before]
+                init=0,
+            ) == expr_sum(
+                +units_on[u, s, t_before]
                 for (u, s, t_before) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_before);
-                init=0
+                init=0,
             )
-        )
-        for (u, s, t_before, t_after) in constraint_unit_state_transition_indices(m)
+        ) for (u, s, t_before, t_after) in constraint_unit_state_transition_indices(m)
     )
 end
 
@@ -56,14 +51,18 @@ Uses stochastic path indices due to potentially different stochastic scenarios b
 Keyword arguments can be used to filter the resulting Array.
 """
 function constraint_unit_state_transition_indices(
-    m::Model; unit=unit(), stochastic_path=anything, t_before=anything, t_after=anything
+    m::Model;
+    unit=unit(),
+    stochastic_path=anything,
+    t_before=anything,
+    t_after=anything,
 )
     unique(
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (u, t_before, t_after) in unit_dynamic_time_indices(m; unit=unit, t_before=t_before, t_after=t_after)
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in units_on_indices(m; unit=u, t=[t_before, t_after]))
-        )
-        if path == stochastic_path || path in stochastic_path
+        for
+        path in active_stochastic_paths(unique(
+            ind.stochastic_scenario for ind in units_on_indices(m; unit=u, t=[t_before, t_after])
+        )) if path == stochastic_path || path in stochastic_path
     )
 end

@@ -21,7 +21,7 @@
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
-            ["model", "instance"], 
+            ["model", "instance"],
             ["temporal_block", "hourly"],
             ["temporal_block", "two_hourly"],
             ["stochastic_structure", "deterministic"],
@@ -57,29 +57,25 @@
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
         ],
-        :relationship_parameter_values => [
-            [
-                "stochastic_structure__stochastic_scenario", 
-                ["stochastic", "parent"], 
-                "stochastic_scenario_end", 
-                Dict("type" => "duration", "data" => "1h")
-            ]
-        ]
+        :relationship_parameter_values => [[
+            "stochastic_structure__stochastic_scenario",
+            ["stochastic", "parent"],
+            "stochastic_scenario_end",
+            Dict("type" => "duration", "data" => "1h"),
+        ]],
     )
     @testset "fixed_om_costs" begin
         db_map = _load_test_data(url_in, test_data)
         unit_capacity = 100
         number_of_units = 4
         fom_cost = 125
-        object_parameter_values = [
-            ["unit", "unit_ab", "number_of_units", number_of_units],
-            ["unit", "unit_ab", "fom_cost", fom_cost]
-        ]
+        object_parameter_values =
+            [["unit", "unit_ab", "number_of_units", number_of_units], ["unit", "unit_ab", "fom_cost", fom_cost]]
         relationship_parameter_values = [["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]]
         db_api.import_data(
-            db_map; 
+            db_map;
             object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
+            relationship_parameter_values=relationship_parameter_values,
         )
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map; log_level=0, optimize=false)
@@ -110,7 +106,7 @@
         candidate_units = 3
         object_parameter_values = [
             ["unit", "unit_ab", "unit_investment_cost", unit_investment_cost],
-            ["unit", "unit_ab", "candidate_units", candidate_units]
+            ["unit", "unit_ab", "candidate_units", candidate_units],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -123,9 +119,8 @@
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         observed_obj = objective_function(m)
-        expected_obj = (
-            unit_investment_cost * sum(units_invested[unit(:unit_ab), s, t] for (s, t) in zip(scenarios, time_slices))
-        )
+        expected_obj =
+            (unit_investment_cost * sum(units_invested[unit(:unit_ab), s, t] for (s, t) in zip(scenarios, time_slices)))
         @test observed_obj == expected_obj
     end
     @testset "objective_penalties" begin
@@ -149,12 +144,12 @@
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         observed_obj = objective_function(m)
         expected_obj = (
-            + 2 * node_a_slack_penalty * node_slack_neg[n_a, s_parent, t2h]
-            + 2 * node_a_slack_penalty * node_slack_pos[n_a, s_parent, t2h]
-            + node_b_slack_penalty * node_slack_neg[n_b, s_parent, t1h1]
-            + node_b_slack_penalty * node_slack_pos[n_b, s_parent, t1h1]
-            + node_b_slack_penalty * node_slack_neg[n_b, s_child, t1h2]
-            + node_b_slack_penalty * node_slack_pos[n_b, s_child, t1h2]
+            +2 * node_a_slack_penalty * node_slack_neg[n_a, s_parent, t2h] +
+            2 * node_a_slack_penalty * node_slack_pos[n_a, s_parent, t2h] +
+            node_b_slack_penalty * node_slack_neg[n_b, s_parent, t1h1] +
+            node_b_slack_penalty * node_slack_pos[n_b, s_parent, t1h1] +
+            node_b_slack_penalty * node_slack_neg[n_b, s_child, t1h2] +
+            node_b_slack_penalty * node_slack_pos[n_b, s_child, t1h2]
         )
         @test observed_obj == expected_obj
     end
@@ -225,10 +220,10 @@
         relationships = [["connection__to_node", ["connection_ab", "node_b"]]]
         object_parameter_values = [["connection", "connection_ab", "connection_flow_cost", connection_flow_cost]]
         db_api.import_data(
-            db_map; 
+            db_map;
             objects=objects,
             relationships=relationships,
-            object_parameter_values=object_parameter_values
+            object_parameter_values=object_parameter_values,
         )
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map; log_level=0, optimize=false)
@@ -237,7 +232,8 @@
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         observed_obj = objective_function(m)
-        expected_obj = connection_flow_cost * sum(connection_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices))
+        expected_obj =
+            connection_flow_cost * sum(connection_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices))
         @test observed_obj == expected_obj
     end
 end

@@ -22,7 +22,7 @@
         url_in = "sqlite://"
         test_data = Dict(
             :objects => [
-                ["model", "instance"], 
+                ["model", "instance"],
                 ["temporal_block", "hourly"],
                 ["stochastic_structure", "stochastic"],
                 ["connection", "connection_ab"],
@@ -64,14 +64,12 @@
                 ["node", "node_a", "demand", -100],
                 ["node", "node_b", "demand", 100],
             ],
-            :relationship_parameter_values => [
-                [
-                    "stochastic_structure__stochastic_scenario", 
-                    ["stochastic", "parent"], 
-                    "stochastic_scenario_end", 
-                    Dict("type" => "duration", "data" => "1h")
-                ]
-            ]
+            :relationship_parameter_values => [[
+                "stochastic_structure__stochastic_scenario",
+                ["stochastic", "parent"],
+                "stochastic_scenario_end",
+                Dict("type" => "duration", "data" => "1h"),
+            ]],
         )
         db_map = _load_test_data(url_in, test_data)
         db_map.commit_session("Add test data")

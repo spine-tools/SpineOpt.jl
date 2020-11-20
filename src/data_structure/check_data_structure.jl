@@ -53,10 +53,7 @@ end
 Check if at least one `model` object is defined.
 """
 function check_model_object()
-    _check(
-        !isempty(model()),
-        "`model` object not found - you need a `model` object to run SpineOpt"
-    )
+    _check(!isempty(model()), "`model` object not found - you need a `model` object to run SpineOpt")
 end
 
 """
@@ -67,7 +64,7 @@ Check if at least one `temporal_block` is defined.
 function check_temporal_block_object()
     _check(
         !isempty(temporal_block()),
-        "`temporal_block` object not found - you need at least one `temporal_block` to run SpineOpt"
+        "`temporal_block` object not found - you need at least one `temporal_block` to run SpineOpt",
     )
 end
 
@@ -80,7 +77,7 @@ function check_node_object()
     for m in model(model_type=:spineopt_operations)
         _check(
             !isempty(node()),
-            "`node` object not found - you need at least one `node` to run a SpineOpt Operations Model"
+            "`node` object not found - you need at least one `node` to run a SpineOpt Operations Model",
         )
     end
 end
@@ -92,16 +89,13 @@ Check that each `node` has at least one `temporal_block` connected to it in each
 """
 function check_model__node__temporal_block()
     errors = [
-        (m,n)
-        for m in model(model_type=:spineopt_operations)
-        for n in node()
-        if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m)))
+        (m, n) for m in model(model_type=:spineopt_operations)
+        for n in node() if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m)))
     ]
     _check(
         isempty(errors),
         "invalid `node__temporal_block` or `model__temporal_block` definitions for `(model, node)` pair(s):
-        $(join(errors, ", ", " and ")) "
-        * "- each `node` must be related to at least one `temporal_block` per `model`"
+        $(join(errors, ", ", " and ")) " * "- each `node` must be related to at least one `temporal_block` per `model`",
     )
 end
 
@@ -114,14 +108,15 @@ This is deduced from the `model__stochastic_structure` and `node__stochastic_str
 """
 function check_model__node__stochastic_structure()
     errors = [
-        (m,n) for m in model(model_type=:spineopt_operations) for n in node()
-        if length(intersect(node__stochastic_structure(node=n), model__stochastic_structure(model=m))) != 1
+        (m, n) for m in model(model_type=:spineopt_operations)
+        for
+        n in node() if length(intersect(node__stochastic_structure(node=n), model__stochastic_structure(model=m))) != 1
     ]
     _check(
         isempty(errors),
         "invalid `node__stochastic_structure` or `model__stochastic_structure` definitions for `(model, node)` pair(s):
-        $(join(errors, ", ", " and ")) "
-        * "- each `node` must be related to one and only one `stochastic_structure` per `model`"
+        $(join(errors, ", ", " and ")) " *
+        "- each `node` must be related to one and only one `stochastic_structure` per `model`",
     )
 end
 
@@ -134,14 +129,16 @@ This is deduced from the `model__stochastic_strucutre` and `units_on__stochastic
 """
 function check_model__unit__stochastic_structure()
     errors = [
-        (m,u) for m in model(model_type=:spineopt_operations) for u in unit()
-        if length(intersect(units_on__stochastic_structure(unit=u), model__stochastic_structure(model=m))) != 1
+        (m, u) for m in model(model_type=:spineopt_operations)
+        for
+        u in unit() if
+        length(intersect(units_on__stochastic_structure(unit=u), model__stochastic_structure(model=m))) != 1
     ]
     _check(
         isempty(errors),
         "invalid `units_on__stochastic_structure` or `model__stochastic_structure` definitions for `(model, unit)`
-        pair(s): $(join(errors, ", ", " and ")) "
-        * "- each `unit` must be related to one and only one `stochastic_structure` per `model`"
+        pair(s): $(join(errors, ", ", " and ")) " *
+        "- each `unit` must be related to one and only one `stochastic_structure` per `model`",
     )
 end
 
@@ -152,14 +149,13 @@ Check if every defined `minimum_operating_point` parameter has a corresponding `
 """
 function check_minimum_operating_point_unit_capacity()
     error_indices = [
-        (u, n, d) 
-        for (u, n, d) in indices(minimum_operating_point) 
-        if unit_capacity(unit=u, node=n, direction=d) === nothing
+        (u, n, d)
+        for (u, n, d) in indices(minimum_operating_point) if unit_capacity(unit=u, node=n, direction=d) === nothing
     ]
     _check(
         isempty(error_indices),
-        "missing `unit_capacity` value for indices: $(join(error_indices, ", ", " and ")) "
-        * "- `unit_capacity` must be specified where `minimum_operating_point` is"
+        "missing `unit_capacity` value for indices: $(join(error_indices, ", ", " and ")) " *
+        "- `unit_capacity` must be specified where `minimum_operating_point` is",
     )
 end
 

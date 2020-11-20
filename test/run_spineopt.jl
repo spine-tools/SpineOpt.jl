@@ -26,7 +26,7 @@ end
     url_out = "sqlite:///$(@__DIR__)/test_out.sqlite"
     test_data = Dict(
         :objects => [
-            ["model", "instance"], 
+            ["model", "instance"],
             ["temporal_block", "hourly"],
             ["stochastic_structure", "deterministic"],
             ["unit", "unit_ab"],
@@ -34,7 +34,7 @@ end
             ["stochastic_scenario", "parent"],
             ["report", "report_x"],
             ["output", "unit_flow"],
-            ["output", "variable_om_costs"]
+            ["output", "variable_om_costs"],
         ],
         :relationships => [
             ["unit__to_node", ["unit_ab", "node_b"]],
@@ -67,16 +67,16 @@ end
         unit_capacity = demand
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
-            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1h")]
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1h")],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity], 
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost]
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
         db_api.import_data(
-            db_map; 
+            db_map;
             object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
+            relationship_parameter_values=relationship_parameter_values,
         )
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map, url_out; log_level=0)
@@ -84,11 +84,11 @@ end
         using_spinedb(url_out, Y)
         cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
         flow_key = (
-            report=Y.report(:report_x), 
-            unit=Y.unit(:unit_ab), 
-            node=Y.node(:node_b), 
-            direction=Y.direction(:to_node), 
-            stochastic_scenario=Y.stochastic_scenario(:parent)
+            report=Y.report(:report_x),
+            unit=Y.unit(:unit_ab),
+            node=Y.node(:node_b),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:parent),
         )
         @testset for (k, (c, d)) in enumerate(zip(vom_cost_data, demand_data))
             t1 = DateTime(2000, 1, 1, k - 1)
@@ -106,16 +106,16 @@ end
         unit_capacity = demand
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
-            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1h")]
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1h")],
         ]
         relationship_parameter_values = [
-            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity], 
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost]
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
         db_api.import_data(
-            db_map; 
+            db_map;
             object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
+            relationship_parameter_values=relationship_parameter_values,
         )
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map, url_out; log_level=0)
@@ -123,14 +123,14 @@ end
         using_spinedb(url_out, Y)
         cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
         flow_key = (
-            report=Y.report(:report_x), 
-            unit=Y.unit(:unit_ab), 
-            node=Y.node(:node_b), 
-            direction=Y.direction(:to_node), 
-            stochastic_scenario=Y.stochastic_scenario(:parent)
+            report=Y.report(:report_x),
+            unit=Y.unit(:unit_ab),
+            node=Y.node(:node_b),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:parent),
         )
         timestamps = collect(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2))
-        @testset for (t0, t1) in zip(timestamps[1:end - 1], timestamps[2:end])
+        @testset for (t0, t1) in zip(timestamps[1:end-1], timestamps[2:end])
             t = TimeSlice(t0, t1)
             @test Y.objective_variable_om_costs(; cost_key..., t=t) == vom_cost * demand
             @test Y.unit_flow(; flow_key..., t=t) == demand
@@ -142,9 +142,9 @@ end
         object_parameter_values = [["node", "node_b", "demand", demand]]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand - 1]]
         db_api.import_data(
-            db_map; 
+            db_map;
             object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
+            relationship_parameter_values=relationship_parameter_values,
         )
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map, url_out; log_level=0)
@@ -159,14 +159,14 @@ end
         object_parameter_values = [["node", "node_b", "demand", demand]]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand],
-            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost]
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
         db_api.import_data(
-            db_map; 
+            db_map;
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values
+            relationship_parameter_values=relationship_parameter_values,
         )
         @test_logs (:warn, "can't find a value for 'unknown_output'") run_spineopt(db_map, url_out; log_level=0)
     end

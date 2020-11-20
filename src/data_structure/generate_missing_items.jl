@@ -25,14 +25,9 @@ Compare the defined sets of `ObjectClass`, `RelationshipClass` and parameter def
 """
 function generate_missing_items(mod=@__MODULE__)
     template = _template()
-    missing_items = Dict(
-        "object classes" => String[],
-        "relationship classes" => String[],
-        "parameter definitions" => String[],
-    )
-    classes = Dict{Symbol,Union{ObjectClass,RelationshipClass}}(
-        class.name => class for class in object_class(mod)
-    )
+    missing_items =
+        Dict("object classes" => String[], "relationship classes" => String[], "parameter definitions" => String[])
+    classes = Dict{Symbol,Union{ObjectClass,RelationshipClass}}(class.name => class for class in object_class(mod))
     merge!(classes, Dict(class.name => class for class in relationship_class(mod)))
     parameters = Set(param.name for param in parameter(mod))
     for (name,) in template["object_classes"]

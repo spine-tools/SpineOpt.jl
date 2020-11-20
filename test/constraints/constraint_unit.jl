@@ -23,7 +23,7 @@
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
-            ["model", "instance"], 
+            ["model", "instance"],
             ["temporal_block", "hourly"],
             ["temporal_block", "two_hourly"],
             ["stochastic_structure", "deterministic"],
@@ -59,14 +59,12 @@
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
         ],
-        :relationship_parameter_values => [
-            [
-                "stochastic_structure__stochastic_scenario", 
-                ["stochastic", "parent"], 
-                "stochastic_scenario_end", 
-                Dict("type" => "duration", "data" => "1h")
-            ]
-        ]
+        :relationship_parameter_values => [[
+            "stochastic_structure__stochastic_scenario",
+            ["stochastic", "parent"],
+            "stochastic_scenario_end",
+            Dict("type" => "duration", "data" => "1h"),
+        ]],
     )
     @testset "constraint_units_on" begin
         db_map = _load_test_data(url_in, test_data)
@@ -90,11 +88,11 @@
     end
     @testset "constraint_units_available" begin
         db_map = _load_test_data(url_in, test_data)
-        number_of_units = 4        
+        number_of_units = 4
         candidate_units = 3
         object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units], 
-            ["unit", "unit_ab", "number_of_units", number_of_units]
+            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["unit", "unit_ab", "number_of_units", number_of_units],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -115,7 +113,7 @@
             var_u_inv_av = var_units_invested_available[key...]
             expected_con = @build_constraint(var_u_av - var_u_inv_av == number_of_units)
             con = constraint[key...]
-            observed_con = constraint_object(con)            
+            observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
@@ -181,7 +179,7 @@
         minimum_operating_point = 0.25
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "minimum_operating_point", minimum_operating_point]
+            ["unit__from_node", ["unit_ab", "node_a"], "minimum_operating_point", minimum_operating_point],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -202,16 +200,16 @@
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
-    end    
+    end
     @testset "constraint_operating_point_bounds" begin
         db_map = _load_test_data(url_in, test_data)
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
-        deltas = [points[1]; [points[i] - points[i - 1] for i in 2:length(points)]]
+        deltas = [points[1]; [points[i] - points[i-1] for i in 2:length(points)]]
         operating_points = Dict("type" => "array", "data" => PyVector(points))
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
+            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -239,9 +237,8 @@
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
         operating_points = Dict("type" => "array", "data" => PyVector(points))
-        relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
-        ]
+        relationship_parameter_values =
+            [["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map; log_level=0, optimize=false)
@@ -269,33 +266,34 @@
         senses_by_prefix = Dict("min" => >=, "fix" => ==, "max" => <=)
         classes_by_prefix = Dict("in" => "unit__from_node", "out" => "unit__to_node")
         @testset for (p, a, b) in (
-                ("min", "in", "in"),
-                ("fix", "in", "in"),
-                ("max", "in", "in"),
-                ("min", "in", "out"),
-                ("fix", "in", "out"),
-                ("max", "in", "out"),
-                ("min", "out", "in"),
-                ("fix", "out", "in"),
-                ("max", "out", "in"),
-                ("min", "out", "out"),
-                ("fix", "out", "out"),
-                ("max", "out", "out"),
-            )
+            ("min", "in", "in"),
+            ("fix", "in", "in"),
+            ("max", "in", "in"),
+            ("min", "in", "out"),
+            ("fix", "in", "out"),
+            ("max", "in", "out"),
+            ("min", "out", "in"),
+            ("fix", "out", "in"),
+            ("max", "out", "in"),
+            ("min", "out", "out"),
+            ("fix", "out", "out"),
+            ("max", "out", "out"),
+        )
             db_map = _load_test_data(url_in, test_data)
             ratio = join([p, "ratio", a, b, "unit_flow"], "_")
             coeff = join([p, "units_on_coefficient", a, b], "_")
             relationships = [
                 [classes_by_prefix[a], ["unit_ab", "node_a"]],
                 [classes_by_prefix[b], ["unit_ab", "node_b"]],
-                [class, relationship], 
+                [class, relationship],
             ]
-            relationship_parameter_values = [
-                [class, relationship, ratio, flow_ratio], [class, relationship, coeff, units_on_coeff]
-            ]
+            relationship_parameter_values =
+                [[class, relationship, ratio, flow_ratio], [class, relationship, coeff, units_on_coeff]]
             sense = senses_by_prefix[p]
             db_api.import_data(
-                db_map; relationships=relationships, relationship_parameter_values=relationship_parameter_values
+                db_map;
+                relationships=relationships,
+                relationship_parameter_values=relationship_parameter_values,
             )
             db_map.commit_session("Add test data")
             m = run_spineopt(db_map; log_level=0, optimize=false)
@@ -324,7 +322,7 @@
                 m,
                 var_u_flow_a1 + var_u_flow_a2,
                 sense,
-                2 * flow_ratio * var_u_flow_b + units_on_coeff * (var_u_on_a1 + var_u_on_a2)
+                2 * flow_ratio * var_u_flow_b + units_on_coeff * (var_u_on_a1 + var_u_on_a2),
             )
             expected_con = constraint_object(expected_con_ref)
             observed_con = constraint_object(constraint[con_key...])
@@ -336,9 +334,8 @@
         @testset for min_up_minutes in (60, 120, 210)
             db_map = _load_test_data(url_in, test_data)
             min_up_time = Dict("type" => "duration", "data" => string(min_up_minutes, "m"))
-            object_parameter_values = [
-                ["unit", "unit_ab", "min_up_time", min_up_time], ["model", "instance", "model_end", model_end],
-            ]
+            object_parameter_values =
+                [["unit", "unit_ab", "min_up_time", min_up_time], ["model", "instance", "model_end", model_end]]
             db_api.import_data(db_map; object_parameter_values=object_parameter_values)
             db_map.commit_session("Add test data")
             m = run_spineopt(db_map; log_level=0, optimize=false)
@@ -347,23 +344,22 @@
             constraint = m.ext[:constraints][:min_up_time]
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
-                stochastic_structure=stochastic_structure(:stochastic), 
-                stochastic_scenario=stochastic_scenario(:parent)
+                stochastic_structure=stochastic_structure(:stochastic),
+                stochastic_scenario=stochastic_scenario(:parent),
             )
-            head_hours = -(
-                length(time_slice(m; temporal_block=temporal_block(:hourly))), 
-                round(parent_end, Hour(1)).value
-            )
+            head_hours =
+                -(length(time_slice(m; temporal_block=temporal_block(:hourly))), round(parent_end, Hour(1)).value)
             tail_hours = round(Minute(min_up_minutes), Hour(1)).value
             scenarios = [
-                repeat([stochastic_scenario(:child)], head_hours); repeat([stochastic_scenario(:parent)], tail_hours)
+                repeat([stochastic_scenario(:child)], head_hours)
+                repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(m; temporal_block=temporal_block(:hourly)));
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
                 reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
-            ][1:head_hours + tail_hours]
+            ][1:head_hours+tail_hours]
             @testset for h in 1:length(constraint)
-                s_set, t_set = scenarios[h:h + tail_hours - 1], time_slices[h:h + tail_hours - 1]
+                s_set, t_set = scenarios[h:h+tail_hours-1], time_slices[h:h+tail_hours-1]
                 s, t = s_set[1], t_set[1]
                 path = reverse(unique(s_set))
                 var_u_on_key = (unit(:unit_ab), s, t)
@@ -381,16 +377,16 @@
         @testset for min_up_minutes in (60, 120, 210)
             db_map = _load_test_data(url_in, test_data)
             min_up_time = Dict("type" => "duration", "data" => string(min_up_minutes, "m"))
-            object_parameter_values = [
-                ["unit", "unit_ab", "min_up_time", min_up_time], ["model", "instance", "model_end", model_end],
-            ]
+            object_parameter_values =
+                [["unit", "unit_ab", "min_up_time", min_up_time], ["model", "instance", "model_end", model_end]]
             relationship_parameter_values = [
                 ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", 1],
-                ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0]
+                ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0],
             ]
-            db_api.import_data(db_map; 
+            db_api.import_data(
+                db_map;
                 object_parameter_values=object_parameter_values,
-                relationship_parameter_values=relationship_parameter_values
+                relationship_parameter_values=relationship_parameter_values,
             )
             db_map.commit_session("Add test data")
             m = run_spineopt(db_map; log_level=0, optimize=false)
@@ -401,22 +397,21 @@
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
                 stochastic_structure=stochastic_structure(:stochastic),
-                stochastic_scenario=stochastic_scenario(:parent)
+                stochastic_scenario=stochastic_scenario(:parent),
             )
-            head_hours = -(
-                length(time_slice(m; temporal_block=temporal_block(:hourly))),
-                round(parent_end, Hour(1)).value
-            )
+            head_hours =
+                -(length(time_slice(m; temporal_block=temporal_block(:hourly))), round(parent_end, Hour(1)).value)
             tail_hours = round(Minute(min_up_minutes), Hour(1)).value
             scenarios = [
-                repeat([stochastic_scenario(:child)], head_hours); repeat([stochastic_scenario(:parent)], tail_hours)
+                repeat([stochastic_scenario(:child)], head_hours)
+                repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(m; temporal_block=temporal_block(:hourly)));
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
                 reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
-            ][1:head_hours + tail_hours]
+            ][1:head_hours+tail_hours]
             @testset for h in 1:length(constraint)
-                s_set, t_set = scenarios[h:h + tail_hours - 1], time_slices[h:h + tail_hours - 1]
+                s_set, t_set = scenarios[h:h+tail_hours-1], time_slices[h:h+tail_hours-1]
                 s, t = s_set[1], t_set[1]
                 path = reverse(unique(s_set))
                 var_u_on_key = (unit(:unit_ab), s, t)
@@ -436,9 +431,8 @@
         @testset for min_down_minutes in (45, 150, 300)
             db_map = _load_test_data(url_in, test_data)
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
-            object_parameter_values = [
-                ["unit", "unit_ab", "min_down_time", min_down_time], ["model", "instance", "model_end", model_end],
-            ]
+            object_parameter_values =
+                [["unit", "unit_ab", "min_down_time", min_down_time], ["model", "instance", "model_end", model_end]]
             db_api.import_data(db_map; object_parameter_values=object_parameter_values)
             db_map.commit_session("Add test data")
             m = run_spineopt(db_map; log_level=0, optimize=false)
@@ -448,20 +442,22 @@
             constraint = m.ext[:constraints][:min_down_time]
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
-                stochastic_structure=stochastic_structure(:stochastic), 
-                stochastic_scenario=stochastic_scenario(:parent)
+                stochastic_structure=stochastic_structure(:stochastic),
+                stochastic_scenario=stochastic_scenario(:parent),
             )
-            head_hours = length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            head_hours =
+                length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
             tail_hours = round(Minute(min_down_minutes), Hour(1)).value
             scenarios = [
-                repeat([stochastic_scenario(:child)], head_hours); repeat([stochastic_scenario(:parent)], tail_hours)
+                repeat([stochastic_scenario(:child)], head_hours)
+                repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(m; temporal_block=temporal_block(:hourly)));
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
                 reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
-            ][1:head_hours + tail_hours]
+            ][1:head_hours+tail_hours]
             @testset for h in 1:length(constraint)
-                s_set, t_set = scenarios[h:h + tail_hours - 1], time_slices[h:h + tail_hours - 1]
+                s_set, t_set = scenarios[h:h+tail_hours-1], time_slices[h:h+tail_hours-1]
                 s, t = s_set[1], t_set[1]
                 path = reverse(unique(s_set))
                 var_u_av_on_key = (unit(:unit_ab), s, t)
@@ -480,16 +476,16 @@
         @testset for min_down_minutes in (90, 150, 300)  # TODO: make it work for 45, 75
             db_map = _load_test_data(url_in, test_data)
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
-            object_parameter_values = [
-                ["unit", "unit_ab", "min_down_time", min_down_time], ["model", "instance", "model_end", model_end],
-            ]
+            object_parameter_values =
+                [["unit", "unit_ab", "min_down_time", min_down_time], ["model", "instance", "model_end", model_end]]
             relationship_parameter_values = [
                 ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", 1],
-                ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0]
+                ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0],
             ]
-            db_api.import_data(db_map; 
+            db_api.import_data(
+                db_map;
                 object_parameter_values=object_parameter_values,
-                relationship_parameter_values=relationship_parameter_values
+                relationship_parameter_values=relationship_parameter_values,
             )
             db_map.commit_session("Add test data")
             m = run_spineopt(db_map; log_level=0, optimize=false)
@@ -501,19 +497,21 @@
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
                 stochastic_structure=stochastic_structure(:stochastic),
-                stochastic_scenario=stochastic_scenario(:parent)
+                stochastic_scenario=stochastic_scenario(:parent),
             )
-            head_hours = length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            head_hours =
+                length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
             tail_hours = round(Minute(min_down_minutes), Hour(1)).value
             scenarios = [
-                repeat([stochastic_scenario(:child)], head_hours); repeat([stochastic_scenario(:parent)], tail_hours)
+                repeat([stochastic_scenario(:child)], head_hours)
+                repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(m; temporal_block=temporal_block(:hourly)));
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
                 reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
-            ][1:head_hours + tail_hours]
+            ][1:head_hours+tail_hours]
             @testset for h in 1:length(constraint)
-                s_set, t_set = scenarios[h:h + tail_hours - 1], time_slices[h:h + tail_hours - 1]
+                s_set, t_set = scenarios[h:h+tail_hours-1], time_slices[h:h+tail_hours-1]
                 s, t = s_set[1], t_set[1]
                 path = reverse(unique(s_set))
                 var_u_av_on_key = (unit(:unit_ab), s, t)
@@ -598,7 +596,7 @@
             object_parameter_values = [
                 ["unit", "unit_ab", "candidate_units", candidate_units],
                 ["unit", "unit_ab", "unit_investment_lifetime", unit_investment_lifetime],
-                ["model", "instance", "model_end", model_end]
+                ["model", "instance", "model_end", model_end],
             ]
             relationships = [
                 ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -612,20 +610,22 @@
             constraint = m.ext[:constraints][:unit_lifetime]
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
-                stochastic_structure=stochastic_structure(:stochastic), 
-                stochastic_scenario=stochastic_scenario(:parent)
+                stochastic_structure=stochastic_structure(:stochastic),
+                stochastic_scenario=stochastic_scenario(:parent),
             )
-            head_hours = length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            head_hours =
+                length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
             tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
             scenarios = [
-                repeat([stochastic_scenario(:child)], head_hours); repeat([stochastic_scenario(:parent)], tail_hours)
+                repeat([stochastic_scenario(:child)], head_hours)
+                repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(m; temporal_block=temporal_block(:hourly)));
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
                 reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
-            ][1:head_hours + tail_hours]
+            ][1:head_hours+tail_hours]
             @testset for h in 1:length(constraint)
-                s_set, t_set = scenarios[h:h + tail_hours - 1], time_slices[h:h + tail_hours - 1]
+                s_set, t_set = scenarios[h:h+tail_hours-1], time_slices[h:h+tail_hours-1]
                 s, t = s_set[1], t_set[1]
                 path = reverse(unique(s_set))
                 key = (unit(:unit_ab), path, t)
@@ -644,7 +644,7 @@
         unit_capacity = 200
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -674,7 +674,7 @@
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "min_res_startup_ramp", min_res_startup_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -702,7 +702,7 @@
         unit_capacity = 200
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -732,7 +732,7 @@
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "min_startup_ramp", min_startup_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -760,7 +760,7 @@
         unit_capacity = 200
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "ramp_up_limit", ramp_up_limit],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -792,7 +792,7 @@
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "ramp_up_limit", ramp_up_limit],
             ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -830,7 +830,7 @@
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -867,7 +867,7 @@
         unit_capacity = 200
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -897,7 +897,7 @@
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "min_res_shutdown_ramp", min_res_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -925,7 +925,7 @@
         unit_capacity = 200
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -955,7 +955,7 @@
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "min_shutdown_ramp", min_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -983,7 +983,7 @@
         unit_capacity = 200
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "ramp_down_limit", ramp_down_limit],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -1015,7 +1015,7 @@
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "ramp_down_limit", ramp_down_limit],
             ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -1053,7 +1053,7 @@
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]
+            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -1096,7 +1096,7 @@
             relationships = [
                 ["unit__from_node__unit_constraint", ["unit_ab", "node_a", "constraint_x"]],
                 ["unit__to_node__unit_constraint", ["unit_ab", "node_b", "constraint_x"]],
-                ["unit__unit_constraint", ["unit_ab", "constraint_x"]]
+                ["unit__unit_constraint", ["unit_ab", "constraint_x"]],
             ]
             object_parameter_values = [
                 ["unit_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
@@ -1106,14 +1106,14 @@
                 [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
                 [relationships[2]..., "unit_flow_coefficient", unit_flow_coefficient_b],
                 [relationships[3]..., "units_on_coefficient", units_on_coefficient],
-                [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient]
+                [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient],
             ]
             db_api.import_data(
-                db_map; 
+                db_map;
                 objects=objects,
                 relationships=relationships,
                 object_parameter_values=object_parameter_values,
-                relationship_parameter_values=relationship_parameter_values
+                relationship_parameter_values=relationship_parameter_values,
             )
             db_map.commit_session("Add test data")
             m = run_spineopt(db_map; log_level=0, optimize=false)
@@ -1129,15 +1129,17 @@
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             expected_con_ref = SpineOpt.sense_constraint(
                 m,
-                + unit_flow_coefficient_a 
-                * (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2])
-                + 2 * unit_flow_coefficient_b * var_unit_flow[key_b..., s_parent, t2h]
-                + units_on_coefficient
-                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
-                + units_started_up_coefficient
-                * (var_units_started_up[unit(:unit_ab), s_parent, t1h1] + var_units_started_up[unit(:unit_ab), s_child, t1h2]),
+                +unit_flow_coefficient_a *
+                (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]) +
+                2 * unit_flow_coefficient_b * var_unit_flow[key_b..., s_parent, t2h] +
+                units_on_coefficient *
+                (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
+                units_started_up_coefficient * (
+                    var_units_started_up[unit(:unit_ab), s_parent, t1h1] +
+                    var_units_started_up[unit(:unit_ab), s_child, t1h2]
+                ),
                 Symbol(sense),
-                rhs
+                rhs,
             )
             expected_con = constraint_object(expected_con_ref)
             con_key = (unit_constraint(:constraint_x), [s_parent, s_child], t2h)
@@ -1159,7 +1161,7 @@
             relationships = [
                 ["unit__from_node__unit_constraint", ["unit_ab", "node_a", "constraint_x"]],
                 ["unit__to_node__unit_constraint", ["unit_ab", "node_b", "constraint_x"]],
-                ["unit__unit_constraint", ["unit_ab", "constraint_x"]]
+                ["unit__unit_constraint", ["unit_ab", "constraint_x"]],
             ]
             object_parameter_values = [
                 ["unit_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
@@ -1171,14 +1173,14 @@
                 [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
                 [relationships[2]..., "unit_flow_coefficient", unit_flow_coefficient_b],
                 [relationships[3]..., "units_on_coefficient", units_on_coefficient],
-                [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient]
+                [relationships[3]..., "units_started_up_coefficient", units_started_up_coefficient],
             ]
             db_api.import_data(
-                db_map; 
+                db_map;
                 objects=objects,
                 relationships=relationships,
                 object_parameter_values=object_parameter_values,
-                relationship_parameter_values=relationship_parameter_values
+                relationship_parameter_values=relationship_parameter_values,
             )
             db_map.commit_session("Add test data")
             m = run_spineopt(db_map; log_level=0, optimize=false)
@@ -1194,18 +1196,19 @@
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             expected_con_ref = SpineOpt.sense_constraint(
                 m,
-                + unit_flow_coefficient_a 
-                * sum(
+                +unit_flow_coefficient_a * sum(
                     var_unit_flow_op[key_a..., i, s_parent, t1h1] + var_unit_flow_op[key_a..., i, s_child, t1h2]
                     for i in 1:3
-                )
-                + 2 * sum(unit_flow_coefficient_b * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
-                + units_on_coefficient
-                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
-                + units_started_up_coefficient
-                * (var_units_started_up[unit(:unit_ab), s_parent, t1h1] + var_units_started_up[unit(:unit_ab), s_child, t1h2]),
+                ) +
+                2 * sum(unit_flow_coefficient_b * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3) +
+                units_on_coefficient *
+                (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
+                units_started_up_coefficient * (
+                    var_units_started_up[unit(:unit_ab), s_parent, t1h1] +
+                    var_units_started_up[unit(:unit_ab), s_child, t1h2]
+                ),
                 Symbol(sense),
-                rhs
+                rhs,
             )
             expected_con = constraint_object(expected_con_ref)
             con_key = (unit_constraint(:constraint_x), [s_parent, s_child], t2h)

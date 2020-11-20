@@ -26,22 +26,15 @@ Adds Benders optimality cuts for the units_available constraint. This tells the 
 
 function add_constraint_mp_units_invested_cuts!(m::Model)
     @fetch mp_objective_lowerbound, units_invested_available = m.ext[:variables]
-    m.ext[:constraints][:mp_units_invested_cut] = Dict(    
-        (benders_iteration=bi, t=t1) =>  @constraint(
-            m,            
-            + mp_objective_lowerbound[m1, t1]
-            >=            
-            + sp_objective_value_bi(benders_iteration=bi)
-            + expr_sum(
-                + (  + units_invested_available[u, s, t] 
-                    - units_invested_available_bi(benders_iteration=bi, unit=u, t=t)
-                )
-                * units_available_mv(benders_iteration=bi, unit=u, t=t)                
+    m.ext[:constraints][:mp_units_invested_cut] = Dict(
+        (benders_iteration=bi, t=t1) => @constraint(
+            m,
+            +mp_objective_lowerbound[m1, t1] >=
+            +sp_objective_value_bi(benders_iteration=bi) + expr_sum(
+                (units_invested_available[u, s, t] - units_invested_available_bi(benders_iteration=bi, unit=u, t=t)) * units_available_mv(benders_iteration=bi, unit=u, t=t)
                 for (u, s, t) in units_invested_available_indices(m);
-                init=0
+                init=0,
             )
-        )        
-        for bi in benders_iteration()
-        for (m1, t1) in mp_objective_lowerbound_indices(m)
+        ) for bi in benders_iteration() for (m1, t1) in mp_objective_lowerbound_indices(m)
     )
 end

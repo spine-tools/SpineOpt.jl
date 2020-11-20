@@ -30,8 +30,12 @@ function add_variable_units_invested!(m::Model)
         units_invested_available_indices;
         lb=x -> 0,
         fix_value=x -> fix_units_invested(
-            unit=x.unit, stochastic_scenario=x.stochastic_scenario, analysis_time=t0, t=x.t, _strict=false
+            unit=x.unit,
+            stochastic_scenario=x.stochastic_scenario,
+            analysis_time=t0,
+            t=x.t,
+            _strict=false,
         ),
-        int=units_invested_available_int
+        int=units_invested_available_int,
     )
 end

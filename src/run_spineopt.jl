@@ -58,9 +58,10 @@ function run_spineopt(
         generate_missing_items()
     end
 
-    # High-level algorithm selection. For now, selecting based on defined model types, but may want more robust system in future     
+    # High-level algorithm selection. For now, selecting based on defined model types,
+    # but may want more robust system in future     
 
-    if length(model(model_type=:spineopt_master)) > 0
+    if !isempty(model(model_type=:spineopt_master))
         rerun_spineopt_mp(
             url_out;
             mip_solver=mip_solver,

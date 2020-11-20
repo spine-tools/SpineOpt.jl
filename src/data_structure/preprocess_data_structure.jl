@@ -27,19 +27,19 @@ Runs a number of other functions processing different aspecs of the input data i
 function preprocess_data_structure(; log_level=3)
     expand_model_default_relationships()
     expand_node__stochastic_structure()
-    expand_units_on__stochastic_structure()    
+    expand_units_on__stochastic_structure()
     # NOTE: generate direction before calling `generate_network_components`,
     # so calls to `connection__from_node` don't corrupt lookup cache
     add_connection_relationships()
     generate_direction()
     generate_network_components()
-    generate_variable_indexing_support()        
+    generate_variable_indexing_support()
     generate_benders_structure()
 end
 
 
 function preprocess_model_data_structure(m::Model; log_level=3)
-    
+
 end
 
 """
@@ -52,9 +52,8 @@ function expand_node__stochastic_structure()
         node__stochastic_structure,
         [
             (node=n, stochastic_structure=stochastic_structure)
-            for (ng, stochastic_structure) in node__stochastic_structure()
-            for n in members(ng)
-        ]
+            for (ng, stochastic_structure) in node__stochastic_structure() for n in members(ng)
+        ],
     )
 end
 
@@ -68,9 +67,8 @@ function expand_units_on__stochastic_structure()
         units_on__stochastic_structure,
         [
             (unit=u, stochastic_structure=stochastic_structure)
-            for (ug, stochastic_structure) in units_on__stochastic_structure()
-            for u in members(ug)
-        ]
+            for (ug, stochastic_structure) in units_on__stochastic_structure() for u in members(ug)
+        ],
     )
 end
 
@@ -90,9 +88,8 @@ function add_connection_relationships()
     isempty(conn_from_to) && return
     new_connection__from_node_rels = [(connection=conn, node=n) for (conn, _n, n) in conn_from_to]
     new_connection__to_node_rels = [(connection=conn, node=n) for (conn, n, _n) in conn_from_to]
-    new_connection__node__node_rels = collect(
-        (connection=conn, node1=n1, node2=n2) for (conn, x, y) in conn_from_to for (n1, n2) in ((x, y), (y, x))
-    )
+    new_connection__node__node_rels =
+        collect((connection=conn, node1=n1, node2=n2) for (conn, x, y) in conn_from_to for (n1, n2) in ((x, y), (y, x)))
     add_relationships!(connection__from_node, new_connection__from_node_rels)
     add_relationships!(connection__to_node, new_connection__to_node_rels)
     add_relationships!(connection__node__node, new_connection__node__node_rels)
@@ -100,9 +97,8 @@ function add_connection_relationships()
     new_connection__from_node_parameter_values = Dict(
         (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__from_node_rels
     )
-    new_connection__to_node_parameter_values = Dict(
-        (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__to_node_rels
-    )
+    new_connection__to_node_parameter_values =
+        Dict((conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__to_node_rels)
     new_connection__node__node_parameter_values = Dict(
         (conn, n1, n2) => Dict(:fix_ratio_out_in_connection_flow => value_one)
         for (conn, n1, n2) in new_connection__node__node_rels
@@ -153,13 +149,13 @@ function generate_node_has_ptdf()
     for n in node()
         ptdf_comms = Tuple(
             c
-            for c in node__commodity(node=n)
-            if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
+            for
+            c in node__commodity(node=n) if
+            commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
         )
         node.parameter_values[n][:has_ptdf] = parameter_value(!isempty(ptdf_comms))
-        node.parameter_values[n][:node_ptdf_threshold] = parameter_value(
-            reduce(max, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0.0000001)
-        )
+        node.parameter_values[n][:node_ptdf_threshold] =
+            parameter_value(reduce(max, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0.0000001))
     end
     has_ptdf = Parameter(:has_ptdf, [node])
     node_ptdf_threshold = Parameter(:node_ptdf_threshold, [node])
@@ -179,12 +175,11 @@ function generate_connection_has_ptdf()
         from_nodes = connection__from_node(connection=conn, direction=anything)
         to_nodes = connection__to_node(connection=conn, direction=anything)
         is_bidirectional = length(from_nodes) == 2 && isempty(symdiff(from_nodes, to_nodes))
-        is_loseless = fix_ratio_out_in_connection_flow(;
-            connection=conn, zip((:node1, :node2), from_nodes)..., _strict=false
-        ) == 1
-        connection.parameter_values[conn][:has_ptdf] = parameter_value(
-            is_bidirectional && is_loseless && all(has_ptdf(node=n) for n in from_nodes)
-        )
+        is_loseless =
+            fix_ratio_out_in_connection_flow(; connection=conn, zip((:node1, :node2), from_nodes)..., _strict=false) ==
+            1
+        connection.parameter_values[conn][:has_ptdf] =
+            parameter_value(is_bidirectional && is_loseless && all(has_ptdf(node=n) for n in from_nodes))
     end
     push!(has_ptdf.classes, connection)
 end
@@ -198,13 +193,13 @@ function generate_connection_has_lodf()
     for conn in connection(has_ptdf=true)
         lodf_comms = Tuple(
             c
-            for c in commodity(commodity_physics=:commodity_physics_lodf)
-            if issubset(connection__from_node(connection=conn, direction=anything), node__commodity(commodity=c))
+            for
+            c in commodity(commodity_physics=:commodity_physics_lodf) if
+            issubset(connection__from_node(connection=conn, direction=anything), node__commodity(commodity=c))
         )
         connection.parameter_values[conn][:has_lodf] = parameter_value(!isempty(lodf_comms))
-        connection.parameter_values[conn][:connnection_lodf_tolerance] = parameter_value(
-            reduce(max, (commodity_lodf_tolerance(commodity=c) for c in lodf_comms); init=0.05)
-        )
+        connection.parameter_values[conn][:connnection_lodf_tolerance] =
+            parameter_value(reduce(max, (commodity_lodf_tolerance(commodity=c) for c in lodf_comms); init=0.05))
     end
     has_lodf = Parameter(:has_lodf, [connection])
     connnection_lodf_tolerance = Parameter(:connnection_lodf_tolerance, [connection]) # TODO connnection with 3 `n`'s?
@@ -233,9 +228,8 @@ function _ptdf_values()
             base_voltage=nothing,
             area=nothing,
             load_zone=LoadZone(nothing),
-            ext=Dict{String,Any}()
-        )
-        for (i, n) in enumerate(node(has_ptdf=true))
+            ext=Dict{String,Any}(),
+        ) for (i, n) in enumerate(node(has_ptdf=true))
     )
     isempty(ps_busses_by_node) && return Dict()
     ps_busses = collect(values(ps_busses_by_node))
@@ -252,16 +246,16 @@ function _ptdf_values()
             x=max(connection_reactance(connection=conn), 0.00001),
             b=(from=0.0, to=0.0),
             rate=0.0,
-            angle_limits=(min=0.0, max=0.0)
+            angle_limits=(min=0.0, max=0.0),
         )  # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
-        for conn in connection(has_ptdf=true)
+        for
+        conn in connection(has_ptdf=true)
     )
     ps_lines = collect(values(ps_lines_by_connection))
     ps_ptdf = PowerSystems.PTDF(ps_lines, ps_busses)
     Dict(
         (conn, n) => Dict(:ptdf => parameter_value(ps_ptdf[line.name, bus.number]))
-        for (conn, line) in ps_lines_by_connection
-        for (n, bus) in ps_busses_by_node
+        for (conn, line) in ps_lines_by_connection for (n, bus) in ps_busses_by_node
     )
 end
 
@@ -276,7 +270,7 @@ function generate_ptdf()
         :ptdf_connection__node,
         [:connection, :node],
         [(connection=conn, node=n) for (conn, n) in keys(ptdf_values)],
-        ptdf_values
+        ptdf_values,
     )
     ptdf = Parameter(:ptdf, [ptdf_rel_cls])
     @eval begin
@@ -306,21 +300,21 @@ function generate_lodf()
 
     lodf_values = Dict(
         (conn_cont, conn_mon) => Dict(:lodf => parameter_value(lodf_trial))
-        for (conn_cont, lodf_fn, tolerance) in (
-            (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont))
-            for conn_cont in connection(connection_contingency=true, has_lodf=true)
+        for
+        (conn_cont, lodf_fn, tolerance) in (
+            (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont)) for
+            conn_cont in connection(connection_contingency=true, has_lodf=true)
         )
-        for (conn_mon, lodf_trial) in (
-            (conn_mon, lodf_fn(conn_mon))
-            for conn_mon in connection(connection_monitored=true, has_lodf=true)
-        )
-        if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
+        for
+        (conn_mon, lodf_trial) in
+        ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(connection_monitored=true, has_lodf=true)) if
+        conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
     )
     lodf_rel_cls = RelationshipClass(
         :lodf_connection__connection,
         [:connection1, :connection2],
         [(connection1=conn_cont, connection2=conn_mon) for (conn_cont, conn_mon) in keys(lodf_values)],
-        lodf_values
+        lodf_values,
     )
     lodf = Parameter(:lodf, [lodf_rel_cls])
     @eval begin
@@ -360,7 +354,7 @@ function generate_variable_indexing_support()
             (unit=u, node=n, direction=d, temporal_block=tb)
             for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
             for tb in node__temporal_block(node=n)
-        )
+        ),
     )
     connection__node__direction__temporal_block = RelationshipClass(
         :connection__node__direction__temporal_block,
@@ -369,81 +363,75 @@ function generate_variable_indexing_support()
             (connection=conn, node=n, direction=d, temporal_block=tb)
             for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
             for tb in node__temporal_block(node=n)
-        )
+        ),
     )
     node_with_state__temporal_block = RelationshipClass(
         :node_with_state__temporal_block,
         [:node, :temporal_block],
-        unique((node=n, temporal_block=tb) for n in node(has_state=true) for tb in node__temporal_block(node=n))
+        unique((node=n, temporal_block=tb) for n in node(has_state=true) for tb in node__temporal_block(node=n)),
     )
     start_up_unit__node__direction__temporal_block = RelationshipClass(
         :start_up_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb)
-            for (u, ng, d) in indices(max_startup_ramp)
-            for n in members(ng)
-            for tb in node__temporal_block(node=n)
-        )
+            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(max_startup_ramp)
+            for n in members(ng) for tb in node__temporal_block(node=n)
+        ),
     )
     nonspin_ramp_up_unit__node__direction__temporal_block = RelationshipClass(
         :nonspin_ramp_up_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb)
-            for (u, ng, d) in indices(max_res_startup_ramp)
-            for n in members(ng)
-            for tb in node__temporal_block(node=n)
-        )
+            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(max_res_startup_ramp)
+            for n in members(ng) for tb in node__temporal_block(node=n)
+        ),
     )
     ramp_up_unit__node__direction__temporal_block = RelationshipClass(
         :ramp_up_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb)
-            for (u, ng, d) in indices(ramp_up_limit)
-            for n in members(ng)
-            for tb in node__temporal_block(node=n)
-            for (u, n, d, tb) in #setdiff(
-                unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb, _compact=false)#,
-                # nonspin_ramp_up_unit__node__direction__temporal_block(
-                #     unit=u, node=n, direction=d, temporal_block=tb, _compact=false
-                # )
+            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(ramp_up_limit)
+            for n in members(ng) for tb in node__temporal_block(node=n)
+            for
+            (u, n, d, tb) in #setdiff(
+            unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb, _compact=false)#,
+            # nonspin_ramp_up_unit__node__direction__temporal_block(
+            #     unit=u, node=n, direction=d, temporal_block=tb, _compact=false
             # )
-        )
+            # )
+        ),
     )
     shut_down_unit__node__direction__temporal_block = RelationshipClass(
         :shut_down_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb)
-            for (u, ng, d) in indices(max_shutdown_ramp)
-            for n in members(ng)
-            for tb in node__temporal_block(node=n)
-        )
+            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(max_shutdown_ramp)
+            for n in members(ng) for tb in node__temporal_block(node=n)
+        ),
     )
     nonspin_ramp_down_unit__node__direction__temporal_block = RelationshipClass(
         :nonspin_ramp_down_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb)
-            for (u, ng, d) in indices(max_res_shutdown_ramp)
-            for n in members(ng)
-            for tb in node__temporal_block(node=n)
-        )
+            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(max_res_shutdown_ramp)
+            for n in members(ng) for tb in node__temporal_block(node=n)
+        ),
     )
     ramp_down_unit__node__direction__temporal_block = RelationshipClass(
         :ramp_down_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb)
-            for (u, ng, d) in indices(ramp_down_limit)
-            for n in members(ng)
-            for tb in node__temporal_block(node=n)
-            for (u, n, d, tb) in setdiff(
-                unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb, _compact=false)
-            )
-        )
+            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(ramp_down_limit)
+            for n in members(ng) for tb in node__temporal_block(node=n)
+            for
+            (u, n, d, tb) in setdiff(unit__node__direction__temporal_block(
+                unit=u,
+                node=n,
+                direction=d,
+                temporal_block=tb,
+                _compact=false,
+            ))
+        ),
     )
     @eval begin
         node_with_slack_penalty = $node_with_slack_penalty
@@ -454,7 +442,8 @@ function generate_variable_indexing_support()
         nonspin_ramp_up_unit__node__direction__temporal_block = $nonspin_ramp_up_unit__node__direction__temporal_block
         ramp_up_unit__node__direction__temporal_block = $ramp_up_unit__node__direction__temporal_block
         shut_down_unit__node__direction__temporal_block = $shut_down_unit__node__direction__temporal_block
-        nonspin_ramp_down_unit__node__direction__temporal_block = $nonspin_ramp_down_unit__node__direction__temporal_block
+        nonspin_ramp_down_unit__node__direction__temporal_block =
+            $nonspin_ramp_down_unit__node__direction__temporal_block
         ramp_down_unit__node__direction__temporal_block = $ramp_down_unit__node__direction__temporal_block
     end
 end
@@ -485,15 +474,15 @@ if it is not already defined.
 function expand_model__default_investment_temporal_block()
     add_relationships!(
         model__temporal_block,
-        [(model=m, temporal_block=tb) for (m, tb) in model__default_investment_temporal_block()]
+        [(model=m, temporal_block=tb) for (m, tb) in model__default_investment_temporal_block()],
     )
     add_relationships!(
-        unit__investment_temporal_block, 
+        unit__investment_temporal_block,
         [
             (unit=u, temporal_block=tb)
             for u in setdiff(indices(candidate_units), unit__investment_temporal_block(temporal_block=anything))
             for tb in model__default_investment_temporal_block(model=anything)
-        ]
+        ],
     )
 end
 
@@ -510,17 +499,16 @@ relationship if it is not already defined.
 function expand_model__default_investment_stochastic_structure()
     add_relationships!(
         model__stochastic_structure,
-        [(model=m, stochastic_structure=ss) for (m, ss) in model__default_investment_stochastic_structure()]
+        [(model=m, stochastic_structure=ss) for (m, ss) in model__default_investment_stochastic_structure()],
     )
     add_relationships!(
-        unit__investment_stochastic_structure, 
+        unit__investment_stochastic_structure,
         [
             (unit=u, stochastic_structure=ss)
-            for u in setdiff(
-                indices(candidate_units), unit__investment_stochastic_structure(stochastic_structure=anything)
-            )
+            for
+            u in setdiff(indices(candidate_units), unit__investment_stochastic_structure(stochastic_structure=anything))
             for ss in model__default_investment_stochastic_structure(model=anything)
-        ]
+        ],
     )
 end
 
@@ -535,7 +523,7 @@ relationship if it not already defined.
 function expand_model__default_stochastic_structure()
     add_relationships!(
         model__stochastic_structure,
-        [(model=m, stochastic_structure=ss) for (m, ss) in model__default_stochastic_structure()]
+        [(model=m, stochastic_structure=ss) for (m, ss) in model__default_stochastic_structure()],
     )
     add_relationships!(
         node__stochastic_structure,
@@ -543,7 +531,7 @@ function expand_model__default_stochastic_structure()
             (node=n, stochastic_structure=ss)
             for n in setdiff(node(), node__stochastic_structure(stochastic_structure=anything))
             for ss in model__default_stochastic_structure(model=anything)
-        )
+        ),
     )
     add_relationships!(
         units_on__stochastic_structure,
@@ -551,7 +539,7 @@ function expand_model__default_stochastic_structure()
             (unit=u, stochastic_structure=ss)
             for u in setdiff(unit(), units_on__stochastic_structure(stochastic_structure=anything))
             for ss in model__default_stochastic_structure(model=anything)
-        )
+        ),
     )
 end
 
@@ -565,23 +553,21 @@ and `units_on` without `units_on_temporal_block`.
 function expand_model__default_temporal_block()
     add_relationships!(
         model__temporal_block,
-        [(model=m, temporal_block=tb) for (m, tb) in model__default_temporal_block()]
+        [(model=m, temporal_block=tb) for (m, tb) in model__default_temporal_block()],
     )
     add_relationships!(
         node__temporal_block,
         unique(
-            (node=n, temporal_block=tb)
-            for n in setdiff(node(), node__temporal_block(temporal_block=anything))
+            (node=n, temporal_block=tb) for n in setdiff(node(), node__temporal_block(temporal_block=anything))
             for tb in model__default_temporal_block(model=anything)
-        )
+        ),
     )
     add_relationships!(
         units_on__temporal_block,
         unique(
-            (unit=u, temporal_block=tb)
-            for u in setdiff(unit(), units_on__temporal_block(temporal_block=anything))
+            (unit=u, temporal_block=tb) for u in setdiff(unit(), units_on__temporal_block(temporal_block=anything))
             for tb in model__default_temporal_block(model=anything)
-        )
+        ),
     )
 end
 
@@ -593,39 +579,35 @@ Creates the `benders_iteration` object class. Master problem variables have the 
 benders iteration object is pushed on each master problem iteration.
 """
 function generate_benders_structure()
-   
+
     # check that units_invested_available exists as an output and add it if not       
     #add_object!(output, Object(Symbol("units_invested_available")))
 
-    current_bi = Object(Symbol(string("bi_1")))  
-    benders_iteration = ObjectClass(:benders_iteration,[current_bi])
-        
-    unit__benders_iteration = 
-    RelationshipClass(
-        :unit__benders_iteration, 
-        [:unit, :benders_iteration],
-        []
-    )
+    current_bi = Object(Symbol(string("bi_1")))
+    benders_iteration = ObjectClass(:benders_iteration, [current_bi])
+
+    unit__benders_iteration = RelationshipClass(:unit__benders_iteration, [:unit, :benders_iteration], [])
 
     units_available_mv = Parameter(:units_available_mv, [unit__benders_iteration])
-    units_invested_available_bi = Parameter(:units_invested_available_bi, [unit__benders_iteration])    
-    
+    units_invested_available_bi = Parameter(:units_invested_available_bi, [unit__benders_iteration])
+
     for u in indices(candidate_units)
         unit__benders_iteration.parameter_values[(u, current_bi)] = Dict()
         unit__benders_iteration.parameter_values[(u, current_bi)][:units_invested_available_bi] = parameter_value(0)
         unit__benders_iteration.parameter_values[(u, current_bi)][:units_available_mv] = parameter_value(0)
-    end    
+    end
 
-    sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])  
-    benders_iteration.parameter_values[current_bi]=Dict()
+    sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])
+    benders_iteration.parameter_values[current_bi] = Dict()
     benders_iteration.parameter_values[current_bi][:sp_objective_value_bi] = parameter_value(0)
     starting_fix_units_invested_available = Parameter(:starting_fix_units_invested_available, [unit])
 
     for u in indices(candidate_units)
         if haskey(unit.parameter_values[u], :fix_units_invested_available)
-            unit.parameter_values[u][:starting_fix_units_invested_available] = unit.parameter_values[u][:fix_units_invested_available]        
-        end        
-    end 
+            unit.parameter_values[u][:starting_fix_units_invested_available] =
+                unit.parameter_values[u][:fix_units_invested_available]
+        end
+    end
 
     @eval begin
         benders_iteration = $benders_iteration
@@ -642,5 +624,5 @@ function generate_benders_structure()
         export units_invested_available_bi
         export sp_objective_value_bi
         export starting_fix_units_invested_available
-    end    
+    end
 end

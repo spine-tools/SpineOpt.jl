@@ -27,7 +27,7 @@ function objective_terms(m::Model)
                 :taxes,
                 :operating_costs,
                 :fuel_costs,
-            #    :investment_costs,
+                #    :investment_costs,
                 :start_up_costs,
                 :shut_down_costs,
                 :objective_penalties,
@@ -56,9 +56,7 @@ function objective_terms(m::Model)
             ]
         end
     elseif model_type(model=m.ext[:instance]) == :spineopt_master
-        [           
-            :investment_costs         
-        ]    
+        [:investment_costs]
     end
 end
 

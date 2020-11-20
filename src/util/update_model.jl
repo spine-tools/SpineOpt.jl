@@ -43,7 +43,7 @@ MOI.constant(s::GreaterThanCall) = s.lower
 MOI.constant(s::LessThanCall) = s.upper
 MOI.constant(s::EqualToCall) = s.value
 
-function Base.convert(::Type{GenericAffExpr{Call,VariableRef}}, expr::GenericAffExpr{C,VariableRef}) where C
+function Base.convert(::Type{GenericAffExpr{Call,VariableRef}}, expr::GenericAffExpr{C,VariableRef}) where {C}
     constant = Call(expr.constant)
     terms = OrderedDict{VariableRef,Call}(var => Call(coef) for (var, coef) in expr.terms)
     GenericAffExpr{Call,VariableRef}(constant, terms)
@@ -61,7 +61,7 @@ SpineInterface.realize(s::GreaterThanCall) = MOI.GreaterThan(realize(MOI.constan
 SpineInterface.realize(s::LessThanCall) = MOI.LessThan(realize(MOI.constant(s)))
 SpineInterface.realize(s::EqualToCall) = MOI.EqualTo(realize(MOI.constant(s)))
 
-function SpineInterface.realize(e::GenericAffExpr{C,VariableRef}) where C
+function SpineInterface.realize(e::GenericAffExpr{C,VariableRef}) where {C}
     constant = realize(e.constant)
     terms = OrderedDict{VariableRef,typeof(constant)}(var => realize(coef) for (var, coef) in e.terms)
     GenericAffExpr(constant, terms)
@@ -109,8 +109,10 @@ function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,Varia
 end
 
 function JuMP.add_constraint(
-        model::Model, con::ScalarConstraint{GenericAffExpr{Call,VariableRef},S}, name::String=""
-    ) where S <: CallSet
+    model::Model,
+    con::ScalarConstraint{GenericAffExpr{Call,VariableRef},S},
+    name::String="",
+) where {S<:CallSet}
     realized_con = ScalarConstraint(realize(con.func), realize(con.set))
     con_ref = add_constraint(model, realized_con, name)
     # Register varying stuff in `model.ext` so we can do work in `update_varying_constraints!`. This is the entire trick.
@@ -125,8 +127,10 @@ function JuMP.add_constraint(
 end
 
 function JuMP.add_constraint(
-        model::Model, con::ScalarConstraint{GenericAffExpr{Call,VariableRef},MOI.Interval{T}}, name::String=""
-    ) where T
+    model::Model,
+    con::ScalarConstraint{GenericAffExpr{Call,VariableRef},MOI.Interval{T}},
+    name::String="",
+) where {T}
     realized_con = ScalarConstraint(realize(con.func), con.set)
     add_constraint(model, realized_con, name)
 end
@@ -137,9 +141,7 @@ function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, call::Ca
     aff
 end
 
-function JuMP.add_to_expression!(
-        aff::GenericAffExpr{Call,VariableRef}, other::GenericAffExpr{C,VariableRef}
-    ) where C
+function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, other::GenericAffExpr{C,VariableRef}) where {C}
     merge!(+, aff.terms, other.terms)
     aff.constant += other.constant
     aff
@@ -170,26 +172,34 @@ function JuMP.add_to_expression!(aff::GenericAffExpr{Call,VariableRef}, other::C
 end
 
 function JuMP.add_to_expression!(
-        aff::GenericAffExpr{Call,VariableRef}, coef::_Constant, other::GenericAffExpr{Call,VariableRef}
-    )
+    aff::GenericAffExpr{Call,VariableRef},
+    coef::_Constant,
+    other::GenericAffExpr{Call,VariableRef},
+)
     add_to_expression!(aff, coef * other)
 end
 
 function JuMP.add_to_expression!(
-        aff::GenericAffExpr{Call,VariableRef}, other::GenericAffExpr{Call,VariableRef}, coef::_Constant
-    )
+    aff::GenericAffExpr{Call,VariableRef},
+    other::GenericAffExpr{Call,VariableRef},
+    coef::_Constant,
+)
     add_to_expression!(aff, coef, other)
 end
 
 function JuMP.add_to_expression!(
-        aff::GenericAffExpr{Call,VariableRef}, coef::_Constant, other::GenericAffExpr{C,VariableRef}
-    ) where C
+    aff::GenericAffExpr{Call,VariableRef},
+    coef::_Constant,
+    other::GenericAffExpr{C,VariableRef},
+) where {C}
     add_to_expression!(aff, coef, convert(GenericAffExpr{Call,VariableRef}, other))
 end
 
 function JuMP.add_to_expression!(
-        aff::GenericAffExpr{Call,VariableRef}, other::GenericAffExpr{C,VariableRef}, coef::_Constant
-    ) where C
+    aff::GenericAffExpr{Call,VariableRef},
+    other::GenericAffExpr{C,VariableRef},
+    coef::_Constant,
+) where {C}
     add_to_expression!(aff, coef, other)
 end
 
@@ -211,7 +221,7 @@ Base.:*(lhs::Call, rhs::VariableRef) = _build_aff_expr_with_calls(Call(0.0), lhs
 Base.:*(lhs::VariableRef, rhs::Call) = (*)(rhs, lhs)
 
 # Call--GenericAffExpr
-function Base.:+(lhs::Call, rhs::GenericAffExpr{C,VariableRef}) where C
+function Base.:+(lhs::Call, rhs::GenericAffExpr{C,VariableRef}) where {C}
     constant = lhs + rhs.constant
     terms = OrderedDict{VariableRef,Call}(var => Call(coef) for (var, coef) in rhs.terms)
     GenericAffExpr(constant, terms)
@@ -219,7 +229,7 @@ end
 Base.:+(lhs::GenericAffExpr, rhs::Call) = (+)(rhs, lhs)
 Base.:-(lhs::Call, rhs::GenericAffExpr) = (+)(lhs, -rhs)
 Base.:-(lhs::GenericAffExpr, rhs::Call) = (+)(lhs, -rhs)
-function Base.:*(lhs::Call, rhs::GenericAffExpr{C,VariableRef}) where C
+function Base.:*(lhs::Call, rhs::GenericAffExpr{C,VariableRef}) where {C}
     constant = lhs * rhs.constant
     terms = OrderedDict{VariableRef,Call}(var => lhs * coef for (var, coef) in rhs.terms)
     GenericAffExpr(constant, terms)
@@ -232,26 +242,24 @@ Base.:/(lhs::GenericAffExpr, rhs::Call) = (*)(lhs, 1.0 / rhs)
 function Base.:+(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{Call,VariableRef})
     JuMP.add_to_expression!(copy(lhs), rhs)
 end
-function Base.:+(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{C,VariableRef}) where C
+function Base.:+(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{C,VariableRef}) where {C}
     JuMP.add_to_expression!(copy(lhs), rhs)
 end
-Base.:+(lhs::GenericAffExpr{C,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) where C = (+)(rhs, lhs)
+Base.:+(lhs::GenericAffExpr{C,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) where {C} = (+)(rhs, lhs)
 Base.:-(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) = (+)(lhs, -rhs)
-Base.:-(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{C,VariableRef}) where C = (+)(lhs, -rhs)
-Base.:-(lhs::GenericAffExpr{C,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) where C = (+)(lhs, -rhs)
+Base.:-(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{C,VariableRef}) where {C} = (+)(lhs, -rhs)
+Base.:-(lhs::GenericAffExpr{C,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) where {C} = (+)(lhs, -rhs)
 
 # @objective extension
 function JuMP.set_objective_function(model::Model, func::GenericAffExpr{Call,VariableRef})
-    model.ext[:varying_objective_terms] = Dict(
-        var => coef for (var, coef) in func.terms if is_varying(coef)
-    )
+    model.ext[:varying_objective_terms] = Dict(var => coef for (var, coef) in func.terms if is_varying(coef))
     set_objective_function(model, realize(func))
 end
 
 function update_varying_objective!(model::Model)
     for (var, coef) in get(model.ext, :varying_objective_terms, ())
         set_objective_coefficient(model, var, realize(coef))
-    end    
+    end
 end
 
 function update_varying_constraints!(model::Model)
@@ -260,7 +268,7 @@ function update_varying_constraints!(model::Model)
             set_normalized_coefficient(con_ref, var, realize(coef))
         end
     end
-    for (con_ref, rhs) in get(model.ext, :varying_constraint_rhs, ())  
+    for (con_ref, rhs) in get(model.ext, :varying_constraint_rhs, ())
         set_normalized_rhs(con_ref, realize(rhs))
     end
 end

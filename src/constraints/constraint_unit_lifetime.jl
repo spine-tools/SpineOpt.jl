@@ -28,15 +28,15 @@ function add_constraint_unit_lifetime!(m::Model)
     m.ext[:constraints][:unit_lifetime] = Dict(
         (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
-                + units_invested_available[u, s, t]
+            +expr_sum(
+                +units_invested_available[u, s, t]
                 for (u, s, t) in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t);
-                init=0
-            )
-            >=
-            + sum(
-                + units_invested[u, s_past, t_past]
-                for (u, s_past, t_past) in units_invested_available_indices(
+                init=0,
+            ) >=
+            +sum(
+                +units_invested[u, s_past, t_past]
+                for
+                (u, s_past, t_past) in units_invested_available_indices(
                     m;
                     unit=u,
                     stochastic_scenario=s,
@@ -44,13 +44,12 @@ function add_constraint_unit_lifetime!(m::Model)
                         m;
                         t=TimeSlice(
                             end_(t) - unit_investment_lifetime(unit=u, stochastic_scenario=s, analysis_time=t0, t=t),
-                            end_(t)
-                        )
-                    )
+                            end_(t),
+                        ),
+                    ),
                 )
             )
-        )
-        for (u, s, t) in constraint_unit_lifetime_indices(m)
+        ) for (u, s, t) in constraint_unit_lifetime_indices(m)
     )
 end
 
@@ -65,12 +64,11 @@ Keyword arguments can be used to filther the resulting Array.
 function constraint_unit_lifetime_indices(m::Model; unit=anything, stochastic_path=anything, t=anything)
     t0 = startref(current_window(m))
     unique(
-        (unit=u, stochastic_path=path, t=t)
-        for u in indices(unit_investment_lifetime)
-        if u in unit
+        (unit=u, stochastic_path=path, t=t) for u in indices(unit_investment_lifetime) if u in unit
         for (u, s, t) in units_invested_available_indices(m; unit=u, t=t)
-        for path in active_stochastic_paths(_constraint_unit_lifetime_indices(m, u, s, t0, t))
-        if path == stochastic_path || path in stochastic_path
+        for
+        path in active_stochastic_paths(_constraint_unit_lifetime_indices(m, u, s, t0, t)) if
+        path == stochastic_path || path in stochastic_path
     )
 end
 
@@ -82,11 +80,8 @@ by the `unit_investment_lifetime` parameter.
 """
 function _constraint_unit_lifetime_indices(m, u, s, t0, t)
     t_past_and_present = to_time_slice(
-        m; 
-        t=TimeSlice(end_(t) - unit_investment_lifetime(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t))
+        m;
+        t=TimeSlice(end_(t) - unit_investment_lifetime(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)),
     )
-    unique(
-        ind.stochastic_scenario
-        for ind in units_invested_available_indices(m; unit=u, t=t_past_and_present)
-    )
+    unique(ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=t_past_and_present))
 end

@@ -25,10 +25,14 @@ the keyword arguments act as filters for each dimension.
 """
 function units_invested_available_indices(m::Model; unit=anything, stochastic_scenario=anything, t=anything)
     [
-        (unit=u, stochastic_scenario=s, t=t)
-        for (u, tb) in unit__investment_temporal_block(unit=unit, _compact=false)
-        for (u, s, t) in unit_investment_stochastic_time_indices(
-            m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
+        (unit=u, stochastic_scenario=s, t=t) for (u, tb) in unit__investment_temporal_block(unit=unit, _compact=false)
+        for
+        (u, s, t) in unit_investment_stochastic_time_indices(
+            m;
+            unit=u,
+            stochastic_scenario=stochastic_scenario,
+            temporal_block=tb,
+            t=t,
         )
     ]
 end
@@ -51,9 +55,10 @@ to consider this.
 """
 function fix_initial_units_invested_available(m)
     for u in indices(candidate_units)
-        t=last(history_time_slice(m))        
+        t = last(history_time_slice(m))
         if fix_units_invested_available(unit=u, t=t, _strict=false) === nothing
-            unit.parameter_values[u][:fix_units_invested_available] = parameter_value(TimeSeries([start(t)] , [0], false, false))
+            unit.parameter_values[u][:fix_units_invested_available] =
+                parameter_value(TimeSeries([start(t)], [0], false, false))
         end
     end
 end
@@ -63,18 +68,22 @@ end
 
 Add `units_invested_available` variables to model `m`.
 """
-function add_variable_units_invested_available!(m::Model)    
+function add_variable_units_invested_available!(m::Model)
     # fix units_invested_available to zero in the timestep before the investment window to prevent "free" investments
     fix_initial_units_invested_available(m)
     t0 = startref(current_window(m))
     add_variable!(
-    	m,
-    	:units_invested_available, 
+        m,
+        :units_invested_available,
         units_invested_available_indices;
-    	lb=x -> 0,
-    	int=units_invested_available_int,
-    	fix_value=x -> fix_units_invested_available(
-            unit=x.unit, stochastic_scenario=x.stochastic_scenario, analysis_time=t0, t=x.t, _strict=false
-        )
+        lb=x -> 0,
+        int=units_invested_available_int,
+        fix_value=x -> fix_units_invested_available(
+            unit=x.unit,
+            stochastic_scenario=x.stochastic_scenario,
+            analysis_time=t0,
+            t=x.t,
+            _strict=false,
+        ),
     )
 end

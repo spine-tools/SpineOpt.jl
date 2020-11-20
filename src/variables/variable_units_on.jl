@@ -25,11 +25,10 @@ for each dimension.
 """
 function units_on_indices(m::Model; unit=anything, stochastic_scenario=anything, t=anything)
     [
-        (unit=u, stochastic_scenario=s, t=t)
-        for (u, tb) in units_on__temporal_block(unit=unit, _compact=false)
-        for (u, s, t) in unit_stochastic_time_indices(
-            m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
-        )
+        (unit=u, stochastic_scenario=s, t=t) for (u, tb) in units_on__temporal_block(unit=unit, _compact=false)
+        for
+        (u, s, t) in
+        unit_stochastic_time_indices(m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
     ]
 end
 
@@ -55,14 +54,18 @@ Add `units_on` variables to model `m`.
 function add_variable_units_on!(m::Model)
     t0 = startref(current_window(m))
     add_variable!(
-    	m,
-    	:units_on, 
+        m,
+        :units_on,
         units_on_indices;
-    	lb=x -> 0,
-    	bin=units_on_bin,
-    	int=units_on_int,
-    	fix_value=x -> fix_units_on(
-            unit=x.unit, stochastic_scenario=x.stochastic_scenario, analysis_time=t0, t=x.t, _strict=false
-        )
+        lb=x -> 0,
+        bin=units_on_bin,
+        int=units_on_int,
+        fix_value=x -> fix_units_on(
+            unit=x.unit,
+            stochastic_scenario=x.stochastic_scenario,
+            analysis_time=t0,
+            t=x.t,
+            _strict=false,
+        ),
     )
 end

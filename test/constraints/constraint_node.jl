@@ -21,7 +21,7 @@
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
-            ["model", "instance"], 
+            ["model", "instance"],
             ["temporal_block", "hourly"],
             ["temporal_block", "two_hourly"],
             ["stochastic_structure", "deterministic"],
@@ -71,20 +71,16 @@
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["node", "node_group_bc", "balance_type", "balance_type_group"],
         ],
-        :relationship_parameter_values => [
-            [
-                "stochastic_structure__stochastic_scenario", 
-                ["stochastic", "parent"], 
-                "stochastic_scenario_end", 
-                Dict("type" => "duration", "data" => "1h")
-            ]
-        ]
+        :relationship_parameter_values => [[
+            "stochastic_structure__stochastic_scenario",
+            ["stochastic", "parent"],
+            "stochastic_scenario_end",
+            Dict("type" => "duration", "data" => "1h"),
+        ]],
     )
     @testset "constraint_nodal_balance" begin
         db_map = _load_test_data(url_in, test_data)
-        object_parameter_values = [
-            ["node", "node_a", "node_slack_penalty", 0.5],
-        ]
+        object_parameter_values = [["node", "node_a", "node_slack_penalty", 0.5]]
         db_api.import_data(db_map; object_parameter_values=object_parameter_values)
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map; log_level=0, optimize=false)
@@ -135,9 +131,7 @@
         diff_coeff_bc = 0.2
         diff_coeff_cb = 0.3
         db_map = _load_test_data(url_in, test_data)
-        relationships = [
-            ["node__node", ["node_b", "node_c"]], ["node__node", ["node_c", "node_b"]]
-        ]
+        relationships = [["node__node", ["node_b", "node_c"]], ["node__node", ["node_c", "node_b"]]]
         object_parameter_values = [
             ["node", "node_a", "demand", demand_a],
             ["node", "node_b", "demand", demand_b],
@@ -157,10 +151,10 @@
             ["node__node", ["node_c", "node_b"], "diff_coeff", diff_coeff_cb],
         ]
         db_api.import_data(
-            db_map; 
-            relationships=relationships, 
-            object_parameter_values=object_parameter_values, 
-            relationship_parameter_values=relationship_parameter_values
+            db_map;
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
         )
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map; log_level=0, optimize=false)
@@ -212,14 +206,10 @@
             @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=n, t_after=t1)
                 var_n_st_b0 = get(var_node_state, (n, s0, t0), 0)
                 expected_con = @build_constraint(
-                    var_n_inj 
-                    + (state_coeff_b + frac_state_loss_b + diff_coeff_bc) * var_n_st_b1
-                    - state_coeff_b * var_n_st_b0
-                    - diff_coeff_cb * var_n_st_c1 
-                    - var_u_flow 
-                    + demand_b 
-                    + demand_group * fractional_demand_b
-                    == 0
+                    var_n_inj + (state_coeff_b + frac_state_loss_b + diff_coeff_bc) * var_n_st_b1 -
+                    state_coeff_b * var_n_st_b0 - diff_coeff_cb * var_n_st_c1 - var_u_flow +
+                    demand_b +
+                    demand_group * fractional_demand_b == 0
                 )
                 con = constraint[n, path, t0, t1]
                 observed_con = constraint_object(con)
@@ -239,13 +229,10 @@
             @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=n, t_after=t1)
                 var_n_st_c0 = get(var_node_state, (n, s0, t0), 0)
                 expected_con = @build_constraint(
-                    var_n_inj 
-                    + (state_coeff_c + frac_state_loss_c + diff_coeff_cb) * var_n_st_c1
-                    - state_coeff_c * var_n_st_c0
-                    - diff_coeff_bc * var_n_st_b1 
-                    + demand_c 
-                    + demand_group * fractional_demand_c
-                    == 0
+                    var_n_inj + (state_coeff_c + frac_state_loss_c + diff_coeff_cb) * var_n_st_c1 -
+                    state_coeff_c * var_n_st_c0 - diff_coeff_bc * var_n_st_b1 +
+                    demand_c +
+                    demand_group * fractional_demand_c == 0
                 )
                 con = constraint[n, path, t0, t1]
                 observed_con = constraint_object(con)

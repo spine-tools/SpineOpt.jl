@@ -22,12 +22,11 @@
     test_data = Dict(
         :objects => [["connection", "connection_ab"], ["node", "node_a"], ["node", "node_b"]],
         :relationships => [
-            ["connection__from_node", ["connection_ab", "node_a"]], 
-            ["connection__to_node", ["connection_ab", "node_b"]]
+            ["connection__from_node", ["connection_ab", "node_a"]],
+            ["connection__to_node", ["connection_ab", "node_b"]],
         ],
-        :object_parameter_values => [
-            ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"]
-        ]
+        :object_parameter_values =>
+            [["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"]],
     )
     db_map = _load_test_data(url_in, test_data)
     db_map.commit_session("Add test data")
@@ -52,24 +51,24 @@ end
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
-            ["stochastic_structure", "ss"], 
-            ["node", "node_group_ab"], 
-            ["node", "node_a"], 
+            ["stochastic_structure", "ss"],
+            ["node", "node_group_ab"],
+            ["node", "node_a"],
             ["node", "node_b"],
-            ["unit", "unit_group_ab"], 
-            ["unit", "unit_a"], 
-            ["unit", "unit_b"]
+            ["unit", "unit_group_ab"],
+            ["unit", "unit_a"],
+            ["unit", "unit_b"],
         ],
         :object_groups => [
-            ["node", "node_group_ab", "node_a"], 
-            ["node", "node_group_ab", "node_b"], 
+            ["node", "node_group_ab", "node_a"],
+            ["node", "node_group_ab", "node_b"],
             ["unit", "unit_group_ab", "unit_a"],
-            ["unit", "unit_group_ab", "unit_b"]
+            ["unit", "unit_group_ab", "unit_b"],
         ],
         :relationships => [
-            ["node__stochastic_structure", ["node_group_ab", "ss"]], 
-            ["units_on__stochastic_structure", ["unit_group_ab", "ss"]], 
-        ]
+            ["node__stochastic_structure", ["node_group_ab", "ss"]],
+            ["units_on__stochastic_structure", ["unit_group_ab", "ss"]],
+        ],
     )
     db_map = _load_test_data(url_in, test_data)
     db_map.commit_session("Add test data")

@@ -27,5 +27,11 @@ function add_variable_units_mothballed!(m::Model)
 end
 
 function add_variable_mp_units_mothballed!(m::Model)
-    add_variable!(m, :mp_units_mothballed, units_invested_available_indices; lb=x -> 0, int=units_invested_available_int)
+    add_variable!(
+        m,
+        :mp_units_mothballed,
+        units_invested_available_indices;
+        lb=x -> 0,
+        int=units_invested_available_int,
+    )
 end

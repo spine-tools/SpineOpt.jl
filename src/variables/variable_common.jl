@@ -30,23 +30,29 @@ Add a variable to `m`, with given `name` and indices given by interating over `i
 - `fix_value::Union{Function,Nothing}=nothing`: given an index, return a fix value for the variable of nothing
 """
 function add_variable!(
-        m::Model, 
-        name::Symbol,
-        indices::Function;
-        lb::Union{Function,Nothing}=nothing,
-        ub::Union{Function,Nothing}=nothing,
-        bin::Union{Function,Nothing}=nothing,
-        int::Union{Function,Nothing}=nothing,
-        fix_value::Union{Function,Nothing}=nothing
-    )
+    m::Model,
+    name::Symbol,
+    indices::Function;
+    lb::Union{Function,Nothing}=nothing,
+    ub::Union{Function,Nothing}=nothing,
+    bin::Union{Function,Nothing}=nothing,
+    int::Union{Function,Nothing}=nothing,
+    fix_value::Union{Function,Nothing}=nothing,
+)
     m.ext[:variables_definition][name] = Dict{Symbol,Union{Function,Nothing}}(
-        :indices => indices, :lb => lb, :ub => ub, :bin => bin, :int => int, :fix_value => fix_value
+        :indices => indices,
+        :lb => lb,
+        :ub => ub,
+        :bin => bin,
+        :int => int,
+        :fix_value => fix_value,
     )
-    var = m.ext[:variables][name] = Dict(
-        ind => _variable(m, name, ind, lb, ub, bin, int) 
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-    )
-    ( (bin != nothing) || (int != nothing) ) && push!(m.ext[:integer_variables], name)
+    var =
+        m.ext[:variables][name] = Dict(
+            ind => _variable(m, name, ind, lb, ub, bin, int)
+            for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+        )
+    ((bin != nothing) || (int != nothing)) && push!(m.ext[:integer_variables], name)
 end
 
 """
@@ -62,7 +68,7 @@ _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 Create a JuMP variable with the input properties.
 """
 function _variable(m, name, ind, lb, ub, bin, int)
-    var = @variable(m, base_name=_base_name(name, ind))
+    var = @variable(m, base_name = _base_name(name, ind))
     lb != nothing && set_lower_bound(var, lb(ind))
     ub != nothing && set_upper_bound(var, ub(ind))
     bin != nothing && bin(ind) && set_binary(var)

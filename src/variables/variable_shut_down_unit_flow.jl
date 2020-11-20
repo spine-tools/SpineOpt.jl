@@ -29,18 +29,23 @@ A list of `NamedTuple`s corresponding to indices of the `shut_down_unit_flow` va
 where the keyword arguments act as filters for each dimension.
 """
 function shut_down_unit_flow_indices(
-        m::Model; unit=anything, node=anything, direction=anything, stochastic_scenario=anything, t=anything
-    )
+    m::Model;
+    unit=anything,
+    node=anything,
+    direction=anything,
+    stochastic_scenario=anything,
+    t=anything,
+)
     unit = members(unit)
     node = members(node)
     unique(
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (u, n, d, tb) in shut_down_unit__node__direction__temporal_block(
-            unit=unit, node=node, direction=direction, _compact=false
-        )
-        for (n, s, t) in node_stochastic_time_indices(
-            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
-        )
+        for
+        (u, n, d, tb) in
+        shut_down_unit__node__direction__temporal_block(unit=unit, node=node, direction=direction, _compact=false)
+        for
+        (n, s, t) in
+        node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
     )
 end
 
@@ -63,7 +68,7 @@ function add_variable_shut_down_unit_flow!(m::Model)
             stochastic_scenario=x.stochastic_scenario,
             analysis_time=t0,
             t=x.t,
-            _strict=false
-        )
+            _strict=false,
+        ),
     )
 end

@@ -39,52 +39,50 @@ function write_system_components_file(file_name="system_components.md")
     pj = _template()
     system_string = []
     push!(system_string, "# System Components\n\n")
-    for k in ["object_classes",]
+    for k in ["object_classes"]
         push!(system_string, "## $(k)\n\n")
         for j in 1:length(pj[k])
             push!(system_string, "### `$(pj[k][j][1])`\n\n")
             push!(system_string, "$(pj[k][j][2])\n\n")
         end
     end
-    for k in ["relationship_classes",]
+    for k in ["relationship_classes"]
         push!(system_string, "## $(k)\n\n")
         for j in 1:length(pj[k])
             push!(system_string, "### `$(pj[k][j][1])`\n\n")
             push!(
-                system_string, 
-                "**Relates object classes:** `$(join([pj[k][j][2]...], repeat([",",], length(pj[k][j][2])-1)...))`\n\n"
+                system_string,
+                "**Relates object classes:** `$(join([pj[k][j][2]...], repeat([",",], length(pj[k][j][2])-1)...))`\n\n",
             )
             push!(system_string, "$(pj[k][j][3])\n\n")
         end
     end
-    for k in ["object_parameters",]
-        push!(system_string,"## $(k)\n\n")
+    for k in ["object_parameters"]
+        push!(system_string, "## $(k)\n\n")
         for j in 1:length(pj[k])
             push!(system_string, "### `$(pj[k][j][2])`\n\n")
             push!(system_string, "**Object class:** [`$(pj[k][j][1])`](#$(pj[k][j][1]))\n\n")
             pj[k][j][3] != nothing && push!(system_string, "**Default value:** `$(pj[k][j][3])`\n\n")
-            pj[k][j][4] != nothing && push!(
-                system_string, "**Parameter value list:** [`$(pj[k][j][4])`](#$(pj[k][j][4]))\n\n"
-            )
+            pj[k][j][4] != nothing &&
+                push!(system_string, "**Parameter value list:** [`$(pj[k][j][4])`](#$(pj[k][j][4]))\n\n")
             pj[k][j][5] != nothing && push!(system_string, "$(pj[k][j][5])\n\n")
         end
     end
-    for k in ["relationship_parameters",]
+    for k in ["relationship_parameters"]
         push!(system_string, "## $(k)\n\n")
         for j in 1:length(pj[k])
             push!(system_string, "### `$(pj[k][j][2])`\n\n")
             push!(system_string, "**Relationship class**: [`$(pj[k][j][1])`](#$(pj[k][j][1]))\n\n")
-            pj[k][j][3] != nothing && push!(system_string ,"**Default value**: `$(pj[k][j][3])`\n\n")
-            pj[k][j][4] != nothing && push!(
-                system_string ,"**Parameter value list**: [`$(pj[k][j][4])`](#$(pj[k][j][4]))\n\n"
-            )
-            pj[k][j][5] != nothing && push!(system_string ,"$(pj[k][j][5])\n\n")
+            pj[k][j][3] != nothing && push!(system_string, "**Default value**: `$(pj[k][j][3])`\n\n")
+            pj[k][j][4] != nothing &&
+                push!(system_string, "**Parameter value list**: [`$(pj[k][j][4])`](#$(pj[k][j][4]))\n\n")
+            pj[k][j][5] != nothing && push!(system_string, "$(pj[k][j][5])\n\n")
         end
     end
-    for k in ["parameter_value_lists" ,]
+    for k in ["parameter_value_lists"]
         push!(system_string, "## $(k)\n\n")
         for j in 1:length(pj[k])
-        #unique([x[1] for x in pj["parameter_value_lists" ,]])
+            #unique([x[1] for x in pj["parameter_value_lists" ,]])
             if j > 1 && pj[k][j][1] == pj[k][j-1][1]
                 pj[k][j][2] != nothing && push!(system_string, "**Value**: `$(pj[k][j][2])`\n\n")
             else

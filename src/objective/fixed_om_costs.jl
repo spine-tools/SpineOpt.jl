@@ -27,14 +27,12 @@ function fixed_om_costs(m, t1)
     @expression(
         m,
         expr_sum(
-            + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * fom_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * duration(t)
-            for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for (u, s, t) in units_on_indices(m; unit=u)
-            if end_(t) <= t1;
-            init=0
+            +unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
+            number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] *
+            fom_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] *
+            duration(t) for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))
+            for (u, s, t) in units_on_indices(m; unit=u) if end_(t) <= t1;
+            init=0,
         )
     )
 end

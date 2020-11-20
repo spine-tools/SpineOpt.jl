@@ -33,7 +33,7 @@ end
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
-            ["model", "instance"], 
+            ["model", "instance"],
             ["node", "only_node"],
             ["temporal_block", "block_a"],
             ["temporal_block", "block_b"],
@@ -44,20 +44,16 @@ end
             ["node__temporal_block", ["only_node", "block_a"]],
             ["node__temporal_block", ["only_node", "block_b"]],
         ],
-        :object_parameter_values => [
-            ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],            
-        ]
+        :object_parameter_values =>
+            [["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")]],
     )
     @testset "zero_resolution" begin
         db_map = _load_test_data(url_in, test_data)
         object_parameter_values = [
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
-            ["temporal_block", "block_a", "resolution", 0]
+            ["temporal_block", "block_a", "resolution", 0],
         ]
-        db_api.import_data(
-            db_map; 
-            object_parameter_values=object_parameter_values
-        )
+        db_api.import_data(db_map; object_parameter_values=object_parameter_values)
         using_spinedb(db_map, SpineOpt)
         err_msg = "`resolution` of temporal block `block_a` cannot be zero!"
         m = _model()
@@ -66,10 +62,8 @@ end
     @testset "block_start" begin
         db_map = _load_test_data(url_in, test_data)
         objects = [["temporal_block", "block_c"]]
-        relationships = [
-            ["model__temporal_block", ["instance", "block_c"]],
-            ["node__temporal_block", ["only_node", "block_c"]]
-        ]
+        relationships =
+            [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
         object_parameter_values = [
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-03T00:00:00")],
             ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1D")],
@@ -80,10 +74,10 @@ end
             ["temporal_block", "block_c", "block_start", nothing],
         ]
         db_api.import_data(
-            db_map; 
+            db_map;
             objects=objects,
             relationships=relationships,
-            object_parameter_values=object_parameter_values
+            object_parameter_values=object_parameter_values,
         )
         using_spinedb(db_map, SpineOpt)
         m = _model()
@@ -94,11 +88,9 @@ end
     end
     @testset "block_end" begin
         db_map = _load_test_data(url_in, test_data)
-        objects = [["temporal_block", "block_c"]]        
-        relationships = [
-            ["model__temporal_block", ["instance", "block_c"]],
-            ["node__temporal_block", ["only_node", "block_c"]]
-        ]
+        objects = [["temporal_block", "block_c"]]
+        relationships =
+            [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
         object_parameter_values = [
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-03T00:00:00")],
             ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1D")],
@@ -109,10 +101,10 @@ end
             ["temporal_block", "block_c", "block_end", nothing],
         ]
         db_api.import_data(
-            db_map; 
+            db_map;
             objects=objects,
             relationships=relationships,
-            object_parameter_values=object_parameter_values
+            object_parameter_values=object_parameter_values,
         )
         using_spinedb(db_map, SpineOpt)
         m = _model()
@@ -123,11 +115,9 @@ end
     end
     @testset "one_two_four_even" begin
         db_map = _load_test_data(url_in, test_data)
-        objects = [["temporal_block", "block_c"]]        
-        relationships = [
-            ["model__temporal_block", ["instance", "block_c"]],
-            ["node__temporal_block", ["only_node", "block_c"]]
-        ]
+        objects = [["temporal_block", "block_c"]]
+        relationships =
+            [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
         object_parameter_values = [
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2004-01-01T00:00:00")],
             ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1Y")],
@@ -135,7 +125,10 @@ end
             ["temporal_block", "block_c", "resolution", Dict("type" => "duration", "data" => "4Y")],
         ]
         db_api.import_data(
-            db_map; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
+            db_map;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
         )
         using_spinedb(db_map, SpineOpt)
         m = _model()
@@ -248,10 +241,8 @@ end
     @testset "gaps" begin
         db_map = _load_test_data(url_in, test_data)
         objects = [["temporal_block", "block_c"]]
-        relationships = [
-            ["model__temporal_block", ["instance", "block_c"]],
-            ["node__temporal_block", ["only_node", "block_c"]]
-        ]
+        relationships =
+            [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
         object_parameter_values = [
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2007-01-11T00:00:00")],
             ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1Y")],
@@ -264,7 +255,10 @@ end
             ["temporal_block", "block_c", "block_end", Dict("type" => "duration", "data" => "10Y")],
         ]
         db_api.import_data(
-            db_map; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
+            db_map;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
         )
         using_spinedb(db_map, SpineOpt)
         m = _model()
@@ -317,9 +311,7 @@ end
             ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "6M")],
             ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "6M")],
         ]
-        db_api.import_data(
-            db_map; object_parameter_values=object_parameter_values
-        )
+        db_api.import_data(db_map; object_parameter_values=object_parameter_values)
         using_spinedb(db_map, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)
@@ -342,11 +334,9 @@ end
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "3h")],
             ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "block_b", "resolution", Dict("type" => "duration", "data" => "2h")],
-            ["unit", "unitA", "min_up_time", Dict("type" => "duration", "data" => "4h")]
+            ["unit", "unitA", "min_up_time", Dict("type" => "duration", "data" => "4h")],
         ]
-        db_api.import_data(
-            db_map; objects=objects, object_parameter_values=object_parameter_values
-        )
+        db_api.import_data(db_map; objects=objects, object_parameter_values=object_parameter_values)
         using_spinedb(db_map, SpineOpt)
         m = _model()
         generate_temporal_structure!(m)

@@ -32,7 +32,7 @@ end
 
 Find the unique combinations of `active_scenarios` along valid stochastic paths.
 """
-function (h::StochasticPathFinder)(active_scenarios::Union{Array{T,1},T}) where T
+function (h::StochasticPathFinder)(active_scenarios::Union{Array{T,1},T}) where {T}
     # TODO: cache these
     unique(map(path -> intersect(path, active_scenarios), h.full_stochastic_paths))
 end
@@ -104,9 +104,8 @@ function _stochastic_DAG(stochastic_structure::Object, window_start::DateTime, w
         for scen in scenarios
     )
     for scen in scenarios
-        scenario_duration = stochastic_scenario_end(
-            stochastic_structure=stochastic_structure, stochastic_scenario=scen, _strict=false
-        )
+        scenario_duration =
+            stochastic_scenario_end(stochastic_structure=stochastic_structure, stochastic_scenario=scen, _strict=false)
         if scenario_duration === nothing
             scen_end[scen] = window_very_end
             continue
@@ -116,9 +115,10 @@ function _stochastic_DAG(stochastic_structure::Object, window_start::DateTime, w
         children = _find_children(scen)
         children_relative_weight = Dict(
             child => weight_relative_to_parents(
-                stochastic_structure=stochastic_structure, stochastic_scenario=child, _strict=false
-            )
-            for child in children
+                stochastic_structure=stochastic_structure,
+                stochastic_scenario=child,
+                _strict=false,
+            ) for child in children
         )
         valid_children = [child for (child, weight) in children_relative_weight if weight !== nothing]
         invalid_children = setdiff(children, valid_children)
@@ -134,10 +134,7 @@ function _stochastic_DAG(stochastic_structure::Object, window_start::DateTime, w
         end
         append!(scenarios, valid_children)
     end
-    Dict(
-        scen => (start=scen_start[scen], end_=scen_end[scen], weight=scen_weight[scen])
-        for scen in scenarios
-    )
+    Dict(scen => (start=scen_start[scen], end_=scen_end[scen], weight=scen_weight[scen]) for scen in scenarios)
 end
 
 """
@@ -149,8 +146,7 @@ function _all_stochastic_DAGs(m::Model...)
     window_start = minimum(start(current_window(x)) for x in m)
     window_very_end = maximum(end_(last(time_slice(x))) for x in m)
     Dict(
-        structure => _stochastic_DAG(structure, window_start, window_very_end)
-        for x in m
+        structure => _stochastic_DAG(structure, window_start, window_very_end) for x in m
         for structure in model__stochastic_structure(model=x.ext[:instance])
     )
 end
@@ -164,9 +160,7 @@ A `Dict` mapping `time_slice` objects to their set of active `stochastic_scenari
 function _stochastic_time_mapping(stochastic_DAG::Dict, m::Model...)
     # Window `time_slices`
     scenario_mapping = Dict(
-        t => [scen for (scen, param_vals) in stochastic_DAG if param_vals.start <= start(t) < param_vals.end_]
-        for x in m
-        for t in time_slice(x)
+        t => [scen for (scen, param_vals) in stochastic_DAG if param_vals.start <= start(t) < param_vals.end_] for x in m for t in time_slice(x)
     )
     # History `time_slices`
     roots = _find_root_scenarios()
@@ -181,10 +175,8 @@ end
 Generate the `stochastic_time_map` for all defined `stochastic_structures`.
 """
 function _generate_stochastic_time_map(all_stochastic_DAGs, m...)
-    stochastic_time_map = Dict(
-        structure => _stochastic_time_mapping(DAG, m...)
-        for (structure, DAG) in all_stochastic_DAGs
-    )
+    stochastic_time_map =
+        Dict(structure => _stochastic_time_mapping(DAG, m...) for (structure, DAG) in all_stochastic_DAGs)
     @eval begin
         stochastic_time_map = $stochastic_time_map
     end
@@ -196,13 +188,18 @@ end
 Stochastic time indexes for `nodes` with keyword arguments that allow filtering.
 """
 function node_stochastic_time_indices(
-        m::Model; node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
-    )
+    m::Model;
+    node=anything,
+    stochastic_scenario=anything,
+    temporal_block=anything,
+    t=anything,
+)
     unique(
         (node=n, stochastic_scenario=s, t=t1)
         for (n, t1) in node_time_indices(m; node=node, temporal_block=temporal_block, t=t)
-        for structure in node__stochastic_structure(node=n)
-        if structure in model__stochastic_structure(model=m.ext[:instance])
+        for
+        structure in node__stochastic_structure(node=n) if
+        structure in model__stochastic_structure(model=m.ext[:instance])
         for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
     )
 end
@@ -213,13 +210,18 @@ end
 Stochastic time indexes for `units` with keyword arguments that allow filtering.
 """
 function unit_stochastic_time_indices(
-        m::Model; unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
-    )
+    m::Model;
+    unit=anything,
+    stochastic_scenario=anything,
+    temporal_block=anything,
+    t=anything,
+)
     unique(
         (unit=u, stochastic_scenario=s, t=t1)
         for (u, t1) in unit_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
-        for structure in units_on__stochastic_structure(unit=u)
-        if structure in model__stochastic_structure(model=m.ext[:instance])
+        for
+        structure in units_on__stochastic_structure(unit=u) if
+        structure in model__stochastic_structure(model=m.ext[:instance])
         for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
     )
 end
@@ -230,13 +232,18 @@ end
 Stochastic time indexes for `units_invested` with keyword arguments that allow filtering.
 """
 function unit_investment_stochastic_time_indices(
-        m::Model; unit=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
-    )
+    m::Model;
+    unit=anything,
+    stochastic_scenario=anything,
+    temporal_block=anything,
+    t=anything,
+)
     unique(
         (unit=u, stochastic_scenario=s, t=t1)
         for (u, t1) in unit_investment_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
-        for structure in unit__investment_stochastic_structure(unit=u)
-        if structure in model__stochastic_structure(model=m.ext[:instance])
+        for
+        structure in unit__investment_stochastic_structure(unit=u) if
+        structure in model__stochastic_structure(model=m.ext[:instance])
         for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
     )
 end
@@ -252,15 +259,14 @@ function _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict, m.
     node_stochastic_scenario_weight_values = Dict(
         (node, scen) => Dict(:node_stochastic_scenario_weight => parameter_value(param_vals.weight))
         for (node, structure) in node__stochastic_structure()
-        for x in m
-        if structure in model__stochastic_structure(model=x.ext[:instance])
+        for x in m if structure in model__stochastic_structure(model=x.ext[:instance])
         for (scen, param_vals) in all_stochastic_DAGs[structure]
     )
     node__stochastic_scenario = RelationshipClass(
         :node__stochastic_scenario,
         [:node, :stochastic_scenario],
         [(node=n, stochastic_scenario=scen) for (n, scen) in keys(node_stochastic_scenario_weight_values)],
-        node_stochastic_scenario_weight_values
+        node_stochastic_scenario_weight_values,
     )
     node_stochastic_scenario_weight = Parameter(:node_stochastic_scenario_weight, [node__stochastic_scenario])
     @eval begin
@@ -278,18 +284,17 @@ Generate the `unit_stochastic_scenario_weight` parameter for the `model` for eas
 function _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict, m...)
     unit_stochastic_scenario_weight_values = Dict(
         (unit, scen) => Dict(:unit_stochastic_scenario_weight => parameter_value(param_vals.weight))
-        for (unit, structure) in Iterators.flatten(
-            (units_on__stochastic_structure(), unit__investment_stochastic_structure())
-        )
-        for x in m
-        if structure in model__stochastic_structure(model=x.ext[:instance])
+        for
+        (unit, structure) in
+        Iterators.flatten((units_on__stochastic_structure(), unit__investment_stochastic_structure()))
+        for x in m if structure in model__stochastic_structure(model=x.ext[:instance])
         for (scen, param_vals) in all_stochastic_DAGs[structure]
     )
     unit__stochastic_scenario = RelationshipClass(
         :unit__stochastic_scenario,
         [:unit, :stochastic_scenario],
         [(unit=u, stochastic_scenario=scen) for (u, scen) in keys(unit_stochastic_scenario_weight_values)],
-        unit_stochastic_scenario_weight_values
+        unit_stochastic_scenario_weight_values,
     )
     unit_stochastic_scenario_weight = Parameter(:unit_stochastic_scenario_weight, [unit__stochastic_scenario])
     @eval begin

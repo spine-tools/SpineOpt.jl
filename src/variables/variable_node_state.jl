@@ -25,11 +25,10 @@ for `node`, `s`, and `t`.
 """
 function node_state_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything)
     unique(
-        (node=n, stochastic_scenario=s, t=t)
-        for (n, tb) in node_with_state__temporal_block(node=node, _compact=false)
-        for (n, s, t) in node_stochastic_time_indices(
-            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
-        )
+        (node=n, stochastic_scenario=s, t=t) for (n, tb) in node_with_state__temporal_block(node=node, _compact=false)
+        for
+        (n, s, t) in
+        node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
     )
 end
 
@@ -41,14 +40,22 @@ Add `node_state` variables to model `m`.
 function add_variable_node_state!(m::Model)
     t0 = startref(current_window(m))
     add_variable!(
-        m, 
-        :node_state, 
-        node_state_indices; 
+        m,
+        :node_state,
+        node_state_indices;
         lb=x -> node_state_min(
-            node=x.node, stochastic_scenario=x.stochastic_scenario, analysis_time=t0, t=x.t, _strict=false
+            node=x.node,
+            stochastic_scenario=x.stochastic_scenario,
+            analysis_time=t0,
+            t=x.t,
+            _strict=false,
         ),
         fix_value=x -> fix_node_state(
-            node=x.node, stochastic_scenario=x.stochastic_scenario, analysis_time=t0, t=x.t, _strict=false
-        )
+            node=x.node,
+            stochastic_scenario=x.stochastic_scenario,
+            analysis_time=t0,
+            t=x.t,
+            _strict=false,
+        ),
     )
 end

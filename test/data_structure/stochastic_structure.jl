@@ -21,7 +21,7 @@
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
-            ["model", "instance"], 
+            ["model", "instance"],
             ["node", "only_node"],
             ["unit", "only_unit"],
             ["temporal_block", "only_block"],
@@ -32,7 +32,7 @@
             ["stochastic_scenario", "scenario_a2"],
             ["stochastic_scenario", "scenario_b"],
             ["stochastic_scenario", "scenario_b1"],
-            ["stochastic_scenario", "scenario_b2"]
+            ["stochastic_scenario", "scenario_b2"],
         ],
         :relationships => [
             ["model__temporal_block", ["instance", "only_block"]],
@@ -69,92 +69,92 @@
                 "stochastic_structure__stochastic_scenario",
                 ["structure_a", "scenario_a"],
                 "stochastic_scenario_end",
-                Dict("type" => "duration", "data" => "1D")
+                Dict("type" => "duration", "data" => "1D"),
             ],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["structure_a", "scenario_a"],
                 "weight_relative_to_parents",
-                1.0
+                1.0,
             ],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["structure_a", "scenario_a1"],
                 "weight_relative_to_parents",
-                1.0
+                1.0,
             ],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["structure_a", "scenario_a2"],
                 "weight_relative_to_parents",
-                2.0
+                2.0,
             ],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["structure_a", "scenario_b"],
                 "weight_relative_to_parents",
-                0.0
+                0.0,
             ],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["structure_a", "scenario_b1"],
                 "weight_relative_to_parents",
-                0.0
+                0.0,
             ],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["structure_a", "scenario_b2"],
                 "weight_relative_to_parents",
-                0.0
+                0.0,
             ],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["structure_b", "scenario_b"],
                 "stochastic_scenario_end",
-                Dict("type" => "duration", "data" => "2D")
+                Dict("type" => "duration", "data" => "2D"),
             ],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["structure_b", "scenario_b"],
                 "weight_relative_to_parents",
-                2.0
+                2.0,
             ],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["structure_b", "scenario_b1"],
                 "weight_relative_to_parents",
-                0.1
+                0.1,
             ],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["structure_b", "scenario_b2"],
                 "weight_relative_to_parents",
-                0.2
+                0.2,
             ],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["structure_b", "scenario_a"],
                 "weight_relative_to_parents",
-                0.0
+                0.0,
             ],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["structure_b", "scenario_a1"],
                 "weight_relative_to_parents",
-                0.0
+                0.0,
             ],
             [
                 "stochastic_structure__stochastic_scenario",
                 ["structure_b", "scenario_a2"],
                 "weight_relative_to_parents",
-                0.0
+                0.0,
             ],
-        ]
+        ],
     )
     db_map = _load_test_data(url_in, test_data)
     using_spinedb(db_map, SpineOpt)
     db_map.commit_session("Add test data")
-        m = run_spineopt(db_map, log_level=0, optimize=false)
+    m = run_spineopt(db_map, log_level=0, optimize=false)
 
     @testset "node_stochastic_time_indices" begin
         @test length(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a))) == 1
@@ -176,16 +176,40 @@
     end
     @testset "node_stochastic_scenario_weight" begin
         @test length(SpineOpt.node__stochastic_scenario()) == 4
-        @test SpineOpt.node_stochastic_scenario_weight(node=node(:only_node), stochastic_scenario=stochastic_scenario(:scenario_a)) == 1.0
-        @test SpineOpt.node_stochastic_scenario_weight(node=node(:only_node), stochastic_scenario=stochastic_scenario(:scenario_a1)) == 1.0
-        @test SpineOpt.node_stochastic_scenario_weight(node=node(:only_node), stochastic_scenario=stochastic_scenario(:scenario_a2)) == 2.0
-        @test SpineOpt.node_stochastic_scenario_weight(node=node(:only_node), stochastic_scenario=stochastic_scenario(:scenario_b)) == 0.0
+        @test SpineOpt.node_stochastic_scenario_weight(
+            node=node(:only_node),
+            stochastic_scenario=stochastic_scenario(:scenario_a),
+        ) == 1.0
+        @test SpineOpt.node_stochastic_scenario_weight(
+            node=node(:only_node),
+            stochastic_scenario=stochastic_scenario(:scenario_a1),
+        ) == 1.0
+        @test SpineOpt.node_stochastic_scenario_weight(
+            node=node(:only_node),
+            stochastic_scenario=stochastic_scenario(:scenario_a2),
+        ) == 2.0
+        @test SpineOpt.node_stochastic_scenario_weight(
+            node=node(:only_node),
+            stochastic_scenario=stochastic_scenario(:scenario_b),
+        ) == 0.0
     end
     @testset "unit_stochastic_scenario_weight" begin
         @test length(SpineOpt.unit__stochastic_scenario()) == 4
-        @test SpineOpt.unit_stochastic_scenario_weight(unit=unit(:only_unit), stochastic_scenario=stochastic_scenario(:scenario_b)) == 2.0
-        @test SpineOpt.unit_stochastic_scenario_weight(unit=unit(:only_unit), stochastic_scenario=stochastic_scenario(:scenario_b1)) == 0.2
-        @test SpineOpt.unit_stochastic_scenario_weight(unit=unit(:only_unit), stochastic_scenario=stochastic_scenario(:scenario_b2)) == 0.4
-        @test SpineOpt.unit_stochastic_scenario_weight(unit=unit(:only_unit), stochastic_scenario=stochastic_scenario(:scenario_a)) == 0.0
+        @test SpineOpt.unit_stochastic_scenario_weight(
+            unit=unit(:only_unit),
+            stochastic_scenario=stochastic_scenario(:scenario_b),
+        ) == 2.0
+        @test SpineOpt.unit_stochastic_scenario_weight(
+            unit=unit(:only_unit),
+            stochastic_scenario=stochastic_scenario(:scenario_b1),
+        ) == 0.2
+        @test SpineOpt.unit_stochastic_scenario_weight(
+            unit=unit(:only_unit),
+            stochastic_scenario=stochastic_scenario(:scenario_b2),
+        ) == 0.4
+        @test SpineOpt.unit_stochastic_scenario_weight(
+            unit=unit(:only_unit),
+            stochastic_scenario=stochastic_scenario(:scenario_a),
+        ) == 0.0
     end
 end

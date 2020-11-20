@@ -28,12 +28,8 @@ function add_constraint_node_state_capacity!(m::Model)
     m.ext[:constraints][:node_state_capacity] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + node_state[ng, s, t]
-            <=
-            + node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
+            +node_state[ng, s, t] <= +node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
             # TODO: add investment decisions for storages
-        )
-        for ng in indices(node_state_cap)
-        for (ng, s, t) in node_state_indices(m; node=ng)
+        ) for ng in indices(node_state_cap) for (ng, s, t) in node_state_indices(m; node=ng)
     )
 end

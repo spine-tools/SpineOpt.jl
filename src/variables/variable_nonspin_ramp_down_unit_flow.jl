@@ -35,18 +35,27 @@ for each dimension.
 # rather model choise use ramps
 ### nonspin_ramp_down_unit_flow
 function nonspin_ramp_down_unit_flow_indices(
-        m::Model; unit=anything, node=anything, direction=anything, stochastic_scenario=anything, t=anything
-    )
+    m::Model;
+    unit=anything,
+    node=anything,
+    direction=anything,
+    stochastic_scenario=anything,
+    t=anything,
+)
     unit = members(unit)
     node = members(node)
     [
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
-        for (u, n, d, tb) in nonspin_ramp_down_unit__node__direction__temporal_block(
-            unit=unit, node=node, direction=direction, _compact=false
+        for
+        (u, n, d, tb) in nonspin_ramp_down_unit__node__direction__temporal_block(
+            unit=unit,
+            node=node,
+            direction=direction,
+            _compact=false,
         )
-        for (n, s, t) in node_stochastic_time_indices(
-            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
-        )
+        for
+        (n, s, t) in
+        node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
     ]
 end
 
@@ -69,7 +78,7 @@ function add_variable_nonspin_ramp_down_unit_flow!(m::Model)
             stochastic_scenario=x.stochastic_scenario,
             analysis_time=t0,
             t=x.t,
-            _strict=false
-        )
+            _strict=false,
+        ),
     )
 end
