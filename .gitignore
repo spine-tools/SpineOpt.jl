@@ -10,6 +10,8 @@
 *.gz
 *.toc
 *.sqlite-journal
+*test.sqlite
+*test_out.sqlite
 
 docs/build/
 docs/site/
