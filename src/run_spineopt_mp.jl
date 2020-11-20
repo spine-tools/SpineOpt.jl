@@ -31,9 +31,11 @@ A new Spine database is created at `url_out` if it doesn't exist.
 **`cleanup=true`** tells [`run_spineopt`](@ref) whether or not convenience functors should be
 set to `nothing` after completion.
 
-**`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window, and allows adding user contraints.
+**`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window, 
+    and allows adding user contraints.
 
-**`update_constraints=m -> nothing`** is called in windows 2 to the last, and allows updating contraints added by `add_constraints`.
+**`update_constraints=m -> nothing`** is called in windows 2 to the last, and allows updating contraints
+    added by `add_constraints`.
 
 **`log_level=3`** is the log level.
 """
@@ -98,16 +100,14 @@ function rerun_spineopt_mp(
         global current_bi
         @log log_level 0 "Starting Master Problem iteration $j"
         j > 1 && (current_bi = add_benders_iteration(j))
-        (optimize_model!(mp, mip_solver=mip_solver, lp_solver=lp_solver) && j <= max_benders_iterations) || break   # master problem loop
+        (optimize_model!(mp, mip_solver=mip_solver, lp_solver=lp_solver) && j <= max_benders_iterations) || break
         @timelog log_level 2 "Saving master problem results..." save_mp_model_results!(outputs, mp)
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)
         if j == 1
             @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
         else
-            @timelog log_level 2 "Resetting sub problem temporal structure. Rewinding $(k-1) times..." reset_temporal_structure(
-                m,
-                k - 1,
-            )
+            msg = "Resetting sub problem temporal structure. Rewinding $(k-1) times..."
+            @timelog log_level 2 msg reset_temporal_structure(m, k - 1)
             @log log_level 1 "Window 1: $(current_window(m))"
             set_optimizer(m, mip_solver)
             update_model!(m; update_constraints=update_constraints, log_level=log_level)
@@ -120,14 +120,18 @@ function rerun_spineopt_mp(
             @timelog log_level 2 "Rolling temporal structure..." roll_temporal_structure!(m) ||
                                                                  @timelog log_level 2 " ... Rolling complete\n" break
             @log log_level 1 "Operations window $(k+1), benders iteration $j : $(current_window(m))"
-            # we have to do this here because to early and we can't access the solution and too late, we can't add integers/binaries
+            # we have to do this here because too early and we can't access the solution and too late,
+            # we can't add integers/binaries
             set_optimizer(m, mip_solver)
             update_model!(m; update_constraints=update_constraints, log_level=log_level)
             k += 1
         end
         @timelog log_level 2 "Processing operational problem solution..." process_subproblem_solution(m, mp, j)
 
-        @log log_level 1 "Benders iteration $j complete. Objective upper bound: $(@sprintf("%.5e",mp.ext[:objective_upper_bound])); Objective lower bound: $(@sprintf("%.5e",mp.ext[:objective_lower_bound])); Gap: $(@sprintf("%1.4f",mp.ext[:benders_gap]*100))%"
+        @log log_level 1 "Benders iteration $j complete. Objective upper bound: "
+        @log log_level 1 "$(@sprintf("%.5e",mp.ext[:objective_upper_bound])); "
+        @log log_level 1 "Objective lower bound: $(@sprintf("%.5e",mp.ext[:objective_lower_bound])); "
+        @log log_level 1 "Gap: $(@sprintf("%1.4f",mp.ext[:benders_gap]*100))%"
 
         mp.ext[:benders_gap] <= max_gap(model=mp.ext[:instance]) &&
             @timelog log_level 1 "Benders tolerance satisfied, terminating..." break
@@ -142,10 +146,10 @@ end
 
 
 """
-Initialize the given model for SpineOpt Master Problem: add variables, fix the necessary variables, add constraints and set objective.
+Initialize the given model for SpineOpt Master Problem: add variables, fix the necessary variables, 
+add constraints and set objective.
 """
 function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
-    @timelog log_level 2 "Identifying MP outputs...\n" identify_outputs(m)
     @timelog log_level 2 "Adding MP variables...\n" add_mp_variables!(m; log_level=log_level)
     @timelog log_level 2 "Fixing MP variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding MP constraints...\n" add_mp_constraints!(

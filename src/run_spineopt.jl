@@ -31,9 +31,11 @@ A new Spine database is created at `url_out` if it doesn't exist.
 **`cleanup=true`** tells [`run_spineopt`](@ref) whether or not convenience functors should be
 set to `nothing` after completion.
 
-**`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window, and allows adding user contraints.
+**`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window,
+    and allows adding user contraints.
 
-**`update_constraints=m -> nothing`** is called in windows 2 to the last, and allows updating contraints added by `add_constraints`.
+**`update_constraints=m -> nothing`** is called in windows 2 to the last, and allows updating contraints
+    added by `add_constraints`.
 
 **`log_level=3`** is the log level.
 """
@@ -105,8 +107,9 @@ function rerun_spineopt(
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
     @log log_level 1 "Window 1: $(current_window(m))"
-    calculate_duals = init_model!(m; add_constraints=add_constraints, log_level=log_level)
+    init_model!(m; add_constraints=add_constraints, log_level=log_level)
     k = 2
+    calculate_duals = duals_calculation_needed(m)
     while optimize && optimize_model!(
         m;
         log_level=log_level,
@@ -271,11 +274,20 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     end
 end
 
+function duals_calculation_needed(m::Model)
+    for r in model__report(model=m.ext[:instance])
+        for o in report__output(report=r)
+            output_name = lowercase(String(o.name))
+            startswith(output_name, r"bound_|constraint_") && return true
+        end
+    end
+    false
+end
+
 """
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
 function init_model!(m; add_constraints=m -> nothing, log_level=3)
-    @timelog log_level 2 "Identifying outputs...\n" calculate_duals = identify_outputs(m)
     @timelog log_level 2 "Adding variables...\n" add_variables!(m; log_level=log_level)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(
@@ -284,7 +296,6 @@ function init_model!(m; add_constraints=m -> nothing, log_level=3)
         log_level=log_level,
     )
     @timelog log_level 2 "Setting objective..." set_objective!(m)
-    calculate_duals
 end
 
 """
@@ -392,7 +403,8 @@ Update the given model for the next window in the rolling horizon: update variab
 update constraints and update objective.
 """
 function update_model!(m; update_constraints=m -> nothing, log_level=3)
-    # The below is needed here because we remove the integer constraints to get a dual solution and then need to re-add them for the next write_mps_on_no_solve
+    # The below is needed here because we remove the integer constraints to get a dual solution 
+    # and then need to re-add them for the next write_mps_on_no_solve
     # we can only do this once we have saved the solution    
     @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
     @timelog log_level 2 "Updating variables..." update_variables!(m)
@@ -429,19 +441,6 @@ function write_report(model, default_url)
     end
 end
 
-
-function identify_outputs(m::Model)
-    calculate_duals = false
-    for r in model__report(model=m.ext[:instance])
-        for o in report__output(report=r)
-            get!(m.ext[:outputs], o.name, Dict{NamedTuple,Dict}())
-            s_name = lowercase(String(o.name))
-            length(s_name) >= 6 && (SubString(s_name, 1, 6) == "bound_" && (calculate_duals = true))
-            length(s_name) >= 11 && (SubString(s_name, 1, 11) == "constraint_" && (calculate_duals = true))
-        end
-    end
-    calculate_duals
-end
 
 
 function relax_integer_vars(m::Model)
