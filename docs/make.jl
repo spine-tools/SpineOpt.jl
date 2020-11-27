@@ -7,6 +7,7 @@ makedocs(
     sitename="SpineOpt.jl",
     format=Documenter.HTML(prettyurls=get(ENV, "CI", nothing) == "true"),
     pages=[
+        "Introduction" => "index.md",
         "Getting Started" => "getting_started.md",
         "System Components" => "system_components.md",
         "Advanced Usage" => "advanced_usage.md",
@@ -14,6 +15,7 @@ makedocs(
             "Objective"=>joinpath("mathematical_formulation", "objective_function.md"),
             "Constraints"=>joinpath("mathematical_formulation", "constraints.md"),
         ],
+        "Library" => "library.md"
     ],
 )
 

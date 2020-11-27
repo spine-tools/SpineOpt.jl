@@ -1,15 +1,5 @@
 # Getting started
 
-## Introduction
-
-This package provides the ability to generate and run the Spine energy system integration model
-(in short, *SpineOpt*)
-from databases having the appropriate structure.
-`SpineOpt` uses [`SpineInterface`](https://github.com/Spine-project/SpineInterface.jl)
-to gain access to the contents of the database,
-and [`JuMP`](https://github.com/JuliaOpt/JuMP.jl) to build and solve
-an optimisation model based on those contents.
-
 ## Compatibility
 
 This package requires Julia 1.2 or later.
@@ -150,12 +140,3 @@ The second step in defining a SpineOpt is to specify the object and parameter va
 that dictate the model behavior.
 
 TO BE CONTINUED...
-
-
-## Library outline
-
-```@contents
-Pages = ["library.md"]
-Depth = 5
-```
-
