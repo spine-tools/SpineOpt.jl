@@ -30,7 +30,8 @@ function add_constraint_node_injection!(m::Model)
         (node=n, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             +expr_sum(
-                +node_injection[n, s, t_after] + demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)]
+                + node_injection[n, s, t_after]
+                + demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)]
                 for (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t_after);
                 init=0,
             ) + expr_sum(

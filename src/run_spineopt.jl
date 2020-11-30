@@ -107,10 +107,12 @@ function rerun_spineopt(
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
-    @log log_level 1 "Window 1: $(current_window(m))"
+    @log log_level 1 "Window 1: $(current_window(m))"        
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
+    calculate_duals = duals_calculation_needed(m) 
     k = 2
-    calculate_duals = duals_calculation_needed(m)
+    
+
     while optimize && optimize_model!(
         m;
         log_level=log_level,
@@ -217,8 +219,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
     @timelog log_level 3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m)
     @timelog log_level 3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
-    @timelog log_level 3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
-    @timelog log_level 3 "- [constraint_unit_flow_capacity_w_ramp]" add_constraint_unit_flow_capacity_w_ramp!(m)
+    @timelog log_level 3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)    
     @timelog log_level 3 "- [constraint_operating_point_bounds]" add_constraint_operating_point_bounds!(m)
     @timelog log_level 3 "- [constraint_operating_point_sum]" add_constraint_operating_point_sum!(m)
     @timelog log_level 3 "- [constraint_fix_ratio_out_in_unit_flow]" add_constraint_fix_ratio_out_in_unit_flow!(m)
@@ -241,7 +242,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     )
     @timelog log_level 3 "- [constraint_min_ratio_out_in_connection_flow]" add_constraint_min_ratio_out_in_connection_flow!(
         m,
-    )
+    )    
     @timelog log_level 3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)
     @timelog log_level 3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
     @timelog log_level 3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
@@ -253,6 +254,8 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)
     @timelog log_level 3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
     @timelog log_level 3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
+
+    @timelog log_level 3 "- [constraint_unit_flow_capacity_w_ramp]" add_constraint_unit_flow_capacity_w_ramp!(m)
     @timelog log_level 3 "- [constraint_split_ramp_up]" add_constraint_split_ramp_up!(m)
     @timelog log_level 3 "- [constraint_ramp_up]" add_constraint_ramp_up!(m)
     @timelog log_level 3 "- [constraint_max_start_up_ramp]" add_constraint_max_start_up_ramp!(m)
@@ -267,22 +270,25 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_min_nonspin_ramp_down]" add_constraint_min_nonspin_ramp_down!(m)
     @timelog log_level 3 "- [constraint_res_minimum_node_state]" add_constraint_res_minimum_node_state!(m)
     @timelog log_level 3 "- [constraint_user]" add_constraints(m)
-    # Name constraints
+    
+    # Name constraints    
     for (con_key, cons) in m.ext[:constraints]
         for (inds, con) in cons
             set_name(con, string(con_key, inds))
         end
-    end
+    end    
 end
 
 function duals_calculation_needed(m::Model)
-    for r in model__report(model=m.ext[:instance])
+    calculate_duals = false
+    for r in model__report(model=m.ext[:instance])        
         for o in report__output(report=r)
+            get!(m.ext[:outputs], o.name, Dict{NamedTuple,Dict}())            
             output_name = lowercase(String(o.name))
-            startswith(output_name, r"bound_|constraint_") && return true
+            startswith(output_name, r"bound_|constraint_") && (calculate_duals = true)
         end
     end
-    false
+    calculate_duals
 end
 
 """
@@ -495,8 +501,8 @@ end
 
 function save_marginal_values!(m::Model)
     for (constraint_name, con) in m.ext[:constraints]
-        output_name = Symbol(string("constraint_", constraint_name))
-        if haskey(m.ext[:outputs], output_name)
+        output_name = Symbol(string("constraint_", constraint_name))                
+        if haskey(m.ext[:outputs], output_name)        
             _save_marginal_value!(m, constraint_name, output_name)
         end
     end
@@ -513,8 +519,8 @@ end
 
 function save_bound_marginal_values!(m::Model)
     for (variable_name, con) in m.ext[:variables]
-        output_name = Symbol(string("bound_", variable_name))
-        if haskey(m.ext[:outputs], output_name)
+        output_name = Symbol(string("bound_", variable_name))        
+        if haskey(m.ext[:outputs], output_name)            
             _save_bound_marginal_value!(m, variable_name, output_name)
         end
     end
