@@ -91,6 +91,8 @@ function rerun_spineopt_mp(
     @log log_level 1 "Window 1: $(current_window(m))"
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
     init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
+    duals_calculation_needed(m) 
+    duals_calculation_needed(mp) 
 
     max_benders_iterations = max_iterations(model=mp.ext[:instance])
 
