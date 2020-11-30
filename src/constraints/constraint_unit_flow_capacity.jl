@@ -36,7 +36,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 (u, n, d, s, t) in
                 unit_flow_indices(m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m; t_long=t));
                 init=0,
-            ) * duration(t) <=
+            ) <=
             +expr_sum(
                 (units_on[u, s, t1]) *
                 min(duration(t1), duration(t)) *
