@@ -18,10 +18,10 @@
 #############################################################################
 
 """
-    add_variable_units_mothballed!(m::Model)
+    add_variable_connections_mothballed!(m::Model)
 
-Add `units_mothballed` variables to model `m`.
+Add `connections_mothballed` variables to model `m`.
 """
-function add_variable_units_mothballed!(m::Model)
-    add_variable!(m, :units_mothballed, units_invested_available_indices; lb=x -> 0, int=units_invested_available_int)
+function add_variable_connections_mothballed!(m::Model)
+    add_variable!(m, :connections_mothballed, connections_invested_available_indices; lb=x -> 0, int=connections_invested_available_int)
 end

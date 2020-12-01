@@ -18,10 +18,21 @@
 #############################################################################
 
 """
-    add_variable_units_mothballed!(m::Model)
+    add_constraint_connections_invested_available!(m::Model)
 
-Add `units_mothballed` variables to model `m`.
+Limit the connections_invested_available by the number of investment candidate connections.
 """
-function add_variable_units_mothballed!(m::Model)
-    add_variable!(m, :units_mothballed, units_invested_available_indices; lb=x -> 0, int=units_invested_available_int)
+function add_constraint_connections_invested_available!(m::Model)
+    @fetch connections_invested_available = m.ext[:variables]
+    t0 = startref(current_window(m))
+    m.ext[:constraints][:connections_invested_available] = Dict(
+        (connection=conn, stochastic_scenario=s, t=t) => @constraint(
+            m,
+            +connections_invested_available[conn, s, t] <=
+            +candidate_connections[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
+        ) for (conn, s, t) in connections_invested_available_indices(m)
+    )
 end
+# TODO: units_invested_available or \sum(units_invested)?
+# Candidate units: max amount of units that can be installed over model horizon
+# or max amount of units that can be available at a time?

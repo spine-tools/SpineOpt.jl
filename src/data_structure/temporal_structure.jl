@@ -419,6 +419,19 @@ end
 
 
 """
+    connection_investment_time_indices(m::Model;<keyword arguments>)
+
+Generate an `Array` of all valid `(connection, t)` `NamedTuples` for `connection` investment variables with filter keywords.
+"""
+function connection_investment_time_indices(m::Model; connection=anything, temporal_block=anything, t=anything)
+    unique(
+        (connection=conn, t=t1)
+        for (conn, tb) in connection__investment_temporal_block(connection=connection, temporal_block=temporal_block, _compact=false) if tb in model__temporal_block(model=m.ext[:instance])
+        for t1 in time_slice(m; temporal_block=tb, t=t)
+    )
+end
+
+"""
     unit_investment_dynamic_time_indices(m::Model;<keyword arguments>)
 
 Generate an `Array` of all valid `(unit, t_before, t_after)` `NamedTuples` for `unit` investment variables with filters.
@@ -430,6 +443,24 @@ function unit_investment_dynamic_time_indices(m::Model; unit=anything, t_before=
         (u, tb) in unit_investment_time_indices(
             m;
             unit=u,
+            t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
+        )
+    )
+end
+
+
+"""
+    connection_investment_dynamic_time_indices(m::Model;<keyword arguments>)
+
+Generate an `Array` of all valid `(connection, t_before, t_after)` `NamedTuples` for `connection` investment variables with filters.
+"""
+function connection_investment_dynamic_time_indices(m::Model; connection=anything, t_before=anything, t_after=anything)
+    unique(
+        (connection=u, t_before=tb, t_after=ta) for (conn, ta) in connection_investment_time_indices(m; connection=connection, t=t_after)
+        for
+        (conn, tb) in connection_investment_time_indices(
+            m;
+            connection=conn,
             t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
         )
     )

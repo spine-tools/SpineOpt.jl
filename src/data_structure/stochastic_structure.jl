@@ -249,6 +249,28 @@ function unit_investment_stochastic_time_indices(
 end
 
 
+"""
+    connection_investment_stochastic_time_indices(;<keyword arguments>)
+
+Stochastic time indexes for `connections_invested` with keyword arguments that allow filtering.
+"""
+function connection_investment_stochastic_time_indices(
+    m::Model;
+    connection=anything,
+    stochastic_scenario=anything,
+    temporal_block=anything,
+    t=anything,
+)
+    unique(
+        (connection=conn, stochastic_scenario=s, t=t1)
+        for (conn, t1) in connection_investment_time_indices(m; connection=connection, temporal_block=temporal_block, t=t)
+        for
+        structure in connection__investment_stochastic_structure(connection=conn) if
+        structure in model__stochastic_structure(model=m.ext[:instance])
+        for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
+    )
+end
+
 
 """
     _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict, m...)
