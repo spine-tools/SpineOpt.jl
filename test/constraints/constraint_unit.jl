@@ -24,9 +24,12 @@
     test_data = Dict(
         :objects => [
             ["model", "instance"],
+            ["model", "master"],
             ["temporal_block", "hourly"],
+            ["temporal_block", "investments_hourly"],
             ["temporal_block", "two_hourly"],
             ["stochastic_structure", "deterministic"],
+            ["stochastic_structure", "investments_deterministic"],
             ["stochastic_structure", "stochastic"],
             ["unit", "unit_ab"],
             ["node", "node_a"],
@@ -36,9 +39,11 @@
         ],
         :relationships => [
             ["model__temporal_block", ["instance", "hourly"]],
-            ["model__temporal_block", ["instance", "two_hourly"]],
+            ["model__temporal_block", ["master", "investments_hourly"]],
+            ["model__temporal_block", ["instance", "two_hourly"]],            
             ["model__stochastic_structure", ["instance", "deterministic"]],
-            ["model__stochastic_structure", ["instance", "stochastic"]],
+            ["model__stochastic_structure", ["master", "investments_deterministic"]],
+            ["model__stochastic_structure", ["instance", "stochastic"]],            
             ["units_on__temporal_block", ["unit_ab", "hourly"]],
             ["units_on__stochastic_structure", ["unit_ab", "stochastic"]],
             ["unit__from_node", ["unit_ab", "node_a"]],
@@ -48,6 +53,7 @@
             ["node__stochastic_structure", ["node_a", "stochastic"]],
             ["node__stochastic_structure", ["node_b", "deterministic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
+            ["stochastic_structure__stochastic_scenario", ["investments_deterministic", "parent"]],
             ["stochastic_structure__stochastic_scenario", ["stochastic", "parent"]],
             ["stochastic_structure__stochastic_scenario", ["stochastic", "child"]],
             ["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "child"]],
@@ -56,7 +62,15 @@
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
+            ["model", "instance", "model_type", "spineopt_operations"],
+            ["model", "master", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
+            ["model", "master", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+            ["model", "master", "duration_unit", "hour"],
+            ["model", "master", "model_type", "spineopt_other"],
+            ["model", "master", "max_gap", "0.05"],
+            ["model", "master", "max_iterations", "2"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
+            ["temporal_block", "investments_hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
         ],
         :relationship_parameter_values => [[
@@ -65,7 +79,7 @@
             "stochastic_scenario_end",
             Dict("type" => "duration", "data" => "1h"),
         ]],
-    )
+    )    
     @testset "constraint_units_on" begin
         db_map = _load_test_data(url_in, test_data)
         db_map.commit_session("Add test data")
@@ -552,6 +566,57 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+    @testset "constraint_units_invested_available_mp" begin
+        db_map = _load_test_data(url_in, test_data)
+        candidate_units = 7
+        object_parameter_values = [
+            ["unit", "unit_ab", "candidate_units", candidate_units],
+            ["model", "master", "model_type", "spineopt_master"]                        
+        ]
+        relationships = [
+            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+            ["unit__investment_temporal_block", ["unit_ab", "investments_hourly"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "investments_deterministic"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]]
+        ]
+        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m, mp = run_spineopt(db_map; log_level=0, optimize=false)
+        var_units_invested_available = m.ext[:variables][:units_invested_available]
+        constraint = m.ext[:constraints][:units_invested_available]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            key = (unit(:unit_ab), s, t)
+            var = var_units_invested_available[key...]
+            expected_con = @build_constraint(var <= candidate_units)
+            con = constraint[key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+
+        var_units_invested_available = mp.ext[:variables][:units_invested_available]
+        constraint = mp.ext[:constraints][:units_invested_available]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), )
+        time_slices = time_slice(mp; temporal_block=temporal_block(:investments_hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            key = (unit(:unit_ab), s, t)
+            var = var_units_invested_available[key...]
+            expected_con = @build_constraint(var <= candidate_units)
+            con = constraint[key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+
+
+    end
+
+
+
+#=
+
     @testset "constraint_units_invested_transition" begin
         db_map = _load_test_data(url_in, test_data)
         candidate_units = 4
@@ -1216,4 +1281,7 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+
+=#
+
 end

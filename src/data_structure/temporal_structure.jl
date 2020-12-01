@@ -412,7 +412,7 @@ Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` investment
 function unit_investment_time_indices(m::Model; unit=anything, temporal_block=anything, t=anything)
     unique(
         (unit=u, t=t1)
-        for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
+        for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false) if tb in model__temporal_block(model=m.ext[:instance])
         for t1 in time_slice(m; temporal_block=tb, t=t)
     )
 end

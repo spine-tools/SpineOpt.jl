@@ -70,7 +70,7 @@ function run_spineopt_mp(
 end
 
 function rerun_spineopt_mp(
-    url_out::String;
+    url_out::Union{String,SpineInterface.PyObject};
     mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
     lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
     add_constraints=m -> nothing,
@@ -98,7 +98,7 @@ function rerun_spineopt_mp(
 
     j = 1
     k = 1
-    while true
+    while optimize
         global current_bi
         @log log_level 0 "Starting Master Problem iteration $j"
         j > 1 && (current_bi = add_benders_iteration(j))
@@ -143,7 +143,7 @@ function rerun_spineopt_mp(
         j += 1
     end
     @timelog log_level 2 "Writing report..." write_report(m, url_out)
-    m
+    m, mp
 end
 
 
