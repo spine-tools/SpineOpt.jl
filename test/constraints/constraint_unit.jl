@@ -612,11 +612,6 @@
 
 
     end
-
-
-
-#=
-
     @testset "constraint_units_invested_transition" begin
         db_map = _load_test_data(url_in, test_data)
         candidate_units = 4
@@ -924,8 +919,7 @@
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
-    end
-    ###
+    end    
     @testset "constraint_max_nonspin_ramp_down_unit_flow" begin
         db_map = _load_test_data(url_in, test_data)
         max_res_shutdown_ramp = 0.5
@@ -1147,8 +1141,7 @@
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
-    end
-    ###
+    end    
     @testset "constraint_unit_constraint" begin
         @testset for sense in ("==", ">=", "<=")
             db_map = _load_test_data(url_in, test_data)
@@ -1281,7 +1274,4 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-
-=#
-
 end
