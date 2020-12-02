@@ -18,16 +18,16 @@
 #############################################################################
 
 """
-    connections_invested_available_indices(unit=anything, t=anything)
+    connections_invested_available_indices(connection=anything, t=anything)
 
 A list of `NamedTuple`s corresponding to indices of the `connections_invested_available` variable where
 the keyword arguments act as filters for each dimension.
 """
 function connections_invested_available_indices(m::Model; connection=anything, stochastic_scenario=anything, t=anything)
     [
-        (connection=conn, stochastic_scenario=s, t=t) for (u, tb) in connection__investment_temporal_block(unit=unit, _compact=false)
+        (connection=conn, stochastic_scenario=s, t=t) for (conn, tb) in connection__investment_temporal_block(connection=connection, _compact=false)
         for
-        (u, s, t) in connection_investment_stochastic_time_indices(
+        (conn, s, t) in connection_investment_stochastic_time_indices(
             m;
             connection=conn,
             stochastic_scenario=stochastic_scenario,
@@ -49,7 +49,7 @@ connections_invested_available_int(x) = connection_investment_variable_type(conn
 """
     fix_initial_connections_invested_available()
 
-If fix_units_invested_available is not defined in the timeslice preceding the first rolling window
+If fix_connections_invested_available is not defined in the timeslice preceding the first rolling window
 then force it to be zero so that the model doesn't get free investments and the user isn't forced
 to consider this.
 """
@@ -64,12 +64,12 @@ function fix_initial_connections_invested_available(m)
 end
 
 """
-    add_variable_units_invested_available!(m::Model)
+    add_variable_connections_invested_available!(m::Model)
 
-Add `units_invested_available` variables to model `m`.
+Add `connections_invested_available` variables to model `m`.
 """
 function add_variable_connections_invested_available!(m::Model)
-    # fix units_invested_available to zero in the timestep before the investment window to prevent "free" investments
+    # fix connections_invested_available to zero in the timestep before the investment window to prevent "free" investments
     fix_initial_connections_invested_available(m)
     t0 = startref(current_window(m))
     add_variable!(

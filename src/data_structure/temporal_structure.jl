@@ -456,7 +456,7 @@ Generate an `Array` of all valid `(connection, t_before, t_after)` `NamedTuples`
 """
 function connection_investment_dynamic_time_indices(m::Model; connection=anything, t_before=anything, t_after=anything)
     unique(
-        (connection=u, t_before=tb, t_after=ta) for (conn, ta) in connection_investment_time_indices(m; connection=connection, t=t_after)
+        (connection=conn, t_before=tb, t_after=ta) for (conn, ta) in connection_investment_time_indices(m; connection=connection, t=t_after)
         for
         (conn, tb) in connection_investment_time_indices(
             m;

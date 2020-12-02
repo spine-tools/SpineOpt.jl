@@ -24,14 +24,14 @@ Ensure consistency between the variables `connections_invested_available`, `conn
 """
 function add_constraint_connections_invested_transition!(m::Model)
     @fetch connections_invested_available, connections_invested, connections_mothballed = m.ext[:variables]
-    m.ext[:constraints][:units_invested_transition] = Dict(
+    m.ext[:constraints][:connections_invested_transition] = Dict(
         (connection=conn, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             expr_sum(
                 +connections_invested_available[conn, s, t_after] - connections_invested[conn, s, t_after] +
                 connections_mothballed[conn, s, t_after]
-                # TODO: +units_decomissioned[u, s, t_after]
-                # TODO: -units_demothballed[u,s,t_after] ...
+                # TODO: +connections_decomissioned[u, s, t_after]
+                # TODO: -connections_demothballed[u,s,t_after] ...
                 for
                 (conn, s, t_after) in connections_invested_available_indices(m; connection=conn, stochastic_scenario=s, t=t_after);
                 init=0,

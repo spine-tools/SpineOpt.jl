@@ -484,6 +484,14 @@ function expand_model__default_investment_temporal_block()
             for tb in model__default_investment_temporal_block(model=anything)
         ],
     )
+    add_relationships!(
+        connection__investment_temporal_block,
+        [
+            (connection=conn, temporal_block=tb)
+            for conn in setdiff(indices(candidate_connections), connection__investment_temporal_block(temporal_block=anything))
+            for tb in model__default_investment_temporal_block(model=anything)
+        ],
+    )
 end
 
 
@@ -507,6 +515,15 @@ function expand_model__default_investment_stochastic_structure()
             (unit=u, stochastic_structure=ss)
             for
             u in setdiff(indices(candidate_units), unit__investment_stochastic_structure(stochastic_structure=anything))
+            for ss in model__default_investment_stochastic_structure(model=anything)
+        ],
+    )
+    add_relationships!(
+        connection__investment_stochastic_structure,
+        [
+            (connection=conn, stochastic_structure=ss)
+            for
+            conn in setdiff(indices(candidate_connections), connection__investment_stochastic_structure(stochastic_structure=anything))
             for ss in model__default_investment_stochastic_structure(model=anything)
         ],
     )
