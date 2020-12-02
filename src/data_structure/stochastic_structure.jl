@@ -326,6 +326,31 @@ function _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs::Dict, m.
 end
 
 
+"""
+    _generate_connection_stochastic_scenario_weight(all_stochastic_DAGs::Dict, m...)
+
+Generate the `connection_stochastic_scenario_weight` parameter for the `model` for easier access to the scenario weights.
+"""
+function _generate_connection_stochastic_scenario_weight(all_stochastic_DAGs::Dict, m...)       
+    connection_stochastic_scenario_weight_values = Dict(
+        (connection, scen) => Dict(:connection_stochastic_scenario_weight => parameter_value(param_vals.weight))
+        for (connection, structure) in connection__investment_stochastic_structure()
+        for x in m if structure in model__stochastic_structure(model=x.ext[:instance])
+        for (scen, param_vals) in all_stochastic_DAGs[structure]
+    )
+    connection__stochastic_scenario = RelationshipClass(
+        :connection__stochastic_scenario,
+        [:connection, :stochastic_scenario],
+        [(connection=c, stochastic_scenario=scen) for (c, scen) in keys(connection_stochastic_scenario_weight_values)],
+        connection_stochastic_scenario_weight_values,
+    )
+    connection_stochastic_scenario_weight = Parameter(:connection_stochastic_scenario_weight, [connection__stochastic_scenario])
+    @eval begin
+        connection__stochastic_scenario = $connection__stochastic_scenario
+        connection_stochastic_scenario_weight = $connection_stochastic_scenario_weight
+    end
+end
+
 
 """
     generate_master_stochastic_structure(m::Model)
@@ -337,5 +362,6 @@ function generate_stochastic_structure(m::Model...)
     _generate_stochastic_time_map(all_stochastic_DAGs, m...)
     _generate_node_stochastic_scenario_weight(all_stochastic_DAGs, m...)
     _generate_unit_stochastic_scenario_weight(all_stochastic_DAGs, m...)
+    _generate_connection_stochastic_scenario_weight(all_stochastic_DAGs, m...)
     _generate_active_stochastic_paths()
 end

@@ -18,11 +18,11 @@
 #############################################################################
 
 """
-    investment_costs(m::Model)
+    unit_investment_costs(m::Model)
 
 Create and expression for unit investment costs.
 """
-function investment_costs(m::Model, t1)
+function unit_investment_costs(m::Model, t1)
     @fetch units_invested = m.ext[:variables]
     t0 = startref(current_window(m))
     @expression(
@@ -33,6 +33,6 @@ function investment_costs(m::Model, t1)
             unit_stochastic_scenario_weight[(unit=u, stochastic_scenario=s)]
             for (u, s, t) in units_invested_available_indices(m; unit=indices(unit_investment_cost)) if end_(t) <= t1;
             init=0,
-        )
+        )      
     )
 end
