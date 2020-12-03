@@ -18,10 +18,10 @@
 #############################################################################
 
 """
-    add_variable_connections_mothballed!(m::Model)
+    add_variable_connections_decomissioned!(m::Model)
 
-Add `connections_mothballed` variables to model `m`.
+Add `connections_decomissioned` variables to model `m`.
 """
-function add_variable_connections_mothballed!(m::Model)
-    add_variable!(m, :connections_mothballed, connections_invested_available_indices; lb=x -> 0, int=connections_invested_available_int)
+function add_variable_connections_decomissioned!(m::Model)
+    add_variable!(m, :connections_decomissioned, connections_invested_available_indices; lb=x -> 0, int=connections_invested_available_int)
 end
