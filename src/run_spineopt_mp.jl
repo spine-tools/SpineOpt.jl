@@ -171,6 +171,9 @@ function add_mp_variables!(m; log_level=3)
     @timelog log_level 3 "- [variable_mp_units_invested]" add_variable_units_invested!(m)
     @timelog log_level 3 "- [variable_mp_units_invested_available]" add_variable_units_invested_available!(m)
     @timelog log_level 3 "- [variable_mp_units_mothballed]" add_variable_units_mothballed!(m)
+    @timelog log_level 3 "- [variable_mp_connections_invested]" add_variable_connections_invested!(m)
+    @timelog log_level 3 "- [variable_mp_connections_invested_available]" add_variable_connections_invested_available!(m)
+    @timelog log_level 3 "- [variable_mp_connections_decomissioned]" add_variable_connections_decomissioned!(m)
 end
 
 
@@ -183,7 +186,9 @@ function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(m)
     @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
     @timelog log_level 3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)
-
+    @timelog log_level 3 "- [constraint_connection_lifetime]" add_constraint_connection_lifetime!(m)
+    @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(m)
+    @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(m)
 
     # Name constraints
     for (con_key, cons) in m.ext[:constraints]

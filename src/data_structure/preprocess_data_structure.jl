@@ -602,44 +602,62 @@ function generate_benders_structure()
 
     current_bi = Object(Symbol(string("bi_1")))
     benders_iteration = ObjectClass(:benders_iteration, [current_bi])
+    sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])
+    benders_iteration.parameter_values[current_bi] = Dict()
+    benders_iteration.parameter_values[current_bi][:sp_objective_value_bi] = parameter_value(0)
 
-    unit__benders_iteration = RelationshipClass(:unit__benders_iteration, [:unit, :benders_iteration], [])
-
-    units_available_mv = Parameter(:units_available_mv, [unit__benders_iteration])
-    units_invested_available_bi = Parameter(:units_invested_available_bi, [unit__benders_iteration])
+    unit__benders_iteration = RelationshipClass(:unit__benders_iteration, [:unit, :benders_iteration], [])   
+    units_available_mv = Parameter(:units_available_mv, [unit__benders_iteration])    
+    units_invested_available_bi = Parameter(:units_invested_available_bi, [unit__benders_iteration])    
+    starting_fix_units_invested_available = Parameter(:starting_fix_units_invested_available, [unit])
 
     for u in indices(candidate_units)
         unit__benders_iteration.parameter_values[(u, current_bi)] = Dict()
         unit__benders_iteration.parameter_values[(u, current_bi)][:units_invested_available_bi] = parameter_value(0)
         unit__benders_iteration.parameter_values[(u, current_bi)][:units_available_mv] = parameter_value(0)
-    end
-
-    sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])
-    benders_iteration.parameter_values[current_bi] = Dict()
-    benders_iteration.parameter_values[current_bi][:sp_objective_value_bi] = parameter_value(0)
-    starting_fix_units_invested_available = Parameter(:starting_fix_units_invested_available, [unit])
-
-    for u in indices(candidate_units)
         if haskey(unit.parameter_values[u], :fix_units_invested_available)
             unit.parameter_values[u][:starting_fix_units_invested_available] =
                 unit.parameter_values[u][:fix_units_invested_available]
         end
     end
 
+    connection__benders_iteration = RelationshipClass(:connection__benders_iteration, [:connection, :benders_iteration], [])
+    connections_invested_available_mv = Parameter(:connections_invested_available_mv, [connection__benders_iteration])
+    connections_invested_available_bi = Parameter(:connections_invested_available_bi, [connection__benders_iteration])
+    starting_fix_connections_invested_available = Parameter(:starting_fix_connections_invested_available, [connection])
+
+    for c in indices(candidate_connections)
+        connection__benders_iteration.parameter_values[(c, current_bi)] = Dict()
+        connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_bi] = parameter_value(0)
+        connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_mv] = parameter_value(0)
+        if haskey(connection.parameter_values[c], :fix_connections_invested_available)
+            connection.parameter_values[c][:starting_fix_connections_invested_available] =
+                connection.parameter_values[c][:fix_connections_invested_available]
+        end
+    end
+
     @eval begin
         benders_iteration = $benders_iteration
+        current_bi = $current_bi
+        sp_objective_value_bi = $sp_objective_value_bi
         unit__benders_iteration = $unit__benders_iteration
         units_available_mv = $units_available_mv
         units_invested_available_bi = $units_invested_available_bi
-        current_bi = $current_bi
-        sp_objective_value_bi = $sp_objective_value_bi
         starting_fix_units_invested_available = $starting_fix_units_invested_available
+        connection__benders_iteration = $connection__benders_iteration
+        connections_invested_available_mv = $connections_invested_available_mv
+        connections_invested_available_bi = $connections_invested_available_bi               
+        starting_fix_connections_invested_available = $starting_fix_connections_invested_available
         export current_bi
         export benders_iteration
+        export sp_objective_value_bi
         export unit__benders_iteration
         export units_available_mv
-        export units_invested_available_bi
-        export sp_objective_value_bi
+        export units_invested_available_bi        
         export starting_fix_units_invested_available
+        export connection__benders_iteration
+        export connections_invested_available_mv
+        export connections_invested_available_bi        
+        export starting_fix_connections_invested_available        
     end
 end

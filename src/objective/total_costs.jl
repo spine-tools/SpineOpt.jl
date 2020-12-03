@@ -58,7 +58,10 @@ function objective_terms(m::Model)
             ]
         end
     elseif model_type(model=m.ext[:instance]) == :spineopt_master
-        [:unit_investment_costs]
+        [
+            :unit_investment_costs,
+            :connection_investment_costs
+        ]
     end
 end
 
