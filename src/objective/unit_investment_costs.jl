@@ -18,10 +18,21 @@
 #############################################################################
 
 """
-    add_variable_units_mothballed!(m::Model)
+    unit_investment_costs(m::Model)
 
-Add `units_mothballed` variables to model `m`.
+Create and expression for unit investment costs.
 """
-function add_variable_units_mothballed!(m::Model)
-    add_variable!(m, :units_mothballed, units_invested_available_indices; lb=x -> 0, int=units_invested_available_int)
+function unit_investment_costs(m::Model, t1)
+    @fetch units_invested = m.ext[:variables]
+    t0 = startref(current_window(m))
+    @expression(
+        m,
+        +expr_sum(
+            units_invested[u, s, t] *
+            unit_investment_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] *
+            unit_stochastic_scenario_weight[(unit=u, stochastic_scenario=s)]
+            for (u, s, t) in units_invested_available_indices(m; unit=indices(unit_investment_cost)) if end_(t) <= t1;
+            init=0,
+        )      
+    )
 end

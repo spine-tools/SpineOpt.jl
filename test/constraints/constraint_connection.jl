@@ -22,9 +22,12 @@
     test_data = Dict(
         :objects => [
             ["model", "instance"],
+            ["model", "master"],
             ["temporal_block", "hourly"],
+            ["temporal_block", "investments_hourly"],
             ["temporal_block", "two_hourly"],
             ["stochastic_structure", "deterministic"],
+            ["stochastic_structure", "investments_deterministic"],
             ["stochastic_structure", "stochastic"],
             ["connection", "connection_ab"],
             ["connection", "connection_bc"],
@@ -38,8 +41,10 @@
         :relationships => [
             ["model__temporal_block", ["instance", "hourly"]],
             ["model__temporal_block", ["instance", "two_hourly"]],
+            ["model__temporal_block", ["master", "investments_hourly"]],
             ["model__stochastic_structure", ["instance", "deterministic"]],
             ["model__stochastic_structure", ["instance", "stochastic"]],
+            ["model__stochastic_structure", ["master", "investments_deterministic"]],
             ["connection__from_node", ["connection_ab", "node_a"]],
             ["connection__to_node", ["connection_ab", "node_b"]],
             ["connection__from_node", ["connection_bc", "node_b"]],
@@ -55,12 +60,20 @@
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
             ["stochastic_structure__stochastic_scenario", ["stochastic", "parent"]],
             ["stochastic_structure__stochastic_scenario", ["stochastic", "child"]],
+            ["stochastic_structure__stochastic_scenario", ["investments_deterministic", "parent"]],
             ["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "child"]],
         ],
         :object_parameter_values => [
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
+            ["model", "instance", "model_type", "spineopt_operations"],
+            ["model", "master", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
+            ["model", "master", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+            ["model", "master", "duration_unit", "hour"],
+            ["model", "master", "model_type", "spineopt_other"],
+            ["model", "master", "max_gap", "0.05"],
+            ["model", "master", "max_iterations", "2"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
         ],
@@ -70,7 +83,7 @@
             "stochastic_scenario_end",
             Dict("type" => "duration", "data" => "1h"),
         ]],
-    )
+    )    
     @testset "constraint_connection_flow_capacity" begin
         connection_capacity = 200
         db_map = _load_test_data(url_in, test_data)
@@ -79,7 +92,7 @@
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map; log_level=0, optimize=false)
-        var_connection_flow = m.ext[:variables][:connection_flow]
+        var_connection_flow = m.ext[:variables][:connection_flow]        
         constraint = m.ext[:constraints][:connection_flow_capacity]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -88,6 +101,47 @@
             key = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
             var_conn_flow = var_connection_flow[key...]
             expected_con = @build_constraint(var_conn_flow <= connection_capacity)
+            con_key = (connection(:connection_ab), node(:node_a), direction(:from_node), [s], t)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_connection_flow_capacity_investments" begin
+        connection_capacity = 200        
+        db_map = _load_test_data(url_in, test_data)
+        
+        object_parameter_values = [
+            ["connection", "connection_ab", "candidate_connections", 1],
+            ["connection", "connection_ab", "connection_investment_lifetime", Dict("type" => "duration", "data" => "60m")],
+        ]
+        relationships = [
+            ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
+        ]        
+        relationship_parameter_values =
+            [["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity]]  
+
+        db_api.import_data(
+            db_map;
+            object_parameter_values=object_parameter_values,
+            relationships=relationships,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_connection_flow = m.ext[:variables][:connection_flow]
+        var_connections_invested_available = m.ext[:variables][:connections_invested_available]
+
+        constraint = m.ext[:constraints][:connection_flow_capacity]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            key = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
+            invest_key = (connection(:connection_ab), s, t)
+            var_conn_flow = var_connection_flow[key...]
+            var_conn_inv_a = var_connections_invested_available[invest_key...]
+            expected_con = @build_constraint(var_conn_flow <= connection_capacity * var_conn_inv_a)
             con_key = (connection(:connection_ab), node(:node_a), direction(:from_node), [s], t)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
@@ -377,4 +431,312 @@
             end
         end
     end
+    @testset "constraint_connections_invested_transition" begin
+        db_map = _load_test_data(url_in, test_data)
+        candidate_connections = 1
+        object_parameter_values = [["connection", "connection_ab", "candidate_connections", candidate_connections]]
+        relationships = [
+            ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
+        ]
+        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_connections_invested_available = m.ext[:variables][:connections_invested_available]
+        var_connections_invested = m.ext[:variables][:connections_invested]
+        var_connections_decommissioned = m.ext[:variables][:connections_decommissioned]
+        constraint = m.ext[:constraints][:connections_invested_transition]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        s0 = stochastic_scenario(:parent)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s1, t1) in zip(scenarios, time_slices)
+            path = unique([s0, s1])
+            var_key1 = (connection(:connection_ab), s1, t1)
+            var_c_inv_av1 = var_connections_invested_available[var_key1...]
+            var_c_inv_1 = var_connections_invested[var_key1...]
+            var_c_decom_1 = var_connections_decommissioned[var_key1...]
+            @testset for (c, t0, t1) in connection_investment_dynamic_time_indices(m; connection=connection(:connection_ab), t_after=t1)
+                var_key0 = (c, s0, t0)
+                var_c_inv_av0 = get(var_connections_invested_available, var_key0, 0)
+                con_key = (c, path, t0, t1)
+                expected_con = @build_constraint(var_c_inv_av1 - var_c_inv_1 + var_c_decom_1 == var_c_inv_av0)
+                observed_con = constraint_object(constraint[con_key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+    @testset "constraint_connections_invested_transition_mp" begin
+        db_map = _load_test_data(url_in, test_data)
+        candidate_connections = 4
+        object_parameter_values = [
+            ["connection", "connection_ab", "candidate_connections", candidate_connections],
+            ["model", "master", "model_type", "spineopt_master"]
+        ]
+        relationships = [
+            ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
+            ["connection__investment_temporal_block", ["connection_ab", "investments_hourly"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "investments_deterministic"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]]
+        ]
+        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m, mp = run_spineopt(db_map; log_level=0, optimize=false)
+        var_connections_invested_available = m.ext[:variables][:connections_invested_available]
+        var_connections_invested = m.ext[:variables][:connections_invested]
+        var_connections_decommissioned = m.ext[:variables][:connections_decommissioned]
+        constraint = m.ext[:constraints][:connections_invested_transition]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        s0 = stochastic_scenario(:parent)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s1, t1) in zip(scenarios, time_slices)
+            path = unique([s0, s1])
+            var_key1 = (connection(:connection_ab), s1, t1)
+            var_c_inv_av1 = var_connections_invested_available[var_key1...]
+            var_c_inv_1 = var_connections_invested[var_key1...]
+            var_c_decom_1 = var_connections_decommissioned[var_key1...]
+            @testset for (c, t0, t1) in connection_investment_dynamic_time_indices(m; connection=connection(:connection_ab), t_after=t1)
+                var_key0 = (c, s0, t0)
+                var_c_inv_av0 = get(var_connections_invested_available, var_key0, 0)
+                con_key = (c, path, t0, t1)
+                expected_con = @build_constraint(var_c_inv_av1 - var_c_inv_1 + var_c_decom_1 == var_c_inv_av0)
+                observed_con = constraint_object(constraint[con_key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+
+        var_connections_invested_available = mp.ext[:variables][:connections_invested_available]
+        var_connections_invested = mp.ext[:variables][:connections_invested]
+        var_connections_decommissioned = mp.ext[:variables][:connections_decommissioned]
+        constraint = mp.ext[:constraints][:connections_invested_transition]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), )
+        s0 = stochastic_scenario(:parent)
+        time_slices = time_slice(mp; temporal_block=temporal_block(:investments_hourly))
+        @testset for (s1, t1) in zip(scenarios, time_slices)
+            path = unique([s0, s1])
+            var_key1 = (connection(:connection_ab), s1, t1)
+            var_c_inv_av1 = var_connections_invested_available[var_key1...]
+            var_c_inv_1 = var_connections_invested[var_key1...]
+            var_c_decom_1 = var_connections_decommissioned[var_key1...]
+            @testset for (c, t0, t1) in connection_investment_dynamic_time_indices(mp; connection=connection(:connection_ab), t_after=t1)
+                var_key0 = (c, s0, t0)
+                var_c_inv_av0 = get(var_connections_invested_available, var_key0, 0)
+                con_key = (c, path, t0, t1)
+                expected_con = @build_constraint(var_c_inv_av1 - var_c_inv_1 + var_c_decom_1 == var_c_inv_av0)
+                observed_con = constraint_object(constraint[con_key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+    @testset "constraint_connection_lifetime" begin
+        candidate_connections = 3
+        model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
+        @testset for lifetime_minutes in (30, 180, 240)
+            db_map = _load_test_data(url_in, test_data)
+            connection_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            object_parameter_values = [
+                ["connection", "connection_ab", "candidate_connections", candidate_connections],
+                ["connection", "connection_ab", "connection_investment_lifetime", connection_investment_lifetime],
+                ["model", "instance", "model_end", model_end],
+            ]
+            relationships = [
+                ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
+                ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
+            ]
+            db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+            db_map.commit_session("Add test data")
+            m = run_spineopt(db_map; log_level=0, optimize=false)
+            var_connections_invested_available = m.ext[:variables][:connections_invested_available]
+            var_connections_invested = m.ext[:variables][:connections_invested]
+            constraint = m.ext[:constraints][:connection_lifetime]
+            
+            @test length(constraint) == 5
+            parent_end = stochastic_scenario_end(
+                stochastic_structure=stochastic_structure(:stochastic),
+                stochastic_scenario=stochastic_scenario(:parent),
+            )
+            head_hours =
+                length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
+            scenarios = [
+                repeat([stochastic_scenario(:child)], head_hours)
+                repeat([stochastic_scenario(:parent)], tail_hours)
+            ]
+            time_slices = [
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
+                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+            ][1:head_hours+tail_hours]
+            @testset for h in 1:length(constraint)
+                s_set, t_set = scenarios[h:h+tail_hours-1], time_slices[h:h+tail_hours-1]
+                s, t = s_set[1], t_set[1]
+                path = reverse(unique(s_set))
+                key = (connection(:connection_ab), path, t)
+                var_c_inv_av_key = (connection(:connection_ab), s, t)
+                var_c_inv_av = var_connections_invested_available[var_c_inv_av_key...]
+                vars_c_inv = [var_connections_invested[connection(:connection_ab), s, t] for (s, t) in zip(s_set, t_set)]
+                expected_con = @build_constraint(var_c_inv_av >= sum(vars_c_inv))
+                observed_con = constraint_object(constraint[key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+    @testset "constraint_connection_lifetime_mp" begin
+        candidate_connections = 3
+        model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
+        @testset for lifetime_minutes in (30, 180, 240)
+            db_map = _load_test_data(url_in, test_data)
+            connection_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            object_parameter_values = [
+                ["connection", "connection_ab", "candidate_connections", candidate_connections],
+                ["connection", "connection_ab", "connection_investment_lifetime", connection_investment_lifetime],
+                ["model", "instance", "model_end", model_end],
+                ["model", "master", "model_end", model_end],
+                ["model", "master", "model_type", "spineopt_master"]
+            ]
+            relationships = [
+                ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
+                ["connection__investment_temporal_block", ["connection_ab", "investments_hourly"]],
+                ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
+                ["connection__investment_stochastic_structure", ["connection_ab", "investments_deterministic"]],                
+            ]
+            db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+            db_map.commit_session("Add test data")
+            m, mp = run_spineopt(db_map; log_level=0, optimize=false)
+            var_connections_invested_available = m.ext[:variables][:connections_invested_available]
+            var_connections_invested = m.ext[:variables][:connections_invested]
+            constraint = m.ext[:constraints][:connection_lifetime]
+            @test length(constraint) == 5
+            parent_end = stochastic_scenario_end(
+                stochastic_structure=stochastic_structure(:stochastic),
+                stochastic_scenario=stochastic_scenario(:parent),
+            )
+            head_hours =
+                length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
+            scenarios = [
+                repeat([stochastic_scenario(:child)], head_hours)
+                repeat([stochastic_scenario(:parent)], tail_hours)
+            ]
+            time_slices = [
+                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
+                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
+            ][1:head_hours+tail_hours]
+            @testset for h in 1:length(constraint)
+                s_set, t_set = scenarios[h:h+tail_hours-1], time_slices[h:h+tail_hours-1]
+                s, t = s_set[1], t_set[1]
+                path = reverse(unique(s_set))
+                key = (connection(:connection_ab), path, t)
+                var_c_inv_av_key = (connection(:connection_ab), s, t)
+                var_c_inv_av = var_connections_invested_available[var_c_inv_av_key...]
+                vars_c_inv = [var_connections_invested[connection(:connection_ab), s, t] for (s, t) in zip(s_set, t_set)]
+                expected_con = @build_constraint(var_c_inv_av >= sum(vars_c_inv))
+                observed_con = constraint_object(constraint[key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+
+            var_connections_invested_available = mp.ext[:variables][:connections_invested_available]
+            var_connections_invested = mp.ext[:variables][:connections_invested]
+            constraint = mp.ext[:constraints][:connection_lifetime]
+            @test length(constraint) == 5
+            parent_end = stochastic_scenario_end(
+                stochastic_structure=stochastic_structure(:stochastic),
+                stochastic_scenario=stochastic_scenario(:parent),
+            )
+            head_hours =
+                length(time_slice(mp; temporal_block=temporal_block(:investments_hourly))) - Hour(1).value
+            tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
+            scenarios = [                
+                repeat([stochastic_scenario(:parent)], head_hours)
+                repeat([stochastic_scenario(:parent)], tail_hours)
+            ]
+            time_slices = [
+                reverse(time_slice(mp; temporal_block=temporal_block(:investments_hourly)))
+                reverse(history_time_slice(mp; temporal_block=temporal_block(:investments_hourly)))
+            ][1:head_hours+tail_hours]
+            @testset for h in 1:length(constraint)
+                s_set, t_set = scenarios[h:h+tail_hours-1], time_slices[h:h+tail_hours-1]
+                s, t = s_set[1], t_set[1]
+                path = reverse(unique(s_set))
+                key = (connection(:connection_ab), path, t)
+                var_c_inv_av_key = (connection(:connection_ab), s, t)
+                var_c_inv_av = var_connections_invested_available[var_c_inv_av_key...]
+                vars_c_inv = [var_connections_invested[connection(:connection_ab), s, t] for (s, t) in zip(s_set, t_set)]
+                expected_con = @build_constraint(var_c_inv_av >= sum(vars_c_inv))
+                observed_con = constraint_object(constraint[key...])                
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+    @testset "constraint_connections_invested_available" begin
+        db_map = _load_test_data(url_in, test_data)
+        candidate_connections = 7
+        object_parameter_values = [["connection", "connection_ab", "candidate_connections", candidate_connections]]
+        relationships = [
+            ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
+        ]
+        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_connections_invested_available = m.ext[:variables][:connections_invested_available]
+        constraint = m.ext[:constraints][:connections_invested_available]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            key = (connection(:connection_ab), s, t)
+            var = var_connections_invested_available[key...]
+            expected_con = @build_constraint(var <= candidate_connections)
+            con = constraint[key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_connections_invested_available_mp" begin
+        db_map = _load_test_data(url_in, test_data)
+        candidate_connections = 7
+        object_parameter_values = [
+            ["connection", "connection_ab", "candidate_connections", candidate_connections],
+            ["model", "master", "model_type", "spineopt_master"]
+        ]
+        relationships = [
+            ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
+            ["connection__investment_temporal_block", ["connection_ab", "investments_hourly"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "investments_deterministic"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]]
+        ]
+        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m, mp = run_spineopt(db_map; log_level=0, optimize=false)
+        var_connections_invested_available = m.ext[:variables][:connections_invested_available]
+        constraint = m.ext[:constraints][:connections_invested_available]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            key = (connection(:connection_ab), s, t)
+            var = var_connections_invested_available[key...]
+            expected_con = @build_constraint(var <= candidate_connections)
+            con = constraint[key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+        var_connections_invested_available = mp.ext[:variables][:connections_invested_available]
+        constraint = mp.ext[:constraints][:connections_invested_available]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), )
+        time_slices = time_slice(mp; temporal_block=temporal_block(:investments_hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            key = (connection(:connection_ab), s, t)
+            var = var_connections_invested_available[key...]
+            expected_con = @build_constraint(var <= candidate_connections)
+            con = constraint[key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+
+
 end

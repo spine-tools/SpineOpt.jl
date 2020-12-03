@@ -30,7 +30,8 @@ function add_constraint_units_available!(m::Model)
             m,
             +units_available[u, s, t] ==
             +unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] * (
-                +number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] + expr_sum(
+                +number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
+                + expr_sum(
                     units_invested_available[u, s, t1]
                     for
                     (u, s, t1) in

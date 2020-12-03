@@ -18,10 +18,24 @@
 #############################################################################
 
 """
-    add_variable_units_mothballed!(m::Model)
+    add_variable_connections_invested!(m::Model)
 
-Add `units_mothballed` variables to model `m`.
+Add `connections_invested` variables to model `m`.
 """
-function add_variable_units_mothballed!(m::Model)
-    add_variable!(m, :units_mothballed, units_invested_available_indices; lb=x -> 0, int=units_invested_available_int)
+function add_variable_connections_invested!(m::Model)
+    t0 = startref(current_window(m))
+    add_variable!(
+        m,
+        :connections_invested,
+        connections_invested_available_indices;
+        lb=x -> 0,
+        fix_value=x -> fix_connections_invested(
+            connection=x.connection,
+            stochastic_scenario=x.stochastic_scenario,
+            analysis_time=t0,
+            t=x.t,
+            _strict=false,
+        ),
+        int=connections_invested_available_int,
+    )
 end

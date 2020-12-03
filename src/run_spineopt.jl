@@ -168,6 +168,9 @@ function add_variables!(m; log_level=3)
     @timelog log_level 3 "- [variable_unit_flow]" add_variable_unit_flow!(m)
     @timelog log_level 3 "- [variable_unit_flow_op]" add_variable_unit_flow_op!(m)
     @timelog log_level 3 "- [variable_connection_flow]" add_variable_connection_flow!(m)
+    @timelog log_level 3 "- [variable_connections_invested]" add_variable_connections_invested!(m)
+    @timelog log_level 3 "- [variable_connections_invested_available]" add_variable_connections_invested_available!(m)
+    @timelog log_level 3 "- [variable_connections_decommissioned]" add_variable_connections_decommissioned!(m)
     @timelog log_level 3 "- [variable_node_state]" add_variable_node_state!(m)
     @timelog log_level 3 "- [variable_node_slack_pos]" add_variable_node_slack_pos!(m)
     @timelog log_level 3 "- [variable_node_slack_neg]" add_variable_node_slack_neg!(m)
@@ -212,14 +215,16 @@ end
 """
 Add SpineOpt constraints to the given model.
 """
-function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
-    @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
+function add_constraints!(m; add_constraints=m -> nothing, log_level=3)    
     @timelog log_level 3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
     @timelog log_level 3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
     @timelog log_level 3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
     @timelog log_level 3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m)
     @timelog log_level 3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
     @timelog log_level 3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)    
+    @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(m)
+    @timelog log_level 3 "- [constraint_connection_lifetime]" add_constraint_connection_lifetime!(m)
+    @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(m)
     @timelog log_level 3 "- [constraint_operating_point_bounds]" add_constraint_operating_point_bounds!(m)
     @timelog log_level 3 "- [constraint_operating_point_sum]" add_constraint_operating_point_sum!(m)
     @timelog log_level 3 "- [constraint_fix_ratio_out_in_unit_flow]" add_constraint_fix_ratio_out_in_unit_flow!(m)
@@ -250,6 +255,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_units_available]" add_constraint_units_available!(m)
     @timelog log_level 3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)
     @timelog log_level 3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(m)
+    @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
     @timelog log_level 3 "- [constraint_minimum_operating_point]" add_constraint_minimum_operating_point!(m)
     @timelog log_level 3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)
     @timelog log_level 3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
@@ -316,7 +322,9 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, mip_solve
     if termination_status(m) == MOI.OPTIMAL || termination_status(m) == MOI.TIME_LIMIT
         if calculate_duals
             @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
-            @timelog log_level 0 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
+            if lp_solver != mip_solver
+                @timelog log_level 0 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
+            end
             @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
         end
         true

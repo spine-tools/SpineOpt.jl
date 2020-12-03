@@ -18,21 +18,21 @@
 #############################################################################
 
 """
-    investment_costs(m::Model)
+    add_constraint_connections_invested_available!(m::Model)
 
-Create and expression for unit investment costs.
+Limit the connections_invested_available by the number of investment candidate connections.
 """
-function investment_costs(m::Model, t1)
-    @fetch units_invested = m.ext[:variables]
+function add_constraint_connections_invested_available!(m::Model)
+    @fetch connections_invested_available = m.ext[:variables]
     t0 = startref(current_window(m))
-    @expression(
-        m,
-        +expr_sum(
-            units_invested[u, s, t] *
-            unit_investment_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] *
-            unit_stochastic_scenario_weight[(unit=u, stochastic_scenario=s)]
-            for (u, s, t) in units_invested_available_indices(m; unit=indices(unit_investment_cost)) if end_(t) <= t1;
-            init=0,
-        )
+    m.ext[:constraints][:connections_invested_available] = Dict(
+        (connection=conn, stochastic_scenario=s, t=t) => @constraint(
+            m,
+            +connections_invested_available[conn, s, t] <=
+            +candidate_connections[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
+        ) for (conn, s, t) in connections_invested_available_indices(m)
     )
 end
+# TODO: units_invested_available or \sum(units_invested)?
+# Candidate units: max amount of units that can be installed over model horizon
+# or max amount of units that can be available at a time?

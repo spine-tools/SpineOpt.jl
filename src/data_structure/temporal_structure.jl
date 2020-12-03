@@ -219,7 +219,7 @@ end
 The required length of the included history based on parameter values that impose delays as a `Dates.Period`.
 """
 function _required_history_duration(instance::Object)
-    delay_params = (min_up_time, min_down_time, connection_flow_delay, unit_investment_lifetime)
+    delay_params = (min_up_time, min_down_time, connection_flow_delay, unit_investment_lifetime, connection_investment_lifetime)
     max_vals = (maximum_parameter_value(p) for p in delay_params)
     init = _model_duration_unit(instance)(1)  # Dynamics always require at least 1 duration unit of history
     reduce(max, (val for val in max_vals if val !== nothing); init=init)
@@ -419,6 +419,19 @@ end
 
 
 """
+    connection_investment_time_indices(m::Model;<keyword arguments>)
+
+Generate an `Array` of all valid `(connection, t)` `NamedTuples` for `connection` investment variables with filter keywords.
+"""
+function connection_investment_time_indices(m::Model; connection=anything, temporal_block=anything, t=anything)
+    unique(
+        (connection=conn, t=t1)
+        for (conn, tb) in connection__investment_temporal_block(connection=connection, temporal_block=temporal_block, _compact=false) if tb in model__temporal_block(model=m.ext[:instance])
+        for t1 in time_slice(m; temporal_block=tb, t=t)
+    )
+end
+
+"""
     unit_investment_dynamic_time_indices(m::Model;<keyword arguments>)
 
 Generate an `Array` of all valid `(unit, t_before, t_after)` `NamedTuples` for `unit` investment variables with filters.
@@ -430,6 +443,24 @@ function unit_investment_dynamic_time_indices(m::Model; unit=anything, t_before=
         (u, tb) in unit_investment_time_indices(
             m;
             unit=u,
+            t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
+        )
+    )
+end
+
+
+"""
+    connection_investment_dynamic_time_indices(m::Model;<keyword arguments>)
+
+Generate an `Array` of all valid `(connection, t_before, t_after)` `NamedTuples` for `connection` investment variables with filters.
+"""
+function connection_investment_dynamic_time_indices(m::Model; connection=anything, t_before=anything, t_after=anything)
+    unique(
+        (connection=conn, t_before=tb, t_after=ta) for (conn, ta) in connection_investment_time_indices(m; connection=connection, t=t_after)
+        for
+        (conn, tb) in connection_investment_time_indices(
+            m;
+            connection=conn,
             t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
         )
     )
