@@ -34,7 +34,8 @@ import SpineOpt:
     generate_temporal_structure!,
     roll_temporal_structure!,
     unit_dynamic_time_indices,
-    unit_investment_dynamic_time_indices,
+    unit_investment_dynamic_time_indices,    
+    connection_investment_dynamic_time_indices,
     node_dynamic_time_indices,
     node_stochastic_time_indices,
     unit_stochastic_time_indices

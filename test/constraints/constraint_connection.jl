@@ -418,4 +418,39 @@
             end
         end
     end
+    @testset "constraint_connections_invested_transition" begin
+        db_map = _load_test_data(url_in, test_data)
+        candidate_connections = 1
+        object_parameter_values = [["connection", "connection_ab", "candidate_connections", candidate_connections]]
+        relationships = [
+            ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
+        ]
+        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_connections_invested_available = m.ext[:variables][:connections_invested_available]
+        var_connections_invested = m.ext[:variables][:connections_invested]
+        var_connections_decomissioned = m.ext[:variables][:connections_decomissioned]
+        constraint = m.ext[:constraints][:connections_invested_transition]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        s0 = stochastic_scenario(:parent)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s1, t1) in zip(scenarios, time_slices)
+            path = unique([s0, s1])
+            var_key1 = (connection(:connection_ab), s1, t1)
+            var_c_inv_av1 = var_connections_invested_available[var_key1...]
+            var_c_inv_1 = var_connections_invested[var_key1...]
+            var_c_decom_1 = var_connections_decomissioned[var_key1...]
+            @testset for (c, t0, t1) in connection_investment_dynamic_time_indices(m; connection=connection(:connection_ab), t_after=t1)
+                var_key0 = (c, s0, t0)
+                var_c_inv_av0 = get(var_connections_invested_available, var_key0, 0)
+                con_key = (c, path, t0, t1)
+                expected_con = @build_constraint(var_c_inv_av1 - var_c_inv_1 + var_c_decom_1 == var_c_inv_av0)
+                observed_con = constraint_object(constraint[con_key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
 end
