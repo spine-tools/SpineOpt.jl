@@ -444,7 +444,7 @@
         m = run_spineopt(db_map; log_level=0, optimize=false)
         var_connections_invested_available = m.ext[:variables][:connections_invested_available]
         var_connections_invested = m.ext[:variables][:connections_invested]
-        var_connections_decomissioned = m.ext[:variables][:connections_decomissioned]
+        var_connections_decommissioned = m.ext[:variables][:connections_decommissioned]
         constraint = m.ext[:constraints][:connections_invested_transition]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -455,7 +455,7 @@
             var_key1 = (connection(:connection_ab), s1, t1)
             var_c_inv_av1 = var_connections_invested_available[var_key1...]
             var_c_inv_1 = var_connections_invested[var_key1...]
-            var_c_decom_1 = var_connections_decomissioned[var_key1...]
+            var_c_decom_1 = var_connections_decommissioned[var_key1...]
             @testset for (c, t0, t1) in connection_investment_dynamic_time_indices(m; connection=connection(:connection_ab), t_after=t1)
                 var_key0 = (c, s0, t0)
                 var_c_inv_av0 = get(var_connections_invested_available, var_key0, 0)
@@ -484,7 +484,7 @@
         m, mp = run_spineopt(db_map; log_level=0, optimize=false)
         var_connections_invested_available = m.ext[:variables][:connections_invested_available]
         var_connections_invested = m.ext[:variables][:connections_invested]
-        var_connections_decomissioned = m.ext[:variables][:connections_decomissioned]
+        var_connections_decommissioned = m.ext[:variables][:connections_decommissioned]
         constraint = m.ext[:constraints][:connections_invested_transition]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -495,7 +495,7 @@
             var_key1 = (connection(:connection_ab), s1, t1)
             var_c_inv_av1 = var_connections_invested_available[var_key1...]
             var_c_inv_1 = var_connections_invested[var_key1...]
-            var_c_decom_1 = var_connections_decomissioned[var_key1...]
+            var_c_decom_1 = var_connections_decommissioned[var_key1...]
             @testset for (c, t0, t1) in connection_investment_dynamic_time_indices(m; connection=connection(:connection_ab), t_after=t1)
                 var_key0 = (c, s0, t0)
                 var_c_inv_av0 = get(var_connections_invested_available, var_key0, 0)
@@ -508,7 +508,7 @@
 
         var_connections_invested_available = mp.ext[:variables][:connections_invested_available]
         var_connections_invested = mp.ext[:variables][:connections_invested]
-        var_connections_decomissioned = mp.ext[:variables][:connections_decomissioned]
+        var_connections_decommissioned = mp.ext[:variables][:connections_decommissioned]
         constraint = mp.ext[:constraints][:connections_invested_transition]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), )
@@ -519,7 +519,7 @@
             var_key1 = (connection(:connection_ab), s1, t1)
             var_c_inv_av1 = var_connections_invested_available[var_key1...]
             var_c_inv_1 = var_connections_invested[var_key1...]
-            var_c_decom_1 = var_connections_decomissioned[var_key1...]
+            var_c_decom_1 = var_connections_decommissioned[var_key1...]
             @testset for (c, t0, t1) in connection_investment_dynamic_time_indices(mp; connection=connection(:connection_ab), t_after=t1)
                 var_key0 = (c, s0, t0)
                 var_c_inv_av0 = get(var_connections_invested_available, var_key0, 0)

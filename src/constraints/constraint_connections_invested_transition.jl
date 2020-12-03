@@ -20,16 +20,16 @@
 """
     add_constraint_connections_invested_transition!(m::Model)
 
-Ensure consistency between the variables `connections_invested_available`, `connections_invested` and `connections_decomissioned`.
+Ensure consistency between the variables `connections_invested_available`, `connections_invested` and `connections_decommissioned`.
 """
 function add_constraint_connections_invested_transition!(m::Model)
-    @fetch connections_invested_available, connections_invested, connections_decomissioned = m.ext[:variables]
+    @fetch connections_invested_available, connections_invested, connections_decommissioned = m.ext[:variables]
     m.ext[:constraints][:connections_invested_transition] = Dict(
         (connection=conn, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             expr_sum(
                 +connections_invested_available[conn, s, t_after] - connections_invested[conn, s, t_after] +
-                connections_decomissioned[conn, s, t_after]                              
+                connections_decommissioned[conn, s, t_after]                              
                 for
                 (conn, s, t_after) in connections_invested_available_indices(m; connection=conn, stochastic_scenario=s, t=t_after);
                 init=0,

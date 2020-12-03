@@ -595,7 +595,6 @@
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
-
         var_units_invested_available = mp.ext[:variables][:units_invested_available]
         constraint = mp.ext[:constraints][:units_invested_available]
         @test length(constraint) == 2
@@ -609,8 +608,6 @@
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
-
-
     end
     @testset "constraint_units_invested_transition" begin
         db_map = _load_test_data(url_in, test_data)

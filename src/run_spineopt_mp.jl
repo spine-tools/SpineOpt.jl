@@ -173,7 +173,7 @@ function add_mp_variables!(m; log_level=3)
     @timelog log_level 3 "- [variable_mp_units_mothballed]" add_variable_units_mothballed!(m)
     @timelog log_level 3 "- [variable_mp_connections_invested]" add_variable_connections_invested!(m)
     @timelog log_level 3 "- [variable_mp_connections_invested_available]" add_variable_connections_invested_available!(m)
-    @timelog log_level 3 "- [variable_mp_connections_decomissioned]" add_variable_connections_decomissioned!(m)
+    @timelog log_level 3 "- [variable_mp_connections_decommissioned]" add_variable_connections_decommissioned!(m)
 end
 
 

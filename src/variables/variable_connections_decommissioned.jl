@@ -18,10 +18,10 @@
 #############################################################################
 
 """
-    add_variable_connections_decomissioned!(m::Model)
+    add_variable_connections_decommissioned!(m::Model)
 
-Add `connections_decomissioned` variables to model `m`.
+Add `connections_decommissioned` variables to model `m`.
 """
-function add_variable_connections_decomissioned!(m::Model)
-    add_variable!(m, :connections_decomissioned, connections_invested_available_indices; lb=x -> 0, int=connections_invested_available_int)
+function add_variable_connections_decommissioned!(m::Model)
+    add_variable!(m, :connections_decommissioned, connections_invested_available_indices; lb=x -> 0, int=connections_invested_available_int)
 end
