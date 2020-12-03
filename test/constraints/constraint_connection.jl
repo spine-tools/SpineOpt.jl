@@ -70,7 +70,7 @@
             "stochastic_scenario_end",
             Dict("type" => "duration", "data" => "1h"),
         ]],
-    )
+    )    
     @testset "constraint_connection_flow_capacity" begin
         connection_capacity = 200
         db_map = _load_test_data(url_in, test_data)
@@ -79,7 +79,7 @@
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map; log_level=0, optimize=false)
-        var_connection_flow = m.ext[:variables][:connection_flow]
+        var_connection_flow = m.ext[:variables][:connection_flow]        
         constraint = m.ext[:constraints][:connection_flow_capacity]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -88,6 +88,47 @@
             key = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
             var_conn_flow = var_connection_flow[key...]
             expected_con = @build_constraint(var_conn_flow <= connection_capacity)
+            con_key = (connection(:connection_ab), node(:node_a), direction(:from_node), [s], t)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_connection_flow_capacity_investments" begin
+        connection_capacity = 200        
+        db_map = _load_test_data(url_in, test_data)
+        
+        object_parameter_values = [
+            ["connection", "connection_ab", "candidate_connections", 1],
+            ["connection", "connection_ab", "connection_investment_lifetime", Dict("type" => "duration", "data" => "60m")],
+        ]
+        relationships = [
+            ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
+            ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
+        ]        
+        relationship_parameter_values =
+            [["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity]]  
+
+        db_api.import_data(
+            db_map;
+            object_parameter_values=object_parameter_values,
+            relationships=relationships,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_connection_flow = m.ext[:variables][:connection_flow]
+        var_connections_invested_available = m.ext[:variables][:connections_invested_available]
+
+        constraint = m.ext[:constraints][:connection_flow_capacity]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            key = (connection(:connection_ab), node(:node_a), direction(:from_node), s, t)
+            invest_key = (connection(:connection_ab), s, t)
+            var_conn_flow = var_connection_flow[key...]
+            var_conn_inv_a = var_connections_invested_available[invest_key...]
+            expected_con = @build_constraint(var_conn_flow <= connection_capacity * var_conn_inv_a)
             con_key = (connection(:connection_ab), node(:node_a), direction(:from_node), [s], t)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
