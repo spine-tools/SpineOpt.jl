@@ -272,6 +272,30 @@ function connection_investment_stochastic_time_indices(
 end
 
 
+
+"""
+    node_investment_stochastic_time_indices(;<keyword arguments>)
+
+Stochastic time indexes for `storages_invested` with keyword arguments that allow filtering.
+"""
+function node_investment_stochastic_time_indices(
+    m::Model;
+    node=anything,
+    stochastic_scenario=anything,
+    temporal_block=anything,
+    t=anything,
+)
+    unique(
+        (node=n, stochastic_scenario=s, t=t1)
+        for (n, t1) in node_investment_time_indices(m; node=node, temporal_block=temporal_block, t=t)
+        for
+        structure in node__investment_stochastic_structure(node=n) if
+        structure in model__stochastic_structure(model=m.ext[:instance])
+        for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
+    )
+end
+
+
 """
     _generate_node_stochastic_scenario_weight(all_stochastic_DAGs::Dict, m...)
 

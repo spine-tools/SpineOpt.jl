@@ -28,8 +28,56 @@ function add_constraint_node_state_capacity!(m::Model)
     m.ext[:constraints][:node_state_capacity] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
-            +node_state[ng, s, t] <= +node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
-            # TODO: add investment decisions for storages
-        ) for ng in indices(node_state_cap) for (ng, s, t) in node_state_indices(m; node=ng)
+            +node_state[ng, s, t] 
+            <=
+            +node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
+            *(candidate_connections(connection=conn) != nothing ? 
+                + expr_sum(
+                    storages_invested_available[n, s, t1]
+                    for
+                    (n, s, t1) in
+                    storages_invested_available_indices(m; node=ng, stochastic_scenario=s, t=t_in_t(m; t_short=t));
+                    init=0,
+                ) : 1
+            )            
+        ) for (ng, s, t) in constraint_node_state_capacity_indices(m)
     )
+end
+
+
+"""
+    constraint_node_state_capacity_indices(m::Model; filtering_options...)
+
+Form the stochastic index array for the `:constraint_node_state_capacity` constraint.
+
+Uses stochastic path indices of the `node_state` variables. Keyword arguments can be used to filter the resulting 
+"""
+function constraint_node_state_capacity_indices(
+    m::Model;    
+    node=anything,    
+    stochastic_path=anything,
+    t=anything,
+)
+    unique(
+        (node=ng, stochastic_path=path, t=t)       
+        for (ng, s, t) in node_state_indices(m; node=ng)
+        for
+        path in active_stochastic_paths(unique(
+            ind.stochastic_scenario for ind in _constraint_node_state_capacity_indices(m, ng, t)            
+        )) if path == stochastic_path || path in stochastic_path
+    )
+end
+
+
+"""
+    _constraint_node_state_capacity_indices(model, node, t)
+
+Gather the indices of the relevant `node_state` and `storages_invested_available` variables.
+"""
+function _constraint_node_state_capacity_indices(m, node, t)
+    (m, node, t)
+    Iterators.flatten((
+        node_state_indices(m; node=node, t=t),        
+        storages_invested_available_indices(m; node=node, t=t_in_t(m; t_short=t))        
+    ))
 end
