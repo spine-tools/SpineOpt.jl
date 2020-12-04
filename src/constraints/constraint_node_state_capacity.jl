@@ -23,15 +23,19 @@
 Limit the maximum value of a `node_state` variable under `node_state_cap`, if it exists.
 """
 function add_constraint_node_state_capacity!(m::Model)
-    @fetch node_state = m.ext[:variables]
+    @fetch node_state, storages_invested_available = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:node_state_capacity] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
-            +node_state[ng, s, t] 
+            + expr_sum(
+                    +node_state[ng, s, t]            
+                    for (ng, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s, t=t);                    
+                    init=0,
+                )            
             <=
             +node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
-            *(candidate_connections(connection=conn) != nothing ? 
+            *(candidate_storages(node=ng) != nothing ? 
                 + expr_sum(
                     storages_invested_available[n, s, t1]
                     for
@@ -60,7 +64,7 @@ function constraint_node_state_capacity_indices(
 )
     unique(
         (node=ng, stochastic_path=path, t=t)       
-        for (ng, s, t) in node_state_indices(m; node=ng)
+        for (ng, s, t) in node_state_indices(m; node=node)
         for
         path in active_stochastic_paths(unique(
             ind.stochastic_scenario for ind in _constraint_node_state_capacity_indices(m, ng, t)            
