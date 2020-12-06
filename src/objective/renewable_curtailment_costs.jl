@@ -29,7 +29,7 @@ function renewable_curtailment_costs(m::Model, t1)
         m,
         expr_sum(
             curtailment_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t_short)] *
-            node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)] *
+            node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s) *
             (
                 units_available[u, s, t_long] *
                 unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_short)] *

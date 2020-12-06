@@ -31,7 +31,7 @@ function variable_om_costs(m::Model, t1)
             +unit_flow[u, n, d, s, t] *
             duration(t) *
             vom_cost[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-            node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)] for (u, n, d) in indices(vom_cost)
+            node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s) for (u, n, d) in indices(vom_cost)
             for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=n, direction=d) if end_(t) <= t1;
             init=0,
         )

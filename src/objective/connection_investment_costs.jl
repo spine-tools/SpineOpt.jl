@@ -30,7 +30,7 @@ function connection_investment_costs(m::Model, t1)
         +expr_sum(
             connections_invested[c, s, t] *
             connection_investment_cost[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)] *
-            connection_stochastic_scenario_weight[(connection=c, stochastic_scenario=s)]
+            connection_stochastic_scenario_weight(m; connection=c, stochastic_scenario=s)
             for (c, s, t) in connections_invested_available_indices(m; connection=indices(connection_investment_cost)) if end_(t) <= t1;
             init=0,
         )      
