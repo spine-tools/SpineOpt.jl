@@ -73,7 +73,7 @@ _internal_nodes(n::Object) = setdiff(members(n), n)
 """
     _connection_nodes(connection, node)
 
-An iterator over all nodes of given `connection` that have the commodity as given `node`.
+An iterator over all nodes of given `connection` that have the same commodity as given `node`.
 """
 _connection_nodes(connection, node) = (
     n for connection__node in (connection__from_node, connection__to_node) for
