@@ -131,8 +131,6 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-
-
     @testset "constraint_unit_state_transition" begin
         db_map = _load_test_data(url_in, test_data)
         object_parameter_values = [["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"]]
