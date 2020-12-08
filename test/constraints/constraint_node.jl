@@ -253,20 +253,62 @@
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map; log_level=0, optimize=false)
         var_node_state = m.ext[:variables][:node_state]
-        constraint = m.ext[:constraints][:node_state_capacity]
+        constraint = m.ext[:constraints][:node_state_capacity]        
         @test length(constraint) == 4
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             @testset for (name, cap) in node_capacity
-                n = node(Symbol(name))
-                key = (n, s, t)
-                var_n_st = var_node_state[key...]
+                n = node(Symbol(name))                
+                var_n_st_key = (n, s, t)
+                con_key = (n, [s], t)
+                var_n_st = var_node_state[var_n_st_key...]
                 expected_con = @build_constraint(var_n_st <= cap)
-                con = constraint[key...]
+                con = constraint[con_key...]
                 observed_con = constraint_object(con)
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
     end
+    @testset "constraint_connections_invested_transition" begin
+        db_map = _load_test_data(url_in, test_data)
+        candidate_storages = 1
+        node_capacity = 500
+        object_parameter_values = [
+            ["node", "node_c", "candidate_storages", candidate_storages],
+            ["node", "node_c", "node_state_cap", node_capacity],
+            ["node", "node_b", "has_state", true],
+        ]
+        relationships = [
+            ["node__investment_temporal_block", ["node_c", "hourly"]],
+            ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
+        ]
+        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_storages_invested_available = m.ext[:variables][:storages_invested_available]
+        var_storages_invested = m.ext[:variables][:storages_invested]
+        var_storages_decommissioned = m.ext[:variables][:storages_decommissioned]
+        constraint = m.ext[:constraints][:storages_invested_transition]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        s0 = stochastic_scenario(:parent)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s1, t1) in zip(scenarios, time_slices)
+            path = unique([s0, s1])
+            var_key1 = (node(:node_c), s1, t1)
+            var_s_inv_av1 = var_storages_invested_available[var_key1...]
+            var_s_inv_1 = var_storages_invested[var_key1...]
+            var_s_decom_1 = var_storages_decommissioned[var_key1...]
+            @testset for (n, t0, t1) in node_investment_dynamic_time_indices(m; node=node(:node_c), t_after=t1)
+                var_key0 = (n, s0, t0)
+                var_s_inv_av0 = get(var_storages_invested_available, var_key0, 0)
+                con_key = (n, path, t0, t1)
+                expected_con = @build_constraint(var_s_inv_av1 - var_s_inv_1 + var_s_decom_1 == var_s_inv_av0)
+                observed_con = constraint_object(constraint[con_key...])
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+
 end

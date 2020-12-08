@@ -38,7 +38,8 @@ import SpineOpt:
     connection_investment_dynamic_time_indices,
     node_dynamic_time_indices,
     node_stochastic_time_indices,
-    unit_stochastic_time_indices
+    unit_stochastic_time_indices,
+    node_investment_dynamic_time_indices
 
 _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
 
@@ -78,16 +79,16 @@ function _dismember_function(func)
 end
 
 @testset begin
-    include("data_structure/check_data_structure.jl")
-    include("data_structure/preprocess_data_structure.jl")
-    include("data_structure/generate_missing_items.jl")
-    include("data_structure/temporal_structure.jl")
-    include("data_structure/stochastic_structure.jl")
-    include("constraints/constraint_unit.jl")
+    #include("data_structure/check_data_structure.jl")
+    #include("data_structure/preprocess_data_structure.jl")
+    #include("data_structure/generate_missing_items.jl")
+    #include("data_structure/temporal_structure.jl")
+    #include("data_structure/stochastic_structure.jl")
+    #include("constraints/constraint_unit.jl")
     include("constraints/constraint_node.jl")
-    include("constraints/constraint_connection.jl")
-    include("objective/objective.jl")
-    include("util/misc.jl")
-    include("util/postprocess_results.jl")
-    include("run_spineopt.jl")
+    #include("constraints/constraint_connection.jl")
+    #include("objective/objective.jl")
+    #include("util/misc.jl")
+    #include("util/postprocess_results.jl")
+    #include("run_spineopt.jl")
 end
