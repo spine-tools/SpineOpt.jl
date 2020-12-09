@@ -300,10 +300,10 @@ function node_investment_stochastic_time_indices(
     unique(
         (node=n, stochastic_scenario=s, t=t1)
         for (n, t1) in node_investment_time_indices(m; node=node, temporal_block=temporal_block, t=t)
-        for
-        structure in node__investment_stochastic_structure(node=n) if
-        structure in model__stochastic_structure(model=m.ext[:instance])
-        for s in intersect(stochastic_time_map[structure][t1], stochastic_scenario)
+        for (m_, structure) in model__stochastic_structure(
+            model=m.ext[:instance], stochastic_structure=node__investment_stochastic_structure(node=n), _compact=false
+        )
+        for s in _stochastic_scenario_set(m, structure, t1, stochastic_scenario)    
     )
 end
 
