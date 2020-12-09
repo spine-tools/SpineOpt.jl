@@ -145,7 +145,6 @@ function create_model(mip_solver, use_direct_model=false, model_type=:spineopt_o
     m.ext[:values] = Dict{Symbol,Dict}()
     m.ext[:constraints] = Dict{Symbol,Dict}()
     m.ext[:marginals] = Dict{Symbol,Dict}()
-    m.ext[:stochastic_time_map] = Dict{Object,Dict}()
     m.ext[:outputs] = Dict()
     m.ext[:integer_variables] = []
     m.ext[:is_subproblem] = false

@@ -25,16 +25,13 @@ using JuMP
 using Clp
 using Cbc
 using Dates
-using TimeZones
 using SpineInterface
-using Suppressor
 using JSON
-using PowerSystems
 using Printf
 
 import Dates: CompoundPeriod
 import DataStructures: OrderedDict
-import LinearAlgebra: UniformScaling
+import LinearAlgebra: UniformScaling, BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 import JuMP: MOI, MOIU
 
 # Export utility

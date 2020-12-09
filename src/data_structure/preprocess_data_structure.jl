@@ -209,14 +209,66 @@ function generate_connection_has_lodf()
     end
 end
 
+function _build_ptdf(connections, nodes)
+    nodecount = length(nodes)
+    conncount = length(connections)
+    node_numbers = Dict{Object,Int32}(n => ix for (ix, n) in enumerate(nodes))
+
+    A = zeros(Float64, nodecount, conncount)  # incidence_matrix
+    inv_X = zeros(Float64, conncount, conncount)
+
+    for (ix, conn) in enumerate(connections)
+        # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
+        from_n, to_n = connection__from_node(connection=conn, direction=anything)
+        A[node_numbers[from_n], ix] = 1
+        A[node_numbers[to_n], ix] = -1
+        inv_X[ix, ix] = 1 / max(connection_reactance(connection=conn), 0.00001)
+    end
+
+    i = findfirst(n -> node_opf_type(node=n) == :node_opf_type_reference, nodes)
+    if i === nothing
+        error("slack node not found")
+    end
+    slack = nodes[i]
+    slack_position = node_numbers[slack]
+    B = gemm(
+        'N',
+        'T',
+        gemm('N', 'N', A[setdiff(1:end, slack_position), 1:end], inv_X),
+        A[setdiff(1:end, slack_position), 1:end],
+    )
+    B, bipiv, binfo = getrf!(B)
+    if binfo < 0
+        error("illegal argument in inputs")  # FIXME: come up with a better message
+    elseif binfo > 0
+        error("singular value in factorization, possibly there is an islanded bus")
+    end
+    S_ = gemm(
+        'N',
+        'N',
+        gemm('N', 'T', inv_X, A[setdiff(1:end, slack_position), :]),
+        getri!(B, bipiv),
+    )
+    hcat(S_[:, 1:(slack_position - 1)], zeros(conncount), S_[:, slack_position:end])
+end
+
 """
     _ptdf_values()
 
-Calculate the values of the `ptdf` parameters?
-
-TODO @JodyDillon: Check this docstring!
+Calculate the values of the `ptdf` parameter.
 """
 function _ptdf_values()
+    nodes = node(has_ptdf=true)
+    isempty(nodes) && return Dict()
+    connections = connection(has_ptdf=true)
+    ptdf = _build_ptdf(connections, nodes)
+    Dict(
+        (conn, n) => Dict(:ptdf => parameter_value(ptdf[i, j]))
+        for (i, conn) in enumerate(connections) for (j, n) in enumerate(nodes)
+    )
+end
+
+function _old_ptdf_values()
     ps_busses_by_node = Dict(
         n => Bus(
             number=i,

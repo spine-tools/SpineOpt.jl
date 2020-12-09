@@ -31,7 +31,7 @@ function operating_costs(m::Model, t1)
             unit_flow[u, n, d, s, t] *
             duration(t) *
             operating_cost[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-            node_stochastic_scenario_weight[(node=ng, stochastic_scenario=s)] for (u, ng, d) in indices(operating_cost)
+            node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s) for (u, ng, d) in indices(operating_cost)
             for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d) if end_(t) <= t1;
             init=0,
         )

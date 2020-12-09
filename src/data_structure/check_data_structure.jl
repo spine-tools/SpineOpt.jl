@@ -18,7 +18,7 @@
 #############################################################################
 
 # NOTE: I see some small problem here, related to doing double work.
-# For example, checking that the stochastic DAGs have no loops requires to generate those DAGs, 
+# For example, checking that the stochastic dags have no loops requires to generate those dags, 
 # but we can't generate them just for checking and then throw them away, can we?
 # So I propose we do that type of checks when we actually generate the corresponding structure.
 # And here, we just perform simpler checks that can be done directly on the contents of the db, 

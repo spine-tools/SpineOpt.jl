@@ -85,9 +85,10 @@ function rerun_spineopt_mp(
     m.ext[:is_sub_problem] = true
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
-    @timelog log_level 2 "Creating operations model temporal structures..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating master problem temporal structure..." generate_temporal_structure!(mp)
-    @timelog log_level 2 "Creating model stochastic structures..." generate_stochastic_structure(m, mp)
+    @timelog log_level 2 "Creating operations temporal structure..." generate_temporal_structure!(m)
+    @timelog log_level 2 "Creating master temporal structure..." generate_temporal_structure!(mp)
+    @timelog log_level 2 "Creating operations stochastic structure..." generate_stochastic_structure(m)
+    @timelog log_level 2 "Creating master stochastic structure..." generate_stochastic_structure(mp)
     @log log_level 1 "Window 1: $(current_window(m))"
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
     init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
