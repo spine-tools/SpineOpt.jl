@@ -24,13 +24,12 @@ Compare the defined sets of `ObjectClass`, `RelationshipClass` and parameter def
 `spineopt_template.json` and generates missing items.
 """
 function generate_missing_items(mod=@__MODULE__)
-    template = _template()
     missing_items =
         Dict("object classes" => String[], "relationship classes" => String[], "parameter definitions" => String[])
     classes = Dict{Symbol,Union{ObjectClass,RelationshipClass}}(class.name => class for class in object_class(mod))
     merge!(classes, Dict(class.name => class for class in relationship_class(mod)))
     parameters = Set(param.name for param in parameter(mod))
-    for (name,) in template["object_classes"]
+    for (name,) in _template["object_classes"]
         sym_name = Symbol(name)
         sym_name in keys(classes) && continue
         push!(missing_items["object classes"], name)
@@ -41,7 +40,7 @@ function generate_missing_items(mod=@__MODULE__)
             export $sym_name
         end
     end
-    for (name, object_class_names) in template["relationship_classes"]
+    for (name, object_class_names) in _template["relationship_classes"]
         sym_name = Symbol(name)
         sym_name in keys(classes) && continue
         push!(missing_items["relationship classes"], name)
@@ -52,7 +51,7 @@ function generate_missing_items(mod=@__MODULE__)
         end
     end
     d = Dict{Symbol,Array{Pair{Union{ObjectClass,RelationshipClass},AbstractParameterValue},1}}()
-    for (class_name, name, default_value) in [template["object_parameters"]; template["relationship_parameters"]]
+    for (class_name, name, default_value) in [_template["object_parameters"]; _template["relationship_parameters"]]
         sym_name = Symbol(name)
         sym_name in parameters && continue
         push!(missing_items["parameter definitions"], string(class_name, ".", name))
