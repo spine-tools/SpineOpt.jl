@@ -758,7 +758,6 @@
             end
         end
     end
-
     @testset "constraint_unit_lifetime_mp" begin
         candidate_units = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")

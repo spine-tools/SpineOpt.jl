@@ -284,6 +284,42 @@
             end
         end
     end
+    @testset "constraint_node_state_capacity_investments" begin
+        db_map = _load_test_data(url_in, test_data)
+        candidate_storages = 1
+        node_capacity = 400
+        object_parameter_values = [            
+            ["node", "node_c", "node_state_cap", node_capacity],            
+            ["node", "node_c", "has_state", true],
+            ["node", "node_c", "candidate_storages", candidate_storages],                      
+        ]
+        relationships = [
+            ["node__investment_temporal_block", ["node_c", "hourly"]],
+            ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
+        ]
+        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_node_state = m.ext[:variables][:node_state]
+        var_storages_invested_available = m.ext[:variables][:storages_invested_available]
+        constraint = m.ext[:constraints][:node_state_capacity]        
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)            
+            n = node(:node_c)
+            var_n_st_key = (n, s, t)
+            var_s_in_av_key = (n, s, t)
+            con_key = (n, [s], t)
+            var_n_st = var_node_state[var_n_st_key...]
+            var_s_inv_av = var_storages_invested_available[var_s_in_av_key...]
+            expected_con = @build_constraint(var_n_st <= node_capacity * var_s_inv_av)
+            con = constraint[con_key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)                        
+        end
+    end
     @testset "constraint_storages_invested_available" begin
         db_map = _load_test_data(url_in, test_data)
         candidate_storages = 1
