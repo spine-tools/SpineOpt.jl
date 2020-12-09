@@ -219,7 +219,7 @@ end
 The required length of the included history based on parameter values that impose delays as a `Dates.Period`.
 """
 function _required_history_duration(instance::Object)
-    delay_params = (min_up_time, min_down_time, connection_flow_delay, unit_investment_lifetime, connection_investment_lifetime)
+    delay_params = (min_up_time, min_down_time, connection_flow_delay, unit_investment_lifetime, connection_investment_lifetime, storage_investment_lifetime)
     max_vals = (maximum_parameter_value(p) for p in delay_params)
     init = _model_duration_unit(instance)(1)  # Dynamics always require at least 1 duration unit of history
     reduce(max, (val for val in max_vals if val !== nothing); init=init)
@@ -431,6 +431,21 @@ function connection_investment_time_indices(m::Model; connection=anything, tempo
     )
 end
 
+
+"""
+    node_investment_time_indices(m::Model;<keyword arguments>)
+
+Generate an `Array` of all valid `(node, t)` `NamedTuples` for `node` investment variables (storages) with filter keywords.
+"""
+function node_investment_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
+    unique(
+        (node=n, t=t1)
+        for (n, tb) in node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false) if tb in model__temporal_block(model=m.ext[:instance])
+        for t1 in time_slice(m; temporal_block=tb, t=t)
+    )
+end
+
+
 """
     unit_investment_dynamic_time_indices(m::Model;<keyword arguments>)
 
@@ -461,6 +476,24 @@ function connection_investment_dynamic_time_indices(m::Model; connection=anythin
         (conn, tb) in connection_investment_time_indices(
             m;
             connection=conn,
+            t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
+        )
+    )
+end
+
+
+"""
+    node_investment_dynamic_time_indices(m::Model;<keyword arguments>)
+
+Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` for `node` investment variables with filters.
+"""
+function node_investment_dynamic_time_indices(m::Model; node=anything, t_before=anything, t_after=anything)
+    unique(
+        (node=n, t_before=tb, t_after=ta) for (n, ta) in node_investment_time_indices(m; node=node, t=t_after)
+        for
+        (node, tb) in node_investment_time_indices(
+            m;
+            node=n,
             t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
         )
     )

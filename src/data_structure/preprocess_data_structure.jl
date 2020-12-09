@@ -544,6 +544,14 @@ function expand_model__default_investment_temporal_block()
             for tb in model__default_investment_temporal_block(model=anything)
         ],
     )
+    add_relationships!(
+        node__investment_temporal_block,
+        [
+            (node=n, temporal_block=tb)
+            for n in setdiff(indices(candidate_storages), node__investment_temporal_block(temporal_block=anything))
+            for tb in model__default_investment_temporal_block(model=anything)
+        ],
+    )
 end
 
 
@@ -576,6 +584,15 @@ function expand_model__default_investment_stochastic_structure()
             (connection=conn, stochastic_structure=ss)
             for
             conn in setdiff(indices(candidate_connections), connection__investment_stochastic_structure(stochastic_structure=anything))
+            for ss in model__default_investment_stochastic_structure(model=anything)
+        ],
+    )
+    add_relationships!(
+        node__investment_stochastic_structure,
+        [
+            (node=n, stochastic_structure=ss)
+            for
+            n in setdiff(indices(candidate_storages), node__investment_stochastic_structure(stochastic_structure=anything))
             for ss in model__default_investment_stochastic_structure(model=anything)
         ],
     )
@@ -688,6 +705,22 @@ function generate_benders_structure()
         end
     end
 
+
+    node__benders_iteration = RelationshipClass(:node__benders_iteration, [:node, :benders_iteration], [])
+    storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node__benders_iteration])
+    storages_invested_available_bi = Parameter(:storages_invested_available_bi, [node__benders_iteration])
+    starting_fix_storages_invested_available = Parameter(:starting_fix_storages_invested_available, [node])
+
+    for n in indices(candidate_storages)
+        node__benders_iteration.parameter_values[(n, current_bi)] = Dict()
+        node__benders_iteration.parameter_values[(n, current_bi)][:storages_invested_available_bi] = parameter_value(0)
+        node__benders_iteration.parameter_values[(n, current_bi)][:storages_invested_available_mv] = parameter_value(0)
+        if haskey(node.parameter_values[n], :fix_storages_invested_available)
+            node.parameter_values[n][:starting_fix_storages_invested_available] =
+                node.parameter_values[n][:fix_storages_invested_available]
+        end
+    end
+
     @eval begin
         benders_iteration = $benders_iteration
         current_bi = $current_bi
@@ -700,16 +733,24 @@ function generate_benders_structure()
         connections_invested_available_mv = $connections_invested_available_mv
         connections_invested_available_bi = $connections_invested_available_bi               
         starting_fix_connections_invested_available = $starting_fix_connections_invested_available
+        node__benders_iteration = $node__benders_iteration
+        storages_invested_available_mv = $storages_invested_available_mv
+        storages_invested_available_bi = $storages_invested_available_bi               
+        starting_fix_storages_invested_available = $starting_fix_storages_invested_available
         export current_bi
         export benders_iteration
         export sp_objective_value_bi
         export unit__benders_iteration
         export units_available_mv
-        export units_invested_available_bi        
+        export units_invested_available_bi
         export starting_fix_units_invested_available
         export connection__benders_iteration
         export connections_invested_available_mv
-        export connections_invested_available_bi        
-        export starting_fix_connections_invested_available        
+        export connections_invested_available_bi
+        export starting_fix_connections_invested_available
+        export node__benders_iteration
+        export storages_invested_available_mv
+        export storages_invested_available_bi
+        export starting_fix_storages_invested_available
     end
 end

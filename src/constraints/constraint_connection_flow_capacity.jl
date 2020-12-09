@@ -124,4 +124,3 @@ function _constraint_connection_flow_capacity_indices(m, connection, node, direc
         connections_invested_available_indices(m; connection=connection, t=t_in_t(m; t_short=t))
     ))
 end
-

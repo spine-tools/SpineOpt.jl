@@ -100,11 +100,10 @@ function write_system_components_file(file_name="system_components.md")
 end
 
 function print_constraint(constraint)
+    io = open(joinpath(@__DIR__, "constraint_debug.txt"), "w")
     for (inds, con) in constraint
-        print(inds)
-        println()
-        print(con)
-        println()
-        println()
+        print(io, inds, "\n")        
+        print(io, con, "\n\n")
     end
+    close(io);
 end

@@ -52,6 +52,24 @@ function process_master_problem_solution(mp)
         connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_bi] =
             parameter_value(TimeSeries(time_indices, vals, false, false))
     end
+    for n in indices(candidate_storages)
+        time_indices = [
+            start(inds.t)
+            for inds in storages_invested_available_indices(mp; node=n) if end_(inds.t) <= end_(current_window(mp))
+        ]
+        vals = [
+            mp.ext[:values][:storages_invested_available][inds]
+            for inds in storages_invested_available_indices(mp; node=n) if end_(inds.t) <= end_(current_window(mp))
+        ]
+        node.parameter_values[n][:fix_storages_invested_available] =
+            parameter_value(TimeSeries(time_indices, vals, false, false))
+        if !haskey(node__benders_iteration.parameter_values, (n, current_bi))
+            node__benders_iteration.parameter_values[(n, current_bi)] = Dict()
+        end
+        node__benders_iteration.parameter_values[(n, current_bi)][:storages_invested_available_bi] =
+            parameter_value(TimeSeries(time_indices, vals, false, false))
+    end
+
 end
 
 
@@ -79,6 +97,14 @@ function unfix_mp_variables()
             delete!(connection.parameter_values[c], :fix_connections_invested_available)
         end
     end
+    for n in indices(candidate_storages)
+        if haskey(node.parameter_values[n], :starting_fix_storages_invested_available)
+            node.parameter_values[n][:fix_storages_invested_available] =
+                node.parameter_values[n][:starting_fix_storages_invested_available]
+        else
+            delete!(node.parameter_values[n], :fix_storages_invested_available)
+        end
+    end
 end
 
 
@@ -104,6 +130,13 @@ function save_sp_marginal_values(m)
         time_indices = [start(ind.t) for ind in inds if ind.connection == c]
         vals = [m.ext[:values][:bound_connections_invested_available][ind] for ind in inds if ind.connection == c]
         connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_mv] =
+            parameter_value(TimeSeries(time_indices, vals, false, false))
+    end
+    inds = keys(m.ext[:values][:bound_storages_invested_available])
+    for n in indices(candidate_storages)
+        time_indices = [start(ind.t) for ind in inds if ind.node == n]
+        vals = [m.ext[:values][:bound_storages_invested_available][ind] for ind in inds if ind.node == n]
+        node__benders_iteration.parameter_values[(n, current_bi)][:storages_invested_available_mv] =
             parameter_value(TimeSeries(time_indices, vals, false, false))
     end
 end

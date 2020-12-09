@@ -38,7 +38,8 @@ import SpineOpt:
     connection_investment_dynamic_time_indices,
     node_dynamic_time_indices,
     node_stochastic_time_indices,
-    unit_stochastic_time_indices
+    unit_stochastic_time_indices,
+    node_investment_dynamic_time_indices
 
 _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
 
