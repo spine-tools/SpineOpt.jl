@@ -84,91 +84,6 @@
             Dict("type" => "duration", "data" => "1h"),
         ]],
     )
-
-    @testset "constraint_unit_constraint_node_connection" begin
-        @testset for sense in ("==", ">=", "<=")
-            db_map = _load_test_data(url_in, test_data)
-            rhs = 40
-            unit_flow_coefficient = 25
-            connection_flow_coefficient = 25
-            demand_coefficient = 45            
-            node_state_coefficient = 55
-            units_on_coefficient = 20
-            units_started_up_coefficient = 35
-            demand = 150
-
-            objects = [
-                ["unit_constraint", "constraint_x"],
-                ["unit", "unit_c"],                
-            ]
-            relationships = [
-                ["unit__to_node__unit_constraint", ["unit_c", "node_c", "constraint_x"]],                    
-                ["unit__unit_constraint", ["unit_c", "constraint_x"]],
-                ["connection__to_node__unit_constraint", ["connection_ab", "node_b", "constraint_x"]],                
-                ["node__unit_constraint", ["node_b", "constraint_x"]],
-                ["units_on__temporal_block", ["unit_c", "hourly"]],
-                ["units_on__stochastic_structure", ["unit_c", "stochastic"]],                
-                ["unit__to_node", ["unit_c", "node_c"]],            
-            ]
-            object_parameter_values = [
-                ["unit_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
-                ["unit_constraint", "constraint_x", "right_hand_side", rhs],
-                ["node", "node_b", "demand", demand],
-                ["node", "node_b", "has_state", true]
-            ]
-            relationship_parameter_values = [
-                [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient],                
-                [relationships[2]..., "units_on_coefficient", units_on_coefficient],
-                [relationships[2]..., "units_started_up_coefficient", units_started_up_coefficient],
-                [relationships[3]..., "connection_to_flow_uc_coefficient", connection_flow_coefficient],
-                [relationships[4]..., "demand_uc_coefficient", demand_coefficient],
-                [relationships[4]..., "node_state_uc_coefficient", node_state_coefficient],
-            ]
-            db_api.import_data(
-                db_map;
-                objects=objects,
-                relationships=relationships,
-                object_parameter_values=object_parameter_values,
-                relationship_parameter_values=relationship_parameter_values,
-            )
-            db_map.commit_session("Add test data")
-            m = run_spineopt(db_map; log_level=0, optimize=false)
-            var_unit_flow = m.ext[:variables][:unit_flow]
-            var_units_on = m.ext[:variables][:units_on]
-            var_units_started_up = m.ext[:variables][:units_started_up]
-            var_connection_flow = m.ext[:variables][:connection_flow]
-            var_node_state = m.ext[:variables][:node_state]
-            constraint = m.ext[:constraints][:unit_constraint]
-            @test length(constraint) == 1
-            key_a = (unit(:unit_c), node(:node_c), direction(:to_node))
-            key_b = (connection(:connection_ab), node(:node_b), direction(:to_node))
-            
-            s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-            t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-            t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
-            expected_con_ref = SpineOpt.sense_constraint(
-                m,
-                +unit_flow_coefficient *
-                (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]) +
-                2 * connection_flow_coefficient * var_connection_flow[key_b..., s_parent, t2h] +
-                units_on_coefficient *
-                (var_units_on[unit(:unit_c), s_parent, t1h1] + var_units_on[unit(:unit_c), s_child, t1h2]) +
-                units_started_up_coefficient * (
-                    var_units_started_up[unit(:unit_c), s_parent, t1h1] +
-                    var_units_started_up[unit(:unit_c), s_child, t1h2]
-                )
-                + 2 * node_state_coefficient * var_node_state[node(:node_b), s_parent, t2h] 
-                + 2 * demand_coefficient * demand,
-                Symbol(sense),
-                rhs,
-            )            
-            expected_con = constraint_object(expected_con_ref)
-            con_key = (unit_constraint(:constraint_x), [s_parent, s_child], t2h)            
-            observed_con = constraint_object(constraint[con_key...])                        
-            @test _is_constraint_equal(observed_con, expected_con)            
-        end
-    end
-
     @testset "constraint_connection_flow_capacity" begin
         connection_capacity = 200
         db_map = _load_test_data(url_in, test_data)
@@ -821,5 +736,89 @@
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
-    end    
+    end
+    @testset "constraint_unit_constraint_node_connection" begin
+        @testset for sense in ("==", ">=", "<=")
+            db_map = _load_test_data(url_in, test_data)
+            rhs = 40
+            unit_flow_coefficient = 25
+            connection_flow_coefficient = 25
+            demand_coefficient = 45            
+            node_state_coefficient = 55
+            units_on_coefficient = 20
+            units_started_up_coefficient = 35
+            demand = 150
+
+            objects = [
+                ["unit_constraint", "constraint_x"],
+                ["unit", "unit_c"],                
+            ]
+            relationships = [
+                ["unit__to_node__unit_constraint", ["unit_c", "node_c", "constraint_x"]],                    
+                ["unit__unit_constraint", ["unit_c", "constraint_x"]],
+                ["connection__to_node__unit_constraint", ["connection_ab", "node_b", "constraint_x"]],                
+                ["node__unit_constraint", ["node_b", "constraint_x"]],
+                ["units_on__temporal_block", ["unit_c", "hourly"]],
+                ["units_on__stochastic_structure", ["unit_c", "stochastic"]],                
+                ["unit__to_node", ["unit_c", "node_c"]],            
+            ]
+            object_parameter_values = [
+                ["unit_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
+                ["unit_constraint", "constraint_x", "right_hand_side", rhs],
+                ["node", "node_b", "demand", demand],
+                ["node", "node_b", "has_state", true]
+            ]
+            relationship_parameter_values = [
+                [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient],                
+                [relationships[2]..., "units_on_coefficient", units_on_coefficient],
+                [relationships[2]..., "units_started_up_coefficient", units_started_up_coefficient],
+                [relationships[3]..., "connection_flow_coefficient", connection_flow_coefficient],
+                [relationships[4]..., "demand_coefficient", demand_coefficient],
+                [relationships[4]..., "node_state_coefficient", node_state_coefficient],
+            ]
+            db_api.import_data(
+                db_map;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            db_map.commit_session("Add test data")
+            m = run_spineopt(db_map; log_level=0, optimize=false)
+            var_unit_flow = m.ext[:variables][:unit_flow]
+            var_units_on = m.ext[:variables][:units_on]
+            var_units_started_up = m.ext[:variables][:units_started_up]
+            var_connection_flow = m.ext[:variables][:connection_flow]
+            var_node_state = m.ext[:variables][:node_state]
+            constraint = m.ext[:constraints][:unit_constraint]
+            @test length(constraint) == 1
+            key_a = (unit(:unit_c), node(:node_c), direction(:to_node))
+            key_b = (connection(:connection_ab), node(:node_b), direction(:to_node))
+            
+            s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
+            t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
+            t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+            expected_con_ref = SpineOpt.sense_constraint(
+                m,
+                +unit_flow_coefficient *
+                (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]) +
+                2 * connection_flow_coefficient * var_connection_flow[key_b..., s_parent, t2h] +
+                units_on_coefficient *
+                (var_units_on[unit(:unit_c), s_parent, t1h1] + var_units_on[unit(:unit_c), s_child, t1h2]) +
+                units_started_up_coefficient * (
+                    var_units_started_up[unit(:unit_c), s_parent, t1h1] +
+                    var_units_started_up[unit(:unit_c), s_child, t1h2]
+                )
+                + 2 * node_state_coefficient * var_node_state[node(:node_b), s_parent, t2h] 
+                + 2 * demand_coefficient * demand,
+                Symbol(sense),
+                rhs,
+            )            
+            expected_con = constraint_object(expected_con_ref)
+            con_key = (unit_constraint(:constraint_x), [s_parent, s_child], t2h)            
+            observed_con = constraint_object(constraint[con_key...])                        
+            @test _is_constraint_equal(observed_con, expected_con)     
+            return       
+        end
+    end
 end

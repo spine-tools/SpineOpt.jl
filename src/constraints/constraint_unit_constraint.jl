@@ -25,14 +25,6 @@ Custom constraint for `units`.
 function add_constraint_unit_constraint!(m::Model)       
     @fetch unit_flow_op, unit_flow, units_on, units_started_up, connection_flow, node_state = m.ext[:variables]
     t0 = startref(current_window(m))
-    #=
-    for (uc, s, t) in constraint_unit_constraint_indices(m)
-        @info "indices" uc s t
-        for n in node__unit_constraint(unit_constraint=uc)
-            @info "demand" n demand(node=n, stochastic_scenario=s, analysis_time=t0, t=t)
-        end
-    end
-    =#
     m.ext[:constraints][:unit_constraint] = Dict(
         (unit_constraint=uc, stochastic_path=s, t=t) => sense_constraint(
             m,
@@ -150,7 +142,7 @@ function add_constraint_unit_constraint!(m::Model)
             )
             +expr_sum(
                 +connection_flow[c, n, d, s, t_short] *
-                connection_from_flow_uc_coefficient[(
+                connection_flow_coefficient[(
                     connection=c,
                     node=n,
                     unit_constraint=uc,                    
@@ -158,7 +150,7 @@ function add_constraint_unit_constraint!(m::Model)
                     analysis_time=t0,
                     t=t_short,
                 )] *
-                duration(t_short) for (c, n, uc) in indices(connection_from_flow_uc_coefficient; unit_constraint=uc)
+                duration(t_short) for (c, n) in connection__from_node__unit_constraint(unit_constraint=uc)                
                 for
                 (c, n, d, s, t_short) in connection_flow_indices(
                     m;
@@ -172,7 +164,7 @@ function add_constraint_unit_constraint!(m::Model)
             ) 
             +expr_sum(
                 +connection_flow[c, n, d, s, t_short] *
-                connection_to_flow_uc_coefficient[(
+                connection_flow_coefficient[(
                     connection=c,
                     node=n,
                     unit_constraint=uc,                    
@@ -180,7 +172,7 @@ function add_constraint_unit_constraint!(m::Model)
                     analysis_time=t0,
                     t=t_short,
                 )] *
-                duration(t_short) for (c, n, uc) in indices(connection_to_flow_uc_coefficient; unit_constraint=uc)
+                duration(t_short) for (c, n) in connection__to_node__unit_constraint(unit_constraint=uc)
                 for
                 (c, n, d, s, t_short) in connection_flow_indices(
                     m;
@@ -194,14 +186,14 @@ function add_constraint_unit_constraint!(m::Model)
             ) 
             +expr_sum(
                 +node_state[n, s, t_short] *
-                node_state_uc_coefficient[(                    
+                node_state_coefficient[(                    
                     node=n,
                     unit_constraint=uc,                    
                     stochastic_scenario=s,
                     analysis_time=t0,
                     t=t_short,
                 )] *
-                duration(t_short) for n in indices(node_state_uc_coefficient; unit_constraint=uc)
+                duration(t_short) for n in indices(node_state_coefficient; unit_constraint=uc)
                 for
                 (n, s, t_short) in node_state_indices(
                     m;                    
@@ -213,7 +205,7 @@ function add_constraint_unit_constraint!(m::Model)
             )
             +expr_sum(
                 +demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]                 
-                    *demand_uc_coefficient[(node=n, unit_constraint=uc, stochastic_scenario=s, analysis_time=t0, t=t)]
+                    *demand_coefficient[(node=n, unit_constraint=uc, stochastic_scenario=s, analysis_time=t0, t=t)]
                     *duration(t_short)
                 for n in node__unit_constraint(unit_constraint=uc)
                 for (ns, s, t_short) in node_stochastic_time_indices(m; node=n, stochastic_scenario=s, t=t_in_t(m; t_long=t))
