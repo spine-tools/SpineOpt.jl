@@ -24,6 +24,7 @@ For connection networks with monitored and has_ptdf set to true, set the steady 
 """
 function add_constraint_connection_flow_ptdf!(m::Model)
     @fetch connection_flow, node_injection = m.ext[:variables]
+    t0 = startref(current_window(m))
     m.ext[:constraints][:connection_flow_ptdf] = Dict(
         (connection=conn, node=n_to, stochastic_path=s, t=t) => @constraint(
             m,
@@ -38,7 +39,16 @@ function add_constraint_connection_flow_ptdf!(m::Model)
                 (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t) if
                 !isapprox(ptdf(connection=conn, node=n), 0; atol=node_ptdf_threshold(node=n));
                 init=0,
-            )
+            ) # this is the increase in flow on the line for all candidate connections that are not invested in
+            +expr_sum(
+                +get(connection_flow, (candidate_connection, n_to, direction(:to_node), s, t), 0) -
+                get(connection_flow, (candidate_connection, n_to, direction(:from_node), s, t), 0)
+                for candidate_connection in indices(candidate_connections) if candidate_connection != conn
+                for n_to in connection__to_node(connection=candidate_connection)
+                for s in s;
+                init=0,
+            ) * (1 - connections_invested_available_mp[(connection=candidate_connection, stochastic_scenario=s, analysis_time=t0, t=t))])
+              * lodf(connection1=candidate_connection, connection2=conn)
         ) for (conn, n_to, s, t) in constraint_connection_flow_ptdf_indices(m)
     )
 end
@@ -85,5 +95,46 @@ function _constraint_connection_flow_ptdf_indices(m, connection, node_to, direct
             ind for (conn, n_inj) in indices(ptdf; connection=connection)
             for ind in node_stochastic_time_indices(m; node=n_inj, t=t)
         ),  # `n_inj`
+    ))
+end
+
+
+"""
+    _constraint_connection_flow_ptdf_lowest_resolution_t(m::Model, conn::Object)
+
+Find the lowest resolution `t`s between the `connection_flow` variables of the `conn` connection and
+all candidate connections candidate_conn.
+"""
+function _constraint_connection_flow_ptdf_lowest_resolution_t(m, conn, t)
+    t_lowest_resolution(
+        vcat(
+            [ind.t for ind in connection_flow_indices(m; connection=conn, last(connection__from_node(connection=conn))..., t=t)],
+            [ind.t for candidate_connection in indices(candidate_connections) if candidate_connection != conn
+            for ind in connection_flow_indices(m; connection=candidate_connections, last(connection__from_node(connection=conn))..., t=t)],
+        )
+    )
+end
+
+"""
+    _constraint_connection_flow_ptdf_indices(conn, t)
+
+Gather the indices of the `connection_flow` variable for the connection `conn` and all investment
+candidate connections `candidate_connection` on time slice `t`.
+"""
+function _constraint_connection_flow_ptdf_indices(m, conn, t)
+    Iterators.flatten((
+        connection_flow_indices(
+            m;
+            connection=conn,
+            last(connection__from_node(connection=conn))...,
+            t=t_in_t(m; t_long=t),
+        ),
+        [connection_flow_indices(
+            m;
+            connection=candidate_connection,
+            last(connection__from_node(connection=candidate_connection))...,
+            t=t_in_t(m; t_long=t),
+            ) for candidate_connection in indices(candidate_connections) if candidate_connections != conn
+        ],  # Excess flow due to non-investment in candidate connection
     ))
 end
