@@ -380,8 +380,8 @@ function generate_lodf()
             (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont)) for                        
             conn_cont in connection()
         )
-        if (has_lodf(connection=conn_cont) == true && connection_contingency(connection=conn_cont) == true)
-             || (has_ptdf(connection=conn_cont) = true && is_candidate(connection=conn_cont) == true)
+        if conn_cont in connection(has_lodf=true, connection_contingency=true) ||
+                conn_cont in connection(has_ptdf=true, is_candidate=true)            
         for
         (conn_mon, lodf_trial) in
         ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(connection_monitored=true, has_lodf=true)) if
