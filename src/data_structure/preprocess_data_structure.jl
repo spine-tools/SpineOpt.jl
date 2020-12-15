@@ -25,6 +25,7 @@ Preprocess input data structure for SpineOpt.
 Runs a number of other functions processing different aspecs of the input data in sequence.
 """
 function preprocess_data_structure(; log_level=3)
+    generate_is_cadidate()
     expand_model_default_relationships()
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
@@ -35,6 +36,28 @@ function preprocess_data_structure(; log_level=3)
     generate_network_components()
     generate_variable_indexing_support()
     generate_benders_structure()
+end
+
+
+"""
+    generate_is_candidate()
+
+Generate `is_candidate` for the `node`, `unit` and `connection` `ObjectClass`es.
+"""
+function generate_is_cadidate()
+    for c in indices(candidate_connections)        
+        connection.parameter_values[c][:is_candidate] = true        
+    end
+    for u in indices(candidate_units)        
+        unit.parameter_values[u][:is_candidate] = true        
+    end
+    for n in indices(candidate_storages)        
+        node.parameter_values[n][:is_candidate] = true        
+    end
+    is_candidate = Parameter(:is_candidate, [node, unit, connection])    
+    @eval begin
+        is_candidate = $is_candidate
+    end
 end
 
 
@@ -354,9 +377,11 @@ function generate_lodf()
         (conn_cont, conn_mon) => Dict(:lodf => parameter_value(lodf_trial))
         for
         (conn_cont, lodf_fn, tolerance) in (
-            (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont)) for
-            conn_cont in connection(connection_contingency=true, has_lodf=true)
+            (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont)) for                        
+            conn_cont in connection()
         )
+        if (has_lodf(connection=conn_cont) == true && connection_contingency(connection=conn_cont) == true)
+             || (has_ptdf(connection=conn_cont) = true && is_candidate(connection=conn_cont) == true)
         for
         (conn_mon, lodf_trial) in
         ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(connection_monitored=true, has_lodf=true)) if
@@ -693,18 +718,19 @@ function generate_benders_structure()
     connection__benders_iteration = RelationshipClass(:connection__benders_iteration, [:connection, :benders_iteration], [])
     connections_invested_available_mv = Parameter(:connections_invested_available_mv, [connection__benders_iteration])
     connections_invested_available_bi = Parameter(:connections_invested_available_bi, [connection__benders_iteration])
+    connections_invested_available_mp = Parameter(:connections_invested_available_mp, [connection])
     starting_fix_connections_invested_available = Parameter(:starting_fix_connections_invested_available, [connection])
 
     for c in indices(candidate_connections)
         connection__benders_iteration.parameter_values[(c, current_bi)] = Dict()
         connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_bi] = parameter_value(0)
         connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_mv] = parameter_value(0)
+        connection.parameter_values[c][:connections_invested_available_mp] = parameter_value(0)
         if haskey(connection.parameter_values[c], :fix_connections_invested_available)
             connection.parameter_values[c][:starting_fix_connections_invested_available] =
                 connection.parameter_values[c][:fix_connections_invested_available]
         end
     end
-
 
     node__benders_iteration = RelationshipClass(:node__benders_iteration, [:node, :benders_iteration], [])
     storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node__benders_iteration])
@@ -731,7 +757,8 @@ function generate_benders_structure()
         starting_fix_units_invested_available = $starting_fix_units_invested_available
         connection__benders_iteration = $connection__benders_iteration
         connections_invested_available_mv = $connections_invested_available_mv
-        connections_invested_available_bi = $connections_invested_available_bi               
+        connections_invested_available_bi = $connections_invested_available_bi
+        connections_invested_available_mp = $connections_invested_available_mp
         starting_fix_connections_invested_available = $starting_fix_connections_invested_available
         node__benders_iteration = $node__benders_iteration
         storages_invested_available_mv = $storages_invested_available_mv
@@ -747,6 +774,7 @@ function generate_benders_structure()
         export connection__benders_iteration
         export connections_invested_available_mv
         export connections_invested_available_bi
+        export connections_invested_available_mp
         export starting_fix_connections_invested_available
         export node__benders_iteration
         export storages_invested_available_mv
