@@ -103,8 +103,8 @@ function constraint_connection_flow_lodf_indices(
 )
     unique(
         (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=path, t=t)
-        for
-        (conn_cont, conn_mon) in indices(lodf; connection1=connection_contingency, connection2=connection_monitored)
+        for conn_cont in connection(connection_contingency=true, has_lodf=true)
+        for conn_mon in connection(connection_monitored=true)
         for t in _constraint_connection_flow_lodf_lowest_resolution_t(m, conn_cont, conn_mon, t)
         for
         path in active_stochastic_paths(unique(

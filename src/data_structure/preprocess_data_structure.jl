@@ -46,13 +46,13 @@ Generate `is_candidate` for the `node`, `unit` and `connection` `ObjectClass`es.
 """
 function generate_is_cadidate()
     for c in indices(candidate_connections)        
-        connection.parameter_values[c][:is_candidate] = true        
+        connection.parameter_values[c][:is_candidate] = parameter_value(true)
     end
     for u in indices(candidate_units)        
-        unit.parameter_values[u][:is_candidate] = true        
+        unit.parameter_values[u][:is_candidate] = parameter_value(true)
     end
     for n in indices(candidate_storages)        
-        node.parameter_values[n][:is_candidate] = true        
+        node.parameter_values[n][:is_candidate] = parameter_value(true)
     end
     is_candidate = Parameter(:is_candidate, [node, unit, connection])    
     @eval begin

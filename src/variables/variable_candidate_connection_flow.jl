@@ -62,7 +62,7 @@ function add_variable_candidate_connection_flow!(m::Model)
     t0 = startref(current_window(m))
     add_variable!(
         m,
-        :cadidate_connection_flow,
+        :candidate_connection_flow,
         candidate_connection_flow_indices;
         lb=x -> 0,
         fix_value=x -> fix_candidate_connection_flow(

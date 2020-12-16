@@ -36,9 +36,9 @@ function add_constraint_candidate_connection_flow_base_flow!(m::Model)
     m.ext[:constraints][:candidate_connection_flow_capacity] = Dict(
         (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            + candidate_connection_flow[conn, n, d, s, t]
+            + candidate_connection_flow[conn, ng, d, s, t]
             <=
-            + connection_flow[conn, n, d, s, t]
+            + connection_flow[conn, ng, d, s, t]
             
         )
         for (conn, ng, d, s, t) in candidate_connection_flow_indices(m)
