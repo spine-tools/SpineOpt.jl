@@ -177,7 +177,8 @@
     "relationship_parameters": [
         ["connection__from_node", "connection_capacity", null, null, "Limits the `connection_flow` variable from the `from_node`. `from_node` can be a group of `nodes`, in which case the sum of the `connection_flow` is constrained."],
         ["connection__from_node", "connection_conv_cap_to_flow", 1.0, null, "Optional coefficient for `connection_capacity` unit conversions in the case the `connection_capacity` value is incompatible with the desired `connection_flow` units."],
-        ["connection__from_node", "connection_emergency_capacity", null, null, "Emergy capacity of a `connection`?"],
+        ["connection__from_node", "connection_emergency_capacity", null, null, "Post contingency flow capacity of a `connection`. Sometimes referred to as emergency rating"],
+        ["connection__from_node", "fix_candidate_connection_flow", null, null, "Fix the value of the `candidate_connection_flow` variable."],
         ["connection__from_node", "fix_connection_flow", null, null, "Fix the value of the `connection_flow` variable."],
         ["connection__from_node", "graph_view_position", null, null, null],
         ["connection__from_node__unit_constraint", "connection_flow_coefficient", 0.0, null, "defines the unit constraint coefficient on the connection flow variable in the from direction"],
@@ -188,6 +189,7 @@
         ["connection__to_node", "connection_capacity", null, null, "Limits the `connection_flow` variable to the `to_node`. `to_node` can be a group of `nodes`, in which case the sum of the `connection_flow` is constrained."],
         ["connection__to_node", "connection_conv_cap_to_flow", 1.0, null, "Optional coefficient for `connection_capacity` unit conversions in the case the `connection_capacity` value is incompatible with the desired `connection_flow` units."],
         ["connection__to_node", "connection_emergency_capacity", null, null, "Emergy capacity of a `connection`?"],
+        ["connection__to_node", "fix_candidate_connection_flow", null, null, null],
         ["connection__to_node", "fix_connection_flow", null, null, "Fix the value of the `connection_flow` variable."],
         ["connection__to_node", "graph_view_position", null, null, null],
         ["connection__to_node__unit_constraint", "connection_flow_coefficient", 0.0, null, "defines the unit constraint coefficient on the connection flow variable in the to direction"],
