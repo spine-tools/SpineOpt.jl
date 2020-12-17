@@ -24,12 +24,14 @@ Write model file for Model `m`. Objective, constraints and variable bounds are r
     Optional argument is keyword `file_name`.
 """
 function write_model_file(m::JuMP.Model; file_name="model")
-    model_string = "$m"
+    model_string = "$m"        
+    model_string = replace(model_string, s": -" => ":- ")
+    model_string = replace(model_string, s": " => ": + ")
     model_string = replace(model_string, s"+ " => "\n\t+ ")
     model_string = replace(model_string, s"- " => "\n\t- ")
     model_string = replace(model_string, s">= " => "\n\t\t>= ")
     model_string = replace(model_string, s"== " => "\n\t\t== ")
-    model_string = replace(model_string, s"<= " => "\n\t\t<= ")
+    model_string = replace(model_string, s"<= " => "\n\t\t<= ")        
     open(joinpath(@__DIR__, "$(file_name).so_model"), "w") do file
         write(file, model_string)
     end

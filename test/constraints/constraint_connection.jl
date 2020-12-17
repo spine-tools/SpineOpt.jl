@@ -83,7 +83,7 @@
             "stochastic_scenario_end",
             Dict("type" => "duration", "data" => "1h"),
         ]],
-    )
+    )    
     @testset "constraint_connection_flow_capacity" begin
         connection_capacity = 200
         db_map = _load_test_data(url_in, test_data)
@@ -224,7 +224,7 @@
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
-    end
+    end    
     @testset "constraint_connection_flow_lodf" begin
         conn_r = 0.9
         conn_x = 0.1
@@ -242,15 +242,12 @@
             ["connection__to_node", ["connection_ca", "node_c"]],
             ["node__commodity", ["node_a", "electricity"]],
             ["node__commodity", ["node_b", "electricity"]],
-            ["node__commodity", ["node_c", "electricity"]],
-            ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
-            ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
-            ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
-            ["connection__node__node", ["connection_bc", "node_b", "node_c"]],
-            ["connection__node__node", ["connection_ca", "node_a", "node_c"]],
-            ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
+            ["node__commodity", ["node_c", "electricity"]],            
         ]
         object_parameter_values = [
+            ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
+            ["connection", "connection_bc", "connection_type", "connection_type_lossless_bidirectional"],
+            ["connection", "connection_ca", "connection_type", "connection_type_lossless_bidirectional"],        
             ["connection", "connection_ab", "connection_monitored", true],
             ["connection", "connection_ab", "connection_reactance", conn_x],
             ["connection", "connection_ab", "connection_resistance", conn_r],
@@ -264,13 +261,7 @@
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "connection_contingency", true],
         ]
-        relationship_parameter_values = [
-            ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_ab", "node_a", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_bc", "node_c", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_bc", "node_b", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
-            ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
+        relationship_parameter_values = [            
             [
                 "connection__from_node",
                 ["connection_ab", "node_a"],
@@ -820,5 +811,5 @@
             @test _is_constraint_equal(observed_con, expected_con)     
             return       
         end
-    end
+    end    
 end

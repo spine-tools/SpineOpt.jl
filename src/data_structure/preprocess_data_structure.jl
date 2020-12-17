@@ -379,13 +379,14 @@ function generate_lodf()
         (conn_cont, lodf_fn, tolerance) in (
             (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont)) for                        
             conn_cont in connection()
+            if (conn_cont in connection(has_lodf=true, connection_contingency=true)) ||
+                (conn_cont in connection(has_ptdf=true, is_candidate=true))
         )
-        if conn_cont in connection(has_lodf=true, connection_contingency=true) ||
-                conn_cont in connection(has_ptdf=true, is_candidate=true)            
+        
         for
         (conn_mon, lodf_trial) in
         ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(connection_monitored=true, has_lodf=true)) if
-        conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
+        conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)        
     )
     lodf_rel_cls = RelationshipClass(
         :lodf_connection__connection,

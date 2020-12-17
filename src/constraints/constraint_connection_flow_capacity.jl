@@ -31,7 +31,7 @@ If instantaneous power needs to be constrained as well, defining the `connection
 `connection_flow` can be used to achieve this.
 """
 function add_constraint_connection_flow_capacity!(m::Model)
-    @fetch connection_flow, connections_invested_available = m.ext[:variables]
+    @fetch connection_flow, candidate_connection_flow, connections_invested_available = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:connection_flow_capacity] = Dict(
         (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
@@ -59,7 +59,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
                 analysis_time=t0,
                 t=t,
             )] *
-             (( (candidate_connections(connection=conn) != nothing) & (!has_ptdf(connection=candidate_connection)))  ? 
+             (( (candidate_connections(connection=conn) != nothing) && (!has_ptdf(connection=conn)))  ? 
                 + expr_sum(
                     connections_invested_available[conn, s, t1]
                     for
@@ -69,15 +69,19 @@ function add_constraint_connection_flow_capacity!(m::Model)
                 ) : 1) *
             duration(t) 
             -expr_sum(
-                candidate_connection_flow[candidate_connection, n, d, s, t] * duration(t)
+                + candidate_connection_flow[candidate_connection, n, direction(:to_node), s, t] * duration(t)
+                - candidate_connection_flow[candidate_connection, n, direction(:from_node), s, t] * duration(t)
+                for candidate_connection in connection(is_candidate=true) if (has_ptdf(connection=candidate_connection) && candidate_connection != conn)
+                for n in last(connection__from_node(connection=candidate_connection))
                 for
                 (candidate_connection, n, d, s, t) in candidate_connection_flow_indices(
-                    m;                    
-                    last(connection__from_node(connection=candidate_connection))...,
+                    m;    
+                    connection=candidate_connection,
+                    node=n,
+                    direction=direction(:to_node),
                     stochastic_scenario=s,
                     t=t_in_t(m; t_long=t),
-                )
-                if (has_ptdf(connection=candidate_connection) & candidate_connection != conn);
+                );
                 init=0,
             )*duration(t) 
             <=
@@ -92,7 +96,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
                     t=t_in_t(m; t_long=t),
                 ) if d_reverse != d && !is_reserve_node(node=n);
                 init=0,
-            )
+            )            
         ) for (conn, ng, d, s, t) in constraint_connection_flow_capacity_indices(m)
     )
 end
@@ -146,7 +150,7 @@ function _constraint_connection_flow_capacity_indices(m, connection, node, direc
         (
             candidate_connection_flow_indices(m; connection=candidate_connection, t=t_in_t(m; t_short=t))
             for candidate_connection in indices(candidate_connections)
-            if candidate_connection != connection && !has_ptdf(candidate_connection)        
+            if candidate_connection != connection && !has_ptdf(connection=candidate_connection)        
         )
     ))
 end
