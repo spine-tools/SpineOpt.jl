@@ -41,14 +41,15 @@ function add_constraint_connection_flow_intact_flow!(m::Model)
                 - connection_flow[conn, n, direction(:to_node), s, t] * duration(t)
                 - connection_intact_flow[conn, n, direction(:from_node), s, t] * duration(t)
                 + connection_intact_flow[conn, n, direction(:to_node), s, t] * duration(t)                
+                #for s in s
                 for (conn, n, d, s, t) in connection_flow_indices(
                     m;
                     connection=conn,
-                    direction=direction(:node_from),
+                    direction=direction(:from_node),
                     node=ng,
                     stochastic_scenario=s,
                     t=t_in_t(m; t_long=t),
-                );
+                );               
                 init=0,
             ) 
             ==           
