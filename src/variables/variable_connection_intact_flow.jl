@@ -18,17 +18,17 @@
 #############################################################################
 
 """
-    candidate_connection_flow_indices(
+    connection_intact_flow_indices(
         connection=anything,
         node=anything,
         direction=anything,
         t=anything
     )
 
-A list of `NamedTuple`s corresponding to indices of the `candidate_connection_flow` variable.
+A list of `NamedTuple`s corresponding to indices of the `connection_intact_flow` variable.
 The keyword arguments act as filters for each dimension.
 """
-function candidate_connection_flow_indices(
+function connection_intact_flow_indices(
     m::Model;
     connection=anything,
     node=anything,
@@ -45,8 +45,7 @@ function candidate_connection_flow_indices(
             node=node,
             direction=direction,
             _compact=false,
-        )
-        if conn in indices(candidate_connections)
+        ) if has_ptdf(connection=conn) == true
         for
         (n, s, t) in
         node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
@@ -54,18 +53,18 @@ function candidate_connection_flow_indices(
 end
 
 """
-    add_variable_connection_flow!(m::Model)
+    add_variable_connection_intact_flow!(m::Model)
 
-Add `connection_flow` variables to model `m`.
+Add `connection_intact_flow` variables to model `m`.
 """
-function add_variable_candidate_connection_flow!(m::Model)
+function add_variable_connection_intact_flow!(m::Model)
     t0 = startref(current_window(m))
     add_variable!(
         m,
-        :candidate_connection_flow,
-        candidate_connection_flow_indices;
+        :connection_intact_flow,
+        connection_intact_flow_indices;
         lb=x -> 0,
-        fix_value=x -> fix_candidate_connection_flow(
+        fix_value=x -> fix_connection_intact_flow(
             connection=x.connection,
             node=x.node,
             direction=x.direction,
