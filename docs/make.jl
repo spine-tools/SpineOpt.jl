@@ -24,15 +24,15 @@ makedocs(
             "Parameters"=>joinpath("concept_reference", "parameters.md"),
             "Parameter Value Lists"=>joinpath("concept_reference", "parameter_value_lists.md"),
         ],
-        "Advanced Concepts" => Any[
-            "Temporal Structure"=>joinpath("advanced_concepts", "temporal_structure.md"),
-            "Stochastic Structure"=>joinpath("advanced_concepts", "stochastic_structure.md"),
-            "Investment Optimization"=>joinpath("advanced_concepts", "investment_optimization.md")
-        ],
         "Mathematical Formulation" => Any[
             "Variables"=>joinpath("mathematical_formulation", "variables.md"),
             "Constraints"=>joinpath("mathematical_formulation", "constraints.md"),
             "Objective"=>joinpath("mathematical_formulation", "objective_function.md"),
+        ],
+        "Advanced Concepts" => Any[
+            "Temporal Structure"=>joinpath("advanced_concepts", "temporal_structure.md"),
+            "Stochastic Structure"=>joinpath("advanced_concepts", "stochastic_structure.md"),
+            "Investment Optimization"=>joinpath("advanced_concepts", "investment_optimization.md")
         ],
         "Library" => "library.md"
     ],
