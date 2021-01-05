@@ -35,67 +35,40 @@ function write_model_file(m::JuMP.Model; file_name="model")
     end
 end
 
-function write_system_components_file(file_name="system_components.md")
-    system_string = []
-    push!(system_string, "# System Components\n\n")
-    for k in ["object_classes"]
-        push!(system_string, "## $(k)\n\n")
-        for j in 1:length(_template[k])
-            push!(system_string, "### `$(_template[k][j][1])`\n\n")
-            push!(system_string, "$(_template[k][j][2])\n\n")
-        end
-    end
-    for k in ["relationship_classes"]
-        push!(system_string, "## $(k)\n\n")
-        for j in 1:length(_template[k])
-            push!(system_string, "### `$(_template[k][j][1])`\n\n")
-            push!(
-                system_string,
-                "**Relates object classes:** `$(join([_template[k][j][2]...], repeat([",",], length(_template[k][j][2])-1)...))`\n\n",
-            )
-            push!(system_string, "$(_template[k][j][3])\n\n")
-        end
-    end
-    for k in ["object_parameters"]
-        push!(system_string, "## $(k)\n\n")
-        for j in 1:length(_template[k])
-            push!(system_string, "### `$(_template[k][j][2])`\n\n")
-            push!(system_string, "**Object class:** [`$(_template[k][j][1])`](#$(_template[k][j][1]))\n\n")
-            _template[k][j][3] != nothing && push!(system_string, "**Default value:** `$(_template[k][j][3])`\n\n")
-            _template[k][j][4] != nothing &&
-                push!(system_string, "**Parameter value list:** [`$(_template[k][j][4])`](#$(_template[k][j][4]))\n\n")
-            _template[k][j][5] != nothing && push!(system_string, "$(_template[k][j][5])\n\n")
-        end
-    end
-    for k in ["relationship_parameters"]
-        push!(system_string, "## $(k)\n\n")
-        for j in 1:length(_template[k])
-            push!(system_string, "### `$(_template[k][j][2])`\n\n")
-            push!(system_string, "**Relationship class**: [`$(_template[k][j][1])`](#$(_template[k][j][1]))\n\n")
-            _template[k][j][3] != nothing && push!(system_string, "**Default value**: `$(_template[k][j][3])`\n\n")
-            _template[k][j][4] != nothing &&
-                push!(system_string, "**Parameter value list**: [`$(_template[k][j][4])`](#$(_template[k][j][4]))\n\n")
-            _template[k][j][5] != nothing && push!(system_string, "$(_template[k][j][5])\n\n")
-        end
-    end
-    for k in ["parameter_value_lists"]
-        push!(system_string, "## $(k)\n\n")
-        for j in 1:length(_template[k])
-            #unique([x[1] for x in _template["parameter_value_lists" ,]])
-            if j > 1 && _template[k][j][1] == _template[k][j-1][1]
-                _template[k][j][2] != nothing && push!(system_string, "**Value**: `$(_template[k][j][2])`\n\n")
-            else
-                push!(system_string, "### `$(_template[k][j][1])`\n\n")
-                _template[k][j][2] != nothing && push!(system_string, "**Value**: `$(_template[k][j][2])`\n\n")
+function write_concept_reference_file(
+    makedocs_path::String,
+    filename::String,
+    template_sections::Array{String,1},
+    title::String;
+    template_name_index::Int=1,
+    w::Bool=true
+)
+    error_count = 0
+    system_string = ["# $(title)\n\n"]
+    for section in template_sections
+        for i in 1:length(_template[section])
+            name = _template[section][i][template_name_index]
+            description_path = joinpath(makedocs_path, "src", "concept_reference", "$(name).md")
+            try description = open(f->read(f, String), description_path, "r")
+                while description[end-1:end] != "\n\n"
+                    description = description*"\n"
+                end
+                push!(system_string, description)
+            catch
+                @warn("Description for `$(name)` not found! Please add a description to `$(description_path)`.")
+                error_count += 1
+                description = "### `$(name)`\n\n TODO\n\n"
+                push!(system_string, description)
             end
-
         end
     end
     system_string = join(system_string)
-    # system_string = replace(system_string, "_" => "\\_")
-    open(joinpath(@__DIR__, "$(file_name)"), "w") do file
-        write(file, system_string)
+    if w
+        open(joinpath(makedocs_path, "src", "concept_reference", "$(filename)"), "w") do file
+            write(file, system_string)
+        end
     end
+    return error_count
 end
 
 function print_constraint(constraint)

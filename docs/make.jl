@@ -1,12 +1,21 @@
 using Documenter
 using SpineOpt
 
-#=  No longer automatically write the "system_components.md" based on the "spineop_template.json"
-    This functionality can be restored later if need be, but it might be possible to automate
-    some of the writing, hopefully?
-#SpineOpt.write_system_components_file(joinpath(@__DIR__, "src", "system_components.md"))
-=#
 
+# Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
+# Actual descriptions are fetched separately from `src/concept_reference/concepts/`
+SpineOpt.write_concept_reference_file(@__DIR__, "_object_classes.md", ["object_classes"], "Object Classes")
+SpineOpt.write_concept_reference_file(
+    @__DIR__, "_relationship_classes.md", ["relationship_classes"], "Relationship Classes"
+)
+SpineOpt.write_concept_reference_file(
+    @__DIR__, "_parameters.md", ["object_parameters", "relationship_parameters"], "Parameters"; template_name_index=2
+)
+SpineOpt.write_concept_reference_file(
+    @__DIR__, "_parameter_value_lists.md", ["parameter_value_lists"], "Parameter Value Lists"
+)
+
+# Create and deploy the documentation
 makedocs(
     sitename="SpineOpt.jl",
     format=Documenter.HTML(prettyurls=get(ENV, "CI", nothing) == "true"),
@@ -19,10 +28,10 @@ makedocs(
         ],
         "Concept Reference" => Any[
             "The Basics"=>joinpath("concept_reference", "the_basics.md"),
-            "Object Classes"=>joinpath("concept_reference", "object_classes.md"),
-            "Relationship Classes"=>joinpath("concept_reference", "relationship_classes.md"),
-            "Parameters"=>joinpath("concept_reference", "parameters.md"),
-            "Parameter Value Lists"=>joinpath("concept_reference", "parameter_value_lists.md"),
+            "Object Classes"=>joinpath("concept_reference", "_object_classes.md"),
+            "Relationship Classes"=>joinpath("concept_reference", "_relationship_classes.md"),
+            "Parameters"=>joinpath("concept_reference", "_parameters.md"),
+            "Parameter Value Lists"=>joinpath("concept_reference", "_parameter_value_lists.md"),
         ],
         "Mathematical Formulation" => Any[
             "Variables"=>joinpath("mathematical_formulation", "variables.md"),
