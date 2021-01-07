@@ -46,8 +46,8 @@ function write_concept_reference_file(
     error_count = 0
     system_string = ["# $(title)\n\n"]
     for section in template_sections
-        for i in 1:length(_template[section])
-            name = _template[section][i][template_name_index]
+        names = unique(_template[section][i][template_name_index] for i in 1:length(_template[section]))
+        for name in names
             description_path = joinpath(makedocs_path, "src", "concept_reference", "$(name).md")
             try description = open(f->read(f, String), description_path, "r")
                 while description[end-1:end] != "\n\n"
@@ -57,7 +57,7 @@ function write_concept_reference_file(
             catch
                 @warn("Description for `$(name)` not found! Please add a description to `$(description_path)`.")
                 error_count += 1
-                description = "### `$(name)`\n\n TODO\n\n"
+                description = "## `$(name)`\n\n TODO\n\n"
                 push!(system_string, description)
             end
         end
