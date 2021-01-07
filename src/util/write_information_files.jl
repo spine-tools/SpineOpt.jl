@@ -42,14 +42,22 @@ end
         template_sections::Array{String,1},
         title::String;
         template_name_index::Int=1,
+        template_related_concept_index::Int=template_name_index,
+        template_related_concept_names::Array{String,1}=[""],
+        template_default_value_index::Int=template_name_index,
+        template_parameter_value_list_index::Int=template_name_index,
+        template_description_index::Int=template_name_index,
         w::Bool=true
     )
 
 Automatically writes a markdown file for the `Concept Reference` chapter based on `spineopt_template.json`.
 
-The necessary arguments control *how* the file is created. The `template_name_index` keyword allows customizing which
-entry in the .json is interpreted as the name of the entry in question. The `w` keyword is a flag for controlling
-whether the files are written or not. *(useful for unit tests?)*
+The file is pieced together from three parts: the given `title`, a preamble automatically generated using the
+`spineopt_template`, and a separate description assumed to be found under `docs/src/concept_reference/<name>.md`.
+
+The necessary arguments control *how* the file is created. The keywords define how the `spineopt_template.json`
+is interpreted, with the exception of the `w` keyword, which is a flag for controlling whether
+the files are written or not.
 """
 function write_concept_reference_file(
     makedocs_path::String,
@@ -57,24 +65,66 @@ function write_concept_reference_file(
     template_sections::Array{String,1},
     title::String;
     template_name_index::Int=1,
+    template_related_concept_index::Int=template_name_index,
+    template_related_concept_names::Array{String,1}=[""],
+    template_default_value_index::Int=template_name_index,
+    template_parameter_value_list_index::Int=template_name_index,
+    template_description_index::Int=template_name_index,
     w::Bool=true
 )
     error_count = 0
+    # Initialize the `system_string` with the desired title and two newlines
     system_string = ["# $(title)\n\n"]
-    for section in template_sections
-        names = unique(_template[section][i][template_name_index] for i in 1:length(_template[section]))
-        for name in names
-            description_path = joinpath(makedocs_path, "src", "concept_reference", "$(name).md")
+    # Loop over every section to be aggregated into the file and collect unique template entries
+    for (s,section) in enumerate(template_sections)
+        entries = unique(
+            (
+                name = _template[section][i][template_name_index],
+                related_concepts = _template[section][i][template_related_concept_index],
+                default_value = _template[section][i][template_default_value_index],
+                parameter_value_list = _template[section][i][template_parameter_value_list_index],
+                description = _template[section][i][template_description_index]
+            )
+            for i in 1:length(_template[section])
+        )
+        # Loop over the unique entries and write their information into the file under section `entry.name`
+        for entry in entries
+            title = "## `$(entry.name)`\n\n"
+            preamble = ""
+            # If description is defined, include it into the preamble.
+            if template_description_index != template_name_index
+                preamble *= "$(entry.description)\n\n"
+            end
+            # If related concepts are defined, include those into the preamble
+            if template_related_concept_index != template_name_index
+                if entry.related_concepts isa String
+                    rels = ["[$(replace(entry.related_concepts, "_" => "\\_"))](@ref)"]
+                elseif entry.related_concepts isa Array
+                    rels = ["[$(replace(rel, "_" => "\\_"))](@ref)" for rel in entry.related_concepts]
+                else
+                    rels = []
+                end
+                preamble *= "Related [$(template_related_concept_names[s])](@ref): $(join(rels, ", ", " and "))\n\n"
+            end
+            # If default values are defined, include those into the preamble
+            if template_default_value_index != template_name_index
+                preamble *= "Default value: `$(entry.default_value)`\n\n"
+            end
+            # If parameter value lists are defined, include those into the preamble
+            if template_parameter_value_list_index != template_name_index && !isnothing(entry.parameter_value_list)
+                preamble *= "Uses [Parameter Value Lists](@ref): [$(replace(entry.parameter_value_list, "_" => "\\_"))](@ref)\n\n"
+            end
+            # Try to fetch the description from the corresponding .md file.
+            description_path = joinpath(makedocs_path, "src", "concept_reference", "$(entry.name).md")
             try description = open(f->read(f, String), description_path, "r")
                 while description[end-1:end] != "\n\n"
-                    description = description*"\n"
+                    description *= "\n"
                 end
-                push!(system_string, description)
+                push!(system_string, title * preamble * description)
             catch
-                @warn("Description for `$(name)` not found! Please add a description to `$(description_path)`.")
+                @warn("Description for `$(entry.name)` not found! Please add a description to `$(description_path)`.")
                 error_count += 1
-                description = "## `$(name)`\n\n TODO\n\n"
-                push!(system_string, description)
+                push!(system_string, title * preamble * "TODO\n\n")
             end
         end
     end

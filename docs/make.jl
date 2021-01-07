@@ -4,12 +4,33 @@ using SpineOpt
 
 # Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
 # Actual descriptions are fetched separately from `src/concept_reference/concepts/`
-SpineOpt.write_concept_reference_file(@__DIR__, "_object_classes.md", ["object_classes"], "Object Classes")
 SpineOpt.write_concept_reference_file(
-    @__DIR__, "_relationship_classes.md", ["relationship_classes"], "Relationship Classes"
+    @__DIR__,
+    "_object_classes.md",
+    ["object_classes"],
+    "Object Classes";
+    template_description_index=2
 )
 SpineOpt.write_concept_reference_file(
-    @__DIR__, "_parameters.md", ["object_parameters", "relationship_parameters"], "Parameters"; template_name_index=2
+    @__DIR__,
+    "_relationship_classes.md",
+    ["relationship_classes"],
+    "Relationship Classes";
+    template_related_concept_index=2,
+    template_related_concept_names=["Object Classes"],
+    template_description_index=3
+)
+SpineOpt.write_concept_reference_file(
+    @__DIR__,
+    "_parameters.md",
+    ["object_parameters", "relationship_parameters"],
+    "Parameters";
+    template_name_index=2,
+    template_related_concept_index=1,
+    template_related_concept_names=["Object Classes", "Relationship Classes"],
+    template_default_value_index=3,
+    template_parameter_value_list_index=4,
+    template_description_index=5
 )
 SpineOpt.write_concept_reference_file(
     @__DIR__, "_parameter_value_lists.md", ["parameter_value_lists"], "Parameter Value Lists"

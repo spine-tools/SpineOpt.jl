@@ -1,8 +1,4 @@
-## `commodity`
-
-AN EXAMPLE FOR HOW THE AUTOGENERATION OF `CONCEPT REFERENCE` BASED ON SPINEOPT TEMPLATE WORKS
-
-A `commodity` refers to any product that can be produced, consumed, transported, traded, etc.
+AN EXAMPLE DESCRIPTION FOR HOW THE AUTOGENERATION OF `CONCEPT REFERENCE` BASED ON SPINEOPT TEMPLATE WORKS
 
 References to other sections, e.g. [node](@ref) are handled like this.
 Don't use the grave accents around the reference name, as it seems to break the reference!
