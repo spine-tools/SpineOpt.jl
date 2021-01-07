@@ -35,6 +35,22 @@ function write_model_file(m::JuMP.Model; file_name="model")
     end
 end
 
+"""
+    write_concept_reference_file(
+        makedocs_path::String,
+        filename::String,
+        template_sections::Array{String,1},
+        title::String;
+        template_name_index::Int=1,
+        w::Bool=true
+    )
+
+Automatically writes a markdown file for the `Concept Reference` chapter based on `spineopt_template.json`.
+
+The necessary arguments control *how* the file is created. The `template_name_index` keyword allows customizing which
+entry in the .json is interpreted as the name of the entry in question. The `w` keyword is a flag for controlling
+whether the files are written or not. *(useful for unit tests?)*
+"""
 function write_concept_reference_file(
     makedocs_path::String,
     filename::String,
