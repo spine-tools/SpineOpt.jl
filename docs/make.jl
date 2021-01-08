@@ -48,7 +48,7 @@ makedocs(
             "Creating Your Own Model"=>joinpath("getting_started", "creating_your_own_model.md"),
         ],
         "Concept Reference" => Any[
-            "The Basics"=>joinpath("concept_reference", "the_basics.md"),
+            "Basics of the model structure"=>joinpath("concept_reference", "the_basics.md"),
             "Object Classes"=>joinpath("concept_reference", "_object_classes.md"),
             "Relationship Classes"=>joinpath("concept_reference", "_relationship_classes.md"),
             "Parameters"=>joinpath("concept_reference", "_parameters.md"),
