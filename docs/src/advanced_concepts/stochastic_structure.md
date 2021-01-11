@@ -1,4 +1,4 @@
-# Stochastic Structure
+# Stochastic Framework
 
 TODO: Explain the logic behind the `stochastic_structure` generation, and how they can be used to create
 different interlinked stochastic frameworks.

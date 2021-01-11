@@ -1,3 +1,3 @@
-# Temporal Structure
+# Temporal Framework
 
 TODO
