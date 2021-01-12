@@ -120,6 +120,19 @@ These include:
 
 ### Meta `relationship classes`
 
+*Meta [Relationship Classes](@ref)* are used for defining [model](@ref)-level settings, like which `temporal blocks` or
+`stochastic structures` are active, and what the [model](@ref) [output](@ref) is.
+These include:
+
+- [model\_\_default\_investment\_stochastic\_structure](@ref) defines a default [stochastic\_structure](@ref) to be used for investment [Variables](@ref) when no other definitions exist.
+- [model\_\_default\_investment\_temporal\_block](@ref) defines a default [temporal\_block](@ref) to be used for investment [Variables](@ref) when no other definitions exist.
+- [model\_\_default\_stochastic\_structure](@ref) defines a default [stochastic\_structure](@ref) to be used for `nodes` and `units` when no other definitions exist.
+- [model\_\_default\_temporal\_block](@ref) defines a default [temporal\_block](@ref) to be used for `nodes` and `units` when no other definitions exist.
+- [model\_\_report](@ref) connects each [report](@ref) to the desired [model](@ref).
+- [model\_\_stochastic\_structure](@ref) defines which `stochastic structures` are active in which `models`.
+- [model\_\_temporal\_block](@ref) defines which `temporal blocks` are active in which `models`.
+- [report\_\_output](@ref) defines which `outputs` are part of which [report](@ref).
 
 
 ## Introduction to `parameters`
+
