@@ -136,3 +136,19 @@ These include:
 
 ## Introduction to `parameters`
 
+While the primary function of [Object Classes](@ref) and [Relationship Classes](@ref) is to *define* the system to be
+modelled and it's structure, [Parameters](@ref) exist to *constrain* them.
+Every `parameter` is attributed to at least one `object class` or `relationship class`, but some appear in many classes
+whenever they serve a similar purpose.
+
+[Parameters](@ref) accept different types of values depending on their purpose, e.g. whether they act as a *flag* for
+some specific functionality or appear as a *coefficient* in [Constraints](@ref), so understanding each `parameter` is key.
+Most coefficient-type [Parameters](@ref) accept *constant*, *time series*, and even *stochastic time series* form input,
+but there are some exceptions.
+Most *flag-type* [Parameters](@ref), on the other hand, have a restricted list of acceptable values defined by their
+[Parameter Value Lists](@ref).
+
+The existence of some [Constraints](@ref) is controlled based on if the relevant [Parameters](@ref) are
+defined.
+As a rule-of-thumb, a `constraint` only gets generated if at least one of the [Parameters][@ref] appearing in it is
+defined, but one should refer to the appropriate [Constraints](@ref) and [Parameters](@ref) sections when in doubt.
