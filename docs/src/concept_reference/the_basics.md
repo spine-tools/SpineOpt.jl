@@ -38,7 +38,7 @@ want to model, instead of strictly *what* you want to model.
 These include:
 
 - [stochastic\_scenario](@ref) represents a different *forecast* or another type of an *alternative time period*.
-- [stochastic\_structure](@ref) acts as a handle for a group of `stochastic\_scenarios` with set properties.
+- [stochastic\_structure](@ref) acts as a handle for a group of `stochastic_scenarios` with set properties.
 - [temporal\_block](@ref) defines a period of *time* with the desired temporal [resolution](@ref).
 - [unit\_constraint](@ref) is an optional custom constraint generated based on the input data.
 
@@ -96,25 +96,25 @@ Unfortunately, this flexibility requires quite a few different *structural [Rela
 the most important of which are the following *basic structural [Relationship Classes](@ref)*:
 
 - [node\_\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the [node](@ref) balance.
-- [node\_\_temporal\_structure](@ref) defines the `temporal\_blocks` used for the [node](@ref) balance.
+- [node\_\_temporal\_block](@ref) defines the `temporal blocks` used for the [node](@ref) balance.
 - [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) defines the *stochastic DAG* of the [Stochastic Framework](@ref).
 - [stochastic\_structure\_\_stochastic\_scenario](@ref) holds parameters for `stochastic scenarios` in the [stochastic\_structure](@ref).
 - [units\_on\_\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the online variable of the [unit](@ref).
-- [units\_on\_\_temporal\_structure](@ref) defines the `temporal blocks` used for the online variable of the [unit](@ref).
+- [units\_on\_\_temporal\_block](@ref) defines the `temporal blocks` used for the online variable of the [unit](@ref).
 
 Furthermore, there are also a number of *advanced structural [Relationship Classes](@ref)*, which are only necessary when
 using some of the optional features of *SpineOpt.jl*, like [Investment Optimization](@ref) and custom `unit constraints`.
 These include:
 
 - [connection\_\_from\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](@ref) variable *from* the [node](@ref) in question in the custom [unit\_constraint](@ref).
-- [connection\_\_investment\_stochastic\_structure](@ref) defines the [stochastic structure](@ref) used for the investment [Variables](@ref) for the [connection](@ref).
+- [connection\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [connection](@ref).
 - [connection\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [connection](@ref).
 - [connection\_\_to\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](@ref) variable *to* the [node](@ref) in question in the custom [unit\_constraint](@ref).
-- [node\_\_investment\_stochastic\_structure](@ref) defines the [stochastic structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
-- [node\_\_investment\_temporal\_structure](@ref) defines the [stochastic structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
+- [node\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
+- [node\_\_investment\_temporal\_block](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
 - [node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [node\_state](@ref) variable in the custom [unit\_constraint](@ref).
 - [unit\_\_from\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](@ref) variable *from* the [node](@ref) in question in the custom [unit\_constraint](@ref).
-- [unit\_\_investment\_stochastic\_structure](@ref) defines the [stochastic structure](@ref) used for the investment [Variables](@ref) for the [unit](@ref).
+- [unit\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [unit](@ref).
 - [unit\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [unit](@ref).
 - [unit\_\_to\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](@ref) variable *to* the [node](@ref) in question in the custom [unit\_constraint](@ref).
 
@@ -150,5 +150,5 @@ Most *flag-type* [Parameters](@ref), on the other hand, have a restricted list o
 
 The existence of some [Constraints](@ref) is controlled based on if the relevant [Parameters](@ref) are
 defined.
-As a rule-of-thumb, a `constraint` only gets generated if at least one of the [Parameters][@ref] appearing in it is
+As a rule-of-thumb, a `constraint` only gets generated if at least one of the [Parameters](@ref) appearing in it is
 defined, but one should refer to the appropriate [Constraints](@ref) and [Parameters](@ref) sections when in doubt.
