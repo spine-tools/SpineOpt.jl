@@ -101,7 +101,11 @@ function write_concept_reference_file(
                 for related_concept_name in template_related_concept_names
             ),
             default_value = sort!(unique(e.default_value for e in filter(e->e.name==name, raw_entries))),
-            parameter_value_list = sort!(unique("[$(e.parameter_value_list)](@ref)" for e in filter(e->e.name==name, raw_entries))),
+            parameter_value_list = sort!(unique(
+                "[$(e.parameter_value_list)](@ref)"
+                for e in filter(e->e.name==name, raw_entries)
+                if !isnothing(e.parameter_value_list)
+            )),
             description = sort!(unique(e.description for e in filter(e->e.name==name, raw_entries)))
         )
         for name in unique_names
