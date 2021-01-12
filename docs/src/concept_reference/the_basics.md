@@ -37,10 +37,10 @@ Unlike the above *system [Object Classes](@ref)*, the *structural [Object Classe
 want to model, instead of strictly *what* you want to model.
 These include:
 
-- [stochastic_scenario](@ref) represents a different *forecast* or another type of an *alternative time period*.
-- [stochastic_structure](@ref) acts as a handle for a group of `stochastic_scenarios` with set properties.
-- [temporal_block](@ref) defines a period of *time* with the desired temporal [resolution](@ref).
-- [unit_constraint](@ref) is an optional custom constraint generated based on the input data.
+- [stochastic\_scenario](@ref) represents a different *forecast* or another type of an *alternative time period*.
+- [stochastic\_structure](@ref) acts as a handle for a group of `stochastic\_scenarios` with set properties.
+- [temporal\_block](@ref) defines a period of *time* with the desired temporal [resolution](@ref).
+- [unit\_constraint](@ref) is an optional custom constraint generated based on the input data.
 
 ### Meta `object classes`
 
@@ -73,15 +73,15 @@ interactions work.
 This essentially defines the possible [commodity](@ref) flows to be modelled.
 *Systemic [Relationship Classes](@ref)* include:
 
-- [connection__from_node](@ref) defines which [node](@ref) the [connection](@ref) can transfer a [commodity](@ref) from.
-- [connection__node__node](@ref) holds [Parameters](@ref) for `connections` between two `nodes`.
-- [connection__to_node](@ref) defines which [node](@ref) the [connection](@ref) can transfer a [commodity](@ref) to.
-- [node__commodity](@ref) defines which [node](@ref) holds which [commodity](@ref).
-- [node__node](@ref) holds parameters for direct [node](@ref)-[node](@ref) interactions, like diffusion of `commodities`.
-- [unit__commodity](@ref) defines which [commodity](@ref) the [unit](@ref) handles.
-- [unit__from_node](@ref) defines which [node](@ref) the [unit](@ref) can take an input [commodity](@ref) from.
-- [unit__node__node](@ref) holds parameters for [unit](@ref) interactions between two `nodes`.
-- [unit__to_node](@ref) defines which [node](@ref) the [unit](@ref) can output a [commodity](@ref) to.
+- [connection\_\_from\_node](@ref) defines which [node](@ref) the [connection](@ref) can transfer a [commodity](@ref) from.
+- [connection\_\_node\_\_node](@ref) holds [Parameters](@ref) for `connections` between two `nodes`.
+- [connection\_\_to\_node](@ref) defines which [node](@ref) the [connection](@ref) can transfer a [commodity](@ref) to.
+- [node\_\_commodity](@ref) defines which [node](@ref) holds which [commodity](@ref).
+- [node\_\_node](@ref) holds parameters for direct [node](@ref)-[node](@ref) interactions, like diffusion of `commodities`.
+- [unit\_\_commodity](@ref) defines which [commodity](@ref) the [unit](@ref) handles.
+- [unit\_\_from\_node](@ref) defines which [node](@ref) the [unit](@ref) can take an input [commodity](@ref) from.
+- [unit\_\_node\_\_node](@ref) holds parameters for [unit](@ref) interactions between two `nodes`.
+- [unit\_\_to\_node](@ref) defines which [node](@ref) the [unit](@ref) can output a [commodity](@ref) to.
 
 ### Structural `relationship classes`
 
@@ -95,28 +95,28 @@ modelled *system*, or custom `unit constraints`.
 Unfortunately, this flexibility requires quite a few different *structural [Relationship Classes](@ref)*,
 the most important of which are the following *basic structural [Relationship Classes](@ref)*:
 
-- [node__stochastic_structure](@ref) defines the [stochastic_structure](@ref) used for the [node](@ref) balance.
-- [node__temporal_structure](@ref) defines the `temporal_blocks` used for the [node](@ref) balance.
-- [parent_stochastic_scenario__child_stochastic_scenario](@ref) defines the *stochastic DAG* of the [Stochastic Framework](@ref).
-- [stochastic_structure__stochastic_scenario](@ref) holds parameters for `stochastic scenarios` in the [stochastic_structure](@ref).
-- [units_on__stochastic_structure](@ref) defines the [stochastic_structure](@ref) used for the online variable of the [unit](@ref).
-- [units_on__temporal_structure](@ref) defines the `temporal blocks` used for the online variable of the [unit](@ref).
+- [node\_\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the [node](@ref) balance.
+- [node\_\_temporal\_structure](@ref) defines the `temporal\_blocks` used for the [node](@ref) balance.
+- [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) defines the *stochastic DAG* of the [Stochastic Framework](@ref).
+- [stochastic\_structure\_\_stochastic\_scenario](@ref) holds parameters for `stochastic scenarios` in the [stochastic\_structure](@ref).
+- [units\_on\_\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the online variable of the [unit](@ref).
+- [units\_on\_\_temporal\_structure](@ref) defines the `temporal blocks` used for the online variable of the [unit](@ref).
 
 Furthermore, there are also a number of *advanced structural [Relationship Classes](@ref)*, which are only necessary when
 using some of the optional features of *SpineOpt.jl*, like [Investment Optimization](@ref) and custom `unit constraints`.
 These include:
 
-- [connection__from_node__unit_constraint](@ref) holds [Parameters](@ref) for the [connection_flow](@ref) variable *from* the [node](@ref) in question in the custom [unit_constraint](@ref).
-- [connection__investment_stochastic_structure](@ref) defines the [stochastic structure](@ref) used for the investment [Variables](@ref) for the [connection](@ref).
-- [connection__investment_temporal_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [connection](@ref).
-- [connection__to_node__unit_constraint](@ref) holds [Parameters](@ref) for the [connection_flow](@ref) variable *to* the [node](@ref) in question in the custom [unit_constraint](@ref).
-- [node__investment_stochastic_structure](@ref) defines the [stochastic structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
-- [node__investment_temporal_structure](@ref) defines the [stochastic structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
-- [node__unit_constraint](@ref) holds [Parameters](@ref) for the [node_state](@ref) variable in the custom [unit_constraint](@ref).
-- [unit__from_node__unit_constraint](@ref) holds [Parameters](@ref) for the [unit_flow](@ref) variable *from* the [node](@ref) in question in the custom [unit_constraint](@ref).
-- [unit__investment_stochastic_structure](@ref) defines the [stochastic structure](@ref) used for the investment [Variables](@ref) for the [unit](@ref).
-- [unit__investment_temporal_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [unit](@ref).
-- [unit__to_node__unit_constraint](@ref) holds [Parameters](@ref) for the [unit_flow](@ref) variable *to* the [node](@ref) in question in the custom [unit_constraint](@ref).
+- [connection\_\_from\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](@ref) variable *from* the [node](@ref) in question in the custom [unit\_constraint](@ref).
+- [connection\_\_investment\_stochastic\_structure](@ref) defines the [stochastic structure](@ref) used for the investment [Variables](@ref) for the [connection](@ref).
+- [connection\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [connection](@ref).
+- [connection\_\_to\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](@ref) variable *to* the [node](@ref) in question in the custom [unit\_constraint](@ref).
+- [node\_\_investment\_stochastic\_structure](@ref) defines the [stochastic structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
+- [node\_\_investment\_temporal\_structure](@ref) defines the [stochastic structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
+- [node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [node\_state](@ref) variable in the custom [unit\_constraint](@ref).
+- [unit\_\_from\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](@ref) variable *from* the [node](@ref) in question in the custom [unit\_constraint](@ref).
+- [unit\_\_investment\_stochastic\_structure](@ref) defines the [stochastic structure](@ref) used for the investment [Variables](@ref) for the [unit](@ref).
+- [unit\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [unit](@ref).
+- [unit\_\_to\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](@ref) variable *to* the [node](@ref) in question in the custom [unit\_constraint](@ref).
 
 ### Meta `relationship classes`
 
