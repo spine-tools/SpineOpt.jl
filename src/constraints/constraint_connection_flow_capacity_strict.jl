@@ -114,3 +114,12 @@ function _constraint_connection_flow_capacity_strict_indices(m, connection, node
         connections_invested_available_indices(m; connection=connection, t=t_in_t(m; t_short=t))
     ))
 end
+
+#=
+function _related_connection_flow_indices(m)
+    (conn, capacity_node, capacity_direction, flow_node, flow_direction)
+    for (conn, capacity_node, capacity_direction) in indices(connection_capacity)
+    for (flow_node, flow_direction) in connection_flow_indices(m; connection=conn, node=node, t=t)
+
+end
+=#
