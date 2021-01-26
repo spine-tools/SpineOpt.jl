@@ -28,7 +28,7 @@ run_spineopt("...url of a SpineOpt database...")
 
 ## Building the documentation
 
-The SpineOpt documentation is bundled in with the model itself, and can be built locally.
+The SpineOpt documentation is bundled in with the source code, and can be built locally.
 First, **navigate into the SpineOpt main folder** and activate the `docs` environment from the julia package manager:
 
 ```julia
