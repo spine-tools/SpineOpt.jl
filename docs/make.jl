@@ -1,12 +1,42 @@
 using Documenter
 using SpineOpt
 
-#=  No longer automatically write the "system_components.md" based on the "spineop_template.json"
-    This functionality can be restored later if need be, but it might be possible to automate
-    some of the writing, hopefully?
-#SpineOpt.write_system_components_file(joinpath(@__DIR__, "src", "system_components.md"))
-=#
 
+# Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
+# Actual descriptions are fetched separately from `src/concept_reference/concepts/`
+SpineOpt.write_concept_reference_file(
+    @__DIR__,
+    "_object_classes.md",
+    ["object_classes"],
+    "Object Classes";
+    template_description_index=2
+)
+SpineOpt.write_concept_reference_file(
+    @__DIR__,
+    "_relationship_classes.md",
+    ["relationship_classes"],
+    "Relationship Classes";
+    template_related_concept_index=2,
+    template_related_concept_names=["Object Classes"],
+    template_description_index=3
+)
+SpineOpt.write_concept_reference_file(
+    @__DIR__,
+    "_parameters.md",
+    ["object_parameters", "relationship_parameters"],
+    "Parameters";
+    template_name_index=2,
+    template_related_concept_index=1,
+    template_related_concept_names=["Object Classes", "Relationship Classes"],
+    template_default_value_index=3,
+    template_parameter_value_list_index=4,
+    template_description_index=5
+)
+SpineOpt.write_concept_reference_file(
+    @__DIR__, "_parameter_value_lists.md", ["parameter_value_lists"], "Parameter Value Lists"
+)
+
+# Create and deploy the documentation
 makedocs(
     sitename="SpineOpt.jl",
     format=Documenter.HTML(prettyurls=get(ENV, "CI", nothing) == "true"),
@@ -18,11 +48,11 @@ makedocs(
             "Creating Your Own Model"=>joinpath("getting_started", "creating_your_own_model.md"),
         ],
         "Concept Reference" => Any[
-            "The Basics"=>joinpath("concept_reference", "the_basics.md"),
-            "Object Classes"=>joinpath("concept_reference", "object_classes.md"),
-            "Relationship Classes"=>joinpath("concept_reference", "relationship_classes.md"),
-            "Parameters"=>joinpath("concept_reference", "parameters.md"),
-            "Parameter Value Lists"=>joinpath("concept_reference", "parameter_value_lists.md"),
+            "Basics of the model structure"=>joinpath("concept_reference", "the_basics.md"),
+            "Object Classes"=>joinpath("concept_reference", "_object_classes.md"),
+            "Relationship Classes"=>joinpath("concept_reference", "_relationship_classes.md"),
+            "Parameters"=>joinpath("concept_reference", "_parameters.md"),
+            "Parameter Value Lists"=>joinpath("concept_reference", "_parameter_value_lists.md"),
         ],
         "Mathematical Formulation" => Any[
             "Variables"=>joinpath("mathematical_formulation", "variables.md"),
@@ -30,8 +60,8 @@ makedocs(
             "Objective"=>joinpath("mathematical_formulation", "objective_function.md"),
         ],
         "Advanced Concepts" => Any[
-            "Temporal Structure"=>joinpath("advanced_concepts", "temporal_structure.md"),
-            "Stochastic Structure"=>joinpath("advanced_concepts", "stochastic_structure.md"),
+            "Temporal Framework"=>joinpath("advanced_concepts", "temporal_framework.md"),
+            "Stochastic Framework"=>joinpath("advanced_concepts", "stochastic_framework.md"),
             "Investment Optimization"=>joinpath("advanced_concepts", "investment_optimization.md")
         ],
         "Library" => "library.md"

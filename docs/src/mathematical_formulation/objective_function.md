@@ -14,7 +14,7 @@ TODO: find more precise terminology for objectivepenalties
 TODO: add reserve procurement costs
 
 # Fuel costs
-For all tuples of (unit,{node,node\_group},direction) for which the parameter [`fuel_cost`](@ref) is defined, ther following cost term is added to the objective function.
+For all tuples of (unit,{node,node\_group},direction) for which the parameter [fuel\_cost](@ref) is defined, ther following cost term is added to the objective function.
 
 ```math
 \begin{aligned}
@@ -25,7 +25,7 @@ For all tuples of (unit,{node,node\_group},direction) for which the parameter [`
 ```
 
 # Variable operation and maintanance costs
-The costs term `variable_om_costs` is part of the objective function if the parameter [`vom_cost`](@ref) is defined.
+The costs term `variable_om_costs` is part of the objective function if the parameter [vom\_cost](@ref) is defined.
 ```math
 \begin{aligned}
 & vom\_costs \\
@@ -35,7 +35,7 @@ The costs term `variable_om_costs` is part of the objective function if the para
 ```
 
 # Start up costs
-The costs associated with the start-up of a unit are incorporated in the [`start_up_cost`](@ref) parameter. For all units starting up, the following cost term is 
+The costs associated with the start-up of a unit are incorporated in the [start\_up\_cost](@ref) parameter. For all units starting up, the following cost term is 
 added to `obj`.
 
 ```math
