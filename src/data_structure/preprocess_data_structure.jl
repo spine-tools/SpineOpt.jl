@@ -103,7 +103,7 @@ Add connection relationships for connection_type=:connection_type_lossless_bidir
 For connections with this parameter set, only a connection__from_node and connection__to_node need be set
 and this function creates the additional relationships on the fly.
 """
-function add_connection_relationships()
+function add_connection_relationships()    
     conn_from_to = [
         (conn, first(connection__from_node(connection=conn)), first(connection__to_node(connection=conn)))
         for conn in connection(connection_type=:connection_type_lossless_bidirectional)
@@ -118,10 +118,14 @@ function add_connection_relationships()
     add_relationships!(connection__node__node, new_connection__node__node_rels)
     value_one = parameter_value(1.0)
     new_connection__from_node_parameter_values = Dict(
-        (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__from_node_rels
+        (conn, n) => Dict(:connection_conv_cap_to_flow => value_one,
+                          :connection_capacity => connection__to_node.parameter_values[(conn, n)][:connection_capacity]) 
+                          for (conn, n) in new_connection__from_node_rels
     )
-    new_connection__to_node_parameter_values =
-        Dict((conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__to_node_rels)
+    new_connection__to_node_parameter_values = Dict(
+        (conn, n) => Dict(:connection_conv_cap_to_flow => value_one, 
+                               :connection_capacity => connection__from_node.parameter_values[(conn, n)][:connection_capacity]) 
+                               for (conn, n) in new_connection__to_node_rels)
     new_connection__node__node_parameter_values = Dict(
         (conn, n1, n2) => Dict(:fix_ratio_out_in_connection_flow => value_one)
         for (conn, n1, n2) in new_connection__node__node_rels
@@ -378,15 +382,12 @@ function generate_lodf()
         for
         (conn_cont, lodf_fn, tolerance) in (
             (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont)) for                        
-            conn_cont in connection()
-            if (conn_cont in connection(has_lodf=true, connection_contingency=true)) ||
-                (conn_cont in connection(has_ptdf=true, is_candidate=true))
-        )
-        
+            conn_cont in connection(has_ptdf=true)
+        )        
         for
         (conn_mon, lodf_trial) in
-        ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(connection_monitored=true, has_lodf=true)) if
-        conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)        
+        ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(has_ptdf=true)) if
+          conn_cont !== conn_mon #&& !isapprox(lodf_trial, 0; atol=tolerance)        
     )
     lodf_rel_cls = RelationshipClass(
         :lodf_connection__connection,
