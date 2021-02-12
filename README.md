@@ -19,6 +19,13 @@ pkg"registry add https://github.com/Spine-project/SpineJuliaRegistry"
 pkg"add SpineOpt"
 ```
 
+## Getting the most recent version
+
+```julia
+using Pkg
+pkg"up SpineOpt"
+```
+
 ## Usage
 
 ```julia
