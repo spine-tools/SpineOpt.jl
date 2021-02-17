@@ -70,7 +70,7 @@ function run_spineopt_mp(
 end
 
 function rerun_spineopt_mp(
-    url_out::Union{String,SpineInterface.PyObject};
+    url_out::String;
     mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
     lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
     add_constraints=m -> nothing,
