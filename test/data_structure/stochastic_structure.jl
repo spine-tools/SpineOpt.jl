@@ -175,47 +175,47 @@
         @test length(unit_stochastic_time_indices(m)) == 7
     end
     @testset "node_stochastic_scenario_weight" begin
-        @test SpineOpt.node_stochastic_scenario_weight(
+        @test realize(SpineOpt.node_stochastic_scenario_weight(
             m;
             node=node(:only_node),
             stochastic_scenario=stochastic_scenario(:scenario_a),
-        ) == Call(1.0)
-        @test SpineOpt.node_stochastic_scenario_weight(
+        )) == 1.0
+        @test realize(SpineOpt.node_stochastic_scenario_weight(
             m;
             node=node(:only_node),
             stochastic_scenario=stochastic_scenario(:scenario_a1),
-        ) == Call(1.0)
-        @test SpineOpt.node_stochastic_scenario_weight(
+        )) == 1.0
+        @test realize(SpineOpt.node_stochastic_scenario_weight(
             m;
             node=node(:only_node),
             stochastic_scenario=stochastic_scenario(:scenario_a2),
-        ) == Call(2.0)
-        @test SpineOpt.node_stochastic_scenario_weight(
+        )) == 2.0
+        @test realize(SpineOpt.node_stochastic_scenario_weight(
             m;
             node=node(:only_node),
             stochastic_scenario=stochastic_scenario(:scenario_b),
-        ) == Call(0.0)
+        )) == 0.0
     end
     @testset "unit_stochastic_scenario_weight" begin
-        @test SpineOpt.unit_stochastic_scenario_weight(
+        @test realize(SpineOpt.unit_stochastic_scenario_weight(
             m;
             unit=unit(:only_unit),
             stochastic_scenario=stochastic_scenario(:scenario_b),
-        ) == Call(2.0)
-        @test SpineOpt.unit_stochastic_scenario_weight(
+        )) == 2.0
+        @test realize(SpineOpt.unit_stochastic_scenario_weight(
             m;
             unit=unit(:only_unit),
             stochastic_scenario=stochastic_scenario(:scenario_b1),
-        ) == Call(0.2)
-        @test SpineOpt.unit_stochastic_scenario_weight(
+        )) == 0.2
+        @test realize(SpineOpt.unit_stochastic_scenario_weight(
             m;
             unit=unit(:only_unit),
             stochastic_scenario=stochastic_scenario(:scenario_b2),
-        ) == Call(0.4)
-        @test SpineOpt.unit_stochastic_scenario_weight(
+        )) == 0.4
+        @test realize(SpineOpt.unit_stochastic_scenario_weight(
             m;
             unit=unit(:only_unit),
             stochastic_scenario=stochastic_scenario(:scenario_a),
-        ) == Call(0.0)
+        )) == 0.0
     end
 end
