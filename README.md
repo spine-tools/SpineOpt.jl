@@ -45,7 +45,7 @@ SpineOpt is designed to be used with [Spine Toolbox](https://github.com/Spine-pr
 2. Run Spine Toolbox, go to **File** -> **Settings** -> **Tools**
 
 3. Under **Julia**, select *Use Julia executable*, and then enter the path to your Julia executable.
-It should look something like [this](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/figs/spinetoolbox_settings_juliaexe.png).
+It should look something like [this](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/figs/spinetoolbox_settings_juliaexe.png)
 
 4. Press **Ok**
 
@@ -82,7 +82,7 @@ ERROR: cannot find name corresponding to UUID f269a46b-ccf7-5d73-abea-4c690281aa
 #### Solution
 
 The easiest way to get around this is to reset the General registry and try to add SpineOpt again.
-Paraphrazing Julia's helpdesk, "Registry installation on Windows is a bit bad (but fixed in upcoming version)"
+Paraphrasing Julia's helpdesk, "Registry installation on Windows is a bit bad (but fixed in upcoming version)"
 
 So, just copy/paste the following in the julia prompt:
 
@@ -116,7 +116,7 @@ At line:1 char:35
 
 2. Install Windows management framework 3 or later, from here https://docs.microsoft.com/en-us/powershell/scripting/windows-powershell/wmf/overview?view=powershell-7.1
 
-3. Try to install SpineOpt again.
+3. Try to install SpineOpt again
 
 
 ### Building the documentation
