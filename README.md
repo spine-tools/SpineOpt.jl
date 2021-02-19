@@ -81,10 +81,8 @@ ERROR: cannot find name corresponding to UUID f269a46b-ccf7-5d73-abea-4c690281aa
 
 #### Solution
 
-The easiest way to get around this is to reset the General registry and try to add SpineOpt again.
-Paraphrasing Julia's helpdesk, "Registry installation on Windows is a bit bad (but fixed in upcoming version)".
-
-So, just copy/paste the following in the julia prompt:
+The easiest way to get around this is to reset your Julia General registry and try to add SpineOpt again.
+Just copy/paste the following in the julia prompt:
 
 	using Pkg
 	rm(joinpath(DEPOT_PATH[1], "registries", "General"); force=true, recursive=true)
