@@ -472,19 +472,18 @@ end
 
 
 function relax_integer_vars(m::Model)
-    save_integer_values!(m)
-    fix_vars = [:units_on, :units_invested]
+    save_integer_values!(m)    
     for name in m.ext[:integer_variables]
         def = m.ext[:variables_definition][name]
         bin = def[:bin]
         int = def[:int]
         var = m.ext[:variables][name]
         for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))
-            if name in fix_vars
-                if end_(ind.t) <= end_(current_window(m))
-                    fix(var[ind], m.ext[:values][name][ind]; force=true)
-                end
+            
+            if end_(ind.t) <= end_(current_window(m))
+                fix(var[ind], m.ext[:values][name][ind]; force=true)
             end
+            
             bin != nothing && bin(ind) && unset_binary(var[ind])
             int != nothing && int(ind) && unset_integer(var[ind])
         end
