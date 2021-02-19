@@ -13,11 +13,11 @@ This package requires [Julia](https://julialang.org/) 1.2 or later.
 
 ### Installation
 
-1. Download and install the latest version of [Julia](https://julialang.org/downloads) for your system (if you haven't done it yet)
+1. Download and install the latest version of [Julia](https://julialang.org/downloads) for your system (if you haven't done it yet).
 
-2. Run Julia
+2. Run Julia.
 
-3. Copy/paste the following text into the julia prompt
+3. Copy/paste the following text into the julia prompt:
 
 		using Pkg
 		pkg"registry add https://github.com/Spine-project/SpineJuliaRegistry"
@@ -29,9 +29,9 @@ It doesn't work? See our [Troubleshooting](#troubleshooting) section.
 
 SpineOpt is constantly improving. To get the most recent version, just:
 
-1. Run Julia
+1. Run Julia.
 
-2. Copy/paste the following text into the julia prompt
+2. Copy/paste the following text into the julia prompt:
 
 		using Pkg
 		pkg"up SpineOpt"
@@ -40,14 +40,14 @@ SpineOpt is constantly improving. To get the most recent version, just:
 
 SpineOpt is designed to be used with [Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox).
 
-1. Install Spine Toolbox as described [here](https://github.com/Spine-project/Spine-Toolbox#installing-spine-toolbox)
+1. Install Spine Toolbox as described [here](https://github.com/Spine-project/Spine-Toolbox#installing-spine-toolbox).
 
-2. Run Spine Toolbox, go to **File** -> **Settings** -> **Tools**
+2. Run Spine Toolbox, go to **File** -> **Settings** -> **Tools**.
 
 3. Under **Julia**, select *Use Julia executable*, and then enter the path to your Julia executable.
-It should look something like [this](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/figs/spinetoolbox_settings_juliaexe.png)
+It should look something like [this](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/figs/spinetoolbox_settings_juliaexe.png).
 
-4. Press **Ok**
+4. Press **Ok**.
 
 That's it, now you can use SpineOpt in your Spine Toolbox projects.
 See [here](https://spine-toolbox.readthedocs.io/en/latest/case_study_a5.html) for an example.
@@ -60,7 +60,7 @@ See [here](https://spine-toolbox.readthedocs.io/en/latest/case_study_a5.html) fo
 
 With Julia 1.5.3 on Windows, installation fails with one of the following messages (or similar):
 
-```
+```julia
 julia>  pkg"add SpineOpt"
    Updating registry at `C:\Users\manuelma\.julia\registries\General`
    Updating git-repo `https://github.com/JuliaRegistries/General.git`
@@ -70,7 +70,7 @@ julia>  pkg"add SpineOpt"
 ERROR: expected package `UUIDs [cf7118a7]` to be registered
 ...
 ```
-```
+```julia
 julia>  pkg"add SpineOpt"
    Updating registry at `C:\Users\manuelma\.julia\registries\SpineRegistry`
    Updating git-repo `https://github.com/Spine-project/SpineJuliaRegistry`
@@ -82,7 +82,7 @@ ERROR: cannot find name corresponding to UUID f269a46b-ccf7-5d73-abea-4c690281aa
 #### Solution
 
 The easiest way to get around this is to reset the General registry and try to add SpineOpt again.
-Paraphrasing Julia's helpdesk, "Registry installation on Windows is a bit bad (but fixed in upcoming version)"
+Paraphrasing Julia's helpdesk, "Registry installation on Windows is a bit bad (but fixed in upcoming version)".
 
 So, just copy/paste the following in the julia prompt:
 
@@ -95,9 +95,11 @@ So, just copy/paste the following in the julia prompt:
 
 #### Problem
 
-On Windows 7, installation fails with the following message (or similar:
+On Windows 7, installation fails with the following message (or similar):
 
-```
+```julia
+julia>  pkg"add SpineOpt"
+...
 Downloading artifact: OpenBLAS32
 Exception setting "SecurityProtocol": "Cannot convert null to type "System.Net.
 SecurityProtocolType" due to invalid enumeration values. Specify one of the fol
@@ -112,11 +114,11 @@ At line:1 char:35
 
 #### Solution
 
-1. Install .NET 4.5 from here: https://www.microsoft.com/en-US/download/details.aspx?id=30653
+1. Install .NET 4.5 from here: https://www.microsoft.com/en-US/download/details.aspx?id=30653.
 
-2. Install Windows management framework 3 or later, from here https://docs.microsoft.com/en-us/powershell/scripting/windows-powershell/wmf/overview?view=powershell-7.1
+2. Install Windows management framework 3 or later, from here https://docs.microsoft.com/en-us/powershell/scripting/windows-powershell/wmf/overview?view=powershell-7.1.
 
-3. Try to install SpineOpt again
+3. Try to install SpineOpt again.
 
 
 ### Building the documentation
