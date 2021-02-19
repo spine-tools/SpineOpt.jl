@@ -33,7 +33,7 @@ function add_constraint_connection_intact_flow_ptdf_in_out!(m::Model)
                 init=0,
             ) == 
             +expr_sum(
-                +get(connection_intact_flow, (conn, n_from, direction(:to_node), s, t), 0) -
+                -get(connection_intact_flow, (conn, n_from, direction(:to_node), s, t), 0) +
                 get(connection_intact_flow, (conn, n_from, direction(:from_node), s, t), 0) for s in s;
                 init=0,
             )

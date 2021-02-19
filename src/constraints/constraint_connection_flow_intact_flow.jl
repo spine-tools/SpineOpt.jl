@@ -55,10 +55,10 @@ function add_constraint_connection_flow_intact_flow!(m::Model)
             ==           
             +expr_sum( 
                 lodf(connection1=candidate_connection, connection2=conn) *
-                ( + connection_intact_flow[candidate_connection, n, direction(:to_node), s, t] * duration(t)
-                  - connection_intact_flow[candidate_connection, n, direction(:from_node), s, t] * duration(t)
-                  - connection_flow[candidate_connection, n, direction(:to_node), s, t] * duration(t)
-                  + connection_flow[candidate_connection, n, direction(:from_node), s, t] * duration(t) )
+                ( + connection_intact_flow[candidate_connection, n, direction(:from_node), s, t] * duration(t)
+                  - connection_intact_flow[candidate_connection, n, direction(:to_node), s, t] * duration(t)
+                  - connection_flow[candidate_connection, n, direction(:from_node), s, t] * duration(t)
+                  + connection_flow[candidate_connection, n, direction(:to_node), s, t] * duration(t) )
                 for candidate_connection in connection(is_candidate=true, has_ptdf=true) 
                     if candidate_connection !== conn && ! (lodf(connection1=candidate_connection, connection2 = conn) == nothing)
                 for n in last(connection__from_node(connection=candidate_connection))
@@ -67,7 +67,7 @@ function add_constraint_connection_flow_intact_flow!(m::Model)
                     m;    
                     connection=candidate_connection,
                     node=n,
-                    direction=direction(:to_node),
+                    direction=direction(:from_node),
                     stochastic_scenario=s,
                     t=t_in_t(m; t_long=t),
                 );
