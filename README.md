@@ -19,9 +19,11 @@ This package requires [Julia](https://julialang.org/) 1.2 or later.
 
 3. Copy/paste the following text into the julia prompt:
 
-		using Pkg
-		pkg"registry add https://github.com/Spine-project/SpineJuliaRegistry"
-		pkg"add SpineOpt"
+	```julia
+	using Pkg
+	pkg"registry add https://github.com/Spine-project/SpineJuliaRegistry"
+	pkg"add SpineOpt"
+	```
 
 It doesn't work? See our [Troubleshooting](#troubleshooting) section.
 
@@ -33,8 +35,10 @@ SpineOpt is constantly improving. To get the most recent version, just:
 
 2. Copy/paste the following text into the julia prompt:
 
-		using Pkg
-		pkg"up SpineOpt"
+	```julia
+	using Pkg
+	pkg"up SpineOpt"
+	```
 
 ### Usage
 
@@ -58,7 +62,7 @@ See [here](https://spine-toolbox.readthedocs.io/en/latest/case_study_a5.html) fo
 
 #### Problem
 
-With Julia 1.5.3 on Windows, installation fails with one of the following messages (or similar):
+Using Julia 1.5.3 on Windows, installation fails with one of the following messages (or similar):
 
 ```julia
 julia>  pkg"add SpineOpt"
@@ -81,15 +85,16 @@ ERROR: cannot find name corresponding to UUID f269a46b-ccf7-5d73-abea-4c690281aa
 
 #### Solution
 
-The easiest way to get around this is to reset your Julia General registry and try to add SpineOpt again.
-Just copy/paste the following in the julia prompt:
+1. Reset your Julia General registry. Copy/paste the following in the julia prompt:
 
+	```julia
 	using Pkg
 	rm(joinpath(DEPOT_PATH[1], "registries", "General"); force=true, recursive=true)
 	withenv("JULIA_PKG_SERVER"=>"") do
 	    pkg"registry add"
 	end
-	pkg"add SpineOpt"
+	```
+2. Try to install SpineOpt again.
 
 #### Problem
 
