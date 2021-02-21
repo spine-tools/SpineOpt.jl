@@ -1,5 +1,15 @@
 {
-  "name": "SpineOpt",
-  "version": "0.1.0",
-  "url": "https://github.com/Spine-project/SpineOpt.jl/plugin"
+	"name": "SpineOpt",
+	"version": "0.1.0",
+	"base_path": "https://raw.githubusercontent.com/Spine-project/SpineOpt.jl/master/plugin/",
+	"description": "SpineOpt plugin for Spine Toolbox.",
+    "specifications": {
+        "Tool": [
+            {
+                "type": "path",
+                "relative": true,
+                "path": "specifications/Tool/run_spineopt.json"
+            }
+        ]
+    }
 }
