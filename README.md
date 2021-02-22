@@ -13,9 +13,9 @@ This package requires [Julia](https://julialang.org/) 1.2 or later.
 
 ### Installation
 
-1. Download and install the latest version of [Julia](https://julialang.org/downloads) for your system (if you haven't done it yet).
+1. Download and install the latest version of Julia for your system as described [here](https://julialang.org/downloads)(if you haven't done it yet).
 
-2. Run [Julia](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/figs/win_run_julia.png).
+2. Start the [Julia REPL](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/figs/win_run_julia.png).
 
 3. Copy/paste the following text into the julia prompt
 (it will install the SpineOpt package from the [Spine Julia Registry](https://github.com/Spine-project/SpineJuliaRegistry)):
@@ -32,7 +32,7 @@ It doesn't work? See our [Troubleshooting](#troubleshooting) section.
 
 SpineOpt is constantly improving. To get the most recent version, just:
 
-1. Run [Julia](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/figs/win_run_julia.png).
+1. Start the [Julia REPL](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/figs/win_run_julia.png).
 
 2. Copy/paste the following text into the julia prompt
 (it will update the SpineOpt package from the [Spine Julia Registry](https://github.com/Spine-project/SpineJuliaRegistry)):
