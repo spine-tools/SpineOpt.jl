@@ -44,7 +44,7 @@ SpineOpt is constantly improving. To get the most recent version, just:
 
 SpineOpt is designed to be used with [Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox).
 
-1. Install Spine Toolbox as described [here](https://github.com/Spine-project/Spine-Toolbox#installing-spine-toolbox).
+1. Install Spine Toolbox as described [here](https://github.com/Spine-project/Spine-Toolbox/blob/master/README.md#development-version).
 
 2. Run Spine Toolbox, go to **File** -> **Settings** -> **Tools**.
 
