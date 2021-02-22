@@ -119,14 +119,24 @@ function add_connection_relationships()
     add_relationships!(connection__node__node, new_connection__node__node_rels)
     value_one = parameter_value(1.0)
     new_connection__from_node_parameter_values = Dict(
-        (conn, n) => Dict(:connection_conv_cap_to_flow => value_one,
-                          :connection_capacity => connection__to_node.parameter_values[(conn, n)][:connection_capacity]) 
-                          for (conn, n) in new_connection__from_node_rels
-    )
+        (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__from_node_rels
+    )    
+    
+    for (conn, n) in new_connection__from_node_rels
+        if haskey(connection__to_node.parameter_values[(conn, n)], :connection_capacity)
+            new_connection__from_node_parameter_values[:connection_capacity] = connection__to_node.parameter_values[(conn, n)][:connection_capacity]
+        end
+    end
+
     new_connection__to_node_parameter_values = Dict(
-        (conn, n) => Dict(:connection_conv_cap_to_flow => value_one, 
-                               :connection_capacity => connection__from_node.parameter_values[(conn, n)][:connection_capacity]) 
-                               for (conn, n) in new_connection__to_node_rels)
+        (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__to_node_rels)
+
+    for (conn, n) in new_connection__to_node_rels
+        if haskey(connection__from_node.parameter_values[(conn, n)], :connection_capacity)
+            new_connection__to_node_parameter_values[:connection_capacity] = connection__from_node.parameter_values[(conn, n)][:connection_capacity]
+        end
+    end
+
     new_connection__node__node_parameter_values = Dict(
         (conn, n1, n2) => Dict(:fix_ratio_out_in_connection_flow => value_one)
         for (conn, n1, n2) in new_connection__node__node_rels

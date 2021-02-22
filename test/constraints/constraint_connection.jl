@@ -147,7 +147,7 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_connection_flow_ptdf" begin
+    @testset "constraint_connection_intact_flow_ptdf" begin
         # TODO: node_ptdf_threshold
         conn_r = 0.9
         conn_x = 0.1
@@ -200,9 +200,9 @@
         )
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map; log_level=0, optimize=false)
-        var_connection_flow = m.ext[:variables][:connection_flow]
+        var_connection_flow = m.ext[:variables][:connection_intact_flow]
         var_node_injection = m.ext[:variables][:node_injection]
-        constraint = m.ext[:constraints][:connection_flow_ptdf]
+        constraint = m.ext[:constraints][:connection_intact_flow_ptdf]
         @test length(constraint) == 5
         @testset for (conn_name, n_to_name, n_inj_name, scen_names, t_block) in (
             (:connection_ab, :node_b, :node_b, (:parent,), :two_hourly),
@@ -220,7 +220,10 @@
                 var_n_inj = var_node_injection[n_inj, s, t]
                 ptdf_val = SpineOpt.ptdf(connection=conn, node=n_inj)
                 expected_con = @build_constraint(var_conn_flow_to - var_conn_flow_from == ptdf_val * var_n_inj)
-                observed_con = constraint_object(constraint[conn, n_to, [s], t])
+                @info "info" var_conn_flow_to var_conn_flow_from ptdf_val var_n_inj
+                #SpineOpt.print_constraint(constraint, "observed.txt")
+                #SpineOpt.print_constraint(expected_con, "expected.txt")                
+                observed_con = constraint_object(constraint[conn, n_to, [s], t])                
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end

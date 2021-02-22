@@ -158,8 +158,8 @@ function write_concept_reference_file(
     return error_count
 end
 
-function print_constraint(constraint)
-    io = open(joinpath(@__DIR__, "constraint_debug.txt"), "w")
+function print_constraint(constraint, filename="constraint_debug.txt")
+    io = open(joinpath(@__DIR__, filename), "w")
     for (inds, con) in constraint
         print(io, inds, "\n")        
         print(io, con, "\n\n")
