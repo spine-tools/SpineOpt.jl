@@ -44,6 +44,7 @@ import SpineOpt:
 _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
 
 function _load_test_data(db_url, test_data)
+    SpineInterface._import_spinedb_api()
     db_map = db_api.DatabaseMapping(db_url; create=true)
     data = Dict(Symbol(key) => value for (key, value) in SpineOpt._template)
     merge!(data, test_data)
@@ -77,6 +78,17 @@ function _dismember_function(func)
     end
     println("term constant: ", func.constant)
 end
+
+function SpineOpt.run_spineopt(db_map::PyObject, url_out::String; kwargs...)
+    using_spinedb(db_map, SpineOpt)
+    SpineOpt.generate_missing_items() 
+    if !isempty(model(model_type=:spineopt_master))
+        rerun_spineopt_mp(url_out; kwargs...)
+    else
+        rerun_spineopt(url_out; kwargs...)
+    end
+end
+SpineOpt.run_spineopt(db_map::PyObject; kwargs...) = run_spineopt(db_map, db_map.db_url; kwargs...)
 
 @testset begin
     #include("data_structure/check_data_structure.jl")

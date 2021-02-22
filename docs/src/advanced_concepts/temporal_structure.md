@@ -1,3 +1,0 @@
-# Temporal Structure
-
-TODO

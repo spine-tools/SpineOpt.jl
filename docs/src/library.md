@@ -25,7 +25,7 @@ run_spineopt(::String)
 
 ## Internals
 
-### Variables
+### Variable library
 
 ```@docs
 variable_flow
@@ -42,10 +42,10 @@ var_units_on_indices
 fix_units_on_indices
 ```
 
-### Constraints
+### Constraint library
 
 TODO
 
-### Objectives
+### Objective
 
 TODO
