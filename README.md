@@ -13,11 +13,16 @@ This package requires [Julia](https://julialang.org/) 1.2 or later.
 
 ### Installation
 
-1. Download and install the latest version of [Julia](https://julialang.org/downloads) for your system (if you haven't done it yet).
+SpineOpt is designed to be used with [Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox).
 
-2. Run Julia.
+1. Install Spine Toolbox as described [here](https://github.com/Spine-project/Spine-Toolbox/blob/master/README.md#development-version).
 
-3. Copy/paste the following text into the julia prompt:
+2. Download and install the latest version of Julia for your system as described [here](https://julialang.org/downloads).
+
+3. Start the [Julia REPL](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/figs/win_run_julia.png).
+
+4. Copy/paste the following text into the julia prompt
+(it will install the SpineOpt package from the [Spine Julia Registry](https://github.com/Spine-project/SpineJuliaRegistry)):
 
 	```julia
 	using Pkg
@@ -25,15 +30,26 @@ This package requires [Julia](https://julialang.org/) 1.2 or later.
 	pkg"add SpineOpt"
 	```
 
+5. Configure Spine Toolbox to use your Julia:
+
+	a. Run Spine Toolbox.
+
+	b. Go to **File** -> **Settings** -> **Tools**.
+
+	c. Under **Julia**, select *Use Julia executable*, and then enter the path to your Julia executable. It should look something like [this](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/figs/spinetoolbox_settings_juliaexe.png).
+
+	d. Press **Ok**.
+
 It doesn't work? See our [Troubleshooting](#troubleshooting) section.
 
 ### Upgrading
 
 SpineOpt is constantly improving. To get the most recent version, just:
 
-1. Run Julia.
+1. Start the [Julia REPL](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/figs/win_run_julia.png).
 
-2. Copy/paste the following text into the julia prompt:
+2. Copy/paste the following text into the julia prompt
+(it will update the SpineOpt package from the [Spine Julia Registry](https://github.com/Spine-project/SpineJuliaRegistry)):
 
 	```julia
 	using Pkg
@@ -42,19 +58,8 @@ SpineOpt is constantly improving. To get the most recent version, just:
 
 ### Usage
 
-SpineOpt is designed to be used with [Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox).
-
-1. Install Spine Toolbox as described [here](https://github.com/Spine-project/Spine-Toolbox#installing-spine-toolbox).
-
-2. Run Spine Toolbox, go to **File** -> **Settings** -> **Tools**.
-
-3. Under **Julia**, select *Use Julia executable*, and then enter the path to your Julia executable.
-It should look something like [this](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/figs/spinetoolbox_settings_juliaexe.png).
-
-4. Press **Ok**.
-
-That's it, now you can use SpineOpt in your Spine Toolbox projects.
-See [here](https://spine-toolbox.readthedocs.io/en/latest/case_study_a5.html) for an example.
+For an example of how to use SpineOpt in your Spine Toolbox projects,
+please see [here](https://spine-toolbox.readthedocs.io/en/latest/case_study_a5.html).
 (We apologize for the lengthiness of that example. We're currently working on a minimal example that will get you started faster.)
 
 
