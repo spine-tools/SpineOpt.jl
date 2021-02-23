@@ -200,6 +200,7 @@
         )
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map; log_level=0, optimize=false)
+
         var_connection_flow = m.ext[:variables][:connection_intact_flow]
         var_node_injection = m.ext[:variables][:node_injection]
         constraint = m.ext[:constraints][:connection_intact_flow_ptdf]
@@ -219,10 +220,7 @@
                 var_conn_flow_from = var_connection_flow[conn, n_to, direction(:from_node), s, t]
                 var_n_inj = var_node_injection[n_inj, s, t]
                 ptdf_val = SpineOpt.ptdf(connection=conn, node=n_inj)
-                expected_con = @build_constraint(var_conn_flow_to - var_conn_flow_from == ptdf_val * var_n_inj)
-                @info "info" var_conn_flow_to var_conn_flow_from ptdf_val var_n_inj
-                #SpineOpt.print_constraint(constraint, "observed.txt")
-                #SpineOpt.print_constraint(expected_con, "expected.txt")                
+                expected_con = @build_constraint(var_conn_flow_to - var_conn_flow_from == ptdf_val * var_n_inj)                               
                 observed_con = constraint_object(constraint[conn, n_to, [s], t])                
                 @test _is_constraint_equal(observed_con, expected_con)
             end

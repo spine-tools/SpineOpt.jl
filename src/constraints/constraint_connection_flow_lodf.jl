@@ -106,7 +106,7 @@ function constraint_connection_flow_lodf_indices(
         for conn_cont in connection(connection_contingency=true, has_lodf=true)
         for conn_mon in connection(connection_monitored=true) 
             if conn_cont !== conn_mon &&
-                abs(lodf_lodf(connection1=conn_cont, connection2=conn_mon)) >= connnection_lodf_tolerance(connection=conn_cont)    
+                abs(lodf(connection1=conn_cont, connection2=conn_mon)) >= connnection_lodf_tolerance(connection=conn_cont)    
         for t in _constraint_connection_flow_lodf_lowest_resolution_t(m, conn_cont, conn_mon, t)
         for
         path in active_stochastic_paths(unique(

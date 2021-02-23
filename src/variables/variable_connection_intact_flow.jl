@@ -45,7 +45,7 @@ function connection_intact_flow_indices(
             node=node,
             direction=direction,
             _compact=false,
-        ) if has_ptdf(connection=conn) == true
+        ) #if has_ptdf(connection=conn) == true
         for
         (n, s, t) in
         node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
