@@ -33,7 +33,7 @@ function renewable_curtailment_costs(m::Model, t1)
             (
                 units_available[u, s, t_long] *
                 unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_short)] *
-                unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t_short)] -
+                unit_conv_cap_to_flow[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_short)]   -
                 unit_flow[u, n, d, s, t_short]
             ) *
             duration(t_short) for u in indices(curtailment_cost) for (u, n, d) in indices(unit_capacity; unit=u)
