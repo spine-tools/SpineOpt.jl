@@ -21,7 +21,7 @@ module X end
 @testset "generate missing items" begin
     SpineOpt.generate_missing_items(X)
     all_names = names(X)
-    template = SpineOpt._template
+    template = SpineOpt.template()
     @testset for (name,) in template["object_classes"]
         @test Symbol(name) in all_names
         @test getfield(X, Symbol(name)) isa ObjectClass
