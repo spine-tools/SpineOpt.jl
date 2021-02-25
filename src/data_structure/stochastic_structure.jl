@@ -110,7 +110,7 @@ function _stochastic_dag(m::Model, stochastic_structure::Object, window_start::D
     scen_start = Dict(scen => window_start for scen in scenarios)
     scen_end = Dict()
     scen_weight = Dict(
-        scen => weight_relative_to_parents(stochastic_structure=stochastic_structure, stochastic_scenario=scen)
+        scen => Float64(weight_relative_to_parents(stochastic_structure=stochastic_structure, stochastic_scenario=scen))
         for scen in scenarios
     )
     for scen in scenarios

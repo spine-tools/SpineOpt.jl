@@ -45,6 +45,7 @@ function check_data_structure(; log_level=3)
     check_model__unit__stochastic_structure()
     check_minimum_operating_point_unit_capacity()
     check_islands(; log_level=log_level)
+    check_rolling_branching()
 end
 
 """
@@ -212,6 +213,34 @@ function visit(n, island_count, visited_d, island_node)
     for (conn, n2) in connection__node__node(node1=n)
         if !visited_d[n2]
             visit(n2, island_count, visited_d, island_node)
+        end
+    end
+end
+
+"""
+    check_rolling_branching()
+
+Check that no `stochastic_structure` branches before `roll_forward`.
+"""
+function check_rolling_branching()
+    for m in model()
+        if !isnothing(roll_forward(model=m))
+            for ss in model__stochastic_structure(model=m)
+                cond = all(
+                    stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen)
+                    >=
+                    roll_forward(model=m)
+                    for scen in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
+                    if !isnothing(stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen))
+                )
+                _check(
+                    cond,
+                    """
+                    Branching of `stochastic_structures` before `model` `roll_forward` isn't supported!
+                    Please check the `stochastic_scenario_end` parameters of `stochastic_structure` `$(ss)`.
+                    """
+                )
+            end
         end
     end
 end
