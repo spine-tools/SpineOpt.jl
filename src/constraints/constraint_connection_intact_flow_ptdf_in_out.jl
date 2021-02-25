@@ -20,7 +20,7 @@
 """
     add_constraint_connection_intact_flow_ptdf_in_out!(m::Model)
 
-For connection networks with monitored and has_ptdf set to true, set the steady state flow based on PTDFs.
+For connection investments with PTDFs enabled, constrain that the flow into a connection must equal the flow out
 """
 function add_constraint_connection_intact_flow_ptdf_in_out!(m::Model)
     @fetch connection_intact_flow, node_injection = m.ext[:variables]
@@ -46,10 +46,10 @@ end
 """
     constraint_connection_intact_flow_ptdf_in_out_indices(m::Model; filtering_options...)
 
-Form the stochastic indexing Array for the `:connection_intact_flow_lodf` constraint.
+Form the stochastic indexing Array for the `:connection_intact_flow_ptdf_in_out` constraint.
 
-Uses stochastic path indices due to potentially different stochastic structures between
-`connection_intact_flow` and `node_injection` variables? Keyword arguments can be used for filtering the resulting Array.
+Uses stochastic path indices due to potentially different stochastic structures between the 
+`connection_intact_flow` variables at node_from and node_to. Keyword arguments can be used for filtering the resulting Array.
 """
 function constraint_connection_intact_flow_ptdf_in_out_indices(
     m::Model;
@@ -75,8 +75,7 @@ end
 """
     _constraint_connection_intact_flow_ptdf_in_out_indices(connection, node_to, direction_to, t)
 
-Gather the indices of the `connection_intact_flow` and the `node_injection` variables appearing in
-`add_constraint_connection_intact_flow_ptdf!`.
+Gather the indices of the `connection_intact_flow` variables appearing in `add_constraint_connection_intact_flow_ptdf_in_out!`.
 """
 function _constraint_connection_intact_flow_ptdf_in_out_indices(m, connection, node_to, direction_to, node_from, direction_from, t)
     Iterators.flatten((        
