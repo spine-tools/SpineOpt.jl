@@ -167,6 +167,7 @@ function add_variables!(m; log_level=3)
     @timelog log_level 3 "- [variable_unit_flow]" add_variable_unit_flow!(m)
     @timelog log_level 3 "- [variable_unit_flow_op]" add_variable_unit_flow_op!(m)
     @timelog log_level 3 "- [variable_connection_flow]" add_variable_connection_flow!(m)
+    @timelog log_level 3 "- [variable_connection_intact_flow]" add_variable_connection_intact_flow!(m)
     @timelog log_level 3 "- [variable_connections_invested]" add_variable_connections_invested!(m)
     @timelog log_level 3 "- [variable_connections_invested_available]" add_variable_connections_invested_available!(m)
     @timelog log_level 3 "- [variable_connections_decommissioned]" add_variable_connections_decommissioned!(m)
@@ -221,8 +222,14 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
     @timelog log_level 3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
     @timelog log_level 3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
-    @timelog log_level 3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m)
+    @timelog log_level 3 "- [constraint_candidate_connection_flow_ub]" add_constraint_candidate_connection_flow_ub!(m)
+    @timelog log_level 3 "- [constraint_candidate_connection_flow_lb]" add_constraint_candidate_connection_flow_lb!(m)
+    @timelog log_level 3 "- [constraint_connection_intact_flow_ptdf]" add_constraint_connection_intact_flow_ptdf!(m)
+    #@timelog log_level 3 "- [constraint_connection_intact_flow_ptdf_in_out]" add_constraint_connection_intact_flow_ptdf_in_out!(m)
+    @timelog log_level 3 "- [constraint_connection_flow_intact_flow]" add_constraint_connection_flow_intact_flow!(m)
     @timelog log_level 3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
+    @timelog log_level 3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)    
+    @timelog log_level 3 "- [constraint_connection_intact_flow_capacity]" add_constraint_connection_intact_flow_capacity!(m)  
     @timelog log_level 3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)    
     @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(m)
     @timelog log_level 3 "- [constraint_connection_lifetime]" add_constraint_connection_lifetime!(m)
@@ -244,6 +251,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_fix_ratio_in_out_unit_flow]" add_constraint_fix_ratio_in_out_unit_flow!(m)
     @timelog log_level 3 "- [constraint_max_ratio_in_out_unit_flow]" add_constraint_max_ratio_in_out_unit_flow!(m)
     @timelog log_level 3 "- [constraint_min_ratio_in_out_unit_flow]" add_constraint_min_ratio_in_out_unit_flow!(m)
+    @timelog log_level 3 "- [constraint_ratio_out_in_connection_intact_flow]" add_constraint_ratio_out_in_connection_intact_flow!(m)           
     @timelog log_level 3 "- [constraint_fix_ratio_out_in_connection_flow]" add_constraint_fix_ratio_out_in_connection_flow!(
         m,
     )
@@ -252,8 +260,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     )
     @timelog log_level 3 "- [constraint_min_ratio_out_in_connection_flow]" add_constraint_min_ratio_out_in_connection_flow!(
         m,
-    )    
-    @timelog log_level 3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)
+    )           
     @timelog log_level 3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
     @timelog log_level 3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
     @timelog log_level 3 "- [constraint_units_on]" add_constraint_units_on!(m)
@@ -463,21 +470,19 @@ function write_report(model, default_url)
 end
 
 
-
 function relax_integer_vars(m::Model)
-    save_integer_values!(m)
-    fix_vars = [:units_on, :units_invested]
+    save_integer_values!(m)    
     for name in m.ext[:integer_variables]
         def = m.ext[:variables_definition][name]
         bin = def[:bin]
         int = def[:int]
         var = m.ext[:variables][name]
         for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))
-            if name in fix_vars
-                if end_(ind.t) <= end_(current_window(m))
-                    fix(var[ind], m.ext[:values][name][ind]; force=true)
-                end
+            
+            if end_(ind.t) <= end_(current_window(m))
+                fix(var[ind], m.ext[:values][name][ind]; force=true)
             end
+            
             bin != nothing && bin(ind) && unset_binary(var[ind])
             int != nothing && int(ind) && unset_integer(var[ind])
         end
