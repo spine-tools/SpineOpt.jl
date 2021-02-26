@@ -30,11 +30,11 @@ function add_constraint_min_up_time!(m::Model)
         (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
             +expr_sum(
-                +units_on[u, s, t] for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
+                +units_on[u, s, t] for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
                 init=0,
             ) - expr_sum(
                 +nonspin_units_shut_down[u, n, s, t]
-                for (u, n, s, t) in nonspin_units_shut_down_indices(m; unit=u, stochastic_scenario=s, t=t);
+                for (u, n, s, t) in nonspin_units_shut_down_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
                 init=0,
             ) >=
             +sum(
@@ -51,6 +51,7 @@ function add_constraint_min_up_time!(m::Model)
                             end_(t),
                         ),
                     ),
+                    temporal_block=anything
                 )
             )
         ) for (u, s, t) in constraint_min_up_time_indices(m)
@@ -86,5 +87,5 @@ function _constraint_min_up_time_indices(m, u, s, t0, t)
         m;
         t=TimeSlice(end_(t) - min_up_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)),
     )
-    unique(ind.stochastic_scenario for ind in units_on_indices(m; unit=u, t=t_past_and_present))
+    unique(ind.stochastic_scenario for ind in units_on_indices(m; unit=u, t=t_past_and_present, temporal_block=anything))
 end

@@ -30,6 +30,7 @@ function res_proc_costs(m::Model, t1)
         expr_sum(
             unit_flow[u, n, d, s, t] *
             duration(t) *
+            sum(weight(temporal_block=blk) for blk in t.blocks) *
             reserve_procurement_cost[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)] *
             node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s) for n in indices(reserve_procurement_cost)  # TODO: change this to (u, n, d) indices
             for

@@ -23,9 +23,9 @@
 A list of `NamedTuple`s corresponding to indices of the `units_invested_available` variable where
 the keyword arguments act as filters for each dimension.
 """
-function units_invested_available_indices(m::Model; unit=anything, stochastic_scenario=anything, t=anything)
+function units_invested_available_indices(m::Model; unit=anything, stochastic_scenario=anything, t=anything, temporal_block=anything)
     [
-        (unit=u, stochastic_scenario=s, t=t) for (u, tb) in unit__investment_temporal_block(unit=unit, _compact=false)
+        (unit=u, stochastic_scenario=s, t=t) for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
         for
         (u, s, t) in unit_investment_stochastic_time_indices(
             m;

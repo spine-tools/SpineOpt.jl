@@ -52,8 +52,32 @@ function add_variable!(
             ind => _variable(m, name, ind, lb, ub, bin, int)
             for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
         )
+    if use_representative_days(model=m.ext[:instance]) == :use_representative_days_w_seasonal_storage
+        map_variable!(m, m.ext[:variables][name], indices)
+    end
     ((bin != nothing) || (int != nothing)) && push!(m.ext[:integer_variables], name)
 end
+
+"""
+    map_variable!(v::Dict{VariableRef}, indices_all::Function)
+
+Extends variable Dictionary such that indexing by a non representative
+time slice returns the variable with the corresponding representative
+time slice.
+"""
+function map_variable!(m::Model, var::Dict, var_indices::Function)
+    # TODO: should probably rename "ordering_periods" to
+    # "time_slice_mapping"
+    for ind in setdiff(var_indices(m;temporal_block=anything),var_indices(m))
+        # Get indices which aren't time slices
+        Keys = [k for k in keys(ind) if !(typeof(ind[k]) <: TimeSlice)]
+        Values = [ind[k] for k in Keys]
+        non_t_slice_ind = (; zip(Keys, Values)...) #this gets everything, but the timeslice index...
+        ind_rep = first(var_indices(m;non_t_slice_ind...,t=rep_time_slices(m)[to_time_slice(m,t=ind.t)]))
+        var[ind] = var[ind_rep]
+    end
+end
+
 
 """
     _base_name(name, ind)

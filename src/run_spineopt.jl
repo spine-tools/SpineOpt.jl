@@ -324,6 +324,31 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, mip_solve
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
+    if termination_status(m) == MOI.INFEASIBLE
+        compute_conflict!(m)
+        cons=[]
+        for (a,b) in list_of_constraint_types(m)
+            push!(cons,all_constraints(m,a,b)...)
+        end
+        conflicts=[]
+        for c in cons
+            try
+                conf = MOI.get(m, MOI.ConstraintConflictStatus(), c)
+                if conf==MOI.ConflictParticipationStatusCode(1)
+                    @show c
+                    push!(conflicts, c)
+                end
+            catch
+                @info("something went wrong with $c")
+            end
+        end
+
+        @info "conflicts are: "
+        for c in conflicts
+            @info "$(c)"
+        end
+    end
+
     if termination_status(m) == MOI.OPTIMAL || termination_status(m) == MOI.TIME_LIMIT
         if calculate_duals
             @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
