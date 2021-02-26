@@ -33,6 +33,7 @@ function preprocess_data_structure(; log_level=3)
     # so calls to `connection__from_node` don't corrupt lookup cache
     add_connection_relationships()
     generate_direction()
+    process_loss_bidirectional_capacities()
     generate_network_components()
     generate_variable_indexing_support()
     generate_benders_structure()
@@ -121,21 +122,9 @@ function add_connection_relationships()
     new_connection__from_node_parameter_values = Dict(
         (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__from_node_rels
     )    
-    
-    for (conn, n) in new_connection__from_node_rels
-        if haskey(connection__to_node.parameter_values[(conn, n)], :connection_capacity)
-            new_connection__from_node_parameter_values[:connection_capacity] = connection__to_node.parameter_values[(conn, n)][:connection_capacity]
-        end
-    end
 
     new_connection__to_node_parameter_values = Dict(
         (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__to_node_rels)
-
-    for (conn, n) in new_connection__to_node_rels
-        if haskey(connection__from_node.parameter_values[(conn, n)], :connection_capacity)
-            new_connection__to_node_parameter_values[:connection_capacity] = connection__from_node.parameter_values[(conn, n)][:connection_capacity]
-        end
-    end
 
     new_connection__node__node_parameter_values = Dict(
         (conn, n1, n2) => Dict(:fix_ratio_out_in_connection_flow => value_one)
@@ -174,6 +163,54 @@ function generate_direction()
     @eval begin
         direction = $direction
         export direction
+    end
+end
+
+"""
+    process_loss_bidirectional_capacities()
+
+    For connections of type `:connection_type_lossless_bidirectional` if a `connection_capacity` is found
+    we ensure that it appies to each of the four flow variables
+
+"""
+
+function process_loss_bidirectional_capacities()
+    for c in connection(connection_type=:connection_type_lossless_bidirectional)
+        conn_capacity_param = nothing
+        found_from = false
+        for (n, d) in connection__from_node(connection=c)
+            if haskey(connection__from_node.parameter_values[(c, n, d)], :connection_capacity)
+                conn_capacity_param = connection__from_node.parameter_values[(c, n, d)][:connection_capacity]
+                found_from = true
+                for n2 in connection__from_node(connection=c, direction=d)
+                    if n2 != n
+                        connection__from_node.parameter_values[(c, n2, d)][:connection_capacity] = conn_capacity_param
+                    end
+                end
+            end
+        end
+        found_to = false
+        for (n, d) in connection__to_node(connection=c)
+            if haskey(connection__to_node.parameter_values[(c, n, d)], :connection_capacity)
+                conn_capacity_param = connection__to_node.parameter_values[(c, n, d)][:connection_capacity]
+                found_to = true
+                for n2 in connection__to_node(connection=c, direction=d)
+                    if n2 != n
+                        connection__to_node.parameter_values[(c, n2, d)][:connection_capacity] = conn_capacity_param
+                    end
+                end
+            end
+        end
+        if !found_from && conn_capacity_param !== nothing
+            for (n, d) in connection__from_node(connection=c)                
+                connection__from_node.parameter_values[(c, n, d)][:connection_capacity] = conn_capacity_param
+            end            
+        end
+        if !found_to && conn_capacity_param !== nothing
+            for (n, d) in connection__to_node(connection=c)                
+                connection__to_node.parameter_values[(c, n, d)][:connection_capacity] = conn_capacity_param
+            end            
+        end        
     end
 end
 
