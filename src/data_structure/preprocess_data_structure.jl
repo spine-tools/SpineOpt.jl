@@ -179,8 +179,9 @@ function process_loss_bidirectional_capacities()
         conn_capacity_param = nothing
         found_from = false
         for (n, d) in connection__from_node(connection=c)
-            if haskey(connection__from_node.parameter_values[(c, n, d)], :connection_capacity)
-                conn_capacity_param = connection__from_node.parameter_values[(c, n, d)][:connection_capacity]
+            found_value = get(connection__from_node.parameter_values[(c, n, d)], :connection_capacity, nothing)
+            if found_value !== nothing
+                conn_capacity_param = found_value
                 found_from = true
                 for n2 in connection__from_node(connection=c, direction=d)
                     if n2 != n
@@ -191,8 +192,9 @@ function process_loss_bidirectional_capacities()
         end
         found_to = false
         for (n, d) in connection__to_node(connection=c)
-            if haskey(connection__to_node.parameter_values[(c, n, d)], :connection_capacity)
-                conn_capacity_param = connection__to_node.parameter_values[(c, n, d)][:connection_capacity]
+            found_value = get(connection__to_node.parameter_values[(c, n, d)], :connection_capacity, nothing)
+            if found_value !== nothing
+                conn_capacity_param = found_value
                 found_to = true
                 for n2 in connection__to_node(connection=c, direction=d)
                     if n2 != n
