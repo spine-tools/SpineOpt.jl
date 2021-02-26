@@ -110,10 +110,9 @@ end
 
 
 """
-    constraint_ratio_unit_flow_indices(m::Model, ratio, d1, d2; filtering_options...)
+    constraint_unit_pw_heat_rate_indices(m::Model; filtering_options...)
 
-Form the stochastic indexing Array for the `:ratio_unit_flow` constraint for the desired `ratio` and direction pair
-`d1` and `d2`.
+Form the stochastic indexing Array for the `unit_pw_heat_rate` constraint 
 
 Uses stochastic path indices due to potentially different stochastic structures between `unit_flow` and
 `units_on` variables. Keyword arguments can be used to filter the resulting Array.
@@ -139,7 +138,7 @@ function constraint_unit_pw_heat_rate_indices(
 end
 
 """
-    _constraint_ratio_unit_flow_indices(unit, node1, direction1, node2, direction2, t)
+    _constraint_unit_pw_heat_rate_indices(unit, node_from, node_to, t)
 
 Gather the indices of the relevant `unit_flow` and `units_on` variables.
 """
