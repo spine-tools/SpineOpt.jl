@@ -74,20 +74,21 @@ function write_concept_reference_file(
     template_description_index::Int=template_name_index,
     w::Bool=true
 )
+    template = SpineOpt.template()
     error_count = 0
     # Initialize the `system_string` with the desired title and two newlines
     system_string = ["# $(title)\n\n"]
     # Loop over every section to be aggregated into the file and collect unique template entries
     raw_entries = unique(
         (
-            name = _template[section][i][template_name_index],
-            related_concepts = (template_related_concept_names[s], vcat(_template[section][i][template_related_concept_index])),
-            default_value = _template[section][i][template_default_value_index],
-            parameter_value_list = _template[section][i][template_parameter_value_list_index],
-            description = _template[section][i][template_description_index]
+            name = template[section][i][template_name_index],
+            related_concepts = (template_related_concept_names[s], vcat(template[section][i][template_related_concept_index])),
+            default_value = template[section][i][template_default_value_index],
+            parameter_value_list = template[section][i][template_parameter_value_list_index],
+            description = template[section][i][template_description_index]
         )
         for (s,section) in enumerate(template_sections)
-        for i in 1:length(_template[section])
+        for i in 1:length(template[section])
     )
     # Aggregate and sort the entries based on their names
     unique_names = sort!(unique!(map(e->e.name, raw_entries)))

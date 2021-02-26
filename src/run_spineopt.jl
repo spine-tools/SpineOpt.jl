@@ -223,14 +223,13 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
     @timelog log_level 3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
     @timelog log_level 3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
-    @timelog log_level 3 "- [constraint_candidate_connection_flow_intact_flow]" add_constraint_candidate_connection_flow_intact_flow!(m)
-    @timelog log_level 3 "- [constraint_candidate_connection_flow_intact_flow2]" add_constraint_candidate_connection_flow_intact_flow2!(m)
+    @timelog log_level 3 "- [constraint_candidate_connection_flow_ub]" add_constraint_candidate_connection_flow_ub!(m)
+    @timelog log_level 3 "- [constraint_candidate_connection_flow_lb]" add_constraint_candidate_connection_flow_lb!(m)
     @timelog log_level 3 "- [constraint_connection_intact_flow_ptdf]" add_constraint_connection_intact_flow_ptdf!(m)
-    @timelog log_level 3 "- [constraint_connection_intact_flow_ptdf_in_out]" add_constraint_connection_intact_flow_ptdf_in_out!(m)
+    #@timelog log_level 3 "- [constraint_connection_intact_flow_ptdf_in_out]" add_constraint_connection_intact_flow_ptdf_in_out!(m)
     @timelog log_level 3 "- [constraint_connection_flow_intact_flow]" add_constraint_connection_flow_intact_flow!(m)
     @timelog log_level 3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
-    @timelog log_level 3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)
-    #@timelog log_level 3 "- [constraint_connection_flow_capacity_strict]" add_constraint_connection_flow_capacity_strict!(m)
+    @timelog log_level 3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)    
     @timelog log_level 3 "- [constraint_connection_intact_flow_capacity]" add_constraint_connection_intact_flow_capacity!(m)  
     @timelog log_level 3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)    
     @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(m)
@@ -253,6 +252,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_fix_ratio_in_out_unit_flow]" add_constraint_fix_ratio_in_out_unit_flow!(m)
     @timelog log_level 3 "- [constraint_max_ratio_in_out_unit_flow]" add_constraint_max_ratio_in_out_unit_flow!(m)
     @timelog log_level 3 "- [constraint_min_ratio_in_out_unit_flow]" add_constraint_min_ratio_in_out_unit_flow!(m)
+    @timelog log_level 3 "- [constraint_ratio_out_in_connection_intact_flow]" add_constraint_ratio_out_in_connection_intact_flow!(m)           
     @timelog log_level 3 "- [constraint_fix_ratio_out_in_connection_flow]" add_constraint_fix_ratio_out_in_connection_flow!(
         m,
     )
@@ -469,7 +469,6 @@ function write_report(model, default_url)
         end
     end
 end
-
 
 
 function relax_integer_vars(m::Model)

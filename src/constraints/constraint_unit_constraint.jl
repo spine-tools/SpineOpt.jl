@@ -208,7 +208,7 @@ function add_constraint_unit_constraint!(m::Model)
                     *demand_coefficient[(node=n, unit_constraint=uc, stochastic_scenario=s, analysis_time=t0, t=t)]
                     *duration(t_short)
                 for n in node__unit_constraint(unit_constraint=uc)
-                for (ns, s, t_short) in node_stochastic_time_indices(m; node=n, stochastic_scenario=s, t=t_in_t(m; t_long=t))
+                for (ns, s, t_short) in node_stochastic_time_indices(m; node=n, stochastic_scenario=s, t=t_in_t(m; t_long=t));
                 init=0,            
             ),
             constraint_sense(unit_constraint=uc),

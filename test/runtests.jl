@@ -34,7 +34,7 @@ import SpineOpt:
     generate_temporal_structure!,
     roll_temporal_structure!,
     unit_dynamic_time_indices,
-    unit_investment_dynamic_time_indices,    
+    unit_investment_dynamic_time_indices,
     connection_investment_dynamic_time_indices,
     node_dynamic_time_indices,
     node_stochastic_time_indices,
@@ -46,7 +46,7 @@ _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.se
 function _load_test_data(db_url, test_data)
     SpineInterface._import_spinedb_api()
     db_map = db_api.DatabaseMapping(db_url; create=true)
-    data = Dict(Symbol(key) => value for (key, value) in SpineOpt._template)
+    data = Dict(Symbol(key) => value for (key, value) in SpineOpt.template())
     merge!(data, test_data)
     db_api.import_data(db_map; data...)
     db_map
