@@ -14,15 +14,15 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.2"  # Minimum compat version
-          #- "1"    # Latest Release
+          - "1.2"  # Minimum compatible Release
+          - "1.5"  # Latest Release
         os:
           - ubuntu-latest
-          #- macOS-latest
-          #- windows-latest
+          - macOS-latest
+          - windows-latest
         arch:
           - x64
-          #- x86
+          - x86
         exclude:
           # Test 32-bit only on Linux
           - os: macOS-latest
