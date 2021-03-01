@@ -1289,7 +1289,7 @@
             end
         end
     end    
-    @testset "constraint_unit_constraint" begin
+    @testset "constraint_user_constraint" begin
         @testset for sense in ("==", ">=", "<=")
             db_map = _load_test_data(url_in, test_data)
             rhs = 40
@@ -1297,15 +1297,15 @@
             unit_flow_coefficient_b = 30
             units_on_coefficient = 20
             units_started_up_coefficient = 35
-            objects = [["unit_constraint", "constraint_x"]]
+            objects = [["user_constraint", "constraint_x"]]
             relationships = [
-                ["unit__from_node__unit_constraint", ["unit_ab", "node_a", "constraint_x"]],
-                ["unit__to_node__unit_constraint", ["unit_ab", "node_b", "constraint_x"]],
-                ["unit__unit_constraint", ["unit_ab", "constraint_x"]],
+                ["unit__from_node__user_constraint", ["unit_ab", "node_a", "constraint_x"]],
+                ["unit__to_node__user_constraint", ["unit_ab", "node_b", "constraint_x"]],
+                ["unit__user_constraint", ["unit_ab", "constraint_x"]],
             ]
             object_parameter_values = [
-                ["unit_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
-                ["unit_constraint", "constraint_x", "right_hand_side", rhs],
+                ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
+                ["user_constraint", "constraint_x", "right_hand_side", rhs],
             ]
             relationship_parameter_values = [
                 [relationships[1]..., "unit_flow_coefficient", unit_flow_coefficient_a],
@@ -1325,7 +1325,7 @@
             var_unit_flow = m.ext[:variables][:unit_flow]
             var_units_on = m.ext[:variables][:units_on]
             var_units_started_up = m.ext[:variables][:units_started_up]
-            constraint = m.ext[:constraints][:unit_constraint]
+            constraint = m.ext[:constraints][:user_constraint]
             @test length(constraint) == 1
             key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
             key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
@@ -1347,12 +1347,12 @@
                 rhs,
             )
             expected_con = constraint_object(expected_con_ref)
-            con_key = (unit_constraint(:constraint_x), [s_parent, s_child], t2h)
+            con_key = (user_constraint(:constraint_x), [s_parent, s_child], t2h)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_unit_constraint_with_operating_segments" begin
+    @testset "constraint_user_constraint_with_operating_segments" begin
         @testset for sense in ("==", ">=", "<=")
             db_map = _load_test_data(url_in, test_data)
             rhs = 40
@@ -1362,15 +1362,15 @@
             units_started_up_coefficient = 35
             points = [0.1, 0.5, 1.0]
             operating_points = Dict("type" => "array", "data" => PyVector(points))
-            objects = [["unit_constraint", "constraint_x"]]
+            objects = [["user_constraint", "constraint_x"]]
             relationships = [
-                ["unit__from_node__unit_constraint", ["unit_ab", "node_a", "constraint_x"]],
-                ["unit__to_node__unit_constraint", ["unit_ab", "node_b", "constraint_x"]],
-                ["unit__unit_constraint", ["unit_ab", "constraint_x"]],
+                ["unit__from_node__user_constraint", ["unit_ab", "node_a", "constraint_x"]],
+                ["unit__to_node__user_constraint", ["unit_ab", "node_b", "constraint_x"]],
+                ["unit__user_constraint", ["unit_ab", "constraint_x"]],
             ]
             object_parameter_values = [
-                ["unit_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
-                ["unit_constraint", "constraint_x", "right_hand_side", rhs],
+                ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
+                ["user_constraint", "constraint_x", "right_hand_side", rhs],
             ]
             relationship_parameter_values = [
                 ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
@@ -1392,7 +1392,7 @@
             var_unit_flow_op = m.ext[:variables][:unit_flow_op]
             var_units_on = m.ext[:variables][:units_on]
             var_units_started_up = m.ext[:variables][:units_started_up]
-            constraint = m.ext[:constraints][:unit_constraint]
+            constraint = m.ext[:constraints][:user_constraint]
             @test length(constraint) == 1
             key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
             key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
@@ -1416,7 +1416,7 @@
                 rhs,
             )
             expected_con = constraint_object(expected_con_ref)
-            con_key = (unit_constraint(:constraint_x), [s_parent, s_child], t2h)
+            con_key = (user_constraint(:constraint_x), [s_parent, s_child], t2h)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end

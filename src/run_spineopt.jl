@@ -219,7 +219,7 @@ end
 Add SpineOpt constraints to the given model.
 """
 function add_constraints!(m; add_constraints=m -> nothing, log_level=3)    
-    @timelog log_level 3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
+    @timelog log_level 3 "- [constraint_user_constraint]" add_constraint_user_constraint!(m)
     @timelog log_level 3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
     @timelog log_level 3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
     @timelog log_level 3 "- [constraint_candidate_connection_flow_ub]" add_constraint_candidate_connection_flow_ub!(m)

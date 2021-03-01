@@ -729,7 +729,7 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_unit_constraint_node_connection" begin
+    @testset "constraint_user_constraint_node_connection" begin
         @testset for sense in ("==", ">=", "<=")
             db_map = _load_test_data(url_in, test_data)
             rhs = 40
@@ -742,21 +742,21 @@
             demand = 150
 
             objects = [
-                ["unit_constraint", "constraint_x"],
+                ["user_constraint", "constraint_x"],
                 ["unit", "unit_c"],                
             ]
             relationships = [
-                ["unit__to_node__unit_constraint", ["unit_c", "node_c", "constraint_x"]],                    
-                ["unit__unit_constraint", ["unit_c", "constraint_x"]],
-                ["connection__to_node__unit_constraint", ["connection_ab", "node_b", "constraint_x"]],                
-                ["node__unit_constraint", ["node_b", "constraint_x"]],
+                ["unit__to_node__user_constraint", ["unit_c", "node_c", "constraint_x"]],                    
+                ["unit__user_constraint", ["unit_c", "constraint_x"]],
+                ["connection__to_node__user_constraint", ["connection_ab", "node_b", "constraint_x"]],                
+                ["node__user_constraint", ["node_b", "constraint_x"]],
                 ["units_on__temporal_block", ["unit_c", "hourly"]],
                 ["units_on__stochastic_structure", ["unit_c", "stochastic"]],                
                 ["unit__to_node", ["unit_c", "node_c"]],            
             ]
             object_parameter_values = [
-                ["unit_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
-                ["unit_constraint", "constraint_x", "right_hand_side", rhs],
+                ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
+                ["user_constraint", "constraint_x", "right_hand_side", rhs],
                 ["node", "node_b", "demand", demand],
                 ["node", "node_b", "has_state", true]
             ]
@@ -782,7 +782,7 @@
             var_units_started_up = m.ext[:variables][:units_started_up]
             var_connection_flow = m.ext[:variables][:connection_flow]
             var_node_state = m.ext[:variables][:node_state]
-            constraint = m.ext[:constraints][:unit_constraint]
+            constraint = m.ext[:constraints][:user_constraint]
             @test length(constraint) == 1
             key_a = (unit(:unit_c), node(:node_c), direction(:to_node))
             key_b = (connection(:connection_ab), node(:node_b), direction(:to_node))
@@ -807,7 +807,7 @@
                 rhs,
             )            
             expected_con = constraint_object(expected_con_ref)
-            con_key = (unit_constraint(:constraint_x), [s_parent, s_child], t2h)            
+            con_key = (user_constraint(:constraint_x), [s_parent, s_child], t2h)            
             observed_con = constraint_object(constraint[con_key...])                        
             @test _is_constraint_equal(observed_con, expected_con)     
             return       

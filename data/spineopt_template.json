@@ -10,16 +10,16 @@
         ["stochastic_structure", "A group of stochastic scenarios that represent a structure.", 281470681806146],
         ["temporal_block", "A length of time with a particular resolution.", 280376891207703],
         ["unit", "A conversion of one/many comodities between nodes.", 281470681805429],
-        ["unit_constraint", "A constraint over the flows of a specific unit.", 281473533931636]
+        ["user_constraint", "A constraint over the flows of a specific unit.", 281473533931636]
     ],
     "relationship_classes": [
         ["connection__from_node", ["connection", "node"], "Defines the `nodes` the `connection` can take input from, and holds most `connection_flow` variable specific parameters."],
-        ["connection__from_node__unit_constraint", ["connection", "node", "unit_constraint"], "when specified this relationship allows the relevant flow connection flow variable to be included in the specified user constraint"],
+        ["connection__from_node__user_constraint", ["connection", "node", "user_constraint"], "when specified this relationship allows the relevant flow connection flow variable to be included in the specified user constraint"],
         ["connection__investment_stochastic_structure", ["connection", "stochastic_structure"], "Defines the stochastic structure of the connections investments variable"],
         ["connection__investment_temporal_block", ["connection", "temporal_block"], "Defines the temporal resolution of the connections investments variable"],
         ["connection__node__node", ["connection", "node", "node"], "Holds parameters spanning multiple `connection_flow` variables to and from multiple `nodes`."],
         ["connection__to_node", ["connection", "node"], "Defines the `nodes` the `connection` can output to, and holds most `connection_flow` variable specific parameters."],
-        ["connection__to_node__unit_constraint", ["connection", "node", "unit_constraint"], "when specified this relationship allows the relevant flow connection flow variable to be included in the specified user constraint"],
+        ["connection__to_node__user_constraint", ["connection", "node", "user_constraint"], "when specified this relationship allows the relevant flow connection flow variable to be included in the specified user constraint"],
         ["model__default_investment_stochastic_structure", ["model", "stochastic_structure"], "Defines the default stochastic structure used for investment variables, which will be replaced by more specific definitions"],
         ["model__default_investment_temporal_block", ["model", "temporal_block"], "Defines the default temporal block used for investment variables, which will be replaced by more specific definitions"],
         ["model__default_stochastic_structure", ["model", "stochastic_structure"], "Defines the default stochastic structure used for model variables, which will be replaced by more specific definitions"],
@@ -33,19 +33,19 @@
         ["node__node", ["node", "node"], "Holds parameters for direct interactions between two `nodes`, e.g. `node_state` diffusion coefficients."],
         ["node__stochastic_structure", ["node", "stochastic_structure"], "Defines which specific `stochastic_structure` is used by the `node` and all `flow` variables associated with it. Only one `stochastic_structure` is permitted per `node`."],
         ["node__temporal_block", ["node", "temporal_block"], "Defines the `temporal_blocks` used by the `node` and all the `flow` variables associated with it."],
-        ["node__unit_constraint", ["node", "unit_constraint"], "specifying this relationship allows a node's demand or node_state to be included in the specified unit constraint"],
+        ["node__user_constraint", ["node", "user_constraint"], "specifying this relationship allows a node's demand or node_state to be included in the specified unit constraint"],
         ["parent_stochastic_scenario__child_stochastic_scenario", ["stochastic_scenario", "stochastic_scenario"], "Defines the master stochastic direct acyclic graph, meaning how the `stochastic_scenarios` are related to each other."],
         ["report__output", ["report", "output"], "Output object related to a report object are returned to the output database (if they appear in the model as variables)"],
         ["stochastic_structure__stochastic_scenario", ["stochastic_structure", "stochastic_scenario"], "Defines which `stochastic_scenarios` are included in which `stochastic_structure`, and holds the parameters required for realizing the structure in combination with the `temporal_blocks`."],
         ["unit__commodity", ["unit", "commodity"], "Holds parameters for `commodities` used by the `unit`?"],
         ["unit__from_node", ["unit", "node"], "Defines the `nodes` the `unit` can take input from, and holds most `unit_flow` variable specific parameters."],
-        ["unit__from_node__unit_constraint", ["unit", "node", "unit_constraint"], "Defines which input `unit_flows` are included in the `unit_constraint`, and holds their parameters?"],
+        ["unit__from_node__user_constraint", ["unit", "node", "user_constraint"], "Defines which input `unit_flows` are included in the `user_constraint`, and holds their parameters?"],
         ["unit__investment_stochastic_structure", ["unit", "stochastic_structure"], "Sets the stochastic structure for investment decisions - overrides `model__default_investment_stochastic_structure`. TODO: THIS RELATIONSHIP DOESN'T CURRENTLY APPEAR IN THE MODEL!"],
         ["unit__investment_temporal_block", ["unit", "temporal_block"], "Sets the temporal resolution of investment decisions - overrides `model__default_investment_temporal_block`"],
         ["unit__node__node", ["unit", "node", "node"], "Holds parameters spanning multiple `unit_flow` variables to and from multiple `nodes`."],
         ["unit__to_node", ["unit", "node"], "Defines the `nodes` the `unit` can output to, and holds most `unit_flow` variable specific parameters."],
-        ["unit__to_node__unit_constraint", ["unit", "node", "unit_constraint"], "Defines which output `unit_flows` are included in the `unit_constraint`, and holds their parameters?"],
-        ["unit__unit_constraint", ["unit", "unit_constraint"], "Defines which `units_on` variables are included in the `unit_constraint`, and holds their parameters?"],
+        ["unit__to_node__user_constraint", ["unit", "node", "user_constraint"], "Defines which output `unit_flows` are included in the `user_constraint`, and holds their parameters?"],
+        ["unit__user_constraint", ["unit", "user_constraint"], "Defines which `units_on` variables are included in the `user_constraint`, and holds their parameters?"],
         ["units_on__stochastic_structure", ["unit", "stochastic_structure"], "Defines which specific `stochastic_structure` is used for the `units_on` variable of the `unit`. Only one `stocahstic_structure` is permitted per `unit`."],
         ["units_on__temporal_block", ["unit", "temporal_block"], "Defines which specific `temporal_blocks` are used by the `units_on` variable of the `unit`."]
     ],
@@ -170,9 +170,9 @@
         ["unit", "unit_investment_cost", null, null, "Investment cost per 'sub unit' built."],
         ["unit", "unit_investment_lifetime", null, null, "Minimum lifetime for investment decisions."],
         ["unit", "unit_investment_variable_type", "unit_investment_variable_type_continuous", "unit_investment_variable_type_list", "Determines whether investment variable is integer or continuous."],
-        ["unit_constraint", "constraint_sense", "==", "constraint_sense_list", "A selector for the sense of the `unit_constraint`."],
-        ["unit_constraint", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
-        ["unit_constraint", "right_hand_side", 0.0, null, "The right-hand side of the `unit_constraint`. Can be used e.g. for complicated time-dependent efficiency approximations."]
+        ["user_constraint", "constraint_sense", "==", "constraint_sense_list", "A selector for the sense of the `user_constraint`."],
+        ["user_constraint", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
+        ["user_constraint", "right_hand_side", 0.0, null, "The right-hand side of the `user_constraint`. Can be used e.g. for complicated time-dependent efficiency approximations."]
     ],
     "relationship_parameters": [
         ["connection__from_node", "connection_capacity", null, null, "Limits the `connection_flow` variable from the `from_node`. `from_node` can be a group of `nodes`, in which case the sum of the `connection_flow` is constrained."],
@@ -181,7 +181,7 @@
         ["connection__from_node", "fix_connection_flow", null, null, "Fix the value of the `connection_flow` variable."],
         ["connection__from_node", "fix_connection_intact_flow", null, null, "Fix the value of the `connection_intact_flow` variable."],
         ["connection__from_node", "graph_view_position", null, null, null],
-        ["connection__from_node__unit_constraint", "connection_flow_coefficient", 0.0, null, "defines the unit constraint coefficient on the connection flow variable in the from direction"],
+        ["connection__from_node__user_constraint", "connection_flow_coefficient", 0.0, null, "defines the unit constraint coefficient on the connection flow variable in the from direction"],
         ["connection__node__node", "connection_flow_delay", {"type": "duration", "data": "0h"}, null, "Delays the `connection_flows` associated with the latter `node` in respect to the `connection_flows` associated with the first `node`."],
         ["connection__node__node", "fix_ratio_out_in_connection_flow", null, null, "Fix the ratio between the `connection_flow` from the first `node` and the `connection_flow` to the second `node`."],
         ["connection__node__node", "max_ratio_out_in_connection_flow", null, null, "Maximum ratio between the `connection_flow` from the first `node` and the `connection_flow` to the second `node`."],
@@ -192,10 +192,10 @@
         ["connection__to_node", "fix_connection_flow", null, null, "Fix the value of the `connection_flow` variable."],
         ["connection__to_node", "fix_connection_intact_flow", null, null, "Fix the value of the `connection_intact_flow` variable."],
         ["connection__to_node", "graph_view_position", null, null, null],
-        ["connection__to_node__unit_constraint", "connection_flow_coefficient", 0.0, null, "defines the unit constraint coefficient on the connection flow variable in the to direction"],
+        ["connection__to_node__user_constraint", "connection_flow_coefficient", 0.0, null, "defines the unit constraint coefficient on the connection flow variable in the to direction"],
         ["node__node", "diff_coeff", 0.0, null, "Commodity diffusion coefficient between two `nodes`. Effectively, denotes the *diffusion power per unit of state* from the first `node` to the second."],
-        ["node__unit_constraint", "demand_coefficient", 0.0, null, "coefficient of the specified node's demand in the specified unit constraint"],
-        ["node__unit_constraint", "node_state_coefficient", 0.0, null, "coefficient of the specified node's state variable in the specified unit constraint"],
+        ["node__user_constraint", "demand_coefficient", 0.0, null, "coefficient of the specified node's demand in the specified unit constraint"],
+        ["node__user_constraint", "node_state_coefficient", 0.0, null, "coefficient of the specified node's state variable in the specified unit constraint"],
         ["stochastic_structure__stochastic_scenario", "stochastic_scenario_end", null, null, "A `Duration` for when a `stochastic_scenario` ends and its `child_stochastic_scenarios` start. Values are interpreted relative to the start of the current solve, and if no value is given, the `stochastic_scenario` is assumed to continue indefinitely."],
         ["stochastic_structure__stochastic_scenario", "weight_relative_to_parents", 1.0, null, "The weight of the `stochastic_scenario` in the objective function relative to its parents."],
         ["unit__commodity", "max_cum_in_unit_flow_bound", null, null, "Set a maximum cumulative upped bound for a `unit_flow`?"],
@@ -227,8 +227,8 @@
         ["unit__from_node", "unit_capacity", null, null, "Maximum `unit_flow` capacity of a single 'sub_unit' of the `unit`."],
         ["unit__from_node", "unit_conv_cap_to_flow", 1.0, null, "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."],
         ["unit__from_node", "vom_cost", null, null, "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."],
-        ["unit__from_node__unit_constraint", "graph_view_position", null, null, null],
-        ["unit__from_node__unit_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `unit_constraint`?"],
+        ["unit__from_node__user_constraint", "graph_view_position", null, null, null],
+        ["unit__from_node__user_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `user_constraint`?"],
         ["unit__node__node", "fix_ratio_in_in_unit_flow", null, null, "Fix the ratio between two `unit_flows` coming into the `unit` from the two `nodes`."],
         ["unit__node__node", "fix_ratio_in_out_unit_flow", null, null, "Fix the ratio between an incoming `unit_flow` from the first `node` and an outgoing `unit_flow` to the second `node`."],
         ["unit__node__node", "fix_ratio_out_in_unit_flow", null, null, "Fix the ratio between an outgoing `unit_flow` to the first `node` and an incoming `unit_flow` from the second `node`."],
@@ -285,10 +285,10 @@
         ["unit__to_node", "unit_capacity", null, null, "Maximum `unit_flow` capacity of a single 'sub_unit' of the `unit`."],
         ["unit__to_node", "unit_conv_cap_to_flow", 1.0, null, "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."],
         ["unit__to_node", "vom_cost", null, null, "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."],
-        ["unit__to_node__unit_constraint", "graph_view_position", null, null, null],
-        ["unit__to_node__unit_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `unit_constraint`."],
-        ["unit__unit_constraint", "units_on_coefficient", 0.0, null, "Coefficient of a `units_on` variable for a custom `unit_constraint`."],
-        ["unit__unit_constraint", "units_started_up_coefficient", 0.0, null, "Coefficient of a `units_started_up` variable for a custom `unit_constraint`."]
+        ["unit__to_node__user_constraint", "graph_view_position", null, null, null],
+        ["unit__to_node__user_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `user_constraint`."],
+        ["unit__user_constraint", "units_on_coefficient", 0.0, null, "Coefficient of a `units_on` variable for a custom `user_constraint`."],
+        ["unit__user_constraint", "units_started_up_coefficient", 0.0, null, "Coefficient of a `units_started_up` variable for a custom `user_constraint`."]
     ],
     "tools": [
         ["object_activity_control", ""]
@@ -304,7 +304,7 @@
         ["stochastic_structure", "is_active", "boolean_value_list", "boolean_value_list"],
         ["temporal_block", "is_active", "boolean_value_list", "boolean_value_list"],
         ["unit", "is_active", "boolean_value_list", "boolean_value_list"],
-        ["unit_constraint", "is_active", "boolean_value_list", "boolean_value_list"]
+        ["user_constraint", "is_active", "boolean_value_list", "boolean_value_list"]
     ],
     "tool_features": [
         ["object_activity_control", "commodity", "is_active", false],
@@ -317,6 +317,6 @@
         ["object_activity_control", "stochastic_structure", "is_active", false],
         ["object_activity_control", "temporal_block", "is_active", false],
         ["object_activity_control", "unit", "is_active", false],
-        ["object_activity_control", "unit_constraint", "is_active", false]
+        ["object_activity_control", "user_constraint", "is_active", false]
     ]
 }
