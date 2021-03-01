@@ -37,7 +37,7 @@ jobs:
           arch: ${{ matrix.arch }}
       - name: Add SpineJuliaRegistry
         run:
-          julia -e 'import Pkg; pkg"registry add https://github.com/Spine-project/SpineJuliaRegistry"'
+          julia -e 'using Pkg; pkg"registry add https://github.com/Spine-project/SpineJuliaRegistry"'
       - uses: actions/cache@v2
         env:
           cache-name: cache-artifacts
