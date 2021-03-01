@@ -22,7 +22,7 @@ jobs:
           - windows-latest
         arch:
           - x64
-          - x86
+          # - x86  # FIXME: We don't support x86 because we type-annotate with Int64 and Float64 sparingly
         exclude:
           # Test 32-bit only on Linux
           - os: macOS-latest
