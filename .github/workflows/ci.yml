@@ -43,7 +43,6 @@ jobs:
           julia -e 'using Pkg; pkg"registry add General"; pkg"registry add https://github.com/Spine-project/SpineJuliaRegistry"'
       - name: Install spinedb_api
         run: |
-          sudo apt-get install python3-setuptools
           julia -e 'using Pkg; Pkg.add("PyCall");'
           julia -e 'using PyCall; python = PyCall.pyprogramname; run(`$python -m pip install --user setuptools git+https://github.com/Spine-project/Spine-Database-API`)'
       - uses: julia-actions/julia-runtest@latest
