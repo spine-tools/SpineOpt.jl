@@ -51,9 +51,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install spinedb_api
-        run:
-          julia ./.install_spinedb_api.jl
+      - name: Install dependencies
+        run: |
+          julia ./.install_spinedb_api.jl          
+          julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
       - uses: julia-actions/julia-docdeploy@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
