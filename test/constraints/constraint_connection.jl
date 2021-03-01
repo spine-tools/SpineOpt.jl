@@ -971,9 +971,7 @@
         var_connections_invested_available = m.ext[:variables][:connections_invested_available]
         @test length(constraint) == 6
         conn = connection(:connection_ab)
-        n_to = node(:node_b)
-        SpineOpt.print_constraint(constraint)
-
+        n_to = node(:node_b)        
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
 
@@ -989,8 +987,7 @@
                 >=              
                     + var_connection_intact_flow[conn, n, d, s, t] * duration(t)
                     - (candidate_connections - var_connections_invested_available[conn, s_parent, t2h]) * connection_capacity * duration(t)
-                )
-                print(expected_con)
+                )                
                 s_path = (s == s_parent ? [s] : [s_parent, s_child])
                 con_key = (conn, n, d, s_path, t)
                 observed_con = constraint_object(constraint[con_key...])
@@ -1198,8 +1195,7 @@
         constraint = m.ext[:constraints][:candidate_connection_flow_ub]
         var_connection_intact_flow = m.ext[:variables][:connection_intact_flow]
         var_connection_flow = m.ext[:variables][:connection_flow]
-        @test length(constraint) == 6
-        SpineOpt.print_constraint(constraint)
+        @test length(constraint) == 6        
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))    
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
