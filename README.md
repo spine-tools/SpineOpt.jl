@@ -26,7 +26,7 @@ SpineOpt is designed to be used with [Spine Toolbox](https://github.com/Spine-pr
 
 	```julia
 	using Pkg
-	pkg"registry add https://github.com/Spine-project/SpineJuliaRegistry"
+	pkg"registry add General https://github.com/Spine-project/SpineJuliaRegistry"
 	pkg"add SpineOpt"
 	```
 
