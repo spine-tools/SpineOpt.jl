@@ -175,6 +175,7 @@ end
         ],
         :relationship_parameter_values => [            
             ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", conn_cap_ab,],
+            ["connection__from_node", ["connection_ab", "node_b"], "connection_capacity", conn_cap_ab,],
             ["connection__from_node", ["connection_bc", "node_b"], "connection_capacity", conn_cap_bc,],
             ["connection__from_node", ["connection_ca", "node_c"], "connection_capacity", conn_cap_ca,],
             ["stochastic_structure__stochastic_scenario", ["stochastic", "parent"], "stochastic_scenario_end", Dict("type" => "duration", "data" => "1h")]

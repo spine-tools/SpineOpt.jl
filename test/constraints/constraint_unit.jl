@@ -1582,9 +1582,6 @@
         )        
         con_key = (key_u_a_b..., [s_parent, s_child], t2h)
         observed_con = constraint_object(constraint[con_key...])
-        @test _is_constraint_equal(observed_con, expected_con)
-        @info "observed_con" observed_con
-        @info "expected_con" expected_con
+        @test _is_constraint_equal(observed_con, expected_con)    
     end
-
 end
