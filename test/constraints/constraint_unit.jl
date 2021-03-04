@@ -125,7 +125,7 @@
             key = (unit(:unit_ab), s, t)
             var_u_av = var_units_available[key...]
             var_u_inv_av = var_units_invested_available[key...]
-            expected_con = @build_constraint(var_u_av - var_u_inv_av == number_of_units)
+            expected_con = @build_constraint(var_u_av - var_u_inv_av <= number_of_units)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
