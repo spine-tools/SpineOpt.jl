@@ -2,21 +2,22 @@
 
 SpineOpt offers numerous ways to optimise investment decisions energy system models and in particular, offers a number of methologogies for capturing increaesd detail in investment model while containing the impact on run time. The basic principles of investments will be discussed first and this will be followed by more advanced approaches.
 
-## Key concepts
+## Key concepts for investments
 
 1. **Investment Decisions**
 These are the investment decisions that SpineOpt currently supports. At a high level, these means that the activity of the entities in question is controlled by an investment decision variable. The current implementation supports investments in :
-   - **[Unit](@ref)**: 
-   - **[Connection](@ref)** 
-   - **Storage** - Note: while the above investment decisions correspond to an object class (i.e.) an investment in a [Unit](@ref) or a [Connection](@ref), **Storages** are not an object class in themselves and are rather a property of a [Node](@ref). As such, a storage investment controls whether a particular node has a state variable or not    
+   - **[unit](@ref)**: 
+   - **[connection](@ref)** 
+   - **Storage** - Note: while the above investment decisions correspond to an object class (i.e.) an investment in a [unit](@ref) or a [connection](@ref), **Storages** are not an object class in themselves and are rather a property of a [node](@ref). As such, a storage investment controls whether a particular node has a state variable or not    
 2. **Investment Variable Types**
-In all cases the capacity of the [Unit](@ref) or [Conneciton](@ref) or the maximum node state of a [Node](@ref) is multuplied by the investment variable which may either be continuous, binary or integer. This is determined, for units, by setting the [unit_investment_variable_type](@ref) parameter accordingly. Similary, for connections and node storages where the [connection_investment_variable_type](@ref) and [storage_investment_variable_type](@ref) are specified.  
+In all cases the capacity of the [unit](@ref) or [connection](@ref) or the maximum node state of a [node](@ref) is multuplied by the investment variable which may either be continuous, binary or integer. This is determined, for units, by setting the [unit_investment_variable_type](@ref) parameter accordingly. Similary, for connections and node storages where the [connection_investment_variable_type](@ref) and [storage_investment_variable_type](@ref) are specified.  
 
 3. **Investment Variable Bounds**
 The parameter [candidate_units](@ref) specifies the upper bound of the investment variable. If the [unit_investment_variable_type](@ref) is set to [:variable_type_integer], the investment variable can be interpreted as the number of discrete units that may be invested in. However, if [unit_investment_variable_type](@ref) is [:variable_type_continuous] and the [unit_capacity](@ref) is set to unity, the investment decision variable can then be intpreted as the capacity of the unit rather than the number of units with [candidate_units](@ref) being the maximum capacity that can be invested in. Finally, we can invest in discrete blocks of capacity by setting [unit_capacity](@ref) to the size of the investment capacity blocks and have [unit_investment_variable_type](@ref) set to [:variable_type_integer] with [candidate_units](@ref) representing the maximum number of capacity blocks that may be invested in. The key points here are:
    - The upper bound on the relevant flow variables are determined by the product of the investment variable and the [unit_capacity](@ref) or [connection_capacity](@ref) for connections or [node_state_cap](@ref) for storages.
    - [candidate_units](@ref) sets the upper bound on the investment variable, [candidate_connections](@ref) for connections and [candidate_storages](@ref) for storages
    - [unit_investment_variable_type](@ref) determines wheter the investment variable is integer, binary or continuous ([connection_investment_variable_type](@ref) for connections and [storage_investment_variable_type](@ref) for storages).
+
 4. **Temporal and Stochastic Structure of Investment Decisions** 
 SpineOpt's flexible stochastic and temporal structure extend to investments where individual investment decisions can have their own temporal and stochastic structure indepedent of other investment decisions and other model variables. A global temporal resolution for all investment decisions can be defined by specifying the relationship [model__default_investment_temporal_block](@ref). If a specific temporal resolution is required for specific investment decisions, then one can specifying the following relationships:
     - [unit__investment_temporal_block](@ref) for [unit](@ref)
@@ -32,11 +33,11 @@ Specifying any of the above relationships will override the corresponding [model
 
 ## Model Reference
 
-### Variables
+### Variables for investments
 
 | Variable Name                        | Indices        | Description                                            |
 |--------------------------------------|----------------|--------------------------------------------------------|
-|`units_invested_available`|`unit`, s, t| The number of invested in `unit`s that are available at a given (s, t)|
+| `units_invested_available`|`unit`, s, t| The number of invested in `unit`s that are available at a given (s, t)|
 | `units_invested` | `unit`, s, t | The point-in-time investment decision corresponding to the number of `unit`s invested in at (s,t)
 | `units_mothballed` | `unit`, s, t | "Instantaneous" decision variable to mothball a `unit`
 | `connections_invested_available` | `connection`, s, t | The number of invested-in `connections`s that are available at a given (s, t)
@@ -46,7 +47,7 @@ Specifying any of the above relationships will override the corresponding [model
 | `storages_invested` | `node`, s, t | The point-in-time investment decision corresponding to the number of storages invested in at (s,t)
 | `storages_decommissioned` | `node`, s, t | "instantaneous" decision variable to decommission a storage
 
-### Relationships
+### Relationships for investments
 
 | Relationship Name                        | Related Object Class List    | Description                             |
 |------------------------------------------|------------------------------|-----------------------------------------|
@@ -56,7 +57,7 @@ Specifying any of the above relationships will override the corresponding [model
 | `unit__investment_stochastic_structure`|`unit, stochastic_structure`| Set stochastic structure for investment decisions - overrides model__default_investment_stochastic_structure
 
 
-### Parameters
+### Parameters for investments
 
 | Parameter Name                 | Object Class List            | Description                                     |
 |--------------------------------|------------------------------|-------------------------------------------------|
