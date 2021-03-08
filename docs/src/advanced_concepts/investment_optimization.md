@@ -10,26 +10,26 @@ These are the investment decisions that SpineOpt currently supports. At a high l
    - **[connection](@ref)** 
    - **Storage** - Note: while the above investment decisions correspond to an object class (i.e.) an investment in a [unit](@ref) or a [connection](@ref), **Storages** are not an object class in themselves and are rather a property of a [node](@ref). As such, a storage investment controls whether a particular node has a state variable or not    
 2. **Investment Variable Types**
-In all cases the capacity of the [unit](@ref) or [connection](@ref) or the maximum node state of a [node](@ref) is multuplied by the investment variable which may either be continuous, binary or integer. This is determined, for units, by setting the [unit_investment_variable_type](@ref) parameter accordingly. Similary, for connections and node storages where the [connection_investment_variable_type](@ref) and [storage_investment_variable_type](@ref) are specified.  
+In all cases the capacity of the [unit](@ref) or [connection](@ref) or the maximum node state of a [node](@ref) is multuplied by the investment variable which may either be continuous, binary or integer. This is determined, for units, by setting the [unit\_investment\_variable\_type](@ref) parameter accordingly. Similary, for connections and node storages where the [connection\_investment\_variable\_type](@ref) and [storage\_investment\_variable\_type](@ref) are specified.  
 
 3. **Investment Variable Bounds**
-The parameter [candidate_units](@ref) specifies the upper bound of the investment variable. If the [unit_investment_variable_type](@ref) is set to [:variable_type_integer], the investment variable can be interpreted as the number of discrete units that may be invested in. However, if [unit_investment_variable_type](@ref) is [:variable_type_continuous] and the [unit_capacity](@ref) is set to unity, the investment decision variable can then be intpreted as the capacity of the unit rather than the number of units with [candidate_units](@ref) being the maximum capacity that can be invested in. Finally, we can invest in discrete blocks of capacity by setting [unit_capacity](@ref) to the size of the investment capacity blocks and have [unit_investment_variable_type](@ref) set to [:variable_type_integer] with [candidate_units](@ref) representing the maximum number of capacity blocks that may be invested in. The key points here are:
-   - The upper bound on the relevant flow variables are determined by the product of the investment variable and the [unit_capacity](@ref) or [connection_capacity](@ref) for connections or [node_state_cap](@ref) for storages.
-   - [candidate_units](@ref) sets the upper bound on the investment variable, [candidate_connections](@ref) for connections and [candidate_storages](@ref) for storages
-   - [unit_investment_variable_type](@ref) determines wheter the investment variable is integer, binary or continuous ([connection_investment_variable_type](@ref) for connections and [storage_investment_variable_type](@ref) for storages).
+The parameter [candidate\_units](@ref) specifies the upper bound of the investment variable. If the [unit\_investment\_variable\_type](@ref) is set to `:variable_type_integer`, the investment variable can be interpreted as the number of discrete units that may be invested in. However, if [unit\_investment\_variable\_type](@ref) is `:variable_type_continuous` and the [unit\_capacity](@ref) is set to unity, the investment decision variable can then be intpreted as the capacity of the unit rather than the number of units with [candidate\_units](@ref) being the maximum capacity that can be invested in. Finally, we can invest in discrete blocks of capacity by setting [unit\_capacity](@ref) to the size of the investment capacity blocks and have [unit\_investment\_variable\_type](@ref) set to `:variable_type_integer` with [candidate\_units](@ref) representing the maximum number of capacity blocks that may be invested in. The key points here are:
+   - The upper bound on the relevant flow variables are determined by the product of the investment variable and the [unit\_capacity](@ref) or [connection\_capacity](@ref) for connections or [node\_state\_cap](@ref) for storages.
+   - [candidate\_units](@ref) sets the upper bound on the investment variable, [candidate\_connections](@ref) for connections and [candidate\_storages](@ref) for storages
+   - [unit\_investment\_variable\_type](@ref) determines wheter the investment variable is integer, binary or continuous ([connection\_investment\_variable\_type](@ref) for connections and [storage\_investment\_variable\_type](@ref) for storages).
 
 4. **Temporal and Stochastic Structure of Investment Decisions** 
-SpineOpt's flexible stochastic and temporal structure extend to investments where individual investment decisions can have their own temporal and stochastic structure indepedent of other investment decisions and other model variables. A global temporal resolution for all investment decisions can be defined by specifying the relationship [model__default_investment_temporal_block](@ref). If a specific temporal resolution is required for specific investment decisions, then one can specifying the following relationships:
-    - [unit__investment_temporal_block](@ref) for [unit](@ref)
-    - [connection__investment_temporal_block](@ref) for [connection](@ref) 
-    - [node__investment_temporal_block](@ref) for storages
-Specifying any of the above relationships will override the corresponding [model__default_investment_temporal_block](@ref). 
+SpineOpt's flexible stochastic and temporal structure extend to investments where individual investment decisions can have their own temporal and stochastic structure indepedent of other investment decisions and other model variables. A global temporal resolution for all investment decisions can be defined by specifying the relationship [model\_\_default\_investment\_temporal\_block](@ref). If a specific temporal resolution is required for specific investment decisions, then one can specifying the following relationships:
+    - [unit\_\_investment\_temporal\_block](@ref) for [unit](@ref)
+    - [connection\_\_investment\_temporal\_block](@ref) for [connection](@ref) 
+    - [node\_\_investment\_temporal\_block](@ref) for storages
+Specifying any of the above relationships will override the corresponding [model\_\_default\_investment\_temporal\_block](@ref). 
 
-Similarly, a global stochastic structure can be defined for all investment decisions by specifying the relationship [model__default_investment_stochastic_structure](@ref). If a specific stochastic structure is required for specific investment decisions, then one can specifying the following relationships:
-    - [unit__investment_stochastic_structure](@ref) for [unit](@ref)
-    - [connection__investment_stochastic_structure](@ref) for [connection](@ref) 
-    - [node__investment_stochastic_structure](@ref) for storages
-Specifying any of the above relationships will override the corresponding [model__default_investment_stochastic_structure](@ref). 
+Similarly, a global stochastic structure can be defined for all investment decisions by specifying the relationship [model\_\_default\_investment\_stochastic\_structure](@ref). If a specific stochastic structure is required for specific investment decisions, then one can specifying the following relationships:
+    - [unit\_\_investment\_stochastic\_structure](@ref) for [unit](@ref)
+    - [connection\_\_investment\_stochastic\_structure](@ref) for [connection](@ref) 
+    - [node\_\_investment\_stochastic\_structure](@ref) for storages
+Specifying any of the above relationships will override the corresponding [model\_\_default\_investment\_stochastic\_structure](@ref). 
 
 ## Model Reference
 
