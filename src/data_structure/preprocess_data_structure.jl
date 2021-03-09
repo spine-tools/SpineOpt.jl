@@ -29,6 +29,7 @@ function preprocess_data_structure(; log_level=3)
     expand_model_default_relationships()
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
+    generate_decomposed_storage_subsystems()
     # NOTE: generate direction before calling `generate_network_components`,
     # so calls to `connection__from_node` don't corrupt lookup cache
     add_connection_relationships()
@@ -853,5 +854,30 @@ function generate_benders_structure()
         export node_state_mv
         export node_state_bi
         export starting_fix_node_state
+    end
+end
+
+
+function generate_decomposed_storage_subsystems()
+    mp_storage_node = node(has_state=true, is_decomposed_storage=true)
+    mp_storage_unit = unique(u
+        for n in mp_storage_node    
+        for u in Iterators.flatten((unit__from_node(node=n), unit__to_node(node=n)))        
+    )
+
+    mp_storage_res_node = unique(n         
+        for u in mp_storage_unit 
+        for n in Iterators.flatten((unit__from_node(unit=u), unit__to_node(unit=u)))
+            if !(n in mp_storage_node)
+    )
+
+    @eval begin
+        mp_storage_node = $mp_storage_node
+        mp_storage_unit = $mp_storage_unit
+        mp_storage_res_node = $mp_storage_res_node
+
+        export mp_storage_node
+        export mp_storage_unit
+        export mp_storage_res_node
     end
 end

@@ -80,6 +80,7 @@ function process_master_problem_solution(mp)
             mp.ext[:values][:node_state][inds]
             for inds in node_state_indices(mp; node=n) if end_(inds.t) <= end_(current_window(mp))
         ]
+        @info "vals" time_indices vals size(time_indices) size(vals)
         node.parameter_values[n][:fix_node_state] =
             parameter_value(TimeSeries(time_indices, vals, false, false))
         if !haskey(node__benders_iteration.parameter_values, (n, current_bi))

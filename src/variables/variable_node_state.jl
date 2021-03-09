@@ -27,7 +27,9 @@ function node_state_indices(m::Model; node=anything, stochastic_scenario=anythin
     unique(
         (node=n, stochastic_scenario=s, t=t) 
         for (n, tb) in node_with_state__temporal_block(node=node, _compact=false) 
-            if (model_type(model=m.ext[:instance])==:spineopt_master && is_decomposed_storage(node=n)) || model_type(model=m.ext[:instance]) !== :spineopt_master
+            if ((model_type(model=m.ext[:instance])==:spineopt_master && is_decomposed_storage(node=n)) || model_type(model=m.ext[:instance]) !== :spineopt_master)
+                && tb in model__temporal_block(model=m.ext[:instance])
+
         for
         (n, s, t) in
         node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)

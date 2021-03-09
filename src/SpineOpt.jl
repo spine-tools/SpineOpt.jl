@@ -133,7 +133,6 @@ include("constraints/constraint_connection_flow_capacity.jl")
 include("constraints/constraint_connection_intact_flow_capacity.jl")
 include("constraints/constraint_connection_flow_intact_flow.jl")
 include("constraints/constraint_connection_intact_flow_ptdf.jl")
-#include("constraints/constraint_connection_intact_flow_ptdf_in_out.jl")
 include("constraints/constraint_candidate_connection_flow_ub.jl")
 include("constraints/constraint_candidate_connection_flow_lb.jl")
 include("constraints/constraint_connection_flow_lodf.jl")
@@ -170,6 +169,8 @@ include("constraints/constraint_min_nonspin_ramp_down.jl")
 include("constraints/constraint_res_minimum_node_state.jl")
 
 include("constraints/constraint_mp_units_invested_cuts.jl")
+include("constraints/constraint_mp_node_state_increase.jl")
+include("constraints/constraint_mp_node_state_decrease.jl")
 
 const _template = JSON.parsefile(joinpath(@__DIR__, "..", "data", "spineopt_template.json"))
 
