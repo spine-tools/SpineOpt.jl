@@ -803,7 +803,7 @@ function generate_benders_structure()
     node_state_bi = Parameter(:node_state_bi, [node__benders_iteration])
     starting_fix_node_state = Parameter(:starting_fix_node_state, [node])  
 
-    for n in node(has_state==true, is_decomposed_storage==true)
+    for n in node(has_state=true, is_decomposed_storage=true)
         node__benders_iteration.parameter_values[(n, current_bi)] = Dict()
         node__benders_iteration.parameter_values[(n, current_bi)][:node_state_bi] = parameter_value(0)
         node__benders_iteration.parameter_values[(n, current_bi)][:node_state_mv] = parameter_value(0)

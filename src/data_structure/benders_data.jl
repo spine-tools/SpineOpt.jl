@@ -71,7 +71,7 @@ function process_master_problem_solution(mp)
         node__benders_iteration.parameter_values[(n, current_bi)][:storages_invested_available_bi] =
             parameter_value(TimeSeries(time_indices, vals, false, false))
     end
-    for n in node(has_state==true, is_decomposed_storage==true)
+    for n in node(has_state=true, is_decomposed_storage=true)
         time_indices = [
             start(inds.t)
             for inds in node_state_indices(mp; node=n) if end_(inds.t) <= end_(current_window(mp))
@@ -123,7 +123,7 @@ function unfix_mp_variables()
             delete!(node.parameter_values[n], :fix_storages_invested_available)
         end
     end
-    for n in node(has_state==true, is_decomposed_storage==true)
+    for n in node(has_state=true, is_decomposed_storage=true)
         if haskey(node.parameter_values[n], :starting_fix_node_state)
             node.parameter_values[n][:fix_node_state] =
                 node.parameter_values[n][:starting_fix_node_state]
@@ -166,7 +166,7 @@ function save_sp_marginal_values(m)
             parameter_value(TimeSeries(time_indices, vals, false, false))
     end
     inds = keys(m.ext[:values][:bound_node_state])
-    for n in node(has_state==true, is_decomposed_storage==true)
+    for n in node(has_state=true, is_decomposed_storage=true)
         time_indices = [start(ind.t) for ind in inds if ind.node == n]
         vals = [m.ext[:values][:bound_node_state][ind] for ind in inds if ind.node == n]
         node__benders_iteration.parameter_values[(n, current_bi)][:node_state_mv] =
