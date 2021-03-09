@@ -799,6 +799,21 @@ function generate_benders_structure()
         end
     end
 
+    node_state_mv = Parameter(:node_state_mv, [node__benders_iteration])
+    node_state_bi = Parameter(:node_state_bi, [node__benders_iteration])
+    starting_fix_node_state = Parameter(:starting_fix_node_state, [node])  
+
+    for n in node(has_state==true, is_decomposed_storage==true)
+        node__benders_iteration.parameter_values[(n, current_bi)] = Dict()
+        node__benders_iteration.parameter_values[(n, current_bi)][:node_state_bi] = parameter_value(0)
+        node__benders_iteration.parameter_values[(n, current_bi)][:node_state_mv] = parameter_value(0)
+        if haskey(node.parameter_values[n], :fix_node_state)
+            node.parameter_values[n][:starting_fix_node_state] =
+                node.parameter_values[n][:fix_node_state]
+        end
+    end
+
+
     @eval begin
         benders_iteration = $benders_iteration
         current_bi = $current_bi
@@ -816,6 +831,9 @@ function generate_benders_structure()
         storages_invested_available_mv = $storages_invested_available_mv
         storages_invested_available_bi = $storages_invested_available_bi               
         starting_fix_storages_invested_available = $starting_fix_storages_invested_available
+        node_state_mv = $node_state_mv
+        node_state_bi = $node_state_bi               
+        starting_fix_node_state = $starting_fix_node_state
         export current_bi
         export benders_iteration
         export sp_objective_value_bi
@@ -832,5 +850,8 @@ function generate_benders_structure()
         export storages_invested_available_mv
         export storages_invested_available_bi
         export starting_fix_storages_invested_available
+        export node_state_mv
+        export node_state_bi
+        export starting_fix_node_state
     end
 end

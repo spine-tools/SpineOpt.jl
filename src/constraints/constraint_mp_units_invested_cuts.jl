@@ -55,6 +55,13 @@ function add_constraint_mp_units_invested_cuts!(m::Model)
                 for (n, s, t) in storages_invested_available_indices(m);
                 init=0,
             )
+            + expr_sum(
+                ( + node_state[n, s, t]
+                  - node_state_bi(benders_iteration=bi, node=n, t=t)
+                ) * node_state_mv(benders_iteration=bi, node=n, t=t)
+                for (n, s, t) in node_state_indices(m);
+                init=0,
+            )
         ) for bi in last(benders_iteration()) for (m1, t1) in mp_objective_lowerbound_indices(m)
     )
 end

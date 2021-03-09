@@ -175,9 +175,10 @@ function add_mp_variables!(m; log_level=3)
     @timelog log_level 3 "- [variable_mp_connections_invested]" add_variable_connections_invested!(m)
     @timelog log_level 3 "- [variable_mp_connections_invested_available]" add_variable_connections_invested_available!(m)
     @timelog log_level 3 "- [variable_mp_connections_decommissioned]" add_variable_connections_decommissioned!(m)
-    @timelog log_level 3 "- [variable_mp_storages_invested]" add_variable_storages_invested!(m)
+    @timelog log_level 3 "- [variable_mp_storages_invested]" add_variable_storages_invested!(m)    
     @timelog log_level 3 "- [variable_mp_storages_invested_available]" add_variable_storages_invested_available!(m)
     @timelog log_level 3 "- [variable_mp_storages_decommissioned]" add_variable_storages_decommissioned!(m)
+    @timelog log_level 3 "- [variable_mp_node_state]" add_variable_node_state!(m)
 end
 
 
