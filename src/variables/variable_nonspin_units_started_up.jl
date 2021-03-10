@@ -29,7 +29,7 @@ function nonspin_units_started_up_indices(
     node=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(ordering_periods=nothing) ,
+    temporal_block=temporal_block(representative_periods=nothing) ,
 )
     unique(
         (unit=u, node=n, stochastic_scenario=s, t=t)

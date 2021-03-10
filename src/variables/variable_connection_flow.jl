@@ -35,8 +35,6 @@ function connection_flow_indices(
     direction=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(ordering_periods=nothing)
-    #this addition is only necessary if rep days are used + seasonal storages
 )
     node = members(node)
     [
@@ -46,7 +44,6 @@ function connection_flow_indices(
             connection=connection,
             node=node,
             direction=direction,
-            temporal_block=temporal_block,
             _compact=false,
         )
         for

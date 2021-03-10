@@ -351,9 +351,9 @@ Generate an `Array` mapping all non-representative to representative time-slices
 """
 function rep_time_slice_mapping(m::Model)
     rep_dict=Dict()
-    for blk in indices(ordering_periods)
-        for t_start_real in ordering_periods(temporal_block=blk).indexes
-            rep_blk = ordering_periods(temporal_block=blk, inds=t_start_real)
+    for blk in indices(representative_periods)
+        for t_start_real in representative_periods(temporal_block=blk).indexes
+            rep_blk = representative_periods(temporal_block=blk, inds=t_start_real)
             t_start_real_i = t_start_real
             for t in time_slice(m, temporal_block=temporal_block(rep_blk))
                 rep_dict[to_time_slice(m,t=TimeSlice(t_start_real_i,t_start_real_i + _model_duration_unit(m.ext[:instance])(duration(t))))] = t
@@ -401,7 +401,7 @@ end
 
 Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` online variables unit with filter keywords.
 """
-function unit_time_indices(m::Model; unit=anything, temporal_block=temporal_block(ordering_periods=nothing) , t=anything)
+function unit_time_indices(m::Model; unit=anything, temporal_block=temporal_block(representative_periods=nothing) , t=anything)
     unique(
         (unit=u, t=t1)
         for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)

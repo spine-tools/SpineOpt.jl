@@ -66,7 +66,7 @@ time slice returns the variable with the corresponding representative
 time slice.
 """
 function map_variable!(m::Model, var::Dict, var_indices::Function)
-    # TODO: should probably rename "ordering_periods" to
+    # TODO: should probably rename "representative_periods" to
     # "time_slice_mapping"
     for ind in setdiff(var_indices(m;temporal_block=anything),var_indices(m))
         # Get indices which aren't time slices

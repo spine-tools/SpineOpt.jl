@@ -41,7 +41,7 @@ function nonspin_ramp_down_unit_flow_indices(
     direction=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(ordering_periods=nothing) ,
+    temporal_block=temporal_block(representative_periods=nothing) ,
 )
     unit = members(unit)
     node = members(node)
