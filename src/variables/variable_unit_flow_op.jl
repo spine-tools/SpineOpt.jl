@@ -37,7 +37,7 @@ function unit_flow_op_indices(
     i=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods=nothing) 
+    temporal_block=temporal_block(representative_periods_mapping=nothing) 
 )
     unit = members(unit)
     node = members(node)

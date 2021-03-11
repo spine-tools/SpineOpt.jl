@@ -35,7 +35,7 @@ function add_constraint_node_injection!(m::Model)
                         stochastic_scenario=s,
                         analysis_time=t0,
                         t=
-                        (use_representative_days(model=m.ext[:instance]) == :use_representative_days_w_seasonal_storage ? rep_time_slices(m)[to_time_slice(m,t=t_after)] : t))]
+                        (!isempty(indices(representative_periods_mapping)) ? representative_time_slices(m)[to_time_slice(m,t=t_after)] : t))]
                 for (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t_after, temporal_block=anything);
                 init=0,
             ) + expr_sum(

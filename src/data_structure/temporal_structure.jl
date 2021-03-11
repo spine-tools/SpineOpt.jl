@@ -65,7 +65,7 @@ An `Array` of time slices *in the model*.
 (h::TimeSliceSet)(::Anything, ::Anything) = h.time_slices
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = h.block_time_slices[temporal_block]
 (h::TimeSliceSet)(::Anything, s) = s
-(h::TimeSliceSet)(temporal_block::Object, s) = [t for t in s if temporal_block in t.blocks]
+(h::TimeSliceSet)(temporal_block::Object, s) = [t for t in s if temporal_block in blocks(t)]
 (h::TimeSliceSet)(temporal_blocks::Array{T,1}, s) where {T} = [t for blk in temporal_blocks for t in h(blk, s)]
 
 """
@@ -283,7 +283,7 @@ function generate_temporal_structure!(m::Model)
     _generate_current_window!(m::Model)
     _generate_time_slice!(m::Model)
     _generate_time_slice_relationships!(m::Model)
-    rep_time_slice_mapping(m::Model)
+    _generate_representative_time_slice_mapping(m::Model)
 end
 
 
@@ -346,14 +346,14 @@ function to_time_slice(m::Model; t::TimeSlice)
 end
 
 """
-    rep_time_slice_mapping(m::Model)
+    _generate_representative_time_slice_mapping(m::Model)
 Generate an `Array` mapping all non-representative to representative time-slices
 """
-function rep_time_slice_mapping(m::Model)
+function _generate_representative_time_slice_mapping(m::Model)
     rep_dict=Dict()
-    for blk in indices(representative_periods)
-        for t_start_real in representative_periods(temporal_block=blk).indexes
-            rep_blk = representative_periods(temporal_block=blk, inds=t_start_real)
+    for blk in indices(representative_periods_mapping)
+        for t_start_real in representative_periods_mapping(temporal_block=blk).indexes
+            rep_blk = representative_periods_mapping(temporal_block=blk, inds=t_start_real)
             t_start_real_i = t_start_real
             for t in time_slice(m, temporal_block=temporal_block(rep_blk))
                 rep_dict[to_time_slice(m,t=TimeSlice(t_start_real_i,t_start_real_i + _model_duration_unit(m.ext[:instance])(duration(t))))] = t
@@ -362,11 +362,9 @@ function rep_time_slice_mapping(m::Model)
         end
     end
     m.ext[:temporal_structure][:rep_day_mapping] = rep_dict
-    m.ext[:temporal_structure][:non_rep_ind] = keys(rep_dict)
-    #TODO: use these to create non-rep. temporal_block resolution ?
 end
 
-rep_time_slices(m) = m.ext[:temporal_structure][:rep_day_mapping]
+representative_time_slices(m) = m.ext[:temporal_structure][:rep_day_mapping]
 """
     node_time_indices(m::Model;<keyword arguments>)
 
@@ -401,7 +399,7 @@ end
 
 Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` online variables unit with filter keywords.
 """
-function unit_time_indices(m::Model; unit=anything, temporal_block=temporal_block(representative_periods=nothing) , t=anything)
+function unit_time_indices(m::Model; unit=anything, temporal_block=temporal_block(representative_periods_mapping=nothing) , t=anything)
     unique(
         (unit=u, t=t1)
         for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)

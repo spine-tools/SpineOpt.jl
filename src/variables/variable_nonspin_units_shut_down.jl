@@ -29,7 +29,7 @@ function nonspin_units_shut_down_indices(
     node=anything,
     stochastic_scenario=anything,
     t=anything,
-    temporal_block=temporal_block(representative_periods=nothing) ,
+    temporal_block=temporal_block(representative_periods_mapping=nothing) ,
 )
     unique(
         (unit=u, node=n, stochastic_scenario=s, t=t)
