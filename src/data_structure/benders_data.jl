@@ -74,13 +74,12 @@ function process_master_problem_solution(mp)
     for n in node(has_state=true, is_decomposed_storage=true)
         time_indices = [
             start(inds.t)
-            for inds in node_state_indices(mp; node=n) if end_(inds.t) <= end_(current_window(mp))
+            for inds in mp_node_state_indices(mp; node=n) if end_(inds.t) <= end_(current_window(mp))
         ]
         vals = [
-            mp.ext[:values][:node_state][inds]
-            for inds in node_state_indices(mp; node=n) if end_(inds.t) <= end_(current_window(mp))
-        ]
-        @info "vals" time_indices vals size(time_indices) size(vals)
+            mp.ext[:values][:mp_node_state][inds]
+            for inds in mp_node_state_indices(mp; node=n) if end_(inds.t) <= end_(current_window(mp))
+        ]        
         node.parameter_values[n][:fix_node_state] =
             parameter_value(TimeSeries(time_indices, vals, false, false))
         if !haskey(node__benders_iteration.parameter_values, (n, current_bi))
@@ -152,12 +151,14 @@ function save_sp_marginal_values(m)
         unit__benders_iteration.parameter_values[(u, current_bi)][:units_available_mv] =
             parameter_value(TimeSeries(time_indices, vals, false, false))
     end
-    inds = keys(m.ext[:values][:bound_connections_invested_available])
-    for c in indices(candidate_connections)
-        time_indices = [start(ind.t) for ind in inds if ind.connection == c]
-        vals = [m.ext[:values][:bound_connections_invested_available][ind] for ind in inds if ind.connection == c]
-        connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_mv] =
-            parameter_value(TimeSeries(time_indices, vals, false, false))
+    if !isempty(indices(candidate_connections))
+        inds = keys(m.ext[:values][:bound_connections_invested_available])
+        for c in indices(candidate_connections)
+            time_indices = [start(ind.t) for ind in inds if ind.connection == c]
+            vals = [m.ext[:values][:bound_connections_invested_available][ind] for ind in inds if ind.connection == c]
+            connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_mv] =
+                parameter_value(TimeSeries(time_indices, vals, false, false))
+        end
     end
     inds = keys(m.ext[:values][:bound_storages_invested_available])
     for n in indices(candidate_storages)

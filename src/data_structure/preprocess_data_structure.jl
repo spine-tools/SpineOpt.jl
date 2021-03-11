@@ -736,6 +736,12 @@ function expand_model__default_temporal_block()
 end
 
 
+function create_model_temporal_block_relationships()
+    model__node__temporal_block_rels = [(m, n, tb) for (n, tb) in node__temporal_block() for m in model__temporal_block(temporal_block=tb)]
+    model__node__temporal_block = RelationshipClass(:model__node__temporal_block, [:model, :node, :temporal_block], model__node__temporal_block_rels)   
+end
+
+
 """
 generate_subproblem_marginals()
 

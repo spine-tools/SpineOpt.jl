@@ -18,57 +18,32 @@
 #############################################################################
 
 """
-    node_state_indices(filtering_options...)
+    mp_node_state_indices(filtering_options...)
 
 A set of tuples for indexing the `node_state` variable where filtering options can be specified
 for `node`, `s`, and `t`.
 """
-function node_state_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything)        
+function mp_node_state_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything)        
     unique(
         (node=n, stochastic_scenario=s, t=t) 
-        for (n, tb) in node_with_state__temporal_block(node=node, _compact=false) 
-            if ((model_type(model=m.ext[:instance])==:spineopt_master && is_decomposed_storage(node=n)) || model_type(model=m.ext[:instance]) !== :spineopt_master)
-                && tb in model__temporal_block(model=m.ext[:instance])
-
+        for (n, tb) in mp_node__temporal_block(node=node, _compact=false)             
         for
         (n, s, t) in
-        node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
+        mp_node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
     )
 end
 
-
 """
-    node_state_last_index(filtering_options...)
+    add_variable_mp_node_state!(m::Model)
 
-A tuples for indexing the last `node_state` variable of the rolling window where filtering options can be specified
-for `node`, `s`, and `t`.
+Add `mp_node_state` variables to model `m`.
 """
-function node_state_last_index(m::Model; node=anything, stochastic_scenario=anything, t=anything)        
-    unique(
-        (node=n, stochastic_scenario=s, t=t) 
-        for (n, tb) in node_with_state__temporal_block(node=node, _compact=false) 
-            if ((model_type(model=m.ext[:instance])==:spineopt_master && is_decomposed_storage(node=n)) || model_type(model=m.ext[:instance]) !== :spineopt_master)
-                && tb in model__temporal_block(model=m.ext[:instance])
-
-        for
-        (n, s, t) in
-        [last(node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t))]
-    )
-end
-
-
-
-"""
-    add_variable_node_state!(m::Model)
-
-Add `node_state` variables to model `m`.
-"""
-function add_variable_node_state!(m::Model)
+function add_variable_mp_node_state!(m::Model)
     t0 = startref(current_window(m))
     add_variable!(
         m,
-        :node_state,
-        node_state_indices;
+        :mp_node_state,
+        mp_node_state_indices;
         lb=x -> node_state_min(
             node=x.node,
             stochastic_scenario=x.stochastic_scenario,

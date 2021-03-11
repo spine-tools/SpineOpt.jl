@@ -356,6 +356,19 @@ function node_time_indices(m::Model; node=anything, temporal_block=anything, t=a
     )
 end
 
+
+"""
+    mp_node_time_indices(m::Model;<keyword arguments>)
+
+Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword arguments that allow filtering.
+"""
+function mp_node_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
+    unique(
+        (node=n, t=t1) for (n, tb) in mp_node__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
+        for t1 in time_slice(m; temporal_block=tb, t=t)
+    )
+end
+
 """
     node_dynamic_time_indices(m::Model;<keyword arguments>)
 
@@ -366,6 +379,24 @@ function node_dynamic_time_indices(m::Model; node=anything, t_before=anything, t
         (node=n, t_before=tb, t_after=ta) for (n, ta) in node_time_indices(m; node=node, t=t_after)
         for
         (n, tb) in node_time_indices(
+            m;
+            node=n,
+            t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
+        )
+    )
+end
+
+
+"""
+    lt_node_dynamic_time_indices(m::Model;<keyword arguments>)
+
+Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` with keyword arguments that allow filtering.
+"""
+function mp_node_dynamic_time_indices(m::Model; node=anything, t_before=anything, t_after=anything)
+    unique(
+        (node=n, t_before=tb, t_after=ta) for (n, ta) in mp_node_time_indices(m; node=node, t=t_after)
+        for
+        (n, tb) in mp_node_time_indices(
             m;
             node=n,
             t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),

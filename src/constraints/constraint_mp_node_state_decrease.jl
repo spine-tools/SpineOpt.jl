@@ -24,25 +24,25 @@ Limit the decrease in node state between timeslices in the master problem to `de
 
 """
 function add_constraint_mp_node_state_decrease!(m::Model)
-    @fetch node_state = m.ext[:variables]
+    @fetch mp_node_state = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:mp_node_state_decrease] = Dict(
         (node=ng, stochastic_scenario=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             - expr_sum(
-                    +node_state[ng, s, t_after]
-                    for (ng, s, t_after) in node_state_indices(m; node=ng, stochastic_scenario=s, t=t_after);
+                    +mp_node_state[ng, s, t_after]
+                    for (ng, s, t_after) in mp_node_state_indices(m; node=ng, stochastic_scenario=s, t=t_after);
                     init=0,
                 )
             + expr_sum(
-                +node_state[ng, s, t_before]            
-                for (ng, s, t_before) in node_state_indices(m; node=ng, stochastic_scenario=s, t=t_before);                    
+                +mp_node_state[ng, s, t_before]            
+                for (ng, s, t_before) in mp_node_state_indices(m; node=ng, stochastic_scenario=s, t=t_before);                    
                 init=0,
             )      
             <=
             +decomposed_max_state_decrease[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t_before)]            
             *min(duration(t_before), duration(t_after))
-        ) for (ng, s, t) in constraint_mp_node_state_decrease_indices(m)
+        ) for (ng, s, t_before, t_after) in constraint_mp_node_state_decrease_indices(m)
     )
 end
 
@@ -63,11 +63,11 @@ function constraint_mp_node_state_decrease_indices(
 )
     unique(
         (node=ng, stochastic_path=path, t_before=t_before, t_after=t_after)                       
-        for (ng, s, t_after) in node_state_indices(m; node=node) 
+        for (ng, s, t_after) in mp_node_state_indices(m; node=node) 
             if ng in mp_storage_node && ng in indices(decomposed_max_state_decrease)
-        for (ng, t_before, t_after) in node_dynamic_time_indices(m; node=ng, t_before=t_before, t_after=t_after)
+        for (ng, t_before, t_after) in mp_node_dynamic_time_indices(m; node=ng, t_before=t_before, t_after=t_after)
         for path in active_stochastic_paths(unique(
-            ind.stochastic_scenario for ind in node_state_indices(m; node=ng, t=[t_before, t_after])
+            ind.stochastic_scenario for ind in mp_node_state_indices(m; node=ng, t=[t_before, t_after])
         )) if path == stochastic_path || path in stochastic_path
         
     )

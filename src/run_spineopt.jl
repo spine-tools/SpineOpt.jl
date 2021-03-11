@@ -124,6 +124,7 @@ function rerun_spineopt(
         @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
         @timelog log_level 2 "Rolling temporal structure...\n" roll_temporal_structure!(m) || break
         @log log_level 1 "Window $k: $(current_window(m))"
+        set_optimizer(m, mip_solver)
         update_model!(m; update_constraints=update_constraints, log_level=log_level)
         k += 1
     end
@@ -151,6 +152,7 @@ function create_model(mip_solver, use_direct_model=false, model_type=:spineopt_o
     m.ext[:objective_lower_bound] = 0.0
     m.ext[:objective_upper_bound] = 0.0
     m.ext[:benders_gap] = 0.0
+    m.ext[:dynamic_constraints] = []
     m
 
 end
@@ -263,6 +265,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
         m,
     )           
     @timelog log_level 3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
+    @timelog log_level 3 "- [constraint_node_state_end_target]" add_constraint_node_state_end_target!(m)
     @timelog log_level 3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
     @timelog log_level 3 "- [constraint_units_on]" add_constraint_units_on!(m)
     @timelog log_level 3 "- [constraint_units_available]" add_constraint_units_available!(m)
@@ -295,7 +298,9 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
         for (inds, con) in cons
             set_name(con, string(con_key, inds))
         end
-    end    
+    end
+    #identify dynamic constraints
+    identify_dynamic_constraints(m)    
 end
 
 function duals_calculation_needed(m::Model)
@@ -408,9 +413,16 @@ function save_outputs!(m)
         end
         existing = get!(m.ext[:outputs], name, Dict{NamedTuple,Dict}())
         for (k, v) in value
-            end_(k.t) <= model_start(model=m.ext[:instance]) && continue
-            new_k = _drop_key(k, :t)
-            push!(get!(existing, new_k, Dict{DateTime,Any}()), start(k.t) => v)
+            if :t_after in propertynames(k)
+                end_(k.t_after) <= model_start(model=m.ext[:instance]) && continue
+                new_k = _drop_key(k, :t_after)
+                new_k = _drop_key(new_k, :t_before)
+                push!(get!(existing, new_k, Dict{DateTime,Any}()), start(k.t_after) => v)
+            else
+                end_(k.t) <= model_start(model=m.ext[:instance]) && continue
+                new_k = _drop_key(k, :t)
+                push!(get!(existing, new_k, Dict{DateTime,Any}()), start(k.t) => v)
+            end
         end
     end
 end
@@ -435,8 +447,8 @@ function update_model!(m; update_constraints=m -> nothing, log_level=3)
     # The below is needed here because we remove the integer constraints to get a dual solution 
     # and then need to re-add them for the next write_mps_on_no_solve
     # we can only do this once we have saved the solution    
+    @timelog log_level 2 "Updating variables..." update_variables!(m)    
     @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
-    @timelog log_level 2 "Updating variables..." update_variables!(m)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
     @timelog log_level 2 "Updating user constraints..." update_constraints(m)
@@ -473,37 +485,34 @@ end
 
 function relax_integer_vars(m::Model)
     save_integer_values!(m)    
-    for name in m.ext[:integer_variables]
+    for name in m.ext[:integer_variables]        
         def = m.ext[:variables_definition][name]
         bin = def[:bin]
         int = def[:int]
-        var = m.ext[:variables][name]
-        for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))
-            
+        var = m.ext[:variables][name]        
+        inds = def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))        
+        for ind in inds            
             if end_(ind.t) <= end_(current_window(m))
                 fix(var[ind], m.ext[:values][name][ind]; force=true)
-            end
-            
-            bin != nothing && bin(ind) && unset_binary(var[ind])
-            int != nothing && int(ind) && unset_integer(var[ind])
+            end            
+            (bin != nothing && bin(ind)==true) && unset_binary(var[ind])
+            (int != nothing && int(ind)==true) && unset_integer(var[ind])
         end
     end
 end
 
 
 function unrelax_integer_vars(m::Model)
-    for name in m.ext[:integer_variables]
+    for name in m.ext[:integer_variables]    
         def = m.ext[:variables_definition][name]
         bin = def[:bin]
-        int = def[:int]
-        indices = def[:indices]
-        var = m.ext[:variables][name]
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            if end_(ind.t) <= end_(current_window(m))
-                bin != nothing && bin(ind) && set_binary(var[ind])
-                int != nothing && int(ind) && set_integer(var[ind])
-            end
-        end
+        int = def[:int]        
+        var = m.ext[:variables][name]        
+        inds = def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))        
+        for ind in inds            
+            (bin != nothing && bin(ind)==true) && set_binary(var[ind])
+            (int != nothing && int(ind)==true) && set_integer(var[ind])                        
+        end        
     end
 end
 
@@ -528,11 +537,16 @@ function save_marginal_values!(m::Model)
 end
 
 
-function _save_marginal_value!(m::Model, constraint_name::Symbol, output_name::Symbol)
+function _save_marginal_value!(m::Model, constraint_name::Symbol, output_name::Symbol)    
     con = m.ext[:constraints][constraint_name]
     inds = keys(con)
-    m.ext[:values][output_name] =
-        Dict(ind => JuMP.dual(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window(m)))
+    if constraint_name in m.ext[:dynamic_constraints]
+        m.ext[:values][output_name] =
+            Dict(ind => JuMP.dual(con[ind]) for ind in inds if end_(ind.t_after) <= end_(current_window(m)))
+    else
+        m.ext[:values][output_name] =
+            Dict(ind => JuMP.dual(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window(m)))
+    end
 end
 
 
@@ -554,4 +568,16 @@ function _save_bound_marginal_value!(m::Model, variable_name::Symbol, output_nam
         for
         ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if end_(ind.t) <= end_(current_window(m))
     )
+end
+
+function identify_dynamic_constraints(m::Model)
+    for con_name in keys(m.ext[:constraints])        
+        con = m.ext[:constraints][con_name]
+        if !isempty(con)
+            ind = first(keys(con))            
+            if :t_after in propertynames(ind)
+                push!(m.ext[:dynamic_constraints], con_name)
+            end
+        end
+    end
 end
