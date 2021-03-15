@@ -30,7 +30,7 @@ Here, we briefly describe the key concepts required to understand the stochastic
 4. **[stochastic\_structure](@ref)** is essentially a "realization" of the *stochastic DAG*, with additional information like the [stochastic\_scenario\_end](@ref) and [weight\_relative\_to\_parents](@ref) [Parameters](@ref). These become relevant when we start discussing interactions between different `stochastic structures`.
 
 ```@raw html
-<img src="../../figs/dag_fullpath_path.svg" width="40%"/>
+<img src="../figs/dag_fullpath_path.svg" width="40%"/>
 ```
 
 The above figure presents an example *stochastic DAG* with the individual `stochastic scenarios` labelled from `s0-s8`.
@@ -46,8 +46,8 @@ since all `stochastic scenarios` only have a single parent.
 However, this is no longer the case for *stochastic DAGs*, as illustrated in the figures below:
 
 ```@raw html
-<img src="../../figs/branching.svg" width="40%"/>
-<img src="../../figs/converging.svg" width="40%"/>
+<img src="../figs/branching.svg" width="40%"/>
+<img src="../figs/converging.svg" width="40%"/>
 ```
 
 The example on the left illustrates the "traditional" indexing in branching *stochastic trees*,
@@ -72,7 +72,7 @@ we can identify the number of unique paths necessary for constraint generation a
 #### Example dynamic constraint generation
 
 ```@raw html
-<img src="../../figs/constraint_paths.svg" width="40%"/>
+<img src="../figs/constraint_paths.svg" width="40%"/>
 ```
 
 The above figure shows examples of two different dynamic constraints generated in a *stochastic DAG*:
@@ -121,7 +121,7 @@ or at two `stochastic structures`, one of which has been delayed, on the same `t
 This is illustrated by the figure below:
 
 ```@raw html
-<img src="../../figs/delayed_stochastic_paths.svg" width="50%"/>
+<img src="../figs/delayed_stochastic_paths.svg" width="50%"/>
 ```
 
 The above represents constraint generation over two `stochastic structures`,
