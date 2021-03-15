@@ -37,12 +37,6 @@ SpineOpt.write_concept_reference_file(
     path, "parameter_value_lists.md", ["parameter_value_lists"], "Parameter Value Lists"
 )
 
-# Temporarily copy the `figs` folder into `src` for online deployment of docs.
-try
-    cp(path*"\\figs\\", path*"\\src\\figs\\")
-catch
-end
-
 # Create and deploy the documentation
 makedocs(
     sitename="SpineOpt.jl",
@@ -75,9 +69,4 @@ makedocs(
     ],
 )
 
-# Deploy the documentation and remove the duplicate figs
 deploydocs(repo="github.com/Spine-project/SpineOpt.jl.git", versions=["stable" => "v^", "v#.#"])
-try
-    rm(path*"\\src\\figs\\", recursive=true)
-catch
-end
