@@ -4,15 +4,16 @@ using SpineOpt
 
 # Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
 # Actual descriptions are fetched separately from `src/concept_reference/concepts/`
+path = @__DIR__
 SpineOpt.write_concept_reference_file(
-    @__DIR__,
+    path,
     "object_classes.md",
     ["object_classes"],
     "Object Classes";
     template_description_index=2
 )
 SpineOpt.write_concept_reference_file(
-    @__DIR__,
+    path,
     "relationship_classes.md",
     ["relationship_classes"],
     "Relationship Classes";
@@ -21,7 +22,7 @@ SpineOpt.write_concept_reference_file(
     template_description_index=3
 )
 SpineOpt.write_concept_reference_file(
-    @__DIR__,
+    path,
     "parameters.md",
     ["object_parameters", "relationship_parameters"],
     "Parameters";
@@ -33,7 +34,7 @@ SpineOpt.write_concept_reference_file(
     template_description_index=5
 )
 SpineOpt.write_concept_reference_file(
-    @__DIR__, "parameter_value_lists.md", ["parameter_value_lists"], "Parameter Value Lists"
+    path, "parameter_value_lists.md", ["parameter_value_lists"], "Parameter Value Lists"
 )
 
 # Create and deploy the documentation
@@ -67,5 +68,7 @@ makedocs(
         "Library" => "library.md"
     ],
 )
-
+# Temporarily copy the `figs` folder into `src` for online deployment of docs.
+cp(path*"\\figs\\", path*"\\src\\figs\\")
 deploydocs(repo="github.com/Spine-project/SpineOpt.jl.git", versions=["stable" => "v^", "v#.#"])
+rm(path*"\\src\\figs\\", recursive=true)
