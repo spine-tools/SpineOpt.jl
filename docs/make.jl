@@ -38,7 +38,10 @@ SpineOpt.write_concept_reference_file(
 )
 
 # Temporarily copy the `figs` folder into `src` for online deployment of docs.
-cp(path*"\\figs\\", path*"\\src\\figs\\")
+try
+    cp(path*"\\figs\\", path*"\\src\\figs\\")
+catch
+end
 
 # Create and deploy the documentation
 makedocs(
@@ -74,4 +77,7 @@ makedocs(
 
 # Deploy the documentation and remove the duplicate figs
 deploydocs(repo="github.com/Spine-project/SpineOpt.jl.git", versions=["stable" => "v^", "v#.#"])
-rm(path*"\\src\\figs\\", recursive=true)
+try
+    rm(path*"\\src\\figs\\", recursive=true)
+catch
+end
