@@ -6,14 +6,14 @@ using SpineOpt
 # Actual descriptions are fetched separately from `src/concept_reference/concepts/`
 SpineOpt.write_concept_reference_file(
     @__DIR__,
-    "_object_classes.md",
+    "object_classes.md",
     ["object_classes"],
     "Object Classes";
     template_description_index=2
 )
 SpineOpt.write_concept_reference_file(
     @__DIR__,
-    "_relationship_classes.md",
+    "relationship_classes.md",
     ["relationship_classes"],
     "Relationship Classes";
     template_related_concept_index=2,
@@ -22,7 +22,7 @@ SpineOpt.write_concept_reference_file(
 )
 SpineOpt.write_concept_reference_file(
     @__DIR__,
-    "_parameters.md",
+    "parameters.md",
     ["object_parameters", "relationship_parameters"],
     "Parameters";
     template_name_index=2,
@@ -33,7 +33,7 @@ SpineOpt.write_concept_reference_file(
     template_description_index=5
 )
 SpineOpt.write_concept_reference_file(
-    @__DIR__, "_parameter_value_lists.md", ["parameter_value_lists"], "Parameter Value Lists"
+    @__DIR__, "parameter_value_lists.md", ["parameter_value_lists"], "Parameter Value Lists"
 )
 
 # Create and deploy the documentation
@@ -49,10 +49,10 @@ makedocs(
         ],
         "Concept Reference" => Any[
             "Basics of the model structure"=>joinpath("concept_reference", "the_basics.md"),
-            "Object Classes"=>joinpath("concept_reference", "_object_classes.md"),
-            "Relationship Classes"=>joinpath("concept_reference", "_relationship_classes.md"),
-            "Parameters"=>joinpath("concept_reference", "_parameters.md"),
-            "Parameter Value Lists"=>joinpath("concept_reference", "_parameter_value_lists.md"),
+            "Object Classes"=>joinpath("concept_reference", "object_classes.md"),
+            "Relationship Classes"=>joinpath("concept_reference", "relationship_classes.md"),
+            "Parameters"=>joinpath("concept_reference", "parameters.md"),
+            "Parameter Value Lists"=>joinpath("concept_reference", "parameter_value_lists.md"),
         ],
         "Mathematical Formulation" => Any[
             "Variables"=>joinpath("mathematical_formulation", "variables.md"),
