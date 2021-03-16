@@ -59,7 +59,7 @@ function run_spineopt(
     end
 
     # High-level algorithm selection. For now, selecting based on defined model types,
-    # but may want more robust system in future     
+    # but may want more robust system in future
 
     if !isempty(model(model_type=:spineopt_master))
         rerun_spineopt_mp(
@@ -107,11 +107,11 @@ function rerun_spineopt(
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
-    @log log_level 1 "Window 1: $(current_window(m))"        
+    @log log_level 1 "Window 1: $(current_window(m))"
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
-    calculate_duals = duals_calculation_needed(m) 
+    calculate_duals = duals_calculation_needed(m)
     k = 2
-    
+
 
     while optimize && optimize_model!(
         m;
@@ -217,13 +217,13 @@ end
 """
 Add SpineOpt constraints to the given model.
 """
-function add_constraints!(m; add_constraints=m -> nothing, log_level=3)    
+function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
     @timelog log_level 3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
     @timelog log_level 3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
     @timelog log_level 3 "- [constraint_connection_flow_ptdf]" add_constraint_connection_flow_ptdf!(m)
     @timelog log_level 3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
-    @timelog log_level 3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)    
+    @timelog log_level 3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
     @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(m)
     @timelog log_level 3 "- [constraint_connection_lifetime]" add_constraint_connection_lifetime!(m)
     @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(m)
@@ -252,7 +252,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     )
     @timelog log_level 3 "- [constraint_min_ratio_out_in_connection_flow]" add_constraint_min_ratio_out_in_connection_flow!(
         m,
-    )    
+    )
     @timelog log_level 3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)
     @timelog log_level 3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
     @timelog log_level 3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
@@ -281,20 +281,20 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_min_nonspin_ramp_down]" add_constraint_min_nonspin_ramp_down!(m)
     @timelog log_level 3 "- [constraint_res_minimum_node_state]" add_constraint_res_minimum_node_state!(m)
     @timelog log_level 3 "- [constraint_user]" add_constraints(m)
-    
-    # Name constraints    
+
+    # Name constraints
     for (con_key, cons) in m.ext[:constraints]
         for (inds, con) in cons
             set_name(con, string(con_key, inds))
         end
-    end    
+    end
 end
 
 function duals_calculation_needed(m::Model)
     calculate_duals = false
-    for r in model__report(model=m.ext[:instance])        
+    for r in model__report(model=m.ext[:instance])
         for o in report__output(report=r)
-            get!(m.ext[:outputs], o.name, Dict{NamedTuple,Dict}())            
+            get!(m.ext[:outputs], o.name, Dict{NamedTuple,Dict}())
             output_name = lowercase(String(o.name))
             startswith(output_name, r"bound_|constraint_") && (calculate_duals = true)
         end
@@ -324,31 +324,6 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, mip_solve
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
-    if termination_status(m) == MOI.INFEASIBLE
-        compute_conflict!(m)
-        cons=[]
-        for (a,b) in list_of_constraint_types(m)
-            push!(cons,all_constraints(m,a,b)...)
-        end
-        conflicts=[]
-        for c in cons
-            try
-                conf = MOI.get(m, MOI.ConstraintConflictStatus(), c)
-                if conf==MOI.ConflictParticipationStatusCode(1)
-                    @show c
-                    push!(conflicts, c)
-                end
-            catch
-                @info("something went wrong with $c")
-            end
-        end
-
-        @info "conflicts are: "
-        for c in conflicts
-            @info "$(c)"
-        end
-    end
-
     if termination_status(m) == MOI.OPTIMAL || termination_status(m) == MOI.TIME_LIMIT
         if calculate_duals
             @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
@@ -449,9 +424,9 @@ Update the given model for the next window in the rolling horizon: update variab
 update constraints and update objective.
 """
 function update_model!(m; update_constraints=m -> nothing, log_level=3)
-    # The below is needed here because we remove the integer constraints to get a dual solution 
+    # The below is needed here because we remove the integer constraints to get a dual solution
     # and then need to re-add them for the next write_mps_on_no_solve
-    # we can only do this once we have saved the solution    
+    # we can only do this once we have saved the solution
     @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
     @timelog log_level 2 "Updating variables..." update_variables!(m)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
@@ -539,8 +514,8 @@ end
 
 function save_marginal_values!(m::Model)
     for (constraint_name, con) in m.ext[:constraints]
-        output_name = Symbol(string("constraint_", constraint_name))                
-        if haskey(m.ext[:outputs], output_name)        
+        output_name = Symbol(string("constraint_", constraint_name))
+        if haskey(m.ext[:outputs], output_name)
             _save_marginal_value!(m, constraint_name, output_name)
         end
     end
@@ -557,8 +532,8 @@ end
 
 function save_bound_marginal_values!(m::Model)
     for (variable_name, con) in m.ext[:variables]
-        output_name = Symbol(string("bound_", variable_name))        
-        if haskey(m.ext[:outputs], output_name)            
+        output_name = Symbol(string("bound_", variable_name))
+        if haskey(m.ext[:outputs], output_name)
             _save_bound_marginal_value!(m, variable_name, output_name)
         end
     end
