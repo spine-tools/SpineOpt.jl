@@ -40,7 +40,7 @@ SpineOpt.write_concept_reference_file(
 # Create and deploy the documentation
 makedocs(
     sitename="SpineOpt.jl",
-    format=Documenter.HTML(prettyurls=get(ENV, "CI", nothing) == "true"),
+    #format=Documenter.HTML(prettyurls=get(ENV, "CI", nothing) == "true"),
     pages=[
         "Introduction" => "index.md",
         "Getting Started" => Any[
