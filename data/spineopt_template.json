@@ -115,6 +115,7 @@
         ["model", "write_lodf_file", false, "boolean_value_list", "A boolean flag for whether the LODF values should be written to a results file."],
         ["model", "write_mps_file", null, "write_mps_file_list", "A selector for writing an .mps file of the model."],
         ["model", "write_ptdf_file", false, "boolean_value_list", "A boolean flag for whether the LODF values should be written to a results file."],
+        ["model", "write_math_model_file", false, "boolean_value_list", "A boolean flag for whether the mathematical optimization model should be written to a file."],
         ["node", "balance_type", "balance_type_node", "balance_type_list", "A selector for how the `:nodal_balance` constraint should be handled."],
         ["node", "candidate_storages", null, null, "Determines the maximum number of new storages which may be invested in"],
         ["node", "demand", 0.0, null, "Demand for the `commodity` of a `node`. Energy gains can be represented using negative `demand`."],

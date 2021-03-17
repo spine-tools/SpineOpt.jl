@@ -46,6 +46,7 @@ function run_spineopt(
     mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
     lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
     cleanup=true,
+    add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
@@ -77,6 +78,7 @@ function run_spineopt(
             url_out;
             mip_solver=mip_solver,
             lp_solver=lp_solver,
+            add_user_variables=add_user_variables,
             add_constraints=add_constraints,
             update_constraints=update_constraints,
             log_level=log_level,
@@ -90,6 +92,7 @@ function rerun_spineopt(
     url_out::String;
     mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
     lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
+    add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
@@ -107,15 +110,16 @@ function rerun_spineopt(
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
-    @log log_level 1 "Window 1: $(current_window(m))"        
-    init_model!(m; add_constraints=add_constraints, log_level=log_level)
-    calculate_duals = duals_calculation_needed(m) 
+    @log log_level 1 "Window 1: $(current_window(m))"
+    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
+    calculate_duals = duals_calculation_needed(m)
     k = 2
-    
+
 
     while optimize && optimize_model!(
         m;
         log_level=log_level,
+        use_direct_model=use_direct_model,
         mip_solver=mip_solver,
         lp_solver=lp_solver,
         calculate_duals=calculate_duals,
@@ -159,7 +163,7 @@ end
 """
 Add SpineOpt variables to the given model.
 """
-function add_variables!(m; log_level=3)
+function add_variables!(m; add_user_variables=m -> nothing, log_level=3)
     @timelog log_level 3 "- [variable_units_available]" add_variable_units_available!(m)
     @timelog log_level 3 "- [variable_units_on]" add_variable_units_on!(m)
     @timelog log_level 3 "- [variable_units_started_up]" add_variable_units_started_up!(m)
@@ -189,6 +193,7 @@ function add_variables!(m; log_level=3)
     @timelog log_level 3 "- [variable_shut_down_unit_flow]" add_variable_shut_down_unit_flow!(m)
     @timelog log_level 3 "- [variable_nonspin_units_shut_down]" add_variable_nonspin_units_shut_down!(m)
     @timelog log_level 3 "- [variable_nonspin_ramp_down_unit_flow]" add_variable_nonspin_ramp_down_unit_flow!(m)
+    @timelog log_level 3 "- [user_variables]" add_user_variables(m)
 end
 
 """
@@ -313,8 +318,8 @@ end
 """
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
-function init_model!(m; add_constraints=m -> nothing, log_level=3)
-    @timelog log_level 2 "Adding variables...\n" add_variables!(m; log_level=log_level)
+function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3)
+    @timelog log_level 2 "Adding variables...\n" add_variables!(m; add_user_variables=add_user_variables, log_level=log_level)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(
         m;
@@ -327,11 +332,38 @@ end
 """
 Optimize the given model. If an optimal solution is found, return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, mip_solver, lp_solver)
+function optimize_model!(m::Model; log_level=3, calculate_duals=false, use_direct_model=false, mip_solver, lp_solver)
     write_mps_file(model=m.ext[:instance]) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
+    write_math_model_file(model=m.ext[:instance]) == true && write_model_file(m,file_name="$(m.ext[:instance])_$(startref(current_window(m)))")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
+    if termination_status(m) == MOI.INFEASIBLE && use_direct_model==true
+        compute_conflict!(m)
+        cons=[]
+        for (a,b) in list_of_constraint_types(m)
+            push!(cons,all_constraints(m,a,b)...)
+        end
+        conflicts=[]
+        for c in cons
+            try
+                conf = MOI.get(m, MOI.ConstraintConflictStatus(), c)
+                if conf==MOI.ConflictParticipationStatusCode(1)
+                    @show c
+                    push!(conflicts, c)
+                end
+            catch
+                @info("something went wrong with $c")
+            end
+        end
+
+        @info "conflicts are: "
+        for c in conflicts
+            @info "$(c)"
+        end
+        write_conflicts_to_file(conflicts, file_name="conflicts_$(m.ext[:instance])_$(startref(current_window(m))).txt")
+    end
+
     if termination_status(m) == MOI.OPTIMAL || termination_status(m) == MOI.TIME_LIMIT
         if calculate_duals
             @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
@@ -344,6 +376,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, mip_solve
     else
         @log log_level 0 "Unable to find solution (reason: $(termination_status(m)))"
         write_mps_file(model=m.ext[:instance]) == :write_mps_on_no_solve && write_to_file(m, "model_diagnostics.mps")
+        write_math_model_file(model=m.ext[:instance]) == true && write_model_file(m,file_name="$(m.ext[:instance])_$(startref(current_window(m)))")
         false
     end
 end

@@ -162,8 +162,16 @@ end
 function print_constraint(constraint, filename="constraint_debug.txt")
     io = open(joinpath(@__DIR__, filename), "w")
     for (inds, con) in constraint
-        print(io, inds, "\n")        
+        print(io, inds, "\n")
         print(io, con, "\n\n")
+    end
+    close(io);
+end
+
+function write_conflicts_to_file(conflicts; file_name="conflicts")
+    io = open(joinpath(@__DIR__, "$(file_name).txt"), "w")
+    for confl in conflicts
+        print(io, confl, "\n")
     end
     close(io);
 end
