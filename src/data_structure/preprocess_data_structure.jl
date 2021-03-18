@@ -25,6 +25,7 @@ Preprocess input data structure for SpineOpt.
 Runs a number of other functions processing different aspecs of the input data in sequence.
 """
 function preprocess_data_structure(; log_level=3)
+    generate_is_cadidate()
     expand_model_default_relationships()
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
@@ -32,9 +33,33 @@ function preprocess_data_structure(; log_level=3)
     # so calls to `connection__from_node` don't corrupt lookup cache
     add_connection_relationships()
     generate_direction()
+    process_loss_bidirectional_capacities()
     generate_network_components()
     generate_variable_indexing_support()
     generate_benders_structure()
+end
+
+
+"""
+    generate_is_candidate()
+
+Generate `is_candidate` for the `node`, `unit` and `connection` `ObjectClass`es.
+"""
+function generate_is_cadidate()
+    is_candidate = Parameter(:is_candidate, [node, unit, connection])    
+    for c in indices(candidate_connections)        
+        connection.parameter_values[c][:is_candidate] = parameter_value(true)
+    end
+    for u in indices(candidate_units)        
+        unit.parameter_values[u][:is_candidate] = parameter_value(true)
+    end
+    for n in indices(candidate_storages)        
+        node.parameter_values[n][:is_candidate] = parameter_value(true)
+    end
+    
+    @eval begin
+        is_candidate = $is_candidate
+    end
 end
 
 
@@ -80,7 +105,7 @@ Add connection relationships for connection_type=:connection_type_lossless_bidir
 For connections with this parameter set, only a connection__from_node and connection__to_node need be set
 and this function creates the additional relationships on the fly.
 """
-function add_connection_relationships()
+function add_connection_relationships()    
     conn_from_to = [
         (conn, first(connection__from_node(connection=conn)), first(connection__to_node(connection=conn)))
         for conn in connection(connection_type=:connection_type_lossless_bidirectional)
@@ -96,9 +121,11 @@ function add_connection_relationships()
     value_one = parameter_value(1.0)
     new_connection__from_node_parameter_values = Dict(
         (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__from_node_rels
-    )
-    new_connection__to_node_parameter_values =
-        Dict((conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__to_node_rels)
+    )    
+
+    new_connection__to_node_parameter_values = Dict(
+        (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__to_node_rels)
+
     new_connection__node__node_parameter_values = Dict(
         (conn, n1, n2) => Dict(:fix_ratio_out_in_connection_flow => value_one)
         for (conn, n1, n2) in new_connection__node__node_rels
@@ -136,6 +163,56 @@ function generate_direction()
     @eval begin
         direction = $direction
         export direction
+    end
+end
+
+"""
+    process_loss_bidirectional_capacities()
+
+    For connections of type `:connection_type_lossless_bidirectional` if a `connection_capacity` is found
+    we ensure that it appies to each of the four flow variables
+
+"""
+
+function process_loss_bidirectional_capacities()
+    for c in connection(connection_type=:connection_type_lossless_bidirectional)
+        conn_capacity_param = nothing
+        found_from = false
+        for (n, d) in connection__from_node(connection=c)
+            found_value = get(connection__from_node.parameter_values[(c, n, d)], :connection_capacity, nothing)
+            if found_value !== nothing
+                conn_capacity_param = found_value
+                found_from = true
+                for n2 in connection__from_node(connection=c, direction=d)
+                    if n2 != n
+                        connection__from_node.parameter_values[(c, n2, d)][:connection_capacity] = conn_capacity_param
+                    end
+                end
+            end
+        end
+        found_to = false
+        for (n, d) in connection__to_node(connection=c)
+            found_value = get(connection__to_node.parameter_values[(c, n, d)], :connection_capacity, nothing)
+            if found_value !== nothing
+                conn_capacity_param = found_value
+                found_to = true
+                for n2 in connection__to_node(connection=c, direction=d)
+                    if n2 != n
+                        connection__to_node.parameter_values[(c, n2, d)][:connection_capacity] = conn_capacity_param
+                    end
+                end
+            end
+        end
+        if !found_from && conn_capacity_param !== nothing
+            for (n, d) in connection__from_node(connection=c)                
+                connection__from_node.parameter_values[(c, n, d)][:connection_capacity] = conn_capacity_param
+            end            
+        end
+        if !found_to && conn_capacity_param !== nothing
+            for (n, d) in connection__to_node(connection=c)                
+                connection__to_node.parameter_values[(c, n, d)][:connection_capacity] = conn_capacity_param
+            end            
+        end        
     end
 end
 
@@ -354,13 +431,13 @@ function generate_lodf()
         (conn_cont, conn_mon) => Dict(:lodf => parameter_value(lodf_trial))
         for
         (conn_cont, lodf_fn, tolerance) in (
-            (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont)) for
-            conn_cont in connection(connection_contingency=true, has_lodf=true)
-        )
+            (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont)) for                        
+            conn_cont in connection(has_ptdf=true)
+        )        
         for
         (conn_mon, lodf_trial) in
-        ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(connection_monitored=true, has_lodf=true)) if
-        conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
+        ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(has_ptdf=true)) if
+          conn_cont !== conn_mon #&& !isapprox(lodf_trial, 0; atol=tolerance)        
     )
     lodf_rel_cls = RelationshipClass(
         :lodf_connection__connection,
@@ -693,18 +770,19 @@ function generate_benders_structure()
     connection__benders_iteration = RelationshipClass(:connection__benders_iteration, [:connection, :benders_iteration], [])
     connections_invested_available_mv = Parameter(:connections_invested_available_mv, [connection__benders_iteration])
     connections_invested_available_bi = Parameter(:connections_invested_available_bi, [connection__benders_iteration])
+    connections_invested_available_mp = Parameter(:connections_invested_available_mp, [connection])
     starting_fix_connections_invested_available = Parameter(:starting_fix_connections_invested_available, [connection])
 
     for c in indices(candidate_connections)
         connection__benders_iteration.parameter_values[(c, current_bi)] = Dict()
         connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_bi] = parameter_value(0)
         connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_mv] = parameter_value(0)
+        connection.parameter_values[c][:connections_invested_available_mp] = parameter_value(0)
         if haskey(connection.parameter_values[c], :fix_connections_invested_available)
             connection.parameter_values[c][:starting_fix_connections_invested_available] =
                 connection.parameter_values[c][:fix_connections_invested_available]
         end
     end
-
 
     node__benders_iteration = RelationshipClass(:node__benders_iteration, [:node, :benders_iteration], [])
     storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node__benders_iteration])
@@ -731,7 +809,8 @@ function generate_benders_structure()
         starting_fix_units_invested_available = $starting_fix_units_invested_available
         connection__benders_iteration = $connection__benders_iteration
         connections_invested_available_mv = $connections_invested_available_mv
-        connections_invested_available_bi = $connections_invested_available_bi               
+        connections_invested_available_bi = $connections_invested_available_bi
+        connections_invested_available_mp = $connections_invested_available_mp
         starting_fix_connections_invested_available = $starting_fix_connections_invested_available
         node__benders_iteration = $node__benders_iteration
         storages_invested_available_mv = $storages_invested_available_mv
@@ -747,6 +826,7 @@ function generate_benders_structure()
         export connection__benders_iteration
         export connections_invested_available_mv
         export connections_invested_available_bi
+        export connections_invested_available_mp
         export starting_fix_connections_invested_available
         export node__benders_iteration
         export storages_invested_available_mv

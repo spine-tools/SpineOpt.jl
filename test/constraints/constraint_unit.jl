@@ -79,7 +79,7 @@
             "stochastic_scenario_end",
             Dict("type" => "duration", "data" => "1h"),
         ]],
-    )    
+    )   
     @testset "constraint_units_on" begin
         db_map = _load_test_data(url_in, test_data)
         db_map.commit_session("Add test data")
@@ -996,10 +996,14 @@
         ramp_up_limit = 0.8
         max_startup_ramp = 0.4
         unit_capacity = 200
+        ramp_down_limit = 0.8
+        max_shutdown_ramp = 0.4
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "ramp_up_limit", ramp_up_limit],
             ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
+            ["unit__from_node", ["unit_ab", "node_a"], "ramp_down_limit", ramp_down_limit],
+            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -1007,7 +1011,9 @@
         var_unit_flow = m.ext[:variables][:unit_flow]
         var_start_up_unit_flow = m.ext[:variables][:start_up_unit_flow]
         var_ramp_up_unit_flow = m.ext[:variables][:ramp_up_unit_flow]
-        constraint = m.ext[:constraints][:split_ramp_up]
+        var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
+        var_ramp_down_unit_flow = m.ext[:variables][:ramp_down_unit_flow]
+        constraint = m.ext[:constraints][:split_ramps]
         @test length(constraint) == 2
         key_head = (unit(:unit_ab), node(:node_a), direction(:from_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -1019,25 +1025,31 @@
             var_u_flow1 = var_unit_flow[var_key1...]
             var_su_u_flow1 = var_start_up_unit_flow[var_key1...]
             var_ru_u_flow1 = var_ramp_up_unit_flow[var_key1...]
+            var_sd_u_flow1 = var_shut_down_unit_flow[var_key1...]
+            var_rd_u_flow1 = var_ramp_down_unit_flow[var_key1...]
             @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=node(:node_a), t_after=t1)
                 var_key0 = (key_head..., s0, t0)
                 var_u_flow0 = get(var_unit_flow, var_key0, 0)
                 con_key = (key_head..., path, t0, t1)
-                expected_con = @build_constraint(var_u_flow1 - var_u_flow0 <= var_su_u_flow1 + var_ru_u_flow1)
+                expected_con = @build_constraint(var_u_flow1 - var_u_flow0 == var_su_u_flow1 + var_ru_u_flow1 - var_sd_u_flow1 - var_rd_u_flow1)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
     end
-    @testset "constraint_split_ramp_up_with_nonspin_units" begin
+    @testset "constraint_split_ramps_with_nonspin_units" begin
         db_map = _load_test_data(url_in, test_data)
         max_startup_ramp = 0.4
         max_res_startup_ramp = 0.5
         unit_capacity = 200
+        max_shutdown_ramp = 0.4
+        max_res_shutdown_ramp = 0.5
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
+            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -1045,7 +1057,9 @@
         var_unit_flow = m.ext[:variables][:unit_flow]
         var_start_up_unit_flow = m.ext[:variables][:start_up_unit_flow]
         var_nonspin_ramp_up_unit_flow = m.ext[:variables][:nonspin_ramp_up_unit_flow]
-        constraint = m.ext[:constraints][:split_ramp_up]
+        var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
+        var_nonspin_ramp_down_unit_flow = m.ext[:variables][:nonspin_ramp_down_unit_flow]
+        constraint = m.ext[:constraints][:split_ramps]
         @test length(constraint) == 2
         key_head = (unit(:unit_ab), node(:node_a), direction(:from_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -1057,16 +1071,18 @@
             var_u_flow1 = var_unit_flow[var_key1...]
             var_su_u_flow1 = var_start_up_unit_flow[var_key1...]
             var_ns_ru_u_flow1 = var_nonspin_ramp_up_unit_flow[var_key1...]
+            var_sd_u_flow1 = var_shut_down_unit_flow[var_key1...]
+            var_ns_rd_u_flow1 = var_nonspin_ramp_down_unit_flow[var_key1...]
             @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=node(:node_a), t_after=t1)
                 var_key0 = (key_head..., s0, t0)
                 var_u_flow0 = get(var_unit_flow, var_key0, 0)
                 con_key = (key_head..., path, t0, t1)
-                expected_con = @build_constraint(var_u_flow1 - var_u_flow0 <= var_su_u_flow1 + var_ns_ru_u_flow1)
+                expected_con = @build_constraint(var_u_flow1 - var_u_flow0 == var_su_u_flow1 + var_ns_ru_u_flow1 - var_sd_u_flow1 - var_ns_rd_u_flow1)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
-    end    
+    end
     @testset "constraint_max_nonspin_ramp_down_unit_flow" begin
         db_map = _load_test_data(url_in, test_data)
         max_res_shutdown_ramp = 0.5
@@ -1213,82 +1229,6 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_split_ramp_down" begin
-        db_map = _load_test_data(url_in, test_data)
-        ramp_down_limit = 0.8
-        max_shutdown_ramp = 0.4
-        unit_capacity = 200
-        relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "ramp_down_limit", ramp_down_limit],
-            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-        ]
-        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
-        var_unit_flow = m.ext[:variables][:unit_flow]
-        var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
-        var_ramp_down_unit_flow = m.ext[:variables][:ramp_down_unit_flow]
-        constraint = m.ext[:constraints][:split_ramp_down]
-        @test length(constraint) == 3
-        key_head = (unit(:unit_ab), node(:node_a), direction(:from_node))
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s1, t1) in zip(scenarios, time_slices)
-            path = unique([s0, s1])
-            var_key1 = (key_head..., s1, t1)
-            var_u_flow1 = var_unit_flow[var_key1...]
-            var_sd_u_flow1 = var_shut_down_unit_flow[var_key1...]
-            var_ru_u_flow1 = var_ramp_down_unit_flow[var_key1...]
-            @testset for t0 in t_before_t(m; t_after=t1)
-                var_key0 = (key_head..., s0, t0)
-                var_u_flow0 = get(var_unit_flow, var_key0, 0)
-                con_key = (key_head..., path, t0, t1)
-                expected_con = @build_constraint(var_u_flow1 + var_u_flow0 <= var_sd_u_flow1 + var_ru_u_flow1)
-                observed_con = constraint_object(constraint[con_key...])
-                @test _is_constraint_equal(observed_con, expected_con)
-            end
-        end
-    end
-    @testset "constraint_split_ramp_down_with_nonspin_units" begin
-        db_map = _load_test_data(url_in, test_data)
-        max_shutdown_ramp = 0.4
-        max_res_shutdown_ramp = 0.5
-        unit_capacity = 200
-        relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-        ]
-        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
-        var_unit_flow = m.ext[:variables][:unit_flow]
-        var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
-        var_nonspin_ramp_down_unit_flow = m.ext[:variables][:nonspin_ramp_down_unit_flow]
-        constraint = m.ext[:constraints][:split_ramp_down]
-        @test length(constraint) == 3
-        key_head = (unit(:unit_ab), node(:node_a), direction(:from_node))
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s1, t1) in zip(scenarios, time_slices)
-            path = unique([s0, s1])
-            var_key1 = (key_head..., s1, t1)
-            var_u_flow1 = var_unit_flow[var_key1...]
-            var_sd_u_flow1 = var_shut_down_unit_flow[var_key1...]
-            var_ns_rd_u_flow1 = var_nonspin_ramp_down_unit_flow[var_key1...]
-            @testset for t0 in t_before_t(m; t_after=t1)
-                var_key0 = (key_head..., s0, t0)
-                var_u_flow0 = get(var_unit_flow, var_key0, 0)
-                con_key = (key_head..., path, t0, t1)
-                expected_con = @build_constraint(var_u_flow1 + var_u_flow0 <= var_sd_u_flow1 + var_ns_rd_u_flow1)
-                observed_con = constraint_object(constraint[con_key...])
-                @test _is_constraint_equal(observed_con, expected_con)
-            end
-        end
-    end    
     @testset "constraint_unit_constraint" begin
         @testset for sense in ("==", ">=", "<=")
             db_map = _load_test_data(url_in, test_data)
@@ -1420,5 +1360,168 @@
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
+    end
+    @testset "constraint_pw_unit_heat_rate" begin        
+        db_map = _load_test_data(url_in, test_data)                        
+        unit_idle_heat_rate = 200
+        unit_start_flow = 100                    
+        points = [0.1, 0.5, 1.0]
+        inc_hrs = [10, 20, 30]
+        operating_points = Dict("type" => "array", "data" => PyVector(points))
+        unit_incremental_heat_rate = Dict("type" => "array", "data" => PyVector(inc_hrs))        
+        relationships = [
+            ["unit__node__node", ["unit_ab", "node_a", "node_b"]]
+        ]        
+        relationship_parameter_values = [            
+            ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],            
+            [relationships[1]..., "unit_incremental_heat_rate", unit_incremental_heat_rate],
+            [relationships[1]..., "unit_idle_heat_rate", unit_idle_heat_rate],
+            [relationships[1]..., "unit_start_flow", unit_start_flow],
+        ]
+        db_api.import_data(
+            db_map;            
+            relationships=relationships,            
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_unit_flow = m.ext[:variables][:unit_flow]
+        var_unit_flow_op = m.ext[:variables][:unit_flow_op]        
+        var_units_on = m.ext[:variables][:units_on]
+        var_units_started_up = m.ext[:variables][:units_started_up]
+        constraint = m.ext[:constraints][:unit_pw_heat_rate]
+        @test length(constraint) == 1
+        key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
+        key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
+        key_u_a_b = (unit(:unit_ab), node(:node_a), node(:node_b))
+        s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
+        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
+        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]    
+        expected_con = @build_constraint(            
+            + var_unit_flow[key_a..., s_parent, t1h1]
+            + var_unit_flow[key_a..., s_child, t1h2]
+            ==
+            2 * sum(
+                inc_hrs[i] * var_unit_flow_op[key_b..., i, s_parent, t2h]
+                for i in 1:3
+            ) +            
+            unit_idle_heat_rate * (
+                var_units_on[unit(:unit_ab), s_parent, t1h1] + 
+                var_units_on[unit(:unit_ab), s_child, t1h2]
+            ) +
+            unit_start_flow * (
+                var_units_started_up[unit(:unit_ab), s_parent, t1h1] +
+                var_units_started_up[unit(:unit_ab), s_child, t1h2]
+            )                      
+        )        
+        con_key = (key_u_a_b..., [s_parent, s_child], t2h)
+        observed_con = constraint_object(constraint[con_key...])
+        @test _is_constraint_equal(observed_con, expected_con)
+    end
+    @testset "constraint_pw_unit_heat_rate_simple" begin        
+        db_map = _load_test_data(url_in, test_data)                        
+        unit_idle_heat_rate = 200
+        unit_start_flow = 100                    
+        points = [0.1, 0.5, 1.0]
+        inc_hrs = 10
+        operating_points = Dict("type" => "array", "data" => PyVector(points))        
+        relationships = [
+            ["unit__node__node", ["unit_ab", "node_a", "node_b"]]
+        ]        
+        relationship_parameter_values = [            
+            ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],            
+            [relationships[1]..., "unit_incremental_heat_rate", inc_hrs],
+            [relationships[1]..., "unit_idle_heat_rate", unit_idle_heat_rate],
+            [relationships[1]..., "unit_start_flow", unit_start_flow],
+        ]
+        db_api.import_data(
+            db_map;            
+            relationships=relationships,            
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_unit_flow = m.ext[:variables][:unit_flow]
+        var_unit_flow_op = m.ext[:variables][:unit_flow_op]        
+        var_units_on = m.ext[:variables][:units_on]
+        var_units_started_up = m.ext[:variables][:units_started_up]
+        constraint = m.ext[:constraints][:unit_pw_heat_rate]
+        @test length(constraint) == 1
+        key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
+        key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
+        key_u_a_b = (unit(:unit_ab), node(:node_a), node(:node_b))
+        s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
+        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
+        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]    
+        expected_con = @build_constraint(            
+            + var_unit_flow[key_a..., s_parent, t1h1]
+            + var_unit_flow[key_a..., s_child, t1h2]
+            ==
+            2 * sum(
+                inc_hrs * var_unit_flow_op[key_b..., i, s_parent, t2h]
+                for i in 1:3
+            ) +
+            unit_idle_heat_rate * (
+                var_units_on[unit(:unit_ab), s_parent, t1h1] + 
+                var_units_on[unit(:unit_ab), s_child, t1h2]
+            ) +
+            unit_start_flow * (
+                var_units_started_up[unit(:unit_ab), s_parent, t1h1] +
+                var_units_started_up[unit(:unit_ab), s_child, t1h2]
+            )                      
+        )        
+        con_key = (key_u_a_b..., [s_parent, s_child], t2h)
+        observed_con = constraint_object(constraint[con_key...])
+        @test _is_constraint_equal(observed_con, expected_con)       
+    end
+    @testset "constraint_pw_unit_heat_rate_simple2" begin        
+        db_map = _load_test_data(url_in, test_data)                        
+        unit_idle_heat_rate = 200
+        unit_start_flow = 100                            
+        inc_hrs = 10        
+        relationships = [
+            ["unit__node__node", ["unit_ab", "node_a", "node_b"]]
+        ]        
+        relationship_parameter_values = [                        
+            [relationships[1]..., "unit_incremental_heat_rate", inc_hrs],
+            [relationships[1]..., "unit_idle_heat_rate", unit_idle_heat_rate],
+            [relationships[1]..., "unit_start_flow", unit_start_flow],
+        ]
+        db_api.import_data(
+            db_map;            
+            relationships=relationships,            
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_unit_flow = m.ext[:variables][:unit_flow]
+        var_unit_flow_op = m.ext[:variables][:unit_flow_op]        
+        var_units_on = m.ext[:variables][:units_on]
+        var_units_started_up = m.ext[:variables][:units_started_up]
+        constraint = m.ext[:constraints][:unit_pw_heat_rate]
+        @test length(constraint) == 1
+        key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
+        key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
+        key_u_a_b = (unit(:unit_ab), node(:node_a), node(:node_b))
+        s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
+        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
+        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]    
+        expected_con = @build_constraint(            
+            + var_unit_flow[key_a..., s_parent, t1h1]
+            + var_unit_flow[key_a..., s_child, t1h2]
+            ==
+            2 * inc_hrs * var_unit_flow[key_b..., s_parent, t2h] +            
+            unit_idle_heat_rate * (
+                var_units_on[unit(:unit_ab), s_parent, t1h1] + 
+                var_units_on[unit(:unit_ab), s_child, t1h2]
+            ) +
+            unit_start_flow * (
+                var_units_started_up[unit(:unit_ab), s_parent, t1h1] +
+                var_units_started_up[unit(:unit_ab), s_child, t1h2]
+            )                      
+        )        
+        con_key = (key_u_a_b..., [s_parent, s_child], t2h)
+        observed_con = constraint_object(constraint[con_key...])
+        @test _is_constraint_equal(observed_con, expected_con)    
     end
 end

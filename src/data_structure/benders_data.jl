@@ -44,6 +44,8 @@ function process_master_problem_solution(mp)
             mp.ext[:values][:connections_invested_available][inds]
             for inds in connections_invested_available_indices(mp; connection=c) if end_(inds.t) <= end_(current_window(mp))
         ]
+        connection.parameter_values[c][:connections_invested_available_mp] =
+            parameter_value(TimeSeries(time_indices, vals, false, false))
         connection.parameter_values[c][:fix_connections_invested_available] =
             parameter_value(TimeSeries(time_indices, vals, false, false))
         if !haskey(connection__benders_iteration.parameter_values, (c, current_bi))
