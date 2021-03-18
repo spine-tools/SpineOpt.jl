@@ -46,6 +46,7 @@ function run_spineopt(
     mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
     lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
     cleanup=true,
+    add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
@@ -59,13 +60,14 @@ function run_spineopt(
     end
 
     # High-level algorithm selection. For now, selecting based on defined model types,
-    # but may want more robust system in future     
+    # but may want more robust system in future
 
     if !isempty(model(model_type=:spineopt_master))
         rerun_spineopt_mp(
             url_out;
             mip_solver=mip_solver,
             lp_solver=lp_solver,
+            add_user_variables=add_user_variables,
             add_constraints=add_constraints,
             update_constraints=update_constraints,
             log_level=log_level,
@@ -77,6 +79,7 @@ function run_spineopt(
             url_out;
             mip_solver=mip_solver,
             lp_solver=lp_solver,
+            add_user_variables=add_user_variables,
             add_constraints=add_constraints,
             update_constraints=update_constraints,
             log_level=log_level,
@@ -90,6 +93,7 @@ function rerun_spineopt(
     url_out::String;
     mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
     lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
+    add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
@@ -107,11 +111,11 @@ function rerun_spineopt(
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
-    @log log_level 1 "Window 1: $(current_window(m))"        
-    init_model!(m; add_constraints=add_constraints, log_level=log_level)
-    calculate_duals = duals_calculation_needed(m) 
+    @log log_level 1 "Window 1: $(current_window(m))"
+    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
+    calculate_duals = duals_calculation_needed(m)
     k = 2
-    
+
 
     while optimize && optimize_model!(
         m;
@@ -159,7 +163,7 @@ end
 """
 Add SpineOpt variables to the given model.
 """
-function add_variables!(m; log_level=3)
+function add_variables!(m; add_user_variables=m -> nothing, log_level=3)
     @timelog log_level 3 "- [variable_units_available]" add_variable_units_available!(m)
     @timelog log_level 3 "- [variable_units_on]" add_variable_units_on!(m)
     @timelog log_level 3 "- [variable_units_started_up]" add_variable_units_started_up!(m)
@@ -189,6 +193,9 @@ function add_variables!(m; log_level=3)
     @timelog log_level 3 "- [variable_shut_down_unit_flow]" add_variable_shut_down_unit_flow!(m)
     @timelog log_level 3 "- [variable_nonspin_units_shut_down]" add_variable_nonspin_units_shut_down!(m)
     @timelog log_level 3 "- [variable_nonspin_ramp_down_unit_flow]" add_variable_nonspin_ramp_down_unit_flow!(m)
+    @timelog log_level 3 "- [variable_node_pressure]" add_variable_node_pressure!(m)
+    @timelog log_level 3 "- [variable_node_voltage_angle]" add_variable_node_voltage_angle!(m)
+    @timelog log_level 3 "- [user_defined_variables]" add_user_variables(m)
 end
 
 """
@@ -218,8 +225,8 @@ end
 """
 Add SpineOpt constraints to the given model.
 """
-function add_constraints!(m; add_constraints=m -> nothing, log_level=3)    
-    @timelog log_level 3 "- [constraint_unit_pw_heat_rate]" add_constraint_unit_pw_heat_rate!(m)    
+function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
+    @timelog log_level 3 "- [constraint_unit_pw_heat_rate]" add_constraint_unit_pw_heat_rate!(m)
     @timelog log_level 3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
     @timelog log_level 3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
     @timelog log_level 3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
@@ -229,9 +236,9 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     #@timelog log_level 3 "- [constraint_connection_intact_flow_ptdf_in_out]" add_constraint_connection_intact_flow_ptdf_in_out!(m)
     @timelog log_level 3 "- [constraint_connection_flow_intact_flow]" add_constraint_connection_flow_intact_flow!(m)
     @timelog log_level 3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
-    @timelog log_level 3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)    
-    @timelog log_level 3 "- [constraint_connection_intact_flow_capacity]" add_constraint_connection_intact_flow_capacity!(m)  
-    @timelog log_level 3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)    
+    @timelog log_level 3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)
+    @timelog log_level 3 "- [constraint_connection_intact_flow_capacity]" add_constraint_connection_intact_flow_capacity!(m)
+    @timelog log_level 3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
     @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(m)
     @timelog log_level 3 "- [constraint_connection_lifetime]" add_constraint_connection_lifetime!(m)
     @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(m)
@@ -252,7 +259,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_fix_ratio_in_out_unit_flow]" add_constraint_fix_ratio_in_out_unit_flow!(m)
     @timelog log_level 3 "- [constraint_max_ratio_in_out_unit_flow]" add_constraint_max_ratio_in_out_unit_flow!(m)
     @timelog log_level 3 "- [constraint_min_ratio_in_out_unit_flow]" add_constraint_min_ratio_in_out_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_ratio_out_in_connection_intact_flow]" add_constraint_ratio_out_in_connection_intact_flow!(m)           
+    @timelog log_level 3 "- [constraint_ratio_out_in_connection_intact_flow]" add_constraint_ratio_out_in_connection_intact_flow!(m)
     @timelog log_level 3 "- [constraint_fix_ratio_out_in_connection_flow]" add_constraint_fix_ratio_out_in_connection_flow!(
         m,
     )
@@ -261,7 +268,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     )
     @timelog log_level 3 "- [constraint_min_ratio_out_in_connection_flow]" add_constraint_min_ratio_out_in_connection_flow!(
         m,
-    )           
+    )
     @timelog log_level 3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
     @timelog log_level 3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
     @timelog log_level 3 "- [constraint_units_on]" add_constraint_units_on!(m)
@@ -288,21 +295,30 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_max_nonspin_ramp_down]" add_constraint_max_nonspin_ramp_down!(m)
     @timelog log_level 3 "- [constraint_min_nonspin_ramp_down]" add_constraint_min_nonspin_ramp_down!(m)
     @timelog log_level 3 "- [constraint_res_minimum_node_state]" add_constraint_res_minimum_node_state!(m)
+
+    @timelog log_level 3 "- [constraint_fix_node_pressure_point]" add_constraint_fix_node_pressure_point!(m)
+    @timelog log_level 3 "- [constraint_compression_ratio]" add_constraint_compression_ratio!(m)
+    @timelog log_level 3 "- [constraint_storage_line_pack]" add_constraint_storage_line_pack!(m)
+    @timelog log_level 3 "- [constraint_init_stor_state]" add_constraint_init_stor_state!(m)
+    @timelog log_level 3 "- [constraint_connection_flow_gas_capacity]" add_constraint_connection_flow_gas_capacity!(m)
+    @timelog log_level 3 "- [constraint_node_voltage_angle_ref]" add_constraint_node_voltage_angle_ref!(m)
+    @timelog log_level 3 "- [add_constraint_node_voltage_angle]" add_constraint_node_voltage_angle!(m)
+
     @timelog log_level 3 "- [constraint_user]" add_constraints(m)
-    
-    # Name constraints    
+
+    # Name constraints
     for (con_key, cons) in m.ext[:constraints]
         for (inds, con) in cons
             set_name(con, string(con_key, inds))
         end
-    end    
+    end
 end
 
 function duals_calculation_needed(m::Model)
     calculate_duals = false
-    for r in model__report(model=m.ext[:instance])        
+    for r in model__report(model=m.ext[:instance])
         for o in report__output(report=r)
-            get!(m.ext[:outputs], o.name, Dict{NamedTuple,Dict}())            
+            get!(m.ext[:outputs], o.name, Dict{NamedTuple,Dict}())
             output_name = lowercase(String(o.name))
             startswith(output_name, r"bound_|constraint_") && (calculate_duals = true)
         end
@@ -313,8 +329,8 @@ end
 """
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
-function init_model!(m; add_constraints=m -> nothing, log_level=3)
-    @timelog log_level 2 "Adding variables...\n" add_variables!(m; log_level=log_level)
+function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3)
+    @timelog log_level 2 "Adding variables...\n" add_variables!(m; add_user_variables=add_user_variables,log_level=log_level)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(
         m;
@@ -432,9 +448,9 @@ Update the given model for the next window in the rolling horizon: update variab
 update constraints and update objective.
 """
 function update_model!(m; update_constraints=m -> nothing, log_level=3)
-    # The below is needed here because we remove the integer constraints to get a dual solution 
+    # The below is needed here because we remove the integer constraints to get a dual solution
     # and then need to re-add them for the next write_mps_on_no_solve
-    # we can only do this once we have saved the solution    
+    # we can only do this once we have saved the solution
     @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
     @timelog log_level 2 "Updating variables..." update_variables!(m)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
@@ -472,18 +488,18 @@ end
 
 
 function relax_integer_vars(m::Model)
-    save_integer_values!(m)    
+    save_integer_values!(m)
     for name in m.ext[:integer_variables]
         def = m.ext[:variables_definition][name]
         bin = def[:bin]
         int = def[:int]
         var = m.ext[:variables][name]
         for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))
-            
+
             if end_(ind.t) <= end_(current_window(m))
                 fix(var[ind], m.ext[:values][name][ind]; force=true)
             end
-            
+
             bin != nothing && bin(ind) && unset_binary(var[ind])
             int != nothing && int(ind) && unset_integer(var[ind])
         end
@@ -520,8 +536,8 @@ end
 
 function save_marginal_values!(m::Model)
     for (constraint_name, con) in m.ext[:constraints]
-        output_name = Symbol(string("constraint_", constraint_name))                
-        if haskey(m.ext[:outputs], output_name)        
+        output_name = Symbol(string("constraint_", constraint_name))
+        if haskey(m.ext[:outputs], output_name)
             _save_marginal_value!(m, constraint_name, output_name)
         end
     end
@@ -538,8 +554,8 @@ end
 
 function save_bound_marginal_values!(m::Model)
     for (variable_name, con) in m.ext[:variables]
-        output_name = Symbol(string("bound_", variable_name))        
-        if haskey(m.ext[:outputs], output_name)            
+        output_name = Symbol(string("bound_", variable_name))
+        if haskey(m.ext[:outputs], output_name)
             _save_bound_marginal_value!(m, variable_name, output_name)
         end
     end
