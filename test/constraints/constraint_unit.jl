@@ -996,10 +996,14 @@
         ramp_up_limit = 0.8
         max_startup_ramp = 0.4
         unit_capacity = 200
+        ramp_down_limit = 0.8
+        max_shutdown_ramp = 0.4
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "ramp_up_limit", ramp_up_limit],
             ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
+            ["unit__from_node", ["unit_ab", "node_a"], "ramp_down_limit", ramp_down_limit],
+            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -1007,7 +1011,9 @@
         var_unit_flow = m.ext[:variables][:unit_flow]
         var_start_up_unit_flow = m.ext[:variables][:start_up_unit_flow]
         var_ramp_up_unit_flow = m.ext[:variables][:ramp_up_unit_flow]
-        constraint = m.ext[:constraints][:split_ramp_up]
+        var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
+        var_ramp_down_unit_flow = m.ext[:variables][:ramp_down_unit_flow]
+        constraint = m.ext[:constraints][:split_ramps]
         @test length(constraint) == 2
         key_head = (unit(:unit_ab), node(:node_a), direction(:from_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -1019,25 +1025,31 @@
             var_u_flow1 = var_unit_flow[var_key1...]
             var_su_u_flow1 = var_start_up_unit_flow[var_key1...]
             var_ru_u_flow1 = var_ramp_up_unit_flow[var_key1...]
+            var_sd_u_flow1 = var_shut_down_unit_flow[var_key1...]
+            var_rd_u_flow1 = var_ramp_down_unit_flow[var_key1...]
             @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=node(:node_a), t_after=t1)
                 var_key0 = (key_head..., s0, t0)
                 var_u_flow0 = get(var_unit_flow, var_key0, 0)
                 con_key = (key_head..., path, t0, t1)
-                expected_con = @build_constraint(var_u_flow1 - var_u_flow0 <= var_su_u_flow1 + var_ru_u_flow1)
+                expected_con = @build_constraint(var_u_flow1 - var_u_flow0 == var_su_u_flow1 + var_ru_u_flow1 - var_sd_u_flow1 - var_rd_u_flow1)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
     end
-    @testset "constraint_split_ramp_up_with_nonspin_units" begin
+    @testset "constraint_split_ramps_with_nonspin_units" begin
         db_map = _load_test_data(url_in, test_data)
         max_startup_ramp = 0.4
         max_res_startup_ramp = 0.5
         unit_capacity = 200
+        max_shutdown_ramp = 0.4
+        max_res_shutdown_ramp = 0.5
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
+            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
         ]
         db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
         db_map.commit_session("Add test data")
@@ -1045,7 +1057,9 @@
         var_unit_flow = m.ext[:variables][:unit_flow]
         var_start_up_unit_flow = m.ext[:variables][:start_up_unit_flow]
         var_nonspin_ramp_up_unit_flow = m.ext[:variables][:nonspin_ramp_up_unit_flow]
-        constraint = m.ext[:constraints][:split_ramp_up]
+        var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
+        var_nonspin_ramp_down_unit_flow = m.ext[:variables][:nonspin_ramp_down_unit_flow]
+        constraint = m.ext[:constraints][:split_ramps]
         @test length(constraint) == 2
         key_head = (unit(:unit_ab), node(:node_a), direction(:from_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -1057,16 +1071,18 @@
             var_u_flow1 = var_unit_flow[var_key1...]
             var_su_u_flow1 = var_start_up_unit_flow[var_key1...]
             var_ns_ru_u_flow1 = var_nonspin_ramp_up_unit_flow[var_key1...]
+            var_sd_u_flow1 = var_shut_down_unit_flow[var_key1...]
+            var_ns_rd_u_flow1 = var_nonspin_ramp_down_unit_flow[var_key1...]
             @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=node(:node_a), t_after=t1)
                 var_key0 = (key_head..., s0, t0)
                 var_u_flow0 = get(var_unit_flow, var_key0, 0)
                 con_key = (key_head..., path, t0, t1)
-                expected_con = @build_constraint(var_u_flow1 - var_u_flow0 <= var_su_u_flow1 + var_ns_ru_u_flow1)
+                expected_con = @build_constraint(var_u_flow1 - var_u_flow0 == var_su_u_flow1 + var_ns_ru_u_flow1 - var_sd_u_flow1 - var_ns_rd_u_flow1)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
-    end    
+    end
     @testset "constraint_max_nonspin_ramp_down_unit_flow" begin
         db_map = _load_test_data(url_in, test_data)
         max_res_shutdown_ramp = 0.5
@@ -1213,82 +1229,6 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_split_ramp_down" begin
-        db_map = _load_test_data(url_in, test_data)
-        ramp_down_limit = 0.8
-        max_shutdown_ramp = 0.4
-        unit_capacity = 200
-        relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "ramp_down_limit", ramp_down_limit],
-            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-        ]
-        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
-        var_unit_flow = m.ext[:variables][:unit_flow]
-        var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
-        var_ramp_down_unit_flow = m.ext[:variables][:ramp_down_unit_flow]
-        constraint = m.ext[:constraints][:split_ramp_down]
-        @test length(constraint) == 3
-        key_head = (unit(:unit_ab), node(:node_a), direction(:from_node))
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s1, t1) in zip(scenarios, time_slices)
-            path = unique([s0, s1])
-            var_key1 = (key_head..., s1, t1)
-            var_u_flow1 = var_unit_flow[var_key1...]
-            var_sd_u_flow1 = var_shut_down_unit_flow[var_key1...]
-            var_ru_u_flow1 = var_ramp_down_unit_flow[var_key1...]
-            @testset for t0 in t_before_t(m; t_after=t1)
-                var_key0 = (key_head..., s0, t0)
-                var_u_flow0 = get(var_unit_flow, var_key0, 0)
-                con_key = (key_head..., path, t0, t1)
-                expected_con = @build_constraint(var_u_flow1 + var_u_flow0 <= var_sd_u_flow1 + var_ru_u_flow1)
-                observed_con = constraint_object(constraint[con_key...])
-                @test _is_constraint_equal(observed_con, expected_con)
-            end
-        end
-    end
-    @testset "constraint_split_ramp_down_with_nonspin_units" begin
-        db_map = _load_test_data(url_in, test_data)
-        max_shutdown_ramp = 0.4
-        max_res_shutdown_ramp = 0.5
-        unit_capacity = 200
-        relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-        ]
-        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
-        var_unit_flow = m.ext[:variables][:unit_flow]
-        var_shut_down_unit_flow = m.ext[:variables][:shut_down_unit_flow]
-        var_nonspin_ramp_down_unit_flow = m.ext[:variables][:nonspin_ramp_down_unit_flow]
-        constraint = m.ext[:constraints][:split_ramp_down]
-        @test length(constraint) == 3
-        key_head = (unit(:unit_ab), node(:node_a), direction(:from_node))
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s1, t1) in zip(scenarios, time_slices)
-            path = unique([s0, s1])
-            var_key1 = (key_head..., s1, t1)
-            var_u_flow1 = var_unit_flow[var_key1...]
-            var_sd_u_flow1 = var_shut_down_unit_flow[var_key1...]
-            var_ns_rd_u_flow1 = var_nonspin_ramp_down_unit_flow[var_key1...]
-            @testset for t0 in t_before_t(m; t_after=t1)
-                var_key0 = (key_head..., s0, t0)
-                var_u_flow0 = get(var_unit_flow, var_key0, 0)
-                con_key = (key_head..., path, t0, t1)
-                expected_con = @build_constraint(var_u_flow1 + var_u_flow0 <= var_sd_u_flow1 + var_ns_rd_u_flow1)
-                observed_con = constraint_object(constraint[con_key...])
-                @test _is_constraint_equal(observed_con, expected_con)
-            end
-        end
-    end    
     @testset "constraint_unit_constraint" begin
         @testset for sense in ("==", ">=", "<=")
             db_map = _load_test_data(url_in, test_data)
