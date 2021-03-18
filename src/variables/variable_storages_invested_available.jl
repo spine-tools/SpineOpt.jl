@@ -23,9 +23,11 @@
 A list of `NamedTuple`s corresponding to indices of the `storagess_invested_available` variable where
 the keyword arguments act as filters for each dimension.
 """
-function storages_invested_available_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything)
+function storages_invested_available_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything, temporal_block=anything)
     [
-        (node=n, stochastic_scenario=s, t=t) for (n, tb) in node__investment_temporal_block(node=node, _compact=false)
+        (node=n, stochastic_scenario=s, t=t) for (n, tb) in node__investment_temporal_block(
+            node=node, temporal_block=temporal_block, _compact=false
+            )
         for
         (n, s, t) in node_investment_stochastic_time_indices(
             m;

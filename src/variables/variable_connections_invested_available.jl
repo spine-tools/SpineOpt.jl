@@ -23,9 +23,10 @@
 A list of `NamedTuple`s corresponding to indices of the `connections_invested_available` variable where
 the keyword arguments act as filters for each dimension.
 """
-function connections_invested_available_indices(m::Model; connection=anything, stochastic_scenario=anything, t=anything)
+function connections_invested_available_indices(m::Model; connection=anything, stochastic_scenario=anything, t=anything, temporal_block=anything)
     [
-        (connection=conn, stochastic_scenario=s, t=t) for (conn, tb) in connection__investment_temporal_block(connection=connection, _compact=false)
+        (connection=conn, stochastic_scenario=s, t=t) for (conn, tb) in connection__investment_temporal_block(
+            connection=connection, temporal_block=temporal_block, _compact=false)
         for
         (conn, s, t) in connection_investment_stochastic_time_indices(
             m;

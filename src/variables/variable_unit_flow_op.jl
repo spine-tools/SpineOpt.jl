@@ -37,13 +37,16 @@ function unit_flow_op_indices(
     i=anything,
     stochastic_scenario=anything,
     t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing) 
 )
     unit = members(unit)
     node = members(node)
     [
         (unit=u, node=n, direction=d, i=i, stochastic_scenario=s, t=t)
         for (u, n) in indices(operating_points, unit=unit, node=node)
-        for (u, n, d, tb) in unit__node__direction__temporal_block(unit=u, node=n, direction=direction, _compact=false)
+        for (u, n, d, tb) in unit__node__direction__temporal_block(
+            unit=u, node=n, direction=direction, temporal_block=temporal_block,_compact=false
+            )
         for i in intersect(i, 1:length(operating_points(unit=u, node=n, direction=d)))
         for
         (n, s, t) in

@@ -334,7 +334,7 @@ function constraint_unit_flow_capacity_w_ramp_indices(
         for
         t_before in t_lowest_resolution(time_slice(
             m;
-            temporal_block=node__temporal_block(node=members(ng)),
+            temporal_block=members(node__temporal_block(node=members(ng))),
             t=intersect(t_before_t(m, t_after=t_after), t_before),
         ))
         for

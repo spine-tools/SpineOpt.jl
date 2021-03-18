@@ -41,6 +41,7 @@ function nonspin_ramp_up_unit_flow_indices(
     direction=anything,
     stochastic_scenario=anything,
     t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing) ,
 )
     unit = members(unit)
     node = members(node)
@@ -48,7 +49,7 @@ function nonspin_ramp_up_unit_flow_indices(
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
         for
         (u, n, d, tb) in
-        nonspin_ramp_up_unit__node__direction__temporal_block(unit=unit, node=node, direction=direction, _compact=false)
+        nonspin_ramp_up_unit__node__direction__temporal_block(unit=unit, node=node, direction=direction, temporal_block=temporal_block, _compact=false)
         for
         (n, s, t) in
         node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)

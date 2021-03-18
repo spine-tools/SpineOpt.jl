@@ -70,7 +70,7 @@ function constraint_max_shut_down_ramp_indices(
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(max_shutdown_ramp) if u in unit && ng in node && d in direction
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t))
+        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng))), t=t))
         # How to deal with groups correctly?
         for
         path in active_stochastic_paths(unique(

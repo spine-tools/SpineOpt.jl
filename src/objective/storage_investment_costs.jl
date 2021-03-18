@@ -30,9 +30,10 @@ function storage_investment_costs(m::Model, t1)
         +expr_sum(
             storages_invested[n, s, t] *
             storage_investment_cost[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)] *
+            prod(weight(temporal_block=blk) for blk in blocks(t)) *
             node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]
             for (n, s, t) in storages_invested_available_indices(m; node=indices(storage_investment_cost)) if end_(t) <= t1;
             init=0,
-        )      
+        )
     )
 end

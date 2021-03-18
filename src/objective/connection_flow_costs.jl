@@ -30,6 +30,7 @@ function connection_flow_costs(m::Model, t1)
         expr_sum(
             connection_flow[conn, n, d, s, t] *
             duration(t) *
+            prod(weight(temporal_block=blk) for blk in blocks(t)) *
             connection_flow_cost[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] *
             node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s) for conn in indices(connection_flow_cost)
             for (conn, n, d, s, t) in connection_flow_indices(m; connection=conn) if end_(t) <= t1;  # TODO: do we need connection_flow_costs in different directions?

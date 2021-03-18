@@ -23,13 +23,19 @@
 A list of `NamedTuple`s corresponding to indices of the `units_on` variable where the keyword arguments act as filters
 for each dimension.
 """
-function units_on_indices(m::Model; unit=anything, stochastic_scenario=anything, t=anything)
-    [
-        (unit=u, stochastic_scenario=s, t=t) for (u, tb) in units_on__temporal_block(unit=unit, _compact=false)
+function units_on_indices(
+    m::Model;
+    unit=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing)
+)
+    unique([
+        (unit=u, stochastic_scenario=s, t=t) for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
         for
         (u, s, t) in
         unit_stochastic_time_indices(m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
-    ]
+    ])
 end
 
 """

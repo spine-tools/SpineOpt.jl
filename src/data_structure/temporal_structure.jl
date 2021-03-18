@@ -65,7 +65,7 @@ An `Array` of time slices *in the model*.
 (h::TimeSliceSet)(::Anything, ::Anything) = h.time_slices
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = h.block_time_slices[temporal_block]
 (h::TimeSliceSet)(::Anything, s) = s
-(h::TimeSliceSet)(temporal_block::Object, s) = [t for t in s if temporal_block in t.blocks]
+(h::TimeSliceSet)(temporal_block::Object, s) = [t for t in s if temporal_block in blocks(t)]
 (h::TimeSliceSet)(temporal_blocks::Array{T,1}, s) where {T} = [t for blk in temporal_blocks for t in h(blk, s)]
 
 """
@@ -142,7 +142,7 @@ A `Dict` mapping 'pre-time_slices' (i.e., (start, end) tuples) to an Array of te
 function _time_interval_blocks(instance::Object, window_start::DateTime, window_end::DateTime)
     blocks_by_time_interval = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
     # TODO: In preprocessing, remove temporal_blocks without any node__temporal_block relationships?
-    for block in model__temporal_block(model=instance)
+    for block in members(model__temporal_block(model=instance))
         adjusted_start = _adjusted_start(window_start, block_start(temporal_block=block, _strict=false))
         adjusted_end = _adjusted_end(window_start, window_end, block_end(temporal_block=block, _strict=false))
         time_slice_start = adjusted_start
@@ -283,6 +283,7 @@ function generate_temporal_structure!(m::Model)
     _generate_current_window!(m::Model)
     _generate_time_slice!(m::Model)
     _generate_time_slice_relationships!(m::Model)
+    _generate_representative_time_slice_mapping(m::Model)
 end
 
 
@@ -330,7 +331,7 @@ t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t]
 t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t_excl](t)
 
 """
-    to_time_slice(t::TimeSlice...)
+    to_time_slice(m::Model, t::TimeSlice...)
 
 An `Array` of `TimeSlice`s *in the model* overlapping the given `t` (where `t` may not be in model).
 """
@@ -345,6 +346,26 @@ function to_time_slice(m::Model; t::TimeSlice)
 end
 
 """
+    _generate_representative_time_slice_mapping(m::Model)
+Generate an `Array` mapping all non-representative to representative time-slices
+"""
+function _generate_representative_time_slice_mapping(m::Model)
+    rep_dict=Dict()
+    for blk in indices(representative_periods_mapping)
+        for t_start_real in representative_periods_mapping(temporal_block=blk).indexes
+            rep_blk = representative_periods_mapping(temporal_block=blk, inds=t_start_real)
+            t_start_real_i = t_start_real
+            for t in time_slice(m, temporal_block=temporal_block(rep_blk))
+                rep_dict[to_time_slice(m,t=TimeSlice(t_start_real_i,t_start_real_i + _model_duration_unit(m.ext[:instance])(duration(t))))] = t
+                t_start_real_i = t_start_real_i + _model_duration_unit(m.ext[:instance])(duration(t))
+            end
+        end
+    end
+    m.ext[:temporal_structure][:rep_day_mapping] = rep_dict
+end
+
+representative_time_slices(m) = m.ext[:temporal_structure][:rep_day_mapping]
+"""
     node_time_indices(m::Model;<keyword arguments>)
 
 Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword arguments that allow filtering.
@@ -352,7 +373,7 @@ Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword argument
 function node_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
     unique(
         (node=n, t=t1) for (n, tb) in node__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(m; temporal_block=tb, t=t)
+        for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
 
@@ -378,11 +399,11 @@ end
 
 Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` online variables unit with filter keywords.
 """
-function unit_time_indices(m::Model; unit=anything, temporal_block=anything, t=anything)
+function unit_time_indices(m::Model; unit=anything, temporal_block=temporal_block(representative_periods_mapping=nothing) , t=anything)
     unique(
         (unit=u, t=t1)
         for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
-        for t1 in time_slice(m; temporal_block=tb, t=t)
+        for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
 
@@ -392,7 +413,7 @@ end
 
 Generate an `Array` of all valid `(unit, t_before, t_after)` `NamedTuples` for `unit` online variables filter keywords.
 """
-function unit_dynamic_time_indices(m::Model; unit=anything, t_before=anything, t_after=anything)
+function unit_dynamic_time_indices(m::Model; unit=anything, t_before=anything, t_after=anything, temporal_block=anything)
     unique(
         (unit=u, t_before=tb, t_after=ta) for (u, ta) in unit_time_indices(m; unit=unit, t=t_after)
         for
@@ -400,6 +421,7 @@ function unit_dynamic_time_indices(m::Model; unit=anything, t_before=anything, t
             m;
             unit=u,
             t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
+            temporal_block=temporal_block
         )
     )
 end
@@ -413,7 +435,7 @@ function unit_investment_time_indices(m::Model; unit=anything, temporal_block=an
     unique(
         (unit=u, t=t1)
         for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false) if tb in model__temporal_block(model=m.ext[:instance])
-        for t1 in time_slice(m; temporal_block=tb, t=t)
+        for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
 
@@ -427,7 +449,7 @@ function connection_investment_time_indices(m::Model; connection=anything, tempo
     unique(
         (connection=conn, t=t1)
         for (conn, tb) in connection__investment_temporal_block(connection=connection, temporal_block=temporal_block, _compact=false) if tb in model__temporal_block(model=m.ext[:instance])
-        for t1 in time_slice(m; temporal_block=tb, t=t)
+        for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
 
@@ -441,7 +463,7 @@ function node_investment_time_indices(m::Model; node=anything, temporal_block=an
     unique(
         (node=n, t=t1)
         for (n, tb) in node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false) if tb in model__temporal_block(model=m.ext[:instance])
-        for t1 in time_slice(m; temporal_block=tb, t=t)
+        for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
 
