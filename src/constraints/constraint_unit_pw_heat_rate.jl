@@ -44,8 +44,8 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
             ) ==
             0 +
             expr_sum(
-                + unit_flow_op[u, n, d, op, s, t_short] *
-                unit_incremental_heat_rate[(
+                + unit_flow_op[u, n, d, op, s, t_short]
+                * unit_incremental_heat_rate[(
                     unit=u,
                     node1=n_from,
                     node2=n,
@@ -53,8 +53,8 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                     stochastic_scenario=s,
                     analysis_time=t0,
                     t=t_short,
-                )] *
-                duration(t_short) for (u, n, d, op, s, t_short) in unit_flow_op_indices(
+                )]
+                * duration(t_short) for (u, n, d, op, s, t_short) in unit_flow_op_indices(
                     m;
                     unit=u,
                     node=n_to,
@@ -65,8 +65,8 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                 init=0,
             ) +
             expr_sum(
-                + unit_flow[u, n, d, s, t_short] *
-                unit_incremental_heat_rate[(
+                + unit_flow[u, n, d, s, t_short]
+                * unit_incremental_heat_rate[(
                     unit=u,
                     node1=n_from,
                     node2=n,
@@ -74,8 +74,8 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                     stochastic_scenario=s,
                     analysis_time=t0,
                     t=t_short,
-                )] *
-                duration(t_short) for (u, n, d, s, t_short) in unit_flow_indices(
+                )]
+                * duration(t_short) for (u, n, d, s, t_short) in unit_flow_indices(
                     m;
                     unit=u,
                     node=n_to,
@@ -88,9 +88,9 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
             expr_sum(
                 0 +
                 (
-                    units_on[u, s, t1] *
-                    min(duration(t1), duration(t)) *
-                    unit_idle_heat_rate[(
+                    units_on[u, s, t1]
+                    * min(duration(t1), duration(t))
+                    * unit_idle_heat_rate[(
                         unit=u,
                         node1=n_from,
                         node2=n_to,

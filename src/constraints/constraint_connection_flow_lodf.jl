@@ -64,9 +64,9 @@ function add_constraint_connection_flow_lodf!(m::Model)
                     stochastic_scenario=s,
                     analysis_time=t0,
                     t=t,
-                )] *
-                connection_availability_factor[(connection=conn_mon, stochastic_scenario=s, analysis_time=t0, t=t)] *
-                connection_conv_cap_to_flow[(
+                )]
+                * connection_availability_factor[(connection=conn_mon, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * connection_conv_cap_to_flow[(
                     connection=conn_mon,
                     node=n_mon,
                     direction=d,

@@ -65,21 +65,26 @@ function add_constraint_candidate_connection_flow_lb!(m::Model)
                     );
                     init=0,
                 )
-            ) *
-            (
-                (
-                    connection_capacity(
-                        connection=conn,
-                        node=n,
-                        direction=d,
-                        stochastic_scenario=s,
-                        analysis_time=t0,
-                        t=t,
-                    ) == nothing
-                ) ? 1000000 :
-                connection_capacity(connection=conn, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
-            ) *
-            duration(t)
+            )
+            * ((
+                connection_capacity(
+                    connection=conn,
+                    node=n,
+                    direction=d,
+                    stochastic_scenario=s,
+                    analysis_time=t0,
+                    t=t,
+                ) == nothing
+            ) ? 1000000 :
+               connection_capacity(
+                connection=conn,
+                node=n,
+                direction=d,
+                stochastic_scenario=s,
+                analysis_time=t0,
+                t=t,
+            ))
+            * duration(t)
         ) for (conn, n, d, s, t) in constraint_candidate_connection_flow_lb_indices(m)
     )
 end

@@ -48,11 +48,11 @@ function add_constraint_ramp_down!(m::Model)
                             is_reserve_node(node=n) && downward_reserve(node=n);
                         init=0,
                     )
-                ) *
-                min(duration(t), duration(t1)) * ## conversion units_on to unit_flow resolution
-                ramp_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-                unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-                unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                )
+                * min(duration(t), duration(t1))
+                * ramp_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t))
             ) * duration(t) ## [ramp_down_limit]=MW/h
         ) for (u, ng, d, s, t) in constraint_ramp_down_indices(m)

@@ -53,10 +53,17 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     init=0,
                 ) <=
                 + expr_sum(
-                    (units_on[u, s, t_before1] - units_started_up[u, s, t_before1] - units_shut_down[u, s, t_after1]) *
-                    min(duration(t_before1), duration(t_before)) *
-                    unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before)] *
-                    unit_conv_cap_to_flow[(
+                    (units_on[u, s, t_before1] - units_started_up[u, s, t_before1] - units_shut_down[u, s, t_after1])
+                    * min(duration(t_before1), duration(t_before))
+                    * unit_capacity[(
+                        unit=u,
+                        node=ng,
+                        direction=d,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=t_before,
+                    )]
+                    * unit_conv_cap_to_flow[(
                         unit=u,
                         node=ng,
                         direction=d,
@@ -69,41 +76,55 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     init=0,
                 ) +
                 expr_sum(
-                    units_started_up[u, s, t_before1] *
-                    min(duration(t_before1), duration(t_before)) *
-                    max_startup_ramp[(
+                    units_started_up[u, s, t_before1]
+                    * min(duration(t_before1), duration(t_before))
+                    * max_startup_ramp[(
                         unit=u,
                         node=ng,
                         direction=d,
                         stochastic_scenario=s,
                         analysis_time=t0,
                         t=t_before,
-                    )] *
-                    unit_conv_cap_to_flow[(
+                    )]
+                    * unit_conv_cap_to_flow[(
                         unit=u,
                         node=ng,
                         direction=d,
                         stochastic_scenario=s,
                         analysis_time=t0,
                         t=t_before,
-                    )] *
-                    unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before)] for (u, s, t_before1) in
+                    )]
+                    * unit_capacity[(
+                        unit=u,
+                        node=ng,
+                        direction=d,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=t_before,
+                    )] for (u, s, t_before1) in
                         units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
                     init=0,
                 ) +
                 expr_sum(
-                    units_shut_down[u, s, t_after1] *
-                    min(duration(t_after1), duration(t_before)) *
-                    max_shutdown_ramp[(
+                    units_shut_down[u, s, t_after1]
+                    * min(duration(t_after1), duration(t_before))
+                    * max_shutdown_ramp[(
                         unit=u,
                         node=ng,
                         direction=d,
                         stochastic_scenario=s,
                         analysis_time=t0,
                         t=t_after,
-                    )] *
-                    unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_after)] *
-                    unit_conv_cap_to_flow[(
+                    )]
+                    * unit_capacity[(
+                        unit=u,
+                        node=ng,
+                        direction=d,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=t_after,
+                    )]
+                    * unit_conv_cap_to_flow[(
                         unit=u,
                         node=ng,
                         direction=d,
@@ -131,10 +152,17 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     init=0,
                 ) <=
                 + expr_sum(
-                    (units_on[u, s, t_before1] - units_shut_down[u, s, t_after1]) *
-                    min(duration(t_before1), duration(t_before)) *
-                    unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before)] *
-                    unit_conv_cap_to_flow[(
+                    (units_on[u, s, t_before1] - units_shut_down[u, s, t_after1])
+                    * min(duration(t_before1), duration(t_before))
+                    * unit_capacity[(
+                        unit=u,
+                        node=ng,
+                        direction=d,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=t_before,
+                    )]
+                    * unit_conv_cap_to_flow[(
                         unit=u,
                         node=ng,
                         direction=d,
@@ -146,9 +174,9 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     for (u, s, t_after1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
                     init=0,
                 ) - expr_sum(
-                    units_started_up[u, s, t_before1] *
-                    min(duration(t_before1), duration(t_before)) *
-                    max(
+                    units_started_up[u, s, t_before1]
+                    * min(duration(t_before1), duration(t_before))
+                    * max(
                         + max_shutdown_ramp[(
                             unit=u,
                             node=ng,
@@ -165,31 +193,45 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                             t=t_before,
                         )],
                         0,
-                    ) *
-                    unit_conv_cap_to_flow[(
+                    )
+                    * unit_conv_cap_to_flow[(
                         unit=u,
                         node=ng,
                         direction=d,
                         stochastic_scenario=s,
                         analysis_time=t0,
                         t=t_before,
-                    )] *
-                    unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before)] for (u, s, t_before1) in
+                    )]
+                    * unit_capacity[(
+                        unit=u,
+                        node=ng,
+                        direction=d,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=t_before,
+                    )] for (u, s, t_before1) in
                         units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
                     init=0,
                 ) + expr_sum(
-                    units_shut_down[u, s, t_after1] *
-                    min(duration(t_after1), duration(t_after)) *
-                    max_shutdown_ramp[(
+                    units_shut_down[u, s, t_after1]
+                    * min(duration(t_after1), duration(t_after))
+                    * max_shutdown_ramp[(
                         unit=u,
                         node=ng,
                         direction=d,
                         stochastic_scenario=s,
                         analysis_time=t0,
                         t=t_after,
-                    )] *
-                    unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_after)] *
-                    unit_conv_cap_to_flow[(
+                    )]
+                    * unit_capacity[(
+                        unit=u,
+                        node=ng,
+                        direction=d,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=t_after,
+                    )]
+                    * unit_conv_cap_to_flow[(
                         unit=u,
                         node=ng,
                         direction=d,
@@ -217,10 +259,17 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     init=0,
                 ) <=
                 + expr_sum(
-                    (units_on[u, s, t_before1] - units_started_up[u, s, t_before1]) *
-                    min(duration(t_before1), duration(t_before)) *
-                    unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before)] *
-                    unit_conv_cap_to_flow[(
+                    (units_on[u, s, t_before1] - units_started_up[u, s, t_before1])
+                    * min(duration(t_before1), duration(t_before))
+                    * unit_capacity[(
+                        unit=u,
+                        node=ng,
+                        direction=d,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=t_before,
+                    )]
+                    * unit_conv_cap_to_flow[(
                         unit=u,
                         node=ng,
                         direction=d,
@@ -231,31 +280,38 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
                     init=0,
                 ) + expr_sum(
-                    units_started_up[u, s, t_before1] *
-                    min(duration(t_before1), duration(t_before)) *
-                    max_startup_ramp[(
+                    units_started_up[u, s, t_before1]
+                    * min(duration(t_before1), duration(t_before))
+                    * max_startup_ramp[(
                         unit=u,
                         node=ng,
                         direction=d,
                         stochastic_scenario=s,
                         analysis_time=t0,
                         t=t_before,
-                    )] *
-                    unit_conv_cap_to_flow[(
+                    )]
+                    * unit_conv_cap_to_flow[(
                         unit=u,
                         node=ng,
                         direction=d,
                         stochastic_scenario=s,
                         analysis_time=t0,
                         t=t_before,
-                    )] *
-                    unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before)] for (u, s, t_before1) in
+                    )]
+                    * unit_capacity[(
+                        unit=u,
+                        node=ng,
+                        direction=d,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=t_before,
+                    )] for (u, s, t_before1) in
                         units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
                     init=0,
                 ) - expr_sum(
-                    units_shut_down[u, s, t_after1] *
-                    min(duration(t_after1), duration(t_after)) *
-                    max(
+                    units_shut_down[u, s, t_after1]
+                    * min(duration(t_after1), duration(t_after))
+                    * max(
                         max_startup_ramp[(
                             unit=u,
                             node=ng,
@@ -272,9 +328,16 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                             t=t_after,
                         )],
                         0,
-                    ) *
-                    unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_after)] *
-                    unit_conv_cap_to_flow[(
+                    )
+                    * unit_capacity[(
+                        unit=u,
+                        node=ng,
+                        direction=d,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=t_after,
+                    )]
+                    * unit_conv_cap_to_flow[(
                         unit=u,
                         node=ng,
                         direction=d,
