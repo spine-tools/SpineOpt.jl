@@ -61,8 +61,7 @@ function generate_is_cadidate()
     end
 end
 
-function preprocess_model_data_structure(m::Model; log_level=3) 
-end
+function preprocess_model_data_structure(m::Model; log_level=3) end
 
 """
     expand_node__stochastic_structure()
@@ -704,7 +703,7 @@ end
 """
 generate_subproblem_marginals()
 
-Creates the `benders_iteration` object class. Master problem variables have the Benders iteration as an index. A new 
+Creates the `benders_iteration` object class. Master problem variables have the Benders iteration as an index. A new
 benders iteration object is pushed on each master problem iteration.
 """
 function generate_benders_structure()

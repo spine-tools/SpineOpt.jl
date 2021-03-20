@@ -31,11 +31,11 @@ A new Spine database is created at `url_out` if it doesn't exist.
 **`cleanup=true`** tells [`run_spineopt`](@ref) whether or not convenience functors should be
 set to `nothing` after completion.
 
-**`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window, 
-    and allows adding user contraints.
+**`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window,
+and allows adding user contraints.
 
 **`update_constraints=m -> nothing`** is called in windows 2 to the last, and allows updating contraints
-    added by `add_constraints`.
+added by `add_constraints`.
 
 **`log_level=3`** is the log level.
 """
@@ -148,7 +148,7 @@ function rerun_spineopt_mp(
 end
 
 """
-Initialize the given model for SpineOpt Master Problem: add variables, fix the necessary variables, 
+Initialize the given model for SpineOpt Master Problem: add variables, fix the necessary variables,
 add constraints and set objective.
 """
 function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)

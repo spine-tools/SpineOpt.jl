@@ -20,7 +20,7 @@
 """
     nonspin_units_started_up_indices(unit=anything, stochastic_scenario=anything, t=anything)
 
-A list of `NamedTuple`s corresponding to indices of the `nonspin_units_started_up` variable 
+A list of `NamedTuple`s corresponding to indices of the `nonspin_units_started_up` variable
 where the keyword arguments act as filters for each dimension.
 """
 function nonspin_units_started_up_indices(

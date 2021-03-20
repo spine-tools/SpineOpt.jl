@@ -53,7 +53,7 @@ end
 
 Form the stochastic index array for the `:constraint_node_state_capacity` constraint.
 
-Uses stochastic path indices of the `node_state` variables. Keyword arguments can be used to filter the resulting 
+Uses stochastic path indices of the `node_state` variables. Keyword arguments can be used to filter the resulting
 """
 function constraint_node_state_capacity_indices(m::Model; node=anything, stochastic_path=anything, t=anything)
     unique(

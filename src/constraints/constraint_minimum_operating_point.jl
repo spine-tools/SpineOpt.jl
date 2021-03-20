@@ -20,8 +20,8 @@
 """
     add_constraint_minimum_operating_point!(m::Model)
 
-Limit the maximum in/out `unit_flow` of a `unit` if the parameters `unit_capacity,
-number_of_unit, unit_conv_cap_to_flow, unit_availability_factor` exist.
+Limit the maximum in/out `unit_flow` of a `unit` if the parameters `unit_capacity, number_of_unit,
+unit_conv_cap_to_flow, unit_availability_factor` exist.
 """
 function add_constraint_minimum_operating_point!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
@@ -39,7 +39,8 @@ function add_constraint_minimum_operating_point!(m::Model)
                 min(duration(t), duration(t1)) *
                 minimum_operating_point[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
                 unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-                unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
+                unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] for 
+                (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0,
             )
         ) for (u, ng, d, s, t) in constraint_minimum_operating_point_indices(m)

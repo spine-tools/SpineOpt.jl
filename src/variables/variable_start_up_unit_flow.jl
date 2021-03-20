@@ -25,7 +25,7 @@
         t=anything
     )
 
-A list of `NamedTuple`s corresponding to indices of the `start_up_unit_flow` variable 
+A list of `NamedTuple`s corresponding to indices of the `start_up_unit_flow` variable
 where the keyword arguments act as filters for each dimension.
 """
 function start_up_unit_flow_indices(

@@ -58,8 +58,8 @@ end
 
 An `Array` of time slices *in the model*.
 
-- `temporal_block` is a temporal block object to filter the result.
-- `t` is a `TimeSlice` or collection of `TimeSlice`s *in the model* to filter the result.
+  - `temporal_block` is a temporal block object to filter the result.
+  - `t` is a `TimeSlice` or collection of `TimeSlice`s *in the model* to filter the result.
 """
 (h::TimeSliceSet)(; temporal_block=anything, t=anything) = h(temporal_block, t)
 (h::TimeSliceSet)(::Anything, ::Anything) = h.time_slices
@@ -351,6 +351,7 @@ end
 
 """
     _generate_representative_time_slice_mapping(m::Model)
+
 Generate an `Array` mapping all non-representative to representative time-slices
 """
 function _generate_representative_time_slice_mapping(m::Model)

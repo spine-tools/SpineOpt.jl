@@ -87,7 +87,9 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         analysis_time=t0,
                         t=t_before,
                     )] *
-                    unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before)] for (u, s, t_before1) in
+                    unit_capacity[(
+                        unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before
+                    )] for (u, s, t_before1) in
                     units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
                     init=0,
                 ) +

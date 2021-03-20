@@ -25,8 +25,9 @@ Limit the maximum in/out `connection_intact_flow` of a `connection` for all `con
 Check if `connection_conv_cap_to_flow` is defined. The `connection_capacity` parameter is used to constrain the
 "average power" (e.g. MWh/h) instead of "instantaneous power" (e.g. MW) of the `connection`.
 For most applications, there isn't any difference between the two. However, for situations where the same `connection`
-handles `connection_intact_flows` to multiple `nodes` with different temporal resolutions, the constraint is only generated
-for the lowest resolution, and only the average of the higher resolution `connection_intact_flow` is constrained.
+handles `connection_intact_flows` to multiple `nodes` with different temporal resolutions, the constraint is only
+generated for the lowest resolution, and only the average of the higher resolution `connection_intact_flow` is
+constrained.
 If instantaneous power needs to be constrained as well, defining the `connection_capacity` separately for each
 `connection_intact_flow` can be used to achieve this.
 """
@@ -79,9 +80,9 @@ end
 
 Form the stochastic index array for the `:connection_intact_flow_capacity` constraint.
 
-Uses stochastic path indices of the `connection_intact_flow` variables. Only the lowest resolution time slices are included,
-as the `:connection_intact_flow_capacity` is used to constrain the "average power" of the `connection`
-instead of "instantaneous power". Keyword arguments can be used to filter the resulting 
+Uses stochastic path indices of the `connection_intact_flow` variables. Only the lowest resolution time slices are
+included, as the `:connection_intact_flow_capacity` is used to constrain the "average power" of the `connection`
+instead of "instantaneous power". Keyword arguments can be used to filter the resulting
 """
 function constraint_connection_intact_flow_capacity_indices(
     m::Model;

@@ -54,7 +54,7 @@ end
     constraint_max_start_up_ramp_indices(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:max_start_up_ramp` constraint.
-    
+
 Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
 Keyword arguments can be used to filter the resulting Array.
 """

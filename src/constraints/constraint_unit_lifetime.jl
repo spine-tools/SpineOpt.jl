@@ -54,7 +54,7 @@ end
 """
     constraint_unit_lifetime_indices(m::Model; filtering_options...)
 
-Form the stochastic indexing Array for the `:units_invested_lifetime()` constraint. 
+Form the stochastic indexing Array for the `:units_invested_lifetime()` constraint.
 
 Uses stochastic path indexing due to the potentially different stochastic structures between present and past time.
 Keyword arguments can be used to filther the resulting Array.

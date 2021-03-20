@@ -20,8 +20,7 @@
 """
     add_constraint_res_minimum_node_state!(m::Model)
 
-Limit the `node_state` of a `node` if the parameters `node_state_min,
-res_activation_time` exist.
+Limit the `node_state` of a `node` if the parameters `node_state_min, res_activation_time` exist.
 """
 function add_constraint_res_minimum_node_state!(m::Model)
     @fetch unit_flow, node_state = m.ext[:variables]

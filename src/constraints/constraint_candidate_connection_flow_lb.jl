@@ -23,7 +23,6 @@
 For connection investments with PTDF flow enabled, this constrains the flow on the candidate_connection
 to be equal to connection_intact_flow if connections_invested_available is equal to 1 and is rendered
 in active otherwise where contraint connection_flow_capacity will constraint the flow to zero.
-
 """
 function add_constraint_candidate_connection_flow_lb!(m::Model)
     @fetch connection_flow, connection_intact_flow, connections_invested_available = m.ext[:variables]

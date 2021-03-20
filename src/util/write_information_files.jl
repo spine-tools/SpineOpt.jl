@@ -21,7 +21,7 @@
 function write_model_file(m::Model; file_name="model")
 
 Write model file for Model `m`. Objective, constraints and variable bounds are reported.
-    Optional argument is keyword `file_name`.
+Optional argument is keyword `file_name`.
 """
 function write_model_file(m::JuMP.Model; file_name="model")
     model_string = "$m"

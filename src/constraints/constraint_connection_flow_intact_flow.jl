@@ -20,11 +20,11 @@
 """
     add_constraint_connection_flow_intact_flow!(m::Model)
 
-Enforces the relationship between the `intact_flow` (flow with all investments assumed in force) and the `connection_flow`
+Enforces the relationship between the `intact_flow` (flow with all investments assumed in force) and the
+`connection_flow`
 
-`intact_flow` is the flow on all lines with all investments assumed in place. This constraint ensures that the `connection_flow`
-is the `intact_flow` plus additional contributions from all investments not invested in.
-
+`intact_flow` is the flow on all lines with all investments assumed in place. This constraint ensures that the
+`connection_flow` is the `intact_flow` plus additional contributions from all investments not invested in.
 """
 function add_constraint_connection_flow_intact_flow!(m::Model)
     @fetch connection_flow, connection_intact_flow = m.ext[:variables]
@@ -77,9 +77,9 @@ end
 
 Form the stochastic index array for the `:connection_flow_intact_flow` constraint.
 
-Uses stochastic path indices of the `connection_flow` and `connection_intact_flow` variables. Only the lowest resolution time slices are included,
-as the `:connection_flow_capacity` is used to constrain the "average power" of the `connection`
-instead of "instantaneous power". Keyword arguments can be used to filter the resulting 
+Uses stochastic path indices of the `connection_flow` and `connection_intact_flow` variables. Only the lowest
+resolution time slices are included, as the `:connection_flow_capacity` is used to constrain the "average power" of the
+`connection` instead of "instantaneous power". Keyword arguments can be used to filter the resulting 
 """
 
 function constraint_connection_flow_intact_flow_indices(

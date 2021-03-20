@@ -20,8 +20,10 @@
 """
     add_constraint_split_ramps!(m::Model)
 
-Split delta(`unit_flow`) in `ramp_down_unit_flow`, `start_up_unit_flow`,`ramp_down_unit_flow` and `shut_down_unit_flow`.
-Optionally also non spinning reserve contribution can be included, `nonspin_ramp_up_unit_flow` and `nonspin_ramp_down_unit_flow`.
+Split delta(`unit_flow`) in `ramp_down_unit_flow`, `start_up_unit_flow`,`ramp_down_unit_flow` and
+`shut_down_unit_flow`.
+Optionally also non spinning reserve contribution can be included, `nonspin_ramp_up_unit_flow` and
+`nonspin_ramp_down_unit_flow`.
 
 This is required to enforce separate limitations on these ramp types.
 """

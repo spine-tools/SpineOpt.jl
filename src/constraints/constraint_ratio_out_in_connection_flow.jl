@@ -119,7 +119,7 @@ end
     constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in; filtering_options...)
 
 Form the stochastic indexing Array for the `:ratio_out_in_connection_flow` constraint for the desired `ratio_out_in`.
-    
+
 Uses stochastic path indices due to potentially different stochastic structures between `connection_flow` variables.
 Keyword arguments can be used to filter the resulting Array.
 """

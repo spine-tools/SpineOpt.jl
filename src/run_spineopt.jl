@@ -32,10 +32,10 @@ A new Spine database is created at `url_out` if it doesn't exist.
 set to `nothing` after completion.
 
 **`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window,
-    and allows adding user contraints.
+and allows adding user contraints.
 
 **`update_constraints=m -> nothing`** is called in windows 2 to the last, and allows updating contraints
-    added by `add_constraints`.
+added by `add_constraints`.
 
 **`log_level=3`** is the log level.
 """

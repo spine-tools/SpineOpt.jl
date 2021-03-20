@@ -23,11 +23,11 @@ Add a variable to `m`, with given `name` and indices given by interating over `i
 
 # Arguments
 
-- `lb::Union{Function,Nothing}=nothing`: given an index, return the lower bound.
-- `ub::Union{Function,Nothing}=nothing`: given an index, return the upper bound.
-- `bin::Union{Function,Nothing}=nothing`: given an index, return whether or not the variable should be binary
-- `int::Union{Function,Nothing}=nothing`: given an index, return whether or not the variable should be integer
-- `fix_value::Union{Function,Nothing}=nothing`: given an index, return a fix value for the variable of nothing
+  - `lb::Union{Function,Nothing}=nothing`: given an index, return the lower bound.
+  - `ub::Union{Function,Nothing}=nothing`: given an index, return the upper bound.
+  - `bin::Union{Function,Nothing}=nothing`: given an index, return whether or not the variable should be binary
+  - `int::Union{Function,Nothing}=nothing`: given an index, return whether or not the variable should be integer
+  - `fix_value::Union{Function,Nothing}=nothing`: given an index, return a fix value for the variable of nothing
 """
 function add_variable!(
     m::Model,

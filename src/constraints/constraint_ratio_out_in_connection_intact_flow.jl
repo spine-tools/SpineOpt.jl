@@ -63,7 +63,7 @@ end
     constraint_ratio_out_in_connection_intact_flow_indices(m::Model; filtering_options...)
 
 For investments with PTDF based flows, constraint the intact flow into a node to be equal to the flow out of the node.
-    
+
 Uses stochastic path indices due to potentially different stochastic structures between `connection_intact_flow` variables.
 Keyword arguments can be used to filter the resulting Array.
 """

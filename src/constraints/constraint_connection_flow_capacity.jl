@@ -94,7 +94,7 @@ Form the stochastic index array for the `:connection_flow_capacity` constraint.
 
 Uses stochastic path indices of the `connection_flow` variables. Only the lowest resolution time slices are included,
 as the `:connection_flow_capacity` is used to constrain the "average power" of the `connection`
-instead of "instantaneous power". Keyword arguments can be used to filter the resulting 
+instead of "instantaneous power". Keyword arguments can be used to filter the resulting
 """
 function constraint_connection_flow_capacity_indices(
     m::Model;

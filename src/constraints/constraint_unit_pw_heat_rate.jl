@@ -20,9 +20,9 @@
 """
     add_constraint_unit_pw_heat_rate!(m)
 
-Implements a standard piecewise linear heat_rate function where `unit_flow` from `node_from` (input fuel consumption) is equal to the
-sum over operating point segments of `unit_flow_op` to `node_to` (output electricity node) times the corresponding incremental_heat_rate
-
+Implements a standard piecewise linear heat_rate function where `unit_flow` from `node_from` (input fuel consumption)
+is equal to the sum over operating point segments of `unit_flow_op` to `node_to` (output electricity node) times the
+corresponding incremental_heat_rate
 """
 function add_constraint_unit_pw_heat_rate!(m::Model)
     @fetch unit_flow, unit_flow_op, units_on, units_started_up = m.ext[:variables]
@@ -118,7 +118,7 @@ end
 """
     constraint_unit_pw_heat_rate_indices(m::Model; filtering_options...)
 
-Form the stochastic indexing Array for the `unit_pw_heat_rate` constraint 
+Form the stochastic indexing Array for the `unit_pw_heat_rate` constraint
 
 Uses stochastic path indices due to potentially different stochastic structures between `unit_flow` and
 `units_on` variables. Keyword arguments can be used to filter the resulting Array.

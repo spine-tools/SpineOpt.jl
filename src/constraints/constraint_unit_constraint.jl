@@ -211,7 +211,7 @@ end
     constraint_unit_constraint_indices(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:unit_constraint` constraint.
-    
+
 Uses stochastic path indices due to potentially different stochastic structures between `unit_flow`, `unit_flow_op`,
 and `units_on` variables. Keyword arguments can be used to filter the resulting Array.
 """

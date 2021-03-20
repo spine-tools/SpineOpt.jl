@@ -20,7 +20,8 @@
 """
     add_constraint_connections_invested_transition!(m::Model)
 
-Ensure consistency between the variables `connections_invested_available`, `connections_invested` and `connections_decommissioned`.
+Ensure consistency between the variables `connections_invested_available`, `connections_invested` and
+`connections_decommissioned`.
 """
 function add_constraint_connections_invested_transition!(m::Model)
     @fetch connections_invested_available, connections_invested, connections_decommissioned = m.ext[:variables]
