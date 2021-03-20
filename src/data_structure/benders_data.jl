@@ -20,12 +20,12 @@
 function process_master_problem_solution(mp)
     for u in indices(candidate_units)
         time_indices = [
-            start(inds.t) for
-            inds in units_invested_available_indices(mp; unit=u) if end_(inds.t) <= end_(current_window(mp))
+            start(inds.t)
+            for inds in units_invested_available_indices(mp; unit=u) if end_(inds.t) <= end_(current_window(mp))
         ]
         vals = [
-            mp.ext[:values][:units_invested_available][inds] for
-            inds in units_invested_available_indices(mp; unit=u) if end_(inds.t) <= end_(current_window(mp))
+            mp.ext[:values][:units_invested_available][inds]
+            for inds in units_invested_available_indices(mp; unit=u) if end_(inds.t) <= end_(current_window(mp))
         ]
         unit.parameter_values[u][:fix_units_invested_available] =
             parameter_value(TimeSeries(time_indices, vals, false, false))
@@ -38,11 +38,12 @@ function process_master_problem_solution(mp)
     for c in indices(candidate_connections)
         time_indices = [
             start(inds.t) for inds in connections_invested_available_indices(mp; connection=c) if
-            end_(inds.t) <= end_(current_window(mp))
+                end_(inds.t) <= end_(current_window(mp))
         ]
         vals = [
-            mp.ext[:values][:connections_invested_available][inds] for
-            inds in connections_invested_available_indices(mp; connection=c) if end_(inds.t) <= end_(current_window(mp))
+            mp.ext[:values][:connections_invested_available][inds]
+            for inds in connections_invested_available_indices(mp; connection=c) if
+                end_(inds.t) <= end_(current_window(mp))
         ]
         connection.parameter_values[c][:connections_invested_available_mp] =
             parameter_value(TimeSeries(time_indices, vals, false, false))
@@ -56,12 +57,12 @@ function process_master_problem_solution(mp)
     end
     for n in indices(candidate_storages)
         time_indices = [
-            start(inds.t) for
-            inds in storages_invested_available_indices(mp; node=n) if end_(inds.t) <= end_(current_window(mp))
+            start(inds.t)
+            for inds in storages_invested_available_indices(mp; node=n) if end_(inds.t) <= end_(current_window(mp))
         ]
         vals = [
-            mp.ext[:values][:storages_invested_available][inds] for
-            inds in storages_invested_available_indices(mp; node=n) if end_(inds.t) <= end_(current_window(mp))
+            mp.ext[:values][:storages_invested_available][inds]
+            for inds in storages_invested_available_indices(mp; node=n) if end_(inds.t) <= end_(current_window(mp))
         ]
         node.parameter_values[n][:fix_storages_invested_available] =
             parameter_value(TimeSeries(time_indices, vals, false, false))

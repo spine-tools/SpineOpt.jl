@@ -29,8 +29,8 @@ function add_constraint_min_down_time!(m::Model)
         (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
             +expr_sum(
-                +units_available[u, s, t] - units_on[u, s, t] for
-                (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
+                +units_available[u, s, t] - units_on[u, s, t] for (u, s, t) in
+                    units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
                 init=0,
             ) >=
             +expr_sum(
@@ -49,8 +49,13 @@ function add_constraint_min_down_time!(m::Model)
                 );
                 init=0,
             ) + expr_sum(
-                +nonspin_units_started_up[u, n, s, t] for (u, n, s, t) in
-                nonspin_units_started_up_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
+                +nonspin_units_started_up[u, n, s, t] for (u, n, s, t) in nonspin_units_started_up_indices(
+                    m;
+                    unit=u,
+                    stochastic_scenario=s,
+                    t=t,
+                    temporal_block=anything,
+                );
                 init=0,
             )
         ) for (u, s, t) in constraint_min_down_time_indices(m)
@@ -70,10 +75,10 @@ Keyword arguments can be used to filter the resulting Array.
 function constraint_min_down_time_indices(m::Model; unit=anything, stochastic_path=anything, t=anything)
     t0 = startref(current_window(m))
     unique(
-        (unit=u, stochastic_path=path, t=t) for u in indices(min_down_time) if u in unit for
-        (u, s, t) in units_on_indices(m; unit=u, t=t) for
-        path in active_stochastic_paths(_constraint_min_down_time_indices(m, u, s, t0, t)) if
-        path == stochastic_path || path in stochastic_path
+        (unit=u, stochastic_path=path, t=t) for u in indices(min_down_time) if u in unit
+        for (u, s, t) in units_on_indices(m; unit=u, t=t)
+        for path in active_stochastic_paths(_constraint_min_down_time_indices(m, u, s, t0, t)) if
+            path == stochastic_path || path in stochastic_path
     )
 end
 

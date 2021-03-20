@@ -37,8 +37,8 @@ function add_constraint_connection_flow_capacity!(m::Model)
         (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             +expr_sum(
-                connection_flow[conn, n, d, s, t] * duration(t) for
-                (conn, n, d, s, t) in connection_flow_indices(
+                connection_flow[conn, n, d, s, t] * duration(t)
+                for (conn, n, d, s, t) in connection_flow_indices(
                     m;
                     connection=conn,
                     direction=d,
@@ -61,8 +61,8 @@ function add_constraint_connection_flow_capacity!(m::Model)
             (
                 (candidate_connections(connection=conn) != nothing) ?
                 +expr_sum(
-                    connections_invested_available[conn, s, t1] for
-                    (conn, s, t1) in connections_invested_available_indices(
+                    connections_invested_available[conn, s, t1]
+                    for (conn, s, t1) in connections_invested_available_indices(
                         m;
                         connection=conn,
                         stochastic_scenario=s,
@@ -73,8 +73,8 @@ function add_constraint_connection_flow_capacity!(m::Model)
             ) *
             duration(t) <=
             +expr_sum(
-                connection_flow[conn, n, d_reverse, s, t] * duration(t) for
-                (conn, n, d_reverse, s, t) in connection_flow_indices(
+                connection_flow[conn, n, d_reverse, s, t] * duration(t)
+                for (conn, n, d_reverse, s, t) in connection_flow_indices(
                     m;
                     connection=conn,
                     node=ng,
@@ -105,10 +105,10 @@ function constraint_connection_flow_capacity_indices(
     t=anything,
 )
     unique(
-        (connection=c, node=ng, direction=d, stochastic_path=path, t=t) for
-        (c, ng, d) in indices(connection_capacity; connection=connection, node=node, direction=direction) for
-        t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng))), t=t)) for
-        path in active_stochastic_paths(
+        (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
+        for (c, ng, d) in indices(connection_capacity; connection=connection, node=node, direction=direction)
+        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng))), t=t))
+        for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_connection_flow_capacity_indices(m, c, ng, d, t)),
         ) if path == stochastic_path || path in stochastic_path
     )

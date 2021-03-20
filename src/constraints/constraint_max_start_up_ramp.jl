@@ -43,8 +43,8 @@ function add_constraint_max_start_up_ramp!(m::Model)
                 units_started_up[u, s, t] *
                 max_startup_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
                 unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-                unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] for
-                (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t))
+                unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t))
             )
         ) for (u, ng, d, s, t) in constraint_max_start_up_ramp_indices(m)
     )
@@ -67,12 +67,11 @@ function constraint_max_start_up_ramp_indices(
     t=anything,
 )
     unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t) for
-        (u, ng, d) in indices(max_startup_ramp) if u in unit && ng in node && d in direction for
-        t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng))), t=t))
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
+        for (u, ng, d) in indices(max_startup_ramp) if u in unit && ng in node && d in direction
+        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng))), t=t))
         # How to deal with groups correctly?
-        for
-        path in active_stochastic_paths(
+        for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario for ind in Iterators.flatten((
                     units_on_indices(m; unit=u, t=t),

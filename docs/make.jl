@@ -1,7 +1,6 @@
 using Documenter
 using SpineOpt
 
-
 # Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
 # Actual descriptions are fetched separately from `src/concept_reference/concepts/`
 path = @__DIR__
@@ -47,26 +46,26 @@ makedocs(
     pages=[
         "Introduction" => "index.md",
         "Getting Started" => Any[
-            "Installation"=>joinpath("getting_started", "installation.md"),
-            "Running an Optimization"=>joinpath("getting_started", "running_an_optimization.md"),
-            "Creating Your Own Model"=>joinpath("getting_started", "creating_your_own_model.md"),
+            "Installation" => joinpath("getting_started", "installation.md"),
+            "Running an Optimization" => joinpath("getting_started", "running_an_optimization.md"),
+            "Creating Your Own Model" => joinpath("getting_started", "creating_your_own_model.md"),
         ],
         "Concept Reference" => Any[
-            "Basics of the model structure"=>joinpath("concept_reference", "the_basics.md"),
-            "Object Classes"=>joinpath("concept_reference", "object_classes.md"),
-            "Relationship Classes"=>joinpath("concept_reference", "relationship_classes.md"),
-            "Parameters"=>joinpath("concept_reference", "parameters.md"),
-            "Parameter Value Lists"=>joinpath("concept_reference", "parameter_value_lists.md"),
+            "Basics of the model structure" => joinpath("concept_reference", "the_basics.md"),
+            "Object Classes" => joinpath("concept_reference", "object_classes.md"),
+            "Relationship Classes" => joinpath("concept_reference", "relationship_classes.md"),
+            "Parameters" => joinpath("concept_reference", "parameters.md"),
+            "Parameter Value Lists" => joinpath("concept_reference", "parameter_value_lists.md"),
         ],
         "Mathematical Formulation" => Any[
-            "Variables"=>joinpath("mathematical_formulation", "variables.md"),
-            "Constraints"=>joinpath("mathematical_formulation", "constraints.md"),
-            "Objective"=>joinpath("mathematical_formulation", "objective_function.md"),
+            "Variables" => joinpath("mathematical_formulation", "variables.md"),
+            "Constraints" => joinpath("mathematical_formulation", "constraints.md"),
+            "Objective" => joinpath("mathematical_formulation", "objective_function.md"),
         ],
         "Advanced Concepts" => Any[
-            "Temporal Framework"=>joinpath("advanced_concepts", "temporal_framework.md"),
-            "Stochastic Framework"=>joinpath("advanced_concepts", "stochastic_framework.md"),
-            "Investment Optimization"=>joinpath("advanced_concepts", "investment_optimization.md"),
+            "Temporal Framework" => joinpath("advanced_concepts", "temporal_framework.md"),
+            "Stochastic Framework" => joinpath("advanced_concepts", "stochastic_framework.md"),
+            "Investment Optimization" => joinpath("advanced_concepts", "investment_optimization.md"),
         ],
         "Library" => "library.md",
     ],

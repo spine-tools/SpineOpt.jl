@@ -31,9 +31,9 @@ function units_invested_available_indices(
     temporal_block=anything,
 )
     [
-        (unit=u, stochastic_scenario=s, t=t) for
-        (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false) for
-        (u, s, t) in unit_investment_stochastic_time_indices(
+        (unit=u, stochastic_scenario=s, t=t)
+        for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
+        for (u, s, t) in unit_investment_stochastic_time_indices(
             m;
             unit=u,
             stochastic_scenario=stochastic_scenario,

@@ -34,15 +34,15 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
     m.ext[:constraints][:unit_flow_capacity_w_ramp] = constraint = Dict()
     for (u, ng, d, s, t_before, t_after) in constraint_unit_flow_capacity_w_ramp_indices(m)
         cutout = first(
-            end_(t_before) - start(t) for
-            (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before))
+            end_(t_before) - start(t)
+            for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before))
         )
         if min_up_time(unit=u) != nothing && min_up_time(unit=u) > cutout
             constraint[(unit=u, node=ng, direction=d, stochastic_path=s, t=t_before)] = @constraint(
                 m,
                 expr_sum(
-                    +unit_flow[u, n, d, s, t_before1] * duration(t_before1) for
-                    (u, n, d, s, t_before1) in unit_flow_indices(
+                    +unit_flow[u, n, d, s, t_before1] * duration(t_before1)
+                    for (u, n, d, s, t_before1) in unit_flow_indices(
                         m;
                         unit=u,
                         node=ng,
@@ -64,8 +64,8 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         analysis_time=t0,
                         t=t_before,
                     )] for (u, s, t_before1) in
-                    units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before)) for
-                    (u, s, t_after1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
+                        units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before))
+                    for (u, s, t_after1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
                     init=0,
                 ) +
                 expr_sum(
@@ -87,10 +87,8 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         analysis_time=t0,
                         t=t_before,
                     )] *
-                    unit_capacity[(
-                        unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before
-                    )] for (u, s, t_before1) in
-                    units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
+                    unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before)] for (u, s, t_before1) in
+                        units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
                     init=0,
                 ) +
                 expr_sum(
@@ -144,8 +142,8 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         analysis_time=t0,
                         t=t_before,
                     )] for (u, s, t_before1) in
-                    units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before)) for
-                    (u, s, t_after1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
+                        units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before))
+                    for (u, s, t_after1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
                     init=0,
                 ) - expr_sum(
                     units_started_up[u, s, t_before1] *
@@ -177,7 +175,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         t=t_before,
                     )] *
                     unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before)] for (u, s, t_before1) in
-                    units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
+                        units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
                     init=0,
                 ) + expr_sum(
                     units_shut_down[u, s, t_after1] *
@@ -207,8 +205,8 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
             constraint[(unit=u, node=ng, direction=d, stochastic_path=s, t=t_before, i=2)] = @constraint(
                 m,
                 expr_sum(
-                    +unit_flow[u, n, d, s, t] * min(duration(t), duration(t_before)) for
-                    (u, n, d, s, t) in unit_flow_indices(
+                    +unit_flow[u, n, d, s, t] * min(duration(t), duration(t_before))
+                    for (u, n, d, s, t) in unit_flow_indices(
                         m;
                         unit=u,
                         node=ng,
@@ -230,7 +228,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         analysis_time=t0,
                         t=t_before,
                     )] for (u, s, t_before1) in
-                    units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
+                        units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
                     init=0,
                 ) + expr_sum(
                     units_started_up[u, s, t_before1] *
@@ -252,7 +250,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         t=t_before,
                     )] *
                     unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before)] for (u, s, t_before1) in
-                    units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
+                        units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
                     init=0,
                 ) - expr_sum(
                     units_shut_down[u, s, t_after1] *
@@ -313,10 +311,10 @@ function constraint_unit_flow_capacity_w_ramp_indices(
     t_after=anything,
 )
     unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after) for
-        (u, ng, d) in indices(max_shutdown_ramp) if u in unit && ng in node && d in direction for
-        t_after in time_slice(m; temporal_block=units_on__temporal_block(unit=u), t=t_after) for
-        t_before in t_lowest_resolution(
+        (unit=u, node=ng, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (u, ng, d) in indices(max_shutdown_ramp) if u in unit && ng in node && d in direction
+        for t_after in time_slice(m; temporal_block=units_on__temporal_block(unit=u), t=t_after)
+        for t_before in t_lowest_resolution(
             time_slice(
                 m;
                 temporal_block=members(node__temporal_block(node=members(ng))),
@@ -324,8 +322,8 @@ function constraint_unit_flow_capacity_w_ramp_indices(
             ),
         ) for path in active_stochastic_paths(
             unique(
-                ind.stochastic_scenario for
-                ind in _constraint_unit_flow_capacity_w_ramp_indices(m, u, ng, d, t_before, t_after)
+                ind.stochastic_scenario
+                for ind in _constraint_unit_flow_capacity_w_ramp_indices(m, u, ng, d, t_before, t_after)
             ),
         ) if path == stochastic_path || path in stochastic_path
     )

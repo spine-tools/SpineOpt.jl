@@ -31,8 +31,8 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
         (unit=u, node1=n_from, node2=n_to, stochastic_path=s, t=t) => @constraint(
             m,
             expr_sum(
-                +unit_flow[u, n, d, s, t_short] * duration(t_short) for
-                (u, n, d, s, t_short) in unit_flow_indices(
+                +unit_flow[u, n, d, s, t_short] * duration(t_short)
+                for (u, n, d, s, t_short) in unit_flow_indices(
                     m;
                     unit=u,
                     node=n_from,
@@ -132,10 +132,11 @@ function constraint_unit_pw_heat_rate_indices(
     t=anything,
 )
     unique(
-        (unit=u, node_from=n_from, node_to=n_to, stochastic_path=path, t=t) for
-        (u, n_from, n_to) in indices(unit_incremental_heat_rate) if u in unit && n_from in node_from && n_to in node_to
-        for t in t_lowest_resolution(x.t for x in unit_flow_indices(m; unit=u, node=[n_from, n_to], t=t)) for
-        path in active_stochastic_paths(
+        (unit=u, node_from=n_from, node_to=n_to, stochastic_path=path, t=t)
+        for (u, n_from, n_to) in indices(unit_incremental_heat_rate) if
+            u in unit && n_from in node_from && n_to in node_to
+        for t in t_lowest_resolution(x.t for x in unit_flow_indices(m; unit=u, node=[n_from, n_to], t=t))
+        for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_unit_pw_heat_rate_indices(m, u, n_from, n_to, t)),
         ) if path == stochastic_path || path in stochastic_path
     )

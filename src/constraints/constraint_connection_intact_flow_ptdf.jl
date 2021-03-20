@@ -33,9 +33,9 @@ function add_constraint_connection_intact_flow_ptdf!(m::Model)
                 init=0,
             ) ==
             +expr_sum(
-                ptdf(connection=conn, node=n) * node_injection[n, s, t] for (conn, n) in indices(ptdf; connection=conn) for
-                (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t) if
-                !isapprox(ptdf(connection=conn, node=n), 0; atol=node_ptdf_threshold(node=n));
+                ptdf(connection=conn, node=n) * node_injection[n, s, t] for (conn, n) in indices(ptdf; connection=conn)
+                for (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t) if
+                    !isapprox(ptdf(connection=conn, node=n), 0; atol=node_ptdf_threshold(node=n));
                 init=0,
             )
         ) for (conn, n_to, s, t) in constraint_connection_intact_flow_ptdf_indices(m)
@@ -60,13 +60,13 @@ function constraint_connection_intact_flow_ptdf_indices(
     t=anything,
 )
     unique(
-        (connection=conn, node=n_to, stochastic_path=path, t=t) for
-        conn in connection if connection_monitored(connection=conn) && has_ptdf(connection=conn) for
-        (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn, node=node; _compact=false), 1) for
-        (n_to, t) in node_time_indices(m; node=n_to, t=t) for path in active_stochastic_paths(
+        (connection=conn, node=n_to, stochastic_path=path, t=t)
+        for conn in connection if connection_monitored(connection=conn) && has_ptdf(connection=conn)
+        for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn, node=node; _compact=false), 1)
+        for (n_to, t) in node_time_indices(m; node=n_to, t=t) for path in active_stochastic_paths(
             unique(
-                ind.stochastic_scenario for
-                ind in _constraint_connection_intact_flow_ptdf_indices(m, conn, n_to, d_to, t)
+                ind.stochastic_scenario
+                for ind in _constraint_connection_intact_flow_ptdf_indices(m, conn, n_to, d_to, t)
             ),
         ) if path == stochastic_path || path in stochastic_path
     )
@@ -82,8 +82,8 @@ function _constraint_connection_intact_flow_ptdf_indices(m, connection, node_to,
     Iterators.flatten((
         connection_intact_flow_indices(m; connection=connection, node=node_to, direction=direction_to, t=t),  # `n_to`
         (
-            ind for (conn, n_inj) in indices(ptdf; connection=connection) for
-            ind in node_stochastic_time_indices(m; node=n_inj, t=t)
+            ind for (conn, n_inj) in indices(ptdf; connection=connection)
+            for ind in node_stochastic_time_indices(m; node=n_inj, t=t)
         ),  # `n_inj`
     ))
 end

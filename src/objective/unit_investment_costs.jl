@@ -31,8 +31,8 @@ function unit_investment_costs(m::Model, t1)
             units_invested[u, s, t] *
             unit_investment_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] *
             prod(weight(temporal_block=blk) for blk in blocks(t)) *
-            unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s) for
-            (u, s, t) in units_invested_available_indices(m; unit=indices(unit_investment_cost)) if end_(t) <= t1;
+            unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)
+            for (u, s, t) in units_invested_available_indices(m; unit=indices(unit_investment_cost)) if end_(t) <= t1;
             init=0,
         )
     )

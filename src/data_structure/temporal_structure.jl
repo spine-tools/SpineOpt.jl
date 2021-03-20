@@ -37,9 +37,8 @@ struct TimeSliceSet
         solids = [(first(time_slices), last(time_slices)) for time_slices in values(block_time_slices)]
         sort!(solids)
         gap_bounds = (
-            (last_, next_first) for
-            ((first_, last_), (next_first, next_last)) in zip(solids[1:(end - 1)], solids[2:end]) if
-            end_(last_) < start(next_first)
+            (last_, next_first) for ((first_, last_), (next_first, next_last)) in
+                                    zip(solids[1:(end - 1)], solids[2:end]) if end_(last_) < start(next_first)
         )
         gaps = [TimeSlice(end_(last_), start(next_first)) for (last_, next_first) in gap_bounds]
         # NOTE: For convention, the last time slice in the preceding block becomes the 'bridge'
@@ -176,8 +175,8 @@ A sorted `Array` of `TimeSlices` in the given window.
 """
 function _window_time_slices(instance::Object, window_start::DateTime, window_end::DateTime)
     window_time_slices = [
-        TimeSlice(t..., blocks...; duration_unit=_model_duration_unit(instance)) for
-        (t, blocks) in _time_interval_blocks(instance, window_start, window_end)
+        TimeSlice(t..., blocks...; duration_unit=_model_duration_unit(instance))
+        for (t, blocks) in _time_interval_blocks(instance, window_start, window_end)
     ]
     sort!(window_time_slices)
 end
@@ -246,12 +245,12 @@ function _generate_time_slice_relationships!(m::Model)
     t_overlaps_t_maping = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
     t_overlaps_t_excl_mapping = Dict(t => setdiff(overlapping_t, t) for (t, overlapping_t) in t_overlaps_t_maping)
     t_before_t_tuples = unique(
-        (t_before=t_before, t_after=t_after) for (t_before, following) in t_follows_t_mapping for
-        t_after in following if before(t_before, t_after)
+        (t_before=t_before, t_after=t_after) for (t_before, following) in t_follows_t_mapping
+        for t_after in following if before(t_before, t_after)
     )
     t_in_t_tuples = unique(
-        (t_short=t_short, t_long=t_long) for (t_short, overlapping) in t_overlaps_t_maping for
-        t_long in overlapping if iscontained(t_short, t_long)
+        (t_short=t_short, t_long=t_long) for (t_short, overlapping) in t_overlaps_t_maping
+        for t_long in overlapping if iscontained(t_short, t_long)
     )
     t_in_t_excl_tuples = [(t_short=t1, t_long=t2) for (t1, t2) in t_in_t_tuples if t1 != t2]
     # Create the function-like objects
@@ -380,8 +379,8 @@ Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword argument
 """
 function node_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
     unique(
-        (node=n, t=t1) for (n, tb) in node__temporal_block(node=node, temporal_block=temporal_block, _compact=false) for
-        t1 in time_slice(m; temporal_block=members(tb), t=t)
+        (node=n, t=t1) for (n, tb) in node__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
+        for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
 
@@ -392,8 +391,8 @@ Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` with 
 """
 function node_dynamic_time_indices(m::Model; node=anything, t_before=anything, t_after=anything)
     unique(
-        (node=n, t_before=tb, t_after=ta) for (n, ta) in node_time_indices(m; node=node, t=t_after) for
-        (n, tb) in node_time_indices(
+        (node=n, t_before=tb, t_after=ta) for (n, ta) in node_time_indices(m; node=node, t=t_after)
+        for (n, tb) in node_time_indices(
             m;
             node=n,
             t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
@@ -431,8 +430,8 @@ function unit_dynamic_time_indices(
     temporal_block=anything,
 )
     unique(
-        (unit=u, t_before=tb, t_after=ta) for (u, ta) in unit_time_indices(m; unit=unit, t=t_after) for
-        (u, tb) in unit_time_indices(
+        (unit=u, t_before=tb, t_after=ta) for (u, ta) in unit_time_indices(m; unit=unit, t=t_after)
+        for (u, tb) in unit_time_indices(
             m;
             unit=u,
             t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
@@ -448,9 +447,9 @@ Generate an `Array` of all valid `(unit, t)` `NamedTuples` for `unit` investment
 """
 function unit_investment_time_indices(m::Model; unit=anything, temporal_block=anything, t=anything)
     unique(
-        (unit=u, t=t1) for
-        (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false) if
-        tb in model__temporal_block(model=m.ext[:instance]) for t1 in time_slice(m; temporal_block=members(tb), t=t)
+        (unit=u, t=t1)
+        for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false) if
+            tb in model__temporal_block(model=m.ext[:instance]) for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
 
@@ -462,8 +461,8 @@ Generate an `Array` of all valid `(connection, t)` `NamedTuples` for `connection
 function connection_investment_time_indices(m::Model; connection=anything, temporal_block=anything, t=anything)
     unique(
         (connection=conn, t=t1) for (conn, tb) in
-        connection__investment_temporal_block(connection=connection, temporal_block=temporal_block, _compact=false) if
-        tb in model__temporal_block(model=m.ext[:instance]) for t1 in time_slice(m; temporal_block=members(tb), t=t)
+            connection__investment_temporal_block(connection=connection, temporal_block=temporal_block, _compact=false) if
+            tb in model__temporal_block(model=m.ext[:instance]) for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
 
@@ -474,9 +473,9 @@ Generate an `Array` of all valid `(node, t)` `NamedTuples` for `node` investment
 """
 function node_investment_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
     unique(
-        (node=n, t=t1) for
-        (n, tb) in node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false) if
-        tb in model__temporal_block(model=m.ext[:instance]) for t1 in time_slice(m; temporal_block=members(tb), t=t)
+        (node=n, t=t1)
+        for (n, tb) in node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false) if
+            tb in model__temporal_block(model=m.ext[:instance]) for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
 
@@ -487,8 +486,8 @@ Generate an `Array` of all valid `(unit, t_before, t_after)` `NamedTuples` for `
 """
 function unit_investment_dynamic_time_indices(m::Model; unit=anything, t_before=anything, t_after=anything)
     unique(
-        (unit=u, t_before=tb, t_after=ta) for (u, ta) in unit_investment_time_indices(m; unit=unit, t=t_after) for
-        (u, tb) in unit_investment_time_indices(
+        (unit=u, t_before=tb, t_after=ta) for (u, ta) in unit_investment_time_indices(m; unit=unit, t=t_after)
+        for (u, tb) in unit_investment_time_indices(
             m;
             unit=u,
             t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
@@ -503,9 +502,9 @@ Generate an `Array` of all valid `(connection, t_before, t_after)` `NamedTuples`
 """
 function connection_investment_dynamic_time_indices(m::Model; connection=anything, t_before=anything, t_after=anything)
     unique(
-        (connection=conn, t_before=tb, t_after=ta) for
-        (conn, ta) in connection_investment_time_indices(m; connection=connection, t=t_after) for
-        (conn, tb) in connection_investment_time_indices(
+        (connection=conn, t_before=tb, t_after=ta)
+        for (conn, ta) in connection_investment_time_indices(m; connection=connection, t=t_after)
+        for (conn, tb) in connection_investment_time_indices(
             m;
             connection=conn,
             t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
@@ -520,8 +519,8 @@ Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` for `
 """
 function node_investment_dynamic_time_indices(m::Model; node=anything, t_before=anything, t_after=anything)
     unique(
-        (node=n, t_before=tb, t_after=ta) for (n, ta) in node_investment_time_indices(m; node=node, t=t_after) for
-        (node, tb) in node_investment_time_indices(
+        (node=n, t_before=tb, t_after=ta) for (n, ta) in node_investment_time_indices(m; node=node, t=t_after)
+        for (node, tb) in node_investment_time_indices(
             m;
             node=n,
             t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),

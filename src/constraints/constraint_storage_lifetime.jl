@@ -29,13 +29,13 @@ function add_constraint_storage_lifetime!(m::Model)
         (node=n, stochastic_path=s, t=t) => @constraint(
             m,
             +expr_sum(
-                +storages_invested_available[n, s, t] for
-                (n, s, t) in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t);
+                +storages_invested_available[n, s, t]
+                for (n, s, t) in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t);
                 init=0,
             ) >=
             +sum(
-                +storages_invested[n, s_past, t_past] for
-                (n, s_past, t_past) in storages_invested_available_indices(
+                +storages_invested[n, s_past, t_past]
+                for (n, s_past, t_past) in storages_invested_available_indices(
                     m;
                     node=n,
                     stochastic_scenario=s,
@@ -63,10 +63,10 @@ Keyword arguments can be used to filther the resulting Array.
 function constraint_storage_lifetime_indices(m::Model; node=anything, stochastic_path=anything, t=anything)
     t0 = startref(current_window(m))
     unique(
-        (node=n, stochastic_path=path, t=t) for n in indices(storage_investment_lifetime) if n in node for
-        (n, s, t) in storages_invested_available_indices(m; node=n, t=t) for
-        path in active_stochastic_paths(_constraint_storage_lifetime_indices(m, n, s, t0, t)) if
-        path == stochastic_path || path in stochastic_path
+        (node=n, stochastic_path=path, t=t) for n in indices(storage_investment_lifetime) if n in node
+        for (n, s, t) in storages_invested_available_indices(m; node=n, t=t)
+        for path in active_stochastic_paths(_constraint_storage_lifetime_indices(m, n, s, t0, t)) if
+            path == stochastic_path || path in stochastic_path
     )
 end
 

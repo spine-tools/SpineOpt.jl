@@ -57,9 +57,9 @@ Uses stochastic path indices of the `node_state` variables. Keyword arguments ca
 """
 function constraint_node_state_capacity_indices(m::Model; node=anything, stochastic_path=anything, t=anything)
     unique(
-        (node=ng, stochastic_path=path, t=t) for
-        (ng, s, t) in node_state_indices(m; node=node) if ng in indices(node_state_cap) for
-        path in active_stochastic_paths(
+        (node=ng, stochastic_path=path, t=t)
+        for (ng, s, t) in node_state_indices(m; node=node) if ng in indices(node_state_cap)
+        for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_node_state_capacity_indices(m, ng, t)),
         ) if path == stochastic_path || path in stochastic_path
     )

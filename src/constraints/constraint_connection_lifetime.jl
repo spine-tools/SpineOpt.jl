@@ -30,12 +30,12 @@ function add_constraint_connection_lifetime!(m::Model)
             m,
             +expr_sum(
                 +connections_invested_available[conn, s, t] for (conn, s, t) in
-                connections_invested_available_indices(m; connection=conn, stochastic_scenario=s, t=t);
+                    connections_invested_available_indices(m; connection=conn, stochastic_scenario=s, t=t);
                 init=0,
             ) >=
             +sum(
-                +connections_invested[conn, s_past, t_past] for
-                (conn, s_past, t_past) in connections_invested_available_indices(
+                +connections_invested[conn, s_past, t_past]
+                for (conn, s_past, t_past) in connections_invested_available_indices(
                     m;
                     connection=conn,
                     stochastic_scenario=s,
@@ -68,11 +68,11 @@ Keyword arguments can be used to filther the resulting Array.
 function constraint_connection_lifetime_indices(m::Model; connection=anything, stochastic_path=anything, t=anything)
     t0 = startref(current_window(m))
     unique(
-        (connection=conn, stochastic_path=path, t=t) for
-        conn in indices(connection_investment_lifetime) if conn in connection for
-        (conn, s, t) in connections_invested_available_indices(m; connection=conn, t=t) for
-        path in active_stochastic_paths(_constraint_connection_lifetime_indices(m, conn, s, t0, t)) if
-        path == stochastic_path || path in stochastic_path
+        (connection=conn, stochastic_path=path, t=t)
+        for conn in indices(connection_investment_lifetime) if conn in connection
+        for (conn, s, t) in connections_invested_available_indices(m; connection=conn, t=t)
+        for path in active_stochastic_paths(_constraint_connection_lifetime_indices(m, conn, s, t0, t)) if
+            path == stochastic_path || path in stochastic_path
     )
 end
 
@@ -91,7 +91,7 @@ function _constraint_connection_lifetime_indices(m, conn, s, t0, t)
         ),
     )
     unique(
-        ind.stochastic_scenario for
-        ind in connections_invested_available_indices(m; connection=conn, t=t_past_and_present)
+        ind.stochastic_scenario
+        for ind in connections_invested_available_indices(m; connection=conn, t=t_past_and_present)
     )
 end

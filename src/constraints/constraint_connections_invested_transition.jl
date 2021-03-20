@@ -31,11 +31,16 @@ function add_constraint_connections_invested_transition!(m::Model)
             expr_sum(
                 +connections_invested_available[conn, s, t_after] - connections_invested[conn, s, t_after] +
                 connections_decommissioned[conn, s, t_after] for (conn, s, t_after) in
-                connections_invested_available_indices(m; connection=conn, stochastic_scenario=s, t=t_after);
+                    connections_invested_available_indices(m; connection=conn, stochastic_scenario=s, t=t_after);
                 init=0,
             ) == expr_sum(
-                +connections_invested_available[conn, s, t_before] for (conn, s, t_before) in
-                connections_invested_available_indices(m; connection=conn, stochastic_scenario=s, t=t_before);
+                +connections_invested_available[conn, s, t_before]
+                for (conn, s, t_before) in connections_invested_available_indices(
+                    m;
+                    connection=conn,
+                    stochastic_scenario=s,
+                    t=t_before,
+                );
                 init=0,
             )
         ) for (conn, s, t_before, t_after) in constraint_connections_invested_transition_indices(m)
@@ -59,11 +64,11 @@ function constraint_connections_invested_transition_indices(
 )
     unique(
         (connection=conn, stochastic_path=path, t_before=t_before, t_after=t_after) for (conn, t_before, t_after) in
-        connection_investment_dynamic_time_indices(m; connection=connection, t_before=t_before, t_after=t_after) for
-        path in active_stochastic_paths(
+            connection_investment_dynamic_time_indices(m; connection=connection, t_before=t_before, t_after=t_after)
+        for path in active_stochastic_paths(
             unique(
-                ind.stochastic_scenario for
-                ind in connections_invested_available_indices(m; connection=conn, t=[t_before, t_after])
+                ind.stochastic_scenario
+                for ind in connections_invested_available_indices(m; connection=conn, t=[t_before, t_after])
             ),
         ) if path == stochastic_path || path in stochastic_path
     )

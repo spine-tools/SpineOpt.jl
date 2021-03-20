@@ -360,8 +360,8 @@ Save the value of a variable in a model.
 function _save_variable_value!(m::Model, name::Symbol, indices::Function)
     var = m.ext[:variables][name]
     m.ext[:values][name] = Dict(
-        ind => _variable_value(var[ind]) for
-        ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if end_(ind.t) <= end_(current_window(m))
+        ind => _variable_value(var[ind]) for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if
+            end_(ind.t) <= end_(current_window(m))
     )
 end
 
@@ -540,7 +540,7 @@ function _save_bound_marginal_value!(m::Model, variable_name::Symbol, output_nam
     var = m.ext[:variables][variable_name]
     indices = m.ext[:variables_definition][variable_name][:indices]
     m.ext[:values][output_name] = Dict(
-        ind => JuMP.reduced_cost(var[ind]) for
-        ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if end_(ind.t) <= end_(current_window(m))
+        ind => JuMP.reduced_cost(var[ind]) for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if
+            end_(ind.t) <= end_(current_window(m))
     )
 end

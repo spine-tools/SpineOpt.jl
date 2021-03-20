@@ -31,9 +31,10 @@ function units_on_indices(
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
     unique([
-        (unit=u, stochastic_scenario=s, t=t) for
-        (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false) for (u, s, t) in
-        unit_stochastic_time_indices(m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
+        (unit=u, stochastic_scenario=s, t=t)
+        for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
+        for (u, s, t) in
+            unit_stochastic_time_indices(m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
     ])
 end
 

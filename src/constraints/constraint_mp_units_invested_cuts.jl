@@ -38,9 +38,8 @@ function add_constraint_mp_units_invested_cuts!(m::Model)
             # operating cost benefit from investments in units
             +
             expr_sum(
-                (units_invested_available[u, s, t] - units_invested_available_bi(benders_iteration=bi, unit=u, t=t)) * 
-                units_available_mv(benders_iteration=bi, unit=u, t=t) for
-                (u, s, t) in units_invested_available_indices(m);
+                (units_invested_available[u, s, t] - units_invested_available_bi(benders_iteration=bi, unit=u, t=t)) * units_available_mv(benders_iteration=bi, unit=u, t=t)
+                for (u, s, t) in units_invested_available_indices(m);
                 init=0,
             )
             # operating cost benefit from investments in connections
@@ -49,8 +48,8 @@ function add_constraint_mp_units_invested_cuts!(m::Model)
                 (
                     +connections_invested_available[c, s, t] -
                     connections_invested_available_bi(benders_iteration=bi, connection=c, t=t)
-                ) * connections_invested_available_mv(benders_iteration=bi, connection=c, t=t) for
-                (c, s, t) in connections_invested_available_indices(m);
+                ) * connections_invested_available_mv(benders_iteration=bi, connection=c, t=t)
+                for (c, s, t) in connections_invested_available_indices(m);
                 init=0,
             )
             # operating cost benefit from investments in storages
@@ -59,8 +58,8 @@ function add_constraint_mp_units_invested_cuts!(m::Model)
                 (
                     +storages_invested_available[n, s, t] -
                     storages_invested_available_bi(benders_iteration=bi, node=n, t=t)
-                ) * storages_invested_available_mv(benders_iteration=bi, node=n, t=t) for
-                (n, s, t) in storages_invested_available_indices(m);
+                ) * storages_invested_available_mv(benders_iteration=bi, node=n, t=t)
+                for (n, s, t) in storages_invested_available_indices(m);
                 init=0,
             )
         ) for bi in last(benders_iteration()) for (m1, t1) in mp_objective_lowerbound_indices(m)

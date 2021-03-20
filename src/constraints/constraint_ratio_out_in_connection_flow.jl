@@ -32,8 +32,8 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=s, t=t) => sense_constraint(
             m,
             +expr_sum(
-                +connection_flow[conn, n_out, d, s, t_short] * duration(t_short) for
-                (conn, n_out, d, s, t_short) in connection_flow_indices(
+                +connection_flow[conn, n_out, d, s, t_short] * duration(t_short)
+                for (conn, n_out, d, s, t_short) in connection_flow_indices(
                     m;
                     connection=conn,
                     node=ng_out,
@@ -134,14 +134,14 @@ function constraint_ratio_out_in_connection_flow_indices(
 )
     t0 = startref(current_window(m))
     unique(
-        (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t) for
-        (conn, n_out, n_in) in indices(ratio_out_in) if conn in connection && n_out in node1 && n_in in node2 for
-        t in t_lowest_resolution(
+        (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
+        for (conn, n_out, n_in) in indices(ratio_out_in) if conn in connection && n_out in node1 && n_in in node2
+        for t in t_lowest_resolution(
             x.t for x in connection_flow_indices(m; connection=conn, node=[members(n_out)..., members(n_in)...], t=t)
         ) for path in active_stochastic_paths(
             unique(
-                ind.stochastic_scenario for
-                ind in _constraint_ratio_out_in_connection_flow_indices(m, conn, n_out, n_in, t0, t)
+                ind.stochastic_scenario
+                for ind in _constraint_ratio_out_in_connection_flow_indices(m, conn, n_out, n_in, t0, t)
             ),
         ) if path == stochastic_path || path in stochastic_path
     )
@@ -161,8 +161,8 @@ function _constraint_ratio_out_in_connection_flow_indices(m, connection, node_ou
             direction=direction(:to_node),
             t=t_in_t(m; t_long=t),
         ),  # `to_node` `connection_flow`s
-        (connection=conn, node=n_in, direction=d, stochastic_scenario=s, t=t) for
-        (conn, n_in, d, s, t1) in connection_flow_indices(
+        (connection=conn, node=n_in, direction=d, stochastic_scenario=s, t=t)
+        for (conn, n_in, d, s, t1) in connection_flow_indices(
             m;
             connection=connection,
             node=node_in,

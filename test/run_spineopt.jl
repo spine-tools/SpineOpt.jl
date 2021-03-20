@@ -130,7 +130,7 @@ end
             stochastic_scenario=Y.stochastic_scenario(:parent),
         )
         timestamps = collect(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2))
-        @testset for (t0, t1) in zip(timestamps[1:end-1], timestamps[2:end])
+        @testset for (t0, t1) in zip(timestamps[1:(end - 1)], timestamps[2:end])
             t = TimeSlice(t0, t1)
             @test Y.objective_variable_om_costs(; cost_key..., t=t) == vom_cost * demand
             @test Y.unit_flow(; flow_key..., t=t) == demand

@@ -31,8 +31,8 @@ function add_constraint_candidate_connection_flow_lb!(m::Model)
         (connection=conn, node=n, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             +expr_sum(
-                connection_flow[conn, n, d, s, t] * duration(t) for
-                (conn, n, d, s, t) in connection_flow_indices(
+                connection_flow[conn, n, d, s, t] * duration(t)
+                for (conn, n, d, s, t) in connection_flow_indices(
                     m;
                     connection=conn,
                     direction=d,
@@ -43,8 +43,8 @@ function add_constraint_candidate_connection_flow_lb!(m::Model)
                 init=0,
             ) >=
             +expr_sum(
-                connection_intact_flow[conn, n, d, s, t] * duration(t) for
-                (conn, n, d, s, t) in connection_intact_flow_indices(
+                connection_intact_flow[conn, n, d, s, t] * duration(t)
+                for (conn, n, d, s, t) in connection_intact_flow_indices(
                     m;
                     connection=conn,
                     direction=d,
@@ -56,8 +56,8 @@ function add_constraint_candidate_connection_flow_lb!(m::Model)
             ) -
             (
                 candidate_connections(connection=conn) - expr_sum(
-                    connections_invested_available[conn, s, t1] for
-                    (conn, s, t1) in connections_invested_available_indices(
+                    connections_invested_available[conn, s, t1]
+                    for (conn, s, t1) in connections_invested_available_indices(
                         m;
                         connection=conn,
                         stochastic_scenario=s,
@@ -102,10 +102,10 @@ function constraint_candidate_connection_flow_lb_indices(
     t=anything,
 )
     unique(
-        (connection=conn, node=n, direction=d, stochastic_path=path, t=t) for
-        (conn, n, d, s, t) in connection_flow_indices(m; connection=connection, node=node, direction=direction) for
-        t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=n), t=t)) for
-        path in active_stochastic_paths(
+        (connection=conn, node=n, direction=d, stochastic_path=path, t=t)
+        for (conn, n, d, s, t) in connection_flow_indices(m; connection=connection, node=node, direction=direction)
+        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=n), t=t))
+        for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario for ind in _constraint_candidate_connection_flow_lb_indices(m, conn, n, d, t)
             ),

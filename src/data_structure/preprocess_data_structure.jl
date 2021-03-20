@@ -72,8 +72,8 @@ function expand_node__stochastic_structure()
     add_relationships!(
         node__stochastic_structure,
         [
-            (node=n, stochastic_structure=stochastic_structure) for
-            (ng, stochastic_structure) in node__stochastic_structure() for n in members(ng)
+            (node=n, stochastic_structure=stochastic_structure)
+            for (ng, stochastic_structure) in node__stochastic_structure() for n in members(ng)
         ],
     )
 end
@@ -87,8 +87,8 @@ function expand_units_on__stochastic_structure()
     add_relationships!(
         units_on__stochastic_structure,
         [
-            (unit=u, stochastic_structure=stochastic_structure) for
-            (ug, stochastic_structure) in units_on__stochastic_structure() for u in members(ug)
+            (unit=u, stochastic_structure=stochastic_structure)
+            for (ug, stochastic_structure) in units_on__stochastic_structure() for u in members(ug)
         ],
     )
 end
@@ -103,8 +103,8 @@ and this function creates the additional relationships on the fly.
 """
 function add_connection_relationships()
     conn_from_to = [
-        (conn, first(connection__from_node(connection=conn)), first(connection__to_node(connection=conn))) for
-        conn in connection(connection_type=:connection_type_lossless_bidirectional)
+        (conn, first(connection__from_node(connection=conn)), first(connection__to_node(connection=conn)))
+        for conn in connection(connection_type=:connection_type_lossless_bidirectional)
     ]
     isempty(conn_from_to) && return
     new_connection__from_node_rels = [(connection=conn, node=n) for (conn, _n, n) in conn_from_to]
@@ -123,8 +123,8 @@ function add_connection_relationships()
         Dict((conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__to_node_rels)
 
     new_connection__node__node_parameter_values = Dict(
-        (conn, n1, n2) => Dict(:fix_ratio_out_in_connection_flow => value_one) for
-        (conn, n1, n2) in new_connection__node__node_rels
+        (conn, n1, n2) => Dict(:fix_ratio_out_in_connection_flow => value_one)
+        for (conn, n1, n2) in new_connection__node__node_rels
     )
     merge!(connection__from_node.parameter_values, new_connection__from_node_parameter_values)
     merge!(connection__to_node.parameter_values, new_connection__to_node_parameter_values)
@@ -222,7 +222,7 @@ function generate_node_has_ptdf()
     for n in node()
         ptdf_comms = Tuple(
             c for c in node__commodity(node=n) if
-            commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
+                commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
         )
         node.parameter_values[n][:has_ptdf] = parameter_value(!isempty(ptdf_comms))
         node.parameter_values[n][:node_ptdf_threshold] =
@@ -264,7 +264,7 @@ function generate_connection_has_lodf()
     for conn in connection(has_ptdf=true)
         lodf_comms = Tuple(
             c for c in commodity(commodity_physics=:commodity_physics_lodf) if
-            issubset(connection__from_node(connection=conn, direction=anything), node__commodity(commodity=c))
+                issubset(connection__from_node(connection=conn, direction=anything), node__commodity(commodity=c))
         )
         connection.parameter_values[conn][:has_lodf] = parameter_value(!isempty(lodf_comms))
         connection.parameter_values[conn][:connnection_lodf_tolerance] =
@@ -327,8 +327,8 @@ function _ptdf_values()
     connections = connection(has_ptdf=true)
     ptdf = _build_ptdf(connections, nodes)
     Dict(
-        (conn, n) => Dict(:ptdf => parameter_value(ptdf[i, j])) for (i, conn) in enumerate(connections) for
-        (j, n) in enumerate(nodes)
+        (conn, n) => Dict(:ptdf => parameter_value(ptdf[i, j])) for (i, conn) in enumerate(connections)
+        for (j, n) in enumerate(nodes)
     )
 end
 
@@ -363,14 +363,13 @@ function _old_ptdf_values()
             b=(from=0.0, to=0.0),
             rate=0.0,
             angle_limits=(min=0.0, max=0.0),
-        )  # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
-        for conn in connection(has_ptdf=true)
+        ) for conn in connection(has_ptdf=true)
     )
     ps_lines = collect(values(ps_lines_by_connection))
     ps_ptdf = PowerSystems.PTDF(ps_lines, ps_busses)
     Dict(
-        (conn, n) => Dict(:ptdf => parameter_value(ps_ptdf[line.name, bus.number])) for
-        (conn, line) in ps_lines_by_connection for (n, bus) in ps_busses_by_node
+        (conn, n) => Dict(:ptdf => parameter_value(ps_ptdf[line.name, bus.number]))
+        for (conn, line) in ps_lines_by_connection for (n, bus) in ps_busses_by_node
     )
 end
 
@@ -415,10 +414,12 @@ function generate_lodf()
 
     lodf_values = Dict(
         (conn_cont, conn_mon) => Dict(:lodf => parameter_value(lodf_trial)) for (conn_cont, lodf_fn, tolerance) in (
-            (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont)) for
-            conn_cont in connection(has_ptdf=true)
+            (conn_cont, make_lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont)) for conn_cont in
+                                                                                                       connection(
+                has_ptdf=true,
+            )
         ) for (conn_mon, lodf_trial) in ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(has_ptdf=true)) if
-        conn_cont !== conn_mon #&& !isapprox(lodf_trial, 0; atol=tolerance)        
+            conn_cont !== conn_mon #&& !isapprox(lodf_trial, 0; atol=tolerance)        
     )
     lodf_rel_cls = RelationshipClass(
         :lodf_connection__connection,
@@ -461,18 +462,18 @@ function generate_variable_indexing_support()
         :unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb) for
-            (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node())) for
-            tb in node__temporal_block(node=n)
+            (unit=u, node=n, direction=d, temporal_block=tb)
+            for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
+            for tb in node__temporal_block(node=n)
         ),
     )
     connection__node__direction__temporal_block = RelationshipClass(
         :connection__node__direction__temporal_block,
         [:connection, :node, :direction, :temporal_block],
         unique(
-            (connection=conn, node=n, direction=d, temporal_block=tb) for
-            (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node())) for
-            tb in node__temporal_block(node=n)
+            (connection=conn, node=n, direction=d, temporal_block=tb)
+            for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
+            for tb in node__temporal_block(node=n)
         ),
     )
     node_with_state__temporal_block = RelationshipClass(
@@ -484,25 +485,25 @@ function generate_variable_indexing_support()
         :start_up_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(max_startup_ramp) for
-            n in members(ng) for tb in node__temporal_block(node=n)
+            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(max_startup_ramp)
+            for n in members(ng) for tb in node__temporal_block(node=n)
         ),
     )
     nonspin_ramp_up_unit__node__direction__temporal_block = RelationshipClass(
         :nonspin_ramp_up_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(max_res_startup_ramp) for
-            n in members(ng) for tb in node__temporal_block(node=n)
+            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(max_res_startup_ramp)
+            for n in members(ng) for tb in node__temporal_block(node=n)
         ),
     )
     ramp_up_unit__node__direction__temporal_block = RelationshipClass(
         :ramp_up_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(ramp_up_limit) for
-            n in members(ng) for tb in node__temporal_block(node=n) for (u, n, d, tb) in #setdiff(
-            unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb, _compact=false)#,
+            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(ramp_up_limit)
+            for n in members(ng) for tb in node__temporal_block(node=n) for (u, n, d, tb) in #setdiff(
+                unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb, _compact=false)#,
             # nonspin_ramp_up_unit__node__direction__temporal_block(
             #     unit=u, node=n, direction=d, temporal_block=tb, _compact=false
             # )
@@ -513,24 +514,24 @@ function generate_variable_indexing_support()
         :shut_down_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(max_shutdown_ramp) for
-            n in members(ng) for tb in node__temporal_block(node=n)
+            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(max_shutdown_ramp)
+            for n in members(ng) for tb in node__temporal_block(node=n)
         ),
     )
     nonspin_ramp_down_unit__node__direction__temporal_block = RelationshipClass(
         :nonspin_ramp_down_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(max_res_shutdown_ramp) for
-            n in members(ng) for tb in node__temporal_block(node=n)
+            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(max_res_shutdown_ramp)
+            for n in members(ng) for tb in node__temporal_block(node=n)
         ),
     )
     ramp_down_unit__node__direction__temporal_block = RelationshipClass(
         :ramp_down_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(ramp_down_limit) for
-            n in members(ng) for tb in node__temporal_block(node=n) for (u, n, d, tb) in setdiff(
+            (unit=u, node=n, direction=d, temporal_block=tb) for (u, ng, d) in indices(ramp_down_limit)
+            for n in members(ng) for tb in node__temporal_block(node=n) for (u, n, d, tb) in setdiff(
                 unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb, _compact=false),
             )
         ),
@@ -579,25 +580,25 @@ function expand_model__default_investment_temporal_block()
     add_relationships!(
         unit__investment_temporal_block,
         [
-            (unit=u, temporal_block=tb) for
-            u in setdiff(indices(candidate_units), unit__investment_temporal_block(temporal_block=anything)) for
-            tb in model__default_investment_temporal_block(model=anything)
+            (unit=u, temporal_block=tb)
+            for u in setdiff(indices(candidate_units), unit__investment_temporal_block(temporal_block=anything))
+            for tb in model__default_investment_temporal_block(model=anything)
         ],
     )
     add_relationships!(
         connection__investment_temporal_block,
         [
             (connection=conn, temporal_block=tb) for conn in
-            setdiff(indices(candidate_connections), connection__investment_temporal_block(temporal_block=anything)) for
-            tb in model__default_investment_temporal_block(model=anything)
+                setdiff(indices(candidate_connections), connection__investment_temporal_block(temporal_block=anything))
+            for tb in model__default_investment_temporal_block(model=anything)
         ],
     )
     add_relationships!(
         node__investment_temporal_block,
         [
-            (node=n, temporal_block=tb) for
-            n in setdiff(indices(candidate_storages), node__investment_temporal_block(temporal_block=anything)) for
-            tb in model__default_investment_temporal_block(model=anything)
+            (node=n, temporal_block=tb)
+            for n in setdiff(indices(candidate_storages), node__investment_temporal_block(temporal_block=anything))
+            for tb in model__default_investment_temporal_block(model=anything)
         ],
     )
 end
@@ -619,8 +620,8 @@ function expand_model__default_investment_stochastic_structure()
     add_relationships!(
         unit__investment_stochastic_structure,
         [
-            (unit=u, stochastic_structure=ss) for
-            u in setdiff(indices(candidate_units), unit__investment_stochastic_structure(stochastic_structure=anything))
+            (unit=u, stochastic_structure=ss) for u in
+                setdiff(indices(candidate_units), unit__investment_stochastic_structure(stochastic_structure=anything))
             for ss in model__default_investment_stochastic_structure(model=anything)
         ],
     )
@@ -636,9 +637,10 @@ function expand_model__default_investment_stochastic_structure()
     add_relationships!(
         node__investment_stochastic_structure,
         [
-            (node=n, stochastic_structure=ss) for n in
-            setdiff(indices(candidate_storages), node__investment_stochastic_structure(stochastic_structure=anything))
-            for ss in model__default_investment_stochastic_structure(model=anything)
+            (node=n, stochastic_structure=ss) for n in setdiff(
+                indices(candidate_storages),
+                node__investment_stochastic_structure(stochastic_structure=anything),
+            ) for ss in model__default_investment_stochastic_structure(model=anything)
         ],
     )
 end
@@ -658,17 +660,17 @@ function expand_model__default_stochastic_structure()
     add_relationships!(
         node__stochastic_structure,
         unique(
-            (node=n, stochastic_structure=ss) for
-            n in setdiff(node(), node__stochastic_structure(stochastic_structure=anything)) for
-            ss in model__default_stochastic_structure(model=anything)
+            (node=n, stochastic_structure=ss)
+            for n in setdiff(node(), node__stochastic_structure(stochastic_structure=anything))
+            for ss in model__default_stochastic_structure(model=anything)
         ),
     )
     add_relationships!(
         units_on__stochastic_structure,
         unique(
-            (unit=u, stochastic_structure=ss) for
-            u in setdiff(unit(), units_on__stochastic_structure(stochastic_structure=anything)) for
-            ss in model__default_stochastic_structure(model=anything)
+            (unit=u, stochastic_structure=ss)
+            for u in setdiff(unit(), units_on__stochastic_structure(stochastic_structure=anything))
+            for ss in model__default_stochastic_structure(model=anything)
         ),
     )
 end
@@ -687,15 +689,15 @@ function expand_model__default_temporal_block()
     add_relationships!(
         node__temporal_block,
         unique(
-            (node=n, temporal_block=tb) for n in setdiff(node(), node__temporal_block(temporal_block=anything)) for
-            tb in model__default_temporal_block(model=anything)
+            (node=n, temporal_block=tb) for n in setdiff(node(), node__temporal_block(temporal_block=anything))
+            for tb in model__default_temporal_block(model=anything)
         ),
     )
     add_relationships!(
         units_on__temporal_block,
         unique(
-            (unit=u, temporal_block=tb) for u in setdiff(unit(), units_on__temporal_block(temporal_block=anything)) for
-            tb in model__default_temporal_block(model=anything)
+            (unit=u, temporal_block=tb) for u in setdiff(unit(), units_on__temporal_block(temporal_block=anything))
+            for tb in model__default_temporal_block(model=anything)
         ),
     )
 end

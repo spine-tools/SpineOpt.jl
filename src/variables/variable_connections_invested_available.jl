@@ -32,8 +32,8 @@ function connections_invested_available_indices(
 )
     [
         (connection=conn, stochastic_scenario=s, t=t) for (conn, tb) in
-        connection__investment_temporal_block(connection=connection, temporal_block=temporal_block, _compact=false) for
-        (conn, s, t) in connection_investment_stochastic_time_indices(
+            connection__investment_temporal_block(connection=connection, temporal_block=temporal_block, _compact=false)
+        for (conn, s, t) in connection_investment_stochastic_time_indices(
             m;
             connection=conn,
             stochastic_scenario=stochastic_scenario,

@@ -31,8 +31,8 @@ function add_constraint_min_nonspin_ramp_down!(m::Model)
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             +sum(
-                nonspin_ramp_down_unit_flow[u, n, d, s, t] for
-                (u, n, d, s, t) in nonspin_ramp_down_unit_flow_indices(
+                nonspin_ramp_down_unit_flow[u, n, d, s, t]
+                for (u, n, d, s, t) in nonspin_ramp_down_unit_flow_indices(
                     m;
                     unit=u,
                     node=ng,
@@ -45,8 +45,8 @@ function add_constraint_min_nonspin_ramp_down!(m::Model)
                 nonspin_units_shut_down[u, n, s, t] *
                 min_res_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
                 unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-                unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] for
-                (u, n, s, t) in nonspin_units_shut_down_indices(
+                unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                for (u, n, s, t) in nonspin_units_shut_down_indices(
                     m;
                     unit=u,
                     node=ng,
@@ -76,10 +76,10 @@ function constraint_min_nonspin_ramp_down_indices(
     t=anything,
 )
     unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t) for
-        (u, ng, d) in indices(min_res_shutdown_ramp) if u in unit && ng in node && d in direction for
-        t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng))), t=t)) for
-        path in active_stochastic_paths(
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
+        for (u, ng, d) in indices(min_res_shutdown_ramp) if u in unit && ng in node && d in direction
+        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng))), t=t))
+        for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario for ind in Iterators.flatten((
                     nonspin_ramp_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),

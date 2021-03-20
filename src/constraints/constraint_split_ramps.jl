@@ -40,23 +40,23 @@ function add_constraint_split_ramps!(m::Model)
             m,
             expr_sum(
                 +unit_flow[u, n, d, s, t_after] for (u, n, d, s, t_after) in
-                unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after) if
-                !is_reserve_node(node=n);
+                    unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after) if
+                    !is_reserve_node(node=n);
                 init=0,
             ) + expr_sum(
                 +unit_flow[u, n, d, s, t_after] for (u, n, d, s, t_after) in
-                unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after) if
-                is_reserve_node(node=n) && upward_reserve(node=n);
+                    unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after) if
+                    is_reserve_node(node=n) && upward_reserve(node=n);
                 init=0,
             ) - expr_sum(
                 +unit_flow[u, n, d, s, t_before] for (u, n, d, s, t_before) in
-                unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_before) if
-                !is_reserve_node(node=n);
+                    unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_before) if
+                    !is_reserve_node(node=n);
                 init=0,
             ) - expr_sum(
                 +unit_flow[u, n, d, s, t_after] for (u, n, d, s, t_after) in
-                unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after) if
-                is_reserve_node(node=n) && downward_reserve(node=n);
+                    unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after) if
+                    is_reserve_node(node=n) && downward_reserve(node=n);
                 init=0,
             ) ==
             expr_sum(
@@ -92,8 +92,8 @@ function constraint_split_ramps_indices(
     t_after=anything,
 )
     unique(
-        (unit=u, node=n, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after) for
-        (u, n, d, s, t_after) in unique(
+        (unit=u, node=n, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (u, n, d, s, t_after) in unique(
             Iterators.flatten((
                 ramp_up_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after),
                 start_up_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after),
@@ -102,11 +102,11 @@ function constraint_split_ramps_indices(
                 start_up_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after),
                 nonspin_ramp_down_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after),
             )),
-        ) for (n, t_before, t_after) in node_dynamic_time_indices(m; node=n, t_before=t_before, t_after=t_after) for
-        path in active_stochastic_paths(
+        ) for (n, t_before, t_after) in node_dynamic_time_indices(m; node=n, t_before=t_before, t_after=t_after)
+        for path in active_stochastic_paths(
             unique(
-                ind.stochastic_scenario for
-                ind in unit_flow_indices(m; unit=u, node=n, direction=d, t=[t_before, t_after])
+                ind.stochastic_scenario
+                for ind in unit_flow_indices(m; unit=u, node=n, direction=d, t=[t_before, t_after])
             ),
         ) if path == stochastic_path || path in stochastic_path
     )
