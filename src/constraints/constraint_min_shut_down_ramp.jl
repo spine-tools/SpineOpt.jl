@@ -30,7 +30,7 @@ function add_constraint_min_shut_down_ramp!(m::Model)
     m.ext[:constraints][:min_shut_down_ramp] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            +sum(
+            + sum(
                 shut_down_unit_flow[u, n, d, s, t] for (u, n, d, s, t) in shut_down_unit_flow_indices(
                     m;
                     unit=u,
@@ -40,7 +40,7 @@ function add_constraint_min_shut_down_ramp!(m::Model)
                     t=t_in_t(m; t_long=t),
                 )
             ) >=
-            +sum(
+            + sum(
                 units_shut_down[u, s, t] *
                 min_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
                 unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *

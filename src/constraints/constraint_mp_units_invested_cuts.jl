@@ -33,8 +33,8 @@ function add_constraint_mp_units_invested_cuts!(m::Model)
     m.ext[:constraints][:mp_units_invested_cut] = Dict(
         (benders_iteration=bi, t=t1) => @constraint(
             m,
-            +mp_objective_lowerbound[m1, t1] >=
-            +sp_objective_value_bi(benders_iteration=bi)
+            + mp_objective_lowerbound[m1, t1] >=
+            + sp_objective_value_bi(benders_iteration=bi)
             # operating cost benefit from investments in units
             +
             expr_sum(
@@ -46,8 +46,8 @@ function add_constraint_mp_units_invested_cuts!(m::Model)
             +
             expr_sum(
                 (
-                    +connections_invested_available[c, s, t] -
-                    connections_invested_available_bi(benders_iteration=bi, connection=c, t=t)
+                    + connections_invested_available[c, s, t]
+                    - connections_invested_available_bi(benders_iteration=bi, connection=c, t=t)
                 ) * connections_invested_available_mv(benders_iteration=bi, connection=c, t=t)
                 for (c, s, t) in connections_invested_available_indices(m);
                 init=0,
@@ -56,8 +56,8 @@ function add_constraint_mp_units_invested_cuts!(m::Model)
             +
             expr_sum(
                 (
-                    +storages_invested_available[n, s, t] -
-                    storages_invested_available_bi(benders_iteration=bi, node=n, t=t)
+                    + storages_invested_available[n, s, t]
+                    - storages_invested_available_bi(benders_iteration=bi, node=n, t=t)
                 ) * storages_invested_available_mv(benders_iteration=bi, node=n, t=t)
                 for (n, s, t) in storages_invested_available_indices(m);
                 init=0,

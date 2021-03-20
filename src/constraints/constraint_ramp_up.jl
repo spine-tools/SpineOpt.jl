@@ -29,7 +29,7 @@ function add_constraint_ramp_up!(m::Model)
     m.ext[:constraints][:ramp_up] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            +sum(
+            + sum(
                 ramp_up_unit_flow[u, n, d, s, t] * duration(t) for (u, n, d, s, t) in ramp_up_unit_flow_indices(
                     m;
                     unit=u,
@@ -39,7 +39,7 @@ function add_constraint_ramp_up!(m::Model)
                     stochastic_scenario=s,
                 )
             ) <=
-            +sum(
+            + sum(
                 (units_on[u, s, t1] - units_started_up[u, s, t1]) *
                 min(duration(t), duration(t1)) * ## conversion units_on to unit_flow resolution
                 ramp_up_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *

@@ -30,7 +30,7 @@ function add_constraint_candidate_connection_flow_lb!(m::Model)
     m.ext[:constraints][:candidate_connection_flow_lb] = Dict(
         (connection=conn, node=n, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            +expr_sum(
+            + expr_sum(
                 connection_flow[conn, n, d, s, t] * duration(t)
                 for (conn, n, d, s, t) in connection_flow_indices(
                     m;
@@ -42,7 +42,7 @@ function add_constraint_candidate_connection_flow_lb!(m::Model)
                 );
                 init=0,
             ) >=
-            +expr_sum(
+            + expr_sum(
                 connection_intact_flow[conn, n, d, s, t] * duration(t)
                 for (conn, n, d, s, t) in connection_intact_flow_indices(
                     m;
@@ -53,8 +53,8 @@ function add_constraint_candidate_connection_flow_lb!(m::Model)
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
-            ) -
-            (
+            )
+            - (
                 candidate_connections(connection=conn) - expr_sum(
                     connections_invested_available[conn, s, t1]
                     for (conn, s, t1) in connections_invested_available_indices(

@@ -28,8 +28,8 @@ function add_constraint_minimum_operating_point!(m::Model)
     m.ext[:constraints][:minimum_operating_point] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            +expr_sum(
-                +unit_flow[u, n, d, s, t] for (u, n, d, s, t) in unit_flow_indices(
+            + expr_sum(
+                + unit_flow[u, n, d, s, t] for (u, n, d, s, t) in unit_flow_indices(
                     m;
                     unit=u,
                     node=ng,
@@ -39,8 +39,8 @@ function add_constraint_minimum_operating_point!(m::Model)
                 );
                 init=0,
             ) * duration(t) >=
-            +expr_sum(
-                +units_on[u, s, t1] *
+            + expr_sum(
+                + units_on[u, s, t1] *
                 min(duration(t), duration(t1)) *
                 minimum_operating_point[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
                 unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *

@@ -31,9 +31,9 @@ function add_constraint_connection_flow_lodf!(m::Model)
             -1 <=
             (
                 # flow in monitored connection
-                +expr_sum(
-                    +connection_flow[conn_mon, n_mon_to, direction(:to_node), s, t_short] -
-                    connection_flow[conn_mon, n_mon_to, direction(:from_node), s, t_short]
+                + expr_sum(
+                    + connection_flow[conn_mon, n_mon_to, direction(:to_node), s, t_short]
+                    - connection_flow[conn_mon, n_mon_to, direction(:from_node), s, t_short]
                     for (conn_mon, n_mon_to, d, s, t_short) in connection_flow_indices(
                         m;
                         connection=conn_mon,
@@ -44,10 +44,9 @@ function add_constraint_connection_flow_lodf!(m::Model)
                     init=0,
                 )
                 # excess flow due to outage on contingency connection
-                +
-                lodf(connection1=conn_cont, connection2=conn_mon) * expr_sum(
-                    +connection_flow[conn_cont, n_cont_to, direction(:to_node), s, t_short] -
-                    connection_flow[conn_cont, n_cont_to, direction(:from_node), s, t_short]
+                + lodf(connection1=conn_cont, connection2=conn_mon) * expr_sum(
+                    + connection_flow[conn_cont, n_cont_to, direction(:to_node), s, t_short]
+                    - connection_flow[conn_cont, n_cont_to, direction(:from_node), s, t_short]
                     for (conn_cont, n_cont_to, d, s, t_short) in connection_flow_indices(
                         m;
                         connection=conn_cont,
@@ -58,7 +57,7 @@ function add_constraint_connection_flow_lodf!(m::Model)
                     init=0,
                 )
             ) / minimum(
-                +connection_emergency_capacity[(
+                + connection_emergency_capacity[(
                     connection=conn_mon,
                     node=n_mon,
                     direction=d,

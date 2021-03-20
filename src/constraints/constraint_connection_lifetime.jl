@@ -28,13 +28,13 @@ function add_constraint_connection_lifetime!(m::Model)
     m.ext[:constraints][:connection_lifetime] = Dict(
         (connection=conn, stochastic_path=s, t=t) => @constraint(
             m,
-            +expr_sum(
-                +connections_invested_available[conn, s, t] for (conn, s, t) in
+            + expr_sum(
+                + connections_invested_available[conn, s, t] for (conn, s, t) in
                     connections_invested_available_indices(m; connection=conn, stochastic_scenario=s, t=t);
                 init=0,
             ) >=
-            +sum(
-                +connections_invested[conn, s_past, t_past]
+            + sum(
+                + connections_invested[conn, s_past, t_past]
                 for (conn, s_past, t_past) in connections_invested_available_indices(
                     m;
                     connection=conn,

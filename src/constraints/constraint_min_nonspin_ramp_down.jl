@@ -30,7 +30,7 @@ function add_constraint_min_nonspin_ramp_down!(m::Model)
     m.ext[:constraints][:min_nonspin_shut_down_ramp] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            +sum(
+            + sum(
                 nonspin_ramp_down_unit_flow[u, n, d, s, t]
                 for (u, n, d, s, t) in nonspin_ramp_down_unit_flow_indices(
                     m;
@@ -41,7 +41,7 @@ function add_constraint_min_nonspin_ramp_down!(m::Model)
                     t=t_in_t(m; t_long=t),
                 )
             ) >=
-            +expr_sum(
+            + expr_sum(
                 nonspin_units_shut_down[u, n, s, t] *
                 min_res_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
                 unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *

@@ -115,8 +115,8 @@ function check_model__node__stochastic_structure()
     _check(
         isempty(errors),
         "invalid `node__stochastic_structure` or `model__stochastic_structure` definitions for `(model, node)` pair(s):
-        $(join(errors, ", ", " and ")) " *
-        "- each `node` must be related to one and only one `stochastic_structure` per `model`",
+        $(join(errors, ", ", " and ")) "
+        * "- each `node` must be related to one and only one `stochastic_structure` per `model`",
     )
 end
 
@@ -135,8 +135,8 @@ function check_model__unit__stochastic_structure()
     _check(
         isempty(errors),
         "invalid `units_on__stochastic_structure` or `model__stochastic_structure` definitions for `(model, unit)`
-        pair(s): $(join(errors, ", ", " and ")) " *
-        "- each `unit` must be related to one and only one `stochastic_structure` per `model`",
+        pair(s): $(join(errors, ", ", " and ")) "
+        * "- each `unit` must be related to one and only one `stochastic_structure` per `model`",
     )
 end
 
@@ -152,8 +152,8 @@ function check_minimum_operating_point_unit_capacity()
     ]
     _check(
         isempty(error_indices),
-        "missing `unit_capacity` value for indices: $(join(error_indices, ", ", " and ")) " *
-        "- `unit_capacity` must be specified where `minimum_operating_point` is",
+        "missing `unit_capacity` value for indices: $(join(error_indices, ", ", " and ")) "
+        * "- `unit_capacity` must be specified where `minimum_operating_point` is",
     )
 end
 

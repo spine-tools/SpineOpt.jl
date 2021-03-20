@@ -31,7 +31,7 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
     m.ext[:constraints][ratio.name] = Dict(
         (unit=u, node1=ng1, node2=ng2, stochastic_path=s, t=t) => sense_constraint(
             m,
-            +expr_sum(
+            + expr_sum(
                 unit_flow[u, n1, d1, s, t_short] * duration(t_short)
                 for (u, n1, d1, s, t_short) in unit_flow_indices(
                     m;
@@ -44,7 +44,7 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
                 init=0,
             ),
             sense,
-            +expr_sum(
+            + expr_sum(
                 unit_flow[u, n2, d2, s, t_short] *
                 duration(t_short) *
                 ratio[(unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)]

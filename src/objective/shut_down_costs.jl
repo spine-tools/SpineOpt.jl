@@ -28,7 +28,7 @@ function shut_down_costs(m::Model, t1)
     @expression(
         m,
         expr_sum(
-            +units_shut_down[u, s, t] *
+            + units_shut_down[u, s, t] *
             shut_down_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] *
             prod(weight(temporal_block=blk) for blk in blocks(t)) *
             unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)

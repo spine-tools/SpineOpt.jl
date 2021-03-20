@@ -31,10 +31,9 @@ function add_constraint_nodal_balance!(m::Model)
         (node=n, stochastic_scenario=s, t=t) => sense_constraint(
             m,
             # Net injection
-            +node_injection[n, s, t]
+            + node_injection[n, s, t]
             # Commodity flows from connections
-            +
-            expr_sum(
+            + expr_sum(
                 connection_flow[conn, n, d, s, t] for (conn, n, d, s, t) in connection_flow_indices(
                     m;
                     node=n,
@@ -45,8 +44,7 @@ function add_constraint_nodal_balance!(m::Model)
                 init=0,
             )
             # Commodity flows to connections
-            -
-            expr_sum(
+            - expr_sum(
                 connection_flow[conn, n, d, s, t] for (conn, n, d, s, t) in connection_flow_indices(
                     m;
                     node=n,
@@ -57,8 +55,7 @@ function add_constraint_nodal_balance!(m::Model)
                 init=0,
             )
             # slack variable - only exists if slack_penalty is defined
-            +
-            get(node_slack_pos, (n, s, t), 0) - get(node_slack_neg, (n, s, t), 0),
+            + get(node_slack_pos, (n, s, t), 0) - get(node_slack_neg, (n, s, t), 0),
             eval(nodal_balance_sense(node=n)),
             0,
         ) for (n, internal_nodes, s, t) in (

@@ -27,7 +27,7 @@ function connection_investment_costs(m::Model, t1)
     t0 = startref(current_window(m))
     @expression(
         m,
-        +expr_sum(
+        + expr_sum(
             connections_invested[c, s, t] *
             prod(weight(temporal_block=blk) for blk in blocks(t)) *
             connection_investment_cost[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)] *

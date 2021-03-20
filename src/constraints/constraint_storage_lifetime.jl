@@ -28,13 +28,13 @@ function add_constraint_storage_lifetime!(m::Model)
     m.ext[:constraints][:storage_lifetime] = Dict(
         (node=n, stochastic_path=s, t=t) => @constraint(
             m,
-            +expr_sum(
-                +storages_invested_available[n, s, t]
+            + expr_sum(
+                + storages_invested_available[n, s, t]
                 for (n, s, t) in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t);
                 init=0,
             ) >=
-            +sum(
-                +storages_invested[n, s_past, t_past]
+            + sum(
+                + storages_invested[n, s_past, t_past]
                 for (n, s_past, t_past) in storages_invested_available_indices(
                     m;
                     node=n,

@@ -27,7 +27,7 @@ function fixed_om_costs(m, t1)
     @expression(
         m,
         expr_sum(
-            +unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
+            + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
             number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] *
             fom_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] *
             prod(weight(temporal_block=blk) for blk in blocks(t)) *

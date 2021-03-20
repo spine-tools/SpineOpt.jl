@@ -41,7 +41,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
             constraint[(unit=u, node=ng, direction=d, stochastic_path=s, t=t_before)] = @constraint(
                 m,
                 expr_sum(
-                    +unit_flow[u, n, d, s, t_before1] * duration(t_before1)
+                    + unit_flow[u, n, d, s, t_before1] * duration(t_before1)
                     for (u, n, d, s, t_before1) in unit_flow_indices(
                         m;
                         unit=u,
@@ -52,7 +52,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     );
                     init=0,
                 ) <=
-                +expr_sum(
+                + expr_sum(
                     (units_on[u, s, t_before1] - units_started_up[u, s, t_before1] - units_shut_down[u, s, t_after1]) *
                     min(duration(t_before1), duration(t_before)) *
                     unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before)] *
@@ -120,7 +120,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
             constraint[(unit=u, node=ng, direction=d, stochastic_path=s, t=t_before, i=1)] = @constraint(
                 m,
                 expr_sum(
-                    +unit_flow[u, n, d, s, t] * duration(t) for (u, n, d, s, t) in unit_flow_indices(
+                    + unit_flow[u, n, d, s, t] * duration(t) for (u, n, d, s, t) in unit_flow_indices(
                         m;
                         unit=u,
                         node=ng,
@@ -130,7 +130,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     );
                     init=0,
                 ) <=
-                +expr_sum(
+                + expr_sum(
                     (units_on[u, s, t_before1] - units_shut_down[u, s, t_after1]) *
                     min(duration(t_before1), duration(t_before)) *
                     unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before)] *
@@ -149,7 +149,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     units_started_up[u, s, t_before1] *
                     min(duration(t_before1), duration(t_before)) *
                     max(
-                        +max_shutdown_ramp[(
+                        + max_shutdown_ramp[(
                             unit=u,
                             node=ng,
                             direction=d,
@@ -205,7 +205,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
             constraint[(unit=u, node=ng, direction=d, stochastic_path=s, t=t_before, i=2)] = @constraint(
                 m,
                 expr_sum(
-                    +unit_flow[u, n, d, s, t] * min(duration(t), duration(t_before))
+                    + unit_flow[u, n, d, s, t] * min(duration(t), duration(t_before))
                     for (u, n, d, s, t) in unit_flow_indices(
                         m;
                         unit=u,
@@ -216,7 +216,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     );
                     init=0,
                 ) <=
-                +expr_sum(
+                + expr_sum(
                     (units_on[u, s, t_before1] - units_started_up[u, s, t_before1]) *
                     min(duration(t_before1), duration(t_before)) *
                     unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before)] *

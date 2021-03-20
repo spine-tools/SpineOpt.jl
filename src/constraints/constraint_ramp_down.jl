@@ -29,7 +29,7 @@ function add_constraint_ramp_down!(m::Model)
     m.ext[:constraints][:ramp_down] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            +sum(
+            + sum(
                 ramp_down_unit_flow[u, n, d, s, t] * duration(t)
                 for (u, n, d, s, t) in ramp_down_unit_flow_indices(
                     m;
@@ -40,10 +40,10 @@ function add_constraint_ramp_down!(m::Model)
                     stochastic_scenario=s,
                 )
             ) <=
-            +sum(
+            + sum(
                 (
                     units_on[u, s, t1] - units_shut_down[u, s, t1] - expr_sum(
-                        +nonspin_units_shut_down[u, n, s, t1] for (u, n, s, t1) in
+                        + nonspin_units_shut_down[u, n, s, t1] for (u, n, s, t1) in
                             nonspin_units_shut_down_indices(m; unit=u, stochastic_scenario=s, t=t1) if
                             is_reserve_node(node=n) && downward_reserve(node=n);
                         init=0,

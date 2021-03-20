@@ -27,7 +27,7 @@ function res_start_up_costs(m::Model, t1)
     @expression(
         m,
         expr_sum(
-            +nonspin_units_started_up[u, n, s, t] *
+            + nonspin_units_started_up[u, n, s, t] *
             res_start_up_cost[(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)] *
             prod(weight(temporal_block=blk) for blk in blocks(t)) *
             unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)

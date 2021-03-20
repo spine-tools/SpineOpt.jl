@@ -40,7 +40,7 @@ function save_connection_avg_throughflow!(m::Model)
     m.ext[:values][:connection_avg_throughflow] = Dict(
         (connection=conn, stochastic_path=stochastic_path, t=t) =>
             0.5 * (
-                +sum(
+                + sum(
                     JuMP.value(connection_flow[conn, n_to, d, s, t])
                     for (conn, n_to, d, s, t) in connection_flow_indices(
                         m;
@@ -113,7 +113,7 @@ function save_connection_avg_intact_throughflow!(m::Model)
     m.ext[:values][:connection_avg_intact_throughflow] = Dict(
         (connection=conn, stochastic_path=stochastic_path, t=t) =>
             0.5 * (
-                +sum(
+                + sum(
                     JuMP.value(connection_intact_flow[conn, n_to, d, s, t])
                     for (conn, n_to, d, s, t) in connection_intact_flow_indices(
                         m;

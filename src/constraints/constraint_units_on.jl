@@ -25,7 +25,7 @@ Limit the units_on by the number of available units.
 function add_constraint_units_on!(m::Model)
     @fetch units_on, units_available = m.ext[:variables]
     m.ext[:constraints][:units_on] = Dict(
-        (unit=u, stochastic_scenario=s, t=t) => @constraint(m, +units_on[u, s, t] <= +units_available[u, s, t])
+        (unit=u, stochastic_scenario=s, t=t) => @constraint(m, + units_on[u, s, t] <= + units_available[u, s, t])
         for (u, s, t) in units_on_indices(m)
     )
 end

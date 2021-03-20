@@ -27,12 +27,12 @@ function add_constraint_connection_intact_flow_ptdf!(m::Model)
     m.ext[:constraints][:connection_intact_flow_ptdf] = Dict(
         (connection=conn, node=n_to, stochastic_path=s, t=t) => @constraint(
             m,
-            +expr_sum(
-                +get(connection_intact_flow, (conn, n_to, direction(:to_node), s, t), 0) -
-                get(connection_intact_flow, (conn, n_to, direction(:from_node), s, t), 0) for s in s;
+            + expr_sum(
+                + get(connection_intact_flow, (conn, n_to, direction(:to_node), s, t), 0)
+                - get(connection_intact_flow, (conn, n_to, direction(:from_node), s, t), 0) for s in s;
                 init=0,
             ) ==
-            +expr_sum(
+            + expr_sum(
                 ptdf(connection=conn, node=n) * node_injection[n, s, t] for (conn, n) in indices(ptdf; connection=conn)
                 for (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t) if
                     !isapprox(ptdf(connection=conn, node=n), 0; atol=node_ptdf_threshold(node=n));
