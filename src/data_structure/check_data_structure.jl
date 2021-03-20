@@ -44,7 +44,7 @@ function check_data_structure(; log_level=3)
     check_model__node__stochastic_structure()
     check_model__unit__stochastic_structure()
     check_minimum_operating_point_unit_capacity()
-    check_islands(; log_level=log_level)
+    #check_islands(; log_level=log_level)
     check_rolling_branching()
 end
 
@@ -90,8 +90,8 @@ Check that each `node` has at least one `temporal_block` connected to it in each
 """
 function check_model__node__temporal_block()
     errors = [
-        (m, n) for m in model(model_type=:spineopt_operations)
-        for n in node() if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m)))
+        (m, n) for m in model(model_type=:spineopt_operations) for
+        n in node() if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m)))
     ]
     _check(
         isempty(errors),
@@ -109,9 +109,8 @@ This is deduced from the `model__stochastic_structure` and `node__stochastic_str
 """
 function check_model__node__stochastic_structure()
     errors = [
-        (m, n) for m in model(model_type=:spineopt_operations)
-        for
-        n in node() if length(intersect(node__stochastic_structure(node=n), model__stochastic_structure(model=m))) != 1
+        (m, n) for m in model(model_type=:spineopt_operations) for n in node() if
+        length(intersect(node__stochastic_structure(node=n), model__stochastic_structure(model=m))) != 1
     ]
     _check(
         isempty(errors),
@@ -130,9 +129,7 @@ This is deduced from the `model__stochastic_strucutre` and `units_on__stochastic
 """
 function check_model__unit__stochastic_structure()
     errors = [
-        (m, u) for m in model(model_type=:spineopt_operations)
-        for
-        u in unit() if
+        (m, u) for m in model(model_type=:spineopt_operations) for u in unit() if
         length(intersect(units_on__stochastic_structure(unit=u), model__stochastic_structure(model=m))) != 1
     ]
     _check(
@@ -150,8 +147,8 @@ Check if every defined `minimum_operating_point` parameter has a corresponding `
 """
 function check_minimum_operating_point_unit_capacity()
     error_indices = [
-        (u, n, d)
-        for (u, n, d) in indices(minimum_operating_point) if unit_capacity(unit=u, node=n, direction=d) === nothing
+        (u, n, d) for
+        (u, n, d) in indices(minimum_operating_point) if unit_capacity(unit=u, node=n, direction=d) === nothing
     ]
     _check(
         isempty(error_indices),
@@ -227,18 +224,16 @@ function check_rolling_branching()
         if !isnothing(roll_forward(model=m))
             for ss in model__stochastic_structure(model=m)
                 cond = all(
-                    stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen)
-                    >=
-                    roll_forward(model=m)
-                    for scen in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
-                    if !isnothing(stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen))
+                    stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen) >= roll_forward(model=m) for
+                    scen in stochastic_structure__stochastic_scenario(stochastic_structure=ss) if
+                    !isnothing(stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen))
                 )
                 _check(
                     cond,
                     """
                     Branching of `stochastic_structures` before `model` `roll_forward` isn't supported!
                     Please check the `stochastic_scenario_end` parameters of `stochastic_structure` `$(ss)`.
-                    """
+                    """,
                 )
             end
         end

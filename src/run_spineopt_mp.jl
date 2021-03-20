@@ -92,8 +92,8 @@ function rerun_spineopt_mp(
     @log log_level 1 "Window 1: $(current_window(m))"
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
     init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
-    duals_calculation_needed(m) 
-    duals_calculation_needed(mp) 
+    duals_calculation_needed(m)
+    duals_calculation_needed(mp)
 
     max_benders_iterations = max_iterations(model=mp.ext[:instance])
 
@@ -147,7 +147,6 @@ function rerun_spineopt_mp(
     m, mp
 end
 
-
 """
 Initialize the given model for SpineOpt Master Problem: add variables, fix the necessary variables, 
 add constraints and set objective.
@@ -163,7 +162,6 @@ function init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 2 "Setting MP objective..." set_mp_objective!(m)
 end
 
-
 """
 Add SpineOpt Master Problem variables to the given model.
 """
@@ -173,26 +171,30 @@ function add_mp_variables!(m; log_level=3)
     @timelog log_level 3 "- [variable_mp_units_invested_available]" add_variable_units_invested_available!(m)
     @timelog log_level 3 "- [variable_mp_units_mothballed]" add_variable_units_mothballed!(m)
     @timelog log_level 3 "- [variable_mp_connections_invested]" add_variable_connections_invested!(m)
-    @timelog log_level 3 "- [variable_mp_connections_invested_available]" add_variable_connections_invested_available!(m)
+    @timelog log_level 3 "- [variable_mp_connections_invested_available]" add_variable_connections_invested_available!(
+        m,
+    )
     @timelog log_level 3 "- [variable_mp_connections_decommissioned]" add_variable_connections_decommissioned!(m)
     @timelog log_level 3 "- [variable_mp_storages_invested]" add_variable_storages_invested!(m)
     @timelog log_level 3 "- [variable_mp_storages_invested_available]" add_variable_storages_invested_available!(m)
     @timelog log_level 3 "- [variable_mp_storages_decommissioned]" add_variable_storages_decommissioned!(m)
 end
 
-
 """
 Add SpineOpt master problem constraints to the given model.
 """
 function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
-
     @timelog log_level 3 "- [constraint_mp_objective]" add_constraint_mp_objective!(m)
     @timelog log_level 3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(m)
     @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
     @timelog log_level 3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)
     @timelog log_level 3 "- [constraint_connection_lifetime]" add_constraint_connection_lifetime!(m)
-    @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(m)
-    @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(m)
+    @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(
+        m,
+    )
+    @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(
+        m,
+    )
     @timelog log_level 3 "- [constraint_storage_lifetime]" add_constraint_storage_lifetime!(m)
     @timelog log_level 3 "- [constraint_storages_invested_transition]" add_constraint_storages_invested_transition!(m)
     @timelog log_level 3 "- [constraint_storages_invested_available]" add_constraint_storages_invested_available!(m)
@@ -205,12 +207,10 @@ function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
     end
 end
 
-
 """
 Update (readd) SpineOpt master problem constraints that involve new objects (update doesn't work).
 """
 function add_mp_cuts!(m; log_level=3)
-
     @timelog log_level 3 " - [constraint_mp_units_invested_cuts]" add_constraint_mp_units_invested_cuts!(m)
 
     # Name constraints
@@ -219,7 +219,6 @@ function add_mp_cuts!(m; log_level=3)
         set_name(con, string(:mp_units_invested_cut, inds))
     end
 end
-
 
 function save_mp_model_results!(outputs, m)
     save_variable_values!(m)

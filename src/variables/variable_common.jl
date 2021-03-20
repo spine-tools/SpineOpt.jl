@@ -49,8 +49,8 @@ function add_variable!(
     )
     var =
         m.ext[:variables][name] = Dict(
-            ind => _variable(m, name, ind, lb, ub, bin, int)
-            for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+            ind => _variable(m, name, ind, lb, ub, bin, int) for
+            ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
         )
     if !isempty(SpineOpt.indices(representative_periods_mapping))
         map_to_representative_periods!(m, m.ext[:variables][name], indices)
@@ -66,19 +66,15 @@ time slice returns the variable with the corresponding representative
 time slice.
 """
 function map_to_representative_periods!(m::Model, var::Dict, var_indices::Function)
-    @show "not here 1"
-    for ind in setdiff(var_indices(m,temporal_block=anything),var_indices(m))
+    for ind in setdiff(var_indices(m, temporal_block=anything), var_indices(m))
         # Get indices which aren't time slices
-        # @show "not here 2"
         Keys = [k for k in keys(ind) if !(typeof(ind[k]) <: TimeSlice)]
         Values = [ind[k] for k in Keys]
         non_t_slice_ind = (; zip(Keys, Values)...) #this gets everything, but the timeslice index...
-        # @show "not here 3"
-        ind_rep = first(var_indices(m;non_t_slice_ind...,t=representative_time_slices(m)[to_time_slice(m,t=ind.t)]))
+        ind_rep = first(var_indices(m; non_t_slice_ind..., t=representative_time_slices(m)[to_time_slice(m, t=ind.t)]))
         var[ind] = var[ind_rep]
     end
 end
-
 
 """
     _base_name(name, ind)

@@ -30,9 +30,7 @@ function add_constraint_res_minimum_node_state!(m::Model)
         (node=n_stor, stochastic_path=s, t=t_after) => @constraint(
             m,
             expr_sum(
-                node_state[n_stor, s, t_before]
-                for
-                (n_stor, s, t_before) in
+                node_state[n_stor, s, t_before] for (n_stor, s, t_before) in
                 node_state_indices(m; node=n_stor, stochastic_scenario=s, t=t_before_t(m; t_after=t_after));
                 init=0,
             ) >=
@@ -49,17 +47,13 @@ function add_constraint_res_minimum_node_state!(m::Model)
                     stochastic_scenario=s,
                     analysis_time=t0,
                     t=t_after,
-                )]
-                for
-                (u, n_stor, d, s, t_after) in unit_flow_indices(
+                )] for (u, n_stor, d, s, t_after) in unit_flow_indices(
                     m;
                     node=n_stor,
                     direction=direction(:from_node),
                     stochastic_scenario=s,
                     t=t_in_t(m; t_long=t_after),
-                )
-                for
-                (u, n_res, d, s, t_after) in unit_flow_indices(
+                ) for (u, n_res, d, s, t_after) in unit_flow_indices(
                     m;
                     unit=u,
                     node=indices(minimum_reserve_activation_time),
@@ -67,15 +61,11 @@ function add_constraint_res_minimum_node_state!(m::Model)
                     t=t_in_t(m; t_long=t_after),
                 )
                 # NOTE: the below only works if only theres only 1 conventional commodity
-                for
-                (u, n_conv, n_stor) in indices(fix_ratio_out_in_unit_flow; unit=u, node2=n_stor) if
+                for (u, n_conv, n_stor) in indices(fix_ratio_out_in_unit_flow; unit=u, node2=n_stor) if
                 is_reserve_node(node=n_res) &&
-                realize(minimum_reserve_activation_time[(
-                    node=n_res,
-                    stochastic_scenario=s,
-                    analysis_time=t0,
-                    t=t_after,
-                )]) !== nothing;  # NOTE: this is an additional sanity check
+                realize(
+                    minimum_reserve_activation_time[(node=n_res, stochastic_scenario=s, analysis_time=t0, t=t_after)],
+                ) !== nothing;  # NOTE: this is an additional sanity check
                 init=0,
             )
         ) for (n_stor, s, t_after) in constraint_res_minimum_node_state_indices(m)
@@ -98,16 +88,15 @@ function constraint_res_minimum_node_state_indices(m::Model; node=anything, stoc
         (node=n_stor, stochastic_path=path, t=t)
         #TODO: make this more instuitive
         for
-        (u, n_aFRR, d, s, t) in unit_flow_indices(m; node=indices(minimum_reserve_activation_time), t=t)
-        for (u, n_stor, d, s, t) in unit_flow_indices(m; unit=u, node=node, t=t) if has_state(node=n_stor)
-        for
-        path in active_stochastic_paths(unique(
-            ind.stochastic_scenario
-            for
-            ind in Iterators.flatten((
-                node_state_indices(m; node=n_stor, t=t),
-                unit_flow_indices(m; unit=u, node=n_aFRR, direction=d, t=t),
-            ))
-        )) if path == stochastic_path || path in stochastic_path
+        (u, n_aFRR, d, s, t) in unit_flow_indices(m; node=indices(minimum_reserve_activation_time), t=t) for
+        (u, n_stor, d, s, t) in unit_flow_indices(m; unit=u, node=node, t=t) if has_state(node=n_stor) for
+        path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario for ind in Iterators.flatten((
+                    node_state_indices(m; node=n_stor, t=t),
+                    unit_flow_indices(m; unit=u, node=n_aFRR, direction=d, t=t),
+                ))
+            ),
+        ) if path == stochastic_path || path in stochastic_path
     )
 end

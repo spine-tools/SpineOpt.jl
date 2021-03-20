@@ -49,7 +49,6 @@ function Base.convert(::Type{GenericAffExpr{Call,VariableRef}}, expr::GenericAff
     GenericAffExpr{Call,VariableRef}(constant, terms)
 end
 
-
 # TODO: try to get rid of this in favor of JuMP's generic implementation
 function Base.show(io::IO, e::GenericAffExpr{Call,VariableRef})
     str = string(join([string(coef, " * ", var) for (var, coef) in e.terms], " + "), " + ", e.constant)

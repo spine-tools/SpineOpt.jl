@@ -10,7 +10,7 @@ SpineOpt.write_concept_reference_file(
     "object_classes.md",
     ["object_classes"],
     "Object Classes";
-    template_description_index=2
+    template_description_index=2,
 )
 SpineOpt.write_concept_reference_file(
     path,
@@ -19,7 +19,7 @@ SpineOpt.write_concept_reference_file(
     "Relationship Classes";
     template_related_concept_index=2,
     template_related_concept_names=["Object Classes"],
-    template_description_index=3
+    template_description_index=3,
 )
 SpineOpt.write_concept_reference_file(
     path,
@@ -31,10 +31,13 @@ SpineOpt.write_concept_reference_file(
     template_related_concept_names=["Object Classes", "Relationship Classes"],
     template_default_value_index=3,
     template_parameter_value_list_index=4,
-    template_description_index=5
+    template_description_index=5,
 )
 SpineOpt.write_concept_reference_file(
-    path, "parameter_value_lists.md", ["parameter_value_lists"], "Parameter Value Lists"
+    path,
+    "parameter_value_lists.md",
+    ["parameter_value_lists"],
+    "Parameter Value Lists",
 )
 
 # Create and deploy the documentation
@@ -63,9 +66,9 @@ makedocs(
         "Advanced Concepts" => Any[
             "Temporal Framework"=>joinpath("advanced_concepts", "temporal_framework.md"),
             "Stochastic Framework"=>joinpath("advanced_concepts", "stochastic_framework.md"),
-            "Investment Optimization"=>joinpath("advanced_concepts", "investment_optimization.md")
+            "Investment Optimization"=>joinpath("advanced_concepts", "investment_optimization.md"),
         ],
-        "Library" => "library.md"
+        "Library" => "library.md",
     ],
 )
 

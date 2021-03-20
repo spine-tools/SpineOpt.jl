@@ -29,11 +29,9 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
     t0 = startref(current_window(m))
     m.ext[:constraints][:unit_pw_heat_rate] = Dict(
         (unit=u, node1=n_from, node2=n_to, stochastic_path=s, t=t) => @constraint(
-            m,            
+            m,
             expr_sum(
-                +unit_flow[u, n, d, s, t_short] *
-                duration(t_short)
-                for
+                +unit_flow[u, n, d, s, t_short] * duration(t_short) for
                 (u, n, d, s, t_short) in unit_flow_indices(
                     m;
                     unit=u,
@@ -43,10 +41,10 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
-            )
-            ==
-            +expr_sum(
-                + unit_flow_op[u, n, d, op, s, t_short] *                
+            ) ==
+            0 +
+            expr_sum(
+                +unit_flow_op[u, n, d, op, s, t_short] *
                 unit_incremental_heat_rate[(
                     unit=u,
                     node1=n_from,
@@ -56,9 +54,7 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                     analysis_time=t0,
                     t=t_short,
                 )] *
-                duration(t_short)
-                for
-                (u, n, d, op, s, t_short) in unit_flow_op_indices(
+                duration(t_short) for (u, n, d, op, s, t_short) in unit_flow_op_indices(
                     m;
                     unit=u,
                     node=n_to,
@@ -67,22 +63,19 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
-            )            
-            +
+            ) +
             expr_sum(
                 +unit_flow[u, n, d, s, t_short] *
                 unit_incremental_heat_rate[(
                     unit=u,
                     node1=n_from,
-                    node2=n,                    
+                    node2=n,
                     i=1,
                     stochastic_scenario=s,
                     analysis_time=t0,
                     t=t_short,
                 )] *
-                duration(t_short)
-                for
-                (u, n, d, s, t_short) in unit_flow_indices(
+                duration(t_short) for (u, n, d, s, t_short) in unit_flow_indices(
                     m;
                     unit=u,
                     node=n_to,
@@ -91,23 +84,36 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                     t=t_in_t(m; t_long=t),
                 ) if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short));
                 init=0,
-            )             
-             + expr_sum(
-                + ( units_on[u, s, t1] *
+            ) +
+            expr_sum(
+                0 +
+                (
+                    units_on[u, s, t1] *
                     min(duration(t1), duration(t)) *
-                    unit_idle_heat_rate[(unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, analysis_time=t0, t=t)]                     
-                )
-                + ( units_started_up[u, s, t1] *                    
-                    unit_start_flow[(unit=u, node1=n_from, node2=n_to, stochastic_scenario=s, analysis_time=t0, t=t)]                     
-                )
-                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
+                    unit_idle_heat_rate[(
+                        unit=u,
+                        node1=n_from,
+                        node2=n_to,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=t,
+                    )]
+                ) +
+                (
+                    units_started_up[u, s, t1] * unit_start_flow[(
+                        unit=u,
+                        node1=n_from,
+                        node2=n_to,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=t,
+                    )]
+                ) for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0,
-            )           
+            )
         ) for (u, n_from, n_to, s, t) in constraint_unit_pw_heat_rate_indices(m)
     )
 end
-
-
 
 """
     constraint_unit_pw_heat_rate_indices(m::Model; filtering_options...)
@@ -118,7 +124,7 @@ Uses stochastic path indices due to potentially different stochastic structures 
 `units_on` variables. Keyword arguments can be used to filter the resulting Array.
 """
 function constraint_unit_pw_heat_rate_indices(
-    m::Model,    
+    m::Model,
     unit=anything,
     node_from=anything,         #input "fuel" node
     node_to=anything,           #output "electricity" node
@@ -126,14 +132,12 @@ function constraint_unit_pw_heat_rate_indices(
     t=anything,
 )
     unique(
-        (unit=u, node_from=n_from, node_to=n_to, stochastic_path=path, t=t)
-        for (u, n_from, n_to) in indices(unit_incremental_heat_rate) if u in unit && n_from in node_from && n_to in node_to
-        for
-        t in t_lowest_resolution(x.t for x in unit_flow_indices(m; unit=u, node=[n_from, n_to], t=t))
-        for
-        path in active_stochastic_paths(unique(
-            ind.stochastic_scenario for ind in _constraint_unit_pw_heat_rate_indices(m, u, n_from, n_to, t)
-        )) if path == stochastic_path || path in stochastic_path
+        (unit=u, node_from=n_from, node_to=n_to, stochastic_path=path, t=t) for
+        (u, n_from, n_to) in indices(unit_incremental_heat_rate) if u in unit && n_from in node_from && n_to in node_to
+        for t in t_lowest_resolution(x.t for x in unit_flow_indices(m; unit=u, node=[n_from, n_to], t=t)) for
+        path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_unit_pw_heat_rate_indices(m, u, n_from, n_to, t)),
+        ) if path == stochastic_path || path in stochastic_path
     )
 end
 

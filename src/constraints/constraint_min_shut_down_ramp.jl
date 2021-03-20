@@ -31,9 +31,7 @@ function add_constraint_min_shut_down_ramp!(m::Model)
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             +sum(
-                shut_down_unit_flow[u, n, d, s, t]
-                for
-                (u, n, d, s, t) in shut_down_unit_flow_indices(
+                shut_down_unit_flow[u, n, d, s, t] for (u, n, d, s, t) in shut_down_unit_flow_indices(
                     m;
                     unit=u,
                     node=ng,
@@ -46,8 +44,8 @@ function add_constraint_min_shut_down_ramp!(m::Model)
                 units_shut_down[u, s, t] *
                 min_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
                 unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-                unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t))
+                unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] for
+                (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t))
             )
         ) for (u, ng, d, s, t) in constraint_min_shut_down_ramp_indices(m)
     )
@@ -70,18 +68,18 @@ function constraint_min_shut_down_ramp_indices(
     t=anything,
 )
     unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(min_shutdown_ramp) if u in unit && ng in node && d in direction
-        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng))), t=t))
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t) for
+        (u, ng, d) in indices(min_shutdown_ramp) if u in unit && ng in node && d in direction for
+        t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng))), t=t))
         # How to deal with groups correctly?
         for
-        path in active_stochastic_paths(unique(
-            ind.stochastic_scenario
-            for
-            ind in Iterators.flatten((
-                units_on_indices(m; unit=u, t=t),
-                shut_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
-            ))  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
-        )) if path == stochastic_path || path in stochastic_path
+        path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario for ind in Iterators.flatten((
+                    units_on_indices(m; unit=u, t=t),
+                    shut_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
+                ))  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
+            ),
+        ) if path == stochastic_path || path in stochastic_path
     )
 end

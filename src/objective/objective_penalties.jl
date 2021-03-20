@@ -33,8 +33,8 @@ function objective_penalties(m::Model, t1)
             duration(t) *
             prod(weight(temporal_block=blk) for blk in blocks(t)) *
             node_slack_penalty[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)] *
-            node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
-            for (n, s, t) in node_slack_indices(m) if end_(t) <= t1;
+            node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s) for
+            (n, s, t) in node_slack_indices(m) if end_(t) <= t1;
             init=0,
         )
     )

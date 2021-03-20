@@ -171,13 +171,13 @@ include("constraints/constraint_mp_units_invested_cuts.jl")
 const _template = JSON.parsefile(joinpath(@__DIR__, "..", "data", "spineopt_template.json"))
 
 function template()
-	try
-		JSON.parsefile(joinpath(@__DIR__, "..", "data", "spineopt_template.json"))
-	catch
-		# Template file not found, use _template constant instead.
-		# This will happen in the SpineOpt app
-		_template
-	end
+    try
+        JSON.parsefile(joinpath(@__DIR__, "..", "data", "spineopt_template.json"))
+    catch
+        # Template file not found, use _template constant instead.
+        # This will happen in the SpineOpt app
+        _template
+    end
 end
 
 end

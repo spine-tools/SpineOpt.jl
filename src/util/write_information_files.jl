@@ -24,14 +24,14 @@ Write model file for Model `m`. Objective, constraints and variable bounds are r
     Optional argument is keyword `file_name`.
 """
 function write_model_file(m::JuMP.Model; file_name="model")
-    model_string = "$m"        
+    model_string = "$m"
     model_string = replace(model_string, s": -" => ":- ")
     model_string = replace(model_string, s": " => ": + ")
     model_string = replace(model_string, s"+ " => "\n\t+ ")
     model_string = replace(model_string, s"- " => "\n\t- ")
     model_string = replace(model_string, s">= " => "\n\t\t>= ")
     model_string = replace(model_string, s"== " => "\n\t\t== ")
-    model_string = replace(model_string, s"<= " => "\n\t\t<= ")        
+    model_string = replace(model_string, s"<= " => "\n\t\t<= ")
     open(joinpath(@__DIR__, "$(file_name).so_model"), "w") do file
         write(file, model_string)
     end
@@ -72,7 +72,7 @@ function write_concept_reference_file(
     template_default_value_index::Int=template_name_index,
     template_parameter_value_list_index::Int=template_name_index,
     template_description_index::Int=template_name_index,
-    w::Bool=true
+    w::Bool=true,
 )
     template = SpineOpt.template()
     error_count = 0
@@ -81,37 +81,40 @@ function write_concept_reference_file(
     # Loop over every section to be aggregated into the file and collect unique template entries
     raw_entries = unique(
         (
-            name = template[section][i][template_name_index],
-            related_concepts = (template_related_concept_names[s], vcat(template[section][i][template_related_concept_index])),
-            default_value = template[section][i][template_default_value_index],
-            parameter_value_list = template[section][i][template_parameter_value_list_index],
-            description = template[section][i][template_description_index]
-        )
-        for (s,section) in enumerate(template_sections)
-        for i in 1:length(template[section])
+            name=template[section][i][template_name_index],
+            related_concepts=(
+                template_related_concept_names[s],
+                vcat(template[section][i][template_related_concept_index]),
+            ),
+            default_value=template[section][i][template_default_value_index],
+            parameter_value_list=template[section][i][template_parameter_value_list_index],
+            description=template[section][i][template_description_index],
+        ) for (s, section) in enumerate(template_sections) for i in 1:length(template[section])
     )
     # Aggregate and sort the entries based on their names
-    unique_names = sort!(unique!(map(e->e.name, raw_entries)))
+    unique_names = sort!(unique!(map(e -> e.name, raw_entries)))
     entries = unique(
         (
-            name = name,
-            related_concepts = Dict(
-                related_concept_name => sort!(unique(
-                    "[$(concept)](@ref)"
-                    for e in filter(e->e.name==name && e.related_concepts[1]==related_concept_name, raw_entries)
-                    for concept in e.related_concepts[2]
-                ))
-                for related_concept_name in template_related_concept_names
+            name=name,
+            related_concepts=Dict(
+                related_concept_name => sort!(
+                    unique(
+                        "[$(concept)](@ref)" for e in filter(
+                            e -> e.name == name && e.related_concepts[1] == related_concept_name,
+                            raw_entries,
+                        ) for concept in e.related_concepts[2]
+                    ),
+                ) for related_concept_name in template_related_concept_names
             ),
-            default_value = sort!(unique(e.default_value for e in filter(e->e.name==name, raw_entries))),
-            parameter_value_list = sort!(unique(
-                "[$(e.parameter_value_list)](@ref)"
-                for e in filter(e->e.name==name, raw_entries)
-                if !isnothing(e.parameter_value_list)
-            )),
-            description = sort!(unique(e.description for e in filter(e->e.name==name, raw_entries)))
-        )
-        for name in unique_names
+            default_value=sort!(unique(e.default_value for e in filter(e -> e.name == name, raw_entries))),
+            parameter_value_list=sort!(
+                unique(
+                    "[$(e.parameter_value_list)](@ref)" for
+                    e in filter(e -> e.name == name, raw_entries) if !isnothing(e.parameter_value_list)
+                ),
+            ),
+            description=sort!(unique(e.description for e in filter(e -> e.name == name, raw_entries))),
+        ) for name in unique_names
     )
     # Loop over the unique entries and write their information into the file under section `entry.name`
     for entry in entries
@@ -139,8 +142,9 @@ function write_concept_reference_file(
         end
         # Try to fetch the description from the corresponding .md file.
         description_path = joinpath(makedocs_path, "src", "concept_reference", "$(entry.name).md")
-        try description = open(f->read(f, String), description_path, "r")
-            while description[end-1:end] != "\n\n"
+        try
+            description = open(f -> read(f, String), description_path, "r")
+            while description[(end - 1):end] != "\n\n"
                 description *= "\n"
             end
             push!(system_string, title * preamble * description)
@@ -162,8 +166,8 @@ end
 function print_constraint(constraint, filename="constraint_debug.txt")
     io = open(joinpath(@__DIR__, filename), "w")
     for (inds, con) in constraint
-        print(io, inds, "\n")        
+        print(io, inds, "\n")
         print(io, con, "\n\n")
     end
-    close(io);
+    close(io)
 end

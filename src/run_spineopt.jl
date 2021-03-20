@@ -112,7 +112,6 @@ function rerun_spineopt(
     calculate_duals = duals_calculation_needed(m)
     k = 2
 
-
     while optimize && optimize_model!(
         m;
         log_level=log_level,
@@ -131,12 +130,10 @@ function rerun_spineopt(
     m
 end
 
-
 """
 A JuMP `Model` for SpineOpt.
 """
 function create_model(mip_solver, use_direct_model=false, model_type=:spineopt_operations)
-
     m = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)
     length(model(model_type=model_type)) == 0 && error("No model of type $model_type defined")
     m.ext[:instance] = first(model(model_type=model_type))
@@ -152,9 +149,7 @@ function create_model(mip_solver, use_direct_model=false, model_type=:spineopt_o
     m.ext[:objective_upper_bound] = 0.0
     m.ext[:benders_gap] = 0.0
     m
-
 end
-
 
 """
 Add SpineOpt variables to the given model.
@@ -214,12 +209,11 @@ function fix_variables!(m::Model)
     end
 end
 
-
 """
 Add SpineOpt constraints to the given model.
 """
-function add_constraints!(m; add_constraints=m -> nothing, log_level=3)    
-    @timelog log_level 3 "- [constraint_unit_pw_heat_rate]" add_constraint_unit_pw_heat_rate!(m)    
+function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
+    @timelog log_level 3 "- [constraint_unit_pw_heat_rate]" add_constraint_unit_pw_heat_rate!(m)
     @timelog log_level 3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
     @timelog log_level 3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
     @timelog log_level 3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
@@ -229,12 +223,18 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     #@timelog log_level 3 "- [constraint_connection_intact_flow_ptdf_in_out]" add_constraint_connection_intact_flow_ptdf_in_out!(m)
     @timelog log_level 3 "- [constraint_connection_flow_intact_flow]" add_constraint_connection_flow_intact_flow!(m)
     @timelog log_level 3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
-    @timelog log_level 3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)    
-    @timelog log_level 3 "- [constraint_connection_intact_flow_capacity]" add_constraint_connection_intact_flow_capacity!(m)  
-    @timelog log_level 3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)    
-    @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(m)
+    @timelog log_level 3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)
+    @timelog log_level 3 "- [constraint_connection_intact_flow_capacity]" add_constraint_connection_intact_flow_capacity!(
+        m,
+    )
+    @timelog log_level 3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
+    @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(
+        m,
+    )
     @timelog log_level 3 "- [constraint_connection_lifetime]" add_constraint_connection_lifetime!(m)
-    @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(m)
+    @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(
+        m,
+    )
     @timelog log_level 3 "- [constraint_storages_invested_available]" add_constraint_storages_invested_available!(m)
     @timelog log_level 3 "- [constraint_storage_lifetime]" add_constraint_storage_lifetime!(m)
     @timelog log_level 3 "- [constraint_storages_invested_transition]" add_constraint_storages_invested_transition!(m)
@@ -252,7 +252,9 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_fix_ratio_in_out_unit_flow]" add_constraint_fix_ratio_in_out_unit_flow!(m)
     @timelog log_level 3 "- [constraint_max_ratio_in_out_unit_flow]" add_constraint_max_ratio_in_out_unit_flow!(m)
     @timelog log_level 3 "- [constraint_min_ratio_in_out_unit_flow]" add_constraint_min_ratio_in_out_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_ratio_out_in_connection_intact_flow]" add_constraint_ratio_out_in_connection_intact_flow!(m)           
+    @timelog log_level 3 "- [constraint_ratio_out_in_connection_intact_flow]" add_constraint_ratio_out_in_connection_intact_flow!(
+        m,
+    )
     @timelog log_level 3 "- [constraint_fix_ratio_out_in_connection_flow]" add_constraint_fix_ratio_out_in_connection_flow!(
         m,
     )
@@ -261,7 +263,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     )
     @timelog log_level 3 "- [constraint_min_ratio_out_in_connection_flow]" add_constraint_min_ratio_out_in_connection_flow!(
         m,
-    )           
+    )
     @timelog log_level 3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
     @timelog log_level 3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
     @timelog log_level 3 "- [constraint_units_on]" add_constraint_units_on!(m)
@@ -358,8 +360,7 @@ Save the value of a variable in a model.
 function _save_variable_value!(m::Model, name::Symbol, indices::Function)
     var = m.ext[:variables][name]
     m.ext[:values][name] = Dict(
-        ind => _variable_value(var[ind])
-        for
+        ind => _variable_value(var[ind]) for
         ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if end_(ind.t) <= end_(current_window(m))
     )
 end
@@ -373,10 +374,8 @@ function save_variable_values!(m::Model)
     end
 end
 
-
 _value(v::GenericAffExpr) = JuMP.value(v)
 _value(v) = v
-
 
 """
 Save the value of the objective terms in a model.
@@ -469,26 +468,23 @@ function write_report(model, default_url)
     end
 end
 
-
 function relax_integer_vars(m::Model)
-    save_integer_values!(m)    
+    save_integer_values!(m)
     for name in m.ext[:integer_variables]
         def = m.ext[:variables_definition][name]
         bin = def[:bin]
         int = def[:int]
         var = m.ext[:variables][name]
         for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))
-            
             if end_(ind.t) <= end_(current_window(m))
                 fix(var[ind], m.ext[:values][name][ind]; force=true)
             end
-            
+
             bin != nothing && bin(ind) && unset_binary(var[ind])
             int != nothing && int(ind) && unset_integer(var[ind])
         end
     end
 end
-
 
 function unrelax_integer_vars(m::Model)
     for name in m.ext[:integer_variables]
@@ -506,7 +502,6 @@ function unrelax_integer_vars(m::Model)
     end
 end
 
-
 """
 Save the value of all binary and integer variables so they can be fixed to obtain a dual solution
 """
@@ -515,7 +510,6 @@ function save_integer_values!(m::Model)
         _save_variable_value!(m, name, m.ext[:variables_definition][name][:indices])
     end
 end
-
 
 function save_marginal_values!(m::Model)
     for (constraint_name, con) in m.ext[:constraints]
@@ -526,14 +520,12 @@ function save_marginal_values!(m::Model)
     end
 end
 
-
 function _save_marginal_value!(m::Model, constraint_name::Symbol, output_name::Symbol)
     con = m.ext[:constraints][constraint_name]
     inds = keys(con)
     m.ext[:values][output_name] =
         Dict(ind => JuMP.dual(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window(m)))
 end
-
 
 function save_bound_marginal_values!(m::Model)
     for (variable_name, con) in m.ext[:variables]
@@ -544,13 +536,11 @@ function save_bound_marginal_values!(m::Model)
     end
 end
 
-
 function _save_bound_marginal_value!(m::Model, variable_name::Symbol, output_name::Symbol)
     var = m.ext[:variables][variable_name]
     indices = m.ext[:variables_definition][variable_name][:indices]
     m.ext[:values][output_name] = Dict(
-        ind => JuMP.reduced_cost(var[ind])
-        for
+        ind => JuMP.reduced_cost(var[ind]) for
         ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if end_(ind.t) <= end_(current_window(m))
     )
 end

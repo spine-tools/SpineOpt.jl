@@ -26,22 +26,10 @@ function add_constraint_cyclic_node_state!(m::Model)
     cons = m.ext[:constraints][:cyclic_node_state] = Dict()
     for (n, blk) in indices(cyclic_condition)
         if has_state(node=n) == :value_true && cyclic_condition(node=n, temporal_block=blk)
-            (n,t_start) = first(
-                node_state_indices(
-                    node=n,
-                    t=first(t_before_t(t_after=first(time_slice(temporal_block=blk))))
-                )
-            )
-            (n,t_end) = first(
-                node_state_indices(
-                    node=n,
-                    t=last(time_slice(temporal_block=blk))
-                )
-            )
-            cons[n, blk] = @constraint(
-                m,
-                node_state[n,t_end] >= node_state[n,t_start]
-            )
+            (n, t_start) =
+                first(node_state_indices(node=n, t=first(t_before_t(t_after=first(time_slice(temporal_block=blk))))))
+            (n, t_end) = first(node_state_indices(node=n, t=last(time_slice(temporal_block=blk))))
+            cons[n, blk] = @constraint(m, node_state[n, t_end] >= node_state[n, t_start])
         end
     end
 end

@@ -32,8 +32,7 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
         (unit=u, node1=ng1, node2=ng2, stochastic_path=s, t=t) => sense_constraint(
             m,
             +expr_sum(
-                unit_flow[u, n1, d1, s, t_short] * duration(t_short)
-                for
+                unit_flow[u, n1, d1, s, t_short] * duration(t_short) for
                 (u, n1, d1, s, t_short) in unit_flow_indices(
                     m;
                     unit=u,
@@ -48,8 +47,7 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
             +expr_sum(
                 unit_flow[u, n2, d2, s, t_short] *
                 duration(t_short) *
-                ratio[(unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for
+                ratio[(unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)] for
                 (u, n2, d2, s, t_short) in unit_flow_indices(
                     m;
                     unit=u,
@@ -282,14 +280,12 @@ function constraint_ratio_unit_flow_indices(
     t=anything,
 )
     unique(
-        (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
-        for (u, n1, n2) in indices(ratio) if u in unit && n1 in node1 && n2 in node2
-        for
+        (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t) for
+        (u, n1, n2) in indices(ratio) if u in unit && n1 in node1 && n2 in node2 for
         t in t_lowest_resolution(x.t for x in unit_flow_indices(m; unit=u, node=[members(n1)..., members(n2)...], t=t))
-        for
-        path in active_stochastic_paths(unique(
-            ind.stochastic_scenario for ind in _constraint_ratio_unit_flow_indices(m, u, n1, d1, n2, d2, t)
-        )) if path == stochastic_path || path in stochastic_path
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_ratio_unit_flow_indices(m, u, n1, d1, n2, d2, t)),
+        ) if path == stochastic_path || path in stochastic_path
     )
 end
 

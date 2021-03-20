@@ -23,11 +23,16 @@
 A list of `NamedTuple`s corresponding to indices of the `connections_invested_available` variable where
 the keyword arguments act as filters for each dimension.
 """
-function connections_invested_available_indices(m::Model; connection=anything, stochastic_scenario=anything, t=anything, temporal_block=anything)
+function connections_invested_available_indices(
+    m::Model;
+    connection=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=anything,
+)
     [
-        (connection=conn, stochastic_scenario=s, t=t) for (conn, tb) in connection__investment_temporal_block(
-            connection=connection, temporal_block=temporal_block, _compact=false)
-        for
+        (connection=conn, stochastic_scenario=s, t=t) for (conn, tb) in
+        connection__investment_temporal_block(connection=connection, temporal_block=temporal_block, _compact=false) for
         (conn, s, t) in connection_investment_stochastic_time_indices(
             m;
             connection=conn,
@@ -38,14 +43,14 @@ function connections_invested_available_indices(m::Model; connection=anything, s
     ]
 end
 
-
 """
     connections_invested_available_int(x)
 
 Check if conneciton investment variable type is defined to be an integer.
 """
 
-connections_invested_available_int(x) = connection_investment_variable_type(connection=x.connection) == :variable_type_integer
+connections_invested_available_int(x) =
+    connection_investment_variable_type(connection=x.connection) == :variable_type_integer
 
 """
     fix_initial_connections_invested_available()
