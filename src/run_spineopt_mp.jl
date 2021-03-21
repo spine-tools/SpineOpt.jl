@@ -112,11 +112,11 @@ function rerun_spineopt_mp(
             # we can't add integers/binaries
             set_optimizer(m, mip_solver)
             @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
-            if @timelog log_level 2 "Rolling temporal structure...\n" roll_temporal_structure!(m)
-                update_model!(m; update_constraints=update_constraints, log_level=log_level)
-                k += 1
+            if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
+                @timelog log_level 2 " ... Rolling complete\n" break
             end
-            @timelog log_level 2 " ... Rolling complete\n" break
+            update_model!(m; update_constraints=update_constraints, log_level=log_level)
+            k += 1
         end
         @timelog log_level 2 "Processing operational problem solution..." process_subproblem_solution(m, mp, j)
 

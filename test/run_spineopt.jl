@@ -148,7 +148,7 @@ end
         )
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map, url_out; log_level=0)
-        @test termination_status(m) == JuMP.MathOptInterface.INFEASIBLE
+        @test termination_status(m) != JuMP.MathOptInterface.OPTIMAL
     end
     @testset "unknown output" begin
         db_map = _load_test_data(url_in, test_data)

@@ -32,7 +32,7 @@
                 ["stochastic_scenario", "child"],
                 ["commodity", "electricity"],
                 ["report", "report_x"],
-                ["output", "connection_avg_throughflow"],
+                ["output", "connection_avg_intact_throughflow"],
             ],
             :relationships => [
                 ["connection__from_node", ["connection_ab", "node_a"]],
@@ -48,7 +48,7 @@
                 ["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "child"]],
                 ["node__commodity", ["node_a", "electricity"]],
                 ["node__commodity", ["node_b", "electricity"]],
-                ["report__output", ["report_x", "connection_avg_throughflow"]],
+                ["report__output", ["report_x", "connection_avg_intact_throughflow"]],
             ],
             :object_parameter_values => [
                 ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
@@ -74,7 +74,7 @@
         db_map = _load_test_data(url_in, test_data)
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map, "sqlite://"; log_level=0)
-        connection_avg_throughflow = m.ext[:values][:connection_avg_throughflow]
+        connection_avg_throughflow = m.ext[:values][:connection_avg_intact_throughflow]
         @test length(connection_avg_throughflow) == 2
         t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
         key1 = (connection=connection(:connection_ab), stochastic_path=[stochastic_scenario(:parent)], t=t1)

@@ -123,11 +123,11 @@ function rerun_spineopt(
         )
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
-        if @timelog log_level 2 "Rolling temporal structure...\n" roll_temporal_structure!(m)
-            update_model!(m; update_constraints=update_constraints, log_level=log_level)
-            k += 1
+        if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
+            @timelog log_level 2 " ... Rolling complete\n" break
         end
-        @timelog log_level 2 " ... Rolling complete\n" break
+        update_model!(m; update_constraints=update_constraints, log_level=log_level)
+        k += 1
     end
     @timelog log_level 2 "Writing report..." write_report(m, url_out)
     m
@@ -336,7 +336,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, mip_solve
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
-    if termination_status(m) == MOI.OPTIMAL || termination_status(m) == MOI.TIME_LIMIT
+    if termination_status(m) in (MOI.OPTIMAL, MOI.TIME_LIMIT)
         if calculate_duals
             @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
             if lp_solver != mip_solver
