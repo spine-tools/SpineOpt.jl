@@ -107,24 +107,27 @@ function rerun_spineopt(
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
-    @log log_level 1 "Window 1: $(current_window(m))"
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
+    init_outputs!(m)
     calculate_duals = duals_calculation_needed(m)
-    k = 2
+    k = 1
 
-    while optimize && optimize_model!(
-        m;
-        log_level=log_level,
-        mip_solver=mip_solver,
-        lp_solver=lp_solver,
-        calculate_duals=calculate_duals,
-    )
+    while optimize
+        @log log_level 1 "Window $k: $(current_window(m))"
+        optimize_model!(
+            m;
+            log_level=log_level,
+            mip_solver=mip_solver,
+            lp_solver=lp_solver,
+            calculate_duals=calculate_duals,
+        )
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
-        @timelog log_level 2 "Rolling temporal structure...\n" roll_temporal_structure!(m) || break
-        @log log_level 1 "Window $k: $(current_window(m))"
-        update_model!(m; update_constraints=update_constraints, log_level=log_level)
-        k += 1
+        if @timelog log_level 2 "Rolling temporal structure...\n" roll_temporal_structure!(m)
+            update_model!(m; update_constraints=update_constraints, log_level=log_level)
+            k += 1
+        end
+        @timelog log_level 2 " ... Rolling complete\n" break
     end
     @timelog log_level 2 "Writing report..." write_report(m, url_out)
     m
@@ -299,16 +302,16 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     end
 end
 
-function duals_calculation_needed(m::Model)
-    calculate_duals = false
+function init_outputs!(m::Model)
     for r in model__report(model=m.ext[:instance])
         for o in report__output(report=r)
             get!(m.ext[:outputs], o.name, Dict{NamedTuple,Dict}())
-            output_name = lowercase(String(o.name))
-            startswith(output_name, r"bound_|constraint_") && (calculate_duals = true)
         end
     end
-    calculate_duals
+end
+
+function duals_calculation_needed(m::Model)
+    any(startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:outputs])))
 end
 
 """
@@ -337,7 +340,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, mip_solve
         if calculate_duals
             @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
             if lp_solver != mip_solver
-                @timelog log_level 0 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
+                @timelog log_level 0 "Switching to LP solver..." set_optimizer(m, lp_solver)
             end
             @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
         end
@@ -430,10 +433,6 @@ Update the given model for the next window in the rolling horizon: update variab
 update constraints and update objective.
 """
 function update_model!(m; update_constraints=m -> nothing, log_level=3)
-    # The below is needed here because we remove the integer constraints to get a dual solution
-    # and then need to re-add them for the next write_mps_on_no_solve
-    # we can only do this once we have saved the solution
-    @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
     @timelog log_level 2 "Updating variables..." update_variables!(m)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
