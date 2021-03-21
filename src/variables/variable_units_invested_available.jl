@@ -64,6 +64,8 @@ function fix_initial_units_invested_available(m)
         if fix_units_invested_available(unit=u, t=t, _strict=false) === nothing
             unit.parameter_values[u][:fix_units_invested_available] =
                 parameter_value(TimeSeries([start(t)], [0], false, false))
+            unit.parameter_values[u][:starting_fix_units_invested_available] =
+                parameter_value(TimeSeries([start(t)], [0], false, false))
         end
     end
 end
