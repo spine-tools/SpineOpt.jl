@@ -33,7 +33,7 @@ function add_constraint_mp_units_invested_cuts!(m::Model)
     m.ext[:constraints][:mp_units_invested_cut] = Dict(
         (benders_iteration=bi, t=t1) => @constraint(
             m,
-            + mp_objective_lowerbound[m1, t1] >=
+            + mp_objective_lowerbound[t1] >=
             + sp_objective_value_bi(benders_iteration=bi)
             # operating cost benefit from investments in units
             +
@@ -65,6 +65,6 @@ function add_constraint_mp_units_invested_cuts!(m::Model)
                 for (n, s, t) in storages_invested_available_indices(m);
                 init=0,
             )
-        ) for bi in last(benders_iteration()) for (m1, t1) in mp_objective_lowerbound_indices(m)
+        ) for bi in last(benders_iteration()) for (t1,) in mp_objective_lowerbound_indices(m)
     )
 end
