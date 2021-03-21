@@ -474,14 +474,14 @@ function relax_integer_vars(m::Model)
         def = m.ext[:variables_definition][name]
         bin = def[:bin]
         int = def[:int]
+        indices = def[:indices]
         var = m.ext[:variables][name]
-        for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
             if end_(ind.t) <= end_(current_window(m))
                 fix(var[ind], m.ext[:values][name][ind]; force=true)
+                bin != nothing && bin(ind) && unset_binary(var[ind])
+                int != nothing && int(ind) && unset_integer(var[ind])
             end
-
-            bin != nothing && bin(ind) && unset_binary(var[ind])
-            int != nothing && int(ind) && unset_integer(var[ind])
         end
     end
 end
@@ -489,12 +489,18 @@ end
 function unrelax_integer_vars(m::Model)
     for name in m.ext[:integer_variables]
         def = m.ext[:variables_definition][name]
+        lb = def[:lb]
+        ub = def[:ub]
         bin = def[:bin]
         int = def[:int]
         indices = def[:indices]
         var = m.ext[:variables][name]
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
             if end_(ind.t) <= end_(current_window(m))
+                unfix(var[ind])
+                # `unfix` frees the variable entirely, also bounds
+                lb != nothing && set_lower_bound(var[ind], lb(ind))
+                ub != nothing && set_upper_bound(var[ind], ub(ind))
                 bin != nothing && bin(ind) && set_binary(var[ind])
                 int != nothing && int(ind) && set_integer(var[ind])
             end
