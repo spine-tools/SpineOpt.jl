@@ -26,7 +26,7 @@
 Balance equation for nodes.
 """
 function add_constraint_nodal_balance!(m::Model)
-    @fetch node_injection, connection_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
+    @fetch node_injection, connection_intact_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
     m.ext[:constraints][:nodal_balance] = Dict(
         (node=n, stochastic_scenario=s, t=t) => sense_constraint(
             m,
@@ -34,7 +34,7 @@ function add_constraint_nodal_balance!(m::Model)
             + node_injection[n, s, t]
             # Commodity flows from connections
             + expr_sum(
-                connection_flow[conn, n, d, s, t] for (conn, n, d, s, t) in connection_flow_indices(
+                connection_intact_flow[conn, n, d, s, t] for (conn, n, d, s, t) in connection_flow_indices(
                     m;
                     node=n,
                     direction=direction(:to_node),
@@ -45,7 +45,7 @@ function add_constraint_nodal_balance!(m::Model)
             )
             # Commodity flows to connections
             - expr_sum(
-                connection_flow[conn, n, d, s, t] for (conn, n, d, s, t) in connection_flow_indices(
+                connection_intact_flow[conn, n, d, s, t] for (conn, n, d, s, t) in connection_flow_indices(
                     m;
                     node=n,
                     direction=direction(:from_node),

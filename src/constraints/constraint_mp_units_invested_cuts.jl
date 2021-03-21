@@ -38,7 +38,10 @@ function add_constraint_mp_units_invested_cuts!(m::Model)
             # operating cost benefit from investments in units
             +
             expr_sum(
-                (units_invested_available[u, s, t] - units_invested_available_bi(benders_iteration=bi, unit=u, t=t)) * units_available_mv(benders_iteration=bi, unit=u, t=t)
+                (
+                    + units_invested_available[u, s, t] 
+                    - units_invested_available_bi(benders_iteration=bi, unit=u, t=t)
+                ) * units_available_mv(benders_iteration=bi, unit=u, t=t)
                 for (u, s, t) in units_invested_available_indices(m);
                 init=0,
             )
