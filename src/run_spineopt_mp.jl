@@ -118,7 +118,7 @@ function rerun_spineopt_mp(
             update_model!(m; update_constraints=update_constraints, log_level=log_level)
             k += 1
         end
-        @timelog log_level 2 "Processing operational problem solution..." process_subproblem_solution(m, mp, j)
+        @timelog log_level 2 "Processing operational problem solution..." process_subproblem_solution(m, mp)
 
         @log log_level 1 "Benders iteration $j complete. Objective upper bound: "
         @log log_level 1 "$(@sprintf("%.5e",mp.ext[:objective_upper_bound])); "
@@ -136,7 +136,6 @@ function rerun_spineopt_mp(
         msg = "Resetting sub problem temporal structure. Rewinding $(k - 1) times..."
         if @timelog log_level 2 msg reset_temporal_structure(m, k - 1)
             update_model!(m; update_constraints=update_constraints, log_level=log_level)
-            @timelog log_level 2 "Re-fixing variable values..." fix_variables!(m)
         end
         j += 1
         global current_bi = add_benders_iteration(j)

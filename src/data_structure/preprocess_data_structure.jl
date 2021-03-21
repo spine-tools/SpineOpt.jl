@@ -703,7 +703,7 @@ function expand_model__default_temporal_block()
 end
 
 """
-generate_subproblem_marginals()
+    generate_benders_structure()
 
 Creates the `benders_iteration` object class. Master problem variables have the Benders iteration as an index. A new
 benders iteration object is pushed on each master problem iteration.

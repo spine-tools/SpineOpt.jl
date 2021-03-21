@@ -99,7 +99,7 @@
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map; log_level=0, optimize=false)
         var_node_injection = m.ext[:variables][:node_injection]
-        var_connection_flow = m.ext[:variables][:connection_intact_flow]
+        var_connection_flow = m.ext[:variables][:connection_flow]
         var_node_slack_pos = m.ext[:variables][:node_slack_pos]
         var_node_slack_neg = m.ext[:variables][:node_slack_neg]
         constraint = m.ext[:constraints][:nodal_balance]

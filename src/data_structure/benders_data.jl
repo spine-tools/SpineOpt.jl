@@ -74,7 +74,7 @@ function process_master_problem_solution(mp)
     end
 end
 
-function process_subproblem_solution(m, mp, j)
+function process_subproblem_solution(m, mp)
     save_sp_marginal_values(m)
     save_sp_objective_value_bi(m, mp)
     unfix_mp_variables()
