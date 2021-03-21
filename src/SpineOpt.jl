@@ -166,7 +166,7 @@ include("constraints/constraint_max_nonspin_ramp_down.jl")
 include("constraints/constraint_min_nonspin_ramp_down.jl")
 include("constraints/constraint_res_minimum_node_state.jl")
 
-include("constraints/constraint_mp_units_invested_cuts.jl")
+include("constraints/constraint_mp_any_invested_cuts.jl")
 
 const _template = JSON.parsefile(joinpath(@__DIR__, "..", "data", "spineopt_template.json"))
 

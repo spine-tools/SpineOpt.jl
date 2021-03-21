@@ -209,7 +209,7 @@ end
 Update (readd) SpineOpt master problem constraints that involve new objects (update doesn't work).
 """
 function add_mp_cuts!(mp; log_level=3)
-    @timelog log_level 3 " - [constraint_mp_units_invested_cuts]" add_constraint_mp_units_invested_cuts!(mp)
+    @timelog log_level 3 " - [constraint_mp_any_invested_cuts]" add_constraint_mp_any_invested_cuts!(mp)
 
     # Name constraints
     cons = mp.ext[:constraints][:mp_units_invested_cut]

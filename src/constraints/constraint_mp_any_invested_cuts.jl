@@ -24,7 +24,7 @@ Adds Benders optimality cuts for the units_available constraint. This tells the 
     cost improvement that is possible for an increase in the number of units available for a unit.
 """
 
-function add_constraint_mp_units_invested_cuts!(m::Model)
+function add_constraint_mp_any_invested_cuts!(m::Model)
     # FIXME: rename this to ...mp_stuff_invested_cuts, since it's not only units
     @fetch mp_objective_lowerbound,
     units_invested_available,
