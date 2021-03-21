@@ -220,8 +220,8 @@
             @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=n, t_after=t1)
                 var_n_st_b0 = get(var_node_state, (n, s0, t0), 0)
                 expected_con = @build_constraint(
-                    var_n_inj + (state_coeff_b + frac_state_loss_b + diff_coeff_bc) * var_n_st_b1 -
-                    state_coeff_b * var_n_st_b0 - diff_coeff_cb * var_n_st_c1 - var_u_flow +
+                    var_n_inj + (state_coeff_b + frac_state_loss_b + diff_coeff_bc) * var_n_st_b1
+                    - state_coeff_b * var_n_st_b0 - diff_coeff_cb * var_n_st_c1 - var_u_flow +
                     demand_b +
                     demand_group * fractional_demand_b == 0
                 )
@@ -243,8 +243,8 @@
             @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=n, t_after=t1)
                 var_n_st_c0 = get(var_node_state, (n, s0, t0), 0)
                 expected_con = @build_constraint(
-                    var_n_inj + (state_coeff_c + frac_state_loss_c + diff_coeff_cb) * var_n_st_c1 -
-                    state_coeff_c * var_n_st_c0 - diff_coeff_bc * var_n_st_b1 +
+                    var_n_inj + (state_coeff_c + frac_state_loss_c + diff_coeff_cb) * var_n_st_c1
+                    - state_coeff_c * var_n_st_c0 - diff_coeff_bc * var_n_st_b1 +
                     demand_c +
                     demand_group * fractional_demand_c == 0
                 )

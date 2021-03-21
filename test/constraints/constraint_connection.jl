@@ -313,13 +313,13 @@
         expected_con = @build_constraint(
             -1 <=
             (
-                +var_connection_flow[conn_mon, n_mon_to, d_to, s_parent, t2h] -
-                var_connection_flow[conn_mon, n_mon_to, d_from, s_parent, t2h] +
-                SpineOpt.lodf(connection1=conn_cont, connection2=conn_mon) * (
-                    +var_connection_flow[conn_cont, n_cont_to, d_to, s_parent, t1h1] +
-                    var_connection_flow[conn_cont, n_cont_to, d_to, s_child, t1h2] -
-                    var_connection_flow[conn_cont, n_cont_to, d_from, s_parent, t1h1] -
-                    var_connection_flow[conn_cont, n_cont_to, d_from, s_child, t1h2]
+                + var_connection_flow[conn_mon, n_mon_to, d_to, s_parent, t2h]
+                - var_connection_flow[conn_mon, n_mon_to, d_from, s_parent, t2h]
+                + SpineOpt.lodf(connection1=conn_cont, connection2=conn_mon) * (
+                    + var_connection_flow[conn_cont, n_cont_to, d_to, s_parent, t1h1]
+                    + var_connection_flow[conn_cont, n_cont_to, d_to, s_child, t1h2]
+                    - var_connection_flow[conn_cont, n_cont_to, d_from, s_parent, t1h1]
+                    - var_connection_flow[conn_cont, n_cont_to, d_from, s_child, t1h2]
                 )
             ) / conn_emergency_cap_ab <=
             +1
@@ -332,11 +332,11 @@
         expected_con = @build_constraint(
             -1 <=
             (
-                +var_connection_flow[conn_mon, n_mon_to, d_to, s_parent, t1h1] -
-                var_connection_flow[conn_mon, n_mon_to, d_from, s_parent, t1h1] +
-                SpineOpt.lodf(connection1=conn_cont, connection2=conn_mon) * (
-                    +var_connection_flow[conn_cont, n_cont_to, d_to, s_parent, t1h1] -
-                    var_connection_flow[conn_cont, n_cont_to, d_from, s_parent, t1h1]
+                + var_connection_flow[conn_mon, n_mon_to, d_to, s_parent, t1h1]
+                - var_connection_flow[conn_mon, n_mon_to, d_from, s_parent, t1h1]
+                + SpineOpt.lodf(connection1=conn_cont, connection2=conn_mon) * (
+                    + var_connection_flow[conn_cont, n_cont_to, d_to, s_parent, t1h1]
+                    - var_connection_flow[conn_cont, n_cont_to, d_from, s_parent, t1h1]
                 )
             ) / conn_emergency_cap_bc <=
             +1
@@ -347,11 +347,11 @@
         expected_con = @build_constraint(
             -1 <=
             (
-                +var_connection_flow[conn_mon, n_mon_to, d_to, s_child, t1h2] -
-                var_connection_flow[conn_mon, n_mon_to, d_from, s_child, t1h2] +
-                SpineOpt.lodf(connection1=conn_cont, connection2=conn_mon) * (
-                    +var_connection_flow[conn_cont, n_cont_to, d_to, s_child, t1h2] -
-                    var_connection_flow[conn_cont, n_cont_to, d_from, s_child, t1h2]
+                + var_connection_flow[conn_mon, n_mon_to, d_to, s_child, t1h2]
+                - var_connection_flow[conn_mon, n_mon_to, d_from, s_child, t1h2]
+                + SpineOpt.lodf(connection1=conn_cont, connection2=conn_mon) * (
+                    + var_connection_flow[conn_cont, n_cont_to, d_to, s_child, t1h2]
+                    - var_connection_flow[conn_cont, n_cont_to, d_from, s_child, t1h2]
                 )
             ) / conn_emergency_cap_bc <=
             +1
@@ -808,14 +808,14 @@
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             expected_con_ref = SpineOpt.sense_constraint(
                 m,
-                +unit_flow_coefficient *
-                (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]) +
+                + unit_flow_coefficient
+                * (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]) +
                 2 * connection_flow_coefficient * var_connection_flow[key_b..., s_parent, t2h] +
-                units_on_coefficient *
-                (var_units_on[unit(:unit_c), s_parent, t1h1] + var_units_on[unit(:unit_c), s_child, t1h2]) +
+                units_on_coefficient
+                * (var_units_on[unit(:unit_c), s_parent, t1h1] + var_units_on[unit(:unit_c), s_child, t1h2]) +
                 units_started_up_coefficient * (
-                    var_units_started_up[unit(:unit_c), s_parent, t1h1] +
-                    var_units_started_up[unit(:unit_c), s_child, t1h2]
+                    var_units_started_up[unit(:unit_c), s_parent, t1h1]
+                    + var_units_started_up[unit(:unit_c), s_child, t1h2]
                 ) +
                 2 * node_state_coefficient * var_node_state[node(:node_b), s_parent, t2h] +
                 2 * demand_coefficient * demand,
@@ -897,22 +897,35 @@
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             lodf_val = SpineOpt.lodf(connection1=conn_k, connection2=conn_l)
             expected_con = @build_constraint(
-                -var_connection_flow[conn_l, n_to_l, direction(:to_node), s_parent, t1h1] +
+                - var_connection_flow[conn_l, n_to_l, direction(:to_node), s_parent, t1h1] +
                 var_connection_flow[conn_l, n_to_l, direction(:from_node), s_parent, t1h1] +
-                var_connection_intact_flow[conn_l, n_to_l, direction(:to_node), s_parent, t1h1] -
-                var_connection_intact_flow[conn_l, n_to_l, direction(:from_node), s_parent, t1h1] -
-                var_connection_flow[conn_l, n_to_l, direction(:to_node), s_child, t1h2] +
+                var_connection_intact_flow[conn_l, n_to_l, direction(:to_node), s_parent, t1h1]
+                - var_connection_intact_flow[conn_l, n_to_l, direction(:from_node), s_parent, t1h1]
+                - var_connection_flow[conn_l, n_to_l, direction(:to_node), s_child, t1h2] +
                 var_connection_flow[conn_l, n_to_l, direction(:from_node), s_child, t1h2] +
-                var_connection_intact_flow[conn_l, n_to_l, direction(:to_node), s_child, t1h2] -
-                var_connection_intact_flow[conn_l, n_to_l, direction(:from_node), s_child, t1h2] ==
-                2 *
-                lodf_val *
-                (
-                    +var_connection_flow[conn_k, n_to_k, direction(:to_node), s_parent, t2h] -
-                    var_connection_flow[conn_k, n_to_k, direction(:from_node), s_parent, t2h] -
-                    var_connection_intact_flow[conn_k, n_to_k, direction(:to_node), s_parent, t2h] +
-                    var_connection_intact_flow[conn_k, n_to_k, direction(:from_node), s_parent, t2h]
-                )
+                var_connection_intact_flow[conn_l, n_to_l, direction(:to_node), s_child, t1h2]
+                - var_connection_intact_flow[conn_l, n_to_l, direction(:from_node), s_child, t1h2] ==
+                2
+                * lodf_val
+                * (+ var_connection_flow[
+                    conn_k,
+                    n_to_k,
+                    direction(:to_node),
+                    s_parent,
+                    t2h,
+                ] - var_connection_flow[
+                    conn_k,
+                    n_to_k,
+                    direction(:from_node),
+                    s_parent,
+                    t2h,
+                ] - var_connection_intact_flow[
+                    conn_k,
+                    n_to_k,
+                    direction(:to_node),
+                    s_parent,
+                    t2h,
+                ] + var_connection_intact_flow[conn_k, n_to_k, direction(:from_node), s_parent, t2h])
             )
             observed_con = constraint_object(constraint[conn_l, n_to_l, [s_parent, s_child], t2h])
             @test _is_constraint_equal(observed_con, expected_con)
@@ -1002,11 +1015,11 @@
             time_slices = time_slice(m; temporal_block=tb)
             @testset for (s, t) in zip(scenarios, time_slices)
                 expected_con = @build_constraint(
-                    +var_connection_flow[conn, n, d, s, t] * duration(t) >=
-                    +var_connection_intact_flow[conn, n, d, s, t] * duration(t) -
-                    (candidate_connections - var_connections_invested_available[conn, s_parent, t2h]) *
-                    connection_capacity *
-                    duration(t)
+                    + var_connection_flow[conn, n, d, s, t] * duration(t) >=
+                    + var_connection_intact_flow[conn, n, d, s, t] * duration(t)
+                    - (candidate_connections - var_connections_invested_available[conn, s_parent, t2h])
+                    * connection_capacity
+                    * duration(t)
                 )
                 s_path = (s == s_parent ? [s] : [s_parent, s_child])
                 con_key = (conn, n, d, s_path, t)
@@ -1022,11 +1035,11 @@
             time_slices = time_slice(m; temporal_block=tb)
             @testset for (s, t) in zip(scenarios, time_slices)
                 expected_con = @build_constraint(
-                    +var_connection_flow[conn, n, d, s, t] * duration(t) >=
-                    +var_connection_intact_flow[conn, n, d, s, t] * duration(t) -
-                    (candidate_connections - var_connections_invested_available[conn, s_parent, t2h]) *
-                    1000000 *
-                    duration(t)
+                    + var_connection_flow[conn, n, d, s, t] * duration(t) >=
+                    + var_connection_intact_flow[conn, n, d, s, t] * duration(t)
+                    - (candidate_connections - var_connections_invested_available[conn, s_parent, t2h])
+                    * 1000000
+                    * duration(t)
                 )
                 print(expected_con)
                 s_path = (s == s_parent ? [s] : [s_parent, s_child])
@@ -1128,8 +1141,8 @@
             ),
         )
             expected_con = @build_constraint(
-                +var_connection_intact_flow[conn, n_in, direction(:to_node), s_parent, t1h1] +
-                var_connection_intact_flow[conn, n_in, direction(:to_node), s_child, t1h2] ==
+                + var_connection_intact_flow[conn, n_in, direction(:to_node), s_parent, t1h1]
+                + var_connection_intact_flow[conn, n_in, direction(:to_node), s_child, t1h2] ==
                 +2 * var_connection_intact_flow[conn, n_out, direction(:from_node), s_parent, t2h]
             )
             s_path = [s_parent, s_child]
@@ -1155,8 +1168,8 @@
         )
             expected_con = @build_constraint(
                 +2 * var_connection_intact_flow[conn, n_in, direction(:to_node), s_parent, t2h] ==
-                +var_connection_intact_flow[conn, n_out, direction(:from_node), s_parent, t1h1] +
-                var_connection_intact_flow[conn, n_out, direction(:from_node), s_child, t1h2]
+                + var_connection_intact_flow[conn, n_out, direction(:from_node), s_parent, t1h1]
+                + var_connection_intact_flow[conn, n_out, direction(:from_node), s_child, t1h2]
             )
             s_path = [s_parent, s_child]
             con_key = (conn, n_in, n_out, s_path, t2h)
@@ -1183,8 +1196,8 @@
             time_slices = time_slice(m; temporal_block=tb_in)
             @testset for (s, t) in zip(scenarios, time_slices)
                 expected_con = @build_constraint(
-                    +var_connection_intact_flow[conn, n_in, direction(:to_node), s, t] ==
-                    +var_connection_intact_flow[conn, n_out, direction(:from_node), s, t]
+                    + var_connection_intact_flow[conn, n_in, direction(:to_node), s, t] ==
+                    + var_connection_intact_flow[conn, n_out, direction(:from_node), s, t]
                 )
                 s_path = [s]
                 con_key = (conn, n_in, n_out, s_path, t)
@@ -1271,8 +1284,9 @@
             scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
             time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
             @testset for (s, t) in zip(scenarios, time_slices)
-                expected_con =
-                    @build_constraint(+var_connection_flow[c, n, d, s, t] <= +var_connection_intact_flow[c, n, d, s, t])
+                expected_con = @build_constraint(
+                    + var_connection_flow[c, n, d, s, t] <= + var_connection_intact_flow[c, n, d, s, t]
+                )
                 s_path = s
                 con_key = (c, n, d, s_path, t)
                 observed_con = constraint_object(constraint[con_key...])
@@ -1286,8 +1300,9 @@
             scenarios = (stochastic_scenario(:parent))
             time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
             @testset for (s, t) in zip(scenarios, time_slices)
-                expected_con =
-                    @build_constraint(+var_connection_flow[c, n, d, s, t] <= +var_connection_intact_flow[c, n, d, s, t])
+                expected_con = @build_constraint(
+                    + var_connection_flow[c, n, d, s, t] <= + var_connection_intact_flow[c, n, d, s, t]
+                )
                 s_path = s
                 con_key = (c, n, d, s_path, t)
                 observed_con = constraint_object(constraint[con_key...])

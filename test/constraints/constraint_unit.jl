@@ -1278,14 +1278,14 @@
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             expected_con_ref = SpineOpt.sense_constraint(
                 m,
-                +unit_flow_coefficient_a *
-                (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]) +
+                + unit_flow_coefficient_a
+                * (var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]) +
                 2 * unit_flow_coefficient_b * var_unit_flow[key_b..., s_parent, t2h] +
-                units_on_coefficient *
-                (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
+                units_on_coefficient
+                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
                 units_started_up_coefficient * (
-                    var_units_started_up[unit(:unit_ab), s_parent, t1h1] +
-                    var_units_started_up[unit(:unit_ab), s_child, t1h2]
+                    var_units_started_up[unit(:unit_ab), s_parent, t1h1]
+                    + var_units_started_up[unit(:unit_ab), s_child, t1h2]
                 ),
                 Symbol(sense),
                 rhs,
@@ -1345,16 +1345,16 @@
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             expected_con_ref = SpineOpt.sense_constraint(
                 m,
-                +unit_flow_coefficient_a * sum(
+                + unit_flow_coefficient_a * sum(
                     var_unit_flow_op[key_a..., i, s_parent, t1h1] + var_unit_flow_op[key_a..., i, s_child, t1h2]
                     for i in 1:3
                 ) +
                 2 * sum(unit_flow_coefficient_b * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3) +
-                units_on_coefficient *
-                (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
+                units_on_coefficient
+                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
                 units_started_up_coefficient * (
-                    var_units_started_up[unit(:unit_ab), s_parent, t1h1] +
-                    var_units_started_up[unit(:unit_ab), s_child, t1h2]
+                    var_units_started_up[unit(:unit_ab), s_parent, t1h1]
+                    + var_units_started_up[unit(:unit_ab), s_child, t1h2]
                 ),
                 Symbol(sense),
                 rhs,
@@ -1400,13 +1400,13 @@
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         expected_con = @build_constraint(
-            +var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2] ==
+            + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2] ==
             2 * sum(inc_hrs[i] * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3) +
-            unit_idle_heat_rate *
-            (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
+            unit_idle_heat_rate
+            * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
             unit_start_flow * (
-                var_units_started_up[unit(:unit_ab), s_parent, t1h1] +
-                var_units_started_up[unit(:unit_ab), s_child, t1h2]
+                var_units_started_up[unit(:unit_ab), s_parent, t1h1]
+                + var_units_started_up[unit(:unit_ab), s_child, t1h2]
             )
         )
         con_key = (key_u_a_b..., [s_parent, s_child], t2h)
@@ -1447,13 +1447,13 @@
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         expected_con = @build_constraint(
-            +var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2] ==
+            + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2] ==
             2 * sum(inc_hrs * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3) +
-            unit_idle_heat_rate *
-            (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
+            unit_idle_heat_rate
+            * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
             unit_start_flow * (
-                var_units_started_up[unit(:unit_ab), s_parent, t1h1] +
-                var_units_started_up[unit(:unit_ab), s_child, t1h2]
+                var_units_started_up[unit(:unit_ab), s_parent, t1h1]
+                + var_units_started_up[unit(:unit_ab), s_child, t1h2]
             )
         )
         con_key = (key_u_a_b..., [s_parent, s_child], t2h)
@@ -1491,13 +1491,13 @@
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         expected_con = @build_constraint(
-            +var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2] ==
+            + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2] ==
             2 * inc_hrs * var_unit_flow[key_b..., s_parent, t2h] +
-            unit_idle_heat_rate *
-            (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
+            unit_idle_heat_rate
+            * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
             unit_start_flow * (
-                var_units_started_up[unit(:unit_ab), s_parent, t1h1] +
-                var_units_started_up[unit(:unit_ab), s_child, t1h2]
+                var_units_started_up[unit(:unit_ab), s_parent, t1h1]
+                + var_units_started_up[unit(:unit_ab), s_child, t1h2]
             )
         )
         con_key = (key_u_a_b..., [s_parent, s_child], t2h)
