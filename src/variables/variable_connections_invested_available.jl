@@ -65,6 +65,8 @@ function fix_initial_connections_invested_available(m)
         if fix_connections_invested_available(connection=conn, t=t, _strict=false) === nothing
             connection.parameter_values[conn][:fix_connections_invested_available] =
                 parameter_value(TimeSeries([start(t)], [0], false, false))
+            connection.parameter_values[conn][:starting_fix_connections_invested_available] =
+                parameter_value(TimeSeries([start(t)], [0], false, false))
         end
     end
 end
