@@ -29,7 +29,7 @@ These include:
 - [node](@ref) ensures the balance of the [commodity](@ref) flows, and can be used to store `commodities` as well.
 - [unit](@ref) handles the generation and consumption of `commodities`.
 
-### Structural `object classes` 
+### Structural `object classes`
 
 *Structural [Object Classes](@ref)* are used to define the temporal and stochastic structure of the modelled problem, as
 well as custom `unit constraints`.
@@ -57,7 +57,7 @@ These include:
 
 While [Object Classes](@ref) define all the `objects` or *entities* that make up a [model](@ref),
 [Relationship Classes](@ref) define how those *entities* are related to each other.
-Thus, [Relationship Classes](@ref) hold no meaning on their own, and always include at least one `object class`. 
+Thus, [Relationship Classes](@ref) hold no meaning on their own, and always include at least one `object class`.
 
 Similar to [Object Classes](@ref), each `relationship class` has a very specific purpose in *SpineOpt.jl*, and
 understanding the purpose of each `relationship class` is paramount.
@@ -106,17 +106,17 @@ Furthermore, there are also a number of *advanced structural [Relationship Class
 using some of the optional features of *SpineOpt.jl*, like [Investment Optimization](@ref) and custom `unit constraints`.
 These include:
 
-- [connection\_\_from\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](@ref) variable *from* the [node](@ref) in question in the custom [unit\_constraint](@ref).
+- [connection\_\_from\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](#Variables) variable *from* the [node](@ref) in question in the custom [unit\_constraint](@ref).
 - [connection\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [connection](@ref).
 - [connection\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [connection](@ref).
-- [connection\_\_to\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](@ref) variable *to* the [node](@ref) in question in the custom [unit\_constraint](@ref).
+- [connection\_\_to\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](#Variables) variable *to* the [node](@ref) in question in the custom [unit\_constraint](@ref).
 - [node\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
 - [node\_\_investment\_temporal\_block](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
-- [node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [node\_state](@ref) variable in the custom [unit\_constraint](@ref).
-- [unit\_\_from\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](@ref) variable *from* the [node](@ref) in question in the custom [unit\_constraint](@ref).
+- [node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [node\_state](#Variables) variable in the custom [unit\_constraint](@ref).
+- [unit\_\_from\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](#Variables) variable *from* the [node](@ref) in question in the custom [unit\_constraint](@ref).
 - [unit\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [unit](@ref).
 - [unit\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [unit](@ref).
-- [unit\_\_to\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](@ref) variable *to* the [node](@ref) in question in the custom [unit\_constraint](@ref).
+- [unit\_\_to\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](#Variables) variable *to* the [node](@ref) in question in the custom [unit\_constraint](@ref).
 
 ### Meta `relationship classes`
 
