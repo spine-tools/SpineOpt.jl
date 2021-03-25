@@ -38,6 +38,124 @@ function write_model_file(m::JuMP.Model; file_name="model")
 end
 
 """
+    initialize_concept_dictionary(template::Dict)
+
+Gathers information from `spineopt_template.json` and forms a `Dict` for the concepts.
+
+Unfortunately, the template is not uniform when it comes to the location of the `name` of each concept, their related
+concepts, or the `description`.
+Thus, we have to map things somewhat manually here.
+"""
+function initialize_concept_dictionary(template::Dict)
+    # Define mapping of template entries, where each attribute of interest is.
+    template_mapping = Dict(
+        "object_classes" => Dict(
+            :name_index => 1,
+            :description_index => 2,
+        ),
+        "relationship_classes" => Dict(
+            :name_index => 1,
+            :description_index => 3,
+            :related_concept_index => 2,
+            :related_concept_type => "object_classes"
+        ),
+        "parameter_value_lists" => Dict(
+            :name_index => 1,
+            :default_value_index => 2
+        ),
+        "object_parameters" => Dict(
+            :name_index => 2,
+            :description_index => 5,
+            :related_concept_index => 1,
+            :related_concept_type => "object_classes",
+            :default_value_index => 3,
+            :parameter_value_list_index => 4
+        ),
+        "relationship_parameters" => Dict(
+            :name_index => 2,
+            :description_index => 5,
+            :related_concept_index => 1,
+            :related_concept_type => "relationship_classes",
+            :default_value_index => 3,
+            :parameter_value_list_index => 4
+        ),
+        "tools" => Dict(
+            :name_index => 1,
+            :description_index => 2,
+        ),
+        "features" => Dict(
+            :name_index => 2,
+            :related_concept_index => 1,
+            :related_concept_type => "object_classes",
+            :default_value_index => 3,
+            :parameter_value_list_index => 4,
+        ),
+        "tool_features" => Dict(
+            :name_index => 1,
+            :related_concept_index => 2,
+            :related_concept_type => "object_classes",
+            :default_value_index => 4,
+            :feature_index => 4,
+        ),
+    )
+    # Initialize the concept dictionary based on the template
+    concept_dictionary = Dict(
+        key => Dict(
+            entry[template_mapping[key][:name_index]] => Dict(
+                :description => isnothing(get(template_mapping[key], :description_index, nothing)) ? nothing : (
+                    entry[template_mapping[key][:description_index]]
+                ),
+                :default_value => isnothing(get(template_mapping[key], :default_value_index, nothing)) ? nothing : (
+                    entry[template_mapping[key][:default_value_index]]
+                ),
+                :parameter_value_list => isnothing(get(template_mapping[key], :parameter_value_list_index, nothing)) ? nothing : (
+                    entry[template_mapping[key][:parameter_value_list_index]]
+                ),
+                :feature => isnothing(get(template_mapping[key], :feature_index, nothing)) ? nothing : (
+                    entry[template_mapping[key][:feature_index]]
+                ),
+                :related_concepts => isnothing(get(template_mapping[key], :related_concept_index, nothing)) ? Dict() : Dict(
+                    template_mapping[key][:related_concept_type] => (
+                        isa(entry[template_mapping[key][:related_concept_index]], Array) ? (
+                            unique([entry[template_mapping[key][:related_concept_index]]...])
+                        ) : [entry[template_mapping[key][:related_concept_index]]]
+                    )
+                ),
+            )
+            for entry in template[key]
+        )
+        for key in keys(template)
+    )
+    return concept_dictionary
+end
+
+"""
+    add_cross_references!(concept_dictionary::Dict)
+
+Loops over the `concept_dictionary` and cross-references all `:related_concepts`.
+"""
+function add_cross_references!(concept_dictionary::Dict)
+    # Loop over the concept dictionary and cross-reference all related concepts.
+    for class in keys(concept_dictionary)
+        for concept in keys(concept_dictionary[class])
+            for related_concept_class in keys(concept_dictionary[class][concept][:related_concepts])
+                for related_concept in concept_dictionary[class][concept][:related_concepts][related_concept_class]
+                    if !isnothing(get(concept_dictionary[related_concept_class][related_concept][:related_concepts], class, nothing))
+                        if concept in concept_dictionary[related_concept_class][related_concept][:related_concepts][class]
+                            nothing
+                        else
+                            push!(concept_dictionary[related_concept_class][related_concept][:related_concepts][class], concept)
+                        end
+                    else
+                        concept_dictionary[related_concept_class][related_concept][:related_concepts][class] = [concept]
+                    end
+                end
+            end
+        end
+    end
+end
+
+"""
     write_concept_reference_file(
         makedocs_path::String,
         filename::String,
