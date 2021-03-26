@@ -38,125 +38,232 @@ function write_model_file(m::JuMP.Model; file_name="model")
 end
 
 """
-    write_concept_reference_file(
-        makedocs_path::String,
-        filename::String,
-        template_sections::Array{String,1},
-        title::String;
-        template_name_index::Int=1,
-        template_related_concept_index::Int=template_name_index,
-        template_related_concept_names::Array{String,1}=[""],
-        template_default_value_index::Int=template_name_index,
-        template_parameter_value_list_index::Int=template_name_index,
-        template_description_index::Int=template_name_index,
-        w::Bool=true
-    )
+    initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
 
-Automatically writes a markdown file for the `Concept Reference` chapter based on `spineopt_template.json`.
+Gathers information from `spineopt_template.json` and forms a `Dict` for the concepts according to `translation`.
 
-The file is pieced together from three parts: the given `title`, a preamble automatically generated using the
-`spineopt_template`, and a separate description assumed to be found under `docs/src/concept_reference/<name>.md`.
-
-The necessary arguments control *how* the file is created. The keywords define how the `spineopt_template.json`
-is interpreted, with the exception of the `w` keyword, which is a flag for controlling whether
-the files are written or not.
+Unfortunately, the template is not uniform when it comes to the location of the `name` of each concept, their related
+concepts, or the `description`.
+Thus, we have to map things somewhat manually here.
+The optional `translation` keyword can be used to aggregate and translate the output using the
+`translate_and_aggregate_concept_dictionary()` function.
 """
-function write_concept_reference_file(
-    makedocs_path::String,
-    filename::String,
-    template_sections::Array{String,1},
-    title::String;
-    template_name_index::Int=1,
-    template_related_concept_index::Int=template_name_index,
-    template_related_concept_names::Array{String,1}=[""],
-    template_default_value_index::Int=template_name_index,
-    template_parameter_value_list_index::Int=template_name_index,
-    template_description_index::Int=template_name_index,
-    w::Bool=true,
-)
-    template = SpineOpt.template()
-    error_count = 0
-    # Initialize the `system_string` with the desired title and two newlines
-    system_string = ["# $(title)\n\n"]
-    # Loop over every section to be aggregated into the file and collect unique template entries
-    raw_entries = unique(
-        (
-            name=template[section][i][template_name_index],
-            related_concepts=(
-                template_related_concept_names[s],
-                vcat(template[section][i][template_related_concept_index]),
-            ),
-            default_value=template[section][i][template_default_value_index],
-            parameter_value_list=template[section][i][template_parameter_value_list_index],
-            description=template[section][i][template_description_index],
-        ) for (s, section) in enumerate(template_sections) for i in 1:length(template[section])
+function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
+    # Define mapping of template entries, where each attribute of interest is.
+    template_mapping = Dict(
+        "object_classes" => Dict(
+            :name_index => 1,
+            :description_index => 2,
+        ),
+        "relationship_classes" => Dict(
+            :name_index => 1,
+            :description_index => 3,
+            :related_concept_index => 2,
+            :related_concept_type => "object_classes"
+        ),
+        "parameter_value_lists" => Dict(
+            :name_index => 1,
+            :default_value_index => 2
+        ),
+        "object_parameters" => Dict(
+            :name_index => 2,
+            :description_index => 5,
+            :related_concept_index => 1,
+            :related_concept_type => "object_classes",
+            :default_value_index => 3,
+            :parameter_value_list_index => 4
+        ),
+        "relationship_parameters" => Dict(
+            :name_index => 2,
+            :description_index => 5,
+            :related_concept_index => 1,
+            :related_concept_type => "relationship_classes",
+            :default_value_index => 3,
+            :parameter_value_list_index => 4
+        ),
+        "tools" => Dict(
+            :name_index => 1,
+            :description_index => 2,
+        ),
+        "features" => Dict(
+            :name_index => 2,
+            :related_concept_index => 1,
+            :related_concept_type => "object_classes",
+            :default_value_index => 3,
+            :parameter_value_list_index => 4,
+        ),
+        "tool_features" => Dict(
+            :name_index => 1,
+            :related_concept_index => 2,
+            :related_concept_type => "object_classes",
+            :default_value_index => 4,
+            :feature_index => 4,
+        ),
     )
-    # Aggregate and sort the entries based on their names
-    unique_names = sort!(unique!(map(e -> e.name, raw_entries)))
-    entries = unique(
-        (
-            name=name,
-            related_concepts=Dict(
-                related_concept_name => sort!(
-                    unique(
-                        "[$(concept)](@ref)" for e in filter(
-                            e -> e.name == name && e.related_concepts[1] == related_concept_name,
-                            raw_entries,
-                        ) for concept in e.related_concepts[2]
-                    ),
-                ) for related_concept_name in template_related_concept_names
-            ),
-            default_value=sort!(unique(e.default_value for e in filter(e -> e.name == name, raw_entries))),
-            parameter_value_list=sort!(
-                unique(
-                    "[$(e.parameter_value_list)](@ref)"
-                    for e in filter(e -> e.name == name, raw_entries) if !isnothing(e.parameter_value_list)
+    # Initialize the concept dictionary based on the template
+    concept_dictionary = Dict(
+        key => Dict(
+            entry[template_mapping[key][:name_index]] => Dict(
+                :description => isnothing(get(template_mapping[key], :description_index, nothing)) ? nothing : (
+                    entry[template_mapping[key][:description_index]]
                 ),
-            ),
-            description=sort!(unique(e.description for e in filter(e -> e.name == name, raw_entries))),
-        ) for name in unique_names
+                :default_value => isnothing(get(template_mapping[key], :default_value_index, nothing)) ? nothing : (
+                    entry[template_mapping[key][:default_value_index]]
+                ),
+                :parameter_value_list => isnothing(get(template_mapping[key], :parameter_value_list_index, nothing)) ? nothing : (
+                    entry[template_mapping[key][:parameter_value_list_index]]
+                ),
+                :feature => isnothing(get(template_mapping[key], :feature_index, nothing)) ? nothing : (
+                    entry[template_mapping[key][:feature_index]]
+                ),
+                :related_concepts => isnothing(get(template_mapping[key], :related_concept_index, nothing)) ? Dict() : Dict(
+                    template_mapping[key][:related_concept_type] => (
+                        isa(entry[template_mapping[key][:related_concept_index]], Array) ? (
+                            unique([entry[template_mapping[key][:related_concept_index]]...])
+                        ) : [entry[template_mapping[key][:related_concept_index]]]
+                    )
+                ),
+            )
+            for entry in template[key]
+        )
+        for key in keys(template)
     )
-    # Loop over the unique entries and write their information into the file under section `entry.name`
-    for entry in entries
-        title = "## `$(entry.name)`\n\n"
-        preamble = ""
-        # If description is defined, include it into the preamble.
-        if template_description_index != template_name_index && !isempty(entry.description)
-            preamble *= "$(join(entry.description, " "))\n\n"
+    if !isempty(translation)
+        concept_dictionary = translate_and_aggregate_concept_dictionary(concept_dictionary, translation)
+    end
+    return concept_dictionary
+end
+
+"""
+    translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, translation::Dict)
+
+Translates and aggregates the concept types of the initialized `concept_dictionary` according to `translation`.
+
+`translation` needs to be a `Dict` with arrays of `String`s corresponding to the template sections mapped to
+a `String` corresponding to the translated section name.
+If multiple template section names are mapped to a single `String`, the entries are aggregated under that title.
+"""
+function translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, translation::Dict)
+    initial_translation = Dict(
+        translation[key] => merge([concept_dictionary[k] for k in key]...)
+        for key in keys(translation)
+    )
+    translated_concept_dictionary = deepcopy(initial_translation)
+    for concept_type in keys(initial_translation)
+        for concept in keys(initial_translation[concept_type])
+            translated_concept_dictionary[concept_type][concept][:related_concepts] = Dict(
+                translation[key] => vcat(
+                    [
+                        initial_translation[concept_type][concept][:related_concepts][k]
+                        for k in key
+                        if k in keys(initial_translation[concept_type][concept][:related_concepts])
+                    ]...
+                )
+                for key in keys(translation)
+            )
         end
-        # If related concepts are defined, include those into the preamble
-        if template_related_concept_index != template_name_index
-            for related_concept_name in template_related_concept_names
-                if !isempty(entry.related_concepts[related_concept_name])
-                    preamble *= "Related [$(replace(related_concept_name, "_" => "\\_"))](@ref): $(join(replace.(entry.related_concepts[related_concept_name], "_" => "\\_"), ", ", " and "))\n\n"
+    end
+    return translated_concept_dictionary
+end
+
+"""
+    add_cross_references!(concept_dictionary::Dict)
+
+Loops over the `concept_dictionary` and cross-references all `:related_concepts`.
+"""
+function add_cross_references!(concept_dictionary::Dict)
+    # Loop over the concept dictionary and cross-reference all related concepts.
+    for class in keys(concept_dictionary)
+        for concept in keys(concept_dictionary[class])
+            for related_concept_class in keys(concept_dictionary[class][concept][:related_concepts])
+                for related_concept in concept_dictionary[class][concept][:related_concepts][related_concept_class]
+                    if !isnothing(get(concept_dictionary[related_concept_class][related_concept][:related_concepts], class, nothing))
+                        if concept in concept_dictionary[related_concept_class][related_concept][:related_concepts][class]
+                            nothing
+                        else
+                            push!(concept_dictionary[related_concept_class][related_concept][:related_concepts][class], concept)
+                        end
+                    else
+                        concept_dictionary[related_concept_class][related_concept][:related_concepts][class] = [concept]
+                    end
                 end
             end
         end
-        # If default values are defined, include those into the preamble
-        if template_default_value_index != template_name_index && !isempty(entry.default_value)
-            preamble *= "Default value: $(join(entry.default_value, ", ", " and "))\n\n"
-        end
-        # If parameter value lists are defined, include those into the preamble
-        if template_parameter_value_list_index != template_name_index && !isempty(entry.parameter_value_list)
-            preamble *= "Uses [Parameter Value Lists](@ref): $(join(replace.(entry.parameter_value_list, "_" => "\\_"), ", ", " and "))\n\n"
-        end
-        # Try to fetch the description from the corresponding .md file.
-        description_path = joinpath(makedocs_path, "src", "concept_reference", "$(entry.name).md")
-        try
-            description = open(f -> read(f, String), description_path, "r")
-            while description[(end - 1):end] != "\n\n"
-                description *= "\n"
-            end
-            push!(system_string, title * preamble * description)
-        catch
-            @warn("Description for `$(entry.name)` not found! Please add a description to `$(description_path)`.")
-            error_count += 1
-            push!(system_string, title * preamble * "TODO\n\n")
-        end
     end
-    system_string = join(system_string)
-    if w
-        open(joinpath(makedocs_path, "src", "concept_reference", "$(filename)"), "w") do file
+    return concept_dictionary
+end
+
+"""
+    write_concept_reference_files(
+        concept_dictionary::Dict,
+        makedocs_path::String
+    )
+
+Automatically writes markdown files for the `Concept Reference` chapter based on the `concept_dictionary`.
+
+Each file is pieced together from two parts: the preamble automatically generated using the
+`concept_dictionary`, and a separate description assumed to be found under `docs/src/concept_reference/<name>.md`.
+"""
+function write_concept_reference_files(
+    concept_dictionary::Dict,
+    makedocs_path::String
+)
+    error_count = 0
+    for filename in keys(concept_dictionary)
+        system_string = ["# $(filename)\n\n"]
+        # Loop over the unique names and write their information into the filename under a dedicated section.
+        for concept in unique!(sort!(collect(keys(concept_dictionary[filename]))))
+            section = "## `$(concept)`\n\n"
+            # If description is defined, include it into the preamble.
+            if !isnothing(concept_dictionary[filename][concept][:description])
+                section *= ">$(concept_dictionary[filename][concept][:description])\n\n"
+            end
+            # If default values are defined, include those into the preamble
+            if !isnothing(concept_dictionary[filename][concept][:default_value])
+                if concept_dictionary[filename][concept][:default_value] isa String
+                    str = replace(concept_dictionary[filename][concept][:default_value], "_" => "\\_")
+                else
+                    str = concept_dictionary[filename][concept][:default_value]
+                end
+                section *= ">**Default value:** $(str)\n\n"
+            end
+            # If parameter value lists are defined, include those into the preamble
+            if !isnothing(concept_dictionary[filename][concept][:parameter_value_list])
+                refstring = "[$(replace(concept_dictionary[filename][concept][:parameter_value_list], "_" => "\\_"))](@ref)"
+                section *= ">**Uses [Parameter Value Lists](@ref):** $(refstring)\n\n"
+            end
+            # If related concepts are defined, include those into the preamble
+            if !isempty(concept_dictionary[filename][concept][:related_concepts])
+                for related_concept_type in keys(concept_dictionary[filename][concept][:related_concepts])
+                    if !isempty(concept_dictionary[filename][concept][:related_concepts][related_concept_type])
+                        refstrings = [
+                            "[$(replace(c, "_" => "\\_"))](@ref)"
+                            for c in concept_dictionary[filename][concept][:related_concepts][related_concept_type]
+                        ]
+                        section *= ">**Related [$(replace(related_concept_type, "_" => "\\_"))](@ref):** $(join(sort!(refstrings), ", ", " and "))\n\n"
+                    end
+                end
+            end
+            # If features are defined, include those into the preamble
+            #if !isnothing(concept_dictionary[filename][concept][:feature])
+            #    section *= "Uses [Features](@ref): $(join(replace(concept_dictionary[filename][concept][:feature], "_" => "\\_"), ", ", " and "))\n\n"
+            #end
+            # Try to fetch the description from the corresponding .md filename.
+            description_path = joinpath(makedocs_path, "src", "concept_reference", "$(concept).md")
+            try
+                description = open(f -> read(f, String), description_path, "r")
+                while description[(end - 1):end] != "\n\n"
+                    description *= "\n"
+                end
+                push!(system_string, section * description)
+            catch
+                @warn("Description for `$(concept)` not found! Please add a description to `$(description_path)`.")
+                error_count += 1
+                push!(system_string, section * "TODO\n\n")
+            end
+        end
+        system_string = join(system_string)
+        open(joinpath(makedocs_path, "src", "concept_reference", "$(filename).md"), "w") do file
             write(file, system_string)
         end
     end

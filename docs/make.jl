@@ -1,45 +1,24 @@
 using Documenter
 using SpineOpt
 
-# Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
+## Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
 # Actual descriptions are fetched separately from `src/concept_reference/concepts/`
 path = @__DIR__
-SpineOpt.write_concept_reference_file(
-    path,
-    "object_classes.md",
-    ["object_classes"],
-    "Object Classes";
-    template_description_index=2,
+default_translation = Dict(
+    #["tool_features"] => "Tool Features",
+    ["relationship_classes"] => "Relationship Classes",
+    ["parameter_value_lists"] => "Parameter Value Lists",
+    #["features"] => "Features",
+    #["tools"] => "Tools",
+    ["object_parameters", "relationship_parameters"] => "Parameters",
+    ["object_classes"] => "Object Classes"
 )
-SpineOpt.write_concept_reference_file(
-    path,
-    "relationship_classes.md",
-    ["relationship_classes"],
-    "Relationship Classes";
-    template_related_concept_index=2,
-    template_related_concept_names=["Object Classes"],
-    template_description_index=3,
+concept_dictionary = SpineOpt.add_cross_references!(
+    SpineOpt.initialize_concept_dictionary(SpineOpt.template(); translation=default_translation)
 )
-SpineOpt.write_concept_reference_file(
-    path,
-    "parameters.md",
-    ["object_parameters", "relationship_parameters"],
-    "Parameters";
-    template_name_index=2,
-    template_related_concept_index=1,
-    template_related_concept_names=["Object Classes", "Relationship Classes"],
-    template_default_value_index=3,
-    template_parameter_value_list_index=4,
-    template_description_index=5,
-)
-SpineOpt.write_concept_reference_file(
-    path,
-    "parameter_value_lists.md",
-    ["parameter_value_lists"],
-    "Parameter Value Lists",
-)
+SpineOpt.write_concept_reference_files(concept_dictionary, path)
 
-# Create and deploy the documentation
+## Create and deploy the documentation
 makedocs(
     sitename="SpineOpt.jl",
     #format=Documenter.HTML(prettyurls=get(ENV, "CI", nothing) == "true"),
@@ -52,10 +31,10 @@ makedocs(
         ],
         "Concept Reference" => Any[
             "Basics of the model structure" => joinpath("concept_reference", "the_basics.md"),
-            "Object Classes" => joinpath("concept_reference", "object_classes.md"),
-            "Relationship Classes" => joinpath("concept_reference", "relationship_classes.md"),
-            "Parameters" => joinpath("concept_reference", "parameters.md"),
-            "Parameter Value Lists" => joinpath("concept_reference", "parameter_value_lists.md"),
+            "Object Classes" => joinpath("concept_reference", "Object Classes.md"),
+            "Relationship Classes" => joinpath("concept_reference", "Relationship Classes.md"),
+            "Parameters" => joinpath("concept_reference", "Parameters.md"),
+            "Parameter Value Lists" => joinpath("concept_reference", "Parameter Value Lists.md"),
         ],
         "Mathematical Formulation" => Any[
             "Sets" => joinpath("mathematical_formulation", "sets.md"),
