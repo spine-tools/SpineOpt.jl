@@ -38,15 +38,17 @@ function write_model_file(m::JuMP.Model; file_name="model")
 end
 
 """
-    initialize_concept_dictionary(template::Dict)
+    initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
 
-Gathers information from `spineopt_template.json` and forms a `Dict` for the concepts.
+Gathers information from `spineopt_template.json` and forms a `Dict` for the concepts according to `translation`.
 
 Unfortunately, the template is not uniform when it comes to the location of the `name` of each concept, their related
 concepts, or the `description`.
 Thus, we have to map things somewhat manually here.
+The optional `translation` keyword can be used to aggregate and translate the output using the
+`translate_and_aggregate_concept_dictionary()` function.
 """
-function initialize_concept_dictionary(template::Dict)
+function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
     # Define mapping of template entries, where each attribute of interest is.
     template_mapping = Dict(
         "object_classes" => Dict(
@@ -126,7 +128,42 @@ function initialize_concept_dictionary(template::Dict)
         )
         for key in keys(template)
     )
+    if !isempty(translation)
+        concept_dictionary = translate_and_aggregate_concept_dictionary(concept_dictionary, translation)
+    end
     return concept_dictionary
+end
+
+"""
+    translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, translation::Dict)
+
+Translates and aggregates the concept types of the initialized `concept_dictionary` according to `translation`.
+
+`translation` needs to be a `Dict` with arrays of `String`s corresponding to the template sections mapped to
+a `String` corresponding to the translated section name.
+If multiple template section names are mapped to a single `String`, the entries are aggregated under that title.
+"""
+function translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, translation::Dict)
+    initial_translation = Dict(
+        translation[key] => merge([concept_dictionary[k] for k in key]...)
+        for key in keys(translation)
+    )
+    translated_concept_dictionary = deepcopy(initial_translation)
+    for concept_type in keys(initial_translation)
+        for concept in keys(initial_translation[concept_type])
+            translated_concept_dictionary[concept_type][concept][:related_concepts] = Dict(
+                translation[key] => vcat(
+                    [
+                        initial_translation[concept_type][concept][:related_concepts][k]
+                        for k in key
+                        if k in keys(initial_translation[concept_type][concept][:related_concepts])
+                    ]...
+                )
+                for key in keys(translation)
+            )
+        end
+    end
+    return translated_concept_dictionary
 end
 
 """
