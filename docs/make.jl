@@ -5,13 +5,13 @@ using SpineOpt
 # Actual descriptions are fetched separately from `src/concept_reference/concepts/`
 path = @__DIR__
 default_translation = Dict(
-    ["tool_features"] => "Tool features",
-    ["relationship_classes"] => "Relationship classes",
-    ["parameter_value_lists"] => "Parameter value lists",
-    ["features"] => "Features",
-    ["tools"] => "Tools",
+    #["tool_features"] => "Tool Features",
+    ["relationship_classes"] => "Relationship Classes",
+    ["parameter_value_lists"] => "Parameter Value Lists",
+    #["features"] => "Features",
+    #["tools"] => "Tools",
     ["object_parameters", "relationship_parameters"] => "Parameters",
-    ["object_classes"] => "Object classes"
+    ["object_classes"] => "Object Classes"
 )
 concept_dictionary = SpineOpt.add_cross_references!(
     SpineOpt.initialize_concept_dictionary(SpineOpt.template(); translation=default_translation)
@@ -31,10 +31,10 @@ makedocs(
         ],
         "Concept Reference" => Any[
             "Basics of the model structure" => joinpath("concept_reference", "the_basics.md"),
-            "Object Classes" => joinpath("concept_reference", "object_classes.md"),
-            "Relationship Classes" => joinpath("concept_reference", "relationship_classes.md"),
-            "Parameters" => joinpath("concept_reference", "parameters.md"),
-            "Parameter Value Lists" => joinpath("concept_reference", "parameter_value_lists.md"),
+            "Object Classes" => joinpath("concept_reference", "Object Classes.md"),
+            "Relationship Classes" => joinpath("concept_reference", "Relationship Classes.md"),
+            "Parameters" => joinpath("concept_reference", "Parameters.md"),
+            "Parameter Value Lists" => joinpath("concept_reference", "Parameter Value Lists.md"),
         ],
         "Mathematical Formulation" => Any[
             "Variables" => joinpath("mathematical_formulation", "variables.md"),

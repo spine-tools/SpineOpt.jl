@@ -216,21 +216,31 @@ function write_concept_reference_files(
             section = "## `$(concept)`\n\n"
             # If description is defined, include it into the preamble.
             if !isnothing(concept_dictionary[filename][concept][:description])
-                section *= "$(join(concept_dictionary[filename][concept][:description], " "))\n\n"
+                section *= ">$(concept_dictionary[filename][concept][:description])\n\n"
             end
             # If default values are defined, include those into the preamble
             if !isnothing(concept_dictionary[filename][concept][:default_value])
-                section *= "Default value: $(join(concept_dictionary[filename][concept][:default_value], ", ", " and "))\n\n"
+                if concept_dictionary[filename][concept][:default_value] isa String
+                    str = replace(concept_dictionary[filename][concept][:default_value], "_" => "\\_")
+                else
+                    str = concept_dictionary[filename][concept][:default_value]
+                end
+                section *= ">**Default value:** $(str)\n\n"
             end
             # If parameter value lists are defined, include those into the preamble
             if !isnothing(concept_dictionary[filename][concept][:parameter_value_list])
-                section *= "Uses [Parameter value lists](@ref): $(join(replace(concept_dictionary[filename][concept][:parameter_value_list], "_" => "\\_"), ", ", " and "))\n\n"
+                refstring = "[$(replace(concept_dictionary[filename][concept][:parameter_value_list], "_" => "\\_"))](@ref)"
+                section *= ">**Uses [Parameter Value Lists](@ref):** $(refstring)\n\n"
             end
             # If related concepts are defined, include those into the preamble
             if !isempty(concept_dictionary[filename][concept][:related_concepts])
                 for related_concept_type in keys(concept_dictionary[filename][concept][:related_concepts])
                     if !isempty(concept_dictionary[filename][concept][:related_concepts][related_concept_type])
-                        section *= "Related [$(replace(related_concept_type, "_" => "\\_"))](@ref): $(join(replace.(sort!(concept_dictionary[filename][concept][:related_concepts][related_concept_type]), "_" => "\\_"), ", ", " and "))\n\n"
+                        refstrings = [
+                            "[$(replace(c, "_" => "\\_"))](@ref)"
+                            for c in concept_dictionary[filename][concept][:related_concepts][related_concept_type]
+                        ]
+                        section *= ">**Related [$(replace(related_concept_type, "_" => "\\_"))](@ref):** $(join(sort!(refstrings), ", ", " and "))\n\n"
                     end
                 end
             end
