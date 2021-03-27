@@ -24,8 +24,9 @@ for `node`, `s`, and `t`.
 """
 function node_voltage_angle_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything)
     inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
-        (node=n, stochastic_scenario=s, t=t) for n in intersect(indices(min_voltage_angle), indices(max_voltage_angle))
-        for (n, s, t) in node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, t=t)
+        (node=n, stochastic_scenario=s, t=t)
+        for (n, s, t) in node_stochastic_time_indices(m; node=node, stochastic_scenario=stochastic_scenario, t=t)
+            if n in intersect(indices(min_voltage_angle), indices(max_voltage_angle))
     ]
     unique!(inds)
 end

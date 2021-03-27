@@ -96,6 +96,7 @@ include("variables/variable_nonspin_ramp_down_unit_flow.jl")
 include("variables/variable_nonspin_units_shut_down.jl")
 include("variables/variable_node_pressure.jl")
 include("variables/variable_node_voltage_angle.jl")
+include("variables/variable_binary_connection_flow.jl")
 
 include("variables/variable_mp_objective_lowerbound.jl")
 

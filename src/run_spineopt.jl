@@ -121,6 +121,7 @@ function rerun_spineopt(
         m;
         log_level=log_level,
         mip_solver=mip_solver,
+        use_direct_model=use_direct_model,
         lp_solver=lp_solver,
         calculate_duals=calculate_duals,
     )
@@ -195,6 +196,7 @@ function add_variables!(m; add_user_variables=m -> nothing, log_level=3)
     @timelog log_level 3 "- [variable_nonspin_ramp_down_unit_flow]" add_variable_nonspin_ramp_down_unit_flow!(m)
     @timelog log_level 3 "- [variable_node_pressure]" add_variable_node_pressure!(m)
     @timelog log_level 3 "- [variable_node_voltage_angle]" add_variable_node_voltage_angle!(m)
+    @timelog log_level 3 "- [variable_binary_connection_flow]" add_variable_binary_connection_flow!(m)
     @timelog log_level 3 "- [user_defined_variables]" add_user_variables(m)
 end
 
@@ -297,9 +299,11 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_res_minimum_node_state]" add_constraint_res_minimum_node_state!(m)
 
     @timelog log_level 3 "- [constraint_fix_node_pressure_point]" add_constraint_fix_node_pressure_point!(m)
+    @timelog log_level 3 "- [constraint_enforce_unitary_flow]" add_constraint_enforce_unitary_flow!(m)
     @timelog log_level 3 "- [constraint_compression_ratio]" add_constraint_compression_ratio!(m)
     @timelog log_level 3 "- [constraint_storage_line_pack]" add_constraint_storage_line_pack!(m)
-    @timelog log_level 3 "- [constraint_init_stor_state]" add_constraint_init_stor_state!(m)
+    @timelog log_level 3 "- [constraint_init_node_state]" add_constraint_init_node_state!(m)
+    #@timelog log_level 3 "- [constraint_init_stor_state]" add_constraint_init_stor_state!(m)
     @timelog log_level 3 "- [constraint_connection_flow_gas_capacity]" add_constraint_connection_flow_gas_capacity!(m)
     @timelog log_level 3 "- [constraint_node_voltage_angle_ref]" add_constraint_node_voltage_angle_ref!(m)
     @timelog log_level 3 "- [add_constraint_node_voltage_angle]" add_constraint_node_voltage_angle!(m)
@@ -343,11 +347,36 @@ end
 """
 Optimize the given model. If an optimal solution is found, return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, mip_solver, lp_solver)
+function optimize_model!(m::Model; log_level=3, calculate_duals=false, use_direct_model=false, mip_solver, lp_solver)
     write_mps_file(model=m.ext[:instance]) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
+    if termination_status(m) == MOI.INFEASIBLE && use_direct_model==true
+        compute_conflict!(m)
+        cons=[]
+        for (a,b) in list_of_constraint_types(m)
+            push!(cons,all_constraints(m,a,b)...)
+        end
+        conflicts=[]
+        for c in cons
+            try
+                conf = MOI.get(m, MOI.ConstraintConflictStatus(), c)
+                if conf==MOI.ConflictParticipationStatusCode(1)
+                    @show c
+                    push!(conflicts, c)
+                end
+            catch
+                @info("something went wrong with $c")
+            end
+        end
+
+        @info "conflicts are: "
+        for c in conflicts
+            @info "$(c)"
+        end
+        write_conflicts_to_file(conflicts, file_name="conflicts_$(m.ext[:instance])_$(startref(current_window(m))).txt")
+    end
     if termination_status(m) == MOI.OPTIMAL || termination_status(m) == MOI.TIME_LIMIT
         if calculate_duals
             @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)

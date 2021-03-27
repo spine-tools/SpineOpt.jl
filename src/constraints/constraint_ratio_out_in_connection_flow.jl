@@ -57,14 +57,14 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
                 )] *
                 overlap_duration(
                     t_short,
-                    t - connection_flow_delay(
-                        connection=conn,
-                        node1=ng_out,
-                        node2=ng_in,
-                        stochastic_scenario=s,
-                        analysis_time=t0,
-                        t=t,
-                    ),
+                    t #- connection_flow_delay(
+                    #     connection=conn,
+                    #     node1=ng_out,
+                    #     node2=ng_in,
+                    #     stochastic_scenario=s,
+                    #     analysis_time=t0,
+                    #     t=t,
+                    # ),
                 )
                 for
                 (conn, n_in, d, s, t_short) in connection_flow_indices(
@@ -75,14 +75,15 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
                     stochastic_scenario=s,
                     t=to_time_slice(
                         m;
-                        t=t - connection_flow_delay(
-                            connection=conn,
-                            node1=ng_out,
-                            node2=ng_in,
-                            stochastic_scenario=s,
-                            analysis_time=t0,
-                            t=t,
-                        ),
+                        t=t
+                        # t=t - connection_flow_delay(
+                        #     # connection=conn,
+                        #     # node1=ng_out,
+                        #     # node2=ng_in,
+                        #     # stochastic_scenario=s,
+                        #     # analysis_time=t0,
+                        #     # t=t,
+                        # ),
                     ),
                 );
                 init=0,
@@ -122,7 +123,7 @@ end
     constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in; filtering_options...)
 
 Form the stochastic indexing Array for the `:ratio_out_in_connection_flow` constraint for the desired `ratio_out_in`.
-    
+
 Uses stochastic path indices due to potentially different stochastic structures between `connection_flow` variables.
 Keyword arguments can be used to filter the resulting Array.
 """
@@ -182,14 +183,14 @@ function _constraint_ratio_out_in_connection_flow_indices(m, connection, node_ou
             direction=d,
             t=to_time_slice(
                 m;
-                t=t - connection_flow_delay(
-                    connection=conn,
-                    node1=node_out,
-                    node2=n_in,
-                    stochastic_scenario=s,
-                    analysis_time=t0,
-                    t=t1,
-                ),
+                t=t #- connection_flow_delay(
+                #     connection=conn,
+                #     node1=node_out,
+                #     node2=n_in,
+                #     stochastic_scenario=s,
+                #     analysis_time=t0,
+                #     t=t1,
+                # ),
             ),
         )  # `from_node` `connection_flow`s with potential `connection_flow_delay`
     ))

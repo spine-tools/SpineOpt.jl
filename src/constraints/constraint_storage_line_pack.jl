@@ -21,23 +21,25 @@
 
 Constraint for line storage dependent on line pack.
 """
-function add_constraint_storage_line_pack(m::Model)
+function add_constraint_storage_line_pack!(m::Model)
     @fetch node_state, node_pressure = m.ext[:variables]
     constr_dict = m.ext[:constraints][:storage_line_pack] = Dict()
-    for (stor,conn) in connection__node__direction()
-        for conn in indices(linepack_constant;connection=conn)
-            for (n_orig,n_dest) in connection__from_node__to_node(connection=conn)
-                for (conn,n,c,d,t) in connection_flow_indices(connection=conn)
-                    constr_dict[conn, stor, t] = @constraint(
+    # for (n,conn,d) in connection__node__direction()
+    for conn in indices(linepack_constant)
+        for (n_orig,n_dest) in connection__from_node__to_node(connection=conn)
+            for (conn,n,d,s,t) in connection_flow_indices(m,connection=conn)
+                if n != n_orig && n != n_dest
+                    constr_dict[conn, n, t] = @constraint(
                         m,
-                        node_state[stor,c,t] ##TODO: how to identify gas_storage nodes?
+                        node_state[n,s,t] ##TODO: how to identify gas_storage nodes?
                         ==
-                        linepack_constant(connection=conn)*0.5*(node_pressure[n_orig,t]+node_pressure[n_dest,t])
+                        linepack_constant(connection=conn)*0.5*(node_pressure[n_orig,s,t]+node_pressure[n_dest,s,t])
                         )
                 end
-                end
-        end
+            end ###TODO: revise!
+            end
     end
+    # end
 end
 
 """

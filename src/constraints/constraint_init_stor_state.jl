@@ -17,77 +17,32 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-    constraint_stor_state(m::Model)
+    constraint_node_state(m::Model)
 
 Balance for storage level.
 """
-function constraint_init_stor_state(m::Model)
-    @fetch stor_state,flow,connection_flow= m.ext[:variables]
-    constr_dict = m.ext[:constraints][:init_stor_state] = Dict()
-    for (stor, c, t_after) in stor_state_indices()
-        if t_after == time_slice()[1]
-            constr_dict[stor, c, t_after] = @constraint(
+function add_constraint_init_node_state!(m::Model)
+    @fetch node_state= m.ext[:variables]
+    constr_dict = m.ext[:constraints][:init_node_state] = Dict()
+    t_before1 = t_before_t(m;t_after=time_slice(m)[1])
+    t0 = startref(current_window(m))
+    for (stor, s, t_before) in node_state_indices(m;t=t_before_t(m;t_after=time_slice(m)[1]))
+            constr_dict[stor, s, t_before] = @constraint(
                 m,
-                + stor_state[stor, c, t_after]
-                    * state_coeff(storage=stor)
-                     / duration(t_after)
+                + node_state[stor, s, t_before]
+                    * state_coeff(node=stor)
+                     / duration(t_before)
                 ==
-                stor_state_init(storage=stor)
-                - reduce(
-                    +,
-                   unit_flow[u, n, c_, d, t_] * stor_unit_discharg_eff(storage=stor, unit=u)
-                    for (u, n, c_, d, t_) in unit_flow_indices(
-                        unit=[u1 for (stor1, u1) in indices(stor_unit_discharg_eff; storage=stor)],
-                        commodity=c,
-                        direction=:to_node,
-                        t=t_after
-                    );
-                    init=0
-                )
-                + reduce(
-                    +,
-                    unit_flow[u, n, c_, d, t_] * stor_unit_charg_eff(storage=stor, unit=u)
-                    for (u, n, c_, d, t_) in unit_flow_indices(
-                        unit=[u1 for (stor1, u1) in indices(stor_unit_charg_eff; storage=stor)],
-                        commodity=c,
-                        direction=:from_node,
-                        t=t_after
-                    );
-                    init=0
-                )
-                - reduce(
-                    +,
-                    connection_flow[conn, n, c_, d, t_] * stor_conn_discharg_eff(storage=stor, connection=conn)
-                    for (conn, n, c_, d, t_) in connection_flow_indices(
-                        connection=[conn1 for (stor1, conn1) in indices(stor_conn_discharg_eff; storage=stor)],
-                        commodity=c,
-                        direction=:to_node,
-                        t=t_after
-                    );
-                    init=0
-                )
-                + reduce(
-                    +,
-                    connection_flow[conn, n, c_, d, t_] * stor_conn_charg_eff(storage=stor, connection=conn)
-                    for (conn, n, c_, d, t_) in connection_flow_indices(
-                        connection=[conn1 for (stor1, conn1) in indices(stor_conn_charg_eff; storage=stor)],
-                        commodity=c,
-                        direction=:from_node,
-                        t=t_after
-                    );
-                    init=0
-                )
-                )
-        end
-        if t_after == time_slice()[end]
-            constr_dict[stor, c, t_after] = @constraint(
+                node_state_init(node=stor))
+    end
+    for (stor, s, t_before) in node_state_indices(m;t=time_slice(m)[end])
+            constr_dict[stor, s, t_before] = @constraint(
                 m,
-                + stor_state[stor, c, t_after]
-                    * state_coeff(storage=stor)
-                     / duration(t_after)
+                + node_state[stor, s, t_before]
+                    * state_coeff(node=stor)
+                     / duration(t_before)
                 >=
-                stor_state_init(storage=stor)
-                )
-        end
+                node_state_init(node=stor)
+                )#
     end
 end

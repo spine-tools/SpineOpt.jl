@@ -21,25 +21,25 @@
 
 Outer approximation of the non-linear terms.
 """
-function constraint_node_voltage_angle(m::Model)
+function add_constraint_node_voltage_angle!(m::Model)
     @fetch node_voltage_angle = m.ext[:variables]
     @fetch connection_flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:voltage_angle] = Dict()
-    for conn in indices(line_susceptance)
-        for (conn,n_from,c,d_from,t) in var_connection_flow_indices(connection=conn,direction=:from_node)
-            for (conn,n_to,c,d_to,t)  in var_connection_flow_indices(connection=conn,commodity=c,direction=:to_node,t=t)
+    for conn in indices(connection_reactance)
+        for (conn,n_from,d_from,s,t) in connection_flow_indices(m;connection=conn,direction=direction(:from_node))
+            for (conn,n_to,d_to,s,t)  in connection_flow_indices(m;connection=conn,direction=direction(:to_node),t=t)
                 if n_to != n_from
                     constr_dict[conn,n_from,t] = @constraint(
                         m,
-                            connection_flow[conn,n_from,c,d_from,t]
+                            connection_flow[conn,n_from,d_from,s,t]
                             -
-                                connection_flow[conn,n_to,c,d_from,t]
+                                connection_flow[conn,n_to,d_from,s,t]
                         ==
-                        1/line_susceptance(connection=conn)
+                        1/connection_reactance(connection=conn) ##reactance or susceptance
                         * 250
-                        * (node_voltage_angle[n_from,t]
+                        * (node_voltage_angle[n_from,s,t]
                             -
-                                    node_voltage_angle[n_to,t])
+                                    node_voltage_angle[n_to,s,t])
                     )
                 end
             end

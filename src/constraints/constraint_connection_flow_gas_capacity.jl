@@ -21,24 +21,27 @@
 
 This constraint is needed to force uni-directional unit_flow
 """
-function constraint_connection_flow_gas_capacity(m::Model)
+function add_constraint_connection_flow_gas_capacity!(m::Model)
     @fetch connection_flow,binary_connection_flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:connection_flow_gas_capacity] = Dict()
-    for (conn, n, c, d, t) in var_connection_flow_indices(commodity=Object("Gas"),direction=Object("to_node"))
+    for (conn, n, d, s, t) in connection_flow_indices(m;node=node__commodity(commodity=commodity(:Gas)),direction=direction(:to_node))
+        if has_state(node=n) == false
             constr_dict[conn, n, t] = @constraint(
                 m,
                 (
-                    connection_flow[conn, n, c, d, t]
+                    connection_flow[conn, n, d, s, t]
                     +  reduce(
                     +,
-                    connection_flow[conn1, n1, c1,  d1, t1]
-                        for (conn1,n1,c1,d1,t1) in var_connection_flow_indices(connection=conn,commodity=c,t=t)
-                            if d1 != d && n1 != n
+                    connection_flow[conn1, n1, d1, s1, t1]
+                        for (conn1,n1,d1,s1,t1) in connection_flow_indices(m,connection=conn,t=t)
+                            if d1 != d && n1 != n && has_state(node=n1) == false;
+                                init=0
                         )
                 ) /2
                 <=
                 + bigM(model=m.ext[:instance])
-                * binary_connection_flow[conn, n, d, t]
+                * binary_connection_flow[conn, n, d, s, t]
             )
+        end
     end
 end

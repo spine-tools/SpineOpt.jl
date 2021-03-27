@@ -21,16 +21,15 @@
 
 Reference node voltage angle.
 """
-function constraint_node_voltage_angle_ref(m::Model)
+function add_constraint_node_voltage_angle_ref!(m::Model)
     @fetch node_voltage_angle = m.ext[:variables]
     constr_dict = m.ext[:constraints][:ref_node] = Dict()
-    n = Object("node_1")
-        for t in time_slice()
-            constr_dict[n,t] = @constraint(
+    for (n,s,t) in node_voltage_angle_indices(m,node=node(:node_1))
+            constr_dict[n,s,t] = @constraint(
                 m,
-                node_voltage_angle[n,t]
+                node_voltage_angle[n,s,t]
                 ==
                 0
             )
-        end
+    end
 end

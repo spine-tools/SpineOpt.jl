@@ -24,14 +24,14 @@ Write model file for Model `m`. Objective, constraints and variable bounds are r
     Optional argument is keyword `file_name`.
 """
 function write_model_file(m::JuMP.Model; file_name="model")
-    model_string = "$m"        
+    model_string = "$m"
     model_string = replace(model_string, s": -" => ":- ")
     model_string = replace(model_string, s": " => ": + ")
     model_string = replace(model_string, s"+ " => "\n\t+ ")
     model_string = replace(model_string, s"- " => "\n\t- ")
     model_string = replace(model_string, s">= " => "\n\t\t>= ")
     model_string = replace(model_string, s"== " => "\n\t\t== ")
-    model_string = replace(model_string, s"<= " => "\n\t\t<= ")        
+    model_string = replace(model_string, s"<= " => "\n\t\t<= ")
     open(joinpath(@__DIR__, "$(file_name).so_model"), "w") do file
         write(file, model_string)
     end
@@ -162,8 +162,16 @@ end
 function print_constraint(constraint, filename="constraint_debug.txt")
     io = open(joinpath(@__DIR__, filename), "w")
     for (inds, con) in constraint
-        print(io, inds, "\n")        
+        print(io, inds, "\n")
         print(io, con, "\n\n")
+    end
+    close(io);
+end
+
+function write_conflicts_to_file(conflicts; file_name="conflicts")
+    io = open(joinpath(@__DIR__, "$(file_name).txt"), "w")
+    for confl in conflicts
+        print(io, confl, "\n")
     end
     close(io);
 end

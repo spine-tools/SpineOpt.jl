@@ -21,22 +21,39 @@
 
 Outer approximation of the non-linear terms.
 """
-function constraint_fix_node_pressure_point(m::Model)
+function add_constraint_fix_node_pressure_point!(m::Model)
     @fetch node_pressure,connection_flow,binary_connection_flow = m.ext[:variables]
     constr_dict = m.ext[:constraints][:fix_node_pressure_point] = Dict()
     for (conn, n_orig, n_dest) in indices(K1)
-        for (conn,n_orig,c,d_from,t) in connection_flow_indices(connection=conn,node=n_orig,direction=:from_node)
+        for (conn,n_orig,d_from,s,t) in connection_flow_indices(m;connection=conn,node=n_orig,direction=direction(:from_node))
+            # @show K1(connection=conn,node1=n_orig,node2=n_dest)
             for j = 1:length(K1(connection=conn,node1=n_orig,node2=n_dest))
                 if K1(connection=conn,node1=n_orig,node2=n_dest,i=j) != 0
-                    constr_dict[conn, n_orig, n_dest, j, t] = @constraint(
+                    constr_dict[conn, n_orig, n_dest, j, s, t] = @constraint(
                         m,
-                        (connection_flow[conn,n_orig,c,d_from,t] + connection_flow[conn,n_dest,c,Object("to_node"),t])/2 ##### TO DO from node, to node???? for all segments??????
+                        (connection_flow[conn,n_orig,d_from,s,t] + connection_flow[conn,n_dest,direction(:to_node),s,t])/2 ##### TO DO from node, to node???? for all segments??????
                         <=
-                        + K1(connection=conn,node1=n_orig,node2=n_dest,i=j) * node_pressure[n_orig,t] - K0(connection=conn,node1=n_orig,node2=n_dest,i=j)* node_pressure[n_dest,t]
-                        + bigM(model=:instance)* (1-binary_connection_flow[conn, n_dest, Object("to_node"), t])
+                        + (K1(connection=conn,node1=n_orig,node2=n_dest,i=j))
+                        * node_pressure[n_orig,s,t]
+                        - (K0(connection=conn,node1=n_orig,node2=n_dest,i=j))
+                        * node_pressure[n_dest,s,t]
+                        + bigM(model=m.ext[:instance])* (1-binary_connection_flow[conn, n_dest, direction(:to_node), s,t])
                     )
                 end
             end
+        end
+    end
+end
+
+function add_constraint_enforce_unitary_flow!(m::Model)
+    @fetch binary_connection_flow = m.ext[:variables]
+    constr_dict = m.ext[:constraints][:enforce_unitary_flow] = Dict()
+    for (conn, n_orig, n_dest) in indices(K1)
+        for (conn,n_orig,d_to_node,s,t) in connection_flow_indices(m;connection=conn,node=n_orig,direction=direction(:to_node))
+            constr_dict[conn, n_orig, n_dest, s, t] = @constraint(
+                m,
+                binary_connection_flow[conn, n_orig, direction(:to_node), s,t]
+                == 1 - binary_connection_flow[conn, n_dest, direction(:to_node), s,t])
         end
     end
 end

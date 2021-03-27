@@ -21,16 +21,16 @@
 
 Constraint for compressor pipelines.
 """
-function constraint_compression_ratio(m::Model)
+function add_constraint_compression_ratio!(m::Model)
     @fetch node_pressure = m.ext[:variables]
     constr_dict = m.ext[:constraints][:compression_ratio] = Dict()
     for (conn, n_orig, n_dest) in indices(compression_factor)
-        for (n_orig,t) in node_pressure_indices(node=n_orig)
-            constr_dict[conn, n_orig, n_dest, t] = @constraint(
+        for (n_orig,s,t) in node_pressure_indices(m;node=n_orig)
+            constr_dict[conn, n_orig, n_dest, s, t] = @constraint(
                 m,
-                node_pressure[n_dest,t]
+                node_pressure[n_dest,s,t]
                 <=
-                compression_factor(connection = conn,node1=n_orig,node2=n_dest) * node_pressure[n_orig,t]
+                compression_factor(connection = conn,node1=n_orig,node2=n_dest) * node_pressure[n_orig,s,t]
                 )
         end
     end
