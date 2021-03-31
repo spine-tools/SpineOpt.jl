@@ -36,7 +36,7 @@ function add_constraint_node_voltage_angle!(m::Model)
                                 connection_flow[conn,n_to,d_from,s,t]
                         ==
                         1/connection_reactance(connection=conn) ##reactance or susceptance
-                        * 250
+                        * connection_reactance_p_u(connection=conn)
                         * (node_voltage_angle[n_from,s,t]
                             -
                                     node_voltage_angle[n_to,s,t])
@@ -46,3 +46,4 @@ function add_constraint_node_voltage_angle!(m::Model)
         end
     end
 end
+#TODO

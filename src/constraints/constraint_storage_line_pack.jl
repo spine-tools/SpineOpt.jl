@@ -25,15 +25,15 @@ function add_constraint_storage_line_pack!(m::Model)
     @fetch node_state, node_pressure = m.ext[:variables]
     constr_dict = m.ext[:constraints][:storage_line_pack] = Dict()
     # for (n,conn,d) in connection__node__direction()
-    for conn in indices(linepack_constant)
-        for (n_orig,n_dest) in connection__from_node__to_node(connection=conn)
+    for conn in indices(connection_linepack_constant)
+        for (n_orig,n_dest) in connection__node__node(connection=conn)
             for (conn,n,d,s,t) in connection_flow_indices(m,connection=conn)
-                if n != n_orig && n != n_dest
+                if is_linepack_storage(node=n)
                     constr_dict[conn, n, t] = @constraint(
                         m,
                         node_state[n,s,t] ##TODO: how to identify gas_storage nodes?
                         ==
-                        linepack_constant(connection=conn)*0.5*(node_pressure[n_orig,s,t]+node_pressure[n_dest,s,t])
+                        connection_linepack_constant(connection=conn)*0.5*(node_pressure[n_orig,s,t]+node_pressure[n_dest,s,t])
                         )
                 end
             end ###TODO: revise!
@@ -56,7 +56,7 @@ end
     )
         unique(
             (connection=c, node1=node_origin, node2=node_destination, stochastic_path=path, t=t)
-            for c_ in indices(linepack_constant)
+            for c_ in indices(connection_linepack_constant)
             for (c, node_origin, node_destination) in indices(unit_capacity) if u in unit && ng in node && d in direction
             for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t))
             for

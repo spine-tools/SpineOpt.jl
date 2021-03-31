@@ -19,7 +19,7 @@
 """
     constraint_gas_line_pack_capacity(m::Model)
 
-This constraint is needed to force uni-directional unit_flow
+This constraint is needed to force uni-directional flow over gas connections.
 """
 function add_constraint_connection_flow_gas_capacity!(m::Model)
     @fetch connection_flow,binary_connection_flow = m.ext[:variables]
@@ -45,3 +45,5 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
         end
     end
 end
+
+#binary_connection_flow_indices
