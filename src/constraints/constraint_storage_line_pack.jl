@@ -23,23 +23,23 @@ Constraint for line storage dependent on line pack.
 """
 function add_constraint_storage_line_pack!(m::Model)
     @fetch node_state, node_pressure = m.ext[:variables]
-    constr_dict = m.ext[:constraints][:storage_line_pack] = Dict()
-    # for (n,conn,d) in connection__node__direction()
-    for conn in indices(connection_linepack_constant)
-        for (n_orig,n_dest) in connection__node__node(connection=conn)
-            for (conn,n,d,s,t) in connection_flow_indices(m,connection=conn)
-                if is_linepack_storage(node=n)
-                    constr_dict[conn, n, t] = @constraint(
-                        m,
-                        node_state[n,s,t] ##TODO: how to identify gas_storage nodes?
-                        ==
-                        connection_linepack_constant(connection=conn)*0.5*(node_pressure[n_orig,s,t]+node_pressure[n_dest,s,t])
-                        )
-                end
-            end ###TODO: revise!
-            end
-    end
-    # end
+    m.ext[:constraints][:storage_line_pack] = Dict(
+    (connection=conn,node1=stor,node2=ng, stochastic_path=s, t=t) => @constraint(
+        m,
+        sum(
+        node_state[stor,s,t]*duration(t)
+        for (stor,s,t) in node_state_indices(m;node=stor,stochastic_scenario=s,t=t_in_t(m; t_long=t))
+        )
+        ==
+        connection_linepack_constant(connection=conn,node1=stor,node2=ng)
+        #connection_linepack_constant[(connection=conn,node1=stor,node2=ng,stochastic_scenario=s,analysis_time=t0, t=t)] #TODO: fails for some reason
+        *0.5
+        *sum( #summing up the partial pressure of each component for both sides
+            node_pressure[ng,s,t]*duration(t)
+            for (ng,s,t) in node_pressure_indices(m;node=ng, stochastic_scenario=s,t=t_in_t(m; t_long=t))
+        )
+        ) for (conn, stor, ng, s, t) in constraint_storage_line_pack_indices(m)
+        )
 end
 
 """
@@ -49,19 +49,30 @@ end
     function constraint_storage_line_pack_indices(
         m::Model;
         connection=anything,
+        node_stor=anything,
         node1=anything,
         node2=anything,
         stochastic_path=anything,
         t=anything,
     )
         unique(
-            (connection=c, node1=node_origin, node2=node_destination, stochastic_path=path, t=t)
-            for c_ in indices(connection_linepack_constant)
-            for (c, node_origin, node_destination) in indices(unit_capacity) if u in unit && ng in node && d in direction
-            for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t))
+            (connection=conn, node1=n_stor, node2=ng, stochastic_path=path, t=t)
+            for (conn,n_stor,ng) in indices(connection_linepack_constant)
+            for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=[members(n_stor)...,members(ng)...]), t=t))
             for
             path in active_stochastic_paths(unique(
-                ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(m, u, ng, d, t)
+                ind.stochastic_scenario for ind in _constraint_storage_line_pack_indices(m, n_stor, ng, t)
             )) if path == stochastic_path || path in stochastic_path
         )
+    end
+
+    """
+        _constraint_storage_line_pack_indices(m::Model, n_stor, ng, t)
+
+    """
+    function _constraint_storage_line_pack_indices(m, n_stor, ng, t)
+            Iterators.flatten((
+                node_state_indices(m; node=n_stor, t=t_in_t(m; t_long=t)),
+                node_pressure_indices(m; node=ng, t=t_in_t(m; t_long=t)),
+            ))
     end
