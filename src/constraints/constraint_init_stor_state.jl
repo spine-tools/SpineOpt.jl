@@ -27,6 +27,7 @@ function add_constraint_init_node_state!(m::Model)
     t_before1 = t_before_t(m;t_after=time_slice(m)[1])
     t0 = startref(current_window(m))
     for (stor, s, t_before) in node_state_indices(m;t=t_before_t(m;t_after=time_slice(m)[1]))
+        if stor in indices(node_state_init)
             constr_dict[stor, s, t_before] = @constraint(
                 m,
                 + node_state[stor, s, t_before]
@@ -34,8 +35,10 @@ function add_constraint_init_node_state!(m::Model)
                      / duration(t_before)
                 ==
                 node_state_init(node=stor))
+        end
     end
     for (stor, s, t_before) in node_state_indices(m;t=time_slice(m)[end])
+        if stor in indices(node_state_init)
             constr_dict[stor, s, t_before] = @constraint(
                 m,
                 + node_state[stor, s, t_before]
@@ -44,6 +47,6 @@ function add_constraint_init_node_state!(m::Model)
                 >=
                 node_state_init(node=stor)
                 )#
+            end
     end
 end
-#TODO

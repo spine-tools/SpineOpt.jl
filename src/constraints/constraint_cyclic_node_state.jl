@@ -23,13 +23,11 @@ Enforces cyclic constraint on node state over a temporal block.
 """
 function add_constraint_cyclic_node_state!(m::Model)
     @fetch node_state = m.ext[:variables]
-    cons = m.ext[:constraints][:cyclic_node_state] = Dict()
-    for (n, blk) in indices(cyclic_condition)
-        if has_state(node=n) == :value_true && cyclic_condition(node=n, temporal_block=blk)
-            (n, t_start) =
-                first(node_state_indices(node=n, t=first(t_before_t(t_after=first(time_slice(temporal_block=blk))))))
-            (n, t_end) = first(node_state_indices(node=n, t=last(time_slice(temporal_block=blk))))
-            cons[n, blk] = @constraint(m, node_state[n, t_end] >= node_state[n, t_start])
-        end
-    end
+    m.ext[:constraints][:cyclic_node_state] = Dict(
+    (node=n, stochastic_scenario=s, t=t_end) => @constraint(
+            m, node_state[n, s, t_end] >= node_state[n, s, t_start]
+            ) for (n, blk) in indices(cyclic_condition) if cyclic_condition(node=n, temporal_block=blk)
+                    for (n, s, t_start) in node_state_indices(m;node=n, t=first(t_before_t(m;t_after=first(time_slice(m;temporal_block=blk)))))
+                        for (n, s, t_end) in node_state_indices(m;node=n, t=last(time_slice(m;temporal_block=blk)))
+    )
 end

@@ -277,6 +277,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
         m,
     )
     @timelog log_level 3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
+    @timelog log_level 3 "- [constraint_cyclic_node_state]" add_constraint_cyclic_node_state!(m)
     @timelog log_level 3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
     @timelog log_level 3 "- [constraint_units_on]" add_constraint_units_on!(m)
     @timelog log_level 3 "- [constraint_units_available]" add_constraint_units_available!(m)

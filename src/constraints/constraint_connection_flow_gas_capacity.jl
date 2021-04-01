@@ -83,9 +83,3 @@ function _constraint_connection_flow_gas_capacity_indices(m, conn, node1, node2,
         connection_flow_indices(m; connection=conn, node=node2, t=t)
     ))
 end
-
-
-# for (conn, n, d, s, t) in connection_flow_indices(m;node=node__commodity(commodity=commodity(:Gas)),direction=direction(:to_node))
-# #TODO: replace this with connection_linepack_constant..pressuer thing; then you don't need has_state anymore
-#     if has_state(node=n) == false
-# #binary_connection_flow_indices
