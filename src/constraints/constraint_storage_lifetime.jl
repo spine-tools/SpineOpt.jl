@@ -28,15 +28,14 @@ function add_constraint_storage_lifetime!(m::Model)
     m.ext[:constraints][:storage_lifetime] = Dict(
         (node=n, stochastic_path=s, t=t) => @constraint(
             m,
-            +expr_sum(
-                +storages_invested_available[n, s, t]
+            + expr_sum(
+                + storages_invested_available[n, s, t]
                 for (n, s, t) in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t);
                 init=0,
             ) >=
-            +sum(
-                +storages_invested[n, s_past, t_past]
-                for
-                (n, s_past, t_past) in storages_invested_available_indices(
+            + sum(
+                + storages_invested[n, s_past, t_past]
+                for (n, s_past, t_past) in storages_invested_available_indices(
                     m;
                     node=n,
                     stochastic_scenario=s,
@@ -56,7 +55,7 @@ end
 """
     constraint_storage_lifetime_indices(m::Model; filtering_options...)
 
-Form the stochastic indexing Array for the `:storages_invested_lifetime()` constraint. 
+Form the stochastic indexing Array for the `:storages_invested_lifetime()` constraint.
 
 Uses stochastic path indexing due to the potentially different stochastic structures between present and past time.
 Keyword arguments can be used to filther the resulting Array.
@@ -66,9 +65,8 @@ function constraint_storage_lifetime_indices(m::Model; node=anything, stochastic
     unique(
         (node=n, stochastic_path=path, t=t) for n in indices(storage_investment_lifetime) if n in node
         for (n, s, t) in storages_invested_available_indices(m; node=n, t=t)
-        for
-        path in active_stochastic_paths(_constraint_storage_lifetime_indices(m, n, s, t0, t)) if
-        path == stochastic_path || path in stochastic_path
+        for path in active_stochastic_paths(_constraint_storage_lifetime_indices(m, n, s, t0, t)) if
+            path == stochastic_path || path in stochastic_path
     )
 end
 
@@ -81,7 +79,10 @@ by the `storage_investment_lifetime` parameter.
 function _constraint_storage_lifetime_indices(m, n, s, t0, t)
     t_past_and_present = to_time_slice(
         m;
-        t=TimeSlice(end_(t) - storage_investment_lifetime(node=n, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)),
+        t=TimeSlice(
+            end_(t) - storage_investment_lifetime(node=n, stochastic_scenario=s, analysis_time=t0, t=t),
+            end_(t),
+        ),
     )
     unique(ind.stochastic_scenario for ind in storages_invested_available_indices(m; node=n, t=t_past_and_present))
 end

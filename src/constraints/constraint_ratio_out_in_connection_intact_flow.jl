@@ -31,10 +31,9 @@ function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
     m.ext[:constraints][:ratio_out_in_connection_intact_flow] = Dict(
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=s, t=t) => @constraint(
             m,
-            +expr_sum(
-                +connection_intact_flow[conn, n_out, d, s, t_short] * duration(t_short)
-                for
-                (conn, n_out, d, s, t_short) in connection_intact_flow_indices(
+            + expr_sum(
+                + connection_intact_flow[conn, n_out, d, s, t_short] * duration(t_short)
+                for (conn, n_out, d, s, t_short) in connection_intact_flow_indices(
                     m;
                     connection=conn,
                     node=ng_out,
@@ -43,18 +42,17 @@ function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
-            )
-            ==
-            +expr_sum(
-                +connection_intact_flow[conn, n_in, d, s, t_short] * duration(t_short)
+            ) ==
+            + expr_sum(
+                + connection_intact_flow[conn, n_in, d, s, t_short] * duration(t_short)
                 for (conn, n_in, d, s, t_short) in connection_intact_flow_indices(
-                        m;
-                        connection=conn,
-                        node=ng_in,
-                        direction=direction(:from_node),
-                        stochastic_scenario=s,
-                        t=t_in_t(m; t_long=t),
-                    );
+                    m;
+                    connection=conn,
+                    node=ng_in,
+                    direction=direction(:from_node),
+                    stochastic_scenario=s,
+                    t=t_in_t(m; t_long=t),
+                );
                 init=0,
             )
         ) for (conn, ng_in, ng_out, s, t) in constraint_ratio_out_in_connection_intact_flow_indices(m)
@@ -65,7 +63,7 @@ end
     constraint_ratio_out_in_connection_intact_flow_indices(m::Model; filtering_options...)
 
 For investments with PTDF based flows, constraint the intact flow into a node to be equal to the flow out of the node.
-    
+
 Uses stochastic path indices due to potentially different stochastic structures between `connection_intact_flow` variables.
 Keyword arguments can be used to filter the resulting Array.
 """
@@ -79,18 +77,16 @@ function constraint_ratio_out_in_connection_intact_flow_indices(
 )
     t0 = startref(current_window(m))
     unique(
-        (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
-        for conn in connection
+        (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t) for conn in connection
         for (n_in, n_out) in connection__node__node(connection=conn) if n_in in node1 && n_out in node2
-        for
-        t in t_lowest_resolution(
+        for t in t_lowest_resolution(
             x.t for x in connection_flow_indices(m; connection=conn, node=[members(n_in)..., members(n_out)...], t=t)
-        )
-        for
-        path in active_stochastic_paths(unique(
-            ind.stochastic_scenario
-            for ind in _constraint_ratio_out_in_connection_intact_flow_indices(m, conn, n_in, n_out, t0, t)
-        )) if path == stochastic_path || path in stochastic_path
+        ) for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in _constraint_ratio_out_in_connection_intact_flow_indices(m, conn, n_in, n_out, t0, t)
+            ),
+        ) if path == stochastic_path || path in stochastic_path
     )
 end
 

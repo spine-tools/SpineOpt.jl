@@ -146,10 +146,10 @@ import DelimitedFiles: readdlm
         SpineOpt.generate_network_components()
         SpineOpt.write_ptdfs()
         ptdfs = readdlm("ptdfs.csv", ',', Any, '\n')
-        @test ptdfs[1, 1:end-1] == ["connection", "node_a", "node_b", "node_c"]
+        @test ptdfs[1, 1:(end - 1)] == ["connection", "node_a", "node_b", "node_c"]
         @test ptdfs[:, 1] == ["connection", "connection_ab", "connection_bc", "connection_ca"]
         @test isapprox(
-            convert(Array{Float64,2}, ptdfs[2:end, 2:end-1]),
+            convert(Array{Float64,2}, ptdfs[2:end, 2:(end - 1)]),
             [
                 0.0 -0.666666 -0.333333
                 0.0 0.333333 -0.333333
@@ -159,9 +159,9 @@ import DelimitedFiles: readdlm
         )
         SpineOpt.write_lodfs()
         lodfs = readdlm("lodfs.csv", ',', Any, '\n')
-        @test convert(Array{String,1}, lodfs[1, 1:end-1]) ==
+        @test convert(Array{String,1}, lodfs[1, 1:(end - 1)]) ==
               ["contingency line", "from_node", "to node", "connection_ab", "connection_bc", "connection_ca"]
         @test convert(Array{String,1}, lodfs[:, 1]) == ["contingency line", "connection_ca"]
-        @test isapprox(convert(Array{Float64,1}, lodfs[2, 4:end-2]), [-1, -1])
+        @test isapprox(convert(Array{Float64,1}, lodfs[2, 4:(end - 2)]), [-1, -1])
     end
 end

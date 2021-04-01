@@ -118,7 +118,6 @@ include("objective/renewable_curtailment_costs.jl")
 include("objective/connection_flow_costs.jl")
 include("objective/res_proc_costs.jl")
 include("objective/ramp_costs.jl")
-include("objective/res_start_up_costs.jl")
 
 include("constraints/constraint_common.jl")
 include("constraints/constraint_max_cum_in_unit_flow_bound.jl")
@@ -156,14 +155,13 @@ include("constraints/constraint_unit_constraint.jl")
 include("constraints/constraint_units_invested_available.jl")
 include("constraints/constraint_units_invested_transition.jl")
 include("constraints/constraint_unit_lifetime.jl")
+include("constraints/constraint_split_ramps.jl")
 include("constraints/constraint_unit_pw_heat_rate.jl")
-include("constraints/constraint_split_ramp_up.jl")
 include("constraints/constraint_ramp_up.jl")
 include("constraints/constraint_max_start_up_ramp.jl")
 include("constraints/constraint_min_start_up_ramp.jl")
 include("constraints/constraint_max_nonspin_ramp_up.jl")
 include("constraints/constraint_min_nonspin_ramp_up.jl")
-include("constraints/constraint_split_ramp_down.jl")
 include("constraints/constraint_ramp_down.jl")
 include("constraints/constraint_max_shut_down_ramp.jl")
 include("constraints/constraint_min_shut_down_ramp.jl")
@@ -178,18 +176,18 @@ include("constraints/constraint_connection_flow_gas_capacity.jl")
 include("constraints/constraint_node_voltage_angle.jl")
 include("constraints/constraint_connection_unitary_flow.jl")
 
-include("constraints/constraint_mp_units_invested_cuts.jl")
+include("constraints/constraint_mp_any_invested_cuts.jl")
 
 const _template = JSON.parsefile(joinpath(@__DIR__, "..", "data", "spineopt_template.json"))
 
 function template()
-	try
-		JSON.parsefile(joinpath(@__DIR__, "..", "data", "spineopt_template.json"))
-	catch
-		# Template file not found, use _template constant instead.
-		# This will happen in the SpineOpt app
-		_template
-	end
+    try
+        JSON.parsefile(joinpath(@__DIR__, "..", "data", "spineopt_template.json"))
+    catch
+        # Template file not found, use _template constant instead.
+        # This will happen in the SpineOpt app
+        _template
+    end
 end
 
 end

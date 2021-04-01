@@ -81,7 +81,7 @@ end
 
 function SpineOpt.run_spineopt(db_map::PyObject, url_out::String; kwargs...)
     using_spinedb(db_map, SpineOpt)
-    SpineOpt.generate_missing_items() 
+    SpineOpt.generate_missing_items()
     if !isempty(model(model_type=:spineopt_master))
         rerun_spineopt_mp(url_out; kwargs...)
     else

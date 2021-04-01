@@ -28,11 +28,8 @@ function add_constraint_storages_invested_available!(m::Model)
     m.ext[:constraints][:storages_invested_available] = Dict(
         (node=n, stochastic_scenario=s, t=t) => @constraint(
             m,
-            +storages_invested_available[n, s, t] <=
-            +candidate_storages[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+            + storages_invested_available[n, s, t] <=
+            + candidate_storages[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
         ) for (n, s, t) in storages_invested_available_indices(m)
     )
 end
-# TODO: units_invested_available or \sum(units_invested)?
-# Candidate units: max amount of units that can be installed over model horizon
-# or max amount of units that can be available at a time?

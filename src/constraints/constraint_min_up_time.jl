@@ -29,18 +29,22 @@ function add_constraint_min_up_time!(m::Model)
     m.ext[:constraints][:min_up_time] = Dict(
         (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
-            +expr_sum(
-                +units_on[u, s, t] for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
+            + expr_sum(
+                + units_on[u, s, t] for (u, s, t) in
+                    units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
                 init=0,
             ) - expr_sum(
-                +nonspin_units_shut_down[u, n, s, t]
-                for (u, n, s, t) in nonspin_units_shut_down_indices(m; unit=u, stochastic_scenario=s, t=t);
+                + nonspin_units_shut_down[u, n, s, t] for (u, n, s, t) in nonspin_units_shut_down_indices(
+                    m;
+                    unit=u,
+                    stochastic_scenario=s,
+                    t=t,
+                    temporal_block=anything,
+                );
                 init=0,
             ) >=
-            +sum(
-                +units_started_up[u, s_past, t_past]
-                for
-                (u, s_past, t_past) in units_on_indices(
+            + sum(
+                + units_started_up[u, s_past, t_past] for (u, s_past, t_past) in units_on_indices(
                     m;
                     unit=u,
                     stochastic_scenario=s,
@@ -51,6 +55,7 @@ function add_constraint_min_up_time!(m::Model)
                             end_(t),
                         ),
                     ),
+                    temporal_block=anything,
                 )
             )
         ) for (u, s, t) in constraint_min_up_time_indices(m)
@@ -61,7 +66,7 @@ end
     constraint_min_up_time_indices(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:min_up_time` constraint.
-    
+
 Uses stochastic path indices due to potentially different stochastic structures between `units_on` and
 `units_started_up` variables on past time slices. Keyword arguments can be used to filter the resulting Array.
 """
@@ -70,9 +75,8 @@ function constraint_min_up_time_indices(m::Model; unit=anything, stochastic_path
     unique(
         (unit=u, stochastic_path=path, t=t) for u in indices(min_up_time) if u in unit
         for (u, s, t) in units_on_indices(m; unit=u, t=t)
-        for
-        path in active_stochastic_paths(_constraint_min_up_time_indices(m, u, s, t0, t)) if
-        path == stochastic_path || path in stochastic_path
+        for path in active_stochastic_paths(_constraint_min_up_time_indices(m, u, s, t0, t)) if
+            path == stochastic_path || path in stochastic_path
     )
 end
 
@@ -86,5 +90,7 @@ function _constraint_min_up_time_indices(m, u, s, t0, t)
         m;
         t=TimeSlice(end_(t) - min_up_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)),
     )
-    unique(ind.stochastic_scenario for ind in units_on_indices(m; unit=u, t=t_past_and_present))
+    unique(
+        ind.stochastic_scenario for ind in units_on_indices(m; unit=u, t=t_past_and_present, temporal_block=anything)
+    )
 end

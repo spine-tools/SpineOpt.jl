@@ -51,7 +51,7 @@ function check_data_structure(; log_level=3)
     check_model__node__stochastic_structure()
     check_model__unit__stochastic_structure()
     check_minimum_operating_point_unit_capacity()
-    check_islands(; log_level=log_level)
+    #check_islands(; log_level=log_level)
     check_rolling_branching()
 end
 
@@ -153,8 +153,8 @@ function check_model__node__stochastic_structure()
     _check(
         isempty(errors),
         "invalid `node__stochastic_structure` or `model__stochastic_structure` definitions for `(model, node)` pair(s):
-        $(join(errors, ", ", " and ")) " *
-        "- each `node` must be related to one and only one `stochastic_structure` per `model`",
+        $(join(errors, ", ", " and ")) "
+        * "- each `node` must be related to one and only one `stochastic_structure` per `model`",
     )
     _check(
         isempty(errors_group),
@@ -179,16 +179,14 @@ This is deduced from the `model__stochastic_strucutre` and `units_on__stochastic
 """
 function check_model__unit__stochastic_structure()
     errors = [
-        (m, u) for m in model(model_type=:spineopt_operations)
-        for
-        u in unit() if
-        length(intersect(units_on__stochastic_structure(unit=u), model__stochastic_structure(model=m))) != 1
+        (m, u) for m in model(model_type=:spineopt_operations) for u in unit() if
+            length(intersect(units_on__stochastic_structure(unit=u), model__stochastic_structure(model=m))) != 1
     ]
     _check(
         isempty(errors),
         "invalid `units_on__stochastic_structure` or `model__stochastic_structure` definitions for `(model, unit)`
-        pair(s): $(join(errors, ", ", " and ")) " *
-        "- each `unit` must be related to one and only one `stochastic_structure` per `model`",
+        pair(s): $(join(errors, ", ", " and ")) "
+        * "- each `unit` must be related to one and only one `stochastic_structure` per `model`",
     )
 end
 
@@ -204,8 +202,8 @@ function check_minimum_operating_point_unit_capacity()
     ]
     _check(
         isempty(error_indices),
-        "missing `unit_capacity` value for indices: $(join(error_indices, ", ", " and ")) " *
-        "- `unit_capacity` must be specified where `minimum_operating_point` is",
+        "missing `unit_capacity` value for indices: $(join(error_indices, ", ", " and ")) "
+        * "- `unit_capacity` must be specified where `minimum_operating_point` is",
     )
 end
 
@@ -276,18 +274,16 @@ function check_rolling_branching()
         if !isnothing(roll_forward(model=m))
             for ss in model__stochastic_structure(model=m)
                 cond = all(
-                    stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen)
-                    >=
-                    roll_forward(model=m)
-                    for scen in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
-                    if !isnothing(stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen))
+                    stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen) >= roll_forward(model=m)
+                    for scen in stochastic_structure__stochastic_scenario(stochastic_structure=ss) if
+                        !isnothing(stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen))
                 )
                 _check(
                     cond,
                     """
                     Branching of `stochastic_structures` before `model` `roll_forward` isn't supported!
                     Please check the `stochastic_scenario_end` parameters of `stochastic_structure` `$(ss)`.
-                    """
+                    """,
                 )
             end
         end

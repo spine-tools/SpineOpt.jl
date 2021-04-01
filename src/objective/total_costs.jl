@@ -35,9 +35,8 @@ function objective_terms(m::Model)
                 :objective_penalties,
                 :connection_flow_costs,
                 :renewable_curtailment_costs,
-                #:res_proc_costs,
+                :res_proc_costs,
                 :ramp_costs,
-                #:res_start_up_costs
             ]
         else
             [
@@ -54,17 +53,12 @@ function objective_terms(m::Model)
                 :objective_penalties,
                 :connection_flow_costs,
                 :renewable_curtailment_costs,
-                #:res_proc_costs,
+                :res_proc_costs,
                 :ramp_costs,
-                #:res_start_up_costs
             ]
         end
     elseif model_type(model=m.ext[:instance]) == :spineopt_master
-        [
-            :unit_investment_costs,
-            :connection_investment_costs,
-            :storage_investment_costs
-        ]
+        [:unit_investment_costs, :connection_investment_costs, :storage_investment_costs]
     end
 end
 

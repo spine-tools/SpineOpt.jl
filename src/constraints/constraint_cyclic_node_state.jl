@@ -16,25 +16,20 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
 """
-    connection_investment_costs(m::Model)
+    add_constraint_nodal_balance!(m::Model)
 
-Create and expression for connection investment costs.
+Enforces cyclic constraint on node state over a temporal block.
 """
-function connection_investment_costs(m::Model, t1)
-    @fetch connections_invested = m.ext[:variables]
-    t0 = startref(current_window(m))
-    @expression(
-        m,
-        + expr_sum(
-            connections_invested[c, s, t]
-            * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * connection_investment_cost[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * connection_stochastic_scenario_weight(m; connection=c, stochastic_scenario=s)
-            for (c, s, t) in connections_invested_available_indices(m; connection=indices(connection_investment_cost)) if
-                end_(t) <= t1;
-            init=0,
-        )
-    )
+function add_constraint_cyclic_node_state!(m::Model)
+    @fetch node_state = m.ext[:variables]
+    cons = m.ext[:constraints][:cyclic_node_state] = Dict()
+    for (n, blk) in indices(cyclic_condition)
+        if has_state(node=n) == :value_true && cyclic_condition(node=n, temporal_block=blk)
+            (n, t_start) =
+                first(node_state_indices(node=n, t=first(t_before_t(t_after=first(time_slice(temporal_block=blk))))))
+            (n, t_end) = first(node_state_indices(node=n, t=last(time_slice(temporal_block=blk))))
+            cons[n, blk] = @constraint(m, node_state[n, t_end] >= node_state[n, t_start])
+        end
+    end
 end

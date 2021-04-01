@@ -30,10 +30,9 @@ function add_constraint_max_nonspin_ramp_up!(m::Model)
     m.ext[:constraints][:max_nonspin_start_up_ramp] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            +sum(
+            + sum(
                 nonspin_ramp_up_unit_flow[u, n, d, s, t]
-                for
-                (u, n, d, s, t) in nonspin_ramp_up_unit_flow_indices(
+                for (u, n, d, s, t) in nonspin_ramp_up_unit_flow_indices(
                     m;
                     unit=u,
                     node=ng,
@@ -42,13 +41,12 @@ function add_constraint_max_nonspin_ramp_up!(m::Model)
                     t=t_in_t(m; t_long=t),
                 )
             ) <=
-            +expr_sum(
-                nonspin_units_started_up[u, n, s, t] *
-                max_res_startup_ramp[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-                unit_conv_cap_to_flow[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-                unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for
-                (u, n, s, t) in nonspin_units_started_up_indices(
+            + expr_sum(
+                nonspin_units_started_up[u, n, s, t]
+                * max_res_startup_ramp[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                for (u, n, s, t) in nonspin_units_started_up_indices(
                     m;
                     unit=u,
                     node=ng,
@@ -80,15 +78,14 @@ function constraint_max_nonspin_ramp_up_indices(
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(max_res_startup_ramp) if u in unit && ng in node && d in direction
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t))
-        for
-        path in active_stochastic_paths(unique(
-            ind.stochastic_scenario
-            for
-            ind in Iterators.flatten((
-                nonspin_ramp_up_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
-                nonspin_units_started_up_indices(m; unit=u, node=ng, t=t),
-            ))
-        )) if path == stochastic_path || path in stochastic_path
+        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng))), t=t))
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario for ind in Iterators.flatten((
+                    nonspin_ramp_up_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
+                    nonspin_units_started_up_indices(m; unit=u, node=ng, t=t),
+                ))
+            ),
+        ) if path == stochastic_path || path in stochastic_path
     )
 end

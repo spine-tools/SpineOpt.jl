@@ -23,5 +23,11 @@
 Add `storages_decommissioned` variables to model `m`.
 """
 function add_variable_storages_decommissioned!(m::Model)
-    add_variable!(m, :storages_decommissioned, storages_invested_available_indices; lb=x -> 0, int=storages_invested_available_int)
+    add_variable!(
+        m,
+        :storages_decommissioned,
+        storages_invested_available_indices;
+        lb=x -> 0,
+        int=storages_invested_available_int,
+    )
 end

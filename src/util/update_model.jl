@@ -49,7 +49,6 @@ function Base.convert(::Type{GenericAffExpr{Call,VariableRef}}, expr::GenericAff
     GenericAffExpr{Call,VariableRef}(constant, terms)
 end
 
-
 # TODO: try to get rid of this in favor of JuMP's generic implementation
 function Base.show(io::IO, e::GenericAffExpr{Call,VariableRef})
     str = string(join([string(coef, " * ", var) for (var, coef) in e.terms], " + "), " + ", e.constant)
@@ -81,7 +80,7 @@ end
 function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,VariableRef}, set::MOI.AbstractScalarSet)
     constant = expr.constant
     expr.constant = zero(Call)
-    new_set = MOIU.shift_constant(set, -constant)
+    new_set = MOIU.shift_constant(set, - constant)
     ScalarConstraint(expr, new_set)
 end
 
@@ -103,7 +102,7 @@ function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,Varia
         _error("Range constraint with time-varying bounds or free-term is not supported at the moment.")
     else
         set = MOI.Interval(realize(lb), realize(ub))
-        new_set = MOIU.shift_constant(set, -realize(constant))
+        new_set = MOIU.shift_constant(set, - realize(constant))
         ScalarConstraint(expr, new_set)
     end
 end
@@ -216,7 +215,7 @@ end
 Base.:+(lhs::Call, rhs::VariableRef) = _build_aff_expr_with_calls(lhs, Call(1.0), rhs)
 Base.:+(lhs::VariableRef, rhs::Call) = (+)(rhs, lhs)
 Base.:-(lhs::Call, rhs::VariableRef) = _build_aff_expr_with_calls(lhs, Call(-1.0), rhs)
-Base.:-(lhs::VariableRef, rhs::Call) = (+)(lhs, -rhs)
+Base.:-(lhs::VariableRef, rhs::Call) = (+)(lhs, - rhs)
 Base.:*(lhs::Call, rhs::VariableRef) = _build_aff_expr_with_calls(Call(0.0), lhs, rhs)
 Base.:*(lhs::VariableRef, rhs::Call) = (*)(rhs, lhs)
 
@@ -227,8 +226,8 @@ function Base.:+(lhs::Call, rhs::GenericAffExpr{C,VariableRef}) where {C}
     GenericAffExpr(constant, terms)
 end
 Base.:+(lhs::GenericAffExpr, rhs::Call) = (+)(rhs, lhs)
-Base.:-(lhs::Call, rhs::GenericAffExpr) = (+)(lhs, -rhs)
-Base.:-(lhs::GenericAffExpr, rhs::Call) = (+)(lhs, -rhs)
+Base.:-(lhs::Call, rhs::GenericAffExpr) = (+)(lhs, - rhs)
+Base.:-(lhs::GenericAffExpr, rhs::Call) = (+)(lhs, - rhs)
 function Base.:*(lhs::Call, rhs::GenericAffExpr{C,VariableRef}) where {C}
     constant = lhs * rhs.constant
     terms = OrderedDict{VariableRef,Call}(var => lhs * coef for (var, coef) in rhs.terms)
@@ -246,9 +245,9 @@ function Base.:+(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{C,Va
     JuMP.add_to_expression!(copy(lhs), rhs)
 end
 Base.:+(lhs::GenericAffExpr{C,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) where {C} = (+)(rhs, lhs)
-Base.:-(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) = (+)(lhs, -rhs)
-Base.:-(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{C,VariableRef}) where {C} = (+)(lhs, -rhs)
-Base.:-(lhs::GenericAffExpr{C,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) where {C} = (+)(lhs, -rhs)
+Base.:-(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) = (+)(lhs, - rhs)
+Base.:-(lhs::GenericAffExpr{Call,VariableRef}, rhs::GenericAffExpr{C,VariableRef}) where {C} = (+)(lhs, - rhs)
+Base.:-(lhs::GenericAffExpr{C,VariableRef}, rhs::GenericAffExpr{Call,VariableRef}) where {C} = (+)(lhs, - rhs)
 
 # @objective extension
 function JuMP.set_objective_function(model::Model, func::GenericAffExpr{Call,VariableRef})

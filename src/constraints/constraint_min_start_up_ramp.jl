@@ -30,10 +30,8 @@ function add_constraint_min_start_up_ramp!(m::Model)
     m.ext[:constraints][:min_start_up_ramp] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            +sum(
-                start_up_unit_flow[u, n, d, s, t]
-                for
-                (u, n, d, s, t) in start_up_unit_flow_indices(
+            + sum(
+                start_up_unit_flow[u, n, d, s, t] for (u, n, d, s, t) in start_up_unit_flow_indices(
                     m;
                     unit=u,
                     node=ng,
@@ -42,11 +40,11 @@ function add_constraint_min_start_up_ramp!(m::Model)
                     t=t_in_t(m; t_long=t),
                 )
             ) >=
-            +sum(
-                units_started_up[u, s, t] *
-                min_startup_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-                unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-                unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+            + sum(
+                units_started_up[u, s, t]
+                * min_startup_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t))
             )
         ) for (u, ng, d, s, t) in constraint_min_start_up_ramp_indices(m)
@@ -72,16 +70,15 @@ function constraint_min_start_up_ramp_indices(
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(min_startup_ramp) if u in unit && ng in node && d in direction
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t))
+        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng))), t=t))
         # How to deal with groups correctly?
-        for
-        path in active_stochastic_paths(unique(
-            ind.stochastic_scenario
-            for
-            ind in Iterators.flatten((
-                units_on_indices(m; unit=u, t=t),
-                start_up_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
-            ))  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
-        )) if path == stochastic_path || path in stochastic_path
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario for ind in Iterators.flatten((
+                    units_on_indices(m; unit=u, t=t),
+                    start_up_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
+                ))  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
+            ),
+        ) if path == stochastic_path || path in stochastic_path
     )
 end

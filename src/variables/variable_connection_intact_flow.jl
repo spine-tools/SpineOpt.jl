@@ -39,16 +39,13 @@ function connection_intact_flow_indices(
     node = members(node)
     [
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
-        for
-        (conn, n, d, tb) in connection__node__direction__temporal_block(
+        for (conn, n, d, tb) in connection__node__direction__temporal_block(
             connection=connection,
             node=node,
             direction=direction,
             _compact=false,
-        ) #if has_ptdf(connection=conn) == true
-        for
-        (n, s, t) in
-        node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
+        ) for (n, s, t) in
+            node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
     ]
 end
 
