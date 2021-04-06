@@ -55,6 +55,9 @@ function generate_is_cadidate()
     for n in indices(candidate_storages)
         node.parameter_values[n][:is_candidate] = parameter_value(true)
     end
+    connection.parameter_defaults[:is_candidate] = parameter_value(false)
+    unit.parameter_defaults[:is_candidate] = parameter_value(false)
+    node.parameter_defaults[:is_candidate] = parameter_value(false)
 
     @eval begin
         is_candidate = $is_candidate
