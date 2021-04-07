@@ -1,5 +1,14 @@
 # Objective function
 
+*@TimMertens, some general comments:
+This does look really good. I started out with some additions to this, but possibly you can ellaborate. What I feel might be nice:
+- If there is value for it (I guess it depends on the cost term), it might be nice to start the objective term with a (very short) introduction. E.g. "To account for taxes on certain commodity flows in the objective function, the textunitflow ...(etc.) parameters can be defined. If these parameters exist, the following equation is generated for all: ...".
+I'm personally not 100% sure how necessary it is; I leave it up to you - as a SpineOpt newby, you probably know better what's self explanatory and what not
+- I also added (for some cost terms), that the objective is multiplied by the duration of the timestep, if the triggering parameter is given in a dynamic way.
+- I think we should, in the beginning of the objective chapter quickly mention the weight of stochastic structure and temporal blocks. Not sure if it would be worthwhile to leave them out of expressions? Might be less explicit.
+- WDYT is better: having the equations in one horizontal line (with scroll bar) or rather breaking the terms across multiple lines?
+- Lastly, if you come across something weird (I think you were saying e.g. the objective penalties need revising), could you try to open an issue or post something in the model chat in slack? Whatever works best for you, just so we document all short-comings for future improvements
+
 The objective function of SpineOpt expresses the minimization of the total system costs associated with maintaining and operating the considered energy system.
 
 ```math
@@ -11,17 +20,17 @@ The objective function of SpineOpt expresses the minimization of the total syste
 v_{objective\_penalties}\\
 \end{aligned}
 ```
-Note that each cost term is reflected here as a separate variable that can be expressed mathematically by the equations below.
+Note that each cost term is reflected here as a separate variable that can be expressed mathematically by the equations below. All cost terms are weighted by the associated scenario and temporal block weights.
 
 # Unit investment costs
 
-For all tuples of (unit, scenario, timestep) in the set units\_invested\_available\_indices for which the parameter [unit\_investment\_cost](@ref) is defined, an investment cost term is added to the objective function. The total unit investment costs can be expressed as:
+For all tuples of (unit, scenario, timestep) in the set [units\_invested\_available\_indices](@ref Sets) for which the parameter [unit\_investment\_cost](@ref) is defined, an investment cost term is added to the objective function, if a unit is invested in during the current optimization window. The total unit investment costs can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{unit\_investment\_costs} \\
 & = \sum_{\substack{(u,s,t) \in units\_invested\_available\_indices:\\
-      u \in ind(unit\_investment\_cost)}}
+      u \in ind(p_{unit\_investment\_cost})}}
     v_{units\_invested}(u, s, t) \cdot p_{unit\_investment\_cost}(u,s,t) \cdot p_{weight\_stochastic\_scenario}(u,s) \cdot p_{weight\_temporal\_block}(t) \\
 \end{aligned}
 ```
@@ -29,24 +38,24 @@ For all tuples of (unit, scenario, timestep) in the set units\_invested\_availab
 
 # Connection investment costs
 
-For all tuples of (connection, scenario, timestep) in the set connections\_invested\_available\_indices for which the parameter [connection\_investment\_cost](@ref) is defined, an investment cost term is added to the objective function. The total connection investment costs can be expressed as:
+For all tuples of (connection, scenario, timestep) in the set [connections\_invested\_available\_indices](@ref Sets) for which the parameter [connection\_investment\_cost](@ref) is defined, an investment cost term is added to the objective function, if a connection is invested in during the current optimization window. The total connection investment costs can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{connection\_investment\_costs} \\
-& = \sum_{\substack{(conn,s,t) \in connections\_invested\_available\_indices: \\ conn \in ind(connection\_investment\_cost)}}
+& = \sum_{\substack{(conn,s,t) \in connections\_invested\_available\_indices: \\ conn \in ind(p_{connection\_investment\_cost})}}
  v_{connections\_invested}(conn, s, t) \cdot p_{connection\_investment\_cost}(conn,s,t) \cdot p_{weight\_stochastic\_scenario}(conn,s) \cdot p_{weight\_temporal\_block}(t) \\
 \end{aligned}
 ```
 
 # Storage investment costs
 
-For all tuples of (node, scenario, timestep) in the set storages\_invested\_available\_indices for which the parameter [storage\_investment\_cost](@ref) is defined, an investment cost term is added to the objective function. The total storage investment costs can be expressed as:
+For all tuples of (node, scenario, timestep) in the set [storages\_invested\_available\_indices](@ref Sets) for which the parameter [storage\_investment\_cost](@ref) is defined, an investment cost term is added to the objective function, if a node storage is invested in during the current optimization window. The total storage investment costs can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{storage\_investment\_costs} \\
-& = \sum_{\substack{(n,s,t) \in storages\_invested\_available\_indices:\\ n \in ind(storage\_investment\_cost)}}
+& = \sum_{\substack{(n,s,t) \in storages\_invested\_available\_indices:\\ n \in ind(p_{storage\_investment\_cost})}}
  v_{storages\_invested}(n, s, t) \cdot p_{storage\_investment\_cost}(n,s,t) \cdot p_{weight\_stochastic\_scenario}(n,s) \cdot p_{weight\_temporal\_block}(t) \\
 \end{aligned}
 ```
@@ -54,12 +63,13 @@ For all tuples of (node, scenario, timestep) in the set storages\_invested\_avai
 
 # Fixed O&M costs
 
-For all tuples of (unit, {node,node\_group}, direction) for which the parameters [unit\_capacity](@ref) and [fom\_cost](@ref) are defined, and for which tuples (unit, scenario, timestep) exist in the set units\_on\_indices, a fixed O&M cost term is added to the objective function. The total fixed O&M costs can be expressed as:
+For all tuples of (unit, {node,node\_group}, direction) for which the parameters [fom\_cost](@ref) and [unit\_capacity](@ref) are defined, and for which tuples (unit, scenario, timestep) exist in the set [units\_on\_indices](@ref Sets), a fixed O&M cost term is added to the objective function. Note that, as the [units\_on\_indices](@ref Sets) are used to retrieve the relevant time slices, the unit of the [fom\_cost](@ref) parameter should per given per resolution of the [units\_on](@ref Variables).
+The total fixed O&M costs can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{fixed\_om\_costs} \\
-& = \sum_{\substack{(u,n,d) \in ind(unit\_capacity):\\ u \in ind(fom\_cost)}}
+& = \sum_{\substack{(u,n,d) \in ind(p_{unit\_capacity}):\\ u \in ind(p_{fom\_cost})}}
 \sum_{\substack{(u,s,t)  \in  units\_on\_indices}}
  p_{unit\_capacity}(u,n,d,s,t) \cdot p_{number\_of\_units}(u,s,t)\cdot p_{fom\_cost}(u,s,t)\cdot p_{weight\_temporal\_block}(t) \cdot p_{duration}(t)\\
 \end{aligned}
@@ -67,115 +77,120 @@ For all tuples of (unit, {node,node\_group}, direction) for which the parameters
 
 # Variable O&M costs
 
-For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set unit\_flow\_indices for which the parameter [vom\_cost](@ref) is defined, a variable O&M cost term is added to the objective function. The total variable O&M costs can be expressed as:
+For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set [unit\_flow\_indices](@ref Sets) for which the parameter for variable operational and maintenance ([vom\_cost](@ref)) is defined, a variable O&M cost term is added to the objective function. As the parameter [vom\_cost](@ref) is a dynamic parameter, the cost term is multiplied with the duration of each timestep.
+The total variable O&M costs can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{variable\_om\_costs} \\
-& = \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices: \\(u,n,d) \in ind(vom\_cost)}}
+& = \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices: \\(u,n,d) \in ind(p_{vom\_cost})}}
  v_{unit\_flow}(u, n, d, s, t) \cdot  p_{vom\_cost}(u,n,d,s,t) \cdot p_{weight\_stochastic\_scenario}(n,s) \cdot p_{weight\_temporal\_block}(t) \cdot p_{duration}(t)\\
 \end{aligned}
 ```
 
 # Fuel costs
-For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set unit\_flow\_indices for which the parameter [fuel\_cost](@ref) is defined, a fuel cost term is added to the objective function. The total fuel costs can be expressed as:
+For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set [unit\_flow\_indices](@ref Sets) for which the parameter [fuel\_cost](@ref) is defined, a fuel cost term is added to the objective function.
+As the parameter [fuel\_cost](@ref) is a dynamic parameter, the cost term is multiplied with the duration of each timestep.
+The total fuel costs can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{fuel\_costs} \\
-& = \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ (u,n,d) \in ind(fuel\_cost)}}
+& = \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ (u,n,d) \in ind(p_{fuel\_cost})}}
  v_{unit\_flow}(u, n, d, s, t) \cdot  p_{fuel\_cost}(u,n,d,s,t) \cdot p_{weight\_stochastic\_scenario}(n,s) \cdot p_{weight\_temporal\_block}(t) \cdot p_{duration}(t)\\
 \end{aligned}
 ```
 
 # Operating costs
-For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set unit\_flow\_indices for which the parameter [operating\_cost](@ref) is defined, an operating cost term is added to the objective function. The total operating costs can be expressed as:
+For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set [unit\_flow\_indices](@ref Sets) for which the parameter [operating\_cost](@ref) is defined, an operating cost term is added to the objective function.
+As the parameter [operating\_cost](@ref) is a dynamic parameter, the cost term is multiplied with the duration of each timestep.
+The total operating costs can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{operating\_costs} \\
-& = \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices: \\ (u,n,d) \in ind(operating\_cost)}}
+& = \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices: \\ (u,n,d) \in ind(p_{operating\_cost})}}
  v_{unit\_flow}(u, n, d, s, t) \cdot  p_{operating\_cost}(u,n,d,s,t) \cdot p_{weight\_stochastic\_scenario}(n,s) \cdot p_{weight\_temporal\_block}(t) \cdot p_{duration}(t)\\
 \end{aligned}
 ```
 
 # Connection flow costs
-For all tuples of (conn, {node,node\_group}, direction, scenario, timestep) in the set connection\_flow\_indices for which the parameter [connection\_flow\_cost](@ref) is defined, a connection flow cost term is added to the objective function. The total connection flow costs can be expressed as:
+For all tuples of (conn, {node,node\_group}, direction, scenario, timestep) in the set [connection\_flow\_indices](@ref Sets) for which the parameter [connection\_flow\_cost](@ref) is defined, a connection flow cost term is added to the objective function. The total connection flow costs can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{connection\_flow\_costs} \\
-& = \sum_{\substack{(conn,n,d,s,t) \in connection\_flow\_indices: \\ conn \in ind(connection\_flow\_cost)}}
+& = \sum_{\substack{(conn,n,d,s,t) \in connection\_flow\_indices: \\ conn \in ind(p_{connection\_flow\_cost})}}
 v_{connection\_flow }(conn, n, d, s, t) \cdot  p_{connection\_flow\_cost}(conn,s,t) \cdot p_{weight\_stochastic\_scenario}(n,s) \cdot p_{weight\_temporal\_block}(t) \cdot p_{duration}(t)\\
 \end{aligned}
 ```
 
 
 # Start up costs
-For all tuples of (unit, scenario, timestep) in the set units\_on\_indices for which the parameter [start\_up\_cost](@ref) is defined, a start up cost term is added to the objective function. The total start up costs can be expressed as:
+For all tuples of (unit, scenario, timestep) in the set [units\_on\_indices](@ref Sets) for which the parameter [start\_up\_cost](@ref) is defined, a start up cost term is added to the objective function. The total start up costs can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{start\_up\_costs} \\
-& = \sum_{\substack{(u,s,t) \in units\_on\_indices:\\ u \in ind(start\_up\_cost)}}
+& = \sum_{\substack{(u,s,t) \in units\_on\_indices:\\ u \in ind(p_{start\_up\_cost})}}
  v_{units\_started\_up}(u, s, t) \cdot p_{start\_up\_cost}(u,s,t)\cdot p_{weight\_stochastic\_scenario}(u,s) \cdot p_{weight\_temporal\_block}(t)\\
 \end{aligned}
 ```
 # Shut down costs
-For all tuples of (unit, scenario, timestep) in the set units\_on\_indices for which the parameter [shut\_down\_cost](@ref) is defined, a shut down cost term is added to the objective function. The total shut down costs can be expressed as:
+For all tuples of (unit, scenario, timestep) in the set [units\_on\_indices](@ref Sets) for which the parameter [shut\_down\_cost](@ref) is defined, a shut down cost term is added to the objective function. The total shut down costs can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{shut\_down\_costs} \\
-& = \sum_{\substack{(u,s,t) \in units\_on\_indices:\\ u \in ind(shut\_down\_cost)}}
+& = \sum_{\substack{(u,s,t) \in units\_on\_indices:\\ u \in ind(p_{shut\_down\_cost})}}
 v_{units\_shut\_down}(u,s,t) \cdot p_{start\_up\_cost}(u,s,t)\cdot p_{weight\_stochastic\_scenario}(u,s) \cdot p_{weight\_temporal\_block}(t)\\
 \end{aligned}
 ```
 
 # Ramping costs
-For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the sets ramp\_up\_unit\_flow\_indices and ramp\_down\_unit\_flow\_indices for which the parameter [ramp\_up\_cost](@ref), respectively [ramp\_down\_cost](@ref) is defined, a ramping cost term is added to the objective function. The total ramping costs can be expressed as:
+For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the sets [ramp\_up\_unit\_flow\_indices](@ref Sets) and [ramp\_down\_unit\_flow\_indices](@ref Sets) for which the parameter [ramp\_up\_cost](@ref), respectively [ramp\_down\_cost](@ref) is defined, a ramping cost term is added to the objective function. The total ramping costs can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{ramp\_costs} \\
-& = \sum_{\substack{(u,n,d,s,t) \in ramp\_up\_unit\_flow\_indices: \\ (u,n,d) \in ind(ramp\_up\_cost)}}
+& = \sum_{\substack{(u,n,d,s,t) \in ramp\_up\_unit\_flow\_indices: \\ (u,n,d) \in ind(p_{ramp\_up\_cost})}}
 v_{ramp\_up\_unit\_flow}(u, n, d, s, t)\cdot p_{ramp\_up\_cost}(u,n,d,s,t)\cdot p_{weight\_stochastic\_scenario}(n,s) \cdot p_{weight\_temporal\_block}(t) \cdot p_{duration}(t)\\
- & + \sum_{\substack{(u,n,d,s,t) \in ramp\_down\_unit\_flow\_indices: \\ (u,n,d) \in ind(ramp\_down\_cost)}}
-  v_{ramp\_down\_unit\_flow}(u, n, d, s, t) \cdot p_{ramp\_up\_cost}(u,n,d,s,t)\cdot p_{weight\_stochastic\_scenario}(n,s) \cdot p_{weight\_temporal\_block}(t) \cdot p_{duration}(t)\\
+ & + \sum_{\substack{(u,n,d,s,t) \in ramp\_down\_unit\_flow\_indices: \\ (u,n,d) \in ind(p_{ramp\_down\_cost})}}
+  v_{ramp\_down\_unit\_flow}(u, n, d, s, t) \cdot p_{ramp\_down\_cost}(u,n,d,s,t)\cdot p_{weight\_stochastic\_scenario}(n,s) \cdot p_{weight\_temporal\_block}(t) \cdot p_{duration}(t)\\
 \end{aligned}
 ```
 
 
 # Reserve procurement costs
-For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set unit\_flow\_indices for which the parameter [reserve\_procurement\_cost](@ref) is defined, a reserve procurement cost term is added to the objective function. The total reserve procurement costs can be expressed as:
+For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set [unit\_flow\_indices](@ref Sets) for which the parameter [reserve\_procurement\_cost](@ref) is defined, a reserve procurement cost term is added to the objective function. The total reserve procurement costs can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{res\_proc\_costs} \\
-& = \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices: \\ (u,n,d) \in ind(reserve\_procurement\_cost)}}
+& = \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices: \\ (u,n,d) \in ind(p_{reserve\_procurement\_cost})}}
 v_{unit\_flow}(u, n, d, s, t) \cdot p_{reserve\_procurement\_cost}(u,n,d,s,t) \cdot p_{weight\_stochastic\_scenario}(n,s) \cdot p_{weight\_temporal\_block}(t) \cdot p_{duration}(t)\\
 \end{aligned}
 ```
 
 
 # Reserve start up costs
-For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set nonspin\_units\_started\_up\_indices for which the parameter [res\_start\_up\_cost](@ref) is defined, a reserve start up cost term is added to the objective function. The total reserve start up costs can be expressed as:
+For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set [nonspin\_units\_started\_up\_indices](@ref Sets) for which the parameter [res\_start\_up\_cost](@ref) is defined, a reserve start up cost term is added to the objective function. The total reserve start up costs can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{res\_start\_up\_costs} \\
-& = \sum_{\substack{(u,n,s,t) \in nonspin\_units\_started\_up\_indices: \\ (u,n,d) \in ind(res\_start\_up\_cost) }}
+& = \sum_{\substack{(u,n,s,t) \in nonspin\_units\_started\_up\_indices: \\ (u,n,d) \in ind(p_{res\_start\_up\_cost) }}}
 v_{nonspin\_units\_started\_up}(u, n, s, t) \cdot p_{res\_start\_up\_cost}(u,n,d,s,t)\cdot p_{weight\_stochastic\_scenario}(u,s) \cdot p_{weight\_temporal\_block}(t)\\
 \end{aligned}
 ```
 
 # Renewable curtailment costs
-For all tuples of (unit,  {node,node\_group}, direction) for which the parameters [unit\_capacity](@ref) and  [curtailment\_cost](@ref) are defined, and for which tuples (unit, scenario, timestep\_long) exist in the set units\_on\_indices, and for which tuples (unit, {node,node\_group}, direction, scenario, timestep\_short) exist in the set unit\_flow\_indices, a renewable curtailment cost term is added to the objective function. The total renewable curtailment costs can be expressed as:
+For all tuples of (unit,  {node,node\_group}, direction) for which the parameters [unit\_capacity](@ref) and  [curtailment\_cost](@ref) are defined, and for which tuples (unit, scenario, timestep\_long) exist in the set [units\_on\_indices](@ref Sets), and for which tuples (unit, {node,node\_group}, direction, scenario, timestep\_short) exist in the set [unit\_flow\_indices](@ref Sets), a renewable curtailment cost term is added to the objective function. The total renewable curtailment costs can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{renewable\_curtailment\_costs} \\
-& = \sum_{\substack{(u,n,d) \in ind(unit\_capacity): \\ u \in ind(curtailment\_cost)}}
+& = \sum_{\substack{(u,n,d) \in ind(p_{unit\_capacity}): \\ u \in ind(p_{curtailment\_cost})}}
 \sum_{\substack{(u,s,t_{long}) \in units\_on\_indices}}
 \sum_{\substack{(u,n,s,t_{short}) \in unit\_flow\_indices}}
 
@@ -185,25 +200,25 @@ For all tuples of (unit,  {node,node\_group}, direction) for which the parameter
 ```
 
 # Taxes
-For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set unit\_flow\_indices for which the parameter [tax\_net\_unit\_flow](@ref), [tax\_out\_unit\_flow](@ref) or [tax\_in\_unit\_flow](@ref) is defined, a tax term is added to the objective function. The total taxes can be expressed as:
+For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set [unit\_flow\_indices](@ref Sets) for which the parameter [tax\_net\_unit\_flow](@ref), [tax\_out\_unit\_flow](@ref) or [tax\_in\_unit\_flow](@ref) is defined, a tax term is added to the objective function. The total taxes can be expressed as:
 
 ```math
 \begin{aligned}
 & v_{taxes} \\
-& = \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(tax\_net\_unit\_flow) \& d=  to\_node}}
+& = \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(p_{tax\_net\_unit\_flow}) \& d=  to\_node}}
 v_{unit\_flow}(u, n, d, s, t)\cdot p_{tax\_net\_unit\_flow}(n,s,t)\cdot p_{weight\_stochastic\_scenario}(n,s) \cdot p_{weight\_temporal\_block}(t) \cdot p_{duration}(t)\\
-& - \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(tax\_net\_unit\_flow) \& d=  from\_node}}
+& - \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(p_{tax\_net\_unit\_flow}) \& d=  from\_node}}
 v_{unit\_flow}(u, n, d, s, t)\cdot p_{tax\_net\_unit\_flow}(n,s,t)\cdot p_{weight\_stochastic\_scenario}(n,s) \cdot p_{weight\_temporal\_block}(t) \cdot p_{duration}(t)\\
- & + \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(tax\_out\_unit\_flow) \& d=  from\_node}}
+ & + \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(p_{tax\_out\_unit\_flow}) \& d=  from\_node}}
  v_{unit\_flow}(u, n, d, s, t)\cdot p_{tax\_out\_unit\_flow}(n,s,t)\cdot p_{weight\_stochastic\_scenario}(n,s) \cdot p_{weight\_temporal\_block}(t) \cdot p_{duration}(t)\\
- & + \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(tax\_out\_unit\_flow) \& d=  to\_node}}
+ & + \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(p_{tax\_out\_unit\_flow}) \& d=  to\_node}}
  v_{unit\_flow}(u, n, d, s, t)\cdot p_{tax\_in\_unit\_flow}(n,s,t)\cdot p_{weight\_stochastic\_scenario}(n,s) \cdot p_{weight\_temporal\_block}(t) \cdot p_{duration}(t)\\
 \end{aligned}
 ```
 
 
 # Objective penalties
-For all tuples of ({node,node\_group}, scenario, timestep) in the set node\_slack\_indices, a penalty term is added to the objective function. The total objective penalties can be expressed as:
+For all tuples of ({node,node\_group}, scenario, timestep) in the set [node\_slack\_indices](@ref Sets), a penalty term is added to the objective function. The total objective penalties can be expressed as:
 
 ```math
 \begin{aligned}
