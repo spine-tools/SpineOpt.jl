@@ -94,7 +94,7 @@ In the most general form of the equation, two node groups are defined (an input 
 and a linear relationship is expressed between both node groups. Note that whenever the relationship is specified between groups of multiple nodes,
 there remains a degree of freedom regarding the composition of the input node flows within group $ng_{in}$  and the output node flows within group $ng_{out}$.
 
-##### Fixed ratio between output and input $unit_{flow}$s
+##### Fixed ratio between output and input unit
 
 The constrained given below enforces a fixed ratio between outgoing and incoming $unit_{flows}$. The constrained is only triggered, if the parameter `p_{fix_ratio_out_in_unit_flow(unit__node__node= u, ng_out, ng_in)}` is defined.
 ```math

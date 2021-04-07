@@ -60,7 +60,8 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
             ) + expr_sum(
                 units_on[u, s, t1]
                 * min(duration(t1), duration(t))
-                * units_on_coefficient[(unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)] for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
+                * units_on_coefficient[(unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)]
+                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0,
             ),
         ) for (u, ng1, ng2, s, t) in constraint_ratio_unit_flow_indices(m, ratio, d1, d2)
