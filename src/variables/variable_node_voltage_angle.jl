@@ -26,7 +26,7 @@ function node_voltage_angle_indices(m::Model; node=anything, stochastic_scenario
     inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
         (node=n, stochastic_scenario=s, t=t)
         for (n, s, t) in node_stochastic_time_indices(m; node=node, stochastic_scenario=stochastic_scenario, t=t)
-            if n in intersect(indices(min_voltage_angle), indices(max_voltage_angle))
+            if has_voltage_angle(node=n)
     ]
     unique!(inds)
 end
@@ -42,20 +42,6 @@ function add_variable_node_voltage_angle!(m::Model)
         m,
         :node_voltage_angle,
         node_voltage_angle_indices;
-        lb=x -> min_voltage_angle(
-            node=x.node,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false
-            ),
-        ub=x -> max_voltage_angle(
-            node=x.node,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false
-            ),
         fix_value=x -> fix_node_voltage_angle(
             node=x.node,
             stochastic_scenario=x.stochastic_scenario,
