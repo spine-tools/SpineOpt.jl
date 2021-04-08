@@ -7,7 +7,7 @@ one or more (possibly the same) [node](@ref)s.
 The former are specificed through the [unit\_\_from\_node](@ref) relationship,
 and the latter through [unit\_\_to\_node](@ref).
 Every [unit](@ref) has a temporal and stochastic structures given by the
-[unit\_\_temporal\_block](@ref) and [unit\_\_stochastic\_structure](@ref) relationships.
+[units\_on\_\_temporal\_block](@ref) and [units\_on\_\_stochastic\_structure] relationships.
 The model will generate `unit_flow` variables for every combination of
 [unit](@ref), [node](@ref), *direction* (from node or to node), *time slice*, and *stochastic scenario*,
 according to the above relationships.

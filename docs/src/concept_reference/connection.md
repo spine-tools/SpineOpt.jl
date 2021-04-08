@@ -17,4 +17,4 @@ is given by [connection\_capacity](@ref).
 The conversion ratio of input to output can be specified using any of [fix\_ratio\_out\_in\_connection\_flow](@ref),
 [max\_ratio\_out\_in\_connection\_flow](@ref), and [min\_ratio\_out\_in\_connection\_flow](@ref).
 The delay on a connection, as the time it takes for the energy to go from one end to the other,
-is given by [connection\_delay](@ref).
+is given by [connection\_flow\_delay](@ref).
