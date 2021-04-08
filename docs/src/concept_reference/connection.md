@@ -1,8 +1,8 @@
-[connection](@ref) represents a transfer of energy of one [commodity](@ref) over space.
-For example, an electricy transmission line, a gas pipe, a river branch,
-can be modelled using [connection](@ref).
+A [connection](@ref) represents a transfer of energy of one [commodity](@ref) over space.
+For example, an electricity transmission line, a gas pipe, a river branch,
+can be modelled using a [connection](@ref).
 
-A [connection](@ref) always takes energy from one or more [node](@ref)s, and releases energy to
+A [connection](@ref) always takes energy from one or more [node](@ref)s, and releases that same energy to
 one or more (possibly the same) [node](@ref)s.
 The former are specificed through the [connection\_\_from\_node](@ref) relationship,
 and the latter through [connection\_\_to\_node](@ref).

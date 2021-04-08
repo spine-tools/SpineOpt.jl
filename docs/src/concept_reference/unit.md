@@ -1,13 +1,13 @@
-[unit](@ref) represents an energy conversion process, where energy of one [commodity](@ref) can be converted
+A [unit](@ref) represents an energy conversion process, where energy of one [commodity](@ref) can be converted
 into energy of another [commodity](@ref). For example, a gas turbine, a power plant, or even a load,
-can be modelled using [unit](@ref).
+can be modelled using a [unit](@ref).
 
 A [unit](@ref) always takes energy from one or more [node](@ref)s, and releases energy to
 one or more (possibly the same) [node](@ref)s.
 The former are specificed through the [unit\_\_from\_node](@ref) relationship,
 and the latter through [unit\_\_to\_node](@ref).
 Every [unit](@ref) has a temporal and stochastic structures given by the
-[unit\_\_temporal\_block](@ref) and [unit\_\_stochastic\_structure] relationships.
+[unit\_\_temporal\_block](@ref) and [unit\_\_stochastic\_structure](@ref) relationships.
 The model will generate `unit_flow` variables for every combination of
 [unit](@ref), [node](@ref), *direction* (from node or to node), *time slice*, and *stochastic scenario*,
 according to the above relationships.
