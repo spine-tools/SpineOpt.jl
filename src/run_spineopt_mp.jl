@@ -105,7 +105,13 @@ function rerun_spineopt_mp(
         k = 1
         while true
             @log log_level 1 "Benders iteration $j - Window $k: $(current_window(m))"
-            optimize_model!(m; mip_solver=mip_solver, lp_solver=lp_solver, log_level=log_level, calculate_duals=true)
+            optimize_model!(
+                m;
+                mip_solver=mip_solver,
+                lp_solver=lp_solver,
+                log_level=log_level,
+                calculate_duals=true
+            ) || break
             @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
             @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
             # we have to do this here because too early and we can't access the solution and too late,

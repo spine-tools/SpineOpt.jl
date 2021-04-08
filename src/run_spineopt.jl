@@ -120,7 +120,7 @@ function rerun_spineopt(
             mip_solver=mip_solver,
             lp_solver=lp_solver,
             calculate_duals=calculate_duals,
-        )
+        ) || break
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
