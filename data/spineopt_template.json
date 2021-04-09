@@ -46,7 +46,7 @@
         ["unit__to_node", ["unit", "node"], "Defines the `nodes` the `unit` can output to, and holds most `unit_flow` variable specific parameters."],
         ["unit__to_node__unit_constraint", ["unit", "node", "unit_constraint"], "Defines which output `unit_flows` are included in the `unit_constraint`, and holds their parameters?"],
         ["unit__unit_constraint", ["unit", "unit_constraint"], "Defines which `units_on` variables are included in the `unit_constraint`, and holds their parameters?"],
-        ["units_on__stochastic_structure", ["unit", "stochastic_structure"], "Defines which specific `stochastic_structure` is used for the `units_on` variable of the `unit`. Only one `stocahstic_structure` is permitted per `unit`."],
+        ["units_on__stochastic_structure", ["unit", "stochastic_structure"], "Defines which specific `stochastic_structure` is used for the `units_on` variable of the `unit`. Only one `stochastic_structure` is permitted per `unit`."],
         ["units_on__temporal_block", ["unit", "temporal_block"], "Defines which specific `temporal_blocks` are used by the `units_on` variable of the `unit`."]
     ],
     "parameter_value_lists": [
