@@ -96,7 +96,7 @@ include("variables/variable_nonspin_ramp_down_unit_flow.jl")
 include("variables/variable_nonspin_units_shut_down.jl")
 include("variables/variable_node_pressure.jl")
 include("variables/variable_node_voltage_angle.jl")
-include("variables/variable_binary_connection_flow.jl")
+include("variables/variable_binary_gas_connection_flow.jl")
 
 include("variables/variable_mp_objective_lowerbound.jl")
 
@@ -179,7 +179,7 @@ include("constraints/constraint_min_node_pressure.jl")
 include("constraints/constraint_max_node_voltage_angle.jl")
 include("constraints/constraint_min_node_voltage_angle.jl")
 include("constraints/constraint_node_voltage_angle.jl")
-include("constraints/constraint_connection_unitary_flow.jl")
+include("constraints/constraint_connection_unitary_gas_flow.jl")
 
 include("constraints/constraint_mp_any_invested_cuts.jl")
 

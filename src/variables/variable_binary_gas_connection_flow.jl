@@ -17,38 +17,37 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-    binary_connection_flow_indices(
+    binary_gas_connection_flow_indices(
         connection=anything,
         node=anything,
         direction=anything,
         t=anything
     )
 
-A list of `NamedTuple`s corresponding to indices of the `binary_connection_flow_indices` variable.
+A list of `NamedTuple`s corresponding to indices of the `binary_gas_connection_flow_indices` variable.
 The keyword arguments act as filters for each dimension.
 """
-function binary_connection_flow_indices(
+function binary_gas_connection_flow_indices(
     m::Model;
     connection=anything,
     node=anything,
     direction=direction(:to_node),
     stochastic_scenario=anything,
     t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
     node = members(node)
     [
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
         for
-        (conn, n, d, tb) in connection__node__direction__temporal_block(
-            connection=connection,
-            node=node,
-            direction=direction,
-            _compact=false,
-        )
-        for
-        (n, s, t) in
-        node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
-        if connection_binary_flow(connection=conn) == true && has_state(node=n) == false
+        (conn,n,d,s,t) in connection_flow_indices(
+                m;
+                connection=connection,
+                node=node,
+                stochastic_scenario=stochastic_scenario,
+                t=t,
+                temporal_block=temporal_block)
+        if connection_binary_gas_flow(connection=conn) == true && has_state(node=n) == false
     ]
 end
 
@@ -58,14 +57,14 @@ set_bin(x) = true
 
 Add `connection_flow` variables to model `m`.
 """
-function add_variable_binary_connection_flow!(m::Model)
+function add_variable_binary_gas_connection_flow!(m::Model)
     t0 = startref(current_window(m))
     add_variable!(
         m,
-        :binary_connection_flow,
-        binary_connection_flow_indices;
+        :binary_gas_connection_flow,
+        binary_gas_connection_flow_indices;
         bin=set_bin,
-        fix_value=x -> fix_binary_connection_flow(
+        fix_value=x -> fix_binary_gas_connection_flow(
             connection=x.connection,
             node=x.node,
             direction=x.direction,

@@ -23,7 +23,7 @@ Outer approximation of the non-linear terms.
 #Linear apprioximation around fixed pressure points
 """
 function add_constraint_fix_node_pressure_point!(m::Model)
-    @fetch node_pressure,connection_flow,binary_connection_flow = m.ext[:variables]
+    @fetch node_pressure,connection_flow,binary_gas_connection_flow = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:fix_node_pressure_point] = Dict(
     (connection=conn,node1=n_orig,node2=n_dest,stochastic_scenario=s,t=t,i=j) => @constraint(
@@ -48,9 +48,9 @@ function add_constraint_fix_node_pressure_point!(m::Model)
         for (n_dest,s,t) in node_pressure_indices(m;node=n_dest,stochastic_scenario=s,t=t_in_t(m;t_long=t))
         )
         + bigM(model=m.ext[:instance])
-        * (1-
+        * (
         sum(
-        binary_connection_flow[conn, n_dest, direction(:to_node), s,t]
+        1-binary_gas_connection_flow[conn, n_dest, direction(:to_node), s,t]
         for (conn,n_dest,d,s,t) in connection_flow_indices(m;connection=conn,node=n_dest,stochastic_scenario=s,direction=direction(:to_node),t=t_in_t(m;t_long=t)))
         )
     ) for (conn, n_orig, n_dest, s, t) in constraint_connection_flow_gas_capacity_indices(m)

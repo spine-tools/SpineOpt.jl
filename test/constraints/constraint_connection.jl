@@ -113,7 +113,7 @@
         fixed_pressure_constant_1_ = Dict(("connection_ca", "node_c","node_a") => 0)
         db_map = _load_test_data(url_in, test_data)
         object_parameter_values = [
-            ["connection", "connection_ca", "connection_binary_flow", binary["connection_ca"]],
+            ["connection", "connection_ca", "connection_binary_gas_flow", binary["connection_ca"]],
             ["model", "instance", "bigM", bigm["instance"]],
         ]
         relationship_parameter_values =
@@ -122,7 +122,7 @@
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
-        var_binary_flow = m.ext[:variables][:binary_connection_flow]
+        var_binary_flow = m.ext[:variables][:binary_gas_connection_flow]
         var_pressure = m.ext[:variables][:node_pressure]
         constraint = m.ext[:constraints][:connection_flow_gas_capacity]
         @test length(constraint) == 2
@@ -162,7 +162,7 @@
         object_parameter_values = [
             ["node", "node_a", "has_pressure", has_pressure["node_a"]],
             ["node", "node_c", "has_pressure", has_pressure["node_c"]],
-            ["connection", "connection_ca", "connection_binary_flow", binary["connection_ca"]],
+            ["connection", "connection_ca", "connection_binary_gas_flow", binary["connection_ca"]],
             ["model", "instance", "bigM", bigm["instance"]],
         ]
         relationship_parameter_values =
@@ -173,7 +173,7 @@
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
-        var_binary_flow = m.ext[:variables][:binary_connection_flow]
+        var_binary_flow = m.ext[:variables][:binary_gas_connection_flow]
         var_node_pressure = m.ext[:variables][:node_pressure]
         constraint = m.ext[:constraints][:fix_node_pressure_point]
         @test length(constraint) == 12
@@ -213,7 +213,7 @@
             end
         end
     end
-    @testset "constraint_enforce_unitary_connection_flow" begin
+    @testset "constraint_connection_unitary_gas_flow" begin
         binary = Dict("connection_ca" => true)
         bigm = Dict("instance" => 10000)
         relationships = [
@@ -223,7 +223,7 @@
         fixed_pr_constant_1_ = Dict(("connection_ca", "node_c","node_a") => 0)
         db_map = _load_test_data(url_in, test_data)
         object_parameter_values = [
-            ["connection", "connection_ca", "connection_binary_flow", binary["connection_ca"]],
+            ["connection", "connection_ca", "connection_binary_gas_flow", binary["connection_ca"]],
             ["model", "instance", "bigM", bigm["instance"]],
         ]
         relationship_parameter_values =
@@ -231,9 +231,8 @@
         db_api.import_data(db_map; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
         db_map.commit_session("Add test data")
         m = run_spineopt(db_map; log_level=0, optimize=false)
-        var_binary_flow = m.ext[:variables][:binary_connection_flow]
-        @show keys(var_binary_flow)
-        constraint = m.ext[:constraints][:enforce_unitary_flow]
+        var_binary_flow = m.ext[:variables][:binary_gas_connection_flow]
+        constraint = m.ext[:constraints][:connection_unitary_gas_flow]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent),)
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -251,8 +250,6 @@
                     expected_con = @build_constraint(var_bin1 == 1- var_bin2)
                     con = constraint[con_key...]
                     observed_con = constraint_object(con)
-                    @show observed_con
-                    @show expected_con
                     @test _is_constraint_equal(observed_con, expected_con)
                 end
             end
