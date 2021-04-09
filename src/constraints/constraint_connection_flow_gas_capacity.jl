@@ -26,7 +26,7 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
     m.ext[:constraints][:connection_flow_gas_capacity] = Dict(
     (connection=conn, node1=n_from, node2=n_to, stochastic_scenario=s,t=t) => @constraint(
         m,
-        sum(
+        (sum(
         connection_flow[conn, n_from, d, s, t]*duration(t)
         for (conn,n_from,d,s,t) in connection_flow_indices(m;connection=conn, node=n_from, stochastic_scenario=s, t=t_in_t(m;t_long=t),direction=direction(:from_node))
         )
@@ -34,7 +34,7 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
         sum(
         connection_flow[conn, n_to, d, s, t]*duration(t)
         for (conn,n_to,d,s,t) in connection_flow_indices(m;connection=conn, node=n_to, stochastic_scenario=s, t=t_in_t(m;t_long=t),direction=direction(:to_node))
-        ) /2
+        )) /2
         <=
         + bigM(model=m.ext[:instance])
         *

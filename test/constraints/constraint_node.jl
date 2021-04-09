@@ -284,6 +284,12 @@
             end
         end
     end
+    @testset "constraint_cyclic_node_state" begin
+    #TODO
+    end
+    @testset "constraint_storage_line_pack" begin
+    #TODO
+    end
     @testset "constraint_compression_ratio" begin
         db_map = _load_test_data(url_in, test_data)
         has_pressure = Dict("node_b" => true, "node_c" => true)

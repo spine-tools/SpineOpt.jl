@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-    add_constraint_nodal_balance!(m::Model)
+    add_constraint_cyclic_node_state!(m::Model)
 
 Enforces cyclic constraint on node state over a temporal block.
 """

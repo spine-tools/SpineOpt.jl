@@ -106,6 +106,210 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+    @testset "constraint_connection_flow_gas_capacity" begin
+        bigm = Dict("instance" => 10000)
+        binary = Dict("connection_ca" => true)
+        relationships = [["connection__node__node", [ "connection_ca", "node_c", "node_a"]]]
+        fixed_pressure_constant_1_ = Dict(("connection_ca", "node_c","node_a") => 0)
+        db_map = _load_test_data(url_in, test_data)
+        object_parameter_values = [
+            ["connection", "connection_ca", "connection_binary_flow", binary["connection_ca"]],
+            ["model", "instance", "bigM", bigm["instance"]],
+        ]
+        relationship_parameter_values =
+            [["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_1", fixed_pressure_constant_1_[("connection_ca", "node_c","node_a")]]]
+        db_api.import_data(db_map; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_connection_flow = m.ext[:variables][:connection_flow]
+        var_binary_flow = m.ext[:variables][:binary_connection_flow]
+        var_pressure = m.ext[:variables][:node_pressure]
+        constraint = m.ext[:constraints][:connection_flow_gas_capacity]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent),)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        bigm = 10000
+        @testset for (s, t) in zip(scenarios, time_slices)
+            @testset for ((conn,n_from,n_to), val) in fixed_pressure_constant_1_
+                if binary["connection_ca"]
+                    conn = connection(Symbol(conn))
+                    n_from = node(Symbol(n_from))
+                    n_to = node(Symbol(n_to))
+                    var_conn_flow_key1 = (conn, n_from, direction(:from_node), s, t)
+                    var_conn_flow_key2 = (conn, n_to, direction(:to_node), s, t)
+                    var_conn1 = var_connection_flow[var_conn_flow_key1...]
+                    var_conn2 = var_connection_flow[var_conn_flow_key2...]
+                    var_bin = var_binary_flow[var_conn_flow_key2...]
+                    con_key = (conn, n_from, n_to, [s], t)
+                    expected_con = @build_constraint((var_conn1 + var_conn2)/2 <= bigm * var_bin)
+                    con = constraint[con_key...]
+                    observed_con = constraint_object(con)
+                    @test _is_constraint_equal(observed_con, expected_con)
+                end
+            end
+        end
+    end
+    @testset "constraint_fix_node_pressure_point" begin
+        bigm = Dict("instance" => 10000)
+        binary = Dict("connection_ca" => true)
+        has_pressure = Dict("node_a" => true, "node_c" => true)
+        relationships = [["connection__node__node", [ "connection_ca", "node_c", "node_a"]]]
+        fixed_pressure_constant_1_raw = [60.315, 64.993, 69.359, 0.0, 42.783, 37.252, 0.0, 0.0, 45.406]
+        fixed_pressure_constant_0_raw = [53.422, 58.652, 63.456, 0.0, 32.348, 24.57, 0.0, 0.0, 35.745]
+        fixed_pressure_constant_1_ = Dict(("connection_ca", "node_c","node_a") => Dict("type" => "array", "value_type" => "float", "data" => PyVector(fixed_pressure_constant_1_raw)))
+        fixed_pressure_constant_0_ = Dict(("connection_ca", "node_c","node_a") => Dict("type" => "array", "value_type" => "float", "data" => PyVector(fixed_pressure_constant_0_raw)))
+        db_map = _load_test_data(url_in, test_data)
+        object_parameter_values = [
+            ["node", "node_a", "has_pressure", has_pressure["node_a"]],
+            ["node", "node_c", "has_pressure", has_pressure["node_c"]],
+            ["connection", "connection_ca", "connection_binary_flow", binary["connection_ca"]],
+            ["model", "instance", "bigM", bigm["instance"]],
+        ]
+        relationship_parameter_values =
+            [["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_1", fixed_pressure_constant_1_[("connection_ca", "node_c","node_a")]],
+            ["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_0", fixed_pressure_constant_0_[("connection_ca", "node_c","node_a")]]
+            ]
+        db_api.import_data(db_map; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_connection_flow = m.ext[:variables][:connection_flow]
+        var_binary_flow = m.ext[:variables][:binary_connection_flow]
+        var_node_pressure = m.ext[:variables][:node_pressure]
+        constraint = m.ext[:constraints][:fix_node_pressure_point]
+        @test length(constraint) == 12
+        scenarios = (stochastic_scenario(:parent),)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        bigm = 10000
+        @testset for (s, t) in zip(scenarios, time_slices)
+            @testset for ((conn,n_from,n_to), val) in fixed_pressure_constant_1_
+                if binary["connection_ca"]
+                    conn = connection(Symbol(conn))
+                    n_from = node(Symbol(n_from))
+                    n_to = node(Symbol(n_to))
+                    var_conn_flow_key1 = (conn, n_from, direction(:from_node), s, t)
+                    var_conn_flow_key2 = (conn, n_to, direction(:to_node), s, t)
+                    var_node_pr_keys1 = (n_from, s, t)
+                    var_node_pr_keys2 = (n_to, s, t)
+                    var_conn1 = var_connection_flow[var_conn_flow_key1...]
+                    var_conn2 = var_connection_flow[var_conn_flow_key2...]
+                    var_bin = var_binary_flow[var_conn_flow_key2...]
+                    var_pr1 = var_node_pressure[var_node_pr_keys1...]
+                    var_pr2 = var_node_pressure[var_node_pr_keys2...]
+                    @testset for i in length(fixed_pressure_constant_1_raw)
+                            if fixed_pressure_constant_1_raw[i] !=0
+                            con_key = (conn, n_from, n_to, [s], t, i)
+                            expected_con = @build_constraint(
+                                (var_conn1 + var_conn2)/2 <=
+                                (fixed_pressure_constant_1_raw[i]*var_pr1)
+                                - (fixed_pressure_constant_0_raw[i]*var_pr2)
+                                + bigm * (1-var_bin)
+                                )
+                            con = constraint[con_key...]
+                            observed_con = constraint_object(con)
+                            @test _is_constraint_equal(observed_con, expected_con)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    @testset "constraint_enforce_unitary_connection_flow" begin
+        binary = Dict("connection_ca" => true)
+        bigm = Dict("instance" => 10000)
+        relationships = [
+            ["connection__node__node", [ "connection_ca", "node_c", "node_a"]],
+            ["connection__to_node", [ "connection_ca", "node_c"]]
+            ]
+        fixed_pr_constant_1_ = Dict(("connection_ca", "node_c","node_a") => 0)
+        db_map = _load_test_data(url_in, test_data)
+        object_parameter_values = [
+            ["connection", "connection_ca", "connection_binary_flow", binary["connection_ca"]],
+            ["model", "instance", "bigM", bigm["instance"]],
+        ]
+        relationship_parameter_values =
+            [["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_1", fixed_pr_constant_1_[("connection_ca", "node_c","node_a")]]]
+        db_api.import_data(db_map; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_binary_flow = m.ext[:variables][:binary_connection_flow]
+        @show keys(var_binary_flow)
+        constraint = m.ext[:constraints][:enforce_unitary_flow]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent),)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            @testset for ((conn,n_from,n_to), val) in fixed_pr_constant_1_
+                if binary["connection_ca"]
+                    conn = connection(Symbol(conn))
+                    n_from = node(Symbol(n_from))
+                    n_to = node(Symbol(n_to))
+                    var_conn_flow_key1 = (conn, n_from, direction(:to_node), s, t)
+                    var_conn_flow_key2 = (conn, n_to, direction(:to_node), s, t)
+                    var_bin1 = var_binary_flow[var_conn_flow_key1...]
+                    var_bin2 = var_binary_flow[var_conn_flow_key2...]
+                    con_key = (conn, n_from, n_to, [s], t)
+                    expected_con = @build_constraint(var_bin1 == 1- var_bin2)
+                    con = constraint[con_key...]
+                    observed_con = constraint_object(con)
+                    @show observed_con
+                    @show expected_con
+                    @test _is_constraint_equal(observed_con, expected_con)
+                end
+            end
+        end
+    end
+    @testset "constraint_node_voltage_angle" begin
+        conn_react = Dict("connection_ca" => 0.17)
+        conn_react_p_u = Dict("connection_ca" => 250)
+        has_volt_ang = Dict("node_c" => true,"node_a" => true,)
+        fix_ratio_out_in = Dict(("connection_ca", "node_a","node_c") => 1)
+        relationships = [
+            ["connection__node__node", [ "connection_ca", "node_a", "node_c"]],
+            ["connection__from_node", [ "connection_ca", "node_a"]],
+        ]
+        object_parameter_values = [
+            ["connection", "connection_ca", "connection_reactance", conn_react["connection_ca"]],
+            ["connection", "connection_ca", "connection_reactance_p_u", conn_react_p_u["connection_ca"]],
+            ["node", "node_c", "has_voltage_angle", has_volt_ang["node_c"]],
+            ["node", "node_a", "has_voltage_angle", has_volt_ang["node_a"]],
+        ]
+        relationship_parameter_values =
+            [
+            ["connection__node__node", ["connection_ca", "node_a","node_c"], "fix_ratio_out_in_connection_flow", fix_ratio_out_in[("connection_ca", "node_a","node_c")]],
+            ]
+        db_map = _load_test_data(url_in, test_data)
+        db_api.import_data(db_map; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_connection_flow = m.ext[:variables][:connection_flow]
+        var_voltage_angle = m.ext[:variables][:node_voltage_angle]
+        constraint = m.ext[:constraints][:node_voltage_angle]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent),)
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            @testset for ((conn,n_to,n_from), val) in fix_ratio_out_in
+                    react = conn_react[conn]
+                    react_p_u = conn_react_p_u[conn]
+                    conn = connection(Symbol(conn))
+                    n_from = node(Symbol(n_from))
+                    n_to = node(Symbol(n_to))
+                    var_conn_flow_key1 = (conn, n_from, direction(:from_node), s, t)
+                    var_conn_flow_key2 = (conn, n_to, direction(:from_node), s, t)
+                    var_volt_ang_key1  = (n_from , s, t)
+                    var_volt_ang_key2  = (n_to, s, t)
+                    var_conn_flow1 = var_connection_flow[var_conn_flow_key1...]
+                    var_conn_flow2 = var_connection_flow[var_conn_flow_key2...]
+                    var_volt_ang1 = var_voltage_angle[var_volt_ang_key1...]
+                    var_volt_ang2 = var_voltage_angle[var_volt_ang_key2...]
+                    con_key = (conn, n_to, n_from, [s], t)
+                    expected_con = @build_constraint(var_conn_flow1 - var_conn_flow2 == (var_volt_ang1-var_volt_ang2)/react*react_p_u)
+                    con = constraint[con_key...]
+                    observed_con = constraint_object(con)
+                    @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
     @testset "constraint_connection_flow_capacity_investments" begin
         connection_capacity = 200
         db_map = _load_test_data(url_in, test_data)
