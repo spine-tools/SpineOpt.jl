@@ -4,9 +4,7 @@ To enable the representation of units with a high level of technical detail, the
 
 ## Relevant objects, relationships and parameters
 
-Note: this is not entirely true, one can also implement ramps on the unit\__from node relationships. (Would move this to the list elements). Also I think it'd be important, when listing this, that it can be defined on both a unit - node relationship, but (similarly to the unit capacity) can be defined on a unit - node group aswell. This will be important for explaining how reserves work
-
-Everything that is related to ramping is defined in parameters of either the [unit\_\_to\_node](@ref), [unit\_\_from\_node](@ref), or unit\_\_to\_node_group] relationship. Generally speaking, the ramping constraints will impose restrictions on the change in the [unit_flow](@ref) variable between two consecutive timesteps.
+Everything that is related to ramping is defined in parameters of either the [unit\_\_to\_node](@ref), [unit\_\_from\_node](@ref), or unit\_\_to\_node\_group relationship. Generally speaking, the ramping constraints will impose restrictions on the change in the [unit_flow](@ref Variables) variable between two consecutive timesteps.
 
 All parameters that limit the ramping abilities of a unit are expressed as a fraction of the unit capacity. This means that a value of 1 indicates the full capacity of a unit.
 
@@ -23,12 +21,12 @@ All parameters that limit the ramping abilities of a unit are expressed as a fra
 
 
 ### Constraining shutdown ramps
-  * [max\_shutdown\_ramp](@ref) : limit the maximum of the `unit_flow` variable the timestep right before a shutdown. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on maximum downward shut down ramps](@ref)
-  * [min\_shutdown\_ramp](@ref) : limit the minimum of the `unit_flow` variable the timestep right before a shutdown. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on minimum downward shut down ramps](@ref)
+  * [max\_shutdown\_ramp](@ref) : limit the maximum of the `unit_flow` variable the timestep right before a shutdown. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on downward shut down ramps](@ref)
+  * [min\_shutdown\_ramp](@ref) : limit the minimum of the `unit_flow` variable the timestep right before a shutdown. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on downward shut down ramps](@ref)
 
 ### Constraining startup ramps
-  * [max\_startup\_ramp](@ref) : limit the maximum of the `unit_flow` variable the timestep right after a start-up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on maximum upward start up ramps](@ref)
-  * [min\_startup\_ramp](@ref) : limit the minimum of the `unit_flow` variable the timestep right after a start-up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on minimum upward start up ramps](@ref)
+  * [max\_startup\_ramp](@ref) : limit the maximum of the `unit_flow` variable the timestep right after a start-up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on upward start up ramp_up](@ref)
+  * [min\_startup\_ramp](@ref) : limit the minimum of the `unit_flow` variable the timestep right after a start-up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on upward start up ramp_up](@ref)
 
 ## General principle and example use cases
 The general principle of the Spine modelling ramping constraints is that all of these parameters can be defined separately for each unit. This allows the user to incorporate different units (which can either represent a single unit or a technology type) with different flexibility characteristics.
