@@ -1,5 +1,5 @@
-The line outage distribution factor is the additional flow on a [connection](@ref)
-due to an outage on another [connection](@ref). 
+Given two [connection](@ref)s, the line outage distribution factor (LODF) is
+the fraction of the pre-contingency flow on one of them, that will flow on the other after the contingency.
 [commodity\_lodf\_tolerance](@ref) is the minimum absolute value of the LODF that is considered meaningful.
 Any value below this tolerance (in absolute value) will be treated as zero.
 
@@ -7,6 +7,6 @@ The LODFs are used to model contingencies on some [connection](@ref)s and their 
 To model contingencies on a [connection](@ref), set [connection\_contingency](@ref) to `true`;
 to study the impact of such contingencies on another [connection](@ref), set [connection\_monitored](@ref) to `true`.
 
-In addition, define a [commodity](@ref) with [commodity\_physics](@ref) set to `commodity\_physics\_lodf`,
+In addition, define a [commodity](@ref) with [commodity\_physics](@ref) set to [commodity\_physics\_lodf](@ref),
 and associate that [commodity](@ref) (via [node\_\_commodity](@ref)) to both [connection](@ref)s' [node](@ref)s
 (given by [connection\_\_to\_node](@ref) and [connection\_\_from\_node](@ref)).
