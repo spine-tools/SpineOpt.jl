@@ -335,47 +335,6 @@ function _ptdf_values()
     )
 end
 
-function _old_ptdf_values()
-    ps_busses_by_node = Dict(
-        n => Bus(
-            number=i,
-            name=string(n.name),
-            bustype=(node_opf_type(node=n) == :node_opf_type_reference) ? BusTypes.REF : BusTypes.PV,
-            angle=0.0,
-            magnitude=0.0,
-            voltage_limits=(min=0.0, max=0.0),
-            base_voltage=nothing,
-            area=nothing,
-            load_zone=LoadZone(nothing),
-            ext=Dict{String,Any}(),
-        ) for (i, n) in enumerate(node(has_ptdf=true))
-    )
-    isempty(ps_busses_by_node) && return Dict()
-    ps_busses = collect(values(ps_busses_by_node))
-    PowerSystems.buscheck(ps_busses)
-    PowerSystems.slack_bus_check(ps_busses)
-    ps_lines_by_connection = Dict(
-        conn => Line(;
-            name=string(conn.name),
-            available=true,
-            active_power_flow=0.0,
-            reactive_power_flow=0.0,
-            arc=Arc((ps_busses_by_node[n] for n in connection__from_node(connection=conn, direction=anything))...),
-            r=connection_resistance(connection=conn),
-            x=max(connection_reactance(connection=conn), 0.00001),
-            b=(from=0.0, to=0.0),
-            rate=0.0,
-            angle_limits=(min=0.0, max=0.0),
-        ) for conn in connection(has_ptdf=true)
-    )
-    ps_lines = collect(values(ps_lines_by_connection))
-    ps_ptdf = PowerSystems.PTDF(ps_lines, ps_busses)
-    Dict(
-        (conn, n) => Dict(:ptdf => parameter_value(ps_ptdf[line.name, bus.number]))
-        for (conn, line) in ps_lines_by_connection for (n, bus) in ps_busses_by_node
-    )
-end
-
 """
     generate_ptdf()
 
