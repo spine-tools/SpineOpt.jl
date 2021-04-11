@@ -306,7 +306,6 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_connection_unitary_gas_flow]" add_constraint_connection_unitary_gas_flow!(m)
     @timelog log_level 3 "- [constraint_compression_ratio]" add_constraint_compression_ratio!(m)
     @timelog log_level 3 "- [constraint_storage_line_pack]" add_constraint_storage_line_pack!(m)
-    #@timelog log_level 3 "- [constraint_init_node_state]" add_constraint_init_node_state!(m)
     @timelog log_level 3 "- [constraint_connection_flow_gas_capacity]" add_constraint_connection_flow_gas_capacity!(m)
     @timelog log_level 3 "- [constraint_max_node_pressure]" add_constraint_max_node_pressure!(m)
     @timelog log_level 3 "- [constraint_min_node_pressure]" add_constraint_min_node_pressure!(m)
@@ -358,31 +357,6 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, use_direc
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
-    if termination_status(m) == MOI.INFEASIBLE && use_direct_model==true
-        compute_conflict!(m)
-        cons=[]
-        for (a,b) in list_of_constraint_types(m)
-            push!(cons,all_constraints(m,a,b)...)
-        end
-        conflicts=[]
-        for c in cons
-            try
-                conf = MOI.get(m, MOI.ConstraintConflictStatus(), c)
-                if conf==MOI.ConflictParticipationStatusCode(1)
-                    @show c
-                    push!(conflicts, c)
-                end
-            catch
-                @info("something went wrong with $c")
-            end
-        end
-
-        @info "conflicts are: "
-        for c in conflicts
-            @info "$(c)"
-        end
-        write_conflicts_to_file(conflicts, file_name="conflicts_$(m.ext[:instance])_$(startref(current_window(m))).txt")
-    end
     if termination_status(m) in (MOI.OPTIMAL, MOI.TIME_LIMIT)
         if calculate_duals
             @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
