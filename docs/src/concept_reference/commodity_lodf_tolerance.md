@@ -1,5 +1,5 @@
 Given two [connection](@ref)s, the line outage distribution factor (LODF) is
-the fraction of the pre-contingency flow on one of them, that will flow on the other after the contingency.
+the fraction of the pre-contingency flow on the first one, that will flow on the second after the contingency.
 [commodity\_lodf\_tolerance](@ref) is the minimum absolute value of the LODF that is considered meaningful.
 Any value below this tolerance (in absolute value) will be treated as zero.
 
