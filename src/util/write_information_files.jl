@@ -51,27 +51,21 @@ The optional `translation` keyword can be used to aggregate and translate the ou
 function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
     # Define mapping of template entries, where each attribute of interest is.
     template_mapping = Dict(
-        "object_classes" => Dict(
-            :name_index => 1,
-            :description_index => 2,
-        ),
+        "object_classes" => Dict(:name_index => 1, :description_index => 2),
         "relationship_classes" => Dict(
             :name_index => 1,
             :description_index => 3,
             :related_concept_index => 2,
-            :related_concept_type => "object_classes"
+            :related_concept_type => "object_classes",
         ),
-        "parameter_value_lists" => Dict(
-            :name_index => 1,
-            :default_value_index => 2
-        ),
+        "parameter_value_lists" => Dict(:name_index => 1, :default_value_index => 2),
         "object_parameters" => Dict(
             :name_index => 2,
             :description_index => 5,
             :related_concept_index => 1,
             :related_concept_type => "object_classes",
             :default_value_index => 3,
-            :parameter_value_list_index => 4
+            :parameter_value_list_index => 4,
         ),
         "relationship_parameters" => Dict(
             :name_index => 2,
@@ -79,12 +73,9 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
             :related_concept_index => 1,
             :related_concept_type => "relationship_classes",
             :default_value_index => 3,
-            :parameter_value_list_index => 4
+            :parameter_value_list_index => 4,
         ),
-        "tools" => Dict(
-            :name_index => 1,
-            :description_index => 2,
-        ),
+        "tools" => Dict(:name_index => 1, :description_index => 2),
         "features" => Dict(
             :name_index => 2,
             :related_concept_index => 1,
@@ -104,29 +95,29 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
     concept_dictionary = Dict(
         key => Dict(
             entry[template_mapping[key][:name_index]] => Dict(
-                :description => isnothing(get(template_mapping[key], :description_index, nothing)) ? nothing : (
-                    entry[template_mapping[key][:description_index]]
-                ),
-                :default_value => isnothing(get(template_mapping[key], :default_value_index, nothing)) ? nothing : (
-                    entry[template_mapping[key][:default_value_index]]
-                ),
-                :parameter_value_list => isnothing(get(template_mapping[key], :parameter_value_list_index, nothing)) ? nothing : (
-                    entry[template_mapping[key][:parameter_value_list_index]]
-                ),
-                :feature => isnothing(get(template_mapping[key], :feature_index, nothing)) ? nothing : (
-                    entry[template_mapping[key][:feature_index]]
-                ),
-                :related_concepts => isnothing(get(template_mapping[key], :related_concept_index, nothing)) ? Dict() : Dict(
-                    template_mapping[key][:related_concept_type] => (
-                        isa(entry[template_mapping[key][:related_concept_index]], Array) ? (
-                            unique([entry[template_mapping[key][:related_concept_index]]...])
-                        ) : [entry[template_mapping[key][:related_concept_index]]]
-                    )
-                ),
-            )
-            for entry in template[key]
-        )
-        for key in keys(template)
+                :description =>
+                    isnothing(get(template_mapping[key], :description_index, nothing)) ? nothing :
+                    (entry[template_mapping[key][:description_index]]),
+                :default_value =>
+                    isnothing(get(template_mapping[key], :default_value_index, nothing)) ? nothing :
+                    (entry[template_mapping[key][:default_value_index]]),
+                :parameter_value_list =>
+                    isnothing(get(template_mapping[key], :parameter_value_list_index, nothing)) ? nothing :
+                    (entry[template_mapping[key][:parameter_value_list_index]]),
+                :feature =>
+                    isnothing(get(template_mapping[key], :feature_index, nothing)) ? nothing :
+                    (entry[template_mapping[key][:feature_index]]),
+                :related_concepts =>
+                    isnothing(get(template_mapping[key], :related_concept_index, nothing)) ? Dict() :
+                    Dict(
+                        template_mapping[key][:related_concept_type] => (
+                            isa(entry[template_mapping[key][:related_concept_index]], Array) ?
+                            (unique([entry[template_mapping[key][:related_concept_index]]...])) :
+                            [entry[template_mapping[key][:related_concept_index]]]
+                        ),
+                    ),
+            ) for entry in template[key]
+        ) for key in keys(template)
     )
     if !isempty(translation)
         concept_dictionary = translate_and_aggregate_concept_dictionary(concept_dictionary, translation)
@@ -144,10 +135,8 @@ a `String` corresponding to the translated section name.
 If multiple template section names are mapped to a single `String`, the entries are aggregated under that title.
 """
 function translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, translation::Dict)
-    initial_translation = Dict(
-        translation[key] => merge([concept_dictionary[k] for k in key]...)
-        for key in keys(translation)
-    )
+    initial_translation =
+        Dict(translation[key] => merge([concept_dictionary[k] for k in key]...) for key in keys(translation))
     translated_concept_dictionary = deepcopy(initial_translation)
     for concept_type in keys(initial_translation)
         for concept in keys(initial_translation[concept_type])
@@ -155,11 +144,9 @@ function translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, tr
                 translation[key] => vcat(
                     [
                         initial_translation[concept_type][concept][:related_concepts][k]
-                        for k in key
-                        if k in keys(initial_translation[concept_type][concept][:related_concepts])
-                    ]...
-                )
-                for key in keys(translation)
+                        for k in key if k in keys(initial_translation[concept_type][concept][:related_concepts])
+                    ]...,
+                ) for key in keys(translation)
             )
         end
     end
@@ -177,11 +164,21 @@ function add_cross_references!(concept_dictionary::Dict)
         for concept in keys(concept_dictionary[class])
             for related_concept_class in keys(concept_dictionary[class][concept][:related_concepts])
                 for related_concept in concept_dictionary[class][concept][:related_concepts][related_concept_class]
-                    if !isnothing(get(concept_dictionary[related_concept_class][related_concept][:related_concepts], class, nothing))
-                        if concept in concept_dictionary[related_concept_class][related_concept][:related_concepts][class]
+                    if !isnothing(
+                        get(
+                            concept_dictionary[related_concept_class][related_concept][:related_concepts],
+                            class,
+                            nothing,
+                        ),
+                    )
+                        if concept in
+                           concept_dictionary[related_concept_class][related_concept][:related_concepts][class]
                             nothing
                         else
-                            push!(concept_dictionary[related_concept_class][related_concept][:related_concepts][class], concept)
+                            push!(
+                                concept_dictionary[related_concept_class][related_concept][:related_concepts][class],
+                                concept,
+                            )
                         end
                     else
                         concept_dictionary[related_concept_class][related_concept][:related_concepts][class] = [concept]
@@ -204,10 +201,7 @@ Automatically writes markdown files for the `Concept Reference` chapter based on
 Each file is pieced together from two parts: the preamble automatically generated using the
 `concept_dictionary`, and a separate description assumed to be found under `docs/src/concept_reference/<name>.md`.
 """
-function write_concept_reference_files(
-    concept_dictionary::Dict,
-    makedocs_path::String
-)
+function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::String)
     error_count = 0
     for filename in keys(concept_dictionary)
         system_string = ["# $(filename)\n\n"]
@@ -284,5 +278,5 @@ function write_conflicts_to_file(conflicts; file_name="conflicts")
     for confl in conflicts
         print(io, confl, "\n")
     end
-    close(io);
+    close(io)
 end

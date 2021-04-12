@@ -209,10 +209,8 @@ end
 
 function constraint_unit_constraint_indices(m::Model)
     unique(
-        (unit_constraint=uc, stochastic_path=path, t=t)
-        for uc in unit_constraint()
-        for t in _constraint_unit_constraint_lowest_resolution_t(m, uc)
-        for path in active_stochastic_paths(
+        (unit_constraint=uc, stochastic_path=path, t=t) for uc in unit_constraint()
+        for t in _constraint_unit_constraint_lowest_resolution_t(m, uc) for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_unit_constraint_indices(m, uc, t)),
         )
     )
@@ -321,7 +319,8 @@ Gather the `node_state` variable indices appearing in `add_constraint_unit_const
 """
 function _constraint_unit_constraint_node_state_indices(m, uc, t)
     (
-        ind for n in node__unit_constraint(unit_constraint=uc) for ind in node_state_indices(m; node=n, t=t_in_t(m; t_long=t))
+        ind for n in node__unit_constraint(unit_constraint=uc) for ind in
+                                                                   node_state_indices(m; node=n, t=t_in_t(m; t_long=t))
     )
 end
 
@@ -332,7 +331,8 @@ Gather the `units_on` variable indices appearing in `add_constraint_unit_constra
 """
 function _constraint_unit_constraint_units_on_indices(m, uc, t)
     (
-        ind for u in unit__unit_constraint(unit_constraint=uc) for ind in units_on_indices(m; unit=u, t=t_in_t(m; t_long=t))
+        ind for u in unit__unit_constraint(unit_constraint=uc) for ind in
+                                                                   units_on_indices(m; unit=u, t=t_in_t(m; t_long=t))
     )
 end
 

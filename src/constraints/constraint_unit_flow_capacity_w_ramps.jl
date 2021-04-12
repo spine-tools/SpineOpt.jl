@@ -400,11 +400,10 @@ function constraint_unit_flow_capacity_w_ramp_indices_filtered(
             direction=direction,
             stochastic_path=stochastic_path,
             t_before=t_before,
-            t_after=t_after
+            t_after=t_after,
         )
     end
     filter(f, constraint_unit_flow_capacity_w_ramp_indices(m))
-
 end
 
 """

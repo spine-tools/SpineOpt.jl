@@ -25,11 +25,21 @@
 A list of `NamedTuple`s corresponding to indices of the `node_pressure` variable.
 The keyword arguments act as filters for each dimension.
 """
-function node_pressure_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything, temporal_block=temporal_block(representative_periods_mapping=nothing))
+function node_pressure_indices(
+    m::Model;
+    node=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
+)
     inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
-        (node=n, stochastic_scenario=s, t=t)
-        for (n, s, t) in node_stochastic_time_indices(m; node=members(node), stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block)
-            if has_pressure(node=n)
+        (node=n, stochastic_scenario=s, t=t) for (n, s, t) in node_stochastic_time_indices(
+            m;
+            node=members(node),
+            stochastic_scenario=stochastic_scenario,
+            t=t,
+            temporal_block=temporal_block,
+        ) if has_pressure(node=n)
     ]
     unique!(inds)
 end

@@ -119,7 +119,7 @@ function constraint_connection_flow_lodf_indices_filtered(
             connection_contingency=connection_contingency,
             connection_monitored=connection_monitored,
             stochastic_path=stochastic_path,
-            t=t
+            t=t,
         )
     end
     filter(f, constraint_connection_flow_lodf_indices(m))

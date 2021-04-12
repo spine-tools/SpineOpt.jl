@@ -53,8 +53,7 @@ function add_constraint_connection_flow_intact_flow!(m::Model)
                     - connection_intact_flow[candidate_conn, n, direction(:to_node), s, t] * duration(t)
                     - connection_flow[candidate_conn, n, direction(:from_node), s, t] * duration(t)
                     + connection_flow[candidate_conn, n, direction(:to_node), s, t] * duration(t)
-                )
-                for candidate_conn in _candidate_connections(conn)
+                ) for candidate_conn in _candidate_connections(conn)
                 for n in last(connection__from_node(connection=candidate_conn))
                 for (candidate_conn, n, d, s, t) in connection_flow_indices(
                     m;
@@ -77,10 +76,7 @@ function constraint_connection_flow_intact_flow_indices(m::Model)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
         for t in _constraint_connection_flow_intact_flow_lowest_resolution_t(m, conn)
         for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in _constraint_connection_flow_intact_flow_indices(m, conn, t)
-            ),
+            unique(ind.stochastic_scenario for ind in _constraint_connection_flow_intact_flow_indices(m, conn, t)),
         )
     )
 end
@@ -92,7 +88,7 @@ Form the stochastic index array for the `:connection_flow_intact_flow` constrain
 
 Uses stochastic path indices of the `connection_flow` and `connection_intact_flow` variables. Only the lowest
 resolution time slices are included, as the `:connection_flow_capacity` is used to constrain the "average power" of the
-`connection` instead of "instantaneous power". Keyword arguments can be used to filter the resulting 
+`connection` instead of "instantaneous power". Keyword arguments can be used to filter the resulting
 """
 function constraint_connection_flow_intact_flow_indices_filtered(
     m::Model;
@@ -112,9 +108,8 @@ An iterator over all candidate connections that can impact the flow on the given
 """
 function _candidate_connections(conn)
     (
-        candidate_conn
-        for candidate_conn in connection(is_candidate=true, has_ptdf=true)
-        if candidate_conn !== conn && lodf(connection1=candidate_conn, connection2=conn) !== nothing
+        candidate_conn for candidate_conn in connection(is_candidate=true, has_ptdf=true) if
+                           candidate_conn !== conn && lodf(connection1=candidate_conn, connection2=conn) !== nothing
     )
 end
 
@@ -132,9 +127,7 @@ Gather the indices of the relevant `connection_flow` variables.
 """
 function _constraint_connection_flow_intact_flow_indices(m, conn, t)
     (
-        ind
-        for conn_k in Iterators.flatten(((conn,), _candidate_connections(conn)))
-        for ind in connection_flow_indices(
+        ind for conn_k in Iterators.flatten(((conn,), _candidate_connections(conn))) for ind in connection_flow_indices(
             m;
             connection=conn_k,
             last(connection__from_node(connection=conn_k))...,

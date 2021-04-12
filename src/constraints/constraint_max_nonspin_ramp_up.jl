@@ -61,8 +61,7 @@ end
 
 function constraint_max_nonspin_ramp_up_indices(m::Model)
     unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(max_res_startup_ramp)
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t) for (u, ng, d) in indices(max_res_startup_ramp)
         for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
         for path in active_stochastic_paths(
             unique(
@@ -93,5 +92,4 @@ function constraint_max_nonspin_ramp_up_indices_filtered(
 )
     f(ind) = _index_in(ind; unit=unit, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_max_nonspin_ramp_up_indices(m))
-
 end

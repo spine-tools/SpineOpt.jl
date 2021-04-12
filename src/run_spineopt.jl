@@ -116,7 +116,7 @@ function rerun_spineopt(
     calculate_duals = duals_calculation_needed(m)
     k = 1
 
-    while optimize 
+    while optimize
         @log log_level 1 "Window $k: $(current_window(m))"
         optimize_model!(
             m;
@@ -339,7 +339,11 @@ end
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
 function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3)
-    @timelog log_level 2 "Adding variables...\n" add_variables!(m; add_user_variables=add_user_variables,log_level=log_level)
+    @timelog log_level 2 "Adding variables...\n" add_variables!(
+        m;
+        add_user_variables=add_user_variables,
+        log_level=log_level,
+    )
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(
         m;
