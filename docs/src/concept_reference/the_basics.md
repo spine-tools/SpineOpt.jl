@@ -152,3 +152,5 @@ The existence of some [Constraints](@ref) is controlled based on if the relevant
 defined.
 As a rule-of-thumb, a `constraint` only gets generated if at least one of the [Parameters](@ref) appearing in it is
 defined, but one should refer to the appropriate [Constraints](@ref) and [Parameters](@ref) sections when in doubt.
+
+## Introduction to groups of objects

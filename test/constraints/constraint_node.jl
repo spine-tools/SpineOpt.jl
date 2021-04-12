@@ -284,6 +284,272 @@
             end
         end
     end
+    @testset "constraint_cyclic_node_state" begin
+        db_map = _load_test_data(url_in, test_data)
+        node_capacity = Dict("node_b" => 120, "node_c" => 400)
+        cyc_cond = Dict(("node_b", "hourly") => true, ("node_c", "hourly") => true)
+        object_parameter_values = [
+            ["node", "node_b", "node_state_cap", node_capacity["node_b"]],
+            ["node", "node_c", "node_state_cap", node_capacity["node_c"]],
+            ["node", "node_b", "has_state", true],
+            ["node", "node_c", "has_state", true],
+        ]
+        relationship_parameter_values = [
+            ["node__temporal_block", ["node_b", "hourly"], "cyclic_condition",cyc_cond[("node_b", "hourly")]],
+            ["node__temporal_block", ["node_c", "hourly"],"cyclic_condition", cyc_cond[("node_c", "hourly")]],
+        ]
+        db_api.import_data(db_map; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values)
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_node_state = m.ext[:variables][:node_state]
+        constraint = m.ext[:constraints][:cyclic_node_state]
+        @test length(constraint) == 2
+        scenario0 = stochastic_scenario(:parent)
+        scenario1 = stochastic_scenario(:child)
+        @testset for ((n,blk), cyc) in cyc_cond
+            n = node(Symbol(n))
+            blk = temporal_block(Symbol(blk))
+            t0 = filter(x -> blk in blocks(x),t_before_t(m;t_after=first(time_slice(m;temporal_block=blk))))[1]
+            t1 = last(time_slice(m;temporal_block=blk))
+            var_n_st_key0 = (n, scenario0, t0)
+            var_n_st_key1 = (n, scenario1, t1)
+            con_key = (n, [scenario0, scenario1], t0, t1)
+            var_n_st0 = var_node_state[var_n_st_key0...]
+            var_n_st1 = var_node_state[var_n_st_key1...]
+            expected_con = @build_constraint(var_n_st1 >= var_n_st0)
+            con = constraint[con_key...]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+    @testset "constraint_storage_line_pack" begin
+        db_map = _load_test_data(url_in, test_data)
+        pressure = Dict("node_b" => true, "node_c" => true)
+        state = Dict("node_a" => true)
+        object_parameter_values = [
+            ["node", "node_b", "has_pressure", pressure["node_b"]],
+            ["node", "node_c", "has_pressure", pressure["node_c"]],
+            ["node", "node_a", "has_state", state["node_a"]],
+        ]
+        conn_linepack = Dict(("connection_bc","node_a","node_group_bc") => 28)
+        relationships = [
+            ["connection__to_node", ["connection_bc", "node_a"]],
+            ["connection__from_node", ["connection_bc", "node_a"]],
+            ["connection__node__node",["connection_bc","node_a","node_group_bc"]],
+        ]
+        relationship_parameter_values = [
+            ["connection__node__node",["connection_bc","node_a","node_group_bc"],"connection_linepack_constant", conn_linepack[("connection_bc","node_a","node_group_bc")]]
+        ]
+        db_api.import_data(
+            db_map;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+            relationships=relationships,
+        )
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_node_pressure = m.ext[:variables][:node_pressure]
+        var_node_state = m.ext[:variables][:node_state]
+        constraint = m.ext[:constraints][:storage_line_pack]
+        @test length(constraint) == 1
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        scenario_det = stochastic_scenario(:parent)
+        time_slices = [time_slice(m; temporal_block=temporal_block(:two_hourly))[1],]
+        @testset for (s, t) in zip(scenarios, time_slices)
+            @testset for ((conn,n_stor,ng), conn_lp) in conn_linepack
+                conn = connection(Symbol(conn))
+                n_stor = node(Symbol(n_stor))
+                ng = node(Symbol(ng))
+                (n1,n2) = members(ng)
+                var_n_stor_key = (n_stor, scenario_det, t)
+                (t1,t2) = sort(filter(x -> temporal_block(:hourly) in blocks(x),t_in_t(m;t_long=t)))
+                var_n1_press_key_t1 = (n1, s, t1)
+                var_n1_press_key_t2 = (n1, stochastic_scenario(:child), t2)
+                var_n2_press_key_t1 = (n2, s, t1)
+                var_n2_press_key_t2 = (n2, stochastic_scenario(:child), t2)
+                con_key = (conn, n_stor, ng, [scenarios...], t)
+                var_n_st = var_node_state[var_n_stor_key...]
+                var_pr1_t1 = var_node_pressure[var_n1_press_key_t1...]
+                var_pr1_t2 = var_node_pressure[var_n1_press_key_t2...]
+                var_pr2_t1 = var_node_pressure[var_n2_press_key_t1...]
+                var_pr2_t2 = var_node_pressure[var_n2_press_key_t2...]
+                expected_con = @build_constraint(var_n_st*2 == conn_lp*0.5*((var_pr1_t1+var_pr1_t2)+(var_pr2_t1+var_pr2_t2)))
+                con = constraint[con_key...]
+                observed_con = constraint_object(con)
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    #TODO
+    end
+    @testset "constraint_compression_ratio" begin
+        db_map = _load_test_data(url_in, test_data)
+        has_pressure = Dict("node_b" => true, "node_c" => true)
+        relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
+        compression_ratio = Dict(("connection_bc","node_b", "node_c") => 1.2) #fromnodetonode
+        object_parameter_values = [
+            ["node", "node_b", "has_pressure", has_pressure["node_b"]],
+            ["node", "node_c", "has_pressure", has_pressure["node_c"]],
+        ]
+        relationship_parameter_values = [
+            ["connection__node__node", ["connection_bc", "node_b", "node_c"], "compression_factor", compression_ratio[(("connection_bc","node_b", "node_c"))]]]
+        db_api.import_data(
+            db_map;
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_node_pressure = m.ext[:variables][:node_pressure]
+        constraint = m.ext[:constraints][:compression_ratio]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            @testset for ((conn,n1,n2), comp_ratio) in compression_ratio
+                conn = connection(Symbol(conn))
+                n1 = node(Symbol(n1))
+                n2 = node(Symbol(n2))
+                var_n_pressure_key1 = (n1, s, t)
+                var_n_pressure_key2 = (n2, s, t)
+                con_key = (conn, n1, n2, [s], t)
+                var_n1 = var_node_pressure[var_n_pressure_key1...]
+                var_n2 = var_node_pressure[var_n_pressure_key2...]
+                expected_con = @build_constraint(var_n2 <= comp_ratio*var_n1)
+                con = constraint[con_key...]
+                observed_con = constraint_object(con)
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+    @testset "constraint_min_node_pressure" begin
+        db_map = _load_test_data(url_in, test_data)
+        has_pressure = Dict("node_b" => true)
+        min_pressure = Dict("node_b" => 350)
+        object_parameter_values = [
+            ["node", "node_b", "has_pressure", has_pressure["node_b"]],
+            ["node", "node_b", "min_node_pressure", min_pressure["node_b"]]
+        ]
+        db_api.import_data(
+            db_map;
+            object_parameter_values=object_parameter_values
+        )
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_node_pressure = m.ext[:variables][:node_pressure]
+        constraint = m.ext[:constraints][:min_node_pressure]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            @testset for (n, min_press) in min_pressure
+                n = node(Symbol(n))
+                var_n_pressure_key1 = (n, s, t)
+                con_key = (n, [s], t)
+                var_n1 = var_node_pressure[var_n_pressure_key1...]
+                expected_con = @build_constraint(var_n1 >= min_press)
+                con = constraint[con_key...]
+                observed_con = constraint_object(con)
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+    @testset "constraint_max_node_pressure" begin
+        db_map = _load_test_data(url_in, test_data)
+        has_pressure = Dict("node_b" => true)
+        max_pressure = Dict("node_b" => 470)
+        object_parameter_values = [
+            ["node", "node_b", "has_pressure", has_pressure["node_b"]],
+            ["node", "node_b", "max_node_pressure", max_pressure["node_b"]]
+        ]
+        db_api.import_data(
+            db_map;
+            object_parameter_values=object_parameter_values
+        )
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_node_pressure = m.ext[:variables][:node_pressure]
+        constraint = m.ext[:constraints][:max_node_pressure]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            @testset for (n, max_press) in max_pressure
+                n = node(Symbol(n))
+                var_n_pressure_key1 = (n, s, t)
+                con_key = (n, [s], t)
+                var_n1 = var_node_pressure[var_n_pressure_key1...]
+                expected_con = @build_constraint(var_n1 <= max_press)
+                con = constraint[con_key...]
+                observed_con = constraint_object(con)
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+    @testset "constraint_min_node_voltage_angle" begin
+        db_map = _load_test_data(url_in, test_data)
+        has_voltage_angle = Dict("node_b" => true)
+        min_voltage_angle = Dict("node_b" => -3.14)
+        object_parameter_values = [
+            ["node", "node_b", "has_voltage_angle", has_voltage_angle["node_b"]],
+            ["node", "node_b", "min_voltage_angle", min_voltage_angle["node_b"]]
+        ]
+        db_api.import_data(
+            db_map;
+            object_parameter_values=object_parameter_values
+        )
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_node_voltage_angle = m.ext[:variables][:node_voltage_angle]
+        constraint = m.ext[:constraints][:min_node_voltage_angle]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            @testset for (n, min_volt_ang) in min_voltage_angle
+                n = node(Symbol(n))
+                var_n_voltage_key1 = (n, s, t)
+                con_key = (n, [s], t)
+                var_n1 = var_node_voltage_angle[var_n_voltage_key1...]
+                expected_con = @build_constraint(var_n1 >= min_volt_ang)
+                con = constraint[con_key...]
+                observed_con = constraint_object(con)
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
+    @testset "constraint_max_node_voltage_angle" begin
+        db_map = _load_test_data(url_in, test_data)
+        has_voltage_angle = Dict("node_b" => true)
+        max_voltage_angle = Dict("node_b" => 3.14)
+        object_parameter_values = [
+            ["node", "node_b", "has_voltage_angle", has_voltage_angle["node_b"]],
+            ["node", "node_b", "max_voltage_angle", max_voltage_angle["node_b"]]
+        ]
+        db_api.import_data(
+            db_map;
+            object_parameter_values=object_parameter_values
+        )
+        db_map.commit_session("Add test data")
+        m = run_spineopt(db_map; log_level=0, optimize=false)
+        var_node_voltage_angle = m.ext[:variables][:node_voltage_angle]
+        constraint = m.ext[:constraints][:max_node_voltage_angle]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            @testset for (n, max_volt_ang) in max_voltage_angle
+                n = node(Symbol(n))
+                var_n_voltage_key1 = (n, s, t)
+                con_key = (n, [s], t)
+                var_n1 = var_node_voltage_angle[var_n_voltage_key1...]
+                expected_con = @build_constraint(var_n1 <= max_volt_ang)
+                con = constraint[con_key...]
+                observed_con = constraint_object(con)
+                @test _is_constraint_equal(observed_con, expected_con)
+            end
+        end
+    end
     @testset "constraint_node_state_capacity_investments" begin
         db_map = _load_test_data(url_in, test_data)
         candidate_storages = 1

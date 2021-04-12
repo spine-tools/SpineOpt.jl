@@ -425,6 +425,15 @@ Storage nodes can also contribute to the provision of reserves. The amount of ba
 
 ### Network representation
 
+### [Pressure driven gas transfer](@id pressure-driven-gas-transfer-math)
+#### Maximum node pressure
+#### Minimum node pressure
+#### [Outer approximation through fixed pressure points](@id constraint-fixed-node-pressure-point)
+#### [Linepack storage flexibility](@id line-pack-storage-constraint)
+#### [Gas connection flow capacity](@id constraint-connection-flow-gas-capacity)
+### [Nodebased lossless DC power flow](@id nodal-lossless-DC)
+#### Maximum node voltage angle
+#### Minimum node voltage angle
 ### Connection capacity bounds
 
 ## Investments

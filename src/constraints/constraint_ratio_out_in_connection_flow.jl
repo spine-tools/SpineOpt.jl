@@ -157,12 +157,12 @@ end
 
 Gather the `connection_flow` variiable indices for `add_constraint_ratio_out_in_connection_flow!`.
 """
-function _constraint_ratio_out_in_connection_flow_indices(m, connection, node_out, node_in, t0, t)
+function _constraint_ratio_out_in_connection_flow_indices(m, connection, node_group_out, node_group_in, t0, t)
     Iterators.flatten((
         connection_flow_indices(
             m;
             connection=connection,
-            node=node_out,
+            node=node_group_out,
             direction=direction(:to_node),
             t=t_in_t(m; t_long=t),
         ),  # `to_node` `connection_flow`s
@@ -170,20 +170,20 @@ function _constraint_ratio_out_in_connection_flow_indices(m, connection, node_ou
         for (conn, n_in, d, s, t1) in connection_flow_indices(
             m;
             connection=connection,
-            node=node_in,
+            node=node_group_in,
             direction=direction(:from_node),
             t=t_in_t(m; t_long=t),
         ) for (conn, n_in, d, s, t) in connection_flow_indices(
             m;
             connection=conn,
-            node=n_in,
+            node=node_group_in,
             direction=d,
             t=to_time_slice(
                 m;
                 t=t - connection_flow_delay(
                     connection=conn,
-                    node1=node_out,
-                    node2=n_in,
+                    node1=node_group_out,
+                    node2=node_group_in,
                     stochastic_scenario=s,
                     analysis_time=t0,
                     t=t1,

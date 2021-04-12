@@ -294,7 +294,7 @@ function _build_ptdf(connections, nodes)
         from_n, to_n = connection__from_node(connection=conn, direction=anything)
         A[node_numbers[from_n], ix] = 1
         A[node_numbers[to_n], ix] = -1
-        inv_X[ix, ix] = 1 / max(connection_reactance(connection=conn), 0.00001)
+        inv_X[ix, ix] = 1 / max(connection_reactance(connection=conn), 0.00001) * connection_reactance_base(connection=conn)
     end
 
     i = findfirst(n -> node_opf_type(node=n) == :node_opf_type_reference, nodes)

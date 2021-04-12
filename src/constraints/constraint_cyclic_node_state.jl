@@ -17,19 +17,49 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 """
-    add_constraint_nodal_balance!(m::Model)
+    add_constraint_cyclic_node_state!(m::Model)
 
 Enforces cyclic constraint on node state over a temporal block.
 """
 function add_constraint_cyclic_node_state!(m::Model)
     @fetch node_state = m.ext[:variables]
-    cons = m.ext[:constraints][:cyclic_node_state] = Dict()
-    for (n, blk) in indices(cyclic_condition)
-        if has_state(node=n) == :value_true && cyclic_condition(node=n, temporal_block=blk)
-            (n, t_start) =
-                first(node_state_indices(node=n, t=first(t_before_t(t_after=first(time_slice(temporal_block=blk))))))
-            (n, t_end) = first(node_state_indices(node=n, t=last(time_slice(temporal_block=blk))))
-            cons[n, blk] = @constraint(m, node_state[n, t_end] >= node_state[n, t_start])
-        end
-    end
+    m.ext[:constraints][:cyclic_node_state] = Dict(
+        (node=n, stochastic_scenario=s, t_start=t_start, t_end=t_end) => @constraint(
+            m,
+            expr_sum(
+                node_state[n, s, t_end]
+                for (n, s, t_end) in node_state_indices(m; node=n, stochastic_scenario=s, t=t_end);
+                init=0
+            )
+            >=
+            expr_sum(
+                node_state[n, s, t_start]
+                for (n, s, t_start) in node_state_indices(m; node=n, stochastic_scenario=s, t=t_start);
+                init=0
+            )
+        ) for (n, s, t_start, t_end) in constraint_cyclic_node_state_indices(m)
+    )
+end
+
+function constraint_cyclic_node_state_indices(
+    m::Model;
+    node=anything,
+    temporal_block=anything,
+    stochastic_path=anything,
+    t_start=anything,
+    t_end=anything,
+)
+    unique(
+    (node=n, stochastic_path=path,t_start=t_start, t_end=t_end)
+    for (n, blk) in indices(cyclic_condition;node=node,temporal_block=temporal_block)
+        if cyclic_condition(node=n, temporal_block=blk)
+    for t_start in filter(x -> blk in blocks(x),t_before_t(m;t_after=first(time_slice(m;temporal_block=blk))))
+    for t_end in last(time_slice(m;temporal_block=blk))
+    for path in active_stochastic_paths(
+        unique(
+            ind.stochastic_scenario
+            for ind in node_state_indices(m; node=n, t=[t_start, t_end])
+        ),
+    ) if path == stochastic_path || path in stochastic_path
+    )
 end

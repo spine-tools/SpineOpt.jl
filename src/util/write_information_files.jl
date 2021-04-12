@@ -278,3 +278,11 @@ function print_constraint(constraint, filename="constraint_debug.txt")
     end
     close(io)
 end
+
+function write_conflicts_to_file(conflicts; file_name="conflicts")
+    io = open(joinpath(@__DIR__, "$(file_name).txt"), "w")
+    for confl in conflicts
+        print(io, confl, "\n")
+    end
+    close(io);
+end
