@@ -74,22 +74,10 @@ function constraint_compression_ratio_indices(
     unique(
         (connection=c, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (c, n1, n2) in indices(compression_factor; connection=connection, node1=node1, node2=node2)
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=[members(n1)...,members(n2)...]), t=t))
+        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n1),members(n2)))), t=t))
         for
         path in active_stochastic_paths(unique(
-            ind.stochastic_scenario for ind in _constraint_compression_ratio_indices(m, n1, n2, t)
+            ind.stochastic_scenario for ind in node_pressure_indices(m; node=[n1, n2], t=t)
         )) if path == stochastic_path || path in stochastic_path
     )
-end
-
-"""
-    _constraint_compression_ratio_indices(m, node1, node2, t)
-
-Gather the indices of the relevant `node_pressure` variables.
-"""
-function _constraint_compression_ratio_indices(m, node1, node2, t)
-    Iterators.flatten((
-        node_pressure_indices(m; node=node1, t=t),
-        node_pressure_indices(m; node=node2, t=t)
-    ))
 end

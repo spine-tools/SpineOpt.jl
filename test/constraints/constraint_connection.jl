@@ -114,7 +114,7 @@
         db_map = _load_test_data(url_in, test_data)
         object_parameter_values = [
             ["connection", "connection_ca", "connection_binary_gas_flow", binary["connection_ca"]],
-            ["model", "instance", "bigM", bigm["instance"]],
+            ["model", "instance", "big_m", bigm["instance"]],
         ]
         relationship_parameter_values =
             [["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_1", fixed_pressure_constant_1_[("connection_ca", "node_c","node_a")]]]
@@ -163,7 +163,7 @@
             ["node", "node_a", "has_pressure", has_pressure["node_a"]],
             ["node", "node_c", "has_pressure", has_pressure["node_c"]],
             ["connection", "connection_ca", "connection_binary_gas_flow", binary["connection_ca"]],
-            ["model", "instance", "bigM", bigm["instance"]],
+            ["model", "instance", "big_m", bigm["instance"]],
         ]
         relationship_parameter_values =
             [["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_1", fixed_pressure_constant_1_[("connection_ca", "node_c","node_a")]],
@@ -224,7 +224,7 @@
         db_map = _load_test_data(url_in, test_data)
         object_parameter_values = [
             ["connection", "connection_ca", "connection_binary_gas_flow", binary["connection_ca"]],
-            ["model", "instance", "bigM", bigm["instance"]],
+            ["model", "instance", "big_m", bigm["instance"]],
         ]
         relationship_parameter_values =
             [["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_1", fixed_pr_constant_1_[("connection_ca", "node_c","node_a")]]]
@@ -266,7 +266,7 @@
         ]
         object_parameter_values = [
             ["connection", "connection_ca", "connection_reactance", conn_react["connection_ca"]],
-            ["connection", "connection_ca", "connection_reactance_p_u", conn_react_p_u["connection_ca"]],
+            ["connection", "connection_ca", "connection_reactance_base", conn_react_p_u["connection_ca"]],
             ["node", "node_c", "has_voltage_angle", has_volt_ang["node_c"]],
             ["node", "node_a", "has_voltage_angle", has_volt_ang["node_a"]],
         ]

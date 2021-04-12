@@ -33,7 +33,6 @@ function add_constraint_min_node_pressure!(m::Model)
                 init=0,
             ) >=
             + min_node_pressure[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
-            #TODO: support investments?
         ) for (ng, s, t) in constraint_min_node_pressure_indices(m)
     )
 end

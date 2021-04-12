@@ -25,45 +25,48 @@ function add_constraint_node_voltage_angle!(m::Model)
     @fetch node_voltage_angle, connection_flow = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:node_voltage_angle] = Dict(
-    (connection=conn,node1=n_to,node2=n_from,stochastic_scenario=s,t=t) => @constraint(
-        m,
-        sum(
-        connection_flow[conn,n_from,d_from,s,t]
-        for (conn,n_from,d_from,s,t) in
-            connection_flow_indices(m;
-                connection=conn,
-                node=n_from,
-                direction=direction(:from_node),
-                stochastic_scenario=s,
-                t=t)
-        )
-        -
-        sum(
-        connection_flow[conn,n_to,d_from,s,t]
-        for (conn,n_from,d_from,s,t) in
-            connection_flow_indices(m;
-                connection=conn,
-                node=n_to,
-                direction=direction(:from_node),
-                stochastic_scenario=s,
-                t=t)
-        )
-        ==
-        1/connection_reactance[(connection=conn, stochastic_scenario=s,analysis_time=t0, t=t)] ##reactance or susceptance
-        * connection_reactance_p_u[(connection=conn, stochastic_scenario=s,analysis_time=t0, t=t)]
-        *
-        (sum(
-        node_voltage_angle[n_from,s,t]
-        for (n_from,s,t) in node_voltage_angle_indices(m; node=n_from, stochastic_scenario=s, t=t)
-        )
-        - sum(
-        node_voltage_angle[n_to,s,t]
-        for (n_to,s,t) in node_voltage_angle_indices(m; node=n_to, stochastic_scenario=s, t=t)
-        ))
+        (connection=conn,node1=n_to,node2=n_from,stochastic_scenario=s,t=t) => @constraint(
+            m,
+            sum(
+                connection_flow[conn,n_from,d_from,s,t]
+                for (conn,n_from,d_from,s,t) in connection_flow_indices(
+                    m;
+                    connection=conn,
+                    node=n_from,
+                    direction=direction(:from_node),
+                    stochastic_scenario=s,
+                    t=t
+                )
+            )
+            -
+            sum(
+                connection_flow[conn,n_to,d_from,s,t]
+                for (conn,n_from,d_from,s,t) in connection_flow_indices(
+                    m;
+                    connection=conn,
+                    node=n_to,
+                    direction=direction(:from_node),
+                    stochastic_scenario=s,
+                    t=t
+                )
+            )
+            ==
+            1 / connection_reactance[(connection=conn, stochastic_scenario=s,analysis_time=t0, t=t)]
+            * connection_reactance_base[(connection=conn, stochastic_scenario=s,analysis_time=t0, t=t)]
+            * (
+                sum(
+                    node_voltage_angle[n_from,s,t]
+                    for (n_from,s,t) in node_voltage_angle_indices(m; node=n_from, stochastic_scenario=s, t=t)
+                )
+                - sum(
+                    node_voltage_angle[n_to,s,t]
+                    for (n_to,s,t) in node_voltage_angle_indices(m; node=n_to, stochastic_scenario=s, t=t)
+                )
+            )
         ) for (conn,n_to,n_from,s,t) in constraint_node_voltage_angle_indices(m)
-        )
+    )
 end
-#TODO
+
 """
     constraint_node_voltage_angle_indices(m::Model; filtering_options...)
 
@@ -84,26 +87,10 @@ function constraint_node_voltage_angle_indices(
         (connection=conn, node1=n_to, node2=n_from, stochastic_path=path, t=t)
         for conn in indices(connection_reactance;connection=connection)
         for (conn,n_to,n_from) in indices(fix_ratio_out_in_connection_flow;connection=conn,node1=node1,node2=node2)
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=[members(n_to)...,members(n_from)...]), t=t))
+        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n_to),members(n_from)))), t=t))
         for
         path in active_stochastic_paths(unique(
-            ind.stochastic_scenario for ind in node_voltage_angle_indices(m; node=[n_to...,n_from...], t=t)
+            ind.stochastic_scenario for ind in node_voltage_angle_indices(m; node=[n_to, n_from], t=t)
         )) if path == stochastic_path || path in stochastic_path
     )
 end
-
-"""
-    _constraint_connection_flow_gas_capacity_indices(m, conn, node1, node2, t)
-
-Gather the indices of the relevant `connection_flow` variables.
-"""
-function _constraint_node_voltage_angle_indices(m, node1, node2, t)
-    Iterators.flatten((
-        node_voltage_angle_indices(m; node=[node1...,node2...], t=t)
-    ))
-end
-
-# for conn in indices(connection_reactance)
-#     for (conn,n_from,d_from,s,t) in connection_flow_indices(m;connection=conn,direction=direction(:from_node))
-#         for (conn,n_to,d_to,s,t)  in connection_flow_indices(m;connection=conn,direction=direction(:to_node),t=t)
-# if n_to != n_from

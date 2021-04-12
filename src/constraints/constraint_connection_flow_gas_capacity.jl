@@ -24,26 +24,47 @@ This constraint is needed to force uni-directional flow over gas connections.
 function add_constraint_connection_flow_gas_capacity!(m::Model)
     @fetch connection_flow,binary_gas_connection_flow = m.ext[:variables]
     m.ext[:constraints][:connection_flow_gas_capacity] = Dict(
-    (connection=conn, node1=n_from, node2=n_to, stochastic_scenario=s,t=t) => @constraint(
-        m,
-        (sum(
-        connection_flow[conn, n_from, d, s, t]*duration(t)
-        for (conn,n_from,d,s,t) in connection_flow_indices(m;connection=conn, node=n_from, stochastic_scenario=s, t=t_in_t(m;t_long=t),direction=direction(:from_node))
-        )
-        +
-        sum(
-        connection_flow[conn, n_to, d, s, t]*duration(t)
-        for (conn,n_to,d,s,t) in connection_flow_indices(m;connection=conn, node=n_to, stochastic_scenario=s, t=t_in_t(m;t_long=t),direction=direction(:to_node))
-        )) /2
-        <=
-        + bigM(model=m.ext[:instance])
-        *
-        sum(
-        binary_gas_connection_flow[conn, n_to, d, s, t]*duration(t)
-        for (conn,n_to,d,s,t) in connection_flow_indices(m;connection=conn, node=n_to, stochastic_scenario=s, t=t_in_t(m;t_long=t),direction=direction(:to_node))
-        )
-        ) for (conn,n_from,n_to,s,t) in constraint_connection_flow_gas_capacity_indices(m)
-        )
+        (connection=conn, node1=n_from, node2=n_to, stochastic_scenario=s,t=t) => @constraint(
+            m,
+            (
+                sum(
+                    connection_flow[conn, n_from, d, s, t] * duration(t)
+                    for (conn,n_from,d,s,t) in connection_flow_indices(
+                        m;
+                        connection=conn,
+                        node=n_from,
+                        stochastic_scenario=s,
+                        t=t_in_t(m;t_long=t),
+                        direction=direction(:from_node)
+                    )
+                )
+                + sum(
+                    connection_flow[conn, n_to, d, s, t] * duration(t)
+                    for (conn,n_to,d,s,t) in connection_flow_indices(
+                        m;
+                        connection=conn,
+                        node=n_to,
+                        stochastic_scenario=s,
+                        t=t_in_t(m;t_long=t),
+                        direction=direction(:to_node)
+                    )
+                )
+            ) / 2
+            <=
+            + big_m(model=m.ext[:instance])
+            * sum(
+                binary_gas_connection_flow[conn, n_to, d, s, t] * duration(t)
+                for (conn,n_to,d,s,t) in connection_flow_indices(
+                    m;
+                    connection=conn,
+                    node=n_to,
+                    stochastic_scenario=s,
+                    t=t_in_t(m;t_long=t),
+                    direction=direction(:to_node)
+                )
+            )
+        ) for (conn, n_from, n_to, s, t) in constraint_connection_flow_gas_capacity_indices(m)
+    )
 end
 
 """
@@ -64,22 +85,10 @@ function constraint_connection_flow_gas_capacity_indices(
     unique(
         (connection=conn, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (conn, n1, n2) in indices(fixed_pressure_constant_1; connection=connection, node1=node1, node2=node2) #n1: from_node; n2: to_node
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=[members(n1)...,members(n2)...]), t=t))
+        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n1),members(n2)))), t=t))
         for
         path in active_stochastic_paths(unique(
-            ind.stochastic_scenario for ind in _constraint_connection_flow_gas_capacity_indices(m, conn, n1, n2, t)
+            ind.stochastic_scenario for ind in connection_flow_indices(m; connection=conn, node=[n1, n2], t=t)
         )) if path == stochastic_path || path in stochastic_path
     )
-end
-
-"""
-    _constraint_connection_flow_gas_capacity_indices(m, conn, node1, node2, t)
-
-Gather the indices of the relevant `connection_flow` variables.
-"""
-function _constraint_connection_flow_gas_capacity_indices(m, conn, node1, node2, t)
-    Iterators.flatten((
-        connection_flow_indices(m; connection=conn, node=node1, t=t),
-        connection_flow_indices(m; connection=conn, node=node2, t=t)
-    ))
 end

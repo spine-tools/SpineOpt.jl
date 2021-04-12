@@ -33,7 +33,6 @@ function add_constraint_max_node_voltage_angle!(m::Model)
                 init=0,
             ) <=
             + max_voltage_angle[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
-            #TODO: support investments?
         ) for (ng, s, t) in constraint_max_node_voltage_angle_indices(m)
     )
 end

@@ -107,7 +107,7 @@ function check_model__node__temporal_block()
     )
     error_group = [
         (m, n) for m in model(model_type=:spineopt_operations)
-        for n in node() if isempty(intersect(node__temporal_block(node=members(n)), model__temporal_block(model=m)))# && n != members(n)
+        for n in node() if any(isempty,intersect(node__temporal_block(node=members(n)), model__temporal_block(model=m)))
     ]
     _check(
         isempty(error_group),
@@ -115,14 +115,14 @@ function check_model__node__temporal_block()
         $(join(error_group, ", ", " and ")) " *
         "- each `node` of the node groups must be related to at least one `temporal_block` per `model`",
     )
-    warning = [
+    warnings = [
         (m, n) for m in model(model_type=:spineopt_operations)
         for n in node() if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m))) && n != members(n)
     ]
     _check_warn(
-        isempty(warning),
+        isempty(warnings),
         "Some node groups don't have a `node__temporal_block` or `model__temporal_block` definitions for `(model, node)` pair(s):
-        $(join(warning, ", ", " and ")) " *
+        $(join(warnings, ", ", " and ")) " *
         "- these `node_groups` will only be used for aggregation, there will be no variables and balances associated with these group nodes",
     )
 end
@@ -145,7 +145,7 @@ function check_model__node__stochastic_structure()
         for
         n in node() if length(intersect(node__stochastic_structure(node=members(n)), model__stochastic_structure(model=m))) != 1
     ]
-    warning = [
+    warnings = [
         (m, n) for m in model(model_type=:spineopt_operations)
         for
         n in node() if length(intersect(node__stochastic_structure(node=n), model__stochastic_structure(model=m))) != 1 && n != members(n)
@@ -163,9 +163,9 @@ function check_model__node__stochastic_structure()
         "- each member `node` of these `node_groups` must be related to one and only one `stochastic_structure` per `model`",
     )
     _check_warn(
-        isempty(warning),
+        isempty(warnings),
         "Some node groups don't have a `node__stochastic_structure` or `model__stochastic_structure` definitions for `(model, node)` pair(s):
-        $(join(warning, ", ", " and ")) " *
+        $(join(warnings, ", ", " and ")) " *
         "- these `node_groups` will only be used for aggregation, there will be no variables and balances associated with these group nodes",
     )
 end

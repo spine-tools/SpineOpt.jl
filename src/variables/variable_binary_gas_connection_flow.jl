@@ -47,7 +47,7 @@ function binary_gas_connection_flow_indices(
                 stochastic_scenario=stochastic_scenario,
                 t=t,
                 temporal_block=temporal_block)
-        if connection_binary_gas_flow(connection=conn) == true && has_state(node=n) == false
+        if connection_binary_gas_flow(connection=conn)  && !has_state(node=n)
     ]
 end
 
