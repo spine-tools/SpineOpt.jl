@@ -55,29 +55,33 @@ function add_constraint_compression_ratio!(m::Model)
             )
 end
 
+function constraint_compression_ratio_indices(m::Model)
+    unique(
+        (connection=conn, node1=n1, node2=n2, stochastic_path=path, t=t)
+        for (conn, n1, n2) in indices(compression_factor)
+        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n1), members(n2))))))
+        for path in active_stochastic_paths(unique(
+            ind.stochastic_scenario for ind in node_pressure_indices(m; node=[n1, n2], t=t)
+        ))
+    )
+end
+
 """
-    constraint_compression_ratio_indices(m::Model; filtering_options...)
+    constraint_compression_ratio_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:compression_ratio` constraint.
 
 Uses stochastic path indices of the `node_pressure` variables. Only the lowest resolution time slices are included,
 as the `:compression_factor` is used to constrain the "average compression ratio" of the `connection`. Keyword arguments can be used to filter the resulting
 """
-function constraint_compression_ratio_indices(
-        m::Model;
-        node1=anything,
-        node2=anything,
-        connection=anything,
-        stochastic_path=anything,
-        t=anything,
-    )
-    unique(
-        (connection=c, node1=n1, node2=n2, stochastic_path=path, t=t)
-        for (c, n1, n2) in indices(compression_factor; connection=connection, node1=node1, node2=node2)
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n1),members(n2)))), t=t))
-        for
-        path in active_stochastic_paths(unique(
-            ind.stochastic_scenario for ind in node_pressure_indices(m; node=[n1, n2], t=t)
-        )) if path == stochastic_path || path in stochastic_path
-    )
+function constraint_compression_ratio_indices_filtered(
+    m::Model;
+    connection=anything,
+    node1=anything,
+    node2=anything,
+    stochastic_path=anything,
+    t=anything,
+)
+    f(ind) = _index_in(ind; connection=connection, node1=node1, node2=node2, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_compression_ratio_indices(m))
 end

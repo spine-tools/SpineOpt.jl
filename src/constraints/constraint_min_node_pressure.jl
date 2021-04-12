@@ -37,19 +37,24 @@ function add_constraint_min_node_pressure!(m::Model)
     )
 end
 
+function constraint_min_node_pressure_indices(m::Model)
+    unique(
+        (node=ng, stochastic_path=path, t=t)
+        for (ng, s, t) in node_pressure_indices(m; node=indices(min_node_pressure))
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in node_pressure_indices(m; node=ng, t=t)),
+        )
+    )
+end
+
 """
-    constraint_min_node_pressure_indices(m::Model; filtering_options...)
+    constraint_min_node_pressure_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic index array for the `:min_node_pressure` constraint.
 
 Uses stochastic path indices of the `node_pressure` variables. Keyword arguments can be used to filter the resulting
 """
-function constraint_min_node_pressure_indices(m::Model; node=anything, stochastic_path=anything, t=anything)
-    unique(
-        (node=ng, stochastic_path=path, t=t)
-        for (ng, s, t) in node_pressure_indices(m; node=node) if ng in indices(min_node_pressure)
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in node_pressure_indices(m; node=ng, t=t)),
-        ) if path == stochastic_path || path in stochastic_path
-    )
+function constraint_min_node_pressure_indices_filtered(m::Model; node=anything, stochastic_path=anything, t=anything)
+    f(ind) = _index_in(ind; node=node, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_min_node_pressure_indices(m))
 end

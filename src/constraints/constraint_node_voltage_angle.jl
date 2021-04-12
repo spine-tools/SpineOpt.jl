@@ -67,30 +67,34 @@ function add_constraint_node_voltage_angle!(m::Model)
     )
 end
 
+function constraint_node_voltage_angle_indices(m::Model)
+    unique(
+        (connection=conn, node1=n_to, node2=n_from, stochastic_path=path, t=t)
+        for conn in indices(connection_reactance)
+        for (conn, n_to, n_from) in indices(fix_ratio_out_in_connection_flow; connection=conn)
+        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n_to), members(n_from))))))
+        for path in active_stochastic_paths(unique(
+            ind.stochastic_scenario for ind in node_voltage_angle_indices(m; node=[n_to, n_from], t=t)
+        ))
+    )
+end
+
 """
-    constraint_node_voltage_angle_indices(m::Model; filtering_options...)
+    constraint_node_voltage_angle_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:node_voltage_angle` constraint.
 
 Uses stochastic path indices of the `node_voltage_angle` and `connection_flow` variables.
 Only the highest resolution time slices are included.(?)
 """
-function constraint_node_voltage_angle_indices(
-        m::Model;
-        connection=anything,
-        node1=anything,
-        node2=anything,
-        stochastic_path=anything,
-        t=anything,
-    )
-    unique(
-        (connection=conn, node1=n_to, node2=n_from, stochastic_path=path, t=t)
-        for conn in indices(connection_reactance;connection=connection)
-        for (conn,n_to,n_from) in indices(fix_ratio_out_in_connection_flow;connection=conn,node1=node1,node2=node2)
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n_to),members(n_from)))), t=t))
-        for
-        path in active_stochastic_paths(unique(
-            ind.stochastic_scenario for ind in node_voltage_angle_indices(m; node=[n_to, n_from], t=t)
-        )) if path == stochastic_path || path in stochastic_path
-    )
+function constraint_node_voltage_angle_indices_filtered(
+    m::Model;
+    connection=anything,
+    node1=anything,
+    node2=anything,
+    stochastic_path=anything,
+    t=anything,
+)
+    f(ind) = _index_in(ind; connection=connection, node1=node1, node2=node2, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_node_voltage_angle_indices(m))
 end

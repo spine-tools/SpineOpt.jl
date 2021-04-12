@@ -29,7 +29,7 @@ function node_pressure_indices(m::Model; node=anything, stochastic_scenario=anyt
     inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
         (node=n, stochastic_scenario=s, t=t)
         for (n, s, t) in node_stochastic_time_indices(m; node=members(node), stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block)
-            if has_pressure(node=n)
+        if has_pressure(node=n)
     ]
     unique!(inds)
 end

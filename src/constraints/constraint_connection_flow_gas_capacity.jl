@@ -67,28 +67,32 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
     )
 end
 
+function constraint_connection_flow_gas_capacity_indices(m::Model)
+    unique(
+        (connection=conn, node1=n1, node2=n2, stochastic_path=path, t=t)
+        for (conn, n1, n2) in indices(fixed_pressure_constant_1)  # n1: from_node; n2: to_node
+        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n1),members(n2))))))
+        for path in active_stochastic_paths(unique(
+            ind.stochastic_scenario for ind in connection_flow_indices(m; connection=conn, node=[n1, n2], t=t)
+        ))
+    )
+end
+
 """
-    constraint_connection_flow_gas_capacity_indices(m::Model; filtering_options...)
+    constraint_connection_flow_gas_capacity_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:connection_flow_gas_capacity` constraint.
 
 Uses stochastic path indices of the `connection_flow` variables. Only the highest resolution time slices are included.
 """
-function constraint_connection_flow_gas_capacity_indices(
-        m::Model;
-        connection=anything,
-        node1=anything,
-        node2=anything,
-        stochastic_path=anything,
-        t=anything,
-    )
-    unique(
-        (connection=conn, node1=n1, node2=n2, stochastic_path=path, t=t)
-        for (conn, n1, n2) in indices(fixed_pressure_constant_1; connection=connection, node1=node1, node2=node2) #n1: from_node; n2: to_node
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n1),members(n2)))), t=t))
-        for
-        path in active_stochastic_paths(unique(
-            ind.stochastic_scenario for ind in connection_flow_indices(m; connection=conn, node=[n1, n2], t=t)
-        )) if path == stochastic_path || path in stochastic_path
-    )
+function constraint_connection_flow_gas_capacity_indices_filtered(
+    m::Model;
+    connection=anything,
+    node1=anything,
+    node2=anything,
+    stochastic_path=anything,
+    t=anything,
+)
+    f(ind) = _index_in(ind; connection=connection, node1=node1, node2=node2, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_connection_flow_gas_capacity_indices(m))
 end

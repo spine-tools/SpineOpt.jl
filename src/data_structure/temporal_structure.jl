@@ -393,7 +393,8 @@ Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` with 
 """
 function node_dynamic_time_indices(m::Model; node=anything, t_before=anything, t_after=anything)
     unique(
-        (node=n, t_before=tb, t_after=ta) for (n, ta) in node_time_indices(m; node=node, t=t_after)
+        (node=n, t_before=tb, t_after=ta)
+        for (n, ta) in node_time_indices(m; node=node, t=t_after)
         for (n, tb) in node_time_indices(
             m;
             node=n,
