@@ -12,9 +12,9 @@ The energy balance is enforced by the following constraint:
 \begin{aligned}
 & v_{node\_injection}(n,s,t) \\
 & + \sum_{\substack{(conn,n',d_{in},s,t) \in connection\_flow\_indices: \\ d_{out} == :to\_node}}
- v_{connection_flow}(conn,n',d_{in},s,t)\\
+ v_{connection\_flow}(conn,n',d_{in},s,t)\\
 & - \sum_{\substack{(conn,n',d_{out},s,t) \in connection\_flow\_indices: \\ d_{out} == :from\_node}}
- v_{connection_flow}(conn,n',d_{out},s,t)\\
+ v_{connection\_flow}(conn,n',d_{out},s,t)\\
 % & + v_{node\_slack\_pos}(n,s,t) \\
 % & - v_{node\_slack\_neg}(n,s,t) \\
 & \{>=,==,<=\} \\
