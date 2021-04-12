@@ -51,26 +51,11 @@ function add_constraint_min_start_up_ramp!(m::Model)
     )
 end
 
-"""
-    constraint_min_start_up_ramp_indices(m::Model; filtering_options...)
-
-Forms the stochastic indexing Array for the `:min_start_up_ramp` constraint.
-
-Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
-Keyword arguments can be used to filter the resulting Array.
-"""
-function constraint_min_start_up_ramp_indices(
-    m::Model;
-    unit=anything,
-    node=anything,
-    direction=anything,
-    stochastic_path=anything,
-    t=anything,
-)
+function constraint_min_start_up_ramp_indices(m::Model)
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(min_startup_ramp) if u in unit && ng in node && d in direction
-        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng))), t=t))
+        for (u, ng, d) in indices(min_startup_ramp)
+        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
         # How to deal with groups correctly?
         for path in active_stochastic_paths(
             unique(
@@ -79,6 +64,26 @@ function constraint_min_start_up_ramp_indices(
                     start_up_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
                 ))  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
             ),
-        ) if path == stochastic_path || path in stochastic_path
+        )
     )
+end
+
+"""
+    constraint_min_start_up_ramp_indices_filtered(m::Model; filtering_options...)
+
+Forms the stochastic indexing Array for the `:min_start_up_ramp` constraint.
+
+Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
+Keyword arguments can be used to filter the resulting Array.
+"""
+function constraint_min_start_up_ramp_indices_filtered(
+    m::Model;
+    unit=anything,
+    node=anything,
+    direction=anything,
+    stochastic_path=anything,
+    t=anything,
+)
+    f(ind) = _index_in(ind; unit=unit, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_min_start_up_ramp_indices(m))
 end

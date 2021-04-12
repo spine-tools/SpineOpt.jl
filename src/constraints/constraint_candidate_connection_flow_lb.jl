@@ -89,8 +89,21 @@ function add_constraint_candidate_connection_flow_lb!(m::Model)
     )
 end
 
+function constraint_candidate_connection_flow_lb_indices(m::Model)
+    unique(
+        (connection=conn, node=n, direction=d, stochastic_path=path, t=t)
+        for (conn, n, d, s, t) in connection_flow_indices(m; connection=connection(is_candidate=true, has_ptdf=true))
+        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=n)))
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario for ind in _constraint_candidate_connection_flow_lb_indices(m, conn, n, d, t)
+            ),
+        )
+    )
+end
+
 """
-    constraint_connection_flow_lb_indices(m::Model; filtering_options...)
+    constraint_candidate_connection_flow_lb_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic index array for the `:connection_intact_flow_lb` constraint.
 
@@ -98,24 +111,16 @@ Uses stochastic path indices of the `connection_flow` variables. Only the lowest
 as the `:connection_flow_capacity` is used to constrain the "average power" of the `connection`
 instead of "instantaneous power". Keyword arguments can be used to filter the resulting indices
 """
-function constraint_candidate_connection_flow_lb_indices(
+function constraint_candidate_connection_flow_lb_indices_filtered(
     m::Model;
-    connection=connection(is_candidate=true, has_ptdf=true),
+    connection=anything,
     node=anything,
     direction=anything,
     stochastic_path=anything,
     t=anything,
 )
-    unique(
-        (connection=conn, node=n, direction=d, stochastic_path=path, t=t)
-        for (conn, n, d, s, t) in connection_flow_indices(m; connection=connection, node=node, direction=direction)
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=n), t=t))
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario for ind in _constraint_candidate_connection_flow_lb_indices(m, conn, n, d, t)
-            ),
-        ) if path == stochastic_path || path in stochastic_path
-    )
+    f(ind) = _index_in(ind; connection=connection, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_candidate_connection_flow_lb_indices(m))
 end
 
 """

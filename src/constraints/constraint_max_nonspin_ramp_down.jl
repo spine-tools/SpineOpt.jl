@@ -59,26 +59,11 @@ function add_constraint_max_nonspin_ramp_down!(m::Model)
     )
 end
 
-"""
-    constraint_max_nonspin_ramp_down_indices(m::Model; filtering_options...)
-
-Form the stochastic index set for the `:max_nonspin_shut_down_ramp` constraint.
-
-Uses stochastic path indices due to potentially different stochastic scenarios
-between `t_after` and `t_before`.
-"""
-function constraint_max_nonspin_ramp_down_indices(
-    m::Model;
-    unit=anything,
-    node=anything,
-    direction=anything,
-    stochastic_path=anything,
-    t=anything,
-)
+function constraint_max_nonspin_ramp_down_indices(m::Model)
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(max_res_shutdown_ramp) if u in unit && ng in node && d in direction
-        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng))), t=t))
+        for (u, ng, d) in indices(max_res_shutdown_ramp)
+        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
         for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario for ind in Iterators.flatten((
@@ -86,6 +71,26 @@ function constraint_max_nonspin_ramp_down_indices(
                     nonspin_units_shut_down_indices(m; unit=u, node=ng, t=t),
                 ))
             ),
-        ) if path == stochastic_path || path in stochastic_path
+        )
     )
+end
+
+"""
+    constraint_max_nonspin_ramp_down_indices_filtered(m::Model; filtering_options...)
+
+Form the stochastic index set for the `:max_nonspin_shut_down_ramp` constraint.
+
+Uses stochastic path indices due to potentially different stochastic scenarios
+between `t_after` and `t_before`.
+"""
+function constraint_max_nonspin_ramp_down_indices_filtered(
+    m::Model;
+    unit=anything,
+    node=anything,
+    direction=anything,
+    stochastic_path=anything,
+    t=anything,
+)
+    f(ind) = _index_in(ind; unit=unit, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_max_nonspin_ramp_down_indices(m))
 end

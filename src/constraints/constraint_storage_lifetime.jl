@@ -52,22 +52,27 @@ function add_constraint_storage_lifetime!(m::Model)
     )
 end
 
+function constraint_storage_lifetime_indices(m::Model)
+    t0 = startref(current_window(m))
+    unique(
+        (node=n, stochastic_path=path, t=t)
+        for n in indices(storage_investment_lifetime)
+        for (n, s, t) in storages_invested_available_indices(m; node=n)
+        for path in active_stochastic_paths(_constraint_storage_lifetime_indices(m, n, s, t0, t))
+    )
+end
+
 """
-    constraint_storage_lifetime_indices(m::Model; filtering_options...)
+    constraint_storage_lifetime_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:storages_invested_lifetime()` constraint.
 
 Uses stochastic path indexing due to the potentially different stochastic structures between present and past time.
 Keyword arguments can be used to filther the resulting Array.
 """
-function constraint_storage_lifetime_indices(m::Model; node=anything, stochastic_path=anything, t=anything)
-    t0 = startref(current_window(m))
-    unique(
-        (node=n, stochastic_path=path, t=t) for n in indices(storage_investment_lifetime) if n in node
-        for (n, s, t) in storages_invested_available_indices(m; node=n, t=t)
-        for path in active_stochastic_paths(_constraint_storage_lifetime_indices(m, n, s, t0, t)) if
-            path == stochastic_path || path in stochastic_path
-    )
+function constraint_storage_lifetime_indices_filtered(m::Model; node=anything, stochastic_path=anything, t=anything)
+    f(ind) = _index_in(ind; node=node, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_storage_lifetime_indices(m))
 end
 
 """

@@ -62,22 +62,26 @@ function add_constraint_min_up_time!(m::Model)
     )
 end
 
+function constraint_min_up_time_indices(m::Model; unit=anything, stochastic_path=anything, t=anything)
+    t0 = startref(current_window(m))
+    unique(
+        (unit=u, stochastic_path=path, t=t) for u in indices(min_up_time)
+        for (u, s, t) in units_on_indices(m; unit=u)
+        for path in active_stochastic_paths(_constraint_min_up_time_indices(m, u, s, t0, t))
+    )
+end
+
 """
-    constraint_min_up_time_indices(m::Model; filtering_options...)
+    constraint_min_up_time_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:min_up_time` constraint.
 
 Uses stochastic path indices due to potentially different stochastic structures between `units_on` and
 `units_started_up` variables on past time slices. Keyword arguments can be used to filter the resulting Array.
 """
-function constraint_min_up_time_indices(m::Model; unit=anything, stochastic_path=anything, t=anything)
-    t0 = startref(current_window(m))
-    unique(
-        (unit=u, stochastic_path=path, t=t) for u in indices(min_up_time) if u in unit
-        for (u, s, t) in units_on_indices(m; unit=u, t=t)
-        for path in active_stochastic_paths(_constraint_min_up_time_indices(m, u, s, t0, t)) if
-            path == stochastic_path || path in stochastic_path
-    )
+function constraint_min_up_time_indices_filtered(m::Model; unit=anything, stochastic_path=anything, t=anything)
+    f(ind) = _index_in(ind; unit=unit, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_min_up_time_indices(m))    
 end
 
 """

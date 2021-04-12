@@ -82,8 +82,22 @@ function add_constraint_connection_intact_flow_capacity!(m::Model)
     )
 end
 
+function constraint_connection_intact_flow_capacity_indices(m::Model)
+    unique(
+        (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
+        for (c, ng, d) in indices(connection_capacity; connection=connection(has_ptdf=true))
+        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng))))
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in connection_intact_flow_indices(m; connection=c, node=ng, direction=d, t=t)
+            ),
+        )
+    )
+end
+
 """
-    constraint_connection_intact_flow_capacity_indices(m::Model; filtering_options...)
+    constraint_connection_intact_flow_capacity_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic index array for the `:connection_intact_flow_capacity` constraint.
 
@@ -91,7 +105,7 @@ Uses stochastic path indices of the `connection_intact_flow` variables. Only the
 included, as the `:connection_intact_flow_capacity` is used to constrain the "average power" of the `connection`
 instead of "instantaneous power". Keyword arguments can be used to filter the resulting
 """
-function constraint_connection_intact_flow_capacity_indices(
+function constraint_connection_intact_flow_capacity_indices_filtered(
     m::Model;
     connection=anything,
     node=anything,
@@ -99,16 +113,6 @@ function constraint_connection_intact_flow_capacity_indices(
     stochastic_path=anything,
     t=anything,
 )
-    unique(
-        (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
-        for (c, ng, d) in indices(connection_capacity; connection=connection, node=node, direction=direction) if
-            has_ptdf(connection=c)
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t))
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in connection_intact_flow_indices(m; connection=c, node=ng, direction=d, t=t)
-            ),
-        ) if path == stochastic_path || path in stochastic_path
-    )
+    f(ind) = _index_in(ind; connection=connection, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_connection_intact_flow_capacity_indices(m))
 end

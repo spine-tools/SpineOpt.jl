@@ -48,21 +48,26 @@ function add_constraint_node_state_capacity!(m::Model)
     )
 end
 
+function constraint_node_state_capacity_indices(m::Model)
+    unique(
+        (node=ng, stochastic_path=path, t=t)
+        for (ng, s, t) in node_state_indices(m; node=indices(node_state_cap))
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_node_state_capacity_indices(m, ng, t)),
+        )
+    )
+end
+
 """
-    constraint_node_state_capacity_indices(m::Model; filtering_options...)
+    constraint_node_state_capacity_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic index array for the `:constraint_node_state_capacity` constraint.
 
 Uses stochastic path indices of the `node_state` variables. Keyword arguments can be used to filter the resulting
 """
-function constraint_node_state_capacity_indices(m::Model; node=anything, stochastic_path=anything, t=anything)
-    unique(
-        (node=ng, stochastic_path=path, t=t)
-        for (ng, s, t) in node_state_indices(m; node=node) if ng in indices(node_state_cap)
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_node_state_capacity_indices(m, ng, t)),
-        ) if path == stochastic_path || path in stochastic_path
-    )
+function constraint_node_state_capacity_indices_filtered(m::Model; node=anything, stochastic_path=anything, t=anything)
+    f(ind) = _index_in(ind; node=node, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_node_state_capacity_indices(m))
 end
 
 """

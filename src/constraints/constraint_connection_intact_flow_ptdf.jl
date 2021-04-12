@@ -44,33 +44,38 @@ end
 
 # NOTE: always pick the second (last) node in `connection__from_node` as 'to' node
 
+function constraint_connection_intact_flow_ptdf_indices(m::Model)
+    unique(
+        (connection=conn, node=n_to, stochastic_path=path, t=t)
+        for conn in connection(connection_monitored=true, has_ptdf=true)
+        for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
+        for (n_to, t) in node_time_indices(m; node=n_to)
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in _constraint_connection_intact_flow_ptdf_indices(m, conn, n_to, d_to, t)
+            ),
+        )
+    )
+end
+
 """
-    constraint_connection_intact_flow_ptdf_indices(m::Model; filtering_options...)
+    constraint_connection_intact_flow_ptdf_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:connection_intact_flow_lodf` constraint.
 
 Uses stochastic path indices due to potentially different stochastic structures between
 `connection_intact_flow` and `node_injection` variables? Keyword arguments can be used for filtering the resulting Array.
 """
-function constraint_connection_intact_flow_ptdf_indices(
+function constraint_connection_intact_flow_ptdf_indices_filtered(
     m::Model;
-    connection=connection(connection_monitored=true, has_ptdf=true),
+    connection=anything,
     node=anything,
     stochastic_path=anything,
     t=anything,
 )
-    unique(
-        (connection=conn, node=n_to, stochastic_path=path, t=t)
-        for conn in connection
-        if connection_monitored(connection=conn) && has_ptdf(connection=conn)
-        for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn, node=node; _compact=false), 1)
-        for (n_to, t) in node_time_indices(m; node=n_to, t=t) for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in _constraint_connection_intact_flow_ptdf_indices(m, conn, n_to, d_to, t)
-            ),
-        ) if path == stochastic_path || path in stochastic_path
-    )
+    f(ind) = _index_in(ind; connection=connection, node=node, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_connection_intact_flow_ptdf_indices(m))
 end
 
 """

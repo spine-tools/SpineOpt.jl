@@ -104,27 +104,33 @@ end
 
 #TODO: can we find an easier way to define the constraint indices?
 # I feel that for unexperienced uses it gets more an more complicated to understand our code
+function constraint_node_injection_indices(m::Model)
+    unique(
+        (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (n, t_before, t_after) in node_dynamic_time_indices(m)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_node_injection_indices(m, n, t_after, t_before)),
+        )
+    )
+end
+
 """
-    constraint_node_injection_indices(m::Model; filtering_options...)
+    constraint_node_injection_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:node_injection` constraint.
 
 Uses stochastic path indices due to dynamics and potentially different stochastic structures between this
 `node` and `nodes` connected via diffusion. Keyword arguments can be used to filter the resulting Array.
 """
-function constraint_node_injection_indices(
+function constraint_node_injection_indices_filtered(
     m::Model;
     node=anything,
     stochastic_path=anything,
     t_before=anything,
     t_after=anything,
 )
-    unique(
-        (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (n, t_before, t_after) in node_dynamic_time_indices(m; node=node) for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_node_injection_indices(m, n, t_after, t_before)),
-        ) if path == stochastic_path || path in stochastic_path
-    )
+    f(ind) = _index_in(ind; node=node, stochastic_path=stochastic_path, t_before=t_before, t_after=t_after)
+    filter(f, constraint_node_injection_indices(m))
 end
 
 """

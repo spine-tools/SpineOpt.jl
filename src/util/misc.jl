@@ -169,3 +169,22 @@ function write_lodfs()
     end
     close(io)
 end
+
+"""
+    _index_in(ind::NamedTuple; kwargs...)
+
+Whether or not each field in the given named tuple is in sets passed as keyword arguments.
+Used in constraint indices filtered functions.
+
+# Examples
+ind = (connection=1, unit=2)
+_index_in(ind; connection=[1, 2, 3]) # true
+_index_in(ind; unit=[3, 4]) # false
+_index_in(ind; node=[8]) # raises ERROR: NamedTuple has no field node
+"""
+function _index_in(ind::NamedTuple; kwargs...)
+    for (key, value) in pairs(kwargs)
+        ind[key] == value || ind[key] in value || return false
+    end
+    true
+end

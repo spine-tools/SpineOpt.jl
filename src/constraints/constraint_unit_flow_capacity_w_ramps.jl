@@ -353,18 +353,37 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
     end
 end
 
+# TODO: we should only consider the highest t_highest_resolution of either uniton or unitflow
+# TODO: how to determine this especially when e.g. this "order" swaps between two timesteps/ corner case I guess?
+function constraint_unit_flow_capacity_w_ramp_indices(m::Model)
+    unique(
+        (unit=u, node=ng, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (u, ng, d) in indices(max_shutdown_ramp)
+        for t_after in time_slice(m; temporal_block=units_on__temporal_block(unit=u))
+        for t_before in t_lowest_resolution(
+            time_slice(
+                m;
+                temporal_block=members(node__temporal_block(node=members(ng))),
+                t=t_before_t(m, t_after=t_after),
+            ),
+        ) for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in _constraint_unit_flow_capacity_w_ramp_indices(m, u, ng, d, t_before, t_after)
+            ),
+        )
+    )
+end
+
 """
-    constraint_unit_flow_capacity_indices(m::Model; filtering_options...)
+    constraint_unit_flow_capacity_w_ramp_indices_filtered(m::Model; filtering_options...)
 
 Forms the stochastic indexing Array for the `:unit_flow_capacity` constraint.
 
 Uses stochastic path indices due to potentially different stochastic structures between `unit_flow` and `units_on`
 variables. Keyword arguments can be used to filter the resulting Array.
 """
-# TODO: we should only consider the highest t_highest_resolution of either uniton or unitflow
-# TODO: how to determine this especially when e.g. this "order" swaps between two timesteps/ corner case I guess?
-# TODO fix filter option for this indices function
-function constraint_unit_flow_capacity_w_ramp_indices(
+function constraint_unit_flow_capacity_w_ramp_indices_filtered(
     m::Model;
     unit=anything,
     node=anything,
@@ -373,23 +392,19 @@ function constraint_unit_flow_capacity_w_ramp_indices(
     t_before=anything,
     t_after=anything,
 )
-    unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, ng, d) in indices(max_shutdown_ramp) if u in unit && ng in node && d in direction
-        for t_after in time_slice(m; temporal_block=units_on__temporal_block(unit=u), t=t_after)
-        for t_before in t_lowest_resolution(
-            time_slice(
-                m;
-                temporal_block=members(node__temporal_block(node=members(ng))),
-                t=intersect(t_before_t(m, t_after=t_after), t_before),
-            ),
-        ) for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in _constraint_unit_flow_capacity_w_ramp_indices(m, u, ng, d, t_before, t_after)
-            ),
-        ) if path == stochastic_path || path in stochastic_path
-    )
+    function f(ind)
+        _index_in(
+            ind;
+            unit=unit,
+            node=node,
+            direction=direction,
+            stochastic_path=stochastic_path,
+            t_before=t_before,
+            t_after=t_after
+        )
+    end
+    filter(f, constraint_unit_flow_capacity_w_ramp_indices(m))
+
 end
 
 """

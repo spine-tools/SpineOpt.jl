@@ -74,15 +74,37 @@ function add_constraint_split_ramps!(m::Model)
     )
 end
 
+function constraint_split_ramps_indices(m::Model)
+    unique(
+        (unit=u, node=n, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (u, n, d, s, t_after) in unique(
+            Iterators.flatten((
+                ramp_up_unit_flow_indices(m),
+                start_up_unit_flow_indices(m),
+                nonspin_ramp_up_unit_flow_indices(m),
+                ramp_down_unit_flow_indices(m),
+                start_up_unit_flow_indices(m),
+                nonspin_ramp_down_unit_flow_indices(m),
+            )),
+        ) for (n, t_before, t_after) in node_dynamic_time_indices(m; node=n, t_after=t_after)
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in unit_flow_indices(m; unit=u, node=n, direction=d, t=[t_before, t_after])
+            ),
+        )
+    )
+end
+
 """
-    constraint_split_ramps_indices(m::Model; filtering_options...)
+    constraint_split_ramps_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:split_ramp_up` constraint.
 
 Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
 Keyword arguments can be used to filter the resulting Array.
 """
-function constraint_split_ramps_indices(
+function constraint_split_ramps_indices_filtered(
     m::Model;
     unit=anything,
     node=anything,
@@ -91,23 +113,6 @@ function constraint_split_ramps_indices(
     t_before=anything,
     t_after=anything,
 )
-    unique(
-        (unit=u, node=n, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, n, d, s, t_after) in unique(
-            Iterators.flatten((
-                ramp_up_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after),
-                start_up_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after),
-                nonspin_ramp_up_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after),
-                ramp_down_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after),
-                start_up_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after),
-                nonspin_ramp_down_unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_after),
-            )),
-        ) for (n, t_before, t_after) in node_dynamic_time_indices(m; node=n, t_before=t_before, t_after=t_after)
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in unit_flow_indices(m; unit=u, node=n, direction=d, t=[t_before, t_after])
-            ),
-        ) if path == stochastic_path || path in stochastic_path
-    )
+    f(ind) = _index_in(ind; unit=unit, node=node, direction=direction, stochastic_path=stochastic_path, t_before=t_before, t_after=t_after)
+    filter(f, constraint_split_ramps_indices(m))
 end

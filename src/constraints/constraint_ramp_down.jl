@@ -59,26 +59,11 @@ function add_constraint_ramp_down!(m::Model)
     )
 end
 
-"""
-    constraint_ramp_down_indices(m::Model; filtering_options...)
-
-Form the stochastic indexing Array for the `:ramp_down` constraint.
-
-Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
-Keyword arguments can be used to filter the resulting Array.
-"""
-function constraint_ramp_down_indices(
-    m::Model;
-    unit=anything,
-    node=anything,
-    direction=anything,
-    stochastic_path=anything,
-    t=anything,
-)
+function constraint_ramp_down_indices(m::Model)
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(ramp_down_limit) if u in unit && ng in node && d in direction
-        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng))), t=t))
+        for (u, ng, d) in indices(ramp_down_limit)
+        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
         # How to deal with groups correctly?
         for path in active_stochastic_paths(
             unique(
@@ -87,6 +72,26 @@ function constraint_ramp_down_indices(
                     ramp_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
                 ))
             ),
-        ) if path == stochastic_path || path in stochastic_path
+        )
     )
+end
+
+"""
+    constraint_ramp_down_indices_filtered(m::Model; filtering_options...)
+
+Form the stochastic indexing Array for the `:ramp_down` constraint.
+
+Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
+Keyword arguments can be used to filter the resulting Array.
+"""
+function constraint_ramp_down_indices_filtered(
+    m::Model;
+    unit=anything,
+    node=anything,
+    direction=anything,
+    stochastic_path=anything,
+    t=anything,
+)
+    f(ind) = _index_in(ind; unit=unit, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_ramp_down_indices(m))
 end

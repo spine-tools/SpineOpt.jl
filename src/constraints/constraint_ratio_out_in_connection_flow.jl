@@ -115,15 +115,31 @@ function add_constraint_min_ratio_out_in_connection_flow!(m::Model)
     add_constraint_ratio_out_in_connection_flow!(m, min_ratio_out_in_connection_flow, >=)
 end
 
+function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
+    t0 = startref(current_window(m))
+    unique(
+        (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
+        for (conn, n_out, n_in) in indices(ratio_out_in)
+        for t in t_lowest_resolution(
+            x.t for x in connection_flow_indices(m; connection=conn, node=Iterators.flatten((members(n_out), members(n_in))))
+        ) for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in _constraint_ratio_out_in_connection_flow_indices(m, conn, n_out, n_in, t0, t)
+            ),
+        )
+    )
+end
+
 """
-    constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in; filtering_options...)
+    constraint_ratio_out_in_connection_flow_indices_filtered(m::Model, ratio_out_in; filtering_options...)
 
 Form the stochastic indexing Array for the `:ratio_out_in_connection_flow` constraint for the desired `ratio_out_in`.
 
 Uses stochastic path indices due to potentially different stochastic structures between `connection_flow` variables.
 Keyword arguments can be used to filter the resulting Array.
 """
-function constraint_ratio_out_in_connection_flow_indices(
+function constraint_ratio_out_in_connection_flow_indices_filtered(
     m::Model,
     ratio_out_in;
     connection=anything,
@@ -132,19 +148,8 @@ function constraint_ratio_out_in_connection_flow_indices(
     stochastic_path=anything,
     t=anything,
 )
-    t0 = startref(current_window(m))
-    unique(
-        (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
-        for (conn, n_out, n_in) in indices(ratio_out_in) if conn in connection && n_out in node1 && n_in in node2
-        for t in t_lowest_resolution(
-            x.t for x in connection_flow_indices(m; connection=conn, node=[members(n_out)..., members(n_in)...], t=t)
-        ) for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in _constraint_ratio_out_in_connection_flow_indices(m, conn, n_out, n_in, t0, t)
-            ),
-        ) if path == stochastic_path || path in stochastic_path
-    )
+    f(ind) = _index_in(ind; connection=connection, node1=node1, node2=node2, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_ratio_out_in_connection_flow_indices(m, ratio_out_in))
 end
 
 """

@@ -207,26 +207,33 @@ function add_constraint_unit_constraint!(m::Model)
     )
 end
 
+function constraint_unit_constraint_indices(m::Model)
+    unique(
+        (unit_constraint=uc, stochastic_path=path, t=t)
+        for uc in unit_constraint()
+        for t in _constraint_unit_constraint_lowest_resolution_t(m, uc)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_unit_constraint_indices(m, uc, t)),
+        )
+    )
+end
+
 """
-    constraint_unit_constraint_indices(m::Model; filtering_options...)
+    constraint_unit_constraint_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:unit_constraint` constraint.
 
 Uses stochastic path indices due to potentially different stochastic structures between `unit_flow`, `unit_flow_op`,
 and `units_on` variables. Keyword arguments can be used to filter the resulting Array.
 """
-function constraint_unit_constraint_indices(
+function constraint_unit_constraint_indices_filtered(
     m::Model;
-    unit_constraint=unit_constraint(),
+    unit_constraint=anything,
     stochastic_path=anything,
     t=anything,
 )
-    unique(
-        (unit_constraint=uc, stochastic_path=path, t=t) for uc in unit_constraint
-        for t in _constraint_unit_constraint_lowest_resolution_t(m, uc, t) for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_unit_constraint_indices(m, uc, t)),
-        ) if path == stochastic_path || path in stochastic_path
-    )
+    f(ind) = _index_in(ind; unit_constraint=unit_constraint, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_unit_constraint_indices(m))
 end
 
 """
@@ -234,25 +241,25 @@ end
 
 Find the lowest temporal resolution amoung the `unit_flow` variables appearing in the `unit_constraint`.
 """
-function _constraint_unit_constraint_lowest_resolution_t(m, uc, t)
+function _constraint_unit_constraint_lowest_resolution_t(m, uc)
     t_lowest_resolution(
         vcat(
             [
                 ind.t
                 for unit__node__unit_constraint in (unit__from_node__unit_constraint, unit__to_node__unit_constraint)
                 for (u, n) in unit__node__unit_constraint(unit_constraint=uc)
-                for ind in unit_flow_indices(m; unit=u, node=n, t=t)
+                for ind in unit_flow_indices(m; unit=u, node=n)
             ],
             [
                 ind.t for connection__node__unit_constraint in
                     (connection__from_node__unit_constraint, connection__to_node__unit_constraint)
                 for (c, n) in connection__node__unit_constraint(unit_constraint=uc)
-                for ind in connection_flow_indices(m; connection=c, node=n, t=t)
+                for ind in connection_flow_indices(m; connection=c, node=n)
             ],
-            [ind.t for n in node__unit_constraint(unit_constraint=uc) for ind in node_state_indices(m; node=n, t=t)],
+            [ind.t for n in node__unit_constraint(unit_constraint=uc) for ind in node_state_indices(m; node=n)],
             [
                 ind.t for n in node__unit_constraint(unit_constraint=uc)
-                for ind in node_stochastic_time_indices(m; node=n, t=t)
+                for ind in node_stochastic_time_indices(m; node=n)
             ],
         ),
     )
@@ -314,8 +321,7 @@ Gather the `node_state` variable indices appearing in `add_constraint_unit_const
 """
 function _constraint_unit_constraint_node_state_indices(m, uc, t)
     (
-        ind for n in node__unit_constraint(unit_constraint=uc) for ind in
-                                                                   node_state_indices(m; node=n, t=t_in_t(m; t_long=t))
+        ind for n in node__unit_constraint(unit_constraint=uc) for ind in node_state_indices(m; node=n, t=t_in_t(m; t_long=t))
     )
 end
 
@@ -326,8 +332,7 @@ Gather the `units_on` variable indices appearing in `add_constraint_unit_constra
 """
 function _constraint_unit_constraint_units_on_indices(m, uc, t)
     (
-        ind for u in unit__unit_constraint(unit_constraint=uc) for ind in
-                                                                   units_on_indices(m; unit=u, t=t_in_t(m; t_long=t))
+        ind for u in unit__unit_constraint(unit_constraint=uc) for ind in units_on_indices(m; unit=u, t=t_in_t(m; t_long=t))
     )
 end
 
