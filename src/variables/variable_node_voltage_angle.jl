@@ -22,11 +22,21 @@
 A set of tuples for indexing the `node_voltage_angle` variable. Any filtering options can be specified
 for `node`, `s`, and `t`.
 """
-function node_voltage_angle_indices(m::Model; node=anything, stochastic_scenario=anything, t=anything, temporal_block=temporal_block(representative_periods_mapping=nothing))
+function node_voltage_angle_indices(
+    m::Model;
+    node=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
+)
     inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
-        (node=n, stochastic_scenario=s, t=t)
-        for (n, s, t) in node_stochastic_time_indices(m; node=node, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block)
-            if has_voltage_angle(node=n)
+        (node=n, stochastic_scenario=s, t=t) for (n, s, t) in node_stochastic_time_indices(
+            m;
+            node=node,
+            stochastic_scenario=stochastic_scenario,
+            t=t,
+            temporal_block=temporal_block,
+        ) if has_voltage_angle(node=n)
     ]
     unique!(inds)
 end

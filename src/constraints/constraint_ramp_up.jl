@@ -53,8 +53,7 @@ end
 
 function constraint_ramp_up_indices(m::Model)
     unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(ramp_up_limit)
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t) for (u, ng, d) in indices(ramp_up_limit)
         for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
         # How to deal with groups correctly?
         for path in active_stochastic_paths(

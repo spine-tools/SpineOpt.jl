@@ -29,10 +29,10 @@ function add_constraint_max_node_voltage_angle!(m::Model)
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
             + expr_sum(
-                + node_voltage_angle[ng, s, t] for (ng, s, t) in node_voltage_angle_indices(m; node=ng, stochastic_scenario=s, t=t);
+                + node_voltage_angle[ng, s, t]
+                for (ng, s, t) in node_voltage_angle_indices(m; node=ng, stochastic_scenario=s, t=t);
                 init=0,
-            ) <=
-            + max_voltage_angle[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
+            ) <= + max_voltage_angle[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
         ) for (ng, s, t) in constraint_max_node_voltage_angle_indices(m)
     )
 end
@@ -54,7 +54,12 @@ Form the stochastic index array for the `:max_node_voltage_angle` constraint.
 
 Uses stochastic path indices of the `node_voltage_angle` variables. Keyword arguments can be used to filter the resulting
 """
-function constraint_max_node_voltage_angle_indices_filtered(m::Model; node=anything, stochastic_path=anything, t=anything)
+function constraint_max_node_voltage_angle_indices_filtered(
+    m::Model;
+    node=anything,
+    stochastic_path=anything,
+    t=anything,
+)
     f(ind) = _index_in(ind; node=node, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_max_node_voltage_angle_indices(m))
 end

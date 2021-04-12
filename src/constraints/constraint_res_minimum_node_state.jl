@@ -100,7 +100,10 @@ Uses stochastic path indices due to potentially different stochastic structures 
 `unit_flow` and `units_on` variables. Keyword arguments can be used to filter the resulting Array.
 """
 function constraint_res_minimum_node_state_indices_filtered(
-    m::Model; node=anything, stochastic_path=anything, t=anything
+    m::Model;
+    node=anything,
+    stochastic_path=anything,
+    t=anything,
 )
     f(ind) = _index_in(ind; node=node, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_res_minimum_node_state_indices(m))

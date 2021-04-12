@@ -41,15 +41,13 @@ function add_constraint_node_injection!(m::Model)
                 )] for (n, s, t) in
                     node_injection_indices(m; node=n, stochastic_scenario=s, t=t_after, temporal_block=anything);
                 init=0,
-            )
-            + expr_sum(
+            ) + expr_sum(
                 fractional_demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)]
                 * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t_after)] for (n, s, t) in
                     node_injection_indices(m; node=n, stochastic_scenario=s, t=t_after, temporal_block=anything)
                 for ng in groups(n);
                 init=0,
-            )
-            ==
+            ) ==
             + expr_sum(
                 (
                     + get(node_state, (n, s, t_before), 0)
@@ -109,8 +107,7 @@ end
 function constraint_node_injection_indices(m::Model)
     unique(
         (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (n, t_before, t_after) in node_dynamic_time_indices(m)
-        for path in active_stochastic_paths(
+        for (n, t_before, t_after) in node_dynamic_time_indices(m) for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in _constraint_node_injection_indices(m, n, t_after, t_before)),
         )
     )

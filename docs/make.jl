@@ -11,10 +11,10 @@ default_translation = Dict(
     #["features"] => "Features",
     #["tools"] => "Tools",
     ["object_parameters", "relationship_parameters"] => "Parameters",
-    ["object_classes"] => "Object Classes"
+    ["object_classes"] => "Object Classes",
 )
 concept_dictionary = SpineOpt.add_cross_references!(
-    SpineOpt.initialize_concept_dictionary(SpineOpt.template(); translation=default_translation)
+    SpineOpt.initialize_concept_dictionary(SpineOpt.template(); translation=default_translation),
 )
 SpineOpt.write_concept_reference_files(concept_dictionary, path)
 
