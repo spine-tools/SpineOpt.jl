@@ -1,6 +1,6 @@
 The [diff\_coeff](@ref) parameter represents diffusion of a [commodity](@ref) between the two [node](@ref)s
 in the [node\_\_node](@ref) relationship.
-It appears as a coefficient on the `node_state` variable in the [Node injection w storage capability](@ref) constraint,
+It appears as a coefficient on the `node_state` variable in the [node injection](@ref constraint_node_injection2) constraint,
 essentially representing *diffusion power per unit of state*.
 Note that the [diff\_coeff](@ref) is interpreted as *one-directional*, meaning that if one defines
 ```julia
