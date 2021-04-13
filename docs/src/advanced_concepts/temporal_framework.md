@@ -50,16 +50,16 @@ Indicates the end of this temporal block.
 #### [model\_\_temporal\_block](@ref) relationship
 In this relationship, a model instance is linked to a temporal block. If this relationship doesn't exist - the temporal block is disregarded from this optimization model.
 #### [model\_\_default\_temporal\_block](@ref) relationship
-Defines the default temporal block used for model objects, which will be replaced when a specific relationship is defined for a model in `model_instance_temporal_block`.
+Defines the default temporal block used for model objects, which will be replaced when a specific relationship is defined for a model in `model__temporal_block`.
 #### [node\_\_temporal\_block](@ref) relationship
 This relationship will link a node to a temporal block.
 
 #### [units\_on\_\_temporal_block](@ref) relationship
 This relationship links the `units_on` variable of a unit to a temporal block and will therefore govern the time-resolution of the unit's online/offline status.
 #### [unit\__investment\_temporal_block](@ref) relationship
-This relationship sets the temporal dimensions for investment decisions of a certain unit. The separation between this relationship and the `units_on_temporal_block`, allows the user for example to give a much finer resolution to a unit's on- or offline status than to it's investment decisions.
+This relationship sets the temporal dimensions for investment decisions of a certain unit. The separation between this relationship and the `units_on__temporal_block`, allows the user for example to give a much finer resolution to a unit's on- or offline status than to it's investment decisions.
 #### [model\_\_default\_investment\_temporal\_block](@ref) relationship
-Defines the default temporal block used for investment decisions, which will be replaced when a specific relationship is defined for a unit in `unit_investment_temporal_block`.
+Defines the default temporal block used for investment decisions, which will be replaced when a specific relationship is defined for a unit in `unit__investment_temporal_block`.
 ## General principle of the temporal framework
 
 The general principle of the Spine modeling temporal structure is that different temporal blocks can be defined and linked to different objects in a model. This leads to great flexibility in the temporal structure of the model as a whole. To illustrate this, we will discuss some of the possibilities that arise in this framework.
@@ -69,14 +69,20 @@ The general principle of the Spine modeling temporal structure is that different
 #### Single solve with single block
 The simplest case is a single solve of the entire time horizon (so `roll_forward` not defined) with a fixed resolution. In this case, only one temporal block has to be defined with a fixed resolution. Each node has to be linked to this `temporal_block`.
 
-TODO: varying resolution, but currently not working
+Alternatively, a variable resolution can be defined by choosing an array of durations for the [resolution](@ref) parameter. The sum of the durations in the array then have to match the length of the temporal block. The example below illustrates an optimization that spans one day for which the resolution is hourly in the beginning and then gradually decreases to a 6h resolution at the end.
+
+* `temporal_block_1`
+  * `block_start`: 0h
+  * `block_start`: 1D
+  * `resolution`: [1h 1h 1h 1h 2h 2h 2h 4h 4h 6h]
+
 
 #### Rolling window optimization with single block
-A model with a single `temporal_block` can also be optimized in a rolling horizon framework. In this case, the `roll_forward` parameter has to be defined in the `model_instance` object. The `roll_forward` parameter will then determine how much the optimization moves forward with every step, while the size of the temporal block will determine how large a time frame is optimized in each step. To see this more clearly, let's take a look at an example.
+A model with a single `temporal_block` can also be optimized in a rolling horizon framework. In this case, the `roll_forward` parameter has to be defined in the `model` object. The `roll_forward` parameter will then determine how much the optimization moves forward with every step, while the size of the temporal block will determine how large a time frame is optimized in each step. To see this more clearly, let's take a look at an example.
 
 Suppose we want to model a horizon of one week, with a rolling window size of one day. The `roll_forward` parameter will then be a duration value of 1d. If we take the `temporal_block` parameters `block_start` and `block_end` to be the duration values 0h and 1d respectively, the model will optimize each day of the week separately. However, we could also take the `block_end` parameter to be 2d. Now the model will start by optimizing day 1 and day 2 together, after which it keeps only the values obtained for the first day, and moves forward to optimize the second and third day together.
 
-TODO: varying resolution, but currently not working
+Again, a variable resolution can be implemented for the rolling window optimization. The sum of the durations must in this case match the size of the optimized window. 
 
 ### Advanced usage: multiple `temporal_block` objects
 
@@ -86,10 +92,10 @@ Multiple temporal blocks can be used to optimize disconnected periods. Let's tak
 
 * `temporal_block_1`
   * `block_start`: 0h
-  * `block_start`: 4h
+  * `block_end`: 4h
 * `temporal_block_2`
   * `block_start`: 12h
-  * `block_start`: 16h
+  * `block_end`: 16h
 
 This example will lead to an optimization of the first four hours of the model horizon, and also of hour 12 to 16. By defining exactly the same relationships for the two temporal blocks, an optimization of disconnected periods is achieved for exactly the same model components. This leads to the possibility of implementing the widely used representative days method. If desired, it is possible to choose a different temporal resolution for the different `temporal_blocks`.
 
@@ -114,18 +120,18 @@ Similarly, the on- and offline status of a unit can be modeled with a lower reso
 
 #### Rolling horizon with multiple blocks
 ##### Rolling horizon with different window sizes
-Similar to what has been discussed above in [Different regions/commodities in different resolutions](@ref), different commodities or regions can be modeled with a different resolution in the rolling horizon setting. The way to do it is completely analogous. Furthermore, when using the rolling horizon framework, a different window size can be chosen for the different modeled components, by simply using a different `temporal_block_end` paramter. #TODO: What happens to coupling constraints between different regions?
+Similar to what has been discussed above in [Different regions/commodities in different resolutions](@ref), different commodities or regions can be modeled with a different resolution in the rolling horizon setting. The way to do it is completely analogous. Furthermore, when using the rolling horizon framework, a different window size can be chosen for the different modeled components, by simply using a different `block_end` parameter. #TODO: What happens to coupling constraints between different regions?
 
 ##### Rolling horizon where the resolution is dependent on the absolute time
 TODO : How can this be done, since there is no parameter that indicates whether a temporal block is static or rolling
 
 ##### Putting it all together: rolling horizon with variable resolution that differs for different model components
 Below is an example of an advanced use case in which a rolling horizon optimization is used, and different model components are optimized with a different resolution. By choosing the relevant parameters in the following way:
-* `model_instance`
+* `model`
   * `roll_forward`: 4h
 * `temporal_blocks`
   * `temporal_block_A`
-    * `resolution`: [1h 1h 2h 2h 3h 3h]
+    * `resolution`: [1h 1h 2h 2h 2h 3h 3h]
     * `block_end`: 14h
   * `temporal_block_B`
     * `resolution`: [2h 2h 4h 6h]
