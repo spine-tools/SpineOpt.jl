@@ -114,7 +114,7 @@ function add_constraint_node_injection!(m::Model)
     )
 end
 
-#TODO: can we find an easier way to define the constraint indices?
+# TODO: can we find an easier way to define the constraint indices?
 # I feel that for unexperienced uses it gets more an more complicated to understand our code
 function constraint_node_injection_indices(m::Model)
     unique(

@@ -33,7 +33,6 @@ function add_constraint_storage_line_pack!(m::Model)
             )
             ==
             connection_linepack_constant(connection=conn, node1=stor, node2=ng)
-            # connection_linepack_constant[(connection=conn,node1=stor,node2=ng,stochastic_scenario=s, analysis_time=t0, t=t)] #TODO: fails for some reason
             * 0.5
             * sum( #summing up the partial pressure of each component for both sides
                 node_pressure[ng, s, t] * duration(t)

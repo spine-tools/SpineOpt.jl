@@ -61,15 +61,15 @@ function constraint_cyclic_node_state_indices_filtered(
     t_start=anything,
     t_end=anything,
 )
-    f(
-        ind,
-    ) = _index_in(
-        ind;
-        node=node,
-        temporal_block=temporal_block,
-        stochastic_path=stochastic_path,
-        t_start=t_start,
-        t_end=t_end,
-    )
+    function f(ind)
+        _index_in(
+            ind;
+            node=node,
+            temporal_block=temporal_block,
+            stochastic_path=stochastic_path,
+            t_start=t_start,
+            t_end=t_end,
+        )
+    end
     filter(f, constraint_cyclic_node_state_indices(m))
 end

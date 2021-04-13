@@ -129,16 +129,16 @@ function constraint_split_ramps_indices_filtered(
     t_before=anything,
     t_after=anything,
 )
-    f(
-        ind,
-    ) = _index_in(
-        ind;
-        unit=unit,
-        node=node,
-        direction=direction,
-        stochastic_path=stochastic_path,
-        t_before=t_before,
-        t_after=t_after,
-    )
+    function f(ind)
+        _index_in(
+            ind;
+            unit=unit,
+            node=node,
+            direction=direction,
+            stochastic_path=stochastic_path,
+            t_before=t_before,
+            t_after=t_after,
+        )
+    end
     filter(f, constraint_split_ramps_indices(m))
 end
