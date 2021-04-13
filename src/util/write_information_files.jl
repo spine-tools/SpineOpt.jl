@@ -135,8 +135,9 @@ a `String` corresponding to the translated section name.
 If multiple template section names are mapped to a single `String`, the entries are aggregated under that title.
 """
 function translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, translation::Dict)
-    initial_translation =
-        Dict(translation[key] => merge([concept_dictionary[k] for k in key]...) for key in keys(translation))
+    initial_translation = Dict(translation[key] => merge([concept_dictionary[k]
+    for k in key]...)
+    for key in keys(translation))
     translated_concept_dictionary = deepcopy(initial_translation)
     for concept_type in keys(initial_translation)
         for concept in keys(initial_translation[concept_type])
@@ -171,8 +172,7 @@ function add_cross_references!(concept_dictionary::Dict)
                             nothing,
                         ),
                     )
-                        if concept in
-                           concept_dictionary[related_concept_class][related_concept][:related_concepts][class]
+                        if concept in concept_dictionary[related_concept_class][related_concept][:related_concepts][class]
                             nothing
                         else
                             push!(

@@ -68,8 +68,10 @@ time slice.
 function map_to_representative_periods!(m::Model, var::Dict, var_indices::Function)
     for ind in setdiff(var_indices(m, temporal_block=anything), var_indices(m))
         # Get indices which aren't time slices
-        Keys = [k for k in keys(ind) if !(typeof(ind[k]) <: TimeSlice)]
-        Values = [ind[k] for k in Keys]
+        Keys = [k
+        for k in keys(ind) if !(typeof(ind[k]) <: TimeSlice)]
+        Values = [ind[k]
+        for k in Keys]
         non_t_slice_ind = (; zip(Keys, Values)...) #this gets everything, but the timeslice index...
         ind_rep = first(var_indices(m; non_t_slice_ind..., t=representative_time_slices(m)[to_time_slice(m, t=ind.t)]))
         var[ind] = var[ind_rep]

@@ -42,7 +42,8 @@ macro fetch(expr)
     (expr isa Expr && expr.head == :(=)) || error("please use @fetch with the assignment operator (=)")
     keys, dict = expr.args
     values = if keys isa Expr
-        Expr(:tuple, [:($dict[$(Expr(:quote, k))]) for k in keys.args]...)
+        Expr(:tuple, [:($dict[$(Expr(:quote, k))])
+        for k in keys.args]...)
     else
         :($dict[$(Expr(:quote, keys))])
     end
@@ -96,16 +97,22 @@ Create a JuMP constraint with the desired left-hand-side `lhs`, `sense`, and rig
 """
 function sense_constraint(m, lhs, sense::Symbol, rhs)
     if sense == :>=
-        @constraint(m, lhs >= rhs)
+        @constraint(m, lhs >=
+        rhs)
     elseif sense == :<=
-        @constraint(m, lhs <= rhs)
+        @constraint(m, lhs <=
+        rhs)
     else
-        @constraint(m, lhs == rhs)
+        @constraint(m, lhs ==
+        rhs)
     end
 end
-sense_constraint(m, lhs, sense::typeof(<=), rhs) = @constraint(m, lhs <= rhs)
-sense_constraint(m, lhs, sense::typeof(==), rhs) = @constraint(m, lhs == rhs)
-sense_constraint(m, lhs, sense::typeof(>=), rhs) = @constraint(m, lhs >= rhs)
+sense_constraint(m, lhs, sense::typeof(<=), rhs) = @constraint(m, lhs <=
+rhs)
+sense_constraint(m, lhs, sense::typeof(==), rhs) = @constraint(m, lhs ==
+rhs)
+sense_constraint(m, lhs, sense::typeof(>=), rhs) = @constraint(m, lhs >=
+rhs)
 
 """
     expr_sum(iter; init::Number)
