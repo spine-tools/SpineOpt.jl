@@ -95,10 +95,12 @@ end
 
 function constraint_connection_flow_capacity_indices(m::Model)
     unique(
-        (connection=c, node=ng, direction=d, stochastic_path=path, t=t) for (c, ng, d) in indices(connection_capacity)
+        (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
+        for (c, ng, d) in indices(connection_capacity)
         for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
         for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_connection_flow_capacity_indices(m, c, ng, d, t)),
+            unique(ind.stochastic_scenario
+            for ind in _constraint_connection_flow_capacity_indices(m, c, ng, d, t)),
         )
     )
 end

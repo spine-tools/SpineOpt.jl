@@ -97,7 +97,8 @@ function constraint_candidate_connection_flow_lb_indices(m::Model)
         for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=n)))
         for path in active_stochastic_paths(
             unique(
-                ind.stochastic_scenario for ind in _constraint_candidate_connection_flow_lb_indices(m, conn, n, d, t)
+                ind.stochastic_scenario
+                for ind in _constraint_candidate_connection_flow_lb_indices(m, conn, n, d, t)
             ),
         )
     )

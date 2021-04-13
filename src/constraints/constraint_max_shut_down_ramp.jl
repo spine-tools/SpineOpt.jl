@@ -53,9 +53,9 @@ end
 
 function constraint_max_shut_down_ramp_indices(m::Model)
     unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t) for (u, ng, d) in indices(max_shutdown_ramp)
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
+        for (u, ng, d) in indices(max_shutdown_ramp)
         for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
-        # How to deal with groups correctly?
         for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario for ind in Iterators.flatten((

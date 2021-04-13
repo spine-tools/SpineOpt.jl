@@ -29,10 +29,8 @@ function add_constraint_units_invested_transition!(m::Model)
             m,
             expr_sum(
                 + units_invested_available[u, s, t_after] - units_invested[u, s, t_after]
-                + units_mothballed[u, s, t_after]
-                # TODO: +units_decommissioned[u, s, t_after]
-                # TODO: -units_demothballed[u,s,t_after] ...
-                for (u, s, t_after) in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t_after);
+                + units_mothballed[u, s, t_after] for (u, s, t_after) in
+                    units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t_after);
                 init=0,
             ) ==
             expr_sum(
@@ -49,7 +47,8 @@ function constraint_units_invested_transition_indices(m::Model)
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (u, t_before, t_after) in unit_investment_dynamic_time_indices(m) for path in active_stochastic_paths(
             unique(
-                ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=[t_before, t_after])
+                ind.stochastic_scenario
+                for ind in units_invested_available_indices(m; unit=u, t=[t_before, t_after])
             ),
         )
     )

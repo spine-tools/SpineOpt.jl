@@ -200,7 +200,8 @@ function add_constraint_unit_constraint!(m::Model)
             ),
             constraint_sense(unit_constraint=uc),
             + expr_sum(
-                right_hand_side[(unit_constraint=uc, stochastic_scenario=s, analysis_time=t0, t=t)] for s in s;
+                right_hand_side[(unit_constraint=uc, stochastic_scenario=s, analysis_time=t0, t=t)]
+                for s in s;
                 init=0,
             ) / length(s),
         ) for (uc, s, t) in constraint_unit_constraint_indices(m)
@@ -209,9 +210,11 @@ end
 
 function constraint_unit_constraint_indices(m::Model)
     unique(
-        (unit_constraint=uc, stochastic_path=path, t=t) for uc in unit_constraint()
-        for t in _constraint_unit_constraint_lowest_resolution_t(m, uc) for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_unit_constraint_indices(m, uc, t)),
+        (unit_constraint=uc, stochastic_path=path, t=t)
+        for uc in unit_constraint() for t in _constraint_unit_constraint_lowest_resolution_t(m, uc)
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario
+            for ind in _constraint_unit_constraint_indices(m, uc, t)),
         )
     )
 end
@@ -254,11 +257,12 @@ function _constraint_unit_constraint_lowest_resolution_t(m, uc)
                 for (c, n) in connection__node__unit_constraint(unit_constraint=uc)
                 for ind in connection_flow_indices(m; connection=c, node=n)
             ],
-            [ind.t for n in node__unit_constraint(unit_constraint=uc) for ind in node_state_indices(m; node=n)],
-            [
-                ind.t for n in node__unit_constraint(unit_constraint=uc)
-                for ind in node_stochastic_time_indices(m; node=n)
-            ],
+            [ind.t
+            for n in node__unit_constraint(unit_constraint=uc)
+            for ind in node_state_indices(m; node=n)],
+            [ind.t
+            for n in node__unit_constraint(unit_constraint=uc)
+            for ind in node_stochastic_time_indices(m; node=n)],
         ),
     )
 end

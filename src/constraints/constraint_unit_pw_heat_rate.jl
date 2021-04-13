@@ -119,10 +119,10 @@ end
 function constraint_unit_pw_heat_rate_indices(m::Model)
     unique(
         (unit=u, node_from=n_from, node_to=n_to, stochastic_path=path, t=t)
-        for (u, n_from, n_to) in indices(unit_incremental_heat_rate)
-        for t in t_lowest_resolution(x.t for x in unit_flow_indices(m; unit=u, node=[n_from, n_to]))
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_unit_pw_heat_rate_indices(m, u, n_from, n_to, t)),
+        for (u, n_from, n_to) in indices(unit_incremental_heat_rate) for t in t_lowest_resolution(x.t
+        for x in unit_flow_indices(m; unit=u, node=[n_from, n_to])) for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario
+            for ind in _constraint_unit_pw_heat_rate_indices(m, u, n_from, n_to, t)),
         )
     )
 end

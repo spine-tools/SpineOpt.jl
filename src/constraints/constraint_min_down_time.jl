@@ -67,7 +67,9 @@ end
 function constraint_min_down_time_indices(m::Model)
     t0 = startref(current_window(m))
     unique(
-        (unit=u, stochastic_path=path, t=t) for u in indices(min_down_time) for (u, s, t) in units_on_indices(m; unit=u)
+        (unit=u, stochastic_path=path, t=t)
+        for u in indices(min_down_time)
+        for (u, s, t) in units_on_indices(m; unit=u)
         for path in active_stochastic_paths(_constraint_min_down_time_indices(m, u, s, t0, t))
     )
 end

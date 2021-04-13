@@ -60,7 +60,8 @@ function add_constraint_nodal_balance!(m::Model)
             0,
         ) for (n, internal_nodes, s, t) in (
             (n, _internal_nodes(n), s, t) for (n, s, t) in node_stochastic_time_indices(m) if balance_type(node=n) !== :balance_type_none && all(
-                balance_type(node=ng) !== :balance_type_group for ng in groups(n)
+                balance_type(node=ng) !== :balance_type_group
+                for ng in groups(n)
             )
         )
     )

@@ -92,7 +92,8 @@ function constraint_connection_flow_lodf_indices(m::Model)
         for t in _constraint_connection_flow_lodf_lowest_resolution_t(m, conn_cont, conn_mon)
         for path in active_stochastic_paths(
             unique(
-                ind.stochastic_scenario for ind in _constraint_connection_flow_lodf_indices(m, conn_cont, conn_mon, t)
+                ind.stochastic_scenario
+                for ind in _constraint_connection_flow_lodf_indices(m, conn_cont, conn_mon, t)
             ),
         )
     )
@@ -133,7 +134,8 @@ the `conn_mon` monitored connection.
 """
 function _constraint_connection_flow_lodf_lowest_resolution_t(m, conn_cont, conn_mon)
     t_lowest_resolution(
-        ind.t for conn in (conn_cont, conn_mon)
+        ind.t
+        for conn in (conn_cont, conn_mon)
         for ind in connection_flow_indices(m; connection=conn, last(connection__from_node(connection=conn))...)
     )
 end

@@ -59,9 +59,7 @@ function add_constraint_res_minimum_node_state!(m::Model)
                     node=indices(minimum_reserve_activation_time),
                     direction=direction(:to_node),
                     t=t_in_t(m; t_long=t_after),
-                )
-                # NOTE: the below only works if there's only 1 conventional commodity
-                for (u, n_conv, n_stor) in indices(fix_ratio_out_in_unit_flow; unit=u, node2=n_stor)
+                ) for (u, n_conv, n_stor) in indices(fix_ratio_out_in_unit_flow; unit=u, node2=n_stor)
                     if is_reserve_node(node=n_res) &&
                        realize(
                     minimum_reserve_activation_time[(node=n_res, stochastic_scenario=s, analysis_time=t0, t=t_after)],
@@ -78,7 +76,6 @@ _div(x::Period, y::Period) = Minute(x) / Minute(y)
 function constraint_res_minimum_node_state_indices(m::Model)
     unique(
         (node=n_stor, stochastic_path=path, t=t)
-        # TODO: make this more intuitive
         for (u, n_aFRR, d, s, t) in unit_flow_indices(m; node=indices(minimum_reserve_activation_time))
         for (u, n_stor, d, s, t) in unit_flow_indices(m; unit=u, node=node(has_state=true), t=t)
         for path in active_stochastic_paths(

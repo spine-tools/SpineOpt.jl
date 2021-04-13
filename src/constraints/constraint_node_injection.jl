@@ -109,7 +109,8 @@ function constraint_node_injection_indices(m::Model)
     unique(
         (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (n, t_before, t_after) in node_dynamic_time_indices(m) for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_node_injection_indices(m, n, t_after, t_before)),
+            unique(ind.stochastic_scenario
+            for ind in _constraint_node_injection_indices(m, n, t_after, t_before)),
         )
     )
 end
@@ -146,8 +147,12 @@ function _constraint_node_injection_indices(m, node, t_after, t_before)
         # `node_state` on `t_before`
         node_state_indices(m; node=node, t=t_before),
         # Diffusion to this `node`
-        (ind for n1 in node__node(node2=node) for ind in node_state_indices(m; node=n1, t=t_after)),
+        (ind
+        for n1 in node__node(node2=node)
+        for ind in node_state_indices(m; node=n1, t=t_after)),
         # Diffusion from this `node`
-        (ind for n2 in node__node(node1=node) for ind in node_state_indices(m; node=n2, t=t_after)),
+        (ind
+        for n2 in node__node(node1=node)
+        for ind in node_state_indices(m; node=n2, t=t_after)),
     ))
 end

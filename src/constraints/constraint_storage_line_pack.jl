@@ -49,7 +49,8 @@ function constraint_storage_line_pack_indices(m::Model)
         for (conn, n_stor, ng) in indices(connection_linepack_constant) for t in t_lowest_resolution(
             time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n_stor), members(ng))))),
         ) for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_storage_line_pack_indices(m, n_stor, ng, t)),
+            unique(ind.stochastic_scenario
+            for ind in _constraint_storage_line_pack_indices(m, n_stor, ng, t)),
         )
     )
 end

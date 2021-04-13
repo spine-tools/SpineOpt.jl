@@ -77,7 +77,8 @@ function constraint_connection_flow_intact_flow_indices(m::Model)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
         for t in _constraint_connection_flow_intact_flow_lowest_resolution_t(m, conn)
         for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_connection_flow_intact_flow_indices(m, conn, t)),
+            unique(ind.stochastic_scenario
+            for ind in _constraint_connection_flow_intact_flow_indices(m, conn, t)),
         )
     )
 end
@@ -119,7 +120,8 @@ end
 
 function _constraint_connection_flow_intact_flow_lowest_resolution_t(m, conn)
     t_lowest_resolution(
-        ind.t for conn_k in Iterators.flatten(((conn,), _candidate_connections(conn)))
+        ind.t
+        for conn_k in Iterators.flatten(((conn,), _candidate_connections(conn)))
         for ind in connection_flow_indices(m; connection=conn_k, last(connection__from_node(connection=conn_k))...)
     )
 end

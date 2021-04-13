@@ -61,7 +61,8 @@ end
 function constraint_connection_lifetime_indices(m::Model)
     t0 = startref(current_window(m))
     unique(
-        (connection=conn, stochastic_path=path, t=t) for conn in indices(connection_investment_lifetime)
+        (connection=conn, stochastic_path=path, t=t)
+        for conn in indices(connection_investment_lifetime)
         for (conn, s, t) in connections_invested_available_indices(m; connection=conn)
         for path in active_stochastic_paths(_constraint_connection_lifetime_indices(m, conn, s, t0, t))
     )
