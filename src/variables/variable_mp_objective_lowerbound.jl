@@ -17,8 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-add_variable_mp_objective_lowerbound!(m::Model) =
-    add_variable!(m, :mp_objective_lowerbound, mp_objective_lowerbound_indices;)
+add_variable_mp_objective_lowerbound!(
+    m::Model,
+) = add_variable!(m, :mp_objective_lowerbound, mp_objective_lowerbound_indices;)
 
 function mp_objective_lowerbound_indices(m::Model; t=anything)
     ((t=first(time_slice(m)),),)

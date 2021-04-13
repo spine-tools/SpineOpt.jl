@@ -146,9 +146,8 @@ function check_model__node__stochastic_structure()
     ]
     errors_group = [
         (m, n)
-        for m in model(model_type=:spineopt_operations) for n in node() if length(
-            intersect(node__stochastic_structure(node=members(n)), model__stochastic_structure(model=m)),
-        ) != 1
+        for m in model(model_type=:spineopt_operations) for n in node()
+            if length(intersect(node__stochastic_structure(node=members(n)), model__stochastic_structure(model=m))) != 1
     ]
     warnings = [
         (m, n)

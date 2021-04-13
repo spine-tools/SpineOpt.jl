@@ -25,8 +25,11 @@ Compare the defined sets of `ObjectClass`, `RelationshipClass` and parameter def
 """
 function generate_missing_items(mod=@__MODULE__)
     template = SpineOpt.template()
-    missing_items =
-        Dict("object classes" => String[], "relationship classes" => String[], "parameter definitions" => String[])
+    missing_items = Dict(
+        "object classes" => String[],
+        "relationship classes" => String[],
+        "parameter definitions" => String[],
+    )
     classes = Dict{Symbol,Union{ObjectClass,RelationshipClass}}(class.name => class
     for class in object_class(mod))
     merge!(classes, Dict(class.name => class
