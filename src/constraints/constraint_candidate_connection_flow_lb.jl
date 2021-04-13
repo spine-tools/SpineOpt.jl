@@ -41,7 +41,8 @@ function add_constraint_candidate_connection_flow_lb!(m::Model)
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
-            ) >=
+            )
+            >=
             + expr_sum(
                 connection_intact_flow[conn, n, d, s, t] * duration(t)
                 for (conn, n, d, s, t) in connection_intact_flow_indices(

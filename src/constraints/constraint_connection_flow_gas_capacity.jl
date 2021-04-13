@@ -48,7 +48,8 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
                         direction=direction(:to_node),
                     )
                 )
-            ) / 2 <=
+            ) / 2
+            <=
             + big_m(model=m.ext[:instance]) * sum(
                 binary_gas_connection_flow[conn, n_to, d, s, t] * duration(t)
                 for (conn, n_to, d, s, t) in connection_flow_indices(

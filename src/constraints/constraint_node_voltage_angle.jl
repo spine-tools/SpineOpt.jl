@@ -47,7 +47,8 @@ function add_constraint_node_voltage_angle!(m::Model)
                     stochastic_scenario=s,
                     t=t,
                 )
-            ) ==
+            )
+            ==
             1 / connection_reactance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
             * connection_reactance_base[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
             * (sum(

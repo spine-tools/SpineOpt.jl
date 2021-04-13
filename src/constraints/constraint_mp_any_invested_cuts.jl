@@ -33,7 +33,8 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
     m.ext[:constraints][:mp_units_invested_cut] = Dict(
         (benders_iteration=bi, t=t1) => @constraint(
             m,
-            + mp_objective_lowerbound[t1] >=
+            + mp_objective_lowerbound[t1]
+            >=
             + sp_objective_value_bi(benders_iteration=bi)
             # operating cost benefit from investments in units
             +

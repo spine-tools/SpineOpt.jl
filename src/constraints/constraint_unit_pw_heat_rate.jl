@@ -41,7 +41,8 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
-            ) ==
+            )
+            ==
             0 +
             expr_sum(
                 + unit_flow_op[u, n, d, op, s, t_short]

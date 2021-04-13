@@ -32,7 +32,8 @@ function add_constraint_storage_lifetime!(m::Model)
                 + storages_invested_available[n, s, t]
                 for (n, s, t) in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t);
                 init=0,
-            ) >=
+            )
+            >=
             + sum(
                 + storages_invested[n, s_past, t_past]
                 for (n, s_past, t_past) in storages_invested_available_indices(

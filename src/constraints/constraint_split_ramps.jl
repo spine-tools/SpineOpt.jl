@@ -40,25 +40,26 @@ function add_constraint_split_ramps!(m::Model)
             m,
             expr_sum(
                 + unit_flow[u, n, d, s, t_after] for (u, n, d, s, t_after) in
-                    unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after) if
-                    !is_reserve_node(node=n);
+                    unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after)
+                    if !is_reserve_node(node=n);
                 init=0,
             ) + expr_sum(
                 + unit_flow[u, n, d, s, t_after] for (u, n, d, s, t_after) in
-                    unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after) if
-                    is_reserve_node(node=n) && upward_reserve(node=n);
+                    unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after)
+                    if is_reserve_node(node=n) && upward_reserve(node=n);
                 init=0,
             ) - expr_sum(
                 + unit_flow[u, n, d, s, t_before] for (u, n, d, s, t_before) in
-                    unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_before) if
-                    !is_reserve_node(node=n);
+                    unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_before)
+                    if !is_reserve_node(node=n);
                 init=0,
             ) - expr_sum(
                 + unit_flow[u, n, d, s, t_after] for (u, n, d, s, t_after) in
-                    unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after) if
-                    is_reserve_node(node=n) && downward_reserve(node=n);
+                    unit_flow_indices(m; unit=u, node=n, direction=d, stochastic_scenario=s, t=t_after)
+                    if is_reserve_node(node=n) && downward_reserve(node=n);
                 init=0,
-            ) ==
+            )
+            ==
             expr_sum(
                 + get(ramp_up_unit_flow, (u, n, d, s, t_after), 0) +
                 get(start_up_unit_flow, (u, n, d, s, t_after), 0) +

@@ -32,7 +32,8 @@ function add_constraint_res_minimum_node_state!(m::Model)
                 node_state[n_stor, s, t_before] for (n_stor, s, t_before) in
                     node_state_indices(m; node=n_stor, stochastic_scenario=s, t=t_before_t(m; t_after=t_after));
                 init=0,
-            ) >=
+            )
+            >=
             node_state_min[(node=n_stor, stochastic_scenario=s, analysis_time=t0, t=t_after)] + expr_sum(
                 unit_flow[u, n_res, d, s, t_after]
                 * duration(t_after)
@@ -60,9 +61,9 @@ function add_constraint_res_minimum_node_state!(m::Model)
                     t=t_in_t(m; t_long=t_after),
                 )
                 # NOTE: the below only works if there's only 1 conventional commodity
-                for (u, n_conv, n_stor) in indices(fix_ratio_out_in_unit_flow; unit=u, node2=n_stor) if
-                    is_reserve_node(node=n_res) &&
-                    realize(
+                for (u, n_conv, n_stor) in indices(fix_ratio_out_in_unit_flow; unit=u, node2=n_stor)
+                    if is_reserve_node(node=n_res) &&
+                       realize(
                     minimum_reserve_activation_time[(node=n_res, stochastic_scenario=s, analysis_time=t0, t=t_after)],
                 ) !== nothing;  # NOTE: this is an additional sanity check
                 init=0,

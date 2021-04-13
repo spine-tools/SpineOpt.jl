@@ -31,7 +31,8 @@ function add_constraint_compression_ratio!(m::Model)
                 node_pressure[n_dest, s, t] * duration(t) for (n_dest, s, t) in
                     node_pressure_indices(m; node=n_dest, stochastic_scenario=s, t=t_in_t(m; t_long=t));
                 init=0,
-            ) <=
+            )
+            <=
             compression_factor[(
                 connection=conn,
                 node1=n_orig,

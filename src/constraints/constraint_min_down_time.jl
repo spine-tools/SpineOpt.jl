@@ -32,7 +32,8 @@ function add_constraint_min_down_time!(m::Model)
                 + units_available[u, s, t] - units_on[u, s, t] for (u, s, t) in
                     units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
                 init=0,
-            ) >=
+            )
+            >=
             + expr_sum(
                 + units_shut_down[u, s_past, t_past] for (u, s_past, t_past) in units_on_indices(
                     m;

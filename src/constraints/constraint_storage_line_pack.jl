@@ -30,7 +30,8 @@ function add_constraint_storage_line_pack!(m::Model)
             sum(
                 node_state[stor, s, t] * duration(t) for (stor, s, t) in
                     node_state_indices(m; node=stor, stochastic_scenario=s, t=t_in_t(m; t_long=t))
-            ) ==
+            )
+            ==
             connection_linepack_constant(connection=conn, node1=stor, node2=ng)
             # connection_linepack_constant[(connection=conn,node1=stor,node2=ng,stochastic_scenario=s, analysis_time=t0, t=t)] #TODO: fails for some reason
             * 0.5

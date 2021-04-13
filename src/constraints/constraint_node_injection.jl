@@ -47,7 +47,8 @@ function add_constraint_node_injection!(m::Model)
                     node_injection_indices(m; node=n, stochastic_scenario=s, t=t_after, temporal_block=anything)
                 for ng in groups(n);
                 init=0,
-            ) ==
+            )
+            ==
             + expr_sum(
                 (
                     + get(node_state, (n, s, t_before), 0)

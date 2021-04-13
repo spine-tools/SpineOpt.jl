@@ -76,7 +76,8 @@ function add_constraint_connection_flow_capacity!(m::Model)
                 );
                 init=0,
             ) : 1)
-            * duration(t) <=
+            * duration(t)
+            <=
             + expr_sum(
                 connection_flow[conn, n, d_reverse, s, t] * duration(t)
                 for (conn, n, d_reverse, s, t) in connection_flow_indices(

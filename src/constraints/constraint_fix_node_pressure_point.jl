@@ -50,7 +50,8 @@ function add_constraint_fix_node_pressure_point!(m::Model)
                         t=t_in_t(m; t_long=t),
                     )
                 )
-            ) / 2 <=
+            ) / 2
+            <=
             0
             + (fixed_pressure_constant_1[(
                 connection=conn,
@@ -88,7 +89,7 @@ function add_constraint_fix_node_pressure_point!(m::Model)
                 )
             ))
         ) for (conn, n_orig, n_dest, s, t) in constraint_connection_flow_gas_capacity_indices(m)
-        for j = 1:length(fixed_pressure_constant_1(connection=conn, node1=n_orig, node2=n_dest)) if
-            fixed_pressure_constant_1(connection=conn, node1=n_orig, node2=n_dest, i=j) != 0
+        for j = 1:length(fixed_pressure_constant_1(connection=conn, node1=n_orig, node2=n_dest))
+            if fixed_pressure_constant_1(connection=conn, node1=n_orig, node2=n_dest, i=j) != 0
     )
 end

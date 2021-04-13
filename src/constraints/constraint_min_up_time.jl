@@ -42,7 +42,8 @@ function add_constraint_min_up_time!(m::Model)
                     temporal_block=anything,
                 );
                 init=0,
-            ) >=
+            )
+            >=
             + sum(
                 + units_started_up[u, s_past, t_past] for (u, s_past, t_past) in units_on_indices(
                     m;

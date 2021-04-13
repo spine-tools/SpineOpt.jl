@@ -38,7 +38,8 @@ function add_constraint_ramp_up!(m::Model)
                     t=t_in_t(m; t_long=t),
                     stochastic_scenario=s,
                 )
-            ) <=
+            )
+            <=
             + sum(
                 (units_on[u, s, t1] - units_started_up[u, s, t1])
                 * min(duration(t), duration(t1))

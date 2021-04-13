@@ -66,7 +66,8 @@ function add_constraint_connection_intact_flow_capacity!(m::Model)
                 analysis_time=t0,
                 t=t,
             )]
-            * duration(t) <=
+            * duration(t)
+            <=
             + expr_sum(
                 connection_intact_flow[conn, n, d_reverse, s, t] * duration(t)
                 for (conn, n, d_reverse, s, t) in connection_intact_flow_indices(

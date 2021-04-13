@@ -38,7 +38,8 @@ function add_constraint_minimum_operating_point!(m::Model)
                     t=t_in_t(m, t_long=t),
                 );
                 init=0,
-            ) * duration(t) >=
+            ) * duration(t)
+            >=
             + expr_sum(
                 + units_on[u, s, t1]
                 * min(duration(t), duration(t1))

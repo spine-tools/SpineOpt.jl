@@ -46,7 +46,8 @@ function add_constraint_connection_flow_intact_flow!(m::Model)
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
-            ) ==
+            )
+            ==
             + expr_sum(
                 lodf(connection1=candidate_conn, connection2=conn) * (
                     + connection_intact_flow[candidate_conn, n, direction(:from_node), s, t] * duration(t)
@@ -108,8 +109,11 @@ An iterator over all candidate connections that can impact the flow on the given
 """
 function _candidate_connections(conn)
     (
-        candidate_conn for candidate_conn in connection(is_candidate=true, has_ptdf=true) if
-                           candidate_conn !== conn && lodf(connection1=candidate_conn, connection2=conn) !== nothing
+        candidate_conn for candidate_conn in connection(is_candidate=true, has_ptdf=true) if candidate_conn !== conn &&
+                                                                                             lodf(
+            connection1=candidate_conn,
+            connection2=conn,
+        ) !== nothing
     )
 end
 

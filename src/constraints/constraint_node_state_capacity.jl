@@ -31,7 +31,8 @@ function add_constraint_node_state_capacity!(m::Model)
             + expr_sum(
                 + node_state[ng, s, t] for (ng, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s, t=t);
                 init=0,
-            ) <=
+            )
+            <=
             + node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)] * (
                 (candidate_storages(node=ng) != nothing) ?
                 + expr_sum(

@@ -40,7 +40,8 @@ function add_constraint_unit_flow_capacity!(m::Model)
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
-            ) <=
+            )
+            <=
             + expr_sum(
                 (units_on[u, s, t1])
                 * min(duration(t1), duration(t))

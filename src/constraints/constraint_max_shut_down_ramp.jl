@@ -38,7 +38,8 @@ function add_constraint_max_shut_down_ramp!(m::Model)
                     stochastic_scenario=s,
                     t=t_in_t(m; t_long=t),
                 )
-            ) <=
+            )
+            <=
             + sum(
                 units_shut_down[u, s, t]
                 * max_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]

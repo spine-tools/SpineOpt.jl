@@ -39,7 +39,8 @@ function add_constraint_min_start_up_ramp!(m::Model)
                     stochastic_scenario=s,
                     t=t_in_t(m; t_long=t),
                 )
-            ) >=
+            )
+            >=
             + sum(
                 units_started_up[u, s, t]
                 * min_startup_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]

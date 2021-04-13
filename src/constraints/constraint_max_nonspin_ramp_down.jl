@@ -40,7 +40,8 @@ function add_constraint_max_nonspin_ramp_down!(m::Model)
                     stochastic_scenario=s,
                     t=t_in_t(m; t_long=t),
                 )
-            ) <=
+            )
+            <=
             + expr_sum(
                 nonspin_units_shut_down[u, n, s, t]
                 * max_res_shutdown_ramp[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]

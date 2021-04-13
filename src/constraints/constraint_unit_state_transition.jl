@@ -34,7 +34,8 @@ function add_constraint_unit_state_transition!(m::Model)
                 for (u, s, t_after) in
                     units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after, temporal_block=anything);
                 init=0,
-            ) == expr_sum(
+            ) ==
+            expr_sum(
                 + units_on[u, s, t_before] for (u, s, t_before) in
                     units_on_indices(m; unit=u, stochastic_scenario=s, t=t_before, temporal_block=anything);
                 init=0,

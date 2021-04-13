@@ -51,7 +51,8 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         t=t_overlaps_t(m; t=t_before),
                     );
                     init=0,
-                ) <=
+                )
+                <=
                 + expr_sum(
                     (units_on[u, s, t_before1] - units_started_up[u, s, t_before1] - units_shut_down[u, s, t_after1])
                     * min(duration(t_before1), duration(t_before))
@@ -150,7 +151,8 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         t=t_overlaps_t(m; t=t_before),
                     );
                     init=0,
-                ) <=
+                )
+                <=
                 + expr_sum(
                     (units_on[u, s, t_before1] - units_shut_down[u, s, t_after1])
                     * min(duration(t_before1), duration(t_before))
@@ -257,7 +259,8 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         t=t_overlaps_t(m; t=t_before),
                     );
                     init=0,
-                ) <=
+                )
+                <=
                 + expr_sum(
                     (units_on[u, s, t_before1] - units_started_up[u, s, t_before1])
                     * min(duration(t_before1), duration(t_before))
