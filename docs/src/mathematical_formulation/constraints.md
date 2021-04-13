@@ -42,7 +42,7 @@ The node injection itself represents all local production and consumption, repre
 \end{aligned}
 ```
 
-### [Node injection w storage capability](@id constraint_node_injection2)
+### [Node injection with storage capability](@id constraint_node_injection2)
 
 If a node corresponds to a storage node, the parameter [has\_state](@ref) should be set to [true](@ref boolean_value_list) for this node. In this case the nodal injection will translate to the following constraint:
 
@@ -209,22 +209,25 @@ Similarly to the [ratio between outgoing and incoming units flows](@ref ratio_ou
 ```
 Note that a right-hand side constant coefficient associated with the variable [`v_{units\_on}`](@ref Variables) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_out\_out](@ref), [max\_units\_on\_coefficient\_out\_out](@ref), [min\_units\_on\_coefficient\_out\_out](@ref), respectively.
 
-#### [Define unit/technology capacity](@id constraint_unit_flow_capacity)
+#### [Bounds on the unit capacity](@id constraint_unit_flow_capacity)
 In a multi-commodity setting, there can be different commodities entering/leaving a certain
 technology/unit. These can be energy-related commodities (e.g., electricity, natural gas, etc.),
-emissions, or other commodities (e.g., water, steel). The capacity of the unit must be specified
-for at least one of the connected nodes, and induces a constraint on the maximum commodity
-flows to this location in each time step. When desirable, the capacity can be specified for a number of nodes.
-Note that the capacity can be specified both for input and output nodes.
+emissions, or other commodities (e.g., water, steel). The [unit\_capacity](@ref) be specified
+for at least one [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relationship, in order to trigger a constraint on the maximum commodity
+flows to this location in each time step. When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products).
+
 ```math
 \begin{aligned}
 & \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)}} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
 & <= p_{unit\_capacity}(u,ng,d,t) \\
-&  \cdot p_{conv\_cap\_to\_flow}(u,ng,d,t) \\
+&  \cdot p_{unit\_conv\_cap\_to\_flow}(u,ng,d,t) \\
 &  \cdot \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ \\ & (u,\Delta t_{units\_on} \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \cdot \min(t_{units\_on},\Delta t) \\
 & \forall (u,ng,d) \in ind(p_{unit\_capacity}), \forall t \in timeslices, \forall s \in stochasticpath
 \end{aligned}
 ```
+
+Note that the conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted in case the unit of measurement for the capacity is different the unit flows unit of measurement.
+
 ### Dynamic constraints
 
 #### Commitment constraints
@@ -234,7 +237,7 @@ different commodities, but also model the online ("commitment") status of the un
 at every time step. Therefore, an additional variable $v_{units\_on}$ is introduced. This variable
 represents the number of online units of that technology (for a normal unit commitment model,
 this variable might be a binary, for investment planning purposes, this might also be an integer
-or even a continuous variable).
+or even a continuous variable). To define the type of a commitment variable, see [online\_variable\_type](@ref).
 Commitment variables will be introduced by the following constraints (with corresponding
 parameters):
 - constraint on `units_on`
@@ -258,7 +261,7 @@ The number of online units need to be restricted to the number of available unit
 ```
 
 ##### [Bound on available units](@id constraint_units_available)
-The number of available units itself is constrained by the parameter $p_{number\_of\_units}$ and the variable number of invested unit ()$v_{units\_invested\_available}$):
+The number of available units itself is constrained by the parameters [unit\_availability\_factor](@ref) and [number\_of\_units](@ref), and the variable number of invested units $v_{units\_invested\_available}$):
 
 ```math
 \begin{aligned}
@@ -270,7 +273,7 @@ The number of available units itself is constrained by the parameter $p_{number\
 \end{aligned}
 ```
 
-The investment formulation is described in chapter [Investments](@ref). (TODO)
+The investment formulation is described in chapter [Investments](@ref).
 
 ##### [Unit state transition](@id constraint_unit_state_transition)
 The units on status is furtheron constraint by shutting down and starting up actions. This transition is defined as follows:
@@ -282,7 +285,7 @@ The units on status is furtheron constraint by shutting down and starting up act
 & + v_{units\_shut\_down}(u,s,t_{after}) \\
 & == v_{units\_on}(u,s,t_{before}) \\
 & \forall (u,s,t_{after}) \in units\_on\_indices, \\
-& \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in units\_on\_indices,\\
+& \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in units\_on\_indices\\
 \end{aligned}
 ```
 ##### [Constraint on minimum operating point](@id constraint_minimum_operating_point)
@@ -295,12 +298,15 @@ input or output nodes/node groups ng:
 & >= p_{minimum\_operating\_point}(u,ng,d,t) \\
 & \cdot p_{unit\_capacity}(u,ng,d,t) \\
 &  \cdot \cdot p_{conv\_cap\_to\_flow}(u,ng,d,t) \\
-&  \cdot \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ \\ & (u,\Delta t_{units\_on} \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \cdot \min(t_{units\_on},\Delta t) \\
-& \forall (u,ng,d) \in ind(p_{minimum\_operating\_point}), \forall t \in timeslices, \forall s \in stochasticpath
+&  \cdot \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ (u,\Delta t_{units\_on} \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
+& \cdot \min(t_{units\_on},\Delta t) \\
+& \forall (u,ng,d) \in ind(p_{minimum\_operating\_point}), \forall t \in t\_lowest\_resolution(node\_\_temporal\_block(node=members(ng))), \forall s \in stochasticpath
 \end{aligned}
 ```
+Note that this constraint is always generated for the lowest resolution of all involved members of the node group `ng`, i.e. the lowest resolution of the involved units flows. This is also why the term ```\min(t_{units\_on},\Delta t)``` is added for the units on variable, in order to dis-/aggregate the units on resolution to the resolution of the unit flows.
 
 ##### [Minimum down time (basic version)](@id constraint_min_down_time)
+In order to impose a minimum offline time of a unit, before it can be started up again, the [min\_down\_time](@ref) parameter needs to be defined, which triggers the generation of the following constraint:
 
 ```math
 \begin{aligned}
@@ -312,9 +318,10 @@ v_{units\_shut\_down}(u,s,t') \\
 \end{aligned}
 ```
 
-This constraint can be extended to the use reserves. See also. (TODO)
+Note that for the use reserves the generated minimum down time constraint will include [startups for non-spinning reserves](@ref constraint_min_down_time2).
 
-##### Minimum up time (basic version)
+##### [Minimum up time (basic version)](@id constraint_min_up_time)
+Similarly to the [minimum down time constraint](@ref constraint_min_down_time), a minimum time that a unit needs to remain online after a startup can be imposed by defining the [min\_up\_time](@ref) parameter. This will trigger the generation of the following constraint:
 
 ```math
 \begin{aligned}
@@ -324,53 +331,45 @@ v_{units\_started\_up}(u,s,t') \\
 & \forall (u,s,t) \in units\_on\_indices\\
 \end{aligned}
 ```
-This constraint can be extended to the use reserves. See [also](@ref constraint_min_up_time2)
+This constraint can be extended to the use of nonspinning reserves. See [also](@ref constraint_min_up_time2).
 
 
 #### Ramping and reserve constraints
 
-To include ramping and reserve constraints, it is a pre requisit that minimum operation points and maximum capacity constraints are enforced as described above.
+To include ramping and reserve constraints, it is a pre requisite that [minimum operating points](@ref constraint_minimum_operating_point) and [maximum capacity constraints](@ref constraint_unit_flow_capacity) are enforced as described.
 
-For dispatchable units, additional ramping constraints can be introduced. First, the upward ramp of a unit is split into online, start-up and non-spinning ramping contributions.
+For dispatchable units, additional ramping constraints can be introduced. For setting up ramping characteristics of units see
+(***TODO: add reference to advanced concepts once merged***)
+First, the unit flows are split into their online, start-up, shut-down and non-spinning ramping contributions.
 
 #### [Splitting unit flows into ramps](@id constraint_split_ramps)
 ```math
 \begin{aligned}
-& + \sum_{\substack{(u,n,d,s,t_{after}) \in unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})\\ !is\_reserve(n)}} v_{unit\_flow}(u,n,d,s,t_{after}) \\
-& + \sum_{\substack{(u,n,d,s,t_{after}) \in unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})\\ is\_reserve(n) \&\& upward\_reserve(n)}} v_{unit\_flow}(u,n,d,s,t_{after}) \\
-& - \sum_{\substack{(u,n,d,s,t_{before}) \in unit\_flow\_indices: \\ (u,n,d,t_{before}) \, \in \, (u,n,d,t_{before})\\ !is\_reserve(n)}} v_{unit\_flow}(u,n,d,s,t_{before}) \\
-& <=  \\
+& + \sum_{\substack{(u,n,d,s,t_{after}) \in unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})\\ !p_{is\_reserve}(n)}} v_{unit\_flow}(u,n,d,s,t_{after}) \\
+& + \sum_{\substack{(u,n,d,s,t_{after}) \in unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})\\ p_{is\_reserve(n)} \\ p_{upward\_reserve}(n)}} v_{unit\_flow}(u,n,d,s,t_{after}) \\
+& - \sum_{\substack{(u,n,d,s,t_{after}) \in unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})\\ p_{is\_reserve(n)} \\ p_{downward\_reserve}(n)}} v_{unit\_flow}(u,n,d,s,t_{after}) \\
+& - \sum_{\substack{(u,n,d,s,t_{before}) \in unit\_flow\_indices: \\ (u,n,d,t_{before}) \, \in \, (u,n,d,t_{before})\\ !p_{is\_reserve}(n)}} v_{unit\_flow}(u,n,d,s,t_{before}) \\
+& ==  \\
 & + \sum_{\substack{(u,n,d,s,t_{after}) \in ramp\_up\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{ramp\_up\_unit\_flow}(u,n,d,s,t_{after})  \\
 & + \sum_{\substack{(u,n,d,s,t_{after}) \in start\_up\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{start\_up\_unit\_flow}(u,n,d,s,t_{after}) \\
 & + \sum_{\substack{(u,n,d,s,t_{after}) \in nonspin\_ramp\_up\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{nonspin\_ramp\_up\_unit\_flow}(u,n,d,s,t_{after}) \\
+& - \sum_{\substack{(u,n,d,s,t_{after}) \in ramp\_down\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{ramp\_down\_unit\_flow}(u,n,d,s,t_{after}) \\
+& - \sum_{\substack{(u,n,d,s,t_{after}) \in shut\_down\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{shut\_down\_unit\_flow}(u,n,d,s,t_{after}) \\
+& - \sum_{\substack{(u,n,d,s,t_{after}) \in nonspin\_ramp\_down\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{nonspin\_ramp\_down\_unit\_flow}(u,n,d,s,t_{after}) \\
 & \forall (u,n,d,s,t_{after}) \in (\\
 & ramp\_up\_unit\_flow\_indices,\\
 & start\_up\_unit\_flow\_indices,\\
-& nonspin\_ramp\_up\_unit\_flow\_indices) \\
-& \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in unit\_flow\_indices \\
-\end{aligned}
-```
-Similarly, the downward ramp of a unit is split into online, shut-down and non-spinning downward ramping contributions.
-
-```math
-\begin{aligned}
-& + \sum_{\substack{(u,n,d,s,t_{before}) \in unit\_flow\_indices: \\ (u,n,d,t_{before}) \, \in \, (u,n,d,t_{before})\\ !is\_reserve(n)}} v_{unit\_flow}(u,n,d,s,t_{before}) \\
-& - \sum_{\substack{(u,n,d,s,t_{after}) \in unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after}) \\ !is\_reserve(n)}} v_{unit\_flow}(u,n,d,s,t_{after}) \\
-& + \sum_{\substack{(u,n,d,s,t_{after}) \in unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after}) \\ is\_reserve(n) \&\& downward\_reserve(n)}} v_{unit\_flow}(u,n,d,s,t_{after}) \\
-& <=  \\
-& \sum_{\substack{(u,n,d,s,t_{after}) \in ramp\_down\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{ramp\_down\_unit\_flow}(u,n,d,s,t_{after}) \\
-& \sum_{\substack{(u,n,d,s,t_{after}) \in shut\_down\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{shut\_down\_unit\_flow}(u,n,d,s,t_{after}) \\
-& \sum_{\substack{(u,n,d,s,t_{after}) \in nonspin\_ramp\_down\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{nonspin\_ramp\_down\_unit\_flow}(u,n,d,s,t_{after}) \\
-& \forall (u,n,d,s,t_{after}) \in (\\
+& nonspin\_ramp\_up\_unit\_flow\_indices, \\
 & ramp\_down\_unit\_flow\_indices,\\
 & shut\_down\_unit\_flow\_indices,\\
 & nonspin\_ramp\_down\_unit\_flow\_indices) \\
 & \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in unit\_flow\_indices \\
 \end{aligned}
 ```
+Note that each *individual* tuple of the [unit_flow_indices](@ref Sets) is split into its ramping contributions, if any of the ramping variables exist for this tuple.
 
 ##### [Constraint on spinning upwards ramp_up](@id constraint_ramp_up)
-The online ramp up ability of a unit can be constraint by the [ramp\_up\_limit](@ref), expressed as a share of the [unit\_capacity](@ref). With this constraint, ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced.
+The maximum online ramp up ability of a unit can be constraint by the [ramp\_up\_limit](@ref), expressed as a share of the [unit\_capacity](@ref). With this constraint, ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced.
 
 ```math
 \begin{aligned}
@@ -478,6 +477,7 @@ TODO: add correct forall, how to simplify?
 
 The ramp a non-spinning unit can provide is constraint through the [max\_res\_shutdown\_ramp](@ref).
 
+#### [Constraint on minimum up time, including nonspinning reserves](@id constraint_min_down_time2)
 #### [Lower bound on the nonspinning downward reserve provision](@id constraint_min_nonspin_ramp_down)
 #### [Upper bound on the nonspinning downward reserve provision](@id constraint_max_nonspin_ramp_down)
 
@@ -504,7 +504,7 @@ Storage nodes can also contribute to the provision of reserves. The amount of ba
 \end{aligned}
 ```
 
-#### [ with ramps](@id constraint_unit_flow_capacity_w_ramps)
+#### [Bounds on the unit capacity including ramping constraints](@id constraint_unit_flow_capacity_w_ramps)
 Currently not supported, mention issue here
 
 [comment]: <> (TODO:
