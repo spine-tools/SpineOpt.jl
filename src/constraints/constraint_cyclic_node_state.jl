@@ -60,7 +60,9 @@ function constraint_cyclic_node_state_indices_filtered(
     t_start=anything,
     t_end=anything,
 )
-    f(ind) = _index_in(
+    f(
+        ind,
+    ) = _index_in(
         ind;
         node=node,
         temporal_block=temporal_block,

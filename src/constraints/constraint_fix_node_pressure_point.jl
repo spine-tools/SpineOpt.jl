@@ -30,8 +30,7 @@ function add_constraint_fix_node_pressure_point!(m::Model)
             m,
             (
                 sum(
-                    connection_flow[conn, n_orig, d, s, t]
-                    for (conn, n_orig, d, s, t) in connection_flow_indices(
+                    connection_flow[conn, n_orig, d, s, t] for (conn, n_orig, d, s, t) in connection_flow_indices(
                         m;
                         connection=conn,
                         node=n_orig,
@@ -40,8 +39,7 @@ function add_constraint_fix_node_pressure_point!(m::Model)
                         t=t_in_t(m; t_long=t),
                     )
                 ) + sum(
-                    connection_flow[conn, n_dest, d, s, t]
-                    for (conn, n_dest, d, s, t) in connection_flow_indices(
+                    connection_flow[conn, n_dest, d, s, t] for (conn, n_dest, d, s, t) in connection_flow_indices(
                         m;
                         connection=conn,
                         node=n_dest,

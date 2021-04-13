@@ -73,8 +73,7 @@ function add_constraint_connection_flow_lodf!(m::Model)
                     stochastic_scenario=s,
                     analysis_time=t0,
                     t=t,
-                )] for (conn_mon, n_mon, d) in indices(connection_emergency_capacity; connection=conn_mon)
-                for s in s
+                )] for (conn_mon, n_mon, d) in indices(connection_emergency_capacity; connection=conn_mon) for s in s
             ) <=
             +1
         ) for (conn_cont, conn_mon, s, t) in constraint_connection_flow_lodf_indices(m)
