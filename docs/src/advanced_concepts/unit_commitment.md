@@ -1,4 +1,4 @@
-# Unit commitment constraints
+# Unit commitment
 
 To incorporate technical detail about (clustered) unit-commitment statuses of units, the online, started and shutdown status of units can be tracked and constrained in SpineOpt.
 In the following, relevant relationships and parameters are introduced and the general working principle is described.

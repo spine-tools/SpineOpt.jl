@@ -1,4 +1,4 @@
-# Ramping concept
+# Ramping and Reserves
 
 To enable the representation of units with a high level of technical detail, the ramping ability of units can be constrained in SpineOpt. This means that the user has the freedom to impose restrictions on the change in output of units between consecutive timesteps, for online (spinning) units, units starting up and units shutting down. In this section, the concept of ramps in SpineOpt will be introduced. Furthermore, the use of reserves will be explained.
 
@@ -34,7 +34,7 @@ The general principle of the Spine modelling ramping constraints is that all of 
 It should be noted that it is perfectly possible to omit all of the constraining parameters mentioned above. However, once either of the ramping parameters is defined, it is necessary to also assign values to the other parameters. E.g. if a user only wants to restrict the spinning ramp up capability of a unit, one also has to assign values to the `max_startup_ramp`, `min_Shutdown_Ramp` etc.
 ### Illustrative examples
 #### Step 1: Simple case of unrestricted unit
-When none of the ramping parameters mentioned above are defined, the unit is considered to have full ramping flexibility. This means that in any given timestep, its output can be any value between 0 and its capacity, regardless of what the output of the unit was in the previous timestep, and regardless of the on- or offline status or the unit in the previous timestep. Provided that this does not conflict with the [Unit commitment constraints](@ref) restrictions that are defined for this unit. Parameter values for a `unit__node` relationship are illustratively given below.
+When none of the ramping parameters mentioned above are defined, the unit is considered to have full ramping flexibility. This means that in any given timestep, its output can be any value between 0 and its capacity, regardless of what the output of the unit was in the previous timestep, and regardless of the on- or offline status or the unit in the previous timestep. Provided that this does not conflict with the [Unit commitment](@ref) restrictions that are defined for this unit. Parameter values for a `unit__node` relationship are illustratively given below.
 * `max_shutdown_ramp`  : 1
 * `min_shutdown_ramp`  : 0
 * `max_start_up_ramp`  : 1
