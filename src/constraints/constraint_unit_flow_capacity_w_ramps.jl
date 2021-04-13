@@ -71,9 +71,12 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         stochastic_scenario=s,
                         analysis_time=t0,
                         t=t_before,
-                    )] for (u, s, t_before1) in
-                        units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before))
-                    for (u, s, t_after1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
+                    )] for (u, s, t_before1) in units_on_indices(
+                        m;
+                        unit=u,
+                        stochastic_scenario=s,
+                        t=t_overlaps_t(m; t=t_before),
+                    ) for (u, s, t_after1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
                     init=0,
                 ) +
                 expr_sum(
@@ -102,8 +105,12 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         stochastic_scenario=s,
                         analysis_time=t0,
                         t=t_before,
-                    )] for (u, s, t_before1) in
-                        units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
+                    )] for (u, s, t_before1) in units_on_indices(
+                        m;
+                        unit=u,
+                        stochastic_scenario=s,
+                        t=t_overlaps_t(m; t=t_before),
+                    );
                     init=0,
                 ) +
                 expr_sum(
@@ -171,9 +178,12 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         stochastic_scenario=s,
                         analysis_time=t0,
                         t=t_before,
-                    )] for (u, s, t_before1) in
-                        units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before))
-                    for (u, s, t_after1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
+                    )] for (u, s, t_before1) in units_on_indices(
+                        m;
+                        unit=u,
+                        stochastic_scenario=s,
+                        t=t_overlaps_t(m; t=t_before),
+                    ) for (u, s, t_after1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
                     init=0,
                 ) - expr_sum(
                     units_started_up[u, s, t_before1]
@@ -211,8 +221,12 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         stochastic_scenario=s,
                         analysis_time=t0,
                         t=t_before,
-                    )] for (u, s, t_before1) in
-                        units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
+                    )] for (u, s, t_before1) in units_on_indices(
+                        m;
+                        unit=u,
+                        stochastic_scenario=s,
+                        t=t_overlaps_t(m; t=t_before),
+                    );
                     init=0,
                 ) + expr_sum(
                     units_shut_down[u, s, t_after1]
@@ -279,8 +293,12 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         stochastic_scenario=s,
                         analysis_time=t0,
                         t=t_before,
-                    )] for (u, s, t_before1) in
-                        units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
+                    )] for (u, s, t_before1) in units_on_indices(
+                        m;
+                        unit=u,
+                        stochastic_scenario=s,
+                        t=t_overlaps_t(m; t=t_before),
+                    );
                     init=0,
                 ) + expr_sum(
                     units_started_up[u, s, t_before1]
@@ -308,8 +326,12 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         stochastic_scenario=s,
                         analysis_time=t0,
                         t=t_before,
-                    )] for (u, s, t_before1) in
-                        units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
+                    )] for (u, s, t_before1) in units_on_indices(
+                        m;
+                        unit=u,
+                        stochastic_scenario=s,
+                        t=t_overlaps_t(m; t=t_before),
+                    );
                     init=0,
                 ) - expr_sum(
                     units_shut_down[u, s, t_after1]

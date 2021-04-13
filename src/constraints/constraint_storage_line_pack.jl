@@ -28,16 +28,24 @@ function add_constraint_storage_line_pack!(m::Model)
         (connection=conn, node1=stor, node2=ng, stochastic_path=s, t=t) => @constraint(
             m,
             sum(
-                node_state[stor, s, t] * duration(t) for (stor, s, t) in
-                    node_state_indices(m; node=stor, stochastic_scenario=s, t=t_in_t(m; t_long=t))
+                node_state[stor, s, t] * duration(t) for (stor, s, t) in node_state_indices(
+                    m;
+                    node=stor,
+                    stochastic_scenario=s,
+                    t=t_in_t(m; t_long=t),
+                )
             )
             ==
             connection_linepack_constant(connection=conn, node1=stor, node2=ng)
             # connection_linepack_constant[(connection=conn,node1=stor,node2=ng,stochastic_scenario=s, analysis_time=t0, t=t)] #TODO: fails for some reason
             * 0.5
             * sum( #summing up the partial pressure of each component for both sides
-                node_pressure[ng, s, t] * duration(t) for (ng, s, t) in
-                    node_pressure_indices(m; node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t))
+                node_pressure[ng, s, t] * duration(t) for (ng, s, t) in node_pressure_indices(
+                    m;
+                    node=ng,
+                    stochastic_scenario=s,
+                    t=t_in_t(m; t_long=t),
+                )
             )
         ) for (conn, stor, ng, s, t) in constraint_storage_line_pack_indices(m)
     )

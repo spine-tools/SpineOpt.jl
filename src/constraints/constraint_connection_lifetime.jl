@@ -29,8 +29,13 @@ function add_constraint_connection_lifetime!(m::Model)
         (connection=conn, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
-                + connections_invested_available[conn, s, t] for (conn, s, t) in
-                    connections_invested_available_indices(m; connection=conn, stochastic_scenario=s, t=t);
+                + connections_invested_available[conn, s, t]
+                for (conn, s, t) in connections_invested_available_indices(
+                    m;
+                    connection=conn,
+                    stochastic_scenario=s,
+                    t=t,
+                );
                 init=0,
             )
             >=

@@ -87,7 +87,7 @@ Gather the indices of the `connection_intact_flow` and the `node_injection` vari
 """
 function _constraint_connection_intact_flow_ptdf_indices(m, connection, node_to, direction_to, t)
     Iterators.flatten((
-        connection_intact_flow_indices(m; connection=connection, node=node_to, direction=direction_to, t=t),  # `n_to`
+        connection_intact_flow_indices(m; connection=connection, node=node_to, direction=direction_to, t=t),
         (
             ind
             for (conn, n_inj) in indices(ptdf; connection=connection)

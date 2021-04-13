@@ -153,7 +153,7 @@ function _constraint_connection_flow_lodf_indices(m, conn_cont, conn_mon, t)
             connection=conn_mon,
             last(connection__from_node(connection=conn_mon))...,
             t=t_in_t(m; t_long=t),
-        ),  # Monitored connection
+        ),
         connection_flow_indices(
             m;
             connection=conn_cont,

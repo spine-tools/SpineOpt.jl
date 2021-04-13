@@ -110,11 +110,8 @@ An iterator over all candidate connections that can impact the flow on the given
 """
 function _candidate_connections(conn)
     (
-        candidate_conn for candidate_conn in connection(is_candidate=true, has_ptdf=true) if candidate_conn !== conn &&
-                                                                                             lodf(
-            connection1=candidate_conn,
-            connection2=conn,
-        ) !== nothing
+        candidate_conn for candidate_conn in connection(is_candidate=true, has_ptdf=true)
+            if candidate_conn !== conn && lodf(connection1=candidate_conn, connection2=conn) !== nothing
     )
 end
 
@@ -133,7 +130,8 @@ Gather the indices of the relevant `connection_flow` variables.
 """
 function _constraint_connection_flow_intact_flow_indices(m, conn, t)
     (
-        ind for conn_k in Iterators.flatten(((conn,), _candidate_connections(conn))) for ind in connection_flow_indices(
+        ind
+        for conn_k in Iterators.flatten(((conn,), _candidate_connections(conn))) for ind in connection_flow_indices(
             m;
             connection=conn_k,
             last(connection__from_node(connection=conn_k))...,

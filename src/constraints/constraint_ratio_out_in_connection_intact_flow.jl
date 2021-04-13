@@ -66,8 +66,11 @@ function constraint_ratio_out_in_connection_intact_flow_indices(m::Model)
         (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
         for conn in connection(connection_monitored=true, has_ptdf=true)
         for (n_in, n_out) in connection__node__node(connection=conn) for t in t_lowest_resolution(
-            x.t for x in
-                connection_flow_indices(m; connection=conn, node=Iterators.flatten((members(n_out), members(n_in))))
+            x.t for x in connection_flow_indices(
+                m;
+                connection=conn,
+                node=Iterators.flatten((members(n_out), members(n_in))),
+            )
         ) for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario
@@ -111,7 +114,7 @@ function _constraint_ratio_out_in_connection_intact_flow_indices(m, connection, 
             node=node_out,
             direction=direction(:to_node),
             t=t_in_t(m; t_long=t),
-        ),  # `to_node` `connection_flow`s
+        ),
         (connection=conn, node=n_in, direction=d, stochastic_scenario=s, t=t)
         for (conn, n_in, d, s, t1) in connection_intact_flow_indices(
             m;

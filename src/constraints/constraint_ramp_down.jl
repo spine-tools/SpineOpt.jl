@@ -44,9 +44,8 @@ function add_constraint_ramp_down!(m::Model)
             + sum(
                 (
                     units_on[u, s, t1] - units_shut_down[u, s, t1] - expr_sum(
-                        + nonspin_units_shut_down[u, n, s, t1] for (u, n, s, t1) in
-                            nonspin_units_shut_down_indices(m; unit=u, stochastic_scenario=s, t=t1)
-                            if is_reserve_node(node=n) && downward_reserve(node=n);
+                        + nonspin_units_shut_down[u, n, s, t1]
+                        for (u, n, s, t1) in nonspin_units_shut_down_indices(m; unit=u, stochastic_scenario=s, t=t1) if is_reserve_node(node=n) && downward_reserve(node=n);
                         init=0,
                     )
                 )

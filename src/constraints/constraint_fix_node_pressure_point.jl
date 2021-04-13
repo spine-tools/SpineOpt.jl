@@ -62,8 +62,12 @@ function add_constraint_fix_node_pressure_point!(m::Model)
                 analysis_time=t0,
                 t=t,
             )]) * sum(
-                node_pressure[n_orig, s, t] for (n_orig, s, t) in
-                    node_pressure_indices(m; node=n_orig, stochastic_scenario=s, t=t_in_t(m; t_long=t))
+                node_pressure[n_orig, s, t] for (n_orig, s, t) in node_pressure_indices(
+                    m;
+                    node=n_orig,
+                    stochastic_scenario=s,
+                    t=t_in_t(m; t_long=t),
+                )
             )
             - (fixed_pressure_constant_0[(
                 connection=conn,
@@ -74,8 +78,12 @@ function add_constraint_fix_node_pressure_point!(m::Model)
                 analysis_time=t0,
                 t=t,
             )]) * sum(
-                node_pressure[n_dest, s, t] for (n_dest, s, t) in
-                    node_pressure_indices(m; node=n_dest, stochastic_scenario=s, t=t_in_t(m; t_long=t))
+                node_pressure[n_dest, s, t] for (n_dest, s, t) in node_pressure_indices(
+                    m;
+                    node=n_dest,
+                    stochastic_scenario=s,
+                    t=t_in_t(m; t_long=t),
+                )
             )
             + big_m(model=m.ext[:instance]) * (sum(
                 1 - binary_gas_connection_flow[conn, n_dest, direction(:to_node), s, t]

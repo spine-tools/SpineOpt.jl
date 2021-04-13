@@ -29,8 +29,12 @@ function add_constraint_res_minimum_node_state!(m::Model)
         (node=n_stor, stochastic_path=s, t=t_after) => @constraint(
             m,
             expr_sum(
-                node_state[n_stor, s, t_before] for (n_stor, s, t_before) in
-                    node_state_indices(m; node=n_stor, stochastic_scenario=s, t=t_before_t(m; t_after=t_after));
+                node_state[n_stor, s, t_before] for (n_stor, s, t_before) in node_state_indices(
+                    m;
+                    node=n_stor,
+                    stochastic_scenario=s,
+                    t=t_before_t(m; t_after=t_after),
+                );
                 init=0,
             )
             >=
