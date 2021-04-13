@@ -36,7 +36,8 @@ function add_constraint_connection_unitary_gas_flow!(m::Model)
                     direction=direction(:to_node),
                     t=t_in_t(m; t_long=t),
                 )
-            ) / length(
+            )
+            / length(
                 connection_flow_indices(
                     m;
                     connection=conn,

@@ -46,7 +46,8 @@ function add_constraint_node_injection!(m::Model)
                     temporal_block=anything,
                 );
                 init=0,
-            ) + expr_sum(
+            )
+            + expr_sum(
                 fractional_demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)]
                 * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t_after)]
                 for (n, s, t) in node_injection_indices(

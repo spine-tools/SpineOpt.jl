@@ -48,7 +48,8 @@ function add_constraint_fix_node_pressure_point!(m::Model)
                         t=t_in_t(m; t_long=t),
                     )
                 )
-            ) / 2
+            )
+            / 2
             <=
             0
             + (fixed_pressure_constant_1[(

@@ -62,7 +62,8 @@ function add_constraint_split_ramps!(m::Model)
                     t=t_before,
                 ) if !is_reserve_node(node=n);
                 init=0,
-            ) - expr_sum(
+            )
+            - expr_sum(
                 + unit_flow[u, n, d, s, t_after] for (u, n, d, s, t_after) in unit_flow_indices(
                     m;
                     unit=u,

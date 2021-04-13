@@ -36,7 +36,8 @@ function add_constraint_node_voltage_angle!(m::Model)
                     stochastic_scenario=s,
                     t=t,
                 )
-            ) - sum(
+            )
+            - sum(
                 connection_flow[conn, n_to, d_from, s, t] for (conn, n_from, d_from, s, t) in connection_flow_indices(
                     m;
                     connection=conn,

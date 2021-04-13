@@ -32,7 +32,8 @@ function add_constraint_storages_invested_transition!(m::Model)
                 + storages_decommissioned[n, s, t_after]
                 for (n, s, t_after) in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t_after);
                 init=0,
-            ) ==
+            )
+            ==
             expr_sum(
                 + storages_invested_available[n, s, t_before]
                 for (n, s, t_before) in storages_invested_available_indices(

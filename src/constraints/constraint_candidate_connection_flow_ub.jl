@@ -29,7 +29,8 @@ function add_constraint_candidate_connection_flow_ub!(m::Model)
     m.ext[:constraints][:candidate_connection_flow_ub] = Dict(
         (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            connection_flow[conn, ng, d, s, t] <=
+            connection_flow[conn, ng, d, s, t]
+            <=
             connection_intact_flow[conn, ng, d, s, t]
         ) for conn in connection(is_candidate=true, has_ptdf=true)
         for (conn, ng, d, s, t) in connection_flow_indices(m; connection=conn)

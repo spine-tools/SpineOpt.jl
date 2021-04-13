@@ -30,7 +30,8 @@ function add_constraint_cyclic_node_state!(m::Model)
                 node_state[n, s, t_end]
                 for (n, s, t_end) in node_state_indices(m; node=n, stochastic_scenario=s, t=t_end);
                 init=0,
-            ) >=
+            )
+            >=
             expr_sum(
                 node_state[n, s, t_start]
                 for (n, s, t_start) in node_state_indices(m; node=n, stochastic_scenario=s, t=t_start);
