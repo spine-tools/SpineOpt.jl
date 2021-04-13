@@ -31,8 +31,7 @@ function add_constraint_max_nonspin_ramp_down!(m::Model)
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + sum(
-                nonspin_ramp_down_unit_flow[u, n, d, s, t]
-                for (u, n, d, s, t) in nonspin_ramp_down_unit_flow_indices(
+                nonspin_ramp_down_unit_flow[u, n, d, s, t] for (u, n, d, s, t) in nonspin_ramp_down_unit_flow_indices(
                     m;
                     unit=u,
                     node=ng,

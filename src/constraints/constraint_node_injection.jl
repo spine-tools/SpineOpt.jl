@@ -46,7 +46,8 @@ function add_constraint_node_injection!(m::Model)
                     temporal_block=anything,
                 );
                 init=0,
-            ) + expr_sum(
+            )
+            + expr_sum(
                 fractional_demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)]
                 * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t_after)]
                 for (n, s, t) in node_injection_indices(
@@ -113,7 +114,7 @@ function add_constraint_node_injection!(m::Model)
     )
 end
 
-#TODO: can we find an easier way to define the constraint indices?
+# TODO: can we find an easier way to define the constraint indices?
 # I feel that for unexperienced uses it gets more an more complicated to understand our code
 function constraint_node_injection_indices(m::Model)
     unique(

@@ -58,12 +58,11 @@ function add_constraint_nodal_balance!(m::Model)
             + get(node_slack_pos, (n, s, t), 0) - get(node_slack_neg, (n, s, t), 0),
             eval(nodal_balance_sense(node=n)),
             0,
-        ) for (n, internal_nodes, s, t) in ((n, _internal_nodes(n), s, t)
-                                          for (n, s, t) in node_stochastic_time_indices(m)
-                                              if balance_type(node=n) !== :balance_type_none && all(
-            balance_type(node=ng) !== :balance_type_group
-            for ng in groups(n)
-        ))
+        )
+        for (n, internal_nodes, s, t) in ((n, _internal_nodes(n), s, t) for (n, s, t) in node_stochastic_time_indices(m)
+                                              if balance_type(node=n) !== :balance_type_none &&
+                                                 all(balance_type(node=ng) !== :balance_type_group
+        for ng in groups(n)))
     )
 end
 
@@ -74,7 +73,10 @@ _internal_nodes(n::Object) = setdiff(members(n), n)
 
 An iterator over all nodes of given `connection` that have the same commodity as given `node`.
 """
-_connection_nodes(connection, node) = (
+_connection_nodes(
+    connection,
+    node,
+) = (
     n
     for connection__node in (connection__from_node, connection__to_node)
     for n in connection__node(connection=connection, direction=anything)

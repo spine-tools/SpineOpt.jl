@@ -38,7 +38,13 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
             for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before))
         )
         if min_up_time(unit=u) != nothing && min_up_time(unit=u) > cutout
-            constraint[(unit=u, node=ng, direction=d, stochastic_path=s, t=t_before)] = @constraint(
+            constraint[(
+                unit=u,
+                node=ng,
+                direction=d,
+                stochastic_path=s,
+                t=t_before,
+            )] = @constraint(
                 m,
                 expr_sum(
                     + unit_flow[u, n, d, s, t_before1] * duration(t_before1)
@@ -146,7 +152,14 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
             )
         else
             # Part 1
-            constraint[(unit=u, node=ng, direction=d, stochastic_path=s, t=t_before, i=1)] = @constraint(
+            constraint[(
+                unit=u,
+                node=ng,
+                direction=d,
+                stochastic_path=s,
+                t=t_before,
+                i=1,
+            )] = @constraint(
                 m,
                 expr_sum(
                     + unit_flow[u, n, d, s, t] * duration(t) for (u, n, d, s, t) in unit_flow_indices(
@@ -260,7 +273,14 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                 )
             )
             # Part 2
-            constraint[(unit=u, node=ng, direction=d, stochastic_path=s, t=t_before, i=2)] = @constraint(
+            constraint[(
+                unit=u,
+                node=ng,
+                direction=d,
+                stochastic_path=s,
+                t=t_before,
+                i=2,
+            )] = @constraint(
                 m,
                 expr_sum(
                     + unit_flow[u, n, d, s, t] * min(duration(t), duration(t_before))

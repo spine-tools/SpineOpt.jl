@@ -29,13 +29,8 @@ function add_constraint_min_down_time!(m::Model)
         (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
-                + units_available[u, s, t] - units_on[u, s, t] for (u, s, t) in units_on_indices(
-                    m;
-                    unit=u,
-                    stochastic_scenario=s,
-                    t=t,
-                    temporal_block=anything,
-                );
+                + units_available[u, s, t] - units_on[u, s, t]
+                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
                 init=0,
             )
             >=

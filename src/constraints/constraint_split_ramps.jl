@@ -28,13 +28,7 @@ Optionally also non spinning reserve contribution can be included, `nonspin_ramp
 This is required to enforce separate limitations on these ramp types.
 """
 function add_constraint_split_ramps!(m::Model)
-    @fetch unit_flow,
-    ramp_down_unit_flow,
-    shut_down_unit_flow,
-    nonspin_ramp_down_unit_flow,
-    ramp_up_unit_flow,
-    start_up_unit_flow,
-    nonspin_ramp_up_unit_flow = m.ext[:variables]
+    @fetch unit_flow, ramp_down_unit_flow, shut_down_unit_flow, nonspin_ramp_down_unit_flow, ramp_up_unit_flow, start_up_unit_flow, nonspin_ramp_up_unit_flow = m.ext[:variables]
     m.ext[:constraints][:split_ramps] = Dict(
         (unit=u, node=n, direction=d, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
@@ -68,7 +62,8 @@ function add_constraint_split_ramps!(m::Model)
                     t=t_before,
                 ) if !is_reserve_node(node=n);
                 init=0,
-            ) - expr_sum(
+            )
+            - expr_sum(
                 + unit_flow[u, n, d, s, t_after] for (u, n, d, s, t_after) in unit_flow_indices(
                     m;
                     unit=u,
@@ -134,14 +129,16 @@ function constraint_split_ramps_indices_filtered(
     t_before=anything,
     t_after=anything,
 )
-    f(ind) = _index_in(
-        ind;
-        unit=unit,
-        node=node,
-        direction=direction,
-        stochastic_path=stochastic_path,
-        t_before=t_before,
-        t_after=t_after,
-    )
+    function f(ind)
+        _index_in(
+            ind;
+            unit=unit,
+            node=node,
+            direction=direction,
+            stochastic_path=stochastic_path,
+            t_before=t_before,
+            t_after=t_after,
+        )
+    end
     filter(f, constraint_split_ramps_indices(m))
 end

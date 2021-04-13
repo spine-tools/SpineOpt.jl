@@ -27,13 +27,16 @@ function process_master_problem_solution(mp)
             mp.ext[:values][:units_invested_available][inds]
             for inds in units_invested_available_indices(mp; unit=u) if end_(inds.t) <= end_(current_window(mp))
         ]
-        unit.parameter_values[u][:fix_units_invested_available] =
-            parameter_value(TimeSeries(time_indices, vals, false, false))
+        unit.parameter_values[u][:fix_units_invested_available] = parameter_value(
+            TimeSeries(time_indices, vals, false, false),
+        )
         if !haskey(unit__benders_iteration.parameter_values, (u, current_bi))
             unit__benders_iteration.parameter_values[(u, current_bi)] = Dict()
         end
-        unit__benders_iteration.parameter_values[(u, current_bi)][:units_invested_available_bi] =
-            parameter_value(TimeSeries(time_indices, vals, false, false))
+        unit__benders_iteration.parameter_values[(
+            u,
+            current_bi,
+        )][:units_invested_available_bi] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
     for c in indices(candidate_connections)
         time_indices = [
@@ -45,15 +48,19 @@ function process_master_problem_solution(mp)
             for inds in connections_invested_available_indices(mp; connection=c)
                 if end_(inds.t) <= end_(current_window(mp))
         ]
-        connection.parameter_values[c][:connections_invested_available_mp] =
-            parameter_value(TimeSeries(time_indices, vals, false, false))
-        connection.parameter_values[c][:fix_connections_invested_available] =
-            parameter_value(TimeSeries(time_indices, vals, false, false))
+        connection.parameter_values[c][:connections_invested_available_mp] = parameter_value(
+            TimeSeries(time_indices, vals, false, false),
+        )
+        connection.parameter_values[c][:fix_connections_invested_available] = parameter_value(
+            TimeSeries(time_indices, vals, false, false),
+        )
         if !haskey(connection__benders_iteration.parameter_values, (c, current_bi))
             connection__benders_iteration.parameter_values[(c, current_bi)] = Dict()
         end
-        connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_bi] =
-            parameter_value(TimeSeries(time_indices, vals, false, false))
+        connection__benders_iteration.parameter_values[(
+            c,
+            current_bi,
+        )][:connections_invested_available_bi] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
     for n in indices(candidate_storages)
         time_indices = [
@@ -64,13 +71,16 @@ function process_master_problem_solution(mp)
             mp.ext[:values][:storages_invested_available][inds]
             for inds in storages_invested_available_indices(mp; node=n) if end_(inds.t) <= end_(current_window(mp))
         ]
-        node.parameter_values[n][:fix_storages_invested_available] =
-            parameter_value(TimeSeries(time_indices, vals, false, false))
+        node.parameter_values[n][:fix_storages_invested_available] = parameter_value(
+            TimeSeries(time_indices, vals, false, false),
+        )
         if !haskey(node__benders_iteration.parameter_values, (n, current_bi))
             node__benders_iteration.parameter_values[(n, current_bi)] = Dict()
         end
-        node__benders_iteration.parameter_values[(n, current_bi)][:storages_invested_available_bi] =
-            parameter_value(TimeSeries(time_indices, vals, false, false))
+        node__benders_iteration.parameter_values[(
+            n,
+            current_bi,
+        )][:storages_invested_available_bi] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
 end
 
@@ -83,24 +93,21 @@ end
 function unfix_mp_variables()
     for u in indices(candidate_units)
         if haskey(unit.parameter_values[u], :starting_fix_units_invested_available)
-            unit.parameter_values[u][:fix_units_invested_available] =
-                unit.parameter_values[u][:starting_fix_units_invested_available]
+            unit.parameter_values[u][:fix_units_invested_available] = unit.parameter_values[u][:starting_fix_units_invested_available]
         else
             delete!(unit.parameter_values[u], :fix_units_invested_available)
         end
     end
     for c in indices(candidate_connections)
         if haskey(connection.parameter_values[c], :starting_fix_connections_invested_available)
-            connection.parameter_values[c][:fix_connections_invested_available] =
-                connection.parameter_values[c][:starting_fix_connections_invested_available]
+            connection.parameter_values[c][:fix_connections_invested_available] = connection.parameter_values[c][:starting_fix_connections_invested_available]
         else
             delete!(connection.parameter_values[c], :fix_connections_invested_available)
         end
     end
     for n in indices(candidate_storages)
         if haskey(node.parameter_values[n], :starting_fix_storages_invested_available)
-            node.parameter_values[n][:fix_storages_invested_available] =
-                node.parameter_values[n][:starting_fix_storages_invested_available]
+            node.parameter_values[n][:fix_storages_invested_available] = node.parameter_values[n][:starting_fix_storages_invested_available]
         else
             delete!(node.parameter_values[n], :fix_storages_invested_available)
         end
@@ -127,8 +134,10 @@ function save_sp_marginal_values(m)
         for ind in inds if ind.unit == u]
         vals = [m.ext[:values][:bound_units_on][ind]
         for ind in inds if ind.unit == u]
-        unit__benders_iteration.parameter_values[(u, current_bi)][:units_available_mv] =
-            parameter_value(TimeSeries(time_indices, vals, false, false))
+        unit__benders_iteration.parameter_values[(
+            u,
+            current_bi,
+        )][:units_available_mv] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
     inds = keys(m.ext[:values][:bound_connections_invested_available])
     for c in indices(candidate_connections)
@@ -136,8 +145,10 @@ function save_sp_marginal_values(m)
         for ind in inds if ind.connection == c]
         vals = [m.ext[:values][:bound_connections_invested_available][ind]
         for ind in inds if ind.connection == c]
-        connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_mv] =
-            parameter_value(TimeSeries(time_indices, vals, false, false))
+        connection__benders_iteration.parameter_values[(
+            c,
+            current_bi,
+        )][:connections_invested_available_mv] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
     inds = keys(m.ext[:values][:bound_storages_invested_available])
     for n in indices(candidate_storages)
@@ -145,8 +156,10 @@ function save_sp_marginal_values(m)
         for ind in inds if ind.node == n]
         vals = [m.ext[:values][:bound_storages_invested_available][ind]
         for ind in inds if ind.node == n]
-        node__benders_iteration.parameter_values[(n, current_bi)][:storages_invested_available_mv] =
-            parameter_value(TimeSeries(time_indices, vals, false, false))
+        node__benders_iteration.parameter_values[(
+            n,
+            current_bi,
+        )][:storages_invested_available_mv] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
 end
 
@@ -155,8 +168,9 @@ function save_sp_objective_value_bi(m, mp)
     for (ind, value) in m.ext[:values][:total_costs]
         total_sp_objective_value += value
     end
-    benders_iteration.parameter_values[current_bi] =
-        Dict(:sp_objective_value_bi => parameter_value(total_sp_objective_value))
+    benders_iteration.parameter_values[current_bi] = Dict(
+        :sp_objective_value_bi => parameter_value(total_sp_objective_value),
+    )
 
     total_mp_investment_costs = 0
     for (ind, value) in mp.ext[:values][:unit_investment_costs]
@@ -176,6 +190,5 @@ function save_sp_objective_value_bi(m, mp)
 
     mp.ext[:objective_lower_bound] = objective_lower_bound
 
-    mp.ext[:benders_gap] =
-        (2 * (objective_upper_bound - objective_lower_bound)) / (objective_upper_bound + objective_lower_bound)
+    mp.ext[:benders_gap] = (2 * (objective_upper_bound - objective_lower_bound)) / (objective_upper_bound + objective_lower_bound)
 end

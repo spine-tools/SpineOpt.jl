@@ -47,11 +47,10 @@ function add_variable!(
         :int => int,
         :fix_value => fix_value,
     )
-    var =
-        m.ext[:variables][name] = Dict(
-            ind => _variable(m, name, ind, lb, ub, bin, int)
-            for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-        )
+    var = m.ext[:variables][name] = Dict(
+        ind => _variable(m, name, ind, lb, ub, bin, int)
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+    )
     if !isempty(SpineOpt.indices(representative_periods_mapping))
         map_to_representative_periods!(m, m.ext[:variables][name], indices)
     end

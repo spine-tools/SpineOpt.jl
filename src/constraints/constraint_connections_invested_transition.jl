@@ -38,7 +38,8 @@ function add_constraint_connections_invested_transition!(m::Model)
                     t=t_after,
                 );
                 init=0,
-            ) ==
+            )
+            ==
             expr_sum(
                 + connections_invested_available[conn, s, t_before]
                 for (conn, s, t_before) in connections_invested_available_indices(

@@ -95,27 +95,25 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
     concept_dictionary = Dict(
         key => Dict(
             entry[template_mapping[key][:name_index]] => Dict(
-                :description =>
-                    isnothing(get(template_mapping[key], :description_index, nothing)) ? nothing :
-                    (entry[template_mapping[key][:description_index]]),
-                :default_value =>
-                    isnothing(get(template_mapping[key], :default_value_index, nothing)) ? nothing :
-                    (entry[template_mapping[key][:default_value_index]]),
-                :parameter_value_list =>
-                    isnothing(get(template_mapping[key], :parameter_value_list_index, nothing)) ? nothing :
-                    (entry[template_mapping[key][:parameter_value_list_index]]),
-                :feature =>
-                    isnothing(get(template_mapping[key], :feature_index, nothing)) ? nothing :
-                    (entry[template_mapping[key][:feature_index]]),
-                :related_concepts =>
-                    isnothing(get(template_mapping[key], :related_concept_index, nothing)) ? Dict() :
-                    Dict(
-                        template_mapping[key][:related_concept_type] => (
-                            isa(entry[template_mapping[key][:related_concept_index]], Array) ?
-                            (unique([entry[template_mapping[key][:related_concept_index]]...])) :
-                            [entry[template_mapping[key][:related_concept_index]]]
-                        ),
-                    ),
+                :description => isnothing(get(template_mapping[key], :description_index, nothing)) ? nothing :
+                                (entry[template_mapping[key][:description_index]]),
+                :default_value => isnothing(get(template_mapping[key], :default_value_index, nothing)) ? nothing :
+                                  (entry[template_mapping[key][:default_value_index]]),
+                :parameter_value_list => isnothing(get(template_mapping[key], :parameter_value_list_index, nothing)) ?
+                                         nothing : (entry[template_mapping[key][:parameter_value_list_index]]),
+                :feature => isnothing(get(template_mapping[key], :feature_index, nothing)) ? nothing :
+                            (entry[template_mapping[key][:feature_index]]),
+                :related_concepts => isnothing(get(template_mapping[key], :related_concept_index, nothing)) ? Dict() :
+                                     Dict(
+                    template_mapping[key][:related_concept_type] => (isa(
+                        entry[template_mapping[key][:related_concept_index]],
+                        Array,
+                    ) ? (unique([
+                        entry[template_mapping[key][:related_concept_index]]...,
+                    ])) : [
+                        entry[template_mapping[key][:related_concept_index]],
+                    ]),
+                ),
             ) for entry in template[key]
         ) for key in keys(template)
     )
@@ -135,9 +133,11 @@ a `String` corresponding to the translated section name.
 If multiple template section names are mapped to a single `String`, the entries are aggregated under that title.
 """
 function translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, translation::Dict)
-    initial_translation = Dict(translation[key] => merge([concept_dictionary[k]
-    for k in key]...)
-    for key in keys(translation))
+    initial_translation = Dict(
+        translation[key] => merge([concept_dictionary[k]
+        for k in key]...)
+        for key in keys(translation)
+    )
     translated_concept_dictionary = deepcopy(initial_translation)
     for concept_type in keys(initial_translation)
         for concept in keys(initial_translation[concept_type])

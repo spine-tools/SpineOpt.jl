@@ -37,11 +37,9 @@ struct TimeSliceSet
         solids = [(first(time_slices), last(time_slices))
         for time_slices in values(block_time_slices)]
         sort!(solids)
-        gap_bounds = (
-            (last_, next_first)
-            for ((first_, last_), (next_first, next_last)) in zip(solids[1:(end - 1)], solids[2:end])
-                if end_(last_) < start(next_first)
-        )
+        gap_bounds = ((last_, next_first)
+                      for ((first_, last_), (next_first, next_last)) in zip(solids[1:(end - 1)], solids[2:end])
+                          if end_(last_) < start(next_first))
         gaps = [TimeSlice(end_(last_), start(next_first))
         for (last_, next_first) in gap_bounds]
         # NOTE: For convention, the last time slice in the preceding block becomes the 'bridge'
@@ -119,8 +117,11 @@ function _generate_current_window!(m::Model)
     roll_forward_ = roll_forward(model=instance, _strict=false)
     window_start = model_start_
     window_end = (roll_forward_ === nothing) ? model_end_ : min(model_start_ + roll_forward_, model_end_)
-    m.ext[:temporal_structure][:current_window] =
-        TimeSlice(window_start, window_end; duration_unit=_model_duration_unit(instance))
+    m.ext[:temporal_structure][:current_window] = TimeSlice(
+        window_start,
+        window_end;
+        duration_unit=_model_duration_unit(instance),
+    )
 end
 
 # Adjuster functions, in case blocks specify their own start and end
@@ -227,14 +228,7 @@ end
 The required length of the included history based on parameter values that impose delays as a `Dates.Period`.
 """
 function _required_history_duration(instance::Object)
-    delay_params = (
-        min_up_time,
-        min_down_time,
-        connection_flow_delay,
-        unit_investment_lifetime,
-        connection_investment_lifetime,
-        storage_investment_lifetime,
-    )
+    delay_params = (min_up_time, min_down_time, connection_flow_delay, unit_investment_lifetime, connection_investment_lifetime, storage_investment_lifetime)
     max_vals = (maximum_parameter_value(p)
     for p in delay_params)
     init = _model_duration_unit(instance)(1)  # Dynamics always require at least 1 duration unit of history
@@ -359,8 +353,7 @@ function to_time_slice(m::Model; t::TimeSlice)
     t_sets = (temp_struct[:time_slice], temp_struct[:history_time_slice])
     in_blocks = (s
     for t_set in t_sets
-    for time_slices in values(t_set.block_time_slices)
-    for s in _to_time_slice(time_slices, t))
+    for time_slices in values(t_set.block_time_slices) for s in _to_time_slice(time_slices, t))
     in_gaps = (s
     for t_set in t_sets
     for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t))

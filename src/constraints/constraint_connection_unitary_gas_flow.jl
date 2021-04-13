@@ -28,8 +28,7 @@ function add_constraint_connection_unitary_gas_flow!(m::Model)
         (connection=conn, node1=n1, node2=n2, stochastic_scenario=s, t=t) => @constraint(
             m,
             sum(
-                binary_gas_connection_flow[conn, n1, d, s, t]
-                for (conn, n1, d, s, t) in connection_flow_indices(
+                binary_gas_connection_flow[conn, n1, d, s, t] for (conn, n1, d, s, t) in connection_flow_indices(
                     m;
                     connection=conn,
                     node=n1,
@@ -37,7 +36,8 @@ function add_constraint_connection_unitary_gas_flow!(m::Model)
                     direction=direction(:to_node),
                     t=t_in_t(m; t_long=t),
                 )
-            ) / length(
+            )
+            / length(
                 connection_flow_indices(
                     m;
                     connection=conn,
