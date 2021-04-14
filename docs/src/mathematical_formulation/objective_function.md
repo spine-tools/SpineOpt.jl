@@ -1,13 +1,3 @@
-Things that need revising in the documentation
-
--	Could we maybe some examples of operating costs (I don’t really know what can be added other than fuel and VOM costs). Or is this meant to be used for emission costs for instance?
-
-- Also for the objective penalties some examples could be nice.
-
--	I think we need to explain a bit better the structure of the renewable curtailment cost? I assume the first term in the subtraction reflects the installed capacity times the capacity factor at a particular timestep, but I am not sure. Also what is the meaning of and t_short t_long here?
-
-
-
 # Objective function
 
 The objective function of SpineOpt expresses the minimization of the total system costs associated with maintaining and operating the considered energy system.
@@ -228,3 +218,5 @@ Penalty cost terms associated with the slack variables of a specific constraint 
 \left[v_{node\_slack\_neg}(n, s, t)-v_{node\_slack\_pos}(n, s, t) \right]\cdot p_{node\_slack\_penalty}(n,s,t)\cdot p_{weight}(n,s,t) \cdot p_{duration}(t)\\
 \end{aligned}
 ```
+
+@JDillon, could we have an example for the objective penalties?
