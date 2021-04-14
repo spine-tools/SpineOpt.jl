@@ -353,8 +353,8 @@ This constraint can be extended to the use of nonspinning reserves. See [also](@
 
 To include ramping and reserve constraints, it is a pre requisite that [minimum operating points](@ref constraint_minimum_operating_point) and [maximum capacity constraints](@ref constraint_unit_flow_capacity) are enforced as described.
 
-For dispatchable units, additional ramping constraints can be introduced. For setting up ramping characteristics of units see
-(***TODO: add reference to advanced concepts once merged***)
+For dispatchable units, additional ramping constraints can be introduced. For setting up ramping characteristics of units see [Ramping and Reserves](@ref)
+
 First, the unit flows are split into their online, start-up, shut-down and non-spinning ramping contributions.
 
 #### [Splitting unit flows into ramps](@id constraint_split_ramps)
