@@ -12,21 +12,21 @@ All parameters that limit the ramping abilities of a unit are expressed as a fra
 
 ### Constraining spinning ramps (would probably name this one first, as maybe most familiar to people)
 
- * [unit\_capacity](@ref): limit the maximum value of the `unit_flow` variable for a unit which is currently online. Inclusion of this parameter will trigger the creation of the [Define unit/technology capacity](@ref) constraint.
- * [ramp\_up\_limit](@ref) : limit the maximum increase in the `unit_flow` variable between two consecutive timesteps for which the unit is online. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning upwards ramp_up](@ref)
- * [ramp\_down\_limit](@ref) : limit the maximum decrease in the `unit_flow` variable between two consecutive timesteps for which the unit is online. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning downward ramps](@ref)
+ * [unit\_capacity](@ref): limit the maximum value of the `unit_flow` variable for a unit which is currently online. Inclusion of this parameter will trigger the creation of the [Define unit/technology capacity](@ref constraint_unit_flow_capacity) constraint.
+ * [ramp\_up\_limit](@ref) : limit the maximum increase in the `unit_flow` variable between two consecutive timesteps for which the unit is online. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning upwards ramp_up](@ref constraint_ramp_up)
+ * [ramp\_down\_limit](@ref) : limit the maximum decrease in the `unit_flow` variable between two consecutive timesteps for which the unit is online. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning downward ramps](@ref constraint_ramp_down)
 
  * [ramp\_up\_cost](@ref) : cost associated with upward ramping
  * [ramp\_down\_cost](@ref) : cost associated with downward ramping
 
 
 ### Constraining shutdown ramps
-  * [max\_shutdown\_ramp](@ref) : limit the maximum of the `unit_flow` variable the timestep right before a shutdown. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on downward shut down ramps](@ref)
-  * [min\_shutdown\_ramp](@ref) : limit the minimum of the `unit_flow` variable the timestep right before a shutdown. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on downward shut down ramps](@ref)
+  * [max\_shutdown\_ramp](@ref) : limit the maximum of the `unit_flow` variable the timestep right before a shutdown. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on downward shut down ramps](@ref constraint_max_shut_down_ramp)
+  * [min\_shutdown\_ramp](@ref) : limit the minimum of the `unit_flow` variable the timestep right before a shutdown. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on downward shut down ramps](@ref constraint_min_shut_down_ramp)
 
 ### Constraining startup ramps
-  * [max\_startup\_ramp](@ref) : limit the maximum of the `unit_flow` variable the timestep right after a start-up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on upward start up ramp_up](@ref)
-  * [min\_startup\_ramp](@ref) : limit the minimum of the `unit_flow` variable the timestep right after a start-up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on upward start up ramp_up](@ref)
+  * [max\_startup\_ramp](@ref) : limit the maximum of the `unit_flow` variable the timestep right after a start-up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on upward start up ramp_up](@ref constraint_max_start_up_ramp)
+  * [min\_startup\_ramp](@ref) : limit the minimum of the `unit_flow` variable the timestep right after a start-up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on upward start up ramp_up](@ref constraint_min_start_up_ramp)
 
 ## General principle and example use cases
 The general principle of the Spine modelling ramping constraints is that all of these parameters can be defined separately for each unit. This allows the user to incorporate different units (which can either represent a single unit or a technology type) with different flexibility characteristics.

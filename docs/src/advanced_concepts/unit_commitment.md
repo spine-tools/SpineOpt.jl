@@ -16,11 +16,11 @@ Here, we briefly describe the key concepts involved in the representation of (cl
 
 5. [unit\_availability\_factor](@ref): (number value). Is the fraction of the time that this unit is considered to be available. Typically, units are not available ``100``% of the time, due to scheduled maintenance, unforeseen outages, or other things. This can be incorporated in the model by setting the `unit_availability_factor` to a fractional value. For each timestep in the model, an upper bound is then imposed on the `units_on` variable, equal to `number_of_units` ``*`` `unit_availability_factor`. This parameter can not be used when the `online_variable_type` is binary. It should also be noted that when the `online_variable_type` is of integer type, the aforementioned product must be integer as well, since it will determine the value of the `units_available` parameter which is restricted to integer values. The default value for this parameter is ``1``.
 
-6. [min\_up\_time](@ref): (duration value). Sets the minimum time that a unit has to stay online after a startup. Inclusion of this parameter will trigger the creation of the constraint on [Minimum up time (basic version)](@ref)
+6. [min\_up\_time](@ref): (duration value). Sets the minimum time that a unit has to stay online after a startup. Inclusion of this parameter will trigger the creation of the constraint on [Minimum up time (basic version)](@ref constraint_min_up_time)
 
-7. [min\_down\_time](@ref): (duration value). Sets the minimum time that a unit has to stay offline after a shutdown. Inclusion of this parameter will trigger the creation of the constraint on [Minimum down time (basic version)](@ref)
+7. [min\_down\_time](@ref): (duration value). Sets the minimum time that a unit has to stay offline after a shutdown. Inclusion of this parameter will trigger the creation of the constraint on [Minimum down time (basic version)](@ref constraint_min_down_time)
 
-8. [minimum\_operating\_point](@ref): (number value) limits the minimum value of the `unit_flow` variable for a unit which is currently online. Inclusion of this parameter will trigger the creation of the [Constraint on minimum operating point](@ref)
+8. [minimum\_operating\_point](@ref): (number value) limits the minimum value of the `unit_flow` variable for a unit which is currently online. Inclusion of this parameter will trigger the creation of the [Constraint on minimum operating point](@ref constraint_minimum_operating_point)
 
 9. [start\_up\_cost](@ref): "number value". Cost associated with starting up a unit.
 10. [shut\_down\_cost](@ref): "number value". Cost associated with shutting down a unit.

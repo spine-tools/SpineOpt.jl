@@ -82,7 +82,7 @@ A model with a single `temporal_block` can also be optimized in a rolling horizo
 
 Suppose we want to model a horizon of one week, with a rolling window size of one day. The `roll_forward` parameter will then be a duration value of 1d. If we take the `temporal_block` parameters `block_start` and `block_end` to be the duration values 0h and 1d respectively, the model will optimize each day of the week separately. However, we could also take the `block_end` parameter to be 2d. Now the model will start by optimizing day 1 and day 2 together, after which it keeps only the values obtained for the first day, and moves forward to optimize the second and third day together.
 
-Again, a variable resolution can be implemented for the rolling window optimization. The sum of the durations must in this case match the size of the optimized window. 
+Again, a variable resolution can be implemented for the rolling window optimization. The sum of the durations must in this case match the size of the optimized window.
 
 ### Advanced usage: multiple `temporal_block` objects
 
@@ -143,4 +143,5 @@ Below is an example of an advanced use case in which a rolling horizon optimizat
   * `node_1_temporal_block_1`
   * `node_2_temporal_block_2`
 The two model components that are considered have a different resolution, and their own resolution is also varying within the optimization window. Note that in this case the two optimization windows have the same size, but this is not strictly necessary. The image below visualizes the first two window optimizations of this model.
-![temporal structure](Temporal_structure.svg)
+
+![temporal structure](../figs/Temporal_structure.svg)

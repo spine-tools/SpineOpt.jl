@@ -85,7 +85,7 @@ To limit the storage content, the $v_{node\_state}$ variable needs be constraine
 ```
 The discharging and charging behavior of storage nodes can be described through unit(s), representing the link between the storage node and the supply node.
 Note that the dis-/charging efficiencies and capacities are properties of these units.
-See [the capacity coonstraint](@ref constraint_unit_flow_capacity) and [the unit flow ratio constraints](@ref constraint_ratio_unit_flow)
+See [the capacity constraint](@ref constraint_unit_flow_capacity) and [the unit flow ratio constraints](@ref constraint_ratio_unit_flow)
 
 ### [Cyclic condition on node state variable](@id constraint_cyclic_node_state)
 To ensure that the node state at the end of the optimization is at least the same value as the initial value at the beginning of the optimization (or higher), the cyclic node state constraint can be used by setting the [cyclic\_condition](@ref) of a [node\_\_temporal\_block](@ref) to `true`. This trigger the following cyclic constraint:
