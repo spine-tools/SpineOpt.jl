@@ -46,6 +46,8 @@ makedocs(
             "Temporal Framework" => joinpath("advanced_concepts", "temporal_framework.md"),
             "Stochastic Framework" => joinpath("advanced_concepts", "stochastic_framework.md"),
             "Investment Optimization" => joinpath("advanced_concepts", "investment_optimization.md"),
+            "Unit Commitment" => joinpath("advanced_concepts", "unit_commitment.md"),
+            "Ramping and reserves" => joinpath("advanced_concepts", "ramping_and_reserves.md"),
         ],
         "Library" => "library.md",
     ],
