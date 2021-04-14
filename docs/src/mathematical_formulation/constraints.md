@@ -21,7 +21,7 @@ The energy balance is enforced by the following constraint:
 & 0 \\
 & \forall (n,s,t) \in node\_stochastic\_time\_indices: \\
 & p_{balance\_type}(n) != balance\_type\_none \\
-& \nexists ng in groups(n) : balance\_type\_group \\
+& \nexists ng \in groups(n) : balance\_type\_group \\
 \end{aligned}
 ```
 The constraint consists of the [node injections](@ref constraint_node_injection), the [net connections flows](@ref Variables) and [node slack variables](@ref Variables).
@@ -51,9 +51,9 @@ If a node corresponds to a storage node, the parameter [has\_state](@ref) should
 & v_{node\_injection}(n,s,t) \\
 & == \\
 & (v_{node\_state}(n, s, t\_before)\\
-& - v_{node\_state}(n, s, t) \cdot p_{state\_coeff}(n, t)) \\
+& - v_{node\_state}(n, s, t) \cdot p_{state\_coeff}(n,s,t)) \\
 &   / \Delta t_{after} \\
-&  - v_{node\_state}(n, s, t) \cdot p_{frac\_state\_loss}(n, t) \\
+&  - v_{node\_state}(n, s, t) \cdot p_{frac\_state\_loss}(n,s,t) \\
 &  + \sum_{\substack{(n2,s,t) \in node\_state\_indices: \\ \exists diff\_coeff(n2,n)}}
 v_{node\_state}(n2,s,t)\\
 & - \sum_{\substack{(n2,s,t) \in node\_state\_indices: \\ \exists diff\_coeff(n,n2)}}
@@ -64,7 +64,7 @@ v_{node\_state}(n2,s,t)\\
  v_{unit\_flow}(u,n',d_{out},s,t)\\
 & - demand(n,s,t)\\
 & \forall (n,t) \in node\_time\_indices : p_{has\_state}(n)\\
-& \forall s in stochastic\_scenario\_path
+& \forall s \in stochastic\_scenario\_path \\
 & t_{before} \in t\_before\_t(t\_after=t)\\
 \end{aligned}
 ```
@@ -78,8 +78,9 @@ To limit the storage content, the $v_{node\_state}$ variable needs be constraine
 ```math
 \begin{aligned}
 & v_{node\_state}(n, s, t)\\
-& <= p_{node\_state\_cap} \\
-& \forall (n,s,t) \in node\_stochastic\_time\_indices : p_{has\_state}(n)\\
+& <= p_{node\_state\_cap}(n, s, t)\\
+& \forall (n,s,t) \in node\_stochastic\_time\_indices : \\
+& p_{has\_state}(n)\\
 \end{aligned}
 ```
 The discharging and charging behavior of storage nodes can be described through unit(s), representing the link between the storage node and the supply node.
@@ -92,13 +93,17 @@ To ensure that the node state at the end of the optimization is at least the sam
 ```math
 \begin{aligned}
 & v_{node\_state}(n, s, t)\\
-& >= & v_{node\_state}(n, s, t)\\
+& >=  v_{node\_state}(n, s, t)\\
 & \forall (n,tb) \in p_{cyclic\_condition}(n,tb) : \\
 & \{p_{cyclic\_condition}(n,tb) == true,\\
 & p_{has\_state}(n) \}\\
-& \forall (n',t_{initial}) \in node\_time\_indices : n' == n, t_{initial} == t\_before\_t(t\_after=first(t \in tb)),\\
-& \forall (n',t_{last}) \in node\_time\_indices : n' == n, t_{last} == last(t \in tb))\\
-& \forall s in stochastic\_path\\
+& \forall (n',t_{initial}) \in node\_time\_indices : \\
+& \{n' == n, \\
+& t_{initial} == t\_before\_t(t\_after=first(t \in tb)),\\
+& \forall (n',t_{last}) \in node\_time\_indices : \\
+& n' == n, \\
+& t_{last} == last(t \in tb))\\
+& \forall s \in stochastic\_path\\
 \end{aligned}
 ```
 
@@ -130,16 +135,17 @@ The constrained given below enforces a fixed, maximum or minimum ratio between o
 \begin{aligned}
 & \sum_{\substack{(u,n,d,s,t_{out}) \in unit\_flow\_indices: \\ (u,n,d,s,t_{out}) \, \in \, (u,ng_{out},:to\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{out}) \cdot \Delta t_{out} \\
 & \{ \\
-& ==  p_{fix\_ratio\_out\_in\_unit\_flow}(u,ng_{out},ng_{in},t), \\
-& <= p_{max\_ratio\_out\_in\_unit\_flow}(u,ng_{out},ng_{in},t), \\
-& >= p_{min\_ratio\_out\_in\_unit\_flow}(u,ng_{out},ng_{in},t)\\
+& ==  p_{fix\_ratio\_out\_in\_unit\_flow}(u,ng_{out},ng_{in},s,t), \\
+& <= p_{max\_ratio\_out\_in\_unit\_flow}(u,ng_{out},ng_{in},s,t), \\
+& >= p_{min\_ratio\_out\_in\_unit\_flow}(u,ng_{out},ng_{in},s,t)\\
 & \} \\
 & \cdot \sum_{\substack{(u,n,d,s,t_{in}) \in unit\_flow\_indices:\\ (u,n,d,s,t_{in}) \in (u,ng_{in},:from\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{in}) \cdot \Delta t_{in} \\
-& + p_{\{fix,max,min\}\_units\_on\_coefficient\_out\_in}(u,ng_{out},ng_{in},t) \\
-& \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ & (u,s,t_{units\_on}) \in (u,s,t)}} v_{units\_on}(u,s,t_{units\_on}) \cdot \\
-& \min(\Delta t_{units\_on},\Delta t) \\
+& + p_{\{fix,max,min\}\_units\_on\_coefficient\_out\_in}(u,ng_{out},ng_{in},s,t) \\
+& \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
+ (u,s,t_{units\_on}) \in (u,s,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
+& \cdot \min(\Delta t_{units\_on},\Delta t) \\
 & \forall (u, ng_{out}, ng_{in}) \in ind(p_{\{fix,max,min\}\_ratio\_out\_in\_unit\_flow}), \\
-& \forall t \in timeslices, \forall s \in stochasticpath
+& \forall t \in time\_slices, \forall s \in stochastic\_path
 \end{aligned}
 ```
 Note that a right-hand side constant coefficient associated with the variable [`v_{units\_on}`](@ref Variables) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_out\_in](@ref), [max\_units\_on\_coefficient\_out\_in](@ref), [min\_units\_on\_coefficient\_out\_in](@ref), respectively.
@@ -151,16 +157,17 @@ Similarly to the ratio between outgoing and incoming unit flows, a ratio can als
 \begin{aligned}
 & \sum_{\substack{(u,n,d,s,t_{in}) \in unit\_flow\_indices: \\ (u,n,d,s,t_{in}) \, \in \, (u,ng_{in},:from\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{in}) \cdot \Delta t_{in} \\
 & \{ \\
-& ==  p_{fix\_ratio\_in\_out\_unit\_flow}(u,ng_{in},ng_{out},t), \\
-& <= p_{max\_ratio\_in\_out\_unit\_flow}(u,ng_{in},ng_{out},t), \\
-& >= p_{min\_ratio\_in\_out\_unit\_flow}(u,ng_{in},ng_{out},t)\\
+& ==  p_{fix\_ratio\_in\_out\_unit\_flow}(u,ng_{in},ng_{out},s,t), \\
+& <= p_{max\_ratio\_in\_out\_unit\_flow}(u,ng_{in},ng_{out},s,t), \\
+& >= p_{min\_ratio\_in\_out\_unit\_flow}(u,ng_{in},ng_{out},s,t)\\
 & \} \\
-& \cdot \sum_{\substack{(u,n,d,s,t_{out}) \in unit\_flow\_indices:\\ (u,n,d,s,t_{in}) \in (u,ng_{in},:to\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{out}) \cdot \Delta t_{in} \\
-& + p_{\{fix,max,min\}\_units\_on\_coefficient\_in\_out}(u,ng_{in},ng_{out},t) \\
-& \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ & (u,s,t_{units\_on}) \in (u,s,t)}} v_{units\_on}(u,s,t_{units\_on}) \cdot \\
-& \min(\Delta t_{units\_on},\Delta t) \\
+& \cdot \sum_{\substack{(u,n,d,s,t_{out}) \in unit\_flow\_indices:\\ (u,n,d,s,t_{in}) \in (u,ng_{in},:to\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{out}) \cdot \Delta t_{out} \\
+& + p_{\{fix,max,min\}\_units\_on\_coefficient\_in\_out}(u,ng_{in},ng_{out},s,t) \\
+& \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
+ (u,s,t_{units\_on}) \in (u,s,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
+&  \cdot \min(\Delta t_{units\_on},\Delta t) \\
 & \forall (u, ng_{in}, ng_{out}) \in ind(p_{\{fix,max,min\}\_ratio\_in\_out\_unit\_flow}), \\
-& \forall t \in timeslices, \forall s \in stochasticpath
+& \forall t \in time\_slices, \forall s \in stochastic\_path
 \end{aligned}
 ```
 Note that a right-hand side constant coefficient associated with the variable [`v_{units\_on}`](@ref Variables) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_in\_out](@ref), [max\_units\_on\_coefficient\_in\_out](@ref), [min\_units\_on\_coefficient\_in\_out](@ref), respectively.
@@ -173,16 +180,17 @@ Similarly to the [ratio between outgoing and incoming units flows](@ref ratio_ou
 \begin{aligned}
 & \sum_{\substack{(u,n,d,s,t_{in1}) \in unit\_flow\_indices: \\ (u,n,d,s,t_{in1}) \, \in \, (u,ng_{in1},:from\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{in1}) \cdot \Delta t_{in1} \\
 & \{ \\
-& ==  p_{fix\_ratio\_in\_in\_unit\_flow}(u,ng_{in1},ng_{in2},t), \\
-& <= p_{max\_ratio\_in\_in\_unit\_flow}(u,ng_{in1},ng_{in2},t), \\
-& >= p_{min\_ratio\_in\_in\_unit\_flow}(u,ng_{in1},ng_{in2},t)\\
+& ==  p_{fix\_ratio\_in\_in\_unit\_flow}(u,ng_{in1},ng_{in2},s,t), \\
+& <= p_{max\_ratio\_in\_in\_unit\_flow}(u,ng_{in1},ng_{in2},s,t), \\
+& >= p_{min\_ratio\_in\_in\_unit\_flow}(u,ng_{in1},ng_{in2},s,t)\\
 & \} \\
 & \cdot \sum_{\substack{(u,n,d,s,t_{in2}) \in unit\_flow\_indices:\\ (u,n,d,s,t_{in2}) \in (u,ng_{in2},:from\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{in2}) \cdot \Delta t_{in2} \\
-& + p_{\{fix,max,min\}\_units\_on\_coefficient\_in\_in}(u,ng_{in1},ng_{in2},t) \\
-& \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ & (u,s,t_{units\_on}) \in (u,s,t)}} v_{units\_on}(u,s,t_{units\_on}) \cdot \\
-& \min(\Delta t_{units\_on},\Delta t) \\
+& + p_{\{fix,max,min\}\_units\_on\_coefficient\_in\_in}(u,ng_{in1},ng_{in2},s,t) \\
+& \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
+ (u,s,t_{units\_on}) \in (u,s,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
+&  \cdot \min(\Delta t_{units\_on},\Delta t) \\
 & \forall (u, ng_{in1}, ng_{in2}) \in ind(p_{\{fix,max,min\}\_ratio\_in\_in\_unit\_flow}), \\
-& \forall t \in timeslices, \forall s \in stochasticpath
+& \forall t \in time\_slices, \forall s \in stochastic\_path
 \end{aligned}
 ```
 Note that a right-hand side constant coefficient associated with the variable [`v_{units\_on}`](@ref Variables) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_in\_in](@ref), [max\_units\_on\_coefficient\_in\_in](@ref), [min\_units\_on\_coefficient\_in\_in](@ref), respectively.
@@ -195,16 +203,17 @@ Similarly to the [ratio between outgoing and incoming units flows](@ref ratio_ou
 \begin{aligned}
 & \sum_{\substack{(u,n,d,s,t_{out1}) \in unit\_flow\_indices: \\ (u,n,d,s,t_{out1}) \, \in \, (u,ng_{out1},:to\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{out1}) \cdot \Delta t_{out1} \\
 & \{ \\
-& ==  p_{fix\_ratio\_out\_out\_unit\_flow}(u,ng_{out1},ng_{out2},t), \\
-& <= p_{max\_ratio\_out\_out\_unit\_flow}(u,ng_{out1},ng_{out2},t), \\
-& >= p_{min\_ratio\_out\_out\_unit\_flow}(u,ng_{out1},ng_{out2},t)\\
+& ==  p_{fix\_ratio\_out\_out\_unit\_flow}(u,ng_{out1},ng_{out2},s,t), \\
+& <= p_{max\_ratio\_out\_out\_unit\_flow}(u,ng_{out1},ng_{out2},s,t), \\
+& >= p_{min\_ratio\_out\_out\_unit\_flow}(u,ng_{out1},ng_{out2},s,t)\\
 & \} \\
 & \cdot \sum_{\substack{(u,n,d,s,t_{out2}) \in unit\_flow\_indices:\\ (u,n,d,s,t_{out2}) \in (u,ng_{out2},:to\_node,s,t)}} v_{unit\_flow}(u,n,d,s,t_{out2}) \cdot \Delta t_{out2} \\
-& + p_{\{fix,max,min\}\_units\_on\_coefficient\_out\_out}(u,ng_{out1},ng_{out2},t) \\
-& \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ & (u,s,t_{units\_on}) \in (u,s,t)}} v_{units\_on}(u,s,t_{units\_on}) \cdot \\
-& \min(\Delta t_{units\_on},\Delta t) \\
+& + p_{\{fix,max,min\}\_units\_on\_coefficient\_out\_out}(u,ng_{out1},ng_{out2},s,t) \\
+& \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
+ (u,s,t_{units\_on}) \in (u,s,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
+&  \cdot \min(\Delta t_{units\_on},\Delta t) \\
 & \forall (u, ng_{out1}, ng_{out2}) \in ind(p_{\{fix,max,min\}\_ratio\_out\_out\_unit\_flow}), \\
-& \forall t \in timeslices, \forall s \in stochasticpath
+& \forall t \in time\_slices, \forall s \in stochastic\_path
 \end{aligned}
 ```
 Note that a right-hand side constant coefficient associated with the variable [`v_{units\_on}`](@ref Variables) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_out\_out](@ref), [max\_units\_on\_coefficient\_out\_out](@ref), [min\_units\_on\_coefficient\_out\_out](@ref), respectively.
@@ -219,10 +228,14 @@ flows to this location in each time step. When desirable, the capacity can be sp
 ```math
 \begin{aligned}
 & \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)}} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
-& <= p_{unit\_capacity}(u,ng,d,t) \\
-&  \cdot p_{unit\_conv\_cap\_to\_flow}(u,ng,d,t) \\
-&  \cdot \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ \\ & (u,\Delta t_{units\_on} \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \cdot \min(t_{units\_on},\Delta t) \\
-& \forall (u,ng,d) \in ind(p_{unit\_capacity}), \forall t \in timeslices, \forall s \in stochasticpath
+& <= p_{unit\_capacity}(u,ng,d,s,t) \\
+&  \cdot p_{unit\_conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+&  \cdot \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
+(u,\Delta t_{units\_on} \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
+& \cdot \min(t_{units\_on},\Delta t) \\
+& \forall (u,ng,d) \in ind(p_{unit\_capacity}), \\
+& \forall t \in time\_slices, \\
+& \forall s \in stochastic\_path
 \end{aligned}
 ```
 
@@ -268,7 +281,7 @@ The number of available units itself is constrained by the parameters [unit\_ava
 & v_{units\_available}(u,s,t) \\
 & == p_{unit\_availability\_factor}(u,s,t) \\
 & \cdot (p_{number\_of\_units}(u,s,t) \\
-& + \sum_{(u,s,t) in units\_invested\_available\_indices} v_{units\_invested\_available}(u,s,t) ) \\
+& + \sum_{(u,s,t) \in units\_invested\_available\_indices} v_{units\_invested\_available}(u,s,t) ) \\
 & \forall (u,s,t) \in units\_on\_indices
 \end{aligned}
 ```
@@ -295,12 +308,14 @@ input or output nodes/node groups ng:
 ```math
 \begin{aligned}
 & \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)}} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
-& >= p_{minimum\_operating\_point}(u,ng,d,t) \\
-& \cdot p_{unit\_capacity}(u,ng,d,t) \\
-&  \cdot \cdot p_{conv\_cap\_to\_flow}(u,ng,d,t) \\
+& >= p_{minimum\_operating\_point}(u,ng,d,s,t) \\
+& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+&  \cdot \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
 &  \cdot \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ (u,\Delta t_{units\_on} \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
-& \cdot \min(t_{units\_on},\Delta t) \\
-& \forall (u,ng,d) \in ind(p_{minimum\_operating\_point}), \forall t \in t\_lowest\_resolution(node\_\_temporal\_block(node=members(ng))), \forall s \in stochasticpath
+& \cdot \min(\Delta t_{units\_on},\Delta t) \\
+& \forall (u,ng,d) \in ind(p_{minimum\_operating\_point}), \\
+& \forall t \in t\_lowest\_resolution(node\_\_temporal\_block(node=members(ng))),\\
+&  \forall s \in stochastic\_path
 \end{aligned}
 ```
 Note that this constraint is always generated for the lowest resolution of all involved members of the node group `ng`, i.e. the lowest resolution of the involved units flows. This is also why the term ```\min(t_{units\_on},\Delta t)``` is added for the units on variable, in order to dis-/aggregate the units on resolution to the resolution of the unit flows.
@@ -312,7 +327,7 @@ In order to impose a minimum offline time of a unit, before it can be started up
 \begin{aligned}
 & v_{units\_available}(u,s,t) \\
 & - v_{units\_on}(u,s,t) \\
-& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >=t-p_{min\_down\_time} && t' <= t}}
+& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >=t-p_{min\_down\_time}(u,s,t) && t' <= t}}
 v_{units\_shut\_down}(u,s,t') \\
 & \forall (u,s,t) \in units\_on\_indices\\
 \end{aligned}
@@ -326,7 +341,7 @@ Similarly to the [minimum down time constraint](@ref constraint_min_down_time), 
 ```math
 \begin{aligned}
 & v_{units\_on}(u,s,t) \\
-& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >=t-p_{min\_up\_time}, \\ t' <= t}}
+& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >=t-p_{min\_up\_time}(u,s,t), \\ t' <= t}}
 v_{units\_started\_up}(u,s,t') \\
 & \forall (u,s,t) \in units\_on\_indices\\
 \end{aligned}
@@ -366,10 +381,10 @@ First, the unit flows are split into their online, start-up, shut-down and non-s
 & \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in unit\_flow\_indices \\
 \end{aligned}
 ```
-Note that each *individual* tuple of the [unit_flow_indices](@ref Sets) is split into its ramping contributions, if any of the ramping variables exist for this tuple.
+Note that each *individual* tuple of the [unit_flow_indices](@ref Sets) is split into its ramping contributions, if any of the ramping variables exist for this tuple. How to set-up ramps for units is described ***HERE, TODO ADD REF ONCE MERGED***
 
 ##### [Constraint on spinning upwards ramp_up](@id constraint_ramp_up)
-The maximum online ramp up ability of a unit can be constraint by the [ramp\_up\_limit](@ref), expressed as a share of the [unit\_capacity](@ref). With this constraint, ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced.
+The maximum online ramp up ability of a unit can be constraint by the [ramp\_up\_limit](@ref), expressed as a share of the [unit\_capacity](@ref). With this constraint, online (i.e. spinning) ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced.
 
 ```math
 \begin{aligned}
@@ -378,61 +393,101 @@ The maximum online ramp up ability of a unit can be constraint by the [ramp\_up\
 & + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}}
  (v_{units\_on}(u,s,t')
  - v_{units\_started\_up}(u,s,t')) \\
+& \min(\Delta t',\Delta t) \\
 & \cdot p_{ramp\_up\_limit}(u,ng,d,s,t) \\
-& \cdot p_{unit\_capacity}(u,ng,d,t) \\
-& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,t) \\
-& \forall (u,ng,d,s,t) \in ind(constraint\_ramp\_up)\\
+& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+& \forall (u,ng,d) \in ind(p_{ramp\_up\_limit})\\
+& \forall s \in stochastic\_path, \forall t \in time\_slice
 \end{aligned}
 ```
+Note that only online units that are not started up during this timestep are considered.
 ##### [Constraint on minimum upward start up ramp_up](@id constraint_min_start_up_ramp)
+To enforce a lower bound on the ramp of a unit during start-up, the [min\_startup\_ramp](@ref) given as a share of the [unit\_capacity](@ref) needs to be defined, which triggers the constraint below. Usually, only non-reserve commodities can have a start-up ramp. However, it is possible to include them, by adding them to the ramp defining node `ng`.
+
+```math
+\begin{aligned}
+& + \sum_{\substack{(u,n,d,s,t) \in start\_up\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{start\_up\_unit\_flow}(u,n,d,s,t)  \\
+& >= \\
+& + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}} \\
+& \cdot p_{min\_startup\_ramp}(u,ng,d,s,t) \\
+& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+& \forall (u,ng,d) \in ind(p_{min\_startup\_ramp})\\
+& \forall s \in stochastic\_path, \forall t \in time\_slice
+\end{aligned}
+```
+
 ##### [Constraint on maximum upward start up ramp_up](@id constraint_max_start_up_ramp)
 
-This constraint enforces a limit on the unit ramp during startup process. Usually, we consider only non-balancing commodities. However, it is possible to include them, by adding them to the ramp defining node `ng`.
+This constraint enforces a upper limit on the unit ramp during startup process, triggered by the existence of the [max\_startup\_ramp](@ref), which should be given as a share of the [unit\_capacity](@ref). Typically, only  ramp flows to non-reserve nodes are considered during the start-up process. However, it is possible to include them, by adding them to the ramp defining node `ng`.
 ```math
 \begin{aligned}
 & + \sum_{\substack{(u,n,d,s,t) \in start\_up\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{start\_up\_unit\_flow}(u,n,d,s,t)  \\
 & <= \\
-& + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}}
+& + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}} \\
 & \cdot p_{max\_startup\_ramp}(u,ng,d,s,t) \\
-& \cdot p_{unit\_capacity}(u,ng,d,t) \\
-& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,t) \\
-& \forall (u,ng,d,s,t) \in ind(constraint\_start\_up\_ramp)\\
+& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+& \forall (u,ng,d) \in ind(p_{max\_startup\_ramp})\\
+& \forall s \in stochastic\_path, \forall t \in time\_slice
 \end{aligned}
 ```
-##### Constraint on upward non-spinning start up ramps
+##### [Constraint on upward non-spinning start ups](@id constraint_min_down_time2)
 
-For non-spinning reserves, offline units can be scheduled for reserve provision if they have recovered their minimum down time. If nonspinning reserves are used the minimum down-time constraint becomes:
+For non-spinning reserve provision, offline units can be scheduled to provide nonspinning reserves, if they have recovered their minimum down time. If nonspinning reserves are used for a unit, the minimum down-time constraint takes the following form:
 
 ```math
 \begin{aligned}
 & v_{units\_available}(u,s,t) \\
 & - v_{units\_on}(u,s,t) \\
-& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >t-p_{min\_down\_time} && t' <= t}}
+& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >t-p_{min\_down\_time}(u,s,t) \\ t' <= t}}
 v_{units\_shut\_down}(u,s,t') \\
-& \sum_{\substack{(u,n,s,t) \in nonspin\_units\_started\_up\_indices: \\ t \in t\_overlaps\_t(t) \\ (u,s) \in (u,s)}}
-  v_{nonspin\_units\_started\_up}(u,n,s,t)
-& \forall (u,s,t) \in units\_on\_indices\\
+& \sum_{\substack{(u',n',s',t') \in nonspin\_units\_started\_up\_indices:\\ (u',s',t') \in (u,s,t)}}
+  v_{nonspin\_units\_started\_up}(u',n',s',t') \\
+& \forall (u,s,t) \in units\_on\_indices:\\
+& (u,...) \in nonspin\_units\_started\_up\_indices
 \end{aligned}
 ```
-TODO: add correct forall, how to simplify?
 
 ##### [Minimum nonspinning ramp up](@id constraint_min_nonspin_ramp_up)
-##### [Maximum nonspinning ramp up](@id constraint_max_nonspin_ramp_up)
 
-The ramp a non-spinning unit can provide is constraint through the [max\_res\_startup\_ramp](@ref).
+The nonspinning ramp flows of a units ```v_{nonspin\_ramp\_up\_unit\_flow}``` are dependent on the units holding available for nonspinning reserve provision, i.e. ```v_{nonspin\_units\_started\_up}```. A lower bound on these nonspinning reserves can be enforced by defining the [min\_res\_startup\_ramp](@ref) parameter (given as a fraction of the [unit\_capacity](@ref)).
 
 ```math
 \begin{aligned}
-& + \sum_{\substack{(u,n,d,s,t) \in nonspin\_ramp\_up\_unit\_flow\_indices: \\ (u,n,d,s,t)  \in (u,n,d,s,t)}} v_{nonspin\_ramp\_up\_unit\_flow}(u,n,d,s,t)  \\
-& <= \\
-& + \sum_{\substack{(u,n,s,t) \in nonspin\_units\_started\_up\_indices: \\ (u,n,s,t)  \in (u,n,s,t)}} v_{nonspin\_units\_started\_up}(u,n,s,t)  \\
-& \cdot p_{max\_res\_startup\_ramp}(u,ng,d,s,t) \\
-& \cdot p_{unit\_capacity}(u,ng,d,t) \\
-& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,t) \\
-& \forall (u,ng,d,s,t) \in ind(constraint\_max\_nonspin\_ramp)\\
+& + \sum_{\substack{(u,n,d,s,t) \in nonspin\_ramp\_up\_unit\_flow\_indices: \\ (u,n,d)  \in (u,ng,d)}} v_{nonspin\_ramp\_up\_unit\_flow}(u,n,d,s,t)  \\
+& >= \\
+& + \sum_{\substack{(u,n,s,t) \in nonspin\_units\_started\_up\_indices: \\ (u,n)  \in (u,ng}} v_{nonspin\_units\_started\_up}(u,n,s,t)  \\
+& \cdot p_{min\_res\_startup\_ramp}(u,ng,d,s,t) \\
+& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+& \forall (u,ng,d) \in ind(p_{min\_res\_startup\_ramp})\\
+& \forall s \in stochastic\_path, \forall t \in time\_slice
 \end{aligned}
 ```
+
+##### [Maximum nonspinning ramp up](@id constraint_max_nonspin_ramp_up)
+
+The nonspinning ramp flows of a units ```v_{nonspin\_ramp\_up\_unit\_flow}``` are dependent on the units holding available for nonspinning reserve provision, i.e. ```v_{nonspin\_units\_started\_up}```. An upper bound on these nonspinning reserves can be enforced by defining the [max\_res\_startup\_ramp](@ref) parameter (given as a fraction of the [unit\_capacity](@ref)).
+
+```math
+\begin{aligned}
+& + \sum_{\substack{(u,n,d,s,t) \in nonspin\_ramp\_up\_unit\_flow\_indices: \\ (u,n,d)  \in (u,ng,d)}} v_{nonspin\_ramp\_up\_unit\_flow}(u,n,d,s,t)  \\
+& <= \\
+& + \sum_{\substack{(u,n,s,t) \in nonspin\_units\_started\_up\_indices: \\ (u,n)  \in (u,ng}} v_{nonspin\_units\_started\_up}(u,n,s,t)  \\
+& \cdot p_{max\_res\_startup\_ramp}(u,ng,d,s,t) \\
+& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+& \forall (u,ng,d) \in ind(p_{max\_res\_startup\_ramp})\\
+& \forall s \in stochastic\_path, \forall t \in time\_slice
+\end{aligned}
+```
+
 ##### [Constraint on spinning downward ramps](@id constraint_ramp_down)
+
+Similarly to the online [ramp up capbility](@ref constraint_ramp_up) of a unit,
+it is also possible to impose an upper bound on the online ramp down ability of unit by defining a [ramp\_down\_limit](@ref), expressed as a share of the [unit\_capacity](@ref).
 
 ```math
 \begin{aligned}
@@ -442,44 +497,79 @@ The ramp a non-spinning unit can provide is constraint through the [max\_res\_st
  (v_{units\_on}(u,s,t')
  - v_{units\_started\_up}(u,s,t')) \\
 & \cdot p_{ramp\_down\_limit}(u,ng,d,s,t) \\
-& \cdot p_{unit\_capacity}(u,ng,d,t) \\
-& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,t) \\
-& \forall (u,ng,d,s,t) \in ind(constraint\_ramp\_down)\\
+& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+& \forall (u,ng,d) \in ind(p_{ramp\_down\_limit})\\
+& \forall s \in stochastic\_path, \forall t \in time\_slice
 \end{aligned}
 ```
+
 ##### [Lower bound on downward shut-down ramps](@id constraint_min_shut_down_ramp)
+This constraint enforces a lower bound on the unit ramp during shutdown process. Usually, units will only provide shutdown ramps to non-reserve nodes. However, it is possible to include them, by adding them to the ramp defining node `ng`.
+The constraint is triggered by the existence of the [min\_shutdown\_ramp](@ref) parameter.
+
+```math
+\begin{aligned}
+& + \sum_{\substack{(u,n,d,s,t) \in shut\_down\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{shut\_down\_unit\_flow}(u,n,d,s,t)  \\
+& <= \\
+& + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}} v_{units\_shut\_down}(u,s,t') \\
+& \cdot p_{min\_shutdown\_ramp}(u,ng,d,s,t) \\
+& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+& \forall (u,ng,d) \in ind(p_{min\_shutdown\_ramp})\\
+& \forall s \in stochastic\_path, \forall t \in time\_slice
+\end{aligned}
+```
 ##### [Upper bound on downward shut-down ramps](@id constraint_max_shut_down_ramp)
-This constraint enforces a limit on the unit ramp during shutdown process. Usually, we consider only non-balancing commodities. However, it is possible to include them, by adding them to the ramp defining node `ng`.
+This constraint enforces an upper bound on the unit ramp during shutdown process. Usually, units will only provide shutdown ramps to non-reserve nodes. However, it is possible to include them, by adding them to the ramp defining node `ng`.
+The constraint is triggered by the existence of the [max\_shutdown\_ramp](@ref) parameter.
+
 ```math
 \begin{aligned}
 & + \sum_{\substack{(u,n,d,s,t) \in shut\_down\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{shut\_down\_unit\_flow}(u,n,d,s,t)  \\
 & <= \\
 & + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}} v_{units\_shut\_down}(u,s,t') \\
 & \cdot p_{max\_shutdown\_ramp}(u,ng,d,s,t) \\
-& \cdot p_{unit\_capacity}(u,ng,d,t) \\
-& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,t) \\
-& \forall (u,ng,d,s,t) \in ind(constraint\_shut\_down\_ramp)\\
+& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+& \forall (u,ng,d) \in ind(p_{max\_shutdown\_ramp})\\
+& \forall s \in stochastic\_path, \forall t \in time\_slice
 \end{aligned}
 ```
-##### [Constraint on minimum up time, including nonpinning reserves](@id constraint_min_up_time2)
-For non-spinning downward reserves, online units can be scheduled for reserve provision through shut down if they have recovered their minimum up time. If nonspinning reserves are used the minimum up-time constraint becomes; TODO check this:
+##### [Constraint on upward non-spinning shut-downs](@id constraint_min_up_time2)
+For non-spinning downward reserves, online units can be scheduled for reserve provision through shut down if they have recovered their minimum up time. If nonspinning reserves are used the minimum up-time constraint becomes:
+
 ```math
 \begin{aligned}
 & v_{units\_on}(u,s,t) \\
-& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >t-p_{min\_up\_time} && t' <= t}}
+& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >t-p_{min\_up\_time}(u,s,t) && t' <= t}}
 v_{units\_started\_up}(u,s,t') \\
-& \sum_{\substack{(u,n,s,t) \in nonspin\_units\_shut\_down\_indices: \\ t \in t\_overlaps\_t(t) \\ (u,s) \in (u,s)}}
-  v_{nonspin\_units\_shut\_down}(u,n,s,t) \\
-& \forall (u,s,t) \in units\_on\_indices\\
+& \sum_{\substack{(u',n',s',t') \in nonspin\_units\_shut\_down\_indices: \\ (u',s',t') \in (u,s,t)}}
+  v_{nonspin\_units\_shut\_down}(u',n',s',t') \\
+& \forall (u,s,t) \in units\_on\_indices:\\
+& u \in nonspin\_units\_started\_up\_indices
 \end{aligned}
 ```
-TODO: add correct forall, how to simplify?
-
-The ramp a non-spinning unit can provide is constraint through the [max\_res\_shutdown\_ramp](@ref).
-
-#### [Constraint on minimum up time, including nonspinning reserves](@id constraint_min_down_time2)
 #### [Lower bound on the nonspinning downward reserve provision](@id constraint_min_nonspin_ramp_down)
+
+A lower bound on the nonspinning reserve provision of a unit can be imposed by defining the [min\_res\_shutdown\_ramp](@ref) parameter, which leads to the creation of the following constraint in the model:
+
+```math
+\begin{aligned}
+& + \sum_{\substack{(u,n,d,s,t) \in nonspin\_ramp\_down\_unit\_flow\_indices: \\ (u,n,d,s,t)  \in (u,n,d,s,t)}} v_{nonspin\_ramp\_down\_unit\_flow}(u,n,d,s,t)  \\
+& <= \\
+& + \sum_{\substack{(u,n,s,t) \in nonspin\_units\_shut\_down\_indices: \\ (u,n,s,t)  \in (u,n,s,t)}} v_{nonspin\_units\_shut\_down}(u,n,s,t)  \\
+& \cdot p_{min\_res\_shutdown\_ramp}(u,ng,d,s,t) \\
+& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+& \forall (u,ng,d) \in ind(p_{min\_res\_shutdown\_ramp})\\
+& \forall s \in stochastic\_path, \forall t \in time\_slice
+\end{aligned}
+```
+
 #### [Upper bound on the nonspinning downward reserve provision](@id constraint_max_nonspin_ramp_down)
+
+An upper limit on the nonspinning reserve provision of a unit can be imposed by defining the [max\_res\_shutdown\_ramp](@ref) parameter, which leads to the creation of the following constraint in the model:
 
 ```math
 \begin{aligned}
@@ -487,17 +577,18 @@ The ramp a non-spinning unit can provide is constraint through the [max\_res\_sh
 & <= \\
 & + \sum_{\substack{(u,n,s,t) \in nonspin\_units\_shut\_down\_indices: \\ (u,n,s,t)  \in (u,n,s,t)}} v_{nonspin\_units\_shut\_down}(u,n,s,t)  \\
 & \cdot p_{max\_res\_shutdown\_ramp}(u,ng,d,s,t) \\
-& \cdot p_{unit\_capacity}(u,ng,d,t) \\
-& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,t) \\
-& \forall (u,ng,d,s,t) \in ind(constraint\_max\_nonspin\_ramp)\\
+& \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+& \forall (u,ng,d) \in ind(p_{max\_res\_shutdown\_ramp})\\
+& \forall s \in stochastic\_path, \forall t \in time\_slice
 \end{aligned}
 ```
 ##### [Constraint on minimum node state for reserve provision](@id constraint_res_minimum_node_state)
-Storage nodes can also contribute to the provision of reserves. The amount of balancing contributions is limited by the ramps of the sotrage unit (see above) and by the node state:
+Storage nodes can also contribute to the provision of reserves. The amount of balancing contributions is limited by the ramps of the storage unit (see above) and by the node state:
 ```math
 \begin{aligned}
 & v_{node\_state}(n_{stor}, s, t)\\
-& >= p_{node\_state\_min} \\
+& >= p_{node\_state\_min}(n_{stor}, s, t) \\
 & + \sum_{\substack{(u,n_{res},d,s,t) \in unit\_flow\_indices: \\ u \in unit\_flow\_indices;n=n_{stor}) \\ p_{is\_reserve\_node}(n_{res}) }} v_{unit\_flow}(u,n_{res},d,s,t)  \\
 & \cdot p_{minimum\_reserve\_activation\_time}(n_{res}) \\
 & \forall (n_{stor},s,t) \in node\_stochastic\_time\_indices : p_{has\_state}(n)\\
@@ -505,17 +596,7 @@ Storage nodes can also contribute to the provision of reserves. The amount of ba
 ```
 
 #### [Bounds on the unit capacity including ramping constraints](@id constraint_unit_flow_capacity_w_ramps)
-Currently not supported, mention issue here
-
-[comment]: <> (TODO:
-%substract non-spinning downward; make this an energy not power balance (add delat t)
-%minimum up time (extended)
-%minimum down time (extended)
-%constraints max/min non spin ramp up
-% constraint res minimum node state
-%add specifics on how to define e.g. nodal balance, connection capacities for %balancing capacities
-%todo add new downward equations
-%add additional constraints on unit capacity)
+(Currently under development)
 
 ### Operating segments
 #### [Operating segments of units](@id constraint_operating_point_bounds)
@@ -525,6 +606,18 @@ Currently not supported, mention issue here
 ### Bounds on commodity flows
 
 #### [Upper bound on cumulated unit flows](@id constraint_max_cum_in_unit_flow_bound)
+
+To impose a limit on the cumulative amount of certain commodity flows, a cumulative bound can be set by defining the parameter [max\_cum\_in\_unit\_flow\_bound](@ref) for entire optimization window:
+
+```math
+\begin{aligned}
+& \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (ug,ng,d)}} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
+& <= p_{max\_cum\_unit\_flow\_bound}(ug,ng,d,s,t) \\
+& \forall (ug,ng,d) \in ind(p_{max\_cum\_unit\_flow\_bound})
+\end{aligned}
+```
+
+***TODO this constraint needs to be revised. It should be defined on a unit_node_group as indicated here (which is different from the current implementation)***
 
 ## Network constraints
 
