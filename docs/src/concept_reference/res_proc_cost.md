@@ -1,0 +1,1 @@
+By defining the res\_proc\_cost parameter for a specific unit `u`, node `n`, and direction `d`, a cost term will be added to the objective function whenever a reserve asset (characterized by these indices) is used over the course of the operational dispatch during the current optimization window.

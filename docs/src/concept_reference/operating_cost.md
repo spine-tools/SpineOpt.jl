@@ -1,0 +1,1 @@
+By defining the operating\_cost parameter for a specific unit `u`, node `n`, and direction `d`, a cost term will be added to the objective function to account for operating costs associated with that unit over the course of the operational dispatch during the current optimization window.

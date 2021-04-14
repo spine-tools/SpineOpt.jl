@@ -212,7 +212,7 @@ v_{unit\_flow}(u, n, d, s, t)\cdot p_{tax\_net\_unit\_flow}(n,s,t)\cdot p_{weigh
 v_{unit\_flow}(u, n, d, s, t)\cdot p_{tax\_net\_unit\_flow}(n,s,t)\cdot p_{weight}(n,s,t)\cdot p_{duration}(t)\\
  & + \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(p_{tax\_out\_unit\_flow}) \& d=  from\_node}}
  v_{unit\_flow}(u, n, d, s, t)\cdot p_{tax\_out\_unit\_flow}(n,s,t)\cdot p_{weight}(n,s,t) \cdot p_{duration}(t)\\
- & + \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(p_{tax\_out\_unit\_flow}) \& d=  to\_node}}
+ & + \sum_{\substack{(u,n,d,s,t) \in unit\_flow\_indices:\\ n \in ind(p_{tax\_in\_unit\_flow}) \& d=  to\_node}}
  v_{unit\_flow}(u, n, d, s, t)\cdot p_{tax\_in\_unit\_flow}(n,s,t)\cdot p_{weight}(n,s,t) \cdot p_{duration}(t)\\
 \end{aligned}
 ```
