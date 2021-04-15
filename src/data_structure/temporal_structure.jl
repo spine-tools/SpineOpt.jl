@@ -372,10 +372,15 @@ function _generate_representative_time_slice_mapping(m::Model)
             rep_blk = representative_periods_mapping(temporal_block=blk, inds=t_start_real)
             t_start_real_i = t_start_real
             for t in time_slice(m, temporal_block=temporal_block(rep_blk))
-                rep_dict[to_time_slice(
-                    m,
-                    t=TimeSlice(t_start_real_i, t_start_real_i + _model_duration_unit(m.ext[:instance])(duration(t))),
-                )] = t
+                rep_dict[
+                    to_time_slice(
+                        m,
+                        t=TimeSlice(
+                            t_start_real_i,
+                            t_start_real_i + _model_duration_unit(m.ext[:instance])(duration(t)),
+                        ),
+                    ),
+                ] = t
                 t_start_real_i = t_start_real_i + _model_duration_unit(m.ext[:instance])(duration(t))
             end
         end
