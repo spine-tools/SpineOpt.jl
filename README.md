@@ -62,6 +62,9 @@ For an example of how to use SpineOpt in your Spine Toolbox projects,
 please see [here](https://spine-toolbox.readthedocs.io/en/latest/case_study_a5.html).
 (We apologize for the lengthiness of that example. We're currently working on a minimal example that will get you started faster.)
 
+### Documentation
+
+SpineOpt documentation, including getting started guide and reference, can be found here: [Documentation](https://spine-project.github.io/SpineOpt.jl/latest/index.html).
 
 ### Troubleshooting
 
