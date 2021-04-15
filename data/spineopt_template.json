@@ -10,7 +10,7 @@
         ["stochastic_structure", "A group of stochastic scenarios that represent a structure.", 281470681806146],
         ["temporal_block", "A length of time with a particular resolution.", 280376891207703],
         ["unit", "A conversion of one/many comodities between nodes.", 281470681805429],
-        ["unit_constraint", "A constraint over the flows of a specific unit.", 281473533931636]
+        ["unit_constraint", "A generic data-driven custom constraint.", 281473533931636]
     ],
     "relationship_classes": [
         ["connection__from_node", ["connection", "node"], "Defines the `nodes` the `connection` can take input from, and holds most `connection_flow` variable specific parameters."],
