@@ -8,4 +8,4 @@ the [start\_up\_unit\_flow variable](@ref Variables) is only fixed for time step
 
 Other uses can include e.g. a constant or time-varying **exogenous** commodity flow from or to a unit.
 
-Note that the mentioned [start\_up\_unit\_flow variable](@ref Variables) is only included if the parameter [max\_startup\_ramp](@ref) exist for the correspond [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relationship. The usage of ramps is described in [Ramps and reserves](@ref).
+Note that the mentioned [start\_up\_unit\_flow variable](@ref Variables) is only included if the parameter [max\_startup\_ramp](@ref) exist for the correspond [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relationship. The usage of ramps is described in [Ramping and Reserves](@ref).
