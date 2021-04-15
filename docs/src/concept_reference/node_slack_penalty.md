@@ -1,1 +1,1 @@
-By defining the node\_slack\_penalty parameter for a specific node `n`, scenario `s` and time step `t`, a cost term will be added to the objective function to account for penalty costs associated with the violation of a specific constraint over the course of the operational dispatch during the current optimization window.
+By defining the node\_slack\_penalty parameter for a specific `node`, a cost term will be added to the objective function to account for penalty costs over the course of the operational dispatch during the current optimization window.
