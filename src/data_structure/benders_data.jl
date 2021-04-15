@@ -33,10 +33,9 @@ function process_master_problem_solution(mp)
         if !haskey(unit__benders_iteration.parameter_values, (u, current_bi))
             unit__benders_iteration.parameter_values[(u, current_bi)] = Dict()
         end
-        unit__benders_iteration.parameter_values[(
-            u,
-            current_bi,
-        )][:units_invested_available_bi] = parameter_value(TimeSeries(time_indices, vals, false, false))
+        unit__benders_iteration.parameter_values[(u, current_bi)][
+            :units_invested_available_bi,
+        ] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
     for c in indices(candidate_connections)
         time_indices = [
@@ -76,10 +75,9 @@ function process_master_problem_solution(mp)
         if !haskey(node__benders_iteration.parameter_values, (n, current_bi))
             node__benders_iteration.parameter_values[(n, current_bi)] = Dict()
         end
-        node__benders_iteration.parameter_values[(
-            n,
-            current_bi,
-        )][:storages_invested_available_bi] = parameter_value(TimeSeries(time_indices, vals, false, false))
+        node__benders_iteration.parameter_values[(n, current_bi)][
+            :storages_invested_available_bi,
+        ] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
 end
 
@@ -146,10 +144,9 @@ function save_sp_marginal_values(m)
     for n in indices(candidate_storages)
         time_indices = [start(ind.t) for ind in inds if ind.node == n]
         vals = [m.ext[:values][:bound_storages_invested_available][ind] for ind in inds if ind.node == n]
-        node__benders_iteration.parameter_values[(
-            n,
-            current_bi,
-        )][:storages_invested_available_mv] = parameter_value(TimeSeries(time_indices, vals, false, false))
+        node__benders_iteration.parameter_values[(n, current_bi)][
+            :storages_invested_available_mv,
+        ] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
 end
 
