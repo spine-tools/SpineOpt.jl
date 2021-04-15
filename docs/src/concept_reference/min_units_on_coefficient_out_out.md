@@ -1,5 +1,5 @@
 The [min\_units\_on\_coefficient\_out\_out](@ref) parameter is an optinal coefficient in the
-[unit output-output ratio constraint](@ref ratio_out_in) controlled by the [min\_ratio\_out\_out\_unit\_flow](@ref) parameter.
+[unit output-output ratio constraint](@ref ratio_out_out) controlled by the [min\_ratio\_out\_out\_unit\_flow](@ref) parameter.
 Essentially, it acts as a coefficient for the `units_on` [variable](@ref Variables) in the constraint,
 allowing for making the minimum conversion ratio dependent on the amount of online capacity.
 
