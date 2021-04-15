@@ -84,8 +84,8 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         t=t_overlaps_t(m; t=t_before),
                     ) for (u, s, t_after1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
                     init=0,
-                ) +
-                expr_sum(
+                )
+                + expr_sum(
                     units_started_up[u, s, t_before1]
                     * min(duration(t_before1), duration(t_before))
                     * max_startup_ramp[(
@@ -118,8 +118,8 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                         t=t_overlaps_t(m; t=t_before),
                     );
                     init=0,
-                ) +
-                expr_sum(
+                )
+                + expr_sum(
                     units_shut_down[u, s, t_after1]
                     * min(duration(t_after1), duration(t_before))
                     * max_shutdown_ramp[(

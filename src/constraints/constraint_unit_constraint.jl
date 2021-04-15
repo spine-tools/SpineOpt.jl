@@ -49,8 +49,8 @@ function add_constraint_unit_constraint!(m::Model)
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
-            ) +
-            expr_sum(
+            )
+            + expr_sum(
                 + unit_flow[u, n, d, s, t_short]
                 * unit_flow_coefficient[(
                     unit=u,
@@ -71,8 +71,8 @@ function add_constraint_unit_constraint!(m::Model)
                     t=t_in_t(m; t_long=t),
                 ) if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short));
                 init=0,
-            ) +
-            expr_sum(
+            )
+            + expr_sum(
                 + unit_flow_op[u, n, d, op, s, t_short]
                 * unit_flow_coefficient[(
                     unit=u,
@@ -93,8 +93,8 @@ function add_constraint_unit_constraint!(m::Model)
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
-            ) +
-            expr_sum(
+            )
+            + expr_sum(
                 + unit_flow[u, n, d, s, t_short]
                 * unit_flow_coefficient[(
                     unit=u,
@@ -115,15 +115,15 @@ function add_constraint_unit_constraint!(m::Model)
                     t=t_in_t(m; t_long=t),
                 ) if isempty(unit_flow_op_indices(m; unit=u, node=n, direction=d, t=t_short));
                 init=0,
-            ) +
-            expr_sum(
+            )
+            + expr_sum(
                 + units_on[u, s, t1]
                 * units_on_coefficient[(unit_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)]
                 * min(duration(t1), duration(t)) for u in unit__unit_constraint(unit_constraint=uc)
                 for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0,
-            ) +
-            expr_sum(
+            )
+            + expr_sum(
                 + units_started_up[u, s, t1]
                 * units_started_up_coefficient[(
                     unit_constraint=uc,
@@ -135,8 +135,8 @@ function add_constraint_unit_constraint!(m::Model)
                 * min(duration(t1), duration(t)) for u in unit__unit_constraint(unit_constraint=uc)
                 for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0,
-            ) +
-            expr_sum(
+            )
+            + expr_sum(
                 + connection_flow[c, n, d, s, t_short]
                 * connection_flow_coefficient[(
                     connection=c,
@@ -156,8 +156,8 @@ function add_constraint_unit_constraint!(m::Model)
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
-            ) +
-            expr_sum(
+            )
+            + expr_sum(
                 + connection_flow[c, n, d, s, t_short]
                 * connection_flow_coefficient[(
                     connection=c,
@@ -177,8 +177,8 @@ function add_constraint_unit_constraint!(m::Model)
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
-            ) +
-            expr_sum(
+            )
+            + expr_sum(
                 + node_state[n, s, t_short]
                 * node_state_coefficient[(
                     node=n,
@@ -190,8 +190,8 @@ function add_constraint_unit_constraint!(m::Model)
                 * duration(t_short) for n in indices(node_state_coefficient; unit_constraint=uc)
                 for (n, s, t_short) in node_state_indices(m; node=n, stochastic_scenario=s, t=t_in_t(m; t_long=t));
                 init=0,
-            ) +
-            expr_sum(
+            )
+            + expr_sum(
                 + demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * demand_coefficient[(node=n, unit_constraint=uc, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * duration(t_short) for n in node__unit_constraint(unit_constraint=uc)

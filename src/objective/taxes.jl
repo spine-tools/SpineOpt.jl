@@ -45,8 +45,8 @@ function taxes(m::Model, t1)
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s) for (n,) in indices(tax_net_unit_flow)
             for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:from_node)) if end_(t) <= t1;
             init=0,
-        ) +
-        expr_sum(
+        )
+        + expr_sum(
             + unit_flow[u, n, d, s, t]
             * duration(t)
             * tax_out_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
@@ -55,8 +55,8 @@ function taxes(m::Model, t1)
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s) for (n,) in indices(tax_out_unit_flow)
             for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:from_node)) if end_(t) <= t1;
             init=0,
-        ) +
-        expr_sum(
+        )
+        + expr_sum(
             unit_flow[u, n, d, s, t]
             * duration(t)
             * tax_in_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]

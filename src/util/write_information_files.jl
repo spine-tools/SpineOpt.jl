@@ -95,7 +95,7 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
     concept_dictionary = Dict(
         key => Dict(
             entry[template_mapping[key][:name_index]] => Dict(
-                :description => isnothing(get(template_mapping[key], :description_index, nothing)) ? nothing : 
+                :description => isnothing(get(template_mapping[key], :description_index, nothing)) ? nothing :
                                 entry[template_mapping[key][:description_index]],
                 :default_value => isnothing(get(template_mapping[key], :default_value_index, nothing)) ? nothing :
                                   entry[template_mapping[key][:default_value_index]],
@@ -122,13 +122,16 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
         for entry in template[key]
             concept = concept_dictionary[key][entry[template_mapping[key][:name_index]]]
             # Check for conflicts in `description`, `default_value`, `parameter_value_list`, `feature`
-            if !isnothing(concept[:description]) && concept[:description] != entry[template_mapping[key][:description_index]]
+            if !isnothing(concept[:description]) &&
+               concept[:description] != entry[template_mapping[key][:description_index]]
                 @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `description` across dulipcate template entries!"
             end
-            if !isnothing(concept[:default_value]) && concept[:default_value] != entry[template_mapping[key][:default_value_index]]
+            if !isnothing(concept[:default_value]) &&
+               concept[:default_value] != entry[template_mapping[key][:default_value_index]]
                 @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `default_value` across dulipcate template entries!"
             end
-            if !isnothing(concept[:parameter_value_list]) && concept[:parameter_value_list] != entry[template_mapping[key][:parameter_value_list_index]]
+            if !isnothing(concept[:parameter_value_list]) &&
+               concept[:parameter_value_list] != entry[template_mapping[key][:parameter_value_list_index]]
                 @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `parameter_value_list` across dulipcate template entries!"
             end
             if !isnothing(concept[:feature]) && concept[:feature] != entry[template_mapping[key][:feature_index]]
@@ -136,12 +139,14 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
             end
             # Include all unique `concepts` into `related concepts`
             if !isempty(concept[:related_concepts])
-                if isa(entry[template_mapping[key][:related_concept_index]],Array)
+                if isa(entry[template_mapping[key][:related_concept_index]], Array)
                     related_concepts = unique([entry[template_mapping[key][:related_concept_index]]...])
                 else
                     related_concepts = [entry[template_mapping[key][:related_concept_index]]]
                 end
-                unique!(append!(concept[:related_concepts][template_mapping[key][:related_concept_type]], related_concepts))
+                unique!(
+                    append!(concept[:related_concepts][template_mapping[key][:related_concept_type]], related_concepts),
+                )
             end
         end
     end
