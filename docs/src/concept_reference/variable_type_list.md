@@ -1,1 +1,2 @@
-`variable_type_list` holds the possible values for variables where the type may be chosen from integer, binary or continuous. 
+The [variable\_type\_list](@ref) parameter value list contains the possible values
+for the [connection\_investment\_variable\_type](@ref) and [storage\_investment\_variable\_type](@ref) parameters.
