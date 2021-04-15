@@ -111,7 +111,7 @@ To ensure that the node state at the end of the optimization is at least the sam
 
 In the following, the operational constraints on the variables associated with units will be elaborated on. The static constraints, in contrast to the dynamic constraints, are addressing constraint without sequential time-coupling. It should however be noted that static constraints can still perform temporal aggregation.
 
-### Static constraints
+### [Static constraints](@id static-constraints-unit)
 
 The fundamental static constraints for units within SpineOpt relate to the relationships between commodity flows from and to units and to limits on the unit flow capacity.
 
@@ -260,7 +260,6 @@ parameters):
 - constraint on minimum down time
 - constraint on minimum up time
 - constraint on ramp rates
-(TODO: add references to julia constraints and chapters in docs)
 
 ##### [Bound on online units](@id constraint_units_on)
 The number of online units need to be restricted to the number of available units:
@@ -353,8 +352,7 @@ This constraint can be extended to the use of nonspinning reserves. See [also](@
 
 To include ramping and reserve constraints, it is a pre requisite that [minimum operating points](@ref constraint_minimum_operating_point) and [maximum capacity constraints](@ref constraint_unit_flow_capacity) are enforced as described.
 
-For dispatchable units, additional ramping constraints can be introduced. For setting up ramping characteristics of units see
-(***TODO: add reference to advanced concepts once merged***)
+For dispatchable units, additional ramping constraints can be introduced. For setting up ramping characteristics of units see [Ramping and Reserves](@ref).
 First, the unit flows are split into their online, start-up, shut-down and non-spinning ramping contributions.
 
 #### [Splitting unit flows into ramps](@id constraint_split_ramps)
@@ -381,7 +379,7 @@ First, the unit flows are split into their online, start-up, shut-down and non-s
 & \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in unit\_flow\_indices \\
 \end{aligned}
 ```
-Note that each *individual* tuple of the [unit_flow_indices](@ref Sets) is split into its ramping contributions, if any of the ramping variables exist for this tuple. How to set-up ramps for units is described ***HERE, TODO ADD REF ONCE MERGED***
+Note that each *individual* tuple of the [unit_flow_indices](@ref Sets) is split into its ramping contributions, if any of the ramping variables exist for this tuple. How to set-up ramps for units is described in [Ramping and Reserves](@ref).
 
 ##### [Constraint on spinning upwards ramp_up](@id constraint_ramp_up)
 The maximum online ramp up ability of a unit can be constraint by the [ramp\_up\_limit](@ref), expressed as a share of the [unit\_capacity](@ref). With this constraint, online (i.e. spinning) ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced.
@@ -621,23 +619,30 @@ To impose a limit on the cumulative amount of certain commodity flows, a cumulat
 
 ## Network constraints
 
-### Static constraints
+### [Static constraints](@id static-constraints-connection)
+
 #### [Capacity constraint on connections](@id constraint_connection_flow_capacity)
 #### [Fixed ratio between outgoing and incoming flows of a connection](@id constraint_ratio_out_in_connection_flow)
-### Network representation
 
-### [Pressure driven gas transfer](@id pressure-driven-gas-transfer-math)
-#### [Maximum node pressure](@id constraint_max_node_pressure)
-#### [Minimum node pressure](@id constraint_min_node_pressure)
-#### [Constraint o the pressure ratio between to nodes](@id constraint_compression_ratio)
-#### [Outer approximation through fixed pressure points](@id constraint_fixed_node_pressure_point)
-#### [Linepack storage flexibility](@id constraint_storage_line_pack)
-#### [Gas connection flow capacity](@id constraint_connection_flow_gas_capacity)
-#### [Enforcing unidirectional flow](@id constraint_connection_unitary_gas_flow.jl)
-### [Nodebased lossless DC power flow](@id nodal-lossless-DC)
-#### [Maximum node voltage angle](@id constraint_max_node_voltage_angle)
-#### [Minimum node voltage angle](@id constraint_min_node_voltage_angle)
-#### [Voltage angle to connection flows](@id constraint_node_voltage_angle)
+### Specific network representation
+
+In the following, the different specific network representations are introduced. While the [Static constraints](@ref static-constraints-connection) find application in any of the different networks, the following equations are specific to the discussed use cases. Currently, SpineOpt incorporated equations for pressure driven gas networks, nodal lossless DC power flows and PTDF based lossless DC power flow.
+
+#### [Pressure driven gas transfer](@id pressure-driven-gas-transfer-math)
+For gas pipelines it can be relevant a pressure driven gas transfer can be modelled, i.a. to account for linepack flexibility. Generally speaking, the main challenges related to pressure driven gas transfers are the non-convexities associated with the Weymouth equation. In SpineOpt, a convexified MILP representation has been implemented, which as been presented in [Schwele - Coordination of Power and Natural Gas Systems: Convexification Approaches for Linepack Modeling](https://doi.org/10.1109/PTC.2019.8810632).
+
+##### [Maximum node pressure](@id constraint_max_node_pressure)
+##### [Minimum node pressure](@id constraint_min_node_pressure)
+##### [Constraint on the pressure ratio between to nodes](@id constraint_compression_ratio)
+##### [Outer approximation through fixed pressure points](@id constraint_fixed_node_pressure_point)
+##### [Linepack storage flexibility](@id constraint_storage_line_pack)
+##### [Gas connection flow capacity](@id constraint_connection_flow_gas_capacity)
+##### [Enforcing unidirectional flow](@id constraint_connection_unitary_gas_flow.jl)
+
+#### [Nodebased lossless DC power flow](@id nodal-lossless-DC)
+##### [Maximum node voltage angle](@id constraint_max_node_voltage_angle)
+##### [Minimum node voltage angle](@id constraint_min_node_voltage_angle)
+##### [Voltage angle to connection flows](@id constraint_node_voltage_angle)
 
 ### [PTDF based DC lossless powerflow ?](@id PTDF-lossless-DC)
 #### [connection flow LODF?](@id constraint_connection_flow_lodf)
