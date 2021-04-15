@@ -29,8 +29,7 @@ function add_constraint_node_state_capacity!(m::Model)
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
             + expr_sum(
-                + node_state[ng, s, t]
-                for (ng, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s, t=t);
+                + node_state[ng, s, t] for (ng, s, t) in node_state_indices(m; node=ng, stochastic_scenario=s, t=t);
                 init=0,
             )
             <=
@@ -54,8 +53,7 @@ function constraint_node_state_capacity_indices(m::Model)
     unique(
         (node=ng, stochastic_path=path, t=t)
         for (ng, s, t) in node_state_indices(m; node=indices(node_state_cap)) for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario
-            for ind in _constraint_node_state_capacity_indices(m, ng, t)),
+            unique(ind.stochastic_scenario for ind in _constraint_node_state_capacity_indices(m, ng, t)),
         )
     )
 end

@@ -33,9 +33,10 @@ function process_master_problem_solution(mp)
         if !haskey(unit__benders_iteration.parameter_values, (u, current_bi))
             unit__benders_iteration.parameter_values[(u, current_bi)] = Dict()
         end
-        unit__benders_iteration.parameter_values[(u, current_bi)][
-            :units_invested_available_bi,
-        ] = parameter_value(TimeSeries(time_indices, vals, false, false))
+        unit__benders_iteration.parameter_values[(
+            u,
+            current_bi,
+        )][:units_invested_available_bi] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
     for c in indices(candidate_connections)
         time_indices = [
@@ -75,9 +76,10 @@ function process_master_problem_solution(mp)
         if !haskey(node__benders_iteration.parameter_values, (n, current_bi))
             node__benders_iteration.parameter_values[(n, current_bi)] = Dict()
         end
-        node__benders_iteration.parameter_values[(n, current_bi)][
-            :storages_invested_available_bi,
-        ] = parameter_value(TimeSeries(time_indices, vals, false, false))
+        node__benders_iteration.parameter_values[(
+            n,
+            current_bi,
+        )][:storages_invested_available_bi] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
 end
 
@@ -114,12 +116,10 @@ end
 function add_benders_iteration(j)
     new_bi = Object(Symbol(string("bi_", j)))
     add_object!(benders_iteration, new_bi)
-    add_relationships!(unit__benders_iteration, [(unit=u, benders_iteration=new_bi)
-    for u in indices(candidate_units)])
+    add_relationships!(unit__benders_iteration, [(unit=u, benders_iteration=new_bi) for u in indices(candidate_units)])
     add_relationships!(
         connection__benders_iteration,
-        [(connection=c, benders_iteration=new_bi)
-        for c in indices(candidate_connections)],
+        [(connection=c, benders_iteration=new_bi) for c in indices(candidate_connections)],
     )
     new_bi
 end
@@ -127,10 +127,8 @@ end
 function save_sp_marginal_values(m)
     inds = keys(m.ext[:values][:bound_units_on])
     for u in indices(candidate_units)
-        time_indices = [start(ind.t)
-        for ind in inds if ind.unit == u]
-        vals = [m.ext[:values][:bound_units_on][ind]
-        for ind in inds if ind.unit == u]
+        time_indices = [start(ind.t) for ind in inds if ind.unit == u]
+        vals = [m.ext[:values][:bound_units_on][ind] for ind in inds if ind.unit == u]
         unit__benders_iteration.parameter_values[(
             u,
             current_bi,
@@ -138,23 +136,20 @@ function save_sp_marginal_values(m)
     end
     inds = keys(m.ext[:values][:bound_connections_invested_available])
     for c in indices(candidate_connections)
-        time_indices = [start(ind.t)
-        for ind in inds if ind.connection == c]
-        vals = [m.ext[:values][:bound_connections_invested_available][ind]
-        for ind in inds if ind.connection == c]
+        time_indices = [start(ind.t) for ind in inds if ind.connection == c]
+        vals = [m.ext[:values][:bound_connections_invested_available][ind] for ind in inds if ind.connection == c]
         connection__benders_iteration.parameter_values[(c, current_bi)][
             :connections_invested_available_mv,
         ] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
     inds = keys(m.ext[:values][:bound_storages_invested_available])
     for n in indices(candidate_storages)
-        time_indices = [start(ind.t)
-        for ind in inds if ind.node == n]
-        vals = [m.ext[:values][:bound_storages_invested_available][ind]
-        for ind in inds if ind.node == n]
-        node__benders_iteration.parameter_values[(n, current_bi)][
-            :storages_invested_available_mv,
-        ] = parameter_value(TimeSeries(time_indices, vals, false, false))
+        time_indices = [start(ind.t) for ind in inds if ind.node == n]
+        vals = [m.ext[:values][:bound_storages_invested_available][ind] for ind in inds if ind.node == n]
+        node__benders_iteration.parameter_values[(
+            n,
+            current_bi,
+        )][:storages_invested_available_mv] = parameter_value(TimeSeries(time_indices, vals, false, false))
     end
 end
 

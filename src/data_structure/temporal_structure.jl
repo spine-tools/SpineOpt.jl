@@ -34,17 +34,14 @@ struct TimeSliceSet
             end
         end
         # Find eventual gaps in between temporal blocks
-        solids = [(first(time_slices), last(time_slices))
-        for time_slices in values(block_time_slices)]
+        solids = [(first(time_slices), last(time_slices)) for time_slices in values(block_time_slices)]
         sort!(solids)
         gap_bounds = ((last_, next_first)
                       for ((first_, last_), (next_first, next_last)) in zip(solids[1:(end - 1)], solids[2:end])
                           if end_(last_) < start(next_first))
-        gaps = [TimeSlice(end_(last_), start(next_first))
-        for (last_, next_first) in gap_bounds]
+        gaps = [TimeSlice(end_(last_), start(next_first)) for (last_, next_first) in gap_bounds]
         # NOTE: For convention, the last time slice in the preceding block becomes the 'bridge'
-        bridges = [last_
-        for (last_, next_first) in gap_bounds]
+        bridges = [last_ for (last_, next_first) in gap_bounds]
         gap_bridger = GapBridger(gaps, bridges)
         new(time_slices, block_time_slices, gap_bridger)
     end
@@ -66,11 +63,9 @@ An `Array` of time slices *in the model*.
 (h::TimeSliceSet)(::Anything, ::Anything) = h.time_slices
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = h.block_time_slices[temporal_block]
 (h::TimeSliceSet)(::Anything, s) = s
-(h::TimeSliceSet)(temporal_block::Object, s) = [t
-for t in s if temporal_block in blocks(t)]
+(h::TimeSliceSet)(temporal_block::Object, s) = [t for t in s if temporal_block in blocks(t)]
 (h::TimeSliceSet)(temporal_blocks::Array{T,1}, s) where {T} = [t
-for blk in temporal_blocks
-for t in h(blk, s)]
+for blk in temporal_blocks for t in h(blk, s)]
 
 """
     (::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
@@ -79,8 +74,7 @@ A list of time slices that have some time in common with `t` or any time slice i
 """
 function (h::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
     unique(overlapping_t
-    for s in t
-    for overlapping_t in get(h.mapping, s, ()))
+    for s in t for overlapping_t in get(h.mapping, s, ()))
 end
 
 """
@@ -229,11 +223,9 @@ The required length of the included history based on parameter values that impos
 """
 function _required_history_duration(instance::Object)
     delay_params = (min_up_time, min_down_time, connection_flow_delay, unit_investment_lifetime, connection_investment_lifetime, storage_investment_lifetime)
-    max_vals = (maximum_parameter_value(p)
-    for p in delay_params)
+    max_vals = (maximum_parameter_value(p) for p in delay_params)
     init = _model_duration_unit(instance)(1)  # Dynamics always require at least 1 duration unit of history
-    reduce(max, (val
-    for val in max_vals if val !== nothing); init=init)
+    reduce(max, (val for val in max_vals if val !== nothing); init=init)
 end
 
 """
@@ -245,12 +237,11 @@ function _generate_time_slice_relationships!(m::Model)
     instance = m.ext[:instance]
     all_time_slices = Iterators.flatten((history_time_slice(m), time_slice(m)))
     duration_unit = _model_duration_unit(instance)
-    t_follows_t_mapping = Dict(t => to_time_slice(m, t=TimeSlice(end_(t), end_(t) + Minute(1)))
-    for t in all_time_slices)
-    t_overlaps_t_maping = Dict(t => to_time_slice(m, t=t)
-    for t in all_time_slices)
-    t_overlaps_t_excl_mapping = Dict(t => setdiff(overlapping_t, t)
-    for (t, overlapping_t) in t_overlaps_t_maping)
+    t_follows_t_mapping = Dict(
+        t => to_time_slice(m, t=TimeSlice(end_(t), end_(t) + Minute(1))) for t in all_time_slices
+    )
+    t_overlaps_t_maping = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
+    t_overlaps_t_excl_mapping = Dict(t => setdiff(overlapping_t, t) for (t, overlapping_t) in t_overlaps_t_maping)
     t_before_t_tuples = unique(
         (t_before=t_before, t_after=t_after)
         for (t_before, following) in t_follows_t_mapping for t_after in following if before(t_before, t_after)
@@ -259,8 +250,7 @@ function _generate_time_slice_relationships!(m::Model)
         (t_short=t_short, t_long=t_long)
         for (t_short, overlapping) in t_overlaps_t_maping for t_long in overlapping if iscontained(t_short, t_long)
     )
-    t_in_t_excl_tuples = [(t_short=t1, t_long=t2)
-    for (t1, t2) in t_in_t_tuples if t1 != t2]
+    t_in_t_excl_tuples = [(t_short=t1, t_long=t2) for (t1, t2) in t_in_t_tuples if t1 != t2]
     # Create the function-like objects
     temp_struct = m.ext[:temporal_structure]
     temp_struct[:t_before_t] = RelationshipClass(:t_before_t, [:t_before, :t_after], t_before_t_tuples)
@@ -352,11 +342,9 @@ function to_time_slice(m::Model; t::TimeSlice)
     temp_struct = m.ext[:temporal_structure]
     t_sets = (temp_struct[:time_slice], temp_struct[:history_time_slice])
     in_blocks = (s
-    for t_set in t_sets
-    for time_slices in values(t_set.block_time_slices) for s in _to_time_slice(time_slices, t))
+    for t_set in t_sets for time_slices in values(t_set.block_time_slices) for s in _to_time_slice(time_slices, t))
     in_gaps = (s
-    for t_set in t_sets
-    for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t))
+    for t_set in t_sets for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t))
     unique(Iterators.flatten((in_blocks, in_gaps)))
 end
 

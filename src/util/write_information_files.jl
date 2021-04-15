@@ -168,9 +168,7 @@ If multiple template section names are mapped to a single `String`, the entries 
 """
 function translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, translation::Dict)
     initial_translation = Dict(
-        translation[key] => merge([concept_dictionary[k]
-        for k in key]...)
-        for key in keys(translation)
+        translation[key] => merge([concept_dictionary[k] for k in key]...) for key in keys(translation)
     )
     translated_concept_dictionary = deepcopy(initial_translation)
     for concept_type in keys(initial_translation)

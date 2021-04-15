@@ -42,8 +42,7 @@ macro fetch(expr)
     (expr isa Expr && expr.head == :(=)) || error("please use @fetch with the assignment operator (=)")
     keys, dict = expr.args
     values = if keys isa Expr
-        Expr(:tuple, [:($dict[$(Expr(:quote, k))])
-        for k in keys.args]...)
+        Expr(:tuple, [:($dict[$(Expr(:quote, k))]) for k in keys.args]...)
     else
         :($dict[$(Expr(:quote, keys))])
     end

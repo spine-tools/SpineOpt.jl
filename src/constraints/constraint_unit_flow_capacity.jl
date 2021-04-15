@@ -60,8 +60,7 @@ function constraint_unit_flow_capacity_indices(m::Model)
         for (u, ng, d) in indices(unit_capacity)
         for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
         for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario
-            for ind in _constraint_unit_flow_capacity_indices(m, u, ng, d, t)),
+            unique(ind.stochastic_scenario for ind in _constraint_unit_flow_capacity_indices(m, u, ng, d, t)),
         )
     )
 end
