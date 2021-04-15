@@ -201,3 +201,8 @@ function _index_in(ind::NamedTuple; kwargs...)
     end
     true
 end
+
+"""
+Drop keys from a `NamedTuple`.
+"""
+_drop_key(x::NamedTuple, key::Symbol...) = (; (k => v for (k, v) in pairs(x) if !(k in key))...)
