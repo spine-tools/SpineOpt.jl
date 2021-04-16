@@ -128,7 +128,7 @@ In the most general form of the equation, two node groups are defined (an input 
 and a linear relationship is expressed between both node groups. Note that whenever the relationship is specified between groups of multiple nodes,
 there remains a degree of freedom regarding the composition of the input node flows within group $ng_{in}$  and the output node flows within group $ng_{out}$.
 
-The constrained given below enforces a fixed, maximum or minimum ratio between outgoing and incoming $v_{unit\_flow}$. Note that the potential node groups, that the parameters  [fix\_ratio\_out\_in\_unit\_flow](@ref),
+The constrained given below enforces a fixed, maximum or minimum ratio between outgoing and incoming [unit\_flow](@ref). Note that the potential node groups, that the parameters  [fix\_ratio\_out\_in\_unit\_flow](@ref),
 [max\_ratio\_out\_in\_unit\_flow](@ref) and [min\_ratio\_out\_in\_unit\_flow](@ref) defined on, are getting internally expanded to the members of the node group within the unit\_flow\_indices.
 
 ```math
@@ -245,9 +245,9 @@ Note that the conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default 
 
 #### Commitment constraints
 For modeling certain technologies/units, it is important to not only have
-$v_{unit\_flow}$ variables of
+[unit\_flow](@ref) variables of
 different commodities, but also model the online ("commitment") status of the unit/technology
-at every time step. Therefore, an additional variable $v_{units\_on}$ is introduced. This variable
+at every time step. Therefore, an additional variable [units\_on](@ref) is introduced. This variable
 represents the number of online units of that technology (for a normal unit commitment model,
 this variable might be a binary, for investment planning purposes, this might also be an integer
 or even a continuous variable). To define the type of a commitment variable, see [online\_variable\_type](@ref).
@@ -301,7 +301,7 @@ The units on status is constrained by shutting down and starting up actions. Thi
 \end{aligned}
 ```
 ##### [Constraint on minimum operating point](@id constraint_minimum_operating_point)
-The minimum operating point of a unit can be based on the $v_{unit\_flow}$'s of
+The minimum operating point of a unit can be based on the [unit\_flow](@ref)'s of
 input or output nodes/node groups ng:
 
 ```math
@@ -450,7 +450,7 @@ v_{units\_shut\_down}(u,s,t') \\
 
 ##### [Minimum nonspinning ramp up](@id constraint_min_nonspin_ramp_up)
 
-The nonspinning ramp flows of a units ```v_{nonspin\_ramp\_up\_unit\_flow}``` are dependent on the units holding available for nonspinning reserve provision, i.e. ```v_{nonspin\_units\_started\_up}```. A lower bound on these nonspinning reserves can be enforced by defining the [min\_res\_startup\_ramp](@ref) parameter (given as a fraction of the [unit\_capacity](@ref)).
+The nonspinning ramp flows of a units [nonspin\_ramp\_up\_unit\_flow](@ref) are dependent on the units holding available for nonspinning reserve provision, i.e. [nonspin\_units\_started\_up](@ref). A lower bound on these nonspinning reserves can be enforced by defining the [min\_res\_startup\_ramp](@ref) parameter (given as a fraction of the [unit\_capacity](@ref)).
 
 ```math
 \begin{aligned}
@@ -467,7 +467,7 @@ The nonspinning ramp flows of a units ```v_{nonspin\_ramp\_up\_unit\_flow}``` ar
 
 ##### [Maximum nonspinning ramp up](@id constraint_max_nonspin_ramp_up)
 
-The nonspinning ramp flows of a units ```v_{nonspin\_ramp\_up\_unit\_flow}``` are dependent on the units holding available for nonspinning reserve provision, i.e. ```v_{nonspin\_units\_started\_up}```. An upper bound on these nonspinning reserves can be enforced by defining the [max\_res\_startup\_ramp](@ref) parameter (given as a fraction of the [unit\_capacity](@ref)).
+The nonspinning ramp flows of a units [nonspin\_ramp\_up\_unit\_flow](@ref) are dependent on the units holding available for nonspinning reserve provision, i.e. [nonspin\_units\_started\_up](@ref). An upper bound on these nonspinning reserves can be enforced by defining the [max\_res\_startup\_ramp](@ref) parameter (given as a fraction of the [unit\_capacity](@ref)).
 
 ```math
 \begin{aligned}
@@ -662,7 +662,68 @@ To impose a limit on the cumulative amount of certain commodity flows, a cumulat
 ### [Static constraints](@id static-constraints-connection)
 
 #### [Capacity constraint on connections](@id constraint_connection_flow_capacity)
+
+In a multi-commodity setting, there can be different commodities entering/leaving a certain connection. These can be energy-related commodities (e.g., electricity, natural gas, etc.),
+emissions, or other commodities (e.g., water, steel). The [connection\_capacity](@ref) be specified
+for at least one [connection\_\_to\_node](@ref) or [connection\_\_from\_node](@ref) relationship, in order to trigger a constraint on the maximum commodity flows to this location in each time step. When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products). Note that the conversion factor [connection\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted in case the unit of measurement for the capacity is different the connection flows unit of measurement.
+
+```math
+\begin{aligned}
+& \sum_{\substack{(conn,n,d,s,t') \in connection\_flow\_indices: \\ (conn,n,d,s,t') \, \in \, (conn,ng,d,s,t)}} v_{connection\_flow}(conn,n,d,s,t') \cdot \Delta t' \\
+& - \sum_{\substack{(conn,n,d_{reverse},s,t') \in connection\_flow\_indices: \\ (conn,n,s,t') \, \in \, (conn,ng,s,t) \\ d_{reverse} != d}} v_{connection\_flow}(conn,n,d_{reverse},s,t') \cdot \Delta t' \\
+& <= p_{connection\_capacity}(conn,ng,d,s,t) \\
+& p_{connection\_availability\_factor}(conn,s,t) \\
+&  \cdot p_{connection\_conv\_cap\_to\_flow}(conn,ng,d,s,t) \Delta t\\
+& \forall (conn,ng,d) \in ind(p_{connection\_capacity}): \\
+& \nexists p_{candidate\_connections}(conn)\\
+& \forall t \in time\_slices, \\
+& \forall s \in stochastic\_path
+\end{aligned}
+```
+
+If the connection is a [candidate\_connection](@ref), i.e. can be invested in, the connection capacity constraint translates to:
+
+```math
+\begin{aligned}
+& \sum_{\substack{(conn,n,d,s,t') \in connection\_flow\_indices: \\ (conn,n,d,s,t') \, \in \, (conn,ng,d,s,t)}} v_{connection\_flow}(conn,n,d,s,t') \cdot \Delta t' \\
+& - \sum_{\substack{(conn,n,d_{reverse},s,t') \in connection\_flow\_indices: \\ (conn,n,s,t') \, \in \, (conn,ng,s,t) \\ d_{reverse} != d}} v_{connection\_flow}(conn,n,d_{reverse},s,t') \cdot \Delta t' \\
+& <= p_{connection\_capacity}(conn,ng,d,s,t) \\
+& p_{connection\_availability\_factor}(conn,s,t) \\
+&  \cdot p_{connection\_conv\_cap\_to\_flow}(conn,ng,d,s,t) \Delta t\\
+& \cdot \sum_{\substack{(conn,s,t') \in connections\_invested\_available\_indices: \\ (conn,s,t') \, \in \, (conn,s,t\_in\_t(t_{short})}}
+v_{connections\_invest\_available(conn, s, t)}
+& \forall (conn,ng,d) \in ind(p_{connection\_capacity}): \\
+& \exists p_{candidate\_connections}(conn)\\
+& \forall t \in time\_slices, \\
+& \forall s \in stochastic\_path
+\end{aligned}
+```
+
 #### [Fixed ratio between outgoing and incoming flows of a connection](@id constraint_ratio_out_in_connection_flow)
+
+By defining the parameters [fix\_ratio\_out\_in\_connection\_flow](@ref),
+[max\_ratio\_out\_in\_connection\_flow](@ref) or [min\_ratio\_out\_in\_connection\_flow](@ref), a ratio can be set between **out**going and **in**coming flows from and to a connection.
+
+In the most general form of the equation, two node groups are defined (an input node group $ng_{in}$ and an output node group $ng_{out}$),
+and a linear relationship is expressed between both node groups. Note that whenever the relationship is specified between groups of multiple nodes,
+there remains a degree of freedom regarding the composition of the input node flows within group $ng_{in}$  and the output node flows within group $ng_{out}$.
+
+The constrained given below enforces a fixed, maximum or minimum ratio between outgoing and incoming [connection\_flow](@ref). Note that the potential node groups, that the parameters  [fix\_ratio\_out\_in\_connection\_flow](@ref),
+[max\_ratio\_out\_in\_connection\_flow](@ref) and [min\_ratio\_out\_in\_connection\_flow](@ref) are defined on, are getting internally expanded to the members of the node group within the connection\_flow\_indices.
+
+```math
+\begin{aligned}
+& \sum_{\substack{(conn,n,d,s,t_{out}) \in connection\_flow\_indices: \\ (conn,n,d,s,t_{out}) \, \in \, (conn,ng_{out},:to\_node,s,t)}} v_{connection\_flow}(conn,n,d,s,t_{out}) \cdot \Delta t_{out} \\
+& \{ \\
+& ==  p_{fix\_ratio\_out\_in\_connection\_flow}(conn,ng_{out},ng_{in},s,t), \\
+& <= p_{max\_ratio\_out\_in\_connection\_flow}(conn,ng_{out},ng_{in},s,t), \\
+& >= p_{min\_ratio\_out\_in\_connection\_flow}(conn,ng_{out},ng_{in},s,t)\\
+& \} \\
+& \cdot \sum_{\substack{(conn,n,d,s,t_{in}) \in connection\_flow\_indices:\\ (conn,n,d,s,t_{in}) \in (conn,ng_{in},:from\_node,s,t)}} v_{connection\_flow}(conn,n,d,s,t_{in}) \cdot \Delta t_{in} \\
+& \forall (conn, ng_{out}, ng_{in}) \in ind(p_{\{fix,max,min\}\_ratio\_out\_in\_connection\_flow}), \\
+& \forall t \in time\_slices, \forall s \in stochastic\_path
+\end{aligned}
+```
 
 ### Specific network representation
 
@@ -680,8 +741,7 @@ In order to impose an upper limit on the maximum pressure at a node the [maximum
 ```math
 \begin{aligned}
 & \sum_{\substack{(n,s,t') \in node\_pressure\_indices: \\ (n,s,t') \, \in \, (n,s,t)}} v_{node\_pressure}(n,s,t') \cdot \Delta t' \\
-& <= p_{max\_node\_pressure}(ng,s,t) \\
-& \cdot \Delta t \\
+& <= p_{max\_node\_pressure}(ng,s,t) \cdot \Delta t \\
 & \forall (ng) \in ind(p_{max\_node\_pressure}), \\
 & \forall t \in time\_slices, \\
 & \forall s \in stochastic\_path
@@ -695,8 +755,7 @@ In order to impose a lower limit on the pressure at a node the [maximum node pre
 ```math
 \begin{aligned}
 & \sum_{\substack{(n,s,t') \in node\_pressure\_indices: \\ (n,s,t') \, \in \, (n,s,t)}} v_{node\_pressure}(n,s,t') \cdot \Delta t' \\
-& >= p_{min\_node\_pressure}(ng,s,t) \\
-& \cdot \Delta t \\
+& >= p_{min\_node\_pressure}(ng,s,t) \cdot \Delta t \\
 & \forall (ng) \in ind(p_{min\_node\_pressure}), \\
 & \forall t \in time\_slices, \\
 & \forall s \in stochastic\_path
@@ -725,36 +784,29 @@ The Weymouth relates the average flows through a connection to the difference be
 ```math
 \begin{aligned}
   & ((v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 \\
-  &   -\\
-  &   (v_{connection\_flow}(conn, n_{dest},:from\_node,s,t) + v_{connection\_flow}(conn, n_{orig},:to\_node,s,t))/2)\\
+  &   - (v_{connection\_flow}(conn, n_{dest},:from\_node,s,t) + v_{connection\_flow}(conn, n_{orig},:to\_node,s,t))/2)\\
   &   \cdot\\
   & |((v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2\\
-  &   -\\
-  &   (v_{connection\_flow}(conn, n_{dest},:from\_node,s,t) + v_{connection\_flow}(conn, n_{orig},:to\_node,s,t))/2 |) \\
-  &  =\\
-  & K(conn)\\
-  & \cdot (v_{node\_pressure}(n_{orig},s,t)^2 - n_{dest},s,t)^2) \\
+  &   - (v_{connection\_flow}(conn, n_{dest},:from\_node,s,t) + v_{connection\_flow}(conn, n_{orig},:to\_node,s,t))/2 |) \\
+  &  = K(conn) \cdot (v_{node\_pressure}(n_{orig},s,t)^2 - n_{dest},s,t)^2) \\
   \end{aligned}
 ```
 Which can be rewritten as
 ```math
 \begin{aligned}
     & ((v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 \\
-    &   -\\
-    &   (v_{connection\_flow}(conn, n_{dest},:from\_node,s,t) + v_{connection\_flow}(conn, n_{orig},:to\_node,s,t))/2)\\
-    &  =\\
-    & \sqrt{K(conn)\\
-    & \cdot (v_{node\_pressure}(n_{orig},s,t)^2 - n_{dest},s,t)^2)} \\
-    & for (v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 > 0
+    &   - (v_{connection\_flow}(conn, n_{dest},:from\_node,s,t) + v_{connection\_flow}(conn, n_{orig},:to\_node,s,t))/2)\\
+    &  =  \sqrt{K(conn) \cdot (v_{node\_pressure}(n_{orig},s,t)^2 - n_{dest},s,t)^2)} \\
+    & \forall (v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 > 0
   \end{aligned}
+```
+and
+```math
   \begin{aligned}
   & ((v_{connection\_flow}(conn, n_{dest},:from\_node,s,t) + v_{connection\_flow}(conn, n_{orig},:to\_node,s,t))/2\\
-  & -\\
-  & (v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2) \\
-  &  =\\
-  & \sqrt{K(conn)\\
-  & \cdot (v_{node\_pressure}(n_{dest},s,t)^2 - v_{node\_pressure}(n_{orig},s,t)^2)} \\
-    & for (v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 < 0
+  & - (v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2) \\
+  &  = \sqrt{K(conn) \cdot (v_{node\_pressure}(n_{dest},s,t)^2 - v_{node\_pressure}(n_{orig},s,t)^2)} \\
+    & \forall (v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 < 0
   \end{aligned}
 ```
 where `K` corresponds to the natural gas flow constant.
@@ -766,13 +818,10 @@ The linearized version of the Weymouth equation implemented in SpineOpt is given
 ```math
 \begin{aligned}
     & ((v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 \\
-    &  =\\
-    & p_{fixed\_pressure\_constant\_1}(conn,n_{orig},n_{dest},j,s,t) \\
-    & \cdot v_{node\_pressure}(n_{orig},s,t) \\
-    & - p_{fixed\_pressure\_constant\_0}(conn,n_{orig},n_{dest},j,s,t) \\
-    & \cdot v_{node\_pressure}(n_{dest},s,t) \\
+    &  = p_{fixed\_pressure\_constant\_1}(conn,n_{orig},n_{dest},j,s,t) \cdot v_{node\_pressure}(n_{orig},s,t) \\
+    & - p_{fixed\_pressure\_constant\_0}(conn,n_{orig},n_{dest},j,s,t) \cdot v_{node\_pressure}(n_{dest},s,t) \\
     & + p_{big\_m} \cdot (1 - v_{binary\_gas\_connection\_flow}(conn, n_{dest}, :to\_node, s, t)) \\
-    &  \forall (conn, n_{orig}, n_{dest}) in ind(p_{fixed\_pressure\_constant\_1}) \\
+    &  \forall (conn, n_{orig}, n_{dest}) \in ind(p_{fixed\_pressure\_constant\_1}) \\
     & \forall j \in 1:n(p_{fixed\_pressure\_constant\_1(connection=conn, node1=n_{orig}, node2=n_dest)}): \\
     & p_{fixed\_pressure\_constant\_1}(conn, n_{orig}, n_{dest}, i=j) != 0 \\
     & \forall t \in time\_slices, \\
@@ -784,9 +833,9 @@ The parameters [fixed\_pressure\_constant\_1](@ref) and [fixed\_pressure\_consta
 ```math
 \begin{aligned}
   & p_{fixed\_pressure\_constant\_1}(conn,n_{orig},n_{dest},j) \\
-  & = K(conn) * p_{fixed\_pressure}(n_{orig},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j) - p_{fixed\_pressure}(n_{dest},j}\\
+  & = K(conn) \cdot p_{fixed\_pressure}(n_{orig},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j) - p_{fixed\_pressure}(n_{dest},j}\\
   & p_{fixed\_pressure\_constant\_0}(conn,n_{orig},n_{dest},j) \\
-  & = K(conn) * p_{fixed\_pressure}(n_{dest},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j) - p_{fixed\_pressure}(n_{dest},j}\\
+  & = K(conn) \cdot p_{fixed\_pressure}(n_{dest},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j) - p_{fixed\_pressure}(n_{dest},j}\\
 \end{aligned}
 ```
 where K corrsponds to the natural gas flow constant.
@@ -800,8 +849,8 @@ As stated above, the flow through a connection can only be in one direction at a
 ```math
 \begin{aligned}
 & v_{binary\_gas\_connection\_flow}(conn, n_{orig}, :to\_node, s, t)) \\
-& (1 - v_{binary\_gas\_connection\_flow}(conn, n_{dest}, :to\_node, s, t)) \\
-& \forall (n,d,s,t) in binary\_gas\_connection\_flow\_indices\\
+& = (1 - v_{binary\_gas\_connection\_flow}(conn, n_{dest}, :to\_node, s, t)) \\
+& \forall (n,d,s,t) \in binary\_gas\_connection\_flow\_indices\\
 \end{aligned}
 ```
 ##### [Gas connection flow capacity](@id constraint_connection_flow_gas_capacity)
@@ -811,9 +860,8 @@ To enforce that the averge flow of a connection is only in one direction, the fl
 ```math
 \begin{aligned}
     & ((v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 \\
-    &  <=\\
-    & + p_{big\_m} \cdot v_{binary\_gas\_connection\_flow}(conn, n_{dest}, :to\_node, s, t) \\
-    &  \forall (conn, n_{orig}, n_{dest}) in ind(p_{fixed\_pressure\_constant\_1}) \\
+    &  <=  p_{big\_m} \cdot v_{binary\_gas\_connection\_flow}(conn, n_{dest}, :to\_node, s, t) \\
+    &  \forall (conn, n_{orig}, n_{dest}) \in ind(p_{fixed\_pressure\_constant\_1}) \\
     & \forall t \in time\_slices, \\
     & \forall s \in stochastic\_path
 \end{aligned}
@@ -824,11 +872,9 @@ to the average pressure of the adjacent nodes by the following equation, trigger
 
 ```math
 \begin{aligned}
-    & v_{node\_state}(n_{stor},s,t) \Delta t
-    &  =\\
-    & p_{connection\_linepack\_constant}(conn,n_{stor},n_{ngroup}) /2 \\
-    & \sum_{\substack{(n,s,t') \in node\_pressure\_indices: \\ (n,s,t') \, \in \, (ng,s,t)}} v_{node\_pressure}(n,s,t') \cdot \Delta t' \\
-    &  \forall (conn, n_{stor}, n_{ngroup}) in ind(p_{connection\_linepack\_constant}) \\
+    & v_{node\_state}(n_{stor},s,t) \Delta t \\
+    &  = p_{connection\_linepack\_constant}(conn,n_{stor},n_{ngroup}) /2 \sum_{\substack{(n,s,t') \in node\_pressure\_indices: \\ (n,s,t') \, \in \, (ng,s,t)}} v_{node\_pressure}(n,s,t') \cdot \Delta t' \\
+    &  \forall (conn, n_{stor}, n_{ngroup}) \in ind(p_{connection\_linepack\_constant}) \\
     & \forall t \in time\_slices, \\
     & \forall s \in stochastic\_path
 \end{aligned}
@@ -889,7 +935,7 @@ the parameter [connection\_reactance](@ref) is defined for a [connection\_\_node
 & 1/p_{connection\_reactance}(conn) \cdot p_{connection\_reactance\_base}(conn)\\
 & \cdot (\sum_{\substack{(n,s,t') \in node\_voltage\_angle\_indices: \\ (n,s,t') \, \in \, (n_{from},s,t)}} v_{node\_voltage\_angle}(n,s,t') \cdot \Delta t' \\
 & \sum_{\substack{(n,s,t') \in node\_voltage\_angle\_indices: \\ (n,s,t') \, \in \, (n_{to},s,t)}} v_{node\_voltage\_angle}(n,s,t') \cdot \Delta t' \\
-& (conn, n_{to}, n_{from}) in indices(p_{fix_ratio_out_in_connection_flow})\\
+& (conn, n_{to}, n_{from}) \in indices(p_{fix_ratio_out_in_connection_flow})\\
 & \forall t \in time\_slices, \\
 & \forall s \in stochastic\_path
 \end{aligned}
