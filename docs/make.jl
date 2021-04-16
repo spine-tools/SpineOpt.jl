@@ -51,6 +51,9 @@ makedocs(
             "Decomposition" => joinpath("advanced_concepts", "decomposition.md"),
             "PTDF-Based Powerflow" => joinpath("advanced_concepts", "powerflow.md"),
             "Unit Constraints" => joinpath("advanced_concepts", "unit_constraints.md"),
+            "Pressure driven gas transfer" => joinpath("advanced_concepts", "pressure_driven_gas_transfer.md"),
+            "Nodal loss-less DC powerflow" => joinpath("advanced_concepts", "Lossless_DC_power_flow.md"),
+
         ],
         "Library" => "library.md",
     ],

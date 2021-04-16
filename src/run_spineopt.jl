@@ -332,8 +332,7 @@ function init_outputs!(m::Model)
 end
 
 function duals_calculation_needed(m::Model)
-    any(startswith(lowercase(name), r"bound_|constraint_")
-    for name in String.(keys(m.ext[:outputs])))
+    any(startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:outputs])))
 end
 
 """
@@ -418,12 +417,6 @@ function save_objective_values!(m::Model)
 end
 
 """
-Drop keys from a `NamedTuple`.
-"""
-_drop_key(x::NamedTuple, key::Symbol...) = (; (k => v
-for (k, v) in pairs(x) if !(k in key))...)
-
-"""
 Save the outputs of a model into a dictionary.
 """
 function save_outputs!(m)
@@ -484,8 +477,7 @@ function write_report(model, default_url)
             output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
             parameter_name = out.name in objective_terms(model) ? Symbol("objective_", out.name) : out.name
             output_params[parameter_name] = Dict(
-                k => TimeSeries(collect(keys(v)), collect(values(v)), false, false)
-                for (k, v) in d
+                k => TimeSeries(collect(keys(v)), collect(values(v)), false, false) for (k, v) in d
             )
         end
     end
@@ -558,8 +550,7 @@ function _save_marginal_value!(m::Model, constraint_name::Symbol, output_name::S
     con = m.ext[:constraints][constraint_name]
     inds = keys(con)
     m.ext[:values][output_name] = Dict(
-        ind => JuMP.dual(con[ind])
-        for ind in inds if end_(ind.t) <= end_(current_window(m))
+        ind => JuMP.dual(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window(m))
     )
 end
 

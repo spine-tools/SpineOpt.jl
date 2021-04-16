@@ -57,23 +57,13 @@ function add_constraint_connection_flow_lodf!(m::Model)
                     init=0,
                 )
             ) / minimum(
-                + connection_emergency_capacity[(
-                    connection=conn_mon,
-                    node=n_mon,
-                    direction=d,
-                    stochastic_scenario=s,
-                    analysis_time=t0,
-                    t=t,
-                )]
+                + connection_emergency_capacity[
+                    (connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
+                ]
                 * connection_availability_factor[(connection=conn_mon, stochastic_scenario=s, analysis_time=t0, t=t)]
-                * connection_conv_cap_to_flow[(
-                    connection=conn_mon,
-                    node=n_mon,
-                    direction=d,
-                    stochastic_scenario=s,
-                    analysis_time=t0,
-                    t=t,
-                )] for (conn_mon, n_mon, d) in indices(connection_emergency_capacity; connection=conn_mon) for s in s
+                * connection_conv_cap_to_flow[
+                    (connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
+                ] for (conn_mon, n_mon, d) in indices(connection_emergency_capacity; connection=conn_mon) for s in s
             ) <=
             +1
         ) for (conn_cont, conn_mon, s, t) in constraint_connection_flow_lodf_indices(m)
@@ -91,8 +81,7 @@ function constraint_connection_flow_lodf_indices(m::Model)
         for t in _constraint_connection_flow_lodf_lowest_resolution_t(m, conn_cont, conn_mon)
         for path in active_stochastic_paths(
             unique(
-                ind.stochastic_scenario
-                for ind in _constraint_connection_flow_lodf_indices(m, conn_cont, conn_mon, t)
+                ind.stochastic_scenario for ind in _constraint_connection_flow_lodf_indices(m, conn_cont, conn_mon, t)
             ),
         )
     )

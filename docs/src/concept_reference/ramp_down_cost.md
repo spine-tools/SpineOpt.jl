@@ -1,0 +1,1 @@
+By defining the ramp\_down\_cost parameter for a specific `unit`, `node`, and `direction`, a cost term will be added to the objective function whenever the unit ramps down its activity (i.e., when the `ramp_down_unit_flow` is nonzero) over the course of its operational dispatch during the current optimization window.

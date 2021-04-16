@@ -1,5 +1,5 @@
-An [output](@ref) is essentially a handle for a *SpineOpt* [variable](@ref Variables)
-to be included in a [report](@ref) and written into an output database.
+An [output](@ref) is essentially a handle for a *SpineOpt* [variable](@ref Variables) and
+[Objective function](@ref) to be included in a [report](@ref) and written into an output database.
 Typically, e.g. the `unit_flow` [variables](@ref Variables) are desired as output from most [model](@ref)s,
 so creating an [output](@ref) object called `unit_flow` allows one to designate it as something to be written in the
 desired [report](@ref).

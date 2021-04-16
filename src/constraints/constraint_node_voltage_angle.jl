@@ -72,8 +72,7 @@ function constraint_node_voltage_angle_indices(m::Model)
                 temporal_block=node__temporal_block(node=Iterators.flatten((members(n_to), members(n_from)))),
             ),
         ) for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario
-            for ind in node_voltage_angle_indices(m; node=[n_to, n_from], t=t)),
+            unique(ind.stochastic_scenario for ind in node_voltage_angle_indices(m; node=[n_to, n_from], t=t)),
         )
     )
 end

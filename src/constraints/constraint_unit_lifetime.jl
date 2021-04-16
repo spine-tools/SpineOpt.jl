@@ -85,6 +85,5 @@ function _constraint_unit_lifetime_indices(m, u, s, t0, t)
         m;
         t=TimeSlice(end_(t) - unit_investment_lifetime(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)),
     )
-    unique(ind.stochastic_scenario
-    for ind in units_invested_available_indices(m; unit=u, t=t_past_and_present))
+    unique(ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=t_past_and_present))
 end
