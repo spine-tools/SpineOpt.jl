@@ -2,4 +2,4 @@ Within an investments problem `candidate_storages` determines the upper bound on
 
 Note that `candidate_storages` is the main investment switch and setting a value other than none/nothing triggers the creation of the investment variable for storages at the corresponding node. Note that a value of zero will still trigger the variable creation but its value will be fixed to zero. This can be useful if as inspection of the related dual variables will yield the value of this resource.
 
-See also [investment_optimization](@ref) and [storage\_investment\_variable\_type](@ref)
+See also [Investment Optimization](@ref) and [storage\_investment\_variable\_type](@ref)

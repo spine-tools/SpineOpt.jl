@@ -598,7 +598,7 @@ Storage nodes can also contribute to the provision of reserves. The amount of ba
 
 ### Operating segments
 #### [Operating segments of units](@id constraint_operating_point_bounds)
-The `unit_flow_op` operating segment variable is bounded by the difference between successive [operating points](@ref) adjusted for [unit_capacity](@ref)
+The `unit_flow_op` operating segment variable is bounded by the difference between successive [operating\_points](@ref) adjusted for [unit_capacity](@ref)
 
 ```math
 \begin{aligned}
@@ -834,7 +834,7 @@ to the average pressure of the adjacent nodes by the following equation, trigger
 \end{aligned}
 ```
 
-Note that the parameter [connection\_linepack\_constant](@ref) should be defined on a [connection\_\_node\_\_\_node](@ref) relationship, where
+Note that the parameter [connection\_linepack\_constant](@ref) should be defined on a [connection\_\_node\_\_node](@ref) relationship, where
 the first node corresponds to the linepack storage node, whereas the second node corresponds to the node group of both start and end nodes of the pipeline.
 
 #### [Nodebased lossless DC power flow](@id nodal-lossless-DC)
@@ -926,7 +926,7 @@ The power transfer distribution factors are a property of the network reactances
 ## Investments
 ### Investments in units
 #### [Economic lifetime of a unit](@id constraint_unit_lifetime)
-Enforces the minimum duration of a `unit`'s investment decision. Once a `unit` has been invested-in, it must remain invested-in for `unit_investment_lifetime`. 
+Enforces the minimum duration of a `unit`'s investment decision. Once a `unit` has been invested-in, it must remain invested-in for `unit_investment_lifetime`.
 
 ```math
 \begin{aligned}
@@ -999,7 +999,7 @@ Note: is this actually an investment or a network constraint?
 #### [Lower bound on candidate connection flow](@id constraint_candidate_connection_flow_lb)
 #### [Upper bound on candidate connection flow](@id constraint_candidate_connection_flow_ub)
 #### [Economic lifetime of a connection](@id constraint_connection_lifetime)
-Enforces the minimum duration of a `connection`'s investment decision. Once a `connection` has been invested-in, it must remain invested-in for `connection_investment_lifetime`. 
+Enforces the minimum duration of a `connection`'s investment decision. Once a `connection` has been invested-in, it must remain invested-in for `connection_investment_lifetime`.
 
 ```math
 \begin{aligned}
@@ -1038,7 +1038,7 @@ The number of available invested-in storages at node n at any point in time is l
 \end{aligned}
 ```
 #### [Economic lifetime of a storage](@id constraint_storage_lifetime)
-Enforces the minimum duration of a `storage` investment decision at [node](@ref) n. Once a `storage` has been invested-in, it must remain invested-in for `storage_investment_lifetime`. 
+Enforces the minimum duration of a `storage` investment decision at [node](@ref) n. Once a `storage` has been invested-in, it must remain invested-in for `storage_investment_lifetime`.
 
 ```math
 \begin{aligned}
