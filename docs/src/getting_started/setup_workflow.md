@@ -7,6 +7,7 @@ The next steps will set up a SpineOpt specific input database, connect it to a S
     - Give it a name like "Input DB". 
     - Select SQL database dialect (sqlite is a local file and works without a server). 
     - Click *New Spine DB* in the *Data Store Properties* window and create a new database (and save it, if it's sqlite).
+    - For more information about creating and managing Spine Toolbox database, see the [documentation](https://spine-toolbox.readthedocs.io/en/master/data_store_form/getting_started.html)
 
     ![image](https://user-images.githubusercontent.com/40472544/114974364-e8013200-9e8a-11eb-99d6-9fbbd0d3992b.png)
     
@@ -59,4 +60,4 @@ The next steps will set up a SpineOpt specific input database, connect it to a S
 
     ![image](https://user-images.githubusercontent.com/40472544/114977877-171aa200-9e91-11eb-89e0-9896f6cc1fab.png)
 
-SpineOpt would be ready to run, but for the *Input DB*, which is empty of content (it's just a template that contains an appropriate data structure). The next step goes through setting up a simple toy model.
+SpineOpt would be ready to run, but for the *Input DB*, which is empty of content (it's just a template that contains a SpineOpt specific data structure). The [next step](https://spine-project.github.io/SpineOpt.jl/latest/getting_started/creating_your_own_model/) goes through setting up and running a simple toy model.
