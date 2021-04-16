@@ -53,6 +53,7 @@ makedocs(
             "Unit Constraints" => joinpath("advanced_concepts", "unit_constraints.md"),
             "Pressure driven gas transfer" => joinpath("advanced_concepts", "pressure_driven_gas_transfer.md"),
             "Nodal loss-less DC powerflow" => joinpath("advanced_concepts", "Lossless_DC_power_flow.md"),
+            "Representative days with seasonal storages" => joinpath("advanced_concepts", "representative_days_w_seasonal_storage.md"),
         ],
         "Library" => "library.md",
     ],
