@@ -2,4 +2,4 @@ Within an investments problem `candidate_units` determines the upper bound on th
 
 Note that `candidate_units` is the main investment switch and setting a value other than none/nothing triggers the creation of the investment variable for the [unit](@ref). Note that a value of zero will still trigger the variable creation but its value will be fixed to zero. This can be useful if as inspection of the related dual variables will yield the value of this resource.
 
-See also [investment_optimization](@ref) and [unit\_investment\_variable\_type](@ref)
+See also [Investment Optimization](@ref) and [unit\_investment\_variable\_type](@ref)
