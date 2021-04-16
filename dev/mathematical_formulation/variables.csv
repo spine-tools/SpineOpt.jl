@@ -1,4 +1,5 @@
 variable_name,index,indices,description, 
+binary_gas_connection_flow,"(connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)",binary_gas_connection_flow_indices,Binary variable with the indices node ``n`` over the connection ``conn`` in the direction ``to\_node`` for the stochastic scenario ``s`` at timestep ``t`` describing if the direction of gas flow for a pressure drive gastransfer is in the indicated direction. ,
 connection_flow ,"(connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)",connection_flow_indices,Commodity flow associated with node ``n`` over the connection ``conn`` in the direction ``d`` for the stochastic scenario ``s`` at timestep ``t``,
 connection_intact_flow,"(connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)",connection_intact_flow_indices,???,
 connections_decommissioned,"(connection=conn, stochastic_scenario=s, t=t)",connections_invested_available_indices,Number of decomissioned connections ``conn`` for the stochastic scenario ``s`` at timestep ``t``,
