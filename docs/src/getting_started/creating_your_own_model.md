@@ -1,6 +1,86 @@
 # Creating Your Own Model
 
-TODO: Explain the steps necessary top start creating your own models using *SpineOpt* and *Spine Toolbox*.
+This part of the guide shows first an example how to insert objects and their parameter data. Then it shows what other objects, relationships and parameter data needs to be added for a very basic model. Lastly, the model instance is run.
+
+- Creating a SpineOpt model instance
+    - First, open the database editor by double-clicking the *Input DB*. 
+    - Right click on *model* in the *Object tree*. 
+    - Choose *Add objects*. 
+    - Then, add a model object by writing a name to the *object name* field. You can use e.g. *instance*. 
+    - Click ok.
+    - The [model](@ref) object in SpineOpt is an abstraction that represents the model itself. Every SpineOpt database needs to have at least one `model` object.
+    - The model object holds general information about the optimization. The whole range of functionalities is explained in **Advanced Concepts** chapter - in here a minimal set of parameters is used.
+
+    ![image](https://user-images.githubusercontent.com/40472544/114978841-880e8980-9e92-11eb-9272-5dc46708006f.png)
+
+    ![image](https://user-images.githubusercontent.com/40472544/114978964-ba1feb80-9e92-11eb-9f73-14a6c11ad3bd.png)
+
+- Add parameter values to the model instance
+    - Select the model object `instance`.
+    - Go to the `Object parameter value` tab.
+    - Every parameter value belongs to a specific alternative. This allows hold multiple values for the same parameter of a particular object. The alternative values are used to create scenarios. Choose, `Base` for all parameter values (`Base` is required in Spine Toolbox - all other alternatives can be chosen freely).
+    - Then define a `model_start` time and a `model_end` time. 
+        - Double-click on the empty row under `parameter_name` and select [model\_start](@ref). 
+        - A `None` should appear in `value` column. 
+        - To asign a start date value, right-click on `None` and open the editor. 
+        - The parameter type of `model_start` is of type `Datetime`. 
+        - Set the value to e.g. `2019-01-01T00:00:00`. 
+        - Proceed accordingly for the [model\_end](@ref).  
+
+    ![image](https://user-images.githubusercontent.com/40472544/114981259-5d263480-9e96-11eb-9338-1f4bbcff4ecc.png)
+
+    ![image](https://user-images.githubusercontent.com/40472544/114979680-fc95f800-9e93-11eb-834d-75c5f9627c2a.png)
+
+    ![image](https://user-images.githubusercontent.com/40472544/114979620-e5570a80-9e93-11eb-9163-6a4fbbe5631a.png)
+
+    Further reading on adding parameter values can be found [here](https://spine-toolbox.readthedocs.io/en/master/data_store_form/adding_data.html#adding-parameter-values).
+
+- Add other necessary objects and parameter data for the objects. See the picture below. There are three object names that need to be written exactly since they are used internally by SpineOpt: `unit_flow`, `realization`, and `deterministic`. The date time and time series parameter data can be added by using right-click to access the *Edit...* dialog.
+
+    ![image](https://user-images.githubusercontent.com/40472544/115009663-31667700-9eb5-11eb-8f71-163ff14233a7.png)
+
+- Add necessary relationships and parameter data for the relationships. See picture below. The capacity of the gas_turbine has to be sufficient to meet the highest demand for electricity, otherwise the model will be infeasible (it is possible to set penalty values, but they are not included in this example).
+    - To specify the temporal structure for SpineOpt, you need to define [temporal\_block](@ref) objects. Think of a `temporal_block` as a distinctive way of 'slicing' time across the model horizon.
+    - To link the temporal structure to the spatial structure,
+you need to specify [node\_\_temporal\_block](@ref) relationships,
+establishing which `temporal__block` applies to each `node`.
+    - To keep things simple at this point, let's just define one `temporal_block` for our model and apply it to all `nodes`. We add the object `hourly_temporal_block` of type `temporal_block` following the same procedure as before and establish `node__temporal_block` relationships between 
+`node_gas` and `hourly_temporal_block`, and `electricity_node` and `hourly_temporal_block`.
+    - In practical terms, the above means that there energy flows over `gas_node` and `electricity_node`
+for each 'time-slice' comprised in `hourly_temporal_block`.
+    - Similarly with the stochastic structure, each node is assigned a `deterministic` `stochastic_structure`. 
+
+    ![image](https://user-images.githubusercontent.com/40472544/115010276-e305a800-9eb5-11eb-9b29-8bb4f5bb792d.png)
+
+
+
+
+
+To ensure that a `temporal_block` belongs to a certain `model`, we must furthermore establish a relationship 
+of type [model\_\_temporal_block](@ref) between `hourly_temporal_block` and `quick_start`.
+
+
+
+    Further reading on adding objects, relationships and parameter values in Spine Toolbox can be found [here](https://spine-toolbox.readthedocs.io/en/latest/spine_db_editor/index.html).
+
+
+- Run the model: Select *SpineOpt* and press *Execute selection*.
+
+    ![image](https://user-images.githubusercontent.com/40472544/115010605-48599900-9eb6-11eb-930d-b2a258b61bf7.png)
+
+
+- Explore the results by double-clicking the *Results* database.
+
+    ![image](https://user-images.githubusercontent.com/40472544/115010687-5d362c80-9eb6-11eb-8542-93a765c186cf.png) 
+
+- Create and run scenarios and build the model further
+
+    ![image](https://user-images.githubusercontent.com/40472544/115011024-ca49c200-9eb6-11eb-8ddd-8b312c095b74.png)
+
+    ![image](https://user-images.githubusercontent.com/40472544/115011214-0da43080-9eb7-11eb-93e5-e2991e81b429.png)
+
+
+
 
 ### Creating a SpineOpt database
 
@@ -25,7 +105,7 @@ The [model](@ref) object in SpineOpt is an abstraction that represents the model
 Every SpineOpt database needs to have at least one `model` object.
 
 One way to add a model object to `example.db` using the `Stacked view` in SpineToolbox is to right-click the `object_class` model and select "Add objects" from the drop-down menu. By adding the object name `quick_start`, we have
-now created a new model object. For reference, these steps are described in more detail [here](https://spine-toolbox.readthedocs.io/en/master/data_store_form/adding_data.html#adding-object-classes).
+now created a new model object. 
 
 The model object holds general information about the optimization. The whole range of functionalities is later explained in **Advanced Concepts** chapter, but for this example we will
 only add the optimization horizon. For this, you need to enter start and end date of the optimization. To do so, select the object `quick_start` and go to the `Object parameter value` tab. Double-click on the empty row under `parameter_name`
@@ -61,23 +141,6 @@ and from `power_plant` into `electricity_node`.
 
 
 #### Defining the temporal structure
-
-To specify the temporal structure for SpineOpt, you need to define [temporal\_block](@ref) objects.
-Think of a `temporal_block` as a distinctive way of 'slicing' time across the model horizon.
-
-To link the temporal structure to the spatial structure,
-you need to specify [node\_\_temporal\_block](@ref) relationships,
-establishing which `temporal__block` applies to each `node`.
-
-To keep things simple at this point,
-let's just define one `temporal_block` for our model and apply it to all `nodes`. We add the object `hourly_temporal_block` of type `temporal_block`
-following the same procedure as before and establish `node__temporal_block` relationships between 
-`gas_node` and `hourly_temporal_block`, and `electricity_node` and `hourly_temporal_block`.
-In practical terms, the above means that there energy flows over `gas_node` and `electricity_node`
-for each 'time-slice' comprised in `hourly_temporal_block`.
-
-To ensure that a `temporal_block` belongs to a certain `model`, we must furthermore establish a relationship 
-of type [model\_\_temporal_block](@ref) between `hourly_temporal_block` and `quick_start`.
 
 #### Defining the stochastic structure
 
