@@ -88,6 +88,5 @@ function _constraint_storage_lifetime_indices(m, n, s, t0, t)
             end_(t),
         ),
     )
-    unique(ind.stochastic_scenario
-    for ind in storages_invested_available_indices(m; node=n, t=t_past_and_present))
+    unique(ind.stochastic_scenario for ind in storages_invested_available_indices(m; node=n, t=t_past_and_present))
 end

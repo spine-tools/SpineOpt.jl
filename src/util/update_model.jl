@@ -45,15 +45,13 @@ MOI.constant(s::EqualToCall) = s.value
 
 function Base.convert(::Type{GenericAffExpr{Call,VariableRef}}, expr::GenericAffExpr{C,VariableRef}) where {C}
     constant = Call(expr.constant)
-    terms = OrderedDict{VariableRef,Call}(var => Call(coef)
-    for (var, coef) in expr.terms)
+    terms = OrderedDict{VariableRef,Call}(var => Call(coef) for (var, coef) in expr.terms)
     GenericAffExpr{Call,VariableRef}(constant, terms)
 end
 
 # TODO: try to get rid of this in favor of JuMP's generic implementation
 function Base.show(io::IO, e::GenericAffExpr{Call,VariableRef})
-    str = string(join([string(coef, " * ", var)
-    for (var, coef) in e.terms], " + "), " + ", e.constant)
+    str = string(join([string(coef, " * ", var) for (var, coef) in e.terms], " + "), " + ", e.constant)
     print(io, str)
 end
 
@@ -64,8 +62,7 @@ SpineInterface.realize(s::EqualToCall) = MOI.EqualTo(realize(MOI.constant(s)))
 
 function SpineInterface.realize(e::GenericAffExpr{C,VariableRef}) where {C}
     constant = realize(e.constant)
-    terms = OrderedDict{VariableRef,typeof(constant)}(var => realize(coef)
-    for (var, coef) in e.terms)
+    terms = OrderedDict{VariableRef,typeof(constant)}(var => realize(coef) for (var, coef) in e.terms)
     GenericAffExpr(constant, terms)
 end
 
@@ -101,8 +98,7 @@ end
 
 function JuMP.build_constraint(_error::Function, expr::GenericAffExpr{Call,VariableRef}, lb::Call, ub::Call)
     constant = expr.constant
-    if any(is_varying(x)
-    for x in (lb, ub, constant))
+    if any(is_varying(x) for x in (lb, ub, constant))
         _error("Range constraint with time-varying bounds or free-term is not supported at the moment.")
     else
         set = MOI.Interval(realize(lb), realize(ub))
@@ -119,8 +115,7 @@ function JuMP.add_constraint(
     realized_con = ScalarConstraint(realize(con.func), realize(con.set))
     con_ref = add_constraint(model, realized_con, name)
     # Register varying stuff in `model.ext` so we can do work in `update_varying_constraints!`. This is the entire trick.
-    varying_terms = Dict(var => coef
-    for (var, coef) in con.func.terms if is_varying(coef))
+    varying_terms = Dict(var => coef for (var, coef) in con.func.terms if is_varying(coef))
     if !isempty(varying_terms)
         get!(model.ext, :varying_constraint_terms, Dict())[con_ref] = varying_terms
     end
@@ -227,8 +222,7 @@ Base.:*(lhs::VariableRef, rhs::Call) = (*)(rhs, lhs)
 # Call--GenericAffExpr
 function Base.:+(lhs::Call, rhs::GenericAffExpr{C,VariableRef}) where {C}
     constant = lhs + rhs.constant
-    terms = OrderedDict{VariableRef,Call}(var => Call(coef)
-    for (var, coef) in rhs.terms)
+    terms = OrderedDict{VariableRef,Call}(var => Call(coef) for (var, coef) in rhs.terms)
     GenericAffExpr(constant, terms)
 end
 Base.:+(lhs::GenericAffExpr, rhs::Call) = (+)(rhs, lhs)
@@ -236,8 +230,7 @@ Base.:-(lhs::Call, rhs::GenericAffExpr) = (+)(lhs, - rhs)
 Base.:-(lhs::GenericAffExpr, rhs::Call) = (+)(lhs, - rhs)
 function Base.:*(lhs::Call, rhs::GenericAffExpr{C,VariableRef}) where {C}
     constant = lhs * rhs.constant
-    terms = OrderedDict{VariableRef,Call}(var => lhs * coef
-    for (var, coef) in rhs.terms)
+    terms = OrderedDict{VariableRef,Call}(var => lhs * coef for (var, coef) in rhs.terms)
     GenericAffExpr(constant, terms)
 end
 Base.:*(lhs::GenericAffExpr, rhs::Call) = (*)(rhs, lhs)
@@ -258,8 +251,7 @@ Base.:-(lhs::GenericAffExpr{C,VariableRef}, rhs::GenericAffExpr{Call,VariableRef
 
 # @objective extension
 function JuMP.set_objective_function(model::Model, func::GenericAffExpr{Call,VariableRef})
-    model.ext[:varying_objective_terms] = Dict(var => coef
-    for (var, coef) in func.terms if is_varying(coef))
+    model.ext[:varying_objective_terms] = Dict(var => coef for (var, coef) in func.terms if is_varying(coef))
     set_objective_function(model, realize(func))
 end
 
