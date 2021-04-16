@@ -1,0 +1,1 @@
+By defining the curtailment\_cost parameter for a specific `unit`, a cost term will be added to the objective function whenever this unit's available capacity exceeds its activity (i.e., the `unit_flow` variable) over the course of the operational dispatch during the current optimization window.

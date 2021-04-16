@@ -1,0 +1,1 @@
+By defining the vom\_cost parameter for a specific `unit`, `node`, and `direction`, a cost term will be added to the objective function to account for the variable operation and maintenance costs associated with that unit over the course of its operational dispatch during the current optimization window.
