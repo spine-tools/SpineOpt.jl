@@ -49,7 +49,7 @@ establishing which `temporal__block` applies to each `node`.
 for each 'time-slice' comprised in `hourly_temporal_block`.
 - Similarly with the stochastic structure, each node is assigned a `deterministic` `stochastic_structure`. 
 
-### Define the spatial structure
+## Define the spatial structure
 - To specify the spatial structure for SpineOpt, you will need to use the [node](@ref), [unit](@ref), and [connection](@ref) objects defined above,
 together with the relationships that define their interactions.
 - Nodes can be understood as spatial aggregators. In combination with units and connections, they form the energy network.
@@ -64,13 +64,13 @@ going from `node_gas` into `node_elec`, through the `gas_turbine`.
 ## Add remaining  relationships and parameter data for the relationships. 
 See picture below. The capacity of the gas_turbine has to be sufficient to meet the highest demand for electricity, otherwise the model will be infeasible (it is possible to set penalty values, but they are not included in this example).
 
-![image](https://user-images.githubusercontent.com/40472544/115010276-e305a800-9eb5-11eb-9b29-8bb4f5bb792d.png)
+![image](https://user-images.githubusercontent.com/40472544/115033768-79949200-9ed3-11eb-90e7-e35e6f135a24.png)
 
 ## Run the model
 - Select *SpineOpt* 
 - Press *Execute selection*.
 
-    ![image](https://user-images.githubusercontent.com/40472544/115010605-48599900-9eb6-11eb-930d-b2a258b61bf7.png)
+![image](https://user-images.githubusercontent.com/40472544/115010605-48599900-9eb6-11eb-930d-b2a258b61bf7.png)
 
 ## If if fails
 - Double-check that the data is correct
@@ -80,7 +80,7 @@ See picture below. The capacity of the gas_turbine has to be sufficient to meet 
 ## Explore the results 
 - Double-clicking the *Results* database.
 
-    ![image](https://user-images.githubusercontent.com/40472544/115010687-5d362c80-9eb6-11eb-8542-93a765c186cf.png) 
+![image](https://user-images.githubusercontent.com/40472544/115010687-5d362c80-9eb6-11eb-8542-93a765c186cf.png) 
 
 ## Create and run scenarios and build the model further
 - Create a new alternative
@@ -88,9 +88,6 @@ See picture below. The capacity of the gas_turbine has to be sufficient to meet 
 - Connect alternatives under a scenario. Toolbox modifies `Base` data with the data from the alternatives in the same scenario.
 - Execute multiple scenarios in parallel. First run in a new Julia instance will need to compile SpineOpt taking some time.
 
-    ![image](https://user-images.githubusercontent.com/40472544/115011024-ca49c200-9eb6-11eb-8ddd-8b312c095b74.png)
+![image](https://user-images.githubusercontent.com/40472544/115011024-ca49c200-9eb6-11eb-8ddd-8b312c095b74.png)
 
-    ![image](https://user-images.githubusercontent.com/40472544/115011214-0da43080-9eb7-11eb-93e5-e2991e81b429.png)
-
-
-
+![image](https://user-images.githubusercontent.com/40472544/115011214-0da43080-9eb7-11eb-93e5-e2991e81b429.png)
