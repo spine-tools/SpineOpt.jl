@@ -38,8 +38,8 @@ The next steps will set up a SpineOpt specific input database, connect it to a S
 
 2. Fill the *Input DB* with SpineOpt data format **either** by:
 
-    2.a) Drag a tool *Load template* from the SpineOpt ribbon to the *Design View*. Connect an arrow from the *Load template* to the new *Input DB*. Make sure the  *Load template* item from the Design view is selected (then you can edit the properties of that workflow item in the *Tool properties* window. Add the url link in *Available resources* to the *Tool arguments* - you are passing the database address as a command line argument to the load_template.jl script so that it knows where to store the output. Then execute the *Load template* tool.
-  
+    2.a) Drag a tool *Load template* from the SpineOpt ribbon to the *Design View*. Connect an arrow from the *Load template* to the new *Input DB*. Make sure the  *Load template* item from the Design view is selected (then you can edit the properties of that workflow item in the *Tool properties* window. Add the url link in *Available resources* to the *Tool arguments* - you are passing the database address as a command line argument to the load_template.jl script so that it knows where to store the output. Then execute the *Load template* tool. Please note that this process uses SpineOpt to generate the data structure. It takes time, since everything is compiled when running a tool in Julia for the first time in each Julia session. You may also see lot of messages and warnings concernging the compilation, but they should be benign.
+      
     ![image](https://user-images.githubusercontent.com/40472544/114975150-6d391680-9e8c-11eb-94d3-325f56ff55cf.png)
 
     ![image](https://user-images.githubusercontent.com/40472544/114975271-9eb1e200-9e8c-11eb-93a5-5da3d07b8039.png)
@@ -74,7 +74,20 @@ Known issue: On Windows, the backslash between directories need to be changed to
 
 ## Running SpineOpt
 
-TODO
+1. Add a model instance to the *Input DB*. First, open the database editor by double-clicking the *Input DB*. Right click on *model* in the *Object tree*. Choose *Add objects*. Then, add a model object by writing a name to the *object name* field. You can use e.g. *instance*. Click ok.
+
+    ![image](https://user-images.githubusercontent.com/40472544/114978841-880e8980-9e92-11eb-9272-5dc46708006f.png)
+
+    ![image](https://user-images.githubusercontent.com/40472544/114978964-ba1feb80-9e92-11eb-9f73-14a6c11ad3bd.png)
+
+2. Add parameters to the model instance. You need to define the *duration_unit* --> select 'hour' from the list. Then you need to define a *model_start* time and a *model_end* time. These need to be *Date time* parameters. Right-click on the *value* field and choose *Edit...*. Then you can change the parameter type to *Date time* and give an appropraite datetime.
+
+    ![image](https://user-images.githubusercontent.com/40472544/114979574-c789a580-9e93-11eb-95b9-54c735804edc.png)
+
+    ![image](https://user-images.githubusercontent.com/40472544/114979680-fc95f800-9e93-11eb-834d-75c5f9627c2a.png)
+
+    ![image](https://user-images.githubusercontent.com/40472544/114979620-e5570a80-9e93-11eb-9163-6a4fbbe5631a.png)
+
 
 ## Compatibility
 
