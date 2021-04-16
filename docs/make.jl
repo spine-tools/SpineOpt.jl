@@ -48,6 +48,8 @@ makedocs(
             "Investment Optimization" => joinpath("advanced_concepts", "investment_optimization.md"),
             "Unit Commitment" => joinpath("advanced_concepts", "unit_commitment.md"),
             "Ramping and reserves" => joinpath("advanced_concepts", "ramping_and_reserves.md"),
+            "Pressure driven gas transfer" => joinpath("advanced_concepts", "pressure_driven_gas_transfer.md"),
+            "Nodal loss-less DC powerflow" => joinpath("advanced_concepts", "Lossless_DC_power_flow.md"),
         ],
         "Library" => "library.md",
     ],

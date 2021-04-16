@@ -91,18 +91,18 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
             :feature_index => 4,
         ),
     )
-    # Initialize the concept dictionary based on the template
+    # Initialize the concept dictionary based on the template (only preserves the last entry, if overlaps)
     concept_dictionary = Dict(
         key => Dict(
             entry[template_mapping[key][:name_index]] => Dict(
                 :description => isnothing(get(template_mapping[key], :description_index, nothing)) ? nothing :
-                                (entry[template_mapping[key][:description_index]]),
+                                entry[template_mapping[key][:description_index]],
                 :default_value => isnothing(get(template_mapping[key], :default_value_index, nothing)) ? nothing :
-                                  (entry[template_mapping[key][:default_value_index]]),
+                                  entry[template_mapping[key][:default_value_index]],
                 :parameter_value_list => isnothing(get(template_mapping[key], :parameter_value_list_index, nothing)) ?
-                                         nothing : (entry[template_mapping[key][:parameter_value_list_index]]),
+                                         nothing : entry[template_mapping[key][:parameter_value_list_index]],
                 :feature => isnothing(get(template_mapping[key], :feature_index, nothing)) ? nothing :
-                            (entry[template_mapping[key][:feature_index]]),
+                            entry[template_mapping[key][:feature_index]],
                 :related_concepts => isnothing(get(template_mapping[key], :related_concept_index, nothing)) ? Dict() :
                                      Dict(
                     template_mapping[key][:related_concept_type] => (isa(
@@ -117,6 +117,40 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
             ) for entry in template[key]
         ) for key in keys(template)
     )
+    # Perform a second pass to cover overlapping entries and throw warnings for conflicts
+    for key in keys(template)
+        for entry in template[key]
+            concept = concept_dictionary[key][entry[template_mapping[key][:name_index]]]
+            # Check for conflicts in `description`, `default_value`, `parameter_value_list`, `feature`
+            if !isnothing(concept[:description]) &&
+               concept[:description] != entry[template_mapping[key][:description_index]]
+                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `description` across dulipcate template entries!"
+            end
+            if !isnothing(concept[:default_value]) &&
+               concept[:default_value] != entry[template_mapping[key][:default_value_index]]
+                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `default_value` across dulipcate template entries!"
+            end
+            if !isnothing(concept[:parameter_value_list]) &&
+               concept[:parameter_value_list] != entry[template_mapping[key][:parameter_value_list_index]]
+                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `parameter_value_list` across dulipcate template entries!"
+            end
+            if !isnothing(concept[:feature]) && concept[:feature] != entry[template_mapping[key][:feature_index]]
+                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `parameter_value_list` across dulipcate template entries!"
+            end
+            # Include all unique `concepts` into `related concepts`
+            if !isempty(concept[:related_concepts])
+                if isa(entry[template_mapping[key][:related_concept_index]], Array)
+                    related_concepts = unique([entry[template_mapping[key][:related_concept_index]]...])
+                else
+                    related_concepts = [entry[template_mapping[key][:related_concept_index]]]
+                end
+                unique!(
+                    append!(concept[:related_concepts][template_mapping[key][:related_concept_type]], related_concepts),
+                )
+            end
+        end
+    end
+    # If translation and aggregation is defined, do that.
     if !isempty(translation)
         concept_dictionary = translate_and_aggregate_concept_dictionary(concept_dictionary, translation)
     end
@@ -134,9 +168,7 @@ If multiple template section names are mapped to a single `String`, the entries 
 """
 function translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, translation::Dict)
     initial_translation = Dict(
-        translation[key] => merge([concept_dictionary[k]
-        for k in key]...)
-        for key in keys(translation)
+        translation[key] => merge([concept_dictionary[k] for k in key]...) for key in keys(translation)
     )
     translated_concept_dictionary = deepcopy(initial_translation)
     for concept_type in keys(initial_translation)

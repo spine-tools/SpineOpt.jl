@@ -15,8 +15,8 @@ The energy balance is enforced by the following constraint:
  v_{connection\_flow}(conn,n',d_{in},s,t)\\
 & - \sum_{\substack{(conn,n',d_{out},s,t) \in connection\_flow\_indices: \\ d_{out} == :from\_node}}
  v_{connection\_flow}(conn,n',d_{out},s,t)\\
-% & + v_{node\_slack\_pos}(n,s,t) \\
-% & - v_{node\_slack\_neg}(n,s,t) \\
+ & + v_{node\_slack\_pos}(n,s,t) \\
+ & - v_{node\_slack\_neg}(n,s,t) \\
 & \{>=,==,<=\} \\
 & 0 \\
 & \forall (n,s,t) \in node\_stochastic\_time\_indices: \\
@@ -111,7 +111,7 @@ To ensure that the node state at the end of the optimization is at least the sam
 
 In the following, the operational constraints on the variables associated with units will be elaborated on. The static constraints, in contrast to the dynamic constraints, are addressing constraint without sequential time-coupling. It should however be noted that static constraints can still perform temporal aggregation.
 
-### Static constraints
+### [Static constraints](@id static-constraints-unit)
 
 The fundamental static constraints for units within SpineOpt relate to the relationships between commodity flows from and to units and to limits on the unit flow capacity.
 
@@ -227,7 +227,7 @@ flows to this location in each time step. When desirable, the capacity can be sp
 
 ```math
 \begin{aligned}
-& \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)}} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
+& \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,s,t') \, \in \, (u,ng,d,s,t)}} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
 & <= p_{unit\_capacity}(u,ng,d,s,t) \\
 &  \cdot p_{unit\_conv\_cap\_to\_flow}(u,ng,d,s,t) \\
 &  \cdot \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
@@ -260,7 +260,6 @@ parameters):
 - constraint on minimum down time
 - constraint on minimum up time
 - constraint on ramp rates
-(TODO: add references to julia constraints and chapters in docs)
 
 ##### [Bound on online units](@id constraint_units_on)
 The number of online units need to be restricted to the number of available units:
@@ -353,8 +352,12 @@ This constraint can be extended to the use of nonspinning reserves. See [also](@
 
 To include ramping and reserve constraints, it is a pre requisite that [minimum operating points](@ref constraint_minimum_operating_point) and [maximum capacity constraints](@ref constraint_unit_flow_capacity) are enforced as described.
 
+<<<<<<< HEAD
 For dispatchable units, additional ramping constraints can be introduced. For setting up ramping characteristics of units see [Ramping and Reserves](@ref)
 
+=======
+For dispatchable units, additional ramping constraints can be introduced. For setting up ramping characteristics of units see [Ramping and Reserves](@ref).
+>>>>>>> master
 First, the unit flows are split into their online, start-up, shut-down and non-spinning ramping contributions.
 
 #### [Splitting unit flows into ramps](@id constraint_split_ramps)
@@ -381,7 +384,7 @@ First, the unit flows are split into their online, start-up, shut-down and non-s
 & \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in unit\_flow\_indices \\
 \end{aligned}
 ```
-Note that each *individual* tuple of the [unit_flow_indices](@ref Sets) is split into its ramping contributions, if any of the ramping variables exist for this tuple. How to set-up ramps for units is described ***HERE, TODO ADD REF ONCE MERGED***
+Note that each *individual* tuple of the [unit_flow_indices](@ref Sets) is split into its ramping contributions, if any of the ramping variables exist for this tuple. How to set-up ramps for units is described in [Ramping and Reserves](@ref).
 
 ##### [Constraint on spinning upwards ramp_up](@id constraint_ramp_up)
 The maximum online ramp up ability of a unit can be constraint by the [ramp\_up\_limit](@ref), expressed as a share of the [unit\_capacity](@ref). With this constraint, online (i.e. spinning) ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced.
@@ -621,23 +624,241 @@ To impose a limit on the cumulative amount of certain commodity flows, a cumulat
 
 ## Network constraints
 
-### Static constraints
+### [Static constraints](@id static-constraints-connection)
+
 #### [Capacity constraint on connections](@id constraint_connection_flow_capacity)
 #### [Fixed ratio between outgoing and incoming flows of a connection](@id constraint_ratio_out_in_connection_flow)
-### Network representation
 
-### [Pressure driven gas transfer](@id pressure-driven-gas-transfer-math)
-#### [Maximum node pressure](@id constraint_max_node_pressure)
-#### [Minimum node pressure](@id constraint_min_node_pressure)
-#### [Constraint o the pressure ratio between to nodes](@id constraint_compression_ratio)
-#### [Outer approximation through fixed pressure points](@id constraint_fixed_node_pressure_point)
-#### [Linepack storage flexibility](@id constraint_storage_line_pack)
-#### [Gas connection flow capacity](@id constraint_connection_flow_gas_capacity)
-#### [Enforcing unidirectional flow](@id constraint_connection_unitary_gas_flow.jl)
-### [Nodebased lossless DC power flow](@id nodal-lossless-DC)
-#### [Maximum node voltage angle](@id constraint_max_node_voltage_angle)
-#### [Minimum node voltage angle](@id constraint_min_node_voltage_angle)
-#### [Voltage angle to connection flows](@id constraint_node_voltage_angle)
+### Specific network representation
+
+In the following, the different specific network representations are introduced. While the [Static constraints](@ref static-constraints-connection) find application in any of the different networks, the following equations are specific to the discussed use cases. Currently, SpineOpt incorporated equations for pressure driven gas networks, nodal lossless DC power flows and PTDF based lossless DC power flow.
+
+#### [Pressure driven gas transfer](@id pressure-driven-gas-transfer-math)
+For gas pipelines it can be relevant a pressure driven gas transfer can be modelled, i.a. to account for linepack flexibility. Generally speaking, the main challenges related to pressure driven gas transfers are the non-convexities associated with the Weymouth equation. In SpineOpt, a convexified MILP representation has been implemented, which as been presented in [Schwele - Coordination of Power and Natural Gas Systems: Convexification Approaches for Linepack Modeling](https://doi.org/10.1109/PTC.2019.8810632). The approximation approach is based on the Taylor series expansion around fixed pressure points.
+
+In addition to the already known variables, such as [connection\_flow](@ref Variables) and [node\_state](@ref Variables), the start and end points of a gas pipeline connection are associated with the variable [node\_pressure](@ref Variables). The variable is trigger by the [has\_pressure](@ref) parameter. For more details on how to set up a gas pipeline, see also the advanced concept section [on pressure driven gas transfer](@ref pressure-driven-gas-transfer).
+
+##### [Maximum node pressure](@id constraint_max_node_pressure)
+
+In order to impose an upper limit on the maximum pressure at a node the [maximum node pressure constraint](@ref constraint_max_node_pressure) can be included, by defining the parameter [max\_node\_pressure](@ref) which trigger the following constraint:
+
+```math
+\begin{aligned}
+& \sum_{\substack{(n,s,t') \in node\_pressure\_indices: \\ (n,s,t') \, \in \, (n,s,t)}} v_{node\_pressure}(n,s,t') \cdot \Delta t' \\
+& <= p_{max\_node\_pressure}(ng,s,t) \\
+& \cdot \Delta t \\
+& \forall (ng) \in ind(p_{max\_node\_pressure}), \\
+& \forall t \in time\_slices, \\
+& \forall s \in stochastic\_path
+\end{aligned}
+```
+As indicated in the equation, the parameter [max\_node\_pressure](@ref) can also be defined on a node group, in order to impose an upper limit on the aggregated [node\_pressure](@ref Variables) within one node group.
+
+##### [Minimum node pressure](@id constraint_min_node_pressure)
+In order to impose a lower limit on the pressure at a node the [maximum node pressure constraint](@ref constraint_min_node_pressure) can be included, by defining the parameter [min\_node\_pressure](@ref) which trigger the following constraint:
+
+```math
+\begin{aligned}
+& \sum_{\substack{(n,s,t') \in node\_pressure\_indices: \\ (n,s,t') \, \in \, (n,s,t)}} v_{node\_pressure}(n,s,t') \cdot \Delta t' \\
+& >= p_{min\_node\_pressure}(ng,s,t) \\
+& \cdot \Delta t \\
+& \forall (ng) \in ind(p_{min\_node\_pressure}), \\
+& \forall t \in time\_slices, \\
+& \forall s \in stochastic\_path
+\end{aligned}
+```
+As indicated in the equation, the parameter [min\_node\_pressure](@ref) can also be defined on a node group, in order to impose a lower limit on the aggregated [node\_pressure](@ref Variables) within one node group.
+
+##### [Constraint on the pressure ratio between to nodes](@id constraint_compression_factor)
+
+If a compression station is located in between to nodes, the connection is considered to be active and a compression ratio between the two nodes can be imposed. The parameter [compression\_factor](@ref) needs to be defined on a [connection\_\_node\_\_node](@ref) relationship, where the first node corresponds the origin node, before the compression, while the second node corresponds to the destination node, after compression. The existence of this parameter will trigger the following constraint:
+
+```math
+\begin{aligned}
+& \sum_{\substack{(n,s,t') \in node\_pressure\_indices: \\ (n,s,t') \, \in \, (ng2,s,t)}} v_{node\_pressure}(n,s,t') \cdot \Delta t' \\
+& <= p_{compression\_factor}(conn,ng1,ng2,s,t) \\
+& \sum_{\substack{(n,s,t') \in node\_pressure\_indices: \\ (n,s,t') \, \in \, (ng1,s,t)}} v_{node\_pressure}(n,s,t') \cdot \Delta t' \\
+& \forall (conn,ng1,ng2) \in ind(p_{compression\_factor}), \\
+& \forall t \in time\_slices, \\
+& \forall s \in stochastic\_path
+\end{aligned}
+```
+
+##### [Outer approximation through fixed pressure points](@id constraint_fixed_node_pressure_point)
+
+The Weymouth relates the average flows through a connection to the difference between the adjacent squared node pressures.
+```math
+\begin{aligned}
+  & ((v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 \\
+  &   -\\
+  &   (v_{connection\_flow}(conn, n_{dest},:from\_node,s,t) + v_{connection\_flow}(conn, n_{orig},:to\_node,s,t))/2)\\
+  &   \cdot\\
+  & |((v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2\\
+  &   -\\
+  &   (v_{connection\_flow}(conn, n_{dest},:from\_node,s,t) + v_{connection\_flow}(conn, n_{orig},:to\_node,s,t))/2 |) \\
+  &  =\\
+  & K(conn)\\
+  & \cdot (v_{node\_pressure}(n_{orig},s,t)^2 - n_{dest},s,t)^2) \\
+  \end{aligned}
+```
+Which can be rewritten as
+```math
+\begin{aligned}
+    & ((v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 \\
+    &   -\\
+    &   (v_{connection\_flow}(conn, n_{dest},:from\_node,s,t) + v_{connection\_flow}(conn, n_{orig},:to\_node,s,t))/2)\\
+    &  =\\
+    & \sqrt{K(conn)\\
+    & \cdot (v_{node\_pressure}(n_{orig},s,t)^2 - n_{dest},s,t)^2)} \\
+    & for (v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 > 0
+  \end{aligned}
+  \begin{aligned}
+  & ((v_{connection\_flow}(conn, n_{dest},:from\_node,s,t) + v_{connection\_flow}(conn, n_{orig},:to\_node,s,t))/2\\
+  & -\\
+  & (v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2) \\
+  &  =\\
+  & \sqrt{K(conn)\\
+  & \cdot (v_{node\_pressure}(n_{dest},s,t)^2 - v_{node\_pressure}(n_{orig},s,t)^2)} \\
+    & for (v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 < 0
+  \end{aligned}
+```
+where `K` corresponds to the natural gas flow constant.
+
+The cone described by the Weymouth equation can be outer approximated by a number of tangent planes, using a set of fixed pressure points, as illustrated in [Schwele - Integration of Electricity, Natural Gas and Heat Systems With Market-based Coordination](https://orbit.dtu.dk/en/publications/integration-of-electricity-natural-gas-and-heat-systems-with-mark). The bigM method is used to replace the sign function.
+
+The linearized version of the Weymouth equation implemented in SpineOpt is given as follows:
+
+```math
+\begin{aligned}
+    & ((v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 \\
+    &  =\\
+    & p_{fixed\_pressure\_constant\_1}(conn,n_{orig},n_{dest},j,s,t) \\
+    & \cdot v_{node\_pressure}(n_{orig},s,t) \\
+    & - p_{fixed\_pressure\_constant\_0}(conn,n_{orig},n_{dest},j,s,t) \\
+    & \cdot v_{node\_pressure}(n_{dest},s,t) \\
+    & + p_{big\_m} \cdot (1 - v_{binary\_gas\_connection\_flow}(conn, n_{dest}, :to\_node, s, t)) \\
+    &  \forall (conn, n_{orig}, n_{dest}) in ind(p_{fixed\_pressure\_constant\_1}) \\
+    & \forall j \in 1:n(p_{fixed\_pressure\_constant\_1(connection=conn, node1=n_{orig}, node2=n_dest)}): \\
+    & p_{fixed\_pressure\_constant\_1}(conn, n_{orig}, n_{dest}, i=j) != 0 \\
+    & \forall t \in time\_slices, \\
+    & \forall s \in stochastic\_path
+\end{aligned}
+```
+
+The parameters [fixed\_pressure\_constant\_1](@ref) and [fixed\_pressure\_constant\_0](@ref) should be defined in the database. For each considered fixed pressure point, they can be calculated as follows:
+```math
+\begin{aligned}
+  & p_{fixed\_pressure\_constant\_1}(conn,n_{orig},n_{dest},j) \\
+  & = K(conn) * p_{fixed\_pressure}(n_{orig},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j) - p_{fixed\_pressure}(n_{dest},j}\\
+  & p_{fixed\_pressure\_constant\_0}(conn,n_{orig},n_{dest},j) \\
+  & = K(conn) * p_{fixed\_pressure}(n_{dest},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j) - p_{fixed\_pressure}(n_{dest},j}\\
+\end{aligned}
+```
+where K corrsponds to the natural gas flow constant.
+
+ The [big\_m](@ref) parameter combined with the variable [binary\_gas\_connection\_flow](@ref Variables) together with the equations [on unitary gas flow](@ref constraint_connection_unitary_gas_flow) and on the [maximum gas flow](@ref constraint_connection_flow_gas_capacity) ensure that the bound on the average flow through the fixed pressure points becomes active, if the flow is in a positive direction for the observed set of connection, node1 and node2.
+
+##### [Enforcing unidirectional flow](@id constraint_connection_unitary_gas_flow)
+
+As stated above, the flow through a connection can only be in one direction at at time. Whever a flow is active in a certain direction is indicated by the [binary\_gas\_connection\_flow](@ref Variables) variable, which takes a value of `1` if the direction of flow is positive. To ensure that the [binary\_gas\_connection\_flow](@ref Variables) in the opposite direction then takes the value `0`, the following constraint is enforced:
+
+```math
+\begin{aligned}
+& v_{binary\_gas\_connection\_flow}(conn, n_{orig}, :to\_node, s, t)) \\
+& (1 - v_{binary\_gas\_connection\_flow}(conn, n_{dest}, :to\_node, s, t)) \\
+& \forall (n,d,s,t) in binary\_gas\_connection\_flow\_indices\\
+\end{aligned}
+```
+##### [Gas connection flow capacity](@id constraint_connection_flow_gas_capacity)
+
+To enforce that the averge flow of a connection is only in one direction, the flow in the opposite direction is forced to be `0` by the following euqation. For the connection flow in the direction of flow the parameter [big\_m](@ref) should be chosen large enough to not become binding.
+
+```math
+\begin{aligned}
+    & ((v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 \\
+    &  <=\\
+    & + p_{big\_m} \cdot v_{binary\_gas\_connection\_flow}(conn, n_{dest}, :to\_node, s, t) \\
+    &  \forall (conn, n_{orig}, n_{dest}) in ind(p_{fixed\_pressure\_constant\_1}) \\
+    & \forall t \in time\_slices, \\
+    & \forall s \in stochastic\_path
+\end{aligned}
+```
+##### [Linepack storage flexibility](@id constraint_storage_line_pack)
+In order to account for linepack flexibility, i.e. storage capability of a connection, the linepack storage is linked
+to the average pressure of the adjacent nodes by the following equation, triggered by the parameter [connection\_linepack\_constant](@ref):
+
+```math
+\begin{aligned}
+    & v_{node\_state}(n_{stor},s,t) \Delta t
+    &  =\\
+    & p_{connection\_linepack\_constant}(conn,n_{stor},n_{ngroup}) /2 \\
+    & \sum_{\substack{(n,s,t') \in node\_pressure\_indices: \\ (n,s,t') \, \in \, (ng,s,t)}} v_{node\_pressure}(n,s,t') \cdot \Delta t' \\
+    &  \forall (conn, n_{stor}, n_{ngroup}) in ind(p_{connection\_linepack\_constant}) \\
+    & \forall t \in time\_slices, \\
+    & \forall s \in stochastic\_path
+\end{aligned}
+```
+
+Note that the parameter [connection\_linepack\_constant](@ref) should be defined on a [connection\_\_node\_\_\_node](@ref) relationship, where
+the first node corresponds to the linepack storage node, whereas the second node corresponds to the node group of both start and end nodes of the pipeline.
+
+#### [Nodebased lossless DC power flow](@id nodal-lossless-DC)
+
+For the implementation of the nodebased loss DC powerflow model, a new variable [node\_voltage\_angle](@ref Variables) is introduced. See also [has\_voltage\_angle](@ref).
+For further explanation on setting up a database for nodal lossless DC power flow, see the advanced concept chapter on [Lossless nodal DC power flows](@ref).
+
+##### [Maximum node voltage angle](@id constraint_max_node_voltage_angle)
+
+In order to impose an upper limit on the maximum voltage angle at a node the [maximum node voltage angle constraint](@ref constraint_max_node_voltage_angle) can be included, by defining the parameter [max\_voltage\_angle](@ref) which trigger the following constraint:
+
+```math
+\begin{aligned}
+& \sum_{\substack{(n,s,t') \in node\_voltage\_angle\_indices: \\ (n,s,t') \, \in \, (n,s,t)}} v_{node\_voltage\_angle}(n,s,t') \cdot \Delta t' \\
+& <= p_{max\_voltage\_angle}(ng,s,t) \\
+& \cdot \Delta t \\
+& \forall (ng) \in ind(p_{max\_voltage\_angle}), \\
+& \forall t \in time\_slices, \\
+& \forall s \in stochastic\_path
+\end{aligned}
+```
+As indicated in the equation, the parameter [max\_voltage\_angle](@ref) can also be defined on a node group, in order to impose an upper limit on the aggregated [node\_voltage\_angle](@ref Variables) within one node group.
+
+##### [Minimum node voltage angle](@id constraint_min_node_voltage_angle)
+
+In order to impose a lower limit on the voltage angle at a node the [maximum node voltage angle constraint](@ref constraint_min_node_voltage_angle) can be included, by defining the parameter [min\_voltage\_angle](@ref) which trigger the following constraint:
+
+```math
+\begin{aligned}
+& \sum_{\substack{(n,s,t') \in node\_voltage\_angle\_indices: \\ (n,s,t') \, \in \, (n,s,t)}} v_{node\_voltage\_angle}(n,s,t') \cdot \Delta t' \\
+& >= p_{min\_voltage\_angle}(ng,s,t) \\
+& \cdot \Delta t \\
+& \forall (ng) \in ind(p_{min\_voltage\_angle}), \\
+& \forall t \in time\_slices, \\
+& \forall s \in stochastic\_path
+\end{aligned}
+```
+As indicated in the equation, the parameter [min\_voltage\_angle](@ref) can also be defined on a node group, in order to impose a lower limit on the aggregated [node\_voltage\_angle](@ref Variables) within one node group.
+
+##### [Voltage angle to connection flows](@id constraint_node_voltage_angle)
+
+To link the flow over a connection to the voltage angles of the adjacent nodes, the following constraint is imposed. Note that this constraint is only generated if
+the parameter [connection\_reactance](@ref) is defined for a [connection\_\_node\_\_node](@ref) relationship and if a [fix\_ratio\_out\_in\_connection\_flow](@ref) is defined for the corresponding connection, node, node tuples.
+
+```math
+\begin{aligned}
+& + \sum_{\substack{(conn,n',d,s,t) \in connection\_flow\_indices: \\ d_{from} == :from\_node \\ n' \in n_{from}}}
+ v_{connection\_flow}(conn,n',d,s,t)\\
+& - \sum_{\substack{(conn,n',d,s,t) \in connection\_flow\_indices: \\ d_{from} == :from\_node \\ n' \in n_{to}}}
+ v_{connection\_flow}(conn,n',s,t)\\
+& = \\
+& 1/p_{connection\_reactance}(conn) \cdot p_{connection\_reactance\_base}(conn)\\
+& \cdot (\sum_{\substack{(n,s,t') \in node\_voltage\_angle\_indices: \\ (n,s,t') \, \in \, (n_{from},s,t)}} v_{node\_voltage\_angle}(n,s,t') \cdot \Delta t' \\
+& \sum_{\substack{(n,s,t') \in node\_voltage\_angle\_indices: \\ (n,s,t') \, \in \, (n_{to},s,t)}} v_{node\_voltage\_angle}(n,s,t') \cdot \Delta t' \\
+& (conn, n_{to}, n_{from}) in indices(p_{fix_ratio_out_in_connection_flow})\\
+& \forall t \in time\_slices, \\
+& \forall s \in stochastic\_path
+\end{aligned}
+```
 
 ### [PTDF based DC lossless powerflow ?](@id PTDF-lossless-DC)
 #### [connection flow LODF?](@id constraint_connection_flow_lodf)

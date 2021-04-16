@@ -1,0 +1,1 @@
+By defining the res\_proc\_cost parameter for a specific `unit`, `node`, and `direction`, a cost term will be added to the objective function whenever that unit is used over the course of the operational dispatch during the current optimization window.

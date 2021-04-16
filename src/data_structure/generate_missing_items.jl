@@ -30,12 +30,9 @@ function generate_missing_items(mod=@__MODULE__)
         "relationship classes" => String[],
         "parameter definitions" => String[],
     )
-    classes = Dict{Symbol,Union{ObjectClass,RelationshipClass}}(class.name => class
-    for class in object_class(mod))
-    merge!(classes, Dict(class.name => class
-    for class in relationship_class(mod)))
-    parameters = Set(param.name
-    for param in parameter(mod))
+    classes = Dict{Symbol,Union{ObjectClass,RelationshipClass}}(class.name => class for class in object_class(mod))
+    merge!(classes, Dict(class.name => class for class in relationship_class(mod)))
+    parameters = Set(param.name for param in parameter(mod))
     for (name,) in template["object_classes"]
         sym_name = Symbol(name)
         sym_name in keys(classes) && continue
@@ -76,8 +73,7 @@ function generate_missing_items(mod=@__MODULE__)
             export $sym_name
         end
     end
-    header_size = maximum(length(key)
-    for key in keys(missing_items))
+    header_size = maximum(length(key) for key in keys(missing_items))
     empty_header = repeat(" ", header_size)
     splitter = repeat(" ", 2)
     missing_items_str = ""
@@ -85,8 +81,7 @@ function generate_missing_items(mod=@__MODULE__)
         isempty(value) && continue
         header = lpad(key, header_size)
         missing_items_str *= "\n" * string(header, splitter, value[1], "\n")
-        missing_items_str *= join([string(empty_header, splitter, x)
-        for x in value[2:end]], "\n") * "\n"
+        missing_items_str *= join([string(empty_header, splitter, x) for x in value[2:end]], "\n") * "\n"
     end
     if !isempty(missing_items_str)
         println()

@@ -1,0 +1,1 @@
+By defining the storage\_investment\_cost parameter for a specific `node`, a cost term will be added to the objective function whenever a storage investment is made during the current optimization window.

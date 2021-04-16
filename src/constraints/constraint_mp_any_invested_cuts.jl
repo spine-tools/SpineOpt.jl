@@ -34,16 +34,14 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
             >=
             + sp_objective_value_bi(benders_iteration=bi)
             # operating cost benefit from investments in units
-            +
-            expr_sum(
+            + expr_sum(
                 (+ units_invested_available[u, s, t] - units_invested_available_bi(benders_iteration=bi, unit=u, t=t))
                 * units_available_mv(benders_iteration=bi, unit=u, t=t)
                 for (u, s, t) in units_invested_available_indices(m);
                 init=0,
             )
             # operating cost benefit from investments in connections
-            +
-            expr_sum(
+            + expr_sum(
                 (
                     + connections_invested_available[c, s, t]
                     - connections_invested_available_bi(benders_iteration=bi, connection=c, t=t)
@@ -52,8 +50,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                 init=0,
             )
             # operating cost benefit from investments in storages
-            +
-            expr_sum(
+            + expr_sum(
                 (
                     + storages_invested_available[n, s, t]
                     - storages_invested_available_bi(benders_iteration=bi, node=n, t=t)

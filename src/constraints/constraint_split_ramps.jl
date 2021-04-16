@@ -76,14 +76,14 @@ function add_constraint_split_ramps!(m::Model)
             )
             ==
             expr_sum(
-                + get(ramp_up_unit_flow, (u, n, d, s, t_after), 0) +
-                get(start_up_unit_flow, (u, n, d, s, t_after), 0) +
-                get(nonspin_ramp_up_unit_flow, (u, n, d, s, t_after), 0) for s in s;
+                + get(ramp_up_unit_flow, (u, n, d, s, t_after), 0)
+                + get(start_up_unit_flow, (u, n, d, s, t_after), 0)
+                + get(nonspin_ramp_up_unit_flow, (u, n, d, s, t_after), 0) for s in s;
                 init=0,
             ) - expr_sum(
-                + get(ramp_down_unit_flow, (u, n, d, s, t_after), 0) +
-                get(shut_down_unit_flow, (u, n, d, s, t_after), 0) +
-                get(nonspin_ramp_down_unit_flow, (u, n, d, s, t_after), 0) for s in s;
+                + get(ramp_down_unit_flow, (u, n, d, s, t_after), 0)
+                + get(shut_down_unit_flow, (u, n, d, s, t_after), 0)
+                + get(nonspin_ramp_down_unit_flow, (u, n, d, s, t_after), 0) for s in s;
                 init=0,
             )
         ) for (u, n, d, s, t_before, t_after) in constraint_split_ramps_indices(m)

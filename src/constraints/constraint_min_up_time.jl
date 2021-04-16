@@ -68,8 +68,7 @@ function constraint_min_up_time_indices(m::Model; unit=anything, stochastic_path
     t0 = startref(current_window(m))
     unique(
         (unit=u, stochastic_path=path, t=t)
-        for u in indices(min_up_time)
-        for (u, s, t) in units_on_indices(m; unit=u)
+        for u in indices(min_up_time) for (u, s, t) in units_on_indices(m; unit=u)
         for path in active_stochastic_paths(_constraint_min_up_time_indices(m, u, s, t0, t))
     )
 end
@@ -97,6 +96,7 @@ function _constraint_min_up_time_indices(m, u, s, t0, t)
         m;
         t=TimeSlice(end_(t) - min_up_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)),
     )
-    unique(ind.stochastic_scenario
-    for ind in units_on_indices(m; unit=u, t=t_past_and_present, temporal_block=anything))
+    unique(
+        ind.stochastic_scenario for ind in units_on_indices(m; unit=u, t=t_past_and_present, temporal_block=anything)
+    )
 end
