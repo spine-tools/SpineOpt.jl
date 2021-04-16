@@ -600,8 +600,48 @@ Storage nodes can also contribute to the provision of reserves. The amount of ba
 
 ### Operating segments
 #### [Operating segments of units](@id constraint_operating_point_bounds)
+The `unit_flow_op` operating segment variable is bounded by the difference between successive [operating points](@ref) adjusted for [unit_capacity](@ref)
+
+```math
+\begin{aligned}
+& v_{unit\_flow\_op}(u, n, op, s, t) \\
+&  <= p_{unit\_capacity}(u, n, d, s, t) \\
+&  \cdot v_{units\_available}(u, s, t) \\
+&  \cdot p_{unit_conv_cap_to_flow}(u, n, d, s, t) \\
+ \cdot \bigg( & p_{operating\_points}(u, n, op, s, t) \\
+& - \begin{cases}       
+       0                                     & \text{if op = 1}\\
+       p_{operating\_points}(u, n, op-1, s, t) & \text{otherwise}\\
+    \end{cases} \bigg) \\
+& \forall (u,n,d,s,t) \in unit\_flow\_op\_indices \\
+\end{aligned}
+```
+
+
 #### [Bounding unit flows by summing over operating segments](@id constraint_operating_point_sum)
+`unit_flow` is constrained to be the sum of all operating segment variables, `unit_flow_op`
+
+```math
+\begin{aligned}
+& v_{unit\_flow}(u, n, s, t) \\
+&  = \sum_{op}  v_{unit\_flow\_op}(u, n, op, s, t) \\
+& \forall (u,n,d) \in operating\_point\_indices \\
+& \forall (u,n,d,s,t) \in unit\_flow\_op\_indices \\
+\end{aligned}
+```
+
 #### [Heat rate?](@id constraint_unit_pw_heat_rate)
+
+```math
+\begin{aligned}
+              & v_{unit\_flow}(u, n_{in}, d, s, t) \\
+              & = \sum_{op} \bigg( v_{unit\_flow\_op}(u, n_{out}, d, op, s, t) \\
+              & \hspace4em \cdot p_{unit\_incremental\_heat\_rate}(u, n_{in}, n_{out}, op, s, t) \bigg) \\              
+              & + v_{units\_on}(u, s, t) \cdot p_{unit\_idle\_heat\_rate}(u, n_{in}, n_{out}, s, t) \\
+              & + v_{units\_started\_up}(u, s, t) \cdot p_{unit\_start\_flow}(u, n_{in}, n_{out}, s, t) \\
+              & \forall (u,n_{in},n_{out},s,t) \in unit\_pw\_heat\_rate\_indices \\
+\end{aligned}
+```
 
 ### Bounds on commodity flows
 
@@ -639,8 +679,34 @@ To impose a limit on the cumulative amount of certain commodity flows, a cumulat
 #### [Minimum node voltage angle](@id constraint_min_node_voltage_angle)
 #### [Voltage angle to connection flows](@id constraint_node_voltage_angle)
 
-### [PTDF based DC lossless powerflow ?](@id PTDF-lossless-DC)
+### [PTDF based DC lossless powerflow](@id PTDF-lossless-DC)
+#### [connection intact flow PTDF](@id constraint_connection_flow_ptdf)
+
+
+```math
+\begin{aligned}
+              & + v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{to}, s, t) \\
+              & - v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{from}, s, t) \\
+              & + v_{node\_injection}(n_{inj}, s, t) \cdot p_{ptdf}(c, n_{inj}) \Big) \\              
+              & + v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{to}, s, t) \\
+              & - v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{from}, s, t) \\
+
+              & \forall (c,n_{to},s,t) \in connection\_ptdf\_flow\_indices \\
+\end{aligned}
+```
+
 #### [connection flow LODF?](@id constraint_connection_flow_lodf)
+
+```math
+\begin{aligned}
+              & + v_{connection\_flow}(c, n_{to}, d_{to}, s, t) \\
+              & - v_{connection\_flow}(c, n_{to}, d_{from}, s, t) \\
+              & == \sum_{n_{inj}} \Big( v_{node\_injection}(n_{inj}, s, t) \cdot p_{ptdf}(c, n_{inj}) \Big) \\              
+              & \forall (c,n_{to},s,t) \in connection\_ptdf\_flow\_indices \\
+\end{aligned}
+```
+
+
 ## Investments
 ### Investments in units
 #### [Economic lifetime of a unit](@id constraint_unit_lifetime)
