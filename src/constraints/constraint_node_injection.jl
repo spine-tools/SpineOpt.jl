@@ -30,24 +30,38 @@ function add_constraint_node_injection!(m::Model)
         (node=n, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             + expr_sum(
-                + node_injection[n, s, t_after] + demand[(
+                + node_injection[n, s, t_after] + demand[
+                    (
+                        node=n,
+                        stochastic_scenario=s,
+                        analysis_time=t0,
+                        t=(
+                            !isempty(indices(representative_periods_mapping)) ?
+                            representative_time_slices(m)[to_time_slice(m, t=t_after)] : t
+                        ),
+                    ),
+                ] for (n, s, t) in node_injection_indices(
+                    m;
                     node=n,
                     stochastic_scenario=s,
-                    analysis_time=t0,
-                    t=(
-                        !isempty(indices(representative_periods_mapping)) ?
-                        representative_time_slices(m)[to_time_slice(m, t=t_after)] : t
-                    ),
-                )] for (n, s, t) in
-                    node_injection_indices(m; node=n, stochastic_scenario=s, t=t_after, temporal_block=anything);
+                    t=t_after,
+                    temporal_block=anything,
+                );
                 init=0,
-            ) + expr_sum(
+            )
+            + expr_sum(
                 fractional_demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)]
-                * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t_after)] for (n, s, t) in
-                    node_injection_indices(m; node=n, stochastic_scenario=s, t=t_after, temporal_block=anything)
-                for ng in groups(n);
+                * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t_after)]
+                for (n, s, t) in node_injection_indices(
+                    m;
+                    node=n,
+                    stochastic_scenario=s,
+                    t=t_after,
+                    temporal_block=anything,
+                ) for ng in groups(n);
                 init=0,
-            ) ==
+            )
+            ==
             + expr_sum(
                 (
                     + get(node_state, (n, s, t_before), 0)
@@ -102,29 +116,34 @@ function add_constraint_node_injection!(m::Model)
     )
 end
 
-#TODO: can we find an easier way to define the constraint indices?
+# TODO: can we find an easier way to define the constraint indices?
 # I feel that for unexperienced uses it gets more an more complicated to understand our code
+function constraint_node_injection_indices(m::Model)
+    unique(
+        (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (n, t_before, t_after) in node_dynamic_time_indices(m) for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_node_injection_indices(m, n, t_after, t_before)),
+        )
+    )
+end
+
 """
-    constraint_node_injection_indices(m::Model; filtering_options...)
+    constraint_node_injection_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:node_injection` constraint.
 
 Uses stochastic path indices due to dynamics and potentially different stochastic structures between this
 `node` and `nodes` connected via diffusion. Keyword arguments can be used to filter the resulting Array.
 """
-function constraint_node_injection_indices(
+function constraint_node_injection_indices_filtered(
     m::Model;
     node=anything,
     stochastic_path=anything,
     t_before=anything,
     t_after=anything,
 )
-    unique(
-        (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (n, t_before, t_after) in node_dynamic_time_indices(m; node=node) for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_node_injection_indices(m, n, t_after, t_before)),
-        ) if path == stochastic_path || path in stochastic_path
-    )
+    f(ind) = _index_in(ind; node=node, stochastic_path=stochastic_path, t_before=t_before, t_after=t_after)
+    filter(f, constraint_node_injection_indices(m))
 end
 
 """
@@ -140,8 +159,10 @@ function _constraint_node_injection_indices(m, node, t_after, t_before)
         # `node_state` on `t_before`
         node_state_indices(m; node=node, t=t_before),
         # Diffusion to this `node`
-        (ind for n1 in node__node(node2=node) for ind in node_state_indices(m; node=n1, t=t_after)),
+        (ind
+        for n1 in node__node(node2=node) for ind in node_state_indices(m; node=n1, t=t_after)),
         # Diffusion from this `node`
-        (ind for n2 in node__node(node1=node) for ind in node_state_indices(m; node=n2, t=t_after)),
+        (ind
+        for n2 in node__node(node1=node) for ind in node_state_indices(m; node=n2, t=t_after)),
     ))
 end

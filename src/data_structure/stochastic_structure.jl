@@ -115,8 +115,11 @@ function _stochastic_dag(m::Model, stochastic_structure::Object, window_start::D
         ) for scen in scenarios
     )
     for scen in scenarios
-        scenario_duration =
-            stochastic_scenario_end(stochastic_structure=stochastic_structure, stochastic_scenario=scen, _strict=false)
+        scenario_duration = stochastic_scenario_end(
+            stochastic_structure=stochastic_structure,
+            stochastic_scenario=scen,
+            _strict=false,
+        )
         if scenario_duration === nothing
             scen_end[scen] = window_very_end
             continue
@@ -190,8 +193,12 @@ function _generate_stochastic_scenario_set(m::Model, all_stochastic_dags)
     )
 end
 
-_stochastic_scenario_set(m::Model, structure::Object, t::TimeSlice, scenario) =
-    m.ext[:stochastic_structure][:stochastic_scenario_set](structure, t, scenario)
+_stochastic_scenario_set(
+    m::Model,
+    structure::Object,
+    t::TimeSlice,
+    scenario,
+) = m.ext[:stochastic_structure][:stochastic_scenario_set](structure, t, scenario)
 
 """
     node_stochastic_time_indices(m;<keyword arguments>)
@@ -275,10 +282,13 @@ function connection_investment_stochastic_time_indices(
     t=anything,
 )
     unique(
-        (connection=conn, stochastic_scenario=s, t=t1) for (conn, t1) in
-            connection_investment_time_indices(m; connection=connection, temporal_block=temporal_block, t=t)
-        for structure in connection__investment_stochastic_structure(connection=conn) if
-            structure in model__stochastic_structure(model=m.ext[:instance])
+        (connection=conn, stochastic_scenario=s, t=t1) for (conn, t1) in connection_investment_time_indices(
+            m;
+            connection=connection,
+            temporal_block=temporal_block,
+            t=t,
+        ) for structure in connection__investment_stochastic_structure(connection=conn)
+            if structure in model__stochastic_structure(model=m.ext[:instance])
         for s in _stochastic_scenario_set(m, structure, t1, stochastic_scenario)
     )
 end
@@ -314,8 +324,8 @@ Generate the `node_stochastic_scenario_weight` parameter for the `model` for eas
 function _generate_node_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
     node_stochastic_scenario_weight_values = Dict(
         (node, scen) => Dict(:node_stochastic_scenario_weight => parameter_value(param_vals.weight))
-        for (node, structure) in node__stochastic_structure() if
-            structure in model__stochastic_structure(model=m.ext[:instance])
+        for (node, structure) in node__stochastic_structure()
+            if structure in model__stochastic_structure(model=m.ext[:instance])
         for (scen, param_vals) in all_stochastic_dags[structure]
     )
     node__stochastic_scenario = RelationshipClass(
@@ -324,8 +334,10 @@ function _generate_node_stochastic_scenario_weight(m::Model, all_stochastic_dags
         [(node=n, stochastic_scenario=scen) for (n, scen) in keys(node_stochastic_scenario_weight_values)],
         node_stochastic_scenario_weight_values,
     )
-    m.ext[:stochastic_structure][:node_stochastic_scenario_weight] =
-        Parameter(:node_stochastic_scenario_weight, [node__stochastic_scenario])
+    m.ext[:stochastic_structure][:node_stochastic_scenario_weight] = Parameter(
+        :node_stochastic_scenario_weight,
+        [node__stochastic_scenario],
+    )
 end
 
 """
@@ -336,9 +348,10 @@ Generate the `unit_stochastic_scenario_weight` parameter for the `model` for eas
 function _generate_unit_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
     unit_stochastic_scenario_weight_values = Dict(
         (unit, scen) => Dict(:unit_stochastic_scenario_weight => parameter_value(param_vals.weight))
-        for (unit, structure) in
-            Iterators.flatten((units_on__stochastic_structure(), unit__investment_stochastic_structure())) if
-            structure in model__stochastic_structure(model=m.ext[:instance])
+        for (unit, structure) in Iterators.flatten((
+            units_on__stochastic_structure(),
+            unit__investment_stochastic_structure(),
+        )) if structure in model__stochastic_structure(model=m.ext[:instance])
         for (scen, param_vals) in all_stochastic_dags[structure]
     )
     unit__stochastic_scenario = RelationshipClass(
@@ -347,8 +360,10 @@ function _generate_unit_stochastic_scenario_weight(m::Model, all_stochastic_dags
         [(unit=u, stochastic_scenario=scen) for (u, scen) in keys(unit_stochastic_scenario_weight_values)],
         unit_stochastic_scenario_weight_values,
     )
-    m.ext[:stochastic_structure][:unit_stochastic_scenario_weight] =
-        Parameter(:unit_stochastic_scenario_weight, [unit__stochastic_scenario])
+    m.ext[:stochastic_structure][:unit_stochastic_scenario_weight] = Parameter(
+        :unit_stochastic_scenario_weight,
+        [unit__stochastic_scenario],
+    )
 end
 
 """
@@ -359,8 +374,8 @@ Generate the `connection_stochastic_scenario_weight` parameter for the `model` f
 function _generate_connection_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
     connection_stochastic_scenario_weight_values = Dict(
         (connection, scen) => Dict(:connection_stochastic_scenario_weight => parameter_value(param_vals.weight))
-        for (connection, structure) in connection__investment_stochastic_structure() if
-            structure in model__stochastic_structure(model=m.ext[:instance])
+        for (connection, structure) in connection__investment_stochastic_structure()
+            if structure in model__stochastic_structure(model=m.ext[:instance])
         for (scen, param_vals) in all_stochastic_dags[structure]
     )
     connection__stochastic_scenario = RelationshipClass(
@@ -369,16 +384,24 @@ function _generate_connection_stochastic_scenario_weight(m::Model, all_stochasti
         [(connection=c, stochastic_scenario=scen) for (c, scen) in keys(connection_stochastic_scenario_weight_values)],
         connection_stochastic_scenario_weight_values,
     )
-    m.ext[:stochastic_structure][:connection_stochastic_scenario_weight] =
-        Parameter(:connection_stochastic_scenario_weight, [connection__stochastic_scenario])
+    m.ext[:stochastic_structure][:connection_stochastic_scenario_weight] = Parameter(
+        :connection_stochastic_scenario_weight,
+        [connection__stochastic_scenario],
+    )
 end
 
-node_stochastic_scenario_weight(m; kwargs...) =
-    m.ext[:stochastic_structure][:node_stochastic_scenario_weight][(; kwargs...)]
-unit_stochastic_scenario_weight(m; kwargs...) =
-    m.ext[:stochastic_structure][:unit_stochastic_scenario_weight][(; kwargs...)]
-connection_stochastic_scenario_weight(m; kwargs...) =
-    m.ext[:stochastic_structure][:connection_stochastic_scenario_weight][(; kwargs...)]
+node_stochastic_scenario_weight(
+    m;
+    kwargs...,
+) = m.ext[:stochastic_structure][:node_stochastic_scenario_weight][(; kwargs...)]
+unit_stochastic_scenario_weight(
+    m;
+    kwargs...,
+) = m.ext[:stochastic_structure][:unit_stochastic_scenario_weight][(; kwargs...)]
+connection_stochastic_scenario_weight(
+    m;
+    kwargs...,
+) = m.ext[:stochastic_structure][:connection_stochastic_scenario_weight][(; kwargs...)]
 
 """
     generate_master_stochastic_structure(m::Model)

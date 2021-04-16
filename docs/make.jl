@@ -11,10 +11,10 @@ default_translation = Dict(
     #["features"] => "Features",
     #["tools"] => "Tools",
     ["object_parameters", "relationship_parameters"] => "Parameters",
-    ["object_classes"] => "Object Classes"
+    ["object_classes"] => "Object Classes",
 )
 concept_dictionary = SpineOpt.add_cross_references!(
-    SpineOpt.initialize_concept_dictionary(SpineOpt.template(); translation=default_translation)
+    SpineOpt.initialize_concept_dictionary(SpineOpt.template(); translation=default_translation),
 )
 SpineOpt.write_concept_reference_files(concept_dictionary, path)
 
@@ -46,6 +46,10 @@ makedocs(
             "Temporal Framework" => joinpath("advanced_concepts", "temporal_framework.md"),
             "Stochastic Framework" => joinpath("advanced_concepts", "stochastic_framework.md"),
             "Investment Optimization" => joinpath("advanced_concepts", "investment_optimization.md"),
+            "Unit Commitment" => joinpath("advanced_concepts", "unit_commitment.md"),
+            "Ramping and reserves" => joinpath("advanced_concepts", "ramping_and_reserves.md"),
+            "Pressure driven gas transfer" => joinpath("advanced_concepts", "pressure_driven_gas_transfer.md"),
+            "Nodal loss-less DC powerflow" => joinpath("advanced_concepts", "Lossless_DC_power_flow.md"),
         ],
         "Library" => "library.md",
     ],

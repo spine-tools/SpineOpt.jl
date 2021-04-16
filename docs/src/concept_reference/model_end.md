@@ -1,0 +1,5 @@
+Together with the [model_start](@ref) parameter, it is used to define the temporal horizon of the model. In case of a single solve optimization, the parameter marks the end of the last timestep that is possibly part of the optimization. Note that it poses an upper bound, and that the optimization does not necessarily include this timestamp when the [block_end](@ref) parameters are more stringent.
+
+In case of a rolling horizon optimization, it will tell to the model to stop rolling forward once an optimization has been performed for which the result of the indicated timestamp has been kept in the final results. For example, assume that a `model_end` value of `2030-01-01T05:00:00` has been chosen, a [block_end](@ref) of `3h`, and a [roll_forward](@ref) of `2h`. The [roll_forward](@ref) parameter indicates here that the results of the first two hours of each optimization window are kept as final, therefore the last optimization window will span the timeframe `[2030-01-01T04:00:00 - 2030-01-01T06:00:00]`.
+
+A DateTime value should be chosen for this parameter. 

@@ -26,28 +26,22 @@ Adds Benders optimality cuts for the units_available constraint. This tells the 
 
 function add_constraint_mp_any_invested_cuts!(m::Model)
     # FIXME: rename this to ...mp_stuff_invested_cuts, since it's not only units
-    @fetch mp_objective_lowerbound,
-    units_invested_available,
-    connections_invested_available,
-    storages_invested_available = m.ext[:variables]
+    @fetch mp_objective_lowerbound, units_invested_available, connections_invested_available, storages_invested_available = m.ext[:variables]
     m.ext[:constraints][:mp_units_invested_cut] = Dict(
         (benders_iteration=bi, t=t1) => @constraint(
             m,
-            + mp_objective_lowerbound[t1] >=
+            + mp_objective_lowerbound[t1]
+            >=
             + sp_objective_value_bi(benders_iteration=bi)
             # operating cost benefit from investments in units
-            +
-            expr_sum(
-                (
-                    + units_invested_available[u, s, t] 
-                    - units_invested_available_bi(benders_iteration=bi, unit=u, t=t)
-                ) * units_available_mv(benders_iteration=bi, unit=u, t=t)
+            + expr_sum(
+                (+ units_invested_available[u, s, t] - units_invested_available_bi(benders_iteration=bi, unit=u, t=t))
+                * units_available_mv(benders_iteration=bi, unit=u, t=t)
                 for (u, s, t) in units_invested_available_indices(m);
                 init=0,
             )
             # operating cost benefit from investments in connections
-            +
-            expr_sum(
+            + expr_sum(
                 (
                     + connections_invested_available[c, s, t]
                     - connections_invested_available_bi(benders_iteration=bi, connection=c, t=t)
@@ -56,8 +50,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                 init=0,
             )
             # operating cost benefit from investments in storages
-            +
-            expr_sum(
+            + expr_sum(
                 (
                     + storages_invested_available[n, s, t]
                     - storages_invested_available_bi(benders_iteration=bi, node=n, t=t)

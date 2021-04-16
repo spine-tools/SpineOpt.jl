@@ -1,1 +1,6 @@
-By defining the node\_slack\_penalty parameter for a specific `node`, a cost term will be added to the objective function to account for penalty costs over the course of the operational dispatch during the current optimization window.
+`node_slack_penalty` triggers the creation of node slack variables, `node_slack_pos` and `node_slack_neg`. 
+This allows the model to violate the [node\_balance](@ref) constraint with these violations penalised in the objective function 
+with a coefficient equal to `node_slack_penalty`. If `node_slack_penalty` = 0 the slack variables are created and violations are 
+unpenalised. If set to none or undefined, the variables are not created and violation of the [node\_balance](@ref) constraint is 
+not possible. 
+

@@ -31,9 +31,11 @@ function connections_invested_available_indices(
     temporal_block=anything,
 )
     [
-        (connection=conn, stochastic_scenario=s, t=t) for (conn, tb) in
-            connection__investment_temporal_block(connection=connection, temporal_block=temporal_block, _compact=false)
-        for (conn, s, t) in connection_investment_stochastic_time_indices(
+        (connection=conn, stochastic_scenario=s, t=t) for (conn, tb) in connection__investment_temporal_block(
+            connection=connection,
+            temporal_block=temporal_block,
+            _compact=false,
+        ) for (conn, s, t) in connection_investment_stochastic_time_indices(
             m;
             connection=conn,
             stochastic_scenario=stochastic_scenario,
@@ -49,8 +51,9 @@ end
 Check if conneciton investment variable type is defined to be an integer.
 """
 
-connections_invested_available_int(x) =
-    connection_investment_variable_type(connection=x.connection) == :variable_type_integer
+connections_invested_available_int(
+    x,
+) = connection_investment_variable_type(connection=x.connection) == :variable_type_integer
 
 """
     fix_initial_connections_invested_available()
@@ -63,10 +66,12 @@ function fix_initial_connections_invested_available(m)
     for conn in indices(candidate_connections)
         t = last(history_time_slice(m))
         if fix_connections_invested_available(connection=conn, t=t, _strict=false) === nothing
-            connection.parameter_values[conn][:fix_connections_invested_available] =
-                parameter_value(TimeSeries([start(t)], [0], false, false))
-            connection.parameter_values[conn][:starting_fix_connections_invested_available] =
-                parameter_value(TimeSeries([start(t)], [0], false, false))
+            connection.parameter_values[conn][:fix_connections_invested_available] = parameter_value(
+                TimeSeries([start(t)], [0], false, false),
+            )
+            connection.parameter_values[conn][:starting_fix_connections_invested_available] = parameter_value(
+                TimeSeries([start(t)], [0], false, false),
+            )
         end
     end
 end

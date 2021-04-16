@@ -28,7 +28,8 @@ function add_constraint_units_invested_available!(m::Model)
     m.ext[:constraints][:units_invested_available] = Dict(
         (unit=u, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + units_invested_available[u, s, t] <=
+            + units_invested_available[u, s, t]
+            <=
             + candidate_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
         ) for (u, s, t) in units_invested_available_indices(m)
     )

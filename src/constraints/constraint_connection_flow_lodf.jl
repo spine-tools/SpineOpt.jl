@@ -57,24 +57,13 @@ function add_constraint_connection_flow_lodf!(m::Model)
                     init=0,
                 )
             ) / minimum(
-                + connection_emergency_capacity[(
-                    connection=conn_mon,
-                    node=n_mon,
-                    direction=d,
-                    stochastic_scenario=s,
-                    analysis_time=t0,
-                    t=t,
-                )]
+                + connection_emergency_capacity[
+                    (connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
+                ]
                 * connection_availability_factor[(connection=conn_mon, stochastic_scenario=s, analysis_time=t0, t=t)]
-                * connection_conv_cap_to_flow[(
-                    connection=conn_mon,
-                    node=n_mon,
-                    direction=d,
-                    stochastic_scenario=s,
-                    analysis_time=t0,
-                    t=t,
-                )] for (conn_mon, n_mon, d) in indices(connection_emergency_capacity; connection=conn_mon)
-                for s in s
+                * connection_conv_cap_to_flow[
+                    (connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
+                ] for (conn_mon, n_mon, d) in indices(connection_emergency_capacity; connection=conn_mon) for s in s
             ) <=
             +1
         ) for (conn_cont, conn_mon, s, t) in constraint_connection_flow_lodf_indices(m)
@@ -83,33 +72,46 @@ end
 
 # NOTE: always pick the second (last) node in `connection__from_node` as 'to' node
 
+function constraint_connection_flow_lodf_indices(m::Model)
+    unique(
+        (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=path, t=t)
+        for conn_cont in connection(connection_contingency=true, has_lodf=true)
+        for conn_mon in connection(connection_monitored=true) if conn_cont !== conn_mon &&
+            abs(lodf(connection1=conn_cont, connection2=conn_mon)) >= connnection_lodf_tolerance(connection=conn_cont)
+        for t in _constraint_connection_flow_lodf_lowest_resolution_t(m, conn_cont, conn_mon)
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario for ind in _constraint_connection_flow_lodf_indices(m, conn_cont, conn_mon, t)
+            ),
+        )
+    )
+end
+
 """
-    constraint_connection_flow_lodf_indices(m::Model; filtering_options...)
+    constraint_connection_flow_lodf_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:connection_flow_lodf` constraint.
 
 Uses stochastic path indices due to potentially different stochastic structures between `connection_flow` variables.
 Keyword arguments can be used for filtering the resulting Array.
 """
-function constraint_connection_flow_lodf_indices(
+function constraint_connection_flow_lodf_indices_filtered(
     m::Model;
     connection_contingency=anything,
     connection_monitored=anything,
     stochastic_path=anything,
     t=anything,
 )
-    unique(
-        (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=path, t=t)
-        for conn_cont in connection(connection_contingency=true, has_lodf=true)
-        for conn_mon in connection(connection_monitored=true) if conn_cont !== conn_mon &&
-            abs(lodf(connection1=conn_cont, connection2=conn_mon)) >= connnection_lodf_tolerance(connection=conn_cont)
-        for t in _constraint_connection_flow_lodf_lowest_resolution_t(m, conn_cont, conn_mon, t)
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario for ind in _constraint_connection_flow_lodf_indices(m, conn_cont, conn_mon, t)
-            ),
-        ) if path == stochastic_path || path in stochastic_path
-    )
+    function f(ind)
+        _index_in(
+            ind;
+            connection_contingency=connection_contingency,
+            connection_monitored=connection_monitored,
+            stochastic_path=stochastic_path,
+            t=t,
+        )
+    end
+    filter(f, constraint_connection_flow_lodf_indices(m))
 end
 
 """
@@ -118,10 +120,11 @@ end
 Find the lowest resolution `t`s between the `connection_flow` variables of the `conn_cont` contingency connection and
 the `conn_mon` monitored connection.
 """
-function _constraint_connection_flow_lodf_lowest_resolution_t(m, conn_cont, conn_mon, t)
+function _constraint_connection_flow_lodf_lowest_resolution_t(m, conn_cont, conn_mon)
     t_lowest_resolution(
-        ind.t for conn in (conn_cont, conn_mon)
-        for ind in connection_flow_indices(m; connection=conn, last(connection__from_node(connection=conn))..., t=t)
+        ind.t
+        for conn in (conn_cont, conn_mon)
+        for ind in connection_flow_indices(m; connection=conn, last(connection__from_node(connection=conn))...)
     )
 end
 
@@ -138,7 +141,7 @@ function _constraint_connection_flow_lodf_indices(m, conn_cont, conn_mon, t)
             connection=conn_mon,
             last(connection__from_node(connection=conn_mon))...,
             t=t_in_t(m; t_long=t),
-        ),  # Monitored connection
+        ),
         connection_flow_indices(
             m;
             connection=conn_cont,

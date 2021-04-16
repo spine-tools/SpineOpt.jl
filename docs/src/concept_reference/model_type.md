@@ -1,0 +1,3 @@
+This parameter is used, generally, to control [model](@ref) dependent functionality and specify [model](@ref)-level parameters for different [model](@ref)s. Currently, the main use is to identify the [model](@ref) objects that represent the master and operational sub problems within a decomposed investment problem structure. To trigger the decomposed structure, a [model](@ref) object with `model_type`=`:spineopt_master` must exist and another with `model_type`=`:spineopt_operations` must also be present. To deactivate the decomposition functionality, the `model_type` of the master problem can be set to `:spineopt_other`
+
+See also [decomposition]{@ref}

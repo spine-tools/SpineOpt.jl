@@ -29,10 +29,15 @@ function add_constraint_connection_lifetime!(m::Model)
         (connection=conn, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
-                + connections_invested_available[conn, s, t] for (conn, s, t) in
-                    connections_invested_available_indices(m; connection=conn, stochastic_scenario=s, t=t);
+                + connections_invested_available[conn, s, t] for (conn, s, t) in connections_invested_available_indices(
+                    m;
+                    connection=conn,
+                    stochastic_scenario=s,
+                    t=t,
+                );
                 init=0,
-            ) >=
+            )
+            >=
             + sum(
                 + connections_invested[conn, s_past, t_past]
                 for (conn, s_past, t_past) in connections_invested_available_indices(
@@ -57,23 +62,32 @@ function add_constraint_connection_lifetime!(m::Model)
     )
 end
 
+function constraint_connection_lifetime_indices(m::Model)
+    t0 = startref(current_window(m))
+    unique(
+        (connection=conn, stochastic_path=path, t=t)
+        for conn in indices(connection_investment_lifetime)
+        for (conn, s, t) in connections_invested_available_indices(m; connection=conn)
+        for path in active_stochastic_paths(_constraint_connection_lifetime_indices(m, conn, s, t0, t))
+    )
+end
+
 """
-    constraint_connection_lifetime_indices(m::Model; filtering_options...)
+    constraint_connection_lifetime_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:connections_invested_lifetime()` constraint.
 
 Uses stochastic path indexing due to the potentially different stochastic structures between present and past time.
 Keyword arguments can be used to filther the resulting Array.
 """
-function constraint_connection_lifetime_indices(m::Model; connection=anything, stochastic_path=anything, t=anything)
-    t0 = startref(current_window(m))
-    unique(
-        (connection=conn, stochastic_path=path, t=t)
-        for conn in indices(connection_investment_lifetime) if conn in connection
-        for (conn, s, t) in connections_invested_available_indices(m; connection=conn, t=t)
-        for path in active_stochastic_paths(_constraint_connection_lifetime_indices(m, conn, s, t0, t)) if
-            path == stochastic_path || path in stochastic_path
-    )
+function constraint_connection_lifetime_indices_filtered(
+    m::Model;
+    connection=anything,
+    stochastic_path=anything,
+    t=anything,
+)
+    f(ind) = _index_in(ind; connection=connection, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_connection_lifetime_indices(m))
 end
 
 """

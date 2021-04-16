@@ -29,40 +29,51 @@ function add_constraint_storages_invested_transition!(m::Model)
             m,
             expr_sum(
                 + storages_invested_available[n, s, t_after] - storages_invested[n, s, t_after]
-                + storages_decommissioned[n, s, t_after] for (n, s, t_after) in
-                    storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t_after);
+                + storages_decommissioned[n, s, t_after]
+                for (n, s, t_after) in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t_after);
                 init=0,
-            ) == expr_sum(
-                + storages_invested_available[n, s, t_before] for (n, s, t_before) in
-                    storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t_before);
+            )
+            ==
+            expr_sum(
+                + storages_invested_available[n, s, t_before]
+                for (n, s, t_before) in storages_invested_available_indices(
+                    m;
+                    node=n,
+                    stochastic_scenario=s,
+                    t=t_before,
+                );
                 init=0,
             )
         ) for (n, s, t_before, t_after) in constraint_storages_invested_transition_indices(m)
     )
 end
 
+function constraint_storages_invested_transition_indices(m::Model)
+    unique(
+        (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (n, t_before, t_after) in node_investment_dynamic_time_indices(m) for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario for ind in storages_invested_available_indices(m; node=n, t=[t_before, t_after])
+            ),
+        )
+    )
+end
+
 """
-    constraint_storages_invested_transition_indices(m::Model; filtering_options...)
+    constraint_storages_invested_transition_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:storages_invested_transition` constraint.
 
 Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
 Keyword arguments can be used to filter the resulting array.
 """
-function constraint_storages_invested_transition_indices(
+function constraint_storages_invested_transition_indices_filtered(
     m::Model;
     node=anything,
     stochastic_path=anything,
     t_before=anything,
     t_after=anything,
 )
-    unique(
-        (node=n, stochastic_path=path, t_before=t_before, t_after=t_after) for (n, t_before, t_after) in
-            node_investment_dynamic_time_indices(m; node=node, t_before=t_before, t_after=t_after)
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario for ind in storages_invested_available_indices(m; node=n, t=[t_before, t_after])
-            ),
-        ) if path == stochastic_path || path in stochastic_path
-    )
+    f(ind) = _index_in(ind; node=node, stochastic_path=stochastic_path, t_before=t_before, t_after=t_after)
+    filter(f, constraint_storages_invested_transition_indices(m))
 end

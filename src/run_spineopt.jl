@@ -46,6 +46,7 @@ function run_spineopt(
     mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
     lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
     cleanup=true,
+    add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
@@ -66,6 +67,7 @@ function run_spineopt(
             url_out;
             mip_solver=mip_solver,
             lp_solver=lp_solver,
+            add_user_variables=add_user_variables,
             add_constraints=add_constraints,
             update_constraints=update_constraints,
             log_level=log_level,
@@ -77,6 +79,7 @@ function run_spineopt(
             url_out;
             mip_solver=mip_solver,
             lp_solver=lp_solver,
+            add_user_variables=add_user_variables,
             add_constraints=add_constraints,
             update_constraints=update_constraints,
             log_level=log_level,
@@ -90,6 +93,7 @@ function rerun_spineopt(
     url_out::String;
     mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
     lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
+    add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
@@ -107,7 +111,7 @@ function rerun_spineopt(
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
-    init_model!(m; add_constraints=add_constraints, log_level=log_level)
+    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
     init_outputs!(m)
     calculate_duals = duals_calculation_needed(m)
     k = 1
@@ -120,7 +124,7 @@ function rerun_spineopt(
             mip_solver=mip_solver,
             lp_solver=lp_solver,
             calculate_duals=calculate_duals,
-        )
+        ) || break
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
@@ -157,7 +161,7 @@ end
 """
 Add SpineOpt variables to the given model.
 """
-function add_variables!(m; log_level=3)
+function add_variables!(m; add_user_variables=m -> nothing, log_level=3)
     @timelog log_level 3 "- [variable_units_available]" add_variable_units_available!(m)
     @timelog log_level 3 "- [variable_units_on]" add_variable_units_on!(m)
     @timelog log_level 3 "- [variable_units_started_up]" add_variable_units_started_up!(m)
@@ -187,6 +191,10 @@ function add_variables!(m; log_level=3)
     @timelog log_level 3 "- [variable_shut_down_unit_flow]" add_variable_shut_down_unit_flow!(m)
     @timelog log_level 3 "- [variable_nonspin_units_shut_down]" add_variable_nonspin_units_shut_down!(m)
     @timelog log_level 3 "- [variable_nonspin_ramp_down_unit_flow]" add_variable_nonspin_ramp_down_unit_flow!(m)
+    @timelog log_level 3 "- [variable_node_pressure]" add_variable_node_pressure!(m)
+    @timelog log_level 3 "- [variable_node_voltage_angle]" add_variable_node_voltage_angle!(m)
+    @timelog log_level 3 "- [variable_binary_gas_connection_flow]" add_variable_binary_gas_connection_flow!(m)
+    @timelog log_level 3 "- [user_defined_variables]" add_user_variables(m)
 end
 
 """
@@ -268,6 +276,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
         m,
     )
     @timelog log_level 3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
+    @timelog log_level 3 "- [constraint_cyclic_node_state]" add_constraint_cyclic_node_state!(m)
     @timelog log_level 3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
     @timelog log_level 3 "- [constraint_units_on]" add_constraint_units_on!(m)
     @timelog log_level 3 "- [constraint_units_available]" add_constraint_units_available!(m)
@@ -292,6 +301,18 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_max_nonspin_ramp_down]" add_constraint_max_nonspin_ramp_down!(m)
     @timelog log_level 3 "- [constraint_min_nonspin_ramp_down]" add_constraint_min_nonspin_ramp_down!(m)
     @timelog log_level 3 "- [constraint_res_minimum_node_state]" add_constraint_res_minimum_node_state!(m)
+
+    @timelog log_level 3 "- [constraint_fix_node_pressure_point]" add_constraint_fix_node_pressure_point!(m)
+    @timelog log_level 3 "- [constraint_connection_unitary_gas_flow]" add_constraint_connection_unitary_gas_flow!(m)
+    @timelog log_level 3 "- [constraint_compression_ratio]" add_constraint_compression_ratio!(m)
+    @timelog log_level 3 "- [constraint_storage_line_pack]" add_constraint_storage_line_pack!(m)
+    @timelog log_level 3 "- [constraint_connection_flow_gas_capacity]" add_constraint_connection_flow_gas_capacity!(m)
+    @timelog log_level 3 "- [constraint_max_node_pressure]" add_constraint_max_node_pressure!(m)
+    @timelog log_level 3 "- [constraint_min_node_pressure]" add_constraint_min_node_pressure!(m)
+    @timelog log_level 3 "- [constraint_node_voltage_angle]" add_constraint_node_voltage_angle!(m)
+    @timelog log_level 3 "- [constraint_max_node_voltage_angle]" add_constraint_max_node_voltage_angle!(m)
+    @timelog log_level 3 "- [constraint_min_node_voltage_angle]" add_constraint_min_node_voltage_angle!(m)
+
     @timelog log_level 3 "- [constraint_user]" add_constraints(m)
 
     # Name constraints
@@ -317,8 +338,12 @@ end
 """
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
-function init_model!(m; add_constraints=m -> nothing, log_level=3)
-    @timelog log_level 2 "Adding variables...\n" add_variables!(m; log_level=log_level)
+function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3)
+    @timelog log_level 2 "Adding variables...\n" add_variables!(
+        m;
+        add_user_variables=add_user_variables,
+        log_level=log_level,
+    )
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(
         m;
@@ -331,7 +356,7 @@ end
 """
 Optimize the given model. If an optimal solution is found, return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, mip_solver, lp_solver)
+function optimize_model!(m::Model; log_level=3, calculate_duals=false, use_direct_model=false, mip_solver, lp_solver)
     write_mps_file(model=m.ext[:instance]) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
@@ -363,8 +388,8 @@ Save the value of a variable in a model.
 function _save_variable_value!(m::Model, name::Symbol, indices::Function)
     var = m.ext[:variables][name]
     m.ext[:values][name] = Dict(
-        ind => _variable_value(var[ind]) for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if
-            end_(ind.t) <= end_(current_window(m))
+        ind => _variable_value(var[ind])
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if end_(ind.t) <= end_(current_window(m))
     )
 end
 
@@ -390,11 +415,6 @@ function save_objective_values!(m::Model)
         m.ext[:values][name] = Dict(ind => _value(realize(func(m, end_(ind.t)))))
     end
 end
-
-"""
-Drop keys from a `NamedTuple`.
-"""
-_drop_key(x::NamedTuple, key::Symbol...) = (; (k => v for (k, v) in pairs(x) if !(k in key))...)
 
 """
 Save the outputs of a model into a dictionary.
@@ -456,8 +476,9 @@ function write_report(model, default_url)
             url_reports = get!(reports, url, Dict())
             output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
             parameter_name = out.name in objective_terms(model) ? Symbol("objective_", out.name) : out.name
-            output_params[parameter_name] =
-                Dict(k => TimeSeries(collect(keys(v)), collect(values(v)), false, false) for (k, v) in d)
+            output_params[parameter_name] = Dict(
+                k => TimeSeries(collect(keys(v)), collect(values(v)), false, false) for (k, v) in d
+            )
         end
     end
     for (url, url_reports) in reports
@@ -528,8 +549,9 @@ end
 function _save_marginal_value!(m::Model, constraint_name::Symbol, output_name::Symbol)
     con = m.ext[:constraints][constraint_name]
     inds = keys(con)
-    m.ext[:values][output_name] =
-        Dict(ind => JuMP.dual(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window(m)))
+    m.ext[:values][output_name] = Dict(
+        ind => JuMP.dual(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window(m))
+    )
 end
 
 function save_bound_marginal_values!(m::Model)
@@ -545,7 +567,7 @@ function _save_bound_marginal_value!(m::Model, variable_name::Symbol, output_nam
     var = m.ext[:variables][variable_name]
     indices = m.ext[:variables_definition][variable_name][:indices]
     m.ext[:values][output_name] = Dict(
-        ind => JuMP.reduced_cost(var[ind]) for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if
-            end_(ind.t) <= end_(current_window(m))
+        ind => JuMP.reduced_cost(var[ind])
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if end_(ind.t) <= end_(current_window(m))
     )
 end

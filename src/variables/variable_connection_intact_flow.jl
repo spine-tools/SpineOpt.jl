@@ -35,6 +35,7 @@ function connection_intact_flow_indices(
     direction=anything,
     stochastic_scenario=anything,
     t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
     node = members(node)
     [
@@ -43,9 +44,15 @@ function connection_intact_flow_indices(
             connection=connection,
             node=node,
             direction=direction,
+            temporal_block=temporal_block,
             _compact=false,
-        ) for (n, s, t) in
-            node_stochastic_time_indices(m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t)
+        ) for (n, s, t) in node_stochastic_time_indices(
+            m;
+            node=n,
+            stochastic_scenario=stochastic_scenario,
+            temporal_block=tb,
+            t=t,
+        )
     ]
 end
 

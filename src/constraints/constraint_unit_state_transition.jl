@@ -31,41 +31,57 @@ function add_constraint_unit_state_transition!(m::Model)
             m,
             expr_sum(
                 + units_on[u, s, t_after] - units_started_up[u, s, t_after] + units_shut_down[u, s, t_after]
-                for (u, s, t_after) in
-                    units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after, temporal_block=anything);
+                for (u, s, t_after) in units_on_indices(
+                    m;
+                    unit=u,
+                    stochastic_scenario=s,
+                    t=t_after,
+                    temporal_block=anything,
+                );
                 init=0,
-            ) == expr_sum(
-                + units_on[u, s, t_before] for (u, s, t_before) in
-                    units_on_indices(m; unit=u, stochastic_scenario=s, t=t_before, temporal_block=anything);
+            )
+            ==
+            expr_sum(
+                + units_on[u, s, t_before] for (u, s, t_before) in units_on_indices(
+                    m;
+                    unit=u,
+                    stochastic_scenario=s,
+                    t=t_before,
+                    temporal_block=anything,
+                );
                 init=0,
             )
         ) for (u, s, t_before, t_after) in constraint_unit_state_transition_indices(m)
     )
 end
 
+function constraint_unit_state_transition_indices(m::Model)
+    unique(
+        (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (u, t_before, t_after) in unit_dynamic_time_indices(m; unit=unit()) for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in units_on_indices(m; unit=u, t=[t_before, t_after], temporal_block=anything)
+            ),
+        )
+    )
+end
+
 """
-    constraint_unit_state_transition_indices(m::Model; filtering_options...)
+    constraint_unit_state_transition_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic indexing Array for the `:unit_state_transition` constraint.
 
 Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
 Keyword arguments can be used to filter the resulting Array.
 """
-function constraint_unit_state_transition_indices(
+function constraint_unit_state_transition_indices_filtered(
     m::Model;
-    unit=unit(),
+    unit=anything,
     stochastic_path=anything,
     t_before=anything,
     t_after=anything,
 )
-    unique(
-        (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, t_before, t_after) in unit_dynamic_time_indices(m; unit=unit, t_before=t_before, t_after=t_after)
-        for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in units_on_indices(m; unit=u, t=[t_before, t_after], temporal_block=anything)
-            ),
-        ) if path == stochastic_path || path in stochastic_path
-    )
+    f(ind) = _index_in(ind; unit=unit, stochastic_path=stochastic_path, t_before=t_before, t_after=t_after)
+    filter(f, constraint_unit_state_transition_indices(m))
 end
