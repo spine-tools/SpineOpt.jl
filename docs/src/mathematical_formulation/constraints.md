@@ -24,7 +24,7 @@ The energy balance is enforced by the following constraint:
 & \nexists ng \in groups(n) : balance\_type\_group \\
 \end{aligned}
 ```
-The constraint consists of the [node injections](@ref constraint_node_injection), the [net connections flows](@ref Variables) and [node slack variables](@ref Variables).
+The constraint consists of the [node injections](@ref constraint_node_injection), the net [connection\_flow](@ref)s and [node slack variables](@ref Variables).
 
 ### [Node injection](@id constraint_node_injection)
 The node injection itself represents all local production and consumption, represented by the sum of all connected unit flows and the nodal demand. The node injection is created for each node in the network (unless the node is only used for parameter aggregation purposes, see [Introduction to groups of objects](@ref)).
@@ -148,7 +148,7 @@ The constrained given below enforces a fixed, maximum or minimum ratio between o
 & \forall t \in time\_slices, \forall s \in stochastic\_path
 \end{aligned}
 ```
-Note that a right-hand side constant coefficient associated with the variable [`v_{units\_on}`](@ref Variables) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_out\_in](@ref), [max\_units\_on\_coefficient\_out\_in](@ref), [min\_units\_on\_coefficient\_out\_in](@ref), respectively.
+Note that a right-hand side constant coefficient associated with the variable [units\_on](@ref) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_out\_in](@ref), [max\_units\_on\_coefficient\_out\_in](@ref), [min\_units\_on\_coefficient\_out\_in](@ref), respectively.
 
 ##### [Ratios between input and output flows of a unit](@id ratio_in_out)
 Similarly to the ratio between outgoing and incoming unit flows, a ratio can also be defined in reverse between **in**coming and **out**going flows.
@@ -170,7 +170,7 @@ Similarly to the ratio between outgoing and incoming unit flows, a ratio can als
 & \forall t \in time\_slices, \forall s \in stochastic\_path
 \end{aligned}
 ```
-Note that a right-hand side constant coefficient associated with the variable [`v_{units\_on}`](@ref Variables) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_in\_out](@ref), [max\_units\_on\_coefficient\_in\_out](@ref), [min\_units\_on\_coefficient\_in\_out](@ref), respectively.
+Note that a right-hand side constant coefficient associated with the variable [units\_on](@ref) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_in\_out](@ref), [max\_units\_on\_coefficient\_in\_out](@ref), [min\_units\_on\_coefficient\_in\_out](@ref), respectively.
 
 ##### [Ratios between input and input flows of a unit](@id ratio_in_in)
 
@@ -193,7 +193,7 @@ Similarly to the [ratio between outgoing and incoming units flows](@ref ratio_ou
 & \forall t \in time\_slices, \forall s \in stochastic\_path
 \end{aligned}
 ```
-Note that a right-hand side constant coefficient associated with the variable [`v_{units\_on}`](@ref Variables) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_in\_in](@ref), [max\_units\_on\_coefficient\_in\_in](@ref), [min\_units\_on\_coefficient\_in\_in](@ref), respectively.
+Note that a right-hand side constant coefficient associated with the variable [units\_on](@ref) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_in\_in](@ref), [max\_units\_on\_coefficient\_in\_in](@ref), [min\_units\_on\_coefficient\_in\_in](@ref), respectively.
 
 ##### [Ratios between output and output flows of a unit](@id ratio_out_out)
 
@@ -216,7 +216,7 @@ Similarly to the [ratio between outgoing and incoming units flows](@ref ratio_ou
 & \forall t \in time\_slices, \forall s \in stochastic\_path
 \end{aligned}
 ```
-Note that a right-hand side constant coefficient associated with the variable [`v_{units\_on}`](@ref Variables) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_out\_out](@ref), [max\_units\_on\_coefficient\_out\_out](@ref), [min\_units\_on\_coefficient\_out\_out](@ref), respectively.
+Note that a right-hand side constant coefficient associated with the variable [units\_on](@ref) can optionally be included, triggered by the existence of the [fix\_units\_on\_coefficient\_out\_out](@ref), [max\_units\_on\_coefficient\_out\_out](@ref), [min\_units\_on\_coefficient\_out\_out](@ref), respectively.
 
 #### [Bounds on the unit capacity](@id constraint_unit_flow_capacity)
 In a multi-commodity setting, there can be different commodities entering/leaving a certain
@@ -671,7 +671,7 @@ In the following, the different specific network representations are introduced.
 #### [Pressure driven gas transfer](@id pressure-driven-gas-transfer-math)
 For gas pipelines it can be relevant a pressure driven gas transfer can be modelled, i.a. to account for linepack flexibility. Generally speaking, the main challenges related to pressure driven gas transfers are the non-convexities associated with the Weymouth equation. In SpineOpt, a convexified MILP representation has been implemented, which as been presented in [Schwele - Coordination of Power and Natural Gas Systems: Convexification Approaches for Linepack Modeling](https://doi.org/10.1109/PTC.2019.8810632). The approximation approach is based on the Taylor series expansion around fixed pressure points.
 
-In addition to the already known variables, such as [connection\_flow](@ref Variables) and [node\_state](@ref Variables), the start and end points of a gas pipeline connection are associated with the variable [node\_pressure](@ref Variables). The variable is trigger by the [has\_pressure](@ref) parameter. For more details on how to set up a gas pipeline, see also the advanced concept section [on pressure driven gas transfer](@ref pressure-driven-gas-transfer).
+In addition to the already known variables, such as [connection\_flow](@ref) and [node\_state](@ref), the start and end points of a gas pipeline connection are associated with the variable [node\_pressure](@ref). The variable is trigger by the [has\_pressure](@ref) parameter. For more details on how to set up a gas pipeline, see also the advanced concept section [on pressure driven gas transfer](@ref pressure-driven-gas-transfer).
 
 ##### [Maximum node pressure](@id constraint_max_node_pressure)
 
@@ -687,7 +687,7 @@ In order to impose an upper limit on the maximum pressure at a node the [maximum
 & \forall s \in stochastic\_path
 \end{aligned}
 ```
-As indicated in the equation, the parameter [max\_node\_pressure](@ref) can also be defined on a node group, in order to impose an upper limit on the aggregated [node\_pressure](@ref Variables) within one node group.
+As indicated in the equation, the parameter [max\_node\_pressure](@ref) can also be defined on a node group, in order to impose an upper limit on the aggregated [node\_pressure](@ref) within one node group.
 
 ##### [Minimum node pressure](@id constraint_min_node_pressure)
 In order to impose a lower limit on the pressure at a node the [maximum node pressure constraint](@ref constraint_min_node_pressure) can be included, by defining the parameter [min\_node\_pressure](@ref) which trigger the following constraint:
@@ -702,7 +702,7 @@ In order to impose a lower limit on the pressure at a node the [maximum node pre
 & \forall s \in stochastic\_path
 \end{aligned}
 ```
-As indicated in the equation, the parameter [min\_node\_pressure](@ref) can also be defined on a node group, in order to impose a lower limit on the aggregated [node\_pressure](@ref Variables) within one node group.
+As indicated in the equation, the parameter [min\_node\_pressure](@ref) can also be defined on a node group, in order to impose a lower limit on the aggregated [node\_pressure](@ref) within one node group.
 
 ##### [Constraint on the pressure ratio between to nodes](@id constraint_compression_factor)
 
@@ -791,11 +791,11 @@ The parameters [fixed\_pressure\_constant\_1](@ref) and [fixed\_pressure\_consta
 ```
 where K corrsponds to the natural gas flow constant.
 
- The [big\_m](@ref) parameter combined with the variable [binary\_gas\_connection\_flow](@ref Variables) together with the equations [on unitary gas flow](@ref constraint_connection_unitary_gas_flow) and on the [maximum gas flow](@ref constraint_connection_flow_gas_capacity) ensure that the bound on the average flow through the fixed pressure points becomes active, if the flow is in a positive direction for the observed set of connection, node1 and node2.
+ The [big\_m](@ref) parameter combined with the variable [binary\_gas\_connection\_flow](@ref) together with the equations [on unitary gas flow](@ref constraint_connection_unitary_gas_flow) and on the [maximum gas flow](@ref constraint_connection_flow_gas_capacity) ensure that the bound on the average flow through the fixed pressure points becomes active, if the flow is in a positive direction for the observed set of connection, node1 and node2.
 
 ##### [Enforcing unidirectional flow](@id constraint_connection_unitary_gas_flow)
 
-As stated above, the flow through a connection can only be in one direction at at time. Whever a flow is active in a certain direction is indicated by the [binary\_gas\_connection\_flow](@ref Variables) variable, which takes a value of `1` if the direction of flow is positive. To ensure that the [binary\_gas\_connection\_flow](@ref Variables) in the opposite direction then takes the value `0`, the following constraint is enforced:
+As stated above, the flow through a connection can only be in one direction at at time. Whever a flow is active in a certain direction is indicated by the [binary\_gas\_connection\_flow](@ref) variable, which takes a value of `1` if the direction of flow is positive. To ensure that the [binary\_gas\_connection\_flow](@ref) in the opposite direction then takes the value `0`, the following constraint is enforced:
 
 ```math
 \begin{aligned}
@@ -839,7 +839,7 @@ the first node corresponds to the linepack storage node, whereas the second node
 
 #### [Nodebased lossless DC power flow](@id nodal-lossless-DC)
 
-For the implementation of the nodebased loss DC powerflow model, a new variable [node\_voltage\_angle](@ref Variables) is introduced. See also [has\_voltage\_angle](@ref).
+For the implementation of the nodebased loss DC powerflow model, a new variable [node\_voltage\_angle](@ref) is introduced. See also [has\_voltage\_angle](@ref).
 For further explanation on setting up a database for nodal lossless DC power flow, see the advanced concept chapter on [Lossless nodal DC power flows](@ref).
 
 ##### [Maximum node voltage angle](@id constraint_max_node_voltage_angle)
@@ -856,7 +856,7 @@ In order to impose an upper limit on the maximum voltage angle at a node the [ma
 & \forall s \in stochastic\_path
 \end{aligned}
 ```
-As indicated in the equation, the parameter [max\_voltage\_angle](@ref) can also be defined on a node group, in order to impose an upper limit on the aggregated [node\_voltage\_angle](@ref Variables) within one node group.
+As indicated in the equation, the parameter [max\_voltage\_angle](@ref) can also be defined on a node group, in order to impose an upper limit on the aggregated [node\_voltage\_angle](@ref) within one node group.
 
 ##### [Minimum node voltage angle](@id constraint_min_node_voltage_angle)
 
@@ -872,7 +872,7 @@ In order to impose a lower limit on the voltage angle at a node the [maximum nod
 & \forall s \in stochastic\_path
 \end{aligned}
 ```
-As indicated in the equation, the parameter [min\_voltage\_angle](@ref) can also be defined on a node group, in order to impose a lower limit on the aggregated [node\_voltage\_angle](@ref Variables) within one node group.
+As indicated in the equation, the parameter [min\_voltage\_angle](@ref) can also be defined on a node group, in order to impose a lower limit on the aggregated [node\_voltage\_angle](@ref) within one node group.
 
 ##### [Voltage angle to connection flows](@id constraint_node_voltage_angle)
 

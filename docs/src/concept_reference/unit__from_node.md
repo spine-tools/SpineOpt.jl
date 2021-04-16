@@ -1,5 +1,5 @@
 The [unit\_\_to\_node](@ref) and [unit\_\_from\_node](@ref) unit relationships are core elements of SpineOpt.
-For each [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref), a [unit\_flow variable](@ref Variables) is automatically
+For each [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref), a [unit\_flow](@ref) variable is automatically
 added to the model, i.e.
 a commodity flow of a unit *to* or *from* a specific node, respectively.
 
@@ -14,4 +14,4 @@ can be included for the [unit\_\_from\_node](@ref) relationship.
 It is important to note, that the parameters associated with the [unit\_\_from\_node](@ref) can be defined either
 for a specific [node](@ref), or for a group of nodes. Grouping nodes for the described parameters will result
 in an aggregation of the unit flows for the triggered constraint, e.g. the definition of the [unit\_capacity](@ref)
-on a group of nodes will result in an upper bound on the sum of all individual [unit\_flow](@ref Variables)s.
+on a group of nodes will result in an upper bound on the sum of all individual [unit\_flow](@ref)s.

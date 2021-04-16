@@ -1,6 +1,6 @@
 If a node is to present a node in a pressure driven gas network, the boolean parameter
 [has\_pressure](@ref) should be set true, in order to trigger the generation of the
-[v_{node_pressure}](@ref Variables) variable.
+[node\_pressure](@ref) variable.
 The pressure at a certain node can also be constrainted through the
 parameters [max\_node\_pressure](@ref) and [min\_node\_pressure](@ref). More details on the use of pressure driven gas transfer
 are described [here](@ref pressure-driven-gas-transfer)

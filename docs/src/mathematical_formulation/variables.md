@@ -1,4 +1,14 @@
 # Variables 
+## `binary_gas_connection_flow` 
+
+ > **Math symbol:** ``v_{binary\_gas\_connection\_flow} `` 
+
+ > **Indices:** (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t) 
+
+ > **Indices function:** binary\_gas\_connection\_flow\_indices 
+
+Binary variable with the indices node ``n`` over the connection ``conn`` in the direction ``to\_node`` for the stochastic scenario ``s`` at timestep ``t`` describing if the direction of gas flow for a pressure drive gastransfer is in the indicated direction.  
+
 ## `connection_flow ` 
 
  > **Math symbol:** ``v_{connection\_flow } `` 

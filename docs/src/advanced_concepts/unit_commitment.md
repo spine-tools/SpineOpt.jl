@@ -6,9 +6,9 @@ In the following, relevant relationships and parameters are introduced and the g
 ## Key concepts for unit commitment
 Here, we briefly describe the key concepts involved in the representation of (clustered) unit commitment models:
 
-1. [units\_on](@ref Variables) is an optimization variable that holds information about the on- or offline status of a unit. Unit commitment restrictions will govern how this variable can change through time.
+1. [units\_on](@ref) is an optimization variable that holds information about the on- or offline status of a unit. Unit commitment restrictions will govern how this variable can change through time.
 
-2. [units\_on\_\_temporal\_block](@ref) is a relationship linking the `units_on` variable of this unit to a specific [temporal\_block](@ref) object. The temporal block holds information on the temporal scope and resolution for which the variable should be optimized.
+2. [units\_on\_\_temporal\_block](@ref) is a relationship linking the [units\_on](@ref) variable of this unit to a specific [temporal\_block](@ref) object. The temporal block holds information on the temporal scope and resolution for which the variable should be optimized.
 
 3. [online\_variable\_type](@ref) is a method parameter and can take the values "unit\_online\_variable\_type\_binary", "unit\_online\_variable\_type\_integer", "unit\_online\_variable\_type\_linear". If the binary value is chosen, the units status is modelled as a binary (classic UC). For clustered unit commitment units, the integer type is applicable. Note that if the parameter is not defined, the default will be linear. If the units status is not crucial, this can reduce the computational burden.
 

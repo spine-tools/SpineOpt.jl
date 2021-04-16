@@ -4,7 +4,7 @@ To enable the representation of units with a high level of technical detail, the
 
 ## Relevant objects, relationships and parameters
 
-Everything that is related to ramping is defined in parameters of either the [unit\_\_to\_node](@ref), [unit\_\_from\_node](@ref), or unit\_\_to\_node\_group relationship. Generally speaking, the ramping constraints will impose restrictions on the change in the [unit_flow](@ref Variables) variable between two consecutive timesteps.
+Everything that is related to ramping is defined in parameters of either the [unit\_\_to\_node](@ref), [unit\_\_from\_node](@ref), or unit\_\_to\_node\_group relationship. Generally speaking, the ramping constraints will impose restrictions on the change in the [unit\_flow](@ref) variable between two consecutive timesteps.
 
 All parameters that limit the ramping abilities of a unit are expressed as a fraction of the unit capacity. This means that a value of 1 indicates the full capacity of a unit.
 

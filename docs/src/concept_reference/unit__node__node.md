@@ -1,5 +1,5 @@
 While the relationships [unit\_\_to\_node](@ref) and [unit\_\_to\_node](@ref)
-take care of the automatic generation of the [unit\_flow variables](@ref Variables),
+take care of the automatic generation of the [unit\_flow](@ref) variables,
 the [unit\_\_node\_\_node] relationships hold the information how the different commodity flows
 of a unit interact. Only through this relationship and the associated parameters, the topology of a unit, i.e.
 which intakes lead to which porducts etc., becomes unambiguous.
