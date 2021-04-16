@@ -8,7 +8,7 @@ SpineOpt is cross-platform (Linux, Mac and Windows) and uses other cross-platfor
 
 You may skip parts of the following installation process if you already have some of these software available - but please make sure they are in a clean Conda environment to avoid compatibility issues between different package versions.
 
-SpineOpt and Spine Toolbox are under active development and the getting started process could change. If you notice any problems with these instructions, please check if it is a known issue, and if not, then report an [issue](https://github.com/Spine-project/SpineOpt.jl/issues) or start a [discussion](https://github.com/Spine-project/SpineOpt.jl/discussions/categories/support-discuss-a-potential-bug) if you're unsure.
+SpineOpt and Spine Toolbox are under active development and the getting started process could change. If you notice any problems with these instructions, please check if it is a known issue, and if not, then report an [issue](https://github.com/Spine-project/SpineOpt.jl/issues) or start a [discussion](https://github.com/Spine-project/SpineOpt.jl/discussions/categories/support-discuss-a-potential-bug) if you're unsure whether it is an actual issue.
 
 - The recommended interface to SpineOpt is [Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox). Install Spine Toolbox following instructions from here: [Spine Toolbox installation](https://github.com/Spine-project/Spine-Toolbox#installation)
 
