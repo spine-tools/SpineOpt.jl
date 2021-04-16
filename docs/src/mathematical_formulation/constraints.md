@@ -3,7 +3,7 @@
 ## Balance constraint
 
 ### [Nodal balance](@id constraint_nodal_balance)
-
+6
 In **SpineOpt**, [node](@ref) is the place where an energy balance is enforced. As universal aggregators,
 they are the glue that brings all components of the energy system together. An energy balance is created for each [node](@ref) for all [node\_stochastic\_time\_indices](@ref Sets), unless the [balance\_type](@ref) parameter of the node takes the value [balance\_type\_none](@ref balance_type_list) or if the node in question is a member of a node group, for which the [balance\_type](@ref) is [balance\_type\_group](@ref balance_type_list). The parameter [nodal\_balance\_sense](@ref) defaults to equality, but can be changed to allow overproduction ([nodal\_balance\_sense](@ref) [`>=`](@ref constraint_sense_list)) or underproduction ([nodal\_balance\_sense](@ref) [`<=`](@ref constraint_sense_list)).
 The energy balance is enforced by the following constraint:
@@ -288,7 +288,7 @@ The number of available units itself is constrained by the parameters [unit\_ava
 The investment formulation is described in chapter [Investments](@ref).
 
 ##### [Unit state transition](@id constraint_unit_state_transition)
-The units on status is furtheron constraint by shutting down and starting up actions. This transition is defined as follows:
+The units on status is constrained by shutting down and starting up actions. This transition is defined as follows:
 
 ```math
 \begin{aligned}
@@ -352,12 +352,7 @@ This constraint can be extended to the use of nonspinning reserves. See [also](@
 
 To include ramping and reserve constraints, it is a pre requisite that [minimum operating points](@ref constraint_minimum_operating_point) and [maximum capacity constraints](@ref constraint_unit_flow_capacity) are enforced as described.
 
-<<<<<<< HEAD
-For dispatchable units, additional ramping constraints can be introduced. For setting up ramping characteristics of units see [Ramping and Reserves](@ref)
-
-=======
 For dispatchable units, additional ramping constraints can be introduced. For setting up ramping characteristics of units see [Ramping and Reserves](@ref).
->>>>>>> master
 First, the unit flows are split into their online, start-up, shut-down and non-spinning ramping contributions.
 
 #### [Splitting unit flows into ramps](@id constraint_split_ramps)
@@ -901,22 +896,9 @@ the parameter [connection\_reactance](@ref) is defined for a [connection\_\_node
 ```
 
 ### [PTDF based DC lossless powerflow](@id PTDF-lossless-DC)
+
 #### [connection intact flow PTDF](@id constraint_connection_flow_ptdf)
-
-
-```math
-\begin{aligned}
-              & + v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{to}, s, t) \\
-              & - v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{from}, s, t) \\
-              & + v_{node\_injection}(n_{inj}, s, t) \cdot p_{ptdf}(c, n_{inj}) \Big) \\              
-              & + v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{to}, s, t) \\
-              & - v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{from}, s, t) \\
-
-              & \forall (c,n_{to},s,t) \in connection\_ptdf\_flow\_indices \\
-\end{aligned}
-```
-
-#### [connection flow LODF?](@id constraint_connection_flow_lodf)
+The power transfer distribution factors are a property of the network reactances. ptdf(n, c) represents the fraction of an injection at [node](@ref) n that will flow on [connection](@ref) c. The flow on [connection](@ref) c is then the sum over all nodes of ptdf(n, c)*net_injection(c).
 
 ```math
 \begin{aligned}
@@ -927,15 +909,88 @@ the parameter [connection\_reactance](@ref) is defined for a [connection\_\_node
 \end{aligned}
 ```
 
+#### [connection flow LODF?](@id constraint_connection_flow_lodf)
+ The N-1 security constraint for the post-contingency flow on monitored conneciton c_mon upon the outage of contingency connection, c_conn is formed using line outage distribution factors (lodf). lodf(c_con, c_mon) represents the fraction of the pre-contingency flow on connection c_conn that will flow on c_mon if c_conn is disconnected. If [connection](@ref) c_conn is disconnected, the post-contingency flow on monitored connection [connection](@ref) c_mon is the pre-contingency `connection_flow` on c_mon plus the line outage distribution factor (`lodf`) times the pre-contingency `connection_flow` on c_conn. This post-contingency flow should be less than the [connection\_emergency\_capacity](@ref) of c_mon.
+```math
+\begin{aligned}
+              & + v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{to}, s, t) \\
+              & - v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{from}, s, t) \\
+              & + p_{lodf}(c_{conn}, c_{mon}) \cdot \big( \\              
+              & \hspace2em + v_{connection\_flow}(c_{conn}, n_{conn\_to}, d_{to}, s, t) \\
+              & \hspace2em - v_{connection\_flow}(c_{conn}, n_{conn\_to}, d_{from}, s, t) \big) \\
+              & < min( p_{connection\_emergency\_capacity}(c_{mon}, n_{conn\_to}, d_{to}, s, t), p_{connection\_emergency\_capacity}(c_{mon}, n_{conn\_to}, d_{from},s ,t)) \\
+              & \forall (c_{mon}, c_{conn}, s, t) \in constraint\_connection\_flow\_lodf\_indices \\
+\end{aligned}
+```
 
 ## Investments
 ### Investments in units
 #### [Economic lifetime of a unit](@id constraint_unit_lifetime)
+Enforces the minimum duration of a `unit`'s investment decision. Once a `unit` has been invested-in, it must remain invested-in for `unit_investment_lifetime`. 
+
+```math
+\begin{aligned}
+& v_{units\_invested\_available}(u,s,t) \\
+& >= \sum_{\substack{(u,s,t') \in units\_invested\_available\_indices: \\ t' >=t-p_{unit\_investment\_lifetime}(u,s,t), \\ t' <= t}}
+v_{units\_invested}(u,s,t') \\
+& \forall (u,s,t) \in unit\_investment\_lifetime\_indices\\
+\end{aligned}
+```
 #### Technical lifetime of a unit
+
+### [Available Investment Units](@id constraint_units_invested_available)
+The number of available invested-in units at any point in time is less than the number of investment candidate units.
+
+```math
+\begin{aligned}
+& v_{units\_invested\_available}(u,s,t) \\
+& < p_{candidate\_units}(u,s,t) \\
+& \forall u \in candidate\_units\_indices, \\
+& \forall (u,s,t) \in units\_invested\_available\_indices\\
+\end{aligned}
+```
+
 #### [Investment transfer](@id constraint_units_invested_transition)
+
+`units_invested` represents the point-in-time decision to invest in a unit or not while `units_invested_available` represents the invested-in units that are available in a specific timeslice. This constraint enforces the relationship between `units_invested`, `units_invested_available` and `units_mothballed` in adjacent timeslices.
+
+```math
+\begin{aligned}
+& v_{units\_invested\_available}(u,s,t_{after}) \\
+& - v_{units\_invested}(u,s,t_{after}) \\
+& + v_{units\_monthballed}(u,s,t_{after}) \\
+& == v_{units\_invested\_available}(u,s,t_{before}) \\
+& \forall (u,s,t_{after}) \in units\_invested\_available\_indices, \\
+& \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in units\_invested\_available\_indices\\
+\end{aligned}
+```
 ### Investments in connections
 ### [Available connection?](@id constraint_connections_invested_available)
+The number of available invested-in connections at any point in time is less than the number of investment candidate connections.
+
+```math
+\begin{aligned}
+& v_{connections\_invested\_available}(c,s,t) \\
+& < p_{candidate\_connections}(c,s,t) \\
+& \forall c \in candidate\_connections\_indices, \\
+& \forall (c,s,t) \in connections\_invested\_available\_indices\\
+\end{aligned}
+```
+
 ### [Transfer of previous investments](@id constraint_connections_invested_transition)
+
+`connections_invested` represents the point-in-time decision to invest in a connection or not while `connections_invested_available` represents the invested-in connections that are available in a specific timeslice. This constraint enforces the relationship between `connections_invested`, `connections_invested_available` and `connections_decommissioned` in adjacent timeslices.
+
+```math
+\begin{aligned}
+& v_{connections\_invested\_available}(c,s,t_{after}) \\
+& - v_{connections\_invested}(c,s,t_{after}) \\
+& + v_{connections\_decommissioned}(c,s,t_{after}) \\
+& == v_{connections\_invested\_available}(c,s,t_{before}) \\
+& \forall (c,s,t_{after}) \in connections\_invested\_available\_indices, \\
+& \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in connections\_invested\_available\_indices\\
+\end{aligned}
+```
 #### [Intact connection flows?](@id constraint_connection_flow_intact_flow)
 #### [Intact connection flows capacity?](@id constraint_connection_intact_flow_capacity)
 #### [Intact flow ptdf](@id constraint_connection_intact_flow_ptdf)
@@ -944,12 +999,55 @@ Note: is this actually an investment or a network constraint?
 #### [Lower bound on candidate connection flow](@id constraint_candidate_connection_flow_lb)
 #### [Upper bound on candidate connection flow](@id constraint_candidate_connection_flow_ub)
 #### [Economic lifetime of a connection](@id constraint_connection_lifetime)
+Enforces the minimum duration of a `connection`'s investment decision. Once a `connection` has been invested-in, it must remain invested-in for `connection_investment_lifetime`. 
+
+```math
+\begin{aligned}
+& v_{connections\_invested\_available}(c,s,t) \\
+& >= \sum_{\substack{(c,s,t') \in connections\_invested\_available\_indices: \\ t' >=t-p_{connection\_investment\_lifetime}(c,s,t), \\ t' <= t}}
+v_{connections\_invested}(c,s,t') \\
+& \forall (c,s,t) \in connection\_investment\_lifetime\_indices\\
+\end{aligned}
+```
 #### Technical lifetime of a connection
 ### Investments in storages
 Note: can we actually invest in nodes that are not storages? (e.g. new location)
 #### [Available invested storages](@id constraint_storages_invested_available)
+The number of available invested-in storages at node n at any point in time is less than the number of investment candidate storages at that node.
+
+```math
+\begin{aligned}
+& v_{storages\_invested\_available}(n,s,t) \\
+& < p_{candidate\_storages}(n,s,t) \\
+& \forall (n) \in candidate\_storages\_indices, \\
+& \forall (n,s,t) \in storages\_invested\_available\_indices\\
+\end{aligned}
+```
+
 #### [Storage capacity transfer? ](@id constraint_storages_invested_transition)
+`storages_invested` represents the point-in-time decision to invest in storage at a node, n or not while `storages_invested_available` represents the invested-in storages that are available at a node in a specific timeslice. This constraint enforces the relationship between `storages_invested`, `storages_invested_available` and `storages_decommissioned` in adjacent timeslices.
+
+```math
+\begin{aligned}
+& v_{storages\_invested\_available}(n,s,t_{after}) \\
+& - v_{storages\_invested}(n,s,t_{after}) \\
+& + v_{storages\_decommissioned}(n,s,t_{after}) \\
+& == v_{storages\_invested\_available}(n,s,t_{before}) \\
+& \forall (n,s,t_{after}) \in storages\_invested\_available\_indices, \\
+& \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in storages\_invested\_available\_indices\\
+\end{aligned}
+```
 #### [Economic lifetime of a storage](@id constraint_storage_lifetime)
+Enforces the minimum duration of a `storage` investment decision at [node](@ref) n. Once a `storage` has been invested-in, it must remain invested-in for `storage_investment_lifetime`. 
+
+```math
+\begin{aligned}
+& v_{storages\_invested\_available}(n,s,t) \\
+& >= \sum_{\substack{(n,s,t') \in storages\_invested\_available\_indices: \\ t' >=t-p_{storage\_investment\_lifetime}(n,s,t), \\ t' <= t}}
+v_{storages\_invested}(n,s,t') \\
+& \forall (n,s,t) \in storage\_investment\_lifetime\_indices\\
+\end{aligned}
+```
 #### Technical lifetime of a storage
 ### Capacity transfer
 

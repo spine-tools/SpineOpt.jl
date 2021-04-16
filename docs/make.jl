@@ -53,10 +53,8 @@ makedocs(
             "Unit Constraints" => joinpath("advanced_concepts", "unit_constraints.md"),
             "Pressure driven gas transfer" => joinpath("advanced_concepts", "pressure_driven_gas_transfer.md"),
             "Nodal loss-less DC powerflow" => joinpath("advanced_concepts", "Lossless_DC_power_flow.md"),
-
         ],
         "Library" => "library.md",
     ],
 )
-
 deploydocs(repo="github.com/Spine-project/SpineOpt.jl.git", versions=["stable" => "v^", "v#.#"])
