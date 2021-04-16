@@ -1,25 +1,4 @@
 index,indices,Description
-"(connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)",connection_flow_indices,"Indices of the variable ``v_{connection\_intact\_flow}(conn, n, d, s, t)``"
-"(connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)",connection_intact_flow_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(connection=conn, stochastic_scenario=s, t=t)",connections_invested_available_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-t,mp_objective_lowerbound_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(node=n, stochastic_scenario=s, t=t)",node_injection_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(node=n, stochastic_scenario=s, t=t)",node_slack_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(node=n, stochastic_scenario=s, t=t)",node_state_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)",nonspin_ramp_down_unit_flow_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)",nonspin_ramp_up_unit_flow_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(unit=u, node=n, stochastic_scenario=s, t=t)",nonspin_units_shut_down_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(unit=u, node=n, stochastic_scenario=s, t=t)",nonspin_units_started_up_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)",ramp_down_unit_flow_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)",ramp_up_unit_flow_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)",shut_down_unit_flow_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)",start_up_unit_flow_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(node=n, stochastic_scenario=s, t=t)",storages_invested_available_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)",unit_flow_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(unit=u, node=n, direction=d, i=i, stochastic_scenario=s, t=t)",unit_flow_op_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(unit=u, stochastic_scenario=s, t=t)",units_on_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(unit=u, stochastic_scenario=s, t=t)",units_invested_available_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
-"(unit=u, stochastic_scenario=s, t=t)",units_on_indices,"Indices of the variable ``v_{connection\_flow}(conn, n, d, s, t)``"
 ..,ind(*parameter*),"Tuple of all objects, for which the parameter is defined"
 t,t_before_t(t_after=t'),Set of timeslices that are directly before timeslice t'.
 t,t_before_t(t_before=t'),Set of timeslices that are directly after timeslice t'.
@@ -28,5 +7,3 @@ t,t_in_t(t_long=t'),Set of timeslices that are contained in timeslice t'
 t,t_overlaps_t(t'),Set of timeslices that overlap with timeslice t'
 [s_path],full_stochastic_paths,Set of all possible scenario branches
 [s_path],active_stochastic_paths(s),"Set of all active scenario branches, based on active scenarios s"
-,,
-,,
