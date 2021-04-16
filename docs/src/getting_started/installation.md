@@ -74,6 +74,8 @@ Known issue: On Windows, the backslash between directories need to be changed to
 
 ## Running SpineOpt
 
+This part of the guide shows first an example how to insert objects and their parameter data. Then it shows what other objects, relationships and parameter data needs to be added for a very basic model. Lastly, the model instance is run.
+
 1. Add a model instance to the *Input DB*. First, open the database editor by double-clicking the *Input DB*. Right click on *model* in the *Object tree*. Choose *Add objects*. Then, add a model object by writing a name to the *object name* field. You can use e.g. *instance*. Click ok.
 
     ![image](https://user-images.githubusercontent.com/40472544/114978841-880e8980-9e92-11eb-9272-5dc46708006f.png)
@@ -82,11 +84,38 @@ Known issue: On Windows, the backslash between directories need to be changed to
 
 2. Add parameters to the model instance. You need to define the *duration_unit* --> select 'hour' from the list. Then you need to define a *model_start* time and a *model_end* time. These need to be *Date time* parameters. Right-click on the *value* field and choose *Edit...*. Then you can change the parameter type to *Date time* and give an appropraite datetime.
 
-    ![image](https://user-images.githubusercontent.com/40472544/114979574-c789a580-9e93-11eb-95b9-54c735804edc.png)
+    ![image](https://user-images.githubusercontent.com/40472544/114981259-5d263480-9e96-11eb-9338-1f4bbcff4ecc.png)
 
     ![image](https://user-images.githubusercontent.com/40472544/114979680-fc95f800-9e93-11eb-834d-75c5f9627c2a.png)
 
     ![image](https://user-images.githubusercontent.com/40472544/114979620-e5570a80-9e93-11eb-9163-6a4fbbe5631a.png)
+
+
+3. Add other necessary objects and parameter data for the objects. See picture below. There are three object names that need to be written exactly since they are used internally by SpineOpt: *unit_flow*, *realization*, and *deterministic*. The date time and time series parameter data can be added by using right-click to access the *Edit...* dialog.
+
+    ![image](https://user-images.githubusercontent.com/40472544/115009663-31667700-9eb5-11eb-8f71-163ff14233a7.png)
+
+4. Add necessary relationships and parameter data for the relationships. See picture below. The capacity of the gas_turbine has to be sufficient to meet the highest demand for electricity, otherwise the model will be infeasible (it is possible to set penalty values, but they are not included in this example).
+
+    ![image](https://user-images.githubusercontent.com/40472544/115010276-e305a800-9eb5-11eb-9b29-8bb4f5bb792d.png)
+
+
+5. Run the model. Select *SpineOpt* and press *Execute selection*.
+
+    ![image](https://user-images.githubusercontent.com/40472544/115010605-48599900-9eb6-11eb-930d-b2a258b61bf7.png)
+
+
+6. Explore the results by double-clicking the *Results* database.
+
+    ![image](https://user-images.githubusercontent.com/40472544/115010687-5d362c80-9eb6-11eb-8542-93a765c186cf.png) 
+
+7. Create and run scenarios and build the model further
+
+    ![image](https://user-images.githubusercontent.com/40472544/115011024-ca49c200-9eb6-11eb-8ddd-8b312c095b74.png)
+
+    ![image](https://user-images.githubusercontent.com/40472544/115011214-0da43080-9eb7-11eb-93e5-e2991e81b429.png)
+
+
 
 
 ## Compatibility
