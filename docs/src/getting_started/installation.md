@@ -1,4 +1,4 @@
-## Compatibility
+# Compatibility
 
 This package requires Julia 1.2 or later.
 
