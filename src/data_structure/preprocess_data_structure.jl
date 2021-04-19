@@ -483,11 +483,7 @@ function generate_variable_indexing_support()
                 direction=d,
                 temporal_block=tb,
                 _compact=false,
-            )#,
-            # nonspin_ramp_up_unit__node__direction__temporal_block(
-            #     unit=u, node=n, direction=d, temporal_block=tb, _compact=false
-            # )
-            # )
+            )
         ),
     )
     shut_down_unit__node__direction__temporal_block = RelationshipClass(

@@ -19,8 +19,8 @@
 
 function rerun_spineopt_mp(
     url_out::String;
-    mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
-    lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
+    mip_solver=nothing,
+    lp_solver=nothing,
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
@@ -28,6 +28,8 @@ function rerun_spineopt_mp(
     optimize=true,
     use_direct_model=false,
 )
+    mip_solver = _default_mip_solver(mip_solver)
+    lp_solver = _default_lp_solver(lp_solver)
     outputs = Dict()
     mp = create_model(mip_solver, use_direct_model, :spineopt_master)
     m = create_model(mip_solver, use_direct_model, :spineopt_operations)

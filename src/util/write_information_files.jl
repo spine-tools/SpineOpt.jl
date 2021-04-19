@@ -312,3 +312,51 @@ function write_conflicts_to_file(conflicts; file_name="conflicts")
     end
     close(io)
 end
+
+"""
+    write_ptdfs()
+
+Write `ptdf` parameter values to a `ptdfs.csv` file.
+"""
+function write_ptdfs()
+    io = open("ptdfs.csv", "w")
+    print(io, "connection,")
+    for n in node(has_ptdf=true)
+        print(io, string(n), ",")
+    end
+    print(io, "\n")
+    for conn in connection(has_ptdf=true)
+        print(io, string(conn), ",")
+        for n in node(has_ptdf=true)
+            print(io, ptdf(connection=conn, node=n), ",")
+        end
+        print(io, "\n")
+    end
+    close(io)
+end
+
+"""
+    write_lodfs()
+
+Write `lodf` parameter values to a `lodsfs.csv` file.
+"""
+function write_lodfs()
+    io = open("lodfs.csv", "w")
+    print(io, raw"contingency line,from_node,to node,")
+    for conn_mon in connection(connection_monitored=true)
+        print(io, string(conn_mon), ",")
+    end
+    print(io, "\n")
+    for conn_cont in connection(connection_contingency=true)
+        n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
+        print(io, string(conn_cont), ",", string(n_from), ",", string(n_to))
+        for conn_mon in connection(connection_monitored=true)
+            print(io, ",")
+            for (conn_cont, conn_mon) in indices(lodf; connection1=conn_cont, connection2=conn_mon)
+                print(io, lodf(connection1=conn_cont, connection2=conn_mon))
+            end
+        end
+        print(io, "\n")
+    end
+    close(io)
+end

@@ -17,6 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+using Cbc
+using Clp
+
+_default_mip_solver(solver::JuMP.MOI.OptimizerWithAttributes) = solver
+_default_mip_solver(::Nothing) = optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01)
+_default_lp_solver(solver::JuMP.MOI.OptimizerWithAttributes) = solver
+_default_lp_solver(::Nothing) = optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0)
+
 # override `get` and `getindex` so we can access our variable dicts with a `Tuple` instead of the actual `NamedTuple`
 function Base.get(d::Dict{K,VariableRef}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:RelationshipLike{J}}
     Base.get(d, NamedTuple{J}(key), default)
@@ -50,46 +58,6 @@ macro fetch(expr)
 end
 
 """
-    log(level, threshold, msg)
-
-TODO: Print stuff?
-"""
-macro log(level, threshold, msg)
-    quote
-        if $(esc(level)) >= $(esc(threshold))
-            printstyled($(esc(msg)), "\n"; bold=true)
-        end
-    end
-end
-
-"""
-    timelog(level, threshold, msg, expr)
-
-TODO: Logs time taken by commands?
-"""
-macro timelog(level, threshold, msg, expr)
-    quote
-        if $(esc(level)) >= $(esc(threshold))
-            @timemsg $(esc(msg)) $(esc(expr))
-        else
-            $(esc(expr))
-        end
-    end
-end
-
-"""
-    timemsg(msg, expr)
-
-TODO: Prints stuff with time?
-"""
-macro timemsg(msg, expr)
-    quote
-        printstyled($(esc(msg)); bold=true)
-        @time $(esc(expr))
-    end
-end
-
-"""
     sense_constraint(m, lhs, sense::Symbol, rhs)
 
 Create a JuMP constraint with the desired left-hand-side `lhs`, `sense`, and right-hand-side `rhs`.
@@ -120,54 +88,6 @@ function expr_sum(iter; init::Number)
         add_to_expression!(result, item)
     end
     result
-end
-
-"""
-    write_ptdfs()
-
-Write `ptdf` parameter values to a `ptdfs.csv` file.
-"""
-function write_ptdfs()
-    io = open("ptdfs.csv", "w")
-    print(io, "connection,")
-    for n in node(has_ptdf=true)
-        print(io, string(n), ",")
-    end
-    print(io, "\n")
-    for conn in connection(has_ptdf=true)
-        print(io, string(conn), ",")
-        for n in node(has_ptdf=true)
-            print(io, ptdf(connection=conn, node=n), ",")
-        end
-        print(io, "\n")
-    end
-    close(io)
-end
-
-"""
-    write_lodfs()
-
-Write `lodf` parameter values to a `lodsfs.csv` file.
-"""
-function write_lodfs()
-    io = open("lodfs.csv", "w")
-    print(io, raw"contingency line,from_node,to node,")
-    for conn_mon in connection(connection_monitored=true)
-        print(io, string(conn_mon), ",")
-    end
-    print(io, "\n")
-    for conn_cont in connection(connection_contingency=true)
-        n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
-        print(io, string(conn_cont), ",", string(n_from), ",", string(n_to))
-        for conn_mon in connection(connection_monitored=true)
-            print(io, ",")
-            for (conn_cont, conn_mon) in indices(lodf; connection1=conn_cont, connection2=conn_mon)
-                print(io, lodf(connection1=conn_cont, connection2=conn_mon))
-            end
-        end
-        print(io, "\n")
-    end
-    close(io)
 end
 
 """
