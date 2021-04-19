@@ -30,9 +30,7 @@ using JSON
 using Printf
 
 import Dates: CompoundPeriod
-import DataStructures: OrderedDict
-import LinearAlgebra: UniformScaling, BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
-import JuMP: MOI, MOIU
+import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 
 # Export utility
 export run_spineopt
@@ -48,7 +46,6 @@ export units_on_indices
 export units_invested_available_indices
 
 include("util/misc.jl")
-include("util/update_model.jl")
 include("util/postprocess_results.jl")
 include("util/write_information_files.jl")
 

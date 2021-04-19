@@ -243,6 +243,32 @@ function fix_variables!(m::Model)
     end
 end
 
+function update_variable!(m::Model, name::Symbol, indices::Function; update_names=false)
+    var = m.ext[:variables][name]
+    val = m.ext[:values][name]
+    lb = m.ext[:variables_definition][name][:lb]
+    ub = m.ext[:variables_definition][name][:ub]
+    for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+        update_names && set_name(var[ind], _base_name(name, ind))
+        if is_fixed(var[ind])
+            unfix(var[ind])
+            lb != nothing && set_lower_bound(var[ind], lb(ind))
+            ub != nothing && set_upper_bound(var[ind], ub(ind))
+        end
+        history_t = t_history_t(m; t=ind.t)
+        history_t === nothing && continue
+        for history_ind in indices(m; ind..., t=history_t)
+            fix(var[history_ind], val[ind]; force=true)
+        end
+    end
+end
+
+function update_variables!(m::Model)
+    for (name, definition) in m.ext[:variables_definition]
+        update_variable!(m, name, definition[:indices])
+    end
+end
+
 """
 Add SpineOpt constraints to the given model.
 """
