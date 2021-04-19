@@ -44,7 +44,7 @@ When none of the ramping parameters mentioned above are defined, the unit is con
 * `unit_capacity`      : 200
 
 #### Step 2: Spinning ramp restriction
-A unit which is only restricted in spinning ramping can be created by changing the `ramp_up/down_limit` parameters: (btw, I like this example!)
+A unit which is only restricted in spinning ramping can be created by changing the `ramp_up/down_limit` parameters:
 
  * `ramp_up_limit`      : **0.2**
  * `ramp_down_limit`    : **0.4**
