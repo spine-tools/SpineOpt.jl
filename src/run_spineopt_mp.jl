@@ -17,60 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    run_spineopt(url_in, url_out; <keyword arguments>)
-
-Run the SpineOpt from `url_in` and write report to `url_out`.
-At least `url_in` must point to valid Spine database.
-A new Spine database is created at `url_out` if it doesn't exist.
-
-# Keyword arguments
-
-**`with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0)`** is the optimizer factory for building the JuMP model.
-
-**`cleanup=true`** tells [`run_spineopt`](@ref) whether or not convenience functors should be
-set to `nothing` after completion.
-
-**`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window,
-and allows adding user contraints.
-
-**`update_constraints=m -> nothing`** is called in windows 2 to the last, and allows updating contraints
-added by `add_constraints`.
-
-**`log_level=3`** is the log level.
-"""
-function run_spineopt_mp(
-    url_in::String,
-    url_out::String=url_in;
-    upgrade=false,
-    mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
-    lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
-    cleanup=true,
-    add_user_variables=m -> nothing,
-    add_constraints=m -> nothing,
-    update_constraints=m -> nothing,
-    log_level=3,
-    optimize=true,
-    use_direct_model=false,
-)
-    @log log_level 0 "Running SpineOpt for $(url_in)..."
-    @timelog log_level 2 "Initializing data structure from db..." begin
-        using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
-        generate_missing_items()
-    end
-    rerun_spineopt_mp(
-        url_out;
-        mip_solver=mip_solver,
-        lp_solver=lp_solver,
-        add_user_variables=add_user_variables,
-        add_constraints=add_constraints,
-        update_constraints=update_constraints,
-        log_level=log_level,
-        optimize=optimize,
-        use_direct_model=use_direct_model,
-    )
-end
-
 function rerun_spineopt_mp(
     url_out::String;
     mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),

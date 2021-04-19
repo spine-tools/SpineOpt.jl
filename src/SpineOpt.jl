@@ -37,8 +37,6 @@ import JuMP: MOI, MOIU
 # Export utility
 export run_spineopt
 export rerun_spineopt
-export run_spineopt_mp
-export rerun_spineopt_mp
 export @fetch
 
 # Export indices functions

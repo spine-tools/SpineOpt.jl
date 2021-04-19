@@ -58,10 +58,33 @@ function run_spineopt(
         using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
         generate_missing_items()
     end
+    rerun_spineopt(
+        url_out;
+        mip_solver=mip_solver,
+        lp_solver=lp_solver,
+        add_user_variables=add_user_variables,
+        add_constraints=add_constraints,
+        update_constraints=update_constraints,
+        log_level=log_level,
+        optimize=optimize,
+        use_direct_model=use_direct_model,
+    )
+end
 
+
+function rerun_spineopt(
+    url_out::String;
+    mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
+    lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
+    add_user_variables=m -> nothing,
+    add_constraints=m -> nothing,
+    update_constraints=m -> nothing,
+    log_level=3,
+    optimize=true,
+    use_direct_model=false,
+)
     # High-level algorithm selection. For now, selecting based on defined model types,
     # but may want more robust system in future
-
     if !isempty(model(model_type=:spineopt_master))
         rerun_spineopt_mp(
             url_out;
@@ -75,7 +98,7 @@ function run_spineopt(
             use_direct_model=use_direct_model,
         )
     else
-        rerun_spineopt(
+        rerun_spineopt_sp(
             url_out;
             mip_solver=mip_solver,
             lp_solver=lp_solver,
@@ -89,7 +112,7 @@ function run_spineopt(
     end
 end
 
-function rerun_spineopt(
+function rerun_spineopt_sp(
     url_out::String;
     mip_solver=optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01),
     lp_solver=optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0),
@@ -104,7 +127,7 @@ function rerun_spineopt(
 
     m = create_model(mip_solver, use_direct_model, :spineopt_operations)
 
-    @timelog log_level 2 "Preprocessing operations model specific data structure...\n" preprocess_model_data_structure(
+    @timelog log_level 2 "Preprocessing $(m.ext[:instance]) model specific data structure...\n" preprocess_model_data_structure(
         m,
     )
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
