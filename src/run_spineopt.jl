@@ -120,7 +120,8 @@ function rerun_spineopt(
     # High-level algorithm selection. For now, selecting based on defined model types,
     # but may want more robust system in future
     if !isempty(model(model_type=:spineopt_master))
-        rerun_spineopt_mp(
+        Base.invokelatest(
+            rerun_spineopt_mp,
             url_out;
             mip_solver=mip_solver,
             lp_solver=lp_solver,
@@ -132,7 +133,8 @@ function rerun_spineopt(
             use_direct_model=use_direct_model,
         )
     else
-        rerun_spineopt_sp(
+        Base.invokelatest(
+            rerun_spineopt_sp,
             url_out;
             mip_solver=mip_solver,
             lp_solver=lp_solver,
