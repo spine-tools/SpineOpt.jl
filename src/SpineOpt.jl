@@ -35,6 +35,7 @@ export rerun_spineopt
 
 include("run_spineopt.jl")
 include("data_structure/generate_missing_items.jl")
+include("util/docs_utils.jl")
 
 function __init__()
 	@require JuMP="4076af6c-e467-56ae-b986-b466b2749572" begin

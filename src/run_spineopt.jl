@@ -119,31 +119,17 @@ function rerun_spineopt(
     @eval using JuMP
     # High-level algorithm selection. For now, selecting based on defined model types,
     # but may want more robust system in future
-    if !isempty(model(model_type=:spineopt_master))
-        Base.invokelatest(
-            rerun_spineopt_mp,
-            url_out;
-            mip_solver=mip_solver,
-            lp_solver=lp_solver,
-            add_user_variables=add_user_variables,
-            add_constraints=add_constraints,
-            update_constraints=update_constraints,
-            log_level=log_level,
-            optimize=optimize,
-            use_direct_model=use_direct_model,
-        )
-    else
-        Base.invokelatest(
-            rerun_spineopt_sp,
-            url_out;
-            mip_solver=mip_solver,
-            lp_solver=lp_solver,
-            add_user_variables=add_user_variables,
-            add_constraints=add_constraints,
-            update_constraints=update_constraints,
-            log_level=log_level,
-            optimize=optimize,
-            use_direct_model=use_direct_model,
-        )
-    end
+    rerun_spineopt = !isempty(model(model_type=:spineopt_master)) ? rerun_spineopt_mp : rerun_spineopt_sp
+    Base.invokelatest(
+        rerun_spineopt,
+        url_out;
+        mip_solver=mip_solver,
+        lp_solver=lp_solver,
+        add_user_variables=add_user_variables,
+        add_constraints=add_constraints,
+        update_constraints=update_constraints,
+        log_level=log_level,
+        optimize=optimize,
+        use_direct_model=use_direct_model,
+    )
 end
