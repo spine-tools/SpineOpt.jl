@@ -177,7 +177,7 @@ function __init__()
 		@require Revise="295af30f-e4ad-537b-8983-00126c2a3abe" begin
 			import .Revise
 			for file_path in _lazy_include_file_paths
-			    Revise.track(@__MODULE__, joinpath("src", file_path))
+			    Revise.track(@__MODULE__, joinpath(@__DIR__, file_path))
 			end
 		end
 	end
