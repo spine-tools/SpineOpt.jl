@@ -20,9 +20,11 @@
 using Cbc
 using Clp
 
-_default_mip_solver(solver::JuMP.MOI.OptimizerWithAttributes) = solver
+_Solver = Union{JuMP.MOI.OptimizerWithAttributes,Type{T}} where T <: JuMP.MOI.AbstractOptimizer
+
+_default_mip_solver(solver::_Solver) = solver
 _default_mip_solver(::Nothing) = optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01)
-_default_lp_solver(solver::JuMP.MOI.OptimizerWithAttributes) = solver
+_default_lp_solver(solver::_Solver) = solver
 _default_lp_solver(::Nothing) = optimizer_with_attributes(Clp.Optimizer, "LogLevel" => 0)
 
 # override `get` and `getindex` so we can access our variable dicts with a `Tuple` instead of the actual `NamedTuple`

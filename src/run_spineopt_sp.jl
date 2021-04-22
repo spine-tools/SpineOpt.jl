@@ -72,7 +72,7 @@ end
 A JuMP `Model` for SpineOpt.
 """
 function create_model(mip_solver, use_direct_model=false, model_type=:spineopt_operations)
-    m = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)
+    m = use_direct_model ? direct_model(mip_solver()) : Model(mip_solver)
     isempty(model(model_type=model_type)) && error("No model of type $model_type defined")
     m.ext[:instance] = first(model(model_type=model_type))
     m.ext[:variables] = Dict{Symbol,Dict}()
