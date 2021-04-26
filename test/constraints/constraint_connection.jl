@@ -113,7 +113,7 @@
         fixed_pressure_constant_1_ = Dict(("connection_ca", "node_c","node_a") => 0)
         db_map = _load_test_data(url_in, test_data)
         object_parameter_values = [
-            ["connection", "connection_ca", "connection_binary_gas_flow", binary["connection_ca"]],
+            ["connection", "connection_ca", "has_binary_gas_flow", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
         ]
         relationship_parameter_values =
@@ -162,7 +162,7 @@
         object_parameter_values = [
             ["node", "node_a", "has_pressure", has_pressure["node_a"]],
             ["node", "node_c", "has_pressure", has_pressure["node_c"]],
-            ["connection", "connection_ca", "connection_binary_gas_flow", binary["connection_ca"]],
+            ["connection", "connection_ca", "has_binary_gas_flow", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
         ]
         relationship_parameter_values =
@@ -223,7 +223,7 @@
         fixed_pr_constant_1_ = Dict(("connection_ca", "node_c","node_a") => 0)
         db_map = _load_test_data(url_in, test_data)
         object_parameter_values = [
-            ["connection", "connection_ca", "connection_binary_gas_flow", binary["connection_ca"]],
+            ["connection", "connection_ca", "has_binary_gas_flow", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
         ]
         relationship_parameter_values =
