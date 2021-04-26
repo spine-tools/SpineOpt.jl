@@ -32,6 +32,7 @@ import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 
 export run_spineopt
 export rerun_spineopt
+export @fetch
 
 include("run_spineopt.jl")
 include("data_structure/generate_missing_items.jl")

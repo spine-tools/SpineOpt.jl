@@ -105,7 +105,7 @@
         ["connection", "fix_connections_invested_available", null, null, "Setting a value fixes the connections_invested_available variable accordingly"],
         ["connection", "graph_view_position", null, null, null],
         ["connection", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
-        ["connection", "connection_binary_gas_flow", false, "boolean_value_list", "This parameter needs to `true` in order to represent bidirectional pressure drive gas transfer."],
+        ["connection", "has_binary_gas_flow", false, "boolean_value_list", "This parameter needs to `true` in order to represent bidirectional pressure drive gas transfer."],
         ["model", "duration_unit", "minute", "duration_unit_list", "Defines the base temporal unit of the `model`. Currently supported values are either an `hour` or a `minute`."],
         ["model", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["model", "max_gap", 0.05, null, "Specifies the maximum optimality gap for the model. Currently only used for the master problem within a decomposed structure"],

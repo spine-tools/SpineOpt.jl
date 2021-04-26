@@ -41,12 +41,12 @@ function binary_gas_connection_flow_indices(
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
         for (conn, n, d, s, t) in connection_flow_indices(
             m;
-            connection=connection,
-            node=node,
+            connection=intersect(connection, SpineOpt.connection(has_binary_gas_flow=true)),
+            node=intersect(node, SpineOpt.node(has_state=true)),
             stochastic_scenario=stochastic_scenario,
             t=t,
             temporal_block=temporal_block,
-        ) if connection_binary_gas_flow(connection=conn) && !has_state(node=n)
+        )
     ]
 end
 
