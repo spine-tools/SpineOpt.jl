@@ -35,7 +35,7 @@ function node_pressure_indices(
     inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
         (node=n, stochastic_scenario=s, t=t) for (n, s, t) in node_stochastic_time_indices(
             m;
-            node=intersect(members(node), SpineOpt.node(has_pressure=true),
+            node=intersect(members(node), SpineOpt.node(has_pressure=true)),
             stochastic_scenario=stochastic_scenario,
             t=t,
             temporal_block=temporal_block,

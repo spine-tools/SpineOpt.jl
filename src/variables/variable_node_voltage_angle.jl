@@ -32,7 +32,7 @@ function node_voltage_angle_indices(
     inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
         (node=n, stochastic_scenario=s, t=t) for (n, s, t) in node_stochastic_time_indices(
             m;
-            node=intersect(node, SpineOpt.node(has_voltage_angle=true),
+            node=intersect(node, SpineOpt.node(has_voltage_angle=true)),
             stochastic_scenario=stochastic_scenario,
             t=t,
             temporal_block=temporal_block,
