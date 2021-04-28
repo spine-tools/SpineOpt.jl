@@ -1,4 +1,4 @@
-If a node is to present a node in a pressure driven gas network, the boolean parameter
+If a node is to represent a node in a pressure driven gas network, the boolean parameter
 [has\_pressure](@ref) should be set true, in order to trigger the generation of the
 [node\_pressure](@ref) variable.
 The pressure at a certain node can also be constrainted through the

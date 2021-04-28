@@ -19,7 +19,7 @@
 """
     constraint_compression_ratio(m::Model)
 
-Set a fixed compression ratio between to nodes connected through active pipeline.
+Set a fixed compression ratio between two nodes connected through active pipeline.
 """
 function add_constraint_compression_ratio!(m::Model)
     @fetch node_pressure = m.ext[:variables]

@@ -3,7 +3,6 @@
 ## Balance constraint
 
 ### [Nodal balance](@id constraint_nodal_balance)
-6
 In **SpineOpt**, [node](@ref) is the place where an energy balance is enforced. As universal aggregators,
 they are the glue that brings all components of the energy system together. An energy balance is created for each [node](@ref) for all [node\_stochastic\_time\_indices](@ref Sets), unless the [balance\_type](@ref) parameter of the node takes the value [balance\_type\_none](@ref balance_type_list) or if the node in question is a member of a node group, for which the [balance\_type](@ref) is [balance\_type\_group](@ref balance_type_list). The parameter [nodal\_balance\_sense](@ref) defaults to equality, but can be changed to allow overproduction ([nodal\_balance\_sense](@ref) [`>=`](@ref constraint_sense_list)) or underproduction ([nodal\_balance\_sense](@ref) [`<=`](@ref constraint_sense_list)).
 The energy balance is enforced by the following constraint:
@@ -88,7 +87,7 @@ Note that the dis-/charging efficiencies and capacities are properties of these 
 See [the capacity constraint](@ref constraint_unit_flow_capacity) and [the unit flow ratio constraints](@ref constraint_ratio_unit_flow)
 
 ### [Cyclic condition on node state variable](@id constraint_cyclic_node_state)
-To ensure that the node state at the end of the optimization is at least the same value as the initial value at the beginning of the optimization (or higher), the cyclic node state constraint can be used by setting the [cyclic\_condition](@ref) of a [node\_\_temporal\_block](@ref) to `true`. This trigger the following cyclic constraint:
+To ensure that the node state at the end of the optimization is at least the same value as the initial value at the beginning of the optimization (or higher), the cyclic node state constraint can be used by setting the [cyclic\_condition](@ref) of a [node\_\_temporal\_block](@ref) to `true`. This triggers the following cyclic constraint:
 
 ```math
 \begin{aligned}
@@ -109,7 +108,7 @@ To ensure that the node state at the end of the optimization is at least the sam
 
 ## Unit operation
 
-In the following, the operational constraints on the variables associated with units will be elaborated on. The static constraints, in contrast to the dynamic constraints, are addressing constraint without sequential time-coupling. It should however be noted that static constraints can still perform temporal aggregation.
+In the following, the operational constraints on the variables associated with units will be elaborated on. The static constraints, in contrast to the dynamic constraints, are addressing constraints without sequential time-coupling. It should however be noted that static constraints can still perform temporal aggregation.
 
 ### [Static constraints](@id static-constraints-unit)
 
@@ -128,7 +127,7 @@ In the most general form of the equation, two node groups are defined (an input 
 and a linear relationship is expressed between both node groups. Note that whenever the relationship is specified between groups of multiple nodes,
 there remains a degree of freedom regarding the composition of the input node flows within group $ng_{in}$  and the output node flows within group $ng_{out}$.
 
-The constrained given below enforces a fixed, maximum or minimum ratio between outgoing and incoming [unit\_flow](@ref). Note that the potential node groups, that the parameters  [fix\_ratio\_out\_in\_unit\_flow](@ref),
+The constraint given below enforces a fixed, maximum or minimum ratio between outgoing and incoming [unit\_flow](@ref). Note that the potential node groups, that the parameters  [fix\_ratio\_out\_in\_unit\_flow](@ref),
 [max\_ratio\_out\_in\_unit\_flow](@ref) and [min\_ratio\_out\_in\_unit\_flow](@ref) defined on, are getting internally expanded to the members of the node group within the unit\_flow\_indices.
 
 ```math
@@ -239,7 +238,7 @@ flows to this location in each time step. When desirable, the capacity can be sp
 \end{aligned}
 ```
 
-Note that the conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted in case the unit of measurement for the capacity is different the unit flows unit of measurement.
+Note that the conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted in case the unit of measurement for the capacity is different to the unit flows unit of measurement.
 
 ### Dynamic constraints
 
@@ -273,7 +272,7 @@ The number of online units need to be restricted to the number of available unit
 ```
 
 ##### [Bound on available units](@id constraint_units_available)
-The number of available units itself is constrained by the parameters [unit\_availability\_factor](@ref) and [number\_of\_units](@ref), and the variable number of invested units $v_{units\_invested\_available}$):
+The number of available units itself is constrained by the parameters [unit\_availability\_factor](@ref) and [number\_of\_units](@ref), and the variable number of invested units [units\_invested\_available](@ref):
 
 ```math
 \begin{aligned}
@@ -301,7 +300,7 @@ The units on status is constrained by shutting down and starting up actions. Thi
 \end{aligned}
 ```
 ##### [Constraint on minimum operating point](@id constraint_minimum_operating_point)
-The minimum operating point of a unit can be based on the [unit\_flow](@ref)'s of
+The minimum operating point of a unit can be based on the [unit\_flow](@ref)s of
 input or output nodes/node groups ng:
 
 ```math
@@ -309,7 +308,7 @@ input or output nodes/node groups ng:
 & \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)}} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
 & >= p_{minimum\_operating\_point}(u,ng,d,s,t) \\
 & \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
-&  \cdot \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+&  \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
 &  \cdot \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ (u,\Delta t_{units\_on} \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
 & \cdot \min(\Delta t_{units\_on},\Delta t) \\
 & \forall (u,ng,d) \in ind(p_{minimum\_operating\_point}), \\
@@ -317,7 +316,7 @@ input or output nodes/node groups ng:
 &  \forall s \in stochastic\_path
 \end{aligned}
 ```
-Note that this constraint is always generated for the lowest resolution of all involved members of the node group `ng`, i.e. the lowest resolution of the involved units flows. This is also why the term ```\min(t_{units\_on},\Delta t)``` is added for the units on variable, in order to dis-/aggregate the units on resolution to the resolution of the unit flows.
+Note that this constraint is always generated for the lowest resolution of all involved members of the node group `ng`, i.e. the lowest resolution of the involved units flows. This is also why the term ``\\min(\\Delta t_{units\_on},\\Delta t)`` is added for the units on variable, in order to dis-/aggregate the units on resolution to the resolution of the unit flows.
 
 ##### [Minimum down time (basic version)](@id constraint_min_down_time)
 In order to impose a minimum offline time of a unit, before it can be started up again, the [min\_down\_time](@ref) parameter needs to be defined, which triggers the generation of the following constraint:
@@ -379,7 +378,7 @@ First, the unit flows are split into their online, start-up, shut-down and non-s
 & \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in unit\_flow\_indices \\
 \end{aligned}
 ```
-Note that each *individual* tuple of the [unit_flow_indices](@ref Sets) is split into its ramping contributions, if any of the ramping variables exist for this tuple. How to set-up ramps for units is described in [Ramping and Reserves](@ref).
+Note that each *individual* tuple of the [unit\_flow\_indices](@ref Sets) is split into its ramping contributions, if any of the ramping variables exist for this tuple. How to set-up ramps for units is described in [Ramping and Reserves](@ref).
 
 ##### [Constraint on spinning upwards ramp_up](@id constraint_ramp_up)
 The maximum online ramp up ability of a unit can be constraint by the [ramp\_up\_limit](@ref), expressed as a share of the [unit\_capacity](@ref). With this constraint, online (i.e. spinning) ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced.
@@ -407,7 +406,7 @@ To enforce a lower bound on the ramp of a unit during start-up, the [min\_startu
 \begin{aligned}
 & + \sum_{\substack{(u,n,d,s,t) \in start\_up\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{start\_up\_unit\_flow}(u,n,d,s,t)  \\
 & >= \\
-& + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}} \\
+& + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}} v_{units_started\_up}(u,s,t) \\
 & \cdot p_{min\_startup\_ramp}(u,ng,d,s,t) \\
 & \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
 & \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
@@ -423,7 +422,7 @@ This constraint enforces a upper limit on the unit ramp during startup process, 
 \begin{aligned}
 & + \sum_{\substack{(u,n,d,s,t) \in start\_up\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{start\_up\_unit\_flow}(u,n,d,s,t)  \\
 & <= \\
-& + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}} \\
+& + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}} v_{units_started\_up}(u,s,t) \\
 & \cdot p_{max\_startup\_ramp}(u,ng,d,s,t) \\
 & \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
 & \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
@@ -441,10 +440,10 @@ For non-spinning reserve provision, offline units can be scheduled to provide no
 & - v_{units\_on}(u,s,t) \\
 & >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >t-p_{min\_down\_time}(u,s,t) \\ t' <= t}}
 v_{units\_shut\_down}(u,s,t') \\
-& \sum_{\substack{(u',n',s',t') \in nonspin\_units\_started\_up\_indices:\\ (u',s',t') \in (u,s,t)}}
+& + \sum_{\substack{(u',n',s',t') \in nonspin\_units\_started\_up\_indices:\\ (u',s',t') \in (u,s,t)}}
   v_{nonspin\_units\_started\_up}(u',n',s',t') \\
 & \forall (u,s,t) \in units\_on\_indices:\\
-& (u,...) \in nonspin\_units\_started\_up\_indices
+& (u,n,s,t) \in nonspin\_units\_started\_up\_indices
 \end{aligned}
 ```
 
@@ -542,7 +541,7 @@ For non-spinning downward reserves, online units can be scheduled for reserve pr
 & v_{units\_on}(u,s,t) \\
 & >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >t-p_{min\_up\_time}(u,s,t) && t' <= t}}
 v_{units\_started\_up}(u,s,t') \\
-& \sum_{\substack{(u',n',s',t') \in nonspin\_units\_shut\_down\_indices: \\ (u',s',t') \in (u,s,t)}}
+& + \sum_{\substack{(u',n',s',t') \in nonspin\_units\_shut\_down\_indices: \\ (u',s',t') \in (u,s,t)}}
   v_{nonspin\_units\_shut\_down}(u',n',s',t') \\
 & \forall (u,s,t) \in units\_on\_indices:\\
 & u \in nonspin\_units\_started\_up\_indices
@@ -664,15 +663,15 @@ To impose a limit on the cumulative amount of certain commodity flows, a cumulat
 #### [Capacity constraint on connections](@id constraint_connection_flow_capacity)
 
 In a multi-commodity setting, there can be different commodities entering/leaving a certain connection. These can be energy-related commodities (e.g., electricity, natural gas, etc.),
-emissions, or other commodities (e.g., water, steel). The [connection\_capacity](@ref) be specified
-for at least one [connection\_\_to\_node](@ref) or [connection\_\_from\_node](@ref) relationship, in order to trigger a constraint on the maximum commodity flows to this location in each time step. When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products). Note that the conversion factor [connection\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted in case the unit of measurement for the capacity is different the connection flows unit of measurement.
+emissions, or other commodities (e.g., water, steel). The [connection\_capacity](@ref) should be specified
+for at least one [connection\_\_to\_node](@ref) or [connection\_\_from\_node](@ref) relationship, in order to trigger a constraint on the maximum commodity flows to this location in each time step. When desirable, the capacity can be specified for a group of nodes (e.g. combined capacity for multiple products). Note that the conversion factor [connection\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted in case the unit of measurement for the capacity is different to the connection flows unit of measurement.
 
 ```math
 \begin{aligned}
 & \sum_{\substack{(conn,n,d,s,t') \in connection\_flow\_indices: \\ (conn,n,d,s,t') \, \in \, (conn,ng,d,s,t)}} v_{connection\_flow}(conn,n,d,s,t') \cdot \Delta t' \\
 & - \sum_{\substack{(conn,n,d_{reverse},s,t') \in connection\_flow\_indices: \\ (conn,n,s,t') \, \in \, (conn,ng,s,t) \\ d_{reverse} != d}} v_{connection\_flow}(conn,n,d_{reverse},s,t') \cdot \Delta t' \\
 & <= p_{connection\_capacity}(conn,ng,d,s,t) \\
-& p_{connection\_availability\_factor}(conn,s,t) \\
+& \cdot p_{connection\_availability\_factor}(conn,s,t) \\
 &  \cdot p_{connection\_conv\_cap\_to\_flow}(conn,ng,d,s,t) \Delta t\\
 & \forall (conn,ng,d) \in ind(p_{connection\_capacity}): \\
 & \nexists p_{candidate\_connections}(conn)\\
@@ -688,7 +687,7 @@ If the connection is a [candidate\_connection](@ref), i.e. can be invested in, t
 & \sum_{\substack{(conn,n,d,s,t') \in connection\_flow\_indices: \\ (conn,n,d,s,t') \, \in \, (conn,ng,d,s,t)}} v_{connection\_flow}(conn,n,d,s,t') \cdot \Delta t' \\
 & - \sum_{\substack{(conn,n,d_{reverse},s,t') \in connection\_flow\_indices: \\ (conn,n,s,t') \, \in \, (conn,ng,s,t) \\ d_{reverse} != d}} v_{connection\_flow}(conn,n,d_{reverse},s,t') \cdot \Delta t' \\
 & <= p_{connection\_capacity}(conn,ng,d,s,t) \\
-& p_{connection\_availability\_factor}(conn,s,t) \\
+& \cdot p_{connection\_availability\_factor}(conn,s,t) \\
 &  \cdot p_{connection\_conv\_cap\_to\_flow}(conn,ng,d,s,t) \Delta t\\
 & \cdot \sum_{\substack{(conn,s,t') \in connections\_invested\_available\_indices: \\ (conn,s,t') \, \in \, (conn,s,t\_in\_t(t_{short})}}
 v_{connections\_invest\_available(conn, s, t)}
@@ -708,7 +707,7 @@ In the most general form of the equation, two node groups are defined (an input 
 and a linear relationship is expressed between both node groups. Note that whenever the relationship is specified between groups of multiple nodes,
 there remains a degree of freedom regarding the composition of the input node flows within group $ng_{in}$  and the output node flows within group $ng_{out}$.
 
-The constrained given below enforces a fixed, maximum or minimum ratio between outgoing and incoming [connection\_flow](@ref). Note that the potential node groups, that the parameters  [fix\_ratio\_out\_in\_connection\_flow](@ref),
+The constraint given below enforces a fixed, maximum or minimum ratio between outgoing and incoming [connection\_flow](@ref). Note that the potential node groups, that the parameters  [fix\_ratio\_out\_in\_connection\_flow](@ref),
 [max\_ratio\_out\_in\_connection\_flow](@ref) and [min\_ratio\_out\_in\_connection\_flow](@ref) are defined on, are getting internally expanded to the members of the node group within the connection\_flow\_indices.
 
 ```math
@@ -730,13 +729,13 @@ The constrained given below enforces a fixed, maximum or minimum ratio between o
 In the following, the different specific network representations are introduced. While the [Static constraints](@ref static-constraints-connection) find application in any of the different networks, the following equations are specific to the discussed use cases. Currently, SpineOpt incorporated equations for pressure driven gas networks, nodal lossless DC power flows and PTDF based lossless DC power flow.
 
 #### [Pressure driven gas transfer](@id pressure-driven-gas-transfer-math)
-For gas pipelines it can be relevant a pressure driven gas transfer can be modelled, i.a. to account for linepack flexibility. Generally speaking, the main challenges related to pressure driven gas transfers are the non-convexities associated with the Weymouth equation. In SpineOpt, a convexified MILP representation has been implemented, which as been presented in [Schwele - Coordination of Power and Natural Gas Systems: Convexification Approaches for Linepack Modeling](https://doi.org/10.1109/PTC.2019.8810632). The approximation approach is based on the Taylor series expansion around fixed pressure points.
+For gas pipelines it can be relevant a pressure driven gas transfer can be modelled, i.e. to account for linepack flexibility. Generally speaking, the main challenges related to pressure driven gas transfers are the non-convexities associated with the Weymouth equation. In SpineOpt, a convexified MILP representation has been implemented, which as been presented in [Schwele - Coordination of Power and Natural Gas Systems: Convexification Approaches for Linepack Modeling](https://doi.org/10.1109/PTC.2019.8810632). The approximation approach is based on the Taylor series expansion around fixed pressure points.
 
-In addition to the already known variables, such as [connection\_flow](@ref) and [node\_state](@ref), the start and end points of a gas pipeline connection are associated with the variable [node\_pressure](@ref). The variable is trigger by the [has\_pressure](@ref) parameter. For more details on how to set up a gas pipeline, see also the advanced concept section [on pressure driven gas transfer](@ref pressure-driven-gas-transfer).
+In addition to the already known variables, such as [connection\_flow](@ref) and [node\_state](@ref), the start and end points of a gas pipeline connection are associated with the variable [node\_pressure](@ref). The variable is triggered by the [has\_pressure](@ref) parameter. For more details on how to set up a gas pipeline, see also the advanced concept section [on pressure driven gas transfer](@ref pressure-driven-gas-transfer).
 
 ##### [Maximum node pressure](@id constraint_max_node_pressure)
 
-In order to impose an upper limit on the maximum pressure at a node the [maximum node pressure constraint](@ref constraint_max_node_pressure) can be included, by defining the parameter [max\_node\_pressure](@ref) which trigger the following constraint:
+In order to impose an upper limit on the maximum pressure at a node the [maximum node pressure constraint](@ref constraint_max_node_pressure) can be included, by defining the parameter [max\_node\_pressure](@ref) which triggers the following constraint:
 
 ```math
 \begin{aligned}
@@ -750,7 +749,7 @@ In order to impose an upper limit on the maximum pressure at a node the [maximum
 As indicated in the equation, the parameter [max\_node\_pressure](@ref) can also be defined on a node group, in order to impose an upper limit on the aggregated [node\_pressure](@ref) within one node group.
 
 ##### [Minimum node pressure](@id constraint_min_node_pressure)
-In order to impose a lower limit on the pressure at a node the [maximum node pressure constraint](@ref constraint_min_node_pressure) can be included, by defining the parameter [min\_node\_pressure](@ref) which trigger the following constraint:
+In order to impose a lower limit on the pressure at a node the [maximum node pressure constraint](@ref constraint_min_node_pressure) can be included, by defining the parameter [min\_node\_pressure](@ref) which triggers the following constraint:
 
 ```math
 \begin{aligned}
@@ -763,9 +762,9 @@ In order to impose a lower limit on the pressure at a node the [maximum node pre
 ```
 As indicated in the equation, the parameter [min\_node\_pressure](@ref) can also be defined on a node group, in order to impose a lower limit on the aggregated [node\_pressure](@ref) within one node group.
 
-##### [Constraint on the pressure ratio between to nodes](@id constraint_compression_factor)
+##### [Constraint on the pressure ratio between two nodes](@id constraint_compression_factor)
 
-If a compression station is located in between to nodes, the connection is considered to be active and a compression ratio between the two nodes can be imposed. The parameter [compression\_factor](@ref) needs to be defined on a [connection\_\_node\_\_node](@ref) relationship, where the first node corresponds the origin node, before the compression, while the second node corresponds to the destination node, after compression. The existence of this parameter will trigger the following constraint:
+If a compression station is located in between two nodes, the connection is considered to be active and a compression ratio between the two nodes can be imposed. The parameter [compression\_factor](@ref) needs to be defined on a [connection\_\_node\_\_node](@ref) relationship, where the first node corresponds the origin node, before the compression, while the second node corresponds to the destination node, after compression. The existence of this parameter will trigger the following constraint:
 
 ```math
 \begin{aligned}
@@ -844,7 +843,7 @@ where K corrsponds to the natural gas flow constant.
 
 ##### [Enforcing unidirectional flow](@id constraint_connection_unitary_gas_flow)
 
-As stated above, the flow through a connection can only be in one direction at at time. Whever a flow is active in a certain direction is indicated by the [binary\_gas\_connection\_flow](@ref) variable, which takes a value of `1` if the direction of flow is positive. To ensure that the [binary\_gas\_connection\_flow](@ref) in the opposite direction then takes the value `0`, the following constraint is enforced:
+As stated above, the flow through a connection can only be in one direction at at time. Whether a flow is active in a certain direction is indicated by the [binary\_gas\_connection\_flow](@ref) variable, which takes a value of `1` if the direction of flow is positive. To ensure that the [binary\_gas\_connection\_flow](@ref) in the opposite direction then takes the value `0`, the following constraint is enforced:
 
 ```math
 \begin{aligned}
@@ -890,7 +889,7 @@ For further explanation on setting up a database for nodal lossless DC power flo
 
 ##### [Maximum node voltage angle](@id constraint_max_node_voltage_angle)
 
-In order to impose an upper limit on the maximum voltage angle at a node the [maximum node voltage angle constraint](@ref constraint_max_node_voltage_angle) can be included, by defining the parameter [max\_voltage\_angle](@ref) which trigger the following constraint:
+In order to impose an upper limit on the maximum voltage angle at a node the [maximum node voltage angle constraint](@ref constraint_max_node_voltage_angle) can be included, by defining the parameter [max\_voltage\_angle](@ref) which triggers the following constraint:
 
 ```math
 \begin{aligned}
@@ -906,7 +905,7 @@ As indicated in the equation, the parameter [max\_voltage\_angle](@ref) can also
 
 ##### [Minimum node voltage angle](@id constraint_min_node_voltage_angle)
 
-In order to impose a lower limit on the voltage angle at a node the [maximum node voltage angle constraint](@ref constraint_min_node_voltage_angle) can be included, by defining the parameter [min\_voltage\_angle](@ref) which trigger the following constraint:
+In order to impose a lower limit on the voltage angle at a node the [maximum node voltage angle constraint](@ref constraint_min_node_voltage_angle) can be included, by defining the parameter [min\_voltage\_angle](@ref) which triggers the following constraint:
 
 ```math
 \begin{aligned}
@@ -934,7 +933,7 @@ the parameter [connection\_reactance](@ref) is defined for a [connection\_\_node
 & = \\
 & 1/p_{connection\_reactance}(conn) \cdot p_{connection\_reactance\_base}(conn)\\
 & \cdot (\sum_{\substack{(n,s,t') \in node\_voltage\_angle\_indices: \\ (n,s,t') \, \in \, (n_{from},s,t)}} v_{node\_voltage\_angle}(n,s,t') \cdot \Delta t' \\
-& \sum_{\substack{(n,s,t') \in node\_voltage\_angle\_indices: \\ (n,s,t') \, \in \, (n_{to},s,t)}} v_{node\_voltage\_angle}(n,s,t') \cdot \Delta t' \\
+& - \sum_{\substack{(n,s,t') \in node\_voltage\_angle\_indices: \\ (n,s,t') \, \in \, (n_{to},s,t)}} v_{node\_voltage\_angle}(n,s,t') \cdot \Delta t' \\
 & (conn, n_{to}, n_{from}) \in indices(p_{fix_ratio_out_in_connection_flow})\\
 & \forall t \in time\_slices, \\
 & \forall s \in stochastic\_path

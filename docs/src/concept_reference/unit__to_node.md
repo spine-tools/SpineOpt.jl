@@ -8,7 +8,7 @@ constrain the associated unit flows. In most cases a [unit\_capacity](@ref) will
 an upper bound on the commodity flows. Apart from that, ramping abilities of a unit can be
 defined. For further details on ramps see [Ramping and Reserves](@ref).
 
-To associate costs with a certain commodity flows, cost terms, such as [fuel\_cost](@ref)s and [vom\_cost](@ref)s,
+To associate costs with a certain commodity flow, cost terms, such as [fuel\_cost](@ref)s and [vom\_cost](@ref)s,
 can be included for the [unit\_\_to\_node](@ref) relationship.
 
 It is important to note, that the parameters associated with the [unit\_\_to\_node](@ref) can be defined either
