@@ -8,7 +8,7 @@ The main components of flexibility consist of the following parts:
   * Possibility of a rolling optimization window
   * Support for commonly used methods such as representative days
 
-Part of the temporal flexibility in Spine is due to the fact that these options mentioned above can be taken differently across different components of the model, which can be very useful when different markets are coupled in a single model. The resolution and horizon of the gas market can for example be taken differently than that of the electricity market. This documentation aims to give the reader insight in how these aspects are defined, and which objects are used for this.
+Part of the temporal flexibility in Spine is due to the fact that these options mentioned above can be implemented differently across different components of the model, which can be very useful when different markets are coupled in a single model. The resolution and horizon of the gas market can for example be taken differently than that of the electricity market. This documentation aims to give the reader insight in how these aspects are defined, and which objects are used for this.
 
 We start by introducing the relevant objects with their parameters, and the relevant relationship classes for the temporal structure. Afterwards, we will discuss how this setting creates flexibility and will present some of the practical approaches to create a variety of temporal structures.
 
@@ -73,7 +73,7 @@ Alternatively, a variable resolution can be defined by choosing an array of dura
 
 * `temporal_block_1`
   * `block_start`: 0h
-  * `block_start`: 1D
+  * `block_end`: 1D
   * `resolution`: [1h 1h 1h 1h 2h 2h 2h 4h 4h 6h]
 
 
@@ -140,8 +140,8 @@ Below is an example of an advanced use case in which a rolling horizon optimizat
   * `node_1`
   * `node_2`
 * `node_temporal_block` relationships
-  * `node_1_temporal_block_1`
-  * `node_2_temporal_block_2`
+  * `node_1_temporal_block_A`
+  * `node_2_temporal_block_B`
 The two model components that are considered have a different resolution, and their own resolution is also varying within the optimization window. Note that in this case the two optimization windows have the same size, but this is not strictly necessary. The image below visualizes the first two window optimizations of this model.
 
 ![temporal structure](../figs/Temporal_structure.svg)

@@ -10,7 +10,7 @@ All parameters that limit the ramping abilities of a unit are expressed as a fra
 
  The discussion here will be kept conceptual, for the mathematical formulation the reader is referred to the [Ramping and reserve constraints](@ref)
 
-### Constraining spinning ramps (would probably name this one first, as maybe most familiar to people)
+### Constraining spinning ramps
 
  * [unit\_capacity](@ref): limit the maximum value of the `unit_flow` variable for a unit which is currently online. Inclusion of this parameter will trigger the creation of the [Define unit/technology capacity](@ref constraint_unit_flow_capacity) constraint.
  * [ramp\_up\_limit](@ref) : limit the maximum increase in the `unit_flow` variable between two consecutive timesteps for which the unit is online. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on spinning upwards ramp_up](@ref constraint_ramp_up)
@@ -21,12 +21,12 @@ All parameters that limit the ramping abilities of a unit are expressed as a fra
 
 
 ### Constraining shutdown ramps
-  * [max\_shutdown\_ramp](@ref) : limit the maximum of the `unit_flow` variable the timestep right before a shutdown. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on downward shut down ramps](@ref constraint_max_shut_down_ramp)
-  * [min\_shutdown\_ramp](@ref) : limit the minimum of the `unit_flow` variable the timestep right before a shutdown. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on downward shut down ramps](@ref constraint_min_shut_down_ramp)
+  * [max\_shutdown\_ramp](@ref) : limit the maximum of the `unit_flow` variable for the timestep right before a shutdown. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on maximum downward shut down ramps](@ref constraint_max_shut_down_ramp)
+  * [min\_shutdown\_ramp](@ref) : limit the minimum of the `unit_flow` variable for the timestep right before a shutdown. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on minimum downward shut down ramps](@ref constraint_min_shut_down_ramp)
 
 ### Constraining startup ramps
-  * [max\_startup\_ramp](@ref) : limit the maximum of the `unit_flow` variable the timestep right after a start-up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on upward start up ramp_up](@ref constraint_max_start_up_ramp)
-  * [min\_startup\_ramp](@ref) : limit the minimum of the `unit_flow` variable the timestep right after a start-up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on upward start up ramp_up](@ref constraint_min_start_up_ramp)
+  * [max\_startup\_ramp](@ref) : limit the maximum of the `unit_flow` variable for the timestep right after a start-up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on maximum upward start up ramp_up](@ref constraint_max_start_up_ramp)
+  * [min\_startup\_ramp](@ref) : limit the minimum of the `unit_flow` variable for the timestep right after a start-up. The parameter is given as a fraction of the [unit\_capacity](@ref) parameter. Inclusion of this parameter will trigger the creation of the [Constraint on minimum upward start up ramp_up](@ref constraint_min_start_up_ramp)
 
 ## General principle and example use cases
 The general principle of the Spine modelling ramping constraints is that all of these parameters can be defined separately for each unit. This allows the user to incorporate different units (which can either represent a single unit or a technology type) with different flexibility characteristics.
@@ -56,7 +56,7 @@ A unit which is only restricted in spinning ramping can be created by changing t
  By changing the parameter `max_shutdown_ramp` in the previous example, an additional restriction is imposed on the maximum output of the unit from which it can go offline.
 
  * `max_shutdown_ramp`      : **0.5**
- * `max_shutdown_ramp`    :   **0.3**
+ * `min_shutdown_ramp`    :   **0.3**
 
  When this unit goes offline in a given timestep ``t+1``, the output of the unit must be below ``0.5*200 = 100`` in the timestep ``t`` before that.
  Similarly, the parameter `min_shutdown_ramp` can be used to impose a minimum output value in the timestep  before a shutdown. For example, a value of ``0.3`` in this example would mean that the unit can not be running below an output of ``60`` in timestep ``t``.
@@ -116,7 +116,7 @@ The unit can be restricted only in spinning ramping, as in the previous example,
  * `ramp_up_limit`      : **0.2**
  * `ramp_down_limit`    : **0.4**
 
- This parameter choice implies that the unit's flow to the regular demand node between two consecutive timesteps can change with no more than ``0.2  * 200 - upward_reserve_demand`` and no less than ``0.4 * 200 - downward_reserve_demand``. For example, when the unit is running at an output of ``100`` in some timestep ``t``, and there is an upward reserve demand of ```10``` its output for the next timestep must be somewhere in the interval ``[20,130]``.
+ This parameter choice implies that the unit's flow to the regular demand node between two consecutive timesteps can change with no more than ``0.2  * 200 - upward\_reserve\_demand`` and no less than ``0.4 * 200 - downward\_reserve\_demand``. For example, when the unit is running at an output of ``100`` in some timestep ``t``, and there is an upward reserve demand of ```10``` its output for the next timestep must be somewhere in the interval ``[20,130]``.
 
  It can be seen in this example that the demand for reserves is subtracted from both the generation capacity, and the ramping capacity of the unit that is available for regular operation. This stems from the fact that in providing reserve capacity, the unit is expected to be able to provide the demanded reserve within one timestep.
 
@@ -132,7 +132,7 @@ Units can also be allowed to provide non-spinning reserves, through shutdowns an
 
   * `unit_capacity`
 
-These parameters are constraining reserve provision in exactly the same way as their equivalents for regular operation. Note that it is now necessary to define a capacity of the unit with respect to the reserve node. The ramping parameters will then be interpreted as fractions of this specific capacity, which can be taken different than the units overall capacity with respect to the node group.
+These parameters are constraining reserve provision in exactly the same way as their equivalents for regular operation. Note that it is now necessary to define a capacity of the unit with respect to the reserve node. The ramping parameters will then be interpreted as fractions of this specific capacity. The unit's overall capacity can be different than its capacity for reserve provision.
 
 A unit which can provide both spinning and non-spinning reserves can be defined as follows:
 
@@ -155,10 +155,10 @@ The spinning reserve and ramping restrictions now remain the same as above, but 
 
 # Using node_groups for both combined and individual restrictions
 
-It can be seen from the example above that when a node group is defined, ramping restrictions can be imposed both on the group level (thus for the nit as a whole) as well as for the individual nodes. If, for example a `ramp-up-limit` is defined for the node group, the sum of upward ramping of the two nodes will be restricted by this parameter, but it is still possible to limit the individual flows to the nodes as well. We will now discuss an example of this for the `ramp_up_limit`, but this also holds for other parameters.
+It can be seen from the example above that when a node group is defined, ramping restrictions can be imposed both on the group level (thus for the unit as a whole) as well as for the individual nodes. If, for example a `ramp-up-limit` is defined for the node group, the sum of upward ramping of the two nodes will be restricted by this parameter, but it is still possible to limit the individual flows to the nodes as well. We will now discuss an example of this for the `ramp_up_limit`, but this also holds for other parameters.
 
-Let's continue with the example above, where an online unit is capable of ramping up by 20% of its capacity and down by 40%. We might want to impose tighter restrictions for upward reserve provision than the ramping in overall operation (e.g. because the reserved capacity has to be available in a shorter time than the duration_unit). One can then simply define an additional parameter for the unit to reserve node relationship as follows.
+Let's continue with the example above, where an online unit is capable of ramping up by 20% of its capacity and down by 40%. We might want to impose tighter restrictions for upward reserve provision than the ramping in overall operation (e.g. because the reserved capacity has to be available in a shorter time than the [duration_unit](@ref)). One can then simply define an additional parameter for the unit to reserve node relationship as follows.
 
 * `ramp_up_limit`  : 0.15
 
-Which now restricts the spinning upward ramping provision of the unit to 15% of its capacity, as defined for the reserve node. In this case, the `change in the unit's flow to the regular demand node` between two consecutive timesteps is still limited to the interval ```[0.2  * 200 - upward_reserve_demand, 0.4 * 200 - downward_reserve_demand]```. But the upward reserves that it can provide has an upper bound of ```150 * 0.15``.
+Which now restricts the spinning upward ramping provision of the unit to 15% of its capacity, as defined for the reserve node. In this case, the change in the unit's flow to the regular demand node between two consecutive timesteps is still limited to the interval ``[0.2  * 200 - upward\_reserve\_demand, 0.4 * 200 - downward\_reserve\_demand]``. But the upward reserves that it can provide has an upper bound of ```150 * 0.15``.
