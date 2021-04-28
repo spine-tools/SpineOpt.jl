@@ -88,7 +88,6 @@ _lazy_include_file_paths = [
 	"objective/variable_om_costs.jl",
 	"objective/fixed_om_costs.jl",
 	"objective/taxes.jl",
-	"objective/operating_costs.jl",
 	"objective/start_up_costs.jl",
 	"objective/shut_down_costs.jl",
 	"objective/fuel_costs.jl",
