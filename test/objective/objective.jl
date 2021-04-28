@@ -153,21 +153,6 @@
         )
         @test observed_obj == expected_obj
     end
-    @testset "operating_costs" begin
-        db_map = _load_test_data(url_in, test_data)
-        operating_cost = 180
-        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "operating_cost", operating_cost]]
-        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
-        unit_flow = m.ext[:variables][:unit_flow]
-        key = (unit(:unit_ab), node(:node_b), direction(:to_node))
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        observed_obj = objective_function(m)
-        expected_obj = operating_cost * sum(unit_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices))
-        @test observed_obj == expected_obj
-    end
     @testset "shut_down_costs" begin
         db_map = _load_test_data(url_in, test_data)
         shut_down_cost = 180

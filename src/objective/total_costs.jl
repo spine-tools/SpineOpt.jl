@@ -18,14 +18,13 @@
 #############################################################################
 
 function objective_terms(m::Model)
-    # if we have a decomposed structure, master problem costs (investments) should not be included 
+    # if we have a decomposed structure, master problem costs (investments) should not be included
     if model_type(model=m.ext[:instance]) == :spineopt_operations
         if m.ext[:is_subproblem]
             [
                 :variable_om_costs,
                 :fixed_om_costs,
                 :taxes,
-                :operating_costs,
                 :fuel_costs,
                 #    :unit_investment_costs,
                 #    :connection_investment_costs,
@@ -43,7 +42,6 @@ function objective_terms(m::Model)
                 :variable_om_costs,
                 :fixed_om_costs,
                 :taxes,
-                :operating_costs,
                 :fuel_costs,
                 :unit_investment_costs,
                 :connection_investment_costs,
