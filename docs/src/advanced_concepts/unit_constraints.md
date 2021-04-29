@@ -1,7 +1,7 @@
-# [Unit Constraint Creation and Use]
+# Unit Constraints
 Unit constraints allow the user to define arbitrary linear constraints involving most of the problem variables. This section describes this function and how to use it.
 
-## [Key Unit Constraint Concepts]
+## Key Unit Constraint Concepts
 1. **The basic principle**: The basic steps involved in forming a unit constraint are:
  - Creating a user constraint object: One creates a new [unit\_constraint](@ref) object which will be used as a unique handle for the specific constraint and on which constraint-level parameters will be defined.
   - Specify which variables are involved in the constraint: this generally involves creating a relationship involving the [unit\_constraint](@ref) object. For example, specifying the relationship [unit\_\_from\_node\_\_unit\_constraint](@ref) specifies that the corresponding `unit_flow` variable is involved in the constraint. The table below contains a complete list of variables and the corresponding relationships to set.
