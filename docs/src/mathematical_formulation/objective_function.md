@@ -93,8 +93,8 @@ Fuel costs associated with a specific unit can be accounted for by defining the 
 ```
 
 # Operating costs
-To account for other operating costs associated with a specific unit, the [operating\_cost](@ref) parameter can be defined. For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set [unit\_flow\_indices](@ref Sets) for which this parameter is defined, an operating cost term is added to the objective function.
-As the parameter [operating\_cost](@ref) is a dynamic parameter, the cost term is multiplied with the duration of each timestep.
+To account for other operating costs associated with a specific unit, the [vom\_cost](@ref) parameter can be defined. For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set [unit\_flow\_indices](@ref Sets) for which this parameter is defined, an operating cost term is added to the objective function.
+As the parameter [vom\_cost](@ref) is a dynamic parameter, the cost term is multiplied with the duration of each timestep.
 The total operating costs can be expressed as:
 
 ```math

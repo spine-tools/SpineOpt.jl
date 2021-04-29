@@ -680,7 +680,7 @@ for at least one [connection\_\_to\_node](@ref) or [connection\_\_from\_node](@r
 \end{aligned}
 ```
 
-If the connection is a [candidate\_connection](@ref), i.e. can be invested in, the connection capacity constraint translates to:
+If the connection is a [candidate\_connections](@ref), i.e. can be invested in, the connection capacity constraint translates to:
 
 ```math
 \begin{aligned}

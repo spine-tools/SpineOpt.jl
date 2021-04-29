@@ -161,5 +161,7 @@ Groups of objects are used within SpineOpt for different purposes. To create a g
 On the one hand, groups can be used in order to impose constraints on the aggregation of a variable, e.g. on the sum of multiple [unit\_flow](@ref) variables. Constraints based on parameters associated with the [unit\_\_node\_\_node](@ref), [unit\_\_to\_node](@ref), [unit\_\_from\_node](@ref), [connection\_\_node\_\_node](@ref), [connection\_\_to\_node](@ref), [connection\_\_from\_node](@ref) can generally be used for this kind of flow aggregation by defining the parameters on groups of objects, typically node groups.
 (with the exception of variable fixing parameters, e.g. [fix\_unit\_flow](@ref), [fix\_connection\_flow](@ref) etc.). See for instance [constraint\_unit\_flow\_capacity](@ref).
 
-On the other hand, a node group can be used to for [PTDF base pwerflows](@ref). Here a node group is used to enforce a nodal balance on
-system level, while suppressing the node balances at individual nodes. See also [balance\_type](@ref) and [the node balance constraint](@ref constraint_nodal_balance).
+On the other hand, a node group can be used to for [PTDF based powerflows](@ref ptdf-based-powerflow).
+Here a node group is used to enforce a nodal balance on system level,
+while suppressing the node balances at individual nodes. See also [balance\_type](@ref)
+and [the node balance constraint](@ref constraint_nodal_balance).
