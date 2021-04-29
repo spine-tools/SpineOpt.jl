@@ -120,10 +120,7 @@ Similarly, the on- and offline status of a unit can be modeled with a lower reso
 
 #### Rolling horizon with multiple blocks
 ##### Rolling horizon with different window sizes
-Similar to what has been discussed above in [Different regions/commodities in different resolutions](@ref), different commodities or regions can be modeled with a different resolution in the rolling horizon setting. The way to do it is completely analogous. Furthermore, when using the rolling horizon framework, a different window size can be chosen for the different modeled components, by simply using a different `block_end` parameter. #TODO: What happens to coupling constraints between different regions?
-
-##### Rolling horizon where the resolution is dependent on the absolute time
-TODO : How can this be done, since there is no parameter that indicates whether a temporal block is static or rolling
+Similar to what has been discussed above in [Different regions/commodities in different resolutions](@ref), different commodities or regions can be modeled with a different resolution in the rolling horizon setting. The way to do it is completely analogous. Furthermore, when using the rolling horizon framework, a different window size can be chosen for the different modeled components, by simply using a different `block_end` parameter. However, using different [block\_end](@ref)s e.g. for interconnected regions should be treated with care, as the variables for each region will only be generated for their respective [temporal\_block](@ref), which in most cases will lead to inconsistent linking constraints.
 
 ##### Putting it all together: rolling horizon with variable resolution that differs for different model components
 Below is an example of an advanced use case in which a rolling horizon optimization is used, and different model components are optimized with a different resolution. By choosing the relevant parameters in the following way:

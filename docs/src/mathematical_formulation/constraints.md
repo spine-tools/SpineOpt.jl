@@ -4,7 +4,7 @@
 
 ### [Nodal balance](@id constraint_nodal_balance)
 In **SpineOpt**, [node](@ref) is the place where an energy balance is enforced. As universal aggregators,
-they are the glue that brings all components of the energy system together. An energy balance is created for each [node](@ref) for all [node\_stochastic\_time\_indices](@ref Sets), unless the [balance\_type](@ref) parameter of the node takes the value [balance\_type\_none](@ref balance_type_list) or if the node in question is a member of a node group, for which the [balance\_type](@ref) is [balance\_type\_group](@ref balance_type_list). The parameter [nodal\_balance\_sense](@ref) defaults to equality, but can be changed to allow overproduction ([nodal\_balance\_sense](@ref) [`>=`](@ref constraint_sense_list)) or underproduction ([nodal\_balance\_sense](@ref) [`<=`](@ref constraint_sense_list)).
+they are the glue that brings all components of the energy system together. An energy balance is created for each [node](@ref) for all `node_stochastic_time_indices`, unless the [balance\_type](@ref) parameter of the node takes the value [balance\_type\_none](@ref balance_type_list) or if the node in question is a member of a node group, for which the [balance\_type](@ref) is [balance\_type\_group](@ref balance_type_list). The parameter [nodal\_balance\_sense](@ref) defaults to equality, but can be changed to allow overproduction ([nodal\_balance\_sense](@ref) [`>=`](@ref constraint_sense_list)) or underproduction ([nodal\_balance\_sense](@ref) [`<=`](@ref constraint_sense_list)).
 The energy balance is enforced by the following constraint:
 
 ```math
@@ -316,7 +316,7 @@ input or output nodes/node groups ng:
 &  \forall s \in stochastic\_path
 \end{aligned}
 ```
-Note that this constraint is always generated for the lowest resolution of all involved members of the node group `ng`, i.e. the lowest resolution of the involved units flows. This is also why the term ``\\min(\\Delta t_{units\_on},\\Delta t)`` is added for the units on variable, in order to dis-/aggregate the units on resolution to the resolution of the unit flows.
+Note that this constraint is always generated for the lowest resolution of all involved members of the node group `ng`, i.e. the lowest resolution of the involved units flows. This is also why the term ``\min(\Delta t_{units\_on},\Delta t)`` is added for the units on variable, in order to dis-/aggregate the units on resolution to the resolution of the unit flows.
 
 ##### [Minimum down time (basic version)](@id constraint_min_down_time)
 In order to impose a minimum offline time of a unit, before it can be started up again, the [min\_down\_time](@ref) parameter needs to be defined, which triggers the generation of the following constraint:
@@ -378,7 +378,7 @@ First, the unit flows are split into their online, start-up, shut-down and non-s
 & \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in unit\_flow\_indices \\
 \end{aligned}
 ```
-Note that each *individual* tuple of the [unit\_flow\_indices](@ref Sets) is split into its ramping contributions, if any of the ramping variables exist for this tuple. How to set-up ramps for units is described in [Ramping and Reserves](@ref).
+Note that each *individual* tuple of the `unit_flow_indices` is split into its ramping contributions, if any of the ramping variables exist for this tuple. How to set-up ramps for units is described in [Ramping and Reserves](@ref).
 
 ##### [Constraint on spinning upwards ramp_up](@id constraint_ramp_up)
 The maximum online ramp up ability of a unit can be constraint by the [ramp\_up\_limit](@ref), expressed as a share of the [unit\_capacity](@ref). With this constraint, online (i.e. spinning) ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced.
@@ -593,7 +593,7 @@ Storage nodes can also contribute to the provision of reserves. The amount of ba
 ```
 
 #### [Bounds on the unit capacity including ramping constraints](@id constraint_unit_flow_capacity_w_ramps)
-(Currently under development)
+(Comment 2021-04-29: Currently under development)
 
 ### Operating segments
 #### [Operating segments of units](@id constraint_operating_point_bounds)
@@ -604,7 +604,7 @@ The `unit_flow_op` operating segment variable is bounded by the difference betwe
 & v_{unit\_flow\_op}(u, n, op, s, t) \\
 &  <= p_{unit\_capacity}(u, n, d, s, t) \\
 &  \cdot v_{units\_available}(u, s, t) \\
-&  \cdot p_{unit_conv_cap_to_flow}(u, n, d, s, t) \\
+&  \cdot p_{unit\_conv\_cap\_to\_flow}(u, n, d, s, t) \\
  \cdot \bigg( & p_{operating\_points}(u, n, op, s, t) \\
 & - \begin{cases}       
        0                                     & \text{if op = 1}\\
@@ -654,7 +654,7 @@ To impose a limit on the cumulative amount of certain commodity flows, a cumulat
 \end{aligned}
 ```
 
-***TODO this constraint needs to be revised. It should be defined on a unit_node_group as indicated here (which is different from the current implementation)***
+(Comment 2021-04-29: Currently under development)
 
 ## Network constraints
 
@@ -982,7 +982,7 @@ v_{units\_invested}(u,s,t') \\
 \end{aligned}
 ```
 #### Technical lifetime of a unit
-
+(Comment 2021-04-29: Currently under development)
 ### [Available Investment Units](@id constraint_units_invested_available)
 The number of available invested-in units at any point in time is less than the number of investment candidate units.
 
@@ -1055,6 +1055,7 @@ v_{connections\_invested}(c,s,t') \\
 \end{aligned}
 ```
 #### Technical lifetime of a connection
+(Comment 2021-04-29: Currently under development)
 ### Investments in storages
 Note: can we actually invest in nodes that are not storages? (e.g. new location)
 #### [Available invested storages](@id constraint_storages_invested_available)
@@ -1094,10 +1095,11 @@ v_{storages\_invested}(n,s,t') \\
 \end{aligned}
 ```
 #### Technical lifetime of a storage
+(Comment 2021-04-29: Currently under development)
 ### Capacity transfer
-
+(Comment 2021-04-29: Currently under development)
 ### Early retirement of capacity
-
+(Comment 2021-04-29: Currently under development)
 ## Benders decomposition
 Can we add some detail on the mathematics here
 ### [Benders cuts](@id constraint_mp_any_invested_cuts)

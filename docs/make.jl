@@ -37,7 +37,7 @@ makedocs(
             "Parameter Value Lists" => joinpath("concept_reference", "Parameter Value Lists.md"),
         ],
         "Mathematical Formulation" => Any[
-            "Sets" => joinpath("mathematical_formulation", "sets.md"),
+            # "Sets" => joinpath("mathematical_formulation", "sets.md"),
             "Variables" => joinpath("mathematical_formulation", "variables.md"),
             "Constraints" => joinpath("mathematical_formulation", "constraints.md"),
             "Objective" => joinpath("mathematical_formulation", "objective_function.md"),
