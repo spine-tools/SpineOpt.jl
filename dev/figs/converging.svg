@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
-<svg width="13cm" height="10cm" viewBox="738 187 244 200" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg width="13cm" height="10cm" viewBox="738 186 251 200" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <g>
     <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x1="740" y1="320" x2="775.528" y2="320"/>
     <path style="fill: #000000" d="M 740 320 C 740,317.5 742.5,315 745,315 C 747.5,315 750,317.5 750,320 C 750,322.5 747.5,325 745,325 C 742.5,325 740,322.5 740,320z"/>
@@ -152,7 +152,7 @@
     <tspan x="904" y="312">s5,t4</tspan>
   </text>
   <text font-size="12.8" style="fill: #ff0000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="740" y="200">
-    <tspan x="740" y="200">4 Constraints with -1:-1:-2 time delays</tspan>
-    <tspan x="740" y="216">generated at (s5,t4)</tspan>
+    <tspan x="740" y="200">4 Constraints with variables from 3 different</tspan>
+    <tspan x="740" y="216">time steps (t2, t3, t4) generated at (s5,t4)</tspan>
   </text>
 </svg>
