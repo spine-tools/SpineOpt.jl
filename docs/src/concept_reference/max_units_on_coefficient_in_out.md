@@ -1,4 +1,4 @@
-The [max\_units\_on\_coefficient\_in\_out](@ref) parameter is an optinal coefficient in the
+The [max\_units\_on\_coefficient\_in\_out](@ref) parameter is an optional coefficient in the
 [unit input-output ratio constraint](@ref ratio_in_out) controlled by the [max\_ratio\_in\_out\_unit\_flow](@ref) parameter.
 Essentially, it acts as a coefficient for the [units\_on](@ref) variable in the constraint,
 allowing for making the maximum conversion ratio dependent on the amount of online capacity.
