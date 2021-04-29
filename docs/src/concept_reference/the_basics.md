@@ -32,7 +32,7 @@ These include:
 ### Structural `object classes`
 
 *Structural [Object Classes](@ref)* are used to define the temporal and stochastic structure of the modelled problem, as
-well as custom `unit constraints`.
+well as custom [Unit Constraints](@ref).
 Unlike the above *system [Object Classes](@ref)*, the *structural [Object Classes](@ref)* are more about *how* you
 want to model, instead of strictly *what* you want to model.
 These include:
@@ -74,21 +74,21 @@ This essentially defines the possible [commodity](@ref) flows to be modelled.
 *Systemic [Relationship Classes](@ref)* include:
 
 - [connection\_\_from\_node](@ref) defines which [node](@ref) the [connection](@ref) can transfer a [commodity](@ref) from.
-- [connection\_\_node\_\_node](@ref) holds [Parameters](@ref) for `connections` between two `nodes`.
 - [connection\_\_to\_node](@ref) defines which [node](@ref) the [connection](@ref) can transfer a [commodity](@ref) to.
+- [connection\_\_node\_\_node](@ref) holds [Parameters](@ref) for `connections` between two `nodes`.
 - [node\_\_commodity](@ref) defines which [node](@ref) holds which [commodity](@ref).
 - [node\_\_node](@ref) holds parameters for direct [node](@ref)-[node](@ref) interactions, like diffusion of `commodities`.
 - [unit\_\_commodity](@ref) defines which [commodity](@ref) the [unit](@ref) handles.
 - [unit\_\_from\_node](@ref) defines which [node](@ref) the [unit](@ref) can take an input [commodity](@ref) from.
-- [unit\_\_node\_\_node](@ref) holds parameters for [unit](@ref) interactions between two `nodes`.
 - [unit\_\_to\_node](@ref) defines which [node](@ref) the [unit](@ref) can output a [commodity](@ref) to.
+- [unit\_\_node\_\_node](@ref) holds parameters for [unit](@ref) interactions between two `nodes`.
 
 ### Structural `relationship classes`
 
 *Structural [Relationship Classes](@ref)* primarily relate [Structural object classes](@ref) to
 [Systemic object classes](@ref), defining what *structures* the individual parts of the *system* use.
 These are mostly used to determine the temporal and stochastic structures to be used in different parts of the
-modelled *system*, or custom `unit constraints`.
+modelled *system*, or custom [Unit Constraints](@ref).
 
 *SpineOpt.jl* has a very flexible temporal and stochastic structure, explained in detail in the
 [Temporal Framework](@ref) and [Stochastic Framework](@ref) sections of the documentation.
@@ -103,19 +103,24 @@ the most important of which are the following *basic structural [Relationship Cl
 - [units\_on\_\_temporal\_block](@ref) defines the `temporal blocks` used for the online variable of the [unit](@ref).
 
 Furthermore, there are also a number of *advanced structural [Relationship Classes](@ref)*, which are only necessary when
-using some of the optional features of *SpineOpt.jl*, like [Investment Optimization](@ref) and custom `unit constraints`.
-These include:
+using some of the optional features of *SpineOpt.jl*.
+For [Investment Optimization](@ref), the following relationships control the stochastic and temporal structures
+of the investment [variables](@ref Variables):
 
-- [connection\_\_from\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](#Variables) variable *from* the [node](@ref) in question in the custom [unit\_constraint](@ref).
 - [connection\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [connection](@ref).
-- [connection\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [connection](@ref).
-- [connection\_\_to\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](#Variables) variable *to* the [node](@ref) in question in the custom [unit\_constraint](@ref).
+- [connection\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [connection](@ref).[unit\_constraint](@ref).
 - [node\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
 - [node\_\_investment\_temporal\_block](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
+- [unit\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [unit](@ref).
+- [unit\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [unit](@ref).(@ref).
+
+For [Unit Constraints](@ref), which are essentially generic data-driven custom constraints,
+the following relationships are used to control which [variables](@ref Variables) are included and with what coefficients:  
+
+- [connection\_\_from\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](#Variables) variable *from* the [node](@ref) in question in the custom [unit\_constraint](@ref).
+- [connection\_\_to\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](#Variables) variable *to* the [node](@ref) in question in the custom [unit\_constraint](@ref).
 - [node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [node\_state](#Variables) variable in the custom [unit\_constraint](@ref).
 - [unit\_\_from\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](#Variables) variable *from* the [node](@ref) in question in the custom [unit\_constraint](@ref).
-- [unit\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [unit](@ref).
-- [unit\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [unit](@ref).
 - [unit\_\_to\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](#Variables) variable *to* the [node](@ref) in question in the custom [unit\_constraint](@ref).
 
 ### Meta `relationship classes`
