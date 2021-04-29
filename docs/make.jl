@@ -27,7 +27,6 @@ makedocs(
         "Getting Started" => Any[
             "Installation" => joinpath("getting_started", "installation.md"),
             "Setting up a workflow" => joinpath("getting_started", "setup_workflow.md"),
-            #"Running an Optimization" => joinpath("getting_started", "running_an_optimization.md"),
             "Creating Your Own Model" => joinpath("getting_started", "creating_your_own_model.md"),
         ],
         "Concept Reference" => Any[
