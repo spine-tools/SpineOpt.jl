@@ -62,7 +62,7 @@ Further reading on adding parameter values can be found [here](https://spine-too
 - The capacity of the gas_turbine has to be sufficient to meet the highest demand for electricity, otherwise the model will be infeasible (it is possible to set penalty values, but they are not included in this example).
 - The parameter `fix_ratio_in_out_unit_flow` forces the ratio between an input and output flow to be a constant. This is one way to establish an efficiency for a conversion process.
 
-![image](https://user-images.githubusercontent.com/40472544/115033768-79949200-9ed3-11eb-90e7-e35e6f135a24.png)
+![image](https://user-images.githubusercontent.com/40472544/116714620-9dc99600-a9de-11eb-869f-60bf84482888.png)
 
 ## Run the model
 - Select *SpineOpt* 
