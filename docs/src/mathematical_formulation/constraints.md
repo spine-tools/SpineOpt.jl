@@ -943,7 +943,7 @@ the parameter [connection\_reactance](@ref) is defined for a [connection\_\_node
 ### [PTDF based DC lossless powerflow](@id PTDF-lossless-DC)
 
 #### [Connection intact flow PTDF](@id constraint_connection_intact_flow_ptdf)
-The power transfer distribution factors are a property of the network reactances. ptdf(n, c) represents the fraction of an injection at [node](@ref) n that will flow on [connection](@ref) c. The flow on [connection](@ref) c is then the sum over all nodes of ptdf(n, c)*net_injection(c). [connection\_intact\_flow](@ref) represents the flow on each line of the network will all candidate connections with PTDF-based flow present in the network. 
+The power transfer distribution factors are a property of the network reactances. ptdf(n, c) represents the fraction of an injection at [node](@ref) n that will flow on [connection](@ref) c. The flow on [connection](@ref) c is then the sum over all nodes of ptdf(n, c)*net_injection(c). [connection\_intact\_flow](@ref) represents the flow on each line of the network will all candidate connections with PTDF-based flow present in the network.
 
 ```math
 \begin{aligned}
@@ -1040,7 +1040,7 @@ The number of available invested-in connections at any point in time is less tha
 
 Enforces the relationship between [connection\_intact\_flow](@ref) (flow with all investments assumed in force) and [connection\_flow](@ref)
 [connection\_intact\_flow](@ref) is the flow on all lines with all investments assumed in place. This constraint ensures that the
-[connection\_flow](@ref) is [connection\_intact\_flow](@ref) plus additional flow contributions from investment connections that are not invested in. 
+[connection\_flow](@ref) is [connection\_intact\_flow](@ref) plus additional flow contributions from investment connections that are not invested in.
 
 ```math
 \begin{aligned}
@@ -1171,7 +1171,7 @@ v_{storages\_invested}(n,s,t') \\
 (Comment 2021-04-29: Currently under development)
 ### Early retirement of capacity
 (Comment 2021-04-29: Currently under development)
-## Benders decomposition(@id benders_decomposition)
+## [Benders decomposition](@id benders_decomposition)
 This section describes the high-level formulation of the benders-decomposed problem.
 
 Taking the simple example of minimising capacity and operating cost for a fleet of units with a linear cost coefficient $`operational\_cost_u`$ :
@@ -1190,7 +1190,7 @@ subject\ to:&
 \end{aligned}
 ```
 
-So this is a single problem that can't be decoupled over `t` because the investment variables `units_invested_available` couple the timesteps together. If `units_invested_available` were a constant in the problem, then all `t`'s could be solved individually. This is the basic idea in Benders decomposition. We decompose the problem into a master problem and sub problems with the master problem optimising the coupling investment variables which are treated as constants in the sub problems. 
+So this is a single problem that can't be decoupled over `t` because the investment variables `units_invested_available` couple the timesteps together. If `units_invested_available` were a constant in the problem, then all `t`'s could be solved individually. This is the basic idea in Benders decomposition. We decompose the problem into a master problem and sub problems with the master problem optimising the coupling investment variables which are treated as constants in the sub problems.
 
 The master problem in the initial benders iteration is simply to minimise total investment costs:
 
@@ -1203,7 +1203,7 @@ minimise &Z:
 
 ```
 
-The solution to this problem yields values for the investment variables which are fixed as $`\overline{units\_invested_u}`$ in the sub problem and will be zero in the first iteration. 
+The solution to this problem yields values for the investment variables which are fixed as $`\overline{units\_invested_u}`$ in the sub problem and will be zero in the first iteration.
 
 The sub problem for benders iteration `b` then becomes :
 
@@ -1235,7 +1235,7 @@ minimise &Z:
 
 subject\ to:&
 \\
-Z \ge& + \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)\\ 
+Z \ge& + \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)\\
 & + \sum_{u,t}p_{unit\_capacity}(u,t) \cdot \mu_{b,u,t} \cdot (v_{units\_invested}(u,t) - p_{units\_invested}(u,b,t)) \qquad \forall b \\
 
 \end{aligned}
@@ -1282,9 +1282,9 @@ where
 $`p_{units\_invested\_available\_mv}`$ is the reduced cost of the [units\_invested\_available](@ref) fixed sub-problem variable, representing the reduction in operating costs possible from an investment in a [unit](@ref) of this type,  
 $`p_{connections\_invested\_available\_mv}`$ is the reduced cost of the [connections\_invested\_available](@ref) fixed sub-problem variable, representing the reduction in operating costs possible from an investment in a [connection](@ref) of this type,  
 $`p_{storages\_invested\_available\_mv}`$ is the reduced cost of the [storages\_invested\_available](@ref) fixed sub-problem variable, representing the reduction in operating costs possible from an investment in a `storage` of this type,  
-$`p_{units\_invested\_available\_bi}(u,t,b)`$ is the value of the fixed sub problem variable [units\_invested\_available](u,t) in benders iteration `b`,  
-$`p_{connections\_invested\_available\_bi}(c,t,b)`$ is the value of the fixed sub problem variable [connections\_invested\_available](c,t) in benders iteration `b` and  
-$`p_{storages\_invested\_available\_bi}(n,t,b)`$ is the value of the fixed sub problem variable [storages\_invested\_available](n,t) in benders iteration `b`
+$`p_{units\_invested\_available\_bi}(u,t,b)`$ is the value of the fixed sub problem variable [units\_invested\_available](@ref)(u,t) in benders iteration `b`,  
+$`p_{connections\_invested\_available\_bi}(c,t,b)`$ is the value of the fixed sub problem variable [connections\_invested\_available](@ref)(c,t) in benders iteration `b` and  
+$`p_{storages\_invested\_available\_bi}(n,t,b)`$ is the value of the fixed sub problem variable [storages\_invested\_available](@ref)(n,t) in benders iteration `b`
 
 
 ## User constraints
@@ -1300,7 +1300,7 @@ using relationships, like e.g. [unit\_\_from\_node\_\_unit\_constraint](@ref) an
 or [unit\_\_unit\_constraint](@ref) and [node\_\_unit\_constraint](@ref) for [units\_on](@ref), [units\_started\_up](@ref),
 and [node_state](@ref) variables.
 
-For more information, see the dedicated article on [unit\_constraints](@ref)
+For more information, see the dedicated article on [Unit Constraints](@ref)
 
 ```math
 \begin{aligned}
@@ -1327,7 +1327,3 @@ For more information, see the dedicated article on [unit\_constraints](@ref)
 &\forall uc,t,s \in constraint\_unit\_constraint\_indices\\
 \end{aligned}
 ```
-
-
-
-

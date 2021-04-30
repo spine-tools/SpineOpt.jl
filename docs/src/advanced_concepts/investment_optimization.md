@@ -6,8 +6,8 @@ SpineOpt offers numerous ways to optimise investment decisions energy system mod
 
 **Investment Decisions**  
 These are the investment decisions that SpineOpt currently supports. At a high level, this means that the activity of the entities in question is controlled by an investment decision variable. The current implementation supports investments in :
-   - **[unit](@ref)**: 
-   - **[connection](@ref)** 
+   - **[unit](@ref)**:
+   - **[connection](@ref)**
    - **Storage** - Note: while the above investment decisions correspond to an object class (i.e.) an investment in a [unit](@ref) or a [connection](@ref), **Storages** are not an object class in themselves and are rather a property of a [node](@ref). As such, a storage investment controls whether a particular node has a state variable or not.  
 
 **Investment Variable Types**  
@@ -20,20 +20,20 @@ The parameter [candidate\_units](@ref) represents the number of units of this ty
    - [unit\_investment\_variable\_type](@ref) determines wheter the investment variable is integer, binary or continuous ([connection\_investment\_variable\_type](@ref) for connections and [storage\_investment\_variable\_type](@ref) for storages).
 
 **Investment Costs**  
-Investment costs are specified by setting the appropriate `*_investment\_cost` parameter. The investment cost for [unit](@ref)s are specified by setting the [unit](@ref) [unit\_investment\_cost](@ref) parameter. This is currently interpreted as the full cost over the investment period for the unit. See the section below on [investment temporal structure](@ref investment_temporals) for setting the investment period. If the investment period is 1 year, then the corresponding [unit\_investment\_cost](@ref) is the annualised investment cost. For connections and storages, the investment cost parameters are [connection\_investment\_cost](@ref) and [storage\_investment\_cost](@ref), respectively.
+Investment costs are specified by setting the appropriate `*_investment\_cost` parameter. The investment cost for [unit](@ref)s are specified by setting the [unit](@ref) [unit\_investment\_cost](@ref) parameter. This is currently interpreted as the full cost over the investment period for the unit. See the section below on **investment temporal structure** for setting the investment period. If the investment period is 1 year, then the corresponding [unit\_investment\_cost](@ref) is the annualised investment cost. For connections and storages, the investment cost parameters are [connection\_investment\_cost](@ref) and [storage\_investment\_cost](@ref), respectively.
 
 **Temporal and Stochastic Structure of Investment Decisions**  
 SpineOpt's flexible stochastic and temporal structure extend to investments where individual investment decisions can have their own temporal and stochastic structure indepedent of other investment decisions and other model variables. A global temporal resolution for all investment decisions can be defined by specifying the relationship [model\_\_default\_investment\_temporal\_block](@ref). If a specific temporal resolution is required for specific investment decisions, then one can specify the following relationships:
     - [unit\_\_investment\_temporal\_block](@ref) for [unit](@ref)
-    - [connection\_\_investment\_temporal\_block](@ref) for [connection](@ref) 
+    - [connection\_\_investment\_temporal\_block](@ref) for [connection](@ref)
     - [node\_\_investment\_temporal\_block](@ref) for storages.  
-Specifying any of the above relationships will override the corresponding [model\_\_default\_investment\_temporal\_block](@ref). 
+Specifying any of the above relationships will override the corresponding [model\_\_default\_investment\_temporal\_block](@ref).
 
 Similarly, a global stochastic structure can be defined for all investment decisions by specifying the relationship [model\_\_default\_investment\_stochastic\_structure](@ref). If a specific stochastic structure is required for specific investment decisions, then one can specifying the following relationships:
     - [unit\_\_investment\_stochastic\_structure](@ref) for [unit](@ref)
-    - [connection\_\_investment\_stochastic\_structure](@ref) for [connection](@ref) 
+    - [connection\_\_investment\_stochastic\_structure](@ref) for [connection](@ref)
     - [node\_\_investment\_stochastic\_structure](@ref) for storages
-Specifying any of the above relationships will override the corresponding [model\_\_default\_investment\_stochastic\_structure](@ref). 
+Specifying any of the above relationships will override the corresponding [model\_\_default\_investment\_stochastic\_structure](@ref).
 
 ## Creating an Investment Candidate Unit Example  
 If we have model that is not currently set up for investments and we wish to create an investment candidate unit, we can take the following steps.
@@ -41,7 +41,7 @@ If we have model that is not currently set up for investments and we wish to cre
  - Ensure that the [number\_of\_units](@ref) parameter is set to zero so that the unit is unavailable unless invested-in
  - Set the [candidate\_units](@ref) parameter for the unit to 1 to specify that a maximum of 1 new unit of this type may be invested-in by the model.
  - Set the [unit\_investment\_variable\_type](@ref) to `unit_investment_variable_type_integer` to specify that this is a discrete [unit](@ref) investment decision.
- - Specify the [investment\_lifetime](@ref) of the unit to, say, 1 year to specify that this is the minimum amount of time this new unit must be in existence after being invested-in.
+ - Specify the [unit\_investment\_lifetime](@ref) of the unit to, say, 1 year to specify that this is the minimum amount of time this new unit must be in existence after being invested-in.
  - Specify the investment period for this [unit](@ref)'s investment decision in one of two ways
    - Define a default investment period for all investment decisions in the model as follows:
      - create a [temporal\_block](@ref) with the appropriate [resolution](@ref) (say 1 year)
@@ -85,19 +85,19 @@ If we have model that is not currently set up for investments and we wish to cre
 | Parameter Name                 | Object Class List            | Description                                     |
 |--------------------------------|------------------------------|-------------------------------------------------|
 | `candidate_units` | `unit` | The number of additional `unit`s of this type that can be invested in
-| `unit_investment_cost` | `unit` | The total overnight investment cost per candidate `unit` over the model horizon 
+| `unit_investment_cost` | `unit` | The total overnight investment cost per candidate `unit` over the model horizon
 | `unit_investment_lifetime` | `unit` | The investment lifetime of the `unit` - once invested-in, a `unit` must exist for at least this amount of time
 | `unit_investment_variable_type` | `unit` | Whether the `units_invested_available` variable is continuous, integer or binary
 | `fix_units_invested` | `unit`| Fix the value of `units_invested`
 | `fix_units_invested_available` | `unit` | Fix the value of `connections_invested_available`
 | `candidate_connections` | `connection` | The number of additional `connection`s of this type that can be invested in
-| `connection_investment_cost` | `connection` | The total overnight investment cost per candidate `connection` over the model horizon 
+| `connection_investment_cost` | `connection` | The total overnight investment cost per candidate `connection` over the model horizon
 | `connection_investment_lifetime` | `connection` | The investment lifetime of the `connection` - once invested-in, a `connection` must exist for at least this amount of time
 | `connection_investment_variable_type` | `connection` | Whether the `connections_invested_available` variable is continuous, integer or binary
 | `fix_connections_invested` | `connection`| Fix the value of `connections_invested`
 | `fix_connections_invested_available` | `connection` | Fix the value of `connection_invested_available`
 | `candidate_storages` | `node` | The number of additional storages of this type that can be invested in at `node`
-| `storage_investment_cost` | `node` | The total overnight investment cost per candidate storage over the model horizon 
+| `storage_investment_cost` | `node` | The total overnight investment cost per candidate storage over the model horizon
 | `storage_investment_lifetime` | `node` | The investment lifetime of the storage - once invested-in, a storage must exist for at least this amount of time
 | `storage_investment_variable_type` | `node` | Whether the `storages_invested_available` variable is continuous, integer or binary
 | `fix_storages_invested` | `node`| Fix the value of `storages_invested`
@@ -119,4 +119,3 @@ If we have model that is not currently set up for investments and we wish to cre
 | constraint_storages_invested_available.jl | \constraints| constrains `storages_invested_available` to be less than `candidate_storages`
 | constraint_storages_invested_transition.jl | \constraints| defines the relationship between `storages_invested_available`, `storages_invested` and `storages_decommissioned`. Analagous to `units_on`, `units_started` and `units_shutdown`
 | constraint_storage_lifetime.jl | \constraints| once a storage is invested-in, it must remain in existence for at least `storage_investment_lifetime` - analagous to `min_up_time`.
-
