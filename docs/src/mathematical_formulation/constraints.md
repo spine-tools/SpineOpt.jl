@@ -1289,3 +1289,45 @@ $`p_{storages\_invested\_available\_bi}(n,t,b)`$ is the value of the fixed sub p
 
 ## User constraints
 ### [Unit constraint](@id constraint_unit_constraint)
+The [unit\_constraint](@ref) is a generic data-driven [custom constraint](@ref constraint_unit_constraint),
+which allows for defining constraints involving multiple [unit](@ref)s, [node](@ref)s, or [connection](@ref)s.
+The [constraint\_sense](@ref) parameter changes the sense of the [unit\_constraint](@ref),
+while the [right\_hand\_side](@ref) parameter allows for defining the constant terms of the constraint.
+
+Coefficients for the different [variables](@ref Variables) appearing in the [unit\_constraint](@ref) are defined
+using relationships, like e.g. [unit\_\_from\_node\_\_unit\_constraint](@ref) and
+[connection\_\_to\_node\_\_unit\_constraint](@ref) for [unit\_flow](@ref) and [connection\_flow](@ref) variables,
+or [unit\_\_unit\_constraint](@ref) and [node\_\_unit\_constraint](@ref) for [units\_on](@ref), [units\_started\_up](@ref),
+and [node_state](@ref) variables.
+
+For more information, see the dedicated article on [unit\_constraints](@ref)
+
+```math
+\begin{aligned}
+&+\sum_{\substack{u,n \in unit\_\_node\_\_unit\_constraint(uc),t,s}} \\
+& \begin{cases}       
+  \begin{aligned}
+       \sum_{\substack{op}} v_{unit\_flow\_op}(u,n,d,op,s,t) \cdot p_{unit\_flow\_coefficient}(u,n,op,uc,s,t) \qquad  &\text{if } \vert operating\_points(u)\vert > 1\\       
+       v_{unit\_flow}(u,n,d,s,t) \cdot p_{unit\_flow\_coefficient}(u,n,uc,s,t) \qquad &\text{otherwise}\\       
+  \end{aligned}
+  \end{cases}\\
+&+\sum_{\substack{u \in unit\_\_unit\_constraint(uc),t,s}} v_{units\_started\_up}(u,s,t) \cdot p_{units\_started\_up\_coefficient}(u,uc,s,t)\\
+&+\sum_{\substack{u \in unit\_\_unit\_constraint(uc),t,s}} v_{units\_on}(u,s,t) \cdot p_{units\_on\_coefficient}(u,uc,s,t)\\
+&+\sum_{\substack{c,n \in connection\_\_node\_\_unit\_constraint(uc),t,s}} v_{connection\_flow}(c,n,d,s,t) \cdot p_{connection\_flow\_coefficient}(c,n,uc,s,t)\\
+&+\sum_{\substack{n \in node\_\_unit\_constraint(uc),t,s}} v_{node\_state}(n,s,t) \cdot p_{node\_state\_coefficient}(n,uc,s,t)\\
+&+\sum_{\substack{n \in node\_\_unit\_constraint(uc),t,s}} p_{demand}(n,s,t) \cdot p_{demand\_coefficient}(n,uc,s,t)\\
+& \begin{cases}  
+  \begin{aligned}     
+       == \qquad &\text{if } p_{constraint\_sense}(uc) \text{= "=="}\\
+       >= \qquad &\text{if } p_{constraint\_sense}(uc) \text{= ">="}\\
+       <= \qquad &\text{otherwise}\\
+  \end{aligned}
+  \end{cases}\\
+&+p_{right\_hand\_side}(uc,t,s)\\
+&\forall uc,t,s \in constraint\_unit\_constraint\_indices\\
+\end{aligned}
+```
+
+
+
+

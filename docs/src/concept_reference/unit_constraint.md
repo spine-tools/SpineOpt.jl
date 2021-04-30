@@ -8,3 +8,6 @@ using relationships, like e.g. [unit\_\_from\_node\_\_unit\_constraint](@ref) an
 [connection\_\_to\_node\_\_unit\_constraint](@ref) for [unit\_flow](@ref) and [connection\_flow](@ref) variables,
 or [unit\_\_unit\_constraint](@ref) and [node\_\_unit\_constraint](@ref) for [units\_on](@ref), [units\_started\_up](@ref),
 and [node_state](@ref) variables.
+
+For more information, see the dedicated article on [unit\_constraints](@ref)
+
