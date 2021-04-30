@@ -21,4 +21,6 @@ Here, we briefly describe the key objects and relationships required to model pr
     - By default, pipelines are considered to be passive. However, a compression station between two pipeline pressure nodes can be represented by defining a [compression\_factor](@ref). The relationship should be defined in such a manner, that the first node represents the sending node, the second node represents the receiving node, which pressure is equal or smaller to the pressure at the sending node times the compression factor.
     - Lastly, to ensure the balance between incoming/outgoing flows and flows into the linepack, the ratio between the flows need to be fixed. The average incoming flows of the node group (of the pressure start and end nodes) have to equal the flows into the linepack storage, and vice versa. Therefore, the [fix\_ratio\_out\_in\_connection\_flow](@ref) needs to be set to a value (typically 1) for the (pressure group, linepack storage) node pair, and for the (linepack storage, pressure group) node pair.
 
-A complete mathematical formulation can be found [here](@ref pressure-driven-gas-transfer-math)
+A gas pipeline and its connected nodes are illustrated below. A complete mathematical formulation can be found [here](@ref pressure-driven-gas-transfer-math).
+
+![Illustration of gas pipeline](../figs/linepack_illustration.svg)
