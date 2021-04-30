@@ -72,10 +72,11 @@ The simplest case is a single solve of the entire time horizon (so `roll_forward
 Alternatively, a variable resolution can be defined by choosing an array of durations for the [resolution](@ref) parameter. The sum of the durations in the array then have to match the length of the temporal block. The example below illustrates an optimization that spans one day for which the resolution is hourly in the beginning and then gradually decreases to a 6h resolution at the end.
 
 * `temporal_block_1`
-  * `block_start`: 0h
-  * `block_end`: 1D
+  * `block_start`: 0h *(Alternative `DateTime`: e.g. 2030-01-01T00:00:00)*
+  * `block_end`: 1D *(Alternative `DateTime`: e.g. 2030-01-02T00:00:00)*
   * `resolution`: [1h 1h 1h 1h 2h 2h 2h 4h 4h 6h]
 
+Note that, as mentioned above, the [block\_start](@ref) and [block\_end](@ref) parameters can also be entered as absolute values, i.e. `DateTime` values.
 
 #### Rolling window optimization with single block
 A model with a single `temporal_block` can also be optimized in a rolling horizon framework. In this case, the `roll_forward` parameter has to be defined in the `model` object. The `roll_forward` parameter will then determine how much the optimization moves forward with every step, while the size of the temporal block will determine how large a time frame is optimized in each step. To see this more clearly, let's take a look at an example.
