@@ -86,6 +86,6 @@ Further reading on adding parameter values can be found [here](https://spine-too
 - Connect alternatives under a scenario. Toolbox modifies `Base` data with the data from the alternatives in the same scenario.
 - Execute multiple scenarios in parallel. First run in a new Julia instance will need to compile SpineOpt taking some time.
 
-![image](https://user-images.githubusercontent.com/40472544/116697868-618d3a00-a9cc-11eb-9a4c-42f01a4309c5.png)
+![image](https://user-images.githubusercontent.com/40472544/116698265-d3658380-a9cc-11eb-9408-c46a9e06de74.png)
 
 ![image](https://user-images.githubusercontent.com/40472544/115011214-0da43080-9eb7-11eb-93e5-e2991e81b429.png)
