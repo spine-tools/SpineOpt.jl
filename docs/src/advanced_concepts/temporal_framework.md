@@ -24,8 +24,9 @@ Each `model` object holds general information about the model at hand. Here we o
 * [model_start](@ref) and [model_end](@ref) : "Date time value"
 These two parameters define the model horizon. A Datetime value is to be taken for both parameters, in which case they directly mark respectively the beginning and end of the modeled time horizon.
 
-* [duration_unit](@ref) (optional): "hour or minute"
+* [duration_unit](@ref) (optional): "minute or hour"
  This parameters gives the unit of duration that is used in the model calculations. The default value for this parameter is 'minute'.
+ E.g. if the [duration\_unit](@ref) is set to `hour`, a `Duration` of one `minute` gets converted into `1/60 hours` for the calculations.
 
 * [roll_forward](@ref) (optional): "duration value"
 This parameter defines how much the optimization window rolls forward in a rolling horizon optimization and should be expressed as a duration. In the practical approaches presented below, the rolling window optimization will be explained in more detail.
@@ -99,6 +100,13 @@ Multiple temporal blocks can be used to optimize disconnected periods. Let's tak
   * `block_end`: 16h
 
 This example will lead to an optimization of the first four hours of the model horizon, and also of hour 12 to 16. By defining exactly the same relationships for the two temporal blocks, an optimization of disconnected periods is achieved for exactly the same model components. This leads to the possibility of implementing the widely used representative days method. If desired, it is possible to choose a different temporal resolution for the different `temporal_blocks`.
+
+It is worth noting that dynamic [variables](@ref Variables) like [node\_state](@ref) and [units\_on](@ref)
+merit special attention when using disconnected time periods.
+By default, when trying to access [variables](@ref Variables) Variables outside the defined [temporal\_block](@ref)s,
+*SpineOpt.jl* assumes such variables exist but allows them to take any values within specified bounds.
+If fixed initial conditions for the disconnected periods are desired,
+one needs to use parameters such as [fix\_node\_state](@ref) or [fix\_units\_on](@ref).
 
 ##### Different regions/commodities in different resolutions
 
