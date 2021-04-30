@@ -14,7 +14,7 @@ SpineOpt and Spine Toolbox are under active development and the getting started 
 
 - Setup Julia for Spine Toolbox: [Start Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox#running). Go to *File* --> *Settings* --> *Tools*. Either select an existing Julia installation or press *Install Julia* and follow the instructions.
 
-- Select a Julia Kernel spec (if there is none, you may need to define and install a Kernel specification using the dialog under *Kernel spec editor*. Use the newly installed Julia, give it a name and a path to a directory where it should put the files related to the Julia project (SpineOpt in this case). The process may also install iJulia, which allows you to interact with Julia code inside Spine Toolbox using the Julia console).
+- Select a Julia Kernel spec. If there is none, you may need to define and install a Kernel specification using the dialog under *Kernel spec editor*. Use the newly installed Julia, give it a name and a path to a directory where it should put the files related to the Julia project (SpineOpt in this case). The process may also install iJulia, which allows you to interact with Julia code inside Spine Toolbox using the Julia console.
 
 - Install SpineOpt from a Julia console (you can use the Julia console in Spine Toolbox: Go to *Consoles* --> *Start Julia Console*)
 ```julia
