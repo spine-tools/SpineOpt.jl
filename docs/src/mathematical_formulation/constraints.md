@@ -787,7 +787,7 @@ The Weymouth relates the average flows through a connection to the difference be
   &   \cdot\\
   & |((v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2\\
   &   - (v_{connection\_flow}(conn, n_{dest},:from\_node,s,t) + v_{connection\_flow}(conn, n_{orig},:to\_node,s,t))/2 |) \\
-  &  = K(conn) \cdot (v_{node\_pressure}(n_{orig},s,t)^2 - n_{dest},s,t)^2) \\
+  &  = K(conn) \cdot (v_{node\_pressure}(n_{orig},s,t)^2 - v_{node\_pressure}(n_{dest},s,t)^2) \\
   \end{aligned}
 ```
 Which can be rewritten as
@@ -795,7 +795,7 @@ Which can be rewritten as
 \begin{aligned}
     & ((v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 \\
     &   - (v_{connection\_flow}(conn, n_{dest},:from\_node,s,t) + v_{connection\_flow}(conn, n_{orig},:to\_node,s,t))/2)\\
-    &  =  \sqrt{K(conn) \cdot (v_{node\_pressure}(n_{orig},s,t)^2 - n_{dest},s,t)^2)} \\
+    &  =  \sqrt{K(conn) \cdot (v_{node\_pressure}(n_{orig},s,t)^2 - v_{node\_pressure}(n_{dest},s,t)^2)} \\
     & \forall (v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 > 0
   \end{aligned}
 ```
@@ -817,7 +817,7 @@ The linearized version of the Weymouth equation implemented in SpineOpt is given
 ```math
 \begin{aligned}
     & ((v_{connection\_flow}(conn, n_{orig},:from\_node,s,t) + v_{connection\_flow}(conn, n_{dest},:to\_node,s,t))/2 \\
-    &  = p_{fixed\_pressure\_constant\_1}(conn,n_{orig},n_{dest},j,s,t) \cdot v_{node\_pressure}(n_{orig},s,t) \\
+    &  <= p_{fixed\_pressure\_constant\_1}(conn,n_{orig},n_{dest},j,s,t) \cdot v_{node\_pressure}(n_{orig},s,t) \\
     & - p_{fixed\_pressure\_constant\_0}(conn,n_{orig},n_{dest},j,s,t) \cdot v_{node\_pressure}(n_{dest},s,t) \\
     & + p_{big\_m} \cdot (1 - v_{binary\_gas\_connection\_flow}(conn, n_{dest}, :to\_node, s, t)) \\
     &  \forall (conn, n_{orig}, n_{dest}) \in ind(p_{fixed\_pressure\_constant\_1}) \\
@@ -832,9 +832,9 @@ The parameters [fixed\_pressure\_constant\_1](@ref) and [fixed\_pressure\_consta
 ```math
 \begin{aligned}
   & p_{fixed\_pressure\_constant\_1}(conn,n_{orig},n_{dest},j) \\
-  & = K(conn) \cdot p_{fixed\_pressure}(n_{orig},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j) - p_{fixed\_pressure}(n_{dest},j}\\
+  & = K(conn) \cdot p_{fixed\_pressure}(n_{orig},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j)^2 - p_{fixed\_pressure}(n_{dest},j)^2\\
   & p_{fixed\_pressure\_constant\_0}(conn,n_{orig},n_{dest},j) \\
-  & = K(conn) \cdot p_{fixed\_pressure}(n_{dest},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j) - p_{fixed\_pressure}(n_{dest},j}\\
+  & = K(conn) \cdot p_{fixed\_pressure}(n_{dest},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j)^2 - p_{fixed\_pressure}(n_{dest},j)^2\\
 \end{aligned}
 ```
 where K corrsponds to the natural gas flow constant.

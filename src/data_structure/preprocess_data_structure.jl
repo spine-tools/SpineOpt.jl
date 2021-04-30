@@ -253,7 +253,7 @@ function generate_connection_has_ptdf()
         from_nodes = connection__from_node(connection=conn, direction=anything)
         to_nodes = connection__to_node(connection=conn, direction=anything)
         is_bidirectional = length(from_nodes) == 2 && isempty(symdiff(from_nodes, to_nodes))
-        is_loseless = fix_ratio_out_in_connection_flow(;
+        is_loseless = length(from_nodes) == 2 && fix_ratio_out_in_connection_flow(;
             connection=conn,
             zip((:node1, :node2), from_nodes)...,
             _strict=false,

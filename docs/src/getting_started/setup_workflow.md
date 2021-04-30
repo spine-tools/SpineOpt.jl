@@ -1,6 +1,6 @@
 # Setting up a workflow for SpineOpt in Spine Toolbox
 
-The next steps will set up a SpineOpt specific input database, connect it to a SpineOpt instance and setup a database for model results. 
+The next steps will set up a SpineOpt specific input database by creating a new Spine database, loading a blank SpineOpt template, connecting it to a SpineOpt instance and setting up a database for model results. 
 
 - Create a new Spine Toolbox project in an empty folder of your choice: *File* --> *New project...*
 - Create the input database
@@ -8,7 +8,7 @@ The next steps will set up a SpineOpt specific input database, connect it to a S
     - Give it a name like "Input DB". 
     - Select SQL database dialect (sqlite is a local file and works without a server). 
     - Click *New Spine DB* in the *Data Store Properties* window and create a new database (and save it, if it's sqlite).
-    - For more information about creating and managing Spine Toolbox database, see the [documentation](https://spine-toolbox.readthedocs.io/en/master/data_store_form/getting_started.html)
+    - For more information about creating and managing Spine Toolbox database, see the [documentation](https://spine-toolbox.readthedocs.io/en/latest/spine_db_editor/index.html)
 
     ![image](https://user-images.githubusercontent.com/40472544/114974364-e8013200-9e8a-11eb-99d6-9fbbd0d3992b.png)
     
@@ -35,6 +35,7 @@ The next steps will set up a SpineOpt specific input database, connect it to a S
     - Start Julia (you can start a separate Julia console in Spine Toolbox: go to *Consoles* --> *Start Julia Console*). 
     - Copy the URL address of the Data Store from the 'Data Store Properties' --> a copy icon at the bottom. 
     - Then run the following script with the right URL address pasted. The process uses SpineOpt itself to build the database structure. Please note that 'using SpineOpt' for the first time for each Julia session takes time - everything is being compiled.
+   
     ```julia
     julia> using SpineOpt
 
