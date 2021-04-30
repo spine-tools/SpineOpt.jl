@@ -627,7 +627,7 @@ The `unit_flow_op` operating segment variable is bounded by the difference betwe
 \end{aligned}
 ```
 
-#### [Heat rate?](@id constraint_unit_pw_heat_rate)
+#### [Unit piecewise incremental heat rate](@id constraint_unit_pw_heat_rate)
 
 ```math
 \begin{aligned}
@@ -942,20 +942,20 @@ the parameter [connection\_reactance](@ref) is defined for a [connection\_\_node
 
 ### [PTDF based DC lossless powerflow](@id PTDF-lossless-DC)
 
-#### [connection intact flow PTDF](@id constraint_connection_flow_ptdf)
-The power transfer distribution factors are a property of the network reactances. ptdf(n, c) represents the fraction of an injection at [node](@ref) n that will flow on [connection](@ref) c. The flow on [connection](@ref) c is then the sum over all nodes of ptdf(n, c)*net_injection(c).
+#### [Connection intact flow PTDF](@id constraint_connection_intact_flow_ptdf)
+The power transfer distribution factors are a property of the network reactances. ptdf(n, c) represents the fraction of an injection at [node](@ref) n that will flow on [connection](@ref) c. The flow on [connection](@ref) c is then the sum over all nodes of ptdf(n, c)*net_injection(c). [connection\_intact\_flow](@ref) represents the flow on each line of the network will all candidate connections with PTDF-based flow present in the network. 
 
 ```math
 \begin{aligned}
-              & + v_{connection\_flow}(c, n_{to}, d_{to}, s, t) \\
-              & - v_{connection\_flow}(c, n_{to}, d_{from}, s, t) \\
+              & + v_{connection\_intact\_flow}(c, n_{to}, d_{to}, s, t) \\
+              & - v_{connection\_intact\_flow}(c, n_{to}, d_{from}, s, t) \\
               & == \sum_{n_{inj}} \Big( v_{node\_injection}(n_{inj}, s, t) \cdot p_{ptdf}(c, n_{inj}) \Big) \\              
               & \forall (c,n_{to},s,t) \in connection\_ptdf\_flow\_indices \\
 \end{aligned}
 ```
 
-#### [connection flow LODF?](@id constraint_connection_flow_lodf)
- The N-1 security constraint for the post-contingency flow on monitored conneciton c_mon upon the outage of contingency connection, c_conn is formed using line outage distribution factors (lodf). lodf(c_con, c_mon) represents the fraction of the pre-contingency flow on connection c_conn that will flow on c_mon if c_conn is disconnected. If [connection](@ref) c_conn is disconnected, the post-contingency flow on monitored connection [connection](@ref) c_mon is the pre-contingency `connection_flow` on c_mon plus the line outage distribution factor (`lodf`) times the pre-contingency `connection_flow` on c_conn. This post-contingency flow should be less than the [connection\_emergency\_capacity](@ref) of c_mon.
+#### [N-1 post contingency connection flow limits](@id constraint_connection_flow_lodf)
+ The N-1 security constraint for the post-contingency flow on monitored connection, c_mon, upon the outage of contingency connection, c_conn, is formed using line outage distribution factors (lodf). lodf(c_con, c_mon) represents the fraction of the pre-contingency flow on connection c_conn that will flow on c_mon if c_conn is disconnected. If [connection](@ref) c_conn is disconnected, the post-contingency flow on monitored connection [connection](@ref) c_mon is the pre-contingency `connection_flow` on c_mon plus the line outage distribution factor (`lodf`) times the pre-contingency `connection_flow` on c_conn. This post-contingency flow should be less than the [connection\_emergency\_capacity](@ref) of c_mon.
 ```math
 \begin{aligned}
               & + v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{to}, s, t) \\
@@ -1010,7 +1010,7 @@ The number of available invested-in units at any point in time is less than the 
 \end{aligned}
 ```
 ### Investments in connections
-### [Available connection?](@id constraint_connections_invested_available)
+### [Available invested-in connections](@id constraint_connections_invested_available)
 The number of available invested-in connections at any point in time is less than the number of investment candidate connections.
 
 ```math
@@ -1036,13 +1036,84 @@ The number of available invested-in connections at any point in time is less tha
 & \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in connections\_invested\_available\_indices\\
 \end{aligned}
 ```
-#### [Intact connection flows?](@id constraint_connection_flow_intact_flow)
-#### [Intact connection flows capacity?](@id constraint_connection_intact_flow_capacity)
-#### [Intact flow ptdf](@id constraint_connection_intact_flow_ptdf)
-#### [Fixed ratio between outgoing and incoming intact ? flows of a connection](@id constraint_ratio_out_in_connection_intact_flow)
-Note: is this actually an investment or a network constraint?
+#### [Intact network ptdf-based flows on connections](@id constraint_connection_flow_intact_flow)
+
+Enforces the relationship between [connection\_intact\_flow](@ref) (flow with all investments assumed in force) and [connection\_flow](@ref)
+[connection\_intact\_flow](@ref) is the flow on all lines with all investments assumed in place. This constraint ensures that the
+[connection\_flow](@ref) is [connection\_intact\_flow](@ref) plus additional flow contributions from investment connections that are not invested in. 
+
+```math
+\begin{aligned}
+              & + v_{connection\_flow}(c, n_{to}, d_{from}, s, t) \\
+              & - v_{connection\_flow}(c, n_{to}, d_{to}, s, t) \\
+              & - v_{connection\_intact\_flow}(c, n_{to}, d_{from}, s, t) \\
+              & + v_{connection\_intact\_flow}(c, n_{to}, d_{to}, s, t) \\
+              & ==\\
+              & \sum_{c_{candidate}, n_{to_candidate}} p_{lodf}(c_{candidate}, c) \cdot \Big( \\
+              & \hspace4em + v_{connection\_flow}(c_{candidate}, n_{to_candidate}, d_{from}, s, t) \\
+              & \hspace4em - v_{connection\_flow}(c_{candidate}, n_{to_candidate}, d_{to}, s, t) \\
+              & \hspace4em - v_{connection\_intact\_flow}(c_{candidate}, n_{to_candidate}, d_{from}, s, t) \\
+              & \hspace4em + v_{connection\_intact\_flow}(c_{candidate}, n_{to_candidate}, d_{to}, s, t)  \Big) \\              
+              & \forall (c,n_{to},s,t) \in connection\_flow\_intact\_flow\_indices \\
+\end{aligned}
+```
+
+#### [Intact connection flows capacity](@id constraint_connection_intact_flow_capacity)
+Similarly to [constraint\_connection\_flow_capacity](@ref), limits [connection\_intact\_flow](@ref) according to [connection\_capacity](@ref)
+
+```math
+\begin{aligned}
+& \sum_{\substack{(conn,n,d,s,t') \in connection\_intact\_flow\_indices: \\ (conn,n,d,s,t') \, \in \, (conn,ng,d,s,t)}} v_{connection\_intact\_flow}(conn,n,d,s,t') \cdot \Delta t' \\
+& - \sum_{\substack{(conn,n,d_{reverse},s,t') \in connection\_intact\_flow\_indices: \\ (conn,n,s,t') \, \in \, (conn,ng,s,t) \\ d_{reverse} != d}} v_{connection\_intact\_flow}(conn,n,d_{reverse},s,t') \cdot \Delta t' \\
+& <= p_{connection\_capacity}(conn,ng,d,s,t) \\
+& \cdot p_{connection\_availability\_factor}(conn,s,t) \\
+&  \cdot p_{connection\_conv\_cap\_to\_flow}(conn,ng,d,s,t) \Delta t\\
+& \forall (conn,ng,d) \in ind(p_{connection\_capacity}): \\
+& \forall t \in time\_slices, \\
+& \forall s \in stochastic\_path
+\end{aligned}
+```
+
+#### [Fixed ratio between outgoing and incoming intact flows of a connection](@id constraint_ratio_out_in_connection_intact_flow)
+
+For ptdf-based lossless DC power flow, ensures that the output flow to the `to\_node` equals the input flow from the `from\_node`.
+
+```math
+\begin{aligned}              
+              & + v_{connection\_intact\_flow}(c, n_{out}, d_{to}, s, t) \\
+              & ==\\
+              & + v_{connection\_intact\_flow}(c, n_{in}, d_{from}, s, t) \\              
+              & \forall (c,n_{in},n_{out},s,t) \in connection\_intact\_flow\_indices \\
+\end{aligned}
+```
+
 #### [Lower bound on candidate connection flow](@id constraint_candidate_connection_flow_lb)
+
+For candidate connections with PTDF-based poweflow, together with [constraint\_candidate\_connection\_flow\_ub](@ref), this constraint ensures that [connection\_flow](@ref) is zero if the candidate connection is not invested-in and equals [connection\_intact\_flow](@ref) otherwise.
+
+```math
+\begin{aligned}              
+              & + v_{connection\_flow}(c, n, d, s, t) \\
+              & >=\\
+              & + v_{connection\_intact\_flow}(c, n, d, s, t) \\              
+              & - p_{connection\_capacity}(c, n, d, s, t) \cdot (p_{candidate\_connections}(c, s, t) - v_{connections\_invested\_available}(c, s, t))         \\
+              & \forall (c,n,d,s,t) \in constraint\_candidate\_connection\_flow\_lb\_indices \\
+\end{aligned}
+```
+
 #### [Upper bound on candidate connection flow](@id constraint_candidate_connection_flow_ub)
+For candidate connections with PTDF-based poweflow, together with [constraint\_candidate\_connection\_flow\_lb](@ref), this constraint ensures that [connection\_flow](@ref) is zero if the candidate connection is not invested-in and equals [connection\_intact\_flow](@ref) otherwise.
+
+```math
+\begin{aligned}              
+              & + v_{connection\_flow}(c, n, d, s, t) \\
+              & <=\\
+              & + v_{connection\_intact\_flow}(c, n, d, s, t) \\              
+              \\
+              & \forall (c,n,d,s,t) \in constraint\_candidate\_connection\_flow\_ub\_indices \\
+\end{aligned}
+```
+
 #### [Economic lifetime of a connection](@id constraint_connection_lifetime)
 Enforces the minimum duration of a `connection`'s investment decision. Once a `connection` has been invested-in, it must remain invested-in for `connection_investment_lifetime`.
 
@@ -1101,7 +1172,120 @@ v_{storages\_invested}(n,s,t') \\
 ### Early retirement of capacity
 (Comment 2021-04-29: Currently under development)
 ## Benders decomposition
-Can we add some detail on the mathematics here
+This section describes the high-level formulation of the benders-decomposed problem.
+
+Taking the simple example of minimising capacity and operating cost for a fleet of units with a linear cost coefficient $`operational\_cost_u`$ :
+
+```math
+\begin{aligned}
+minimise:&
+\\
+&+ \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u)\\
+&+ \sum_{u, n, t} p_{operational\_cost} \cdot v_{unit\_flow}(u, n, t)\\
+subject\ to:&
+\\
+&flow_{u,n,t} \le p_{unit\_capacity}(u, n, t) \cdot (v_{units\_available} + v_{units\_invested\_available}(u, n, t))\\
+&\sum_{u,n,t} v_{unit\_flow}(u,t) = p_{demand}(n, t) \\
+
+\end{aligned}
+```
+
+So this is a single problem that can't be decoupled over `t` because the investment variables `units_invested_available` couple the timesteps together. If `units_invested_available` were a constant in the problem, then all `t`'s could be solved individually. This is the basic idea in Benders decomposition. We decompose the problem into a master problem and sub problems with the master problem optimising the coupling investment variables which are treated as constants in the sub problems. 
+
+The master problem in the initial benders iteration is simply to minimise total investment costs:
+
+```math
+\begin{aligned}
+minimise &Z:
+\\
+&Z \ge \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u)\\
+\end{aligned}
+
+```
+
+The solution to this problem yields values for the investment variables which are fixed as $`\overline{units\_invested_u}`$ in the sub problem and will be zero in the first iteration. 
+
+The sub problem for benders iteration `b` then becomes :
+
+```math
+\begin{aligned}
+minimise:&
+\\
+obj_b = &+ \sum_{u,n,t} p_{operational\_cost}(u) \cdot v_{unit\_flow}(u,n,t)\\
+subject\ to:&
+\\
+&v_{unit_flow}(u,n,t) \le p_{unit\_capacity}(u) \cdot (v_{units\_available}(u,t) + p_{units\_invested\_available}(u, t)) \qquad \mu_{b,u,t} \\
+&\sum_{u,n,t} v_{unit_flow}(u, n, t) = p_{demand}(n, t) \\
+\\
+\end{aligned}
+```
+This sub problem can be solved individually for each `t`. This is pretty trivial in this small example but if we consider a single t to be a single rolling horizon instead, decoupling the investment variables means that each rolling horizon can be solved individually rather than having to solve the entire model horizon as a single problem.
+
+$`\mu_{u,t}`$ is the marginal value of the capacity constraint and can be interpreted as the decrease in the objective function at time `t` for an additional MW of flow from unit `u`. This information is used to construct a benders cut which represents the reduction in the sub problem objective function which is possible in this benders iteration by adjusting the variable units_investment. This is effectively the decrease in operating costs possible by adding another unit of type `u` and is expressed as :
+
+$`obj_{b} + \sum_{u,t}p_{unit\_capacity}(u,n,t) \cdot \mu_{b,u,t} \cdot (v_{units\_invested}(u,t) - p_{units\_invested}(u,b,t))`$
+
+In the first benders iteration, the value of the investment variables will have been zero so $`p_{units\_invested}(u,b,t)`$ will have the value of zero and thus the expression represents the total reduction in cost from an addition of a new unit of type `u`. This Benders cut is added to the master problem which then becomes, for each subsequent benders iteration, b:
+
+```math
+\begin{aligned}
+minimise &Z:
+\\
+&Z \ge \sum_{u,t} p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)\\
+
+subject\ to:&
+\\
+Z \ge& + \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)\\ 
+& + \sum_{u,t}p_{unit\_capacity}(u,t) \cdot \mu_{b,u,t} \cdot (v_{units\_invested}(u,t) - p_{units\_invested}(u,b,t)) \qquad \forall b \\
+
+\end{aligned}
+```
+Note the benders cuts are added as inequalities because they represent an upper bound on the value we are going to get from adjusting the master problem variables in that benders iteration. If we consider the example of renewable generation - because it's marginal cost is zero, on the first benders iteration, it could look like there would be a lot of value in increasing the capacity because of the marginal values from the sub problems. However, when the capacity variables are increased accordingly and curtailment occurs in the sub-problems, the marginal values will be zero when curtailment occurs and so, other resources may become optimal in subsequent iterations.
+
+This is a simple example but it illustrates the general strategy. The algorithm pseudo code looks something like this:
+
+```
+  initialise master problem
+  initialise sub problem
+  solve first master problem
+  create master problem variable time series
+  solve rolling spine opt model
+  save zipped marginal values
+  while master problem not converged
+      update master problem
+      solve master problem
+      update master problem variable timeseries for benders iteration b
+      rewind sub problem
+      update sub problem
+      solve rolling spine opt model
+      save zipped marginal values
+      test for convergence
+  end
+```
+
 ### [Benders cuts](@id constraint_mp_any_invested_cuts)
+The benders cuts for the problem including all investments in candidate connections, storages and units is given below.
+
+
+```math
+\begin{aligned}
+&v_{objective\_lower\_bound}(b)\\
+&>=\\
+& + \sum_{u,s,t} p_{units\_invested\_available\_mv}(u,t,b) \cdot \lbrack v_{units\_invested\_available}(u,s,t)-p_{units\_invested\_available\_bi}(u,t,b) \rbrack \\
+& + \sum_{c,s,t} p_{connections\_invested\_available\_mv}(c,t,b) \cdot \lbrack v_{connections\_invested\_available}(c,s,t)-p_{connections\_invested\_available\_bi}(c,t,b) \rbrack \\
+& + \sum_{n,s,t} p_{storages\_invested\_available\_mv}(n,t,b) \cdot \lbrack v_{storages\_invested\_available}(n,s,t)-p_{storages\_invested\_available\_bi}(n,t,b) \rbrack \\
+\end{aligned}
+```
+
+where
+
+$`p_{units\_invested\_available\_mv}`$ is the reduced cost of the [units\_invested\_available](@ref) fixed sub-problem variable, representing the reduction in operating costs possible from an investment in a [unit](@ref) of this type,  
+$`p_{connections\_invested\_available\_mv}`$ is the reduced cost of the [connections\_invested\_available](@ref) fixed sub-problem variable, representing the reduction in operating costs possible from an investment in a [connection](@ref) of this type,  
+$`p_{storages\_invested\_available\_mv}`$ is the reduced cost of the [storages\_invested\_available](@ref) fixed sub-problem variable, representing the reduction in operating costs possible from an investment in a `storage` of this type,  
+$`p_{units\_invested\_available\_bi}(u,t,b)`$ is the value of the fixed sub problem variable [units\_invested\_available](u,t) in benders iteration `b`,  
+$`p_{connections\_invested\_available\_bi}(c,t,b)`$ is the value of the fixed sub problem variable [connections\_invested\_available](c,t) in benders iteration `b` and  
+$`p_{storages\_invested\_available\_bi}(n,t,b)`$ is the value of the fixed sub problem variable [storages\_invested\_available](n,t) in benders iteration `b`
+
+
 ## User constraints
 ### [Unit constraint](@id constraint_unit_constraint)

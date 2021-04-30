@@ -20,10 +20,10 @@
 """
     add_constraint_connection_flow_intact_flow!(m::Model)
 
-Enforces the relationship between the `intact_flow` (flow with all investments assumed in force) and the
+Enforces the relationship between `connection_intact_flow` (flow with all investments assumed in force) and 
 `connection_flow`
 
-`intact_flow` is the flow on all lines with all investments assumed in place. This constraint ensures that the
+`connection_intact_flow` is the flow on all lines with all investments assumed in place. This constraint ensures that the
 `connection_flow` is the `intact_flow` plus additional contributions from all investments not invested in.
 """
 function add_constraint_connection_flow_intact_flow!(m::Model)
