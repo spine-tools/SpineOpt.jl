@@ -27,7 +27,7 @@ Commodity flow associated with node ``n`` over the connection ``conn`` in the di
 
  > **Indices function:** connection\_intact\_flow\_indices
 
-???
+Represents the ptdf-based flow on connections where all investment candidate connections are present in the network.
 
 ## `connections_decommissioned`
 

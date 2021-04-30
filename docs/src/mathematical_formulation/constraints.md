@@ -627,7 +627,7 @@ The `unit_flow_op` operating segment variable is bounded by the difference betwe
 \end{aligned}
 ```
 
-#### [Heat rate?](@id constraint_unit_pw_heat_rate)
+#### [Unit piecewise incremental heat rate](@id constraint_unit_pw_heat_rate)
 
 ```math
 \begin{aligned}
@@ -942,20 +942,20 @@ the parameter [connection\_reactance](@ref) is defined for a [connection\_\_node
 
 ### [PTDF based DC lossless powerflow](@id PTDF-lossless-DC)
 
-#### [connection intact flow PTDF](@id constraint_connection_flow_ptdf)
-The power transfer distribution factors are a property of the network reactances. ptdf(n, c) represents the fraction of an injection at [node](@ref) n that will flow on [connection](@ref) c. The flow on [connection](@ref) c is then the sum over all nodes of ptdf(n, c)*net_injection(c).
+#### [Connection intact flow PTDF](@id constraint_connection_intact_flow_ptdf)
+The power transfer distribution factors are a property of the network reactances. ptdf(n, c) represents the fraction of an injection at [node](@ref) n that will flow on [connection](@ref) c. The flow on [connection](@ref) c is then the sum over all nodes of ptdf(n, c)*net_injection(c). [connection\_intact\_flow](@ref) represents the flow on each line of the network will all candidate connections with PTDF-based flow present in the network. 
 
 ```math
 \begin{aligned}
-              & + v_{connection\_flow}(c, n_{to}, d_{to}, s, t) \\
-              & - v_{connection\_flow}(c, n_{to}, d_{from}, s, t) \\
+              & + v_{connection\_intact\_flow}(c, n_{to}, d_{to}, s, t) \\
+              & - v_{connection\_intact\_flow}(c, n_{to}, d_{from}, s, t) \\
               & == \sum_{n_{inj}} \Big( v_{node\_injection}(n_{inj}, s, t) \cdot p_{ptdf}(c, n_{inj}) \Big) \\              
               & \forall (c,n_{to},s,t) \in connection\_ptdf\_flow\_indices \\
 \end{aligned}
 ```
 
-#### [connection flow LODF?](@id constraint_connection_flow_lodf)
- The N-1 security constraint for the post-contingency flow on monitored conneciton c_mon upon the outage of contingency connection, c_conn is formed using line outage distribution factors (lodf). lodf(c_con, c_mon) represents the fraction of the pre-contingency flow on connection c_conn that will flow on c_mon if c_conn is disconnected. If [connection](@ref) c_conn is disconnected, the post-contingency flow on monitored connection [connection](@ref) c_mon is the pre-contingency `connection_flow` on c_mon plus the line outage distribution factor (`lodf`) times the pre-contingency `connection_flow` on c_conn. This post-contingency flow should be less than the [connection\_emergency\_capacity](@ref) of c_mon.
+#### [N-1 post contingency connection flow limits](@id constraint_connection_flow_lodf)
+ The N-1 security constraint for the post-contingency flow on monitored connection, c_mon, upon the outage of contingency connection, c_conn, is formed using line outage distribution factors (lodf). lodf(c_con, c_mon) represents the fraction of the pre-contingency flow on connection c_conn that will flow on c_mon if c_conn is disconnected. If [connection](@ref) c_conn is disconnected, the post-contingency flow on monitored connection [connection](@ref) c_mon is the pre-contingency `connection_flow` on c_mon plus the line outage distribution factor (`lodf`) times the pre-contingency `connection_flow` on c_conn. This post-contingency flow should be less than the [connection\_emergency\_capacity](@ref) of c_mon.
 ```math
 \begin{aligned}
               & + v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{to}, s, t) \\
@@ -1010,7 +1010,7 @@ The number of available invested-in units at any point in time is less than the 
 \end{aligned}
 ```
 ### Investments in connections
-### [Available connection?](@id constraint_connections_invested_available)
+### [Available invested-in connections](@id constraint_connections_invested_available)
 The number of available invested-in connections at any point in time is less than the number of investment candidate connections.
 
 ```math
@@ -1036,13 +1036,84 @@ The number of available invested-in connections at any point in time is less tha
 & \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in connections\_invested\_available\_indices\\
 \end{aligned}
 ```
-#### [Intact connection flows?](@id constraint_connection_flow_intact_flow)
-#### [Intact connection flows capacity?](@id constraint_connection_intact_flow_capacity)
-#### [Intact flow ptdf](@id constraint_connection_intact_flow_ptdf)
-#### [Fixed ratio between outgoing and incoming intact ? flows of a connection](@id constraint_ratio_out_in_connection_intact_flow)
-Note: is this actually an investment or a network constraint?
+#### [Intact network ptdf-based flows on connections](@id constraint_connection_flow_intact_flow)
+
+Enforces the relationship between [connection\_intact\_flow](@ref) (flow with all investments assumed in force) and [connection\_flow](@ref)
+[connection\_intact\_flow](@ref) is the flow on all lines with all investments assumed in place. This constraint ensures that the
+[connection\_flow](@ref) is [connection\_intact\_flow](@ref) plus additional flow contributions from investment connections that are not invested in. 
+
+```math
+\begin{aligned}
+              & + v_{connection\_flow}(c, n_{to}, d_{from}, s, t) \\
+              & - v_{connection\_flow}(c, n_{to}, d_{to}, s, t) \\
+              & - v_{connection\_intact\_flow}(c, n_{to}, d_{from}, s, t) \\
+              & + v_{connection\_intact\_flow}(c, n_{to}, d_{to}, s, t) \\
+              & ==\\
+              & \sum_{c_{candidate}, n_{to_candidate}} p_{lodf}(c_{candidate}, c) \cdot \Big( \\
+              & \hspace4em + v_{connection\_flow}(c_{candidate}, n_{to_candidate}, d_{from}, s, t) \\
+              & \hspace4em - v_{connection\_flow}(c_{candidate}, n_{to_candidate}, d_{to}, s, t) \\
+              & \hspace4em - v_{connection\_intact\_flow}(c_{candidate}, n_{to_candidate}, d_{from}, s, t) \\
+              & \hspace4em + v_{connection\_intact\_flow}(c_{candidate}, n_{to_candidate}, d_{to}, s, t)  \Big) \\              
+              & \forall (c,n_{to},s,t) \in connection\_flow\_intact\_flow\_indices \\
+\end{aligned}
+```
+
+#### [Intact connection flows capacity](@id constraint_connection_intact_flow_capacity)
+Similarly to [constraint\_connection\_flow_capacity](@ref), limits [connection\_intact\_flow](@ref) according to [connection\_capacity](@ref)
+
+```math
+\begin{aligned}
+& \sum_{\substack{(conn,n,d,s,t') \in connection\_intact\_flow\_indices: \\ (conn,n,d,s,t') \, \in \, (conn,ng,d,s,t)}} v_{connection\_intact\_flow}(conn,n,d,s,t') \cdot \Delta t' \\
+& - \sum_{\substack{(conn,n,d_{reverse},s,t') \in connection\_intact\_flow\_indices: \\ (conn,n,s,t') \, \in \, (conn,ng,s,t) \\ d_{reverse} != d}} v_{connection\_intact\_flow}(conn,n,d_{reverse},s,t') \cdot \Delta t' \\
+& <= p_{connection\_capacity}(conn,ng,d,s,t) \\
+& \cdot p_{connection\_availability\_factor}(conn,s,t) \\
+&  \cdot p_{connection\_conv\_cap\_to\_flow}(conn,ng,d,s,t) \Delta t\\
+& \forall (conn,ng,d) \in ind(p_{connection\_capacity}): \\
+& \forall t \in time\_slices, \\
+& \forall s \in stochastic\_path
+\end{aligned}
+```
+
+#### [Fixed ratio between outgoing and incoming intact flows of a connection](@id constraint_ratio_out_in_connection_intact_flow)
+
+For ptdf-based lossless DC power flow, ensures that the output flow to the `to\_node` equals the input flow from the `from\_node`.
+
+```math
+\begin{aligned}              
+              & + v_{connection\_intact\_flow}(c, n_{out}, d_{to}, s, t) \\
+              & ==\\
+              & + v_{connection\_intact\_flow}(c, n_{in}, d_{from}, s, t) \\              
+              & \forall (c,n_{in},n_{out},s,t) \in connection\_intact\_flow\_indices \\
+\end{aligned}
+```
+
 #### [Lower bound on candidate connection flow](@id constraint_candidate_connection_flow_lb)
+
+For candidate connections with PTDF-based poweflow, together with [constraint\_candidate\_connection\_flow\_ub](@ref), this constraint ensures that [connection\_flow](@ref) is zero if the candidate connection is not invested-in and equals [connection\_intact\_flow](@ref) otherwise.
+
+```math
+\begin{aligned}              
+              & + v_{connection\_flow}(c, n, d, s, t) \\
+              & >=\\
+              & + v_{connection\_intact\_flow}(c, n, d, s, t) \\              
+              & - p_{connection\_capacity}(c, n, d, s, t) \cdot (p_{candidate\_connections}(c, s, t) - v_{connections\_invested\_available}(c, s, t))         \\
+              & \forall (c,n,d,s,t) \in constraint\_candidate\_connection\_flow\_lb\_indices \\
+\end{aligned}
+```
+
 #### [Upper bound on candidate connection flow](@id constraint_candidate_connection_flow_ub)
+For candidate connections with PTDF-based poweflow, together with [constraint\_candidate\_connection\_flow\_lb](@ref), this constraint ensures that [connection\_flow](@ref) is zero if the candidate connection is not invested-in and equals [connection\_intact\_flow](@ref) otherwise.
+
+```math
+\begin{aligned}              
+              & + v_{connection\_flow}(c, n, d, s, t) \\
+              & <=\\
+              & + v_{connection\_intact\_flow}(c, n, d, s, t) \\              
+              \\
+              & \forall (c,n,d,s,t) \in constraint\_candidate\_connection\_flow\_ub\_indices \\
+\end{aligned}
+```
+
 #### [Economic lifetime of a connection](@id constraint_connection_lifetime)
 Enforces the minimum duration of a `connection`'s investment decision. Once a `connection` has been invested-in, it must remain invested-in for `connection_investment_lifetime`.
 

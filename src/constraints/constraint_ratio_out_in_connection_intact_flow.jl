@@ -18,11 +18,11 @@
 #############################################################################
 
 """
-    add_constraint_ratio_out_in_connection_flow!(m, ratio_out_in, sense)
+    add_constraint_ratio_out_in_connection_intact_flow!(m, ratio_out_in, sense)
 
-Ratio of `connection_flow` variables.
+Ratio of `connection_intact_flow` variables.
 
-Note that the `<sense>_ratio_<directions>_connection_flow` parameter uses the stochastic dimensions of the second
+Note that the `<sense>_ratio_<directions>_connection_intact_flow` parameter uses the stochastic dimensions of the second
 <direction>!
 """
 function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
