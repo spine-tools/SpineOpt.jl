@@ -943,7 +943,7 @@ the parameter [connection\_reactance](@ref) is defined for a [connection\_\_node
 ### [PTDF based DC lossless powerflow](@id PTDF-lossless-DC)
 
 #### [Connection intact flow PTDF](@id constraint_connection_intact_flow_ptdf)
-The power transfer distribution factors are a property of the network reactances. ptdf(n, c) represents the fraction of an injection at [node](@ref) n that will flow on [connection](@ref) c. The flow on [connection](@ref) c is then the sum over all nodes of ptdf(n, c)*net_injection(c). [connection\_intact\_flow](@ref) represents the flow on each line of the network will all candidate connections with PTDF-based flow present in the network.
+The power transfer distribution factors are a property of the network reactances. `ptdf(n, c)` represents the fraction of an injection at [node](@ref) n that will flow on [connection](@ref) c. The flow on [connection](@ref) c is then the sum over all nodes of `ptdf(n, c)*net_injection(c)`. [connection\_intact\_flow](@ref) represents the flow on each line of the network will all candidate connections with PTDF-based flow present in the network.
 
 ```math
 \begin{aligned}
@@ -955,7 +955,7 @@ The power transfer distribution factors are a property of the network reactances
 ```
 
 #### [N-1 post contingency connection flow limits](@id constraint_connection_flow_lodf)
- The N-1 security constraint for the post-contingency flow on monitored connection, c_mon, upon the outage of contingency connection, c_conn, is formed using line outage distribution factors (lodf). lodf(c_con, c_mon) represents the fraction of the pre-contingency flow on connection c_conn that will flow on c_mon if c_conn is disconnected. If [connection](@ref) c_conn is disconnected, the post-contingency flow on monitored connection [connection](@ref) c_mon is the pre-contingency `connection_flow` on c_mon plus the line outage distribution factor (`lodf`) times the pre-contingency `connection_flow` on c_conn. This post-contingency flow should be less than the [connection\_emergency\_capacity](@ref) of c_mon.
+ The N-1 security constraint for the post-contingency flow on monitored connection, `c_mon`, upon the outage of contingency connection, `c_conn`, is formed using line outage distribution factors (lodf). `lodf(c_con, c_mon)` represents the fraction of the pre-contingency flow on connection `c_conn` that will flow on `c_mon` if `c_conn` is disconnected. If [connection](@ref) `c_conn` is disconnected, the post-contingency flow on monitored connection [connection](@ref) `c_mon` is the pre-contingency `connection_flow` on `c_mon` plus the line outage distribution factor (`lodf`) times the pre-contingency `connection_flow` on `c_conn`. This post-contingency flow should be less than the [connection\_emergency\_capacity](@ref) of `c_mon`.
 ```math
 \begin{aligned}
               & + v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{to}, s, t) \\
@@ -1076,7 +1076,7 @@ Similarly to [constraint\_connection\_flow_capacity](@ref), limits [connection\_
 
 #### [Fixed ratio between outgoing and incoming intact flows of a connection](@id constraint_ratio_out_in_connection_intact_flow)
 
-For ptdf-based lossless DC power flow, ensures that the output flow to the `to\_node` equals the input flow from the `from\_node`.
+For ptdf-based lossless DC power flow, ensures that the output flow to the `to_node` equals the input flow from the `from_node`.
 
 ```math
 \begin{aligned}              
