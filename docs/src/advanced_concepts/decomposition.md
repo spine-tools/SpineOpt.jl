@@ -23,7 +23,7 @@ The high-level algorithm is described below. For a more detailed description ple
      - set `units_available_mv(unit=u, benders_iteration=bi)` equal to a timeseries representing the marginal value of the units_on bound constraint
    - Test for convergence
    - Update master problem
-     - Add Benders cuts constraints (constraint_mp_units_invested_cuts)
+     - Add [Benders cuts constraints](@ref constraint_mp_any_invested_cuts)
    - Next benders iteration
 
 ## Duals calculation for decomposition
@@ -31,7 +31,7 @@ The `optimize_model!()` function has been updated to optionally include an addit
 
 This additional relaxed LP solve is done as follows:
 
-  - `add_varialbe!()` stores the list of integer and binary variables in `m.ext[:integer_variables]`
+  - `add_variable!()` stores the list of integer and binary variables in `m.ext[:integer_variables]`
   - the `fix_value` for integer variables is set to the last MIP solution value
   - the integer constraints on the integer variables are `unset()`
   - A final LP is solved
@@ -42,10 +42,10 @@ This final fixed LP solve is trigged by specifying `calculate_duals=true` in the
 
 ## Reporting dual values:
 
-To report the dual of a constraint, one can add an output item with the corresponding constraint name (e.g. `constraint_nodal_balance`) and add that to a report. This will cause the corresponding constraint's relaxed problem marginal value will be reported in the output DB. When adding a constraint name as an output we need to preface the actual constraint name with "constraint_" to avoid ambiguity with variable names (e.g. `units_available`). So to report the marginal value of `units_available` we add an output object called "constraint_units_available".
+To report the dual of a constraint, one can add an output item with the corresponding constraint name (e.g. `constraint_nodal_balance`) and add that to a report. This will cause the corresponding constraint's relaxed problem marginal value will be reported in the output DB. When adding a constraint name as an output we need to preface the actual constraint name with `constraint_` to avoid ambiguity with variable names (e.g. `units_available`). So to report the marginal value of `units_available` we add an output object called `constraint_units_available`.
 
 To report the `reduced_cost()` for a variable which is the marginal value of the associated active bound or fix constraints
-on that variable, one can add an output object with the variable name prepended by "bound_". So, to report the units_on reduced_cost value, one would create an output item called "bound_units_on". If added to a report, this will cause the reduced cost of units_on in the final fixed LP to be written to the output db.
+on that variable, one can add an output object with the variable name prepended by `bound_`. So, to report the units_on reduced_cost value, one would create an output item called `bound_units_on`. If added to a report, this will cause the reduced cost of units_on in the final fixed LP to be written to the output db.
 Finally, if any constraint duals or reduced_cost values are requested via a report, calculate_duals is set to true and the final fixed LP solve is triggered.
 
 ## Using Decomposition
