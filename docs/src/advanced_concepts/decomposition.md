@@ -10,17 +10,17 @@ Decomposition thus allows us to do a number of things
   - Employ parallel computing methods to solve multiple problems simultaneously.
 
 ## High-level Decomposition Algorithm
-The high-level algorithm works as follows:
+The high-level algorithm is described below. For a more detailed description please see [Benders decomposition](@ref benders\_decomposition)
 
  - Model initialisation (preprocess_data_structure, generate temporal structures etc.)
  - For each benders_iteration
    - Solve master problem
    - Process master-problem solution:
-     - set units_invested_bi(unit=u, benders_iteration=bi) equal to a timeseries representing the investment variables solution from the master problem
+     - set `units_invested_bi(unit=u, benders_iteration=bi)` equal to a timeseries representing the investment variables solution from the master problem
    - Rewind and update operations problem
    - Solve operations problem loop
    - Process operations sub-problem
-     - set units_available_mw(unit=u, benders_iteration=bi) equal to a timeseries representing the marginal value of the units_on bound constraint
+     - set `units_available_mv(unit=u, benders_iteration=bi)` equal to a timeseries representing the marginal value of the units_on bound constraint
    - Test for convergence
    - Update master problem
      - Add Benders cuts constraints (constraint_mp_units_invested_cuts)
@@ -49,10 +49,14 @@ on that variable, one can add an output object with the variable name prepended 
 Finally, if any constraint duals or reduced_cost values are requested via a report, calculate_duals is set to true and the final fixed LP solve is triggered.
 
 ## Using Decomposition
-The decomposition framework creates a master problem where the investment variables are optimised. The decomposition framework is invoked when a model object with the parameter `model_type` set to `:spineopt_operations` is found and a second model object with `model_type` set to `:spineopt_master`. Once these conditions are met, all investment decisions in the model are automatically decomposed and optimised in the master problem. This behavriour may change in the future to allow some investment decisions to be optimised in the operations problem and some optimised in the master problem as desired.
+The decomposition framework creates a master problem where the investment variables are optimised. The decomposition framework is invoked when a model object with the parameter [model\_type](@ref) set to `:spineopt_operations` is found and a second model object with `model_type` set to `:spineopt_master`. Once these conditions are met, all investment decisions in the model are automatically decomposed and optimised in the master problem. This behaviour may change in the future to allow some investment decisions to be optimised in the operations problem and some optimised in the master problem as desired.
 
-Additionally, the following should be specified:  
-  - master problem `model` parameter, `max_gap` - This determines the master problem convergence criterion for the relative benders gap
-  - master problem `model` `max_iterations` - This determines the master problem convergence criterion for the number of iterations  - 
-  - `model_report`: relationship which determines which reports are written for which model
+**Steps to involke decomposition in an investments problem**  
+Assuming one has set up a conventional investments problem as described in [investment\_optimization](@ref) the following additional steps are required to utilise the decomposition framework:
+  - Create a new [model](@ref) object to representent the benders master problem
+  - Set the [model\_type](@ref) parameter for the master problem model to `spineopt_master`.
+  - Set the [model\_type](@ref) parameter for the existing conventional, operations problem model to `spineopt_operations`.
+  - Specify the master problem [model](@ref) parameter, `max_gap` - This determines the master problem convergence criterion for the relative benders gap. A value of 0.05 will represent a relative benders gap of 5%.
+  - Specify the master problem [model](@ref) parameter `max_iterations` - This determines the master problem convergence criterion for the number of iterations. A value of 10 could be appropriate but this is highly dependent on the size and nature of the problem 
+  - Specify appropriate `model_report` relationships to determine which reports are written for which model
  

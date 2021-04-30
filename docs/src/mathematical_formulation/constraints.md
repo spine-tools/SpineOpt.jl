@@ -1171,7 +1171,7 @@ v_{storages\_invested}(n,s,t') \\
 (Comment 2021-04-29: Currently under development)
 ### Early retirement of capacity
 (Comment 2021-04-29: Currently under development)
-## Benders decomposition
+## Benders decomposition(@id benders_decomposition)
 This section describes the high-level formulation of the benders-decomposed problem.
 
 Taking the simple example of minimising capacity and operating cost for a fleet of units with a linear cost coefficient $`operational\_cost_u`$ :

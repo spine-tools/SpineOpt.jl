@@ -1,7 +1,7 @@
 # [Power transfer distribution factors (PTDF) based DC power flow](@id ptdf-based-powerflow)
 There are two main methodologies for directly including DC powerflow in unit commitment/energy system models. One method is to directly include the bus voltage angles as variables in the model. This method is described in [Nodal lossless DC Powerflow](@ref key-concepts-advanced-nodal-DC).
 
-Here we discuss the method of using power transfer distribution factors (PTDF) for DC power flow and line outage distribution factors for security constrained distribution factors.
+Here we discuss the method of using power transfer distribution factors (PTDF) for DC power flow and line outage distribution factors (lodf) for security constrained unit commitment.
 
 ## [Key concepts](@id key-concepts-advanced-ptdf-DC)
 1. **ptdf**: The power transfer distribution factors are a property of the network reactances and their derivation may be found [here](https://www.worldcat.org/title/power-generation-operation-and-control/oclc/886509477). `ptdf(n, c)` represents the fraction of an injection at [node](@ref) n that will flow on [connection](@ref) c. The flow on [connection](@ref) c is then the sum over all nodes of `ptdf(n, c)*net_injection(c)`. The advantage of this method is that it introduces no additional variables into the problem and instead, introduces only one constraint for each connection whose flow we are interested in monitoring.
