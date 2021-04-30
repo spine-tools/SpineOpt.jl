@@ -193,5 +193,3 @@ Penalty cost terms associated with the slack variables of a specific constraint 
 \left[v_{node\_slack\_neg}(n, s, t)-v_{node\_slack\_pos}(n, s, t) \right]\cdot p_{node\_slack\_penalty}(n,s,t)\cdot p_{weight}(n,s,t) \cdot p_{duration}(t)\\
 \end{aligned}
 ```
-
-@JDillon, could we have an example for the objective penalties?
