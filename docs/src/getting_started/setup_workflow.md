@@ -2,6 +2,7 @@
 
 The next steps will set up a SpineOpt specific input database, connect it to a SpineOpt instance and setup a database for model results. 
 
+- Create a new Spine Toolbox project in an empty folder of your choice: *File* --> *New project...*
 - Create the input database
     - Drag an empty *Data store* from the toolbar to the *Design View*. 
     - Give it a name like "Input DB". 
