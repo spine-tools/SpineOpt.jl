@@ -42,6 +42,21 @@ SpineOpt is designed to be used with [Spine Toolbox](https://github.com/Spine-pr
 
 It doesn't work? See our [Troubleshooting](#troubleshooting) section.
 
+
+### Running on the command line
+
+You can run SpineOpt using
+
+    $ julia run.jl [-U] [-h] url_in [url_out]
+
+On the first run, the environment is initialized automatially and you will
+get notifications about required packages being installed.
+
+See help for the command line arguments with
+
+    $ julia run.jl --help
+
+
 ### Upgrading
 
 SpineOpt is constantly improving. To get the most recent version, just:
