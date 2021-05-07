@@ -1,0 +1,1 @@
+By defining the tax\_in\_unit\_flow parameter for a specific `node`, a cost term will be added to the objective function to account the taxes associated with all unit\_flow variables with direction `to_node` over the course of the operational dispatch during the current optimization window.

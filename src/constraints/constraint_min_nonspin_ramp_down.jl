@@ -30,10 +30,8 @@ function add_constraint_min_nonspin_ramp_down!(m::Model)
     m.ext[:constraints][:min_nonspin_shut_down_ramp] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            +sum(
-                nonspin_ramp_down_unit_flow[u, n, d, s, t]
-                for
-                (u, n, d, s, t) in nonspin_ramp_down_unit_flow_indices(
+            + sum(
+                nonspin_ramp_down_unit_flow[u, n, d, s, t] for (u, n, d, s, t) in nonspin_ramp_down_unit_flow_indices(
                     m;
                     unit=u,
                     node=ng,
@@ -41,14 +39,14 @@ function add_constraint_min_nonspin_ramp_down!(m::Model)
                     stochastic_scenario=s,
                     t=t_in_t(m; t_long=t),
                 )
-            ) >=
-            +expr_sum(
-                nonspin_units_shut_down[u, n, s, t] *
-                min_res_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-                unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-                unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for
-                (u, n, s, t) in nonspin_units_shut_down_indices(
+            )
+            >=
+            + expr_sum(
+                nonspin_units_shut_down[u, n, s, t]
+                * min_res_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                for (u, n, s, t) in nonspin_units_shut_down_indices(
                     m;
                     unit=u,
                     node=ng,
@@ -61,15 +59,31 @@ function add_constraint_min_nonspin_ramp_down!(m::Model)
     )
 end
 
+function constraint_min_nonspin_ramp_down_indices(m::Model)
+    unique(
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
+        for (u, ng, d) in indices(min_res_shutdown_ramp)
+        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario for ind in Iterators.flatten((
+                    nonspin_ramp_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
+                    nonspin_units_shut_down_indices(m; unit=u, node=ng, t=t),
+                ))
+            ),
+        )
+    )
+end
+
 """
-    constraint_min_nonspin_ramp_down_indices(m::Model; filtering_options...)
+    constraint_min_nonspin_ramp_down_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic index set for the `:min_nonspin_shut_down_ramp` constraint.
 
 Uses stochastic path indices due to potentially different stochastic scenarios between `t_after` and `t_before`.
 Keyword arguments can be used to filter the resulting Array.
 """
-function constraint_min_nonspin_ramp_down_indices(
+function constraint_min_nonspin_ramp_down_indices_filtered(
     m::Model;
     unit=anything,
     node=anything,
@@ -77,18 +91,6 @@ function constraint_min_nonspin_ramp_down_indices(
     stochastic_path=anything,
     t=anything,
 )
-    unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(min_res_shutdown_ramp) if u in unit && ng in node && d in direction
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t))
-        for
-        path in active_stochastic_paths(unique(
-            ind.stochastic_scenario
-            for
-            ind in Iterators.flatten((
-                nonspin_ramp_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
-                nonspin_units_shut_down_indices(m; unit=u, node=ng, t=t),
-            ))
-        )) if path == stochastic_path || path in stochastic_path
-    )
+    f(ind) = _index_in(ind; unit=unit, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_min_nonspin_ramp_down_indices(m))
 end

@@ -199,7 +199,7 @@ that can be used to set [model](@ref)-wide defaults that are used if specific re
 Here, we'll demonstrate step-by-step how to create the simplest possible stochastic frame: the fully deterministic one.
 
 1. Create a [stochastic\_scenario](@ref) called e.g. `realization` and a [stochastic\_structure](@ref) called e.g. `deterministic`.
-2. We can skip the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationship, since there isn't a *stochastic DAG* in this example, and the default behaviour of each [stochastic\_scenario] being independent works for our purposes *(only one [stochastic\_scenario](@ref) anyhow)*.
+2. We can skip the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationship, since there isn't a *stochastic DAG* in this example, and the default behaviour of each [stochastic\_scenario](@ref) being independent works for our purposes *(only one [stochastic\_scenario](@ref) anyhow)*.
 3. Create the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationship for `(deterministic, realization)`, and set its [weight\_relative\_to\_parents](@ref) parameter to 1. We don't need to define the [stochastic\_scenario\_end](@ref) parameter, as we want the `realization` to go on indefinitely.
 4. Relate the `deterministic` [stochastic\_structure](@ref) to all the desired system objects using the appropriate [Structural relationship classes](@ref), or use the [model](@ref)-level default [Meta relationship classes](@ref).
 
@@ -213,7 +213,7 @@ three at a specific point in time.
 3. Create the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationship for `(branching, realization)`, `(branching, forecast1)`, `(branching, forecast2)`, and `(branching, forecast3)`.
 4. Set the [weight\_relative\_to\_parents](@ref) parameter to 1 and the [stochastic\_scenario\_end](@ref) parameter e.g. to `6h` for the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationship `(branching, realization)`. Now, the `realization` [stochastic\_scenario](@ref) will end after 6 hours of `time steps`, and its children *(`forecast1`, `forecast2`, and `forecast3`)* will become active.
 5. Set the [weight\_relative\_to\_parents](@ref) [Parameters](@ref) for the `(branching, forecast1)`, `(branching, forecast2)`, and `(branching, forecast3)` [stochastic\_structure\_\_stochastic\_scenario](@ref) relationships to whatever you desire, e.g. 0.33 for equal probabilities across all forecasts.
-6. Relate the `brancing` [stochastic\_structure](@ref) to all the desired system objects using the appropriate [Structural relationship classes](@ref), or use the [model](@ref)-level default [Meta relationship classes](@ref).
+6. Relate the `branching` [stochastic\_structure](@ref) to all the desired system objects using the appropriate [Structural relationship classes](@ref), or use the [model](@ref)-level default [Meta relationship classes](@ref).
 
 ### Example of converging stochastics
 
@@ -228,6 +228,82 @@ at the end, which is a child of the `forecast1`, `forecast2`, and `forecast3` sc
 5. Set the [stochastic\_scenario\_end](@ref) [Parameters](@ref) of the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationships `(converging, forecast1)`, `(converging, forecast2)`, and `(converging, forecast3)` to e.g. `12h`, so that all three scenarios end at the same time and the `converged_forecast` becomes active.
 6. Relate the `converging` [stochastic\_structure](@ref) to all the desired system objects using the appropriate [Structural relationship classes](@ref), or use the [model](@ref)-level default [Meta relationship classes](@ref).
 
+## Working with stochastic updating data
+
+Now that we've discussed how to set up stochastics for SpineOpt, let's focus on stochastic data.
+The most complex form of input data SpineOpt can currently handle is both *stochastic* and *updating*,
+meaning that the values the parameter takes can depend on both the [stochastic\_scenario](@ref),
+and the *analysis time (first time step)* of each solve.
+However, just *stochastic* or just *updating* cases are supported as well, using the same input data format.
+
+In SpineOpt, stochastic data uses the `Map` data type from [*SpineInterface.jl*](https://github.com/Spine-project/SpineInterface.jl).
+Essentially, `Maps` are general indexed data containers, which SpineOpt tries to interpret as stochastic data.
+Every time SpineOpt calls a parameter, it passes the [stochastic\_scenario](@ref) and *analysis time* as keyword
+arguments to the parameter, but depending on the parameter type,
+it doesn't necessarily do anything with that information.
+For `Map` type parameters, those keyword arguments are used for navigating the indices of the `Map` to try and find
+the corresponding value.
+If the `Map` doesn't include the [stochastic\_scenario](@ref) index it's looking for,
+it assumes there's no *stochastic* information in the `Map` and carries on to search for *analysis time* indices.
+This logic is useful for defining both *stochastic* and *updating* data, as well as either case by itself,
+as shown in the following examples.
+
+### Example of stochastic data
+
+By *stochastic data*, we mean parameter values that depend only on the [stochastic\_scenario](@ref).
+In such a case, the input data must be formatted as a `Map` with the following structure
+
+|[stochastic\_scenario](@ref)|value|
+|---|---|
+|`scenario1`|`value1`|
+|`scenario2`|`value2`|
+
+where [stochastic\_scenario](@ref) indices are simply `Strings` corresponding to the names of the [stochastic\_scenario](@ref) objects.
+The *values* can be whatever data types [*SpineInterface.jl*](https://github.com/Spine-project/SpineInterface.jl)
+supports, like `Constants`, `DateTimes`, `Durations`, or `TimeSeries`.
+In the above example, the parameter will take `value1` in `scenario1`, and `value2` in `scenario2`.
+Note that since there's no *analysis time* index in this example, the *values* are used regardless of the *analysis time*.
+
+### Example of updating data
+
+By *updating data*, we mean parameter values that depend only on the *analysis time*.
+In such a case, the input data must be formatted as a `Map` with the following structure
+
+|analysis time|value|
+|---|---|
+|`2000-01-01T00:00:00`|`value1`|
+|`2000-01-01T12:00:00`|`value2`|
+
+where the *analysis time* indices are `DateTime` values.
+The *values* can be whatever data types [*SpineInterface.jl*](https://github.com/Spine-project/SpineInterface.jl)
+supports, like `Constants`, `DateTimes`, `Durations`, or `TimeSeries`.
+In the above example, the parameter will take `value1` if the first time step of the current simulation is between
+`2000-01-01T00:00:00` and `2000-01-01T12:00:00`, and `value2` if the first time step of the simulation is after
+`2000-01-01T12:00:00`.
+Note that since there's no [stochastic\_scenario](@ref) index in this example,
+the *values* are used regardless of the [stochastic\_scenario](@ref).
+
+### Example of stochastic updating data
+
+By *stochastic updating data*, we mean parameter values that depend on both the [stochastic\_scenario](@ref)
+and the *analysis time*.
+In such a case, the input data must be formatted as a `Map` with the following structure
+
+|[stochastic\_scenario](@ref)|analysis time|value|
+|---|---|---|
+|`scenario1`|`2000-01-01T00:00:00`|`value1`|
+|`scenario1`|`2000-01-01T12:00:00`|`value2`|
+|`scenario2`|`2000-01-01T00:00:00`|`value3`|
+|`scenario2`|`2000-01-01T12:00:00`|`value4`|
+
+where the [stochastic\_scenario](@ref) indices are simply `Strings` corresponding to the names of the [stochastic\_scenario](@ref) objects,
+and the *analysis time* indices are `DateTime` values.
+The *values* can be whatever data types [*SpineInterface.jl*](https://github.com/Spine-project/SpineInterface.jl)
+supports, like `Constants`, `DateTimes`, `Durations`, or `TimeSeries`.
+In the above example, the parameter will take `value1` if the first time step of the current simulation is between
+`2000-01-01T00:00:00` and `2000-01-01T12:00:00` and the parameter is called in `scenario1`, and `value3` in `scenario2`.
+If the first time step of the current simulation is after `2000-01-01T12:00:00`,
+the parameter will take `value2` in `scenario1`, and `value4` in `scenario2`.
 
 ## Constraint generation with stochastic path indexing
 

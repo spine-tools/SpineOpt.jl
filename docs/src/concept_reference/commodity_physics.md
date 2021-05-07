@@ -1,0 +1,3 @@
+This parameter determines the specific formulation used to carry out dc load flow within a model. To enable power transfer distribution factor (ptdf) based load flow for a network of [node](@ref)s and [connection](@ref)s, all [node](@ref)s must be related to a commodity with [commodity\_physics](@ref) set to  [commodity\_physics\_ptdf](@ref commodity_physics_list). To enable security constraint unit comment based on ptdfs and line outage distribution factors (lodf) all [node](@ref)s must be related to a commodity with [commodity\_physics](@ref) set to [commodity\_physics\_lodf](@ref commodity_physics_list).
+
+See also [powerflow](@ref ptdf-based-powerflow)

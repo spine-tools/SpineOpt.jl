@@ -1,0 +1,1 @@
+For a lossless nodal DC power flow network, each node is associated with a [node\_voltage\_angle](@ref) variable. In order to fix the voltage angle at a certain node or to give initial conditions the [fix\_node\_voltage\_angle](@ref) parameter can be used.

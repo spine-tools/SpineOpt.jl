@@ -1,0 +1,1 @@
+[units\_on\_\_temporal\_block](@ref) is a relationship linking the [units\_on](@ref) variable of a unit to a specific [temporal\_block](@ref) object. As such, this relationship will determine which temporal block governs the on- and offline status of the unit. The temporal block holds information on the temporal scope and resolution for which the variable should be optimized.  

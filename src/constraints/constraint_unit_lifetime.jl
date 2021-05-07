@@ -28,15 +28,14 @@ function add_constraint_unit_lifetime!(m::Model)
     m.ext[:constraints][:unit_lifetime] = Dict(
         (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
-            +expr_sum(
-                +units_invested_available[u, s, t]
+            + expr_sum(
+                + units_invested_available[u, s, t]
                 for (u, s, t) in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0,
-            ) >=
-            +sum(
-                +units_invested[u, s_past, t_past]
-                for
-                (u, s_past, t_past) in units_invested_available_indices(
+            )
+            >=
+            + sum(
+                + units_invested[u, s_past, t_past] for (u, s_past, t_past) in units_invested_available_indices(
                     m;
                     unit=u,
                     stochastic_scenario=s,
@@ -53,23 +52,26 @@ function add_constraint_unit_lifetime!(m::Model)
     )
 end
 
-"""
-    constraint_unit_lifetime_indices(m::Model; filtering_options...)
+function constraint_unit_lifetime_indices(m::Model)
+    t0 = startref(current_window(m))
+    unique(
+        (unit=u, stochastic_path=path, t=t)
+        for u in indices(unit_investment_lifetime) for (u, s, t) in units_invested_available_indices(m; unit=u)
+        for path in active_stochastic_paths(_constraint_unit_lifetime_indices(m, u, s, t0, t))
+    )
+end
 
-Form the stochastic indexing Array for the `:units_invested_lifetime()` constraint. 
+"""
+    constraint_unit_lifetime_indices_filtered(m::Model; filtering_options...)
+
+Form the stochastic indexing Array for the `:units_invested_lifetime()` constraint.
 
 Uses stochastic path indexing due to the potentially different stochastic structures between present and past time.
 Keyword arguments can be used to filther the resulting Array.
 """
-function constraint_unit_lifetime_indices(m::Model; unit=anything, stochastic_path=anything, t=anything)
-    t0 = startref(current_window(m))
-    unique(
-        (unit=u, stochastic_path=path, t=t) for u in indices(unit_investment_lifetime) if u in unit
-        for (u, s, t) in units_invested_available_indices(m; unit=u, t=t)
-        for
-        path in active_stochastic_paths(_constraint_unit_lifetime_indices(m, u, s, t0, t)) if
-        path == stochastic_path || path in stochastic_path
-    )
+function constraint_unit_lifetime_indices_filtered(m::Model; unit=anything, stochastic_path=anything, t=anything)
+    f(ind) = _index_in(ind; unit=unit, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_unit_lifetime_indices(m))
 end
 
 """

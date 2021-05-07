@@ -1,0 +1,2 @@
+This parameter is specific to the use of pressure driven gas transfer.
+To represent a compression between two nodes in the gas network, the [compression\_factor](@ref) can be defined. This factor ensures that the pressure of a node is equal to (or lower than) the pressure at the sending node times the compression\_factor. The relationship [connection\_\_node\_\_node](@ref) that hosts this parameter should be defined in a way that the first node represents the origin node and the second node represents the compressed node.

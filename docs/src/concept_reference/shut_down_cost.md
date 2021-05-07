@@ -1,0 +1,1 @@
+By defining the shut\_down\_cost parameter for a specific `unit`, a cost term will be added to the objective function whenever this unit shuts down over the course of its operational dispatch during the current optimization window.

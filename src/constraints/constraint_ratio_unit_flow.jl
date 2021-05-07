@@ -31,10 +31,8 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
     m.ext[:constraints][ratio.name] = Dict(
         (unit=u, node1=ng1, node2=ng2, stochastic_path=s, t=t) => sense_constraint(
             m,
-            +expr_sum(
-                unit_flow[u, n1, d1, s, t_short] * duration(t_short)
-                for
-                (u, n1, d1, s, t_short) in unit_flow_indices(
+            + expr_sum(
+                unit_flow[u, n1, d1, s, t_short] * duration(t_short) for (u, n1, d1, s, t_short) in unit_flow_indices(
                     m;
                     unit=u,
                     node=ng1,
@@ -45,12 +43,11 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
                 init=0,
             ),
             sense,
-            +expr_sum(
-                unit_flow[u, n2, d2, s, t_short] *
-                duration(t_short) *
-                ratio[(unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for
-                (u, n2, d2, s, t_short) in unit_flow_indices(
+            + expr_sum(
+                unit_flow[u, n2, d2, s, t_short]
+                * duration(t_short)
+                * ratio[(unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)]
+                for (u, n2, d2, s, t_short) in unit_flow_indices(
                     m;
                     unit=u,
                     node=ng2,
@@ -60,9 +57,10 @@ function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, 
                 );
                 init=0,
             ) + expr_sum(
-                units_on[u, s, t1] *
-                min(duration(t1), duration(t)) *
-                units_on_coefficient[(unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)] for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
+                units_on[u, s, t1]
+                * min(duration(t1), duration(t))
+                * units_on_coefficient[(unit=u, node1=ng1, node2=ng2, stochastic_scenario=s, analysis_time=t0, t=t)]
+                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0,
             ),
         ) for (u, ng1, ng2, s, t) in constraint_ratio_unit_flow_indices(m, ratio, d1, d2)
@@ -261,8 +259,19 @@ function add_constraint_min_ratio_in_out_unit_flow!(m::Model)
     )
 end
 
+function constraint_ratio_unit_flow_indices(m::Model, ratio, d1, d2)
+    unique(
+        (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
+        for (u, n1, n2) in indices(ratio) for t in t_lowest_resolution(
+            x.t for x in unit_flow_indices(m; unit=u, node=Iterators.flatten((members(n1), members(n2))))
+        ) for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_ratio_unit_flow_indices(m, u, n1, d1, n2, d2, t)),
+        )
+    )
+end
+
 """
-    constraint_ratio_unit_flow_indices(m::Model, ratio, d1, d2; filtering_options...)
+    constraint_ratio_unit_flow_indices_filtered(m::Model, ratio, d1, d2; filtering_options...)
 
 Form the stochastic indexing Array for the `:ratio_unit_flow` constraint for the desired `ratio` and direction pair
 `d1` and `d2`.
@@ -270,7 +279,7 @@ Form the stochastic indexing Array for the `:ratio_unit_flow` constraint for the
 Uses stochastic path indices due to potentially different stochastic structures between `unit_flow` and
 `units_on` variables. Keyword arguments can be used to filter the resulting Array.
 """
-function constraint_ratio_unit_flow_indices(
+function constraint_ratio_unit_flow_indices_filtered(
     m::Model,
     ratio,
     d1,
@@ -281,16 +290,8 @@ function constraint_ratio_unit_flow_indices(
     stochastic_path=anything,
     t=anything,
 )
-    unique(
-        (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
-        for (u, n1, n2) in indices(ratio) if u in unit && n1 in node1 && n2 in node2
-        for
-        t in t_lowest_resolution(x.t for x in unit_flow_indices(m; unit=u, node=[members(n1)..., members(n2)...], t=t))
-        for
-        path in active_stochastic_paths(unique(
-            ind.stochastic_scenario for ind in _constraint_ratio_unit_flow_indices(m, u, n1, d1, n2, d2, t)
-        )) if path == stochastic_path || path in stochastic_path
-    )
+    f(ind) = _index_in(ind; unit=unit, node1=node1, node2=node2, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_ratio_unit_flow_indices(m, ratio, d1, d2))
 end
 
 """

@@ -1,0 +1,1 @@
+The [connection\_conv\_cap\_to\_flow](@ref) can be used to perform the conversion between the measurement unit of the [connection\_capacity](@ref) to the measurement unit of the [connection\_flow](@ref) variable. The default of this parameter is `1`, i.e. assuming that both are given in the same measurement unit.

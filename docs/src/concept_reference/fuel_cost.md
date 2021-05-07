@@ -1,0 +1,1 @@
+By defining the fuel\_cost parameter for a specific `unit`, `node`, and `direction`, a cost term will be added to the objective function to account for costs associated with the unit's fuel usage over the course of its operational dispatch during the current optimization window.

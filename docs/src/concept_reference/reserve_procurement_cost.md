@@ -1,0 +1,1 @@
+By defining the [reserve\_procurement\_cost](@ref) parameter for a specific [unit\_\_to\_node](@ref) or [unit\_\_from\_node](@ref) relationship, a cost term will be added to the objective function whenever that unit is used over the course of the operational dispatch during the current optimization window.

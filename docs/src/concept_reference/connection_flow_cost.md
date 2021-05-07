@@ -1,0 +1,1 @@
+By defining the connection\_flow\_cost parameter for a specific `connection`, a cost term will be added to the objective function that values all `connection_flow` variables associated with that connection during the current optimization window.

@@ -1,0 +1,3 @@
+`node__commodity` is a two-dimensional relationship between a [node](@ref) and a [commodity](@ref) and specifies the commodity that `flows` to or from the node. Generally, since flows are not dimensioned by [commodity](@ref), this has no meaning in terms of the variables and constraint equations. However, there are two specific uses for this relationship:
+1. To specify that specific network physics should apply to the network formed by the member nodes for that commodity. See [powerflow](@ref ptdf-based-powerflow)
+2. Only connection flows that are between nodes of the same or no [commodity](@ref) are included in the `node_balance` constraint.

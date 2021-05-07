@@ -1,0 +1,1 @@
+By defining the [tax\_net\_unit\_flow](@ref) parameter for a specific [node](@ref), a cost term will be added to the objective function to account the taxes associated with the net total of all [unit\_flow](@ref) variables with the direction `to_node` for this specific node minus all [unit\_flow](@ref) variables with direction `from_node`.

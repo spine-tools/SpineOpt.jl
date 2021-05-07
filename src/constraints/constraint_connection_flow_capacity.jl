@@ -36,10 +36,8 @@ function add_constraint_connection_flow_capacity!(m::Model)
     m.ext[:constraints][:connection_flow_capacity] = Dict(
         (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            +expr_sum(
-                connection_flow[conn, n, d, s, t] * duration(t)
-                for
-                (conn, n, d, s, t) in connection_flow_indices(
+            + expr_sum(
+                connection_flow[conn, n, d, s, t] * duration(t) for (conn, n, d, s, t) in connection_flow_indices(
                     m;
                     connection=conn,
                     direction=d,
@@ -48,30 +46,27 @@ function add_constraint_connection_flow_capacity!(m::Model)
                     t=t_in_t(m; t_long=t),
                 );
                 init=0,
-            ) -
-            connection_capacity[(connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
-            connection_availability_factor[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] *
-            connection_conv_cap_to_flow[(
-                connection=conn,
-                node=ng,
-                direction=d,
-                stochastic_scenario=s,
-                analysis_time=t0,
-                t=t,
-            )] *
-             ( (candidate_connections(connection=conn) != nothing)  ? 
-                + expr_sum(
-                    connections_invested_available[conn, s, t1]
-                    for
-                    (conn, s, t1) in
-                    connections_invested_available_indices(m; connection=conn, stochastic_scenario=s, t=t_in_t(m; t_short=t));
-                    init=0,
-                ) : 1) *
-            duration(t) <=
-            +expr_sum(
+            )
+            - connection_capacity[(connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * connection_availability_factor[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * connection_conv_cap_to_flow[
+                (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
+            ]
+            * ((candidate_connections(connection=conn) != nothing) ?
+               + expr_sum(
+                connections_invested_available[conn, s, t1] for (conn, s, t1) in connections_invested_available_indices(
+                    m;
+                    connection=conn,
+                    stochastic_scenario=s,
+                    t=t_in_t(m; t_short=t),
+                );
+                init=0,
+            ) : 1)
+            * duration(t)
+            <=
+            + expr_sum(
                 connection_flow[conn, n, d_reverse, s, t] * duration(t)
-                for
-                (conn, n, d_reverse, s, t) in connection_flow_indices(
+                for (conn, n, d_reverse, s, t) in connection_flow_indices(
                     m;
                     connection=conn,
                     node=ng,
@@ -84,16 +79,27 @@ function add_constraint_connection_flow_capacity!(m::Model)
     )
 end
 
+function constraint_connection_flow_capacity_indices(m::Model)
+    unique(
+        (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
+        for (c, ng, d) in indices(connection_capacity)
+        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
+        for path in active_stochastic_paths(
+            unique(ind.stochastic_scenario for ind in _constraint_connection_flow_capacity_indices(m, c, ng, d, t)),
+        )
+    )
+end
+
 """
-    constraint_connection_flow_capacity_indices(m::Model; filtering_options...)
+    constraint_connection_flow_capacity_indices_filtered(m::Model; filtering_options...)
 
 Form the stochastic index array for the `:connection_flow_capacity` constraint.
 
 Uses stochastic path indices of the `connection_flow` variables. Only the lowest resolution time slices are included,
 as the `:connection_flow_capacity` is used to constrain the "average power" of the `connection`
-instead of "instantaneous power". Keyword arguments can be used to filter the resulting 
+instead of "instantaneous power". Keyword arguments can be used to filter the resulting
 """
-function constraint_connection_flow_capacity_indices(
+function constraint_connection_flow_capacity_indices_filtered(
     m::Model;
     connection=anything,
     node=anything,
@@ -101,15 +107,8 @@ function constraint_connection_flow_capacity_indices(
     stochastic_path=anything,
     t=anything,
 )
-    unique(
-        (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
-        for (c, ng, d) in indices(connection_capacity; connection=connection, node=node, direction=direction)
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng)), t=t))
-        for
-        path in active_stochastic_paths(unique(
-            ind.stochastic_scenario for ind in _constraint_connection_flow_capacity_indices(m, c, ng, d, t)            
-        )) if path == stochastic_path || path in stochastic_path
-    )
+    f(ind) = _index_in(ind; connection=connection, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
+    filter(f, constraint_connection_flow_capacity_indices(m))
 end
 
 """
@@ -120,7 +119,7 @@ Gather the indices of the relevant `unit_flow` and `units_on` variables.
 function _constraint_connection_flow_capacity_indices(m, connection, node, direction, t)
     (m, connection, node, direction, t)
     Iterators.flatten((
-        connection_flow_indices(m; connection=connection, node=node, direction=direction, t=t),        
-        connections_invested_available_indices(m; connection=connection, t=t_in_t(m; t_short=t))
+        connection_flow_indices(m; connection=connection, node=node, direction=direction, t=t),
+        connections_invested_available_indices(m; connection=connection, t=t_in_t(m; t_short=t)),
     ))
 end

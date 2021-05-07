@@ -1,0 +1,1 @@
+As the [connection\_reactance](@ref) is often given on a per unit basis, often different than the units used elsewhere, the [connection\_reactance\_base](@ref) parameter serves as a conversion factor, scaling the [connection\_reactance](@ref) with its p.u..

@@ -1,0 +1,1 @@
+By defining the connection\_investment\_cost parameter for a specific `connection`, a cost term will be added to the objective function whenever a connection investment is made during the current optimization window.
