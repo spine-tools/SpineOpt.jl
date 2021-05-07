@@ -125,7 +125,7 @@
             key = (unit(:unit_ab), s, t)
             var_u_av = var_units_available[key...]
             var_u_inv_av = var_units_invested_available[key...]
-            expected_con = @build_constraint(var_u_av - var_u_inv_av == number_of_units)
+            expected_con = @build_constraint(var_u_av - var_u_inv_av <= number_of_units)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -442,14 +442,24 @@
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_down_minutes in (45, 150, 300)
             db_map = _load_test_data(url_in, test_data)
+            number_of_units = 4
+            candidate_units = 3
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
-            object_parameter_values =
-                [["unit", "unit_ab", "min_down_time", min_down_time], ["model", "instance", "model_end", model_end]]
-            db_api.import_data(db_map; object_parameter_values=object_parameter_values)
+            object_parameter_values = [
+                ["unit", "unit_ab", "candidate_units", candidate_units],
+                ["unit", "unit_ab", "number_of_units", number_of_units],
+                ["unit", "unit_ab", "min_down_time", min_down_time],
+                ["model", "instance", "model_end", model_end]
+            ]
+            relationships = [
+                ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+                ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
+            ]
+            db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
             db_map.commit_session("Add test data")
             m = run_spineopt(db_map; log_level=0, optimize=false)
             var_units_on = m.ext[:variables][:units_on]
-            var_units_available = m.ext[:variables][:units_available]
+            var_units_invested_available = m.ext[:variables][:units_invested_available]
             var_units_shut_down = m.ext[:variables][:units_shut_down]
             constraint = m.ext[:constraints][:min_down_time]
             @test length(constraint) == 5
@@ -472,11 +482,11 @@
                 s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
                 s, t = s_set[1], t_set[1]
                 path = reverse(unique(s_set))
-                var_u_av_on_key = (unit(:unit_ab), s, t)
-                var_u_av = var_units_available[var_u_av_on_key...]
-                var_u_on = var_units_on[var_u_av_on_key...]
+                var_u_inv_av_on_key = (unit(:unit_ab), s, t)
+                var_u_inv_av = var_units_invested_available[var_u_inv_av_on_key...]
+                var_u_on = var_units_on[var_u_inv_av_on_key...]
                 vars_u_sd = [var_units_shut_down[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
-                expected_con = @build_constraint(var_u_av - var_u_on >= sum(vars_u_sd))
+                expected_con = @build_constraint(number_of_units + var_u_inv_av - var_u_on >= sum(vars_u_sd))
                 con_key = (unit(:unit_ab), path, t)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -487,22 +497,33 @@
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_down_minutes in (90, 150, 300)  # TODO: make it work for 45, 75
             db_map = _load_test_data(url_in, test_data)
+            number_of_units = 4
+            candidate_units = 3
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
-            object_parameter_values =
-                [["unit", "unit_ab", "min_down_time", min_down_time], ["model", "instance", "model_end", model_end]]
+            object_parameter_values = [
+                ["unit", "unit_ab", "candidate_units", candidate_units],
+                ["unit", "unit_ab", "number_of_units", number_of_units],
+                ["unit", "unit_ab", "min_down_time", min_down_time],
+                ["model", "instance", "model_end", model_end]
+            ]
+            relationships = [
+                ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+                ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
+            ]
             relationship_parameter_values = [
                 ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", 1],
                 ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0],
             ]
             db_api.import_data(
                 db_map;
+                relationships=relationships,
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values,
             )
             db_map.commit_session("Add test data")
             m = run_spineopt(db_map; log_level=0, optimize=false)
             var_units_on = m.ext[:variables][:units_on]
-            var_units_available = m.ext[:variables][:units_available]
+            var_units_invested_available = m.ext[:variables][:units_invested_available]
             var_units_shut_down = m.ext[:variables][:units_shut_down]
             var_nonspin_units_started_up = m.ext[:variables][:nonspin_units_started_up]
             constraint = m.ext[:constraints][:min_down_time]
@@ -526,13 +547,13 @@
                 s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
                 s, t = s_set[1], t_set[1]
                 path = reverse(unique(s_set))
-                var_u_av_on_key = (unit(:unit_ab), s, t)
-                var_u_av = var_units_available[var_u_av_on_key...]
-                var_u_on = var_units_on[var_u_av_on_key...]
+                var_u_inv_av_on_key = (unit(:unit_ab), s, t)
+                var_u_inv_av = var_units_invested_available[var_u_inv_av_on_key...]
+                var_u_on = var_units_on[var_u_inv_av_on_key...]
                 vars_u_sd = [var_units_shut_down[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
                 var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
                 var_ns_su = var_nonspin_units_started_up[var_ns_su_key...]
-                expected_con = @build_constraint(var_u_av - var_u_on >= sum(vars_u_sd) + var_ns_su)
+                expected_con = @build_constraint(number_of_units + var_u_inv_av - var_u_on >= sum(vars_u_sd) + var_ns_su)
                 con_key = (unit(:unit_ab), path, t)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
