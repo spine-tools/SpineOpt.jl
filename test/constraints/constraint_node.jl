@@ -124,8 +124,12 @@
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             var_n_inj = var_node_injection[node(:node_group_bc), s, t]
-            var_conn_flow = var_connection_flow[conn, node(:node_c), direction(:from_node), s, t]
-            expected_con = @build_constraint(var_n_inj - var_conn_flow == 0)
+            var_conn_flows = (
+                var_connection_flow[conn, node(:node_c), direction(:from_node), s, t]
+                + var_connection_flow[connection(:connection_bc), node(:node_b), direction(:from_node), s, t]
+                - var_connection_flow[connection(:connection_bc), node(:node_c), direction(:to_node), s, t]
+            )
+            expected_con = @build_constraint(var_n_inj - var_conn_flows == 0)
             con = constraint[node(:node_group_bc), s, t]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
