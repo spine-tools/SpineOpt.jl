@@ -47,6 +47,7 @@ _lazy_include_file_paths = [
 	"data_structure/benders_data.jl",
 	"data_structure/temporal_structure.jl",
 	"data_structure/stochastic_structure.jl",
+	"data_structure/economic_structure.jl",
 	"data_structure/preprocess_data_structure.jl",
 	"data_structure/check_data_structure.jl",
 	"variables/variable_common.jl",

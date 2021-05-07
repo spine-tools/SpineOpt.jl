@@ -30,7 +30,7 @@ function rerun_spineopt_sp(
 )
     mip_solver = _default_mip_solver(mip_solver)
     lp_solver = _default_lp_solver(lp_solver)
-    
+
     outputs = Dict()
 
     m = create_model(mip_solver, use_direct_model, :spineopt_operations)
@@ -41,6 +41,7 @@ function rerun_spineopt_sp(
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
+    @timelog log_level 2 "Creating economic structure..." generate_economic_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
     init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
     init_outputs!(m)

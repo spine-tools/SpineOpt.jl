@@ -29,6 +29,7 @@ function preprocess_data_structure(; log_level=3)
     expand_model_default_relationships()
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
+    expand_unit__investment_temporal_block()
     # NOTE: generate direction before calling `generate_network_components`,
     # so calls to `connection__from_node` don't corrupt lookup cache
     add_connection_relationships()
@@ -92,6 +93,21 @@ function expand_units_on__stochastic_structure()
         [
             (unit=u, stochastic_structure=stochastic_structure)
             for (ug, stochastic_structure) in units_on__stochastic_structure() for u in members(ug)
+        ],
+    )
+end
+
+"""
+    expand_unit__investment_temporal_block()
+
+Expand the `units__investment_temporal_block` `RelationshipClass` for with individual `units` in `unit_groups`.
+"""
+function expand_unit__investment_temporal_block()
+    add_relationships!(
+        unit__investment_temporal_block,
+        [
+            (unit=u, temporal_block=temporal_block)
+            for (ug, temporal_block) in unit__investment_temporal_block() for u in members(ug)
         ],
     )
 end
@@ -392,7 +408,7 @@ function generate_lodf()
             connnection_lodf_tolerance(connection=conn_cont),
         ) for conn_cont in connection(has_ptdf=true))
         for (conn_mon, lodf_trial) in ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(has_ptdf=true))
-            if conn_cont !== conn_mon #&& !isapprox(lodf_trial, 0; atol=tolerance)        
+            if conn_cont !== conn_mon #&& !isapprox(lodf_trial, 0; atol=tolerance)
     )
     lodf_rel_cls = RelationshipClass(
         :lodf_connection__connection,
@@ -690,7 +706,7 @@ benders iteration object is pushed on each master problem iteration.
 """
 function generate_benders_structure()
 
-    # check that units_invested_available exists as an output and add it if not       
+    # check that units_invested_available exists as an output and add it if not
     #add_object!(output, Object(Symbol("units_invested_available")))
 
     current_bi = Object(Symbol(string("bi_1")))
