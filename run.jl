@@ -42,6 +42,7 @@ s = ArgParseSettings(
     "--upgrade", "-U"
         help = "Wheter to automatically upgarde database"
         action = :store_true
+    # TODO: Add more arguments of `run_spineopt()`
 end
 args = parse_args(ARGS, s)
 
