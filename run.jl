@@ -27,7 +27,11 @@ using ArgParse
 using SpineOpt: run_spineopt
 
 # Parse command line arguments
-s = ArgParseSettings()
+s = ArgParseSettings(
+    description="SpineOpt energy system modelling tool",
+    add_version=true,
+    version=string(Pkg.project().version)
+)
 @add_arg_table! s begin
     "url_in"
         help = "Input database url"

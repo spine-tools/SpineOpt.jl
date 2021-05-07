@@ -45,9 +45,9 @@ It doesn't work? See our [Troubleshooting](#troubleshooting) section.
 
 ### Running on the command line
 
-You can run SpineOpt using
+You can also run SpineOpt directly using
 
-    $ julia run.jl [-U] [-h] url_in [url_out]
+    $ run.jl [-U] url_in [url_out]
 
 On the first run, the environment is initialized automatially and you will
 get notifications about required packages being installed.
