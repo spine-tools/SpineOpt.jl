@@ -92,14 +92,14 @@ function reset_fix_parameter_values()
 end
 
 function add_benders_iteration(j)
-    function _bi_relationships(class_name::Symbol, bi::Object, invest_param::Parameter)
-        [(Dict(obj => x)..., benders_iteration=bi) for obj in indices(invest_param)]
+    function _bi_relationships(class_name::Symbol, new_bi::Object, invest_param::Parameter)
+        [(Dict(obj => x)..., benders_iteration=new_bi) for obj in indices(invest_param)]
     end
     new_bi = Object(Symbol(string("bi_", j)))
     add_object!(benders_iteration, new_bi)
-    add_relationships!(unit__benders_iteration, _bi_relationships(:unit, bi, candidate_units))
-    add_relationships!(connection__benders_iteration, _bi_relationships(:connection, bi, candidate_connections))
-    add_relationships!(node__benders_iteration, _bi_relationships(:node, bi, candidate_storages))
+    add_relationships!(unit__benders_iteration, _bi_relationships(:unit, new_bi, candidate_units))
+    add_relationships!(connection__benders_iteration, _bi_relationships(:connection, new_bi, candidate_connections))
+    add_relationships!(node__benders_iteration, _bi_relationships(:node, new_bi, candidate_storages))
     new_bi
 end
 
