@@ -93,7 +93,7 @@ end
 
 function add_benders_iteration(j)
     function _bi_relationships(class_name::Symbol, new_bi::Object, invest_param::Parameter)
-        [(Dict(obj => x)..., benders_iteration=new_bi) for obj in indices(invest_param)]
+        [(Dict(class_name => obj)..., benders_iteration=new_bi) for obj in indices(invest_param)]
     end
     new_bi = Object(Symbol(string("bi_", j)))
     add_object!(benders_iteration, new_bi)
