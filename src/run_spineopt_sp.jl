@@ -44,18 +44,11 @@ function rerun_spineopt_sp(
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
     init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
     init_outputs!(m)
-    calculate_duals = duals_calculation_needed(m)
     k = 1
 
     while optimize
         @log log_level 1 "Window $k: $(current_window(m))"
-        optimize_model!(
-            m;
-            log_level=log_level,
-            mip_solver=mip_solver,
-            lp_solver=lp_solver,
-            calculate_duals=calculate_duals,
-        ) || break
+        optimize_model!(m; log_level=log_level, mip_solver=mip_solver, lp_solver=lp_solver) || break
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
@@ -313,19 +306,12 @@ end
 """
 Optimize the given model. If an optimal solution is found, return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, use_direct_model=false, mip_solver, lp_solver)
+function optimize_model!(m::Model; log_level=3, use_direct_model=false, mip_solver, lp_solver)
     write_mps_file(model=m.ext[:instance]) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
     if termination_status(m) in (MOI.OPTIMAL, MOI.TIME_LIMIT)
-        if calculate_duals
-            @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
-            if lp_solver != mip_solver
-                @timelog log_level 0 "Switching to LP solver..." set_optimizer(m, lp_solver)
-            end
-            @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
-        end
         true
     else
         @log log_level 0 "Unable to find solution (reason: $(termination_status(m)))"
