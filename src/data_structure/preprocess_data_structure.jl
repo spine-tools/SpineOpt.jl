@@ -171,8 +171,8 @@ end
 """
     process_loss_bidirectional_capacities()
 
-    For connections of type `:connection_type_lossless_bidirectional` if a `connection_capacity` is found
-    we ensure that it appies to each of the four flow variables
+For connections of type `:connection_type_lossless_bidirectional` if a `connection_capacity` is found
+we ensure that it appies to each of the four flow variables
 
 """
 
@@ -720,7 +720,6 @@ function generate_benders_structure()
     )
     connections_invested_available_mv = Parameter(:connections_invested_available_mv, [connection__benders_iteration])
     connections_invested_available_bi = Parameter(:connections_invested_available_bi, [connection__benders_iteration])
-    connections_invested_available_mp = Parameter(:connections_invested_available_mp, [connection])
     starting_fix_connections_invested_available = Parameter(:starting_fix_connections_invested_available, [connection])
 
     for c in indices(candidate_connections)
@@ -731,7 +730,6 @@ function generate_benders_structure()
         connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_mv] = parameter_value(
             0,
         )
-        connection.parameter_values[c][:connections_invested_available_mp] = parameter_value(0)
         if haskey(connection.parameter_values[c], :fix_connections_invested_available)
             connection.parameter_values[c][:starting_fix_connections_invested_available] = connection.parameter_values[c][:fix_connections_invested_available]
         end
@@ -762,7 +760,6 @@ function generate_benders_structure()
         connection__benders_iteration = $connection__benders_iteration
         connections_invested_available_mv = $connections_invested_available_mv
         connections_invested_available_bi = $connections_invested_available_bi
-        connections_invested_available_mp = $connections_invested_available_mp
         starting_fix_connections_invested_available = $starting_fix_connections_invested_available
         node__benders_iteration = $node__benders_iteration
         storages_invested_available_mv = $storages_invested_available_mv
@@ -778,7 +775,6 @@ function generate_benders_structure()
         export connection__benders_iteration
         export connections_invested_available_mv
         export connections_invested_available_bi
-        export connections_invested_available_mp
         export starting_fix_connections_invested_available
         export node__benders_iteration
         export storages_invested_available_mv
