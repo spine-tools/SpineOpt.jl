@@ -106,7 +106,7 @@ end
 function save_sp_marginal_values(m)
     function _save_marginal_value(rel_cls::RelationshipClass, invest_param::Parameter, out_name::Symbol, var_name::Symbol)
         obj_scen_val = Dict()
-        for ((class, scen), val) in m.ext[:outputs][out_name]
+        for ((obj, scen), val) in m.ext[:outputs][out_name]
             push!(get!(obj_scen_val, obj, Dict()), scen => val)
         end
         for obj in indices(invest_param)
