@@ -198,22 +198,39 @@ function _generate_time_slice!(m::Model)
     window_start = start(window)
     window_end = end_(window)
     window_time_slices = _window_time_slices(instance, window_start, window_end)
-    history_time_slices = Array{TimeSlice,1}()
-    required_history_duration = _required_history_duration(instance)
     window_duration = window_end - window_start
-    history_window_count = div(Minute(required_history_duration), Minute(window_duration))
     i = findlast(t -> end_(t) <= window_end, window_time_slices)
-    history_window_time_slices = window_time_slices[1:i] .- window_duration
+    #### short_term history
+    history_time_slices_short_term = Array{TimeSlice,1}()
+    required_history_duration = _required_history_duration(instance,duration=:short)
+    history_window_count = div(Minute(required_history_duration), Minute(window_duration))
+    window_time_slices_short_term_filtered = unique(TimeSliceSet(window_time_slices[1:i])(temporal_block=[units_on__temporal_block(unit=anything),node__temporal_block(node=anything)]))
+    history_window_time_slices = window_time_slices_short_term_filtered .- window_duration
     for k in 1:history_window_count
-        prepend!(history_time_slices, history_window_time_slices)
+        prepend!(history_time_slices_short_term, history_window_time_slices)
         history_window_time_slices .-= window_duration
     end
     history_start = window_start - required_history_duration
     filter!(t -> end_(t) > history_start, history_window_time_slices)
-    prepend!(history_time_slices, history_window_time_slices)
+    prepend!(history_time_slices_short_term, history_window_time_slices)
+    #### long_term history
+    history_time_slices_long_term  = Array{TimeSlice,1}()
+    required_history_duration = _required_history_duration(instance,duration=:long)
+    history_window_count = div(Minute(required_history_duration), Minute(window_duration))
+    window_time_slices_long_term_filtered = unique(TimeSliceSet(window_time_slices[1:i])(temporal_block=[unit__investment_temporal_block(unit=anything),connection__investment_temporal_block(connection=anything),node__investment_temporal_block(node=anything)]))
+    history_window_time_slices = window_time_slices_long_term_filtered .- window_duration
+    for k in 1:history_window_count
+        prepend!(history_time_slices_long_term, history_window_time_slices)
+        history_window_time_slices .-= window_duration
+    end
+    history_start = window_start - required_history_duration
+    filter!(t -> end_(t) > history_start, history_window_time_slices)
+    prepend!(history_time_slices_long_term, history_window_time_slices)
+    ### export time slices
     m.ext[:temporal_structure][:time_slice] = TimeSliceSet(window_time_slices)
-    m.ext[:temporal_structure][:history_time_slice] = TimeSliceSet(history_time_slices)
-    m.ext[:temporal_structure][:t_history_t] = Dict(zip(history_time_slices .+ window_duration, history_time_slices))
+    history_time_slices_all = [history_time_slices_long_term...,history_time_slices_short_term...]
+    m.ext[:temporal_structure][:history_time_slice] = TimeSliceSet(history_time_slices_all)
+    m.ext[:temporal_structure][:t_history_t] = Dict(zip(history_time_slices_all .+ window_duration, history_time_slices_all))
 end
 
 """
@@ -221,8 +238,12 @@ end
 
 The required length of the included history based on parameter values that impose delays as a `Dates.Period`.
 """
-function _required_history_duration(instance::Object)
-    delay_params = (min_up_time, min_down_time, connection_flow_delay, unit_investment_lifetime, connection_investment_lifetime, storage_investment_lifetime)
+function _required_history_duration(instance::Object;duration=nothing)
+    if duration == :short
+        delay_params = (min_up_time, min_down_time, connection_flow_delay)
+    elseif duration == :long
+        delay_params = (unit_investment_lifetime, connection_investment_lifetime, storage_investment_lifetime)
+    end
     max_vals = (maximum_parameter_value(p) for p in delay_params)
     init = _model_duration_unit(instance)(1)  # Dynamics always require at least 1 duration unit of history
     reduce(max, (val for val in max_vals if val !== nothing); init=init)
