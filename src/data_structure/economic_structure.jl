@@ -50,10 +50,14 @@ function generate_unit_CPT!(m::Model)
             TLIFE = unit_investment_tech_lifetime(unit=u)
             investment_block = first(unit__investment_temporal_block(unit=u))
             #time_slice function, keyword tempora
+            map_indices = []
+            timeseries_array = []
             for vintage_t in time_slice(m; temporal_block = investment_block)
                 vintage_t_start = start(vintage_t)
                 start_of_operation = vintage_t_start + LT
                 end_of_operation = vintage_t_start + LT + TLIFE
+                timeseries_val = []
+                timeseries_ind = []
                 for t in time_slice(m; temporal_block = investment_block)
                     t_start = start(t)
                     t_end = end_(t)
@@ -65,40 +69,41 @@ function generate_unit_CPT!(m::Model)
                     else
                         val = max(min((end_of_operation-t_start)/dur,1),0)
                     end
-                    CPT[(u, vintage_t, t)] =  parameter_value(val)
+                    CPT[(u, vintage_t.start.x, t.start.x)] =  parameter_value(val)
+                    push!(timeseries_val,val)
+                    push!(timeseries_ind,t_start)
                 end
+                push!(map_indices,vintage_t_start)
+                push!(timeseries_array,TimeSeries(timeseries_ind,timeseries_val,false,false))
             end
+            unit.parameter_values[u][:capacity_transfer_factor] = parameter_value(Map(map_indices,timeseries_array))
         end
     else
         for u in unit()
             investment_block = first(unit__investment_temporal_block(unit=u))
+            map_indices = []
             for vintage_t in time_slice(m; temporal_block = investment_block)
+                timeseries_val = []
+                timeseries_ind = []
                 for t in time_slice(m; temporal_block = investment_block)
-                    CPT[(u, vintage_t, t)] = parameter_value(1.0)
+                    t_start = start(t)
+                    val = 1
+                    push!(timeseries_val,val)
+                    push!(timeseries_ind,t_start)
                 end
+                push!(map_indices,start(vintage_t))
+                push!(timeseries_array,TimeSeries(timeseries_ind,timeseries_val,false,false))
             end
         end
     end
-
-    # unit_CPT_cls = RelationshipClass(
-    #  :unit_CPT_cls,
-    #  [:unit, :TimeSlice1, :TimeSlice2],
-    #  [(unit=u, TimeSlice1=t1, TimeSlice2=t2 ) for (u, t1, t2) in keys(CPT)],
-    #  CPT
-    # )
-    # unit_capacity_transfer = Parameter(:unit_capacity_transfer, [unit_CPT_cls])
-    #
-    #
-    # for u in unit()
-    #     investment_block = first(unit__investment_temporal_block(unit=u))
-    #     for vintage_t in time_slice(m; temporal_block = investment_block)
-    #         for t in time_slice(m; temporal_block = investment_block)
-    #             println(unit_capacity_transfer[(unit = u, TimeSlice1= vintage_t, Timeslice2= t)])
-    #         end
-    #     end
-    # end
-
-
+    capacity_transfer_factor = Parameter(:capacity_transfer_factor, [unit])
+    @eval begin
+        capacity_transfer_factor = $capacity_transfer_factor
+    end
+    ### @Tim,test the following
+    # vintage_t = ime_slice(m)[1].start.x
+    # t = time_slice(m)[1]
+    # capacity_transfer_factor(unit=u,ind=t,t=t)
 end
 
 
@@ -112,15 +117,15 @@ Generate annuity factors for units that can be invested in.
 function generate_unit_annuity!(m::Model)
     instance = m.ext[:instance]
     dynamic_invest = dynamic_investments(model=instance)
-    discount_rate = discount_rate(model=instance)
-    discount_year = discount_year(model=instance)
+    discnt_rate = discount_rate(model=instance)
+    discnt_year = discount_year(model=instance)
 
     annuity = Dict()
 
     for u in unit()
         LT = lead_time(unit=u)
         ELIFE = unit_investment_econ_lifetime(unit=u)
-        CRF = discount_rate * (1+discount_rate)^ELIFE/((1+discount_rate)^ELIFE-1)
+        CRF = discnt_rate * (1+discnt_rate)^(ELIFE/Year(1))/((1+discnt_rate)^(ELIFE/Year(1))-1) #this seems to be specific to yearly  lifetimes
         investment_block = first(unit__investment_temporal_block(unit=u))
         #time_slice function, keyword tempora
         for vintage_t in time_slice(m; temporal_block = investment_block)
@@ -131,10 +136,10 @@ function generate_unit_annuity!(m::Model)
                 j = vintage_t_start
                 val = 0
                 while j<= end_of_operation
-                    UP = min(start_of_operation-1, j)
-                    DOWN = max(vintage_t_start,j-ELIFE+1)
-                    pfrac = max((UP-DOWN+1)/LT,0)
-                    val+= pfrac *1/(1+discount_rate)^(j-discount_year)
+                    UP = min(start_of_operation-Year(1), j) #@TIM -1 Year?
+                    DOWN = max(vintage_t_start,j-ELIFE+Year(1))#@TIM -1 Year?
+                    pfrac = max((Year(UP)-Year(DOWN)+Year(1))/LT,0)#@TIM -1 Year?
+                    val+= pfrac *1/(1+discnt_rate)^((Year(j)-Year(discnt_year))/Year(1)) #this will always be years?
                     j+= Year(1)
                 end
             else
@@ -144,7 +149,7 @@ function generate_unit_annuity!(m::Model)
                     UP = min(vintage_t_start-1, j)
                     DOWN = max(vintage_t_start-LT,j-ELIFE+1)
                     pfrac = max((UP-DOWN+1)/LT,0)
-                    val+= pfrac *1/(1+discount_rate)^(j-discount_year)
+                    val+= pfrac *1/(1+discnt_rate)^(j-discnt_year)
                     j+= Year(1)
                 end
             end
@@ -164,8 +169,8 @@ Generate salvage fraction for units that can be invested in.
 function generate_salvage_fraction!(m::Model)
     instance = m.ext[:instance]
     dynamic_invest = dynamic_investments(model=instance)
-    discount_rate = discount_rate(model=instance)
-    discount_year = discount_year(model=instance)
+    discnt_rate = discount_rate(model=instance)
+    discnt_year = discount_year(model=instance)
     EOH = model_start(model=instance)
 
     salvage_fraction = Dict()
@@ -185,17 +190,17 @@ function generate_salvage_fraction!(m::Model)
                 val1 = 0
                 val2 = 0
                 while j1<= end_of_operation
-                    UP = min(start_of_operation-1, j1)
-                    DOWN = max(vintage_t_start,j1-ELIFE+1)
-                    pfrac = max((UP-DOWN+1)/LT,0)
-                    val1+= pfrac *1/(1+discount_rate)^(j1-discount_year)
+                    UP = Year(min(start_of_operation-Year(1), j1))
+                    DOWN = Year(max(vintage_t_start,j1-ELIFE+Year(1)))
+                    pfrac = max((UP-DOWN+Year(1))/LT,0)
+                    val1+= pfrac *1/(1+discnt_rate)^((Year(j1)-Year(discnt_year))/Year(1))
                     j1+= Year(1)
                 end
                 while j2<= end_of_operation
-                    UP = min(start_of_operation-1, j2)
-                    DOWN = max(vintage_t_start,j2-ELIFE+1)
-                    pfrac = max((UP-DOWN+1)/LT,0)
-                    val2+= pfrac *1/(1+discount_rate)^(j2-discount_year)
+                    UP = Year(min(start_of_operation-Year(1), j2))
+                    DOWN = Year(max(vintage_t_start,j2-ELIFE+Year(1)))
+                    pfrac = max((UP-DOWN+Year(1))/LT,0)
+                    val2+= pfrac *1/(1+discnt_rate)^((Year(j2)-Year(discnt_year))/Year(1))
                     j2+= Year(1)
                 end
             else
@@ -204,17 +209,17 @@ function generate_salvage_fraction!(m::Model)
                 val1 = 0
                 val2 = 0
                 while j1<= end_of_operation-LT
-                    UP = min(vintage_t_start-1, j1)
-                    DOWN = max(vintage_t_start-LT,j1-ELIFE+1)
-                    pfrac = max((UP-DOWN+1)/LT,0)
-                    val+= pfrac *1/(1+discount_rate)^(j1-discount_year)
+                    UP = Year(min(vintage_t_start-Year(1), j1))
+                    DOWN = Year(max(vintage_t_start-LT,j1-ELIFE+Year(1)))
+                    pfrac = max((UP-DOWN+Year(1))/LT,0)
+                    val+= pfrac *1/(1+discnt_rate)^((Year(j1)-Year(discnt_year))/Year(1))
                     j1+= Year(1)
                 end
                 while j2<= end_of_operation-LT
-                    UP = min(vintage_t_start-1, j2)
-                    DOWN = max(vintage_t_start-LT,j2-ELIFE+1)
-                    pfrac = max((UP-DOWN+1)/LT,0)
-                    val2+= pfrac *1/(1+discount_rate)^(j2-discount_year)
+                    UP = Year(min(vintage_t_start-Year(1), j2))
+                    DOWN = Year(max(vintage_t_start-LT,j2-ELIFE+Year(1)))
+                    pfrac = max((UP-DOWN+Year(1))/LT,0)
+                    val2+= pfrac *1/(1+discnt_rate)^((Year(j2)-Year(discnt_year))/Year(1))
                     j2+= Year(1)
                 end
             end
@@ -232,14 +237,15 @@ Generate technology-specific discount factors for units that can be invested in.
 """
 function generate_tech_discount_factor!(m::Model)
     instance = m.ext[:instance]
-    discount_rate = discount_rate(model=instance)
+    discnt_rate = discount_rate(model=instance)
     tech_discount_factor = Dict()
 
-    for u in unit()
+    for u in indices(discount_rate_technology_specific) #@TIm what would be the default value (for unit w/o)? 0?
         ELIFE = unit_investment_econ_lifetime(unit=u)
-        tech_discount_rate = discount_rate(unit=u)
-        CRF_model = discount_rate * (1+discount_rate)^ELIFE/((1+discount_rate)^ELIFE-1)
-        CRF_tech = tech_discount_rate * (1+tech_discount_rate)^ELIFE/((1+tech_discount_rate)^ELIFE-1)
+        tech_discount_rate = discount_rate_technology_specific(unit=u)
+        CRF_model = discnt_rate * (1+discnt_rate)^(Year(ELIFE)/Year(1))/((1+discnt_rate)^(Year(ELIFE)/Year(1))-1)
+        @show tech_discount_rate
+        CRF_tech = tech_discount_rate * (1+tech_discount_rate)^(Year(ELIFE)/Year(1))/((1+tech_discount_rate)^(Year(ELIFE)/Year(1))-1)
         val = CRF_tech/CRF_model
         tech_discount_factor[u] =  parameter_value(val)
     end
@@ -256,8 +262,8 @@ Generate discounted duration of timeslices for each investment timeslice.
 function generate_discount_timeslice_duration!(m::Model)
     instance = m.ext[:instance]
     dynamic_invest = dynamic_investments(model=instance)
-    discount_rate = discount_rate(model=instance)
-    discount_year = discount_year(model=instance)
+    discnt_rate = discount_rate(model=instance)
+    discnt_year = discount_year(model=instance)
 
     discounted_duration = Dict()
 
@@ -266,12 +272,12 @@ function generate_discount_timeslice_duration!(m::Model)
         #time_slice function, keyword tempora
         for t in time_slice(m; temporal_block = investment_block)
             t_start = start(t)
-            t_end = end(t)
+            t_end = end_(t)
 
             j = t_start
             val = 0
             while j< t_end
-                val+= 1/(1+discount_rate)^(j-discount_year)
+                val+= 1/(1+discnt_rate)^((Year(j)-Year(discnt_year))/Year(1))
                 j+= Year(1)
             end
             discounted_duration[(u, t)] =  parameter_value(val)
