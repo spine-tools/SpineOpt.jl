@@ -1358,7 +1358,7 @@
             var_units_on = m.ext[:variables][:units_on]
             var_units_started_up = m.ext[:variables][:units_started_up]
             constraint = m.ext[:constraints][:unit_constraint]
-            @test length(constraint) == 1
+            @test length(constraint) == 2
             key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
             key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
