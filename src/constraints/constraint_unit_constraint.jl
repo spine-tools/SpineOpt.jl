@@ -204,28 +204,7 @@ end
 Find the lowest temporal resolution amoung the `unit_flow` variables appearing in the `unit_constraint`.
 """
 function _constraint_unit_constraint_lowest_resolution_t(m, uc)
-    t_lowest_resolution(
-        vcat(
-            [
-                ind.t
-                for unit__node__unit_constraint in (unit__from_node__unit_constraint, unit__to_node__unit_constraint)
-                for (u, n) in unit__node__unit_constraint(unit_constraint=uc)
-                for ind in unit_flow_indices(m; unit=u, node=n)
-            ],
-            [
-                ind.t
-                for connection__node__unit_constraint in (connection__from_node__unit_constraint, connection__to_node__unit_constraint)
-                for (c, n) in connection__node__unit_constraint(unit_constraint=uc)
-                for ind in connection_flow_indices(m; connection=c, node=n)
-            ],
-            [ind.t
-            for n in node__unit_constraint(unit_constraint=uc) for ind in node_state_indices(m; node=n)],
-            [
-                ind.t
-                for n in node__unit_constraint(unit_constraint=uc) for ind in node_stochastic_time_indices(m; node=n)
-            ],
-        ),
-    )
+    t_lowest_resolution(ind.t for ind in _constraint_unit_constraint_indices(m, uc))
 end
 
 """
@@ -236,39 +215,39 @@ Gather the `unit_flow` variable indices appearing in `add_constraint_unit_constr
 function _constraint_unit_constraint_unit_flow_indices(m, uc, t)
     (
         ind
-        for (u, n) in unit__from_node__unit_constraint(unit_constraint=uc)
-        for ind in unit_flow_indices(m; unit=u, node=n, direction=direction(:from_node), t=t_in_t(m; t_long=t))
+        for (unit__node__unit_constraint, d) in (
+            (unit__from_node__unit_constraint, :from_node), (unit__to_node__unit_constraint, :to_node)
+        )
+        for (u, n) in unit__node__unit_constraint(unit_constraint=uc)
+        for ind in unit_flow_indices(m; unit=u, node=n, direction=direction(d), t=t)
     )
 end
 
 """
-    _constraint_unit_constraint_connectiojn_flow_indices(uc, t)
+    _constraint_unit_constraint_units_on_indices(uc, t)
+
+Gather the `units_on` variable indices appearing in `add_constraint_unit_constraint!`.
+"""
+function _constraint_unit_constraint_units_on_indices(m, uc, t)
+    (
+        ind
+        for u in unit__unit_constraint(unit_constraint=uc) for ind in units_on_indices(m; unit=u, t=t)
+    )
+end
+
+"""
+    _constraint_unit_constraint_connection_flow_indices(uc, t)
 
 Gather the `connection_flow` variable indices appearing in `add_constraint_unit_constraint!`.
 """
 function _constraint_unit_constraint_connection_flow_indices(m, uc, t)
     (
         ind
-        for (c, n) in unit__from_node__unit_constraint(unit_constraint=uc) for ind in connection_flow_indices(
-            m;
-            connection=c,
-            node=n,
-            direction=direction(:from_node),
-            t=t_in_t(m; t_long=t),
+        for (connection__node__unit_constraint, d) in (
+            (connection__from_node__unit_constraint, :from_node), (connection__to_node__unit_constraint, :to_node)
         )
-    )
-end
-
-"""
-    _constraint_unit_constraint_node_stochastic_time_indices(m, uc, t)
-
-Gather the `node_stochastic_time_indices` indices appearing in `add_constraint_unit_constraint!`.
-"""
-function _constraint_unit_constraint_node_stochastic_time_indices(m, uc, t)
-    (
-        ind
-        for n in node__unit_constraint(unit_constraint=uc)
-        for ind in node_stochastic_time_indices(m; node=n, t=t_in_t(m; t_long=t))
+        for (c, n) in connection__node__unit_constraint(unit_constraint=uc)
+        for ind in connection_flow_indices(m; connection=c, node=n, direction=direction(d), t=t)
     )
 end
 
@@ -281,19 +260,20 @@ function _constraint_unit_constraint_node_state_indices(m, uc, t)
     (
         ind
         for n in node__unit_constraint(unit_constraint=uc)
-        for ind in node_state_indices(m; node=n, t=t_in_t(m; t_long=t))
+        for ind in node_state_indices(m; node=n, t=t)
     )
 end
 
 """
-    _constraint_unit_constraint_units_on_indices(uc, t)
+    _constraint_unit_constraint_node_stochastic_time_indices(m, uc, t)
 
-Gather the `units_on` variable indices appearing in `add_constraint_unit_constraint!`.
+Gather the `node_stochastic_time_indices` indices appearing in `add_constraint_unit_constraint!`.
 """
-function _constraint_unit_constraint_units_on_indices(m, uc, t)
+function _constraint_unit_constraint_node_stochastic_time_indices(m, uc, t)
     (
         ind
-        for u in unit__unit_constraint(unit_constraint=uc) for ind in units_on_indices(m; unit=u, t=t_in_t(m; t_long=t))
+        for n in node__unit_constraint(unit_constraint=uc)
+        for ind in node_stochastic_time_indices(m; node=n, t=t)
     )
 end
 
@@ -302,7 +282,8 @@ end
 
 Gather the `unit_flow`, `units_on`, `connection_flow`, `node_state` variables appearing in `add_constraint_unit_constraint!`
 """
-function _constraint_unit_constraint_indices(m, uc, t)
+function _constraint_unit_constraint_indices(m, uc, t=anything)
+    t = t_in_t(m; t_long=t)
     Iterators.flatten((
         _constraint_unit_constraint_unit_flow_indices(m, uc, t),
         _constraint_unit_constraint_units_on_indices(m, uc, t),
