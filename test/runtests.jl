@@ -42,16 +42,23 @@ import SpineOpt:
     node_investment_dynamic_time_indices,
     rerun_spineopt_mp
 
-_is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
+# Override SpineInterface._do_create_db_handler to use the PersistentDBHandler
+# This is so in-memory dbs work
+function SpineInterface._do_create_db_handler(db_url::String, upgrade::Bool)
+    SpineInterface.db_server.PersistentDBHandler(db_url, upgrade)
+end
+
+SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, Dict(kwargs...), "testing")
 
 function _load_test_data(db_url, test_data)
     SpineInterface._import_spinedb_api()
-    db_map = db_api.DatabaseMapping(db_url; create=true)
+    SpineInterface.db_server.close_persistent_db_map(db_url)
     data = Dict(Symbol(key) => value for (key, value) in SpineOpt.template())
     merge!(data, test_data)
-    db_api.import_data(db_map; data...)
-    db_map
+    SpineInterface.import_data(db_url; data...)
 end
+
+_is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
 
 """
     _dismember_constraint(constraint)
@@ -79,17 +86,6 @@ function _dismember_function(func)
     end
     println("term constant: ", func.constant)
 end
-
-function SpineOpt.run_spineopt(db_map::PyObject, url_out::String; kwargs...)
-    using_spinedb(db_map, SpineOpt)
-    SpineOpt.generate_missing_items()
-    if !isempty(model(model_type=:spineopt_master))
-        rerun_spineopt_mp(url_out; kwargs...)
-    else
-        rerun_spineopt(url_out; kwargs...)
-    end
-end
-SpineOpt.run_spineopt(db_map::PyObject; kwargs...) = run_spineopt(db_map, db_map.db_url; kwargs...)
 
 @testset begin
     include("data_structure/check_data_structure.jl")
