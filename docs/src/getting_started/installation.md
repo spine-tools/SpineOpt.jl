@@ -12,11 +12,13 @@ SpineOpt and Spine Toolbox are under active development and the getting started 
 
 - The recommended interface to SpineOpt is [Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox). Install Spine Toolbox following instructions from here: [Spine Toolbox installation](https://github.com/Spine-project/Spine-Toolbox#installation)
 
-- Setup Julia for Spine Toolbox: [Start Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox#running). Go to *File* --> *Settings* --> *Tools*. Either select an existing Julia installation or press *Install Julia* and follow the instructions.
+- Setup Julia for Spine Toolbox: [Start Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox#running). Go to *File* --> *Settings* --> *Tools*. Either select an existing Julia installation, or press *Install Julia* button and follow the instructions. You can download & install Julia manually from https://julialang.org/downloads/.
 
-- Select a Julia Kernel spec. If there is none, you may need to define and install a Kernel specification using the dialog under *Kernel spec editor*. Use the newly installed Julia, give it a name and a path to a directory where it should put the files related to the Julia project (SpineOpt in this case). The process may also install iJulia, which allows you to interact with Julia code inside Spine Toolbox using the Julia console.
+- [Optional] If you want to install and run SpineOpt in a specific Julia project environment (the place for Project.toml and Manifest.toml), you can set the path to the environment folder to the line edit just below the Julia executable line edit (the one that says *Using Julia default project* when empty).
 
-- Install SpineOpt from a Julia console (you can use the Julia console in Spine Toolbox: Go to *Consoles* --> *Start Julia Console*)
+- [Optional] Select a Julia Kernel spec. If none exist, you need to install a Julia kernel specification either [manually](https://julialang.github.io/IJulia.jl/stable/manual/installation/#Installing-additional-Julia-kernels) or by using the dialog under *Kernel spec editor* button. Use the newly installed Julia, give the kernel spec a name and click 'Make kernel specification' button. Installing a kernel spec also installs the IJulia package if missing. The kernel specs allows you to interact with Julia code inside Spine Toolbox using the Julia console.
+
+- Install SpineOpt by clicking the `Add/Update SpineOpt` button and follow the instructions on screen. You may also install SpineOpt manually by opening a Julia REPL (must be the same Julia that you just selected for Spine Toolbox). Enter the following into the REPL:
 ```julia
 julia> using Pkg
 
