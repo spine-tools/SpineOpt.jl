@@ -62,7 +62,7 @@ function constraint_min_shut_down_ramp_indices(m::Model)
                 ind.stochastic_scenario for ind in Iterators.flatten((
                     units_on_indices(m; unit=u, t=t),
                     shut_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
-                ))  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
+                ))
             ),
         )
     )
