@@ -225,7 +225,7 @@ at the end, which is a child of the `forecast1`, `forecast2`, and `forecast3` sc
 2. Create a new [stochastic\_scenario](@ref) called e.g. `converged_forecast`.
 3. Alter the *stochastic DAG* by creating the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships for `(forecast1, converged_forecast)`, `(forecast2, converged_forecast)`, and `(forecast3, converged_forecast)`. Now all three forecasts will converge into a single `converged_forecast`.
 4. Add the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationship for `(converging, converged_forecast)`, and set its [weight\_relative\_to\_parents](@ref) parameter to 1. Now, all the probability mass in `forecast1`, `forecast2`, and `forecast3` will be summed up back to the `converged_forecast`.
-5. Set the [stochastic\_scenario\_end](@ref) [Parameters](@ref) of the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationships `(converging, forecast1)`, `(converging, forecast2)`, and `(converging, forecast3)` to e.g. `12h`, so that all three scenarios end at the same time and the `converged_forecast` becomes active.
+5. Set the [stochastic\_scenario\_end](@ref) [Parameters](@ref) of the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationships `(converging, forecast1)`, `(converging, forecast2)`, and `(converging, forecast3)` to e.g. `1D`, so that all three scenarios end at the same time and the `converged_forecast` becomes active.
 6. Relate the `converging` [stochastic\_structure](@ref) to all the desired system objects using the appropriate [Structural relationship classes](@ref), or use the [model](@ref)-level default [Meta relationship classes](@ref).
 
 ## Working with stochastic updating data
