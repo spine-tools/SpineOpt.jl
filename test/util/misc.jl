@@ -75,7 +75,7 @@ import DelimitedFiles: readdlm
         conn_emergency_cap_ab = 80
         conn_emergency_cap_bc = 100
         conn_emergency_cap_ca = 150
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
@@ -134,14 +134,14 @@ import DelimitedFiles: readdlm
                 conn_emergency_cap_ca,
             ],
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        using_spinedb(db_map, SpineOpt)
+        using_spinedb(url_in, SpineOpt)
         SpineOpt.generate_direction()
         SpineOpt.generate_network_components()
         SpineOpt.write_ptdfs()

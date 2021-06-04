@@ -71,9 +71,8 @@
                 Dict("type" => "duration", "data" => "1h"),
             ]],
         )
-        db_map = _load_test_data(url_in, test_data)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map, "sqlite://"; log_level=0)
+        _load_test_data(url_in, test_data)
+        m = run_spineopt(url_in, "sqlite://"; log_level=0)
         connection_avg_throughflow = m.ext[:values][:connection_avg_intact_throughflow]
         @test length(connection_avg_throughflow) == 2
         t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))

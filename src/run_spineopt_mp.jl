@@ -56,13 +56,17 @@ function rerun_spineopt_mp(
         k = 1
         while true
             @log log_level 1 "Benders iteration $j - Window $k: $(current_window(m))"
-            optimize_model!(m; mip_solver=mip_solver, lp_solver=lp_solver, log_level=log_level, calculate_duals=true) ||
-                break
+            optimize_model!(m; mip_solver=mip_solver, lp_solver=lp_solver, log_level=log_level) || break
+            @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
+            if lp_solver != mip_solver
+                set_optimizer(m, lp_solver)
+            end
+            @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
             @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
             @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
-            # we have to do this here because too early and we can't access the solution and too late,
-            # we can't add integers/binaries
-            set_optimizer(m, mip_solver)
+            if lp_solver != mip_solver
+                set_optimizer(m, mip_solver)
+            end
             @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
             if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
                 @timelog log_level 2 " ... Rolling complete\n" break
@@ -70,7 +74,7 @@ function rerun_spineopt_mp(
             update_model!(m; update_constraints=update_constraints, log_level=log_level)
             k += 1
         end
-        @timelog log_level 2 "Processing operational problem solution..." process_subproblem_solution(m, mp)
+        @timelog log_level 2 "Processing subproblem solution..." process_subproblem_solution(m, mp)
 
         @log log_level 1 "Benders iteration $j complete. Objective upper bound: "
         @log log_level 1 "$(@sprintf("%.5e",mp.ext[:objective_upper_bound])); "

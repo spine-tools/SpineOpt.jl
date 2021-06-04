@@ -19,33 +19,29 @@
 
 @testset "check data structure" begin
     url_in = "sqlite://"
-    db_map = _load_test_data(url_in, Dict())
-    db_map.commit_session("Add test data")
+    _load_test_data(url_in, Dict())
     # TODO: Once we get our error messages right, we should use:
     # @test_throws ErrorException("...exception message...")
     # to make sure that the test passes for the good reasons.
-    @test_throws ErrorException m = run_spineopt(db_map; log_level=0, optimize=false)
-    db_map = _load_test_data(url_in, Dict())
-    db_api.import_data(db_map; objects=[["model", "instance"]])
-    db_map.commit_session("Add test data")
-    @test_throws ErrorException m = run_spineopt(db_map; log_level=0, optimize=false)
-    db_map = _load_test_data(url_in, Dict())
-    db_api.import_data(
-        db_map;
+    @test_throws ErrorException m = run_spineopt(url_in; log_level=0, optimize=false)
+    _load_test_data(url_in, Dict())
+    SpineInterface.import_data(url_in; objects=[["model", "instance"]])
+    @test_throws ErrorException m = run_spineopt(url_in; log_level=0, optimize=false)
+    _load_test_data(url_in, Dict())
+    SpineInterface.import_data(
+        url_in;
         objects=[["temporal_block", "test_temporal_block"], ["unit", "test_unit"], ["node", "test_node"]],
         relationships=[["model__temporal_block", ["instance", "test_temporal_block"]]],
     )
-    db_map.commit_session("Add test data")
-    @test_throws ErrorException m = run_spineopt(db_map; log_level=0, optimize=false)
-    db_map = _load_test_data(url_in, Dict())
-    db_api.import_data(
-        db_map;
+    @test_throws ErrorException m = run_spineopt(url_in; log_level=0, optimize=false)
+    _load_test_data(url_in, Dict())
+    SpineInterface.import_data(
+        url_in;
         objects=[["stochastic_structure", "test_stochastic_structure"]],
         relationships=[
             ["node__stochastic_structure", ["test_node", "test_stochastic_structure"]],
             ["model__stochastic_structure", ["instance", "test_stochastic_structure"]],
         ],
     )
-    db_map.commit_session("Add test data")
-    @test_throws ErrorException m = run_spineopt(db_map; log_level=0, optimize=false)
+    @test_throws ErrorException m = run_spineopt(url_in; log_level=0, optimize=false)
 end

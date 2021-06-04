@@ -151,10 +151,10 @@
             ],
         ],
     )
-    db_map = _load_test_data(url_in, test_data)
-    using_spinedb(db_map, SpineOpt)
-    db_map.commit_session("Add test data")
-    m = run_spineopt(db_map, log_level=0, optimize=false)
+    _load_test_data(url_in, test_data)
+    using_spinedb(url_in, SpineOpt)
+    
+    m = run_spineopt(url_in, log_level=0, optimize=false)
 
     @testset "node_stochastic_time_indices" begin
         @test length(node_stochastic_time_indices(m; stochastic_scenario=stochastic_scenario(:scenario_a))) == 1

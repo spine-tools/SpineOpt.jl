@@ -171,8 +171,8 @@ end
 """
     process_loss_bidirectional_capacities()
 
-    For connections of type `:connection_type_lossless_bidirectional` if a `connection_capacity` is found
-    we ensure that it appies to each of the four flow variables
+For connections of type `:connection_type_lossless_bidirectional` if a `connection_capacity` is found
+we ensure that it appies to each of the four flow variables
 
 """
 
@@ -460,7 +460,8 @@ function generate_variable_indexing_support()
         [:unit, :node, :direction, :temporal_block],
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
-            for (u, ng, d) in indices(max_startup_ramp) for n in members(ng) for tb in node__temporal_block(node=n)
+            for (u, ng, d) in Iterators.flatten((indices(max_startup_ramp), indices(ramp_up_limit)))
+            for n in members(ng) for tb in node__temporal_block(node=n)
         ),
     )
     nonspin_ramp_up_unit__node__direction__temporal_block = RelationshipClass(
@@ -478,11 +479,7 @@ function generate_variable_indexing_support()
             (unit=u, node=n, direction=d, temporal_block=tb)
             for (u, ng, d) in indices(ramp_up_limit) for n in members(ng) for tb in node__temporal_block(node=n)
             for (u, n, d, tb) in unit__node__direction__temporal_block(
-                unit=u,
-                node=n,
-                direction=d,
-                temporal_block=tb,
-                _compact=false,
+                unit=u, node=n, direction=d, temporal_block=tb, _compact=false,
             )
         ),
     )
@@ -491,7 +488,8 @@ function generate_variable_indexing_support()
         [:unit, :node, :direction, :temporal_block],
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
-            for (u, ng, d) in indices(max_shutdown_ramp) for n in members(ng) for tb in node__temporal_block(node=n)
+            for (u, ng, d) in Iterators.flatten((indices(max_shutdown_ramp), indices(ramp_down_limit)))
+            for n in members(ng) for tb in node__temporal_block(node=n)
         ),
     )
     nonspin_ramp_down_unit__node__direction__temporal_block = RelationshipClass(
@@ -508,8 +506,8 @@ function generate_variable_indexing_support()
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
             for (u, ng, d) in indices(ramp_down_limit) for n in members(ng) for tb in node__temporal_block(node=n)
-            for (u, n, d, tb) in setdiff(
-                unit__node__direction__temporal_block(unit=u, node=n, direction=d, temporal_block=tb, _compact=false),
+            for (u, n, d, tb) in unit__node__direction__temporal_block(
+                unit=u, node=n, direction=d, temporal_block=tb, _compact=false,
             )
         ),
     )
@@ -689,67 +687,75 @@ Creates the `benders_iteration` object class. Master problem variables have the 
 benders iteration object is pushed on each master problem iteration.
 """
 function generate_benders_structure()
-
-    # check that units_invested_available exists as an output and add it if not       
-    #add_object!(output, Object(Symbol("units_invested_available")))
-
+    # general
+    bi_name = :benders_iteration
     current_bi = Object(Symbol(string("bi_1")))
-    benders_iteration = ObjectClass(:benders_iteration, [current_bi])
+    benders_iteration = ObjectClass(bi_name, [current_bi])
     sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])
-    benders_iteration.parameter_values[current_bi] = Dict()
-    benders_iteration.parameter_values[current_bi][:sp_objective_value_bi] = parameter_value(0)
-
-    unit__benders_iteration = RelationshipClass(:unit__benders_iteration, [:unit, :benders_iteration], [])
+    benders_iteration.parameter_values[current_bi] = Dict(:sp_objective_value_bi => parameter_value(0))
+    # unit
+    unit__benders_iteration = RelationshipClass(:unit__benders_iteration, [:unit, bi_name], [])
     units_available_mv = Parameter(:units_available_mv, [unit__benders_iteration])
     units_invested_available_bi = Parameter(:units_invested_available_bi, [unit__benders_iteration])
     starting_fix_units_invested_available = Parameter(:starting_fix_units_invested_available, [unit])
-
-    for u in indices(candidate_units)
-        unit__benders_iteration.parameter_values[(u, current_bi)] = Dict()
-        unit__benders_iteration.parameter_values[(u, current_bi)][:units_invested_available_bi] = parameter_value(0)
-        unit__benders_iteration.parameter_values[(u, current_bi)][:units_available_mv] = parameter_value(0)
-        if haskey(unit.parameter_values[u], :fix_units_invested_available)
-            unit.parameter_values[u][:starting_fix_units_invested_available] = unit.parameter_values[u][:fix_units_invested_available]
-        end
-    end
-
-    connection__benders_iteration = RelationshipClass(
-        :connection__benders_iteration,
-        [:connection, :benders_iteration],
-        [],
-    )
+    # connection
+    connection__benders_iteration = RelationshipClass(:connection__benders_iteration, [:connection, bi_name], [])
     connections_invested_available_mv = Parameter(:connections_invested_available_mv, [connection__benders_iteration])
     connections_invested_available_bi = Parameter(:connections_invested_available_bi, [connection__benders_iteration])
-    connections_invested_available_mp = Parameter(:connections_invested_available_mp, [connection])
     starting_fix_connections_invested_available = Parameter(:starting_fix_connections_invested_available, [connection])
-
-    for c in indices(candidate_connections)
-        connection__benders_iteration.parameter_values[(c, current_bi)] = Dict()
-        connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_bi] = parameter_value(
-            0,
-        )
-        connection__benders_iteration.parameter_values[(c, current_bi)][:connections_invested_available_mv] = parameter_value(
-            0,
-        )
-        connection.parameter_values[c][:connections_invested_available_mp] = parameter_value(0)
-        if haskey(connection.parameter_values[c], :fix_connections_invested_available)
-            connection.parameter_values[c][:starting_fix_connections_invested_available] = connection.parameter_values[c][:fix_connections_invested_available]
-        end
-    end
-
-    node__benders_iteration = RelationshipClass(:node__benders_iteration, [:node, :benders_iteration], [])
+    # node (storage)
+    node__benders_iteration = RelationshipClass(:node__benders_iteration, [:node, bi_name], [])
     storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node__benders_iteration])
     storages_invested_available_bi = Parameter(:storages_invested_available_bi, [node__benders_iteration])
     starting_fix_storages_invested_available = Parameter(:starting_fix_storages_invested_available, [node])
 
-    for n in indices(candidate_storages)
-        node__benders_iteration.parameter_values[(n, current_bi)] = Dict()
-        node__benders_iteration.parameter_values[(n, current_bi)][:storages_invested_available_bi] = parameter_value(0)
-        node__benders_iteration.parameter_values[(n, current_bi)][:storages_invested_available_mv] = parameter_value(0)
-        if haskey(node.parameter_values[n], :fix_storages_invested_available)
-            node.parameter_values[n][:starting_fix_storages_invested_available] = node.parameter_values[n][:fix_storages_invested_available]
+    function _init_benders_parameter_values(
+        obj_cls::ObjectClass,
+        rel_cls::RelationshipClass,
+        invest_param::Parameter,
+        param_name_bi::Symbol,
+        param_name_mv::Symbol,
+        fix_name::Symbol,
+        starting_name::Symbol,
+    )
+        for obj in indices(invest_param)
+            rel_cls.parameter_values[(obj, current_bi)] = Dict(
+                param_name_bi => parameter_value(0),
+                param_name_mv => parameter_value(0)
+            )
+            if haskey(obj_cls.parameter_values[obj], fix_name)
+                obj_cls.parameter_values[obj][starting_name] = obj_cls.parameter_values[u][fix_name]
+            end
         end
     end
+
+    _init_benders_parameter_values(
+        unit,
+        unit__benders_iteration,
+        candidate_units,
+        :units_invested_available_bi,
+        :units_available_mv,
+        :fix_units_invested_available,
+        :starting_fix_units_invested_available
+    )
+    _init_benders_parameter_values(
+        connection,
+        connection__benders_iteration,
+        candidate_connections,
+        :connections_invested_available_bi,
+        :connections_invested_available_mv,
+        :fix_connections_invested_available,
+        :starting_fix_connections_invested_available
+    )
+    _init_benders_parameter_values(
+        node,
+        node__benders_iteration,
+        candidate_storages,
+        :storages_invested_available_bi,
+        :storages_invested_available_mv,
+        :fix_storages_invested_available,
+        :starting_fix_storages_invested_available
+    )
 
     @eval begin
         benders_iteration = $benders_iteration
@@ -762,7 +768,6 @@ function generate_benders_structure()
         connection__benders_iteration = $connection__benders_iteration
         connections_invested_available_mv = $connections_invested_available_mv
         connections_invested_available_bi = $connections_invested_available_bi
-        connections_invested_available_mp = $connections_invested_available_mp
         starting_fix_connections_invested_available = $starting_fix_connections_invested_available
         node__benders_iteration = $node__benders_iteration
         storages_invested_available_mv = $storages_invested_available_mv
@@ -778,7 +783,6 @@ function generate_benders_structure()
         export connection__benders_iteration
         export connections_invested_available_mv
         export connections_invested_available_bi
-        export connections_invested_available_mp
         export starting_fix_connections_invested_available
         export node__benders_iteration
         export storages_invested_available_mv
