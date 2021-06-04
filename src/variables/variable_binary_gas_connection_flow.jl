@@ -44,6 +44,7 @@ function binary_gas_connection_flow_indices(
             connection=intersect(connection, SpineOpt.connection(has_binary_gas_flow=true)),
             node=intersect(node, SpineOpt.node(has_state=false)),
             stochastic_scenario=stochastic_scenario,
+            direction=direction,
             t=t,
             temporal_block=temporal_block,
         )
