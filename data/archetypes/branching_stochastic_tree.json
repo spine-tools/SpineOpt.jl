@@ -28,7 +28,7 @@
         ["stochastic_structure__stochastic_scenario", ["branching", "forecast3"]]
     ],
     "relationship_parameter_values": [
-        ["stochastic_structure__stochastic_scenario", ["branching", "realization"], "stochastic_scenario_end", {"data": "6h"}, "Base"],
+        ["stochastic_structure__stochastic_scenario", ["branching", "realization"], "stochastic_scenario_end", {"data": "6h", "type": "duration"}, "Base"],
         ["stochastic_structure__stochastic_scenario", ["branching", "realization"], "weight_relative_to_parents", 1.0, "Base"],
         ["stochastic_structure__stochastic_scenario", ["branching", "forecast1"], "weight_relative_to_parents", 0.33, "Base"],
         ["stochastic_structure__stochastic_scenario", ["branching", "forecast2"], "weight_relative_to_parents", 0.34, "Base"],

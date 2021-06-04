@@ -26,20 +26,20 @@
         ["parent_stochastic_scenario__child_stochastic_scenario", ["forecast1", "converged_forecast"]],
         ["parent_stochastic_scenario__child_stochastic_scenario", ["forecast2", "converged_forecast"]],
         ["parent_stochastic_scenario__child_stochastic_scenario", ["forecast3", "converged_forecast"]],
-        ["stochastic_structure__stochastic_scenario", ["branching_tree", "realization"]],
-        ["stochastic_structure__stochastic_scenario", ["branching_tree", "forecast1"]],
-        ["stochastic_structure__stochastic_scenario", ["branching_tree", "forecast2"]],
-        ["stochastic_structure__stochastic_scenario", ["branching_tree", "forecast3"]],
-        ["stochastic_structure__stochastic_scenario", ["branching_tree", "converged_forecast"]]
+        ["stochastic_structure__stochastic_scenario", ["converging", "realization"]],
+        ["stochastic_structure__stochastic_scenario", ["converging", "forecast1"]],
+        ["stochastic_structure__stochastic_scenario", ["converging", "forecast2"]],
+        ["stochastic_structure__stochastic_scenario", ["converging", "forecast3"]],
+        ["stochastic_structure__stochastic_scenario", ["converging", "converged_forecast"]]
     ],
     "relationship_parameter_values": [
-        ["stochastic_structure__stochastic_scenario", ["branching", "realization"], "stochastic_scenario_end", {"data": "6h"}, "Base"],
-        ["stochastic_structure__stochastic_scenario", ["branching", "forecast1"], "stochastic_scenario_end", {"data": "1D"}, "Base"],
-        ["stochastic_structure__stochastic_scenario", ["branching", "forecast2"], "stochastic_scenario_end", {"data": "1D"}, "Base"],
-        ["stochastic_structure__stochastic_scenario", ["branching", "forecast3"], "stochastic_scenario_end", {"data": "1D"}, "Base"],
-        ["stochastic_structure__stochastic_scenario", ["branching", "realization"], "weight_relative_to_parents", 1.0, "Base"],
-        ["stochastic_structure__stochastic_scenario", ["branching", "forecast1"], "weight_relative_to_parents", 0.33, "Base"],
-        ["stochastic_structure__stochastic_scenario", ["branching", "forecast2"], "weight_relative_to_parents", 0.34, "Base"],
-        ["stochastic_structure__stochastic_scenario", ["branching", "forecast3"], "weight_relative_to_parents", 0.33, "Base"]
+        ["stochastic_structure__stochastic_scenario", ["converging", "realization"], "stochastic_scenario_end", {"data": "6h", "type": "duration"}, "Base"],
+        ["stochastic_structure__stochastic_scenario", ["converging", "forecast1"], "stochastic_scenario_end", {"data": "1D", "type": "duration"}, "Base"],
+        ["stochastic_structure__stochastic_scenario", ["converging", "forecast2"], "stochastic_scenario_end", {"data": "1D", "type": "duration"}, "Base"],
+        ["stochastic_structure__stochastic_scenario", ["converging", "forecast3"], "stochastic_scenario_end", {"data": "1D", "type": "duration"}, "Base"],
+        ["stochastic_structure__stochastic_scenario", ["converging", "realization"], "weight_relative_to_parents", 1.0, "Base"],
+        ["stochastic_structure__stochastic_scenario", ["converging", "forecast1"], "weight_relative_to_parents", 0.33, "Base"],
+        ["stochastic_structure__stochastic_scenario", ["converging", "forecast2"], "weight_relative_to_parents", 0.34, "Base"],
+        ["stochastic_structure__stochastic_scenario", ["converging", "forecast3"], "weight_relative_to_parents", 0.33, "Base"]
     ]
 }
