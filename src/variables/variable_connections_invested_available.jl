@@ -84,7 +84,7 @@ Add `connections_invested_available` variables to model `m`.
 function add_variable_connections_invested_available!(m::Model)
     # fix connections_invested_available to zero in the timestep before the investment window to prevent "free" investments
     fix_initial_connections_invested_available(m)
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     add_variable!(
         m,
         :connections_invested_available,

@@ -24,7 +24,7 @@ Custom constraint for `units`.
 """
 function add_constraint_unit_constraint!(m::Model)
     @fetch unit_flow_op, unit_flow, units_on, units_started_up, connection_flow, node_state = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:unit_constraint] = Dict(
         (unit_constraint=uc, stochastic_path=s, t=t) => sense_constraint(
             m,

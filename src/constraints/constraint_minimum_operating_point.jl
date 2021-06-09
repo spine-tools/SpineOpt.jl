@@ -24,7 +24,7 @@ Limit the maximum in/out `unit_flow` of a `unit` if the parameters `unit_capacit
 """
 function add_constraint_minimum_operating_point!(m::Model)
     @fetch unit_flow, units_on = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:minimum_operating_point] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,

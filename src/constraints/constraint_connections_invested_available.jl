@@ -24,7 +24,7 @@ Limit the connections_invested_available by the number of investment candidate c
 """
 function add_constraint_connections_invested_available!(m::Model)
     @fetch connections_invested_available = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:connections_invested_available] = Dict(
         (connection=conn, stochastic_scenario=s, t=t) => @constraint(
             m,

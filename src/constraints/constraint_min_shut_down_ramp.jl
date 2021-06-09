@@ -26,7 +26,7 @@ For reserves the min non-spinning reserve ramp can be defined here.
 """
 function add_constraint_min_shut_down_ramp!(m::Model)
     @fetch units_shut_down, shut_down_unit_flow = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:min_shut_down_ramp] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,

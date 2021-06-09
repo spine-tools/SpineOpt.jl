@@ -24,7 +24,7 @@ Outer approximation of the non-linear terms.
 """
 function add_constraint_fix_node_pressure_point!(m::Model)
     @fetch node_pressure, connection_flow, binary_gas_connection_flow = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:fix_node_pressure_point] = Dict(
         (connection=conn, node1=n_orig, node2=n_dest, stochastic_scenario=s, t=t, i=j) => @constraint(
             m,

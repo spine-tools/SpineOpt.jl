@@ -24,7 +24,7 @@ Create and expression for storage investment costs.
 """
 function storage_investment_costs(m::Model, t1)
     @fetch storages_invested = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     @expression(
         m,
         + expr_sum(

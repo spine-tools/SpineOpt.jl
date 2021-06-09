@@ -26,7 +26,7 @@ Check if `unit_conv_cap_to_flow` is defined.
 """
 function add_constraint_unit_flow_capacity!(m::Model)
     @fetch unit_flow, units_on, units_started_up, units_shut_down = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:unit_flow_capacity] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,

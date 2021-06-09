@@ -116,3 +116,10 @@ end
 Drop keys from a `NamedTuple`.
 """
 _drop_key(x::NamedTuple, key::Symbol...) = (; (k => v for (k, v) in pairs(x) if !(k in key))...)
+
+"""
+    _analysis_time(m::Model)
+
+Fetch the current analysis time for the model `m`.
+"""
+_analysis_time(m::Model) = startref(current_window(m))

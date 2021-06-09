@@ -24,7 +24,7 @@ Create and expression for connection investment costs.
 """
 function connection_investment_costs(m::Model, t1)
     @fetch connections_invested = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     @expression(
         m,
         + expr_sum(

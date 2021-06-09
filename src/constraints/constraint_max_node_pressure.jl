@@ -24,7 +24,7 @@ Limit the maximum value of a `node_pressure` variable to be below `max_node_pres
 """
 function add_constraint_max_node_pressure!(m::Model)
     @fetch node_pressure = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:max_node_pressure] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,

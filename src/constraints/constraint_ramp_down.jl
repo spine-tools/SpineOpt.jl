@@ -25,7 +25,7 @@ Limit the maximum ramp of `ramp_down_unit_flow` of a `unit` or `unit_group` if t
 """
 function add_constraint_ramp_down!(m::Model)
     @fetch units_on, units_started_up, ramp_down_unit_flow, nonspin_units_shut_down = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:ramp_down] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,

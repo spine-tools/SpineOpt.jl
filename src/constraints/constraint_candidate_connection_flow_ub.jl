@@ -25,7 +25,7 @@ to the intact_flow on that connection, which represents the flow on the line if 
 """
 function add_constraint_candidate_connection_flow_ub!(m::Model)
     @fetch connection_flow, connection_intact_flow = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:candidate_connection_flow_ub] = Dict(
         (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,

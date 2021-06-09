@@ -28,7 +28,7 @@ Enforces the relationship between `connection_intact_flow` (flow with all invest
 """
 function add_constraint_connection_flow_intact_flow!(m::Model)
     @fetch connection_flow, connection_intact_flow = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:connection_flow_intact_flow] = Dict(
         (connection=conn, node=ng, stochastic_path=s, t=t) => @constraint(
             m,

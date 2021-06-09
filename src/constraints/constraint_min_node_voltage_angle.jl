@@ -24,7 +24,7 @@ Limit the minimum value of a `node_voltage_angle` variable to be above `min_volt
 """
 function add_constraint_min_node_voltage_angle!(m::Model)
     @fetch node_voltage_angle = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:min_node_voltage_angle] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
