@@ -167,6 +167,7 @@
         ["temporal_block", "weight", 1.0, null, "Weighting factor of the temporal block associated with the objective function"],
         ["temporal_block", "representative_periods_mapping", null, null, "Mapping from real timelices to their corresponding representative days"],
         ["unit", "candidate_units", null, null, "Number of units which may be additionally constructed"],
+        ["unit","unit_capacity_transfer", null, null, "@TIM can you add description here"],
         ["unit", "curtailment_cost", null, null, "Costs for curtailing generation. Essentially, accrues costs whenever `unit_flow` not operating at its maximum available capacity. E.g. EUR/MWh"],
         ["unit", "discount_rate_technology_specific", null, null, "Unit-specific discount rate used to calculate the unit's investment costs. If not specified, the model discount rate is used."],
         ["unit", "fix_units_invested", null, null, "Fix the value of the `units_invested` variable."],
