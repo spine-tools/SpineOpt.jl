@@ -197,6 +197,8 @@ that can be used to set [model](@ref)-wide defaults that are used if specific re
 ### Example of deterministic stochastics
 
 Here, we'll demonstrate step-by-step how to create the simplest possible stochastic frame: the fully deterministic one.
+See the [Deterministic Stochastic Structure](@ref) [archetype](@ref Archetypes) for how the final data structure looks like,
+as well as how to connect this `stochastic_structure` to the rest of your model. 
 
 1. Create a [stochastic\_scenario](@ref) called e.g. `realization` and a [stochastic\_structure](@ref) called e.g. `deterministic`.
 2. We can skip the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationship, since there isn't a *stochastic DAG* in this example, and the default behaviour of each [stochastic\_scenario](@ref) being independent works for our purposes *(only one [stochastic\_scenario](@ref) anyhow)*.
@@ -207,6 +209,8 @@ Here, we'll demonstrate step-by-step how to create the simplest possible stochas
 
 Here, we'll demonstrate step-by-step how to create a simple branching stochastic tree, where one scenario branches into
 three at a specific point in time.
+See the [Branching Stochastic Tree](@ref) [archetype](@ref Archetypes) for how the final data structure looks like,
+as well as how to connect this `stochastic_structure` to the rest of your model.
 
 1. Create four [stochastic\_scenario](@ref) objects called e.g. `realization`, `forecast1`, `forecast2`, and `forecast3`, and a [stochastic\_structure](@ref) called e.g. `branching`.
 2. Define the *stochastic DAG* by creating the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships for `(realization, forecast1)`, `(realization, forecast2)`, and `(realization, forecast3)`.
@@ -220,6 +224,8 @@ three at a specific point in time.
 Here, we'll demonstrate step-by-step how to create a simple *stochastic DAG*, where both branching and converging occurs.
 This example relies on the previous [Example of branching stochastics](@ref), but adds another [stochastic\_scenario](@ref)
 at the end, which is a child of the `forecast1`, `forecast2`, and `forecast3` scenarios.
+See the [Converging Stochastic Tree](@ref) [archetype](@ref Archetypes) for how the final data structure looks like,
+as well as how to connect this `stochastic_structure` to the rest of your model.
 
 1. Follow the steps 1-5 in the previous [Example of branching stochastics](@ref), except call the [stochastic\_structure](@ref) something different, e.g. `converging`.
 2. Create a new [stochastic\_scenario](@ref) called e.g. `converged_forecast`.
