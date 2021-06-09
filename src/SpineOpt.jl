@@ -183,11 +183,11 @@ function __init__()
 	end
 end
 
-const _template = JSON.parsefile(joinpath(@__DIR__, "..", "data", "spineopt_template.json"))
+const _template = JSON.parsefile(joinpath(@__DIR__, "..", "spineopt_template.json"))
 
 function template()
     try
-        JSON.parsefile(joinpath(@__DIR__, "..", "data", "spineopt_template.json"))
+        JSON.parsefile(joinpath(@__DIR__, "..", "spineopt_template.json"))
     catch
         # Template file not found, use _template constant instead.
         # This will happen in the SpineOpt app
