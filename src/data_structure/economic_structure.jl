@@ -200,7 +200,7 @@ function generate_salvage_fraction!(m::Model)
             start_of_operation = vintage_t_start + LT
             end_of_operation = vintage_t_start + LT + ELIFE
             if dynamic_invest
-                j1= EOH + Year(1) #numerator
+                j1= EOH #+ Year(1) #numerator +1 or not?
                 j2 = vintage_t_start
                 val1 = 0
                 val2 = 0
@@ -328,8 +328,11 @@ function generate_discount_timeslice_duration!(m::Model)
             # discounted_duration[(u, t)] =  parameter_value(val)
         end
         unit.parameter_values[u][:discounted_duration] = parameter_value(TimeSeries(timeseries_ind,timeseries_val,false,false))
+        # for n in [node()[1]]
+        # node.parameter_values[n][:discounted_duration] = parameter_value(TimeSeries(timeseries_ind,timeseries_val,false,false))
+        # end
     end
-    discounted_duration = Parameter(:discounted_duration, [unit])
+    discounted_duration = Parameter(:discounted_duration, [unit])#,node])
     @eval begin
         discounted_duration = $discounted_duration
     end
