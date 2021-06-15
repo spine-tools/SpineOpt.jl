@@ -4,12 +4,12 @@ Archetypes are essentially ready-made templates for different aspects of *SpineO
 They are intended to serve both as examples for *how* the data structure in *SpineOpt.jl* works,
 as well as pre-made modular parts that can be imported on top of existing model input data.
 
-The `examples/basic_model_template.json` contains a ready-made template for simple energy system models,
+The `templates/models/basic_model_template.json` contains a ready-made template for simple energy system models,
 with uniform time resolution and deterministic stochastic structure.
 Essentially, it serves as a basis for testing how the modelled system is set up,
 without having to worry about setting up the temporal and stochastic structures.
 
-The rest of the different archetypes are included under `examples/archetypes` in the *SpineOpt.jl* repository.
+The rest of the different archetypes are included under `templates/archetypes` in the *SpineOpt.jl* repository.
 Each archetype is stored as a `.json` file containing the necessary [objects](@ref introduction-to-object-classes),
 [relationships](@ref introduction-to-relationship-classes), and [parameters](@ref introduction-to-parameters)
 to form a functioning pre-made part for a *SpineOpt.jl* model.
@@ -20,7 +20,7 @@ as well as what steps the user needs to take to connect said archetype to their 
 
 ## Branching Stochastic Tree
 
->`examples/branching_stochastic_tree.json`
+>`templates/archetypes/branching_stochastic_tree.json`
 
 This archetype contains the definitions required for an example [stochastic\_structure](@ref) called `branching`, representing a
 branching scenario tree.
@@ -36,7 +36,7 @@ Note that the model-wide default gets superceded by any conflicting definitions 
 
 ## Converging Stochastic Tree
 
->`examples/converging_stochastic_tree.json`
+>`templates/archetypes/converging_stochastic_tree.json`
 
 This archetype contains the definitions required for an example [stochastic\_structure](@ref) called `converging`, representing a
 converging scenario tree *(technically a directed acyclic graph DAG)*.
@@ -53,7 +53,7 @@ Note that the model-wide default gets superceded by any conflicting definitions 
 
 ## Deterministic Stochastic Structure
 
->`examples/deterministic_stochastic_structure.json`
+>`templates/archetypes/deterministic_stochastic_structure.json`
 
 This archetype contains the definitions required for an example [stochastic\_structure](@ref) called `deterministic`, representing a simple deterministic modelling case.
 The [stochastic\_structure](@ref) contains only a single [stochastic\_scenario](@ref) called `realization`, which continues indefinitely.
