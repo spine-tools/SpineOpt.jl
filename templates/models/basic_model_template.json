@@ -309,7 +309,6 @@
     ],
     "objects": [
         ["model", "simple", null],
-        ["output", "unit_flow", null],
         ["report", "report1", null],
         ["stochastic_scenario", "realization", null],
         ["stochastic_structure", "deterministic", null],
@@ -321,7 +320,6 @@
         ["model__report", ["simple", "report1"]],
         ["model__stochastic_structure", ["simple", "deterministic"]],
         ["model__temporal_block", ["simple", "flat"]],
-        ["report__output", ["report1", "unit_flow"]],
         ["stochastic_structure__stochastic_scenario", ["deterministic", "realization"]]
     ],
     "alternatives": [
