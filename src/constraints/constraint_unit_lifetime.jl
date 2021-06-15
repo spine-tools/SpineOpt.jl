@@ -33,16 +33,18 @@ function add_constraint_unit_lifetime!(m::Model)
                 for (u, s, t) in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0,
             )
-            >=
+            ==
             + sum(
-                + units_invested[u, s_past, t_past] for (u, s_past, t_past) in units_invested_available_indices(
+                + units_invested[u, s_past, t_past]
+                * capacity_transfer_factor[(unit=u, stochastic_structure__stochastic_scenario=s_past,vintage_t=t_past,t=t)]
+                for (u, s_past, t_past) in units_invested_available_indices(
                     m;
                     unit=u,
                     stochastic_scenario=s,
                     t=to_time_slice(
                         m;
                         t=TimeSlice(
-                            end_(t) - unit_investment_lifetime(unit=u, stochastic_scenario=s, analysis_time=t0, t=t),
+                            end_(t) - unit_investment_tech_lifetime(unit=u, stochastic_scenario=s, analysis_time=t0, t=t),
                             end_(t),
                         ),
                     ),

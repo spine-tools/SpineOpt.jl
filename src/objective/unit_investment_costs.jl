@@ -29,7 +29,7 @@ function unit_investment_costs(m::Model, t1)
         m,
         + expr_sum(
             units_invested[u, s, t]
-            * (1- salvage_fraction[(unit=u, analysis_time=t0, t=t)])
+            * (1- salvage_fraction[(unit=u, stochastic_scenario=s, t=t)])
             * tech_discount_factor[(unit=u, analysis_time=t0, t=t)]
             * annuity[(unit=u, analysis_time=t0, t=t)]
             * unit_investment_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]

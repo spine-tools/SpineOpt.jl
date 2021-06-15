@@ -29,6 +29,9 @@ function connection_investment_costs(m::Model, t1)
         m,
         + expr_sum(
             connections_invested[c, s, t]
+            * (1- salvage_fraction[(connection=c, stochastic_scenario=s, t=t)])
+            * tech_discount_factor[(connection=c, analysis_time=t0, t=t)]
+            * annuity[(connection=c, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * connection_investment_cost[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
             * connection_stochastic_scenario_weight(m; connection=c, stochastic_scenario=s)

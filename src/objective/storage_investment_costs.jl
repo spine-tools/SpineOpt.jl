@@ -29,6 +29,9 @@ function storage_investment_costs(m::Model, t1)
         m,
         + expr_sum(
             storages_invested[n, s, t]
+            * (1- salvage_fraction[(node=n, stochastic_scenario=s, t=t)])
+            * tech_discount_factor[(node=n, analysis_time=t0, t=t)]
+            * annuity[(node=n, analysis_time=t0, t=t)]
             * storage_investment_cost[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_stochastic_scenario_weight[(node=n, stochastic_scenario=s)]

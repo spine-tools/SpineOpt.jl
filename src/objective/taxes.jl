@@ -29,6 +29,7 @@ function taxes(m::Model, t1)
         m,
         + expr_sum(
             + unit_flow[u, n, d, s, t]
+            * discount_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)
             * tax_net_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
@@ -37,6 +38,7 @@ function taxes(m::Model, t1)
             init=0,
         ) - expr_sum(
             + unit_flow[u, n, d, s, t]
+            * discount_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)
             * tax_net_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
@@ -46,6 +48,7 @@ function taxes(m::Model, t1)
         )
         + expr_sum(
             + unit_flow[u, n, d, s, t]
+            * discount_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)
             * tax_out_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
@@ -55,6 +58,7 @@ function taxes(m::Model, t1)
         )
         + expr_sum(
             unit_flow[u, n, d, s, t]
+            * discount_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)
             * tax_in_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))

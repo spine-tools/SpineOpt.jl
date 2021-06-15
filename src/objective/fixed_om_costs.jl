@@ -28,11 +28,17 @@ function fixed_om_costs(m, t1)
         m,
         expr_sum(
             + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * fom_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+            *
+            (
+                number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+                +  units_invested_available[u, s, t]
+                -  units_mothballed[u, s, t1]
+            )
+            * fom_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] #should be given as costs per year?
+            * discount_duration[(unit=u, stochastic_scenario=s,t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * duration(t) for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for (u, s, t) in units_on_indices(m; unit=u) if end_(t) <= t1;
+            for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))
+            for (u, s, t) in units_invested_available_indices(m; unit=u) if end_(t) <= t1;
             init=0,
         )
     )
