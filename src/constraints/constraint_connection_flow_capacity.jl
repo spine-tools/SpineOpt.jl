@@ -31,7 +31,7 @@ If instantaneous power needs to be constrained as well, defining the `connection
 `connection_flow` can be used to achieve this.
 """
 function add_constraint_connection_flow_capacity!(m::Model)
-    @fetch connection_flow, connections_invested_available = m.ext[:variables]
+    @fetch connection_flow, connections_invested_available, connection_decomissioned = m.ext[:variables]
     t0 = startref(current_window(m))
     m.ext[:constraints][:connection_flow_capacity] = Dict(
         (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
@@ -54,7 +54,9 @@ function add_constraint_connection_flow_capacity!(m::Model)
             ]
             * ((candidate_connections(connection=conn) != nothing) ?
                + expr_sum(
-                connections_invested_available[conn, s, t1] for (conn, s, t1) in connections_invested_available_indices(
+                connections_invested_available[conn, s, t1]
+                - connection_decomissioned[conn, s, t1]
+                    for (conn, s, t1) in connections_invested_available_indices(
                     m;
                     connection=conn,
                     stochastic_scenario=s,

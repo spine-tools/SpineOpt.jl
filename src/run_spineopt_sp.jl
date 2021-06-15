@@ -201,12 +201,12 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
         m,
     )
     @timelog log_level 3 "- [constraint_connection_lifetime]" add_constraint_connection_lifetime!(m)
-    @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(
+    # @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(
         m,
     )
     @timelog log_level 3 "- [constraint_storages_invested_available]" add_constraint_storages_invested_available!(m)
     @timelog log_level 3 "- [constraint_storage_lifetime]" add_constraint_storage_lifetime!(m)
-    @timelog log_level 3 "- [constraint_storages_invested_transition]" add_constraint_storages_invested_transition!(m)
+    # @timelog log_level 3 "- [constraint_storages_invested_transition]" add_constraint_storages_invested_transition!(m)
     @timelog log_level 3 "- [constraint_operating_point_bounds]" add_constraint_operating_point_bounds!(m)
     @timelog log_level 3 "- [constraint_operating_point_sum]" add_constraint_operating_point_sum!(m)
     @timelog log_level 3 "- [constraint_fix_ratio_out_in_unit_flow]" add_constraint_fix_ratio_out_in_unit_flow!(m)
@@ -240,7 +240,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_units_available]" add_constraint_units_available!(m)
     @timelog log_level 3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)
     @timelog log_level 3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(m)
-    @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
+    # @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
     @timelog log_level 3 "- [constraint_minimum_operating_point]" add_constraint_minimum_operating_point!(m)
     @timelog log_level 3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)
     @timelog log_level 3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)

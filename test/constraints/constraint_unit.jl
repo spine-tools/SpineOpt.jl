@@ -607,105 +607,105 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_units_invested_transition" begin
-        db_map = _load_test_data(url_in, test_data)
-        candidate_units = 4
-        object_parameter_values = [["unit", "unit_ab", "candidate_units", candidate_units]]
-        relationships = [
-            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
-            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
-        ]
-        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
-        var_units_invested_available = m.ext[:variables][:units_invested_available]
-        var_units_invested = m.ext[:variables][:units_invested]
-        var_units_mothballed = m.ext[:variables][:units_mothballed]
-        constraint = m.ext[:constraints][:units_invested_transition]
-        @test length(constraint) == 2
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s1, t1) in zip(scenarios, time_slices)
-            path = unique([s0, s1])
-            var_key1 = (unit(:unit_ab), s1, t1)
-            var_u_inv_av1 = var_units_invested_available[var_key1...]
-            var_u_inv_1 = var_units_invested[var_key1...]
-            var_u_moth_1 = var_units_mothballed[var_key1...]
-            @testset for (u, t0, t1) in unit_investment_dynamic_time_indices(m; unit=unit(:unit_ab), t_after=t1)
-                var_key0 = (u, s0, t0)
-                var_u_inv_av0 = get(var_units_invested_available, var_key0, 0)
-                con_key = (u, path, t0, t1)
-                expected_con = @build_constraint(var_u_inv_av1 - var_u_inv_1 + var_u_moth_1 == var_u_inv_av0)
-                observed_con = constraint_object(constraint[con_key...])
-                @test _is_constraint_equal(observed_con, expected_con)
-            end
-        end
-    end
-    @testset "constraint_units_invested_transition_mp" begin
-        db_map = _load_test_data(url_in, test_data)
-        candidate_units = 4
-        object_parameter_values = [
-            ["unit", "unit_ab", "candidate_units", candidate_units],
-            ["model", "master", "model_type", "spineopt_master"],
-        ]
-        relationships = [
-            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
-            ["unit__investment_temporal_block", ["unit_ab", "investments_hourly"]],
-            ["unit__investment_stochastic_structure", ["unit_ab", "investments_deterministic"]],
-            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
-        ]
-        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-        db_map.commit_session("Add test data")
-        m, mp = run_spineopt(db_map; log_level=0, optimize=false)
-        var_units_invested_available = m.ext[:variables][:units_invested_available]
-        var_units_invested = m.ext[:variables][:units_invested]
-        var_units_mothballed = m.ext[:variables][:units_mothballed]
-        constraint = m.ext[:constraints][:units_invested_transition]
-        @test length(constraint) == 2
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s1, t1) in zip(scenarios, time_slices)
-            path = unique([s0, s1])
-            var_key1 = (unit(:unit_ab), s1, t1)
-            var_u_inv_av1 = var_units_invested_available[var_key1...]
-            var_u_inv_1 = var_units_invested[var_key1...]
-            var_u_moth_1 = var_units_mothballed[var_key1...]
-            @testset for (u, t0, t1) in unit_investment_dynamic_time_indices(m; unit=unit(:unit_ab), t_after=t1)
-                var_key0 = (u, s0, t0)
-                var_u_inv_av0 = get(var_units_invested_available, var_key0, 0)
-                con_key = (u, path, t0, t1)
-                expected_con = @build_constraint(var_u_inv_av1 - var_u_inv_1 + var_u_moth_1 == var_u_inv_av0)
-                observed_con = constraint_object(constraint[con_key...])
-                @test _is_constraint_equal(observed_con, expected_con)
-            end
-        end
-
-        var_units_invested_available = mp.ext[:variables][:units_invested_available]
-        var_units_invested = mp.ext[:variables][:units_invested]
-        var_units_mothballed = mp.ext[:variables][:units_mothballed]
-        constraint = mp.ext[:constraints][:units_invested_transition]
-        @test length(constraint) == 2
-        scenarios = (stochastic_scenario(:parent),)
-        s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(mp; temporal_block=temporal_block(:investments_hourly))
-        @testset for (s1, t1) in zip(scenarios, time_slices)
-            path = unique([s0, s1])
-            var_key1 = (unit(:unit_ab), s1, t1)
-            var_u_inv_av1 = var_units_invested_available[var_key1...]
-            var_u_inv_1 = var_units_invested[var_key1...]
-            var_u_moth_1 = var_units_mothballed[var_key1...]
-            @testset for (u, t0, t1) in unit_investment_dynamic_time_indices(mp; unit=unit(:unit_ab), t_after=t1)
-                var_key0 = (u, s0, t0)
-                var_u_inv_av0 = get(var_units_invested_available, var_key0, 0)
-                con_key = (u, path, t0, t1)
-                expected_con = @build_constraint(var_u_inv_av1 - var_u_inv_1 + var_u_moth_1 == var_u_inv_av0)
-                observed_con = constraint_object(constraint[con_key...])
-                @test _is_constraint_equal(observed_con, expected_con)
-            end
-        end
-    end
+    # @testset "constraint_units_invested_transition" begin
+    #     db_map = _load_test_data(url_in, test_data)
+    #     candidate_units = 4
+    #     object_parameter_values = [["unit", "unit_ab", "candidate_units", candidate_units]]
+    #     relationships = [
+    #         ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+    #         ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
+    #     ]
+    #     db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+    #     db_map.commit_session("Add test data")
+    #     m = run_spineopt(db_map; log_level=0, optimize=false)
+    #     var_units_invested_available = m.ext[:variables][:units_invested_available]
+    #     var_units_invested = m.ext[:variables][:units_invested]
+    #     var_units_mothballed = m.ext[:variables][:units_mothballed]
+    #     constraint = m.ext[:constraints][:units_invested_transition]
+    #     @test length(constraint) == 2
+    #     scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+    #     s0 = stochastic_scenario(:parent)
+    #     time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+    #     @testset for (s1, t1) in zip(scenarios, time_slices)
+    #         path = unique([s0, s1])
+    #         var_key1 = (unit(:unit_ab), s1, t1)
+    #         var_u_inv_av1 = var_units_invested_available[var_key1...]
+    #         var_u_inv_1 = var_units_invested[var_key1...]
+    #         var_u_moth_1 = var_units_mothballed[var_key1...]
+    #         @testset for (u, t0, t1) in unit_investment_dynamic_time_indices(m; unit=unit(:unit_ab), t_after=t1)
+    #             var_key0 = (u, s0, t0)
+    #             var_u_inv_av0 = get(var_units_invested_available, var_key0, 0)
+    #             con_key = (u, path, t0, t1)
+    #             expected_con = @build_constraint(var_u_inv_av1 - var_u_inv_1 + var_u_moth_1 == var_u_inv_av0)
+    #             observed_con = constraint_object(constraint[con_key...])
+    #             @test _is_constraint_equal(observed_con, expected_con)
+    #         end
+    #     end
+    # end
+    # @testset "constraint_units_invested_transition_mp" begin
+    #     db_map = _load_test_data(url_in, test_data)
+    #     candidate_units = 4
+    #     object_parameter_values = [
+    #         ["unit", "unit_ab", "candidate_units", candidate_units],
+    #         ["model", "master", "model_type", "spineopt_master"],
+    #     ]
+    #     relationships = [
+    #         ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+    #         ["unit__investment_temporal_block", ["unit_ab", "investments_hourly"]],
+    #         ["unit__investment_stochastic_structure", ["unit_ab", "investments_deterministic"]],
+    #         ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
+    #     ]
+    #     db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
+    #     db_map.commit_session("Add test data")
+    #     m, mp = run_spineopt(db_map; log_level=0, optimize=false)
+    #     var_units_invested_available = m.ext[:variables][:units_invested_available]
+    #     var_units_invested = m.ext[:variables][:units_invested]
+    #     var_units_mothballed = m.ext[:variables][:units_mothballed]
+    #     constraint = m.ext[:constraints][:units_invested_transition]
+    #     @test length(constraint) == 2
+    #     scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+    #     s0 = stochastic_scenario(:parent)
+    #     time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+    #     @testset for (s1, t1) in zip(scenarios, time_slices)
+    #         path = unique([s0, s1])
+    #         var_key1 = (unit(:unit_ab), s1, t1)
+    #         var_u_inv_av1 = var_units_invested_available[var_key1...]
+    #         var_u_inv_1 = var_units_invested[var_key1...]
+    #         var_u_moth_1 = var_units_mothballed[var_key1...]
+    #         @testset for (u, t0, t1) in unit_investment_dynamic_time_indices(m; unit=unit(:unit_ab), t_after=t1)
+    #             var_key0 = (u, s0, t0)
+    #             var_u_inv_av0 = get(var_units_invested_available, var_key0, 0)
+    #             con_key = (u, path, t0, t1)
+    #             expected_con = @build_constraint(var_u_inv_av1 - var_u_inv_1 + var_u_moth_1 == var_u_inv_av0)
+    #             observed_con = constraint_object(constraint[con_key...])
+    #             @test _is_constraint_equal(observed_con, expected_con)
+    #         end
+    #     end
+    #
+    #     var_units_invested_available = mp.ext[:variables][:units_invested_available]
+    #     var_units_invested = mp.ext[:variables][:units_invested]
+    #     var_units_mothballed = mp.ext[:variables][:units_mothballed]
+    #     constraint = mp.ext[:constraints][:units_invested_transition]
+    #     @test length(constraint) == 2
+    #     scenarios = (stochastic_scenario(:parent),)
+    #     s0 = stochastic_scenario(:parent)
+    #     time_slices = time_slice(mp; temporal_block=temporal_block(:investments_hourly))
+    #     @testset for (s1, t1) in zip(scenarios, time_slices)
+    #         path = unique([s0, s1])
+    #         var_key1 = (unit(:unit_ab), s1, t1)
+    #         var_u_inv_av1 = var_units_invested_available[var_key1...]
+    #         var_u_inv_1 = var_units_invested[var_key1...]
+    #         var_u_moth_1 = var_units_mothballed[var_key1...]
+    #         @testset for (u, t0, t1) in unit_investment_dynamic_time_indices(mp; unit=unit(:unit_ab), t_after=t1)
+    #             var_key0 = (u, s0, t0)
+    #             var_u_inv_av0 = get(var_units_invested_available, var_key0, 0)
+    #             con_key = (u, path, t0, t1)
+    #             expected_con = @build_constraint(var_u_inv_av1 - var_u_inv_1 + var_u_moth_1 == var_u_inv_av0)
+    #             observed_con = constraint_object(constraint[con_key...])
+    #             @test _is_constraint_equal(observed_con, expected_con)
+    #         end
+    #     end
+    # end
     @testset "constraint_unit_lifetime" begin
         candidate_units = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")

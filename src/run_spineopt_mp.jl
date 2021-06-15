@@ -40,6 +40,8 @@ function rerun_spineopt_mp(
     @timelog log_level 2 "Creating $(m.ext[:instance]) stochastic structure..." generate_stochastic_structure(m)
     @timelog log_level 2 "Creating $(mp.ext[:instance]) temporal structure..." generate_temporal_structure!(mp)
     @timelog log_level 2 "Creating $(mp.ext[:instance]) stochastic structure..." generate_stochastic_structure(mp)
+    @timelog log_level 2 "Creating economic structure..." generate_economic_structure!(mp)
+    @timelog log_level 2 "Creating economic structure..." generate_economic_structure!(m)
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
     init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
     init_outputs!(m)
@@ -135,17 +137,17 @@ Add SpineOpt master problem constraints to the given model.
 function add_mp_constraints!(mp; add_constraints=mp -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_mp_objective]" add_constraint_mp_objective!(mp)
     @timelog log_level 3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(mp)
-    @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(mp)
+    # @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(mp)
     @timelog log_level 3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(mp)
     @timelog log_level 3 "- [constraint_connection_lifetime]" add_constraint_connection_lifetime!(mp)
-    @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(
+    # @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(
         mp,
     )
     @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(
         mp,
     )
     @timelog log_level 3 "- [constraint_storage_lifetime]" add_constraint_storage_lifetime!(mp)
-    @timelog log_level 3 "- [constraint_storages_invested_transition]" add_constraint_storages_invested_transition!(mp)
+    # @timelog log_level 3 "- [constraint_storages_invested_transition]" add_constraint_storages_invested_transition!(mp)
     @timelog log_level 3 "- [constraint_storages_invested_available]" add_constraint_storages_invested_available!(mp)
 
     # Name constraints

@@ -37,9 +37,10 @@ function add_constraint_connection_lifetime!(m::Model)
                 );
                 init=0,
             )
-            >=
+            ==
             + sum(
                 + connections_invested[conn, s_past, t_past]
+                * capacity_transfer_factor[(connection=conn, stochastic_structure__stochastic_scenario=s_past,vintage_t=t_past,t=t)]
                 for (conn, s_past, t_past) in connections_invested_available_indices(
                     m;
                     connection=conn,
@@ -47,7 +48,7 @@ function add_constraint_connection_lifetime!(m::Model)
                     t=to_time_slice(
                         m;
                         t=TimeSlice(
-                            end_(t) - connection_investment_lifetime(
+                            end_(t) - connection_investment_tech_lifetime(
                                 connection=conn,
                                 stochastic_scenario=s,
                                 analysis_time=t0,

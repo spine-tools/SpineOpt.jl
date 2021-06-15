@@ -35,14 +35,16 @@ function add_constraint_storage_lifetime!(m::Model)
             )
             >=
             + sum(
-                + storages_invested[n, s_past, t_past] for (n, s_past, t_past) in storages_invested_available_indices(
+                + storages_invested[n, s_past, t_past]
+                * capacity_transfer_factor[(node=n, stochastic_structure__stochastic_scenario=s_past,vintage_t=t_past,t=t)]
+                for (n, s_past, t_past) in storages_invested_available_indices(
                     m;
                     node=n,
                     stochastic_scenario=s,
                     t=to_time_slice(
                         m;
                         t=TimeSlice(
-                            end_(t) - storage_investment_lifetime(node=n, stochastic_scenario=s, analysis_time=t0, t=t),
+                            end_(t) - storage_investment_tech_lifetime(node=n, stochastic_scenario=s, analysis_time=t0, t=t),
                             end_(t),
                         ),
                     ),
