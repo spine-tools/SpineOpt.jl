@@ -322,6 +322,9 @@
         ["model__temporal_block", ["simple", "flat"]],
         ["stochastic_structure__stochastic_scenario", ["deterministic", "realization"]]
     ],
+    "object_parameter_values": [
+        ["temporal_block", "flat", "resolution", {"data": "1D", "type": "duration"}, "Base"]
+    ],
     "alternatives": [
         ["Base", "Base alternative"]
     ],
