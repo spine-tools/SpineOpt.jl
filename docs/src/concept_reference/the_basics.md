@@ -7,7 +7,7 @@ Here, we aim to provide you with a basic understanding of the *SpineOpt.jl* mode
 provide more in-depth explanations of each concept.
 
 
-## Introduction to `object classes`
+## [Introduction to `object classes`](@id introduction-to-object-classes)
 
 Essentially, [Object Classes](@ref) represents different types of `objects` or *entities* that make up the model.
 For example, every power plant in the model is represented as an `object` of the `object class` [unit](@ref),
@@ -53,7 +53,7 @@ These include:
 - [report](@ref) groups together multiple [output](@ref) `objects`.
 
 
-## Introduction to `relationship classes`
+## [Introduction to `relationship classes`](@id introduction-to-relationship-classes)
 
 While [Object Classes](@ref) define all the `objects` or *entities* that make up a [model](@ref),
 [Relationship Classes](@ref) define how those *entities* are related to each other.
@@ -139,7 +139,7 @@ These include:
 - [report\_\_output](@ref) defines which `outputs` are part of which [report](@ref).
 
 
-## Introduction to `parameters`
+## [Introduction to `parameters`](@id introduction-to-parameters)
 
 While the primary function of [Object Classes](@ref) and [Relationship Classes](@ref) is to *define* the system to be
 modelled and it's structure, [Parameters](@ref) exist to *constrain* them.

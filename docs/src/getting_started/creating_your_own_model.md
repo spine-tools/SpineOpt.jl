@@ -1,6 +1,14 @@
 # Creating Your Own Model
 
-This part of the guide shows first an example how to insert objects and their parameter data. Then it shows what other objects, relationships and parameter data needs to be added for a very basic model. Lastly, the model instance is run.
+This part of the guide shows first an example how to insert objects and their parameter data.
+Then it shows what other objects, relationships and parameter data needs to be added for a very basic model.
+Lastly, the model instance is run.
+
+This section explains the process of creating a *SpineOpt.jl* model from scratch in order to give you an understanding
+of the underlying principles of the data structure, etc.
+If you simply want to try something out quickly to see results, check out the [Example Models](@ref) section.
+Furthermore, if you're in a hurry, the [Archetypes](@ref) section provides you with some pre-made templates
+for the different parts of a *SpineOpt.jl* model to get you started quickly.
 
 ## Creating a SpineOpt model instance
 - First, open the database editor by double-clicking the *Input DB*. 

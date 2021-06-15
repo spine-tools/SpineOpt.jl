@@ -197,6 +197,8 @@ that can be used to set [model](@ref)-wide defaults that are used if specific re
 ### Example of deterministic stochastics
 
 Here, we'll demonstrate step-by-step how to create the simplest possible stochastic frame: the fully deterministic one.
+See the [Deterministic Stochastic Structure](@ref) [archetype](@ref Archetypes) for how the final data structure looks like,
+as well as how to connect this `stochastic_structure` to the rest of your model. 
 
 1. Create a [stochastic\_scenario](@ref) called e.g. `realization` and a [stochastic\_structure](@ref) called e.g. `deterministic`.
 2. We can skip the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationship, since there isn't a *stochastic DAG* in this example, and the default behaviour of each [stochastic\_scenario](@ref) being independent works for our purposes *(only one [stochastic\_scenario](@ref) anyhow)*.
@@ -207,6 +209,8 @@ Here, we'll demonstrate step-by-step how to create the simplest possible stochas
 
 Here, we'll demonstrate step-by-step how to create a simple branching stochastic tree, where one scenario branches into
 three at a specific point in time.
+See the [Branching Stochastic Tree](@ref) [archetype](@ref Archetypes) for how the final data structure looks like,
+as well as how to connect this `stochastic_structure` to the rest of your model.
 
 1. Create four [stochastic\_scenario](@ref) objects called e.g. `realization`, `forecast1`, `forecast2`, and `forecast3`, and a [stochastic\_structure](@ref) called e.g. `branching`.
 2. Define the *stochastic DAG* by creating the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships for `(realization, forecast1)`, `(realization, forecast2)`, and `(realization, forecast3)`.
@@ -220,12 +224,14 @@ three at a specific point in time.
 Here, we'll demonstrate step-by-step how to create a simple *stochastic DAG*, where both branching and converging occurs.
 This example relies on the previous [Example of branching stochastics](@ref), but adds another [stochastic\_scenario](@ref)
 at the end, which is a child of the `forecast1`, `forecast2`, and `forecast3` scenarios.
+See the [Converging Stochastic Tree](@ref) [archetype](@ref Archetypes) for how the final data structure looks like,
+as well as how to connect this `stochastic_structure` to the rest of your model.
 
 1. Follow the steps 1-5 in the previous [Example of branching stochastics](@ref), except call the [stochastic\_structure](@ref) something different, e.g. `converging`.
 2. Create a new [stochastic\_scenario](@ref) called e.g. `converged_forecast`.
 3. Alter the *stochastic DAG* by creating the [parent\_stochastic\_scenario\_\_child\_stochastic\_scenario](@ref) relationships for `(forecast1, converged_forecast)`, `(forecast2, converged_forecast)`, and `(forecast3, converged_forecast)`. Now all three forecasts will converge into a single `converged_forecast`.
 4. Add the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationship for `(converging, converged_forecast)`, and set its [weight\_relative\_to\_parents](@ref) parameter to 1. Now, all the probability mass in `forecast1`, `forecast2`, and `forecast3` will be summed up back to the `converged_forecast`.
-5. Set the [stochastic\_scenario\_end](@ref) [Parameters](@ref) of the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationships `(converging, forecast1)`, `(converging, forecast2)`, and `(converging, forecast3)` to e.g. `12h`, so that all three scenarios end at the same time and the `converged_forecast` becomes active.
+5. Set the [stochastic\_scenario\_end](@ref) [Parameters](@ref) of the [stochastic\_structure\_\_stochastic\_scenario](@ref) relationships `(converging, forecast1)`, `(converging, forecast2)`, and `(converging, forecast3)` to e.g. `1D`, so that all three scenarios end at the same time and the `converged_forecast` becomes active.
 6. Relate the `converging` [stochastic\_structure](@ref) to all the desired system objects using the appropriate [Structural relationship classes](@ref), or use the [model](@ref)-level default [Meta relationship classes](@ref).
 
 ## Working with stochastic updating data

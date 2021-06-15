@@ -28,6 +28,8 @@ makedocs(
             "Installation" => joinpath("getting_started", "installation.md"),
             "Setting up a workflow" => joinpath("getting_started", "setup_workflow.md"),
             "Creating Your Own Model" => joinpath("getting_started", "creating_your_own_model.md"),
+            "Example Models" => joinpath("getting_started", "example_models.md"),
+            "Archetypes" => joinpath("getting_started", "archetypes.md")
         ],
         "Concept Reference" => Any[
             "Basics of the model structure" => joinpath("concept_reference", "the_basics.md"),
