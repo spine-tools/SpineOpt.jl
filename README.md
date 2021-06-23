@@ -162,3 +162,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 ### License
 
 SpineOpt is licensed under GNU Lesser General Public License version 3.0 or later.
+
+### Acknowledgements
+
+<center>
+<table width=500px frame="none">
+<tr>
+<td valign="middle" width=100px>
+<img src=https://europa.eu/european-union/sites/europaeu/files/docs/body/flag_yellow_low.jpg alt="EU emblem" width=100%></td>
+<td valign="middle">This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 774629.</td>
+</table>
+</center>
