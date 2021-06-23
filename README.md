@@ -63,6 +63,32 @@ please see [here](https://spine-toolbox.readthedocs.io/en/latest/case_study_a5.h
 ### Documentation
 
 SpineOpt documentation, including getting started guide and reference, can be found here: [Documentation](https://spine-project.github.io/SpineOpt.jl/latest/index.html).
+Alternatively, one can build the documentation locally, as it is bundled in with the source code.
+
+First, **navigate into the SpineOpt main folder** and activate the `docs` environment from the julia package manager:
+
+```julia
+(SpineOpt) pkg> activate docs
+(docs) pkg>
+```
+
+Next, in order to make sure that the `docs` environment uses the same SpineOpt version it is contained within,
+install the package locally into the `docs` environment:
+
+```julia
+(docs) pkg> develop .
+Resolving package versions...
+<lots of packages being checked>
+(docs) pkg>
+```
+
+Now, you should be able to build the documentation by exiting the package manager and typing:
+
+```julia
+julia> include("docs/make.jl")
+```
+
+This should build the documentation on your computer, and you can access it in the `docs/build/` folder.
 
 ### Troubleshooting
 
@@ -128,35 +154,6 @@ At line:1 char:35
 2. Install Windows management framework 3 or later, from here https://docs.microsoft.com/en-us/powershell/scripting/windows-powershell/wmf/overview?view=powershell-7.1.
 
 3. Try to install SpineOpt again.
-
-
-### Building the documentation
-
-The SpineOpt documentation is bundled in with the source code, and can be built locally.
-First, **navigate into the SpineOpt main folder** and activate the `docs` environment from the julia package manager:
-
-```julia
-(SpineOpt) pkg> activate docs
-(docs) pkg>
-```
-
-Next, in order to make sure that the `docs` environment uses the same SpineOpt version it is contained within,
-install the package locally into the `docs` environment:
-
-```julia
-(docs) pkg> develop .
-Resolving package versions...
-<lots of packages being checked>
-(docs) pkg>
-```
-
-Now, you should be able to build the documentation by exiting the package manager and typing:
-
-```julia
-julia> include("docs/make.jl")
-```
-
-This should build the documentation on your computer, and you can access it in the `docs/build/` folder.
 
 ### Reporting Issues and Contributing
 
