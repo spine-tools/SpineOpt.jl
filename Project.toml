@@ -16,5 +16,5 @@ SpineInterface = "0cda1612-498a-11e9-3c92-77fa82595a4f"
 
 [compat]
 JuMP = "0.21.2"
-SpineInterface = "0.6.0"
+SpineInterface = "0.6.1"
 julia = "^1.2"
