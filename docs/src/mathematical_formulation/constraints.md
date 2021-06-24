@@ -325,7 +325,7 @@ In order to impose a minimum offline time of a unit, before it can be started up
 \begin{aligned}
 & v_{units\_available}(u,s,t) \\
 & - v_{units\_on}(u,s,t) \\
-& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >=t-p_{min\_down\_time}(u,s,t) && t' <= t}}
+& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >=t-p_{min\_down\_time}(u,s,t) \quad t' <= t}}
 v_{units\_shut\_down}(u,s,t') \\
 & \forall (u,s,t) \in units\_on\_indices\\
 \end{aligned}
@@ -539,7 +539,7 @@ For non-spinning downward reserves, online units can be scheduled for reserve pr
 ```math
 \begin{aligned}
 & v_{units\_on}(u,s,t) \\
-& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >t-p_{min\_up\_time}(u,s,t) && t' <= t}}
+& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >t-p_{min\_up\_time}(u,s,t) \quad t' <= t}}
 v_{units\_started\_up}(u,s,t') \\
 & + \sum_{\substack{(u',n',s',t') \in nonspin\_units\_shut\_down\_indices: \\ (u',s',t') \in (u,s,t)}}
   v_{nonspin\_units\_shut\_down}(u',n',s',t') \\
