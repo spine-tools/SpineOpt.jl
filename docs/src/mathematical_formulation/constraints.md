@@ -633,7 +633,7 @@ The `unit_flow_op` operating segment variable is bounded by the difference betwe
 \begin{aligned}
               & v_{unit\_flow}(u, n_{in}, d, s, t) \\
               & = \sum_{op} \bigg( v_{unit\_flow\_op}(u, n_{out}, d, op, s, t) \\
-              & \hspace4em \cdot p_{unit\_incremental\_heat\_rate}(u, n_{in}, n_{out}, op, s, t) \bigg) \\              
+              & \qquad \cdot p_{unit\_incremental\_heat\_rate}(u, n_{in}, n_{out}, op, s, t) \bigg) \\              
               & + v_{units\_on}(u, s, t) \cdot p_{unit\_idle\_heat\_rate}(u, n_{in}, n_{out}, s, t) \\
               & + v_{units\_started\_up}(u, s, t) \cdot p_{unit\_start\_flow}(u, n_{in}, n_{out}, s, t) \\
               & \forall (u,n_{in},n_{out},s,t) \in unit\_pw\_heat\_rate\_indices \\
@@ -961,8 +961,8 @@ The power transfer distribution factors are a property of the network reactances
               & + v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{to}, s, t) \\
               & - v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{from}, s, t) \\
               & + p_{lodf}(c_{conn}, c_{mon}) \cdot \big( \\              
-              & \hspace2em + v_{connection\_flow}(c_{conn}, n_{conn\_to}, d_{to}, s, t) \\
-              & \hspace2em - v_{connection\_flow}(c_{conn}, n_{conn\_to}, d_{from}, s, t) \big) \\
+              & \quad + v_{connection\_flow}(c_{conn}, n_{conn\_to}, d_{to}, s, t) \\
+              & \quad - v_{connection\_flow}(c_{conn}, n_{conn\_to}, d_{from}, s, t) \big) \\
               & < min( p_{connection\_emergency\_capacity}(c_{mon}, n_{conn\_to}, d_{to}, s, t), p_{connection\_emergency\_capacity}(c_{mon}, n_{conn\_to}, d_{from},s ,t)) \\
               & \forall (c_{mon}, c_{conn}, s, t) \in constraint\_connection\_flow\_lodf\_indices \\
 \end{aligned}
@@ -1050,10 +1050,10 @@ Enforces the relationship between [connection\_intact\_flow](@ref) (flow with al
               & + v_{connection\_intact\_flow}(c, n_{to}, d_{to}, s, t) \\
               & ==\\
               & \sum_{c_{candidate}, n_{to_candidate}} p_{lodf}(c_{candidate}, c) \cdot \Big( \\
-              & \hspace4em + v_{connection\_flow}(c_{candidate}, n_{to_candidate}, d_{from}, s, t) \\
-              & \hspace4em - v_{connection\_flow}(c_{candidate}, n_{to_candidate}, d_{to}, s, t) \\
-              & \hspace4em - v_{connection\_intact\_flow}(c_{candidate}, n_{to_candidate}, d_{from}, s, t) \\
-              & \hspace4em + v_{connection\_intact\_flow}(c_{candidate}, n_{to_candidate}, d_{to}, s, t)  \Big) \\              
+              & \qquad + v_{connection\_flow}(c_{candidate}, n_{to_candidate}, d_{from}, s, t) \\
+              & \qquad - v_{connection\_flow}(c_{candidate}, n_{to_candidate}, d_{to}, s, t) \\
+              & \qquad - v_{connection\_intact\_flow}(c_{candidate}, n_{to_candidate}, d_{from}, s, t) \\
+              & \qquad + v_{connection\_intact\_flow}(c_{candidate}, n_{to_candidate}, d_{to}, s, t)  \Big) \\              
               & \forall (c,n_{to},s,t) \in connection\_flow\_intact\_flow\_indices \\
 \end{aligned}
 ```
