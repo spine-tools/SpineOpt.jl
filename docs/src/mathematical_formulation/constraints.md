@@ -1185,8 +1185,7 @@ minimise:&
 subject\ to:&
 \\
 &flow_{u,n,t} \le p_{unit\_capacity}(u, n, t) \cdot (v_{units\_available} + v_{units\_invested\_available}(u, n, t))\\
-&\sum_{u,n,t} v_{unit\_flow}(u,t) = p_{demand}(n, t) \\
-
+&\sum_{u,n,t} v_{unit\_flow}(u,t) = p_{demand}(n, t)
 \end{aligned}
 ```
 
