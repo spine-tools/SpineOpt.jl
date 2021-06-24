@@ -832,9 +832,9 @@ The parameters [fixed\_pressure\_constant\_1](@ref) and [fixed\_pressure\_consta
 ```math
 \begin{aligned}
   & p_{fixed\_pressure\_constant\_1}(conn,n_{orig},n_{dest},j) \\
-  & = K(conn) \cdot p_{fixed\_pressure}(n_{orig},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j)^2 - p_{fixed\_pressure}(n_{dest},j)^2\\
+  & = K(conn) \cdot p_{fixed\_pressure}(n_{orig},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j)^2 - p_{fixed\_pressure}(n_{dest},j)^2}\\
   & p_{fixed\_pressure\_constant\_0}(conn,n_{orig},n_{dest},j) \\
-  & = K(conn) \cdot p_{fixed\_pressure}(n_{dest},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j)^2 - p_{fixed\_pressure}(n_{dest},j)^2\\
+  & = K(conn) \cdot p_{fixed\_pressure}(n_{dest},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j)^2 - p_{fixed\_pressure}(n_{dest},j)^2}\\
 \end{aligned}
 ```
 where K corrsponds to the natural gas flow constant.
