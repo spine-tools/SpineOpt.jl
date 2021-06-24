@@ -1231,12 +1231,10 @@ In the first benders iteration, the value of the investment variables will have 
 minimise &Z:
 \\
 &Z \ge \sum_{u,t} p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)\\
-
 subject\ to:&
 \\
 Z \ge& + \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)\\
 & + \sum_{u,t}p_{unit\_capacity}(u,t) \cdot \mu_{b,u,t} \cdot (v_{units\_invested}(u,t) - p_{units\_invested}(u,b,t)) \qquad \forall b \\
-
 \end{aligned}
 ```
 Note the benders cuts are added as inequalities because they represent an upper bound on the value we are going to get from adjusting the master problem variables in that benders iteration. If we consider the example of renewable generation - because it's marginal cost is zero, on the first benders iteration, it could look like there would be a lot of value in increasing the capacity because of the marginal values from the sub problems. However, when the capacity variables are increased accordingly and curtailment occurs in the sub-problems, the marginal values will be zero when curtailment occurs and so, other resources may become optimal in subsequent iterations.
