@@ -13,7 +13,7 @@ This package requires [Julia](https://julialang.org/) 1.2 or later.
 
 SpineOpt is designed to be used with [Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox).
 
-1. Install Spine Toolbox as described [here](https://github.com/Spine-project/Spine-Toolbox/blob/master/README.md#development-version).
+1. Install Spine Toolbox as described [here](https://github.com/Spine-project/Spine-Toolbox/blob/master/README.md#installation).
 
 2. Download and install the latest version of Julia for your system as described [here](https://julialang.org/downloads).
 
