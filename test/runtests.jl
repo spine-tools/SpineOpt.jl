@@ -42,14 +42,10 @@ import SpineOpt:
     node_investment_dynamic_time_indices,
     rerun_spineopt_mp
 
-# Override SpineInterface._do_create_db_handler to use the PersistentDBHandler
-# This is so in-memory dbs work
-function SpineInterface._do_create_db_handler(db_url::String, upgrade::Bool)
-    SpineInterface.db_server.PersistentDBHandler(db_url, upgrade)
-end
-
+# Test code uses legacy syntax for `import_data`, so interpret here.
 SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, Dict(kwargs...), "testing")
 
+# Convenience function for resetting the test in-memory db with the `SpineOpt.template`.
 function _load_test_data(db_url, test_data)
     SpineInterface._import_spinedb_api()
     SpineInterface.db_server.close_persistent_db_map(db_url)
