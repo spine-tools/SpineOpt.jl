@@ -285,10 +285,13 @@ function update_variable!(m::Model, name::Symbol, indices::Function; update_name
             lb != nothing && set_lower_bound(var[ind], lb(ind))
             ub != nothing && set_upper_bound(var[ind], ub(ind))
         end
-        history_t = t_history_t(m; t=ind.t)
-        history_t === nothing && continue
-        for history_ind in indices(m; ind..., t=history_t)
-            fix(var[history_ind], val[ind]; force=true)
+        # don't fix history if variable is decomposed
+        if !(name == :node_state && if is_decomposed_storage(node=inds.node))
+            history_t = t_history_t(m; t=ind.t)
+            history_t === nothing && continue
+            for history_ind in indices(m; ind..., t=history_t)
+                fix(var[history_ind], val[ind]; force=true)
+            end
         end
     end
 end

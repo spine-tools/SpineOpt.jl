@@ -148,6 +148,7 @@ function create_model(mip_solver, use_direct_model=false, model_type=:spineopt_o
     m.ext[:marginals] = Dict{Symbol,Dict}()
     m.ext[:outputs] = Dict()
     m.ext[:integer_variables] = []
+    m.ext[:decomposed_variables] = []
     m.ext[:is_subproblem] = false
     m.ext[:objective_lower_bound] = 0.0
     m.ext[:objective_upper_bound] = 0.0
