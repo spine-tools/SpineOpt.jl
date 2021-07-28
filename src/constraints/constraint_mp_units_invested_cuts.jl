@@ -56,12 +56,33 @@ function add_constraint_mp_units_invested_cuts!(m::Model)
                 init=0,
             )
             + expr_sum(
-                ( + node_state[n, s, t]
-                  - node_state_bi(benders_iteration=bi, node=n, t=t)
-                ) * node_state_mv(benders_iteration=bi, node=n, t=t)
-                for (n, s, t) in node_state_indices(m);
-                init=0,
+                # operating cost benefit from increase in node state
+                + expr_sum(
+                    ( + node_state[n, s, t]
+                    - node_state_bi(benders_iteration=bi, node=n, t=t)
+                    ) * node_state_mv(benders_iteration=bi, node=n, t=t)                                
+                    for (n, s, t) in node_state_indices(m; node=n);
+                    init=0,                      
+                )
+                # operating cost of net node state increase from unit flows
+                + expr_sum(
+                    ( + unit_flow[u, n, d, s, t]
+                      - unit_flow_bi(benders_iteration=bi, unit=u, node=n, direction=d, t=t)
+                    ) * unit_flow_mv(benders_iteration=bi, unit=u, node=n, direction=d, t=t)                                
+                    for (u, n, d, s, t) in unit_flow_indices(m; node=n);
+                    init=0,                      
+                )
+                # operating cost of net node state increase from connection flows
+                + expr_sum(
+                    ( + connection_flow[c, n, d, s, t]
+                      - connection_flow_bi(benders_iteration=bi, connection=c, node=n, direction=d, t=t)
+                    ) * connection_flow_mv(benders_iteration=bi, connection=c, node=n, direction=d, t=t)                                
+                    for (c, n, d, s, t) in connection_flow_indices(m; node=n);
+                    init=0,                      
+                )
+                for n in candidate_storages() if is_decomposed_storage(node=n)
             )
+            
         ) for bi in last(benders_iteration()) for (m1, t1) in mp_objective_lowerbound_indices(m)
     )
 end

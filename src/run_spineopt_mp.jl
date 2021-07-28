@@ -178,7 +178,9 @@ function add_mp_variables!(m; log_level=3)
     @timelog log_level 3 "- [variable_mp_storages_invested]" add_variable_storages_invested!(m)    
     @timelog log_level 3 "- [variable_mp_storages_invested_available]" add_variable_storages_invested_available!(m)
     @timelog log_level 3 "- [variable_mp_storages_decommissioned]" add_variable_storages_decommissioned!(m)
-    @timelog log_level 3 "- [variable_mp_node_state]" add_variable_mp_node_state!(m)    
+    @timelog log_level 3 "- [variable_mp_node_state]" add_variable_mp_node_state!(m)
+    @timelog log_level 3 "- [variable_unit_flow]" add_variable_unit_flow!(m)
+    @timelog log_level 3 "- [variable_connection_flow]" add_variable_connection_flow!(m)
 end
 
 
@@ -200,6 +202,8 @@ function add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_node_state_increase]" add_constraint_mp_node_state_increase!(m)
     @timelog log_level 3 "- [constraint_node_state_decrease]" add_constraint_mp_node_state_decrease!(m)
     @timelog log_level 3 "- [constraint_mp_node_state_capacity]" add_constraint_mp_node_state_capacity!(m)
+    @timelog log_level 3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
+    @timelog log_level 3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)
 
     # Name constraints
     for (con_key, cons) in m.ext[:constraints]
