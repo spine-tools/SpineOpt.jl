@@ -460,7 +460,7 @@ function generate_variable_indexing_support()
         [:unit, :node, :direction, :temporal_block],
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
-            for (u, ng, d) in Iterators.flatten((indices(max_startup_ramp), indices(ramp_up_limit)))
+            for (u, ng, d) in indices(max_startup_ramp)#, indices(ramp_up_limit)))
             for n in members(ng) for tb in node__temporal_block(node=n)
         ),
     )
@@ -481,6 +481,7 @@ function generate_variable_indexing_support()
             for (u, n, d, tb) in unit__node__direction__temporal_block(
                 unit=u, node=n, direction=d, temporal_block=tb, _compact=false,
             )
+            if !is_non_spinning(node=n)
         ),
     )
     shut_down_unit__node__direction__temporal_block = RelationshipClass(
@@ -488,7 +489,7 @@ function generate_variable_indexing_support()
         [:unit, :node, :direction, :temporal_block],
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
-            for (u, ng, d) in Iterators.flatten((indices(max_shutdown_ramp), indices(ramp_down_limit)))
+            for (u, ng, d) in indices(max_shutdown_ramp)
             for n in members(ng) for tb in node__temporal_block(node=n)
         ),
     )
@@ -509,6 +510,7 @@ function generate_variable_indexing_support()
             for (u, n, d, tb) in unit__node__direction__temporal_block(
                 unit=u, node=n, direction=d, temporal_block=tb, _compact=false,
             )
+            if !is_non_spinning(node=n)
         ),
     )
     @eval begin

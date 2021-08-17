@@ -135,6 +135,7 @@
         ["node", "has_voltage_angle", false, "boolean_value_list", "A boolean flag for whether a `node` has a `node_voltage_angle` variable."],
         ["node", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["node", "is_reserve_node", false, "boolean_value_list", "A boolean flag for whether a `node` is acting as a `reserve_node`"],
+        ["node", "is_non_spinning", false, "boolean_value_list", "A boolean flag for whether a `node` is acting as a non-spinning reserve"],
         ["node", "minimum_reserve_activation_time", null, null, "Duration a certain reserve product needs to be online/available"],
         ["node", "nodal_balance_sense", "==", "constraint_sense_list", "A selector for `nodal_balance` constraint sense."],
         ["node", "node_opf_type", "node_opf_type_normal", "node_opf_type_list", "A selector for the reference `node` (slack bus) when PTDF-based DC load-flow is enabled."],

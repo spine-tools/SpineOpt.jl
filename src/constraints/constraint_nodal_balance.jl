@@ -34,7 +34,7 @@ function add_constraint_nodal_balance!(m::Model)
             + node_injection[n, s, t]
             # Commodity flows from connections
             + expr_sum(
-                connection_flow[conn, n, d, s, t] for (conn, n, d, s, t) in connection_flow_indices(
+                connection_flow[conn, n1, d, s, t] for (conn, n1, d, s, t) in connection_flow_indices(
                     m;
                     node=n,
                     direction=direction(:to_node),
@@ -45,7 +45,7 @@ function add_constraint_nodal_balance!(m::Model)
             )
             # Commodity flows to connections
             - expr_sum(
-                connection_flow[conn, n, d, s, t] for (conn, n, d, s, t) in connection_flow_indices(
+                connection_flow[conn, n1, d, s, t] for (conn, n1, d, s, t) in connection_flow_indices(
                     m;
                     node=n,
                     direction=direction(:from_node),
@@ -74,7 +74,7 @@ function _connection_nodes(connection, node)
     (
         n
         for connection__node in (connection__from_node, connection__to_node)
-        for n in connection__node(connection=connection, direction=anything)
-            if node__commodity(node=node) == node__commodity(node=n)
+        for n in members(connection__node(connection=connection, direction=anything))
+            if node__commodity(node=members(node)) == node__commodity(node=n)
     )
 end

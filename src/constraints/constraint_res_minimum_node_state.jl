@@ -42,7 +42,7 @@ function add_constraint_res_minimum_node_state!(m::Model)
                 unit_flow[u, n_res, d, s, t_after]
                 * duration(t_after)
                 * _div(
-                    minimum_reserve_activation_time[(node=n_res, stochastic_scenario=s, analysis_time=t0, t=t_after)],
+                    minimum_reserve_activation_time(node=n_res, stochastic_scenario=s, analysis_time=t0, t=t_after), #TODO: fix time dependent paramter call
                     end_(t_after) - start(t_after),
                 ) / fix_ratio_out_in_unit_flow[
                     (unit=u, node1=n_conv, node2=n_stor, stochastic_scenario=s, analysis_time=t0, t=t_after),
