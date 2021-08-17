@@ -460,7 +460,7 @@ function generate_variable_indexing_support()
         [:unit, :node, :direction, :temporal_block],
         unique(
             (unit=u, node=n, direction=d, temporal_block=tb)
-            for (u, ng, d) in indices(max_startup_ramp)#, indices(ramp_up_limit)))
+            for (u, ng, d) in indices(max_startup_ramp)
             for n in members(ng) for tb in node__temporal_block(node=n)
         ),
     )
