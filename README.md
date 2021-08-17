@@ -13,7 +13,7 @@ This package requires [Julia](https://julialang.org/) 1.2 or later.
 
 SpineOpt is designed to be used with [Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox).
 
-1. Install Spine Toolbox as described [here](https://github.com/Spine-project/Spine-Toolbox/blob/master/README.md#development-version).
+1. Install Spine Toolbox as described [here](https://github.com/Spine-project/Spine-Toolbox/blob/master/README.md#installation).
 
 2. Download and install the latest version of Julia for your system as described [here](https://julialang.org/downloads).
 
@@ -63,6 +63,32 @@ please see [here](https://spine-toolbox.readthedocs.io/en/latest/case_study_a5.h
 ### Documentation
 
 SpineOpt documentation, including getting started guide and reference, can be found here: [Documentation](https://spine-project.github.io/SpineOpt.jl/latest/index.html).
+Alternatively, one can build the documentation locally, as it is bundled in with the source code.
+
+First, **navigate into the SpineOpt main folder** and activate the `docs` environment from the julia package manager:
+
+```julia
+(SpineOpt) pkg> activate docs
+(docs) pkg>
+```
+
+Next, in order to make sure that the `docs` environment uses the same SpineOpt version it is contained within,
+install the package locally into the `docs` environment:
+
+```julia
+(docs) pkg> develop .
+Resolving package versions...
+<lots of packages being checked>
+(docs) pkg>
+```
+
+Now, you should be able to build the documentation by exiting the package manager and typing:
+
+```julia
+julia> include("docs/make.jl")
+```
+
+This should build the documentation on your computer, and you can access it in the `docs/build/` folder.
 
 ### Troubleshooting
 
@@ -129,35 +155,6 @@ At line:1 char:35
 
 3. Try to install SpineOpt again.
 
-
-### Building the documentation
-
-The SpineOpt documentation is bundled in with the source code, and can be built locally.
-First, **navigate into the SpineOpt main folder** and activate the `docs` environment from the julia package manager:
-
-```julia
-(SpineOpt) pkg> activate docs
-(docs) pkg>
-```
-
-Next, in order to make sure that the `docs` environment uses the same SpineOpt version it is contained within,
-install the package locally into the `docs` environment:
-
-```julia
-(docs) pkg> develop .
-Resolving package versions...
-<lots of packages being checked>
-(docs) pkg>
-```
-
-Now, you should be able to build the documentation by exiting the package manager and typing:
-
-```julia
-julia> include("docs/make.jl")
-```
-
-This should build the documentation on your computer, and you can access it in the `docs/build/` folder.
-
 ### Reporting Issues and Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
@@ -165,3 +162,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 ### License
 
 SpineOpt is licensed under GNU Lesser General Public License version 3.0 or later.
+
+### Acknowledgements
+
+<center>
+<table width=500px frame="none">
+<tr>
+<td valign="middle" width=100px>
+<img src=https://europa.eu/european-union/sites/europaeu/files/docs/body/flag_yellow_low.jpg alt="EU emblem" width=100%></td>
+<td valign="middle">This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 774629.</td>
+</table>
+</center>
