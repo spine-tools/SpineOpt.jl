@@ -48,7 +48,7 @@ function rerun_spineopt_sp(
     calculate_duals = duals_calculation_needed(m)
     while optimize
         @log log_level 1 "Window $k: $(current_window(m))"
-        optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals, mip_solver=mip_solver, lp_solver=lp_solver) || break
+        optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals, mip_solver=mip_solver, lp_solver=lp_solver, use_direct_model=use_direct_model) || break
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)

@@ -39,7 +39,8 @@ function add_constraint_unit_flow_capacity!(m::Model)
                     direction=d,
                     stochastic_scenario=s,
                     t=t_in_t(m; t_long=t),
-                );
+                )
+                if !non_spinning(node=n);
                 init=0,
             )
             <=
