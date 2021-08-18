@@ -29,6 +29,10 @@ function preprocess_data_structure(; log_level=3)
     expand_model_default_relationships()
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
+    generate_report()
+    generate_output()
+    generate_report__output()
+    generate_model__report()
     # NOTE: generate direction before calling `generate_network_components`,
     # so calls to `connection__from_node` don't corrupt lookup cache
     add_connection_relationships()
@@ -681,6 +685,113 @@ function expand_model__default_temporal_block()
         ),
     )
 end
+
+"""
+    generate_report__output()
+
+Generate the `report__output` relationship for all possible combinations of outputs and reports, only if no relationship between report and output exists.
+"""
+function generate_report__output()
+    isempty(report__output()) || return
+    add_relationships!(
+        report__output,
+        [(report=r, output=out) for r in report() for out in output()],
+    )
+end
+
+"""
+    generate_model__report()
+
+Generate the `report__output` relationship for all possible combinations of outputs and reports, only if no relationship between report and output exists.
+"""
+function generate_model__report()
+    isempty(model__report()) || return
+    add_relationships!(
+        model__report,
+        [(model=m, report=r) for m in model() for r in report()]
+    )
+end
+
+"""
+    generate_report()
+
+Generate a default `report` object, only if no report objects exist.
+"""
+function generate_report()
+    isempty(report()) || return
+    add_objects!(
+        report,
+        [Object(r) for r in [:default_report,]]
+    )
+end
+
+"""
+    generate_output()
+
+Generate the `output` object for all possible variables, but only if no output objects exist.
+"""
+function generate_output()
+    isempty(output()) || return
+    add_objects!(output,
+        [Object(x)
+        for x in
+            [
+            ### reported variables:
+                :binary_gas_connection_flow,
+                :connection_flow,
+                :connection_intact_flow,
+                :connections_decommissioned,
+                :connections_invested_available,
+                :connections_invested,
+                :mp_objective_lowerbound,
+                :node_injection,
+                :node_pressure,
+                :node_slack_neg,
+                :node_slack_pos,
+                :node_state,
+                :node_voltage_angle,
+                :nonspin_ramp_down_unit_flow,
+                :nonspin_ramp_up_unit_flow,
+                :nonspin_units_shut_down,
+                :nonspin_units_started_up,
+                :ramp_down_unit_flow,
+                :ramp_up_unit_flow,
+                :shut_down_unit_flow,
+                :start_up_unit_flow,
+                :storages_decommissioned,
+                :storages_invested_available,
+                :storages_invested,
+                :unit_flow_op,
+                :unit_flow,
+                :units_available,
+                :units_invested_available,
+                :units_invested,
+                :units_mothballed,
+                :units_on,
+                :units_shut_down,
+                :units_started_up,
+                :connection_avg_throughflow,#?
+                :connection_avg_intact_throughflow,#?
+            ### reported cost terms:
+                :variable_om_costs,
+                :fixed_om_costs,
+                :taxes,
+                :fuel_costs,
+                :unit_investment_costs,
+                :connection_investment_costs,
+                :storage_investment_costs,
+                :start_up_costs,
+                :shut_down_costs,
+                :objective_penalties,
+                :connection_flow_costs,
+                :renewable_curtailment_costs,
+                :res_proc_costs,
+                :ramp_costs,
+                :total_costs,
+                ]] #var_dict should be an array of symbols with all var names
+    )
+end
+
 
 """
     generate_benders_structure()
