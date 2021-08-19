@@ -30,7 +30,6 @@ function preprocess_data_structure(; log_level=3)
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
     generate_report()
-    generate_output()
     generate_report__output()
     generate_model__report()
     # NOTE: generate direction before calling `generate_network_components`,
@@ -724,74 +723,6 @@ function generate_report()
         [Object(r) for r in [:default_report,]]
     )
 end
-
-"""
-    generate_output()
-
-Generate the `output` object for all possible variables, but only if no output objects exist.
-"""
-function generate_output()
-    isempty(output()) || return
-    add_objects!(output,
-        [Object(x)
-        for x in
-            [
-            ### reported variables:
-                :binary_gas_connection_flow,
-                :connection_flow,
-                :connection_intact_flow,
-                :connections_decommissioned,
-                :connections_invested_available,
-                :connections_invested,
-                :mp_objective_lowerbound,
-                :node_injection,
-                :node_pressure,
-                :node_slack_neg,
-                :node_slack_pos,
-                :node_state,
-                :node_voltage_angle,
-                :nonspin_ramp_down_unit_flow,
-                :nonspin_ramp_up_unit_flow,
-                :nonspin_units_shut_down,
-                :nonspin_units_started_up,
-                :ramp_down_unit_flow,
-                :ramp_up_unit_flow,
-                :shut_down_unit_flow,
-                :start_up_unit_flow,
-                :storages_decommissioned,
-                :storages_invested_available,
-                :storages_invested,
-                :unit_flow_op,
-                :unit_flow,
-                :units_available,
-                :units_invested_available,
-                :units_invested,
-                :units_mothballed,
-                :units_on,
-                :units_shut_down,
-                :units_started_up,
-                :connection_avg_throughflow,#?
-                :connection_avg_intact_throughflow,#?
-            ### reported cost terms:
-                :variable_om_costs,
-                :fixed_om_costs,
-                :taxes,
-                :fuel_costs,
-                :unit_investment_costs,
-                :connection_investment_costs,
-                :storage_investment_costs,
-                :start_up_costs,
-                :shut_down_costs,
-                :objective_penalties,
-                :connection_flow_costs,
-                :renewable_curtailment_costs,
-                :res_proc_costs,
-                :ramp_costs,
-                :total_costs,
-                ]] #var_dict should be an array of symbols with all var names
-    )
-end
-
 
 """
     generate_benders_structure()
