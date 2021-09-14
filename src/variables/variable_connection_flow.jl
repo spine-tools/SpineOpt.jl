@@ -38,7 +38,8 @@ function connection_flow_indices(
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
     node = members(node)
-    [
+    unique(
+        [
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
         for (conn, n, d, tb) in connection__node__direction__temporal_block(
             connection=connection,
@@ -53,7 +54,8 @@ function connection_flow_indices(
             temporal_block=tb,
             t=t,
         )
-    ]
+        ]
+    )
 end
 
 """
