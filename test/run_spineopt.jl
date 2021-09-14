@@ -57,8 +57,8 @@ end
         ],
     )
     @testset "rolling" begin
-        db_map = _load_test_data(url_in, test_data)
-        db_api.create_new_spine_database(url_out)
+        _load_test_data(url_in, test_data)
+        SpineInterface.db_server.close_persistent_db_map(url_out)
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
         vom_cost_data = [100 * k for k in 0:23]
         vom_cost = Dict("type" => "time_series", "data" => PyVector(vom_cost_data), "index" => index)
@@ -73,13 +73,13 @@ end
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map, url_out; log_level=0)
+        
+        m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:constraints][:unit_flow_capacity]
         using_spinedb(url_out, Y)
         cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
@@ -98,8 +98,8 @@ end
         end
     end
     @testset "rolling without varying terms" begin
-        db_map = _load_test_data(url_in, test_data)
-        db_api.create_new_spine_database(url_out)
+        _load_test_data(url_in, test_data)
+        SpineInterface.db_server.close_persistent_db_map(url_out)
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
         vom_cost = 1200
         demand = 24
@@ -112,13 +112,13 @@ end
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map, url_out; log_level=0)
+        
+        m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:constraints][:unit_flow_capacity]
         using_spinedb(url_out, Y)
         cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
@@ -137,21 +137,21 @@ end
         end
     end
     @testset "unfeasible" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         demand = 100
         object_parameter_values = [["node", "node_b", "demand", demand]]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand - 1]]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map, url_out; log_level=0)
+        
+        m = run_spineopt(url_in, url_out; log_level=0)
         @test termination_status(m) != JuMP.MathOptInterface.OPTIMAL
     end
     @testset "unknown output" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         demand = 100
         vom_cost = 50
         objects = [["output", "unknown_output"]]
@@ -161,13 +161,13 @@ end
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        @test_logs (:warn, "can't find a value for 'unknown_output'") run_spineopt(db_map, url_out; log_level=0)
+        @test_logs (:warn, "can't find a value for 'unknown_output'") run_spineopt(url_in, url_out; log_level=0)
     end
 end

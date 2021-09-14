@@ -45,8 +45,8 @@ function constraint_cyclic_node_state_indices(m::Model)
     unique(
         (node=n, stochastic_path=path, t_start=t_start, t_end=t_end)
         for (n, blk) in indices(cyclic_condition) if cyclic_condition(node=n, temporal_block=blk)
-        for t_start in filter(x -> blk in blocks(x), t_before_t(m; t_after=first(time_slice(m; temporal_block=blk))))
-        for t_end in last(time_slice(m; temporal_block=blk)) for path in active_stochastic_paths(
+        for t_start in filter(x -> blk in blocks(x), t_before_t(m; t_after=first(time_slice(m; temporal_block=members(blk)))))
+        for t_end in last(time_slice(m; temporal_block=members(blk))) for path in active_stochastic_paths(
             unique(ind.stochastic_scenario for ind in node_state_indices(m; node=n, t=[t_start, t_end])),
         )
     )

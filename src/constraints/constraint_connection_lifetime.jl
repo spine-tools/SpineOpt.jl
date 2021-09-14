@@ -24,7 +24,7 @@ Constrain connections_invested_available by the investment lifetime of a connect
 """
 function add_constraint_connection_lifetime!(m::Model)
     @fetch connections_invested_available, connections_invested = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:connection_lifetime] = Dict(
         (connection=conn, stochastic_path=s, t=t) => @constraint(
             m,
@@ -63,7 +63,7 @@ function add_constraint_connection_lifetime!(m::Model)
 end
 
 function constraint_connection_lifetime_indices(m::Model)
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     unique(
         (connection=conn, stochastic_path=path, t=t)
         for conn in indices(connection_investment_lifetime)

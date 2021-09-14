@@ -26,7 +26,7 @@ in active otherwise where contraint connection_flow_capacity will constraint the
 """
 function add_constraint_candidate_connection_flow_lb!(m::Model)
     @fetch connection_flow, connection_intact_flow, connections_invested_available = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:candidate_connection_flow_lb] = Dict(
         (connection=conn, node=n, direction=d, stochastic_path=s, t=t) => @constraint(
             m,

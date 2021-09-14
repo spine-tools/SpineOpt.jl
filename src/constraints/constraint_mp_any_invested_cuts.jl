@@ -25,7 +25,6 @@ Adds Benders optimality cuts for the units_available constraint. This tells the 
 """
 
 function add_constraint_mp_any_invested_cuts!(m::Model)
-    # FIXME: rename this to ...mp_stuff_invested_cuts, since it's not only units
     @fetch mp_objective_lowerbound, units_invested_available, connections_invested_available, storages_invested_available = m.ext[:variables]
     m.ext[:constraints][:mp_units_invested_cut] = Dict(
         (benders_iteration=bi, t=t1) => @constraint(

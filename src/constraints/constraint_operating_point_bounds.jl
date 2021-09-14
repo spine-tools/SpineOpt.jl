@@ -25,7 +25,7 @@ the capacity of the unit.
 """
 function add_constraint_operating_point_bounds!(m::Model)
     @fetch unit_flow_op, units_available = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:operating_point_bounds] = Dict(
         (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t) => @constraint(
             m,

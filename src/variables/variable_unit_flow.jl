@@ -63,7 +63,7 @@ end
 Add `unit_flow` variables to model `m`.
 """
 function add_variable_unit_flow!(m::Model)
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     add_variable!(
         m,
         :unit_flow,

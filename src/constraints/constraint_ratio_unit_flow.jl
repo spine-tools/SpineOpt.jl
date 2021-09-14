@@ -27,7 +27,7 @@ Note that the `<sense>_ratio_<directions>_unit_flow` parameter uses the stochast
 """
 function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, sense, d1, d2)
     @fetch unit_flow, units_on = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][ratio.name] = Dict(
         (unit=u, node1=ng1, node2=ng2, stochastic_path=s, t=t) => sense_constraint(
             m,

@@ -44,6 +44,7 @@ function binary_gas_connection_flow_indices(
             connection=intersect(connection, SpineOpt.connection(has_binary_gas_flow=true)),
             node=intersect(node, SpineOpt.node(has_state=false)),
             stochastic_scenario=stochastic_scenario,
+            direction=direction,
             t=t,
             temporal_block=temporal_block,
         )
@@ -57,7 +58,7 @@ set_bin(x) = true
 Add `connection_flow` variables to model `m`.
 """
 function add_variable_binary_gas_connection_flow!(m::Model)
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     add_variable!(
         m,
         :binary_gas_connection_flow,

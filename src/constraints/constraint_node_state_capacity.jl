@@ -24,7 +24,7 @@ Limit the maximum value of a `node_state` variable under `node_state_cap`, if it
 """
 function add_constraint_node_state_capacity!(m::Model)
     @fetch node_state, storages_invested_available = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:node_state_capacity] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,

@@ -25,7 +25,7 @@ Limit the maximum ramp at the shut down of a unit.
 # TODO: Good to go for first try; make sure capacities are well defined
 function add_constraint_max_shut_down_ramp!(m::Model)
     @fetch units_shut_down, shut_down_unit_flow = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:max_shut_down_ramp] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
@@ -61,7 +61,7 @@ function constraint_max_shut_down_ramp_indices(m::Model)
                 ind.stochastic_scenario for ind in Iterators.flatten((
                     units_on_indices(m; unit=u, t=t),
                     shut_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
-                ))  # Current `units_on` and `units_available`, plus `units_shut_down` during past time slices
+                ))
             ),
         )
     )

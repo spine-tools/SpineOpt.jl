@@ -24,20 +24,19 @@ Limit the units_online by the number of available units.
 """
 function add_constraint_units_available!(m::Model)
     @fetch units_available, units_invested_available = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:units_available] = Dict(
         (unit=u, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + units_available[u, s, t]
-            ==
-            + unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] * (
-                + number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] + expr_sum(
-                    units_invested_available[u, s, t1] for (u, s, t1) in units_invested_available_indices(
-                        m;
-                        unit=u,
-                        stochastic_scenario=s,
-                        t=t_in_t(m; t_short=t),
-                    );
+            +units_available[u, s, t]
+            <=
+            +unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] * (
+                +number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
+                + expr_sum(
+                    units_invested_available[u, s, t1]
+                    for
+                    (u, s, t1) in
+                    units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t_in_t(m; t_short=t));
                     init=0,
                 )
             )

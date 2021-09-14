@@ -27,7 +27,7 @@ Note that the `<sense>_ratio_<directions>_connection_intact_flow` parameter uses
 """
 function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
     @fetch connection_intact_flow = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:ratio_out_in_connection_intact_flow] = Dict(
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=s, t=t) => @constraint(
             m,
@@ -61,7 +61,7 @@ function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
 end
 
 function constraint_ratio_out_in_connection_intact_flow_indices(m::Model)
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     unique(
         (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
         for conn in connection(connection_monitored=true, has_ptdf=true)

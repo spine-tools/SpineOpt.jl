@@ -43,7 +43,7 @@ end
 Add `node_state` variables to model `m`.
 """
 function add_variable_node_state!(m::Model)
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     add_variable!(
         m,
         :node_state,

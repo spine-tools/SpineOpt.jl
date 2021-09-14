@@ -23,7 +23,7 @@ Set a fixed compression ratio between two nodes connected through active pipelin
 """
 function add_constraint_compression_ratio!(m::Model)
     @fetch node_pressure = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:compression_ratio] = Dict(
         (connection=conn, node1=n_orig, node2=n_dest, stochastic_path=s, t=t) => @constraint(
             m,

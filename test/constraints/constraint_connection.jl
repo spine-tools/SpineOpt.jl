@@ -86,12 +86,11 @@
     )
     @testset "constraint_connection_flow_capacity" begin
         connection_capacity = 200
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         relationship_parameter_values =
             [["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity]]
-        db_api.import_data(db_map; relationship_parameter_values=relationship_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
         constraint = m.ext[:constraints][:connection_flow_capacity]
         @test length(constraint) == 2
@@ -111,16 +110,18 @@
         binary = Dict("connection_ca" => true)
         relationships = [["connection__node__node", [ "connection_ca", "node_c", "node_a"]]]
         fixed_pressure_constant_1_ = Dict(("connection_ca", "node_c","node_a") => 0)
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         object_parameter_values = [
             ["connection", "connection_ca", "has_binary_gas_flow", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
         ]
         relationship_parameter_values =
             [["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_1", fixed_pressure_constant_1_[("connection_ca", "node_c","node_a")]]]
-        db_api.import_data(db_map; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(
+            url_in; 
+            object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
         var_binary_flow = m.ext[:variables][:binary_gas_connection_flow]
         var_pressure = m.ext[:variables][:node_pressure]
@@ -158,7 +159,7 @@
         fixed_pressure_constant_0_raw = [53.422, 58.652, 63.456, 0.0, 32.348, 24.57, 0.0, 0.0, 35.745]
         fixed_pressure_constant_1_ = Dict(("connection_ca", "node_c","node_a") => Dict("type" => "array", "value_type" => "float", "data" => PyVector(fixed_pressure_constant_1_raw)))
         fixed_pressure_constant_0_ = Dict(("connection_ca", "node_c","node_a") => Dict("type" => "array", "value_type" => "float", "data" => PyVector(fixed_pressure_constant_0_raw)))
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         object_parameter_values = [
             ["node", "node_a", "has_pressure", has_pressure["node_a"]],
             ["node", "node_c", "has_pressure", has_pressure["node_c"]],
@@ -169,9 +170,9 @@
             [["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_1", fixed_pressure_constant_1_[("connection_ca", "node_c","node_a")]],
             ["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_0", fixed_pressure_constant_0_[("connection_ca", "node_c","node_a")]]
             ]
-        db_api.import_data(db_map; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
         var_binary_flow = m.ext[:variables][:binary_gas_connection_flow]
         var_node_pressure = m.ext[:variables][:node_pressure]
@@ -221,16 +222,16 @@
             ["connection__to_node", [ "connection_ca", "node_c"]]
             ]
         fixed_pr_constant_1_ = Dict(("connection_ca", "node_c","node_a") => 0)
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         object_parameter_values = [
             ["connection", "connection_ca", "has_binary_gas_flow", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
         ]
         relationship_parameter_values =
             [["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_1", fixed_pr_constant_1_[("connection_ca", "node_c","node_a")]]]
-        db_api.import_data(db_map; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_binary_flow = m.ext[:variables][:binary_gas_connection_flow]
         constraint = m.ext[:constraints][:connection_unitary_gas_flow]
         @test length(constraint) == 2
@@ -274,10 +275,10 @@
             [
             ["connection__node__node", ["connection_ca", "node_a","node_c"], "fix_ratio_out_in_connection_flow", fix_ratio_out_in[("connection_ca", "node_a","node_c")]],
             ]
-        db_map = _load_test_data(url_in, test_data)
-        db_api.import_data(db_map; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        _load_test_data(url_in, test_data)
+        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
         var_voltage_angle = m.ext[:variables][:node_voltage_angle]
         constraint = m.ext[:constraints][:node_voltage_angle]
@@ -309,7 +310,7 @@
     end
     @testset "constraint_connection_flow_capacity_investments" begin
         connection_capacity = 200
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
 
         object_parameter_values = [
             ["connection", "connection_ab", "candidate_connections", 1],
@@ -327,14 +328,14 @@
         relationship_parameter_values =
             [["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity]]
 
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             object_parameter_values=object_parameter_values,
             relationships=relationships,
             relationship_parameter_values=relationship_parameter_values,
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
         var_connections_invested_available = m.ext[:variables][:connections_invested_available]
 
@@ -357,7 +358,7 @@
         # TODO: node_ptdf_threshold
         conn_r = 0.9
         conn_x = 0.1
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
@@ -397,15 +398,15 @@
             ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
 
         var_connection_flow = m.ext[:variables][:connection_intact_flow]
         var_node_injection = m.ext[:variables][:node_injection]
@@ -438,7 +439,7 @@
         conn_emergency_cap_ab = 80
         conn_emergency_cap_bc = 100
         conn_emergency_cap_ca = 150
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
@@ -488,15 +489,15 @@
                 conn_emergency_cap_ca,
             ],
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
         constraint = m.ext[:constraints][:connection_flow_lodf]
         @test length(constraint) == 3
@@ -573,21 +574,21 @@
             h_delay = div(conn_flow_minutes_delay, 60)
             rem_minutes_delay = (conn_flow_minutes_delay % 60) / 60
             @testset for p in ("min", "fix", "max")
-                db_map = _load_test_data(url_in, test_data)
+                _load_test_data(url_in, test_data)
                 sense = senses_by_prefix[p]
                 ratio = string(p, "_ratio_out_in_connection_flow")
                 relationship_parameter_values = [
                     [class, relationship, "connection_flow_delay", connection_flow_delay],
                     [class, relationship, ratio, flow_ratio],
                 ]
-                db_api.import_data(
-                    db_map;
+                SpineInterface.import_data(
+                    url_in;
                     relationships=relationships,
                     object_parameter_values=object_parameter_values,
                     relationship_parameter_values=relationship_parameter_values,
                 )
-                db_map.commit_session("Add test data")
-                m = run_spineopt(db_map; log_level=0, optimize=false)
+                
+                m = run_spineopt(url_in; log_level=0, optimize=false)
                 var_connection_flow = m.ext[:variables][:connection_flow]
                 constraint = m.ext[:constraints][Symbol(ratio)]
                 @test length(constraint) == 2
@@ -630,16 +631,16 @@
         end
     end
     @testset "constraint_connections_invested_transition" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         candidate_connections = 1
         object_parameter_values = [["connection", "connection_ab", "candidate_connections", candidate_connections]]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
             ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
         ]
-        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connections_invested_available = m.ext[:variables][:connections_invested_available]
         var_connections_invested = m.ext[:variables][:connections_invested]
         var_connections_decommissioned = m.ext[:variables][:connections_decommissioned]
@@ -669,7 +670,7 @@
         end
     end
     @testset "constraint_connections_invested_transition_mp" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         candidate_connections = 4
         object_parameter_values = [
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
@@ -681,9 +682,9 @@
             ["connection__investment_stochastic_structure", ["connection_ab", "investments_deterministic"]],
             ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
         ]
-        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-        db_map.commit_session("Add test data")
-        m, mp = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+        
+        m, mp = run_spineopt(url_in; log_level=0, optimize=false)
         var_connections_invested_available = m.ext[:variables][:connections_invested_available]
         var_connections_invested = m.ext[:variables][:connections_invested]
         var_connections_decommissioned = m.ext[:variables][:connections_decommissioned]
@@ -744,7 +745,7 @@
         candidate_connections = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
-            db_map = _load_test_data(url_in, test_data)
+            _load_test_data(url_in, test_data)
             connection_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["connection", "connection_ab", "candidate_connections", candidate_connections],
@@ -755,9 +756,9 @@
                 ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
                 ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
             ]
-            db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-            db_map.commit_session("Add test data")
-            m = run_spineopt(db_map; log_level=0, optimize=false)
+            SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+            
+            m = run_spineopt(url_in; log_level=0, optimize=false)
             var_connections_invested_available = m.ext[:variables][:connections_invested_available]
             var_connections_invested = m.ext[:variables][:connections_invested]
             constraint = m.ext[:constraints][:connection_lifetime]
@@ -797,7 +798,7 @@
         candidate_connections = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
-            db_map = _load_test_data(url_in, test_data)
+            _load_test_data(url_in, test_data)
             connection_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["connection", "connection_ab", "candidate_connections", candidate_connections],
@@ -812,9 +813,9 @@
                 ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
                 ["connection__investment_stochastic_structure", ["connection_ab", "investments_deterministic"]],
             ]
-            db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-            db_map.commit_session("Add test data")
-            m, mp = run_spineopt(db_map; log_level=0, optimize=false)
+            SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+            
+            m, mp = run_spineopt(url_in; log_level=0, optimize=false)
             var_connections_invested_available = m.ext[:variables][:connections_invested_available]
             var_connections_invested = m.ext[:variables][:connections_invested]
             constraint = m.ext[:constraints][:connection_lifetime]
@@ -882,16 +883,16 @@
         end
     end
     @testset "constraint_connections_invested_available" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         candidate_connections = 7
         object_parameter_values = [["connection", "connection_ab", "candidate_connections", candidate_connections]]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
             ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
         ]
-        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connections_invested_available = m.ext[:variables][:connections_invested_available]
         constraint = m.ext[:constraints][:connections_invested_available]
         @test length(constraint) == 2
@@ -907,7 +908,7 @@
         end
     end
     @testset "constraint_connections_invested_available_mp" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         candidate_connections = 7
         object_parameter_values = [
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
@@ -919,9 +920,9 @@
             ["connection__investment_stochastic_structure", ["connection_ab", "investments_deterministic"]],
             ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
         ]
-        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-        db_map.commit_session("Add test data")
-        m, mp = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+        
+        m, mp = run_spineopt(url_in; log_level=0, optimize=false)
         var_connections_invested_available = m.ext[:variables][:connections_invested_available]
         constraint = m.ext[:constraints][:connections_invested_available]
         @test length(constraint) == 2
@@ -951,7 +952,7 @@
     end
     @testset "constraint_unit_constraint_node_connection" begin
         @testset for sense in ("==", ">=", "<=")
-            db_map = _load_test_data(url_in, test_data)
+            _load_test_data(url_in, test_data)
             rhs = 40
             unit_flow_coefficient = 25
             connection_flow_coefficient = 25
@@ -985,22 +986,22 @@
                 [relationships[4]..., "demand_coefficient", demand_coefficient],
                 [relationships[4]..., "node_state_coefficient", node_state_coefficient],
             ]
-            db_api.import_data(
-                db_map;
+            SpineInterface.import_data(
+                url_in;
                 objects=objects,
                 relationships=relationships,
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values,
             )
-            db_map.commit_session("Add test data")
-            m = run_spineopt(db_map; log_level=0, optimize=false)
+            
+            m = run_spineopt(url_in; log_level=0, optimize=false)
             var_unit_flow = m.ext[:variables][:unit_flow]
             var_units_on = m.ext[:variables][:units_on]
             var_units_started_up = m.ext[:variables][:units_started_up]
             var_connection_flow = m.ext[:variables][:connection_flow]
             var_node_state = m.ext[:variables][:node_state]
             constraint = m.ext[:constraints][:unit_constraint]
-            @test length(constraint) == 1
+            @test length(constraint) == 2
             key_a = (unit(:unit_c), node(:node_c), direction(:to_node))
             key_b = (connection(:connection_ab), node(:node_b), direction(:to_node))
 
@@ -1035,7 +1036,7 @@
         conn_r = 0.9
         conn_x = 0.1
         candidate_connections = 1
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
@@ -1076,15 +1077,15 @@
             ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:constraints][:connection_flow_intact_flow]
         var_connection_flow = m.ext[:variables][:connection_flow]
         var_connection_intact_flow = m.ext[:variables][:connection_intact_flow]
@@ -1137,7 +1138,7 @@
         conn_x = 0.1
         candidate_connections = 1
         connection_capacity = 100
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
 
         objects = [["commodity", "electricity"]]
         relationships = [
@@ -1189,15 +1190,15 @@
             ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:constraints][:candidate_connection_flow_lb]
         var_connection_flow = m.ext[:variables][:connection_flow]
         var_connection_intact_flow = m.ext[:variables][:connection_intact_flow]
@@ -1255,7 +1256,7 @@
         conn_x = 0.1
         candidate_connections = 1
         connection_capacity = 100
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
 
         objects = [["commodity", "electricity"]]
         relationships = [
@@ -1307,15 +1308,15 @@
             ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:constraints][:ratio_out_in_connection_intact_flow]
         var_connection_intact_flow = m.ext[:variables][:connection_intact_flow]
         @test length(constraint) == 8
@@ -1411,7 +1412,7 @@
         conn_r = 0.9
         conn_x = 0.1
         candidate_connections = 1
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
 
         objects = [["commodity", "electricity"]]
         relationships = [
@@ -1461,15 +1462,15 @@
             ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
             ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             objects=objects,
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:constraints][:candidate_connection_flow_ub]
         var_connection_intact_flow = m.ext[:variables][:connection_intact_flow]
         var_connection_flow = m.ext[:variables][:connection_flow]

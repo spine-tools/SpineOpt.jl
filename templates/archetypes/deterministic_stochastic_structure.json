@@ -1,0 +1,22 @@
+{
+    "object_classes": [
+        ["stochastic_scenario", "A scenario for stochastic optimisation in SpineOpt.", 280743389491710],
+        ["stochastic_structure", "A group of stochastic scenarios that represent a structure.", 281470681806146]
+    ],
+    "relationship_classes": [
+        ["stochastic_structure__stochastic_scenario", ["stochastic_structure", "stochastic_scenario"], "Defines which `stochastic_scenarios` are included in which `stochastic_structure`, and holds the parameters required for realizing the structure in combination with the `temporal_blocks`."]
+    ],
+    "relationship_parameters": [
+        ["stochastic_structure__stochastic_scenario", "weight_relative_to_parents", 1.0, null, "The weight of the `stochastic_scenario` in the objective function relative to its parents."]
+    ],
+    "objects": [
+        ["stochastic_scenario", "realization", null],
+        ["stochastic_structure", "deterministic", null]
+    ],
+    "relationships": [
+        ["stochastic_structure__stochastic_scenario", ["deterministic", "realization"]]
+    ],
+    "relationship_parameter_values": [
+        ["stochastic_structure__stochastic_scenario", ["deterministic", "realization"], "weight_relative_to_parents", 1.0, "Base"]
+    ]
+}

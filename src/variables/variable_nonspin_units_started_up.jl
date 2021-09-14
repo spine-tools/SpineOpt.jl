@@ -50,7 +50,7 @@ end
 Add `nonspin_units_started_up` variables to model `m`.
 """
 function add_variable_nonspin_units_started_up!(m::Model)
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     add_variable!(
         m,
         :nonspin_units_started_up,
