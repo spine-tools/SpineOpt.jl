@@ -156,8 +156,6 @@
         end
     end
 
-#=
-
     @testset "constraint_node_injection" begin
         demand_a = 100
         demand_b = 20
@@ -940,6 +938,5 @@
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
-    end
-    =#
+    end   
 end
