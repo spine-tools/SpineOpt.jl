@@ -1,7 +1,6 @@
 import spinedb_api as api
 import sys
 
-#url = "sqlite://///sharingiscaring/share/EnergyReform/SPINE LCE-05/DBs/Samuel/input hydrilyte test.sqlite"
 url = sys.argv[1]
 print("processing " + url)
 db_map = api.DatabaseMapping(url)
