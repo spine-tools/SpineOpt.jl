@@ -119,13 +119,6 @@
         con = constraint[node_key...]
         observed_con = constraint_object(con)
         
-        print(observed_con)
-        println()
-        println()
-        print(expected_con)
-        println()
-        println()
-
         @test _is_constraint_equal(observed_con, expected_con)
         # node_group_bc
         n = node(:node_group_bc)
@@ -141,16 +134,6 @@
             expected_con = @build_constraint(var_n_inj - var_conn_flows == 0)
             con = constraint[node(:node_group_bc), s, t]
             observed_con = constraint_object(con)
-
-
-            print((s,t))
-            println()
-            print(observed_con)
-            println()
-            println()
-            print(expected_con)
-            println()
-            println()
 
             @test _is_constraint_equal(observed_con, expected_con)
         end
