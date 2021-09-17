@@ -92,6 +92,7 @@
             Dict("type" => "duration", "data" => "1h"),
         ]],
     )
+    
     @testset "constraint_nodal_balance" begin
         _load_test_data(url_in, test_data)
         object_parameter_values = [["node", "node_a", "node_slack_penalty", 0.5]]
@@ -117,6 +118,14 @@
         expected_con = @build_constraint(var_n_inj + var_conn_flow + var_n_sl_pos - var_n_sl_neg == 0)
         con = constraint[node_key...]
         observed_con = constraint_object(con)
+        
+        print(observed_con)
+        println()
+        println()
+        print(expected_con)
+        println()
+        println()
+
         @test _is_constraint_equal(observed_con, expected_con)
         # node_group_bc
         n = node(:node_group_bc)
@@ -132,9 +141,23 @@
             expected_con = @build_constraint(var_n_inj - var_conn_flows == 0)
             con = constraint[node(:node_group_bc), s, t]
             observed_con = constraint_object(con)
+
+
+            print((s,t))
+            println()
+            print(observed_con)
+            println()
+            println()
+            print(expected_con)
+            println()
+            println()
+
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+
+#=
+
     @testset "constraint_node_injection" begin
         demand_a = 100
         demand_b = 20
@@ -918,4 +941,5 @@
             end
         end
     end
+    =#
 end
