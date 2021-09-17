@@ -132,7 +132,7 @@ _lazy_include_file_paths = [
 	"constraints/constraint_min_up_time.jl",
 	"constraints/constraint_min_down_time.jl",
 	"constraints/constraint_unit_state_transition.jl",
-	"constraints/constraint_unit_constraint.jl",
+	"constraints/constraint_user_constraint.jl",
 	"constraints/constraint_units_invested_available.jl",
 	"constraints/constraint_units_invested_transition.jl",
 	"constraints/constraint_unit_lifetime.jl",

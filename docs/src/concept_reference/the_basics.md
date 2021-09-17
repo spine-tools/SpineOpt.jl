@@ -32,7 +32,7 @@ These include:
 ### Structural `object classes`
 
 *Structural [Object Classes](@ref)* are used to define the temporal and stochastic structure of the modelled problem, as
-well as custom [Unit Constraints](@ref).
+well as custom [User Constraints](@ref).
 Unlike the above *system [Object Classes](@ref)*, the *structural [Object Classes](@ref)* are more about *how* you
 want to model, instead of strictly *what* you want to model.
 These include:
@@ -40,7 +40,7 @@ These include:
 - [stochastic\_scenario](@ref) represents a different *forecast* or another type of an *alternative time period*.
 - [stochastic\_structure](@ref) acts as a handle for a group of `stochastic_scenarios` with set properties.
 - [temporal\_block](@ref) defines a period of *time* with the desired temporal [resolution](@ref).
-- [unit\_constraint](@ref) is an optional custom constraint generated based on the input data.
+- [user\_constraint](@ref) is an optional custom constraint generated based on the input data.
 
 ### Meta `object classes`
 
@@ -88,7 +88,7 @@ This essentially defines the possible [commodity](@ref) flows to be modelled.
 *Structural [Relationship Classes](@ref)* primarily relate [Structural object classes](@ref) to
 [Systemic object classes](@ref), defining what *structures* the individual parts of the *system* use.
 These are mostly used to determine the temporal and stochastic structures to be used in different parts of the
-modelled *system*, or custom [Unit Constraints](@ref).
+modelled *system*, or custom [User Constraints](@ref).
 
 *SpineOpt.jl* has a very flexible temporal and stochastic structure, explained in detail in the
 [Temporal Framework](@ref) and [Stochastic Framework](@ref) sections of the documentation.
@@ -108,20 +108,20 @@ For [Investment Optimization](@ref), the following relationships control the sto
 of the investment [variables](@ref Variables):
 
 - [connection\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [connection](@ref).
-- [connection\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [connection](@ref).[unit\_constraint](@ref).
+- [connection\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [connection](@ref).[user\_constraint](@ref).
 - [node\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
 - [node\_\_investment\_temporal\_block](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [node](@ref).
 - [unit\_\_investment\_stochastic\_structure](@ref) defines the [stochastic\_structure](@ref) used for the investment [Variables](@ref) for the [unit](@ref).
 - [unit\_\_investment\_temporal\_block](@ref) defines the `temporal blocks` used for the investment [Variables](@ref) for the [unit](@ref).(@ref).
 
-For [Unit Constraints](@ref), which are essentially generic data-driven custom constraints,
+For [User Constraints](@ref), which are essentially generic data-driven custom constraints,
 the following relationships are used to control which [variables](@ref Variables) are included and with what coefficients:  
 
-- [connection\_\_from\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](#Variables) variable *from* the [node](@ref) in question in the custom [unit\_constraint](@ref).
-- [connection\_\_to\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](#Variables) variable *to* the [node](@ref) in question in the custom [unit\_constraint](@ref).
-- [node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [node\_state](#Variables) variable in the custom [unit\_constraint](@ref).
-- [unit\_\_from\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](#Variables) variable *from* the [node](@ref) in question in the custom [unit\_constraint](@ref).
-- [unit\_\_to\_node\_\_unit\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](#Variables) variable *to* the [node](@ref) in question in the custom [unit\_constraint](@ref).
+- [connection\_\_from\_node\_\_user\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](#Variables) variable *from* the [node](@ref) in question in the custom [user\_constraint](@ref).
+- [connection\_\_to\_node\_\_user\_constraint](@ref) holds [Parameters](@ref) for the [connection\_flow](#Variables) variable *to* the [node](@ref) in question in the custom [user\_constraint](@ref).
+- [node\_\_user\_constraint](@ref) holds [Parameters](@ref) for the [node\_state](#Variables) variable in the custom [user\_constraint](@ref).
+- [unit\_\_from\_node\_\_user\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](#Variables) variable *from* the [node](@ref) in question in the custom [user\_constraint](@ref).
+- [unit\_\_to\_node\_\_user\_constraint](@ref) holds [Parameters](@ref) for the [unit\_flow](#Variables) variable *to* the [node](@ref) in question in the custom [user\_constraint](@ref).
 
 ### Meta `relationship classes`
 
