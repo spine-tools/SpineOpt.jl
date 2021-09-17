@@ -389,5 +389,18 @@
         ["object_activity_control", "temporal_block", "is_active", false],
         ["object_activity_control", "unit", "is_active", false],
         ["object_activity_control", "unit_constraint", "is_active", false]
+    ],
+    "tool_feature_methods": [
+        ["object_activity_control", "commodity", "is_active", true],
+        ["object_activity_control", "connection", "is_active", true],
+        ["object_activity_control", "model", "is_active", true],
+        ["object_activity_control", "node", "is_active", true],
+        ["object_activity_control", "output", "is_active", true],
+        ["object_activity_control", "report", "is_active", true],
+        ["object_activity_control", "stochastic_scenario", "is_active", true],
+        ["object_activity_control", "stochastic_structure", "is_active", true],
+        ["object_activity_control", "temporal_block", "is_active", true],
+        ["object_activity_control", "unit", "is_active", true],
+        ["object_activity_control", "unit_constraint", "is_active", true]
     ]
 }
