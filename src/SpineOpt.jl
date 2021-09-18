@@ -37,6 +37,7 @@ export @fetch
 include("run_spineopt.jl")
 include("data_structure/generate_missing_items.jl")
 include("util/docs_utils.jl")
+include("data_structure/migration.jl")
 
 _lazy_include_file_paths = [
 	"run_spineopt_sp.jl",

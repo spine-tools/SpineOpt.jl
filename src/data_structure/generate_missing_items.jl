@@ -37,7 +37,6 @@ function generate_missing_items(mod=@__MODULE__)
         sym_name = Symbol(name)
         sym_name in keys(classes) && continue
         push!(missing_items["object classes"], name)
-        @warn("object class $name does not exist, creating it")
         object_class = classes[sym_name] = ObjectClass(sym_name, [])
         @eval mod begin
             $sym_name = $object_class
