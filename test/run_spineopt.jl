@@ -58,7 +58,6 @@ end
     )
     @testset "rolling" begin
         _load_test_data(url_in, test_data)
-        SpineInterface.db_server.close_persistent_db_map(url_out)
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
         vom_cost_data = [100 * k for k in 0:23]
         vom_cost = Dict("type" => "time_series", "data" => PyVector(vom_cost_data), "index" => index)
@@ -99,7 +98,6 @@ end
     end
     @testset "rolling without varying terms" begin
         _load_test_data(url_in, test_data)
-        SpineInterface.db_server.close_persistent_db_map(url_out)
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
         vom_cost = 1200
         demand = 24

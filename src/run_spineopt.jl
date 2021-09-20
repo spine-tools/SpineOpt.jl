@@ -88,6 +88,20 @@ function run_spineopt(
     use_direct_model=false,
 )
     @log log_level 0 "Running SpineOpt for $(url_in)..."
+    version = find_version(url_in)
+    if version < current_version()
+        if !upgrade
+            @warn """
+            The data structure is not the latest version.
+            SpineOpt might still be able to run, but results aren't guaranteed.
+            Please use `run_spineopt(url_in; upgrade=true)` to upgrade.
+            """
+        else
+            @log log_level 0 "Upgrading data structure to the latest version... "
+            run_migrations(url_in, version)
+            @log log_level 0 "Done!"
+        end
+    end
     @timelog log_level 2 "Initializing data structure from db..." begin
         using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
         generate_missing_items()

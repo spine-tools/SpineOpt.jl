@@ -44,7 +44,6 @@ _check_warn(cond, warn_msg) = cond || @warn warn_msg
 Check if the data structure provided from the db results in a valid model.
 """
 function check_data_structure(; log_level=3)
-    check_for_obsolete_unit_constraint()
     check_model_object()
     check_temporal_block_object()
     check_node_object()
@@ -55,24 +54,6 @@ function check_data_structure(; log_level=3)
     #check_islands(; log_level=log_level)
     check_rolling_branching()
 end
-
-"""
-    check_obsolete_unit_constraint()
-
-Check if the unit_constraint is present in the model and issue a warning
-"""
-function check_for_obsolete_unit_constraint()
-    classes = Dict{Symbol,Union{ObjectClass,RelationshipClass}}(class.name => class for class in object_class(@__MODULE__))        
-    _check_warn(
-        !haskey(classes, :unit_constraint),
-        "Your database has the `unit_constraint` object class which has been renamed to `user_constraint`. If you have `unit_constraint` 
-         objects in your model, these will be ignored. You must rename your `unit_constraint` object class to `user_constraint` and all related relationship classes
-         from `*__unit_constraint` to `*__user_constraint` or run the migration script data_structure_migration_script_0.0-0.1.py in the templates repository folder
-          with the path of your model database as the single argument. E.g. 
-                python data_structure_migration_script_0.0-0.1.py \"///sqlite/C:/my/path/model.sqlite\""
-    )         
-end
-
 
 """
     check_model_object()
