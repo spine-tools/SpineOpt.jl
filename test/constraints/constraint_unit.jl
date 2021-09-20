@@ -1254,7 +1254,7 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_user_constraint" begin
+    @testset "constraint_user_constraint(single unit)" begin
         @testset for sense in ("==", ">=", "<=")
             _load_test_data(url_in, test_data)
             rhs = 40
@@ -1317,7 +1317,7 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_user_constraint_with_operating_segments" begin
+    @testset "constraint_user_constraint_with_unit_operating_segments" begin
         @testset for sense in ("==", ">=", "<=")
             _load_test_data(url_in, test_data)
             rhs = 40

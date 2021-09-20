@@ -21,4 +21,12 @@ User constraints allow the user to define arbitrary linear constraints involving
 |`connection_flow` (direction=from_node)  |[connection\_\_from\_node\_\_user\_constraint](@ref)   |[connection\_flow\_coefficient](@ref)            |
 |`connection_flow` (direction=to_node)    |[connection\_\_to\_node\_\_user\_constraint](@ref)     |[connection\_flow\_coefficient](@ref)            |
 |`node_state`                             |[node\_\_user\_constraint](@ref)                       |[node\_state\_coefficient](@ref)                 |
-|`demand`                                 |[node\_\_user\_constraint](@ref)                       |[demand\_coefficient](@ref)            |
+|`storages_invested`                      |[node\_\_user\_constraint](@ref)                       |[storages\_invested\_coefficient](@ref)          |
+|`storages_invested_available`            |[node\_\_user\_constraint](@ref)                       |[storages\_invested\_available\_coefficient](@ref)|
+|`demand`                                 |[node\_\_user\_constraint](@ref)                       |[demand\_coefficient](@ref)                      |
+|`units_on`                               |[unit\_\_user\_constraint](@ref)                       |[units\_on\_coefficient](@ref)                   |
+|`units_started_up`                       |[unit\_\_user\_constraint](@ref)                       |[units\_started\_up\_coefficient](@ref)          |
+|`units_invested`                         |[unit\_\_user\_constraint](@ref)                       |[units\_invested\_coefficient](@ref)             |
+|`units_invested_available`               |[unit\_\_user\_constraint](@ref)                       |[units\_invested\_available\_coefficient](@ref)  |
+|`connections_invested`                   |[connection\_\_user\_constraint](@ref)                 |[connections\_invested\_coefficient](@ref)       |
+|`connections_invested_available`         |[connection\_\_user\_constraint](@ref)                 |[connections\_invested\_available\_coefficient](@ref)|

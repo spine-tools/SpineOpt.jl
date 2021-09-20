@@ -92,6 +92,7 @@ end
     include("constraints/constraint_unit.jl")
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")
+    include("constraints/constraint_user_constraint.jl")
     include("objective/objective.jl")
     include("util/misc.jl")
     include("util/postprocess_results.jl")
