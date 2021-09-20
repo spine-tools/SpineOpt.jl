@@ -96,8 +96,8 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
                         entry[template_mapping[key][:related_concept_index]],
                     ]),
                 ),
-            ) for entry in template[key]
-        ) for key in keys(template)
+            ) for entry in template[key] 
+        ) for key in keys(template) if ! key in ["objects", "relationships", "object_parameter_values", "relationship_parameter_values"]
     )
     # Perform a second pass to cover overlapping entries and throw warnings for conflicts
     for key in keys(template)
