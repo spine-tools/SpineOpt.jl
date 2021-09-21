@@ -30,18 +30,33 @@ function add_constraint_mp_node_state_decrease!(m::Model)
         (node=ng, stochastic_scenario=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             - expr_sum(
-                    +mp_node_state[ng, s, t_after]
-                    for (ng, s, t_after) in mp_node_state_indices(m; node=ng, stochastic_scenario=s, t=t_after);
-                    init=0,
-                )
+                + mp_node_state[ng, s, t_after]
+                for (ng, s, t_after) in mp_node_state_indices(m; node=ng, stochastic_scenario=s, t=t_after);
+                init=0,
+            )
             + expr_sum(
-                +mp_node_state[ng, s, t_before]            
+                + mp_node_state[ng, s, t_before]            
                 for (ng, s, t_before) in mp_node_state_indices(m; node=ng, stochastic_scenario=s, t=t_before);                    
                 init=0,
             )      
+
             <=
-            +decomposed_max_state_decrease[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t_before)]            
-            *min(duration(t_before), duration(t_after))
+
+            unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
+            unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
+            number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] *                  
+            ( 
+                + duration(t)*            
+                + expr_sum(
+                    units_invested_available[u, s, t] ) *
+                    min(duration(t1), duration(t)) *
+                    unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
+                    unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] for (u, s, t1) in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
+                    init=0,
+                )
+            )  for (u, s, t) in units_invested_available_indices(m; unit=u);
+            for u in unit__to_node(node=ng, direction=d) if (u, ng, d) in indices(unit_capacity)
+            for d in direction=direction(:to_node)                            
         ) for (ng, s, t_before, t_after) in constraint_mp_node_state_decrease_indices(m)
     )
 end
