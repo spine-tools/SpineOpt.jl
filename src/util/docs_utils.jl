@@ -30,6 +30,18 @@ The optional `translation` keyword can be used to aggregate and translate the ou
 """
 function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
     # Define mapping of template entries, where each attribute of interest is.
+
+    template_keys = [
+        "object_classes",
+        "relationship_classes",
+        "parameter_value_lists",
+        "object_parameters",
+        "relationship_parameters",
+        "tools",
+        "features",
+        "tool_features"
+        ]
+
     template_mapping = Dict(
         "object_classes" => Dict(:name_index => 1, :description_index => 2),
         "relationship_classes" => Dict(
@@ -96,11 +108,11 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
                         entry[template_mapping[key][:related_concept_index]],
                     ]),
                 ),
-            ) for entry in template[key]
-        ) for key in keys(template)
+            ) for entry in template[key] 
+        ) for key in template_keys
     )
     # Perform a second pass to cover overlapping entries and throw warnings for conflicts
-    for key in keys(template)
+    for key in template_keys
         for entry in template[key]
             concept = concept_dictionary[key][entry[template_mapping[key][:name_index]]]
             # Check for conflicts in `description`, `default_value`, `parameter_value_list`, `feature`

@@ -414,7 +414,7 @@ connection_stochastic_scenario_weight(
 
 Generate stochastic structure all models.
 """
-function generate_stochastic_structure(m::Model)
+function generate_stochastic_structure!(m::Model)
     m.ext[:stochastic_structure] = Dict()
     all_stochastic_dags = _all_stochastic_dags(m)
     _generate_stochastic_scenario_set(m, all_stochastic_dags)
