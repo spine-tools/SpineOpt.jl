@@ -6,7 +6,7 @@
         ["node", "A universal aggregator of commodify flows over units and connections, with storage capabilities.", 280740554077951],
         ["output", "A variable name from SpineOpt that can be included in a report.", 280743406202948],
         ["report", "A results report from a particular SpineOpt run, including the value of specific variables.", 281108461711708],
-        ["settings", "Internal SpineOpt settings. We kindly advice not to mess with this one."],
+        ["settings", "Internal SpineOpt settings. We kindly advise not to mess with this one.", 280375465144798],
         ["stochastic_scenario", "A scenario for stochastic optimisation in SpineOpt.", 280743389491710],
         ["stochastic_structure", "A group of stochastic scenarios that represent a structure.", 281470681806146],
         ["temporal_block", "A length of time with a particular resolution.", 280376891207703],
