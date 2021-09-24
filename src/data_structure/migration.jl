@@ -22,11 +22,9 @@
 # In that file, define a function named after the file (let's use that convention) that does the work.
 # Typically the above means calling `run_request` with the url and using the "call_method" request.
 # Info about what methods are available should be found in spinedb_api's documentation.
-# Finally, `include` the file right here,
-# and append the function name to `_upgrade_functions` below.
+# Then, `include` the file right here, and append the function name to `_upgrade_functions` below.
 # Everything else should be automatically taken care of, I believe.
-# And truly finally, modify the template!
-# Including the version information!
+# And finally, modify the template - including the version information
 # The important thing is to increase the default_value of the `version` parameter in the `settings` class.
 
 include("versions/rename_unit_constraint_to_user_constraint.jl")
@@ -103,7 +101,7 @@ function find_version(url)
 			Dict("object_parameters" => [version_par_def]),
 			"Add version parameter definition"
 		)
-		return find_version(url)
+		return 1
 	end
 	parse(Int, data["parameter_definition_sq"][j]["default_value"])
 end
