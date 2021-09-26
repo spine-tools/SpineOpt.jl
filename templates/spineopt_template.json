@@ -166,6 +166,7 @@
         ["temporal_block", "block_start", null, null, "The start time for the `temporal_block`. Can be given either as a `DateTime` for a static start point, or as a `Duration` for an start point relative to the start of the current optimization."],
         ["temporal_block", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["temporal_block", "resolution", {"type": "duration", "data": "1h"}, null, "Temporal resolution of the `temporal_block`. Essentially, divides the period between `block_start` and `block_end` into `TimeSlices` with the input `resolution`."],
+        ["temporal_block", "output_resolution", null, null, "Temporal resolution of the output variables assosciated with this `temporal_block`."],
         ["temporal_block", "weight", 1.0, null, "Weighting factor of the temporal block associated with the objective function"],
         ["temporal_block", "representative_periods_mapping", null, null, "Mapping from real timelices to their corresponding representative days"],
         ["unit", "candidate_units", null, null, "Number of units which may be additionally constructed"],
