@@ -24,6 +24,7 @@ Create an expression for fixed operation costs of units.
 """
 function fixed_om_costs(m, t1)
     t0 = _analysis_time(m)
+    @fetch units_invested_available = m.ext[:variables]
     @expression(
         m,
         expr_sum(

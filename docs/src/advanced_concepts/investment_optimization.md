@@ -86,7 +86,7 @@ If we have model that is not currently set up for investments and we wish to cre
 |--------------------------------|------------------------------|-------------------------------------------------|
 | `candidate_units` | `unit` | The number of additional `unit`s of this type that can be invested in
 | `unit_investment_cost` | `unit` | The total overnight investment cost per candidate `unit` over the model horizon
-| `unit_investment_lifetime` | `unit` | The investment lifetime of the `unit` - once invested-in, a `unit` must exist for at least this amount of time
+| `unit_investment_econ_lifetime` | `unit` | The investment lifetime of the `unit` - once invested-in, a `unit` must exist for at least this amount of time
 | `unit_investment_variable_type` | `unit` | Whether the `units_invested_available` variable is continuous, integer or binary
 | `fix_units_invested` | `unit`| Fix the value of `units_invested`
 | `fix_units_invested_available` | `unit` | Fix the value of `connections_invested_available`
@@ -111,7 +111,7 @@ If we have model that is not currently set up for investments and we wish to cre
 |-----------------------------|-------------------|--------------------------------------------------------------|
 | constraint_units_invested_available.jl | \constraints| constrains `units_invested_available` to be less than `candidate_units`
 | constraint_units_invested_transition.jl | \constraints| defines the relationship between `units_invested_available`, `units_invested` and `units_mothballed`. Analagous to `units_on`, `units_started` and `units_shutdown`
-| constraint_unit_lifetime.jl | \constraints| once a `unit` is invested-in, it must remain in existence for at least `unit_investment_lifetime` - analagous to `min_up_time`.
+| constraint_unit_lifetime.jl | \constraints| once a `unit` is invested-in, it must remain in existence for at least `unit_investment_econ_lifetime` - analagous to `min_up_time`.
 | constraint_units_available.jl | \constraints| Enforces `units_available` is the sum of `number_of_units` and `units_invested_available`
 | constraint_connections_invested_available.jl | \constraints| constrains `connections_invested_available` to be less than `candidate_connections`
 | constraint_connections_invested_transition.jl | \constraints| defines the relationship between `connections_invested_available`, `connections_invested` and `connections_decommissioned`. Analagous to `units_on`, `units_started` and `units_shutdown`

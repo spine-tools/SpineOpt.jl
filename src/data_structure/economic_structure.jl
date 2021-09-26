@@ -53,7 +53,7 @@ function generate_unit_CPT!(m::Model)
             for s in unique([x.stochastic_scenario for x in units_invested_available_indices(m)])
                 map_indices = []
                 timeseries_array = []
-                for (u,s,vintage_t) in units_invested_available_indices(m;unit=u, stochastic_scenario=s)
+                for (u,s,vintage_t) in units_invested_available_indices(m;unit=u, stochastic_scenario=s, t = Iterators.flatten((history_time_slice(m), time_slice(m))))
                     # @show u,s,vintage_t
                     LT = lead_time(unit=u,stochastic_scenario=s,t=vintage_t)
                     TLIFE = unit_investment_tech_lifetime(unit=u,stochastic_scenario=s,t=vintage_t)

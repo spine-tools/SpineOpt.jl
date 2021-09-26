@@ -97,7 +97,8 @@
         ["unit", "start_up_cost", null, null, "Costs of starting up a 'sub unit', e.g. EUR/startup."],
         ["unit", "unit_availability_factor", 1.0, null, "Availability of the `unit`, acting as a multiplier on its `unit_capacity`. Typically between 0-1."],
         ["unit", "unit_investment_cost", null, null, "Investment cost per 'sub unit' built."],
-        ["unit", "unit_investment_lifetime", null, null, "Minimum lifetime for investment decisions."],
+        ["unit", "unit_investment_econ_lifetime", null, null, "Minimum lifetime for investment decisions."],
+        ["unit", "unit_investment_tech_lifetime", null, null, "Minimum lifetime for investment decisions."],
         ["unit", "unit_investment_variable_type", "unit_investment_variable_type_continuous", "unit_investment_variable_type_list", "Determines whether investment variable is integer or continuous."]
     ],
     "relationship_parameters": [

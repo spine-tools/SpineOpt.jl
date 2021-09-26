@@ -36,7 +36,7 @@ function add_constraint_unit_lifetime!(m::Model)
             ==
             + sum(
                 + units_invested[u, s_past, t_past]
-                * capacity_transfer_factor[(unit=u, stochastic_scenario=s_past,vintage_t=t_past,t=t)]
+                * capacity_transfer_factor[(unit=u, stochastic_scenario=s_past,vintage_t=first(t_past.start),t=t)]
                 for (u, s_past, t_past) in units_invested_available_indices(
                     m;
                     unit=u,
