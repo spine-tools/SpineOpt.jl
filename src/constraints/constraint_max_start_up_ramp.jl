@@ -25,7 +25,7 @@ Limit the maximum ramp at the start up of a unit.
 # TODO: Good to go for first try; make sure capacities are well defined
 function add_constraint_max_start_up_ramp!(m::Model)
     @fetch units_started_up, start_up_unit_flow = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:max_start_up_ramp] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,

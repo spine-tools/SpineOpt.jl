@@ -28,6 +28,8 @@ makedocs(
             "Installation" => joinpath("getting_started", "installation.md"),
             "Setting up a workflow" => joinpath("getting_started", "setup_workflow.md"),
             "Creating Your Own Model" => joinpath("getting_started", "creating_your_own_model.md"),
+            "Example Models" => joinpath("getting_started", "example_models.md"),
+            "Archetypes" => joinpath("getting_started", "archetypes.md")
         ],
         "Concept Reference" => Any[
             "Basics of the model structure" => joinpath("concept_reference", "the_basics.md"),
@@ -48,7 +50,7 @@ makedocs(
             "Unit Commitment" => joinpath("advanced_concepts", "unit_commitment.md"),
             "Ramping and Reserves" => joinpath("advanced_concepts", "ramping_and_reserves.md"),
             "Investment Optimization" => joinpath("advanced_concepts", "investment_optimization.md"),
-            "Unit Constraints" => joinpath("advanced_concepts", "unit_constraints.md"),
+            "User Constraints" => joinpath("advanced_concepts", "user_constraints.md"),
             "Decomposition" => joinpath("advanced_concepts", "decomposition.md"),
             "PTDF-Based Powerflow" => joinpath("advanced_concepts", "powerflow.md"),
             "Pressure driven gas transfer" => joinpath("advanced_concepts", "pressure_driven_gas_transfer.md"),

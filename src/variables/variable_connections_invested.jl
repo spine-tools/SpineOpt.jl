@@ -23,7 +23,7 @@
 Add `connections_invested` variables to model `m`.
 """
 function add_variable_connections_invested!(m::Model)
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     add_variable!(
         m,
         :connections_invested,

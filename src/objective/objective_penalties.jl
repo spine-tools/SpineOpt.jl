@@ -25,7 +25,7 @@ Create an expression for objective penalties.
 # TODO: find a better name for this; objective penalities is not self-speaking
 function objective_penalties(m::Model, t1)
     @fetch node_slack_pos, node_slack_neg = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     @expression(
         m,
         expr_sum(

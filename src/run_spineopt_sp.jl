@@ -42,21 +42,14 @@ function rerun_spineopt_sp(
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating economic structure..." generate_economic_structure!(m)
-    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
+    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
     init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
     init_outputs!(m)
-    calculate_duals = duals_calculation_needed(m)
     k = 1
-
+    calculate_duals = duals_calculation_needed(m)
     while optimize
         @log log_level 1 "Window $k: $(current_window(m))"
-        optimize_model!(
-            m;
-            log_level=log_level,
-            mip_solver=mip_solver,
-            lp_solver=lp_solver,
-            calculate_duals=calculate_duals,
-        ) || break
+        optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals, mip_solver=mip_solver, lp_solver=lp_solver, use_direct_model=use_direct_model) || break
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
@@ -183,7 +176,7 @@ Add SpineOpt constraints to the given model.
 """
 function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_unit_pw_heat_rate]" add_constraint_unit_pw_heat_rate!(m)
-    @timelog log_level 3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
+    @timelog log_level 3 "- [constraint_user_constraint]" add_constraint_user_constraint!(m)
     @timelog log_level 3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
     @timelog log_level 3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
     @timelog log_level 3 "- [constraint_candidate_connection_flow_ub]" add_constraint_candidate_connection_flow_ub!(m)
@@ -319,11 +312,11 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, use_direc
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
-    if termination_status(m) in (MOI.OPTIMAL, MOI.TIME_LIMIT)
+    if termination_status(m) == MOI.OPTIMAL || termination_status(m) == MOI.TIME_LIMIT
         if calculate_duals
             @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
             if lp_solver != mip_solver
-                @timelog log_level 0 "Switching to LP solver..." set_optimizer(m, lp_solver)
+                @timelog log_level 0 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)                
             end
             @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
         end
@@ -347,7 +340,7 @@ function _save_variable_value!(m::Model, name::Symbol, indices::Function)
     var = m.ext[:variables][name]
     m.ext[:values][name] = Dict(
         ind => _variable_value(var[ind])
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if end_(ind.t) <= end_(current_window(m))
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) # if end_(ind.t) <= end_(current_window(m))
     )
 end
 
@@ -412,6 +405,7 @@ update constraints and update objective.
 """
 function update_model!(m; update_constraints=m -> nothing, log_level=3)
     @timelog log_level 2 "Updating variables..." update_variables!(m)
+    @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
     @timelog log_level 2 "Updating user constraints..." update_constraints(m)
@@ -447,7 +441,7 @@ function write_report(model, default_url)
 end
 
 function relax_integer_vars(m::Model)
-    save_integer_values!(m)
+    save_integer_values!(m) 
     for name in m.ext[:integer_variables]
         def = m.ext[:variables_definition][name]
         bin = def[:bin]
@@ -455,11 +449,11 @@ function relax_integer_vars(m::Model)
         indices = def[:indices]
         var = m.ext[:variables][name]
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            if end_(ind.t) <= end_(current_window(m))
+            #if end_(ind.t) <= end_(current_window(m))                
                 fix(var[ind], m.ext[:values][name][ind]; force=true)
-                bin != nothing && bin(ind) && unset_binary(var[ind])
-                int != nothing && int(ind) && unset_integer(var[ind])
-            end
+                (bin != nothing && bin(ind)) && unset_binary(var[ind])
+                (int != nothing && int(ind)) && unset_integer(var[ind])
+            #end
         end
     end
 end
@@ -474,14 +468,14 @@ function unrelax_integer_vars(m::Model)
         indices = def[:indices]
         var = m.ext[:variables][name]
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            if end_(ind.t) <= end_(current_window(m))
-                unfix(var[ind])
+            #if end_(ind.t) <= end_(current_window(m))
+                is_fixed(var[ind]) && unfix(var[ind])
                 # `unfix` frees the variable entirely, also bounds
                 lb != nothing && set_lower_bound(var[ind], lb(ind))
                 ub != nothing && set_upper_bound(var[ind], ub(ind))
-                bin != nothing && bin(ind) && set_binary(var[ind])
-                int != nothing && int(ind) && set_integer(var[ind])
-            end
+                (bin != nothing && bin(ind)) && set_binary(var[ind])
+                (int != nothing && int(ind)) && set_integer(var[ind])
+            #end
         end
     end
 end

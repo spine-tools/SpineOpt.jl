@@ -24,7 +24,7 @@ Set the node injection equal to the summation of all 'input' flows but connectio
 """
 function add_constraint_node_injection!(m::Model)
     @fetch node_injection, node_state, unit_flow = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     # TODO: We need to include both: storages that are defined on n and storage that are defined on internal nodes
     m.ext[:constraints][:node_injection] = Dict(
         (node=n, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(

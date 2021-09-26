@@ -23,8 +23,8 @@
 Limit the units_online by the number of available units.
 """
 function add_constraint_units_available!(m::Model)
+    t0 = _analysis_time(m)
     @fetch units_available, units_invested_available, units_mothballed = m.ext[:variables]
-    t0 = startref(current_window(m))
     m.ext[:constraints][:units_available] = Dict(
         (unit=u, stochastic_scenario=s, t=t) => @constraint(
             m,

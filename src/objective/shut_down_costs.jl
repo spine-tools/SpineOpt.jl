@@ -24,7 +24,7 @@ Create an expression for unit shutdown costs.
 """
 function shut_down_costs(m::Model, t1)
     @fetch units_shut_down = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     @expression(
         m,
         expr_sum(

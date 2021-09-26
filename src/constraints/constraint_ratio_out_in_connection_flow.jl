@@ -27,7 +27,7 @@ Note that the `<sense>_ratio_<directions>_connection_flow` parameter uses the st
 """
 function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, sense)
     @fetch connection_flow = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][ratio_out_in.name] = Dict(
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=s, t=t) => sense_constraint(
             m,
@@ -111,7 +111,7 @@ function add_constraint_min_ratio_out_in_connection_flow!(m::Model)
 end
 
 function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     unique(
         (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
         for (conn, n_out, n_in) in indices(ratio_out_in) for t in t_lowest_resolution(

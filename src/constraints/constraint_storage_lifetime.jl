@@ -24,7 +24,7 @@ Constrain storages_invested_available by the investment lifetime of a storage.
 """
 function add_constraint_storage_lifetime!(m::Model)
     @fetch storages_invested_available, storages_invested = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:storage_lifetime] = Dict(
         (node=n, stochastic_path=s, t=t) => @constraint(
             m,
@@ -55,7 +55,7 @@ function add_constraint_storage_lifetime!(m::Model)
 end
 
 function constraint_storage_lifetime_indices(m::Model)
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     unique(
         (node=n, stochastic_path=path, t=t)
         for n in indices(storage_investment_lifetime) for (n, s, t) in storages_invested_available_indices(m; node=n)

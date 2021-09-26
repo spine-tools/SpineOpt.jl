@@ -26,7 +26,7 @@ corresponding incremental_heat_rate
 """
 function add_constraint_unit_pw_heat_rate!(m::Model)
     @fetch unit_flow, unit_flow_op, units_on, units_started_up = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:unit_pw_heat_rate] = Dict(
         (unit=u, node1=n_from, node2=n_to, stochastic_path=s, t=t) => @constraint(
             m,

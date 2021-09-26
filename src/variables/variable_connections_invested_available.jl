@@ -51,9 +51,9 @@ end
 Check if conneciton investment variable type is defined to be an integer.
 """
 
-connections_invested_available_int(
-    x,
-) = connection_investment_variable_type(connection=x.connection) == :variable_type_integer
+function connections_invested_available_int(x)
+    connection_investment_variable_type(connection=x.connection) == :variable_type_integer
+end
 
 """
     fix_initial_connections_invested_available()
@@ -84,7 +84,7 @@ Add `connections_invested_available` variables to model `m`.
 function add_variable_connections_invested_available!(m::Model)
     # fix connections_invested_available to zero in the timestep before the investment window to prevent "free" investments
     fix_initial_connections_invested_available(m)
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     add_variable!(
         m,
         :connections_invested_available,

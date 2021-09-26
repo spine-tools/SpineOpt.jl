@@ -23,14 +23,22 @@
 Constrain start-up by minimum down time.
 """
 function add_constraint_min_down_time!(m::Model)
-    @fetch units_on, units_available, units_shut_down, nonspin_units_started_up = m.ext[:variables]
-    t0 = startref(current_window(m))
+    @fetch units_invested_available, units_on, units_shut_down, nonspin_units_started_up = m.ext[:variables]
+    t0 = _analysis_time(m)
     m.ext[:constraints][:min_down_time] = Dict(
         (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
-                + units_available[u, s, t] - units_on[u, s, t]
-                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything);
+            +expr_sum(
+                +number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
+                + expr_sum(
+                    units_invested_available[u, s, t1]
+                    for
+                    (u, s, t1) in
+                    units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t_in_t(m; t_short=t));
+                    init=0,
+                )
+                - units_on[u, s, t]
+                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0,
             )
             >=
@@ -65,7 +73,7 @@ end
 
 #TODO: Does this require nonspin_units_started_up_indices() to be added here?
 function constraint_min_down_time_indices(m::Model)
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     unique(
         (unit=u, stochastic_path=path, t=t)
         for u in indices(min_down_time) for (u, s, t) in units_on_indices(m; unit=u)

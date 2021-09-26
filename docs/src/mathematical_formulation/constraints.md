@@ -240,6 +240,22 @@ flows to this location in each time step. When desirable, the capacity can be sp
 
 Note that the conversion factor [unit\_conv\_cap\_to\_flow](@ref) has a default value of `1`, but can be adjusted in case the unit of measurement for the capacity is different to the unit flows unit of measurement.
 
+When the unit also provides non-spinning reserves to a reserve node, the corresponding flows are excluded from the capacity constraint and the unit capacity constraint translates to the following inequality:
+
+```math
+\begin{aligned}
+& \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,s,t') \, \in \, (u,ng,d,s,t)} \\ n !\in is\_non\_spinning} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
+& <= p_{unit\_capacity}(u,ng,d,s,t) \\
+&  \cdot p_{unit\_conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+&  \cdot \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
+(u,\Delta t_{units\_on} \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
+& \cdot \min(t_{units\_on},\Delta t) \\
+& \forall (u,ng,d) \in ind(p_{unit\_capacity}), \\
+& \forall t \in time\_slices, \\
+& \forall s \in stochastic\_path
+\end{aligned}
+```
+
 ### Dynamic constraints
 
 #### Commitment constraints
@@ -325,7 +341,7 @@ In order to impose a minimum offline time of a unit, before it can be started up
 \begin{aligned}
 & v_{units\_available}(u,s,t) \\
 & - v_{units\_on}(u,s,t) \\
-& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >=t-p_{min\_down\_time}(u,s,t) && t' <= t}}
+& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >=t-p_{min\_down\_time}(u,s,t) \quad t' <= t}}
 v_{units\_shut\_down}(u,s,t') \\
 & \forall (u,s,t) \in units\_on\_indices\\
 \end{aligned}
@@ -539,7 +555,7 @@ For non-spinning downward reserves, online units can be scheduled for reserve pr
 ```math
 \begin{aligned}
 & v_{units\_on}(u,s,t) \\
-& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >t-p_{min\_up\_time}(u,s,t) && t' <= t}}
+& >= \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ t' >t-p_{min\_up\_time}(u,s,t) \quad t' <= t}}
 v_{units\_started\_up}(u,s,t') \\
 & + \sum_{\substack{(u',n',s',t') \in nonspin\_units\_shut\_down\_indices: \\ (u',s',t') \in (u,s,t)}}
   v_{nonspin\_units\_shut\_down}(u',n',s',t') \\
@@ -633,7 +649,7 @@ The `unit_flow_op` operating segment variable is bounded by the difference betwe
 \begin{aligned}
               & v_{unit\_flow}(u, n_{in}, d, s, t) \\
               & = \sum_{op} \bigg( v_{unit\_flow\_op}(u, n_{out}, d, op, s, t) \\
-              & \hspace4em \cdot p_{unit\_incremental\_heat\_rate}(u, n_{in}, n_{out}, op, s, t) \bigg) \\              
+              & \qquad \cdot p_{unit\_incremental\_heat\_rate}(u, n_{in}, n_{out}, op, s, t) \bigg) \\              
               & + v_{units\_on}(u, s, t) \cdot p_{unit\_idle\_heat\_rate}(u, n_{in}, n_{out}, s, t) \\
               & + v_{units\_started\_up}(u, s, t) \cdot p_{unit\_start\_flow}(u, n_{in}, n_{out}, s, t) \\
               & \forall (u,n_{in},n_{out},s,t) \in unit\_pw\_heat\_rate\_indices \\
@@ -832,9 +848,9 @@ The parameters [fixed\_pressure\_constant\_1](@ref) and [fixed\_pressure\_consta
 ```math
 \begin{aligned}
   & p_{fixed\_pressure\_constant\_1}(conn,n_{orig},n_{dest},j) \\
-  & = K(conn) \cdot p_{fixed\_pressure}(n_{orig},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j)^2 - p_{fixed\_pressure}(n_{dest},j)^2\\
+  & = K(conn) \cdot p_{fixed\_pressure}(n_{orig},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j)^2 - p_{fixed\_pressure}(n_{dest},j)^2}\\
   & p_{fixed\_pressure\_constant\_0}(conn,n_{orig},n_{dest},j) \\
-  & = K(conn) \cdot p_{fixed\_pressure}(n_{dest},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j)^2 - p_{fixed\_pressure}(n_{dest},j)^2\\
+  & = K(conn) \cdot p_{fixed\_pressure}(n_{dest},j)/ \sqrt{p_{fixed\_pressure}(n_{orig},j)^2 - p_{fixed\_pressure}(n_{dest},j)^2}\\
 \end{aligned}
 ```
 where K corrsponds to the natural gas flow constant.
@@ -961,8 +977,8 @@ The power transfer distribution factors are a property of the network reactances
               & + v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{to}, s, t) \\
               & - v_{connection\_flow}(c_{mon}, n_{mon\_to}, d_{from}, s, t) \\
               & + p_{lodf}(c_{conn}, c_{mon}) \cdot \big( \\              
-              & \hspace2em + v_{connection\_flow}(c_{conn}, n_{conn\_to}, d_{to}, s, t) \\
-              & \hspace2em - v_{connection\_flow}(c_{conn}, n_{conn\_to}, d_{from}, s, t) \big) \\
+              & \quad + v_{connection\_flow}(c_{conn}, n_{conn\_to}, d_{to}, s, t) \\
+              & \quad - v_{connection\_flow}(c_{conn}, n_{conn\_to}, d_{from}, s, t) \big) \\
               & < min( p_{connection\_emergency\_capacity}(c_{mon}, n_{conn\_to}, d_{to}, s, t), p_{connection\_emergency\_capacity}(c_{mon}, n_{conn\_to}, d_{from},s ,t)) \\
               & \forall (c_{mon}, c_{conn}, s, t) \in constraint\_connection\_flow\_lodf\_indices \\
 \end{aligned}
@@ -1050,10 +1066,10 @@ Enforces the relationship between [connection\_intact\_flow](@ref) (flow with al
               & + v_{connection\_intact\_flow}(c, n_{to}, d_{to}, s, t) \\
               & ==\\
               & \sum_{c_{candidate}, n_{to_candidate}} p_{lodf}(c_{candidate}, c) \cdot \Big( \\
-              & \hspace4em + v_{connection\_flow}(c_{candidate}, n_{to_candidate}, d_{from}, s, t) \\
-              & \hspace4em - v_{connection\_flow}(c_{candidate}, n_{to_candidate}, d_{to}, s, t) \\
-              & \hspace4em - v_{connection\_intact\_flow}(c_{candidate}, n_{to_candidate}, d_{from}, s, t) \\
-              & \hspace4em + v_{connection\_intact\_flow}(c_{candidate}, n_{to_candidate}, d_{to}, s, t)  \Big) \\              
+              & \qquad + v_{connection\_flow}(c_{candidate}, n_{to_candidate}, d_{from}, s, t) \\
+              & \qquad - v_{connection\_flow}(c_{candidate}, n_{to_candidate}, d_{to}, s, t) \\
+              & \qquad - v_{connection\_intact\_flow}(c_{candidate}, n_{to_candidate}, d_{from}, s, t) \\
+              & \qquad + v_{connection\_intact\_flow}(c_{candidate}, n_{to_candidate}, d_{to}, s, t)  \Big) \\              
               & \forall (c,n_{to},s,t) \in connection\_flow\_intact\_flow\_indices \\
 \end{aligned}
 ```
@@ -1185,8 +1201,7 @@ minimise:&
 subject\ to:&
 \\
 &flow_{u,n,t} \le p_{unit\_capacity}(u, n, t) \cdot (v_{units\_available} + v_{units\_invested\_available}(u, n, t))\\
-&\sum_{u,n,t} v_{unit\_flow}(u,t) = p_{demand}(n, t) \\
-
+&\sum_{u,n,t} v_{unit\_flow}(u,t) = p_{demand}(n, t)
 \end{aligned}
 ```
 
@@ -1232,12 +1247,10 @@ In the first benders iteration, the value of the investment variables will have 
 minimise &Z:
 \\
 &Z \ge \sum_{u,t} p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)\\
-
 subject\ to:&
 \\
 Z \ge& + \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)\\
 & + \sum_{u,t}p_{unit\_capacity}(u,t) \cdot \mu_{b,u,t} \cdot (v_{units\_invested}(u,t) - p_{units\_invested}(u,b,t)) \qquad \forall b \\
-
 \end{aligned}
 ```
 Note the benders cuts are added as inequalities because they represent an upper bound on the value we are going to get from adjusting the master problem variables in that benders iteration. If we consider the example of renewable generation - because it's marginal cost is zero, on the first benders iteration, it could look like there would be a lot of value in increasing the capacity because of the marginal values from the sub problems. However, when the capacity variables are increased accordingly and curtailment occurs in the sub-problems, the marginal values will be zero when curtailment occurs and so, other resources may become optimal in subsequent iterations.
@@ -1288,34 +1301,34 @@ $`p_{storages\_invested\_available\_bi}(n,t,b)`$ is the value of the fixed sub p
 
 
 ## User constraints
-### [Unit constraint](@id constraint_unit_constraint)
-The [unit\_constraint](@ref) is a generic data-driven [custom constraint](@ref constraint_unit_constraint),
+### [User constraint](@id constraint_user_constraint)
+The [user\_constraint](@ref) is a generic data-driven [custom constraint](@ref constraint_user_constraint),
 which allows for defining constraints involving multiple [unit](@ref)s, [node](@ref)s, or [connection](@ref)s.
-The [constraint\_sense](@ref) parameter changes the sense of the [unit\_constraint](@ref),
+The [constraint\_sense](@ref) parameter changes the sense of the [user\_constraint](@ref),
 while the [right\_hand\_side](@ref) parameter allows for defining the constant terms of the constraint.
 
-Coefficients for the different [variables](@ref Variables) appearing in the [unit\_constraint](@ref) are defined
-using relationships, like e.g. [unit\_\_from\_node\_\_unit\_constraint](@ref) and
-[connection\_\_to\_node\_\_unit\_constraint](@ref) for [unit\_flow](@ref) and [connection\_flow](@ref) variables,
-or [unit\_\_unit\_constraint](@ref) and [node\_\_unit\_constraint](@ref) for [units\_on](@ref), [units\_started\_up](@ref),
+Coefficients for the different [variables](@ref Variables) appearing in the [user\_constraint](@ref) are defined
+using relationships, like e.g. [unit\_\_from\_node\_\_user\_constraint](@ref) and
+[connection\_\_to\_node\_\_user\_constraint](@ref) for [unit\_flow](@ref) and [connection\_flow](@ref) variables,
+or [unit\_\_user\_constraint](@ref) and [node\_\_user\_constraint](@ref) for [units\_on](@ref), [units\_started\_up](@ref),
 and [node_state](@ref) variables.
 
-For more information, see the dedicated article on [Unit Constraints](@ref)
+For more information, see the dedicated article on [User Constraints](@ref)
 
 ```math
 \begin{aligned}
-&+\sum_{\substack{u,n \in unit\_\_node\_\_unit\_constraint(uc),t,s}} \\
+&+\sum_{\substack{u,n \in unit\_\_node\_\_user\_constraint(uc),t,s}} \\
 & \begin{cases}       
   \begin{aligned}
        \sum_{\substack{op}} v_{unit\_flow\_op}(u,n,d,op,s,t) \cdot p_{unit\_flow\_coefficient}(u,n,op,uc,s,t) \qquad  &\text{if } \vert operating\_points(u)\vert > 1\\       
        v_{unit\_flow}(u,n,d,s,t) \cdot p_{unit\_flow\_coefficient}(u,n,uc,s,t) \qquad &\text{otherwise}\\       
   \end{aligned}
   \end{cases}\\
-&+\sum_{\substack{u \in unit\_\_unit\_constraint(uc),t,s}} v_{units\_started\_up}(u,s,t) \cdot p_{units\_started\_up\_coefficient}(u,uc,s,t)\\
-&+\sum_{\substack{u \in unit\_\_unit\_constraint(uc),t,s}} v_{units\_on}(u,s,t) \cdot p_{units\_on\_coefficient}(u,uc,s,t)\\
-&+\sum_{\substack{c,n \in connection\_\_node\_\_unit\_constraint(uc),t,s}} v_{connection\_flow}(c,n,d,s,t) \cdot p_{connection\_flow\_coefficient}(c,n,uc,s,t)\\
-&+\sum_{\substack{n \in node\_\_unit\_constraint(uc),t,s}} v_{node\_state}(n,s,t) \cdot p_{node\_state\_coefficient}(n,uc,s,t)\\
-&+\sum_{\substack{n \in node\_\_unit\_constraint(uc),t,s}} p_{demand}(n,s,t) \cdot p_{demand\_coefficient}(n,uc,s,t)\\
+&+\sum_{\substack{u \in unit\_\_user\_constraint(uc),t,s}} v_{units\_started\_up}(u,s,t) \cdot p_{units\_started\_up\_coefficient}(u,uc,s,t)\\
+&+\sum_{\substack{u \in unit\_\_user\_constraint(uc),t,s}} v_{units\_on}(u,s,t) \cdot p_{units\_on\_coefficient}(u,uc,s,t)\\
+&+\sum_{\substack{c,n \in connection\_\_node\_\_user\_constraint(uc),t,s}} v_{connection\_flow}(c,n,d,s,t) \cdot p_{connection\_flow\_coefficient}(c,n,uc,s,t)\\
+&+\sum_{\substack{n \in node\_\_user\_constraint(uc),t,s}} v_{node\_state}(n,s,t) \cdot p_{node\_state\_coefficient}(n,uc,s,t)\\
+&+\sum_{\substack{n \in node\_\_user\_constraint(uc),t,s}} p_{demand}(n,s,t) \cdot p_{demand\_coefficient}(n,uc,s,t)\\
 & \begin{cases}  
   \begin{aligned}     
        == \qquad &\text{if } p_{constraint\_sense}(uc) \text{= "=="}\\
@@ -1324,6 +1337,6 @@ For more information, see the dedicated article on [Unit Constraints](@ref)
   \end{aligned}
   \end{cases}\\
 &+p_{right\_hand\_side}(uc,t,s)\\
-&\forall uc,t,s \in constraint\_unit\_constraint\_indices\\
+&\forall uc,t,s \in constraint\_user\_constraint\_indices\\
 \end{aligned}
 ```

@@ -42,16 +42,21 @@ import SpineOpt:
     node_investment_dynamic_time_indices,
     rerun_spineopt_mp
 
-_is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
+# Test code uses legacy syntax for `import_data`, so interpret here.
+SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, Dict(kwargs...), "testing")
 
+# Convenience function for resetting the test in-memory db with the `SpineOpt.template`.
 function _load_test_data(db_url, test_data)
     SpineInterface._import_spinedb_api()
-    db_map = db_api.DatabaseMapping(db_url; create=true)
+    dbh = SpineInterface._create_db_handler(db_url, false)
+    dbh.close_connection()
+    dbh.open_connection()
     data = Dict(Symbol(key) => value for (key, value) in SpineOpt.template())
     merge!(data, test_data)
-    db_api.import_data(db_map; data...)
-    db_map
+    SpineInterface.import_data(db_url; data...)
 end
+
+_is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
 
 """
     _dismember_constraint(constraint)
@@ -80,17 +85,6 @@ function _dismember_function(func)
     println("term constant: ", func.constant)
 end
 
-function SpineOpt.run_spineopt(db_map::PyObject, url_out::String; kwargs...)
-    using_spinedb(db_map, SpineOpt)
-    SpineOpt.generate_missing_items()
-    if !isempty(model(model_type=:spineopt_master))
-        rerun_spineopt_mp(url_out; kwargs...)
-    else
-        rerun_spineopt(url_out; kwargs...)
-    end
-end
-SpineOpt.run_spineopt(db_map::PyObject; kwargs...) = run_spineopt(db_map, db_map.db_url; kwargs...)
-
 @testset begin
     include("data_structure/check_data_structure.jl")
     include("data_structure/preprocess_data_structure.jl")
@@ -100,6 +94,7 @@ SpineOpt.run_spineopt(db_map::PyObject; kwargs...) = run_spineopt(db_map, db_map
     include("constraints/constraint_unit.jl")
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")
+    include("constraints/constraint_user_constraint.jl")
     include("objective/objective.jl")
     include("util/misc.jl")
     include("util/postprocess_results.jl")

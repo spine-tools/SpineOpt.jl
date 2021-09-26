@@ -23,7 +23,7 @@ Constraint for line storage dependent on line pack.
 """
 function add_constraint_storage_line_pack!(m::Model)
     @fetch node_state, node_pressure = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     m.ext[:constraints][:storage_line_pack] = Dict(
         (connection=conn, node1=stor, node2=ng, stochastic_path=s, t=t) => @constraint(
             m,

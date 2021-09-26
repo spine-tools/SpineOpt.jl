@@ -24,7 +24,7 @@ Create an expression for fuel costs of units.
 """
 function fuel_costs(m::Model, t1)
     @fetch unit_flow = m.ext[:variables]
-    t0 = startref(current_window(m))
+    t0 = _analysis_time(m)
     @expression(
         m,
         expr_sum(

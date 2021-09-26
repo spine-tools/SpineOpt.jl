@@ -1,0 +1,37 @@
+{
+    "object_classes": [
+        ["stochastic_scenario", "A scenario for stochastic optimisation in SpineOpt.", 280743389491710],
+        ["stochastic_structure", "A group of stochastic scenarios that represent a structure.", 281470681806146]
+    ],
+    "relationship_classes": [
+        ["parent_stochastic_scenario__child_stochastic_scenario", ["stochastic_scenario", "stochastic_scenario"], "Defines the master stochastic direct acyclic graph, meaning how the `stochastic_scenarios` are related to each other."],
+        ["stochastic_structure__stochastic_scenario", ["stochastic_structure", "stochastic_scenario"], "Defines which `stochastic_scenarios` are included in which `stochastic_structure`, and holds the parameters required for realizing the structure in combination with the `temporal_blocks`."]
+    ],
+    "relationship_parameters": [
+        ["stochastic_structure__stochastic_scenario", "stochastic_scenario_end", null, null, "A `Duration` for when a `stochastic_scenario` ends and its `child_stochastic_scenarios` start. Values are interpreted relative to the start of the current solve, and if no value is given, the `stochastic_scenario` is assumed to continue indefinitely."],
+        ["stochastic_structure__stochastic_scenario", "weight_relative_to_parents", 1.0, null, "The weight of the `stochastic_scenario` in the objective function relative to its parents."]
+    ],
+    "objects": [
+        ["stochastic_scenario", "realization", null],
+        ["stochastic_scenario", "forecast1", null],
+        ["stochastic_scenario", "forecast2", null],
+        ["stochastic_scenario", "forecast3", null],
+        ["stochastic_structure", "branching", null]
+    ],
+    "relationships": [
+        ["parent_stochastic_scenario__child_stochastic_scenario", ["realization", "forecast1"]],
+        ["parent_stochastic_scenario__child_stochastic_scenario", ["realization", "forecast2"]],
+        ["parent_stochastic_scenario__child_stochastic_scenario", ["realization", "forecast3"]],
+        ["stochastic_structure__stochastic_scenario", ["branching", "realization"]],
+        ["stochastic_structure__stochastic_scenario", ["branching", "forecast1"]],
+        ["stochastic_structure__stochastic_scenario", ["branching", "forecast2"]],
+        ["stochastic_structure__stochastic_scenario", ["branching", "forecast3"]]
+    ],
+    "relationship_parameter_values": [
+        ["stochastic_structure__stochastic_scenario", ["branching", "realization"], "stochastic_scenario_end", {"data": "6h", "type": "duration"}, "Base"],
+        ["stochastic_structure__stochastic_scenario", ["branching", "realization"], "weight_relative_to_parents", 1.0, "Base"],
+        ["stochastic_structure__stochastic_scenario", ["branching", "forecast1"], "weight_relative_to_parents", 0.33, "Base"],
+        ["stochastic_structure__stochastic_scenario", ["branching", "forecast2"], "weight_relative_to_parents", 0.34, "Base"],
+        ["stochastic_structure__stochastic_scenario", ["branching", "forecast3"], "weight_relative_to_parents", 0.33, "Base"]
+    ]
+}

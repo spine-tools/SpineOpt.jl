@@ -66,6 +66,12 @@ function _find_root_scenarios(m::Model)
     )
     setdiff(all_scenarios, _find_children(anything))
 end
+function _find_root_scenarios(m::Model, stochastic_structure::Object)
+    all_scenarios = stochastic_structure__stochastic_scenario(
+        stochastic_structure=intersect(model__stochastic_structure(model=m.ext[:instance]), stochastic_structure),
+    )
+    setdiff(all_scenarios, _find_children(anything))
+end
 
 """
     _generate_active_stochastic_paths(m::Model)
@@ -106,7 +112,7 @@ for the given `stochastic_structure`.
 Aka dag, that is, a *realized* stochastic structure with all the parameter values in place.
 """
 function _stochastic_dag(m::Model, stochastic_structure::Object, window_start::DateTime, window_very_end::DateTime)
-    scenarios = _find_root_scenarios(m)
+    scenarios = _find_root_scenarios(m, stochastic_structure)
     scen_start = Dict(scen => window_start for scen in scenarios)
     scen_end = Dict()
     scen_weight = Dict(
@@ -408,7 +414,7 @@ connection_stochastic_scenario_weight(
 
 Generate stochastic structure all models.
 """
-function generate_stochastic_structure(m::Model)
+function generate_stochastic_structure!(m::Model)
     m.ext[:stochastic_structure] = Dict()
     all_stochastic_dags = _all_stochastic_dags(m)
     _generate_stochastic_scenario_set(m, all_stochastic_dags)

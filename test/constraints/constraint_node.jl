@@ -83,7 +83,7 @@
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
-            ["node", "node_group_bc", "balance_type", "balance_type_group"],
+            ["node", "node_group_bc", "balance_type", "balance_type_none"]
         ],
         :relationship_parameter_values => [[
             "stochastic_structure__stochastic_scenario",
@@ -92,12 +92,63 @@
             Dict("type" => "duration", "data" => "1h"),
         ]],
     )
+    
     @testset "constraint_nodal_balance" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         object_parameter_values = [["node", "node_a", "node_slack_penalty", 0.5]]
-        db_api.import_data(db_map; object_parameter_values=object_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_node_injection = m.ext[:variables][:node_injection]
+        var_connection_flow = m.ext[:variables][:connection_flow]
+        var_node_slack_pos = m.ext[:variables][:node_slack_pos]
+        var_node_slack_neg = m.ext[:variables][:node_slack_neg]
+        constraint = m.ext[:constraints][:nodal_balance]
+
+        @test length(constraint) == 5
+
+        conn = connection(:connection_ca)
+        # node_a
+        n = node(:node_a)
+        key_tail = (stochastic_scenario(:parent), time_slice(m; temporal_block=temporal_block(:two_hourly))[1])
+        node_key = (n, key_tail...)
+        conn_key = (conn, n, direction(:to_node), key_tail...)
+        var_n_inj = var_node_injection[node_key...]
+        var_n_sl_pos = var_node_slack_pos[node_key...]
+        var_n_sl_neg = var_node_slack_neg[node_key...]
+        var_conn_flow = var_connection_flow[conn_key...]
+        expected_con = @build_constraint(var_n_inj + var_conn_flow + var_n_sl_pos - var_n_sl_neg == 0)
+        con = constraint[node_key...]
+        observed_con = constraint_object(con)       
+
+        # node_b
+        n = node(:node_b)
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            var_n_inj = var_node_injection[n, s, t]
+            var_conn_flows = (                
+                - var_connection_flow[connection(:connection_bc), node(:node_b), direction(:from_node), s, t]                
+            )
+            expected_con = @build_constraint(var_n_inj + var_conn_flows == 0)
+            con = constraint[n, s, t]
+            observed_con = constraint_object(con)
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+        
+        @test _is_constraint_equal(observed_con, expected_con)
+    end
+
+    @testset "constraint_nodal_balance_group" begin
+        _load_test_data(url_in, test_data)
+        object_parameter_values = [
+            ["node", "node_a", "node_slack_penalty", 0.5],
+            ["node", "node_group_bc", "balance_type", "balance_type_group"]
+        ]
+        
+        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_injection = m.ext[:variables][:node_injection]
         var_connection_flow = m.ext[:variables][:connection_flow]
         var_node_slack_pos = m.ext[:variables][:node_slack_pos]
@@ -117,6 +168,7 @@
         expected_con = @build_constraint(var_n_inj + var_conn_flow + var_n_sl_pos - var_n_sl_neg == 0)
         con = constraint[node_key...]
         observed_con = constraint_object(con)
+        
         @test _is_constraint_equal(observed_con, expected_con)
         # node_group_bc
         n = node(:node_group_bc)
@@ -124,8 +176,11 @@
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             var_n_inj = var_node_injection[node(:node_group_bc), s, t]
-            var_conn_flow = var_connection_flow[conn, node(:node_c), direction(:from_node), s, t]
-            expected_con = @build_constraint(var_n_inj - var_conn_flow == 0)
+            var_conn_flows = (                            
+                - var_connection_flow[connection(:connection_ca), node(:node_c), direction(:from_node), s, t]
+            )
+            
+            expected_con = @build_constraint(var_n_inj + var_conn_flows == 0)
             con = constraint[node(:node_group_bc), s, t]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -144,7 +199,7 @@
         state_coeff_c = 0.8
         diff_coeff_bc = 0.2
         diff_coeff_cb = 0.3
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         relationships = [["node__node", ["node_b", "node_c"]], ["node__node", ["node_c", "node_b"]]]
         object_parameter_values = [
             ["node", "node_a", "demand", demand_a],
@@ -164,14 +219,14 @@
             ["node__node", ["node_b", "node_c"], "diff_coeff", diff_coeff_bc],
             ["node__node", ["node_c", "node_b"], "diff_coeff", diff_coeff_cb],
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_injection = m.ext[:variables][:node_injection]
         var_unit_flow = m.ext[:variables][:unit_flow]
         var_node_state = m.ext[:variables][:node_state]
@@ -255,7 +310,7 @@
         end
     end
     @testset "constraint_node_state_capacity" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         node_capacity = Dict("node_b" => 120, "node_c" => 400)
         object_parameter_values = [
             ["node", "node_b", "node_state_cap", node_capacity["node_b"]],
@@ -263,9 +318,9 @@
             ["node", "node_b", "has_state", true],
             ["node", "node_c", "has_state", true],
         ]
-        db_api.import_data(db_map; object_parameter_values=object_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_state = m.ext[:variables][:node_state]
         constraint = m.ext[:constraints][:node_state_capacity]
         @test length(constraint) == 4
@@ -285,7 +340,7 @@
         end
     end
     @testset "constraint_cyclic_node_state" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         node_capacity = Dict("node_b" => 120, "node_c" => 400)
         cyc_cond = Dict(("node_b", "hourly") => true, ("node_c", "hourly") => true)
         object_parameter_values = [
@@ -298,9 +353,9 @@
             ["node__temporal_block", ["node_b", "hourly"], "cyclic_condition",cyc_cond[("node_b", "hourly")]],
             ["node__temporal_block", ["node_c", "hourly"],"cyclic_condition", cyc_cond[("node_c", "hourly")]],
         ]
-        db_api.import_data(db_map; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_state = m.ext[:variables][:node_state]
         constraint = m.ext[:constraints][:cyclic_node_state]
         @test length(constraint) == 2
@@ -323,7 +378,7 @@
         end
     end
     @testset "constraint_storage_line_pack" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         pressure = Dict("node_b" => true, "node_c" => true)
         state = Dict("node_a" => true)
         object_parameter_values = [
@@ -340,14 +395,14 @@
         relationship_parameter_values = [
             ["connection__node__node",["connection_bc","node_a","node_group_bc"],"connection_linepack_constant", conn_linepack[("connection_bc","node_a","node_group_bc")]]
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
             relationships=relationships,
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_pressure = m.ext[:variables][:node_pressure]
         var_node_state = m.ext[:variables][:node_state]
         constraint = m.ext[:constraints][:storage_line_pack]
@@ -382,7 +437,7 @@
     #TODO
     end
     @testset "constraint_compression_ratio" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         has_pressure = Dict("node_b" => true, "node_c" => true)
         relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
         compression_ratio = Dict(("connection_bc","node_b", "node_c") => 1.2) #fromnodetonode
@@ -392,14 +447,14 @@
         ]
         relationship_parameter_values = [
             ["connection__node__node", ["connection_bc", "node_b", "node_c"], "compression_factor", compression_ratio[(("connection_bc","node_b", "node_c"))]]]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_pressure = m.ext[:variables][:node_pressure]
         constraint = m.ext[:constraints][:compression_ratio]
         @test length(constraint) == 2
@@ -423,19 +478,19 @@
         end
     end
     @testset "constraint_min_node_pressure" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         has_pressure = Dict("node_b" => true)
         min_pressure = Dict("node_b" => 350)
         object_parameter_values = [
             ["node", "node_b", "has_pressure", has_pressure["node_b"]],
             ["node", "node_b", "min_node_pressure", min_pressure["node_b"]]
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             object_parameter_values=object_parameter_values
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_pressure = m.ext[:variables][:node_pressure]
         constraint = m.ext[:constraints][:min_node_pressure]
         @test length(constraint) == 2
@@ -455,19 +510,19 @@
         end
     end
     @testset "constraint_max_node_pressure" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         has_pressure = Dict("node_b" => true)
         max_pressure = Dict("node_b" => 470)
         object_parameter_values = [
             ["node", "node_b", "has_pressure", has_pressure["node_b"]],
             ["node", "node_b", "max_node_pressure", max_pressure["node_b"]]
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             object_parameter_values=object_parameter_values
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_pressure = m.ext[:variables][:node_pressure]
         constraint = m.ext[:constraints][:max_node_pressure]
         @test length(constraint) == 2
@@ -487,19 +542,19 @@
         end
     end
     @testset "constraint_min_node_voltage_angle" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         has_voltage_angle = Dict("node_b" => true)
         min_voltage_angle = Dict("node_b" => -3.14)
         object_parameter_values = [
             ["node", "node_b", "has_voltage_angle", has_voltage_angle["node_b"]],
             ["node", "node_b", "min_voltage_angle", min_voltage_angle["node_b"]]
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             object_parameter_values=object_parameter_values
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_voltage_angle = m.ext[:variables][:node_voltage_angle]
         constraint = m.ext[:constraints][:min_node_voltage_angle]
         @test length(constraint) == 2
@@ -519,19 +574,19 @@
         end
     end
     @testset "constraint_max_node_voltage_angle" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         has_voltage_angle = Dict("node_b" => true)
         max_voltage_angle = Dict("node_b" => 3.14)
         object_parameter_values = [
             ["node", "node_b", "has_voltage_angle", has_voltage_angle["node_b"]],
             ["node", "node_b", "max_voltage_angle", max_voltage_angle["node_b"]]
         ]
-        db_api.import_data(
-            db_map;
+        SpineInterface.import_data(
+            url_in;
             object_parameter_values=object_parameter_values
         )
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_voltage_angle = m.ext[:variables][:node_voltage_angle]
         constraint = m.ext[:constraints][:max_node_voltage_angle]
         @test length(constraint) == 2
@@ -551,7 +606,7 @@
         end
     end
     @testset "constraint_node_state_capacity_investments" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         candidate_storages = 1
         node_capacity = 400
         object_parameter_values = [
@@ -563,9 +618,9 @@
             ["node__investment_temporal_block", ["node_c", "hourly"]],
             ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
         ]
-        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_state = m.ext[:variables][:node_state]
         var_storages_invested_available = m.ext[:variables][:storages_invested_available]
         constraint = m.ext[:constraints][:node_state_capacity]
@@ -587,7 +642,7 @@
         end
     end
     @testset "constraint_storages_invested_available" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         candidate_storages = 1
         node_capacity = 500
         object_parameter_values = [
@@ -599,9 +654,9 @@
             ["node__investment_temporal_block", ["node_c", "hourly"]],
             ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
         ]
-        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_storages_invested_available = m.ext[:variables][:storages_invested_available]
         constraint = m.ext[:constraints][:storages_invested_available]
         @test length(constraint) == 2
@@ -617,7 +672,7 @@
         end
     end
     @testset "constraint_storages_invested_available_mp" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         candidate_storages = 7
         node_capacity = 500
         object_parameter_values = [
@@ -632,9 +687,9 @@
             ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
             ["node__investment_stochastic_structure", ["node_c", "investments_deterministic"]],
         ]
-        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-        db_map.commit_session("Add test data")
-        m, mp = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+        
+        m, mp = run_spineopt(url_in; log_level=0, optimize=false)
         var_storages_invested_available = m.ext[:variables][:storages_invested_available]
         constraint = m.ext[:constraints][:storages_invested_available]
         @test length(constraint) == 2
@@ -663,7 +718,7 @@
         end
     end
     @testset "constraint_storages_invested_transition" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         candidate_storages = 1
         node_capacity = 500
         object_parameter_values = [
@@ -675,9 +730,9 @@
             ["node__investment_temporal_block", ["node_c", "hourly"]],
             ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
         ]
-        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-        db_map.commit_session("Add test data")
-        m = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         var_storages_invested_available = m.ext[:variables][:storages_invested_available]
         var_storages_invested = m.ext[:variables][:storages_invested]
         var_storages_decommissioned = m.ext[:variables][:storages_decommissioned]
@@ -703,7 +758,7 @@
         end
     end
     @testset "constraint_storages_invested_transition_mp" begin
-        db_map = _load_test_data(url_in, test_data)
+        _load_test_data(url_in, test_data)
         candidate_storages = 1
         node_capacity = 500
         object_parameter_values = [
@@ -718,9 +773,9 @@
             ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
             ["node__investment_stochastic_structure", ["node_c", "investments_deterministic"]],
         ]
-        db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-        db_map.commit_session("Add test data")
-        m, mp = run_spineopt(db_map; log_level=0, optimize=false)
+        SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+        
+        m, mp = run_spineopt(url_in; log_level=0, optimize=false)
         var_storages_invested_available = m.ext[:variables][:storages_invested_available]
         var_storages_invested = m.ext[:variables][:storages_invested]
         var_storages_decommissioned = m.ext[:variables][:storages_decommissioned]
@@ -774,7 +829,7 @@
         node_capacity = 500
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
-            db_map = _load_test_data(url_in, test_data)
+            _load_test_data(url_in, test_data)
             storage_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["node", "node_c", "candidate_storages", candidate_storages],
@@ -787,9 +842,9 @@
                 ["node__investment_temporal_block", ["node_c", "hourly"]],
                 ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
             ]
-            db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-            db_map.commit_session("Add test data")
-            m = run_spineopt(db_map; log_level=0, optimize=false)
+            SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+            
+            m = run_spineopt(url_in; log_level=0, optimize=false)
             var_storages_invested_available = m.ext[:variables][:storages_invested_available]
             var_storages_invested = m.ext[:variables][:storages_invested]
             constraint = m.ext[:constraints][:storage_lifetime]
@@ -829,7 +884,7 @@
         node_capacity = 500
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
-            db_map = _load_test_data(url_in, test_data)
+            _load_test_data(url_in, test_data)
             storage_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["node", "node_c", "candidate_storages", candidate_storages],
@@ -846,9 +901,9 @@
                 ["node__investment_temporal_block", ["node_c", "investments_hourly"]],
                 ["node__investment_stochastic_structure", ["node_c", "investments_deterministic"]],
             ]
-            db_api.import_data(db_map; relationships=relationships, object_parameter_values=object_parameter_values)
-            db_map.commit_session("Add test data")
-            m, mp = run_spineopt(db_map; log_level=0, optimize=false)
+            SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
+            
+            m, mp = run_spineopt(url_in; log_level=0, optimize=false)
             var_storages_invested_available = m.ext[:variables][:storages_invested_available]
             var_storages_invested = m.ext[:variables][:storages_invested]
             constraint = m.ext[:constraints][:storage_lifetime]
@@ -913,5 +968,5 @@
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
-    end
+    end       
 end

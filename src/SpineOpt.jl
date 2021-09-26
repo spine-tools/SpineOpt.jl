@@ -37,6 +37,7 @@ export @fetch
 include("run_spineopt.jl")
 include("data_structure/generate_missing_items.jl")
 include("util/docs_utils.jl")
+include("data_structure/migration.jl")
 
 _lazy_include_file_paths = [
 	"run_spineopt_sp.jl",
@@ -133,7 +134,7 @@ _lazy_include_file_paths = [
 	"constraints/constraint_min_up_time.jl",
 	"constraints/constraint_min_down_time.jl",
 	"constraints/constraint_unit_state_transition.jl",
-	"constraints/constraint_unit_constraint.jl",
+	"constraints/constraint_user_constraint.jl",
 	"constraints/constraint_units_invested_available.jl",
 	"constraints/constraint_units_invested_transition.jl",
 	"constraints/constraint_unit_lifetime.jl",
@@ -184,11 +185,11 @@ function __init__()
 	end
 end
 
-const _template = JSON.parsefile(joinpath(@__DIR__, "..", "data", "spineopt_template.json"))
+const _template = JSON.parsefile(joinpath(@__DIR__, "..", "templates", "spineopt_template.json"))
 
 function template()
     try
-        JSON.parsefile(joinpath(@__DIR__, "..", "data", "spineopt_template.json"))
+        JSON.parsefile(joinpath(@__DIR__, "..", "templates", "spineopt_template.json"))
     catch
         # Template file not found, use _template constant instead.
         # This will happen in the SpineOpt app

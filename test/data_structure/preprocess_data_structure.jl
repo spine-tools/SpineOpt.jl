@@ -28,9 +28,8 @@
         :object_parameter_values =>
             [["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"]],
     )
-    db_map = _load_test_data(url_in, test_data)
-    db_map.commit_session("Add test data")
-    using_spinedb(db_map, SpineOpt)
+    _load_test_data(url_in, test_data)    
+    using_spinedb(url_in, SpineOpt)
     SpineOpt.add_connection_relationships()
     conn_ab = connection(:connection_ab)
     n_a = node(:node_a)
@@ -70,9 +69,8 @@ end
             ["units_on__stochastic_structure", ["unit_group_ab", "ss"]],
         ],
     )
-    db_map = _load_test_data(url_in, test_data)
-    db_map.commit_session("Add test data")
-    using_spinedb(db_map, SpineOpt)
+    _load_test_data(url_in, test_data)    
+    using_spinedb(url_in, SpineOpt)
     n_a = node(:node_a)
     n_b = node(:node_b)
     ng_ab = node(:node_group_ab)
@@ -186,17 +184,13 @@ end
             ],
         ],
     )
-
-    db_map = _load_test_data(url_in, test_data)
-    db_map.commit_session("Add test data")
-    m = run_spineopt(db_map; log_level=0, optimize=false)
-
+    _load_test_data(url_in, test_data)    
+    m = run_spineopt(url_in; log_level=0, optimize=false)
     capacities_dict = Dict(
         connection(:connection_ab) => conn_cap_ab,
         connection(:connection_bc) => conn_cap_bc,
         connection(:connection_ca) => conn_cap_ca,
     )
-
     for (conn, n_from, n_to) in (
         (connection(:connection_ab), node(:node_a), node(:node_b)),
         (connection(:connection_bc), node(:node_b), node(:node_c)),
