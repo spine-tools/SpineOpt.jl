@@ -145,8 +145,8 @@ function add_mp_constraints!(mp; add_constraints=mp -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(mp)
     @timelog log_level 3 "- [constraint_connection_lifetime]" add_constraint_connection_lifetime!(mp)
     # @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(
-        mp,
-    )
+    #     mp,
+    # )
     @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(
         mp,
     )

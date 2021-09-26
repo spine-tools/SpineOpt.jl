@@ -130,7 +130,7 @@ function rerun_spineopt(
     optimize=true,
     use_direct_model=false,
 )
-    @eval using JuMP
+    # @eval using JuMP
     # High-level algorithm selection. For now, selecting based on defined model types,
     # but may want more robust system in future
     rerun_spineopt = !isempty(model(model_type=:spineopt_master)) ? rerun_spineopt_mp : rerun_spineopt_sp

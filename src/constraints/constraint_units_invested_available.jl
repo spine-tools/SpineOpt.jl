@@ -30,7 +30,8 @@ function add_constraint_units_invested_available!(m::Model)
             m,
             + sum(
                 units_invested_available[u, s, t]
-                for (u, s, t) in units_invested_available_indices(m)
+                for (u, s, t) in units_invested_available_indices(
+                    m; unit=u, stochastic_scenario=s, t=t)
             )
             <=
             + candidate_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]

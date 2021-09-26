@@ -31,7 +31,7 @@ If instantaneous power needs to be constrained as well, defining the `connection
 `connection_flow` can be used to achieve this.
 """
 function add_constraint_connection_flow_capacity!(m::Model)
-    @fetch connection_flow, connections_invested_available, connection_decomissioned = m.ext[:variables]
+    @fetch connection_flow, connections_invested_available, connections_decommissioned = m.ext[:variables]
     t0 = _analysis_time(m)
     m.ext[:constraints][:connection_flow_capacity] = Dict(
         (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(

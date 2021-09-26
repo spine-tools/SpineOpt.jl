@@ -36,7 +36,7 @@ function add_constraint_unit_lifetime!(m::Model)
             ==
             + sum(
                 + units_invested[u, s_past, t_past]
-                * capacity_transfer_factor[(unit=u, stochastic_structure__stochastic_scenario=s_past,vintage_t=t_past,t=t)]
+                * capacity_transfer_factor[(unit=u, stochastic_scenario=s_past,vintage_t=t_past,t=t)]
                 for (u, s_past, t_past) in units_invested_available_indices(
                     m;
                     unit=u,
@@ -58,7 +58,7 @@ function constraint_unit_lifetime_indices(m::Model)
     t0 = _analysis_time(m)
     unique(
         (unit=u, stochastic_path=path, t=t)
-        for u in indices(unit_investment_lifetime) for (u, s, t) in units_invested_available_indices(m; unit=u)
+        for u in indices(unit_investment_tech_lifetime) for (u, s, t) in units_invested_available_indices(m; unit=u)
         for path in active_stochastic_paths(_constraint_unit_lifetime_indices(m, u, s, t0, t))
     )
 end
@@ -80,12 +80,12 @@ end
     _constraint_unit_lifetime_indices(u, s, t0, t)
 
 Gathers the `stochastic_scenario` indices of the `units_invested_available` variable on past time slices determined
-by the `unit_investment_lifetime` parameter.
+by the `unit_investment_tech_lifetime` parameter.
 """
 function _constraint_unit_lifetime_indices(m, u, s, t0, t)
     t_past_and_present = to_time_slice(
         m;
-        t=TimeSlice(end_(t) - unit_investment_lifetime(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)),
+        t=TimeSlice(end_(t) - unit_investment_tech_lifetime(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)),
     )
     unique(ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=t_past_and_present))
 end

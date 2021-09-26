@@ -30,7 +30,7 @@ function ramp_costs(m::Model, t1)
         m,
         expr_sum(
             ramp_up_unit_flow[u, n, d, s, t]
-            * discount_duration[(unit=u, stochastic_scenario=s,t=t)]
+            * discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * ramp_up_cost[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
@@ -39,7 +39,7 @@ function ramp_costs(m::Model, t1)
             init=0,
         ) + expr_sum(
             ramp_down_unit_flow[u, n, d, s, t]
-            * discount_duration[(unit=u, stochastic_scenario=s,t=t)]
+            * discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * ramp_down_cost[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]

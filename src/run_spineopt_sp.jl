@@ -41,8 +41,8 @@ function rerun_spineopt_sp(
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating economic structure..." generate_economic_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
+    @timelog log_level 2 "Creating economic structure..." generate_economic_structure!(m)
     init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
     init_outputs!(m)
     k = 1
@@ -195,8 +195,8 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     )
     @timelog log_level 3 "- [constraint_connection_lifetime]" add_constraint_connection_lifetime!(m)
     # @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(
-        m,
-    )
+    #     m,
+    # )
     @timelog log_level 3 "- [constraint_storages_invested_available]" add_constraint_storages_invested_available!(m)
     @timelog log_level 3 "- [constraint_storage_lifetime]" add_constraint_storage_lifetime!(m)
     # @timelog log_level 3 "- [constraint_storages_invested_transition]" add_constraint_storages_invested_transition!(m)
@@ -312,11 +312,38 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, use_direc
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section. We are ignoring it.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
+
+    if termination_status(m) == MOI.INFEASIBLE && use_direct_model==true
+         compute_conflict!(m)
+         cons=[]
+         for (a,b) in list_of_constraint_types(m)
+             push!(cons,all_constraints(m,a,b)...)
+         end
+         conflicts=[]
+         for c in cons
+             try
+                 conf = MOI.get(m, MOI.ConstraintConflictStatus(), c)
+                 if conf==MOI.ConflictParticipationStatusCode(1)
+                     @show c
+                     push!(conflicts, c)
+                 end
+             catch
+                 @info("something went wrong with $c")
+             end
+         end
+
+         @info "conflicts are: "
+         for c in conflicts
+             @info "$(c)"
+         end
+         write_conflicts_to_file(conflicts, file_name="conflicts_$(m.ext[:instance])_$(startref(current_window(m))).txt")
+     end
+
     if termination_status(m) == MOI.OPTIMAL || termination_status(m) == MOI.TIME_LIMIT
         if calculate_duals
             @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
             if lp_solver != mip_solver
-                @timelog log_level 0 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)                
+                @timelog log_level 0 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
             end
             @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
         end
@@ -441,7 +468,7 @@ function write_report(model, default_url)
 end
 
 function relax_integer_vars(m::Model)
-    save_integer_values!(m) 
+    save_integer_values!(m)
     for name in m.ext[:integer_variables]
         def = m.ext[:variables_definition][name]
         bin = def[:bin]
@@ -449,7 +476,7 @@ function relax_integer_vars(m::Model)
         indices = def[:indices]
         var = m.ext[:variables][name]
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            #if end_(ind.t) <= end_(current_window(m))                
+            #if end_(ind.t) <= end_(current_window(m))
                 fix(var[ind], m.ext[:values][name][ind]; force=true)
                 (bin != nothing && bin(ind)) && unset_binary(var[ind])
                 (int != nothing && int(ind)) && unset_integer(var[ind])

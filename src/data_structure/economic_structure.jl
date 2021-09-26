@@ -48,13 +48,13 @@ function generate_unit_CPT!(m::Model)
         for u in members(unit())
             map_stoch_indices = []
             map_inner = []
-            @show u
-            @show units_invested_available_indices(m;unit=u)
+            # @show u
+            # @show units_invested_available_indices(m;unit=u)
             for s in unique([x.stochastic_scenario for x in units_invested_available_indices(m)])
                 map_indices = []
                 timeseries_array = []
                 for (u,s,vintage_t) in units_invested_available_indices(m;unit=u, stochastic_scenario=s)
-                    @show u,s,vintage_t
+                    # @show u,s,vintage_t
                     LT = lead_time(unit=u,stochastic_scenario=s,t=vintage_t)
                     TLIFE = unit_investment_tech_lifetime(unit=u,stochastic_scenario=s,t=vintage_t)
                     vintage_t_start = start(vintage_t)
@@ -67,7 +67,7 @@ function generate_unit_CPT!(m::Model)
                         t_start = start(t)
                         t_end = end_(t)
                         dur =  t_end - t_start
-                        @show typeof(t_end), typeof(start_of_operation)
+                        # @show typeof(t_end), typeof(start_of_operation)
                         if t_end < start_of_operation
                             val=0
                         elseif t_start<start_of_operation && start_of_operation<=t_end
@@ -152,7 +152,7 @@ function generate_unit_annuity!(m::Model)
                 start_of_operation = vintage_t_start + LT
                 end_of_operation = vintage_t_start + LT + ELIFE
                 if dynamic_invest
-                    @show dynamic_invest
+                    # @show dynamic_invest
                     j = vintage_t_start
                     val = 0
                     while j<= end_of_operation
@@ -223,7 +223,7 @@ function generate_salvage_fraction!(m::Model)
                 start_of_operation = vintage_t_start + LT
                 end_of_operation = vintage_t_start + LT + ELIFE
                 if dynamic_invest
-                    @show dynamic_invest
+                    # @show dynamic_invest
                     j1= EOH + Year(1) #numerator +1 or not?
                     j2 = vintage_t_start
                     val1 = 0
@@ -234,7 +234,7 @@ function generate_salvage_fraction!(m::Model)
                         pfrac = max((UP-DOWN+Year(1))/LT,0)
                         val1+= pfrac *1/(1+discnt_rate)^((Year(j1)-Year(discnt_year))/Year(1))
                         if u == unit()[1]
-                            @show vintage_t_start, val1
+                            # @show vintage_t_start, val1
                         end
                         j1+= Year(1)
                     end
@@ -244,7 +244,7 @@ function generate_salvage_fraction!(m::Model)
                         pfrac = max((UP-DOWN+Year(1))/LT,0)
                         val2+= pfrac *1/(1+discnt_rate)^((Year(j2)-Year(discnt_year))/Year(1))
                         if u == unit()[1]
-                            @show vintage_t_start, val2
+                            # @show vintage_t_start, val2
                         end
                         j2+= Year(1)
                     end
@@ -259,7 +259,7 @@ function generate_salvage_fraction!(m::Model)
                         pfrac = max((UP-DOWN+Year(1))/LT,0)
                         val1 += pfrac *1/(1+discnt_rate)^((Year(j1)-Year(discnt_year))/Year(1)) #changed from val to val1 by maren
                         j1+= Year(1)
-                        @show "both built?"
+                        # @show "both built?"
                         # @show val
                     end
                     while j2<= end_of_operation-LT
@@ -268,12 +268,12 @@ function generate_salvage_fraction!(m::Model)
                         pfrac = max((UP-DOWN+Year(1))/LT,0)
                         val2+= pfrac *1/(1+discnt_rate)^((Year(j2)-Year(discnt_year))/Year(1))
                         j2+= Year(1)
-                        @show "both built?"
-                        @show val2
+                        # @show "both built?"
+                        # @show val2
                     end
                 end
-                @show start(vintage_t), val1, val2
-                @show start(vintage_t), val1/val2
+                # @show start(vintage_t), val1, val2
+                # @show start(vintage_t), val1/val2
                 val = max(val1/val2,0)
                 # @show val
                 # salvage_fraction[(u, vintage_t)] =  parameter_value(val)
@@ -302,22 +302,25 @@ function generate_tech_discount_factor!(m::Model)
     instance = m.ext[:instance]
     discnt_rate = discount_rate(model=instance)
     tech_discount_factor = Dict()
-
-    for u in indices(discount_rate_technology_specific) #@TIm what would be the default value (for unit w/o)? 0?
-        stoch_map_val = []
-        stoch_map_ind = []
-        for s in stochastic_structure__stochastic_scenario(stochastic_structure=unit__investment_stochastic_structure(unit=u))
-            ELIFE = unit_investment_econ_lifetime(unit=u,stochastic_scenario=s)
-            tech_discount_rate = discount_rate_technology_specific(unit=u,stochastic_scenario=s)
-            CRF_model = discnt_rate * (1+discnt_rate)^(Year(ELIFE)/Year(1))/((1+discnt_rate)^(Year(ELIFE)/Year(1))-1)
-            # @show tech_discount_rate
-            CRF_tech = tech_discount_rate * (1+tech_discount_rate)^(Year(ELIFE)/Year(1))/((1+tech_discount_rate)^(Year(ELIFE)/Year(1))-1)
-            val = CRF_tech/CRF_model
-            # tech_discount_factor[u] =  parameter_value(val)
-            push!(stoch_map_val,val)
-            push!(stoch_map_ind,s)
+    for u in unit()
+        if u in indices(discount_rate_technology_specific) #@TIm what would be the default value (for unit w/o)? 0?
+            stoch_map_val = []
+            stoch_map_ind = []
+            for s in stochastic_structure__stochastic_scenario(stochastic_structure=unit__investment_stochastic_structure(unit=u))
+                ELIFE = unit_investment_econ_lifetime(unit=u,stochastic_scenario=s)
+                tech_discount_rate = discount_rate_technology_specific(unit=u,stochastic_scenario=s)
+                CRF_model = discnt_rate * (1+discnt_rate)^(Year(ELIFE)/Year(1))/((1+discnt_rate)^(Year(ELIFE)/Year(1))-1)
+                # @show tech_discount_rate
+                CRF_tech = tech_discount_rate * (1+tech_discount_rate)^(Year(ELIFE)/Year(1))/((1+tech_discount_rate)^(Year(ELIFE)/Year(1))-1)
+                val = CRF_tech/CRF_model
+                # tech_discount_factor[u] =  parameter_value(val)
+                push!(stoch_map_val,val)
+                push!(stoch_map_ind,s)
+            end
+            unit.parameter_values[u][:tech_discount_factor] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
+        else
+            unit.parameter_values[u][:tech_discount_factor] = parameter_value(1)
         end
-        unit.parameter_values[u][:tech_discount_factor] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
     end
     tech_discount_factor = Parameter(:tech_discount_factor, [unit])
     @eval begin
