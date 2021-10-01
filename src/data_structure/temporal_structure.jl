@@ -576,6 +576,9 @@ function _time_interval_output_blocks(instance::Object, window_start::DateTime, 
             duration = output_resolution(output=block, i=i)
             if iszero(duration)
                 duration = Minute(0)
+                time_slice_end = time_slice_start + duration
+                push!(get!(blocks_by_time_interval, (time_slice_start, time_slice_end), Array{Object,1}()), block)
+                time_slice_start = window_end
             end
             time_slice_end = time_slice_start + duration
             if time_slice_end > window_end
