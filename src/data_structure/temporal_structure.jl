@@ -236,13 +236,11 @@ E.g. `t_in_t`, `t_preceeds_t`, `t_overlaps_t`...
 function _generate_time_slice_relationships!(m::Model)
     instance = m.ext[:instance]
     all_time_slices = Iterators.flatten((history_time_slice(m), time_slice(m)))
-    output_all_time_slices = Iterators.flatten((output_time_slice(m), time_slice(m)))
     duration_unit = _model_duration_unit(instance)
     t_follows_t_mapping = Dict(
         t => to_time_slice(m, t=TimeSlice(end_(t), end_(t) + Minute(1))) for t in all_time_slices
     )
     t_overlaps_t_maping = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
-    output_t_overlaps_t_maping = Dict(t => to_time_slice(m, t=t) for t in output_all_time_slices)
     t_overlaps_t_excl_mapping = Dict(t => setdiff(overlapping_t, t) for (t, overlapping_t) in t_overlaps_t_maping)
     t_before_t_tuples = unique(
         (t_before=t_before, t_after=t_after)
@@ -260,7 +258,6 @@ function _generate_time_slice_relationships!(m::Model)
     temp_struct[:t_in_t_excl] = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_tuples)
     temp_struct[:t_overlaps_t] = TOverlapsT(t_overlaps_t_maping)
     temp_struct[:t_overlaps_t_excl] = TOverlapsT(t_overlaps_t_excl_mapping)
-    temp_struct[:t_overlaps_t_output] = TOverlapsT(output_t_overlaps_t_maping)
 end
 
 """
@@ -336,7 +333,6 @@ t_before_t(m::Model; kwargs...) = m.ext[:temporal_structure][:t_before_t](; kwar
 t_in_t(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t](; kwargs...)
 t_in_t_excl(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t_excl](; kwargs...)
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t](t)
-t_overlaps_t_output(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t_output](t)
 t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t_excl](t)
 
 """
