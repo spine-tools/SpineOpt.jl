@@ -443,12 +443,6 @@ function write_report(model, default_url)
             output_params[parameter_name] = Dict(
                 k => TimeSeries(collect(keys(v)), collect(values(v)), false, false) for (k, v) in d
             )
-            @show output_params
-            @show output_params[parameter_name]
-            @show parameter_name
-            @show d
-            ###how to get the right temporal block? probably just extract timeslice ->
-            ### here could be where interpolation happens
         end
     end
     for (url, url_reports) in reports
