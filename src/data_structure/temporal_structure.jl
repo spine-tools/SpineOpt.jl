@@ -288,9 +288,9 @@ function generate_temporal_structure!(m::Model)
     m.ext[:temporal_structure] = Dict()
     _generate_current_window!(m::Model)
     _generate_time_slice!(m::Model)
+    _generate_output_time_slice!(m::Model)
     _generate_time_slice_relationships!(m::Model)
     _generate_representative_time_slice_mapping(m::Model)
-    _generate_output_time_slice!(m::Model)
 end
 
 """
@@ -574,14 +574,14 @@ A `Dict` mapping 'pre-time_slices' (i.e., (start, end) tuples) to an Array of te
 function _time_interval_output_blocks(instance::Object, window_start::DateTime, window_end::DateTime)
     blocks_by_time_interval = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
     # TODO: In preprocessing, remove temporal_blocks without any node__temporal_block relationships?
-    for block in members(model__temporal_block(model=instance))
+    for block in indices(output_resolution)
         time_slice_start = window_start
         i = 1
         while time_slice_start < window_end
-            duration = output_resolution(temporal_block=block, i=i)
+            duration = output_resolution(output=block, i=i)
             if iszero(duration)
                 # TODO: Try to move this to a check...
-                duration = resolution(temporal_block=block, i=i)
+                duration = Minute(0)
             end
             time_slice_end = time_slice_start + duration
             if time_slice_end > window_end

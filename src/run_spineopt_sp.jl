@@ -379,19 +379,22 @@ function save_outputs!(m)
         end
         existing = get!(m.ext[:outputs], name, Dict{NamedTuple,Dict}())
         for (k, v) in value
-            @show k.t.blocks
             end_(k.t) <= model_start(model=m.ext[:instance]) && continue
             new_k = _drop_key(k, :t)
-        #     push!(get!(existing_intermediate, new_k, Dict{DateTime,Any}()), start(k.t) => v)
-        # end
-        # for output_t in output_time_slice(temporal_block=...)
-        #     ab = _search_overlap(orig_timeseries, start(t), end_(t)) #orig_timeseries??
-        #     isempty(ab) && return nothing
-        #     a, b = ab
-        #     isempty(a:b) && return nothing
-        #     vals = Iterators.filter(!isnan, orig_timeseries.values[a:b])
-        #     mean(vals)
             push!(get!(existing, new_k, Dict{DateTime,Any}()), start(k.t) => v)
+        end
+        copy_existing = copy(existing)
+        for (k,v) in existing
+            copy_existing[k] = Dict()
+            for t_out in output_time_slice(m, temporal_block = o)
+                t_e_s = filter(x -> x >= SpineOpt.start(t_out) && x < SpineOpt.end_(t_out),keys(v))
+                if !isempty(t_e_s)
+                    copy_existing[k][SpineOpt.start(t_out)] = SpineOpt.SpineInterface.mean(collect(v[t] for t in t_e_s))
+                end
+            end
+            if !isempty(copy_existing[k])
+                    existing[k] = copy_existing[k]
+            end
         end
     end
 end
