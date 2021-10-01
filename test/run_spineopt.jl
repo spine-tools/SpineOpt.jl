@@ -54,6 +54,8 @@ end
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
             ["model", "instance", "duration_unit", "hour"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
+            ["output", "unit_flow", "output_resolution", Dict("type" => "duration", "data" => "1h")],
+            ["output", "variable_om_costs", "output_resolution", Dict("type" => "duration", "data" => "1h")]
         ],
     )
     @testset "rolling" begin
@@ -159,6 +161,7 @@ end
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
+        object_parameter_values = [["output", "unknown_output", "output_resolution", Dict("type" => "duration", "data" => "1h")]]
         SpineInterface.import_data(
             url_in;
             objects=objects,

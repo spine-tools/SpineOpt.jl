@@ -63,6 +63,7 @@
                 ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
                 ["node", "node_a", "demand", -100],
                 ["node", "node_b", "demand", 100],
+                ["output","connection_avg_intact_throughflow","output_resolution", Dict("type" => "duration", "data" => "0h")]
             ],
             :relationship_parameter_values => [[
                 "stochastic_structure__stochastic_scenario",
