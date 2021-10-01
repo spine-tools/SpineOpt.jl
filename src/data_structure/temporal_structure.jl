@@ -569,18 +569,16 @@ end
 """
     _time_interval_output_blocks(instance, window_start, window_end)
 
-A `Dict` mapping 'pre-time_slices' (i.e., (start, end) tuples) to an Array of temporal blocks where found.
+A `Dict` mapping 'pre-time_slices' (i.e., (start, end) tuples) to an Array of outputs where found.
 """
 function _time_interval_output_blocks(instance::Object, window_start::DateTime, window_end::DateTime)
     blocks_by_time_interval = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
-    # TODO: In preprocessing, remove temporal_blocks without any node__temporal_block relationships?
     for block in indices(output_resolution)
         time_slice_start = window_start
         i = 1
         while time_slice_start < window_end
             duration = output_resolution(output=block, i=i)
             if iszero(duration)
-                # TODO: Try to move this to a check...
                 duration = Minute(0)
             end
             time_slice_end = time_slice_start + duration
