@@ -35,9 +35,6 @@ function rerun_spineopt_sp(
 
     m = create_model(mip_solver, use_direct_model, :spineopt_operations)
 
-    @timelog log_level 2 "Preprocessing $(m.ext[:instance]) model specific data structure...\n" preprocess_model_data_structure(
-        m,
-    )
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
@@ -51,6 +48,7 @@ function rerun_spineopt_sp(
         optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals, mip_solver=mip_solver, lp_solver=lp_solver, use_direct_model=use_direct_model) || break
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
+        @timelog log_level 2 "Fixing non-anticipativity values..." fix_non_anticipativity_values!(m)
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
             @timelog log_level 2 " ... Rolling complete\n" break
         end
@@ -130,7 +128,7 @@ function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Fu
     bin = m.ext[:variables_definition][name][:bin]
     int = m.ext[:variables_definition][name][:int]
     for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-        fix_value_ = fix_value(ind)
+        fix_value_ = _apply_function_or_nothing(fix_value, ind)
         fix_value_ != nothing && !isnan(fix_value_) && fix(var[ind], fix_value_; force=true)
     end
 end
@@ -144,13 +142,14 @@ function fix_variables!(m::Model)
     end
 end
 
-function update_variable!(m::Model, name::Symbol, indices::Function; update_names=false)
+function _update_variable!(m::Model, name::Symbol, definition::Dict)
     var = m.ext[:variables][name]
     val = m.ext[:values][name]
-    lb = m.ext[:variables_definition][name][:lb]
-    ub = m.ext[:variables_definition][name][:ub]
+    indices = definition[:indices]
+    lb = definition[:lb]
+    ub = definition[:ub]
+    window_start = start(current_window(m))
     for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-        update_names && set_name(var[ind], _base_name(name, ind))
         if is_fixed(var[ind])
             unfix(var[ind])
             lb != nothing && set_lower_bound(var[ind], lb(ind))
@@ -166,7 +165,27 @@ end
 
 function update_variables!(m::Model)
     for (name, definition) in m.ext[:variables_definition]
-        update_variable!(m, name, definition[:indices])
+        _update_variable!(m, name, definition)
+    end
+end
+
+function _fix_non_anticipativity_value!(m, name::Symbol, definition::Dict)
+    var = m.ext[:variables][name]
+    val = m.ext[:values][name]
+    indices = definition[:indices]
+    non_anticipativity_time = definition[:non_anticipativity_time]
+    window_start = start(current_window(m))
+    for ind in indices(m; t=time_slice(m))
+        non_anticipativity_time_ = _apply_function_or_nothing(non_anticipativity_time, ind)
+        if non_anticipativity_time_ != nothing && start(ind.t) < window_start +  non_anticipativity_time_
+            fix(var[ind], val[ind]; force=true)
+        end
+    end
+end
+
+function fix_non_anticipativity_values!(m::Model)
+    for (name, definition) in m.ext[:variables_definition]
+        _fix_non_anticipativity_value!(m, name, definition)
     end
 end
 

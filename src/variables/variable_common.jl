@@ -27,7 +27,8 @@ Add a variable to `m`, with given `name` and indices given by interating over `i
   - `ub::Union{Function,Nothing}=nothing`: given an index, return the upper bound.
   - `bin::Union{Function,Nothing}=nothing`: given an index, return whether or not the variable should be binary
   - `int::Union{Function,Nothing}=nothing`: given an index, return whether or not the variable should be integer
-  - `fix_value::Union{Function,Nothing}=nothing`: given an index, return a fix value for the variable of nothing
+  - `fix_value::Union{Function,Nothing}=nothing`: given an index, return a fix value for the variable or nothing
+  - `non_anticipativity_time::Union{Function,Nothing}=nothing`: given an index, return the non-anticipatity time or nothing
 """
 function add_variable!(
     m::Model,
@@ -38,6 +39,7 @@ function add_variable!(
     bin::Union{Function,Nothing}=nothing,
     int::Union{Function,Nothing}=nothing,
     fix_value::Union{Function,Nothing}=nothing,
+    non_anticipativity_time::Union{Function,Nothing}=nothing,
 )
     m.ext[:variables_definition][name] = Dict{Symbol,Union{Function,Nothing}}(
         :indices => indices,
@@ -46,6 +48,7 @@ function add_variable!(
         :bin => bin,
         :int => int,
         :fix_value => fix_value,
+        :non_anticipativity_time => non_anticipativity_time,
     )
     var = m.ext[:variables][name] = Dict(
         ind => _variable(m, name, ind, lb, ub, bin, int)

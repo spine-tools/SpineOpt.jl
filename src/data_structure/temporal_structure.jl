@@ -40,7 +40,7 @@ struct TimeSliceSet
                       for ((first_, last_), (next_first, next_last)) in zip(solids[1:(end - 1)], solids[2:end])
                           if end_(last_) < start(next_first))
         gaps = [TimeSlice(end_(last_), start(next_first)) for (last_, next_first) in gap_bounds]
-        # NOTE: For convention, the last time slice in the preceding block becomes the 'bridge'
+        # NOTE: By convention, the last time slice in the preceding block becomes the 'bridge'
         bridges = [last_ for (last_, next_first) in gap_bounds]
         gap_bridger = GapBridger(gaps, bridges)
         new(time_slices, block_time_slices, gap_bridger)

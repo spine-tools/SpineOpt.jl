@@ -134,6 +134,44 @@ end
             @test Y.unit_flow(; flow_key..., t=t) == demand
         end
     end
+    @testset "fix_non_anticipativity_values" begin
+        _load_test_data(url_in, test_data)
+        vom_cost = 20
+        demand = 200
+        unit_capacity = demand
+        objects = [["output", "units_on"]]
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
+            ["unit", "unit_ab", "units_on_non_anticipativity_time", Dict("type" => "duration", "data" => "3h")],
+            ["temporal_block", "hourly", "block_end", Dict("type" => "duration", "data" => "16h")],
+        ]
+        relationships = [["report__output", ["report_x", "units_on"]]]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )        
+        m = run_spineopt(url_in, url_out; log_level=0)
+        using_spinedb(url_out, Y)
+        units_on_key = (
+            report=Y.report(:report_x),
+            unit=Y.unit(:unit_ab),
+            stochastic_scenario=Y.stochastic_scenario(:parent),
+        )
+        @testset for (k, t) in enumerate(time_slice(m))
+            @show ind = first(SpineOpt.units_on_indices(m; t=t))
+            @show var = m.ext[:variables][:units_on][ind]
+            # Only first three time slices should be fixed
+            @test is_fixed(var) == (k in 1:3)
+        end
+    end
     @testset "unfeasible" begin
         _load_test_data(url_in, test_data)
         demand = 100
