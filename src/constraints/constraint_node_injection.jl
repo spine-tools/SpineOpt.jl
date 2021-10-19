@@ -35,10 +35,7 @@ function add_constraint_node_injection!(m::Model)
                         node=n,
                         stochastic_scenario=s,
                         analysis_time=t0,
-                        t=(
-                            !isempty(indices(representative_periods_mapping)) ?
-                            representative_time_slices(m)[to_time_slice(m, t=t_after)] : t
-                        ),
+                        t=representative_time_slice(m, t),
                     ),
                 ] for (n, s, t) in node_injection_indices(
                     m;
@@ -50,8 +47,8 @@ function add_constraint_node_injection!(m::Model)
                 init=0,
             )
             + expr_sum(
-                fractional_demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)]
-                * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t_after)]
+                fractional_demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+                * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for (n, s, t) in node_injection_indices(
                     m;
                     node=n,

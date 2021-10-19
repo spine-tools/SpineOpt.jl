@@ -286,7 +286,7 @@ function generate_temporal_structure!(m::Model)
     _generate_current_window!(m::Model)
     _generate_time_slice!(m::Model)
     _generate_time_slice_relationships!(m::Model)
-    _generate_representative_time_slice_mapping(m::Model)
+    _generate_representative_time_slice!(m::Model)
 end
 
 """
@@ -323,6 +323,50 @@ function reset_temporal_structure(m::Model, k)
     true
 end
 
+"""
+    to_time_slice(m::Model, t::TimeSlice...)
+
+An `Array` of `TimeSlice`s *in the model* overlapping the given `t` (where `t` may not be in model).
+"""
+function to_time_slice(m::Model; t::TimeSlice)
+    temp_struct = m.ext[:temporal_structure]
+    t_sets = (temp_struct[:time_slice], temp_struct[:history_time_slice])
+    in_blocks = (
+        s
+        for t_set in t_sets 
+        for time_slices in values(t_set.block_time_slices)
+        for s in _to_time_slice(time_slices, t)
+    )
+    in_gaps = (
+        s
+        for t_set in t_sets
+        for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t)
+    )
+    unique(Iterators.flatten((in_blocks, in_gaps)))
+end
+
+"""
+    _generate_representative_time_slice!(m::Model)
+
+Generate a `Dict` mapping all non-representative to representative time-slices
+"""
+function _generate_representative_time_slice!(m::Model)
+    m.ext[:temporal_structure][:representative_time_slice] = d = Dict()
+    for blk in indices(representative_periods_mapping)
+        for (real_t_start, rep_blk_value) in representative_periods_mapping(temporal_block=blk)
+            rep_blk_name = rep_blk_value()
+            rep_blk = temporal_block(rep_blk_name)
+            rep_blk in model__temporal_block(model=m.ext[:instance]) || continue  # FIXME: warn
+            for rep_t in time_slice(m, temporal_block=rep_blk)
+                rep_t_duration = end_(rep_t) - start(rep_t)
+                real_t_end = real_t_start + rep_t_duration
+                merge!(d, Dict(real_t => rep_t for real_t in to_time_slice(m, t=TimeSlice(real_t_start, real_t_end))))
+                real_t_start = real_t_end
+            end
+        end
+    end
+end
+
 current_window(m::Model) = m.ext[:temporal_structure][:current_window]
 time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:time_slice](; kwargs...)
 history_time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:history_time_slice](; kwargs...)
@@ -332,51 +376,8 @@ t_in_t(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t](; kwargs...)
 t_in_t_excl(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t_excl](; kwargs...)
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t](t)
 t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t_excl](t)
+representative_time_slice(m, t) = get(m.ext[:temporal_structure][:representative_time_slice], t, t)
 
-"""
-    to_time_slice(m::Model, t::TimeSlice...)
-
-An `Array` of `TimeSlice`s *in the model* overlapping the given `t` (where `t` may not be in model).
-"""
-function to_time_slice(m::Model; t::TimeSlice)
-    temp_struct = m.ext[:temporal_structure]
-    t_sets = (temp_struct[:time_slice], temp_struct[:history_time_slice])
-    in_blocks = (s
-    for t_set in t_sets for time_slices in values(t_set.block_time_slices) for s in _to_time_slice(time_slices, t))
-    in_gaps = (s
-    for t_set in t_sets for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t))
-    unique(Iterators.flatten((in_blocks, in_gaps)))
-end
-
-"""
-    _generate_representative_time_slice_mapping(m::Model)
-
-Generate an `Array` mapping all non-representative to representative time-slices
-"""
-function _generate_representative_time_slice_mapping(m::Model)
-    rep_dict = Dict()
-    for blk in indices(representative_periods_mapping)
-        for t_start_real in representative_periods_mapping(temporal_block=blk).indexes
-            rep_blk = representative_periods_mapping(temporal_block=blk, inds=t_start_real)
-            t_start_real_i = t_start_real
-            for t in time_slice(m, temporal_block=temporal_block(rep_blk))
-                rep_dict[
-                    to_time_slice(
-                        m,
-                        t=TimeSlice(
-                            t_start_real_i,
-                            t_start_real_i + _model_duration_unit(m.ext[:instance])(duration(t)),
-                        ),
-                    ),
-                ] = t
-                t_start_real_i = t_start_real_i + _model_duration_unit(m.ext[:instance])(duration(t))
-            end
-        end
-    end
-    m.ext[:temporal_structure][:rep_day_mapping] = rep_dict
-end
-
-representative_time_slices(m) = m.ext[:temporal_structure][:rep_day_mapping]
 """
     node_time_indices(m::Model;<keyword arguments>)
 

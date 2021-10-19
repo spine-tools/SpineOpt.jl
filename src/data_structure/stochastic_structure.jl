@@ -130,8 +130,7 @@ function _stochastic_dag(m::Model, stochastic_structure::Object, window_start::D
             scen_end[scen] = window_very_end
             continue
         end
-        scenario_end = window_start + scenario_duration
-        scen_end[scen] = scenario_end
+        scen_end[scen] = scenario_end = window_start + scenario_duration
         children = _find_children(scen)
         children_relative_weight = Dict(
             child => weight_relative_to_parents(

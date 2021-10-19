@@ -70,7 +70,7 @@ time slice.
 function map_to_representative_periods!(m::Model, var::Dict, var_indices::Function)
     for ind in setdiff(var_indices(m, temporal_block=anything), var_indices(m))
         ind_without_t = _drop_key(ind, :t)
-        ind_repr = first(var_indices(m; ind_without_t..., t=representative_time_slices(m)[to_time_slice(m, t=ind.t)]))
+        ind_repr = first(var_indices(m; ind_without_t..., t=representative_time_slice(m, ind.t)))
         var[ind] = var[ind_repr]
     end
 end
