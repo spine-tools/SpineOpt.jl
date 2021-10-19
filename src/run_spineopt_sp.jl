@@ -148,7 +148,6 @@ function _update_variable!(m::Model, name::Symbol, definition::Dict)
     indices = definition[:indices]
     lb = definition[:lb]
     ub = definition[:ub]
-    window_start = start(current_window(m))
     for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
         if is_fixed(var[ind])
             unfix(var[ind])
@@ -396,11 +395,13 @@ function save_outputs!(m)
             @warn "can't find a value for '$(name)'"
             continue
         end
-        existing = get!(m.ext[:outputs], name, Dict{NamedTuple,Dict}())
+        by_entity = get!(m.ext[:outputs], name, Dict{NamedTuple,Dict}())
         for (k, v) in value
             end_(k.t) <= model_start(model=m.ext[:instance]) && continue
-            new_k = _drop_key(k, :t)
-            push!(get!(existing, new_k, Dict{DateTime,Any}()), start(k.t) => v)
+            entity = _drop_key(k, :t)
+            by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
+            by_time_stamp = get!(by_analysis_time, start(current_window(m)), Dict{DateTime,Any}())
+            push!(by_time_stamp, start(k.t) => v)
         end
     end
 end
@@ -430,25 +431,48 @@ function update_model!(m; update_constraints=m -> nothing, log_level=3)
     @timelog log_level 2 "Updating objective..." update_varying_objective!(m)
 end
 
+function _output_parameter_value(by_entity, overwrite_results_on_rolling)
+    if overwrite_results_on_rolling
+        Dict(
+            entity => TimeSeries(
+                [ts for by_time_stamp in values(by_analysis_time) for ts in keys(by_time_stamp)],
+                [val for by_time_stamp in values(by_analysis_time) for val in values(by_time_stamp)],
+                false,
+                false
+            )
+            for (entity, by_analysis_time) in by_entity
+        )
+    else
+        Dict(
+            entity => Map(
+                collect(keys(by_analysis_time)),
+                [
+                    TimeSeries(collect(keys(by_time_stamp)), collect(values(by_time_stamp)), false, false)
+                    for by_time_stamp in values(by_analysis_time)
+                ]
+            )
+            for (entity, by_analysis_time) in by_entity
+        )
+    end
+end
+
 """
 Write report from given outputs into the db.
 """
 function write_report(model, default_url)
     reports = Dict()
     outputs = Dict()
-
     for rpt in model__report(model=model.ext[:instance])
         for out in report__output(report=rpt)
-            d = get!(model.ext[:outputs], out.name, nothing)
-            d === nothing && continue
+            by_entity = get!(model.ext[:outputs], out.name, nothing)
+            by_entity === nothing && continue
             output_url = output_db_url(report=rpt, _strict=false)
             url = output_url !== nothing ? output_url : default_url
             url_reports = get!(reports, url, Dict())
-            output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
+            output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,Any}}())
             parameter_name = out.name in objective_terms(model) ? Symbol("objective_", out.name) : out.name
-            output_params[parameter_name] = Dict(
-                k => TimeSeries(collect(keys(v)), collect(values(v)), false, false) for (k, v) in d
-            )
+            overwrite = overwrite_results_on_rolling(report=rpt, output=out)
+            output_params[parameter_name] = _output_parameter_value(by_entity, overwrite)
         end
     end
     for (url, url_reports) in reports
@@ -467,11 +491,9 @@ function relax_integer_vars(m::Model)
         indices = def[:indices]
         var = m.ext[:variables][name]
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            #if end_(ind.t) <= end_(current_window(m))                
-                fix(var[ind], m.ext[:values][name][ind]; force=true)
-                (bin != nothing && bin(ind)) && unset_binary(var[ind])
-                (int != nothing && int(ind)) && unset_integer(var[ind])
-            #end
+            fix(var[ind], m.ext[:values][name][ind]; force=true)
+            (bin != nothing && bin(ind)) && unset_binary(var[ind])
+            (int != nothing && int(ind)) && unset_integer(var[ind])
         end
     end
 end
@@ -486,14 +508,12 @@ function unrelax_integer_vars(m::Model)
         indices = def[:indices]
         var = m.ext[:variables][name]
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            #if end_(ind.t) <= end_(current_window(m))
-                is_fixed(var[ind]) && unfix(var[ind])
-                # `unfix` frees the variable entirely, also bounds
-                lb != nothing && set_lower_bound(var[ind], lb(ind))
-                ub != nothing && set_upper_bound(var[ind], ub(ind))
-                (bin != nothing && bin(ind)) && set_binary(var[ind])
-                (int != nothing && int(ind)) && set_integer(var[ind])
-            #end
+            is_fixed(var[ind]) && unfix(var[ind])
+            # `unfix` frees the variable entirely, also bounds
+            lb != nothing && set_lower_bound(var[ind], lb(ind))
+            ub != nothing && set_upper_bound(var[ind], ub(ind))
+            (bin != nothing && bin(ind)) && set_binary(var[ind])
+            (int != nothing && int(ind)) && set_integer(var[ind])
         end
     end
 end

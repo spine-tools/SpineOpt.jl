@@ -172,6 +172,56 @@ end
             @test is_fixed(var) == (k in 1:3)
         end
     end
+    @testset "don't overwrite results on rolling" begin
+        _load_test_data(url_in, test_data)
+        index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
+        vom_cost = 1200
+        demand = Dict(
+            "type" => "map", 
+            "index_type" => "date_time",
+            "data" => Dict("2000-01-01T00:00:00" => 50.0, "2000-01-01T12:00:00" => 90.0)
+        )
+        unit_capacity = demand
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "6h")],
+            ["unit", "unit_ab", "min_up_time", Dict("type" => "duration", "data" => "2h")],
+        ]  # NOTE: min_up_time is only so we have a history of two hours
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
+            ["report__output", ["report_x", "unit_flow"], "overwrite_results_on_rolling", false],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in, url_out; log_level=0)
+        con = m.ext[:constraints][:unit_flow_capacity]
+        using_spinedb(url_out, Y)
+        cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+        flow_key = (
+            report=Y.report(:report_x),
+            unit=Y.unit(:unit_ab),
+            node=Y.node(:node_b),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:parent),
+        )
+        analysis_times = DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2) - Hour(1)
+        @testset for at in analysis_times, t in at - Hour(12):Hour(1):at + Hour(12)
+            # For each analysis time, `t` covers a window of ± 12 hours,
+            # but only `t`s within the optimisation window should have a `unit_flow` value
+            window_start = max(DateTime("2000-01-01T00:00:00"), at - Hour(2))
+            window_end = min(DateTime("2000-01-02T00:00:00"), at + Hour(6))
+            expected = if window_start <= t < window_end
+                (t < DateTime("2000-01-01T12:00:00")) ? 50 : 90
+            else
+                nothing
+            end
+            @test Y.unit_flow(; flow_key..., analysis_time=at, t=t) == expected
+        end
+    end
     @testset "unfeasible" begin
         _load_test_data(url_in, test_data)
         demand = 100
