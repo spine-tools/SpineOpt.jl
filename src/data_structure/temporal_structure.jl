@@ -64,8 +64,7 @@ An `Array` of time slices *in the model*.
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = h.block_time_slices[temporal_block]
 (h::TimeSliceSet)(::Anything, s) = s
 (h::TimeSliceSet)(temporal_block::Object, s) = [t for t in s if temporal_block in blocks(t)]
-(h::TimeSliceSet)(temporal_blocks::Array{T,1}, s) where {T} = [t
-for blk in temporal_blocks for t in h(blk, s)]
+(h::TimeSliceSet)(temporal_blocks::Array{T,1}, s) where {T} = [t for blk in temporal_blocks for t in h(blk, s)]
 
 """
     (::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
@@ -352,15 +351,25 @@ Generate a `Dict` mapping all non-representative to representative time-slices
 """
 function _generate_representative_time_slice!(m::Model)
     m.ext[:temporal_structure][:representative_time_slice] = d = Dict()
+    model_blocks = set(member for blk in model__temporal_block(model=m.ext[:instance]) for member in members(block))
     for blk in indices(representative_periods_mapping)
         for (real_t_start, rep_blk_value) in representative_periods_mapping(temporal_block=blk)
             rep_blk_name = rep_blk_value()
             rep_blk = temporal_block(rep_blk_name)
-            rep_blk in model__temporal_block(model=m.ext[:instance]) || continue  # FIXME: warn
+            if !(rep_blk in model_blocks)
+                error("representative temporal block $rep_blk is not included in model $(m.ext[:instance])")
+            end
             for rep_t in time_slice(m, temporal_block=rep_blk)
                 rep_t_duration = end_(rep_t) - start(rep_t)
                 real_t_end = real_t_start + rep_t_duration
-                merge!(d, Dict(real_t => rep_t for real_t in to_time_slice(m, t=TimeSlice(real_t_start, real_t_end))))
+                merge!(
+                    d, 
+                    Dict(
+                        real_t => rep_t 
+                        for real_t in to_time_slice(m, t=TimeSlice(real_t_start, real_t_end))
+                        if blk in real_t.blocks
+                    )
+                )
                 real_t_start = real_t_end
             end
         end
