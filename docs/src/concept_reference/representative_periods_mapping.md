@@ -1,4 +1,4 @@
-Specifies the names of [temporal\_block](@ref)s to use as representative period for certain time ranges.
+Specifies the names of [temporal\_block](@ref) objects to use as representative periods for certain time ranges.
 This indicates the model to define operational variables only for those representative periods,
 and map variables from normal periods to representative ones.
 The idea behind this is to reduce the size of the problem by using a reduced set of variables,
@@ -13,7 +13,7 @@ To use representative periods in your model, do the following:
 
 1. Define one `temporal_block` for the 'normal' periods as you would do if you weren't
    using representative periods.
-2. Define a set of [temporal\_block](@ref) objects, each corresponding to one representative period.
+2. Define a set of `temporal_block` objects, each corresponding to one representative period.
 3. Specify `representative_periods_mapping` for the 'normal' `temporal_block` as a *map*,
    from consecutive date-time values to the name of a representative `temporal_block`.
 4. Associate all the above `temporal_block` objects to elements in your model

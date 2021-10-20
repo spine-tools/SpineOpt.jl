@@ -54,7 +54,7 @@ function add_variable!(
         ind => _variable(m, name, ind, lb, ub, bin, int)
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
     )
-    merge!(var, representative_period_mapping(m, var, indices))
+    merge!(var, _representative_periods_mapping(m, var, indices))
     ((bin != nothing) || (int != nothing)) && push!(m.ext[:integer_variables], name)
 end
 
@@ -70,11 +70,11 @@ function _rep_ind(m, ind, indices)
 end
 
 """
-    representative_period_mapping(v::Dict{VariableRef}, indices::Function)
+    _representative_periods_mapping(v::Dict{VariableRef}, indices::Function)
 
 A `Dict` mapping non representative indices to the variable for the representative index.
 """
-function representative_period_mapping(m::Model, var::Dict, indices::Function)
+function _representative_periods_mapping(m::Model, var::Dict, indices::Function)
     # By default, `indices` skips non-representative time slices for operational variables other than node_state,
     # as well as for investment variables. This is done by setting the default value of the `temporal_block` argument
     # to `temporal_block(representative_periods_mapping=nothing)` - so any block that define a mapping is ignored.
