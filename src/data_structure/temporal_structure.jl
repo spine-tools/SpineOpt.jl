@@ -351,7 +351,7 @@ Generate a `Dict` mapping all non-representative to representative time-slices
 """
 function _generate_representative_time_slice!(m::Model)
     m.ext[:temporal_structure][:representative_time_slice] = d = Dict()
-    model_blocks = set(member for blk in model__temporal_block(model=m.ext[:instance]) for member in members(block))
+    model_blocks = Set(member for blk in model__temporal_block(model=m.ext[:instance]) for member in members(blk))
     for blk in indices(representative_periods_mapping)
         for (real_t_start, rep_blk_value) in representative_periods_mapping(temporal_block=blk)
             rep_blk_name = rep_blk_value()
