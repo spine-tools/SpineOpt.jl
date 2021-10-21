@@ -396,12 +396,13 @@ end
 
 function _save_input!(m, by_entity, param)
     for entity in indices_as_tuples(param)
-        by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-        for stoch_time in stochastic_time_indices(m)
+        for (scen, t) in stochastic_time_indices(m)
+            entity = (; entity..., stochastic_scenario=scen)
+            by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
             by_time_stamp = get!(by_analysis_time, start(current_window(m)), Dict{DateTime,Any}())
-            val = param(; entity..., stoch_time..., _strict=false)
+            val = param(; entity..., t=t, _strict=false)
             val === nothing && continue
-            push!(by_time_stamp, start(stoch_time.t) => val)
+            push!(by_time_stamp, start(t) => val)
         end
     end
 end

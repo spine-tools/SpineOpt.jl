@@ -269,8 +269,9 @@ end
         )
         run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
+        key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
         for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2) - Hour(1))
-            @test Y.demand(report=Y.report(:report_x), node=Y.node(:node_b), t=t) == ((7 <= k <= 18) ? 50 : 100)
+            @test Y.demand(; key..., t=t) == ((7 <= k <= 18) ? 50 : 100)
         end
     end
 end
