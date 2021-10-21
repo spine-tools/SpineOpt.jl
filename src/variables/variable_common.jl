@@ -65,7 +65,7 @@ The representative index corresponding to the given one.
 """
 function _rep_ind(m, ind, indices)
     rep_t = representative_time_slice(m, ind.t)
-    rep_inds = indices(m; _drop_key(ind, :t)..., t=rep_t)        
+    rep_inds = indices(m; ind..., t=rep_t)
     first(rep_inds)
 end
 

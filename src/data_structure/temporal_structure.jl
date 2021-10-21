@@ -260,6 +260,38 @@ function _generate_time_slice_relationships!(m::Model)
 end
 
 """
+    _generate_representative_time_slice!(m::Model)
+
+Generate a `Dict` mapping all non-representative to representative time-slices
+"""
+function _generate_representative_time_slice!(m::Model)
+    m.ext[:temporal_structure][:representative_time_slice] = d = Dict()
+    model_blocks = Set(member for blk in model__temporal_block(model=m.ext[:instance]) for member in members(blk))
+    for blk in indices(representative_periods_mapping)
+        for (real_t_start, rep_blk_value) in representative_periods_mapping(temporal_block=blk)
+            rep_blk_name = rep_blk_value()
+            rep_blk = temporal_block(rep_blk_name)
+            if !(rep_blk in model_blocks)
+                error("representative temporal block $rep_blk is not included in model $(m.ext[:instance])")
+            end
+            for rep_t in time_slice(m, temporal_block=rep_blk)
+                rep_t_duration = end_(rep_t) - start(rep_t)
+                real_t_end = real_t_start + rep_t_duration
+                merge!(
+                    d, 
+                    Dict(
+                        real_t => rep_t 
+                        for real_t in to_time_slice(m, t=TimeSlice(real_t_start, real_t_end))
+                        if blk in real_t.blocks
+                    )
+                )
+                real_t_start = real_t_end
+            end
+        end
+    end
+end
+
+"""
 Find indices in `source` that overlap `t` and return values for those indices in `target`.
 Used by `to_time_slice`.
 """
@@ -344,37 +376,6 @@ function to_time_slice(m::Model; t::TimeSlice)
     unique(Iterators.flatten((in_blocks, in_gaps)))
 end
 
-"""
-    _generate_representative_time_slice!(m::Model)
-
-Generate a `Dict` mapping all non-representative to representative time-slices
-"""
-function _generate_representative_time_slice!(m::Model)
-    m.ext[:temporal_structure][:representative_time_slice] = d = Dict()
-    model_blocks = Set(member for blk in model__temporal_block(model=m.ext[:instance]) for member in members(blk))
-    for blk in indices(representative_periods_mapping)
-        for (real_t_start, rep_blk_value) in representative_periods_mapping(temporal_block=blk)
-            rep_blk_name = rep_blk_value()
-            rep_blk = temporal_block(rep_blk_name)
-            if !(rep_blk in model_blocks)
-                error("representative temporal block $rep_blk is not included in model $(m.ext[:instance])")
-            end
-            for rep_t in time_slice(m, temporal_block=rep_blk)
-                rep_t_duration = end_(rep_t) - start(rep_t)
-                real_t_end = real_t_start + rep_t_duration
-                merge!(
-                    d, 
-                    Dict(
-                        real_t => rep_t 
-                        for real_t in to_time_slice(m, t=TimeSlice(real_t_start, real_t_end))
-                        if blk in real_t.blocks
-                    )
-                )
-                real_t_start = real_t_end
-            end
-        end
-    end
-end
 
 current_window(m::Model) = m.ext[:temporal_structure][:current_window]
 time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:time_slice](; kwargs...)
