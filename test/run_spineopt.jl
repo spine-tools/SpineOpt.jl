@@ -166,8 +166,8 @@ end
             stochastic_scenario=Y.stochastic_scenario(:parent),
         )
         @testset for (k, t) in enumerate(time_slice(m))
-            @show ind = first(SpineOpt.units_on_indices(m; t=t))
-            @show var = m.ext[:variables][:units_on][ind]
+            ind = first(SpineOpt.units_on_indices(m; t=t))
+            var = m.ext[:variables][:units_on][ind]
             # Only first three time slices should be fixed
             @test is_fixed(var) == (k in 1:3)
         end
@@ -253,7 +253,7 @@ end
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        @test_logs (:warn, "can't find a value for 'unknown_output'") run_spineopt(url_in, url_out; log_level=0)
+        @test_logs (:warn, "can't find any values for 'unknown_output'") run_spineopt(url_in, url_out; log_level=0)
     end
     @testset "write inputs" begin
         _load_test_data(url_in, test_data)
