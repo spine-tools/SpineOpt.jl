@@ -384,25 +384,46 @@ function save_objective_values!(m::Model)
     end
 end
 
+function _save_output!(m, by_entity, value)
+    for (k, v) in value
+        end_(k.t) <= model_start(model=m.ext[:instance]) && continue
+        entity = _drop_key(k, :t)
+        by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
+        by_time_stamp = get!(by_analysis_time, start(current_window(m)), Dict{DateTime,Any}())
+        push!(by_time_stamp, start(k.t) => v)
+    end
+end
+
+function _save_input!(m, by_entity, param)
+    for entity in indices_as_tuples(param)
+        by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
+        for stoch_time in stochastic_time_indices(m)
+            by_time_stamp = get!(by_analysis_time, start(current_window(m)), Dict{DateTime,Any}())
+            val = param(; entity..., stoch_time..., _strict=false)
+            val === nothing && continue
+            push!(by_time_stamp, start(stoch_time.t) => val)
+        end
+    end
+end
+
 """
 Save the outputs of a model into a dictionary.
 """
 function save_outputs!(m)
     for r in model__report(model=m.ext[:instance]), o in report__output(report=r)
         name = o.name
+        by_entity = get!(m.ext[:outputs], name, Dict{NamedTuple,Dict}())
         value = get(m.ext[:values], name, nothing)
-        if value === nothing
-            @warn "can't find a value for '$(name)'"
+        if value !== nothing
+            _save_output!(m, by_entity, value)
             continue
         end
-        by_entity = get!(m.ext[:outputs], name, Dict{NamedTuple,Dict}())
-        for (k, v) in value
-            end_(k.t) <= model_start(model=m.ext[:instance]) && continue
-            entity = _drop_key(k, :t)
-            by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-            by_time_stamp = get!(by_analysis_time, start(current_window(m)), Dict{DateTime,Any}())
-            push!(by_time_stamp, start(k.t) => v)
+        param = parameter(name, @__MODULE__)
+        if param !== nothing
+            _save_input!(m, by_entity, param)
+            continue
         end
+        @warn "can't find any values for '$(name)'"
     end
 end
 

@@ -202,6 +202,21 @@ function _stochastic_scenario_set(m::Model, structure::Object, t::TimeSlice, sce
     m.ext[:stochastic_structure][:stochastic_scenario_set](structure, t, scenario)
 end
 
+function stochastic_time_indices(
+    m::Model;
+    stochastic_scenario=anything,
+    temporal_block=anything,
+    t=anything,
+)
+    unique(
+        (stochastic_scenario=s, t=t)
+        for (m_, tb) in model__temporal_block(model=m.ext[:instance], temporal_block=temporal_block, _compact=false)
+        for (m_, ss) in model__stochastic_structure(model=m.ext[:instance], _compact=false)
+        for t in time_slice(m; temporal_block=members(tb), t=t)
+        for s in _stochastic_scenario_set(m, ss, t, stochastic_scenario)
+    )
+end
+
 """
     node_stochastic_time_indices(m;<keyword arguments>)
 

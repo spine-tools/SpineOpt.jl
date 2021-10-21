@@ -30,9 +30,9 @@ function generate_missing_items(mod=@__MODULE__)
         "relationship classes" => String[],
         "parameter definitions" => String[],
     )
-    classes = Dict{Symbol,Union{ObjectClass,RelationshipClass}}(class.name => class for class in object_class(mod))
-    merge!(classes, Dict(class.name => class for class in relationship_class(mod)))
-    parameters = Set(param.name for param in parameter(mod))
+    classes = Dict{Symbol,Union{ObjectClass,RelationshipClass}}(class.name => class for class in object_classes(mod))
+    merge!(classes, Dict(class.name => class for class in relationship_classes(mod)))
+    parameters_ = Set(param.name for param in parameters(mod))
     for (name,) in template["object_classes"]
         sym_name = Symbol(name)
         sym_name in keys(classes) && continue
@@ -56,7 +56,7 @@ function generate_missing_items(mod=@__MODULE__)
     d = Dict{Symbol,Array{Pair{Union{ObjectClass,RelationshipClass},AbstractParameterValue},1}}()
     for (class_name, name, default_value) in [template["object_parameters"]; template["relationship_parameters"]]
         sym_name = Symbol(name)
-        sym_name in parameters && continue
+        sym_name in parameters_ && continue
         push!(missing_items["parameter definitions"], string(class_name, ".", name))
         class = classes[Symbol(class_name)]
         default_val = parameter_value(parse_db_value(JSON.json(default_value)))

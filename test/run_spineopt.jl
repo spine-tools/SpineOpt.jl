@@ -198,7 +198,6 @@ end
             relationship_parameter_values=relationship_parameter_values,
         )
         m = run_spineopt(url_in, url_out; log_level=0)
-        con = m.ext[:constraints][:unit_flow_capacity]
         using_spinedb(url_out, Y)
         cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
         flow_key = (
@@ -255,5 +254,23 @@ end
             relationship_parameter_values=relationship_parameter_values,
         )
         @test_logs (:warn, "can't find a value for 'unknown_output'") run_spineopt(url_in, url_out; log_level=0)
+    end
+    @testset "write inputs" begin
+        _load_test_data(url_in, test_data)
+        demand = Dict("type" => "time_pattern", "data" => Dict("h1-6,h19-24" => 100, "h7-18" => 50))
+        objects = [["output", "demand"]]
+        relationships = [["report__output", ["report_x", "demand"]]]
+        object_parameter_values = [["node", "node_b", "demand", demand]]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+        )
+        run_spineopt(url_in, url_out; log_level=0)
+        using_spinedb(url_out, Y)
+        for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2) - Hour(1))
+            @test Y.demand(report=Y.report(:report_x), node=Y.node(:node_b), t=t) == ((7 <= k <= 18) ? 50 : 100)
+        end
     end
 end
