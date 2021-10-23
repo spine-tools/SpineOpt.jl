@@ -101,6 +101,7 @@ _lazy_include_file_paths = [
 	"objective/connection_flow_costs.jl",
 	"objective/res_proc_costs.jl",
 	"objective/ramp_costs.jl",
+	"objective/units_on_costs.jl",
 	"constraints/constraint_common.jl",
 	"constraints/constraint_max_cum_in_unit_flow_bound.jl",
 	"constraints/constraint_unit_flow_capacity.jl",

@@ -86,6 +86,7 @@ function _dismember_function(func)
 end
 
 @testset begin
+    #=
     include("data_structure/check_data_structure.jl")
     include("data_structure/preprocess_data_structure.jl")
     include("data_structure/generate_missing_items.jl")
@@ -95,8 +96,11 @@ end
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")
     include("constraints/constraint_user_constraint.jl")
+    =#
     include("objective/objective.jl")
+    #=
     include("util/misc.jl")
     include("util/postprocess_results.jl")
     include("run_spineopt.jl")
+    =#
 end

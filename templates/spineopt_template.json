@@ -187,6 +187,7 @@
         ["unit", "unit_investment_lifetime", null, null, "Minimum lifetime for unit investment decisions."],
         ["unit", "unit_investment_variable_type", "unit_investment_variable_type_continuous", "unit_investment_variable_type_list", "Determines whether investment variable is integer or continuous."],
         ["unit", "units_on_non_anticipativity_time", null, null, "Period of time where the value of the `units_on` variable has to be fixed to the result from the previous window."],
+        ["unit", "units_on_cost", null, null, "Objective function coefficient on `units_on`. An idling cost, for example"],
         ["user_constraint", "constraint_sense", "==", "constraint_sense_list", "A selector for the sense of the `user_constraint`."],
         ["user_constraint", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["user_constraint", "right_hand_side", 0.0, null, "The right-hand side, constant term in a `user_constraint`. Can be time-dependent and used e.g. for complicated efficiency approximations."]
@@ -370,6 +371,7 @@
 		["output","renewable_curtailment_costs", null],
 		["output","res_proc_costs", null],
 		["output","ramp_costs", null],
+        ["output","units_on_costs", null],
 		["output","total_costs", null]
 	],
     "tools": [

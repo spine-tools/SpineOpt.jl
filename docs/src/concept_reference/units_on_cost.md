@@ -1,0 +1,1 @@
+By defining the units\_on\_cost parameter for a specific `unit`, a cost term will be added to the objective function whenever this unit is online over the  current optimization window. It can be used to represent an idling cost or any fixed cost incurred when a unit is online.

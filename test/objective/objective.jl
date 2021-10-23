@@ -221,4 +221,18 @@
             connection_flow_cost * sum(connection_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices))
         @test observed_obj == expected_obj
     end
+    @testset "units_on_costs" begin
+        _load_test_data(url_in, test_data)
+        units_on_cost = 913
+        object_parameter_values = [["unit", "unit_ab", "units_on_cost", units_on_cost]]
+        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        units_on = m.ext[:variables][:units_on]        
+        s_parent = stochastic_scenario(:parent)
+        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+        observed_obj = objective_function(m)
+        expected_obj = units_on_cost * units_on[unit(:unit_ab), s_parent, t2h]
+        @test observed_obj == expected_obj
+    end
 end
