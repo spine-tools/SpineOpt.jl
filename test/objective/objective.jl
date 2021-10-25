@@ -232,7 +232,7 @@
         s_parent = stochastic_scenario(:parent)
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         observed_obj = objective_function(m)
-        expected_obj = units_on_cost * units_on[unit(:unit_ab), s_parent, t2h]
+        expected_obj = 2 * units_on_cost * units_on[unit(:unit_ab), s_parent, t2h]
         @test observed_obj == expected_obj
     end
 end
