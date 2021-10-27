@@ -342,7 +342,7 @@ end
 
 Rewind the temporal structure - essentially, rolling it backwards k times.
 """
-function reset_temporal_structure(m::Model, k)
+function reset_temporal_structure!(m::Model, k)
     instance = m.ext[:instance]
     temp_struct = m.ext[:temporal_structure]
     roll_forward_ = roll_forward(model=instance, _strict=false)
