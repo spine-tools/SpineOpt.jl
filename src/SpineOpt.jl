@@ -35,7 +35,6 @@ export rerun_spineopt
 export @fetch
 
 include("run_spineopt.jl")
-include("data_structure/generate_missing_items.jl")
 include("util/docs_utils.jl")
 include("data_structure/migration.jl")
 
