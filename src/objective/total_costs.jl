@@ -33,6 +33,7 @@ function objective_terms(m::Model)
                 :renewable_curtailment_costs,
                 :res_proc_costs,
                 :ramp_costs,
+                :units_on_costs,
             ]
         else
             [
@@ -50,6 +51,7 @@ function objective_terms(m::Model)
                 :renewable_curtailment_costs,
                 :res_proc_costs,
                 :ramp_costs,
+                :units_on_costs,
             ]
         end
     elseif model_type(model=m.ext[:instance]) == :spineopt_master

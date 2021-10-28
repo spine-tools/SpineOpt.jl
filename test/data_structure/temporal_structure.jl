@@ -47,6 +47,56 @@ end
         :object_parameter_values =>
             [["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")]],
     )
+    @testset "representative_time_slice" begin
+        _load_test_data(url_in, test_data)
+        representative_periods_mapping = Dict(
+            "type" => "map",
+            "index_type" => "date_time",
+            "data" => Dict(
+                "2000-01-01T00:00:00" => "rep_blk1",
+                "2000-01-01T08:00:00" => "rep_blk2",
+            )
+        )
+        objects = [["temporal_block", "rep_blk1"], ["temporal_block", "rep_blk2"]]
+        relationships = [
+            ["model__temporal_block", ["instance", "rep_blk1"]],
+            ["model__temporal_block", ["instance", "rep_blk2"]],
+        ]
+        object_parameter_values = [
+            ["temporal_block", "block_a", "representative_periods_mapping", representative_periods_mapping],
+            ["temporal_block", "rep_blk1", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+            ["temporal_block", "rep_blk1", "block_end", Dict("type" => "date_time", "data" => "2000-01-01T06:00:00")],
+            ["temporal_block", "rep_blk1", "resolution", Dict("type" => "duration", "data" => "4h")],
+            ["temporal_block", "rep_blk2", "block_start", Dict("type" => "date_time", "data" => "2000-01-01T12:00:00")],
+            ["temporal_block", "rep_blk2", "block_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
+            ["temporal_block", "rep_blk2", "resolution", Dict("type" => "duration", "data" => "4h")]
+        ]
+        SpineInterface.import_data(
+            url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
+        )
+        using_spinedb(url_in, SpineOpt)
+        m = _model()
+        generate_temporal_structure!(m)
+        rep_blk1_ts = SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk1))
+        rep_blk2_ts = SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk2))
+        m_start = model_start(model=m.ext[:instance])
+        for t in SpineOpt.time_slice(m, temporal_block=temporal_block(:block_a))
+            t_end = end_(t)
+            if t_end <= m_start + Hour(4) 
+                @test SpineOpt.representative_time_slice(m, t) == rep_blk1_ts[1]
+            elseif t_end <= m_start + Hour(8) 
+                @test SpineOpt.representative_time_slice(m, t) == t
+            elseif t_end <= m_start + Hour(12) 
+                @test SpineOpt.representative_time_slice(m, t) == rep_blk2_ts[1]
+            elseif t_end <= m_start + Hour(16) 
+                @test SpineOpt.representative_time_slice(m, t) == rep_blk2_ts[2]
+            elseif t_end <= m_start + Hour(20) 
+                @test SpineOpt.representative_time_slice(m, t) == rep_blk2_ts[3]
+            else
+                @test SpineOpt.representative_time_slice(m, t) == t
+            end
+        end
+    end
     @testset "zero_resolution" begin
         _load_test_data(url_in, test_data)
         object_parameter_values = [
@@ -343,11 +393,11 @@ end
         block_a = temporal_block(:block_a)
         block_b = temporal_block(:block_b)
         expected_history_time_slice = [
-            TimeSlice(DateTime(1999, 12, 31, 20), DateTime(1999, 12, 31, 21), block_a, block_b),
-            TimeSlice(DateTime(1999, 12, 31, 21), DateTime(1999, 12, 31, 22), block_a),
-            TimeSlice(DateTime(1999, 12, 31, 21), DateTime(1999, 12, 31, 23), block_b),
-            TimeSlice(DateTime(1999, 12, 31, 22), DateTime(1999, 12, 31, 23), block_a),
-            TimeSlice(DateTime(1999, 12, 31, 23), DateTime(2000, 1, 1, 00), block_a, block_b),
+            TimeSlice(DateTime(1999, 12, 31, 20), DateTime(1999, 12, 31, 21), block_a, block_b; duration_unit=Hour),
+            TimeSlice(DateTime(1999, 12, 31, 21), DateTime(1999, 12, 31, 22), block_a; duration_unit=Hour),
+            TimeSlice(DateTime(1999, 12, 31, 21), DateTime(1999, 12, 31, 23), block_b; duration_unit=Hour),
+            TimeSlice(DateTime(1999, 12, 31, 22), DateTime(1999, 12, 31, 23), block_a; duration_unit=Hour),
+            TimeSlice(DateTime(1999, 12, 31, 23), DateTime(2000, 1, 1, 00), block_a, block_b; duration_unit=Hour),
         ]
         @test length(history_time_slice(m)) === 5
         @testset for (te, to) in zip(expected_history_time_slice, history_time_slice(m))

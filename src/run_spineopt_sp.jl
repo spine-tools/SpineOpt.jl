@@ -35,22 +35,27 @@ function rerun_spineopt_sp(
 
     m = create_model(mip_solver, use_direct_model, :spineopt_operations)
 
-    @timelog log_level 2 "Preprocessing $(m.ext[:instance]) model specific data structure...\n" preprocess_model_data_structure(
-        m,
-    )
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure(m)
+    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
     init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
     init_outputs!(m)
     k = 1
     calculate_duals = duals_calculation_needed(m)
     while optimize
         @log log_level 1 "Window $k: $(current_window(m))"
-        optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals, mip_solver=mip_solver, lp_solver=lp_solver, use_direct_model=use_direct_model) || break
+        optimize_model!(
+            m;
+            log_level=log_level,
+            calculate_duals=calculate_duals,
+            mip_solver=mip_solver,
+            lp_solver=lp_solver,
+            use_direct_model=use_direct_model
+        ) || break
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
+        @timelog log_level 2 "Fixing non-anticipativity values..." fix_non_anticipativity_values!(m)
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
             @timelog log_level 2 " ... Rolling complete\n" break
         end
@@ -130,7 +135,7 @@ function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Fu
     bin = m.ext[:variables_definition][name][:bin]
     int = m.ext[:variables_definition][name][:int]
     for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-        fix_value_ = fix_value(ind)
+        fix_value_ = _apply_function_or_nothing(fix_value, ind)
         fix_value_ != nothing && !isnan(fix_value_) && fix(var[ind], fix_value_; force=true)
     end
 end
@@ -144,13 +149,13 @@ function fix_variables!(m::Model)
     end
 end
 
-function update_variable!(m::Model, name::Symbol, indices::Function; update_names=false)
+function _update_variable!(m::Model, name::Symbol, definition::Dict)
     var = m.ext[:variables][name]
     val = m.ext[:values][name]
-    lb = m.ext[:variables_definition][name][:lb]
-    ub = m.ext[:variables_definition][name][:ub]
+    indices = definition[:indices]
+    lb = definition[:lb]
+    ub = definition[:ub]
     for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-        update_names && set_name(var[ind], _base_name(name, ind))
         if is_fixed(var[ind])
             unfix(var[ind])
             lb != nothing && set_lower_bound(var[ind], lb(ind))
@@ -166,7 +171,27 @@ end
 
 function update_variables!(m::Model)
     for (name, definition) in m.ext[:variables_definition]
-        update_variable!(m, name, definition[:indices])
+        _update_variable!(m, name, definition)
+    end
+end
+
+function _fix_non_anticipativity_value!(m, name::Symbol, definition::Dict)
+    var = m.ext[:variables][name]
+    val = m.ext[:values][name]
+    indices = definition[:indices]
+    non_anticipativity_time = definition[:non_anticipativity_time]
+    window_start = start(current_window(m))
+    for ind in indices(m; t=time_slice(m))
+        non_anticipativity_time_ = _apply_function_or_nothing(non_anticipativity_time, ind)
+        if non_anticipativity_time_ != nothing && start(ind.t) < window_start +  non_anticipativity_time_
+            fix(var[ind], val[ind]; force=true)
+        end
+    end
+end
+
+function fix_non_anticipativity_values!(m::Model)
+    for (name, definition) in m.ext[:variables_definition]
+        _fix_non_anticipativity_value!(m, name, definition)
     end
 end
 
@@ -175,7 +200,7 @@ Add SpineOpt constraints to the given model.
 """
 function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_unit_pw_heat_rate]" add_constraint_unit_pw_heat_rate!(m)
-    @timelog log_level 3 "- [constraint_unit_constraint]" add_constraint_unit_constraint!(m)
+    @timelog log_level 3 "- [constraint_user_constraint]" add_constraint_user_constraint!(m)
     @timelog log_level 3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
     @timelog log_level 3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
     @timelog log_level 3 "- [constraint_candidate_connection_flow_ub]" add_constraint_candidate_connection_flow_ub!(m)
@@ -369,23 +394,47 @@ function save_objective_values!(m::Model)
     end
 end
 
+function _save_output!(m, by_entity, value)
+    for (k, v) in value
+        end_(k.t) <= model_start(model=m.ext[:instance]) && continue
+        entity = _drop_key(k, :t)
+        by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
+        by_time_stamp = get!(by_analysis_time, start(current_window(m)), Dict{DateTime,Any}())
+        push!(by_time_stamp, start(k.t) => v)
+    end
+end
+
+function _save_input!(m, by_entity, param)
+    for entity in indices_as_tuples(param)
+        for (scen, t) in stochastic_time_indices(m)
+            entity = (; entity..., stochastic_scenario=scen)
+            by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
+            by_time_stamp = get!(by_analysis_time, start(current_window(m)), Dict{DateTime,Any}())
+            val = param(; entity..., t=t, _strict=false)
+            val === nothing && continue
+            push!(by_time_stamp, start(t) => val)
+        end
+    end
+end
+
 """
 Save the outputs of a model into a dictionary.
 """
 function save_outputs!(m)
     for r in model__report(model=m.ext[:instance]), o in report__output(report=r)
         name = o.name
+        by_entity = get!(m.ext[:outputs], name, Dict{NamedTuple,Dict}())
         value = get(m.ext[:values], name, nothing)
-        if value === nothing
-            @warn "can't find a value for '$(name)'"
+        if value !== nothing
+            _save_output!(m, by_entity, value)
             continue
         end
-        existing = get!(m.ext[:outputs], name, Dict{NamedTuple,Dict}())
-        for (k, v) in value
-            end_(k.t) <= model_start(model=m.ext[:instance]) && continue
-            new_k = _drop_key(k, :t)
-            push!(get!(existing, new_k, Dict{DateTime,Any}()), start(k.t) => v)
+        param = parameter(name, @__MODULE__)
+        if param !== nothing
+            _save_input!(m, by_entity, param)
+            continue
         end
+        @warn "can't find any values for '$(name)'"
     end
 end
 
@@ -414,25 +463,48 @@ function update_model!(m; update_constraints=m -> nothing, log_level=3)
     @timelog log_level 2 "Updating objective..." update_varying_objective!(m)
 end
 
+function _output_parameter_value(by_entity, overwrite_results_on_rolling)
+    if overwrite_results_on_rolling
+        Dict(
+            entity => TimeSeries(
+                [ts for by_time_stamp in values(by_analysis_time) for ts in keys(by_time_stamp)],
+                [val for by_time_stamp in values(by_analysis_time) for val in values(by_time_stamp)],
+                false,
+                false
+            )
+            for (entity, by_analysis_time) in by_entity
+        )
+    else
+        Dict(
+            entity => Map(
+                collect(keys(by_analysis_time)),
+                [
+                    TimeSeries(collect(keys(by_time_stamp)), collect(values(by_time_stamp)), false, false)
+                    for by_time_stamp in values(by_analysis_time)
+                ]
+            )
+            for (entity, by_analysis_time) in by_entity
+        )
+    end
+end
+
 """
 Write report from given outputs into the db.
 """
 function write_report(model, default_url)
     reports = Dict()
     outputs = Dict()
-
     for rpt in model__report(model=model.ext[:instance])
         for out in report__output(report=rpt)
-            d = get!(model.ext[:outputs], out.name, nothing)
-            d === nothing && continue
+            by_entity = get!(model.ext[:outputs], out.name, nothing)
+            by_entity === nothing && continue
             output_url = output_db_url(report=rpt, _strict=false)
             url = output_url !== nothing ? output_url : default_url
             url_reports = get!(reports, url, Dict())
-            output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,TimeSeries}}())
+            output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,Any}}())
             parameter_name = out.name in objective_terms(model) ? Symbol("objective_", out.name) : out.name
-            output_params[parameter_name] = Dict(
-                k => TimeSeries(collect(keys(v)), collect(values(v)), false, false) for (k, v) in d
-            )
+            overwrite = overwrite_results_on_rolling(report=rpt, output=out)
+            output_params[parameter_name] = _output_parameter_value(by_entity, overwrite)
         end
     end
     for (url, url_reports) in reports
@@ -451,11 +523,9 @@ function relax_integer_vars(m::Model)
         indices = def[:indices]
         var = m.ext[:variables][name]
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            #if end_(ind.t) <= end_(current_window(m))
-                fix(var[ind], m.ext[:values][name][ind]; force=true)
-                (bin != nothing && bin(ind)) && unset_binary(var[ind])
-                (int != nothing && int(ind)) && unset_integer(var[ind])
-            #end
+            fix(var[ind], m.ext[:values][name][ind]; force=true)
+            (bin != nothing && bin(ind)) && unset_binary(var[ind])
+            (int != nothing && int(ind)) && unset_integer(var[ind])
         end
     end
 end
@@ -470,14 +540,12 @@ function unrelax_integer_vars(m::Model)
         indices = def[:indices]
         var = m.ext[:variables][name]
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            #if end_(ind.t) <= end_(current_window(m))
-                is_fixed(var[ind]) && unfix(var[ind])
-                # `unfix` frees the variable entirely, also bounds
-                lb != nothing && set_lower_bound(var[ind], lb(ind))
-                ub != nothing && set_upper_bound(var[ind], ub(ind))
-                (bin != nothing && bin(ind)) && set_binary(var[ind])
-                (int != nothing && int(ind)) && set_integer(var[ind])
-            #end
+            is_fixed(var[ind]) && unfix(var[ind])
+            # `unfix` frees the variable entirely, also bounds
+            lb != nothing && set_lower_bound(var[ind], lb(ind))
+            ub != nothing && set_upper_bound(var[ind], ub(ind))
+            (bin != nothing && bin(ind)) && set_binary(var[ind])
+            (int != nothing && int(ind)) && set_integer(var[ind])
         end
     end
 end

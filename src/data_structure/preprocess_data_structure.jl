@@ -25,7 +25,7 @@ Preprocess input data structure for SpineOpt.
 Runs a number of other functions processing different aspecs of the input data in sequence.
 """
 function preprocess_data_structure(; log_level=3)
-    generate_is_cadidate()
+    generate_is_candidate()
     expand_model_default_relationships()
     expand_node__stochastic_structure()
     expand_units_on__stochastic_structure()
@@ -47,7 +47,7 @@ end
 
 Generate `is_candidate` for the `node`, `unit` and `connection` `ObjectClass`es.
 """
-function generate_is_cadidate()
+function generate_is_candidate()
     is_candidate = Parameter(:is_candidate, [node, unit, connection])
     for c in indices(candidate_connections)
         connection.parameter_values[c][:is_candidate] = parameter_value(true)
@@ -66,8 +66,6 @@ function generate_is_cadidate()
         is_candidate = $is_candidate
     end
 end
-
-function preprocess_model_data_structure(m::Model; log_level=3) end
 
 """
     expand_node__stochastic_structure()

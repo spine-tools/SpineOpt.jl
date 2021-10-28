@@ -58,7 +58,7 @@ defined, how they interact with each other, and how this impacts writing [Constr
 The [Unit commitment](@ref) section explains how clustered unit-commitment is defined,
 while the [Ramping and Reserves](@ref) section explains how to enable these operational details in your model.
 The [Investment Optimization](@ref) section explains how to include investment variables in your models,
-while the [Unit Constraints](@ref) section details how to include generic data-driven custom constraints.
+while the [User Constraints](@ref) section details how to include generic data-driven custom constraints.
 
 The last few sections focus on highly specialized use-cases for *SpineOpt.jl*,
 which are unlikely to be relevant for simple modelling tasks.

@@ -35,8 +35,8 @@ export rerun_spineopt
 export @fetch
 
 include("run_spineopt.jl")
-include("data_structure/generate_missing_items.jl")
 include("util/docs_utils.jl")
+include("data_structure/migration.jl")
 
 _lazy_include_file_paths = [
 	"run_spineopt_sp.jl",
@@ -100,6 +100,7 @@ _lazy_include_file_paths = [
 	"objective/connection_flow_costs.jl",
 	"objective/res_proc_costs.jl",
 	"objective/ramp_costs.jl",
+	"objective/units_on_costs.jl",
 	"constraints/constraint_common.jl",
 	"constraints/constraint_total_cumulated_unit_flow_bounds.jl",
 	"constraints/constraint_unit_flow_capacity.jl",
@@ -132,7 +133,7 @@ _lazy_include_file_paths = [
 	"constraints/constraint_min_up_time.jl",
 	"constraints/constraint_min_down_time.jl",
 	"constraints/constraint_unit_state_transition.jl",
-	"constraints/constraint_unit_constraint.jl",
+	"constraints/constraint_user_constraint.jl",
 	"constraints/constraint_units_invested_available.jl",
 	"constraints/constraint_units_invested_transition.jl",
 	"constraints/constraint_unit_lifetime.jl",

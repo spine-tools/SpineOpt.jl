@@ -37,9 +37,9 @@ function rerun_spineopt_mp(
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating $(m.ext[:instance]) temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating $(m.ext[:instance]) stochastic structure..." generate_stochastic_structure(m)
+    @timelog log_level 2 "Creating $(m.ext[:instance]) stochastic structure..." generate_stochastic_structure!(m)
     @timelog log_level 2 "Creating $(mp.ext[:instance]) temporal structure..." generate_temporal_structure!(mp)
-    @timelog log_level 2 "Creating $(mp.ext[:instance]) stochastic structure..." generate_stochastic_structure(mp)
+    @timelog log_level 2 "Creating $(mp.ext[:instance]) stochastic structure..." generate_stochastic_structure!(mp)
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
     init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
     init_outputs!(m)
@@ -90,7 +90,7 @@ function rerun_spineopt_mp(
 
         @timelog log_level 2 "Add MP cuts..." add_mp_cuts!(mp; log_level=3)
         msg = "Resetting sub problem temporal structure. Rewinding $(k - 1) times..."
-        if @timelog log_level 2 msg reset_temporal_structure(m, k - 1)
+        if @timelog log_level 2 msg reset_temporal_structure!(m, k - 1)
             update_model!(m; update_constraints=update_constraints, log_level=log_level)
         end
         j += 1

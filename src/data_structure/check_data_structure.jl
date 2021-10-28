@@ -279,11 +279,12 @@ Check that no `stochastic_structure` branches before `roll_forward`.
 function check_rolling_branching()
     for m in model()
         if !isnothing(roll_forward(model=m))
+            t0 = model_start(model=m)
             for ss in model__stochastic_structure(model=m)
                 cond = all(
-                    stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen) >= roll_forward(model=m)
+                    t0 + stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen) >= t0 + roll_forward(model=m)
                     for scen in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
-                        if !isnothing(stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen))
+                    if !isnothing(stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen))
                 )
                 _check(
                     cond,
