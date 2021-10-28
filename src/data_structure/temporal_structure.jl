@@ -316,6 +316,7 @@ function generate_temporal_structure!(m::Model)
     m.ext[:temporal_structure] = Dict()
     _generate_current_window!(m::Model)
     _generate_time_slice!(m::Model)
+    _generate_output_time_slice!(m::Model)
     _generate_time_slice_relationships!(m::Model)
     _generate_representative_time_slice!(m::Model)
 end
@@ -387,6 +388,7 @@ t_in_t_excl(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t_excl](; kw
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t](t)
 t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t_excl](t)
 representative_time_slice(m, t) = get(m.ext[:temporal_structure][:representative_time_slice], t, t)
+output_time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:output_time_slice](; kwargs...)
 
 """
     node_time_indices(m::Model;<keyword arguments>)
@@ -553,4 +555,67 @@ function node_investment_dynamic_time_indices(m::Model; node=anything, t_before=
             t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
         )
     )
+end
+
+
+"""
+    _generate_output_time_slice!(m::Model)
+
+Create and export a `TimeSliceSet`, for the output resolution.
+
+See [@TimeSliceSet()](@ref).
+"""
+function _generate_output_time_slice!(m::Model)
+    instance = m.ext[:instance]
+    window_start = model_start(model=instance)
+    window_end = model_end(model=instance)
+    window_time_slices = _window_output_time_slices(instance, window_start, window_end)
+    m.ext[:temporal_structure][:output_time_slice] = TimeSliceSet(window_time_slices)
+end
+
+"""
+    _time_interval_output_blocks(instance, window_start, window_end)
+
+A `Dict` mapping 'pre-time_slices' (i.e., (start, end) tuples) to an Array of outputs where found.
+"""
+function _time_interval_output_blocks(instance::Object, window_start::DateTime, window_end::DateTime)
+    blocks_by_time_interval = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
+    for block in indices(output_resolution)
+        time_slice_start = window_start
+        i = 1
+        while time_slice_start < window_end
+            duration = output_resolution(output=block, i=i)
+            if iszero(duration)
+                duration = Minute(0)
+                time_slice_end = time_slice_start + duration
+                push!(get!(blocks_by_time_interval, (time_slice_start, time_slice_end), Array{Object,1}()), block)
+                time_slice_start = window_end
+            end
+            time_slice_end = time_slice_start + duration
+            if time_slice_end > window_end
+                time_slice_end = window_end
+                # TODO: Try removing this to a once-off check as if true, this warning appears each time a timeslice is used
+                @warn("""
+                      the last time slice of temporal block $block has been cut to fit within the optimisation window
+                      """)
+            end
+            push!(get!(blocks_by_time_interval, (time_slice_start, time_slice_end), Array{Object,1}()), block)
+            time_slice_start = time_slice_end
+            i += 1
+        end
+    end
+    blocks_by_time_interval
+end
+
+"""
+    _window_time_slices(instance, window_start, window_end)
+
+A sorted `Array` of `TimeSlices` in the given window.
+"""
+function _window_output_time_slices(instance::Object, window_start::DateTime, window_end::DateTime)
+    window_time_slices = [
+        TimeSlice(t..., blocks...; duration_unit=_model_duration_unit(instance))
+        for (t, blocks) in _time_interval_output_blocks(instance, window_start, window_end)
+    ]
+    sort!(window_time_slices)
 end

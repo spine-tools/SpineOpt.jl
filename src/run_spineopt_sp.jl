@@ -432,6 +432,19 @@ function save_outputs!(m)
             continue
         end
         @warn "can't find any values for '$(name)'"
+        copy_existing = copy(by_entity)
+        for (k,v) in by_entity
+            copy_existing[k] = Dict()
+            for t_out in output_time_slice(m, temporal_block = o)
+                t_e_s = filter(x -> x >= SpineOpt.start(t_out) && x < SpineOpt.end_(t_out),keys(v))
+                if !isempty(t_e_s)
+                    copy_existing[k][SpineOpt.start(t_out)] = SpineOpt.SpineInterface.mean(collect(v[t] for t in t_e_s))
+                end
+            end
+            if !isempty(copy_existing[k])
+                    by_entity[k] = copy_existing[k]
+            end
+        end
     end
 end
 
