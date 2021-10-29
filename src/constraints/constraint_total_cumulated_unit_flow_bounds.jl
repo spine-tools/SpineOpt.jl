@@ -24,7 +24,6 @@ Set upperbound `max_cum_in_flow_bound `to the cumulated inflow into a `unit_grou
 if `max_cum_in_unit_flow_bound` exists.
 """
 
-max_total_cumulated_unit_flow_from_node
 
 function add_constraint_total_cumulated_unit_flow!(m::Model, bound,sense,d)
     @fetch unit_flow = m.ext[:variables]
