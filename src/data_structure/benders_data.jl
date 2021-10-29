@@ -74,7 +74,9 @@ function process_subproblem_solution(m, mp)
 end
 
 function reset_fix_parameter_values()
-    function _reset_fix_parameter_value(class::ObjectClass, invest_param::Parameter, fix_name::Symbol, starting_name::Symbol)
+    function _reset_fix_parameter_value(
+        class::ObjectClass, invest_param::Parameter, fix_name::Symbol, starting_name::Symbol
+    )
         for obj in indices(invest_param)
             if haskey(class.parameter_values[obj], starting_name)
                 class.parameter_values[obj][fix_name] = class.parameter_values[obj][starting_name]
@@ -104,17 +106,19 @@ function add_benders_iteration(j)
 end
 
 function save_sp_marginal_values(m)
-    function _save_marginal_value(rel_cls::RelationshipClass, invest_param::Parameter, out_name::Symbol, var_name::Symbol)
-        obj_scen_val = Dict()
-        for ((obj, scen), val) in m.ext[:outputs][out_name]
-            push!(get!(obj_scen_val, obj, Dict()), scen => val)
+    function _save_marginal_value(
+        rel_cls::RelationshipClass, invest_param::Parameter, out_name::Symbol, var_name::Symbol
+    )
+        obj_scen_ts = Dict()
+        by_entity = m.ext[:outputs][out_name]
+        for ((obj, scen), ts) in _output_parameter_value(by_entity, true)
+            push!(get!(obj_scen_ts, obj, Dict()), scen => ts)
         end
         for obj in indices(invest_param)
-            # FIXME: Use Map instead of TimeSeries, to account for different stochastic scenarios
-            scen_val = obj_scen_val[obj]
-            val = first(values(scen_val))
-            pv = parameter_value(TimeSeries(collect(keys(val)), collect(values(val)), false, false))
-            rel_cls.parameter_values[(obj, current_bi)][var_name] = pv
+            scen_ts = obj_scen_ts[obj]
+            # FIXME: At the moment we drop the scenario index, but we could easily use it in a Map...
+            ts = first(values(scen_ts))
+            rel_cls.parameter_values[(obj, current_bi)][var_name] = parameter_value(ts)
         end
     end
     out_name, var_name = :bound_units_on, :units_available_mv

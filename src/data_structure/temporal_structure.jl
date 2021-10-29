@@ -158,7 +158,8 @@ function _time_interval_blocks(instance::Object, window_start::DateTime, window_
             time_slice_end = time_slice_start + duration
             if time_slice_end > adjusted_end
                 time_slice_end = adjusted_end
-                # TODO: Try removing this to a once-off check as if true, this warning appears each time a timeslice is used
+                # TODO: Try removing this to a once-off check as if true, this warning appears each time a timeslice is
+                # created
                 @warn("""
                       the last time slice of temporal block $block has been cut to fit within the optimisation window
                       """)
