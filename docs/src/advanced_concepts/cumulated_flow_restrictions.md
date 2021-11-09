@@ -18,4 +18,27 @@ The main source of flexibility in the use of this constraint lies in the possibi
 TO BE IMPLENENTED.
 
 ## Imposing a limit on carbon
+To impose a limit on overall carbon emissions over the entire optimization horizon,
+the following objects, relationships and parameters are relevant:
+
+1. **[unit](@ref)**: In this case, a unit represents a process (e.g. conversion of Gas to Electricity), where one
+  or multiple [unit\_flow](@ref)s are associated with carbon emissions
+2. **[node](@ref)**: Besides from nodes required to denote e.g. a fuel node or a supply node, at least one node should be introduced representing
+    carbon emissions.
+    (*Note: To distinguish e.g. between regions there can also be more than one carbon node*)
+3. **[unit\_\_to\_node](@ref)**: To associate carbon flows with a unit, the relationship between the unit and the carbon node needs to be imposed,
+    to trigger the generation of a carbon-[unit\_flow](@ref) variable.
+4. **[unit\_\_node\_\_node](@ref)** and **[fix\_ratio\_out\_out](@ref) **: Ratio between e.g. output and output unit flows; e.g. how carbon intensive an electricity flow of a unit is. The parameter is defined on a [unit\_\_node\_\_node](@ref) relationship, for example (gasplant, Carbon, Electricity). (*Note: For a full list of possible ratios, see also [unit\_\_node\_\_node](@ref) and associated parameters*)
+5. **[max\_total\_cumulated\_unit\_flow\_to\_node](@ref)** (and **[unit\_\_to\_node](@ref)**): This parameter triggers a limit on all flows from a unit (or a group of units), e.g. the group of all conventional generators, to a node (or node groups), e.g. considering the atmosphere as a fictive CO2 node, over the entire modelling horizon (e.g. a carbon budget). For example this could be defined on a relationship between a gasplant and a Carbon node, but can also be defined a unit group of all conventional generators and a carbon node.
+
 ## Imposing a carbon taxes
+To include carbon pricing in a model,
+the following objects, relationships and parameters are relevant:
+
+1. **[unit](@ref)**: In this case, a unit represents a process (e.g. conversion of Gas to Electricity), where one
+  or multiple [unit\_flow](@ref)s are associated with carbon emissions
+2. **[node](@ref)** and **[tax\_in\_unit\_flow](@ref)**: Besides from nodes required to denote e.g. a fuel node or a supply node, at least one node should be introduced representing carbon emissions. To associate a carbon-tax with all incoming [unit\_flow](@ref)s, the [tax\_in\_unit\_flow](@ref) parameter can be defined on this node
+    (*Note: To distinguish e.g. between regions there can also be more than one carbon node*)
+3. **[unit\_\_to\_node](@ref)**: To associate carbon flows with a unit, the relationship between the unit and the carbon node needs to be imposed,
+    to trigger the generation of a carbon-[unit\_flow](@ref) variable.
+4. **[unit\_\_node\_\_node](@ref)** and **[fix\_ratio\_out\_out](@ref) **: Ratio between e.g. output and output unit flows; e.g. how carbon intensive an electricity flow of a unit is. The parameter is defined on a [unit\_\_node\_\_node](@ref) relationship, for example (Gasplant, Carbon, Electricity). (*Note: For a full list of possible ratios, see also [unit\_\_node\_\_node](@ref) and associated parameters*)
