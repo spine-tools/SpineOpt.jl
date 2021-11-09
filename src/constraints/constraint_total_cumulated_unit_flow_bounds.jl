@@ -25,10 +25,10 @@ if `max_cum_in_unit_flow_bound` exists.
 """
 
 
-function add_constraint_total_cumulated_unit_flow!(m::Model, bound,sense,d)
+function add_constraint_total_cumulated_unit_flow!(m::Model, bound,sense)
     @fetch unit_flow = m.ext[:variables]
     m.ext[:constraints][bound.name] = Dict(
-        (unit=ug, node= ng, stochastic_path = s,t=t ) => sense_constraint( # TODO: How to turn this one into stochastical one? Path indexing over the whole `unit_group`?
+        (unit=ug, node= ng, stochastic_path = s) => sense_constraint( # TODO: How to turn this one into stochastical one? Path indexing over the whole `unit_group`?
             m,
             + expr_sum(#TODO check if expression sum is needed here
                 unit_flow[u, n, d, s, t] * duration(t) # * node_stochastic_weight[(node=n, stochastic_scenario=s)]
@@ -41,18 +41,18 @@ function add_constraint_total_cumulated_unit_flow!(m::Model, bound,sense,d)
                     init = 0
             ),
             sense,
-            bound(unit = ug, node = ng)
+            bound(unit = ug, node = ng, direction = d)
             #TODO Should this be time-varying, and stochastical?
-        ) for (ug,ng,s) in constraint_total_cumulated_unit_flow_indices(m,bound,d)
+        ) for (ug,ng,d,s) in constraint_total_cumulated_unit_flow_indices(m,bound)
     )
 end
 
 # TODO: Calling `max_cum_in_unit_flow_bound[(unit=ug)]` fails.
 
 
-function constraint_total_cumulated_unit_flow_indices(m::Model,bound,d)
+function constraint_total_cumulated_unit_flow_indices(m::Model,bound)
     unique(
-        (unit = ug, node = ng, stochastic_path = s) for (ug,ng) in indices(bound)
+        (unit = ug, node = ng, direction=d, stochastic_path = s) for (ug,ng, d) in indices(bound)
         for s in active_stochastic_paths(
             unique(
             ind.stochastic_scenario for ind in unit_flow_indices(m,direction = d, unit = ug,node = ng)
@@ -62,17 +62,17 @@ function constraint_total_cumulated_unit_flow_indices(m::Model,bound,d)
 end
 
 function add_constraint_max_total_cumulated_unit_flow_from_node!(m::Model)
-    add_constraint_total_cumulated_unit_flow!(m::Model,max_total_cumulated_unit_flow_from_node,<=,direction(:from_node))
+    add_constraint_total_cumulated_unit_flow!(m::Model,max_total_cumulated_unit_flow_from_node,<=)
 end
 
 function add_constraint_min_total_cumulated_unit_flow_from_node!(m::Model)
-    add_constraint_total_cumulated_unit_flow!(m::Model,min_total_cumulated_unit_flow_from_node,>=,direction(:from_node))
+    add_constraint_total_cumulated_unit_flow!(m::Model,min_total_cumulated_unit_flow_from_node,>=)
 end
 
 function add_constraint_max_total_cumulated_unit_flow_to_node!(m::Model)
-    add_constraint_total_cumulated_unit_flow!(m::Model,max_total_cumulated_unit_flow_to_node,<=,direction(:to_node))
+    add_constraint_total_cumulated_unit_flow!(m::Model,max_total_cumulated_unit_flow_to_node,<=)
 end
 
 function add_constraint_min_total_cumulated_unit_flow_to_node!(m::Model)
-    add_constraint_total_cumulated_unit_flow!(m::Model,min_total_cumulated_unit_flow_to_node,>=,direction(:to_node))
+    add_constraint_total_cumulated_unit_flow!(m::Model,min_total_cumulated_unit_flow_to_node,>=)
 end

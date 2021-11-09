@@ -474,6 +474,7 @@ function check_res_startup_ramps()
         "min_res_startup_ramp has to be smaller than max_res_startup_ramp $(join(error_indices, ", ", " and ")) "
         )
     #Check that node is a reserve node
+    #TODO: Should there be checks for upward, downward, spinning, non-spinning?
     error_indices = [
         (u, n, d)
         for (u, n, d) in union(indices(min_res_startup_ramp),indices(max_res_startup_ramp)) if !(is_reserve_node(node=n))
