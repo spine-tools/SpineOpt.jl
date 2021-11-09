@@ -53,7 +53,7 @@ function check_data_structure(; log_level=3)
     check_minimum_operating_point_unit_capacity()
     #check_islands(; log_level=log_level)
     check_rolling_branching()
-    check_basic_requirements_parameter_values()
+    check_parameter_values()
 end
 
 """
@@ -298,7 +298,7 @@ function check_rolling_branching()
     end
 end
 
-function check_basic_requirements_parameter_values()
+function check_parameter_values()
     check_model_start_smaller_than_end()
     check_operating_points()
     check_ramping_parameters()
