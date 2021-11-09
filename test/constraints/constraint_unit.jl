@@ -1131,27 +1131,20 @@
     end
     @testset "constraint_split_ramps_with_nonspin_units" begin
         _load_test_data(url_in, test_data)
-        max_startup_ramp = 0.4
         max_res_startup_ramp = 0.5
         unit_capacity = 200
-        max_shutdown_ramp = 0.4
-        max_res_shutdown_ramp = 0.5
         ramp_up_limit = 1
-        ramp_down_limit = 1
         is_reserve_node = true
         is_non_spinning = true
+        upward_reserve = true
         object_parameter_values = [
             ["node", "node_a", "is_reserve_node", is_reserve_node],
             ["node", "node_a", "is_non_spinning", is_non_spinning],
+            ["node", "node_a", "upward_reserve", upward_reserve],
         ]
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "ramp_up_limit", ramp_up_limit],
-            ["unit__from_node", ["unit_ab", "node_a"], "ramp_down_limit", ramp_down_limit],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values, object_parameter_values =object_parameter_values)
 
@@ -1171,21 +1164,16 @@
             path = unique([s0, s1])
             var_key1 = (key_head..., s1, t1)
             var_u_flow1 = var_unit_flow[var_key1...]
-            var_su_u_flow1 = var_start_up_unit_flow[var_key1...]
             var_ns_ru_u_flow1 = var_nonspin_ramp_up_unit_flow[var_key1...]
-            var_sd_u_flow1 = var_shut_down_unit_flow[var_key1...]
-            var_ns_rd_u_flow1 = var_nonspin_ramp_down_unit_flow[var_key1...]
             @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=node(:node_a), t_after=t1)
                 var_key0 = (key_head..., s0, t0)
                 var_u_flow0 = get(var_unit_flow, var_key0, 0)
                 con_key = (key_head..., path, t0, t1)
                 expected_con = @build_constraint(
-                    var_u_flow1 - var_u_flow0 ==
-                    var_su_u_flow1 + var_ns_ru_u_flow1 - var_sd_u_flow1 - var_ns_rd_u_flow1
+                    var_u_flow1 ==
+                    var_ns_ru_u_flow1
                 )
                 observed_con = constraint_object(constraint[con_key...])
-                @show "observed", observed_con
-                @show "expected", expected_con
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
