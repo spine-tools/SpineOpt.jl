@@ -666,19 +666,34 @@ To impose a limit on the cumulative amount of certain commodity flows, a cumulat
 * [min\_total\_cumulated\_unit\_flow\_from\_node](@ref)
 * [min\_total\_cumulated\_unit\_flow\_to\_node](@ref)
 
- A maximum cumulated flow restriction can for example be used be used to limit emissions or consumption of a certain commodity. The mathematical implementation will look as follows:
+ A maximum cumulated flow restriction can for example be used be used to limit emissions or consumption of a certain commodity. The mathematical implementation will look as follows for flow coming from nodes:
 
 ```math
 \begin{aligned}
 & \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (ug,ng,d)}} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
+& \{ \\
 & <= p_{max\_total\_cumulated\_unit\_flow\_from\_node}(ug,ng,d) \\
+& >= p_{min\_total\_cumulated\_unit\_flow\_from\_node}(ug,ng,d) \\
+& \} \\
 & \forall (ug,ng,d) \in ind(p_{max\_total\_cumulated\_unit\_flow\_from\_node})
-In which, the case is shown for a restriction of a commodity flow *from a node group*, to a certain unit group.  
 \end{aligned}
 ```
 
 
-max\_total\_cumulated\_unit\_flow\_from\_node
+And the counterpart for flow restrictions to nodes:
+
+```math
+\begin{aligned}
+& \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (ug,ng,d)}} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
+& \{ \\
+& <= p_{max\_total\_cumulated\_unit\_flow\_to\_node}(ug,ng,d) \\
+& >= p_{min\_total\_cumulated\_unit\_flow\_to\_node}(ug,ng,d) \\
+& \} \\
+& \forall (ug,ng,d) \in ind(p_{max\_total\_cumulated\_unit\_flow\_from\_node})
+\end{aligned}
+```
+
+
 ## Network constraints
 
 ### [Static constraints](@id static-constraints-connection)
