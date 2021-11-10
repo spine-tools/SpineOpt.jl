@@ -102,7 +102,7 @@ _lazy_include_file_paths = [
 	"objective/ramp_costs.jl",
 	"objective/units_on_costs.jl",
 	"constraints/constraint_common.jl",
-	"constraints/constraint_max_cum_in_unit_flow_bound.jl",
+	"constraints/constraint_total_cumulated_unit_flow_bounds.jl",
 	"constraints/constraint_unit_flow_capacity.jl",
 	"constraints/constraint_unit_flow_capacity_w_ramps.jl",
 	"constraints/constraint_operating_point_bounds.jl",

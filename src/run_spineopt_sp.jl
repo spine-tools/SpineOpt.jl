@@ -30,7 +30,7 @@ function rerun_spineopt_sp(
 )
     mip_solver = _default_mip_solver(mip_solver)
     lp_solver = _default_lp_solver(lp_solver)
-    
+
     outputs = Dict()
 
     m = create_model(mip_solver, use_direct_model, :spineopt_operations)
@@ -252,7 +252,10 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     )
     @timelog log_level 3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
     @timelog log_level 3 "- [constraint_cyclic_node_state]" add_constraint_cyclic_node_state!(m)
-    @timelog log_level 3 "- [constraint_max_cum_in_unit_flow_bound]" add_constraint_max_cum_in_unit_flow_bound!(m)
+    @timelog log_level 3 "- [constraint_max_total_cumulated_unit_flow_from_node]" add_constraint_max_total_cumulated_unit_flow_from_node!(m)
+    @timelog log_level 3 "- [constraint_min_total_cumulated_unit_flow_from_node]" add_constraint_min_total_cumulated_unit_flow_from_node!(m)
+    @timelog log_level 3 "- [constraint_max_total_cumulated_unit_flow_to_node]" add_constraint_max_total_cumulated_unit_flow_to_node!(m)
+    @timelog log_level 3 "- [constraint_min_total_cumulated_unit_flow_to_node]" add_constraint_min_total_cumulated_unit_flow_to_node!(m)
     @timelog log_level 3 "- [constraint_units_on]" add_constraint_units_on!(m)
     @timelog log_level 3 "- [constraint_units_available]" add_constraint_units_available!(m)
     @timelog log_level 3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)
@@ -340,7 +343,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, use_direc
         if calculate_duals
             @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
             if lp_solver != mip_solver
-                @timelog log_level 0 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)                
+                @timelog log_level 0 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
             end
             @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
         end
@@ -525,7 +528,7 @@ function write_report(model, default_url)
 end
 
 function relax_integer_vars(m::Model)
-    save_integer_values!(m) 
+    save_integer_values!(m)
     for name in m.ext[:integer_variables]
         def = m.ext[:variables_definition][name]
         bin = def[:bin]

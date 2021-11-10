@@ -658,19 +658,41 @@ The `unit_flow_op` operating segment variable is bounded by the difference betwe
 
 ### Bounds on commodity flows
 
-#### [Upper bound on cumulated unit flows](@id constraint_max_cum_in_unit_flow_bound)
+#### [Bound on cumulated unit flows](@id constraint_total_cumulated_unit_flow)
 
-To impose a limit on the cumulative amount of certain commodity flows, a cumulative bound can be set by defining the parameter [max\_cum\_in\_unit\_flow\_bound](@ref) for entire optimization window:
+To impose a limit on the cumulative amount of certain commodity flows, a cumulative bound can be set by defining one of the following parameters:
+* [max\_total\_cumulated\_unit\_flow\_from\_node](@ref)
+* [max\_total\_cumulated\_unit\_flow\_to\_node](@ref)
+* [min\_total\_cumulated\_unit\_flow\_from\_node](@ref)
+* [min\_total\_cumulated\_unit\_flow\_to\_node](@ref)
+
+ A maximum cumulated flow restriction can for example be used be used to limit emissions or consumption of a certain commodity. The mathematical implementation will look as follows for flow coming from nodes:
 
 ```math
 \begin{aligned}
 & \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (ug,ng,d)}} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
-& <= p_{max\_cum\_unit\_flow\_bound}(ug,ng,d,s,t) \\
-& \forall (ug,ng,d) \in ind(p_{max\_cum\_unit\_flow\_bound})
+& \{ \\
+& <= p_{max\_total\_cumulated\_unit\_flow\_from\_node}(ug,ng,d) \\
+& >= p_{min\_total\_cumulated\_unit\_flow\_from\_node}(ug,ng,d) \\
+& \} \\
+& \forall (ug,ng,d) \in ind(p_{max\_total\_cumulated\_unit\_flow\_from\_node})
 \end{aligned}
 ```
 
-(Comment 2021-04-29: Currently under development)
+
+And the counterpart for flow restrictions to nodes:
+
+```math
+\begin{aligned}
+& \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (ug,ng,d)}} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
+& \{ \\
+& <= p_{max\_total\_cumulated\_unit\_flow\_to\_node}(ug,ng,d) \\
+& >= p_{min\_total\_cumulated\_unit\_flow\_to\_node}(ug,ng,d) \\
+& \} \\
+& \forall (ug,ng,d) \in ind(p_{max\_total\_cumulated\_unit\_flow\_from\_node})
+\end{aligned}
+```
+
 
 ## Network constraints
 
