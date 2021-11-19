@@ -61,8 +61,10 @@ function _run_migration(url, version)
 	run_request(
 		url,
 		"import_data", 
-		Dict("object_parameters" => [("settings", "version", version + 1)]),
-		"Update SpineOpt data structure to $(version + 1)"
+		(
+			Dict("object_parameters" => [("settings", "version", version + 1)]),
+			"Update SpineOpt data structure to $(version + 1)"
+		)
 	)
 	true
 end
@@ -75,20 +77,19 @@ If the db doesn't have the `settings` object class or the `version` parameter de
 create them, setting `version`'s default_value to 1.
 """
 function find_version(url)
-	data = run_request(url, "get_data", "object_class_sq")
+	data = run_request(url, "get_data", ("object_class_sq",))
 	i = findfirst(x -> x["name"] == "settings", data["object_class_sq"])
 	if i == nothing
 		settings_class = first([x for x in _template["object_classes"] if x[1] == "settings"])
 		run_request(
 			url,
 			"import_data",
-			Dict("object_classes" => [settings_class]),
-			"Add settings object class"
+			(Dict("object_classes" => [settings_class]), "Add settings object class")
 		)
 		return find_version(url)
 	end
 	settings_class = data["object_class_sq"][i]
-	data = run_request(url, "get_data", "parameter_definition_sq")
+	data = run_request(url, "get_data", ("parameter_definition_sq",))
 	j = findfirst(
 		x -> x["name"] == "version" && x["entity_class_id"] == settings_class["id"], data["parameter_definition_sq"]
 	)
@@ -98,8 +99,7 @@ function find_version(url)
 		run_request(
 			url,
 			"import_data",
-			Dict("object_parameters" => [version_par_def]),
-			"Add version parameter definition"
+			(Dict("object_parameters" => [version_par_def]),	"Add version parameter definition")
 		)
 		return 1
 	end
