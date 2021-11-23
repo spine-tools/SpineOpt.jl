@@ -203,12 +203,14 @@
         connection_flow_cost = 185
         objects = [["connection", "connection_ab"]]
         relationships = [["connection__to_node", ["connection_ab", "node_b"]]]
-        object_parameter_values = [["connection", "connection_ab", "connection_flow_cost", connection_flow_cost]]
+        relationship_parameter_values = [
+            ["connection__to_node", ["connection_ab", "node_b"], "connection_flow_cost", connection_flow_cost]
+        ]
         SpineInterface.import_data(
             url_in;
             objects=objects,
             relationships=relationships,
-            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
         )
         
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -217,8 +219,9 @@
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         observed_obj = objective_function(m)
-        expected_obj =
-            connection_flow_cost * sum(connection_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices))
+        expected_obj = connection_flow_cost * sum(
+            connection_flow[(key..., s, t)...] for (s, t) in zip(scenarios, time_slices)
+        )
         @test observed_obj == expected_obj
     end
     @testset "units_on_costs" begin
