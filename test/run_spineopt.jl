@@ -277,4 +277,31 @@ end
             @test Y.demand(; key..., t=t) == ((7 <= k <= 18) ? 50 : 100)
         end
     end
+    @testset "write inputs overlapping temporal blocks" begin
+        _load_test_data(url_in, test_data)
+        demand = Dict("type" => "time_pattern", "data" => Dict("h1-6,h19-24" => 100, "h7-18" => 50))
+        objects = [["output", "demand"], ["temporal_block", "8hourly"]]
+        relationships = [
+            ["model__temporal_block", ["instance", "8hourly"]],
+            ["node__temporal_block", ["node_a", "8hourly"]],
+            ["report__output", ["report_x", "demand"]]
+        ]
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
+            ["output", "demand", "output_resolution", Dict("type" => "duration", "data" => "1h")],
+            ["temporal_block", "8hourly", "resolution", Dict("type" => "duration", "data" => "8h")],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+        )
+        run_spineopt(url_in, url_out; log_level=0)
+        using_spinedb(url_out, Y)
+        key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
+        for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2) - Hour(1))
+            @test Y.demand(; key..., t=t) == ((7 <= k <= 18) ? 50 : 100)
+        end
+    end
 end

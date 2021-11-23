@@ -425,14 +425,17 @@ function _save_output!(m, out, value_or_param)
     by_entity_full_res = _value_by_entity_at_full_resolution(m, value_or_param)
     by_entity = get!(m.ext[:outputs], out.name, Dict{NamedTuple,Dict}())
     for (entity, by_analysis_time_full_res) in by_entity_full_res
+        by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
         for (analysis_time, by_time_slice_full_res) in by_analysis_time_full_res
+            by_time_stamp = get!(by_analysis_time, analysis_time, Dict{DateTime,Any}())
             for t_aggr in output_time_slices(m, output=out)
-                t_aggr, by_time_slice_full_res
-                time_slices = t_highest_resolution(filter(t -> iscontained(t, t_aggr), keys(by_time_slice_full_res)))
-                isempty(time_slices) && continue
-                v_aggr = SpineInterface.mean(by_time_slice_full_res[t] for t in time_slices)
-                by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-                by_time_stamp = get!(by_analysis_time, analysis_time, Dict{DateTime,Any}())
+                time_slices = filter(t -> iscontained(t, t_aggr), keys(by_time_slice_full_res))
+                if isempty(time_slices)
+                    # No aggregation possible
+                    merge!(by_time_stamp, Dict(start(t) => v for (t, v) in by_time_slice_full_res))
+                    continue
+                end
+                v_aggr = SpineInterface.mean(by_time_slice_full_res[t] for t in t_highest_resolution(time_slices))
                 push!(by_time_stamp, start(t_aggr) => v_aggr)
             end
         end
