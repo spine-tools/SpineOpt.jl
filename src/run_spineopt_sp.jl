@@ -394,60 +394,67 @@ function save_objective_values!(m::Model)
     end
 end
 
-function _save_output!(m, by_entity, value)
+function _value_by_entity_at_full_resolution(m, value::Dict)
+    by_entity = Dict()
     for (k, v) in value
         end_(k.t) <= model_start(model=m.ext[:instance]) && continue
         entity = _drop_key(k, :t)
         by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-        by_time_stamp = get!(by_analysis_time, start(current_window(m)), Dict{DateTime,Any}())
-        push!(by_time_stamp, start(k.t) => v)
+        by_time_slice = get!(by_analysis_time, start(current_window(m)), Dict{TimeSlice,Any}())
+        by_time_slice[k.t] = v
     end
+    by_entity
 end
 
-function _save_input!(m, by_entity, param)
-    for entity in indices_as_tuples(param)
+function _value_by_entity_at_full_resolution(m, parameter::Parameter)
+    by_entity = Dict()
+    for entity in indices_as_tuples(parameter)
         for (scen, t) in stochastic_time_indices(m)
             entity = (; entity..., stochastic_scenario=scen)
             by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-            by_time_stamp = get!(by_analysis_time, start(current_window(m)), Dict{DateTime,Any}())
-            val = param(; entity..., t=t, _strict=false)
+            by_time_slice = get!(by_analysis_time, start(current_window(m)), Dict{TimeSlice,Any}())
+            val = parameter(; entity..., t=t, _strict=false)
             val === nothing && continue
-            push!(by_time_stamp, start(t) => val)
+            by_time_slice[t] = val
         end
     end
+    by_entity
 end
+
+function _save_output!(m, out, value_or_param)
+    by_entity_full_res = _value_by_entity_at_full_resolution(m, value_or_param)
+    by_entity = get!(m.ext[:outputs], out.name, Dict{NamedTuple,Dict}())
+    for (entity, by_analysis_time_full_res) in by_entity_full_res
+        for (analysis_time, by_time_slice_full_res) in by_analysis_time_full_res
+            for t_aggr in output_time_slices(m, output=out)
+                t_aggr, by_time_slice_full_res
+                time_slices = t_highest_resolution(filter(t -> iscontained(t, t_aggr), keys(by_time_slice_full_res)))
+                isempty(time_slices) && continue
+                v_aggr = SpineInterface.mean(by_time_slice_full_res[t] for t in time_slices)
+                by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
+                by_time_stamp = get!(by_analysis_time, analysis_time, Dict{DateTime,Any}())
+                push!(by_time_stamp, start(t_aggr) => v_aggr)
+            end
+        end
+    end
+    true
+end
+_save_output!(m, out, ::Nothing) = false
 
 """
 Save the outputs of a model into a dictionary.
 """
 function save_outputs!(m)
-    for r in model__report(model=m.ext[:instance]), o in report__output(report=r)
-        name = o.name
-        by_entity = get!(m.ext[:outputs], name, Dict{NamedTuple,Dict}())
-        value = get(m.ext[:values], name, nothing)
-        if value !== nothing
-            _save_output!(m, by_entity, value)
+    for r in model__report(model=m.ext[:instance]), out in report__output(report=r)
+        value = get(m.ext[:values], out.name, nothing)
+        if _save_output!(m, out, value)
             continue
         end
-        param = parameter(name, @__MODULE__)
-        if param !== nothing
-            _save_input!(m, by_entity, param)
+        param = parameter(out.name, @__MODULE__)
+        if _save_output!(m, out, param)
             continue
         end
-        @warn "can't find any values for '$(name)'"
-        copy_existing = copy(by_entity)
-        for (k,v) in by_entity
-            copy_existing[k] = Dict()
-            for t_out in output_time_slice(m, temporal_block = o)
-                t_e_s = filter(x -> x >= SpineOpt.start(t_out) && x < SpineOpt.end_(t_out),keys(v))
-                if !isempty(t_e_s)
-                    copy_existing[k][SpineOpt.start(t_out)] = SpineOpt.SpineInterface.mean(collect(v[t] for t in t_e_s))
-                end
-            end
-            if !isempty(copy_existing[k])
-                    by_entity[k] = copy_existing[k]
-            end
-        end
+        @warn "can't find any values for '$(out.name)'"
     end
 end
 
