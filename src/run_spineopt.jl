@@ -103,7 +103,7 @@ function run_spineopt(
             """
         else
             @log log_level 0 "Upgrading data structure to the latest version... "
-            run_migrations(url_in, version)
+            run_migrations(url_in, version, log_level)
             @log log_level 0 "Done!"
         end
     end
