@@ -156,7 +156,7 @@
         ["node", "max_voltage_angle", null, null, "Maximum allowed voltage angle at `node`."],
         ["node", "min_voltage_angle", null, null, "Minimum allowed voltage angle at `node`. "],
         ["output", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
-    	["output", "output_resolution", null, null, "Temporal resolution of the output variables assosciated with this `output`."],
+    	["output", "output_resolution", null, null, "Temporal resolution of the output variables associated with this `output`."],
         ["report", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["report", "output_db_url", null, null, "Database url for SpineOpt output."],
         ["settings", "version", 3, null, "Current version of the SpineOpt data structure. Modify it at your own risk (but please don't)."],
