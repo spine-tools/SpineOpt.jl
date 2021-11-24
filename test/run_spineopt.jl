@@ -248,7 +248,6 @@ end
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
         ]
-        object_parameter_values = [["output", "unknown_output", "output_resolution", Dict("type" => "duration", "data" => "0h")]]
         SpineInterface.import_data(
             url_in;
             objects=objects,
@@ -288,7 +287,6 @@ end
         ]
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
-            ["output", "demand", "output_resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "8hourly", "resolution", Dict("type" => "duration", "data" => "8h")],
         ]
         SpineInterface.import_data(

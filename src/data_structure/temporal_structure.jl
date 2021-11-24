@@ -240,16 +240,24 @@ A `Dict` mapping outputs to an `Array` of `TimeSlice`s corresponding to the outp
 """
 function _output_time_slices(instance::Object, window_start::DateTime, window_end::DateTime)
     output_time_slices = Dict{Object,Array{TimeSlice,1}}()
-    for output in indices(output_resolution)
-        output_time_slices[output] = arr = TimeSlice[]
+    for out in indices(output_resolution)
+        if output_resolution(output=out) === nothing
+            output_time_slices[out] = nothing
+            continue
+        end
+        output_time_slices[out] = arr = TimeSlice[]
         time_slice_start = window_start
         i = 1
         while time_slice_start < window_end
-            duration = output_resolution(output=output, i=i)
+            duration = output_resolution(output=out, i=i)
+            if iszero(duration)
+                # TODO: Try to move this to a check...
+                error("`output_resolution` of output `$(out)` cannot be zero!")
+            end
             time_slice_end = time_slice_start + duration
             if time_slice_end > window_end
                 time_slice_end = window_end
-                @warn("the last time slice of output $output has been cut to fit within the optimisation window")
+                @warn("the last time slice of output $out has been cut to fit within the optimisation window")
             end
             push!(arr, TimeSlice(time_slice_start, time_slice_end; duration_unit=_model_duration_unit(instance)))
             iszero(duration) && break
@@ -433,7 +441,7 @@ t_in_t_excl(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t_excl](; kw
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t](t)
 t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t_excl](t)
 representative_time_slice(m, t) = get(m.ext[:temporal_structure][:representative_time_slice], t, t)
-output_time_slices(m::Model; output::Object) = get(m.ext[:temporal_structure][:output_time_slices], output, [])
+output_time_slices(m::Model; output::Object) = get(m.ext[:temporal_structure][:output_time_slices], output, nothing)
 
 """
     node_time_indices(m::Model;<keyword arguments>)

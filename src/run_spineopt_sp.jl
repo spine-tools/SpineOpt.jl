@@ -394,50 +394,58 @@ function save_objective_values!(m::Model)
     end
 end
 
-function _value_by_entity_at_full_resolution(m, value::Dict)
-    by_entity = Dict()
+function _value_by_entity_non_aggregated(m, value::Dict)
+    by_entity_non_aggr = Dict()
     for (k, v) in value
         end_(k.t) <= model_start(model=m.ext[:instance]) && continue
         entity = _drop_key(k, :t)
-        by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-        by_time_slice = get!(by_analysis_time, start(current_window(m)), Dict{TimeSlice,Any}())
-        by_time_slice[k.t] = v
+        by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
+        by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, start(current_window(m)), Dict{TimeSlice,Any}())
+        by_time_slice_non_aggr[k.t] = v
     end
-    by_entity
+    by_entity_non_aggr
 end
 
-function _value_by_entity_at_full_resolution(m, parameter::Parameter)
-    by_entity = Dict()
+function _value_by_entity_non_aggregated(m, parameter::Parameter)
+    by_entity_non_aggr = Dict()
     for entity in indices_as_tuples(parameter)
         for (scen, t) in stochastic_time_indices(m)
             entity = (; entity..., stochastic_scenario=scen)
-            by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-            by_time_slice = get!(by_analysis_time, start(current_window(m)), Dict{TimeSlice,Any}())
             val = parameter(; entity..., t=t, _strict=false)
             val === nothing && continue
-            by_time_slice[t] = val
+            by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
+            by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, start(current_window(m)), Dict{TimeSlice,Any}())
+            by_time_slice_non_aggr[t] = val
         end
     end
-    by_entity
+    by_entity_non_aggr
+end
+
+function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, output_time_slices::Array)
+    by_time_stamp_aggr = Dict()
+    for t_aggr in output_time_slices
+        time_slices = filter(t -> iscontained(t, t_aggr), keys(by_time_slice_non_aggr))
+        isempty(time_slices) && continue  # No aggregation possible
+        by_time_stamp_aggr[start(t_aggr)] = SpineInterface.mean(by_time_slice_non_aggr[t] for t in time_slices)
+    end
+    by_time_stamp_aggr
+end
+function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, ::Nothing)
+    Dict(start(t) => v for (t, v) in by_time_slice_non_aggr)
 end
 
 function _save_output!(m, out, value_or_param)
-    by_entity_full_res = _value_by_entity_at_full_resolution(m, value_or_param)
-    by_entity = get!(m.ext[:outputs], out.name, Dict{NamedTuple,Dict}())
-    for (entity, by_analysis_time_full_res) in by_entity_full_res
-        by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-        for (analysis_time, by_time_slice_full_res) in by_analysis_time_full_res
+    by_entity_non_aggr = _value_by_entity_non_aggregated(m, value_or_param)
+    for (entity, by_analysis_time_non_aggr) in by_entity_non_aggr
+        for (analysis_time, by_time_slice_non_aggr) in by_analysis_time_non_aggr
+            t_highest_resolution!(by_time_slice_non_aggr)
+            output_time_slices_ = output_time_slices(m, output=out)
+            by_time_stamp_aggr = _value_by_time_stamp_aggregated(by_time_slice_non_aggr, output_time_slices_)
+            isempty(by_time_stamp_aggr) && continue
+            by_entity = get!(m.ext[:outputs], out.name, Dict{NamedTuple,Dict}())
+            by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
             by_time_stamp = get!(by_analysis_time, analysis_time, Dict{DateTime,Any}())
-            for t_aggr in output_time_slices(m, output=out)
-                time_slices = filter(t -> iscontained(t, t_aggr), keys(by_time_slice_full_res))
-                if isempty(time_slices)
-                    # No aggregation possible
-                    merge!(by_time_stamp, Dict(start(t) => v for (t, v) in by_time_slice_full_res))
-                    continue
-                end
-                v_aggr = SpineInterface.mean(by_time_slice_full_res[t] for t in t_highest_resolution(time_slices))
-                push!(by_time_stamp, start(t_aggr) => v_aggr)
-            end
+            merge!(by_time_stamp, by_time_stamp_aggr)
         end
     end
     true

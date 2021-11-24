@@ -229,7 +229,6 @@
         units_on_cost = 913
         object_parameter_values = [["unit", "unit_ab", "units_on_cost", units_on_cost]]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        
         m = run_spineopt(url_in; log_level=0, optimize=false)
         units_on = m.ext[:variables][:units_on]        
         s_parent = stochastic_scenario(:parent)
