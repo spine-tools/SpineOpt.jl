@@ -221,9 +221,12 @@
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
+            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
         ]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
+        relationships = [
+            ["unit__to_node", ["unit_ab", "node_a"]],
+        ]
+        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values, relationships=relationships)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow_op = m.ext[:variables][:unit_flow_op]
