@@ -40,7 +40,7 @@ struct TimeSliceSet
                       for ((first_, last_), (next_first, next_last)) in zip(solids[1:(end - 1)], solids[2:end])
                           if end_(last_) < start(next_first))
         gaps = [TimeSlice(end_(last_), start(next_first)) for (last_, next_first) in gap_bounds]
-        # NOTE: For convention, the last time slice in the preceding block becomes the 'bridge'
+        # NOTE: By convention, the last time slice in the preceding block becomes the 'bridge'
         bridges = [last_ for (last_, next_first) in gap_bounds]
         gap_bridger = GapBridger(gaps, bridges)
         new(time_slices, block_time_slices, gap_bridger)
@@ -64,8 +64,7 @@ An `Array` of time slices *in the model*.
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = h.block_time_slices[temporal_block]
 (h::TimeSliceSet)(::Anything, s) = s
 (h::TimeSliceSet)(temporal_block::Object, s) = [t for t in s if temporal_block in blocks(t)]
-(h::TimeSliceSet)(temporal_blocks::Array{T,1}, s) where {T} = [t
-for blk in temporal_blocks for t in h(blk, s)]
+(h::TimeSliceSet)(temporal_blocks::Array{T,1}, s) where {T} = [t for blk in temporal_blocks for t in h(blk, s)]
 
 """
     (::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
@@ -159,10 +158,9 @@ function _time_interval_blocks(instance::Object, window_start::DateTime, window_
             time_slice_end = time_slice_start + duration
             if time_slice_end > adjusted_end
                 time_slice_end = adjusted_end
-                # TODO: Try removing this to a once-off check as if true, this warning appears each time a timeslice is used
-                @warn("""
-                      the last time slice of temporal block $block has been cut to fit within the optimisation window
-                      """)
+                # TODO: Try removing this to a once-off check as if true, this warning appears each time a timeslice is
+                # created
+                @warn("the last time slice of temporal block $block has been cut to fit within the optimisation window")
             end
             push!(get!(blocks_by_time_interval, (time_slice_start, time_slice_end), Array{Object,1}()), block)
             time_slice_start = time_slice_end
@@ -186,9 +184,28 @@ function _window_time_slices(instance::Object, window_start::DateTime, window_en
 end
 
 """
+    _required_history_duration(m::Model)
+
+The required length of the included history based on parameter values that impose delays as a `Dates.Period`.
+"""
+function _required_history_duration(instance::Object)
+    delay_params = (
+        min_up_time,
+        min_down_time,
+        connection_flow_delay,
+        unit_investment_lifetime,
+        connection_investment_lifetime,
+        storage_investment_lifetime
+    )
+    max_vals = (maximum_parameter_value(p) for p in delay_params)
+    init = _model_duration_unit(instance)(1)  # Dynamics always require at least 1 duration unit of history
+    reduce(max, (val for val in max_vals if val !== nothing); init=init)
+end
+
+"""
     _generate_time_slice!(m::Model)
 
-Create and export a `TimeSliceSet` containing `TimeSlice`s in the current window.
+Create a `TimeSliceSet` containing `TimeSlice`s in the current window.
 
 See [@TimeSliceSet()](@ref).
 """
@@ -217,15 +234,50 @@ function _generate_time_slice!(m::Model)
 end
 
 """
-    _required_history_duration(m::Model)
+    _output_time_slices(instance, window_start, window_end)
 
-The required length of the included history based on parameter values that impose delays as a `Dates.Period`.
+A `Dict` mapping outputs to an `Array` of `TimeSlice`s corresponding to the output's resolution.
 """
-function _required_history_duration(instance::Object)
-    delay_params = (min_up_time, min_down_time, connection_flow_delay, unit_investment_tech_lifetime, connection_investment_lifetime, storage_investment_lifetime)
-    max_vals = (maximum_parameter_value(p) for p in delay_params)
-    init = _model_duration_unit(instance)(1)  # Dynamics always require at least 1 duration unit of history
-    reduce(max, (val for val in max_vals if val !== nothing); init=init)
+function _output_time_slices(instance::Object, window_start::DateTime, window_end::DateTime)
+    output_time_slices = Dict{Object,Array{TimeSlice,1}}()
+    for out in indices(output_resolution)
+        if output_resolution(output=out) === nothing
+            output_time_slices[out] = nothing
+            continue
+        end
+        output_time_slices[out] = arr = TimeSlice[]
+        time_slice_start = window_start
+        i = 1
+        while time_slice_start < window_end
+            duration = output_resolution(output=out, i=i)
+            if iszero(duration)
+                # TODO: Try to move this to a check...
+                error("`output_resolution` of output `$(out)` cannot be zero!")
+            end
+            time_slice_end = time_slice_start + duration
+            if time_slice_end > window_end
+                time_slice_end = window_end
+                @warn("the last time slice of output $out has been cut to fit within the optimisation window")
+            end
+            push!(arr, TimeSlice(time_slice_start, time_slice_end; duration_unit=_model_duration_unit(instance)))
+            iszero(duration) && break
+            time_slice_start = time_slice_end
+            i += 1
+        end
+    end
+    output_time_slices
+end
+
+"""
+    _generate_output_time_slice!(m::Model)
+
+Create a `Dict`, for the output resolution.
+"""
+function _generate_output_time_slices!(m::Model)
+    instance = m.ext[:instance]
+    window_start = model_start(model=instance)
+    window_end = model_end(model=instance)
+    m.ext[:temporal_structure][:output_time_slices] = _output_time_slices(instance, window_start, window_end)
 end
 
 """
@@ -261,6 +313,38 @@ function _generate_time_slice_relationships!(m::Model)
 end
 
 """
+    _generate_representative_time_slice!(m::Model)
+
+Generate a `Dict` mapping all non-representative to representative time-slices
+"""
+function _generate_representative_time_slice!(m::Model)
+    m.ext[:temporal_structure][:representative_time_slice] = d = Dict()
+    model_blocks = Set(member for blk in model__temporal_block(model=m.ext[:instance]) for member in members(blk))
+    for blk in indices(representative_periods_mapping)
+        for (real_t_start, rep_blk_value) in representative_periods_mapping(temporal_block=blk)
+            rep_blk_name = rep_blk_value()
+            rep_blk = temporal_block(rep_blk_name)
+            if !(rep_blk in model_blocks)
+                error("representative temporal block $rep_blk is not included in model $(m.ext[:instance])")
+            end
+            for rep_t in time_slice(m, temporal_block=rep_blk)
+                rep_t_duration = end_(rep_t) - start(rep_t)
+                real_t_end = real_t_start + rep_t_duration
+                merge!(
+                    d, 
+                    Dict(
+                        real_t => rep_t 
+                        for real_t in to_time_slice(m, t=TimeSlice(real_t_start, real_t_end))
+                        if blk in real_t.blocks
+                    )
+                )
+                real_t_start = real_t_end
+            end
+        end
+    end
+end
+
+"""
 Find indices in `source` that overlap `t` and return values for those indices in `target`.
 Used by `to_time_slice`.
 """
@@ -285,8 +369,9 @@ function generate_temporal_structure!(m::Model)
     m.ext[:temporal_structure] = Dict()
     _generate_current_window!(m::Model)
     _generate_time_slice!(m::Model)
+    _generate_output_time_slices!(m::Model)
     _generate_time_slice_relationships!(m::Model)
-    _generate_representative_time_slice_mapping(m::Model)
+    _generate_representative_time_slice!(m::Model)
 end
 
 """
@@ -311,7 +396,7 @@ end
 
 Rewind the temporal structure - essentially, rolling it backwards k times.
 """
-function reset_temporal_structure(m::Model, k)
+function reset_temporal_structure!(m::Model, k)
     instance = m.ext[:instance]
     temp_struct = m.ext[:temporal_structure]
     roll_forward_ = roll_forward(model=instance, _strict=false)
@@ -323,6 +408,29 @@ function reset_temporal_structure(m::Model, k)
     true
 end
 
+"""
+    to_time_slice(m::Model, t::TimeSlice...)
+
+An `Array` of `TimeSlice`s *in the model* overlapping the given `t` (where `t` may not be in model).
+"""
+function to_time_slice(m::Model; t::TimeSlice)
+    temp_struct = m.ext[:temporal_structure]
+    t_sets = (temp_struct[:time_slice], temp_struct[:history_time_slice])
+    in_blocks = (
+        s
+        for t_set in t_sets 
+        for time_slices in values(t_set.block_time_slices)
+        for s in _to_time_slice(time_slices, t)
+    )
+    in_gaps = (
+        s
+        for t_set in t_sets
+        for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t)
+    )
+    unique(Iterators.flatten((in_blocks, in_gaps)))
+end
+
+
 current_window(m::Model) = m.ext[:temporal_structure][:current_window]
 time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:time_slice](; kwargs...)
 history_time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:history_time_slice](; kwargs...)
@@ -332,51 +440,9 @@ t_in_t(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t](; kwargs...)
 t_in_t_excl(m::Model; kwargs...) = m.ext[:temporal_structure][:t_in_t_excl](; kwargs...)
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t](t)
 t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:temporal_structure][:t_overlaps_t_excl](t)
+representative_time_slice(m, t) = get(m.ext[:temporal_structure][:representative_time_slice], t, t)
+output_time_slices(m::Model; output::Object) = get(m.ext[:temporal_structure][:output_time_slices], output, nothing)
 
-"""
-    to_time_slice(m::Model, t::TimeSlice...)
-
-An `Array` of `TimeSlice`s *in the model* overlapping the given `t` (where `t` may not be in model).
-"""
-function to_time_slice(m::Model; t::TimeSlice)
-    temp_struct = m.ext[:temporal_structure]
-    t_sets = (temp_struct[:time_slice], temp_struct[:history_time_slice])
-    in_blocks = (s
-    for t_set in t_sets for time_slices in values(t_set.block_time_slices) for s in _to_time_slice(time_slices, t))
-    in_gaps = (s
-    for t_set in t_sets for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t))
-    unique(Iterators.flatten((in_blocks, in_gaps)))
-end
-
-"""
-    _generate_representative_time_slice_mapping(m::Model)
-
-Generate an `Array` mapping all non-representative to representative time-slices
-"""
-function _generate_representative_time_slice_mapping(m::Model)
-    rep_dict = Dict()
-    for blk in indices(representative_periods_mapping)
-        for t_start_real in representative_periods_mapping(temporal_block=blk).indexes
-            rep_blk = representative_periods_mapping(temporal_block=blk, inds=t_start_real)
-            t_start_real_i = t_start_real
-            for t in time_slice(m, temporal_block=temporal_block(rep_blk))
-                rep_dict[
-                    to_time_slice(
-                        m,
-                        t=TimeSlice(
-                            t_start_real_i,
-                            t_start_real_i + _model_duration_unit(m.ext[:instance])(duration(t)),
-                        ),
-                    ),
-                ] = t
-                t_start_real_i = t_start_real_i + _model_duration_unit(m.ext[:instance])(duration(t))
-            end
-        end
-    end
-    m.ext[:temporal_structure][:rep_day_mapping] = rep_dict
-end
-
-representative_time_slices(m) = m.ext[:temporal_structure][:rep_day_mapping]
 """
     node_time_indices(m::Model;<keyword arguments>)
 

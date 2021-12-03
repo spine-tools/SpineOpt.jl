@@ -56,6 +56,7 @@ makedocs(
             "Pressure driven gas transfer" => joinpath("advanced_concepts", "pressure_driven_gas_transfer.md"),
             "Lossless nodal DC power flows" => joinpath("advanced_concepts", "Lossless_DC_power_flow.md"),
             "Representative days with seasonal storages" => joinpath("advanced_concepts", "representative_days_w_seasonal_storage.md"),
+            "Imposing renewable energy targets" => joinpath("advanced_concepts", "cumulated_flow_restrictions.md"),
         ],
         "Library" => "library.md",
     ],

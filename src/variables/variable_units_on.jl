@@ -77,6 +77,7 @@ function add_variable_units_on!(m::Model)
             analysis_time=t0,
             t=x.t,
             _strict=false,
-        ),
+        ),        
+        non_anticipativity_time=x -> units_on_non_anticipativity_time(unit=x.unit, _strict=false),
     )
 end

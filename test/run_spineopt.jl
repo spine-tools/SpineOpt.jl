@@ -54,6 +54,8 @@ end
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
             ["model", "instance", "duration_unit", "hour"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
+            ["output", "unit_flow", "output_resolution", Dict("type" => "duration", "data" => "1h")],
+            ["output", "variable_om_costs", "output_resolution", Dict("type" => "duration", "data" => "1h")]
         ],
     )
     @testset "rolling" begin
@@ -134,6 +136,93 @@ end
             @test Y.unit_flow(; flow_key..., t=t) == demand
         end
     end
+    @testset "fix_non_anticipativity_values" begin
+        _load_test_data(url_in, test_data)
+        vom_cost = 20
+        demand = 200
+        unit_capacity = demand
+        objects = [["output", "units_on"]]
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
+            ["unit", "unit_ab", "units_on_non_anticipativity_time", Dict("type" => "duration", "data" => "3h")],
+            ["temporal_block", "hourly", "block_end", Dict("type" => "duration", "data" => "16h")],
+        ]
+        relationships = [["report__output", ["report_x", "units_on"]]]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )        
+        m = run_spineopt(url_in, url_out; log_level=0)
+        using_spinedb(url_out, Y)
+        units_on_key = (
+            report=Y.report(:report_x),
+            unit=Y.unit(:unit_ab),
+            stochastic_scenario=Y.stochastic_scenario(:parent),
+        )
+        @testset for (k, t) in enumerate(time_slice(m))
+            ind = first(SpineOpt.units_on_indices(m; t=t))
+            var = m.ext[:variables][:units_on][ind]
+            # Only first three time slices should be fixed
+            @test is_fixed(var) == (k in 1:3)
+        end
+    end
+    @testset "don't overwrite results on rolling" begin
+        _load_test_data(url_in, test_data)
+        index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
+        vom_cost = 1200
+        demand = Dict(
+            "type" => "map", 
+            "index_type" => "date_time",
+            "data" => Dict("2000-01-01T00:00:00" => 50.0, "2000-01-01T12:00:00" => 90.0)
+        )
+        unit_capacity = demand
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "6h")],
+            ["unit", "unit_ab", "min_up_time", Dict("type" => "duration", "data" => "2h")],
+        ]  # NOTE: min_up_time is only so we have a history of two hours
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
+            ["report__output", ["report_x", "unit_flow"], "overwrite_results_on_rolling", false],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in, url_out; log_level=0)
+        using_spinedb(url_out, Y)
+        cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+        flow_key = (
+            report=Y.report(:report_x),
+            unit=Y.unit(:unit_ab),
+            node=Y.node(:node_b),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:parent),
+        )
+        analysis_times = DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2) - Hour(1)
+        @testset for at in analysis_times, t in at - Hour(12):Hour(1):at + Hour(12)
+            # For each analysis time, `t` covers a window of ± 12 hours,
+            # but only `t`s within the optimisation window should have a `unit_flow` value
+            window_start = max(DateTime("2000-01-01T00:00:00"), at - Hour(2))
+            window_end = min(DateTime("2000-01-02T00:00:00"), at + Hour(6))
+            expected = if window_start <= t < window_end
+                (t < DateTime("2000-01-01T12:00:00")) ? 50 : 90
+            else
+                nothing
+            end
+            @test Y.unit_flow(; flow_key..., analysis_time=at, t=t) == expected
+        end
+    end
     @testset "unfeasible" begin
         _load_test_data(url_in, test_data)
         demand = 100
@@ -166,6 +255,80 @@ end
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        @test_logs (:warn, "can't find a value for 'unknown_output'") run_spineopt(url_in, url_out; log_level=0)
+        @test_logs (:warn, "can't find any values for 'unknown_output'") run_spineopt(url_in, url_out; log_level=0)
+    end
+    @testset "write inputs" begin
+        _load_test_data(url_in, test_data)
+        demand = Dict("type" => "time_pattern", "data" => Dict("h1-6,h19-24" => 100, "h7-18" => 50))
+        objects = [["output", "demand"]]
+        relationships = [["report__output", ["report_x", "demand"]]]
+        object_parameter_values = [["node", "node_b", "demand", demand]]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+        )
+        run_spineopt(url_in, url_out; log_level=0)
+        using_spinedb(url_out, Y)
+        key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
+        @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2) - Hour(1))
+            @test Y.demand(; key..., t=t) == ((7 <= k <= 18) ? 50 : 100)
+        end
+    end
+    @testset "write inputs overlapping temporal blocks" begin
+        _load_test_data(url_in, test_data)
+        demand = Dict("type" => "time_pattern", "data" => Dict("h1-6,h19-24" => 100, "h7-18" => 50))
+        objects = [["output", "demand"], ["temporal_block", "8hourly"]]
+        relationships = [
+            ["model__temporal_block", ["instance", "8hourly"]],
+            ["node__temporal_block", ["node_a", "8hourly"]],  # NOTE: 8hourly is associated to the *non*-demand node
+            ["report__output", ["report_x", "demand"]]
+        ]
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
+            ["temporal_block", "8hourly", "resolution", Dict("type" => "duration", "data" => "8h")],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+        )
+        run_spineopt(url_in, url_out; log_level=0)
+        using_spinedb(url_out, Y)
+        key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
+        @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2) - Hour(1))
+            @test Y.demand(; key..., t=t) == ((7 <= k <= 18) ? 50 : 100)
+        end
+    end
+    @testset "output_resolution for an input" begin
+        _load_test_data(url_in, test_data)
+        demand = Dict("type" => "time_pattern", "data" => Dict("h1-6,h19-24" => 100, "h7-18" => 50))
+        objects = [["output", "demand"]]
+        relationships = [["report__output", ["report_x", "demand"]]]
+        @testset for out_res in 1:24
+            object_parameter_values = [
+                ["node", "node_b", "demand", demand],
+                ["output", "demand", "output_resolution", Dict("type" => "duration", "data" => "$(out_res)h")]
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+            )
+            run_spineopt(url_in, url_out; log_level=0)
+            using_spinedb(url_out, Y)
+            key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
+            @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(out_res):DateTime(2000, 1, 2) - Hour(1))
+                lower = out_res * (k - 1) + 1
+                upper = out_res * k
+                upper > 24 && (upper = 24)
+                range = lower:upper
+                expected = sum(((7 <= j <= 18) ? 50 : 100) for j in range) / length(range)
+                @test Y.demand(; key..., t=t) == expected
+            end
+        end
     end
 end

@@ -94,7 +94,6 @@
             Dict("type" => "duration", "data" => "1h"),
         ]],
     )
-
     @testset "constraint_user_constraint_investments" begin
         @testset for sense in ("==", ">=", "<=")
             _load_test_data(url_in, test_data)

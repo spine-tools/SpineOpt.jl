@@ -221,9 +221,12 @@
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
+            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
         ]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
+        relationships = [
+            ["unit__to_node", ["unit_ab", "node_a"]],
+        ]
+        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values, relationships=relationships)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow_op = m.ext[:variables][:unit_flow_op]
@@ -341,6 +344,60 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+
+    @testset "constraint_total_cumulated_unit_flow" begin
+        total_cumulated_flow_bound = 100
+        # class = "unit_$(direction)_node"
+        # relationship = ["unit_ab", "node_a", "node_b"]
+        senses_by_prefix = Dict("min" => >=, "max" => <=)
+        classes_by_prefix = Dict("from_node" => "unit__from_node", "to_node" => "unit__to_node")
+        @testset for (p, a) in (
+            ("min", "from_node"),
+            ("min", "to_node"),
+            ("max", "from_node"),
+            ("max", "to_node"),
+        )
+            _load_test_data(url_in, test_data)
+            cumulated = join([p,"total" , "cumulated", "unit_flow",a], "_")
+            relationships = [
+                [classes_by_prefix[a], ["unit_ab", "node_a"]],
+            ]
+            relationship_parameter_values =
+                [[classes_by_prefix[a], ["unit_ab", "node_a"], cumulated, total_cumulated_flow_bound]]
+            sense = senses_by_prefix[p]
+            SpineInterface.import_data(
+                url_in;
+                relationships=relationships,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            var_unit_flow = m.ext[:variables][:unit_flow]
+            constraint = m.ext[:constraints][Symbol(cumulated)]
+            @test length(constraint) == 1
+            path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
+            t_long = first(time_slice(m; temporal_block=temporal_block(:two_hourly)))
+            t_short1, t_short2 = time_slice(m; temporal_block=temporal_block(:hourly))
+            directions_by_prefix = Dict("from_node" => direction(:from_node), "to_node" => direction(:to_node))
+            d_a = directions_by_prefix[a]
+            var_u_flow_a1_key = (unit(:unit_ab), node(:node_a), d_a, stochastic_scenario(:parent), t_short1)
+            var_u_flow_a2_key = (unit(:unit_ab), node(:node_a), d_a, stochastic_scenario(:child), t_short2)
+            var_u_flow_a1 = var_unit_flow[var_u_flow_a1_key...]
+            var_u_flow_a2 = var_unit_flow[var_u_flow_a2_key...]
+            con_key = (unit(:unit_ab), node(:node_a), path)
+            expected_con_ref = SpineOpt.sense_constraint(
+                m,
+                var_u_flow_a1 + var_u_flow_a2,
+                sense,
+                total_cumulated_flow_bound ,
+            )
+            expected_con = constraint_object(expected_con_ref)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+
+
+
     @testset "constraint_min_up_time" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_up_minutes in (60, 120, 210)
@@ -389,8 +446,11 @@
         @testset for min_up_minutes in (60, 120, 210)
             _load_test_data(url_in, test_data)
             min_up_time = Dict("type" => "duration", "data" => string(min_up_minutes, "m"))
-            object_parameter_values =
-                [["unit", "unit_ab", "min_up_time", min_up_time], ["model", "instance", "model_end", model_end]]
+            object_parameter_values = [
+                ["unit", "unit_ab", "min_up_time", min_up_time],
+                ["model", "instance", "model_end", model_end],
+                ["node", "node_a", "is_reserve_node", true],
+            ]
             relationship_parameter_values = [
                 ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", 1],
                 ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0],
@@ -500,11 +560,13 @@
             number_of_units = 4
             candidate_units = 3
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
+            is_reserve_node=true
             object_parameter_values = [
                 ["unit", "unit_ab", "candidate_units", candidate_units],
                 ["unit", "unit_ab", "number_of_units", number_of_units],
                 ["unit", "unit_ab", "min_down_time", min_down_time],
-                ["model", "instance", "model_end", model_end]
+                ["model", "instance", "model_end", model_end],
+                ["node", "node_a", "is_reserve_node", is_reserve_node],
             ]
             relationships = [
                 ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -869,11 +931,15 @@
         _load_test_data(url_in, test_data)
         max_res_startup_ramp = 0.5
         unit_capacity = 200
+        is_reserve_node = true
+        object_parameter_values = [
+            ["node","node_a","is_reserve_node", is_reserve_node],
+        ]
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
+        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values, object_parameter_values=object_parameter_values)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_nonspin_ramp_up_unit_flow = m.ext[:variables][:nonspin_ramp_up_unit_flow]
@@ -898,12 +964,15 @@
         max_res_startup_ramp = 0.5
         min_res_startup_ramp = 0.25
         unit_capacity = 200
+        object_parameter_values = [
+            ["node", "node_a", "is_reserve_node", true],
+        ]
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "min_res_startup_ramp", min_res_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
+        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values, object_parameter_values=object_parameter_values)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_nonspin_ramp_up_unit_flow = m.ext[:variables][:nonspin_ramp_up_unit_flow]
@@ -927,9 +996,11 @@
         _load_test_data(url_in, test_data)
         max_startup_ramp = 0.4
         unit_capacity = 200
+        ramp_up_limit = 1
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
+            ["unit__from_node", ["unit_ab", "node_a"], "ramp_up_limit", ramp_up_limit],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
 
@@ -956,9 +1027,11 @@
         max_startup_ramp = 0.4
         min_startup_ramp = 0.2
         unit_capacity = 200
+        ramp_up_limit = 1
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "min_startup_ramp", min_startup_ramp],
+            ["unit__from_node", ["unit_ab", "node_a"], "ramp_up_limit",ramp_up_limit],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
@@ -1061,19 +1134,22 @@
     end
     @testset "constraint_split_ramps_with_nonspin_units" begin
         _load_test_data(url_in, test_data)
-        max_startup_ramp = 0.4
         max_res_startup_ramp = 0.5
         unit_capacity = 200
-        max_shutdown_ramp = 0.4
-        max_res_shutdown_ramp = 0.5
+        ramp_up_limit = 1
+        is_reserve_node = true
+        is_non_spinning = true
+        upward_reserve = true
+        object_parameter_values = [
+            ["node", "node_a", "is_reserve_node", is_reserve_node],
+            ["node", "node_a", "is_non_spinning", is_non_spinning],
+            ["node", "node_a", "upward_reserve", upward_reserve],
+        ]
         relationship_parameter_values = [
-            ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
-            ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
         ]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
+        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values, object_parameter_values =object_parameter_values)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:variables][:unit_flow]
@@ -1091,17 +1167,14 @@
             path = unique([s0, s1])
             var_key1 = (key_head..., s1, t1)
             var_u_flow1 = var_unit_flow[var_key1...]
-            var_su_u_flow1 = var_start_up_unit_flow[var_key1...]
             var_ns_ru_u_flow1 = var_nonspin_ramp_up_unit_flow[var_key1...]
-            var_sd_u_flow1 = var_shut_down_unit_flow[var_key1...]
-            var_ns_rd_u_flow1 = var_nonspin_ramp_down_unit_flow[var_key1...]
             @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=node(:node_a), t_after=t1)
                 var_key0 = (key_head..., s0, t0)
                 var_u_flow0 = get(var_unit_flow, var_key0, 0)
                 con_key = (key_head..., path, t0, t1)
                 expected_con = @build_constraint(
-                    var_u_flow1 - var_u_flow0 ==
-                    var_su_u_flow1 + var_ns_ru_u_flow1 - var_sd_u_flow1 - var_ns_rd_u_flow1
+                    var_u_flow1 ==
+                    var_ns_ru_u_flow1
                 )
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -1112,11 +1185,15 @@
         _load_test_data(url_in, test_data)
         max_res_shutdown_ramp = 0.5
         unit_capacity = 200
+        is_reserve_node = true
+        object_parameter_values = [
+            ["node", "node_a", "is_reserve_node", is_reserve_node],
+        ]
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
+        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values, object_parameter_values=object_parameter_values)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_nonspin_ramp_down_unit_flow = m.ext[:variables][:nonspin_ramp_down_unit_flow]
@@ -1141,12 +1218,16 @@
         max_res_shutdown_ramp = 0.5
         min_res_shutdown_ramp = 0.25
         unit_capacity = 200
+        is_reserve_node = true
+        object_parameter_values = [
+            ["node", "node_a", "is_reserve_node", is_reserve_node],
+        ]
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "min_res_shutdown_ramp", min_res_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
+        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values, object_parameter_values=object_parameter_values)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_nonspin_ramp_down_unit_flow = m.ext[:variables][:nonspin_ramp_down_unit_flow]
@@ -1170,9 +1251,11 @@
         _load_test_data(url_in, test_data)
         max_shutdown_ramp = 0.4
         unit_capacity = 200
+        ramp_down_limit = 1
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
+            ["unit__from_node", ["unit_ab", "node_a"], "ramp_down_limit", ramp_down_limit],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
 
@@ -1199,10 +1282,12 @@
         max_shutdown_ramp = 0.4
         min_shutdown_ramp = 0.2
         unit_capacity = 200
+        ramp_down_limit = 1
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "min_shutdown_ramp", min_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
+            ["unit__from_node", ["unit_ab", "node_a"], "ramp_down_limit", ramp_down_limit],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
 

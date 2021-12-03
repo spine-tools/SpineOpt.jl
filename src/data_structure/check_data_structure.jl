@@ -53,6 +53,7 @@ function check_data_structure(; log_level=3)
     check_minimum_operating_point_unit_capacity()
     #check_islands(; log_level=log_level)
     check_rolling_branching()
+    check_parameter_values()
 end
 
 """
@@ -278,11 +279,12 @@ Check that no `stochastic_structure` branches before `roll_forward`.
 function check_rolling_branching()
     for m in model()
         if !isnothing(roll_forward(model=m))
+            t0 = model_start(model=m)
             for ss in model__stochastic_structure(model=m)
                 cond = all(
-                    stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen) >= roll_forward(model=m)
+                    t0 + stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen) >= t0 + roll_forward(model=m)
                     for scen in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
-                        if !isnothing(stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen))
+                    if !isnothing(stochastic_scenario_end(stochastic_structure=ss, stochastic_scenario=scen))
                 )
                 _check(
                     cond,
@@ -294,4 +296,228 @@ function check_rolling_branching()
             end
         end
     end
+end
+
+function check_parameter_values()
+    check_model_start_smaller_than_end()
+    check_operating_points()
+    check_ramping_parameters()
+    check_startup_ramps()
+    check_shutdown_ramps()
+    check_res_startup_ramps()
+    check_res_shutdown_ramps()
+end
+
+
+function check_model_start_smaller_than_end()
+    for m in indices(model_start)
+        _check(model_start(model=m) <= model_end(model=m), "The model start for $(mod) is greater than the model end")
+       end
+end
+
+function check_operating_points()
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(minimum_operating_point) if !(0 <= minimum_operating_point(unit=u, node=n, direction=d) <= 1)
+    ]
+    _check(
+        isempty(error_indices),
+        "minimum operating point has to be between 0 and 1 for $(join(error_indices, ", ", " and ")) "
+        )
+end
+
+function check_ramping_parameters()
+    # ramp_up_limit between 0 and 1
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(ramp_up_limit) if !(0 < ramp_up_limit(unit=u, node=n, direction=d) <= 1)
+    ]
+
+    _check(
+        isempty(error_indices),
+        "ramp_up_limit has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
+        )
+    # ramp_down_limit between 0 and 1
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(ramp_down_limit) if !(0 < ramp_down_limit(unit=u, node=n, direction=d) <= 1)
+    ]
+
+    _check(
+        isempty(error_indices),
+        "ramp_down_limit has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
+        )
+end
+function check_startup_ramps()
+    # Max Startup ramp between 0 and 1
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(max_startup_ramp) if !(0 < max_startup_ramp(unit=u, node=n, direction=d) <= 1)
+    ]
+    _check(
+        isempty(error_indices),
+        "max_startup_ramp has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
+        )
+    # Min Startup ramp between 0 and 1
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(min_startup_ramp) if !(0 <= min_startup_ramp(unit=u, node=n, direction=d) <= 1)
+    ]
+
+    _check(
+        isempty(error_indices),
+        "min_startup_ramp has to be between 0 and 1 for $(join(error_indices, ", ", " and ")) "
+        )
+    #Max Startup ramp greater than Min startup ramp
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in intersect(indices(min_startup_ramp),indices(max_startup_ramp)) if  !(min_startup_ramp(unit=u, node=n, direction=d) <= max_startup_ramp(unit=u, node=n, direction=d))
+    ]
+    _check(
+        isempty(error_indices),
+        "min_startup_ramp has to be smaller than max_start_up_ramp $(join(error_indices, ", ", " and ")) "
+        )
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(max_startup_ramp) if ramp_up_limit(unit=u, node=n, direction=d) === nothing
+    ]
+    _check(
+        isempty(error_indices),
+        "missing `ramp_up_limit` value for indices: $(join(error_indices, ", ", " and ")) "
+        * "- `ramp_up_limit` must be specified where `max_startup_ramp` is",
+    )
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(min_startup_ramp) if ramp_up_limit(unit=u, node=n, direction=d) === nothing
+    ]
+    _check(
+        isempty(error_indices),
+        "missing `ramp_up_limit` value for indices: $(join(error_indices, ", ", " and ")) "
+        * "- `ramp_up_limit` must be specified where `min_startup_ramp` is",
+    )
+end
+
+function check_shutdown_ramps()
+    # Max shutdown ramp between 0 and 1
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(max_shutdown_ramp) if !(0 < max_shutdown_ramp(unit=u, node=n, direction=d) <= 1)
+    ]
+    _check(
+        isempty(error_indices),
+        "max_shutdown_ramp has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
+        )
+    # Min shutdown ramp between 0 and 1
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(min_shutdown_ramp) if !(0 <= min_shutdown_ramp(unit=u, node=n, direction=d) <= 1)
+    ]
+
+    _check(
+        isempty(error_indices),
+        "min_shutdown_ramp has to be between 0 and 1 for $(join(error_indices, ", ", " and ")) "
+        )
+    #Max shutdown ramp greater than Min startup ramp
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in intersect(indices(min_shutdown_ramp),indices(max_shutdown_ramp)) if  !(min_shutdown_ramp(unit=u, node=n, direction=d) <= max_shutdown_ramp(unit=u, node=n, direction=d))
+    ]
+    _check(
+        isempty(error_indices),
+        "min_shutdown_ramp has to be smaller than max_shutdown_ramp $(join(error_indices, ", ", " and ")) "
+        )
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(max_shutdown_ramp) if ramp_down_limit(unit=u, node=n, direction=d) === nothing
+    ]
+    _check(
+        isempty(error_indices),
+        "missing `ramp_down_limit` value for indices: $(join(error_indices, ", ", " and ")) "
+        * "- `ramp_down_limit` must be specified where `max_shutdown_ramp` is",
+    )
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(min_shutdown_ramp) if ramp_down_limit(unit=u, node=n, direction=d) === nothing
+    ]
+    _check(
+        isempty(error_indices),
+        "missing `ramp_down_limit` value for indices: $(join(error_indices, ", ", " and ")) "
+        * "- `ramp_down_limit` must be specified where `min_shutdown_ramp` is",
+    )
+end
+
+
+function check_res_startup_ramps()
+    #Checking that values are within normal boundaries
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(max_res_startup_ramp) if !(0 < max_res_startup_ramp(unit=u, node=n, direction=d) <= 1)
+    ]
+    _check(
+        isempty(error_indices),
+        "max_res_startup_ramp has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
+        )
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(min_res_startup_ramp) if !(0 <= min_res_startup_ramp(unit=u, node=n, direction=d) <= 1)
+    ]
+    _check(
+        isempty(error_indices),
+        "min_res_startup_ramp has to be between 0 and 1 for $(join(error_indices, ", ", " and ")) "
+        )
+    error_indices = [
+        (u, n, d)
+            for (u, n, d) in intersect(indices(min_res_startup_ramp),indices(max_res_startup_ramp)) if  !(min_res_startup_ramp(unit=u, node=n, direction=d) <= max_res_startup_ramp(unit=u, node=n, direction=d))
+    ]
+    _check(
+        isempty(error_indices),
+        "min_res_startup_ramp has to be smaller than max_res_startup_ramp $(join(error_indices, ", ", " and ")) "
+        )
+    #Check that node is a reserve node
+    #TODO: Should there be checks for upward, downward, spinning, non-spinning?
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in union(indices(min_res_startup_ramp),indices(max_res_startup_ramp)) if !(is_reserve_node(node=n))
+    ]
+    _check(
+        isempty(error_indices),
+        "reserve startup ramps have been defined for $(join(error_indices, ", ", " and ")), while this is not a reserve node. Please set the is_reserve_node parameter to True"
+        )
+end
+
+function check_res_shutdown_ramps()
+    #Checking that values are within normal boundaries
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(max_res_shutdown_ramp) if !(0 < max_res_shutdown_ramp(unit=u, node=n, direction=d) <= 1)
+    ]
+    _check(
+        isempty(error_indices),
+        "max_res_shutdown_ramp has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
+        )
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in indices(min_res_shutdown_ramp) if !(0 <= min_res_shutdown_ramp(unit=u, node=n, direction=d) <= 1)
+    ]
+    _check(
+        isempty(error_indices),
+        "min_res_shutdown_ramp has to be between 0 and 1 for $(join(error_indices, ", ", " and ")) "
+        )
+    error_indices = [
+        (u, n, d)
+            for (u, n, d) in intersect(indices(min_res_shutdown_ramp),indices(max_res_shutdown_ramp)) if  !(min_res_shutdown_ramp(unit=u, node=n, direction=d) <= max_res_shutdown_ramp(unit=u, node=n, direction=d))
+    ]
+    _check(
+        isempty(error_indices),
+        "min_res_shutdown_ramp has to be smaller than max_res_shutdown_ramp $(join(error_indices, ", ", " and ")) "
+        )
+    #Check that node is a reserve node
+    error_indices = [
+        (u, n, d)
+        for (u, n, d) in union(indices(min_res_shutdown_ramp),indices(max_res_shutdown_ramp)) if !(is_reserve_node(node=n))
+    ]
+    _check(
+        isempty(error_indices),
+        "reserve shutdown ramps have been defined for $(join(error_indices, ", ", " and ")), while this is not a reserve node. Please set the is_reserve_node parameter to True"
+        )
 end

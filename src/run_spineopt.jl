@@ -51,6 +51,11 @@ macro timemsg(msg, expr)
     end
 end
 
+module _Template
+using SpineInterface
+end
+using ._Template
+
 """
     run_spineopt(url_in, url_out; <keyword arguments>)
 
@@ -98,13 +103,25 @@ function run_spineopt(
             """
         else
             @log log_level 0 "Upgrading data structure to the latest version... "
-            run_migrations(url_in, version)
+            run_migrations(url_in, version, log_level)
             @log log_level 0 "Done!"
         end
     end
     @timelog log_level 2 "Initializing data structure from db..." begin
+        @eval _Template using_spinedb($(SpineOpt.template()), _Template)
         using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
-        generate_missing_items()
+        missing_items = difference(_Template, @__MODULE__)        
+        if !isempty(missing_items)
+            println()
+            @warn """
+            Some items are missing from the input database.
+            We'll assume sensitive defaults for any missing parameter definitions, and empty collections for any missing classes.
+            SpineOpt might still be able to run, but otherwise you'd need to check your input database.
+
+            Missing item list follows:
+            $missing_items
+            """
+        end
     end
     rerun_spineopt(
         url_out;

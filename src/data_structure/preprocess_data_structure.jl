@@ -68,8 +68,6 @@ function generate_is_candidate()
     end
 end
 
-function preprocess_model_data_structure(m::Model; log_level=3) end
-
 """
     expand_node__stochastic_structure()
 

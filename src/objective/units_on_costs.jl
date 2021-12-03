@@ -16,23 +16,25 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-module X end
 
-@testset "generate missing items" begin
-    SpineOpt.generate_missing_items(X)
-    all_names = names(X)
-    template = SpineOpt.template()
-    @testset for (name,) in template["object_classes"]
-        @test Symbol(name) in all_names
-        @test getfield(X, Symbol(name)) isa ObjectClass
-    end
-    @testset for (name, _object_class_names) in template["relationship_classes"]
-        @test Symbol(name) in all_names
-        @test getfield(X, Symbol(name)) isa RelationshipClass
-    end
-    template_parameters = [template["object_parameters"]; template["relationship_parameters"]]
-    @testset for (_class_name, name, _default_value) in template_parameters
-        @test Symbol(name) in all_names
-        @test getfield(X, Symbol(name)) isa Parameter
-    end
+"""
+    units_on_costs(m::Model)
+
+Create an expression for units_on cost.
+"""
+function units_on_costs(m::Model, t1)
+    @fetch units_on = m.ext[:variables]
+    t0 = _analysis_time(m)
+    @expression(
+        m,
+        expr_sum(
+            + units_on[u, s, t]
+            * duration(t)
+            * units_on_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * prod(weight(temporal_block=blk) for blk in blocks(t))
+            * unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)
+            for (u, s, t) in units_on_indices(m; unit=indices(units_on_cost)) if end_(t) <= t1;
+            init=0,
+        )
+    )
 end

@@ -92,21 +92,17 @@
             Dict("type" => "duration", "data" => "1h"),
         ]],
     )
-    
     @testset "constraint_nodal_balance" begin
         _load_test_data(url_in, test_data)
         object_parameter_values = [["node", "node_a", "node_slack_penalty", 0.5]]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_injection = m.ext[:variables][:node_injection]
         var_connection_flow = m.ext[:variables][:connection_flow]
         var_node_slack_pos = m.ext[:variables][:node_slack_pos]
         var_node_slack_neg = m.ext[:variables][:node_slack_neg]
         constraint = m.ext[:constraints][:nodal_balance]
-
         @test length(constraint) == 5
-
         conn = connection(:connection_ca)
         # node_a
         n = node(:node_a)
@@ -120,7 +116,6 @@
         expected_con = @build_constraint(var_n_inj + var_conn_flow + var_n_sl_pos - var_n_sl_neg == 0)
         con = constraint[node_key...]
         observed_con = constraint_object(con)       
-
         # node_b
         n = node(:node_b)
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -135,7 +130,6 @@
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
-        
         @test _is_constraint_equal(observed_con, expected_con)
     end
 
@@ -968,5 +962,5 @@
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
-    end       
+    end
 end
