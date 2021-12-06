@@ -25,7 +25,7 @@ using Dates
 using SpineInterface
 using JSON
 using Printf
-using JuMP
+using Requires
 
 import Dates: CompoundPeriod
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
@@ -158,19 +158,33 @@ _lazy_include_file_paths = [
 	"constraints/constraint_node_voltage_angle.jl",
 	"constraints/constraint_connection_unitary_gas_flow.jl",
 	"constraints/constraint_mp_any_invested_cuts.jl",
+	"constraints/constraint_unit_lifetime.jl",
+	"constraints/constraint_connection_lifetime.jl",
+	"constraints/constraint_storage_lifetime.jl",
+	"data_structure/economic_structure.jl",
 ]
-include("constraints/constraint_unit_lifetime.jl")
-include("constraints/constraint_connection_lifetime.jl")
-include("constraints/constraint_storage_lifetime.jl")
-include("data_structure/economic_structure.jl")
 
 
-export unit_flow_indices
-export unit_flow_op_indices
-export connection_flow_indices
-export node_state_indices
-export units_on_indices
-export units_invested_available_indices
+function __init__()
+	@require JuMP="4076af6c-e467-56ae-b986-b466b2749572" begin
+		export unit_flow_indices
+		export unit_flow_op_indices
+		export connection_flow_indices
+		export node_state_indices
+		export units_on_indices
+		export units_invested_available_indices
+		using .JuMP
+		for file_path in _lazy_include_file_paths
+			include(file_path)
+	    end
+		@require Revise="295af30f-e4ad-537b-8983-00126c2a3abe" begin
+			import .Revise
+			for file_path in _lazy_include_file_paths
+			    Revise.track(@__MODULE__, joinpath(@__DIR__, file_path))
+			end
+		end
+	end
+end
 
 const _template = JSON.parsefile(joinpath(@__DIR__, "..", "templates", "spineopt_template.json"))
 

@@ -110,7 +110,7 @@ function run_spineopt(
     @timelog log_level 2 "Initializing data structure from db..." begin
         @eval _Template using_spinedb($(SpineOpt.template()), _Template)
         using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
-        missing_items = difference(_Template, @__MODULE__)        
+        missing_items = difference(_Template, @__MODULE__)
         if !isempty(missing_items)
             println()
             @warn """
@@ -147,7 +147,7 @@ function rerun_spineopt(
     optimize=true,
     use_direct_model=false,
 )
-    # @eval using JuMP
+    @eval using JuMP
     # High-level algorithm selection. For now, selecting based on defined model types,
     # but may want more robust system in future
     rerun_spineopt = !isempty(model(model_type=:spineopt_master)) ? rerun_spineopt_mp : rerun_spineopt_sp

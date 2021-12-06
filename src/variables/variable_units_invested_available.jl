@@ -86,7 +86,7 @@ function add_variable_units_invested_available!(m::Model)
         :units_invested_available,
         units_invested_available_indices;
         lb=x -> 0,
-        int=units_invested_available_int,
+        #int=units_invested_available_int,
         fix_value=x -> fix_units_invested_available(
             unit=x.unit,
             stochastic_scenario=x.stochastic_scenario,

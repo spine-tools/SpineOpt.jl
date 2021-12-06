@@ -1,16 +1,17 @@
 {
     "object_classes": [
-        ["commodity", "A good or product that can be consumed, produced, traded. E.g., electricity, oil, gas, water...", 281473533932880],
-        ["connection", "A transfer of commodities between nodes. E.g. electricity line, gas pipeline...", 280378317271233],
-        ["model", "An instance of SpineOpt, that specifies general parameters such as the temporal horizon.", 281107035648412],
-        ["node", "A universal aggregator of commodify flows over units and connections, with storage capabilities.", 280740554077951],
-        ["output", "A variable name from SpineOpt that can be included in a report.", 280743406202948],
-        ["report", "A results report from a particular SpineOpt run, including the value of specific variables.", 281108461711708],
-        ["stochastic_scenario", "A scenario for stochastic optimisation in SpineOpt.", 280743389491710],
-        ["stochastic_structure", "A group of stochastic scenarios that represent a structure.", 281470681806146],
-        ["temporal_block", "A length of time with a particular resolution.", 280376891207703],
-        ["unit", "A conversion of one/many comodities between nodes.", 281470681805429],
-        ["unit_constraint", "A generic data-driven custom constraint.", 281473533931636]
+      ["commodity", "A good or product that can be consumed, produced, traded. E.g., electricity, oil, gas, water...", 281473533932880],
+      ["connection", "A transfer of commodities between nodes. E.g. electricity line, gas pipeline...", 280378317271233],
+      ["model", "An instance of SpineOpt, that specifies general parameters such as the temporal horizon.", 281107035648412],
+      ["node", "A universal aggregator of commodify flows over units and connections, with storage capabilities.", 280740554077951],
+      ["output", "A variable name from SpineOpt that can be included in a report.", 280743406202948],
+      ["report", "A results report from a particular SpineOpt run, including the value of specific variables.", 281108461711708],
+      ["settings", "Internal SpineOpt settings. We kindly advise not to mess with this one.", 280375465144798],
+      ["stochastic_scenario", "A scenario for stochastic optimisation in SpineOpt.", 280743389491710],
+      ["stochastic_structure", "A group of stochastic scenarios that represent a structure.", 281470681806146],
+      ["temporal_block", "A length of time with a particular resolution.", 280376891207703],
+      ["unit", "A conversion of one/many comodities between nodes.", 281470681805429],
+      ["user_constraint", "A generic data-driven custom constraint.", 281473533931636]
     ],
     "relationship_classes": [
         ["connection__from_node", ["connection", "node"], "Defines the `nodes` the `connection` can take input from, and holds most `connection_flow` variable specific parameters.", 280378317271897],
@@ -34,7 +35,7 @@
         ["node__node", ["node", "node"], "Holds parameters for direct interactions between two `nodes`, e.g. `node_state` diffusion coefficients."],
         ["node__stochastic_structure", ["node", "stochastic_structure"], "Defines which specific `stochastic_structure` is used by the `node` and all `flow` variables associated with it. Only one `stochastic_structure` is permitted per `node`."],
         ["node__temporal_block", ["node", "temporal_block"], "Defines the `temporal_blocks` used by the `node` and all the `flow` variables associated with it."],
-        ["node__unit_constraint", ["node", "unit_constraint"], "specifying this relationship allows a node's demand or node_state to be included in the specified unit constraint"],
+        ["node__user_constraint", ["node", "user_constraint"], "specifying this relationship allows a node's demand or node_state to be included in the specified unit constraint"],
         ["parent_stochastic_scenario__child_stochastic_scenario", ["stochastic_scenario", "stochastic_scenario"], "Defines the master stochastic direct acyclic graph, meaning how the `stochastic_scenarios` are related to each other."],
         ["report__output", ["report", "output"], "Output object related to a report object are returned to the output database (if they appear in the model as variables)"],
         ["stochastic_structure__stochastic_scenario", ["stochastic_structure", "stochastic_scenario"], "Defines which `stochastic_scenarios` are included in which `stochastic_structure`, and holds the parameters required for realizing the structure in combination with the `temporal_blocks`."],
@@ -106,7 +107,7 @@
         ["connection", "graph_view_position", null, null, "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."],
         ["connection", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["connection", "has_binary_gas_flow", false, "boolean_value_list", "This parameter needs to be set to `true` in order to represent bidirectional pressure drive gas transfer."],
-        ["model", "discount_rate", null, null, "The discount rate used for the discounting of future cashflows"],
+        ["model", "discount_rate", 0, null, "The discount rate used for the discounting of future cashflows"],
         ["model", "discount_year", null, null, "The year to which all cashflows are discounted."],
         ["model", "duration_unit", "minute", "duration_unit_list", "Defines the base temporal unit of the `model`. Currently supported values are either an `hour` or a `minute`."],
         ["model", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
@@ -171,7 +172,7 @@
         ["unit", "candidate_units", null, null, "Number of units which may be additionally constructed"],
         ["unit","unit_capacity_transfer", null, null, "@TIM can you add description here"],
         ["unit", "curtailment_cost", null, null, "Costs for curtailing generation. Essentially, accrues costs whenever `unit_flow` not operating at its maximum available capacity. E.g. EUR/MWh"],
-        ["unit", "discount_rate_technology_specific", null, null, "Unit-specific discount rate used to calculate the unit's investment costs. If not specified, the model discount rate is used."],
+        ["unit", "discount_rate_technology_specific", 0.0 , null, "Unit-specific discount rate used to calculate the unit's investment costs. If not specified, the model discount rate is used."],
         ["unit", "fix_units_invested", null, null, "Fix the value of the `units_invested` variable."],
         ["unit", "fix_units_invested_available", null, null, "Fix the value of the `units_invested_available` variable"],
         ["unit", "fix_units_on", null, null, "Fix the value of the `units_on` variable."],
@@ -262,8 +263,8 @@
         ["unit__from_node", "unit_capacity", null, null, "Maximum `unit_flow` capacity of a single 'sub_unit' of the `unit`."],
         ["unit__from_node", "unit_conv_cap_to_flow", 1.0, null, "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."],
         ["unit__from_node", "vom_cost", null, null, "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."],
-        ["unit__from_node__unit_constraint", "graph_view_position", null, null, "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."],
-        ["unit__from_node__unit_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `unit_constraint`."],
+        ["unit__from_node__user_constraint", "graph_view_position", null, null, "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."],
+        ["unit__from_node__user_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `user_constraint`."],
         ["unit__node__node", "fix_ratio_in_in_unit_flow", null, null, "Fix the ratio between two `unit_flows` coming into the `unit` from the two `nodes`."],
         ["unit__node__node", "fix_ratio_in_out_unit_flow", null, null, "Fix the ratio between an incoming `unit_flow` from the first `node` and an outgoing `unit_flow` to the second `node`."],
         ["unit__node__node", "fix_ratio_out_in_unit_flow", null, null, "Fix the ratio between an outgoing `unit_flow` to the first `node` and an incoming `unit_flow` from the second `node`."],
@@ -315,7 +316,7 @@
         ["unit__to_node", "min_startup_ramp", null, null, "Minimum ramp-up during startups"],
         ["unit__to_node", "min_total_cumulated_unit_flow_to_node", null, null, "Bound on the minimum cumulated flows of a unit group to a node group, e.g. total renewable production."],
         ["unit__to_node", "minimum_operating_point", null, null, "Minimum level for the `unit_flow` relative to the `units_on` online capacity."],
-        ["unit__to_node", "operating_points", null, null, "Decomposes the flow variable into a number of separate operating segment variables. Used to in conjunction with `unit_incremental_heat_rate` and/or `unit_constraint`s"],
+        ["unit__to_node", "operating_points", null, null, "Decomposes the flow variable into a number of separate operating segment variables. Used to in conjunction with `unit_incremental_heat_rate` and/or `user_constraint`s"],
         ["unit__to_node", "ramp_down_cost", null, null, "Costs of ramping down"],
         ["unit__to_node", "ramp_down_limit", null, null, "Limit the maximum ramp-down rate of an online unit, given as a fraction of the unit_capacity. [ramp_down_limit] = %/t, e.g. 0.2/h"],
         ["unit__to_node", "ramp_up_cost", null, null, "Costs of ramping up"],
@@ -323,10 +324,10 @@
         ["unit__to_node", "unit_capacity", null, null, "Maximum `unit_flow` capacity of a single 'sub_unit' of the `unit`."],
         ["unit__to_node", "unit_conv_cap_to_flow", 1.0, null, "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."],
         ["unit__to_node", "vom_cost", null, null, "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."],
-        ["unit__to_node__unit_constraint", "graph_view_position", null, null, "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."],
-        ["unit__to_node__unit_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `unit_constraint`."],
-        ["unit__unit_constraint", "units_on_coefficient", 0.0, null, "Coefficient of a `units_on` variable for a custom `unit_constraint`."],
-        ["unit__unit_constraint", "units_started_up_coefficient", 0.0, null, "Coefficient of a `units_started_up` variable for a custom `unit_constraint`."]
+        ["unit__to_node__user_constraint", "graph_view_position", null, null, "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."],
+        ["unit__to_node__user_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `user_constraint`."],
+        ["unit__user_constraint", "units_on_coefficient", 0.0, null, "Coefficient of a `units_on` variable for a custom `user_constraint`."],
+        ["unit__user_constraint", "units_started_up_coefficient", 0.0, null, "Coefficient of a `units_started_up` variable for a custom `user_constraint`."]
     ],
 	"objects": [
 		["output","binary_gas_connection_flow", null],
@@ -395,7 +396,7 @@
         ["stochastic_structure", "is_active", "boolean_value_list", "boolean_value_list"],
         ["temporal_block", "is_active", "boolean_value_list", "boolean_value_list"],
         ["unit", "is_active", "boolean_value_list", "boolean_value_list"],
-        ["unit_constraint", "is_active", "boolean_value_list", "boolean_value_list"]
+        ["user_constraint", "is_active", "boolean_value_list", "boolean_value_list"]
     ],
     "tool_features": [
         ["object_activity_control", "commodity", "is_active", false],
@@ -408,6 +409,6 @@
         ["object_activity_control", "stochastic_structure", "is_active", false],
         ["object_activity_control", "temporal_block", "is_active", false],
         ["object_activity_control", "unit", "is_active", false],
-        ["object_activity_control", "unit_constraint", "is_active", false]
+        ["object_activity_control", "user_constraint", "is_active", false]
     ]
 }
