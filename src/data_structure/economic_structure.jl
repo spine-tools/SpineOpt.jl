@@ -46,12 +46,9 @@ function generate_unit_capacity_transfer_factor!(m::Model)
     capacity_transfer_factor = Dict()
     if dynamic_investments(model=instance)
         for u in members(unit())
-            #TODO: members, simply to not do this for the groups;
-            #TODO: make this more elgant?
-            map_stoch_indices = []
-            #NOTE: will hold stochastic indices
-            map_inner = []
-            #NOTE: will hold values of stochastic mapping
+            #TODO: members, simply to not do this for the groups; make this more elgant?
+            map_stoch_indices = [] #NOTE: will hold stochastic indices
+            map_inner = [] #NOTE: will map values inside stochastic mapping
             for s in unique([x.stochastic_scenario for x in units_invested_available_indices(m;unit=u)])
                 map_indices = []
                 timeseries_array = []
@@ -125,24 +122,16 @@ function generate_unit_annuity!(m::Model)
     instance = m.ext[:instance]
     discnt_rate = discount_rate(model=instance)
     discnt_year = discount_year(model=instance)
-
     annuity = Dict()
-
     for u in unit()
         stochastic_map_indices = []
         stochastic_map_vals = []
-        for s in unique([x.stochastic_scenario for x in units_invested_available_indices(m)])
-            #this is specific to lifetimes in years
+        for s in unique([x.stochastic_scenario for x in units_invested_available_indices(m)]) #NOTE: this is specific to lifetimes in years
             timeseries_ind = []
             timeseries_val = []
             for (u,s,vintage_t) in units_invested_available_indices(m;unit=u,stochastic_scenario=s)
                 LT = lead_time(unit=u,stochastic_scenario=s,t=vintage_t)
                 ELIFE = unit_investment_econ_lifetime(unit=u,stochastic_scenario=s,t=vintage_t)
-                if discnt_rate != 0
-                    capital_recovery_factor = discnt_rate * (1+discnt_rate)^(ELIFE/Year(1))/((1+discnt_rate)^(ELIFE/Year(1))-1)
-                else
-                    capital_recovery_factor = 1/(ELIFE/Year(1))
-                end
                 vintage_t_start = start(vintage_t)
                 start_of_operation = vintage_t_start + LT
                 end_of_operation = vintage_t_start + LT + ELIFE
@@ -168,12 +157,12 @@ function generate_unit_annuity!(m::Model)
                     end
                 end
                 push!(timeseries_ind,start(vintage_t))
-                push!(timeseries_val,val*capital_recovery_factor)
+                push!(timeseries_val,val*capital_recovery_factor(instance, discnt_rate,ELIFE))
             end
             push!(stochastic_map_indices,s)
             push!(stochastic_map_vals,TimeSeries(timeseries_ind,timeseries_val,false,false))
         end
-        unit.parameter_values[u][:annuity] = parameter_value(SpineInterface.Map(stochastic_map_indices,stochastic_map_vals))#TimeSeries(timeseries_ind,timeseries_val,false,false))
+        unit.parameter_values[u][:annuity] = parameter_value(SpineInterface.Map(stochastic_map_indices,stochastic_map_vals))
     end
     annuity = Parameter(:annuity, [unit])
     @eval begin
@@ -182,8 +171,24 @@ function generate_unit_annuity!(m::Model)
 end
 
 
+function capital_recovery_factor(m, discount_rate,ELIFE)
+    if discount_rate != 0
+        capital_recovery_factor =  discnt_rate * 1/(discount_factor(m,discount_rate,ELIFE)) * 1/(1/(discount_factor(m,discount_rate,ELIFE))-1)
+    else
+        capital_recovery_factor = 1/(Year(ELIFE)/Year(1))
+    end
+    capital_recovery_factor
+end
 
+function discount_factor(m,discount_rate,year::DateTime)
+    discnt_year = discount_year(model=m)
+    discnt_factor = 1/(1+discount_rate)^((Year(year)-Year(discnt_year))/Year(1))
+end
 
+function discount_factor(m,discount_rate,year::T) where {T<:Period}
+    discnt_year = discount_year(model=m)
+    discnt_factor = 1/(1+discount_rate)^((Year(year))/Year(1))
+end
 """
     generate_salvage_fraction()
 
@@ -283,17 +288,7 @@ function generate_tech_discount_factor!(m::Model)
             for s in stochastic_structure__stochastic_scenario(stochastic_structure=unit__investment_stochastic_structure(unit=u))
                 ELIFE = unit_investment_econ_lifetime(unit=u,stochastic_scenario=s)
                 tech_discount_rate = discount_rate_technology_specific(unit=u,stochastic_scenario=s)
-                if discnt_rate != 0
-                    capital_recovery_factor_model = discnt_rate * (1+discnt_rate)^(Year(ELIFE)/Year(1))/((1+discnt_rate)^(Year(ELIFE)/Year(1))-1)
-                else
-                    capital_recovery_factor_model = 1/(Year(ELIFE)/Year(1))
-                end
-                if tech_discount_rate != 0
-                    capital_recovery_factor_tech = tech_discount_rate * (1+tech_discount_rate)^(Year(ELIFE)/Year(1))/((1+tech_discount_rate)^(Year(ELIFE)/Year(1))-1)
-                else
-                    capital_recovery_factor_tech = 1/(Year(ELIFE)/Year(1))
-                end
-                val = capital_recovery_factor_tech/capital_recovery_factor_model
+                val = capital_recovery_factor(instance,tech_discount_rate,ELIFE)/capital_recovery_factor(instance,discnt_rate,ELIFE)
                 push!(stoch_map_val,val)
                 push!(stoch_map_ind,s)
             end
@@ -334,7 +329,7 @@ function generate_discount_timeslice_duration!(m::Model)
                 j = t_start
                 val = 0
                 while j< t_end
-                    val+= 1/(1+discnt_rate)^((Year(j)-Year(discnt_year))/Year(1))
+                    val+= discount_factor(instance,discnt_rate,j)
                     j+= Year(1)
                 end
                 push!(timeseries_ind,start(t))
