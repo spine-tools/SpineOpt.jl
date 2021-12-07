@@ -304,6 +304,7 @@ end
 Generate discounted duration of timeslices for each investment timeslice.
 """
 function generate_discount_timeslice_duration!(m::Model)
+    #TODO: function arguments: objects class, $(objects class)____investment_stochastic_structure, $(objects class)__investment_temporal_block
     instance = m.ext[:instance]
     discnt_rate = discount_rate(model=instance)
     discnt_year = discount_year(model=instance)
