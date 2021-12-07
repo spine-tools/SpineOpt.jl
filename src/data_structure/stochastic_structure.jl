@@ -88,7 +88,7 @@ function _generate_active_stochastic_paths(m::Model)
         invalid_children = setdiff(children, valid_children)
         if !isempty(invalid_children)
             @warn """
-            ignoring scenarios: $(join(invalid_children, ", ", " and ")), 
+            ignoring scenarios: $(join(invalid_children, ", ", " and ")),
             as children of $(path[end]), since they're also its ancestors...
             """
         end
@@ -143,7 +143,7 @@ function _stochastic_dag(m::Model, stochastic_structure::Object, window_start::D
         invalid_children = setdiff(children, valid_children)
         if !isempty(invalid_children)
             @warn """
-            prunning scenarios: $(join(invalid_children, ", ", " and ")), from $(stochastic_structure)'s dag, 
+            prunning scenarios: $(join(invalid_children, ", ", " and ")), from $(stochastic_structure)'s dag,
             since their value of `weight_relative_to_parents` is not specified
             """
         end
@@ -313,7 +313,7 @@ end
 """
     node_investment_stochastic_time_indices(;<keyword arguments>)
 
-Stochastic time indexes for `storages_invested` with keyword arguments that allow filtering.
+Stochastic time indexes for `nodes_invested` with keyword arguments that allow filtering.
 """
 function node_investment_stochastic_time_indices(
     m::Model;

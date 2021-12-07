@@ -1,6 +1,6 @@
 {
     "object_classes": [
-        ["node", "A universal aggregator of commodify flows over units and connections, with storage capabilities.", 280740554077951],
+        ["node", "A universal aggregator of commodify flows over units and connections, with node capabilities.", 280740554077951],
         ["stochastic_structure", "A group of stochastic scenarios that represent a structure.", 281470681806146],
         ["temporal_block", "A length of time with a particular resolution.", 280376891207703],
         ["unit", "A conversion of one/many comodities between nodes.", 281470681805429]
@@ -47,12 +47,12 @@
     ],
     "object_parameters": [
         ["node", "balance_type", "balance_type_node", "balance_type_list", "A selector for how the `:nodal_balance` constraint should be handled."],
-        ["node", "candidate_storages", null, null, "Determines the maximum number of new storages which may be invested in"],
+        ["node", "candidate_nodes", null, null, "Determines the maximum number of new nodes which may be invested in"],
         ["node", "demand", 0.0, null, "Demand for the `commodity` of a `node`. Energy gains can be represented using negative `demand`."],
         ["node", "downward_reserve", false, null, "Identifier for `node`s providing downward reserves"],
         ["node", "fix_node_state", null, null, "Fixes the corresponding `node_state` variable to the provided value. Can be used for e.g. fixing boundary conditions."],
-        ["node", "fix_storages_invested", null, null, "Used to fix the value of the storages_invested variable"],
-        ["node", "fix_storages_invested_available", null, null, "Used to fix the value of the storages_invested_available variable"],
+        ["node", "fix_nodes_invested", null, null, "Used to fix the value of the nodes_invested variable"],
+        ["node", "fix_nodes_invested_available", null, null, "Used to fix the value of the nodes_invested_available variable"],
         ["node", "frac_state_loss", 0.0, null, "Self-discharge coefficient for `node_state` variables. Effectively, represents the *loss power per unit of state*."],
         ["node", "fractional_demand", 0.0, null, "Fractional `demand` for `node` groups?"],
         ["node", "graph_view_position", null, null, null],
@@ -68,9 +68,9 @@
         ["node", "node_state_min", 0.0, null, "The minimum permitted value for a `node_state` variable."],
         ["node", "reserve_procurement_cost", null, null, "Procurement cost for reserves?"],
         ["node", "state_coeff", 0.0, null, "Represents the `commodity` content of a `node_state` variable in respect to the `unit_flow` and `connection_flow` variables. Essentially, acts as a coefficient on the `node_state` variable in the `:node_injection` constraint."],
-        ["node", "storage_investment_cost", null, null, "Determines the investment cost per unit state_cap over the investment life of a storage"],
-        ["node", "storage_investment_lifetime", null, null, null],
-        ["node", "storage_investment_variable_type", "variable_type_integer", "variable_type_list", "Determines whether the storage investment variable is continuous (usually representing capacity) or integer (representing discrete units invested)"],
+        ["node", "node_investment_cost", null, null, "Determines the investment cost per unit state_cap over the investment life of a node"],
+        ["node", "node_investment_lifetime", null, null, null],
+        ["node", "node_investment_variable_type", "variable_type_integer", "variable_type_list", "Determines whether the node investment variable is continuous (usually representing capacity) or integer (representing discrete units invested)"],
         ["node", "tax_in_unit_flow", 0.0, null, "Tax costs for incoming `unit_flows` on this `node`. E.g. EUR/MWh."],
         ["node", "tax_net_unit_flow", 0.0, null, "Tax costs for net incoming and outgoing `unit_flows` on this `node`. Incoming flows accrue positive net taxes, and outgoing flows accrue negative net taxes."],
         ["node", "tax_out_unit_flow", 0.0, null, "Tax costs for outgoing `unit_flows` from this `node`. E.g. EUR/MWh."],

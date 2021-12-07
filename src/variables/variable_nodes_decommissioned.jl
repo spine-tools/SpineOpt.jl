@@ -18,16 +18,16 @@
 #############################################################################
 
 """
-    add_variable_storages_decommissioned!(m::Model)
+    add_variable_nodes_decommissioned!(m::Model)
 
-Add `storages_decommissioned` variables to model `m`.
+Add `nodes_decommissioned` variables to model `m`.
 """
-function add_variable_storages_decommissioned!(m::Model)
+function add_variable_nodes_decommissioned!(m::Model)
     add_variable!(
         m,
-        :storages_decommissioned,
-        storages_invested_available_indices;
+        :nodes_decommissioned,
+        nodes_invested_available_indices;
         lb=x -> 0,
-        int=storages_invested_available_int,
+        int=nodes_invested_available_int,
     )
 end

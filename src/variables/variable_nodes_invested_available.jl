@@ -18,12 +18,12 @@
 #############################################################################
 
 """
-    storages_invested_available_indices(node=anything, t=anything)
+    nodes_invested_available_indices(node=anything, t=anything)
 
-A list of `NamedTuple`s corresponding to indices of the `storagess_invested_available` variable where
+A list of `NamedTuple`s corresponding to indices of the `nodess_invested_available` variable where
 the keyword arguments act as filters for each dimension.
 """
-function storages_invested_available_indices(
+function nodes_invested_available_indices(
     m::Model;
     node=anything,
     stochastic_scenario=anything,
@@ -44,28 +44,28 @@ function storages_invested_available_indices(
 end
 
 """
-    storages_invested_available_int(x)
+    nodes_invested_available_int(x)
 
-Check if storage investment variable type is defined to be an integer.
+Check if node investment variable type is defined to be an integer.
 """
 
-storages_invested_available_int(x) = storage_investment_variable_type(node=x.node) == :variable_type_integer
+nodes_invested_available_int(x) = node_investment_variable_type(node=x.node) == :variable_type_integer
 
 """
-    fix_initial_storages_invested_available()
+    fix_initial_nodes_invested_available()
 
-If fix_storages_invested_available is not defined in the timeslice preceding the first rolling window
+If fix_nodes_invested_available is not defined in the timeslice preceding the first rolling window
 then force it to be zero so that the model doesn't get free investments and the user isn't forced
 to consider this.
 """
-function fix_initial_storages_invested_available(m)
-    for n in indices(candidate_storages)
+function fix_initial_nodes_invested_available(m)
+    for n in indices(candidate_nodes)
         t = last(history_time_slice(m))
-        if fix_storages_invested_available(node=n, t=t, _strict=false) === nothing
-            node.parameter_values[n][:fix_storages_invested_available] = parameter_value(
+        if fix_nodes_invested_available(node=n, t=t, _strict=false) === nothing
+            node.parameter_values[n][:fix_nodes_invested_available] = parameter_value(
                 TimeSeries([start(t)], [0], false, false),
             )
-            node.parameter_values[n][:starting_fix_storages_invested_available] = parameter_value(
+            node.parameter_values[n][:starting_fix_nodes_invested_available] = parameter_value(
                 TimeSeries([start(t)], [0], false, false),
             )
         end
@@ -73,21 +73,21 @@ function fix_initial_storages_invested_available(m)
 end
 
 """
-    add_variable_storages_invested_available!(m::Model)
+    add_variable_nodes_invested_available!(m::Model)
 
-Add `storages_invested_available` variables to model `m`.
+Add `nodes_invested_available` variables to model `m`.
 """
-function add_variable_storages_invested_available!(m::Model)
-    # fix storages_invested_available to zero in the timestep before the investment window to prevent "free" investments
-    fix_initial_storages_invested_available(m)
+function add_variable_nodes_invested_available!(m::Model)
+    # fix nodes_invested_available to zero in the timestep before the investment window to prevent "free" investments
+    fix_initial_nodes_invested_available(m)
     t0 = _analysis_time(m)
     add_variable!(
         m,
-        :storages_invested_available,
-        storages_invested_available_indices;
+        :nodes_invested_available,
+        nodes_invested_available_indices;
         lb=x -> 0,
-        int=storages_invested_available_int,
-        fix_value=x -> fix_storages_invested_available(
+        int=nodes_invested_available_int,
+        fix_value=x -> fix_nodes_invested_available(
             node=x.node,
             stochastic_scenario=x.stochastic_scenario,
             analysis_time=t0,

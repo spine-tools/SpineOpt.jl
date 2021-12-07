@@ -19,8 +19,8 @@
 
 function process_master_problem_solution(mp)
     function _save_mp_values(
-        obj_cls::ObjectClass, 
-        rel_cls::RelationshipClass, 
+        obj_cls::ObjectClass,
+        rel_cls::RelationshipClass,
         investment_parameter::Parameter,
         variable_indices::Function,
         investment_variable_name::Symbol,
@@ -39,31 +39,31 @@ function process_master_problem_solution(mp)
         end
     end
     _save_mp_values(
-        unit, 
-        unit__benders_iteration, 
-        candidate_units, 
-        units_invested_available_indices, 
-        :units_invested_available, 
+        unit,
+        unit__benders_iteration,
+        candidate_units,
+        units_invested_available_indices,
+        :units_invested_available,
         :fix_units_invested_available,
         :units_invested_available_bi
     )
     _save_mp_values(
-        connection, 
-        connection__benders_iteration, 
-        candidate_connections, 
-        connections_invested_available_indices, 
-        :connections_invested_available, 
+        connection,
+        connection__benders_iteration,
+        candidate_connections,
+        connections_invested_available_indices,
+        :connections_invested_available,
         :fix_connections_invested_available,
         :connections_invested_available_bi
     )
     _save_mp_values(
-        node, 
-        node__benders_iteration, 
-        candidate_storages, 
-        storages_invested_available_indices, 
-        :storages_invested_available, 
-        :fix_storages_invested_available,
-        :storages_invested_available_bi
+        node,
+        node__benders_iteration,
+        candidate_nodes,
+        nodes_invested_available_indices,
+        :nodes_invested_available,
+        :fix_nodes_invested_available,
+        :nodes_invested_available_bi
     )
 end
 
@@ -89,8 +89,8 @@ function reset_fix_parameter_values()
     _reset_fix_parameter_value(unit, candidate_units, fix_name, starting_name)
     fix_name, starting_name = :fix_connections_invested_available, :starting_fix_connections_invested_available
     _reset_fix_parameter_value(connection, candidate_connections, fix_name, starting_name)
-    fix_name, starting_name = :fix_storages_invested_available, :starting_fix_storages_invested_available
-    _reset_fix_parameter_value(node, candidate_storages, fix_name, starting_name)
+    fix_name, starting_name = :fix_nodes_invested_available, :starting_fix_nodes_invested_available
+    _reset_fix_parameter_value(node, candidate_nodes, fix_name, starting_name)
 end
 
 function add_benders_iteration(j)
@@ -101,7 +101,7 @@ function add_benders_iteration(j)
     add_object!(benders_iteration, new_bi)
     add_relationships!(unit__benders_iteration, _bi_relationships(:unit, new_bi, candidate_units))
     add_relationships!(connection__benders_iteration, _bi_relationships(:connection, new_bi, candidate_connections))
-    add_relationships!(node__benders_iteration, _bi_relationships(:node, new_bi, candidate_storages))
+    add_relationships!(node__benders_iteration, _bi_relationships(:node, new_bi, candidate_nodes))
     new_bi
 end
 
@@ -125,8 +125,8 @@ function save_sp_marginal_values(m)
     _save_marginal_value(unit__benders_iteration, candidate_units, out_name, var_name)
     out_name, var_name = :bound_connections_invested_available, :connections_invested_available_mv
     _save_marginal_value(connection__benders_iteration, candidate_connections, out_name, var_name)
-    out_name, var_name = :bound_storages_invested_available, :storages_invested_available_mv
-    _save_marginal_value(node__benders_iteration, candidate_storages, out_name, var_name)
+    out_name, var_name = :bound_nodes_invested_available, :nodes_invested_available_mv
+    _save_marginal_value(node__benders_iteration, candidate_nodes, out_name, var_name)
 end
 
 function save_sp_objective_value_bi(m, mp)

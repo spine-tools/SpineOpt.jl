@@ -56,7 +56,7 @@ function generate_is_candidate()
     for u in indices(candidate_units)
         unit.parameter_values[u][:is_candidate] = parameter_value(true)
     end
-    for n in indices(candidate_storages)
+    for n in indices(candidate_nodes)
         node.parameter_values[n][:is_candidate] = parameter_value(true)
     end
     connection.parameter_defaults[:is_candidate] = parameter_value(false)
@@ -591,7 +591,7 @@ function expand_model__default_investment_temporal_block()
         node__investment_temporal_block,
         [
             (node=n, temporal_block=tb)
-            for n in setdiff(indices(candidate_storages), node__investment_temporal_block(temporal_block=anything))
+            for n in setdiff(indices(candidate_nodes), node__investment_temporal_block(temporal_block=anything))
             for tb in model__default_investment_temporal_block(model=anything)
         ],
     )
@@ -633,7 +633,7 @@ function expand_model__default_investment_stochastic_structure()
         node__investment_stochastic_structure,
         [
             (node=n, stochastic_structure=ss) for n in setdiff(
-                indices(candidate_storages),
+                indices(candidate_nodes),
                 node__investment_stochastic_structure(stochastic_structure=anything),
             ) for ss in model__default_investment_stochastic_structure(model=anything)
         ],
@@ -767,9 +767,9 @@ function generate_benders_structure()
     starting_fix_connections_invested_available = Parameter(:starting_fix_connections_invested_available, [connection])
     # node (storage)
     node__benders_iteration = RelationshipClass(:node__benders_iteration, [:node, bi_name], [])
-    storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node__benders_iteration])
-    storages_invested_available_bi = Parameter(:storages_invested_available_bi, [node__benders_iteration])
-    starting_fix_storages_invested_available = Parameter(:starting_fix_storages_invested_available, [node])
+    nodes_invested_available_mv = Parameter(:nodes_invested_available_mv, [node__benders_iteration])
+    nodes_invested_available_bi = Parameter(:nodes_invested_available_bi, [node__benders_iteration])
+    starting_fix_nodes_invested_available = Parameter(:starting_fix_nodes_invested_available, [node])
 
     function _init_benders_parameter_values(
         obj_cls::ObjectClass,
@@ -812,11 +812,11 @@ function generate_benders_structure()
     _init_benders_parameter_values(
         node,
         node__benders_iteration,
-        candidate_storages,
-        :storages_invested_available_bi,
-        :storages_invested_available_mv,
-        :fix_storages_invested_available,
-        :starting_fix_storages_invested_available
+        candidate_nodes,
+        :nodes_invested_available_bi,
+        :nodes_invested_available_mv,
+        :fix_nodes_invested_available,
+        :starting_fix_nodes_invested_available
     )
 
     @eval begin
@@ -832,9 +832,9 @@ function generate_benders_structure()
         connections_invested_available_bi = $connections_invested_available_bi
         starting_fix_connections_invested_available = $starting_fix_connections_invested_available
         node__benders_iteration = $node__benders_iteration
-        storages_invested_available_mv = $storages_invested_available_mv
-        storages_invested_available_bi = $storages_invested_available_bi
-        starting_fix_storages_invested_available = $starting_fix_storages_invested_available
+        nodes_invested_available_mv = $nodes_invested_available_mv
+        nodes_invested_available_bi = $nodes_invested_available_bi
+        starting_fix_nodes_invested_available = $starting_fix_nodes_invested_available
         export current_bi
         export benders_iteration
         export sp_objective_value_bi
@@ -847,8 +847,8 @@ function generate_benders_structure()
         export connections_invested_available_bi
         export starting_fix_connections_invested_available
         export node__benders_iteration
-        export storages_invested_available_mv
-        export storages_invested_available_bi
-        export starting_fix_storages_invested_available
+        export nodes_invested_available_mv
+        export nodes_invested_available_bi
+        export starting_fix_nodes_invested_available
     end
 end

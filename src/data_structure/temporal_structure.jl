@@ -195,7 +195,7 @@ function _required_history_duration(instance::Object)
         connection_flow_delay,
         unit_investment_lifetime,
         connection_investment_lifetime,
-        storage_investment_lifetime
+        node_investment_lifetime
     )
     max_vals = (maximum_parameter_value(p) for p in delay_params)
     init = _model_duration_unit(instance)(1)  # Dynamics always require at least 1 duration unit of history
@@ -331,9 +331,9 @@ function _generate_representative_time_slice!(m::Model)
                 rep_t_duration = end_(rep_t) - start(rep_t)
                 real_t_end = real_t_start + rep_t_duration
                 merge!(
-                    d, 
+                    d,
                     Dict(
-                        real_t => rep_t 
+                        real_t => rep_t
                         for real_t in to_time_slice(m, t=TimeSlice(real_t_start, real_t_end))
                         if blk in real_t.blocks
                     )
@@ -418,7 +418,7 @@ function to_time_slice(m::Model; t::TimeSlice)
     t_sets = (temp_struct[:time_slice], temp_struct[:history_time_slice])
     in_blocks = (
         s
-        for t_set in t_sets 
+        for t_set in t_sets
         for time_slices in values(t_set.block_time_slices)
         for s in _to_time_slice(time_slices, t)
     )

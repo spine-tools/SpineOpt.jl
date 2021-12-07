@@ -23,12 +23,21 @@
     generate_economic_structure!(m::Model)
 """
 function generate_economic_structure!(m::Model)
-    generate_unit_capacity_transfer_factor!(m::Model)
-    generate_unit_annuity!(m::Model)
-    generate_salvage_fraction!(m::Model)
-    generate_tech_discount_factor!(m::Model)
-    generate_discount_timeslice_duration!(m::Model)
-
+    generate_capacity_transfer_factor!(m::Model,unit)
+    generate_annuity!(m::Model,unit)
+    generate_salvage_fraction!(m::Model,unit)
+    generate_tech_discount_factor!(m::Model,unit)
+    generate_discount_timeslice_duration!(m::Model,unit)
+    generate_capacity_transfer_factor!(m::Model,node)
+    generate_annuity!(m::Model,node)
+    generate_salvage_fraction!(m::Model,node)
+    generate_tech_discount_factor!(m::Model,node)
+    generate_discount_timeslice_duration!(m::Model,node)
+    generate_capacity_transfer_factor!(m::Model,connection)
+    generate_annuity!(m::Model,connection)
+    generate_salvage_fraction!(m::Model,connection)
+    generate_tech_discount_factor!(m::Model,connection)
+    generate_discount_timeslice_duration!(m::Model,connection)
 end
 
 
@@ -41,26 +50,26 @@ Generate capacity_transfer_factor factors for units that can be invested in. The
 unit_capacity_transfer_factor is a Map parameter that holds the fraction of an investment in a unit u during vintage
 year t_v that is still available in year t.
 """
-function generate_unit_capacity_transfer_factor!(m::Model)
+function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
     instance = m.ext[:instance]
     capacity_transfer_factor = Dict()
     if dynamic_investments(model=instance)
-        for u in members(unit())
+        for id in members(obj_cls())
             #TODO: members, simply to not do this for the groups; make this more elgant?
             map_stoch_indices = [] #NOTE: will hold stochastic indices
             map_inner = [] #NOTE: will map values inside stochastic mapping
-            for s in unique([x.stochastic_scenario for x in units_invested_available_indices(m;unit=u)])
+            for s in unique([x.stochastic_scenario for x in eval(Symbol("$(obj_cls)s_invested_available_indices"))(m;Dict(obj_cls.name => id)...)])
                 map_indices = []
                 timeseries_array = []
-                for (u,s,vintage_t) in units_invested_available_indices(m;unit=u, stochastic_scenario=s, t = Iterators.flatten((history_time_slice(m), time_slice(m))))
-                    LT = lead_time(unit=u,stochastic_scenario=s,t=vintage_t)
-                    TLIFE = unit_investment_tech_lifetime(unit=u,stochastic_scenario=s,t=vintage_t)
+                for (u,s,vintage_t) in eval(Symbol("$(obj_cls)s_invested_available_indices"))(m;Dict(obj_cls.name => id,stochastic_scenario.name=>s, :t => Iterators.flatten((history_time_slice(m), time_slice(m))))...)
+                    LT = eval(Symbol("$(obj_cls)_lead_time"))(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                    TLIFE = eval(Symbol("$(obj_cls)_investment_tech_lifetime"))(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
                     vintage_t_start = start(vintage_t)
                     start_of_operation = vintage_t_start + LT
                     end_of_operation = vintage_t_start + LT + TLIFE
                     timeseries_val = []
                     timeseries_ind = []
-                    for t in time_slice(m; temporal_block = unit__investment_temporal_block(unit=u))
+                    for t in time_slice(m; temporal_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))(;Dict(obj_cls.name=>id)...))
                         t_start = start(t)
                         t_end = end_(t)
                         dur =  t_end - t_start
@@ -71,7 +80,7 @@ function generate_unit_capacity_transfer_factor!(m::Model)
                         else
                             val = max(min((end_of_operation-t_start)/dur,1),0)
                         end
-                        capacity_transfer_factor[(u, vintage_t.start.x, t.start.x)] =  parameter_value(val)
+                        capacity_transfer_factor[(id, vintage_t.start.x, t.start.x)] =  parameter_value(val)
                         push!(timeseries_val,val)
                         push!(timeseries_ind,t_start)
                     end
@@ -81,12 +90,12 @@ function generate_unit_capacity_transfer_factor!(m::Model)
                 push!(map_stoch_indices,s)
                 push!(map_inner, SpineInterface.Map(map_indices,timeseries_array))
             end
-            unit.parameter_values[u][:capacity_transfer_factor] = parameter_value(SpineInterface.Map(map_stoch_indices,map_inner))
+            obj_cls.parameter_values[id][Symbol("$(obj_cls)_capacity_transfer_factor")] = parameter_value(SpineInterface.Map(map_stoch_indices,map_inner))
             #NOTE: map_indices here will be stochastic_scenarios!
         end
     else
         for u in unit()
-            investment_block = first(unit__investment_temporal_block(unit=u))
+            investment_block = first(eval(Symbol("$(obj_cls)__investment_temporal_block"))(;Dict(obj_cls.name=>id)...))
             map_indices = []
             timeseries_array = []
             for vintage_t in time_slice(m; temporal_block = investment_block)
@@ -101,12 +110,13 @@ function generate_unit_capacity_transfer_factor!(m::Model)
                 push!(map_indices,start(vintage_t))
                 push!(timeseries_array,TimeSeries(timeseries_ind,timeseries_val,false,false))
             end
-            unit.parameter_values[u][:capacity_transfer_factor] = parameter_value(SpineInterface.Map(map_indices,timeseries_array))
+            obj_cls.parameter_values[id][Symbol("$(obj_cls)_capacity_transfer_factor")] = parameter_value(SpineInterface.Map(map_indices,timeseries_array))
         end
     end
-    capacity_transfer_factor = Parameter(:capacity_transfer_factor, [unit])
+
+    param_name = Symbol("$(obj_cls)_capacity_transfer_factor")
     @eval begin
-        capacity_transfer_factor = $capacity_transfer_factor
+        $(param_name) = $(Parameter(param_name, [obj_cls]))
     end
 end
 
@@ -118,20 +128,20 @@ end
 
 Generate annuity factors for units that can be invested in.
 """
-function generate_unit_annuity!(m::Model)
+function generate_annuity!(m::Model, obj_cls::ObjectClass)
     instance = m.ext[:instance]
     discnt_rate = discount_rate(model=instance)
     discnt_year = discount_year(model=instance)
     annuity = Dict()
-    for u in unit()
+    for id in obj_cls()
         stochastic_map_indices = []
         stochastic_map_vals = []
-        for s in unique([x.stochastic_scenario for x in units_invested_available_indices(m)]) #NOTE: this is specific to lifetimes in years
+        for s in unique([x.stochastic_scenario for x in eval(Symbol("$(obj_cls)s_invested_available_indices"))(m)]) #NOTE: this is specific to lifetimes in years
             timeseries_ind = []
             timeseries_val = []
-            for (u,s,vintage_t) in units_invested_available_indices(m;unit=u,stochastic_scenario=s)
-                LT = lead_time(unit=u,stochastic_scenario=s,t=vintage_t)
-                ELIFE = unit_investment_econ_lifetime(unit=u,stochastic_scenario=s,t=vintage_t)
+            for (u,s,vintage_t) in eval(Symbol("$(obj_cls)s_invested_available_indices"))(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
+                LT = eval(Symbol("$(obj_cls)_lead_time"))(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                ELIFE = eval(Symbol("$(obj_cls)_investment_econ_lifetime"))(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
                 vintage_t_start = start(vintage_t)
                 start_of_operation = vintage_t_start + LT
                 end_of_operation = vintage_t_start + LT + ELIFE
@@ -156,11 +166,12 @@ function generate_unit_annuity!(m::Model)
             push!(stochastic_map_indices,s)
             push!(stochastic_map_vals,TimeSeries(timeseries_ind,timeseries_val,false,false))
         end
-        unit.parameter_values[u][:annuity] = parameter_value(SpineInterface.Map(stochastic_map_indices,stochastic_map_vals))
+        obj_cls.parameter_values[id][Symbol("$(obj_cls)_annuity")] = parameter_value(SpineInterface.Map(stochastic_map_indices,stochastic_map_vals))
     end
-    annuity = Parameter(:annuity, [unit])
+    param_name = Symbol("$(obj_cls)_annuity")
+    annuity =
     @eval begin
-        annuity = $annuity
+        $(param_name) = $(Parameter(param_name, [obj_cls]))
     end
 end
 
@@ -199,7 +210,7 @@ end
 
 Generate salvage fraction for units that can be invested in.
 """
-function generate_salvage_fraction!(m::Model)
+function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass)
     instance = m.ext[:instance]
     discnt_rate = discount_rate(model=instance)
     discnt_year = discount_year(model=instance)
@@ -207,15 +218,15 @@ function generate_salvage_fraction!(m::Model)
 
     salvage_fraction = Dict()
 
-    for u in unit()
+    for id in indices(eval(Symbol("$(obj_cls)_investment_econ_lifetime")))
         stochastic_map_ind = []
         stochastic_map_val = []
-        for s in unique([x.stochastic_scenario for x in units_invested_available_indices(m)])
+        for s in unique([x.stochastic_scenario for x in eval(Symbol("$(obj_cls)s_invested_available_indices"))(m)])
             timeseries_ind = []
             timeseries_val = []
-            LT = lead_time(unit=u)
-            ELIFE = unit_investment_econ_lifetime(unit=u)
-            investment_block = first(unit__investment_temporal_block(unit=u))
+            LT = eval(Symbol("$(obj_cls)_lead_time"))(;Dict(obj_cls.name=>id)...)
+            ELIFE = eval(Symbol("$(obj_cls)_investment_econ_lifetime"))(;Dict(obj_cls.name=>id)...)
+            investment_block = first(eval(Symbol("$(obj_cls)__investment_temporal_block"))(;Dict(obj_cls.name=>id)...))
             for vintage_t in time_slice(m; temporal_block = investment_block)
                 vintage_t_start = start(vintage_t)
                 start_of_operation = vintage_t_start + LT
@@ -256,11 +267,11 @@ function generate_salvage_fraction!(m::Model)
             push!(stochastic_map_ind,s)
             push!(stochastic_map_val,TimeSeries(timeseries_ind,timeseries_val,false,false))
         end
-        unit.parameter_values[u][:salvage_fraction] = parameter_value(SpineInterface.Map(stochastic_map_ind,stochastic_map_val))
+        obj_cls.parameter_values[id][Symbol("$(obj_cls)_salvage_fraction")] = parameter_value(SpineInterface.Map(stochastic_map_ind,stochastic_map_val))
     end
-    salvage_fraction = Parameter(:salvage_fraction, [unit])
+    param_name = Symbol("$(obj_cls)_salvage_fraction")
     @eval begin
-        salvage_fraction = $salvage_fraction
+        $(param_name) = $(Parameter(Symbol("$(obj_cls)_salvage_fraction"), [obj_cls]))
     end
 end
 
@@ -271,27 +282,26 @@ end
 
 Generate technology-specific discount factors for units that can be invested in.
 """
-function generate_tech_discount_factor!(m::Model)
+function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass)
     instance = m.ext[:instance]
     discnt_rate = discount_rate(model=instance)
-    tech_discount_factor = Dict()
-    for u in unit()
-        if u in indices(discount_rate_technology_specific) #Default: 0
+    for id in obj_cls()
+        if id in indices(eval(Symbol("$(obj_cls)_discount_rate_technology_specific"))) #Default: 0
             stoch_map_val = []
             stoch_map_ind = []
-            for s in stochastic_structure__stochastic_scenario(stochastic_structure=unit__investment_stochastic_structure(unit=u))
-                ELIFE = unit_investment_econ_lifetime(unit=u,stochastic_scenario=s)
-                tech_discount_rate = discount_rate_technology_specific(unit=u,stochastic_scenario=s)
+            for s in stochastic_structure__stochastic_scenario(stochastic_structure=eval(Symbol("$(obj_cls)__investment_stochastic_structure"))(;Dict(obj_cls.name => id)...))
+                ELIFE = eval(Symbol("$(obj_cls)_investment_econ_lifetime"))(;Dict(obj_cls.name => id, stochastic_scenario.name => s)...)
+                tech_discount_rate = eval(Symbol("$(obj_cls)_discount_rate_technology_specific"))(;Dict(obj_cls.name => id, stochastic_scenario.name => s)...)
                 val = capital_recovery_factor(instance,tech_discount_rate,ELIFE)/capital_recovery_factor(instance,discnt_rate,ELIFE)
                 push!(stoch_map_val,val)
                 push!(stoch_map_ind,s)
             end
-            unit.parameter_values[u][:tech_discount_factor] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
+            obj_cls.parameter_values[id][Symbol("$(obj_cls)_tech_discount_factor")] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
         end
     end
-    tech_discount_factor = Parameter(:tech_discount_factor, [unit])
+    param_name = Symbol("$(obj_cls)_tech_discount_factor")
     @eval begin
-        tech_discount_factor = $tech_discount_factor
+        $(param_name) = $(Parameter(param_name, [obj_cls]))
     end
 end
 
@@ -303,7 +313,7 @@ end
 
 Generate discounted duration of timeslices for each investment timeslice.
 """
-function generate_discount_timeslice_duration!(m::Model)
+function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass)
     #TODO: function arguments: objects class, $(objects class)____investment_stochastic_structure, $(objects class)__investment_temporal_block
     instance = m.ext[:instance]
     discnt_rate = discount_rate(model=instance)
@@ -311,13 +321,13 @@ function generate_discount_timeslice_duration!(m::Model)
 
     discounted_duration = Dict()
 
-    for u in unit()
+    for id in obj_cls()
         stoch_map_val = []
         stoch_map_ind = []
-        for s in stochastic_structure__stochastic_scenario(stochastic_structure=unit__investment_stochastic_structure(unit=u))
+        for s in stochastic_structure__stochastic_scenario(stochastic_structure=eval(Symbol("$(obj_cls)__investment_stochastic_structure"))(;Dict(obj_cls.name=>id)...))
             timeseries_ind = []
             timeseries_val = []
-            investment_block = first(unit__investment_temporal_block(unit=u)) #TODO generalize?
+            investment_block = first(eval(Symbol("$(obj_cls)__investment_temporal_block"))(;Dict(obj_cls.name=>id)...))#TODO generalize?
             for t in time_slice(m; temporal_block = investment_block)
                 t_start = start(t)
                 t_end = end_(t)
@@ -333,10 +343,10 @@ function generate_discount_timeslice_duration!(m::Model)
             push!(stoch_map_ind,s)
             push!(stoch_map_val,TimeSeries(timeseries_ind,timeseries_val,false,false))
         end
-        unit.parameter_values[u][:discounted_duration] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
+        obj_cls.parameter_values[id][Symbol("$(obj_cls)_discounted_duration")] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
     end
-    discounted_duration = Parameter(:discounted_duration, [unit])#,node])
+    param_name = Symbol("$(obj_cls)_discounted_duration")
     @eval begin
-        discounted_duration = $discounted_duration
+        $(param_name) = $(Parameter(Symbol("$(obj_cls)_discounted_duration"), [obj_cls]))
     end
 end

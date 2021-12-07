@@ -18,24 +18,24 @@
 #############################################################################
 
 """
-    add_variable_storages_invested!(m::Model)
+    add_variable_nodes_invested!(m::Model)
 
-Add `storages_invested` variables to model `m`.
+Add `nodes_invested` variables to model `m`.
 """
-function add_variable_storages_invested!(m::Model)
+function add_variable_nodes_invested!(m::Model)
     t0 = _analysis_time(m)
     add_variable!(
         m,
-        :storages_invested,
-        storages_invested_available_indices;
+        :nodes_invested,
+        nodes_invested_available_indices;
         lb=x -> 0,
-        fix_value=x -> fix_storages_invested(
+        fix_value=x -> fix_nodes_invested(
             node=x.node,
             stochastic_scenario=x.stochastic_scenario,
             analysis_time=t0,
             t=x.t,
             _strict=false,
         ),
-        int=storages_invested_available_int,
+        int=nodes_invested_available_int,
     )
 end

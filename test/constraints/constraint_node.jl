@@ -115,15 +115,15 @@
         var_conn_flow = var_connection_flow[conn_key...]
         expected_con = @build_constraint(var_n_inj + var_conn_flow + var_n_sl_pos - var_n_sl_neg == 0)
         con = constraint[node_key...]
-        observed_con = constraint_object(con)       
+        observed_con = constraint_object(con)
         # node_b
         n = node(:node_b)
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             var_n_inj = var_node_injection[n, s, t]
-            var_conn_flows = (                
-                - var_connection_flow[connection(:connection_bc), node(:node_b), direction(:from_node), s, t]                
+            var_conn_flows = (
+                - var_connection_flow[connection(:connection_bc), node(:node_b), direction(:from_node), s, t]
             )
             expected_con = @build_constraint(var_n_inj + var_conn_flows == 0)
             con = constraint[n, s, t]
@@ -139,9 +139,9 @@
             ["node", "node_a", "node_slack_penalty", 0.5],
             ["node", "node_group_bc", "balance_type", "balance_type_group"]
         ]
-        
+
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_injection = m.ext[:variables][:node_injection]
         var_connection_flow = m.ext[:variables][:connection_flow]
@@ -162,7 +162,7 @@
         expected_con = @build_constraint(var_n_inj + var_conn_flow + var_n_sl_pos - var_n_sl_neg == 0)
         con = constraint[node_key...]
         observed_con = constraint_object(con)
-        
+
         @test _is_constraint_equal(observed_con, expected_con)
         # node_group_bc
         n = node(:node_group_bc)
@@ -170,10 +170,10 @@
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             var_n_inj = var_node_injection[node(:node_group_bc), s, t]
-            var_conn_flows = (                            
+            var_conn_flows = (
                 - var_connection_flow[connection(:connection_ca), node(:node_c), direction(:from_node), s, t]
             )
-            
+
             expected_con = @build_constraint(var_n_inj + var_conn_flows == 0)
             con = constraint[node(:node_group_bc), s, t]
             observed_con = constraint_object(con)
@@ -219,7 +219,7 @@
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_injection = m.ext[:variables][:node_injection]
         var_unit_flow = m.ext[:variables][:unit_flow]
@@ -313,7 +313,7 @@
             ["node", "node_c", "has_state", true],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_state = m.ext[:variables][:node_state]
         constraint = m.ext[:constraints][:node_state_capacity]
@@ -348,7 +348,7 @@
             ["node__temporal_block", ["node_c", "hourly"],"cyclic_condition", cyc_cond[("node_c", "hourly")]],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values)
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_state = m.ext[:variables][:node_state]
         constraint = m.ext[:constraints][:cyclic_node_state]
@@ -395,7 +395,7 @@
             relationship_parameter_values=relationship_parameter_values,
             relationships=relationships,
         )
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_pressure = m.ext[:variables][:node_pressure]
         var_node_state = m.ext[:variables][:node_state]
@@ -447,7 +447,7 @@
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_pressure = m.ext[:variables][:node_pressure]
         constraint = m.ext[:constraints][:compression_ratio]
@@ -483,7 +483,7 @@
             url_in;
             object_parameter_values=object_parameter_values
         )
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_pressure = m.ext[:variables][:node_pressure]
         constraint = m.ext[:constraints][:min_node_pressure]
@@ -515,7 +515,7 @@
             url_in;
             object_parameter_values=object_parameter_values
         )
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_pressure = m.ext[:variables][:node_pressure]
         constraint = m.ext[:constraints][:max_node_pressure]
@@ -547,7 +547,7 @@
             url_in;
             object_parameter_values=object_parameter_values
         )
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_voltage_angle = m.ext[:variables][:node_voltage_angle]
         constraint = m.ext[:constraints][:min_node_voltage_angle]
@@ -579,7 +579,7 @@
             url_in;
             object_parameter_values=object_parameter_values
         )
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_voltage_angle = m.ext[:variables][:node_voltage_angle]
         constraint = m.ext[:constraints][:max_node_voltage_angle]
@@ -601,22 +601,22 @@
     end
     @testset "constraint_node_state_capacity_investments" begin
         _load_test_data(url_in, test_data)
-        candidate_storages = 1
+        candidate_nodes = 1
         node_capacity = 400
         object_parameter_values = [
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_c", "has_state", true],
-            ["node", "node_c", "candidate_storages", candidate_storages],
+            ["node", "node_c", "candidate_nodes", candidate_nodes],
         ]
         relationships = [
             ["node__investment_temporal_block", ["node_c", "hourly"]],
             ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_state = m.ext[:variables][:node_state]
-        var_storages_invested_available = m.ext[:variables][:storages_invested_available]
+        var_nodes_invested_available = m.ext[:variables][:nodes_invested_available]
         constraint = m.ext[:constraints][:node_state_capacity]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
@@ -628,19 +628,19 @@
             var_s_in_av_key = (n, s, t)
             con_key = (n, [s], t)
             var_n_st = var_node_state[var_n_st_key...]
-            var_s_inv_av = var_storages_invested_available[var_s_in_av_key...]
+            var_s_inv_av = var_nodes_invested_available[var_s_in_av_key...]
             expected_con = @build_constraint(var_n_st <= node_capacity * var_s_inv_av)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_storages_invested_available" begin
+    @testset "constraint_nodes_invested_available" begin
         _load_test_data(url_in, test_data)
-        candidate_storages = 1
+        candidate_nodes = 1
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_storages", candidate_storages],
+            ["node", "node_c", "candidate_nodes", candidate_nodes],
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_b", "has_state", true],
         ]
@@ -649,28 +649,28 @@
             ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_storages_invested_available = m.ext[:variables][:storages_invested_available]
-        constraint = m.ext[:constraints][:storages_invested_available]
+        var_nodes_invested_available = m.ext[:variables][:nodes_invested_available]
+        constraint = m.ext[:constraints][:nodes_invested_available]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (node(:node_c), s, t)
-            var = var_storages_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_storages)
+            var = var_nodes_invested_available[key...]
+            expected_con = @build_constraint(var <= candidate_nodes)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_storages_invested_available_mp" begin
+    @testset "constraint_nodes_invested_available_mp" begin
         _load_test_data(url_in, test_data)
-        candidate_storages = 7
+        candidate_nodes = 7
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_storages", candidate_storages],
+            ["node", "node_c", "candidate_nodes", candidate_nodes],
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_b", "has_state", true],
             ["model", "master", "model_type", "spineopt_master"],
@@ -682,41 +682,41 @@
             ["node__investment_stochastic_structure", ["node_c", "investments_deterministic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        
+
         m, mp = run_spineopt(url_in; log_level=0, optimize=false)
-        var_storages_invested_available = m.ext[:variables][:storages_invested_available]
-        constraint = m.ext[:constraints][:storages_invested_available]
+        var_nodes_invested_available = m.ext[:variables][:nodes_invested_available]
+        constraint = m.ext[:constraints][:nodes_invested_available]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (node(:node_c), s, t)
-            var = var_storages_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_storages)
+            var = var_nodes_invested_available[key...]
+            expected_con = @build_constraint(var <= candidate_nodes)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
-        var_storages_invested_available = mp.ext[:variables][:storages_invested_available]
-        constraint = mp.ext[:constraints][:storages_invested_available]
+        var_nodes_invested_available = mp.ext[:variables][:nodes_invested_available]
+        constraint = mp.ext[:constraints][:nodes_invested_available]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent),)
         time_slices = time_slice(mp; temporal_block=temporal_block(:investments_hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (node(:node_c), s, t)
-            var = var_storages_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_storages)
+            var = var_nodes_invested_available[key...]
+            expected_con = @build_constraint(var <= candidate_nodes)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_storages_invested_transition" begin
+    @testset "constraint_nodes_invested_transition" begin
         _load_test_data(url_in, test_data)
-        candidate_storages = 1
+        candidate_nodes = 1
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_storages", candidate_storages],
+            ["node", "node_c", "candidate_nodes", candidate_nodes],
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_b", "has_state", true],
         ]
@@ -725,12 +725,12 @@
             ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_storages_invested_available = m.ext[:variables][:storages_invested_available]
-        var_storages_invested = m.ext[:variables][:storages_invested]
-        var_storages_decommissioned = m.ext[:variables][:storages_decommissioned]
-        constraint = m.ext[:constraints][:storages_invested_transition]
+        var_nodes_invested_available = m.ext[:variables][:nodes_invested_available]
+        var_nodes_invested = m.ext[:variables][:nodes_invested]
+        var_nodes_decommissioned = m.ext[:variables][:nodes_decommissioned]
+        constraint = m.ext[:constraints][:nodes_invested_transition]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
@@ -738,12 +738,12 @@
         @testset for (s1, t1) in zip(scenarios, time_slices)
             path = unique([s0, s1])
             var_key1 = (node(:node_c), s1, t1)
-            var_s_inv_av1 = var_storages_invested_available[var_key1...]
-            var_s_inv_1 = var_storages_invested[var_key1...]
-            var_s_decom_1 = var_storages_decommissioned[var_key1...]
+            var_s_inv_av1 = var_nodes_invested_available[var_key1...]
+            var_s_inv_1 = var_nodes_invested[var_key1...]
+            var_s_decom_1 = var_nodes_decommissioned[var_key1...]
             @testset for (n, t0, t1) in node_investment_dynamic_time_indices(m; node=node(:node_c), t_after=t1)
                 var_key0 = (n, s0, t0)
-                var_s_inv_av0 = get(var_storages_invested_available, var_key0, 0)
+                var_s_inv_av0 = get(var_nodes_invested_available, var_key0, 0)
                 con_key = (n, path, t0, t1)
                 expected_con = @build_constraint(var_s_inv_av1 - var_s_inv_1 + var_s_decom_1 == var_s_inv_av0)
                 observed_con = constraint_object(constraint[con_key...])
@@ -751,12 +751,12 @@
             end
         end
     end
-    @testset "constraint_storages_invested_transition_mp" begin
+    @testset "constraint_nodes_invested_transition_mp" begin
         _load_test_data(url_in, test_data)
-        candidate_storages = 1
+        candidate_nodes = 1
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_storages", candidate_storages],
+            ["node", "node_c", "candidate_nodes", candidate_nodes],
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_b", "has_state", true],
             ["model", "master", "model_type", "spineopt_master"],
@@ -768,12 +768,12 @@
             ["node__investment_stochastic_structure", ["node_c", "investments_deterministic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        
+
         m, mp = run_spineopt(url_in; log_level=0, optimize=false)
-        var_storages_invested_available = m.ext[:variables][:storages_invested_available]
-        var_storages_invested = m.ext[:variables][:storages_invested]
-        var_storages_decommissioned = m.ext[:variables][:storages_decommissioned]
-        constraint = m.ext[:constraints][:storages_invested_transition]
+        var_nodes_invested_available = m.ext[:variables][:nodes_invested_available]
+        var_nodes_invested = m.ext[:variables][:nodes_invested]
+        var_nodes_decommissioned = m.ext[:variables][:nodes_decommissioned]
+        constraint = m.ext[:constraints][:nodes_invested_transition]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
@@ -781,12 +781,12 @@
         @testset for (s1, t1) in zip(scenarios, time_slices)
             path = unique([s0, s1])
             var_key1 = (node(:node_c), s1, t1)
-            var_s_inv_av1 = var_storages_invested_available[var_key1...]
-            var_s_inv_1 = var_storages_invested[var_key1...]
-            var_s_decom_1 = var_storages_decommissioned[var_key1...]
+            var_s_inv_av1 = var_nodes_invested_available[var_key1...]
+            var_s_inv_1 = var_nodes_invested[var_key1...]
+            var_s_decom_1 = var_nodes_decommissioned[var_key1...]
             @testset for (n, t0, t1) in node_investment_dynamic_time_indices(m; node=node(:node_c), t_after=t1)
                 var_key0 = (n, s0, t0)
-                var_s_inv_av0 = get(var_storages_invested_available, var_key0, 0)
+                var_s_inv_av0 = get(var_nodes_invested_available, var_key0, 0)
                 con_key = (n, path, t0, t1)
                 expected_con = @build_constraint(var_s_inv_av1 - var_s_inv_1 + var_s_decom_1 == var_s_inv_av0)
                 observed_con = constraint_object(constraint[con_key...])
@@ -794,10 +794,10 @@
             end
         end
 
-        var_storages_invested_available = mp.ext[:variables][:storages_invested_available]
-        var_storages_invested = mp.ext[:variables][:storages_invested]
-        var_storages_decommissioned = mp.ext[:variables][:storages_decommissioned]
-        constraint = mp.ext[:constraints][:storages_invested_transition]
+        var_nodes_invested_available = mp.ext[:variables][:nodes_invested_available]
+        var_nodes_invested = mp.ext[:variables][:nodes_invested]
+        var_nodes_decommissioned = mp.ext[:variables][:nodes_decommissioned]
+        constraint = mp.ext[:constraints][:nodes_invested_transition]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent),)
         s0 = stochastic_scenario(:parent)
@@ -805,12 +805,12 @@
         @testset for (s1, t1) in zip(scenarios, time_slices)
             path = unique([s0, s1])
             var_key1 = (node(:node_c), s1, t1)
-            var_s_inv_av1 = var_storages_invested_available[var_key1...]
-            var_s_inv_1 = var_storages_invested[var_key1...]
-            var_s_decom_1 = var_storages_decommissioned[var_key1...]
+            var_s_inv_av1 = var_nodes_invested_available[var_key1...]
+            var_s_inv_1 = var_nodes_invested[var_key1...]
+            var_s_decom_1 = var_nodes_decommissioned[var_key1...]
             @testset for (n, t0, t1) in node_investment_dynamic_time_indices(mp; node=node(:node_c), t_after=t1)
                 var_key0 = (n, s0, t0)
-                var_s_inv_av0 = get(var_storages_invested_available, var_key0, 0)
+                var_s_inv_av0 = get(var_nodes_invested_available, var_key0, 0)
                 con_key = (n, path, t0, t1)
                 expected_con = @build_constraint(var_s_inv_av1 - var_s_inv_1 + var_s_decom_1 == var_s_inv_av0)
                 observed_con = constraint_object(constraint[con_key...])
@@ -818,18 +818,18 @@
             end
         end
     end
-    @testset "constraint_storage_lifetime" begin
-        candidate_storages = 1
+    @testset "constraint_node_lifetime" begin
+        candidate_nodes = 1
         node_capacity = 500
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             _load_test_data(url_in, test_data)
-            storage_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            node_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
-                ["node", "node_c", "candidate_storages", candidate_storages],
+                ["node", "node_c", "candidate_nodes", candidate_nodes],
                 ["node", "node_c", "node_state_cap", node_capacity],
                 ["node", "node_c", "has_state", true],
-                ["node", "node_c", "storage_investment_lifetime", storage_investment_lifetime],
+                ["node", "node_c", "node_investment_lifetime", node_investment_lifetime],
                 ["model", "instance", "model_end", model_end],
             ]
             relationships = [
@@ -837,11 +837,11 @@
                 ["node__investment_stochastic_structure", ["node_c", "stochastic"]],
             ]
             SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-            
+
             m = run_spineopt(url_in; log_level=0, optimize=false)
-            var_storages_invested_available = m.ext[:variables][:storages_invested_available]
-            var_storages_invested = m.ext[:variables][:storages_invested]
-            constraint = m.ext[:constraints][:storage_lifetime]
+            var_nodes_invested_available = m.ext[:variables][:nodes_invested_available]
+            var_nodes_invested = m.ext[:variables][:nodes_invested]
+            constraint = m.ext[:constraints][:node_lifetime]
 
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
@@ -865,26 +865,26 @@
                 path = reverse(unique(s_set))
                 key = (node(:node_c), path, t)
                 var_s_inv_av_key = (node(:node_c), s, t)
-                var_s_inv_av = var_storages_invested_available[var_s_inv_av_key...]
-                vars_s_inv = [var_storages_invested[node(:node_c), s, t] for (s, t) in zip(s_set, t_set)]
+                var_s_inv_av = var_nodes_invested_available[var_s_inv_av_key...]
+                vars_s_inv = [var_nodes_invested[node(:node_c), s, t] for (s, t) in zip(s_set, t_set)]
                 expected_con = @build_constraint(var_s_inv_av >= sum(vars_s_inv))
                 observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
     end
-    @testset "constraint_storage_lifetime_mp" begin
-        candidate_storages = 1
+    @testset "constraint_node_lifetime_mp" begin
+        candidate_nodes = 1
         node_capacity = 500
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             _load_test_data(url_in, test_data)
-            storage_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
+            node_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
-                ["node", "node_c", "candidate_storages", candidate_storages],
+                ["node", "node_c", "candidate_nodes", candidate_nodes],
                 ["node", "node_c", "node_state_cap", node_capacity],
                 ["node", "node_c", "has_state", true],
-                ["node", "node_c", "storage_investment_lifetime", storage_investment_lifetime],
+                ["node", "node_c", "node_investment_lifetime", node_investment_lifetime],
                 ["model", "instance", "model_end", model_end],
                 ["model", "master", "model_end", model_end],
                 ["model", "master", "model_type", "spineopt_master"],
@@ -896,11 +896,11 @@
                 ["node__investment_stochastic_structure", ["node_c", "investments_deterministic"]],
             ]
             SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-            
+
             m, mp = run_spineopt(url_in; log_level=0, optimize=false)
-            var_storages_invested_available = m.ext[:variables][:storages_invested_available]
-            var_storages_invested = m.ext[:variables][:storages_invested]
-            constraint = m.ext[:constraints][:storage_lifetime]
+            var_nodes_invested_available = m.ext[:variables][:nodes_invested_available]
+            var_nodes_invested = m.ext[:variables][:nodes_invested]
+            constraint = m.ext[:constraints][:node_lifetime]
 
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
@@ -924,16 +924,16 @@
                 path = reverse(unique(s_set))
                 key = (node(:node_c), path, t)
                 var_s_inv_av_key = (node(:node_c), s, t)
-                var_s_inv_av = var_storages_invested_available[var_s_inv_av_key...]
-                vars_s_inv = [var_storages_invested[node(:node_c), s, t] for (s, t) in zip(s_set, t_set)]
+                var_s_inv_av = var_nodes_invested_available[var_s_inv_av_key...]
+                vars_s_inv = [var_nodes_invested[node(:node_c), s, t] for (s, t) in zip(s_set, t_set)]
                 expected_con = @build_constraint(var_s_inv_av >= sum(vars_s_inv))
                 observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
 
-            var_storages_invested_available = mp.ext[:variables][:storages_invested_available]
-            var_storages_invested = mp.ext[:variables][:storages_invested]
-            constraint = mp.ext[:constraints][:storage_lifetime]
+            var_nodes_invested_available = mp.ext[:variables][:nodes_invested_available]
+            var_nodes_invested = mp.ext[:variables][:nodes_invested]
+            constraint = mp.ext[:constraints][:node_lifetime]
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
                 stochastic_structure=stochastic_structure(:stochastic),
@@ -955,8 +955,8 @@
                 path = reverse(unique(s_set))
                 key = (node(:node_c), path, t)
                 var_s_inv_av_key = (node(:node_c), s, t)
-                var_s_inv_av = var_storages_invested_available[var_s_inv_av_key...]
-                vars_s_inv = [var_storages_invested[node(:node_c), s, t] for (s, t) in zip(s_set, t_set)]
+                var_s_inv_av = var_nodes_invested_available[var_s_inv_av_key...]
+                vars_s_inv = [var_nodes_invested[node(:node_c), s, t] for (s, t) in zip(s_set, t_set)]
                 expected_con = @build_constraint(var_s_inv_av >= sum(vars_s_inv))
                 observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)

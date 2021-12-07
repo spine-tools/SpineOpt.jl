@@ -130,9 +130,9 @@ function add_mp_variables!(mp; log_level=3)
         mp,
     )
     @timelog log_level 3 "- [variable_mp_connections_decommissioned]" add_variable_connections_decommissioned!(mp)
-    @timelog log_level 3 "- [variable_mp_storages_invested]" add_variable_storages_invested!(mp)
-    @timelog log_level 3 "- [variable_mp_storages_invested_available]" add_variable_storages_invested_available!(mp)
-    @timelog log_level 3 "- [variable_mp_storages_decommissioned]" add_variable_storages_decommissioned!(mp)
+    @timelog log_level 3 "- [variable_mp_nodes_invested]" add_variable_nodes_invested!(mp)
+    @timelog log_level 3 "- [variable_mp_nodes_invested_available]" add_variable_nodes_invested_available!(mp)
+    @timelog log_level 3 "- [variable_mp_nodes_decommissioned]" add_variable_nodes_decommissioned!(mp)
 end
 
 """
@@ -150,9 +150,9 @@ function add_mp_constraints!(mp; add_constraints=mp -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(
         mp,
     )
-    @timelog log_level 3 "- [constraint_storage_lifetime]" add_constraint_storage_lifetime!(mp)
-    # @timelog log_level 3 "- [constraint_storages_invested_transition]" add_constraint_storages_invested_transition!(mp)
-    @timelog log_level 3 "- [constraint_storages_invested_available]" add_constraint_storages_invested_available!(mp)
+    @timelog log_level 3 "- [constraint_node_lifetime]" add_constraint_node_lifetime!(mp)
+    # @timelog log_level 3 "- [constraint_nodes_invested_transition]" add_constraint_nodes_invested_transition!(mp)
+    @timelog log_level 3 "- [constraint_nodes_invested_available]" add_constraint_nodes_invested_available!(mp)
 
     # Name constraints
     for (con_key, cons) in mp.ext[:constraints]

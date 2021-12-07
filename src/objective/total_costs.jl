@@ -43,7 +43,7 @@ function objective_terms(m::Model)
                 :fuel_costs,
                 :unit_investment_costs,
                 :connection_investment_costs,
-                :storage_investment_costs,
+                :node_investment_costs,
                 :start_up_costs,
                 :shut_down_costs,
                 :objective_penalties,
@@ -55,7 +55,7 @@ function objective_terms(m::Model)
             ]
         end
     elseif model_type(model=m.ext[:instance]) == :spineopt_master
-        [:unit_investment_costs, :connection_investment_costs, :storage_investment_costs]
+        [:unit_investment_costs, :connection_investment_costs, :node_investment_costs]
     end
 end
 

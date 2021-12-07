@@ -18,24 +18,24 @@
 #############################################################################
 
 """
-    storage_investment_costs(m::Model)
+    node_investment_costs(m::Model)
 
-Create and expression for storage investment costs.
+Create and expression for node investment costs.
 """
-function storage_investment_costs(m::Model, t1)
-    @fetch storages_invested = m.ext[:variables]
+function node_investment_costs(m::Model, t1)
+    @fetch nodes_invested = m.ext[:variables]
     t0 = _analysis_time(m)
     @expression(
         m,
         + expr_sum(
-            storages_invested[n, s, t]
+            nodes_invested[n, s, t]
             * (1- salvage_fraction[(node=n, stochastic_scenario=s, t=t)])
             * tech_discount_factor[(node=n, analysis_time=t0, t=t)]
             * annuity[(node=n, analysis_time=t0, t=t)]
-            * storage_investment_cost[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * node_investment_cost[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
-            for (n, s, t) in storages_invested_available_indices(m; node=indices(storage_investment_cost))
+            for (n, s, t) in nodes_invested_available_indices(m; node=indices(node_investment_cost))
                 if end_(t) <= t1;
             init=0,
         )
