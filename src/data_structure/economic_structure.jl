@@ -139,20 +139,14 @@ function generate_unit_annuity!(m::Model)
                     j = vintage_t_start
                     val = 0
                     while j<= end_of_operation
-                        UP = min(start_of_operation-Year(1), j) #@TIM -1 Year?
-                        DOWN = max(vintage_t_start,j-ELIFE+Year(1))#@TIM -1 Year?
-                        pfrac = max((Year(UP)-Year(DOWN)+Year(1))/LT,0)#@TIM -1 Year?
-                        val+= pfrac *1/(1+discnt_rate)^((Year(j)-Year(discnt_year))/Year(1)) #this will always be years?
+                        val+= payment_fraction(vintage_t_start, j, ELIFE, LT)*discount_factor(instance,discnt_rate,j) #1/(1+discnt_rate)^((Year(j)-Year(discnt_year))/Year(1))
                         j+= Year(1)
                     end
                 else
                     j = vintage_t_start-LT
                     val = 0
                     while j<= end_of_operation-LT
-                        UP = min(vintage_t_start-Year(1), j)
-                        DOWN = max(vintage_t_start-LT,j-ELIFE+Year(1))
-                        pfrac = max((Year(UP)-Year(DOWN)+Year(1))/LT,0)
-                        val+= pfrac *1/(1+discnt_rate)^((Year(j)-Year(discnt_year))/Year(1))
+                        val+= payment_fraction(vintage_t_start, j, ELIFE, LT) *discount_factor(instance,discnt_rate,j)
                         j+= Year(1)
                     end
                 end
@@ -171,24 +165,35 @@ function generate_unit_annuity!(m::Model)
 end
 
 
-function capital_recovery_factor(m, discount_rate,ELIFE)
-    if discount_rate != 0
-        capital_recovery_factor =  discnt_rate * 1/(discount_factor(m,discount_rate,ELIFE)) * 1/(1/(discount_factor(m,discount_rate,ELIFE))-1)
+function capital_recovery_factor(m, discnt_rate ,ELIFE)
+    if discnt_rate != 0
+        capital_recovery_factor =  discnt_rate * 1/(discount_factor(m,discnt_rate,ELIFE)) * 1/(1/(discount_factor(m,discnt_rate,ELIFE))-1)
     else
         capital_recovery_factor = 1/(Year(ELIFE)/Year(1))
     end
     capital_recovery_factor
 end
 
-function discount_factor(m,discount_rate,year::DateTime)
+function discount_factor(m,discnt_rate,year::DateTime)
     discnt_year = discount_year(model=m)
-    discnt_factor = 1/(1+discount_rate)^((Year(year)-Year(discnt_year))/Year(1))
+    discnt_factor = 1/(1+discnt_rate)^((Year(year)-Year(discnt_year))/Year(1))
 end
 
-function discount_factor(m,discount_rate,year::T) where {T<:Period}
+function discount_factor(m,discnt_rate,year::T) where {T<:Period}
     discnt_year = discount_year(model=m)
-    discnt_factor = 1/(1+discount_rate)^((Year(year))/Year(1))
+    discnt_factor = 1/(1+discnt_rate)^((Year(year))/Year(1))
 end
+
+"""
+Fraction of the annuity for technology u with vintage year t_vintage that needs to be paid
+in payment year t. Depends on leadtime and economic lifetime of u.
+"""
+function payment_fraction(t_vintage, t, t_econ_life, t_lead)
+    UP = min(t_vintage + t_lead -Year(1), t)
+    DOWN = max(t_vintage,t-t_econ_life+Year(1))
+    pfrac = max((Year(UP)-Year(DOWN)+Year(1))/t_lead,0)
+end
+
 """
     generate_salvage_fraction()
 
@@ -221,17 +226,13 @@ function generate_salvage_fraction!(m::Model)
                     val1 = 0
                     val2 = 0
                     while j1<= end_of_operation
-                        UP = Year(min(start_of_operation-Year(1), j1))
-                        DOWN = Year(max(vintage_t_start,j1-ELIFE+Year(1)))
-                        pfrac = max((UP-DOWN+Year(1))/LT,0)
-                        val1+= pfrac *1/(1+discnt_rate)^((Year(j1)-Year(discnt_year))/Year(1))
+                        ## start_of_operation!
+                        val1+= payment_fraction(vintage_t_start, j1, ELIFE, LT) *discount_factor(instance,discnt_rate,j1)
                         j1+= Year(1)
                     end
                     while j2<= end_of_operation
-                        UP = Year(min(start_of_operation-Year(1), j2))
-                        DOWN = Year(max(vintage_t_start,j2-ELIFE+Year(1)))
-                        pfrac = max((UP-DOWN+Year(1))/LT,0)
-                        val2+= pfrac *1/(1+discnt_rate)^((Year(j2)-Year(discnt_year))/Year(1))
+                        ## start_of_operation!
+                        val2+= payment_fraction(vintage_t_start, j2, ELIFE, LT) *discount_factor(instance,discnt_rate,j2)
                         j2+= Year(1)
                     end
                 else
@@ -240,18 +241,11 @@ function generate_salvage_fraction!(m::Model)
                     val1 = 0
                     val2 = 0
                     while j1<= end_of_operation-LT
-                        UP = Year(min(vintage_t_start-Year(1), j1))
-                        DOWN = Year(max(vintage_t_start-LT,j1-ELIFE+Year(1)))
-                        pfrac = max((UP-DOWN+Year(1))/LT,0)
-                        val1 += pfrac *1/(1+discnt_rate)^((Year(j1)-Year(discnt_year))/Year(1))
-                        #TODO: check changed from val to val1 by maren
+                        val1 += payment_fraction(vintage_t_start, j1, ELIFE, LT) *discount_factor(instance,discnt_rate,j1)
                         j1+= Year(1)
                     end
                     while j2<= end_of_operation-LT
-                        UP = Year(min(vintage_t_start-Year(1), j2))
-                        DOWN = Year(max(vintage_t_start-LT,j2-ELIFE+Year(1)))
-                        pfrac = max((UP-DOWN+Year(1))/LT,0)
-                        val2+= pfrac *1/(1+discnt_rate)^((Year(j2)-Year(discnt_year))/Year(1))
+                        val2+= payment_fraction(vintage_t_start, j2, ELIFE, LT) * discount_factor(instance,discnt_rate,j2)
                         j2+= Year(1)
                     end
                 end
