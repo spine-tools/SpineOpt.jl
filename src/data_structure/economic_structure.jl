@@ -23,21 +23,13 @@
     generate_economic_structure!(m::Model)
 """
 function generate_economic_structure!(m::Model)
-    generate_capacity_transfer_factor!(m::Model,unit)
-    generate_annuity!(m::Model,unit)
-    generate_salvage_fraction!(m::Model,unit)
-    generate_tech_discount_factor!(m::Model,unit)
-    generate_discount_timeslice_duration!(m::Model,unit)
-    generate_capacity_transfer_factor!(m::Model,node)
-    generate_annuity!(m::Model,node)
-    generate_salvage_fraction!(m::Model,node)
-    generate_tech_discount_factor!(m::Model,node)
-    generate_discount_timeslice_duration!(m::Model,node)
-    generate_capacity_transfer_factor!(m::Model,connection)
-    generate_annuity!(m::Model,connection)
-    generate_salvage_fraction!(m::Model,connection)
-    generate_tech_discount_factor!(m::Model,connection)
-    generate_discount_timeslice_duration!(m::Model,connection)
+    for obj in [unit,node,connection]
+        generate_capacity_transfer_factor!(m::Model,obj)
+        generate_annuity!(m::Model,obj)
+        generate_salvage_fraction!(m::Model,obj)
+        generate_tech_discount_factor!(m::Model,obj)
+        generate_discount_timeslice_duration!(m::Model,obj)
+    end
 end
 
 
@@ -53,23 +45,28 @@ year t_v that is still available in year t.
 function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
     instance = m.ext[:instance]
     capacity_transfer_factor = Dict()
+    investment_indices = eval(Symbol("$(obj_cls)s_invested_available_indices"))
+    lead_time = eval(Symbol("$(obj_cls)_lead_time"))
+    tech_lifetime = eval(Symbol("$(obj_cls)_investment_tech_lifetime"))
+    invest_temoral_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
+    param_name = Symbol("$(obj_cls)_capacity_transfer_factor")
     if dynamic_investments(model=instance)
         for id in members(obj_cls())
             #TODO: members, simply to not do this for the groups; make this more elgant?
             map_stoch_indices = [] #NOTE: will hold stochastic indices
             map_inner = [] #NOTE: will map values inside stochastic mapping
-            for s in unique([x.stochastic_scenario for x in eval(Symbol("$(obj_cls)s_invested_available_indices"))(m;Dict(obj_cls.name => id)...)])
+            for s in unique([x.stochastic_scenario for x in investment_indices(m;Dict(obj_cls.name => id)...)])
                 map_indices = []
                 timeseries_array = []
-                for (u,s,vintage_t) in eval(Symbol("$(obj_cls)s_invested_available_indices"))(m;Dict(obj_cls.name => id,stochastic_scenario.name=>s, :t => Iterators.flatten((history_time_slice(m), time_slice(m))))...)
-                    LT = eval(Symbol("$(obj_cls)_lead_time"))(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
-                    TLIFE = eval(Symbol("$(obj_cls)_investment_tech_lifetime"))(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name => id,stochastic_scenario.name=>s, :t => Iterators.flatten((history_time_slice(m), time_slice(m))))...)
+                    LT = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                    TLIFE = tech_lifetime(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
                     vintage_t_start = start(vintage_t)
                     start_of_operation = vintage_t_start + LT
                     end_of_operation = vintage_t_start + LT + TLIFE
                     timeseries_val = []
                     timeseries_ind = []
-                    for t in time_slice(m; temporal_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))(;Dict(obj_cls.name=>id)...))
+                    for t in time_slice(m; temporal_block = invest_temoral_block(;Dict(obj_cls.name=>id)...))
                         t_start = start(t)
                         t_end = end_(t)
                         dur =  t_end - t_start
@@ -90,12 +87,12 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
                 push!(map_stoch_indices,s)
                 push!(map_inner, SpineInterface.Map(map_indices,timeseries_array))
             end
-            obj_cls.parameter_values[id][Symbol("$(obj_cls)_capacity_transfer_factor")] = parameter_value(SpineInterface.Map(map_stoch_indices,map_inner))
+            obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(map_stoch_indices,map_inner))
             #NOTE: map_indices here will be stochastic_scenarios!
         end
     else
         for u in unit()
-            investment_block = first(eval(Symbol("$(obj_cls)__investment_temporal_block"))(;Dict(obj_cls.name=>id)...))
+            investment_block = first(invest_temoral_block(;Dict(obj_cls.name=>id)...))
             map_indices = []
             timeseries_array = []
             for vintage_t in time_slice(m; temporal_block = investment_block)
@@ -110,11 +107,9 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
                 push!(map_indices,start(vintage_t))
                 push!(timeseries_array,TimeSeries(timeseries_ind,timeseries_val,false,false))
             end
-            obj_cls.parameter_values[id][Symbol("$(obj_cls)_capacity_transfer_factor")] = parameter_value(SpineInterface.Map(map_indices,timeseries_array))
+            obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(map_indices,timeseries_array))
         end
     end
-
-    param_name = Symbol("$(obj_cls)_capacity_transfer_factor")
     @eval begin
         $(param_name) = $(Parameter(param_name, [obj_cls]))
     end
@@ -133,15 +128,19 @@ function generate_annuity!(m::Model, obj_cls::ObjectClass)
     discnt_rate = discount_rate(model=instance)
     discnt_year = discount_year(model=instance)
     annuity = Dict()
+    investment_indices = eval(Symbol("$(obj_cls)s_invested_available_indices"))
+    lead_time = eval(Symbol("$(obj_cls)_lead_time"))
+    tech_lifetime = eval(Symbol("$(obj_cls)_investment_tech_lifetime"))
+    param_name = Symbol("$(obj_cls)_annuity")
     for id in obj_cls()
         stochastic_map_indices = []
         stochastic_map_vals = []
-        for s in unique([x.stochastic_scenario for x in eval(Symbol("$(obj_cls)s_invested_available_indices"))(m)]) #NOTE: this is specific to lifetimes in years
+        for s in unique([x.stochastic_scenario for x in investment_indices(m)]) #NOTE: this is specific to lifetimes in years
             timeseries_ind = []
             timeseries_val = []
-            for (u,s,vintage_t) in eval(Symbol("$(obj_cls)s_invested_available_indices"))(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
-                LT = eval(Symbol("$(obj_cls)_lead_time"))(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
-                ELIFE = eval(Symbol("$(obj_cls)_investment_econ_lifetime"))(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+            for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
+                LT = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                ELIFE = tech_lifetime(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
                 vintage_t_start = start(vintage_t)
                 start_of_operation = vintage_t_start + LT
                 end_of_operation = vintage_t_start + LT + ELIFE
@@ -166,10 +165,8 @@ function generate_annuity!(m::Model, obj_cls::ObjectClass)
             push!(stochastic_map_indices,s)
             push!(stochastic_map_vals,TimeSeries(timeseries_ind,timeseries_val,false,false))
         end
-        obj_cls.parameter_values[id][Symbol("$(obj_cls)_annuity")] = parameter_value(SpineInterface.Map(stochastic_map_indices,stochastic_map_vals))
+        obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stochastic_map_indices,stochastic_map_vals))
     end
-    param_name = Symbol("$(obj_cls)_annuity")
-    annuity =
     @eval begin
         $(param_name) = $(Parameter(param_name, [obj_cls]))
     end
@@ -217,16 +214,20 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass)
     EOH = model_end(model=instance)
 
     salvage_fraction = Dict()
-
-    for id in indices(eval(Symbol("$(obj_cls)_investment_econ_lifetime")))
+    econ_lifetime = eval(Symbol("$(obj_cls)_investment_econ_lifetime"))
+    investment_indices = eval(Symbol("$(obj_cls)s_invested_available_indices"))
+    lead_time = eval(Symbol("$(obj_cls)_lead_time"))
+    invest_temoral_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
+    param_name = Symbol("$(obj_cls)_salvage_fraction")
+    for id in indices(econ_lifetime)
         stochastic_map_ind = []
         stochastic_map_val = []
-        for s in unique([x.stochastic_scenario for x in eval(Symbol("$(obj_cls)s_invested_available_indices"))(m)])
+        for s in unique([x.stochastic_scenario for x in investment_indices(m)])
             timeseries_ind = []
             timeseries_val = []
-            LT = eval(Symbol("$(obj_cls)_lead_time"))(;Dict(obj_cls.name=>id)...)
-            ELIFE = eval(Symbol("$(obj_cls)_investment_econ_lifetime"))(;Dict(obj_cls.name=>id)...)
-            investment_block = first(eval(Symbol("$(obj_cls)__investment_temporal_block"))(;Dict(obj_cls.name=>id)...))
+            LT = lead_time(;Dict(obj_cls.name=>id)...)
+            ELIFE = econ_lifetime(;Dict(obj_cls.name=>id)...)
+            investment_block = first(invest_temoral_block(;Dict(obj_cls.name=>id)...))
             for vintage_t in time_slice(m; temporal_block = investment_block)
                 vintage_t_start = start(vintage_t)
                 start_of_operation = vintage_t_start + LT
@@ -267,11 +268,10 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass)
             push!(stochastic_map_ind,s)
             push!(stochastic_map_val,TimeSeries(timeseries_ind,timeseries_val,false,false))
         end
-        obj_cls.parameter_values[id][Symbol("$(obj_cls)_salvage_fraction")] = parameter_value(SpineInterface.Map(stochastic_map_ind,stochastic_map_val))
+        obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stochastic_map_ind,stochastic_map_val))
     end
-    param_name = Symbol("$(obj_cls)_salvage_fraction")
     @eval begin
-        $(param_name) = $(Parameter(Symbol("$(obj_cls)_salvage_fraction"), [obj_cls]))
+        $(param_name) = $(Parameter(param_name, [obj_cls]))
     end
 end
 
@@ -285,21 +285,25 @@ Generate technology-specific discount factors for units that can be invested in.
 function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass)
     instance = m.ext[:instance]
     discnt_rate = discount_rate(model=instance)
+    discnt_rate_tech = eval(Symbol("$(obj_cls)_discount_rate_technology_specific"))
+    econ_lifetime = eval(Symbol("$(obj_cls)_investment_econ_lifetime"))
+    invest_stoch_struct = eval(Symbol("$(obj_cls)__investment_stochastic_structure"))
+    param_name = Symbol("$(obj_cls)_tech_discount_factor")
     for id in obj_cls()
-        if id in indices(eval(Symbol("$(obj_cls)_discount_rate_technology_specific"))) #Default: 0
+        if id in indices(discnt_rate_tech) #Default: 0
             stoch_map_val = []
             stoch_map_ind = []
-            for s in stochastic_structure__stochastic_scenario(stochastic_structure=eval(Symbol("$(obj_cls)__investment_stochastic_structure"))(;Dict(obj_cls.name => id)...))
-                ELIFE = eval(Symbol("$(obj_cls)_investment_econ_lifetime"))(;Dict(obj_cls.name => id, stochastic_scenario.name => s)...)
-                tech_discount_rate = eval(Symbol("$(obj_cls)_discount_rate_technology_specific"))(;Dict(obj_cls.name => id, stochastic_scenario.name => s)...)
+            for s in stochastic_structure__stochastic_scenario(stochastic_structure=invest_stoch_struct(;Dict(obj_cls.name => id)...))
+                ELIFE = econ_lifetime(;Dict(obj_cls.name => id, stochastic_scenario.name => s)...)
+                tech_discount_rate = discnt_rate_tech(;Dict(obj_cls.name => id, stochastic_scenario.name => s)...)
                 val = capital_recovery_factor(instance,tech_discount_rate,ELIFE)/capital_recovery_factor(instance,discnt_rate,ELIFE)
                 push!(stoch_map_val,val)
                 push!(stoch_map_ind,s)
             end
-            obj_cls.parameter_values[id][Symbol("$(obj_cls)_tech_discount_factor")] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
+            obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
         end
     end
-    param_name = Symbol("$(obj_cls)_tech_discount_factor")
+
     @eval begin
         $(param_name) = $(Parameter(param_name, [obj_cls]))
     end
@@ -320,14 +324,16 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass)
     discnt_year = discount_year(model=instance)
 
     discounted_duration = Dict()
-
+    invest_stoch_struct = eval(Symbol("$(obj_cls)__investment_stochastic_structure"))
+    invest_temoral_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
+    param_name = Symbol("$(obj_cls)_discounted_duration")
     for id in obj_cls()
         stoch_map_val = []
         stoch_map_ind = []
-        for s in stochastic_structure__stochastic_scenario(stochastic_structure=eval(Symbol("$(obj_cls)__investment_stochastic_structure"))(;Dict(obj_cls.name=>id)...))
+        for s in stochastic_structure__stochastic_scenario(stochastic_structure=invest_stoch_struct(;Dict(obj_cls.name=>id)...))
             timeseries_ind = []
             timeseries_val = []
-            investment_block = first(eval(Symbol("$(obj_cls)__investment_temporal_block"))(;Dict(obj_cls.name=>id)...))#TODO generalize?
+            investment_block = first(invest_temoral_block(;Dict(obj_cls.name=>id)...))#TODO generalize?
             for t in time_slice(m; temporal_block = investment_block)
                 t_start = start(t)
                 t_end = end_(t)
@@ -343,10 +349,9 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass)
             push!(stoch_map_ind,s)
             push!(stoch_map_val,TimeSeries(timeseries_ind,timeseries_val,false,false))
         end
-        obj_cls.parameter_values[id][Symbol("$(obj_cls)_discounted_duration")] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
+        obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
     end
-    param_name = Symbol("$(obj_cls)_discounted_duration")
     @eval begin
-        $(param_name) = $(Parameter(Symbol("$(obj_cls)_discounted_duration"), [obj_cls]))
+        $(param_name) = $(Parameter(param_name), [obj_cls]))
     end
 end
