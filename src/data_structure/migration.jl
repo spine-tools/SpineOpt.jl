@@ -105,6 +105,6 @@ function find_version(url)
 	_parse_version(pdefs[j]["default_value"])
 end
 
-_parse_version(version::String) = _parse_version(parse(Float64, pdefs[j]["default_value"]))
+_parse_version(version::String) = _parse_version(parse(Float64, version))
 _parse_version(version::Float64) = _parse_version(round(Int, version))
 _parse_version(version::Int) = version
