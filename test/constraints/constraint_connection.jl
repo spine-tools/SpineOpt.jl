@@ -77,12 +77,14 @@
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
         ],
-        :relationship_parameter_values => [[
-            "stochastic_structure__stochastic_scenario",
-            ["stochastic", "parent"],
-            "stochastic_scenario_end",
-            Dict("type" => "duration", "data" => "1h"),
-        ]],
+        :relationship_parameter_values => [
+            [
+                "stochastic_structure__stochastic_scenario",
+                ["stochastic", "parent"],
+                "stochastic_scenario_end",
+                Dict("type" => "duration", "data" => "1h")
+            ]
+        ],
     )
     @testset "constraint_connection_flow_capacity" begin
         connection_capacity = 200

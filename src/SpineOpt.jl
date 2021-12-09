@@ -30,9 +30,10 @@ using Requires
 import Dates: CompoundPeriod
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 
-export run_spineopt
-export rerun_spineopt
 export @fetch
+export output_parameter_value
+export rerun_spineopt
+export run_spineopt
 
 include("run_spineopt.jl")
 include("util/docs_utils.jl")

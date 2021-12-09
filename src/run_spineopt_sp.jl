@@ -494,29 +494,32 @@ function update_model!(m; update_constraints=m -> nothing, log_level=3)
     @timelog log_level 2 "Updating objective..." update_varying_objective!(m)
 end
 
+function output_parameter_value(by_analysis_time, overwrite_results_on_rolling::Bool)
+    output_parameter_value(by_analysis_time, Val(overwrite_results_on_rolling))
+end
+function output_parameter_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
+    TimeSeries(
+        [ts for by_time_stamp in values(by_analysis_time) for ts in keys(by_time_stamp)],
+        [val for by_time_stamp in values(by_analysis_time) for val in values(by_time_stamp)],
+        false,
+        false
+    )
+end
+function output_parameter_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
+    Map(
+        collect(keys(by_analysis_time)),
+        [
+            TimeSeries(collect(keys(by_time_stamp)), collect(values(by_time_stamp)), false, false)
+            for by_time_stamp in values(by_analysis_time)
+        ]
+    )
+end
+
 function _output_parameter_value(by_entity, overwrite_results_on_rolling)
-    if overwrite_results_on_rolling
-        Dict(
-            entity => TimeSeries(
-                [ts for by_time_stamp in values(by_analysis_time) for ts in keys(by_time_stamp)],
-                [val for by_time_stamp in values(by_analysis_time) for val in values(by_time_stamp)],
-                false,
-                false
-            )
-            for (entity, by_analysis_time) in by_entity
-        )
-    else
-        Dict(
-            entity => Map(
-                collect(keys(by_analysis_time)),
-                [
-                    TimeSeries(collect(keys(by_time_stamp)), collect(values(by_time_stamp)), false, false)
-                    for by_time_stamp in values(by_analysis_time)
-                ]
-            )
-            for (entity, by_analysis_time) in by_entity
-        )
-    end
+    Dict(
+        entity => output_parameter_value(by_analysis_time, Val(overwrite_results_on_rolling))
+        for (entity, by_analysis_time) in by_entity
+    )
 end
 
 """
