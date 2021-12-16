@@ -26,7 +26,7 @@ function rerun_spineopt_mp(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    use_direct_model=false,
+    use_direct_model=false
 )
     mip_solver = _default_mip_solver(mip_solver)
     lp_solver = _default_lp_solver(lp_solver)

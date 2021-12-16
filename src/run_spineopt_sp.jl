@@ -26,7 +26,7 @@ function rerun_spineopt_sp(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    use_direct_model=false,
+    use_direct_model=false
 )
     mip_solver = _default_mip_solver(mip_solver)
     lp_solver = _default_lp_solver(lp_solver)
@@ -492,27 +492,6 @@ function update_model!(m; update_constraints=m -> nothing, log_level=3)
     @timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
     @timelog log_level 2 "Updating user constraints..." update_constraints(m)
     @timelog log_level 2 "Updating objective..." update_varying_objective!(m)
-end
-
-function output_parameter_value(by_analysis_time, overwrite_results_on_rolling::Bool)
-    output_parameter_value(by_analysis_time, Val(overwrite_results_on_rolling))
-end
-function output_parameter_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
-    TimeSeries(
-        [ts for by_time_stamp in values(by_analysis_time) for ts in keys(by_time_stamp)],
-        [val for by_time_stamp in values(by_analysis_time) for val in values(by_time_stamp)],
-        false,
-        false
-    )
-end
-function output_parameter_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
-    Map(
-        collect(keys(by_analysis_time)),
-        [
-            TimeSeries(collect(keys(by_time_stamp)), collect(values(by_time_stamp)), false, false)
-            for by_time_stamp in values(by_analysis_time)
-        ]
-    )
 end
 
 function _output_parameter_value(by_entity, overwrite_results_on_rolling)

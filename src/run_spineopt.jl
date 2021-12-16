@@ -132,7 +132,7 @@ function run_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
-        use_direct_model=use_direct_model,
+        use_direct_model=use_direct_model
     )
 end
 
@@ -145,7 +145,7 @@ function rerun_spineopt(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    use_direct_model=false,
+    use_direct_model=false
 )
     @eval using JuMP
     # High-level algorithm selection. For now, selecting based on defined model types,
@@ -161,6 +161,27 @@ function rerun_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
-        use_direct_model=use_direct_model,
+        use_direct_model=use_direct_model
+    )
+end
+
+function output_parameter_value(by_analysis_time, overwrite_results_on_rolling::Bool)
+    output_parameter_value(by_analysis_time, Val(overwrite_results_on_rolling))
+end
+function output_parameter_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
+    TimeSeries(
+        [ts for by_time_stamp in values(by_analysis_time) for ts in keys(by_time_stamp)],
+        [val for by_time_stamp in values(by_analysis_time) for val in values(by_time_stamp)],
+        false,
+        false
+    )
+end
+function output_parameter_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
+    Map(
+        collect(keys(by_analysis_time)),
+        [
+            TimeSeries(collect(keys(by_time_stamp)), collect(values(by_time_stamp)), false, false)
+            for by_time_stamp in values(by_analysis_time)
+        ]
     )
 end
