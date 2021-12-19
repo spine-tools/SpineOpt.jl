@@ -91,6 +91,7 @@ function run_spineopt(
     log_level=3,
     optimize=true,
     use_direct_model=false,
+    filters=Dict("tool" => "object_activity_control")
 )
     @log log_level 0 "Running SpineOpt for $(url_in)..."
     version = find_version(url_in)
@@ -109,7 +110,7 @@ function run_spineopt(
     end
     @timelog log_level 2 "Initializing data structure from db..." begin
         @eval _Template using_spinedb($(SpineOpt.template()), _Template)
-        using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
+        using_spinedb(url_in, @__MODULE__; upgrade=upgrade, filters=filters)
         missing_items = difference(_Template, @__MODULE__)        
         if !isempty(missing_items)
             println()
