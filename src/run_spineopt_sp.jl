@@ -496,7 +496,7 @@ end
 
 function _output_parameter_value(by_entity, overwrite_results_on_rolling)
     Dict(
-        entity => output_parameter_value(by_analysis_time, Val(overwrite_results_on_rolling))
+        entity => output_value(by_analysis_time, Val(overwrite_results_on_rolling))
         for (entity, by_analysis_time) in by_entity
     )
 end

@@ -111,7 +111,7 @@ function run_spineopt(
     @timelog log_level 2 "Initializing data structure from db..." begin
         @eval _Template using_spinedb($(SpineOpt.template()), _Template)
         using_spinedb(url_in, @__MODULE__; upgrade=upgrade, filters=filters)
-        missing_items = difference(_Template, @__MODULE__)        
+        missing_items = difference(_Template, @__MODULE__)
         if !isempty(missing_items)
             println()
             @warn """
@@ -166,10 +166,10 @@ function rerun_spineopt(
     )
 end
 
-function output_parameter_value(by_analysis_time, overwrite_results_on_rolling::Bool)
-    output_parameter_value(by_analysis_time, Val(overwrite_results_on_rolling))
+function output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
+    output_value(by_analysis_time, Val(overwrite_results_on_rolling))
 end
-function output_parameter_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
+function output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
     TimeSeries(
         [ts for by_time_stamp in values(by_analysis_time) for ts in keys(by_time_stamp)],
         [val for by_time_stamp in values(by_analysis_time) for val in values(by_time_stamp)],
@@ -177,7 +177,7 @@ function output_parameter_value(by_analysis_time, overwrite_results_on_rolling::
         false
     )
 end
-function output_parameter_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
+function output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
     Map(
         collect(keys(by_analysis_time)),
         [
