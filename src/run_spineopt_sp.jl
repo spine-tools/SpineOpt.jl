@@ -494,39 +494,6 @@ function update_model!(m; update_constraints=m -> nothing, log_level=3)
     @timelog log_level 2 "Updating objective..." update_varying_objective!(m)
 end
 
-function _output_parameter_value(by_entity, overwrite_results_on_rolling)
-    Dict(
-        entity => output_value(by_analysis_time, Val(overwrite_results_on_rolling))
-        for (entity, by_analysis_time) in by_entity
-    )
-end
-
-"""
-Write report from given outputs into the db.
-"""
-function write_report(model, default_url)
-    reports = Dict()
-    outputs = Dict()
-    for rpt in model__report(model=model.ext[:instance])
-        for out in report__output(report=rpt)
-            by_entity = get!(model.ext[:outputs], out.name, nothing)
-            by_entity === nothing && continue
-            output_url = output_db_url(report=rpt, _strict=false)
-            url = output_url !== nothing ? output_url : default_url
-            url_reports = get!(reports, url, Dict())
-            output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,Any}}())
-            parameter_name = out.name in objective_terms(model) ? Symbol("objective_", out.name) : out.name
-            overwrite = overwrite_results_on_rolling(report=rpt, output=out)
-            output_params[parameter_name] = _output_parameter_value(by_entity, overwrite)
-        end
-    end
-    for (url, url_reports) in reports
-        for (rpt_name, output_params) in url_reports
-            write_parameters(output_params, url; report=string(rpt_name))
-        end
-    end
-end
-
 function relax_integer_vars(m::Model)
     save_integer_values!(m)
     for name in m.ext[:integer_variables]

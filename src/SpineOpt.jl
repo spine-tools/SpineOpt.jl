@@ -31,9 +31,10 @@ import Dates: CompoundPeriod
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 
 export @fetch
-export output_value
 export rerun_spineopt
 export run_spineopt
+export output_value
+export write_report
 
 include("run_spineopt.jl")
 include("util/docs_utils.jl")

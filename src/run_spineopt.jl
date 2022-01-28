@@ -166,6 +166,16 @@ function rerun_spineopt(
     )
 end
 
+"""
+    output_value(by_analysis_time, overwrite_results_on_rolling)
+
+A value from a SpineOpt result.
+
+# Arguments
+- `by_analysis_time::Dict`: mapping analysis times, to timestamps, to values.
+- `overwrite_results_on_rolling::Bool`: if `true`, ignore the analysis times and return a `TimeSeries`.
+    If `false`, return a `Map` where the topmost keys are the analysis times.
+"""
 function output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
     output_value(by_analysis_time, Val(overwrite_results_on_rolling))
 end
@@ -185,4 +195,47 @@ function output_value(by_analysis_time, overwrite_results_on_rolling::Val{false}
             for by_time_stamp in values(by_analysis_time)
         ]
     )
+end
+
+function _output_value_by_entity(by_entity, overwrite_results_on_rolling, output_value=output_value)
+    Dict(
+        entity => output_value(by_analysis_time, Val(overwrite_results_on_rolling))
+        for (entity, by_analysis_time) in by_entity
+    )
+end
+
+"""
+    write_report(m, default_url, output_value=output_value; alternative="")
+
+Write report from given model into a db.
+
+# Arguments
+- `m::Model`: a JuMP model resulting from running SpineOpt successfully.
+- `default_url::String`: a db url to write the report to.
+- `output_value`: a function to replace `SpineOpt.output_value` if needed.
+
+# Keyword arguments
+- `alternative::String`: an alternative to pass to `SpineInterface.write_parameters`.
+"""
+function write_report(m, default_url, output_value=output_value; alternative="")
+    reports = Dict()
+    outputs = Dict()
+    for rpt in model__report(model=m.ext[:instance])
+        for out in report__output(report=rpt)
+            by_entity = get!(m.ext[:outputs], out.name, nothing)
+            by_entity === nothing && continue
+            output_url = output_db_url(report=rpt, _strict=false)
+            url = output_url !== nothing ? output_url : default_url
+            url_reports = get!(reports, url, Dict())
+            output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,Any}}())
+            parameter_name = out.name in objective_terms(m) ? Symbol("objective_", out.name) : out.name
+            overwrite = overwrite_results_on_rolling(report=rpt, output=out)
+            output_params[parameter_name] = _output_value_by_entity(by_entity, overwrite, output_value)
+        end
+    end
+    for (url, url_reports) in reports
+        for (rpt_name, output_params) in url_reports
+            write_parameters(output_params, url; report=string(rpt_name), alternative=alternative)
+        end
+    end
 end
