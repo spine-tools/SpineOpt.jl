@@ -204,6 +204,35 @@ function _output_value_by_entity(by_entity, overwrite_results_on_rolling, output
     )
 end
 
+
+function objective_terms(m)
+    # if we have a decomposed structure, master problem costs (investments) should not be included
+    invest_terms = [:unit_investment_costs, :connection_investment_costs, :storage_investment_costs]
+    op_terms = [
+        :variable_om_costs,
+        :fixed_om_costs,
+        :taxes,
+        :fuel_costs,
+        :start_up_costs,
+        :shut_down_costs,
+        :objective_penalties,
+        :connection_flow_costs,
+        :renewable_curtailment_costs,
+        :res_proc_costs,
+        :ramp_costs,
+        :units_on_costs,
+    ]
+    if model_type(model=m.ext[:instance]) == :spineopt_operations
+        if m.ext[:is_subproblem]
+            op_terms
+        else
+            [op_terms; invest_terms]
+        end
+    elseif model_type(model=m.ext[:instance]) == :spineopt_master
+        invest_terms
+    end
+end
+
 """
     write_report(m, default_url, output_value=output_value; alternative="")
 

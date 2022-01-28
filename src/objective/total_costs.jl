@@ -17,48 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function objective_terms(m::Model)
-    # if we have a decomposed structure, master problem costs (investments) should not be included
-    if model_type(model=m.ext[:instance]) == :spineopt_operations
-        if m.ext[:is_subproblem]
-            [
-                :variable_om_costs,
-                :fixed_om_costs,
-                :taxes,
-                :fuel_costs,
-                :start_up_costs,
-                :shut_down_costs,
-                :objective_penalties,
-                :connection_flow_costs,
-                :renewable_curtailment_costs,
-                :res_proc_costs,
-                :ramp_costs,
-                :units_on_costs,
-            ]
-        else
-            [
-                :variable_om_costs,
-                :fixed_om_costs,
-                :taxes,
-                :fuel_costs,
-                :unit_investment_costs,
-                :connection_investment_costs,
-                :storage_investment_costs,
-                :start_up_costs,
-                :shut_down_costs,
-                :objective_penalties,
-                :connection_flow_costs,
-                :renewable_curtailment_costs,
-                :res_proc_costs,
-                :ramp_costs,
-                :units_on_costs,
-            ]
-        end
-    elseif model_type(model=m.ext[:instance]) == :spineopt_master
-        [:unit_investment_costs, :connection_investment_costs, :storage_investment_costs]
-    end
-end
-
 """
     total_costs(m::Model, t::DateTime)
 
