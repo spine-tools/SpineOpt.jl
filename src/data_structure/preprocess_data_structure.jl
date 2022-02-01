@@ -354,12 +354,7 @@ Generate the `ptdf` parameter.
 """
 function generate_ptdf()
     ptdf_values = _ptdf_values()
-    ptdf_rel_cls = RelationshipClass(
-        :ptdf_connection__node,
-        [:connection, :node],
-        [(connection=conn, node=n) for (conn, n) in keys(ptdf_values)],
-        ptdf_values,
-    )
+    ptdf_rel_cls = RelationshipClass(:ptdf_connection__node, [:connection, :node], keys(ptdf_values), ptdf_values)
     ptdf = Parameter(:ptdf, [ptdf_rel_cls])
     @eval begin
         ptdf = $ptdf
@@ -375,7 +370,7 @@ function generate_lodf()
     """
     Given a contingency connection, return a function that given the monitored connection, return the lodf.
     """
-    function make_lodf_fn(conn_cont)
+    function _lodf_fn(conn_cont)
         n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
         denom = 1 - (ptdf(connection=conn_cont, node=n_from) - ptdf(connection=conn_cont, node=n_to))
         is_tail = isapprox(denom, 0; atol=0.001)
@@ -387,19 +382,16 @@ function generate_lodf()
     end
 
     lodf_values = Dict(
-        (conn_cont, conn_mon) => Dict(:lodf => parameter_value(lodf_trial)) for (conn_cont, lodf_fn, tolerance) in ((
-            conn_cont,
-            make_lodf_fn(conn_cont),
-            connnection_lodf_tolerance(connection=conn_cont),
-        ) for conn_cont in connection(has_ptdf=true))
+        (conn_cont, conn_mon) => Dict(:lodf => parameter_value(lodf_trial))
+        for (conn_cont, lodf_fn, tolerance) in (
+            (conn_cont, _lodf_fn(conn_cont), connnection_lodf_tolerance(connection=conn_cont))
+            for conn_cont in connection(has_ptdf=true)
+        )
         for (conn_mon, lodf_trial) in ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(has_ptdf=true))
-            if conn_cont !== conn_mon #&& !isapprox(lodf_trial, 0; atol=tolerance)        
+        if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)        
     )
     lodf_rel_cls = RelationshipClass(
-        :lodf_connection__connection,
-        [:connection1, :connection2],
-        [(connection1=conn_cont, connection2=conn_mon) for (conn_cont, conn_mon) in keys(lodf_values)],
-        lodf_values,
+        :lodf_connection__connection, [:connection, :connection], keys(lodf_values), lodf_values
     )
     lodf = Parameter(:lodf, [lodf_rel_cls])
     @eval begin
@@ -436,7 +428,7 @@ function generate_variable_indexing_support()
         :unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb)
+            (u, n, d, tb)
             for (u, n, d) in Iterators.flatten((unit__from_node(), unit__to_node()))
             for tb in node__temporal_block(node=n)
         ),
@@ -445,7 +437,7 @@ function generate_variable_indexing_support()
         :connection__node__direction__temporal_block,
         [:connection, :node, :direction, :temporal_block],
         unique(
-            (connection=conn, node=n, direction=d, temporal_block=tb)
+            (conn, n, d, tb)
             for (conn, n, d) in Iterators.flatten((connection__from_node(), connection__to_node()))
             for tb in node__temporal_block(node=n)
         ),
@@ -460,7 +452,7 @@ function generate_variable_indexing_support()
         :start_up_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb)
+            (u, n, d, tb)
             for (u, ng, d) in indices(max_startup_ramp)
             for n in members(ng) for tb in node__temporal_block(node=n)
         ),
@@ -469,7 +461,7 @@ function generate_variable_indexing_support()
         :nonspin_ramp_up_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb)
+            (u, n, d, tb)
             for (u, ng, d) in indices(max_res_startup_ramp) for n in members(ng) for tb in node__temporal_block(node=n)
         ),
     )
@@ -477,7 +469,7 @@ function generate_variable_indexing_support()
         :ramp_up_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb)
+            (u, n, d, tb)
             for (u, ng, d) in indices(ramp_up_limit) for n in members(ng) for tb in node__temporal_block(node=n)
             for (u, n, d, tb) in unit__node__direction__temporal_block(
                 unit=u, node=n, direction=d, temporal_block=tb, _compact=false,
@@ -489,7 +481,7 @@ function generate_variable_indexing_support()
         :shut_down_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb)
+            (u, n, d, tb)
             for (u, ng, d) in indices(max_shutdown_ramp)
             for n in members(ng) for tb in node__temporal_block(node=n)
         ),
@@ -498,7 +490,7 @@ function generate_variable_indexing_support()
         :nonspin_ramp_down_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb)
+            (u, n, d, tb)
             for (u, ng, d) in indices(max_res_shutdown_ramp) for n in members(ng) for tb in node__temporal_block(node=n)
         ),
     )
@@ -506,7 +498,7 @@ function generate_variable_indexing_support()
         :ramp_down_unit__node__direction__temporal_block,
         [:unit, :node, :direction, :temporal_block],
         unique(
-            (unit=u, node=n, direction=d, temporal_block=tb)
+            (u, n, d, tb)
             for (u, ng, d) in indices(ramp_down_limit) for n in members(ng) for tb in node__temporal_block(node=n)
             for (u, n, d, tb) in unit__node__direction__temporal_block(
                 unit=u, node=n, direction=d, temporal_block=tb, _compact=false,

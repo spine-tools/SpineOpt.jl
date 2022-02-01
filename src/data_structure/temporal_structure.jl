@@ -295,14 +295,14 @@ function _generate_time_slice_relationships!(m::Model)
     t_overlaps_t_maping = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
     t_overlaps_t_excl_mapping = Dict(t => setdiff(overlapping_t, t) for (t, overlapping_t) in t_overlaps_t_maping)
     t_before_t_tuples = unique(
-        (t_before=t_before, t_after=t_after)
+        (t_before, t_after)
         for (t_before, following) in t_follows_t_mapping for t_after in following if before(t_before, t_after)
     )
     t_in_t_tuples = unique(
-        (t_short=t_short, t_long=t_long)
+        (t_short, t_long)
         for (t_short, overlapping) in t_overlaps_t_maping for t_long in overlapping if iscontained(t_short, t_long)
     )
-    t_in_t_excl_tuples = [(t_short=t1, t_long=t2) for (t1, t2) in t_in_t_tuples if t1 != t2]
+    t_in_t_excl_tuples = [(t_short, t_long) for (t_short, t_long) in t_in_t_tuples if t_short != t_long]
     # Create the function-like objects
     temp_struct = m.ext[:temporal_structure]
     temp_struct[:t_before_t] = RelationshipClass(:t_before_t, [:t_before, :t_after], t_before_t_tuples)

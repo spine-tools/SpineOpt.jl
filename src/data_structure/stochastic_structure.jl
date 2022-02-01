@@ -350,7 +350,7 @@ function _generate_node_stochastic_scenario_weight(m::Model, all_stochastic_dags
     node__stochastic_scenario = RelationshipClass(
         :node__stochastic_scenario,
         [:node, :stochastic_scenario],
-        [(node=n, stochastic_scenario=scen) for (n, scen) in keys(node_stochastic_scenario_weight_values)],
+        keys(node_stochastic_scenario_weight_values),
         node_stochastic_scenario_weight_values,
     )
     m.ext[:stochastic_structure][:node_stochastic_scenario_weight] = Parameter(
@@ -377,7 +377,7 @@ function _generate_unit_stochastic_scenario_weight(m::Model, all_stochastic_dags
     unit__stochastic_scenario = RelationshipClass(
         :unit__stochastic_scenario,
         [:unit, :stochastic_scenario],
-        [(unit=u, stochastic_scenario=scen) for (u, scen) in keys(unit_stochastic_scenario_weight_values)],
+        keys(unit_stochastic_scenario_weight_values),
         unit_stochastic_scenario_weight_values,
     )
     m.ext[:stochastic_structure][:unit_stochastic_scenario_weight] = Parameter(
@@ -401,7 +401,7 @@ function _generate_connection_stochastic_scenario_weight(m::Model, all_stochasti
     connection__stochastic_scenario = RelationshipClass(
         :connection__stochastic_scenario,
         [:connection, :stochastic_scenario],
-        [(connection=c, stochastic_scenario=scen) for (c, scen) in keys(connection_stochastic_scenario_weight_values)],
+        keys(connection_stochastic_scenario_weight_values),
         connection_stochastic_scenario_weight_values,
     )
     m.ext[:stochastic_structure][:connection_stochastic_scenario_weight] = Parameter(
