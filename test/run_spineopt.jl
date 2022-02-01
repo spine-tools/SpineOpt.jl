@@ -318,7 +318,7 @@ end
                 relationships=relationships,
                 object_parameter_values=object_parameter_values,
             )
-            run_spineopt(url_in, url_out; log_level=0)
+            run_spineopt(url_in, url_out; log_level=0, filters=Dict())
             using_spinedb(url_out, Y)
             key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
             @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(out_res):DateTime(2000, 1, 2) - Hour(1))
