@@ -66,7 +66,7 @@ function add_constraint_node_voltage_angle!(m::Model)
                     t=t_in_t(m; t_short=t),
                 );
                 init=0,
-            ) : 0)
+            )) : 0)
         ) for (conn, n_to, n_from, s, t) in constraint_node_voltage_angle_indices(m)
     )
 end
