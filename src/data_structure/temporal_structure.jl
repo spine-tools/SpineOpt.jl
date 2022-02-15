@@ -331,9 +331,9 @@ function _generate_representative_time_slice!(m::Model)
                 rep_t_duration = end_(rep_t) - start(rep_t)
                 real_t_end = real_t_start + rep_t_duration
                 merge!(
-                    d, 
+                    d,
                     Dict(
-                        real_t => rep_t 
+                        real_t => rep_t
                         for real_t in to_time_slice(m, t=TimeSlice(real_t_start, real_t_end))
                         if blk in real_t.blocks
                     )
@@ -418,11 +418,12 @@ function to_time_slice(m::Model; t::TimeSlice)
     t_sets = (temp_struct[:time_slice], temp_struct[:history_time_slice])
     in_blocks = (
         s
-        for t_set in t_sets 
+        for t_set in t_sets
         for time_slices in values(t_set.block_time_slices)
         for s in _to_time_slice(time_slices, t)
     )
-    in_gaps = (
+    in_gaps = isempty(indices(representative_periods_mapping)) ?
+        [] : (
         s
         for t_set in t_sets
         for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t)
