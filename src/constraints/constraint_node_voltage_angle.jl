@@ -22,7 +22,7 @@
 Outer approximation of the non-linear terms.
 """
 function add_constraint_node_voltage_angle!(m::Model)
-    @fetch node_voltage_angle, connection_flow = m.ext[:variables]
+    @fetch node_voltage_angle, connection_flow, connections_invested_available = m.ext[:variables]
     t0 = _analysis_time(m)
     m.ext[:constraints][:node_voltage_angle] = Dict(
         (connection=conn, node1=n_to, node2=n_from, stochastic_scenario=s, t=t) => @constraint(
@@ -47,7 +47,7 @@ function add_constraint_node_voltage_angle!(m::Model)
                     t=t,
                 )
             )
-            ==
+            <=
             1 / connection_reactance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
             * connection_reactance_base[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
             * (sum(
@@ -57,6 +57,16 @@ function add_constraint_node_voltage_angle!(m::Model)
                 node_voltage_angle[n_to, s, t]
                 for (n_to, s, t) in node_voltage_angle_indices(m; node=n_to, stochastic_scenario=s, t=t)
             ))
+            + ((candidate_connections(connection=conn) != nothing) ?
+               big_m(model=m.ext[:instance])*(1 - expr_sum(
+                connections_invested_available[conn, s, t1] for (conn, s, t1) in connections_invested_available_indices(
+                    m;
+                    connection=conn,
+                    stochastic_scenario=s,
+                    t=t_in_t(m; t_short=t),
+                );
+                init=0,
+            ) : 0)
         ) for (conn, n_to, n_from, s, t) in constraint_node_voltage_angle_indices(m)
     )
 end
