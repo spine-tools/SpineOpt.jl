@@ -1,9 +1,9 @@
 # Managing Output Data
 
-Once a model is created and successfully run, it will hopefull produce results and output data. This section covers how the writing of output data is controlled and managed.
+Once a model is created and successfully run, it will hopefully produce results and output data. This section covers how the writing of output data is controlled and managed.
 
 ## Specifying Your Output Data Store
-In your workflow (more more details see [Setting up a workflow for SpineOpt in Spine Toolbox](@ref) you will normally have a output datastore connected to your RunSpineOpt workflow tool. This is where your output data will be written. If no output datastore is specified, the results will be written by default to the input datastore. However, it is generally preferable to define a separate output data store for results. See [Setting up a workflow for SpineOpt in Spine Toolbox](@ref) for the steps to add an output datastore to your workflow)
+In your workflow (for more details see [Setting up a workflow for SpineOpt in Spine Toolbox](@ref)) you will normally have a output datastore connected to your RunSpineOpt workflow tool. This is where your output data will be written. If no output datastore is specified, the results will be written by default to the input datastore. However, it is generally preferable to define a separate output data store for results. See [Setting up a workflow for SpineOpt in Spine Toolbox](@ref) for the steps to add an output datastore to your workflow)
 
 ## Specifying Outputs to Write
 Outputting of results to the output datastore is controlled using the [output](@ref) and [report](@ref) object classes. To output a specific variable to the output datastore, we need to create an [output](@ref) object of the same name. For example, to output the `unit_flow` variable, we must create an [output](@ref) object named `unit_flow`. The SpineOpt template contains output objects for most problem variables and importing or re-importing the SpineOpt template will add these to your input datastore. So it is probable these output objects will exist already in your input datastore. Once the output objects exist in your model, they must then be added to a report object by creating an [report\_\_output](@ref) relationship
