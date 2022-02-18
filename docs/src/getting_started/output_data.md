@@ -27,14 +27,14 @@ The structure of the output data will follow the structure of the input data wit
 ### Example: `unit_flow`
  For example, consider the [unit\_flow](@ref)) optimisation variable. This variable is dimensioned on the [unit\_\_to_node](@ref) and [unit\_\_from_node](@ref) relationships. In the output datastore, the [report](@ref), [stochastic\_scenario](@ref) and flow `direction` are added as additional dimensions. Therefore, [unit\_\_to_node](@ref) values will appear in the output datastore as timeseries parameters associated with the `report__unit__node__direction__stochastic_scenario` relationship as shown below.
 
-![image](https://github.com/Spine-project/SpineOpt.jl/blob/4f4940d25b313cf7216a7a2b63eb6ad95d005fa7/docs/src/figs/output_data_unit_flow.png)
+![image](https://github.com/Spine-project/SpineOpt.jl/blob/master/docs/src/figs/output_data_unit_flow.png?raw=true)
 
 To view the data, simply double-click on the timeseries value
 
 ### Example: `units_on`
  Consider the [units\_on](@ref)) optimisation variable. This variable is dimensioned on the [unit](@ref) object class. In the output datastore, the [report](@ref) and [stochastic\_scenario](@ref) are added as additional dimensions. Therefore, [units\_on](@ref) values will appear in the output datastore as timeseries parameters associated with the `report__unit__stochastic_scenario` relationship as shown below.
 
-![image](https://github.com/Spine-project/SpineOpt.jl/blob/4f4940d25b313cf7216a7a2b63eb6ad95d005fa7/docs/src/figs/output_data_units_on.png)
+![image](https://github.com/Spine-project/SpineOpt.jl/blob/1d158d7f76e0dc4d6952c6f6f95c21c4c0dc803d/docs/src/figs/output_data_units_on.png?raw=true)
 
 To view the data, simply double-click on the timeseries value
 
@@ -43,7 +43,7 @@ To view the data, simply double-click on the timeseries value
 
 In the example below, the relationship class `report__unit__stochastic_scenario` is selected in the relationship treem therefore results for that relationship class are showing in the relationship parameter pane. Furthermore, in the alternative tree, the alternative `10h TP Load _Reun SpineOpt...` is selected, meaning only results for that alternative are being displayed.
 
-![image](https://github.com/Spine-project/SpineOpt.jl/blob/5b0fcf9220293b26ad485ab6ffa9c9c799eecad2/docs/src/figs/output_data_altneratives.png)
+![image](https://github.com/Spine-project/SpineOpt.jl/blob/master/docs/src/figs/output_data_altneratives.png?raw=true)
 
 ## Output Writing Summary
  - We need an output object in our intput datastore for each variable or marginal value we want included in a report
