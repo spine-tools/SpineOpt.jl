@@ -22,7 +22,7 @@ on that variable, one can add an output object with the variable name prepended 
 Finally, if any constraint duals or reduced_cost values are requested via a report, calculate_duals is set to true and the final fixed LP solve is triggered.
 
 ## Output Data Temporal Resolution
-To control the resolution of report data (both outputs data and inputs data appearing in reports), we use the [output_resolution](@ref) [output](@ref) parameter. For the specific output (or input), this indicates the resolution at which the values should be reported. If [output_resolution](@ref) is null (the default), then results are reported at the highest available resolution that will follow from the temporal structure of the model. If [output_resolution](@ref) is a duration value, then the average value is reported. 
+To control the resolution of report data (both outputs data and inputs data appearing in reports), we use the [output\_resolution](@ref) [output](@ref) parameter. For the specific output (or input), this indicates the resolution at which the values should be reported. If [output\_resolution](@ref) is null (the default), then results are reported at the highest available resolution that will follow from the temporal structure of the model. If [output\_resolution](@ref) is a duration value, then the average value is reported. 
 
 ## Output Data Structure
 The structure of the output data will follow the structure of the input data with the inclusion of additional dimensions as described below:
@@ -53,7 +53,9 @@ In the example below, the relationship class `report__unit__stochastic_scenario`
 
 ## Output Writing Summary
  - We need an output object in our intput datastore for each variable or marginal value we want included in a report
- - We need to create a report object to contain our desired outputs which are added to our report via [report\_\_output](@ref) relationships
+ - Inputs data can also be reported. As above, we need to create an output object named after the input parameter we want reported 
+ - We need to create a report object to contain our desired outputs (or input parameters) which are added to our report via [report\_\_output](@ref) relationships
  - We need to create a [model\_\_report](@ref) object to write a specific report to the output datastore.
+ - The temporal resolution of outputs (which may also be input parameters) is controlled by the [output\_resolution](@ref) [output](@ref) duration parameter. If `null`, the highest available resolution is reported, otherwise the average is reported over the desired duration. 
  - Additional dimensions are added to the output data such as the [report](@ref) object, [stochastic\_scenario](@ref) and, in the case of unit_flow, the flow direction. 
  - Model outputs are tagged with altnernatives that are unique to the model run and scenario that generated them
