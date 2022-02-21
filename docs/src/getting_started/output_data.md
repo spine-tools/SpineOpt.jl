@@ -22,7 +22,7 @@ on that variable, one can add an output object with the variable name prepended 
 Finally, if any constraint duals or reduced_cost values are requested via a report, calculate_duals is set to true and the final fixed LP solve is triggered.
 
 ## Output Data Temporal Resolution
-To control the resolution of report data (both outputs data and inputs data appearing in reports), we use the [output\_resolution](@ref) [output](@ref) parameter. For the specific output (or input), this indicates the resolution at which the values should be reported. If [output\_resolution](@ref) is null (the default), then results are reported at the highest available resolution that will follow from the temporal structure of the model. If [output\_resolution](@ref) is a duration value, then the average value is reported. 
+To control the resolution of report data (both output data and input data appearing in reports), we use the [output\_resolution](@ref) [output](@ref) parameter. For the specific output (or input), this indicates the resolution at which the values should be reported. If [output\_resolution](@ref) is null (the default), results are reported at the highest available resolution that will follow from the temporal structure of the model. If [output\_resolution](@ref) is a duration value, then the average value is reported. 
 
 ## Output Data Structure
 The structure of the output data will follow the structure of the input data with the inclusion of additional dimensions as described below:
