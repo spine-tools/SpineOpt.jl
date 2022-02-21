@@ -99,7 +99,8 @@ function run_spineopt(
     log_level=3,
     optimize=true,
     use_direct_model=false,
-    filters=Dict("tool" => "object_activity_control")
+    filters=Dict("tool" => "object_activity_control"),
+    use_db_solver_options=false
 )
     @log log_level 0 "Running SpineOpt for $(url_in)..."
     version = find_version(url_in)
@@ -133,6 +134,9 @@ function run_spineopt(
             """
         end
     end
+
+    use_db_solver_options && ((mip_solver, lp_solver) = set_db_solvers())
+
     rerun_spineopt(
         url_out;
         mip_solver=mip_solver,
@@ -276,4 +280,48 @@ function write_report(m, default_url, output_value=output_value; alternative="")
             write_parameters(output_params, url; report=string(rpt_name), alternative=alternative)
         end
     end
+end
+
+function set_db_solvers()
+
+    db_mip_solver_val = db_mip_solver(model=first(model()))
+    db_mip_solver_pkg = SubString(string(db_mip_solver_val), 1, length(string(db_mip_solver_val))-3) 
+    db_mip_solver_options_val = db_mip_solver_options(model=first(model()))
+    
+    if db_mip_solver_options_val !== nothing 
+        db_mip_solver_options_dict = [(key => val) for (key, val) in db_mip_solver_options_val]
+    else
+        db_mip_solver_options_dict = []
+    end
+
+    db_mip_solver_module = Module(Symbol(db_mip_solver_pkg))
+
+    db_lp_solver_val = db_lp_solver(model=first(model()))
+    db_lp_solver_pkg = SubString(string(db_lp_solver_val), 1, length(string(db_lp_solver_val))-3) 
+    db_lp_solver_options_val = db_lp_solver_options(model=first(model()))
+    if db_lp_solver_options_val !== nothing
+        db_lp_solver_options_dict =  [(key => val) for (key, val) in db_lp_solver_options_val]
+    else
+        db_lp_solver_options_dict = []
+    end
+
+    db_lp_solver_module = Module(Symbol(db_lp_solver_pkg))
+
+    @eval using db_mip_solver_module
+    if db_lp_solver_val !== db_mip_solver_val
+        @eval using db_mip_solver_module
+    end
+
+    mip_solver = optimizer_with_attributes(
+		db_mip_solver_module.Optimizer, 
+		db_mip_solver_options_dict
+	)
+
+    lp_solver = optimizer_with_attributes(
+		db_lp_solver_module.Optimizer, 
+		db_lp_solver_options_dict
+	)
+
+    return mip_solver, lp_solver
+
 end
