@@ -11,12 +11,18 @@ Outputting of results to the output datastore is controlled using the [output](@
 ## Creating Reports
 [Report](@ref report)s are essentially a collection of outputs that can be written to an output datastore. Any number of report objects can be created. We add output items to a report by creating [report\_\_output](@ref) relationships between the output objects we want included and the desired report object. Finally, to write a specic report to the output database, we must create a [model\_\_report](@ref) relationship for each report object we want included in the output datastore.
 
+## Reporting of Input Parameters
+In addition to writing results as outputs to a datastore, SpineOpt can also report input parameter data. To allow specific input parameters to be included in a report, they must be first added as [output](@ref) objects with a name corresponding exactly to the parameter name. For example, to allow the [demand](@ref) parameter to be included in a report, there must be a correspondingly named [output](@ref) object called `demand`. Similarly to outputs, to include an input parameter in a report, we must create a [report\_\_output](@ref) relationship between the output object representing the input parameter (e.g. `demand`) and the desired report object.
+
 ## Reporting of Dual Values
 To report the dual of a constraint, one can add an output item with the corresponding constraint name (e.g. `constraint_nodal_balance`) and add that to a report. This will cause the corresponding constraint's marginal value to be reported in the output DB. When adding a constraint name as an output we need to preface the actual constraint name with `constraint_` to avoid ambiguity with variable names (e.g. `units_available`). So to report the marginal value of `units_available` we add an output object called `constraint_units_available`.
 
 To report the `reduced_cost()` for a variable which is the marginal value of the associated active bound or fix constraints
 on that variable, one can add an output object with the variable name prepended by `bound_`. So, to report the units_on reduced_cost value, one would create an output item called `bound_units_on`. If added to a report, this will cause the reduced cost of units_on in the final fixed LP to be written to the output db.
 Finally, if any constraint duals or reduced_cost values are requested via a report, calculate_duals is set to true and the final fixed LP solve is triggered.
+
+## Output Data Temporal Resolution
+To control the resolution of report data (both outputs data and inputs data appearing in reports), we use the [output_resolution](@ref) [output](@ref) parameter. For the specific output (or input), this indicates the resolution at which the values should be reported. If [output_resolution](@ref) is null (the default), then results are reported at the highest available resolution that will follow from the temporal structure of the model. If [output_resolution](@ref) is a duration value, then the average value is reported. 
 
 ## Output Data Structure
 The structure of the output data will follow the structure of the input data with the inclusion of additional dimensions as described below:
