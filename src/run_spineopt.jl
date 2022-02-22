@@ -286,8 +286,7 @@ function set_db_solvers()
 
     db_mip_solver_pkg = Symbol("HiGHS")
     @eval using $db_mip_solver_pkg
-    db_mip_solver_mod = getproperty(@__MODULE__, db_mip_solver_pkg)
-    @info "setting MIP Solver" @__MODULE__
+    db_mip_solver_mod = getproperty(@__MODULE__, db_mip_solver_pkg)    
     mip_solver = optimizer_with_attributes(db_mip_solver_mod.Optimizer)
     return (mip_solver, mip_solver)
 
