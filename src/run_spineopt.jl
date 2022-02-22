@@ -88,7 +88,7 @@ added by `add_constraints`.
 """
 function run_spineopt(
     url_in::String,
-    url_out::String=url_in;
+    url_out::Union{String,Nothing}=url_in;
     upgrade=false,
     mip_solver=nothing,
     lp_solver=nothing,
@@ -147,7 +147,7 @@ function run_spineopt(
 end
 
 function rerun_spineopt(
-    url_out::String;
+    url_out::Union{String,Nothing};
     mip_solver=nothing,
     lp_solver=nothing,
     add_user_variables=m -> nothing,
@@ -256,6 +256,7 @@ Write report from given model into a db.
 - `alternative::String`: an alternative to pass to `SpineInterface.write_parameters`.
 """
 function write_report(m, default_url, output_value=output_value; alternative="")
+    default_url === nothing && return
     reports = Dict()
     outputs = Dict()
     for rpt in model__report(model=m.ext[:instance])
