@@ -282,46 +282,51 @@ function write_report(m, default_url, output_value=output_value; alternative="")
     end
 end
 
-function set_db_solvers()
+function set_db_solvers()   
 
     db_mip_solver_val = db_mip_solver(model=first(model()))
-    db_mip_solver_pkg = SubString(string(db_mip_solver_val), 1, length(string(db_mip_solver_val))-3) 
+    db_mip_solver_pkg = Symbol(SubString(string(db_mip_solver_val), 1, length(string(db_mip_solver_val))-3) )
     db_mip_solver_options_val = db_mip_solver_options(model=first(model()))
     
+    
     if db_mip_solver_options_val !== nothing 
-        db_mip_solver_options_dict = [(key => val) for (key, val) in db_mip_solver_options_val]
+        db_mip_solver_options_dict = Dict(String(key) => val.value for (key, val) in db_mip_solver_options_val)
     else
-        db_mip_solver_options_dict = []
+        db_mip_solver_options_dict = Dict()
     end
-
-    db_mip_solver_module = Module(Symbol(db_mip_solver_pkg))
+    
 
     db_lp_solver_val = db_lp_solver(model=first(model()))
-    db_lp_solver_pkg = SubString(string(db_lp_solver_val), 1, length(string(db_lp_solver_val))-3) 
+    db_lp_solver_pkg = Symbol(SubString(string(db_lp_solver_val), 1, length(string(db_lp_solver_val))-3))
     db_lp_solver_options_val = db_lp_solver_options(model=first(model()))
+
     if db_lp_solver_options_val !== nothing
-        db_lp_solver_options_dict =  [(key => val) for (key, val) in db_lp_solver_options_val]
+        db_lp_solver_options_dict =  Dict(String(key) => val.value for (key, val) in db_lp_solver_options_val)
     else
-        db_lp_solver_options_dict = []
+        db_lp_solver_options_dict = Dict()
     end
-
-    db_lp_solver_module = Module(Symbol(db_lp_solver_pkg))
-
-    @eval using db_mip_solver_module
-    if db_lp_solver_val !== db_mip_solver_val
-        @eval using db_mip_solver_module
+    db_mip_solver_pkg = Symbol("CPLEX")
+    @eval using $db_mip_solver_pkg
+    db_mip_solver_mod = getproperty(@__MODULE__, db_mip_solver_pkg)
+    @info "setting MIP Solver" 
+    mip_solver = JuMP.optimizer_with_attributes(db_mip_solver_mod.Optimizer)
+    #mip_solver = optimizer_with_attributes(
+	#	db_mip_solver_mod.Optimizer,
+	#	db_mip_solver_options_dict...
+	#)
+    @info "setting LP Solver" 
+    if db_lp_solver_val == db_mip_solver_val
+        db_lp_solver_pkg = db_mip_solver_pkg
+        db_lp_solver_mod = db_mip_solver_mod
+    else
+        @eval using $db_lp_solver_pkg
+        db_lp_solver_mod = getproperty(@__MODULE__, db_lp_solver_pkg)
     end
-
-    mip_solver = optimizer_with_attributes(
-		db_mip_solver_module.Optimizer, 
-		db_mip_solver_options_dict
-	)
-
+  
+    @info "setting LP Solver"
     lp_solver = optimizer_with_attributes(
-		db_lp_solver_module.Optimizer, 
-		db_lp_solver_options_dict
+		db_lp_solver_mod.Optimizer,
+		db_lp_solver_options_dict...
 	)
-
     return mip_solver, lp_solver
-
 end
