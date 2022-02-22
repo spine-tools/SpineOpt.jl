@@ -161,7 +161,7 @@ function rerun_spineopt(
     optimize=true,
     use_direct_model=false
 )
-    @eval using JuMP
+
     # High-level algorithm selection. For now, selecting based on defined model types,
     # but may want more robust system in future
     rerun_spineopt = !isempty(model(model_type=:spineopt_master)) ? rerun_spineopt_mp : rerun_spineopt_sp
@@ -282,7 +282,18 @@ function write_report(m, default_url, output_value=output_value; alternative="")
     end
 end
 
-function set_db_solvers()   
+function set_db_solvers()
+
+    db_mip_solver_pkg = Symbol("HiGHS")
+    @eval using $db_mip_solver_pkg
+    db_mip_solver_mod = getproperty(@__MODULE__, db_mip_solver_pkg)
+    @info "setting MIP Solver" @__MODULE__
+    mip_solver = optimizer_with_attributes(db_mip_solver_mod.Optimizer)
+    return (mip_solver, mip_solver)
+
+end
+
+function set_db_solvers_2()   
 
     db_mip_solver_val = db_mip_solver(model=first(model()))
     db_mip_solver_pkg = Symbol(SubString(string(db_mip_solver_val), 1, length(string(db_mip_solver_val))-3) )
@@ -308,13 +319,14 @@ function set_db_solvers()
     db_mip_solver_pkg = Symbol("CPLEX")
     @eval using $db_mip_solver_pkg
     db_mip_solver_mod = getproperty(@__MODULE__, db_mip_solver_pkg)
-    @info "setting MIP Solver" 
-    mip_solver = JuMP.optimizer_with_attributes(db_mip_solver_mod.Optimizer)
+    @info "setting MIP Solver" @__MODULE__
+    mip_solver = optimizer_with_attributes(db_mip_solver_mod.Optimizer)
+
     #mip_solver = optimizer_with_attributes(
 	#	db_mip_solver_mod.Optimizer,
 	#	db_mip_solver_options_dict...
 	#)
-    @info "setting LP Solver" 
+    
     if db_lp_solver_val == db_mip_solver_val
         db_lp_solver_pkg = db_mip_solver_pkg
         db_lp_solver_mod = db_mip_solver_mod
