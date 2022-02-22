@@ -23,7 +23,7 @@ function _is_time_slice_set_equal(ts_a, ts_b)
     length(ts_a) == length(ts_b) && all(_is_time_slice_equal(a, b) for (a, b) in zip(sort(ts_a), sort(ts_b)))
 end
 
-function _model(model_type=:spineopt_operations)
+function _model(model_type=:spineopt_standard)
     m = Model()
     m.ext[:instance] = first(model(model_type=model_type))
     m
@@ -82,15 +82,15 @@ end
         m_start = model_start(model=m.ext[:instance])
         for t in SpineOpt.time_slice(m, temporal_block=temporal_block(:block_a))
             t_end = end_(t)
-            if t_end <= m_start + Hour(4) 
+            if t_end <= m_start + Hour(4)
                 @test SpineOpt.representative_time_slice(m, t) == rep_blk1_ts[1]
-            elseif t_end <= m_start + Hour(8) 
+            elseif t_end <= m_start + Hour(8)
                 @test SpineOpt.representative_time_slice(m, t) == t
-            elseif t_end <= m_start + Hour(12) 
+            elseif t_end <= m_start + Hour(12)
                 @test SpineOpt.representative_time_slice(m, t) == rep_blk2_ts[1]
-            elseif t_end <= m_start + Hour(16) 
+            elseif t_end <= m_start + Hour(16)
                 @test SpineOpt.representative_time_slice(m, t) == rep_blk2_ts[2]
-            elseif t_end <= m_start + Hour(20) 
+            elseif t_end <= m_start + Hour(20)
                 @test SpineOpt.representative_time_slice(m, t) == rep_blk2_ts[3]
             else
                 @test SpineOpt.representative_time_slice(m, t) == t

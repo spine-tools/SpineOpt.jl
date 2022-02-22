@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function rerun_spineopt_mp(
+function rerun_spineopt_benders_algorithm(
     url_out::String;
     mip_solver=nothing,
     lp_solver=nothing,
@@ -31,8 +31,8 @@ function rerun_spineopt_mp(
     mip_solver = _default_mip_solver(mip_solver)
     lp_solver = _default_lp_solver(lp_solver)
     outputs = Dict()
-    mp = create_model(mip_solver, use_direct_model, :spineopt_master)
-    m = create_model(mip_solver, use_direct_model, :spineopt_operations)
+    mp = create_model(mip_solver, use_direct_model, :spineopt_benders_master)
+    m = create_model(mip_solver, use_direct_model, :spineopt_benders_operations)
     m.ext[:is_sub_problem] = true
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)

@@ -40,7 +40,7 @@ import SpineOpt:
     node_stochastic_time_indices,
     unit_stochastic_time_indices,
     node_investment_dynamic_time_indices,
-    rerun_spineopt_mp
+    rerun_spineopt_benders_algorithm
 
 # Test code uses legacy syntax for `import_data`, so interpret here.
 SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, Dict(kwargs...), "testing")

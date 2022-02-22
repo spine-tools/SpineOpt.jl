@@ -142,7 +142,7 @@ function run_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
-        use_direct_model=use_direct_model
+        use_direct_model=use_direct_model #FIXME: make sure that this works with solvers, possibly adapt union? + allow for conflicts if direct model is used
     )
 end
 
@@ -155,12 +155,28 @@ function rerun_spineopt(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    use_direct_model=false
+    use_direct_model=false,
+    alternative_objective=nothing,
+    iterations=nothing
 )
     @eval using JuMP
     # High-level algorithm selection. For now, selecting based on defined model types,
     # but may want more robust system in future
-    rerun_spineopt = !isempty(model(model_type=:spineopt_master)) ? rerun_spineopt_mp : rerun_spineopt_sp
+    if !isempty(model(model_type=:spineopt_benders_master))
+        if !isempty(model(model_type=:spineopt_MGA))
+            @error "Currently the combination of Benders and MGA is supported. Please make sure that you do't have a
+            `model_type=:spineopt_benders_master` together with another model of type `:spineopt_MGA`"
+        elseif !isempty(model(model_type=:spineopt_benders_opertions))
+            rerun_spineopt = rerun_spineopt_benders_algorithm
+        else
+            @error "You cannot define a Benders Master problem without a related Benders Sbuproblem. Please make sure there is a Model object
+            with the `model_type=:spineopt_benders_operations`"
+        end
+    elseif !isempty(model(model_type=:spineopt_MGA))
+        rerun_spineopt = rerun_spineopt_MGA_algorithm
+    else
+        rerun_spineopt = rerun_spineopt_sp
+    end
     Base.invokelatest(
         rerun_spineopt,
         url_out;
@@ -171,7 +187,8 @@ function rerun_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
-        use_direct_model=use_direct_model
+        use_direct_model=use_direct_model,
+        alternative_objective=nothing
     )
 end
 
@@ -214,7 +231,7 @@ function _output_value_by_entity(by_entity, overwrite_results_on_rolling, output
 end
 
 
-function objective_terms(m)
+function objective_terms(m) #FIXME: this should just be benders definind the objective function themselves, not haking into run_spineopt
     # if we have a decomposed structure, master problem costs (investments) should not be included
     invest_terms = [:unit_investment_costs, :connection_investment_costs, :storage_investment_costs]
     op_terms = [
@@ -231,13 +248,13 @@ function objective_terms(m)
         :ramp_costs,
         :units_on_costs,
     ]
-    if model_type(model=m.ext[:instance]) == :spineopt_operations
+    if (model_type(model=m.ext[:instance]) == :spineopt_benders_operations || model_type(model=m.ext[:instance]) ==:spineopt_standard || model_type(model=m.ext[:instance]) ==:spineopt_MGA)
         if m.ext[:is_subproblem]
             op_terms
         else
             [op_terms; invest_terms]
         end
-    elseif model_type(model=m.ext[:instance]) == :spineopt_master
+    elseif model_type(model=m.ext[:instance]) == :spineopt_benders_master
         invest_terms
     end
 end

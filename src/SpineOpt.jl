@@ -42,11 +42,13 @@ include("data_structure/migration.jl")
 
 _lazy_include_file_paths = [
 	"run_spineopt_sp.jl",
-	"run_spineopt_mp.jl",
+	"run_spineopt_benders_algorithm.jl",
+	"run_spineopt_MGA.jl",
 	"util/misc.jl",
 	"util/postprocess_results.jl",
 	"util/write_information_files.jl",
 	"data_structure/benders_data.jl",
+	"data_structure/MGA_data.jl",
 	"data_structure/temporal_structure.jl",
 	"data_structure/stochastic_structure.jl",
 	"data_structure/preprocess_data_structure.jl",

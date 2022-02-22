@@ -49,7 +49,7 @@ on that variable, one can add an output object with the variable name prepended 
 Finally, if any constraint duals or reduced_cost values are requested via a report, calculate_duals is set to true and the final fixed LP solve is triggered.
 
 ## Using Decomposition
-The decomposition framework creates a master problem where the investment variables are optimised. The decomposition framework is invoked when a model object with the parameter [model\_type](@ref) set to `:spineopt_operations` is found and a second model object with `model_type` set to `:spineopt_master`. Once these conditions are met, all investment decisions in the model are automatically decomposed and optimised in the master problem. This behaviour may change in the future to allow some investment decisions to be optimised in the operations problem and some optimised in the master problem as desired.
+The decomposition framework creates a master problem where the investment variables are optimised. The decomposition framework is invoked when a model object with the parameter [model\_type](@ref) set to `:spineopt_benders_operations` is found and a second model object with `model_type` set to `:spineopt_master`. Once these conditions are met, all investment decisions in the model are automatically decomposed and optimised in the master problem. This behaviour may change in the future to allow some investment decisions to be optimised in the operations problem and some optimised in the master problem as desired.
 
 **Steps to involke decomposition in an investments problem**  
 Assuming one has set up a conventional investments problem as described in [Investment Optimization](@ref) the following additional steps are required to utilise the decomposition framework:
