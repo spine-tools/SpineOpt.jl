@@ -282,49 +282,44 @@ function write_report(m, default_url, output_value=output_value; alternative="")
     end
 end
 
-function set_db_solvers()
-
+function set_db_solvers_cutdown()
     db_mip_solver_pkg = Symbol("HiGHS")
     @eval using $db_mip_solver_pkg
     db_mip_solver_mod = getproperty(@__MODULE__, db_mip_solver_pkg)    
-    mip_solver = optimizer_with_attributes(db_mip_solver_mod.Optimizer)
-    return (mip_solver, mip_solver)
-
+    mip_solver = Base.invokelatest(optimizer_with_attributes, db_mip_solver_mod.Optimizer)
+    return (mip_solver, mip_solver)    
 end
 
-function set_db_solvers_2()   
+function set_db_solvers()   
 
     db_mip_solver_val = db_mip_solver(model=first(model()))
     db_mip_solver_pkg = Symbol(SubString(string(db_mip_solver_val), 1, length(string(db_mip_solver_val))-3) )
     db_mip_solver_options_val = db_mip_solver_options(model=first(model()))
-    
-    
+        
     if db_mip_solver_options_val !== nothing 
-        db_mip_solver_options_dict = Dict(String(key) => val.value for (key, val) in db_mip_solver_options_val)
+        db_mip_solver_options_dict = [(String(key) => val.value) for (key, val) in db_mip_solver_options_val]
     else
-        db_mip_solver_options_dict = Dict()
-    end
-    
+        db_mip_solver_options_dict = []
+    end    
 
     db_lp_solver_val = db_lp_solver(model=first(model()))
     db_lp_solver_pkg = Symbol(SubString(string(db_lp_solver_val), 1, length(string(db_lp_solver_val))-3))
     db_lp_solver_options_val = db_lp_solver_options(model=first(model()))
 
     if db_lp_solver_options_val !== nothing
-        db_lp_solver_options_dict =  Dict(String(key) => val.value for (key, val) in db_lp_solver_options_val)
+        db_lp_solver_options_dict =  [String(key) => val.value for (key, val) in db_lp_solver_options_val]
     else
-        db_lp_solver_options_dict = Dict()
+        db_lp_solver_options_dict = []
     end
     db_mip_solver_pkg = Symbol("CPLEX")
     @eval using $db_mip_solver_pkg
     db_mip_solver_mod = getproperty(@__MODULE__, db_mip_solver_pkg)
     @info "setting MIP Solver" @__MODULE__
-    mip_solver = optimizer_with_attributes(db_mip_solver_mod.Optimizer)
-
-    #mip_solver = optimizer_with_attributes(
-	#	db_mip_solver_mod.Optimizer,
-	#	db_mip_solver_options_dict...
-	#)
+    
+    mip_solver = Base.invokelatest(optimizer_with_attributes(
+		db_mip_solver_mod.Optimizer,
+		db_mip_solver_options_dict...
+	))
     
     if db_lp_solver_val == db_mip_solver_val
         db_lp_solver_pkg = db_mip_solver_pkg
@@ -335,9 +330,9 @@ function set_db_solvers_2()
     end
   
     @info "setting LP Solver"
-    lp_solver = optimizer_with_attributes(
+    lp_solver = Base.invokelatest(optimizer_with_attributes(
 		db_lp_solver_mod.Optimizer,
 		db_lp_solver_options_dict...
-	)
-    return mip_solver, lp_solver
+	))
+    return (mip_solver, lp_solver)
 end

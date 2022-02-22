@@ -88,6 +88,7 @@
         ["db_mip_solver_list", "KNITRO.jl"],
         ["db_mip_solver_list", "Cbc.jl"],
         ["db_mip_solver_list", "CPLEX.jl"],
+        ["db_mip_solver_list", "HiGHS.jl"],
         ["db_mip_solver_list", "Xpress.jl"],
         ["db_mip_solver_list", "GLPK.jl"],
         ["db_mip_solver_list", "Gurobi.jl"],
