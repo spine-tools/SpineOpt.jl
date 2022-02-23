@@ -26,12 +26,21 @@ function rerun_spineopt_sp(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    use_direct_model=false
-)
-    mip_solver = _default_mip_solver(mip_solver)
-    lp_solver = _default_lp_solver(lp_solver)
+    use_direct_model=false,
+    use_db_solver_options=false
+)    
+    
     outputs = Dict()
+    
+    if use_db_solver_options        
+        (mip_solver, lp_solver) = set_db_solvers(:spineopt_operations)
+    else
+        mip_solver = _default_mip_solver(mip_solver)
+        lp_solver = _default_lp_solver(lp_solver)
+    end
+
     m = create_model(mip_solver, use_direct_model, :spineopt_operations)
+
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
