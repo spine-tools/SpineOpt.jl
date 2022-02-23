@@ -422,7 +422,7 @@ function to_time_slice(m::Model; t::TimeSlice)
         for time_slices in values(t_set.block_time_slices)
         for s in _to_time_slice(time_slices, t)
     )
-    in_gaps = isempty(indices(representative_periods_mapping)) ?
+    in_gaps = !isempty(indices(representative_periods_mapping)) ?
         [] : (
         s
         for t_set in t_sets
