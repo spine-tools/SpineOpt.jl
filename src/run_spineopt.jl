@@ -287,7 +287,7 @@ end
 function set_db_solvers(model_type)   
 
     instance = first(model(model_type=model_type))    
-    db_mip_solver_pkg = string(db_mip_solver(model=instance))
+    db_mip_solver_pkg = db_mip_solver(model=instance)
 
     if db_mip_solver_pkg === nothing
         @warn """ `run_spineopt() was called with `use_db_solver_options=true` but no `db_mip_solver` parameter was found for model $instance)
@@ -296,6 +296,7 @@ function set_db_solvers(model_type)
 
         mip_solver = _default_mip_solver(nothing)        
     else
+        db_mip_solver_pkg = string(db_mip_solver_pkg)
         db_mip_solver_name = Symbol(SubString(db_mip_solver_pkg, 1, length(db_mip_solver_pkg)-3) )
         db_mip_solver_options_map = db_mip_solver_options(model=instance)
         db_mip_solver_options_arr = []
@@ -303,7 +304,7 @@ function set_db_solvers(model_type)
         db_mip_solver_options_map !== nothing && (    
             db_mip_solver_options_arr = [(String(key) => (isa(val.value, Number) ? (isinteger(val.value) ? convert(Int64, val.value) : val.value) : string(val.value)))                         
                 for solver_key in db_mip_solver_options_map if string(solver_key) == db_mip_solver_pkg    
-                for (key, val) in db_mip_solver_options_map[solver_key]                
+                for (key, val) in db_mip_solver_options_map[solver_key]
             ]
         )   
         
@@ -317,7 +318,7 @@ function set_db_solvers(model_type)
                
     end
 
-    db_lp_solver_pkg = string(db_lp_solver(model=instance))
+    db_lp_solver_pkg = db_lp_solver(model=instance)
 
     if db_lp_solver_pkg === nothing
         @warn """ `run_spineopt() was called with `use_db_solver_options=true` but no `db_lp_solver` parameter was found for model $instance)
@@ -326,6 +327,7 @@ function set_db_solvers(model_type)
 
         lp_solver = _default_lp_solver(nothing)        
     else
+        db_lp_solver_pkg = string(db_lp_solver_pkg)
         db_lp_solver_name = Symbol(SubString(db_lp_solver_pkg, 1, length(db_lp_solver_pkg)-3) )
         db_lp_solver_options_map = db_lp_solver_options(model=instance)
         db_lp_solver_options_arr = []
@@ -333,7 +335,7 @@ function set_db_solvers(model_type)
         db_lp_solver_options_map !== nothing && (
             db_lp_solver_options_arr = [(String(key) => (isa(val.value, Number) ? (isinteger(val.value) ? convert(Int64, val.value) : val.value) : string(val.value))) 
                 for solver_key in db_lp_solver_options_map if string(solver_key) == db_lp_solver_pkg    
-                for (key, val) in db_lp_solver_options_map
+                for (key, val) in db_lp_solver_options_map[solver_key]
             ]
         )  
         
