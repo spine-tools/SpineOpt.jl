@@ -284,79 +284,67 @@ function write_report(m, default_url, output_value=output_value; alternative="")
     end
 end
 
-function set_db_solvers_cutdown()
-    db_mip_solver_pkg = Symbol("HiGHS")
-    @eval using $db_mip_solver_pkg
-    db_mip_solver_mod = getproperty(@__MODULE__, db_mip_solver_pkg)    
-    mip_solver = Base.invokelatest(optimizer_with_attributes, db_mip_solver_mod.Optimizer)
-    return (mip_solver, mip_solver)    
-end
-
 function set_db_solvers(model_type)   
 
     instance = first(model(model_type=model_type))    
-    db_mip_solver_val = db_mip_solver(model=instance)
+    db_mip_solver_pkg = string(db_mip_solver(model=instance))
 
-    if db_mip_solver_val === nothing
+    if db_mip_solver_pkg === nothing
         @warn """ `run_spineopt() was called with `use_db_solver_options=true` but no `db_mip_solver` parameter was found for model $instance)
                   using the default MIP solver instead
               """
 
         mip_solver = _default_mip_solver(nothing)        
     else
-        db_mip_solver_pkg = Symbol(SubString(string(db_mip_solver_val), 1, length(string(db_mip_solver_val))-3) )
-        db_mip_solver_options_val = db_mip_solver_options(model=instance)        
-        db_mip_solver_options_dict = []
-        db_mip_solver_options_val !== nothing && (db_mip_solver_options_dict = [(String(key) => val.value) for (key, val) in db_mip_solver_options_val])
-
-        @info db_mip_solver_options_dict
-        @info db_mip_solver_options_val        
-
-        @eval using $db_mip_solver_pkg
-        db_mip_solver_mod = getproperty(@__MODULE__, db_mip_solver_pkg)
-        @info "setting MIP Solver"        
+        db_mip_solver_name = Symbol(SubString(db_mip_solver_pkg, 1, length(db_mip_solver_pkg)-3) )
+        db_mip_solver_options_map = db_mip_solver_options(model=instance)
+        db_mip_solver_options_arr = []
+        
+        db_mip_solver_options_map !== nothing && (    
+            db_mip_solver_options_arr = [(String(key) => (isa(val.value, Number) ? (isinteger(val.value) ? convert(Int64, val.value) : val.value) : string(val.value)))                         
+                for solver_key in db_mip_solver_options_map if string(solver_key) == db_mip_solver_pkg    
+                for (key, val) in db_mip_solver_options_map[solver_key]                
+            ]
+        )   
+        
+        @eval using $db_mip_solver_name
+        db_mip_solver_mod = getproperty(@__MODULE__, db_mip_solver_name)        
         
         mip_solver = Base.invokelatest(optimizer_with_attributes,
             db_mip_solver_mod.Optimizer,
-            db_mip_solver_options_dict...
+            db_mip_solver_options_arr...
         )
                
     end
 
-    db_lp_solver_val = db_lp_solver(model=instance)
-    if db_lp_solver_val === nothing
-        @warn """ `run_spineopt() was called with `use_db_solver_options=true` but no `db_lp_solver` parameter was found for model $instance
-                  using the default LP solver instead              """
+    db_lp_solver_pkg = string(db_lp_solver(model=instance))
 
-        lp_solver = _default_lp_solver(nothing)
+    if db_lp_solver_pkg === nothing
+        @warn """ `run_spineopt() was called with `use_db_solver_options=true` but no `db_lp_solver` parameter was found for model $instance)
+                  using the default LP solver instead
+              """
+
+        lp_solver = _default_lp_solver(nothing)        
     else
-        db_lp_solver_pkg = Symbol(SubString(string(db_lp_solver_val), 1, length(string(db_lp_solver_val))-3))
-        db_lp_solver_options_val = db_lp_solver_options(model=instance)
-
-        if db_lp_solver_options_val !== nothing
-            db_lp_solver_options_dict =  [String(key) => val.value for (key, val) in db_lp_solver_options_val]
-        else
-            db_lp_solver_options_dict = []
-        end
-
-        @info db_lp_solver_options_dict
-        @info db_lp_solver_options_val 
-        
-        if db_lp_solver_val == db_mip_solver_val
-            db_lp_solver_pkg = db_mip_solver_pkg
-            db_lp_solver_mod = db_mip_solver_mod            
-        else
-            @eval using $db_lp_solver_pkg
-            db_lp_solver_mod = getproperty(@__MODULE__, db_lp_solver_pkg)
-        end
+        db_lp_solver_name = Symbol(SubString(db_lp_solver_pkg, 1, length(db_lp_solver_pkg)-3) )
+        db_lp_solver_options_map = db_lp_solver_options(model=instance)
+        db_lp_solver_options_arr = []
   
-        @info "setting LP Solver"
+        db_lp_solver_options_map !== nothing && (
+            db_lp_solver_options_arr = [(String(key) => (isa(val.value, Number) ? (isinteger(val.value) ? convert(Int64, val.value) : val.value) : string(val.value))) 
+                for solver_key in db_lp_solver_options_map if string(solver_key) == db_lp_solver_pkg    
+                for (key, val) in db_lp_solver_options_map
+            ]
+        )  
+        
+        @eval using $db_lp_solver_name
+        db_lp_solver_mod = getproperty(@__MODULE__, Symbol(db_lp_solver_name))        
         
         lp_solver = Base.invokelatest(optimizer_with_attributes,
             db_lp_solver_mod.Optimizer,
-            db_lp_solver_options_dict...
+            db_lp_solver_options_arr...
         )
-        
+               
     end
 
     return (mip_solver, lp_solver)
