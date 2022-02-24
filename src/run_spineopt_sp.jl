@@ -26,17 +26,26 @@ function rerun_spineopt_sp(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    use_direct_model=false,
-    use_db_solver_options=false
+    use_direct_model=false    
 )    
     
-    outputs = Dict()
+    outputs = Dict()    
     
-    if use_db_solver_options        
-        (mip_solver, lp_solver) = set_db_solvers(:spineopt_operations)
+    if mip_solver === nothing
+        @timelog log_level 2 "setting MIP solver" mip_solver = set_db_mip_solver(:spineopt_operations)
+        @log log_level 2 "$mip_solver"
     else
-        mip_solver = _default_mip_solver(mip_solver)
-        lp_solver = _default_lp_solver(lp_solver)
+        @timelog log_level 2 "setting MIP solver" mip_solver = _default_mip_solver(mip_solver)        
+        @log log_level 2 "$mip_solver"
+    end
+    
+
+    if lp_solver === nothing
+        @timelog log_level 2 "setting LP solver" lp_solver = set_db_lp_solver(:spineopt_operations)
+        @log log_level 2 "$lp_solver"
+    else
+        @timelog log_level 2 "setting LP solver" lp_solver = _default_lp_solver(mip_solver)
+        @log log_level 2 "$lp_solver"
     end
 
     m = create_model(mip_solver, use_direct_model, :spineopt_operations)

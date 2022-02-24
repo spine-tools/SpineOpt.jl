@@ -99,8 +99,7 @@ function run_spineopt(
     log_level=3,
     optimize=true,
     use_direct_model=false,
-    filters=Dict("tool" => "object_activity_control"),
-    use_db_solver_options=false
+    filters=Dict("tool" => "object_activity_control")
 )
     @log log_level 0 "Running SpineOpt for $(url_in)..."
     version = find_version(url_in)
@@ -144,9 +143,7 @@ function run_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
-        use_direct_model=use_direct_model,        
-        use_db_solver_options=use_db_solver_options
-
+        use_direct_model=use_direct_model
     )
 end
 
@@ -176,8 +173,7 @@ function rerun_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
-        use_direct_model=use_direct_model,
-        use_db_solver_options=use_db_solver_options
+        use_direct_model=use_direct_model        
     )
 end
 
@@ -284,13 +280,22 @@ function write_report(m, default_url, output_value=output_value; alternative="")
     end
 end
 
-function set_db_solvers(model_type)   
+"""
+    function set_db_mip_solver(model_type)
+
+Sets the MIP solver and solver options for a given `model_type` based
+    on the db_mip_solver and db_mip_solver_options parameters from the
+    input datastore. If mip_solver argument is provided in the call to 
+    run_spineopt, this will override this method
+"""
+
+function set_db_mip_solver(model_type)
 
     instance = first(model(model_type=model_type))    
     db_mip_solver_pkg = db_mip_solver(model=instance)
 
     if db_mip_solver_pkg === nothing
-        @warn """ `run_spineopt() was called with `use_db_solver_options=true` but no `db_mip_solver` parameter was found for model $instance)
+        @warn """ No `db_mip_solver` parameter was found for model $instance)
                   using the default MIP solver instead
               """
 
@@ -318,10 +323,26 @@ function set_db_solvers(model_type)
                
     end
 
+    return mip_solver
+
+end
+
+"""
+    function set_db_lp_solver(model_type)
+
+Sets the LP solver for a given `model_type` based on the db_lp_solver and db_lp_solver_options
+    parameters from the input datastore. If the lp_solver argument is provided
+    in the call to run_spineopt, this will override this method
+"""
+
+function set_db_lp_solver(model_type)
+
+    instance = first(model(model_type=model_type))        
+
     db_lp_solver_pkg = db_lp_solver(model=instance)
 
     if db_lp_solver_pkg === nothing
-        @warn """ `run_spineopt() was called with `use_db_solver_options=true` but no `db_lp_solver` parameter was found for model $instance)
+        @warn """ No `db_lp_solver` parameter was found for model $instance)
                   using the default LP solver instead
               """
 
@@ -345,10 +366,9 @@ function set_db_solvers(model_type)
         lp_solver = Base.invokelatest(optimizer_with_attributes,
             db_lp_solver_mod.Optimizer,
             db_lp_solver_options_arr...
-        )
-               
+        )               
     end
 
-    return (mip_solver, lp_solver)
+    return lp_solver
 
 end

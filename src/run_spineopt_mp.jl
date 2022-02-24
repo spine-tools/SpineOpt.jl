@@ -26,17 +26,23 @@ function rerun_spineopt_mp(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    use_direct_model=false,
-    use_db_solver_options=false)
+    use_direct_model=false
+)
 
     outputs = Dict()    
-
-    if use_db_solver_options        
-        (mip_solver_mp, lp_solver_mp) = set_db_solvers(:spineopt_master)
-        (mip_solver_m, lp_solver_m) = set_db_solvers(:spineopt_operations)
+    
+    if mip_solver === nothing
+        mip_solver_mp = set_db_mip_solver(:spineopt_master)
+        mip_solver_m = set_db_mip_solver(:spineopt_operations)        
     else
         mip_solver_mp = _default_mip_solver(mip_solver)
-        mip_solver_m = mip_solver_mp
+        mip_solver_m = mip_solver_mp        
+    end
+
+    if lp_solver === nothing        
+        lp_solver_mp = set_db_lp_solver(:spineopt_master)
+        lp_solver_m = set_db_lp_solver(:spineopt_operations)
+    else        
         lp_solver_mp = _default_lp_solver(lp_solver)
         lp_solver_m = lp_solver_mp
     end
