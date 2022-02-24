@@ -26,29 +26,20 @@ function rerun_spineopt_mp(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    use_direct_model=false
+    use_direct_model=false,
+    db_mip_solvers=[],
+    db_lp_solvers=[]
 )
 
-    outputs = Dict()    
-    
-    if mip_solver === nothing
-        mip_solver_mp = set_db_mip_solver(:spineopt_master)
-        mip_solver_m = set_db_mip_solver(:spineopt_operations)        
-    else
-        mip_solver_mp = _default_mip_solver(mip_solver)
-        mip_solver_m = mip_solver_mp        
-    end
+    outputs = Dict()         
 
-    if lp_solver === nothing        
-        lp_solver_mp = set_db_lp_solver(:spineopt_master)
-        lp_solver_m = set_db_lp_solver(:spineopt_operations)
-    else        
-        lp_solver_mp = _default_lp_solver(lp_solver)
-        lp_solver_m = lp_solver_mp
-    end
+    mp = create_model(db_mip_solvers, use_direct_model, :spineopt_master)
+    m = create_model(db_mip_solvers, use_direct_model, :spineopt_operations)
 
-    mp = create_model(mip_solver_mp, use_direct_model, :spineopt_master)
-    m = create_model(mip_solver_m, use_direct_model, :spineopt_operations)
+    lp_solver_m = db_lp_solvers[m.ext[:instance]]
+    lp_solver_mp = db_lp_solvers[mp.ext[:instance]]
+    mip_solver_m = db_mip_solvers[m.ext[:instance]]
+    mip_solver_mp = db_mip_solvers[mp.ext[:instance]]
 
     m.ext[:is_sub_problem] = true
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
