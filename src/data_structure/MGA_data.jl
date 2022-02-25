@@ -17,155 +17,196 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# function save_MGA_solution(mp)
-#     function _save_mga_values(
-#         MGA_cls::Union{ObjectClass,RelationshipClass},
-#         rel_cls::RelationshipClass,
-#         MGA_parameter::Parameter,
-#         variable_indices::Function,
-#         variable_name::Symbol,
-#         fix_param_name::Symbol,
-#         param_name_MGAi::Symbol
-#     )
-#         for id in indices(MGA_parameter)
-#             # FIXME: Use Map instead of TimeSeries, to account for different stochastic scenarios
-#             inds_vals = [
-#                 (start(ind.t), mp.ext[:values][variable_name][ind])
-#                 for ind in variable_indices(mp; Dict(MGA_cls.name => id)...) if end_(ind.t) <= end_(current_window(mp))
-#             ]
-#             pv = parameter_value(TimeSeries(first.(inds_vals), last.(inds_vals), false, false))
-#             MGA_cls.parameter_values[id][fix_param_name] = pv
-#             push!(get!(rel_cls.parameter_values, (MGA_cls, current_bi), Dict()), param_name_MGAi => pv)
-#         end
-#     end
-#     _save_mga_values(
-#         unit,
-#         unit__MGA_iteration,
-#         unit_invested__MGA,
-#         units_invested_available_indices,
-#         :units_invested_available,
-#         :fix_units_invested_available,
-#         :units_invested_available_MGAi
-#     )
-#     _save_mga_values(
-#         unit__node__direction,
-#         unit__node__direction__MGA_iteration,
-#         unid_flow__MGA,
-#         unit_flow_indices,
-#         :unit_flow,
-#         :fix_unit_flow,
-#         :unit_flow_MGAi
-#     )
-# end
-
-# function add_MGA_iteration(j)
-#     function _MGA_relationships(class_name::Symbol, new_MGA::Object, invest_param::Parameter)
-#         [(Dict(class_name => obj)..., benders_iteration=new_MGA) for obj in indices(invest_param)]
-#     end
-#     new_MGA = Object(Symbol(string("MGA_", j)))
-#     add_object!(benders_iteration, new_MGA)
-#     add_relationships!(unit__benders_iteration, _MGA_relationships(:unit, new_MGA, candidate_units))
-#     add_relationships!(connection__benders_iteration, _MGA_relationships(:connection, new_MGA, candidate_connections))
-#     add_relationships!(node__benders_iteration, _MGA_relationships(:node, new_MGA, candidate_storages))
-#     new_MGA
-# end
-#
-# function save_first_MGA_objective_value(m)
-#     total_obj_val = m.ext[:values][:total_costs])
-#     MGA_iteration.parameter_values[current_MGA] = Dict(:objective_value_MGA => parameter_value(total_obj_val))
-# end
-#
 function units_invested_MGA_indices()
+    unique(
+        [
+        (unit=ug,)
+        for ug in unit(units_invested_MGA=true)])
+end
+
+function units_invested_MGA_indices(MGA_iteration)
     unique(
         [
         (unit=ug, MGA_iteration=MGA_it)
         for ug in unit(units_invested_MGA=true)
-            for MGA_it in MGA_iteration()])
+            for MGA_it in MGA_iteration])
 end
-# ```alternative objective```
-function set_objective_MGA_iteration!(m)
-    @fetch units_invested_available = m.ext[:variables]
+
+function connections_invested_MGA_indices()
+    unique(
+        [
+        (connection=cg,)
+        for cg in connection(connections_invested_MGA=true)])
+end
+
+function connections_invested_MGA_indices(MGA_iteration)
+    unique(
+        [
+        (connection=cg, MGA_iteration=MGA_it)
+        for cg in connection(connections_invested_MGA=true)
+            for MGA_it in MGA_iteration])
+end
+
+function storages_invested_MGA_indices()
+    unique(
+        [
+        (node=ng, )
+        for ng in node(storages_invested_MGA=true)])
+end
+
+function storages_invested_MGA_indices(MGA_iteration)
+    unique(
+        [
+        (node=ng, MGA_iteration=MGA_it)
+        for ng in node(storages_invested_MGA=true)
+            for MGA_it in MGA_iteration])
+end
+
+function set_objective_MGA_iteration!(m;iteration=nothing)
     instance = m.ext[:instance]
-    MGA_results = m.ext[:outputs]
-    t0 = _analysis_time(m)
-    #### Objective variables needed
-    m.ext[:variables][:MGA_aux_diff] = Dict(
-               ind => @variable(m, base_name = _base_name(:MGA_aux_diff,ind), lower_bound = 0)
-               for ind in units_invested_MGA_indices())
-   m.ext[:variables][:MGA_aux_binary] = Dict(
-              ind => @variable(m, base_name = _base_name(:MGA_aux_binary,ind), binary=true)
-              for ind in units_invested_MGA_indices())
     if MGA_diff_relative(model=instance) #FIXME: define this properly for relative and not relative
-        @fetch MGA_aux_diff, MGA_aux_binary, units_invested_available = m.ext[:variables]
-        m.ext[:constraints][:MGA_diff_pos] = Dict(
-            (unit=ug, MGA_iteration=MGA_it) => @constraint(
-                m,
-                MGA_aux_diff[ug,MGA_it]
-                <=
-                sum(
-                + units_invested_available[u, s, t]
-                  - MGA_results[:units_invested_available][(unit=u, stochastic_scenario = s, MGA_iteration = MGA_it)][t0.ref.x][t.start.x]
-                       for (u,s,t) in units_invested_available_indices(m; unit=ug)
-               )
-               + units_invested_big_m_MGA(unit=ug)*MGA_aux_binary[ug,MGA_it])
-               for (ug, MGA_it) in units_invested_MGA_indices()
-           )
-       m.ext[:constraints][:MGA_diff_neg] = Dict(
-           (unit=ug, MGA_iteration=MGA_it) => @constraint(
-                m,
-                MGA_aux_diff[ug,MGA_it]
-                <=
-                sum(
-                - units_invested_available[u, s, t]
-                  + MGA_results[:units_invested_available][(unit=u, stochastic_scenario = s, MGA_iteration = MGA_it)][t0.ref.x][t.start.x]
-                       for (u,s,t) in units_invested_available_indices(m; unit=ug)
-               )
-              + units_invested_big_m_MGA(unit=ug)*(1-MGA_aux_binary[ug,MGA_it])
-              )
-               for (ug, MGA_it) in units_invested_MGA_indices()
-            )
-        m.ext[:constraints][:MGA_diff_lb1] = Dict(
-            (unit=ug, MGA_iteration=MGA_it) => @constraint(
-                m,
-                MGA_aux_diff[ug,MGA_it]
-                >=
-                sum(
-                units_invested_available[u, s, t]
-                  - MGA_results[:units_invested_available][(unit=u, stochastic_scenario = s, MGA_iteration = MGA_it)][t0.ref.x][t.start.x]
-                       for (u,s,t) in units_invested_available_indices(m; unit=ug)
-               )
-               )
-               for (ug, MGA_it) in units_invested_MGA_indices()
-            )
-        m.ext[:constraints][:MGA_diff_lb2] = Dict(
-            (unit=ug, MGA_iteration=MGA_it) => @constraint(
-                m,
-                MGA_aux_diff[ug,MGA_it]
-                >=
-                sum(
-                -units_invested_available[u, s, t]
-                  + MGA_results[:units_invested_available][(unit=u, stochastic_scenario = s, MGA_iteration = MGA_it)][t0.ref.x][t.start.x]
-                       for (u,s,t) in units_invested_available_indices(m; unit=ug)
-               )
-               )
-               for (ug, MGA_it) in units_invested_MGA_indices()
-                )
-        m.ext[:constraints][:MGA_objective_ub] = Dict(
-            (MGA_iteration=MGA_it) => @constraint(
-                m,
-                m[:MGA_objective]
-                <= sum(MGA_aux_diff[ug,MGA_it]
-                        for ug in unit(units_invested_MGA=true))
-                ) for MGA_it in MGA_iteration()
+        _set_objective_MGA_iteration!(
+            m,
+            :units_invested_available,
+            units_invested_available_indices,
+            unit_stochastic_scenario_weight,
+            units_invested_MGA_indices,
+            units_invested_big_m_MGA,
+            iteration
         )
-        @objective(m,
-                Max,
-                m[:MGA_objective]
+        _set_objective_MGA_iteration!(
+            m,
+            :connections_invested_available,
+            connections_invested_available_indices,
+            connection_stochastic_scenario_weight,
+            connections_invested_MGA_indices,
+            connections_invested_big_m_MGA,
+            iteration
+        )
+        _set_objective_MGA_iteration!(
+            m,
+            :storages_invested_available,
+            storages_invested_available_indices,
+            node_stochastic_scenario_weight,
+            storages_invested_MGA_indices,
+            storages_invested_big_m_MGA,
+            iteration
+        )
+        @fetch MGA_aux_diff, MGA_objective = m.ext[:variables]
+        @show keys(MGA_aux_diff)
+        m.ext[:constraints][:MGA_objective_ub] = Dict(
+            (MGA_iteration=iteration) => @constraint(
+                m,
+                MGA_objective[(model = m.ext[:instance],t=current_window(m))]
+                <= sum(MGA_aux_diff[ind...]
+                       for ind in vcat([storages_invested_MGA_indices(iteration),connections_invested_MGA_indices(iteration),units_invested_MGA_indices(iteration)])
                 )
+        )
+        )
+        for (con_key, cons) in m.ext[:constraints]
+            for (inds, con) in cons
+                set_name(con, string(con_key, inds))
+            end
+        end
     end
+end
+
+function _set_objective_MGA_iteration!(
+        m::Model,
+        variable_name::Symbol,
+        variable_indices_function::Function,
+        scenario_weight_function::Function,
+        MGA_indices::Function,
+        MGA_variable_bigM::Parameter,
+        MGA_current_iteration::Object,
+        )
+        if !isempty(MGA_indices())
+            t0 = _analysis_time(m)
+            @fetch units_invested_available = m.ext[:variables]
+            MGA_results = m.ext[:outputs]
+            t0 = _analysis_time(m)
+            d_aux = get!(m.ext[:variables], :MGA_aux_diff, Dict())
+            d_bin = get!(m.ext[:variables],:MGA_aux_binary, Dict())
+            #FIXME: make more generic (easily add new MGA variables)
+            for ind in MGA_indices(MGA_current_iteration)
+                d_aux[ind] = @variable(m, base_name = _base_name(:MGA_aux_diff,ind), lower_bound = 0)
+                d_bin[ind] = @variable(m, base_name = _base_name(:MGA_aux_binary,ind), binary=true)
+            end
+            @fetch MGA_aux_diff, MGA_aux_binary, MGA_objective = m.ext[:variables]
+            MGA_results = m.ext[:outputs]
+            variable = m.ext[:variables][variable_name]
+            @show collect(keys(d_aux))
+            @show [MGA_aux_diff[ind...,MGA_current_iteration] for ind in MGA_indices()]
+            m.ext[:constraints][:MGA_diff_ub1] = Dict(
+                (ind...,MGA_current_iteration...) => @constraint(
+                    m,
+                    MGA_aux_diff[ind...,MGA_current_iteration]
+                    <=
+                    sum(
+                    + (
+                    variable[_ind]
+                     - MGA_results[variable_name][((Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))..., MGA_iteration=MGA_current_iteration))][t0.ref.x][_ind.t.start.x]
+                     )
+                     *scenario_weight_function(m; Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))...) #fix me, can also be only node or so
+                           for _ind in variable_indices_function(m; ind...)
+                   )
+                   + MGA_variable_bigM(;ind...)*MGA_aux_binary[(ind...,MGA_iteration=MGA_current_iteration)])
+                   for ind in MGA_indices()
+               )
+           m.ext[:constraints][:MGA_diff_ub2] = Dict(
+               (ind...,MGA_current_iteration...) => @constraint(
+                    m,
+                    MGA_aux_diff[ind...,MGA_current_iteration]
+                    <=
+                    sum(
+                    - (variable[_ind]
+                      - MGA_results[variable_name][((Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))..., MGA_iteration=MGA_current_iteration))][t0.ref.x][_ind.t.start.x])
+                      * scenario_weight_function(m; Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))...)
+                           for _ind in variable_indices_function(m; ind...)
+                   )
+                  + MGA_variable_bigM(;ind...)*(1-MGA_aux_binary[(ind...,MGA_iteration=MGA_current_iteration)])
+                  )
+                   for ind in MGA_indices()
+                )
+            m.ext[:constraints][:MGA_diff_lb1] = Dict(
+                (ind...,MGA_current_iteration...) => @constraint(
+                    m,
+                    MGA_aux_diff[ind...,MGA_current_iteration]
+                    >=
+                    sum(
+                    (variable[_ind]
+                      - MGA_results[variable_name][((Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))..., MGA_iteration=MGA_current_iteration))][t0.ref.x][_ind.t.start.x])
+                      * scenario_weight_function(m; Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))...)
+                           for _ind in variable_indices_function(m; ind...)
+                   )
+                   )
+                   for ind in MGA_indices()
+                )
+            m.ext[:constraints][:MGA_diff_lb2] = Dict(
+                (ind...,MGA_current_iteration...) => @constraint(
+                    m,
+                    MGA_aux_diff[ind...,MGA_current_iteration]
+                    >=
+                    sum(
+                    - (variable[_ind]
+                      - MGA_results[variable_name][((Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))..., MGA_iteration=MGA_current_iteration))][t0.ref.x][_ind.t.start.x])
+                      * scenario_weight_function(m; Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))...)
+                           for _ind in variable_indices_function(m; ind...)
+                   )
+                   )
+                   for ind in MGA_indices()
+                    )
+        end
 end
 
 function add_MGA_objective_constraint!(m::Model)
     instance = m.ext[:instance]
     @constraint(m, total_costs(m, end_(last(time_slice(m)))) <= (1+max_MGA_slack(model = instance)) * objective_value_MGA(model= instance))
+end
+
+function save_MGA_objective_values!(m::Model)
+    ind = (model=m.ext[:instance], t=current_window(m))
+    for name in [:MGA_objective,]
+        m.ext[:values][name] = Dict(ind => value(m.ext[:variables][name][ind]))
+    end
 end

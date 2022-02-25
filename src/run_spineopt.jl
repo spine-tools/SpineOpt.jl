@@ -159,7 +159,6 @@ function rerun_spineopt(
     alternative_objective=nothing,
     iterations=nothing
 )
-    @eval using JuMP
     # High-level algorithm selection. For now, selecting based on defined model types,
     # but may want more robust system in future
     if !isempty(model(model_type=:spineopt_benders_master))

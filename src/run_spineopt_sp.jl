@@ -328,7 +328,6 @@ function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> no
         log_level=log_level,
     )
     @timelog log_level 2 "Setting objective..." set_objective!(m;alternative_objective=alternative_objective)
-    #TODO: this needs to change for MGA
 end
 
 """

@@ -49,25 +49,31 @@ function rerun_spineopt_MGA_algorithm(
         k += 1
     end
     m
-    #@timelog log_level 2 "Writing report..." write_report(m, url_out)
 
     name_MGA_obj = :objective_value_MGA
     model.parameter_values[m.ext[:instance]][name_MGA_obj] = parameter_value(objective_value(m))
     @eval begin
         $(name_MGA_obj) = $(Parameter(name_MGA_obj, [model]))
     end
-    #save_model_results!(outputs, m;iterations=iterations)#save_MGA_solution!(m; iteration=MGA_iterations) #save the outputs with MGA indication
     MGA_iterations += 1
     add_MGA_objective_constraint!(m)
-    @variable(m, MGA_objective >=0)
+    m.ext[:variables][:MGA_objective] = Dict(
+               (model = m.ext[:instance],t=current_window(m)) => @variable(m, base_name = _base_name(:MGA_objective,(model = m.ext[:instance],t=current_window(m))), lower_bound=0)
+               )
+    @objective(m,
+            Max,
+            m.ext[:variables][:MGA_objective][(model = m.ext[:instance],t=current_window(m))]
+            )
     while MGA_iterations <= max_MGA_iteration
-        set_objective_MGA_iteration!(m)
+        set_objective_MGA_iteration!(m;iteration=MGA_iteration()[end])
         optimize_model!(m;
                     log_level=log_level,
                     calculate_duals=calculate_duals,
                     mip_solver=mip_solver,
                     lp_solver=lp_solver,
-                    use_direct_model=use_direct_model)
+                    use_direct_model=use_direct_model)  || break
+        @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
+        save_MGA_objective_values!(m)
         save_model_results!(outputs, m;iterations=MGA_iterations) #save the outputs with MGA indication; for now everything should be written back (use save_outputs + keyword)
         MGA_iterations += 1
     end
