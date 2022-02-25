@@ -18,7 +18,7 @@
 #############################################################################
 
 function rerun_spineopt_sp(
-    url_out::String;
+    url_out::Union{String,Nothing};
     mip_solver=nothing,
     lp_solver=nothing,
     add_user_variables=m -> nothing,
