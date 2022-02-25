@@ -170,6 +170,8 @@ end
             ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "connection_contingency", true],
+            ["model", "instance", "db_mip_solver", "Cbc.jl"],
+            ["model", "instance", "db_lp_solver", "Clp.jl"],
         ],
         :relationship_parameter_values => [
             ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", conn_cap_ab],

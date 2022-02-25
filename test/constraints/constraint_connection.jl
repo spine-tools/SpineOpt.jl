@@ -76,6 +76,8 @@
             ["model", "master", "max_iterations", "2"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
+            ["model", "instance", "db_mip_solver", "Cbc.jl"],
+            ["model", "instance", "db_lp_solver", "Clp.jl"],
         ],
         :relationship_parameter_values => [
             [
@@ -390,7 +392,7 @@
             ["connection", "connection_ca", "connection_reactance", conn_x],
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
-            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
+            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],            
         ]
         relationship_parameter_values = [
             ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],

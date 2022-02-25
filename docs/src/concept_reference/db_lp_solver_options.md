@@ -1,5 +1,5 @@
-Specifies the Julia solver package to be used to solve Mixed Integer Programming Problems (MIPs) for the specific [model](@ref). 
-The value must correspond exactly to the name of the Julia solver package (e.g. `Cbc.jl`). Installation and configuration of
-solvers is the responsibility of the user. A full list of solvers supported by JuMP can be found [here](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers). 
-Note that the specified problem must support MIP problems. Solver options are specified using the [db\_mip\_solver\_options](@ref) parameter for the model.
-Note also that if `run_spineopt()` is called with the mip_solver keyword argument specified, this will override this parameter.
+LP solver options are specified for a model using the [db\_lp\_solver\_options](@ref) parameter. This parameter value must take the form of a nested map
+where the outer key corresponds to the solver package name (case sensitive). E.g. `Clp.jl`. The inner map consists of option name and value pairs. See the below example. 
+By default, the SpineOpt template contains some common parameters for some common solvers. For a list of supported solver options, one should consult
+the documentation for the solver and//or the julia solver wrapper package.
+![example db_lp_solver_options map parameter](https://user-images.githubusercontent.com/7080191/155577992-b9dbf284-390b-4df4-b4f3-52b5d0a603d9.png)
