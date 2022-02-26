@@ -69,9 +69,10 @@ end
 A JuMP `Model` for SpineOpt.
 """
 function create_model(db_mip_solvers, use_direct_model=false, model_type=:spineopt_operations)    
-    instance=first(model(model_type=model_type))
-    m = use_direct_model ? (direct_model(db_mip_solvers[instance]())) : (Base.invokelatest(Model, db_mip_solvers[instance]))
     isempty(model(model_type=model_type)) && error("No model of type $model_type defined")    
+    instance=first(model(model_type=model_type))    
+    m = use_direct_model ? (direct_model(db_mip_solvers[instance]())) : (Base.invokelatest(Model, db_mip_solvers[instance]))
+
     m.ext[:instance] = instance
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
