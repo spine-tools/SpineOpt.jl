@@ -56,13 +56,6 @@ using SpineInterface
 end
 using ._Template
 
-function _empty_data_structure()
-    for items in (object_classes, relationship_classes, parameters)
-        for x in items(@__MODULE__)
-            empty!(x)
-        end
-    end
-end
 
 """
     run_spineopt(url_in, url_out; <keyword arguments>)
@@ -117,7 +110,6 @@ function run_spineopt(
         end
     end
     @timelog log_level 2 "Initializing data structure from db..." begin
-        _empty_data_structure()
         using_spinedb(SpineOpt.template(), _Template)
         using_spinedb(url_in, @__MODULE__; upgrade=upgrade, filters=filters)
         missing_items = difference(_Template, @__MODULE__)
