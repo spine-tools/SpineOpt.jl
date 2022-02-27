@@ -26,12 +26,14 @@ function rerun_spineopt_sp(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    use_direct_model=false
-)
-    mip_solver = _default_mip_solver(mip_solver)
-    lp_solver = _default_lp_solver(lp_solver)
-    outputs = Dict()
-    m = create_model(mip_solver, use_direct_model, :spineopt_operations)
+    use_direct_model=false,
+    db_mip_solvers=[],
+    db_lp_solvers=[]
+)    
+    
+    outputs = Dict()        
+    m = create_model(db_mip_solvers, use_direct_model, :spineopt_operations)
+
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
@@ -46,8 +48,8 @@ function rerun_spineopt_sp(
             m;
             log_level=log_level,
             calculate_duals=calculate_duals,
-            mip_solver=mip_solver,
-            lp_solver=lp_solver,
+            mip_solver=db_mip_solvers[m.ext[:instance]],
+            lp_solver=db_lp_solvers[m.ext[:instance]],
             use_direct_model=use_direct_model
         ) || break
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
@@ -66,10 +68,12 @@ end
 """
 A JuMP `Model` for SpineOpt.
 """
-function create_model(mip_solver, use_direct_model=false, model_type=:spineopt_operations)
-    m = use_direct_model ? direct_model(mip_solver()) : Model(mip_solver)
-    isempty(model(model_type=model_type)) && error("No model of type $model_type defined")
-    m.ext[:instance] = first(model(model_type=model_type))
+function create_model(db_mip_solvers, use_direct_model=false, model_type=:spineopt_operations)    
+    isempty(model(model_type=model_type)) && error("No model of type $model_type defined")    
+    instance=first(model(model_type=model_type))    
+    m = use_direct_model ? (direct_model(db_mip_solvers[instance]())) : (Base.invokelatest(Model, db_mip_solvers[instance]))
+
+    m.ext[:instance] = instance
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
     m.ext[:values] = Dict{Symbol,Dict}()

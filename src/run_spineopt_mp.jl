@@ -26,13 +26,21 @@ function rerun_spineopt_mp(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    use_direct_model=false
+    use_direct_model=false,
+    db_mip_solvers=[],
+    db_lp_solvers=[]
 )
-    mip_solver = _default_mip_solver(mip_solver)
-    lp_solver = _default_lp_solver(lp_solver)
-    outputs = Dict()
-    mp = create_model(mip_solver, use_direct_model, :spineopt_master)
-    m = create_model(mip_solver, use_direct_model, :spineopt_operations)
+
+    outputs = Dict()         
+
+    mp = create_model(db_mip_solvers, use_direct_model, :spineopt_master)
+    m = create_model(db_mip_solvers, use_direct_model, :spineopt_operations)
+
+    lp_solver_m = db_lp_solvers[m.ext[:instance]]
+    lp_solver_mp = db_lp_solvers[mp.ext[:instance]]
+    mip_solver_m = db_mip_solvers[m.ext[:instance]]
+    mip_solver_mp = db_mip_solvers[mp.ext[:instance]]
+
     m.ext[:is_sub_problem] = true
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
@@ -50,22 +58,22 @@ function rerun_spineopt_mp(
     j = 1
     while optimize
         @log log_level 0 "Starting Benders iteration $j"
-        optimize_model!(mp, mip_solver=mip_solver, lp_solver=lp_solver) || break
+        optimize_model!(mp, mip_solver=mip_solver_mp, lp_solver=lp_solver_mp) || break
         @timelog log_level 2 "Saving master problem results..." save_mp_model_results!(outputs, mp)
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)
         k = 1
         while true
             @log log_level 1 "Benders iteration $j - Window $k: $(current_window(m))"
-            optimize_model!(m; mip_solver=mip_solver, lp_solver=lp_solver, log_level=log_level) || break
+            optimize_model!(m; mip_solver=mip_solver_m, lp_solver=lp_solver_m, log_level=log_level) || break
             @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
-            if lp_solver != mip_solver
-                set_optimizer(m, lp_solver)
+            if lp_solver_m != mip_solver_m
+                set_optimizer(m, lp_solver_m)
             end
             @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
             @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
             @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
-            if lp_solver != mip_solver
-                set_optimizer(m, mip_solver)
+            if lp_solver_m != mip_solver_m
+                set_optimizer(m, mip_solver_m)
             end
             @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
             if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
