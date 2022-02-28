@@ -292,7 +292,7 @@ function set_db_mip_solvers(mip_solver)
     returned_mip_solver = mip_solver
     for m in model()
         if mip_solver === nothing        
-            db_mip_solver_pkg = db_mip_solver(model=m)
+            db_mip_solver_pkg = db_mip_solver(model=m, _strict=false)
 
             if db_mip_solver_pkg === nothing
                 @warn """ No `db_mip_solver` parameter was found for model $m
@@ -339,7 +339,7 @@ function set_db_lp_solvers(lp_solver)
     returned_lp_solver = lp_solver
     for m in model()
         if lp_solver === nothing
-            db_lp_solver_pkg = db_lp_solver(model=m)
+            db_lp_solver_pkg = db_lp_solver(model=m, _strict=false)
 
             if db_lp_solver_pkg === nothing
                 @warn """ No `db_lp_solver` parameter was found for model $m
