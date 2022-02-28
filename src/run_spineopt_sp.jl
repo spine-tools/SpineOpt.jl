@@ -30,8 +30,7 @@ function rerun_spineopt_sp(
     db_mip_solvers=[],
     db_lp_solvers=[]
 )    
-    
-    outputs = Dict()        
+
     m = create_model(db_mip_solvers, use_direct_model, :spineopt_operations)
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
@@ -52,7 +51,7 @@ function rerun_spineopt_sp(
             use_direct_model=use_direct_model
         ) || break
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
+        @timelog log_level 2 "Saving results..." save_model_results!(m)
         @timelog log_level 2 "Fixing non-anticipativity values..." fix_non_anticipativity_values!(m)
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
             @timelog log_level 2 " ... Rolling complete\n" break
@@ -472,7 +471,7 @@ end
 """
 Save a model results: first postprocess results, then save variables and objective values, and finally save outputs
 """
-function save_model_results!(outputs, m)
+function save_model_results!(m)
     postprocess_results!(m)
     save_variable_values!(m)
     save_objective_values!(m)

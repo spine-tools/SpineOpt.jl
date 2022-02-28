@@ -30,17 +30,12 @@ function rerun_spineopt_mp(
     db_mip_solvers=[],
     db_lp_solvers=[]
 )
-
-    outputs = Dict()         
-
     mp = create_model(db_mip_solvers, use_direct_model, :spineopt_master)
     m = create_model(db_mip_solvers, use_direct_model, :spineopt_operations)
-
     lp_solver_m = db_lp_solvers[m.ext[:instance]]
     lp_solver_mp = db_lp_solvers[mp.ext[:instance]]
     mip_solver_m = db_mip_solvers[m.ext[:instance]]
     mip_solver_mp = db_mip_solvers[mp.ext[:instance]]
-
     m.ext[:is_sub_problem] = true
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
@@ -52,14 +47,12 @@ function rerun_spineopt_mp(
     init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
     init_outputs!(m)
     init_outputs!(mp)
-
     max_benders_iterations = max_iterations(model=mp.ext[:instance])
-
     j = 1
     while optimize
         @log log_level 0 "Starting Benders iteration $j"
         optimize_model!(mp, mip_solver=mip_solver_mp, lp_solver=lp_solver_mp) || break
-        @timelog log_level 2 "Saving master problem results..." save_mp_model_results!(outputs, mp)
+        @timelog log_level 2 "Saving master problem results..." save_mp_model_results!(mp)
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)
         k = 1
         while true
@@ -71,7 +64,7 @@ function rerun_spineopt_mp(
             end
             @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
             @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-            @timelog log_level 2 "Saving results..." save_model_results!(outputs, m)
+            @timelog log_level 2 "Saving results..." save_model_results!(m)
             if lp_solver_m != mip_solver_m
                 set_optimizer(m, mip_solver_m)
             end
@@ -83,19 +76,16 @@ function rerun_spineopt_mp(
             k += 1
         end
         @timelog log_level 2 "Processing subproblem solution..." process_subproblem_solution(m, mp)
-
         @log log_level 1 "Benders iteration $j complete. Objective upper bound: "
         @log log_level 1 "$(@sprintf("%.5e",mp.ext[:objective_upper_bound])); "
         @log log_level 1 "Objective lower bound: $(@sprintf("%.5e",mp.ext[:objective_lower_bound])); "
         @log log_level 1 "Gap: $(@sprintf("%1.4f",mp.ext[:benders_gap]*100))%"
-
         if mp.ext[:benders_gap] <= max_gap(model=mp.ext[:instance])
             @timelog log_level 1 "Benders tolerance satisfied, terminating..." break
         end
         if j >= max_benders_iterations
             @timelog log_level 1 "Maximum number of iterations reached ($j), terminating..." break
         end
-
         @timelog log_level 2 "Add MP cuts..." add_mp_cuts!(mp; log_level=3)
         msg = "Resetting sub problem temporal structure. Rewinding $(k - 1) times..."
         if @timelog log_level 2 msg reset_temporal_structure!(m, k - 1)
@@ -181,7 +171,7 @@ function add_mp_cuts!(mp; log_level=3)
     end
 end
 
-function save_mp_model_results!(outputs, mp)
+function save_mp_model_results!(mp)
     save_variable_values!(mp)
     save_objective_values!(mp)
     save_outputs!(mp)
