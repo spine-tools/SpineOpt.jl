@@ -54,6 +54,7 @@ function check_data_structure(; log_level=3)
     #check_islands(; log_level=log_level)
     check_rolling_branching()
     check_parameter_values()
+    check_binary_investments_voltage_angle_lines()
 end
 
 """
@@ -296,6 +297,52 @@ function check_rolling_branching()
             end
         end
     end
+end
+
+function check_binary_investments_voltage_angle_lines()
+    errors_cont = [
+        (m,conn)
+        for m in model()
+            for conn in intersect(SpineOpt.indices(candidate_connections),SpineOpt.indices(connection_reactance))
+            #for conn in SpineOpt.indices(has_voltage_angle)
+                if SpineOpt.connection_investment_variable_type(connection=conn) == :variable_type_continuous
+    ]
+    errors_int = [
+        (m,conn)
+        for m in model()
+            for conn in intersect(SpineOpt.indices(candidate_connections),SpineOpt.indices(connection_reactance))
+            #for conn in SpineOpt.indices(has_voltage_angle)
+                if (SpineOpt.connection_investment_variable_type(connection=conn) == :variable_type_integer && SpineOpt.candidate_connections(connection=conn) != 1)
+    ]
+    warnings = [
+        (m,conn)
+        for m in model()
+            for conn in intersect(SpineOpt.indices(candidate_connections),SpineOpt.indices(connection_reactance))
+            #for conn in SpineOpt.indices(has_voltage_angle)
+                if SpineOpt.candidate_connections(connection=conn) != 1
+    ]
+    _check(
+        isempty(errors_cont),
+        "This connection has a continous investment variable type:
+        $(join(errors_cont, ", ", " and ")) "
+        * "Investment structure only supported for binary investments.
+        By defining a connection reactance, your model will run a DC power flow calculation, which does not support integer or continuous investment decisions",
+    )
+
+    _check(
+        isempty(errors_int),
+        "This connection has multiple investment candidates:
+        $(join(errors_int, ", ", " and ")) "
+        * "Investment structure only supported for binary investments.
+        By defining a connection reactance, your model will run a DC power flow calculation, which does not support integer or continuous investment decisions",
+    )
+
+    _check_warn(
+        isempty(warnings),
+        "This connection has multiple investment candidates:
+        $(join(warnings, ", ", " and ")) "
+        * "Investment structure only supported for binary investment decisions, the model will invest at most in 1 connection",
+    )
 end
 
 function check_parameter_values()
