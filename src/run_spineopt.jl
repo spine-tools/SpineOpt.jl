@@ -150,7 +150,7 @@ function rerun_spineopt(
     optimize=true,
     use_direct_model=false
 )
-    #@eval using JuMP 
+    @eval using JuMP
 
     db_mip_solvers = set_db_mip_solvers(mip_solver)
     db_lp_solvers = set_db_lp_solvers(lp_solver)  

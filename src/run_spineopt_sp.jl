@@ -33,7 +33,6 @@ function rerun_spineopt_sp(
     
     outputs = Dict()        
     m = create_model(db_mip_solvers, use_direct_model, :spineopt_operations)
-
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
@@ -70,9 +69,9 @@ A JuMP `Model` for SpineOpt.
 """
 function create_model(db_mip_solvers, use_direct_model=false, model_type=:spineopt_operations)    
     isempty(model(model_type=model_type)) && error("No model of type $model_type defined")    
-    instance=first(model(model_type=model_type))    
-    m = use_direct_model ? (direct_model(db_mip_solvers[instance]())) : (Base.invokelatest(Model, db_mip_solvers[instance]))
-
+    instance = first(model(model_type=model_type))
+    mip_solver = db_mip_solvers[instance]
+    m = use_direct_model ? direct_model(mip_solver()) : Base.invokelatest(Model, mip_solver)
     m.ext[:instance] = instance
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()

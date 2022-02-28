@@ -26,7 +26,6 @@ using SpineInterface
 using JSON
 using Printf
 using Requires
-using JuMP
 
 import Dates: CompoundPeriod
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
