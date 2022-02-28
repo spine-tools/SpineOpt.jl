@@ -299,7 +299,7 @@ function set_db_mip_solvers(mip_solver)
                         using the default MIP solver instead
                     """
 
-                mip_solver = Base.invokelatest(_default_mip_solver, nothing)        
+                returned_mip_solver = Base.invokelatest(_default_mip_solver, nothing)        
             else
                 db_mip_solver_pkg = string(db_mip_solver_pkg)
                 db_mip_solver_name = Symbol(SubString(db_mip_solver_pkg, 1, length(db_mip_solver_pkg)-3) )
@@ -346,7 +346,7 @@ function set_db_lp_solvers(lp_solver)
                         using the default LP solver instead
                     """
 
-                lp_solver = Base.invokelatest(_default_lp_solver, nothing)
+                returned_lp_solver = Base.invokelatest(_default_lp_solver, nothing)
             else
                 db_lp_solver_pkg = string(db_lp_solver_pkg)
                 db_lp_solver_name = Symbol(SubString(db_lp_solver_pkg, 1, length(db_lp_solver_pkg)-3) )
