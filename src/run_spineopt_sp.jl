@@ -268,7 +268,8 @@ function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> no
 end
 
 """
-Optimize the given model. If an optimal solution is found, return `true`, otherwise return `false`.
+Optimize the given model.
+If an optimal solution is found, save results and return `true`, otherwise return `false`.
 """
 function optimize_model!(m::Model; log_level=3, calculate_duals=false)
     write_mps_file(model=m.ext[:instance]) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")

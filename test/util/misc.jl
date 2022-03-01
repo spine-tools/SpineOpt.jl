@@ -155,7 +155,7 @@ import DelimitedFiles: readdlm
             [
                 0.0 -0.666666 -0.333333
                 0.0 0.333333 -0.333333
-                0.0 0.333333 0.666667
+                0.0 -0.333333 -0.666667
             ];
             atol=1e-5,
         )
@@ -164,6 +164,6 @@ import DelimitedFiles: readdlm
         @test convert(Array{String,1}, lodfs[1, 1:(end - 1)]) ==
               ["contingency line", "from_node", "to node", "connection_ab", "connection_bc", "connection_ca"]
         @test convert(Array{String,1}, lodfs[:, 1]) == ["contingency line", "connection_ca"]
-        @test isapprox(convert(Array{Float64,1}, lodfs[2, 4:(end - 2)]), [-1, -1])
+        @test isapprox(convert(Array{Float64,1}, lodfs[2, 4:(end - 2)]), [1, 1])
     end
 end
