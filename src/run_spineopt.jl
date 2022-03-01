@@ -177,10 +177,8 @@ A JuMP `Model` for SpineOpt.
 function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)    
     isempty(model(model_type=model_type)) && return nothing
     instance = first(model(model_type=model_type))
-    default_mip_solver = optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01)
-    default_lp_solver = optimizer_with_attributes(Clp.Optimizer, "logLevel" => 0)
-    mip_solver = _solver(instance, mip_solver, db_mip_solver, db_mip_solver_options, default_mip_solver)
-    lp_solver = _solver(instance, lp_solver, db_lp_solver, db_lp_solver_options, default_lp_solver)
+    mip_solver = _mip_solver(instance, mip_solver)
+    lp_solver = _lp_solver(instance, lp_solver)
     m = use_direct_model ? direct_model(mip_solver()) : Model(mip_solver)
     m.ext[:instance] = instance
     m.ext[:variables] = Dict{Symbol,Dict}()
@@ -200,42 +198,69 @@ function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)
 end
 
 """
-    _solver(instance, solver, db_solver, db_solver_options, default_solver)
-
-A mip or lp solver.
-
-If `solver` isn't `nothing`, then just return it.
-Otherwise create and return a solver based on database settings for `db_solver` and `db_solver_options`.
-Finally, if no db settings, then return `default_solver`
+A mip solver for given model instance. If given solver is not `nothing`, just return it.
+Otherwise create and return a solver based on db settings for instance.
 """
-function _solver(instance, solver::Nothing, db_solver, db_solver_options, default_solver)
-    db_solver_ = db_solver(model=instance, _strict=false)
-    if db_solver_ === nothing
-        @warn "no `$(db_solver.name)` parameter was found for model `$instance` - using the default instead"
-        default_solver
-    else
-        db_solver_name = Symbol(first(splitext(string(db_solver_))))
-        db_solver_options_ = db_solver_options(model=instance, _strict=false)
-        db_solver_options_parsed = if db_solver_options_ !== nothing
-            [
-                (String(key) => _parse_solver_option(val.value))
-                for (solver, options) in db_solver_options_
-                if solver == db_solver_
-                for (key, val) in options.value
-            ]
-        else
-            []
-        end
-        @eval using $db_solver_name
-        db_solver_mod = getproperty(@__MODULE__, db_solver_name)
-        Base.invokelatest(optimizer_with_attributes, db_solver_mod.Optimizer, db_solver_options_parsed...)
+function _mip_solver(instance, given_solver)
+    _solver(given_solver) do
+        _db_mip_solver(instance)
     end
 end
-_solver(instance, solver, db_solver, db_solver_options, default_solver) = solver
+
+"""
+A lp solver for given model instance. If given solver is not `nothing`, just return it.
+Otherwise create and return a solver based on db settings for instance.
+"""
+function _lp_solver(instance, given_solver)
+    _solver(given_solver) do
+        _db_lp_solver(instance)
+    end
+end
+
+_solver(f::Function, given_solver) = given_solver
+_solver(f::Function, ::Nothing) = f()
+
+function _db_mip_solver(instance)
+    _db_solver(
+        db_mip_solver(model=instance, _strict=false),
+        db_mip_solver_options(model=instance, _strict=false)
+    ) do
+        @warn "no `db_mip_solver` parameter was found for model `$instance` - using the default instead"
+        optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01)
+    end
+end
+
+function _db_lp_solver(instance)
+    _db_solver(
+        db_lp_solver(model=instance, _strict=false),
+        db_lp_solver_options(model=instance, _strict=false)
+    ) do
+        @warn "no `db_lp_solver` parameter was found for model `$instance` - using the default instead"
+        optimizer_with_attributes(Clp.Optimizer, "logLevel" => 0)
+    end
+end
+
+function _db_solver(f::Function, db_solver_name::Symbol, db_solver_options)
+    db_solver_mod_name = Symbol(first(splitext(string(db_solver_name))))
+    db_solver_options_parsed = _parse_solver_options(db_solver_name, db_solver_options)
+    @eval using $db_solver_mod_name
+    db_solver_mod = getproperty(@__MODULE__, db_solver_mod_name)
+    Base.invokelatest(optimizer_with_attributes, db_solver_mod.Optimizer, db_solver_options_parsed...)
+end
+_db_solver(f::Function, ::Nothing, db_solver_options) = f()
+
+function _parse_solver_options(db_solver_name, db_solver_options::Map)
+    [
+        (String(key) => _parse_solver_option(val.value))
+        for (solver_name, options) in db_solver_options
+        if solver_name == db_solver_name
+        for (key, val) in options.value
+    ]
+end
+_parse_solver_options(db_solver_name, db_solver_options) = []
 
 _parse_solver_option(value::Number) = isinteger(value) ? convert(Int64, value) : value
 _parse_solver_option(value) = string(value)
-
 
 """
     output_value(by_analysis_time, overwrite_results_on_rolling)
