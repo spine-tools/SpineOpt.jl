@@ -146,7 +146,7 @@ end
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
-            ["model", "instance", "model_type", "spineopt_operations"],
+            ["model", "instance", "model_type", "spineopt_standard"],
             ["model", "master", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "master", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "master", "duration_unit", "hour"],

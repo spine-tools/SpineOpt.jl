@@ -157,7 +157,6 @@ function rerun_spineopt(
     optimize=true,
     use_direct_model=false,
     alternative_objective=nothing,
-    iterations=nothing
 )
     # High-level algorithm selection. For now, selecting based on defined model types,
     # but may want more robust system in future
@@ -165,7 +164,7 @@ function rerun_spineopt(
         if !isempty(model(model_type=:spineopt_MGA))
             @error "Currently the combination of Benders and MGA is supported. Please make sure that you do't have a
             `model_type=:spineopt_benders_master` together with another model of type `:spineopt_MGA`"
-        elseif !isempty(model(model_type=:spineopt_benders_opertions))
+        elseif !isempty(model(model_type=:spineopt_benders_operations))
             rerun_spineopt = rerun_spineopt_benders_algorithm
         else
             @error "You cannot define a Benders Master problem without a related Benders Sbuproblem. Please make sure there is a Model object
