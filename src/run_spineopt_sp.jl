@@ -17,21 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function rerun_spineopt_sp(
+function rerun_spineopt!(
+    m::Model,
+    ::Nothing,
     url_out::Union{String,Nothing};
-    mip_solver=nothing,
-    lp_solver=nothing,
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
-    optimize=true,
-    use_direct_model=false,
-    db_mip_solvers=[],
-    db_lp_solvers=[]
-)    
-
-    m = create_model(db_mip_solvers, use_direct_model, :spineopt_operations)
+    optimize=true
+)
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
@@ -39,19 +34,11 @@ function rerun_spineopt_sp(
     init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
     init_outputs!(m)
     k = 1
-    calculate_duals = duals_calculation_needed(m)
+    calculate_duals = any(startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:outputs])))
     while optimize
         @log log_level 1 "Window $k: $(current_window(m))"
-        optimize_model!(
-            m;
-            log_level=log_level,
-            calculate_duals=calculate_duals,
-            mip_solver=db_mip_solvers[m.ext[:instance]],
-            lp_solver=db_lp_solvers[m.ext[:instance]],
-            use_direct_model=use_direct_model
-        ) || break
-        @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @timelog log_level 2 "Saving results..." save_model_results!(m)
+        optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals) || break
+        @timelog log_level 2 "Post-processing results..." postprocess_results!(m)
         @timelog log_level 2 "Fixing non-anticipativity values..." fix_non_anticipativity_values!(m)
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
             @timelog log_level 2 " ... Rolling complete\n" break
@@ -60,29 +47,6 @@ function rerun_spineopt_sp(
         k += 1
     end
     @timelog log_level 2 "Writing report..." write_report(m, url_out)
-    m
-end
-
-"""
-A JuMP `Model` for SpineOpt.
-"""
-function create_model(db_mip_solvers, use_direct_model=false, model_type=:spineopt_operations)    
-    isempty(model(model_type=model_type)) && error("No model of type $model_type defined")    
-    instance = first(model(model_type=model_type))
-    mip_solver = db_mip_solvers[instance]
-    m = use_direct_model ? direct_model(mip_solver()) : Base.invokelatest(Model, mip_solver)
-    m.ext[:instance] = instance
-    m.ext[:variables] = Dict{Symbol,Dict}()
-    m.ext[:variables_definition] = Dict{Symbol,Dict}()
-    m.ext[:values] = Dict{Symbol,Dict}()
-    m.ext[:constraints] = Dict{Symbol,Dict}()
-    m.ext[:marginals] = Dict{Symbol,Dict}()
-    m.ext[:outputs] = Dict()
-    m.ext[:integer_variables] = []
-    m.ext[:is_subproblem] = false
-    m.ext[:objective_lower_bound] = 0.0
-    m.ext[:objective_upper_bound] = 0.0
-    m.ext[:benders_gap] = 0.0
     m
 end
 
@@ -205,21 +169,14 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_candidate_connection_flow_ub]" add_constraint_candidate_connection_flow_ub!(m)
     @timelog log_level 3 "- [constraint_candidate_connection_flow_lb]" add_constraint_candidate_connection_flow_lb!(m)
     @timelog log_level 3 "- [constraint_connection_intact_flow_ptdf]" add_constraint_connection_intact_flow_ptdf!(m)
-    #@timelog log_level 3 "- [constraint_connection_intact_flow_ptdf_in_out]" add_constraint_connection_intact_flow_ptdf_in_out!(m)
     @timelog log_level 3 "- [constraint_connection_flow_intact_flow]" add_constraint_connection_flow_intact_flow!(m)
     @timelog log_level 3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
     @timelog log_level 3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)
-    @timelog log_level 3 "- [constraint_connection_intact_flow_capacity]" add_constraint_connection_intact_flow_capacity!(
-        m,
-    )
+    @timelog log_level 3 "- [constraint_connection_intact_flow_capacity]" add_constraint_connection_intact_flow_capacity!(m)
     @timelog log_level 3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
-    @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(
-        m,
-    )
+    @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(m)
     @timelog log_level 3 "- [constraint_connection_lifetime]" add_constraint_connection_lifetime!(m)
-    @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(
-        m,
-    )
+    @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(m)
     @timelog log_level 3 "- [constraint_storages_invested_available]" add_constraint_storages_invested_available!(m)
     @timelog log_level 3 "- [constraint_storage_lifetime]" add_constraint_storage_lifetime!(m)
     @timelog log_level 3 "- [constraint_storages_invested_transition]" add_constraint_storages_invested_transition!(m)
@@ -237,18 +194,10 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_fix_ratio_in_out_unit_flow]" add_constraint_fix_ratio_in_out_unit_flow!(m)
     @timelog log_level 3 "- [constraint_max_ratio_in_out_unit_flow]" add_constraint_max_ratio_in_out_unit_flow!(m)
     @timelog log_level 3 "- [constraint_min_ratio_in_out_unit_flow]" add_constraint_min_ratio_in_out_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_ratio_out_in_connection_intact_flow]" add_constraint_ratio_out_in_connection_intact_flow!(
-        m,
-    )
-    @timelog log_level 3 "- [constraint_fix_ratio_out_in_connection_flow]" add_constraint_fix_ratio_out_in_connection_flow!(
-        m,
-    )
-    @timelog log_level 3 "- [constraint_max_ratio_out_in_connection_flow]" add_constraint_max_ratio_out_in_connection_flow!(
-        m,
-    )
-    @timelog log_level 3 "- [constraint_min_ratio_out_in_connection_flow]" add_constraint_min_ratio_out_in_connection_flow!(
-        m,
-    )
+    @timelog log_level 3 "- [constraint_ratio_out_in_connection_intact_flow]" add_constraint_ratio_out_in_connection_intact_flow!(m)
+    @timelog log_level 3 "- [constraint_fix_ratio_out_in_connection_flow]" add_constraint_fix_ratio_out_in_connection_flow!(m)
+    @timelog log_level 3 "- [constraint_max_ratio_out_in_connection_flow]" add_constraint_max_ratio_out_in_connection_flow!(m)
+    @timelog log_level 3 "- [constraint_min_ratio_out_in_connection_flow]" add_constraint_min_ratio_out_in_connection_flow!(m)
     @timelog log_level 3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
     @timelog log_level 3 "- [constraint_cyclic_node_state]" add_constraint_cyclic_node_state!(m)
     @timelog log_level 3 "- [constraint_max_total_cumulated_unit_flow_from_node]" add_constraint_max_total_cumulated_unit_flow_from_node!(m)
@@ -264,7 +213,6 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)
     @timelog log_level 3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
     @timelog log_level 3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
-
     @timelog log_level 3 "- [constraint_unit_flow_capacity_w_ramp]" add_constraint_unit_flow_capacity_w_ramp!(m)
     @timelog log_level 3 "- [constraint_split_ramps]" add_constraint_split_ramps!(m)
     @timelog log_level 3 "- [constraint_ramp_up]" add_constraint_ramp_up!(m)
@@ -278,7 +226,6 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_max_nonspin_ramp_down]" add_constraint_max_nonspin_ramp_down!(m)
     @timelog log_level 3 "- [constraint_min_nonspin_ramp_down]" add_constraint_min_nonspin_ramp_down!(m)
     @timelog log_level 3 "- [constraint_res_minimum_node_state]" add_constraint_res_minimum_node_state!(m)
-
     @timelog log_level 3 "- [constraint_fix_node_pressure_point]" add_constraint_fix_node_pressure_point!(m)
     @timelog log_level 3 "- [constraint_connection_unitary_gas_flow]" add_constraint_connection_unitary_gas_flow!(m)
     @timelog log_level 3 "- [constraint_compression_ratio]" add_constraint_compression_ratio!(m)
@@ -289,9 +236,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_node_voltage_angle]" add_constraint_node_voltage_angle!(m)
     @timelog log_level 3 "- [constraint_max_node_voltage_angle]" add_constraint_max_node_voltage_angle!(m)
     @timelog log_level 3 "- [constraint_min_node_voltage_angle]" add_constraint_min_node_voltage_angle!(m)
-
     @timelog log_level 3 "- [constraint_user]" add_constraints(m)
-
     # Name constraints
     for (con_key, cons) in m.ext[:constraints]
         for (inds, con) in cons
@@ -308,24 +253,16 @@ function init_outputs!(m::Model)
     end
 end
 
-function duals_calculation_needed(m::Model)
-    any(startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:outputs])))
-end
-
 """
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
 function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3)
     @timelog log_level 2 "Adding variables...\n" add_variables!(
-        m;
-        add_user_variables=add_user_variables,
-        log_level=log_level,
+        m; add_user_variables=add_user_variables, log_level=log_level
     )
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(
-        m;
-        add_constraints=add_constraints,
-        log_level=log_level,
+        m; add_constraints=add_constraints, log_level=log_level
     )
     @timelog log_level 2 "Setting objective..." set_objective!(m)
 end
@@ -333,18 +270,30 @@ end
 """
 Optimize the given model. If an optimal solution is found, return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, use_direct_model=false, mip_solver, lp_solver)
+function optimize_model!(m::Model; log_level=3, calculate_duals=false)
     write_mps_file(model=m.ext[:instance]) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
-    # but is not mentioned in the COLUMNS section. We are ignoring it.
+    # but is not mentioned in the COLUMNS section.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
     if termination_status(m) == MOI.OPTIMAL || termination_status(m) == MOI.TIME_LIMIT
+        mip_solver = m.ext[:mip_solver]
+        lp_solver = m.ext[:lp_solver]
         if calculate_duals
             @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
             if lp_solver != mip_solver
                 @timelog log_level 0 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
             end
             @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
+        end
+        @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
+        @timelog log_level 2 "Saving $(m.ext[:instance]) results..." save_model_results!(m)
+        if calculate_duals            
+            save_marginal_values!(m)
+            save_bound_marginal_values!(m)
+            if lp_solver != mip_solver
+                set_optimizer(m, mip_solver)
+            end
+            @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
         end
         true
     else
@@ -472,11 +421,8 @@ end
 Save a model results: first postprocess results, then save variables and objective values, and finally save outputs
 """
 function save_model_results!(m)
-    postprocess_results!(m)
     save_variable_values!(m)
     save_objective_values!(m)
-    save_marginal_values!(m)
-    save_bound_marginal_values!(m)
     save_outputs!(m)
 end
 

@@ -17,25 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function rerun_spineopt_mp(
+function rerun_spineopt!(
+    m::Model,
+    mp::Model,
     url_out::Union{String,Nothing};
-    mip_solver=nothing,
-    lp_solver=nothing,
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
-    optimize=true,
-    use_direct_model=false,
-    db_mip_solvers=[],
-    db_lp_solvers=[]
+    optimize=true
 )
-    mp = create_model(db_mip_solvers, use_direct_model, :spineopt_master)
-    m = create_model(db_mip_solvers, use_direct_model, :spineopt_operations)
-    lp_solver_m = db_lp_solvers[m.ext[:instance]]
-    lp_solver_mp = db_lp_solvers[mp.ext[:instance]]
-    mip_solver_m = db_mip_solvers[m.ext[:instance]]
-    mip_solver_mp = db_mip_solvers[mp.ext[:instance]]
     m.ext[:is_sub_problem] = true
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
@@ -51,26 +42,15 @@ function rerun_spineopt_mp(
     j = 1
     while optimize
         @log log_level 0 "Starting Benders iteration $j"
-        optimize_model!(mp, mip_solver=mip_solver_mp, lp_solver=lp_solver_mp) || break
-        @timelog log_level 2 "Saving master problem results..." save_mp_model_results!(mp)
+        optimize_model!(mp; log_level=log_level) || break
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)
         k = 1
         while true
             @log log_level 1 "Benders iteration $j - Window $k: $(current_window(m))"
-            optimize_model!(m; mip_solver=mip_solver_m, lp_solver=lp_solver_m, log_level=log_level) || break
-            @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
-            if lp_solver_m != mip_solver_m
-                set_optimizer(m, lp_solver_m)
-            end
-            @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
-            @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-            @timelog log_level 2 "Saving results..." save_model_results!(m)
-            if lp_solver_m != mip_solver_m
-                set_optimizer(m, mip_solver_m)
-            end
-            @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
+            optimize_model!(m; log_level=log_level, calculate_duals=true) || break
+            @timelog log_level 2 "Post-processing results..." postprocess_results!(m)
             if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
-                @timelog log_level 2 " ... Rolling complete\n" break
+                @timelog log_level 2 "... Rolling complete\n" break
             end
             update_model!(m; update_constraints=update_constraints, log_level=log_level)
             k += 1
@@ -106,9 +86,7 @@ function init_mp_model!(mp; add_constraints=mp -> nothing, log_level=3)
     @timelog log_level 2 "Adding MP variables...\n" add_mp_variables!(mp; log_level=log_level)
     @timelog log_level 2 "Fixing MP variable values..." fix_variables!(mp)
     @timelog log_level 2 "Adding MP constraints...\n" add_mp_constraints!(
-        mp;
-        add_constraints=add_constraints,
-        log_level=log_level,
+        mp; add_constraints=add_constraints, log_level=log_level
     )
     @timelog log_level 2 "Setting MP objective..." set_mp_objective!(mp)
 end
@@ -122,9 +100,7 @@ function add_mp_variables!(mp; log_level=3)
     @timelog log_level 3 "- [variable_mp_units_invested_available]" add_variable_units_invested_available!(mp)
     @timelog log_level 3 "- [variable_mp_units_mothballed]" add_variable_units_mothballed!(mp)
     @timelog log_level 3 "- [variable_mp_connections_invested]" add_variable_connections_invested!(mp)
-    @timelog log_level 3 "- [variable_mp_connections_invested_available]" add_variable_connections_invested_available!(
-        mp,
-    )
+    @timelog log_level 3 "- [variable_mp_connections_invested_available]" add_variable_connections_invested_available!(mp)
     @timelog log_level 3 "- [variable_mp_connections_decommissioned]" add_variable_connections_decommissioned!(mp)
     @timelog log_level 3 "- [variable_mp_storages_invested]" add_variable_storages_invested!(mp)
     @timelog log_level 3 "- [variable_mp_storages_invested_available]" add_variable_storages_invested_available!(mp)
@@ -140,16 +116,11 @@ function add_mp_constraints!(mp; add_constraints=mp -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(mp)
     @timelog log_level 3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(mp)
     @timelog log_level 3 "- [constraint_connection_lifetime]" add_constraint_connection_lifetime!(mp)
-    @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(
-        mp,
-    )
-    @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(
-        mp,
-    )
+    @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(mp)
+    @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(mp)
     @timelog log_level 3 "- [constraint_storage_lifetime]" add_constraint_storage_lifetime!(mp)
     @timelog log_level 3 "- [constraint_storages_invested_transition]" add_constraint_storages_invested_transition!(mp)
     @timelog log_level 3 "- [constraint_storages_invested_available]" add_constraint_storages_invested_available!(mp)
-
     # Name constraints
     for (con_key, cons) in mp.ext[:constraints]
         for (inds, con) in cons
@@ -169,10 +140,4 @@ function add_mp_cuts!(mp; log_level=3)
     for (inds, con) in cons
         set_name(con, string(:mp_units_invested_cut, inds))
     end
-end
-
-function save_mp_model_results!(mp)
-    save_variable_values!(mp)
-    save_objective_values!(mp)
-    save_outputs!(mp)
 end

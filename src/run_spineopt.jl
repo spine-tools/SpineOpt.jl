@@ -154,28 +154,88 @@ function rerun_spineopt(
     use_direct_model=false
 )
     @eval using JuMP
-
-    db_mip_solvers = _db_mip_solvers(mip_solver)
-    db_lp_solvers = _db_lp_solvers(lp_solver)
-
-    # High-level algorithm selection. For now, selecting based on defined model types,
-    # but may want more robust system in future
-    rerun_spineopt = !isempty(model(model_type=:spineopt_master)) ? rerun_spineopt_mp : rerun_spineopt_sp    
+    m = Base.invokelatest(create_model, :spineopt_operations, mip_solver, lp_solver, use_direct_model)
+    mp = Base.invokelatest(create_model, :spineopt_master, mip_solver, lp_solver, use_direct_model)
     Base.invokelatest(
-        rerun_spineopt,
+        rerun_spineopt!,
+        m,
+        mp,
         url_out;
-        mip_solver=mip_solver,
-        lp_solver=lp_solver,
         add_user_variables=add_user_variables,
         add_constraints=add_constraints,
         update_constraints=update_constraints,
         log_level=log_level,
-        optimize=optimize,
-        use_direct_model=use_direct_model,
-        db_mip_solvers=db_mip_solvers,
-        db_lp_solvers=db_lp_solvers
+        optimize=optimize
     )
 end
+
+rerun_spineopt!(::Nothing, mp, url_out; kwargs...) = error("No model of type `spineopt_operations` defined")
+
+"""
+A JuMP `Model` for SpineOpt.
+"""
+function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)    
+    isempty(model(model_type=model_type)) && return nothing
+    instance = first(model(model_type=model_type))
+    default_mip_solver = optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01)
+    default_lp_solver = optimizer_with_attributes(Clp.Optimizer, "logLevel" => 0)
+    mip_solver = _solver(instance, mip_solver, db_mip_solver, db_mip_solver_options, default_mip_solver)
+    lp_solver = _solver(instance, lp_solver, db_lp_solver, db_lp_solver_options, default_lp_solver)
+    m = use_direct_model ? direct_model(mip_solver()) : Model(mip_solver)
+    m.ext[:instance] = instance
+    m.ext[:variables] = Dict{Symbol,Dict}()
+    m.ext[:variables_definition] = Dict{Symbol,Dict}()
+    m.ext[:values] = Dict{Symbol,Dict}()
+    m.ext[:constraints] = Dict{Symbol,Dict}()
+    m.ext[:marginals] = Dict{Symbol,Dict}()
+    m.ext[:outputs] = Dict()
+    m.ext[:integer_variables] = []
+    m.ext[:is_subproblem] = false
+    m.ext[:objective_lower_bound] = 0.0
+    m.ext[:objective_upper_bound] = 0.0
+    m.ext[:benders_gap] = 0.0
+    m.ext[:mip_solver] = mip_solver
+    m.ext[:lp_solver] = lp_solver
+    m
+end
+
+"""
+    _solver(instance, solver, db_solver, db_solver_options, default_solver)
+
+A mip or lp solver.
+
+If `solver` isn't `nothing`, then just return it.
+Otherwise create and return a solver based on database settings for `db_solver` and `db_solver_options`.
+Finally, if no db settings, then return `default_solver`
+"""
+function _solver(instance, solver::Nothing, db_solver, db_solver_options, default_solver)
+    db_solver_ = db_solver(model=instance, _strict=false)
+    if db_solver_ === nothing
+        @warn "no `$(db_solver.name)` parameter was found for model `$instance` - using the default instead"
+        default_solver
+    else
+        db_solver_name = Symbol(first(splitext(string(db_solver_))))
+        db_solver_options_ = db_solver_options(model=instance, _strict=false)
+        db_solver_options_parsed = if db_solver_options_ !== nothing
+            [
+                (String(key) => _parse_solver_option(val.value))
+                for (solver, options) in db_solver_options_
+                if solver == db_solver_
+                for (key, val) in options.value
+            ]
+        else
+            []
+        end
+        @eval using $db_solver_name
+        db_solver_mod = getproperty(@__MODULE__, db_solver_name)
+        Base.invokelatest(optimizer_with_attributes, db_solver_mod.Optimizer, db_solver_options_parsed...)
+    end
+end
+_solver(instance, solver, db_solver, db_solver_options, default_solver) = solver
+
+_parse_solver_option(value::Number) = isinteger(value) ? convert(Int64, value) : value
+_parse_solver_option(value) = string(value)
+
 
 """
     output_value(by_analysis_time, overwrite_results_on_rolling)
@@ -280,56 +340,3 @@ function write_report(m, default_url, output_value=output_value; alternative="")
         end
     end
 end
-
-function _db_mip_solvers(::Nothing)
-    default_solver = Base.invokelatest(optimizer_with_attributes, Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01)
-    _db_solvers(db_mip_solver, db_mip_solver_options, default_solver)
-end
-_db_mip_solvers(mip_solver) = Dict(m => mip_solver for m in model())
-
-function _db_lp_solvers(::Nothing)
-    default_solver = Base.invokelatest(optimizer_with_attributes, Clp.Optimizer, "LogLevel" => 0)
-    _db_solvers(db_lp_solver, db_lp_solver_options, default_solver)
-end
-_db_lp_solvers(lp_solver) = Dict(m => lp_solver for m in model())
-
-
-"""
-    _db_mip_solvers(db_solver, db_solver_options, default_solver)
-
-A Dict mapping models to mip solvers. 
-
-If `mip_solver` is not `nothing`, then it's used for all models.
-Otherwise a solver is built using db_mip_solver (and optionally db_mip_solver_options) from the db.
-"""
-function _db_solvers(db_solver, db_solver_options, default_solver)
-    db_solvers = Dict()
-    for m in model()
-        db_solver_ = db_solver(model=m, _strict=false)
-        db_solvers[m] = if db_solver_ === nothing
-            @warn "no `$(db_solver.name)` parameter was found for model `$m` - using the default instead"
-            default_solver
-        else
-            db_solver_name = Symbol(first(splitext(string(db_solver_))))
-            db_solver_options_ = db_solver_options(model=m, _strict=false)
-            db_solver_options_parsed = if db_solver_options_ !== nothing
-                [
-                    (String(key) => _parse_solver_option(val.value))
-                    for (solver, options) in db_solver_options_
-                    if solver == db_solver_
-                    for (key, val) in options.value
-                ]
-            else
-                []
-            end
-            @eval using $db_solver_name
-            db_solver_mod = getproperty(@__MODULE__, db_solver_name)
-            @info "$db_solver_name solver with $(join(db_solver_options_parsed, ", ")) will be used for model `$m`"
-            Base.invokelatest(optimizer_with_attributes, db_solver_mod.Optimizer, db_solver_options_parsed...)
-        end
-    end
-    db_solvers
-end
-
-_parse_solver_option(value::Number) = isinteger(value) ? convert(Int64, value) : value
-_parse_solver_option(value) = string(value)
