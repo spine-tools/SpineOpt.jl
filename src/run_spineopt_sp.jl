@@ -316,7 +316,7 @@ function _save_variable_value!(m::Model, name::Symbol, indices::Function)
     var = m.ext[:variables][name]
     m.ext[:values][name] = Dict(
         ind => _variable_value(var[ind])
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) # if end_(ind.t) <= end_(current_window(m))
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)),temporal_block=anything) # if end_(ind.t) <= end_(current_window(m))
     )
 end
 
