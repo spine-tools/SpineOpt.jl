@@ -93,15 +93,14 @@ function set_objective_MGA_iteration!(m;iteration=nothing)
             iteration
         )
         @fetch MGA_aux_diff, MGA_objective = m.ext[:variables]
-        @show keys(MGA_aux_diff)
-        m.ext[:constraints][:MGA_objective_ub] = Dict(
-            (MGA_iteration=iteration) => @constraint(
+        ub_objective = get!(m.ext[:constraints],:MGA_objective_ub,Dict())
+        ub_objective[iteration] = @constraint(
                 m,
                 MGA_objective[(model = m.ext[:instance],t=current_window(m))]
-                <= sum(MGA_aux_diff[ind...]
+                <= sum(
+                MGA_aux_diff[ind...]
                        for ind in vcat([storages_invested_MGA_indices(iteration),connections_invested_MGA_indices(iteration),units_invested_MGA_indices(iteration)])
                 )
-        )
         )
         for (con_key, cons) in m.ext[:constraints]
             for (inds, con) in cons
@@ -136,11 +135,15 @@ function _set_objective_MGA_iteration!(
             MGA_results = m.ext[:outputs]
             variable = m.ext[:variables][variable_name]
             @show collect(keys(d_aux))
-            @show [MGA_aux_diff[ind...,MGA_current_iteration] for ind in MGA_indices()]
-            m.ext[:constraints][:MGA_diff_ub1] = Dict(
-                (ind...,MGA_current_iteration...) => @constraint(
+            #FIXME: don't create new dict everytime, but get existing one
+            d_diff_ub1 = get!(m.ext[:constraints],:MGA_diff_ub1,Dict())
+            d_diff_ub2 = get!(m.ext[:constraints],:MGA_diff_ub2,Dict())
+            d_diff_lb1 = get!(m.ext[:constraints],:MGA_diff_lb1,Dict())
+            d_diff_lb2 = get!(m.ext[:constraints],:MGA_diff_lb2,Dict())
+            for ind in MGA_indices()
+                d_diff_ub1[(ind...,MGA_current_iteration...)] = @constraint(
                     m,
-                    MGA_aux_diff[ind...,MGA_current_iteration]
+                    MGA_aux_diff[((ind...,MGA_iteration=MGA_current_iteration))]
                     <=
                     sum(
                     + (
@@ -151,12 +154,9 @@ function _set_objective_MGA_iteration!(
                            for _ind in variable_indices_function(m; ind...)
                    )
                    + MGA_variable_bigM(;ind...)*MGA_aux_binary[(ind...,MGA_iteration=MGA_current_iteration)])
-                   for ind in MGA_indices()
-               )
-           m.ext[:constraints][:MGA_diff_ub2] = Dict(
-               (ind...,MGA_current_iteration...) => @constraint(
+                d_diff_ub2[(ind...,MGA_current_iteration...)]= @constraint(
                     m,
-                    MGA_aux_diff[ind...,MGA_current_iteration]
+                    MGA_aux_diff[((ind...,MGA_iteration=MGA_current_iteration))]
                     <=
                     sum(
                     - (variable[_ind]
@@ -166,12 +166,9 @@ function _set_objective_MGA_iteration!(
                    )
                   + MGA_variable_bigM(;ind...)*(1-MGA_aux_binary[(ind...,MGA_iteration=MGA_current_iteration)])
                   )
-                   for ind in MGA_indices()
-                )
-            m.ext[:constraints][:MGA_diff_lb1] = Dict(
-                (ind...,MGA_current_iteration...) => @constraint(
+                  d_diff_lb1[(ind...,MGA_current_iteration...)] = @constraint(
                     m,
-                    MGA_aux_diff[ind...,MGA_current_iteration]
+                    MGA_aux_diff[((ind...,MGA_iteration=MGA_current_iteration))]
                     >=
                     sum(
                     (variable[_ind]
@@ -180,12 +177,9 @@ function _set_objective_MGA_iteration!(
                            for _ind in variable_indices_function(m; ind...)
                    )
                    )
-                   for ind in MGA_indices()
-                )
-            m.ext[:constraints][:MGA_diff_lb2] = Dict(
-                (ind...,MGA_current_iteration...) => @constraint(
+                   d_diff_lb2[(ind...,MGA_current_iteration...)] = @constraint(
                     m,
-                    MGA_aux_diff[ind...,MGA_current_iteration]
+                    MGA_aux_diff[((ind...,MGA_iteration=MGA_current_iteration))]
                     >=
                     sum(
                     - (variable[_ind]
@@ -194,8 +188,7 @@ function _set_objective_MGA_iteration!(
                            for _ind in variable_indices_function(m; ind...)
                    )
                    )
-                   for ind in MGA_indices()
-                    )
+               end
         end
 end
 
@@ -206,7 +199,13 @@ end
 
 function save_MGA_objective_values!(m::Model)
     ind = (model=m.ext[:instance], t=current_window(m))
-    for name in [:MGA_objective,]
-        m.ext[:values][name] = Dict(ind => value(m.ext[:variables][name][ind]))
+    for name in [:MGA_objective,]#:MGA_aux_diff]
+        for ind in keys(m.ext[:variables][name])
+            m.ext[:values][name] = Dict(ind => value(m.ext[:variables][name][ind]))
+        end
     end
+end
+
+function _set_objective_MGA!(m,iteration)
+#
 end
