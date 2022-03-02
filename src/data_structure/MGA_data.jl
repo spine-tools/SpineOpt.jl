@@ -134,7 +134,6 @@ function _set_objective_MGA_iteration!(
             @fetch MGA_aux_diff, MGA_aux_binary, MGA_objective = m.ext[:variables]
             MGA_results = m.ext[:outputs]
             variable = m.ext[:variables][variable_name]
-            @show collect(keys(d_aux))
             #FIXME: don't create new dict everytime, but get existing one
             d_diff_ub1 = get!(m.ext[:constraints],:MGA_diff_ub1,Dict())
             d_diff_ub2 = get!(m.ext[:constraints],:MGA_diff_ub2,Dict())
@@ -174,6 +173,7 @@ function _set_objective_MGA_iteration!(
                     (variable[_ind]
                       - MGA_results[variable_name][((Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))..., MGA_iteration=MGA_current_iteration))][t0.ref.x][_ind.t.start.x])
                       * scenario_weight_function(m; Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))...)
+                      #FIXME: duration!
                            for _ind in variable_indices_function(m; ind...)
                    )
                    )
@@ -194,7 +194,9 @@ end
 
 function add_MGA_objective_constraint!(m::Model)
     instance = m.ext[:instance]
-    @constraint(m, total_costs(m, end_(last(time_slice(m)))) <= (1+max_MGA_slack(model = instance)) * objective_value_MGA(model= instance))
+    m.ext[:constraints][:MGA_slack_constraint] = Dict(m.ext[:instance] =>
+        @constraint(m, total_costs(m, end_(last(time_slice(m)))) <= (1+max_MGA_slack(model = instance)) * objective_value_MGA(model= instance))
+        )
 end
 
 function save_MGA_objective_values!(m::Model)
@@ -204,8 +206,4 @@ function save_MGA_objective_values!(m::Model)
             m.ext[:values][name] = Dict(ind => value(m.ext[:variables][name][ind]))
         end
     end
-end
-
-function _set_objective_MGA!(m,iteration)
-#
 end
