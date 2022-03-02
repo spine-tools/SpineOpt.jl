@@ -303,7 +303,6 @@
                             <= first_obj_result[t0.ref.x][t.start.x]*(1+mga_slack))
                  con = constraint[model(:instance)]
                  observed_con = constraint_object(con)
-                 @show expected_con, observed_con
                  @test _is_constraint_equal(observed_con, expected_con)
              end
              #FIXME: add for connection and node
@@ -329,7 +328,6 @@
                         MGA_aux_diff_1 + MGA_aux_diff_2 + MGA_aux_diff_3)
              con = constraint[MGA_current_iteration]
              observed_con = constraint_object(con)
-             @show expected_con, observed_con
              @test _is_constraint_equal(observed_con, expected_con)
         end
     end

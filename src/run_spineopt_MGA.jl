@@ -1,19 +1,16 @@
-function rerun_spineopt_MGA_algorithm(
-    url_out::String;
-    mip_solver=nothing,
-    lp_solver=nothing,
+function rerun_spineopt!(
+    ::Nothing,
+    ::Nothing,
+    m::Model,
+    url_out::Union{String,Nothing};
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    use_direct_model=false,
     alternative_objective = nothing
     )
-    mip_solver = _default_mip_solver(mip_solver)
-    lp_solver = _default_lp_solver(lp_solver)
     outputs = Dict()
-    m = create_model(mip_solver, use_direct_model, :spineopt_MGA)
     MGA_iterations = 0
     max_MGA_iteration = max_MGA_iterations(model=m.ext[:instance])
     name_MGA_it = :MGA_iteration
@@ -28,19 +25,15 @@ function rerun_spineopt_MGA_algorithm(
     init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level,alternative_objective=alternative_objective)
     init_outputs!(m)
     k = 1
-    calculate_duals = duals_calculation_needed(m)
     while optimize
         @log log_level 1 "Window $k: $(current_window(m))"
         optimize_model!(
             m;
             log_level=log_level,
-            calculate_duals=calculate_duals,
-            mip_solver=mip_solver,
-            lp_solver=lp_solver,
-            use_direct_model=use_direct_model
+            iterations=MGA_iterations
         ) || break
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @timelog log_level 2 "Saving results..." save_model_results!(outputs, m;iterations=MGA_iterations)
+        # @timelog log_level 2 "Saving results..." save_model_results!(outputs, m;iterations=MGA_iterations)
         @timelog log_level 2 "Fixing non-anticipativity values..." fix_non_anticipativity_values!(m)
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
             @timelog log_level 2 " ... Rolling complete\n" break
@@ -68,13 +61,9 @@ function rerun_spineopt_MGA_algorithm(
         set_objective_MGA_iteration!(m;iteration=MGA_iteration()[end])
         optimize_model!(m;
                     log_level=log_level,
-                    calculate_duals=calculate_duals,
-                    mip_solver=mip_solver,
-                    lp_solver=lp_solver,
-                    use_direct_model=use_direct_model)  || break
+                    iterations=MGA_iterations)  || break
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         save_MGA_objective_values!(m)
-        save_model_results!(outputs, m;iterations=MGA_iterations) #save the outputs with MGA indication; for now everything should be written back (use save_outputs + keyword)
         MGA_iterations += 1
     end
     write_report(m, url_out) #... make sure that m hold all solutions; every output get's an MGA extensions!

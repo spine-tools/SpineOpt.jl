@@ -655,7 +655,7 @@
         object_parameter_values = [
             ["unit", "unit_ab", "candidate_units", candidate_units],
             ["model", "master", "model_type", "spineopt_benders_master"],
-            ["model", "instance", "model_type", "spineopt_benders_operations"],
+            ["model", "instance", "model_type", "spineopt_standard"],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -734,7 +734,7 @@
         object_parameter_values = [
             ["unit", "unit_ab", "candidate_units", candidate_units],
             ["model", "master", "model_type", "spineopt_benders_master"],
-            ["model", "instance", "model_type", "spineopt_benders_operations"],
+            ["model", "instance", "model_type", "spineopt_standard"],
         ]
         relationships = [
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
@@ -857,7 +857,7 @@
                 ["model", "instance", "model_end", model_end],
                 ["model", "master", "model_end", model_end],
                 ["model", "master", "model_type", "spineopt_benders_master"],
-                ["model", "instance", "model_type", "spineopt_benders_operations"],
+                ["model", "instance", "model_type", "spineopt_standard"],
             ]
             relationships = [
                 ["unit__investment_temporal_block", ["unit_ab", "hourly"]],

@@ -676,7 +676,7 @@
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_b", "has_state", true],
             ["model", "master", "model_type", "spineopt_benders_master"],
-            ["model", "instance", "model_type", "spineopt_benders_operations"],
+            ["model", "instance", "model_type", "spineopt_standard"],
         ]
         relationships = [
             ["node__investment_temporal_block", ["node_c", "hourly"]],
@@ -763,7 +763,7 @@
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_b", "has_state", true],
             ["model", "master", "model_type", "spineopt_benders_master"],
-            ["model", "instance", "model_type", "spineopt_benders_operations"],
+            ["model", "instance", "model_type", "spineopt_standard"],
         ]
         relationships = [
             ["node__investment_temporal_block", ["node_c", "hourly"]],
@@ -892,7 +892,7 @@
                 ["model", "instance", "model_end", model_end],
                 ["model", "master", "model_end", model_end],
                 ["model", "master", "model_type", "spineopt_benders_master"],
-                ["model", "instance", "model_type", "spineopt_benders_operations"],
+                ["model", "instance", "model_type", "spineopt_standard"],
             ]
             relationships = [
                 ["node__investment_temporal_block", ["node_c", "hourly"]],

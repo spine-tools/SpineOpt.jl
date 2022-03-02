@@ -127,7 +127,7 @@ function run_spineopt(
             $missing_items
             """
         end
-    end   
+    end
 
     rerun_spineopt(
         url_out;
@@ -154,46 +154,50 @@ function rerun_spineopt(
     use_direct_model=false,
     alternative_objective=nothing,
 )
-    @eval using JuMP
-    m = Base.invokelatest(create_model, :spineopt_operations, mip_solver, lp_solver, use_direct_model)
-    mp = Base.invokelatest(create_model, :spineopt_master, mip_solver, lp_solver, use_direct_model)
+    m = Base.invokelatest(create_model, :spineopt_standard, mip_solver, lp_solver, use_direct_model)
+    mp = Base.invokelatest(create_model, :spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
+    m_MGA = Base.invokelatest(create_model, :spineopt_MGA, mip_solver, lp_solver, use_direct_model)
     # High-level algorithm selection. For now, selecting based on defined model types,
     # but may want more robust system in future
-    if !isempty(model(model_type=:spineopt_benders_master))
-        if !isempty(model(model_type=:spineopt_MGA))
-            @error "Currently the combination of Benders and MGA is supported. Please make sure that you do't have a
-            `model_type=:spineopt_benders_master` together with another model of type `:spineopt_MGA`"
-        elseif !isempty(model(model_type=:spineopt_benders_operations))
-            rerun_spineopt = rerun_spineopt_benders_algorithm
-        else
-            @error "You cannot define a Benders Master problem without a related Benders Sbuproblem. Please make sure there is a Model object
-            with the `model_type=:spineopt_benders_operations`"
-        end
-    elseif !isempty(model(model_type=:spineopt_MGA))
-        rerun_spineopt = rerun_spineopt_MGA_algorithm
-    else
-        rerun_spineopt = rerun_spineopt_sp
-    end
+    # if !isempty(model(model_type=:spineopt_benders_master))
+    #     if !isempty(model(model_type=:spineopt_MGA))
+    #         @error "Currently the combination of Benders and MGA is supported. Please make sure that you don't have a
+    #         `model_type=:spineopt_benders_master` together with another model of type `:spineopt_MGA`"
+    #     elseif !isempty(model(model_type=:spineopt_standard))
+    #         rerun_spineopt = rerun_spineopt_benders_algorithm
+    #     else
+    #         @error "You cannot define a Benders Master problem without a related Benders Sbuproblem. Please make sure there is a Model object
+    #         with the `model_type=:spineopt_standard`"
+    #     end
+    # elseif !isempty(model(model_type=:spineopt_MGA))
+    #     rerun_spineopt = rerun_spineopt_MGA_algorithm
+    # else
+    #     rerun_spineopt = rerun_spineopt_sp
+    # end
     Base.invokelatest(
         rerun_spineopt!,
         m,
         mp,
+        m_MGA,
         url_out;
         add_user_variables=add_user_variables,
         add_constraints=add_constraints,
         update_constraints=update_constraints,
         log_level=log_level,
-        optimize=optimize
+        optimize=optimize,
         alternative_objective=nothing
     )
 end
 
-rerun_spineopt!(::Nothing, mp, url_out; kwargs...) = error("No model of type `spineopt_operations` defined")
+rerun_spineopt!(::Nothing, mp, ::Nothing, url_out; kwargs...) = error("Model of type `spineopt_benders_master` requires the existence of a subproblem model of type `spineopt_standard`")
+rerun_spineopt!(::Nothing, mp, m_MGA; kwargs...) = error("Currently the combination of Benders and MGA is supported. Please make sure that you don't have a `model_type=:spineopt_benders_master` together with another model of type `:spineopt_MGA`")
+rerun_spineopt!(m, ::Nothing, m_MGA; kwargs...) = error("Currently the combination of models with type `spineopt_standard` and `spineopt_MGA` is supported.")
+rerun_spineopt!(::Nothing, ::Nothing, ::Nothing; kwargs...) = error("At least one model object has to exist, with at least one of type `spineopt_standard` (or `spineopt_MGA`)")
 
 """
 A JuMP `Model` for SpineOpt.
 """
-function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)    
+function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)
     isempty(model(model_type=model_type)) && return nothing
     instance = first(model(model_type=model_type))
     mip_solver = _mip_solver(instance, mip_solver)
@@ -337,7 +341,7 @@ function objective_terms(m) #FIXME: this should just be benders definind the obj
         :ramp_costs,
         :units_on_costs,
     ]
-    if (model_type(model=m.ext[:instance]) == :spineopt_benders_operations || model_type(model=m.ext[:instance]) ==:spineopt_standard || model_type(model=m.ext[:instance]) ==:spineopt_MGA)
+    if (model_type(model=m.ext[:instance]) ==:spineopt_standard || model_type(model=m.ext[:instance]) ==:spineopt_MGA)
         if m.ext[:is_subproblem]
             op_terms
         else

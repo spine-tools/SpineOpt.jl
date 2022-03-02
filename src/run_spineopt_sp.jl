@@ -20,14 +20,14 @@
 function rerun_spineopt!(
     m::Model,
     ::Nothing,
+    ::Nothing,
     url_out::Union{String,Nothing};
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     alternative_objective = nothing,
     update_constraints=m -> nothing,
     log_level=3,
-    optimize=true,
-    iterations=nothing
+    optimize=true
 )
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
@@ -39,7 +39,7 @@ function rerun_spineopt!(
     calculate_duals = any(startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:outputs])))
     while optimize
         @log log_level 1 "Window $k: $(current_window(m))"
-        optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals, iteration=iteration) || break
+        optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals) || break
         @timelog log_level 2 "Post-processing results..." postprocess_results!(m)
         @timelog log_level 2 "Fixing non-anticipativity values..." fix_non_anticipativity_values!(m)
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
@@ -273,7 +273,7 @@ end
 Optimize the given model.
 If an optimal solution is found, save results and return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false)
+function optimize_model!(m::Model; log_level=3, calculate_duals=false, iterations=nothing)
     write_mps_file(model=m.ext[:instance]) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
@@ -289,8 +289,8 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false)
             @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
         end
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @timelog log_level 2 "Saving $(m.ext[:instance]) results..." save_model_results!(m)
-        if calculate_duals            
+        @timelog log_level 2 "Saving $(m.ext[:instance]) results..." save_model_results!(m,iterations=iterations)
+        if calculate_duals
             save_marginal_values!(m)
             save_bound_marginal_values!(m)
             if lp_solver != mip_solver
@@ -435,11 +435,10 @@ end
 """
 Save a model results: first postprocess results, then save variables and objective values, and finally save outputs
 """
-function save_model_results!(m)
+function save_model_results!(m; iterations=nothing)
     save_variable_values!(m)
     save_objective_values!(m)
     save_outputs!(m; iterations=iterations)
-    save_outputs!(m)
 end
 
 """

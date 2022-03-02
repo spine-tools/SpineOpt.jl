@@ -233,7 +233,7 @@
         ]
         relationship_parameter_values = [
             [
-                "connection__node__node", 
+                "connection__node__node",
                 ["connection_ca", "node_c","node_a"],
                 "fixed_pressure_constant_1",
                 fixed_pr_constant_1_[("connection_ca", "node_c","node_a")]
@@ -402,7 +402,7 @@
             ["connection", "connection_ca", "connection_reactance", conn_x],
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
-            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],            
+            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
         ]
         relationship_parameter_values = [
             ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
@@ -698,7 +698,7 @@
         object_parameter_values = [
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
             ["model", "master", "model_type", "spineopt_benders_master"],
-            ["model", "instance", "model_type", "spineopt_benders_operations"],
+            ["model", "instance", "model_type", "spineopt_standard"],
         ]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
@@ -830,7 +830,7 @@
                 ["model", "instance", "model_end", model_end],
                 ["model", "master", "model_end", model_end],
                 ["model", "master", "model_type", "spineopt_benders_master"],
-                ["model", "instance", "model_type", "spineopt_benders_operations"],
+                ["model", "instance", "model_type", "spineopt_standard"],
             ]
             relationships = [
                 ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
@@ -938,7 +938,7 @@
         object_parameter_values = [
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
             ["model", "master", "model_type", "spineopt_benders_master"],
-            ["model", "instance", "model_type", "spineopt_benders_operations"],
+            ["model", "instance", "model_type", "spineopt_standard"],
         ]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
