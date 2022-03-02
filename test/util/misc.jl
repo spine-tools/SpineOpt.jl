@@ -107,6 +107,8 @@ import DelimitedFiles: readdlm
             ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "connection_contingency", true],
+            ["model", "instance", "db_mip_solver", "Cbc.jl"],
+            ["model", "instance", "db_lp_solver", "Clp.jl"],
         ]
         relationship_parameter_values = [
             ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
@@ -153,7 +155,7 @@ import DelimitedFiles: readdlm
             [
                 0.0 -0.666666 -0.333333
                 0.0 0.333333 -0.333333
-                0.0 0.333333 0.666667
+                0.0 -0.333333 -0.666667
             ];
             atol=1e-5,
         )
@@ -162,6 +164,6 @@ import DelimitedFiles: readdlm
         @test convert(Array{String,1}, lodfs[1, 1:(end - 1)]) ==
               ["contingency line", "from_node", "to node", "connection_ab", "connection_bc", "connection_ca"]
         @test convert(Array{String,1}, lodfs[:, 1]) == ["contingency line", "connection_ca"]
-        @test isapprox(convert(Array{Float64,1}, lodfs[2, 4:(end - 2)]), [-1, -1])
+        @test isapprox(convert(Array{Float64,1}, lodfs[2, 4:(end - 2)]), [1, 1])
     end
 end

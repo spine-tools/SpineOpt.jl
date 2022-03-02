@@ -76,6 +76,8 @@
             ["model", "master", "max_iterations", "2"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
+            ["model", "instance", "db_mip_solver", "Cbc.jl"],
+            ["model", "instance", "db_lp_solver", "Clp.jl"],
         ],
         :relationship_parameter_values => [
             [
@@ -229,10 +231,20 @@
             ["connection", "connection_ca", "has_binary_gas_flow", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
         ]
-        relationship_parameter_values =
-            [["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_1", fixed_pr_constant_1_[("connection_ca", "node_c","node_a")]]]
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
-
+        relationship_parameter_values = [
+            [
+                "connection__node__node", 
+                ["connection_ca", "node_c","node_a"],
+                "fixed_pressure_constant_1",
+                fixed_pr_constant_1_[("connection_ca", "node_c","node_a")]
+            ]
+        ]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+            relationships=relationships
+        )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_binary_flow = m.ext[:variables][:binary_gas_connection_flow]
         constraint = m.ext[:constraints][:connection_unitary_gas_flow]
@@ -390,7 +402,7 @@
             ["connection", "connection_ca", "connection_reactance", conn_x],
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
-            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
+            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],            
         ]
         relationship_parameter_values = [
             ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
@@ -407,17 +419,17 @@
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
-
         var_connection_flow = m.ext[:variables][:connection_intact_flow]
         var_node_injection = m.ext[:variables][:node_injection]
         constraint = m.ext[:constraints][:connection_intact_flow_ptdf]
         @test length(constraint) == 5
+        # NOTE: always pick the second (last) node in `connection__from_node` as 'to' node
+        # And they are ordered alphabetically from spinedb_api.export_functions.export_relationships
         @testset for (conn_name, n_to_name, n_inj_name, scen_names, t_block) in (
             (:connection_ab, :node_b, :node_b, (:parent,), :two_hourly),
             (:connection_bc, :node_c, :node_c, (:parent, :child), :hourly),
-            (:connection_ca, :node_a, :node_c, (:parent, :child), :hourly),
+            (:connection_ca, :node_c, :node_c, (:parent, :child), :hourly),
         )
             conn = connection(conn_name)
             n_to = node(n_to_name)
@@ -453,11 +465,14 @@
             ["node__commodity", ["node_a", "electricity"]],
             ["node__commodity", ["node_b", "electricity"]],
             ["node__commodity", ["node_c", "electricity"]],
+            ["connection__node__node", ["connection_ab", "node_b", "node_a"]],
+            ["connection__node__node", ["connection_ab", "node_a", "node_b"]],
+            ["connection__node__node", ["connection_bc", "node_c", "node_b"]],
+            ["connection__node__node", ["connection_bc", "node_b", "node_c"]],
+            ["connection__node__node", ["connection_ca", "node_a", "node_c"]],
+            ["connection__node__node", ["connection_ca", "node_c", "node_a"]],
         ]
         object_parameter_values = [
-            ["connection", "connection_ab", "connection_type", "connection_type_lossless_bidirectional"],
-            ["connection", "connection_bc", "connection_type", "connection_type_lossless_bidirectional"],
-            ["connection", "connection_ca", "connection_type", "connection_type_lossless_bidirectional"],
             ["connection", "connection_ab", "connection_monitored", true],
             ["connection", "connection_ab", "connection_reactance", conn_x],
             ["connection", "connection_ab", "connection_resistance", conn_r],
@@ -472,6 +487,12 @@
             ["connection", "connection_ca", "connection_contingency", true],
         ]
         relationship_parameter_values = [
+            ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
+            ["connection__node__node", ["connection_ab", "node_a", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
+            ["connection__node__node", ["connection_bc", "node_c", "node_b"], "fix_ratio_out_in_connection_flow", 1.0],
+            ["connection__node__node", ["connection_bc", "node_b", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
+            ["connection__node__node", ["connection_ca", "node_a", "node_c"], "fix_ratio_out_in_connection_flow", 1.0],
+            ["connection__node__node", ["connection_ca", "node_c", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
             [
                 "connection__from_node",
                 ["connection_ab", "node_a"],
@@ -504,7 +525,7 @@
         constraint = m.ext[:constraints][:connection_flow_lodf]
         @test length(constraint) == 3
         conn_cont = connection(:connection_ca)
-        n_cont_to = node(:node_a)
+        n_cont_to = node(:node_c)
         d_to = direction(:to_node)
         d_from = direction(:from_node)
         s_parent = stochastic_scenario(:parent)

@@ -17,6 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+using Cbc
+using Clp
+
 """
     @log(level, threshold, msg)
 """
@@ -56,13 +59,6 @@ using SpineInterface
 end
 using ._Template
 
-function _empty_data_structure()
-    for items in (object_classes, relationship_classes, parameters)
-        for x in items(@__MODULE__)
-            empty!(x)
-        end
-    end
-end
 
 """
     run_spineopt(url_in, url_out; <keyword arguments>)
@@ -88,7 +84,7 @@ added by `add_constraints`.
 """
 function run_spineopt(
     url_in::String,
-    url_out::String=url_in;
+    url_out::Union{String,Nothing}=url_in;
     upgrade=false,
     mip_solver=nothing,
     lp_solver=nothing,
@@ -117,7 +113,6 @@ function run_spineopt(
         end
     end
     @timelog log_level 2 "Initializing data structure from db..." begin
-        _empty_data_structure()
         using_spinedb(SpineOpt.template(), _Template)
         using_spinedb(url_in, @__MODULE__; upgrade=upgrade, filters=filters)
         missing_items = difference(_Template, @__MODULE__)
@@ -132,7 +127,8 @@ function run_spineopt(
             $missing_items
             """
         end
-    end
+    end   
+
     rerun_spineopt(
         url_out;
         mip_solver=mip_solver,
@@ -147,7 +143,7 @@ function run_spineopt(
 end
 
 function rerun_spineopt(
-    url_out::String;
+    url_out::Union{String,Nothing};
     mip_solver=nothing,
     lp_solver=nothing,
     add_user_variables=m -> nothing,
@@ -158,6 +154,9 @@ function rerun_spineopt(
     use_direct_model=false,
     alternative_objective=nothing,
 )
+    @eval using JuMP
+    m = Base.invokelatest(create_model, :spineopt_operations, mip_solver, lp_solver, use_direct_model)
+    mp = Base.invokelatest(create_model, :spineopt_master, mip_solver, lp_solver, use_direct_model)
     # High-level algorithm selection. For now, selecting based on defined model types,
     # but may want more robust system in future
     if !isempty(model(model_type=:spineopt_benders_master))
@@ -176,19 +175,111 @@ function rerun_spineopt(
         rerun_spineopt = rerun_spineopt_sp
     end
     Base.invokelatest(
-        rerun_spineopt,
+        rerun_spineopt!,
+        m,
+        mp,
         url_out;
-        mip_solver=mip_solver,
-        lp_solver=lp_solver,
         add_user_variables=add_user_variables,
         add_constraints=add_constraints,
         update_constraints=update_constraints,
         log_level=log_level,
-        optimize=optimize,
-        use_direct_model=use_direct_model,
+        optimize=optimize
         alternative_objective=nothing
     )
 end
+
+rerun_spineopt!(::Nothing, mp, url_out; kwargs...) = error("No model of type `spineopt_operations` defined")
+
+"""
+A JuMP `Model` for SpineOpt.
+"""
+function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)    
+    isempty(model(model_type=model_type)) && return nothing
+    instance = first(model(model_type=model_type))
+    mip_solver = _mip_solver(instance, mip_solver)
+    lp_solver = _lp_solver(instance, lp_solver)
+    m = use_direct_model ? direct_model(mip_solver()) : Model(mip_solver)
+    m.ext[:instance] = instance
+    m.ext[:variables] = Dict{Symbol,Dict}()
+    m.ext[:variables_definition] = Dict{Symbol,Dict}()
+    m.ext[:values] = Dict{Symbol,Dict}()
+    m.ext[:constraints] = Dict{Symbol,Dict}()
+    m.ext[:marginals] = Dict{Symbol,Dict}()
+    m.ext[:outputs] = Dict()
+    m.ext[:integer_variables] = []
+    m.ext[:is_subproblem] = false
+    m.ext[:objective_lower_bound] = 0.0
+    m.ext[:objective_upper_bound] = 0.0
+    m.ext[:benders_gap] = 0.0
+    m.ext[:mip_solver] = mip_solver
+    m.ext[:lp_solver] = lp_solver
+    m
+end
+
+"""
+A mip solver for given model instance. If given solver is not `nothing`, just return it.
+Otherwise create and return a solver based on db settings for instance.
+"""
+function _mip_solver(instance, given_solver)
+    _solver(given_solver) do
+        _db_mip_solver(instance)
+    end
+end
+
+"""
+A lp solver for given model instance. If given solver is not `nothing`, just return it.
+Otherwise create and return a solver based on db settings for instance.
+"""
+function _lp_solver(instance, given_solver)
+    _solver(given_solver) do
+        _db_lp_solver(instance)
+    end
+end
+
+_solver(f::Function, given_solver) = given_solver
+_solver(f::Function, ::Nothing) = f()
+
+function _db_mip_solver(instance)
+    _db_solver(
+        db_mip_solver(model=instance, _strict=false),
+        db_mip_solver_options(model=instance, _strict=false)
+    ) do
+        @warn "no `db_mip_solver` parameter was found for model `$instance` - using the default instead"
+        optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01)
+    end
+end
+
+function _db_lp_solver(instance)
+    _db_solver(
+        db_lp_solver(model=instance, _strict=false),
+        db_lp_solver_options(model=instance, _strict=false)
+    ) do
+        @warn "no `db_lp_solver` parameter was found for model `$instance` - using the default instead"
+        optimizer_with_attributes(Clp.Optimizer, "logLevel" => 0)
+    end
+end
+
+function _db_solver(f::Function, db_solver_name::Symbol, db_solver_options)
+    db_solver_mod_name = Symbol(first(splitext(string(db_solver_name))))
+    db_solver_options_parsed = _parse_solver_options(db_solver_name, db_solver_options)
+    @eval using $db_solver_mod_name
+    db_solver_mod = getproperty(@__MODULE__, db_solver_mod_name)
+    Base.invokelatest(optimizer_with_attributes, db_solver_mod.Optimizer, db_solver_options_parsed...)
+end
+_db_solver(f::Function, ::Nothing, db_solver_options) = f()
+
+function _parse_solver_options(db_solver_name, db_solver_options::Map)
+    [
+        (String(key) => _parse_solver_option(val.value))
+        for (solver_name, options) in db_solver_options
+        if solver_name == db_solver_name
+        for (key, val) in options.value
+    ]
+end
+_parse_solver_options(db_solver_name, db_solver_options) = []
+
+_parse_solver_option(value::Number) = isinteger(value) ? convert(Int64, value) : value
+_parse_solver_option(value) = string(value)
 
 """
     output_value(by_analysis_time, overwrite_results_on_rolling)
@@ -271,6 +362,7 @@ Write report from given model into a db.
 - `alternative::String`: an alternative to pass to `SpineInterface.write_parameters`.
 """
 function write_report(m, default_url, output_value=output_value; alternative="")
+    default_url === nothing && return
     reports = Dict()
     outputs = Dict()
     for rpt in model__report(model=m.ext[:instance])
