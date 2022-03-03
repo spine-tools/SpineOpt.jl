@@ -18,6 +18,20 @@ required to connect the archetype to the other input data correctly.
 Regardless, the following sections explain the different archetypes included in the *SpineOpt.jl* repository,
 as well as what steps the user needs to take to connect said archetype to their input data correctly.
 
+## Loading the SpineOpt Template and Archetypes into Your Model
+To load the latest version of the SpineOpt template, in the Spine DB Editor, from the menu (three hirzontal bars in the top right), click on import as follows:
+
+![importing the SpineOpt Template](https://user-images.githubusercontent.com/7080191/156589727-baa578b6-41f2-4de8-beb1-27ec4bddb5d6.png)
+
+Change the file type to JSON and click on spineopt_template.json as follows:
+
+![importing the SpineOpt Template](https://user-images.githubusercontent.com/7080191/156590071-d26125ec-8b76-4853-9a31-1df5508fa793.png)
+
+
+Click on spineopt_template.json and press Open. If you don't see spineopt_template.json make sure you have navigated to `Spine\SpineOpt.jl\templates`.
+
+Loading the latest version of the SpineOpt template in this way will update your datastore with the latest version of the data structure.
+
 ## Branching Stochastic Tree
 
 >`templates/archetypes/branching_stochastic_tree.json`
