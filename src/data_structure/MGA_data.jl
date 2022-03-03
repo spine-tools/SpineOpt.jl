@@ -207,3 +207,13 @@ function save_mga_objective_values!(m::Model)
         end
     end
 end
+
+function set_mga_objective!(m)
+    m.ext[:variables][:mga_objective] = Dict(
+               (model = m.ext[:instance],t=current_window(m)) => @variable(m, base_name = _base_name(:mga_objective,(model = m.ext[:instance],t=current_window(m))), lower_bound=0)
+               )
+    @objective(m,
+            Max,
+            m.ext[:variables][:mga_objective][(model = m.ext[:instance],t=current_window(m))]
+            )
+end
