@@ -157,23 +157,7 @@ function rerun_spineopt(
     m = Base.invokelatest(create_model, :spineopt_standard, mip_solver, lp_solver, use_direct_model)
     mp = Base.invokelatest(create_model, :spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
     m_mga = Base.invokelatest(create_model, :spineopt_mga, mip_solver, lp_solver, use_direct_model)
-    # High-level algorithm selection. For now, selecting based on defined model types,
-    # but may want more robust system in future
-    # if !isempty(model(model_type=:spineopt_benders_master))
-    #     if !isempty(model(model_type=:spineopt_mga))
-    #         @error "Currently the combination of Benders and mga is supported. Please make sure that you don't have a
-    #         `model_type=:spineopt_benders_master` together with another model of type `:spineopt_mga`"
-    #     elseif !isempty(model(model_type=:spineopt_standard))
-    #         rerun_spineopt = rerun_spineopt_benders_algorithm
-    #     else
-    #         @error "You cannot define a Benders Master problem without a related Benders Sbuproblem. Please make sure there is a Model object
-    #         with the `model_type=:spineopt_standard`"
-    #     end
-    # elseif !isempty(model(model_type=:spineopt_mga))
-    #     rerun_spineopt = rerun_spineopt_mga_algorithm
-    # else
-    #     rerun_spineopt = rerun_spineopt_sp
-    # end
+
     Base.invokelatest(
         rerun_spineopt!,
         m,
