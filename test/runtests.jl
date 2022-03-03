@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-using Revise
 using SpineOpt
 using SpineInterface
 using Test
@@ -91,7 +90,7 @@ end
     include("data_structure/preprocess_data_structure.jl")
     include("data_structure/temporal_structure.jl")
     include("data_structure/stochastic_structure.jl")
-    include("data_structure/algorithm_MGA_structure.jl")
+    include("data_structure/algorithm_mga_structure.jl")
     include("constraints/constraint_unit.jl")
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")

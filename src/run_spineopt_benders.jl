@@ -43,6 +43,7 @@ function rerun_spineopt!(
     max_benders_iterations = max_iterations(model=mp.ext[:instance])
     j = 1
     while optimize
+		@log log_level 0 "Starting Benders iteration $j"
         optimize_model!(mp; log_level=log_level) || break
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)
         k = 1

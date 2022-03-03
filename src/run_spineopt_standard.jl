@@ -389,15 +389,15 @@ function _save_output!(m, out, value_or_param; iterations=nothing)
     by_entity_non_aggr = _value_by_entity_non_aggregated(m, value_or_param)
     for (entity, by_analysis_time_non_aggr) in by_entity_non_aggr
         if !isnothing(iterations)
-            new_MGA_name = Symbol(string("MGA_it_", iterations)) ##TODO: fixme! Needs to be done, befooooore we execute solve, as we need to set objective for this solve
-            if MGA_iteration(new_MGA_name) == nothing
-                new_MGA_i = Object(new_MGA_name)
-                add_object!(MGA_iteration, new_MGA_i)
+            new_mga_name = Symbol(string("mga_it_", iterations)) ##TODO: fixme! Needs to be done, befooooore we execute solve, as we need to set objective for this solve
+            if mga_iteration(new_mga_name) == nothing
+                new_mga_i = Object(new_mga_name)
+                add_object!(mga_iteration, new_mga_i)
             else
-                new_MGA_i = MGA_iteration(new_MGA_name)
+                new_mga_i = mga_iteration(new_mga_name)
             end
-            new_val = (values(entity)...,new_MGA_i)
-            new_key = (keys(entity)...,:MGA_iteration)
+            new_val = (values(entity)...,new_mga_i)
+            new_key = (keys(entity)...,:mga_iteration)
             entity = NamedTuple{new_key}(new_val)
         end
         for (analysis_time, by_time_slice_non_aggr) in by_analysis_time_non_aggr
