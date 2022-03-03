@@ -1,3 +1,4 @@
+using Revise
 using Documenter
 using SpineOpt
 
@@ -58,6 +59,7 @@ makedocs(
             "Lossless nodal DC power flows" => joinpath("advanced_concepts", "Lossless_DC_power_flow.md"),
             "Representative days with seasonal storages" => joinpath("advanced_concepts", "representative_days_w_seasonal_storage.md"),
             "Imposing renewable energy targets" => joinpath("advanced_concepts", "cumulated_flow_restrictions.md"),
+            "Modelling to generate alternatives" => joinpath("advanced_concepts", "mga.md"),
         ],
         "Library" => "library.md",
     ],

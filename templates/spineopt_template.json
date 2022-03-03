@@ -151,7 +151,7 @@
         ["model", "max_iterations", 10.0, null, "Specifies the maximum number of iterations for the model. Currently only used for the master problem within a decomposed structure"],
         ["model", "max_mga_iterations", 10.0, null, "Define the number of mga iterations, i.e. how many alternative solutions will be generated."],
         ["model", "max_mga_slack", 0.05, null, "Defines the maximum slack by which the alternative solution may differ from the original solution (e.g. 5% more than initial objective function value)"],
-        ["model", "mga_diff_relative", true, null, "If set to true, the elementwise differences are expressed relative to each other."],
+        ["model", "mga_diff_relative", false, null, "If set to true, the elementwise differences are expressed relative to each other."],
         ["model", "model_end", {"type": "date_time", "data": "2000-01-02T00:00:00"}, null, "Defines the last timestamp to be modelled. Rolling optimization terminates after passing this point."],
         ["model", "model_start", {"type": "date_time", "data": "2000-01-01T00:00:00"}, null, "Defines the first timestamp to be modelled. Relative `temporal_blocks` refer to this value for their start and end."],
         ["model", "model_type", "spineopt_standard", "model_type_list", "Used to identify model objects as relating to the master problem or operational sub problems (default)"],

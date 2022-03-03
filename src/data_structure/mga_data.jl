@@ -64,7 +64,7 @@ end
 
 function set_objective_mga_iteration!(m;iteration=nothing)
     instance = m.ext[:instance]
-    if mga_diff_relative(model=instance) #FIXME: define this properly for relative and not relative
+    if !mga_diff_relative(model=instance) #FIXME: define this properly for relative and not relative
         _set_objective_mga_iteration!(
             m,
             :units_invested_available,

@@ -162,7 +162,7 @@
             ["node", "node_group_bc","storages_invested_big_m_mga",storages_invested_big_m_mga],
             ["node", "node_group_bc","storages_invested_mga_weight",1],
             ["model", "instance", "model_type", "spineopt_mga"],
-            ["model", "instance", "mga_diff_relative", true],
+            ["model", "instance", "mga_diff_relative", false],
             ["model", "instance", "max_mga_slack", mga_slack],
             ["model", "instance", "max_mga_iterations", 2],
             # ["node", "node_a", "demand",1],
