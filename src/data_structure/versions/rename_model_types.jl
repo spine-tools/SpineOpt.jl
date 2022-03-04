@@ -28,39 +28,38 @@ function rename_model_types(db_url, log_level)
 	data = run_request(
 		db_url, "query", ("object_parameter_value_sq", "parameter_value_list_sq")
 	)
-	# Find conn_flow_cost_vals
+
 	pvals = data["object_parameter_value_sq"]
-	pvals_2 = data["parameter_value_list_sq"]
+	plists = data["parameter_value_list_sq"]
 	model_type_vals = [x for x in pvals if x["parameter_name"] == "model_type"]
-	model_type_list = [x for x in pvals_2 if x["name"] == "model_type_list"]
+	model_type_list = [x for x in plists if x["name"] == "model_type_list"]
 	# Prepare new_data
 	new_data = Dict()
-	#find object parameter definition according to template
-	new_data[:object_parameters] = [
-		x for x in template()["object_parameters"] if x[2] == "model_type"
-	]
-	# Compute new_pvals (i.e. replace values)
-
 	new_data[:object_parameter_values] = new_pvals = []
-	new_data[:parameter_value_lists] = new_pval_list = []
+	new_data[:parameter_value_lists] = new_plists = []
+	###
 	for pval in model_type_vals
 		model_id = pval["object_id"]
 		if pval["value"] == "spineopt_master"
-			# run_request(db_url, "call_method", ("cascade_remove_items",), Dict(:parameter_definition => [model_id]))
-			value = parse_db_value(pval["value"]) #we replace the value here
 			new_pval = ["model", pval["object_name"], "model_type", "spineopt_benders_master"]
 			push!(new_pvals, new_pval)
 		elseif pval["value"] == "spineopt_operations"
-			value = parse_db_value(pval["value"]) #we replace the value here
 			new_pval = ["model", pval["object_name"], "model_type", "spineopt_standard"]
 			push!(new_pvals, new_pval)
 		end
 	end
-	data = [
-		["model_type_list", "spineopt_benders_master"], ["model_type_list", "spineopt_standard"],
-		["model_type_list", "spineopt_mga"],
-	]
-	new_pval = data
+
+	for plist in model_type_list
+		if plist["value"] == "spineopt_master"
+			new_plist = ["model_type_list", "spineopt_benders_master"]
+			push!(new_plists, new_plist)
+		elseif plist["value"] == "spineopt_operations"
+			new_plist = ["model_type_list", "spineopt_standard"]
+			push!(new_plists, new_plist)
+		end
+	end
+
+	# Add new data
 	run_request(db_url, "import_data", (new_data, ""))
 	true
 end

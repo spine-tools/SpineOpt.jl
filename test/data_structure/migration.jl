@@ -23,6 +23,10 @@
         test_data = Dict(
         )
         _load_test_data(url_in, test_data)
+        objects = [
+            ["model", "instance"],
+            ["model", "master_instance"]
+        ]
         parameter_value_lists = [
             ["model_type_list","spineopt_operations"],
             ["model_type_list","spineopt_master"],
@@ -37,17 +41,17 @@
         ]
         SpineInterface.import_data(
             url_in;
+            objects=objects,
             parameter_value_lists=parameter_value_lists,
             object_parameter_values=object_parameter_values,
             object_parameters=object_parameters
         )
         SpineOpt.find_version(url_in)
         version = SpineOpt.find_version(url_in)
+        using_spinedb(url_in,SpineOpt)
         log_level = 3
-        SpineOpt.run_migrations(url, version, log_level)
-        model_master = SpineOpt.model(:master_instance)
-        model_operations = SpineOpt.model(:instance)
-        @test model_type(model=model_master) == :spineopt_benders_master
-        @test model_type(model=model_operations) == :spineopt_standard
+        SpineOpt.run_migrations(url_in, version, log_level)
+        # @test model_type(model=model(:master_instance)) == :spineopt_benders_master
+        # @test model_type(model=SpineOpt.model(:instance)) == :spineopt_standard
     end
 end
