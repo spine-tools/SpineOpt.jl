@@ -24,7 +24,7 @@ function rerun_spineopt!(
     url_out::Union{String,Nothing};
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
-    alternative_objective = nothing,
+    alternative_objective=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true

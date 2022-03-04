@@ -384,6 +384,7 @@
 		["output","connections_invested_available", null],
 		["output","connections_invested", null],
 		["output","mp_objective_lowerbound", null],
+    ["output","mga_objective", null],
 		["output","node_injection", null],
 		["output","node_pressure", null],
 		["output","node_slack_neg", null],

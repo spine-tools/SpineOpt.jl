@@ -152,7 +152,7 @@ function rerun_spineopt(
     log_level=3,
     optimize=true,
     use_direct_model=false,
-    alternative_objective=nothing,
+    alternative_objective=m -> nothing,
 )
     m = Base.invokelatest(create_model, :spineopt_standard, mip_solver, lp_solver, use_direct_model)
     mp = Base.invokelatest(create_model, :spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
@@ -169,7 +169,7 @@ function rerun_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
-        alternative_objective=nothing
+        alternative_objective=alternative_objective
     )
 end
 

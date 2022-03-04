@@ -64,10 +64,10 @@ end
 
 function set_objective_mga_iteration!(m;iteration=nothing)
     instance = m.ext[:instance]
-    if !mga_diff_relative(model=instance) #FIXME: define this properly for relative and not relative
+    if !mga_diff_relative(model=instance) #FIXME: define also for relative diffs in the future
         _set_objective_mga_iteration!(
             m,
-            :units_invested_available,
+            :units_invested,
             units_invested_available_indices,
             unit_stochastic_scenario_weight,
             units_invested_mga_indices,
@@ -76,7 +76,7 @@ function set_objective_mga_iteration!(m;iteration=nothing)
         )
         _set_objective_mga_iteration!(
             m,
-            :connections_invested_available,
+            :connections_invested,
             connections_invested_available_indices,
             connection_stochastic_scenario_weight,
             connections_invested_mga_indices,
@@ -85,7 +85,7 @@ function set_objective_mga_iteration!(m;iteration=nothing)
         )
         _set_objective_mga_iteration!(
             m,
-            :storages_invested_available,
+            :storages_invested,
             storages_invested_available_indices,
             node_stochastic_scenario_weight,
             storages_invested_mga_indices,
@@ -99,7 +99,11 @@ function set_objective_mga_iteration!(m;iteration=nothing)
                 mga_objective[(model = m.ext[:instance],t=current_window(m))]
                 <= sum(
                 mga_aux_diff[ind...]
-                       for ind in vcat([storages_invested_mga_indices(iteration),connections_invested_mga_indices(iteration),units_invested_mga_indices(iteration)])
+                for ind in vcat(
+                    [storages_invested_mga_indices(iteration),
+                    connections_invested_mga_indices(iteration),
+                    units_invested_mga_indices(iteration)]
+                    )
                 )
         )
         for (con_key, cons) in m.ext[:constraints]
@@ -120,13 +124,12 @@ function _set_objective_mga_iteration!(
         mga_current_iteration::Object,
         )
         if !isempty(mga_indices())
-            t0 = _analysis_time(m)
-            @fetch units_invested_available = m.ext[:variables]
+            t0 = _analysis_time(m).ref.x
+            @fetch units_invested = m.ext[:variables]
             mga_results = m.ext[:outputs]
             t0 = _analysis_time(m)
             d_aux = get!(m.ext[:variables], :mga_aux_diff, Dict())
             d_bin = get!(m.ext[:variables],:mga_aux_binary, Dict())
-            #FIXME: make more generic (easily add new mga variables)
             for ind in mga_indices(mga_current_iteration)
                 d_aux[ind] = @variable(m, base_name = _base_name(:mga_aux_diff,ind), lower_bound = 0)
                 d_bin[ind] = @variable(m, base_name = _base_name(:mga_aux_binary,ind), binary=true)
@@ -147,10 +150,10 @@ function _set_objective_mga_iteration!(
                     sum(
                     + (
                     variable[_ind]
-                     - mga_results[variable_name][((Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))..., mga_iteration=mga_current_iteration))][t0.ref.x][_ind.t.start.x]
+                     - mga_results[variable_name][(_drop_key(_ind,:t)..., mga_iteration=mga_current_iteration)][t0][_ind.t.start.x]
                      )
-                     *scenario_weight_function(m; Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))...) #fix me, can also be only node or so
-                           for _ind in variable_indices_function(m; ind...)
+                     * scenario_weight_function(m; _drop_key(_ind,:t)...) #fix me, can also be only node or so
+                     for _ind in variable_indices_function(m; ind...)
                    )
                    + mga_variable_bigM(;ind...)*mga_aux_binary[(ind...,mga_iteration=mga_current_iteration)])
                 d_diff_ub2[(ind...,mga_current_iteration...)]= @constraint(
@@ -159,9 +162,9 @@ function _set_objective_mga_iteration!(
                     <=
                     sum(
                     - (variable[_ind]
-                      - mga_results[variable_name][((Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))..., mga_iteration=mga_current_iteration))][t0.ref.x][_ind.t.start.x])
-                      * scenario_weight_function(m; Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))...)
-                           for _ind in variable_indices_function(m; ind...)
+                      - mga_results[variable_name][(_drop_key(_ind,:t)..., mga_iteration=mga_current_iteration)][t0][_ind.t.start.x])
+                      * scenario_weight_function(m; _drop_key(_ind,:t)...)
+                      for _ind in variable_indices_function(m; ind...)
                    )
                   + mga_variable_bigM(;ind...)*(1-mga_aux_binary[(ind...,mga_iteration=mga_current_iteration)])
                   )
@@ -171,10 +174,9 @@ function _set_objective_mga_iteration!(
                     >=
                     sum(
                     (variable[_ind]
-                      - mga_results[variable_name][((Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))..., mga_iteration=mga_current_iteration))][t0.ref.x][_ind.t.start.x])
-                      * scenario_weight_function(m; Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))...)
-                      #FIXME: duration!
-                           for _ind in variable_indices_function(m; ind...)
+                      - mga_results[variable_name][(_drop_key(_ind,:t)..., mga_iteration=mga_current_iteration)][t0][_ind.t.start.x])
+                      * scenario_weight_function(m; _drop_key(_ind,:t)...)
+                       for _ind in variable_indices_function(m; ind...)
                    )
                    )
                    d_diff_lb2[(ind...,mga_current_iteration...)] = @constraint(
@@ -183,9 +185,9 @@ function _set_objective_mga_iteration!(
                     >=
                     sum(
                     - (variable[_ind]
-                      - mga_results[variable_name][((Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))..., mga_iteration=mga_current_iteration))][t0.ref.x][_ind.t.start.x])
-                      * scenario_weight_function(m; Base.structdiff(_ind,NamedTuple{(:t,)}(_ind.t))...)
-                           for _ind in variable_indices_function(m; ind...)
+                      - mga_results[variable_name][(_drop_key(_ind,:t)..., mga_iteration=mga_current_iteration)][t0][_ind.t.start.x])
+                      * scenario_weight_function(m; _drop_key(_ind,:t)...)
+                       for _ind in variable_indices_function(m; ind...)
                    )
                    )
                end
@@ -195,7 +197,7 @@ end
 function add_mga_objective_constraint!(m::Model)
     instance = m.ext[:instance]
     m.ext[:constraints][:mga_slack_constraint] = Dict(m.ext[:instance] =>
-        @constraint(m, total_costs(m, end_(last(time_slice(m)))) <= (1+max_mga_slack(model = instance)) * objective_value_mga(model= instance))
+        @constraint(m, total_costs(m, end_(last(time_slice(m)))) <= (1+max_mga_slack(model=instance)) * objective_value_mga(model=instance))
         )
 end
 

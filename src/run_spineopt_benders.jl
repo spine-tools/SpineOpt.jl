@@ -27,7 +27,7 @@ function rerun_spineopt!(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    alternative_objective = nothing
+    alternative_objective=m -> nothing,
 )
     m.ext[:is_sub_problem] = true
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)

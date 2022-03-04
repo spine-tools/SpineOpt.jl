@@ -1,14 +1,14 @@
 function rerun_spineopt!(
     ::Nothing,
     ::Nothing,
-    m::Model,
+    m_mga::Model,
     url_out::Union{String,Nothing};
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    alternative_objective = nothing
+    alternative_objective=m -> nothing,
     )
     outputs = Dict()
     mga_iterations = 0
