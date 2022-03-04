@@ -56,6 +56,9 @@ function rename_model_types(db_url, log_level)
 		elseif plist["value"] == "spineopt_operations"
 			new_plist = ["model_type_list", "spineopt_standard"]
 			push!(new_plists, new_plist)
+		else
+			new_plist = ["model_type_list", plist["value"]]
+			push!(new_plists, new_plist)
 		end
 	end
 
