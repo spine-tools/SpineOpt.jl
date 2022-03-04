@@ -127,7 +127,6 @@ function _set_objective_mga_iteration!(
             t0 = _analysis_time(m).ref.x
             @fetch units_invested = m.ext[:variables]
             mga_results = m.ext[:outputs]
-            t0 = _analysis_time(m)
             d_aux = get!(m.ext[:variables], :mga_aux_diff, Dict())
             d_bin = get!(m.ext[:variables],:mga_aux_binary, Dict())
             for ind in mga_indices(mga_current_iteration)
