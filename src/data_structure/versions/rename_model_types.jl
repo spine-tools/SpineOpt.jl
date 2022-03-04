@@ -42,7 +42,7 @@ function rename_model_types(db_url, log_level)
 	]
 	# Compute new_pvals (i.e. replace values)
 	new_data[:object_parameter_values] = new_pvals = []
-	new_data[:parameter_value_list] = new_pval_list = []
+	new_data[:parameter_value_lists] = new_pval_list = []
 	for pval in model_type_vals
 		model_id = pval["object_id"]
 		if pval["value"] == "spineopt_master"
