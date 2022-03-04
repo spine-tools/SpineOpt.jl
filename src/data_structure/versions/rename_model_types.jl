@@ -37,6 +37,9 @@ function rename_model_types(db_url, log_level)
 	new_data = Dict()
 	new_data[:object_parameter_values] = new_pvals = []
 	new_data[:parameter_value_lists] = new_plists = []
+	new_data[:object_parameters] = [
+		x for x in template()["object_parameters"] if x[2] == "model_type"
+	]
 	###
 	for pval in model_type_vals
 		model_id = pval["object_id"]

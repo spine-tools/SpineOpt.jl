@@ -87,7 +87,7 @@ end
 
 @testset begin
     include("data_structure/check_data_structure.jl")
-    include("data_structure/migration.jl")
+    # include("data_structure/migration.jl") #FIXME: we should have this in the future
     include("data_structure/preprocess_data_structure.jl")
     include("data_structure/temporal_structure.jl")
     include("data_structure/stochastic_structure.jl")
