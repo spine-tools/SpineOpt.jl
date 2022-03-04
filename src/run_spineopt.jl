@@ -154,12 +154,11 @@ function rerun_spineopt(
     use_direct_model=false,
     alternative_objective=m -> nothing,
 )
-    m = Base.invokelatest(create_model, :spineopt_standard, mip_solver, lp_solver, use_direct_model)
-    mp = Base.invokelatest(create_model, :spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
-    m_mga = Base.invokelatest(create_model, :spineopt_mga, mip_solver, lp_solver, use_direct_model)
+    m = create_model(:spineopt_standard, mip_solver, lp_solver, use_direct_model)
+    mp = create_model(:spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
+    m_mga = create_model(:spineopt_mga, mip_solver, lp_solver, use_direct_model)
 
-    Base.invokelatest(
-        rerun_spineopt!,
+    rerun_spineopt!(
         m,
         mp,
         m_mga,

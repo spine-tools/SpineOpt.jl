@@ -258,7 +258,7 @@ end
 """
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
-function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3,alternative_objective=nothing)
+function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3,alternative_objective=m -> nothing)
     @timelog log_level 2 "Adding variables...\n" add_variables!(
         m; add_user_variables=add_user_variables, log_level=log_level
     )
