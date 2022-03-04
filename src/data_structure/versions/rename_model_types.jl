@@ -26,12 +26,11 @@ Renaming `spineopt_master` to `spineopt_benders_master`, and `spineopt_operation
 function rename_model_types(db_url, log_level)
 	@log log_level 0 "Renaming `spineopt_master` to `spineopt_benders_master`, and `spineopt_operations` to `spineopt_standard`"
 	data = run_request(
-		db_url, "query", ("parameter_definition_sq", "object_parameter_value_sq", "parameter_value_list_sq")
+		db_url, "query", ("object_parameter_value_sq", "parameter_value_list_sq")
 	)
 	# Find conn_flow_cost_vals
 	pvals = data["object_parameter_value_sq"]
-	pvals_2 = data["parameter_value_list_sq"] #find : ["name"] model_type_list;
-	#"id"] ? (number) -> ["value"] => "spineopt_benders"
+	pvals_2 = data["parameter_value_list_sq"]
 	model_type_vals = [x for x in pvals if x["parameter_name"] == "model_type"]
 	model_type_list = [x for x in pvals_2 if x["name"] == "model_type_list"]
 	# Prepare new_data
@@ -41,30 +40,27 @@ function rename_model_types(db_url, log_level)
 		x for x in template()["object_parameters"] if x[2] == "model_type"
 	]
 	# Compute new_pvals (i.e. replace values)
+
 	new_data[:object_parameter_values] = new_pvals = []
 	new_data[:parameter_value_lists] = new_pval_list = []
 	for pval in model_type_vals
 		model_id = pval["object_id"]
 		if pval["value"] == "spineopt_master"
+			# run_request(db_url, "call_method", ("cascade_remove_items",), Dict(:parameter_definition => [model_id]))
 			value = parse_db_value(pval["value"]) #we replace the value here
 			new_pval = ["model", pval["object_name"], "model_type", "spineopt_benders_master"]
 			push!(new_pvals, new_pval)
 		elseif pval["value"] == "spineopt_operations"
-			@show pval["value"]
 			value = parse_db_value(pval["value"]) #we replace the value here
 			new_pval = ["model", pval["object_name"], "model_type", "spineopt_standard"]
 			push!(new_pvals, new_pval)
 		end
 	end
-	for x in model_type_list
-		if x["value"] == "spineopt_master"
-			x["value"] = "spineopt_benders_master"
-		elseif x["value"] == "spineopt_operations"
-			x["value"] = "spineopt_standard"
-		end
-	end
-	push!(new_pval_list,model_type_list)
-	# Add new data
+	data = [
+		["model_type_list", "spineopt_benders_master"], ["model_type_list", "spineopt_standard"],
+		["model_type_list", "spineopt_mga"],
+	]
+	new_pval = data
 	run_request(db_url, "import_data", (new_data, ""))
 	true
 end
