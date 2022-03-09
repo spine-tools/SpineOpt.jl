@@ -1,0 +1,1 @@
+Currently, the MGA algorithm (see [mga-advanced](@ref)) only supports absolute differences between MGA variables (e.g. absolute differences between [units\_invested\_available](@ref) etc.). Hence, the default for this parameter is `false` and should not be changed for now.

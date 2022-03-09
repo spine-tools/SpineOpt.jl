@@ -111,7 +111,7 @@ function save_sp_marginal_values(m)
     )
         obj_scen_ts = Dict()
         by_entity = m.ext[:outputs][out_name]
-        for ((obj, scen), ts) in _output_parameter_value(by_entity, true)
+        for ((obj, scen), ts) in _output_value_by_entity(by_entity, true)
             push!(get!(obj_scen_ts, obj, Dict()), scen => ts)
         end
         for obj in indices(invest_param)

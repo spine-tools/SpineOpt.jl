@@ -1,0 +1,1 @@
+In the MGA algorithm the original problem is reoptimized (see also [mga-advanced](@ref)), and finds near-optimal solutions. The parameter [max\_mga\_iterations](@ref) defines how many MGA iterations will be performed, i.e. how many near-optimal solutions will be generated.

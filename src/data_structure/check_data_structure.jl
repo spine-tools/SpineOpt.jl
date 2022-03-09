@@ -83,7 +83,7 @@ end
 Check if at least one `node` is defined.
 """
 function check_node_object()
-    for m in model(model_type=:spineopt_operations)
+    for m in model(model_type=:spineopt_standard)
         _check(
             !isempty(node()),
             "`node` object not found - you need at least one `node` to run a SpineOpt Operations Model",
@@ -99,7 +99,7 @@ Check that each `node` has at least one `temporal_block` connected to it in each
 function check_model__node__temporal_block()
     errors = [
         (m, n)
-        for m in model(model_type=:spineopt_operations) for n in node()
+        for m in model(model_type=:spineopt_standard) for n in node()
             if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m))) && n == members(n)
     ]
     _check(
@@ -109,7 +109,7 @@ function check_model__node__temporal_block()
     )
     error_group = [
         (m, n)
-        for m in model(model_type=:spineopt_operations) for n in node()
+        for m in model(model_type=:spineopt_standard) for n in node()
             if any(isempty, intersect(node__temporal_block(node=members(n)), model__temporal_block(model=m)))
     ]
     _check(
@@ -120,7 +120,7 @@ function check_model__node__temporal_block()
     )
     warnings = [
         (m, n)
-        for m in model(model_type=:spineopt_operations) for n in node()
+        for m in model(model_type=:spineopt_standard) for n in node()
             if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m))) && n != members(n)
     ]
     _check_warn(
@@ -141,18 +141,19 @@ This is deduced from the `model__stochastic_structure` and `node__stochastic_str
 function check_model__node__stochastic_structure()
     errors = [
         (m, n)
-        for m in model(model_type=:spineopt_operations) for n in node()
+        for m in model(model_type=:spineopt_standard) for n in node()
             if length(intersect(node__stochastic_structure(node=n), model__stochastic_structure(model=m))) != 1 &&
                n == members(n)
     ]
     errors_group = [
         (m, n)
-        for m in model(model_type=:spineopt_operations) for n in node()
-            if length(intersect(node__stochastic_structure(node=members(n)), model__stochastic_structure(model=m))) != 1
+        for m in model(model_type=:spineopt_standard) for n in node()
+            for n_mem in members(n)
+                if length(intersect(node__stochastic_structure(node=n_mem), model__stochastic_structure(model=m))) != 1
     ]
     warnings = [
         (m, n)
-        for m in model(model_type=:spineopt_operations) for n in node()
+        for m in model(model_type=:spineopt_standard) for n in node()
             if length(intersect(node__stochastic_structure(node=n), model__stochastic_structure(model=m))) != 1 &&
                n != members(n)
     ]
@@ -186,8 +187,9 @@ This is deduced from the `model__stochastic_strucutre` and `units_on__stochastic
 function check_model__unit__stochastic_structure()
     errors = [
         (m, u)
-        for m in model(model_type=:spineopt_operations) for u in unit()
-            if length(intersect(units_on__stochastic_structure(unit=u), model__stochastic_structure(model=m))) != 1
+        for m in model(model_type=:spineopt_standard) for u in unit()
+            for u_mem in members(u)
+                if length(intersect(units_on__stochastic_structure(unit=u_mem), model__stochastic_structure(model=m))) != 1
     ]
     _check(
         isempty(errors),
@@ -318,12 +320,13 @@ end
 function check_operating_points()
     error_indices = [
         (u, n, d)
-        for (u, n, d) in indices(minimum_operating_point) if !(0 <= minimum_operating_point(unit=u, node=n, direction=d) <= 1)
+        for (u, n, d) in indices(minimum_operating_point)
+        if !(0 <= minimum_operating_point(unit=u, node=n, direction=d) <= 1)
     ]
     _check(
         isempty(error_indices),
         "minimum operating point has to be between 0 and 1 for $(join(error_indices, ", ", " and ")) "
-        )
+    )
 end
 
 function check_ramping_parameters()
@@ -336,7 +339,7 @@ function check_ramping_parameters()
     _check(
         isempty(error_indices),
         "ramp_up_limit has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
-        )
+    )
     # ramp_down_limit between 0 and 1
     error_indices = [
         (u, n, d)
@@ -346,7 +349,7 @@ function check_ramping_parameters()
     _check(
         isempty(error_indices),
         "ramp_down_limit has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
-        )
+    )
 end
 function check_startup_ramps()
     # Max Startup ramp between 0 and 1
@@ -357,7 +360,7 @@ function check_startup_ramps()
     _check(
         isempty(error_indices),
         "max_startup_ramp has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
-        )
+    )
     # Min Startup ramp between 0 and 1
     error_indices = [
         (u, n, d)
@@ -367,16 +370,17 @@ function check_startup_ramps()
     _check(
         isempty(error_indices),
         "min_startup_ramp has to be between 0 and 1 for $(join(error_indices, ", ", " and ")) "
-        )
+    )
     #Max Startup ramp greater than Min startup ramp
     error_indices = [
         (u, n, d)
-        for (u, n, d) in intersect(indices(min_startup_ramp),indices(max_startup_ramp)) if  !(min_startup_ramp(unit=u, node=n, direction=d) <= max_startup_ramp(unit=u, node=n, direction=d))
+        for (u, n, d) in intersect(indices(min_startup_ramp),indices(max_startup_ramp))
+        if !(min_startup_ramp(unit=u, node=n, direction=d) <= max_startup_ramp(unit=u, node=n, direction=d))
     ]
     _check(
         isempty(error_indices),
         "min_startup_ramp has to be smaller than max_start_up_ramp $(join(error_indices, ", ", " and ")) "
-        )
+    )
     error_indices = [
         (u, n, d)
         for (u, n, d) in indices(max_startup_ramp) if ramp_up_limit(unit=u, node=n, direction=d) === nothing
@@ -406,7 +410,7 @@ function check_shutdown_ramps()
     _check(
         isempty(error_indices),
         "max_shutdown_ramp has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
-        )
+    )
     # Min shutdown ramp between 0 and 1
     error_indices = [
         (u, n, d)
@@ -416,16 +420,17 @@ function check_shutdown_ramps()
     _check(
         isempty(error_indices),
         "min_shutdown_ramp has to be between 0 and 1 for $(join(error_indices, ", ", " and ")) "
-        )
+    )
     #Max shutdown ramp greater than Min startup ramp
     error_indices = [
         (u, n, d)
-        for (u, n, d) in intersect(indices(min_shutdown_ramp),indices(max_shutdown_ramp)) if  !(min_shutdown_ramp(unit=u, node=n, direction=d) <= max_shutdown_ramp(unit=u, node=n, direction=d))
+        for (u, n, d) in intersect(indices(min_shutdown_ramp),indices(max_shutdown_ramp))
+        if !(min_shutdown_ramp(unit=u, node=n, direction=d) <= max_shutdown_ramp(unit=u, node=n, direction=d))
     ]
     _check(
         isempty(error_indices),
         "min_shutdown_ramp has to be smaller than max_shutdown_ramp $(join(error_indices, ", ", " and ")) "
-        )
+    )
     error_indices = [
         (u, n, d)
         for (u, n, d) in indices(max_shutdown_ramp) if ramp_down_limit(unit=u, node=n, direction=d) === nothing
@@ -456,7 +461,7 @@ function check_res_startup_ramps()
     _check(
         isempty(error_indices),
         "max_res_startup_ramp has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
-        )
+    )
     error_indices = [
         (u, n, d)
         for (u, n, d) in indices(min_res_startup_ramp) if !(0 <= min_res_startup_ramp(unit=u, node=n, direction=d) <= 1)
@@ -464,15 +469,16 @@ function check_res_startup_ramps()
     _check(
         isempty(error_indices),
         "min_res_startup_ramp has to be between 0 and 1 for $(join(error_indices, ", ", " and ")) "
-        )
+    )
     error_indices = [
         (u, n, d)
-            for (u, n, d) in intersect(indices(min_res_startup_ramp),indices(max_res_startup_ramp)) if  !(min_res_startup_ramp(unit=u, node=n, direction=d) <= max_res_startup_ramp(unit=u, node=n, direction=d))
+            for (u, n, d) in intersect(indices(min_res_startup_ramp),indices(max_res_startup_ramp))
+            if !(min_res_startup_ramp(unit=u, node=n, direction=d) <= max_res_startup_ramp(unit=u, node=n, direction=d))
     ]
     _check(
         isempty(error_indices),
         "min_res_startup_ramp has to be smaller than max_res_startup_ramp $(join(error_indices, ", ", " and ")) "
-        )
+    )
     #Check that node is a reserve node
     #TODO: Should there be checks for upward, downward, spinning, non-spinning?
     error_indices = [
@@ -482,7 +488,7 @@ function check_res_startup_ramps()
     _check(
         isempty(error_indices),
         "reserve startup ramps have been defined for $(join(error_indices, ", ", " and ")), while this is not a reserve node. Please set the is_reserve_node parameter to True"
-        )
+    )
 end
 
 function check_res_shutdown_ramps()
@@ -494,7 +500,7 @@ function check_res_shutdown_ramps()
     _check(
         isempty(error_indices),
         "max_res_shutdown_ramp has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
-        )
+    )
     error_indices = [
         (u, n, d)
         for (u, n, d) in indices(min_res_shutdown_ramp) if !(0 <= min_res_shutdown_ramp(unit=u, node=n, direction=d) <= 1)
@@ -502,15 +508,16 @@ function check_res_shutdown_ramps()
     _check(
         isempty(error_indices),
         "min_res_shutdown_ramp has to be between 0 and 1 for $(join(error_indices, ", ", " and ")) "
-        )
+    )
     error_indices = [
         (u, n, d)
-            for (u, n, d) in intersect(indices(min_res_shutdown_ramp),indices(max_res_shutdown_ramp)) if  !(min_res_shutdown_ramp(unit=u, node=n, direction=d) <= max_res_shutdown_ramp(unit=u, node=n, direction=d))
+            for (u, n, d) in intersect(indices(min_res_shutdown_ramp),indices(max_res_shutdown_ramp))
+            if !(min_res_shutdown_ramp(unit=u, node=n, direction=d) <= max_res_shutdown_ramp(unit=u, node=n, direction=d))
     ]
     _check(
         isempty(error_indices),
         "min_res_shutdown_ramp has to be smaller than max_res_shutdown_ramp $(join(error_indices, ", ", " and ")) "
-        )
+    )
     #Check that node is a reserve node
     error_indices = [
         (u, n, d)
@@ -519,5 +526,5 @@ function check_res_shutdown_ramps()
     _check(
         isempty(error_indices),
         "reserve shutdown ramps have been defined for $(join(error_indices, ", ", " and ")), while this is not a reserve node. Please set the is_reserve_node parameter to True"
-        )
+    )
 end

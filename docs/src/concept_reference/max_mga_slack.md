@@ -1,0 +1,1 @@
+In the MGA algorithm the original problem is reoptimized (see also [mga-advanced](@ref)), and finds near-optimal solutions. The parameter [max\_mga\_slack](@ref) defines how far from the optimum the new solutions can maximally be (e.g. a value of 0.05 would alow for a 5% increase of the orginal objective value).

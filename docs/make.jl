@@ -29,7 +29,8 @@ makedocs(
             "Setting up a workflow" => joinpath("getting_started", "setup_workflow.md"),
             "Creating Your Own Model" => joinpath("getting_started", "creating_your_own_model.md"),
             "Example Models" => joinpath("getting_started", "example_models.md"),
-            "Archetypes" => joinpath("getting_started", "archetypes.md")
+            "Archetypes" => joinpath("getting_started", "archetypes.md"),
+            "Managing Outputs" => joinpath("getting_started", "output_data.md")
         ],
         "Concept Reference" => Any[
             "Basics of the model structure" => joinpath("concept_reference", "the_basics.md"),
@@ -57,6 +58,7 @@ makedocs(
             "Lossless nodal DC power flows" => joinpath("advanced_concepts", "Lossless_DC_power_flow.md"),
             "Representative days with seasonal storages" => joinpath("advanced_concepts", "representative_days_w_seasonal_storage.md"),
             "Imposing renewable energy targets" => joinpath("advanced_concepts", "cumulated_flow_restrictions.md"),
+            "Modelling to generate alternatives" => joinpath("advanced_concepts", "mga.md"),
         ],
         "Library" => "library.md",
     ],

@@ -24,7 +24,7 @@ Replace unit_constraint by user_constraint in all object and relationship class 
 """
 function rename_unit_constraint_to_user_constraint(db_url, log_level)
 	@log log_level 0 "Renaming `unit_constraint` to `user_constraint`... "
-	data = run_request(db_url, "get_data", ("object_class_sq", "wide_relationship_class_sq"))
+	data = run_request(db_url, "query", ("object_class_sq", "wide_relationship_class_sq"))
 	obj_classes = Tuple(x for x in data["object_class_sq"] if x["name"] == "unit_constraint")
 	rel_classes = Tuple(x for x in data["wide_relationship_class_sq"] if occursin("unit_constraint", x["name"]))
 	for x in Iterators.flatten((obj_classes, rel_classes))

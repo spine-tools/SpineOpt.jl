@@ -40,7 +40,7 @@ import SpineOpt:
     node_stochastic_time_indices,
     unit_stochastic_time_indices,
     node_investment_dynamic_time_indices,
-    rerun_spineopt_mp
+    rerun_spineopt!
 
 # Test code uses legacy syntax for `import_data`, so interpret here.
 SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, Dict(kwargs...), "testing")
@@ -87,9 +87,11 @@ end
 
 @testset begin
     include("data_structure/check_data_structure.jl")
+    # include("data_structure/migration.jl") #FIXME: we should have this in the future
     include("data_structure/preprocess_data_structure.jl")
     include("data_structure/temporal_structure.jl")
     include("data_structure/stochastic_structure.jl")
+    include("data_structure/algorithm_mga_structure.jl")
     include("constraints/constraint_unit.jl")
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")

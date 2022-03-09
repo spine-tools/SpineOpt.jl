@@ -73,7 +73,7 @@
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
-            ["model", "instance", "model_type", "spineopt_operations"],
+            ["model", "instance", "model_type", "spineopt_standard"],
             ["model", "master", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "master", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "master", "duration_unit", "hour"],
@@ -83,7 +83,9 @@
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
-            ["node", "node_group_bc", "balance_type", "balance_type_none"]
+            ["node", "node_group_bc", "balance_type", "balance_type_none"],
+            ["model", "instance", "db_mip_solver", "Cbc.jl"],
+            ["model", "instance", "db_lp_solver", "Clp.jl"],
         ],
         :relationship_parameter_values => [[
             "stochastic_structure__stochastic_scenario",
@@ -673,7 +675,8 @@
             ["node", "node_c", "candidate_nodes", candidate_nodes],
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_b", "has_state", true],
-            ["model", "master", "model_type", "spineopt_master"],
+            ["model", "master", "model_type", "spineopt_benders_master"],
+            ["model", "instance", "model_type", "spineopt_standard"],
         ]
         relationships = [
             ["node__investment_temporal_block", ["node_c", "hourly"]],
@@ -759,7 +762,8 @@
             ["node", "node_c", "candidate_nodes", candidate_nodes],
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_b", "has_state", true],
-            ["model", "master", "model_type", "spineopt_master"],
+            ["model", "master", "model_type", "spineopt_benders_master"],
+            ["model", "instance", "model_type", "spineopt_standard"],
         ]
         relationships = [
             ["node__investment_temporal_block", ["node_c", "hourly"]],
@@ -887,7 +891,8 @@
                 ["node", "node_c", "node_investment_lifetime", node_investment_lifetime],
                 ["model", "instance", "model_end", model_end],
                 ["model", "master", "model_end", model_end],
-                ["model", "master", "model_type", "spineopt_master"],
+                ["model", "master", "model_type", "spineopt_benders_master"],
+                ["model", "instance", "model_type", "spineopt_standard"],
             ]
             relationships = [
                 ["node__investment_temporal_block", ["node_c", "hourly"]],

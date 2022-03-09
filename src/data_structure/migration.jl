@@ -29,8 +29,9 @@
 
 include("versions/rename_unit_constraint_to_user_constraint.jl")
 include("versions/move_connection_flow_cost.jl")
+include("versions/rename_model_types.jl")
 
-_upgrade_functions = [rename_unit_constraint_to_user_constraint, move_connection_flow_cost]
+_upgrade_functions = [rename_unit_constraint_to_user_constraint, move_connection_flow_cost,rename_model_types]
 
 """
 	current_version()
@@ -61,7 +62,7 @@ function _run_migration(url, version, log_level)
 	upgrade_fn(url, log_level) || return false
 	run_request(
 		url,
-		"import_data", 
+		"import_data",
 		(
 			Dict("object_parameters" => [("settings", "version", version + 1)]),
 			"Update SpineOpt data structure to $(version + 1)"
@@ -78,7 +79,7 @@ If the db doesn't have the `settings` object class or the `version` parameter de
 create them, setting `version`'s default_value to 1.
 """
 function find_version(url)
-	obj_clss = run_request(url, "get_data", ("object_class_sq",))["object_class_sq"]
+	obj_clss = run_request(url, "query", ("object_class_sq",))["object_class_sq"]
 	i = findfirst(x -> x["name"] == "settings", obj_clss)
 	if i == nothing
 		settings_class = first([x for x in _template["object_classes"] if x[1] == "settings"])
@@ -90,7 +91,7 @@ function find_version(url)
 		return find_version(url)
 	end
 	settings_class = obj_clss[i]
-	pdefs = run_request(url, "get_data", ("parameter_definition_sq",))["parameter_definition_sq"]
+	pdefs = run_request(url, "query", ("parameter_definition_sq",))["parameter_definition_sq"]
 	j = findfirst(x -> x["name"] == "version" && x["entity_class_id"] == settings_class["id"], pdefs)
 	if j == nothing
 		version_par_def = first([x for x in _template["object_parameters"] if x[1:2] == ["settings", "version"]])
@@ -102,5 +103,9 @@ function find_version(url)
 		)
 		return 1
 	end
-	parse(Int, pdefs[j]["default_value"])
+	_parse_version(pdefs[j]["default_value"])
 end
+
+_parse_version(version::String) = _parse_version(parse(Float64, version))
+_parse_version(version::Float64) = _parse_version(round(Int, version))
+_parse_version(version::Int) = version

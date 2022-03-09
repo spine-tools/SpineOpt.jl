@@ -17,6 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+using Cbc
+using Clp
+
 """
     @log(level, threshold, msg)
 """
@@ -56,6 +59,7 @@ using SpineInterface
 end
 using ._Template
 
+
 """
     run_spineopt(url_in, url_out; <keyword arguments>)
 
@@ -80,7 +84,7 @@ added by `add_constraints`.
 """
 function run_spineopt(
     url_in::String,
-    url_out::String=url_in;
+    url_out::Union{String,Nothing}=url_in;
     upgrade=false,
     mip_solver=nothing,
     lp_solver=nothing,
@@ -91,6 +95,7 @@ function run_spineopt(
     log_level=3,
     optimize=true,
     use_direct_model=false,
+    filters=Dict("tool" => "object_activity_control")
 )
     @log log_level 0 "Running SpineOpt for $(url_in)..."
     version = find_version(url_in)
@@ -108,8 +113,8 @@ function run_spineopt(
         end
     end
     @timelog log_level 2 "Initializing data structure from db..." begin
-        @eval _Template using_spinedb($(SpineOpt.template()), _Template)
-        using_spinedb(url_in, @__MODULE__; upgrade=upgrade)
+        using_spinedb(SpineOpt.template(), _Template)
+        using_spinedb(url_in, @__MODULE__; upgrade=upgrade, filters=filters)
         missing_items = difference(_Template, @__MODULE__)
         if !isempty(missing_items)
             println()
@@ -123,6 +128,7 @@ function run_spineopt(
             """
         end
     end
+
     rerun_spineopt(
         url_out;
         mip_solver=mip_solver,
@@ -132,12 +138,12 @@ function run_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
-        use_direct_model=use_direct_model,
+        use_direct_model=use_direct_model #FIXME: make sure that this works with solvers, possibly adapt union? + allow for conflicts if direct model is used
     )
 end
 
 function rerun_spineopt(
-    url_out::String;
+    url_out::Union{String,Nothing};
     mip_solver=nothing,
     lp_solver=nothing,
     add_user_variables=m -> nothing,
@@ -146,21 +152,222 @@ function rerun_spineopt(
     log_level=3,
     optimize=true,
     use_direct_model=false,
+    alternative_objective=m -> nothing,
 )
-    @eval using JuMP
-    # High-level algorithm selection. For now, selecting based on defined model types,
-    # but may want more robust system in future
-    rerun_spineopt = !isempty(model(model_type=:spineopt_master)) ? rerun_spineopt_mp : rerun_spineopt_sp
-    Base.invokelatest(
-        rerun_spineopt,
+    m = create_model(:spineopt_standard, mip_solver, lp_solver, use_direct_model)
+    mp = create_model(:spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
+    m_mga = create_model(:spineopt_mga, mip_solver, lp_solver, use_direct_model)
+
+    rerun_spineopt!(
+        m,
+        mp,
+        m_mga,
         url_out;
-        mip_solver=mip_solver,
-        lp_solver=lp_solver,
         add_user_variables=add_user_variables,
         add_constraints=add_constraints,
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
-        use_direct_model=use_direct_model,
+        alternative_objective=alternative_objective
     )
+end
+
+rerun_spineopt!(::Nothing, mp, ::Nothing, url_out; kwargs...) = error("Model of type `spineopt_benders_master` requires the existence of a subproblem model of type `spineopt_standard`")
+rerun_spineopt!(::Nothing, mp, m_mga; kwargs...) = error("Currently the combination of Benders and mga is supported. Please make sure that you don't have a `model_type=:spineopt_benders_master` together with another model of type `:spineopt_mga`")
+rerun_spineopt!(m, ::Nothing, m_mga; kwargs...) = error("Currently the combination of models with type `spineopt_standard` and `spineopt_mga` is supported.")
+rerun_spineopt!(::Nothing, ::Nothing, ::Nothing; kwargs...) = error("At least one model object has to exist, with at least one of type `spineopt_standard` (or `spineopt_mga`)")
+
+"""
+A JuMP `Model` for SpineOpt.
+"""
+function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)
+    isempty(model(model_type=model_type)) && return nothing
+    instance = first(model(model_type=model_type))
+    mip_solver = _mip_solver(instance, mip_solver)
+    lp_solver = _lp_solver(instance, lp_solver)
+    m = use_direct_model ? direct_model(mip_solver()) : Model(mip_solver)
+    m.ext[:instance] = instance
+    m.ext[:variables] = Dict{Symbol,Dict}()
+    m.ext[:variables_definition] = Dict{Symbol,Dict}()
+    m.ext[:values] = Dict{Symbol,Dict}()
+    m.ext[:constraints] = Dict{Symbol,Dict}()
+    m.ext[:marginals] = Dict{Symbol,Dict}()
+    m.ext[:outputs] = Dict()
+    m.ext[:integer_variables] = []
+    m.ext[:is_subproblem] = false
+    m.ext[:objective_lower_bound] = 0.0
+    m.ext[:objective_upper_bound] = 0.0
+    m.ext[:benders_gap] = 0.0
+    m.ext[:mip_solver] = mip_solver
+    m.ext[:lp_solver] = lp_solver
+    m
+end
+
+"""
+A mip solver for given model instance. If given solver is not `nothing`, just return it.
+Otherwise create and return a solver based on db settings for instance.
+"""
+function _mip_solver(instance, given_solver)
+    _solver(given_solver) do
+        _db_mip_solver(instance)
+    end
+end
+
+"""
+A lp solver for given model instance. If given solver is not `nothing`, just return it.
+Otherwise create and return a solver based on db settings for instance.
+"""
+function _lp_solver(instance, given_solver)
+    _solver(given_solver) do
+        _db_lp_solver(instance)
+    end
+end
+
+_solver(f::Function, given_solver) = given_solver
+_solver(f::Function, ::Nothing) = f()
+
+function _db_mip_solver(instance)
+    _db_solver(
+        db_mip_solver(model=instance, _strict=false),
+        db_mip_solver_options(model=instance, _strict=false)
+    ) do
+        @warn "no `db_mip_solver` parameter was found for model `$instance` - using the default instead"
+        optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01)
+    end
+end
+
+function _db_lp_solver(instance)
+    _db_solver(
+        db_lp_solver(model=instance, _strict=false),
+        db_lp_solver_options(model=instance, _strict=false)
+    ) do
+        @warn "no `db_lp_solver` parameter was found for model `$instance` - using the default instead"
+        optimizer_with_attributes(Clp.Optimizer, "logLevel" => 0)
+    end
+end
+
+function _db_solver(f::Function, db_solver_name::Symbol, db_solver_options)
+    db_solver_mod_name = Symbol(first(splitext(string(db_solver_name))))
+    db_solver_options_parsed = _parse_solver_options(db_solver_name, db_solver_options)
+    @eval using $db_solver_mod_name
+    db_solver_mod = getproperty(@__MODULE__, db_solver_mod_name)
+    Base.invokelatest(optimizer_with_attributes, db_solver_mod.Optimizer, db_solver_options_parsed...)
+end
+_db_solver(f::Function, ::Nothing, db_solver_options) = f()
+
+function _parse_solver_options(db_solver_name, db_solver_options::Map)
+    [
+        (String(key) => _parse_solver_option(val.value))
+        for (solver_name, options) in db_solver_options
+        if solver_name == db_solver_name
+        for (key, val) in options.value
+    ]
+end
+_parse_solver_options(db_solver_name, db_solver_options) = []
+
+_parse_solver_option(value::Number) = isinteger(value) ? convert(Int64, value) : value
+_parse_solver_option(value) = string(value)
+
+"""
+    output_value(by_analysis_time, overwrite_results_on_rolling)
+
+A value from a SpineOpt result.
+
+# Arguments
+- `by_analysis_time::Dict`: mapping analysis times, to timestamps, to values.
+- `overwrite_results_on_rolling::Bool`: if `true`, ignore the analysis times and return a `TimeSeries`.
+    If `false`, return a `Map` where the topmost keys are the analysis times.
+"""
+function output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
+    output_value(by_analysis_time, Val(overwrite_results_on_rolling))
+end
+function output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
+    TimeSeries(
+        [ts for by_time_stamp in values(by_analysis_time) for ts in keys(by_time_stamp)],
+        [val for by_time_stamp in values(by_analysis_time) for val in values(by_time_stamp)],
+        false,
+        false
+    )
+end
+function output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
+    Map(
+        collect(keys(by_analysis_time)),
+        [
+            TimeSeries(collect(keys(by_time_stamp)), collect(values(by_time_stamp)), false, false)
+            for by_time_stamp in values(by_analysis_time)
+        ]
+    )
+end
+
+function _output_value_by_entity(by_entity, overwrite_results_on_rolling, output_value=output_value)
+    Dict(
+        entity => output_value(by_analysis_time, Val(overwrite_results_on_rolling))
+        for (entity, by_analysis_time) in by_entity
+    )
+end
+
+
+function objective_terms(m) #FIXME: this should just be benders definind the objective function themselves, not haking into run_spineopt
+    # if we have a decomposed structure, master problem costs (investments) should not be included
+    invest_terms = [:unit_investment_costs, :connection_investment_costs, :storage_investment_costs]
+    op_terms = [
+        :variable_om_costs,
+        :fixed_om_costs,
+        :taxes,
+        :fuel_costs,
+        :start_up_costs,
+        :shut_down_costs,
+        :objective_penalties,
+        :connection_flow_costs,
+        :renewable_curtailment_costs,
+        :res_proc_costs,
+        :ramp_costs,
+        :units_on_costs,
+    ]
+    if (model_type(model=m.ext[:instance]) ==:spineopt_standard || model_type(model=m.ext[:instance]) ==:spineopt_mga)
+        if m.ext[:is_subproblem]
+            op_terms
+        else
+            [op_terms; invest_terms]
+        end
+    elseif model_type(model=m.ext[:instance]) == :spineopt_benders_master
+        invest_terms
+    end
+end
+
+"""
+    write_report(m, default_url, output_value=output_value; alternative="")
+
+Write report from given model into a db.
+
+# Arguments
+- `m::Model`: a JuMP model resulting from running SpineOpt successfully.
+- `default_url::String`: a db url to write the report to.
+- `output_value`: a function to replace `SpineOpt.output_value` if needed.
+
+# Keyword arguments
+- `alternative::String`: an alternative to pass to `SpineInterface.write_parameters`.
+"""
+function write_report(m, default_url, output_value=output_value; alternative="")
+    default_url === nothing && return
+    reports = Dict()
+    outputs = Dict()
+    for rpt in model__report(model=m.ext[:instance])
+        for out in report__output(report=rpt)
+            by_entity = get!(m.ext[:outputs], out.name, nothing)
+            by_entity === nothing && continue
+            output_url = output_db_url(report=rpt, _strict=false)
+            url = output_url !== nothing ? output_url : default_url
+            url_reports = get!(reports, url, Dict())
+            output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,Any}}())
+            parameter_name = out.name in objective_terms(m) ? Symbol("objective_", out.name) : out.name
+            overwrite = overwrite_results_on_rolling(report=rpt, output=out)
+            output_params[parameter_name] = _output_value_by_entity(by_entity, overwrite, output_value)
+        end
+    end
+    for (url, url_reports) in reports
+        for (rpt_name, output_params) in url_reports
+            write_parameters(output_params, url; report=string(rpt_name), alternative=alternative)
+        end
+    end
 end

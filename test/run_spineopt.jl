@@ -55,7 +55,9 @@ end
             ["model", "instance", "duration_unit", "hour"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["output", "unit_flow", "output_resolution", Dict("type" => "duration", "data" => "1h")],
-            ["output", "variable_om_costs", "output_resolution", Dict("type" => "duration", "data" => "1h")]
+            ["output", "variable_om_costs", "output_resolution", Dict("type" => "duration", "data" => "1h")],
+            ["model", "instance", "db_mip_solver", "Cbc.jl"],
+            ["model", "instance", "db_lp_solver", "Clp.jl"]
         ],
     )
     @testset "rolling" begin
@@ -240,10 +242,12 @@ end
     @testset "unknown output" begin
         _load_test_data(url_in, test_data)
         demand = 100
-        vom_cost = 50
+        vom_cost = 50        
         objects = [["output", "unknown_output"]]
         relationships = [["report__output", ["report_x", "unknown_output"]]]
-        object_parameter_values = [["node", "node_b", "demand", demand]]
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand]          
+        ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
@@ -318,7 +322,7 @@ end
                 relationships=relationships,
                 object_parameter_values=object_parameter_values,
             )
-            run_spineopt(url_in, url_out; log_level=0)
+            run_spineopt(url_in, url_out; log_level=0, filters=Dict())
             using_spinedb(url_out, Y)
             key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
             @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(out_res):DateTime(2000, 1, 2) - Hour(1))
@@ -330,5 +334,173 @@ end
                 @test Y.demand(; key..., t=t) == expected
             end
         end
+    end
+    @testset "db_solvers" begin
+        _load_test_data(url_in, test_data)
+        logLevel = 1.0
+        ratioGap = 0.015
+        demand = 100
+    
+        mip_solver_options = Dict(
+            "type" => "map",
+            "index_type" => "str",
+            "data" => Dict(
+                "Cbc.jl" => Dict(
+                    "type" => "map",
+                    "index_type" => "str",
+                    "data" => Dict(
+                        "ratioGap" => ratioGap,
+                        "logLevel" => logLevel,                        
+                    ),
+                ),
+            ),
+        )
+
+        lp_solver_options = Dict(
+            "type" => "map",
+            "index_type" => "str",
+            "data" => Dict(
+                "Clp.jl" => Dict(
+                    "type" => "map",
+                    "index_type" => "str",
+                    "data" => Dict(
+                        "LogLevel" => 1.0,
+                    ),
+                ),
+            ),
+        )         
+
+        object_parameter_values = [ 
+            ["node", "node_b", "demand", demand],                                    
+            ["model", "instance", "db_mip_solver_options", mip_solver_options],
+            ["model", "instance", "db_lp_solver_options", lp_solver_options]            
+        ]
+
+        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand]]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        
+        m = run_spineopt(url_in, url_out; log_level=0, optimize=false)
+        @test get_optimizer_attribute(m, "logLevel") == "1"
+        @test get_optimizer_attribute(m, "ratioGap") == "0.015"
+    end
+    @testset "db_solvers_multi_model" begin
+        _load_test_data(url_in, test_data)
+        logLevel = 1.0
+        ratioGap = 0.015
+        logLevel_master = 0.0
+        ratioGap_master = 0.016
+        demand = 100
+    
+        mip_solver_options = Dict(
+            "type" => "map",
+            "index_type" => "str",
+            "data" => Dict(
+                "Cbc.jl" => Dict(
+                    "type" => "map",
+                    "index_type" => "str",
+                    "data" => Dict(
+                        "ratioGap" => ratioGap,
+                        "logLevel" => logLevel,                        
+                    ),
+                ),
+            ),
+        )
+
+        lp_solver_options = Dict(
+            "type" => "map",
+            "index_type" => "str",
+            "data" => Dict(
+                "Clp.jl" => Dict(
+                    "type" => "map",
+                    "index_type" => "str",
+                    "data" => Dict(
+                        "LogLevel" => 1.0,
+                    ),
+                ),
+            ),
+        )         
+
+        mip_solver_options_master = Dict(
+            "type" => "map",
+            "index_type" => "str",
+            "data" => Dict(
+                "Cbc.jl" => Dict(
+                    "type" => "map",
+                    "index_type" => "str",
+                    "data" => Dict(
+                        "ratioGap" => ratioGap_master,
+                        "logLevel" => logLevel_master,                        
+                    ),
+                ),
+            ),
+        )
+
+        lp_solver_options_master = Dict(
+            "type" => "map",
+            "index_type" => "str",
+            "data" => Dict(
+                "Clp.jl" => Dict(
+                    "type" => "map",
+                    "index_type" => "str",
+                    "data" => Dict(
+                        "LogLevel" => 0.0,
+                    ),
+                ),
+            ),
+        )
+
+        objects = [
+            ["model", "master_instance"],
+            ["temporal_block", "master_hourly"],
+            ["stochastic_structure", "master_deterministic"]            
+        ]
+
+        object_parameter_values = [ 
+            ["node", "node_b", "demand", demand],                                    
+            ["model", "instance", "model_type", "spineopt_standard"],
+            ["model", "instance", "db_mip_solver_options", mip_solver_options],
+            ["model", "instance", "db_lp_solver_options", lp_solver_options],            
+            ["model", "master_instance", "model_type", "spineopt_benders_master"],
+            ["model", "master_instance", "db_mip_solver_options", mip_solver_options_master],
+            ["model", "master_instance", "db_lp_solver_options", lp_solver_options_master],
+            ["model", "master_instance", "db_mip_solver", "Cbc.jl"],
+            ["model", "master_instance", "db_lp_solver", "Clp.jl"],
+            ["model", "master_instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
+            ["model", "master_instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
+            ["model", "master_instance", "duration_unit", "hour"],
+            ["model", "master_instance", "max_gap", 0.05],
+            ["model", "master_instance", "max_iterations", 1],
+            ["temporal_block", "master_hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
+            ["unit", "unit_ab", "candidate_units", 1],
+        ]
+
+        relationships = [
+            ["model__temporal_block", ["master_instance", "master_hourly"]],
+            ["model__stochastic_structure", ["master_instance", "master_deterministic"]],
+            ["stochastic_structure__stochastic_scenario", ["master_deterministic", "parent"]],
+            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
+            ["unit__investment_temporal_block", ["unit_ab", "master_hourly"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
+            ["unit__investment_stochastic_structure", ["unit_ab", "master_deterministic"]],            
+        ]
+
+        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand]]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        
+        (m, mp) = run_spineopt(url_in, url_out; log_level=0, optimize=false)
+        @test get_optimizer_attribute(m, "logLevel") == "1"
+        @test get_optimizer_attribute(m, "ratioGap") == "0.015"
+        @test get_optimizer_attribute(mp, "logLevel") == "0"
+        @test get_optimizer_attribute(mp, "ratioGap") == "0.016"
     end
 end
