@@ -39,8 +39,8 @@ end
     generate_unit_capacity_transfer_factor()
 
 Generate capacity_transfer_factor factors for units that can be invested in. The
-unit_capacity_transfer_factor is a Map parameter that holds the fraction of an investment in a unit u during vintage
-year t_v that is still available in year t.
+unit_capacity_transfer_factor is a Map parameter that holds the fraction of an investment during vintage
+year t_v in a unit u that is still available in year t.
 """
 function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
     instance = m.ext[:instance]
@@ -52,7 +52,6 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
     param_name = Symbol("$(obj_cls)_capacity_transfer_factor")
     if dynamic_investments(model=instance)
         for id in members(obj_cls())
-            #TODO: members, simply to not do this for the groups; make this more elgant?
             map_stoch_indices = [] #NOTE: will hold stochastic indices
             map_inner = [] #NOTE: will map values inside stochastic mapping
             for s in unique([x.stochastic_scenario for x in investment_indices(m;Dict(obj_cls.name => id)...)])
@@ -71,11 +70,23 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
                         t_end = end_(t)
                         dur =  t_end - t_start
                         if t_end < start_of_operation
-                            val=0
-                        elseif t_start<start_of_operation && start_of_operation<=t_end
+                            val = 0
+                        #=NOTE:
+                        if the end of the timeslice t is before the start of operation for a unit installed
+                        at vntage year vintage_t_start => no capacity available yet at t_end=#
+                        elseif t_start < start_of_operation
                             val = max(min(1-(start_of_operation-t_start)/dur,1),0)
+                        #=NOTE:
+                        if the end of timeslice t is after the start of operation and the start of the timeslice t
+                        is before the start of operation, val will take a value between 0 and 1, depending on
+                        how much of this capacity is available on average during t=#
                         else
                             val = max(min((end_of_operation-t_start)/dur,1),0)
+                        #=NOTE:
+                        in all other cases, val will describe the fraction [0,1] that is (still) available at
+                        time step t. This will be 1, if the technology does not get decomissioned during t,
+                        a fraction, if the technology gets decomssioned during t, and 0 for all other cases (fully decomissioned)
+                        =#
                         end
                         capacity_transfer_factor[(id, vintage_t.start.x, t.start.x)] =  parameter_value(val)
                         push!(timeseries_val,val)
@@ -101,6 +112,8 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
                 for t in time_slice(m; temporal_block = investment_block)
                     t_start = start(t)
                     val = 1
+                    #=Note: for the non dynamic case, this will always be one, i.e., as
+                    soon as a unit gets build it will be available for the rest of its lifetime =#
                     push!(timeseries_val,val)
                     push!(timeseries_ind,t_start)
                 end
@@ -130,7 +143,7 @@ function generate_annuity!(m::Model, obj_cls::ObjectClass)
     annuity = Dict()
     investment_indices = eval(Symbol("$(obj_cls)s_invested_available_indices"))
     lead_time = eval(Symbol("$(obj_cls)_lead_time"))
-    tech_lifetime = eval(Symbol("$(obj_cls)_investment_tech_lifetime"))
+    econ_lifetime = eval(Symbol("$(obj_cls)_investment_econ_lifetime"))
     param_name = Symbol("$(obj_cls)_annuity")
     for id in obj_cls()
         stochastic_map_indices = []
@@ -140,9 +153,8 @@ function generate_annuity!(m::Model, obj_cls::ObjectClass)
             timeseries_val = []
             for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
                 LT = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
-                ELIFE = tech_lifetime(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                ELIFE = econ_lifetime(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
                 vintage_t_start = start(vintage_t)
-                start_of_operation = vintage_t_start + LT
                 end_of_operation = vintage_t_start + LT + ELIFE
                 if dynamic_investments(model=instance)
                     j = vintage_t_start
@@ -352,6 +364,6 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass)
         obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
     end
     @eval begin
-        $(param_name) = $(Parameter(param_name), [obj_cls]))
+        $(param_name) = $(Parameter(param_name), [obj_cls])
     end
 end
