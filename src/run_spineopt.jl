@@ -127,7 +127,7 @@ function run_spineopt(
             $missing_items
             """
         end
-    end   
+    end
 
     rerun_spineopt(
         url_out;
@@ -138,7 +138,7 @@ function run_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
-        use_direct_model=use_direct_model
+        use_direct_model=use_direct_model #FIXME: make sure that this works with solvers, possibly adapt union? + allow for conflicts if direct model is used
     )
 end
 
@@ -151,30 +151,36 @@ function rerun_spineopt(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    use_direct_model=false
+    use_direct_model=false,
+    alternative_objective=m -> nothing,
 )
-    @eval using JuMP
-    m = Base.invokelatest(create_model, :spineopt_operations, mip_solver, lp_solver, use_direct_model)
-    mp = Base.invokelatest(create_model, :spineopt_master, mip_solver, lp_solver, use_direct_model)
-    Base.invokelatest(
-        rerun_spineopt!,
+    m = create_model(:spineopt_standard, mip_solver, lp_solver, use_direct_model)
+    mp = create_model(:spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
+    m_mga = create_model(:spineopt_mga, mip_solver, lp_solver, use_direct_model)
+
+    rerun_spineopt!(
         m,
         mp,
+        m_mga,
         url_out;
         add_user_variables=add_user_variables,
         add_constraints=add_constraints,
         update_constraints=update_constraints,
         log_level=log_level,
-        optimize=optimize
+        optimize=optimize,
+        alternative_objective=alternative_objective
     )
 end
 
-rerun_spineopt!(::Nothing, mp, url_out; kwargs...) = error("No model of type `spineopt_operations` defined")
+rerun_spineopt!(::Nothing, mp, ::Nothing, url_out; kwargs...) = error("Model of type `spineopt_benders_master` requires the existence of a subproblem model of type `spineopt_standard`")
+rerun_spineopt!(::Nothing, mp, m_mga; kwargs...) = error("Currently the combination of Benders and mga is supported. Please make sure that you don't have a `model_type=:spineopt_benders_master` together with another model of type `:spineopt_mga`")
+rerun_spineopt!(m, ::Nothing, m_mga; kwargs...) = error("Currently the combination of models with type `spineopt_standard` and `spineopt_mga` is supported.")
+rerun_spineopt!(::Nothing, ::Nothing, ::Nothing; kwargs...) = error("At least one model object has to exist, with at least one of type `spineopt_standard` (or `spineopt_mga`)")
 
 """
 A JuMP `Model` for SpineOpt.
 """
-function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)    
+function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)
     isempty(model(model_type=model_type)) && return nothing
     instance = first(model(model_type=model_type))
     mip_solver = _mip_solver(instance, mip_solver)
@@ -301,7 +307,7 @@ function _output_value_by_entity(by_entity, overwrite_results_on_rolling, output
 end
 
 
-function objective_terms(m)
+function objective_terms(m) #FIXME: this should just be benders definind the objective function themselves, not haking into run_spineopt
     # if we have a decomposed structure, master problem costs (investments) should not be included
     invest_terms = [:unit_investment_costs, :connection_investment_costs, :storage_investment_costs]
     op_terms = [
@@ -318,13 +324,13 @@ function objective_terms(m)
         :ramp_costs,
         :units_on_costs,
     ]
-    if model_type(model=m.ext[:instance]) == :spineopt_operations
+    if (model_type(model=m.ext[:instance]) ==:spineopt_standard || model_type(model=m.ext[:instance]) ==:spineopt_mga)
         if m.ext[:is_subproblem]
             op_terms
         else
             [op_terms; invest_terms]
         end
-    elseif model_type(model=m.ext[:instance]) == :spineopt_master
+    elseif model_type(model=m.ext[:instance]) == :spineopt_benders_master
         invest_terms
     end
 end

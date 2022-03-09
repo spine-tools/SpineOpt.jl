@@ -67,7 +67,7 @@
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
-            ["model", "instance", "model_type", "spineopt_operations"],
+            ["model", "instance", "model_type", "spineopt_standard"],
             ["model", "master", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "master", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "master", "duration_unit", "hour"],
@@ -122,7 +122,7 @@
         relationship_parameter_values =
             [["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_1", fixed_pressure_constant_1_[("connection_ca", "node_c","node_a")]]]
         SpineInterface.import_data(
-            url_in; 
+            url_in;
             object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -175,7 +175,7 @@
             ["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_0", fixed_pressure_constant_0_[("connection_ca", "node_c","node_a")]]
             ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
         var_binary_flow = m.ext[:variables][:binary_gas_connection_flow]
@@ -233,7 +233,7 @@
         ]
         relationship_parameter_values = [
             [
-                "connection__node__node", 
+                "connection__node__node",
                 ["connection_ca", "node_c","node_a"],
                 "fixed_pressure_constant_1",
                 fixed_pr_constant_1_[("connection_ca", "node_c","node_a")]
@@ -291,7 +291,7 @@
             ]
         _load_test_data(url_in, test_data)
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
         var_voltage_angle = m.ext[:variables][:node_voltage_angle]
@@ -348,7 +348,7 @@
             relationships=relationships,
             relationship_parameter_values=relationship_parameter_values,
         )
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
         var_connections_invested_available = m.ext[:variables][:connections_invested_available]
@@ -402,7 +402,7 @@
             ["connection", "connection_ca", "connection_reactance", conn_x],
             ["connection", "connection_ca", "connection_resistance", conn_r],
             ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
-            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],            
+            ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
         ]
         relationship_parameter_values = [
             ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
@@ -519,7 +519,7 @@
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
         constraint = m.ext[:constraints][:connection_flow_lodf]
@@ -610,7 +610,7 @@
                     object_parameter_values=object_parameter_values,
                     relationship_parameter_values=relationship_parameter_values,
                 )
-                
+
                 m = run_spineopt(url_in; log_level=0, optimize=false)
                 var_connection_flow = m.ext[:variables][:connection_flow]
                 constraint = m.ext[:constraints][Symbol(ratio)]
@@ -662,7 +662,7 @@
             ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connections_invested_available = m.ext[:variables][:connections_invested_available]
         var_connections_invested = m.ext[:variables][:connections_invested]
@@ -697,7 +697,8 @@
         candidate_connections = 4
         object_parameter_values = [
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["model", "master", "model_type", "spineopt_master"],
+            ["model", "master", "model_type", "spineopt_benders_master"],
+            ["model", "instance", "model_type", "spineopt_standard"],
         ]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
@@ -706,7 +707,7 @@
             ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        
+
         m, mp = run_spineopt(url_in; log_level=0, optimize=false)
         var_connections_invested_available = m.ext[:variables][:connections_invested_available]
         var_connections_invested = m.ext[:variables][:connections_invested]
@@ -780,7 +781,7 @@
                 ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
             ]
             SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-            
+
             m = run_spineopt(url_in; log_level=0, optimize=false)
             var_connections_invested_available = m.ext[:variables][:connections_invested_available]
             var_connections_invested = m.ext[:variables][:connections_invested]
@@ -828,7 +829,8 @@
                 ["connection", "connection_ab", "connection_investment_lifetime", connection_investment_lifetime],
                 ["model", "instance", "model_end", model_end],
                 ["model", "master", "model_end", model_end],
-                ["model", "master", "model_type", "spineopt_master"],
+                ["model", "master", "model_type", "spineopt_benders_master"],
+                ["model", "instance", "model_type", "spineopt_standard"],
             ]
             relationships = [
                 ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
@@ -837,7 +839,7 @@
                 ["connection__investment_stochastic_structure", ["connection_ab", "investments_deterministic"]],
             ]
             SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-            
+
             m, mp = run_spineopt(url_in; log_level=0, optimize=false)
             var_connections_invested_available = m.ext[:variables][:connections_invested_available]
             var_connections_invested = m.ext[:variables][:connections_invested]
@@ -914,7 +916,7 @@
             ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connections_invested_available = m.ext[:variables][:connections_invested_available]
         constraint = m.ext[:constraints][:connections_invested_available]
@@ -935,7 +937,8 @@
         candidate_connections = 7
         object_parameter_values = [
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["model", "master", "model_type", "spineopt_master"],
+            ["model", "master", "model_type", "spineopt_benders_master"],
+            ["model", "instance", "model_type", "spineopt_standard"],
         ]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
@@ -944,7 +947,7 @@
             ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        
+
         m, mp = run_spineopt(url_in; log_level=0, optimize=false)
         var_connections_invested_available = m.ext[:variables][:connections_invested_available]
         constraint = m.ext[:constraints][:connections_invested_available]
@@ -1016,7 +1019,7 @@
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values,
             )
-            
+
             m = run_spineopt(url_in; log_level=0, optimize=false)
             var_unit_flow = m.ext[:variables][:unit_flow]
             var_units_on = m.ext[:variables][:units_on]
@@ -1107,7 +1110,7 @@
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:constraints][:connection_flow_intact_flow]
         var_connection_flow = m.ext[:variables][:connection_flow]
@@ -1220,7 +1223,7 @@
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:constraints][:candidate_connection_flow_lb]
         var_connection_flow = m.ext[:variables][:connection_flow]
@@ -1338,7 +1341,7 @@
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:constraints][:ratio_out_in_connection_intact_flow]
         var_connection_intact_flow = m.ext[:variables][:connection_intact_flow]
@@ -1492,7 +1495,7 @@
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:constraints][:candidate_connection_flow_ub]
         var_connection_intact_flow = m.ext[:variables][:connection_intact_flow]

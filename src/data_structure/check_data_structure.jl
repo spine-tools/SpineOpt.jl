@@ -83,7 +83,7 @@ end
 Check if at least one `node` is defined.
 """
 function check_node_object()
-    for m in model(model_type=:spineopt_operations)
+    for m in model(model_type=:spineopt_standard)
         _check(
             !isempty(node()),
             "`node` object not found - you need at least one `node` to run a SpineOpt Operations Model",
@@ -99,7 +99,7 @@ Check that each `node` has at least one `temporal_block` connected to it in each
 function check_model__node__temporal_block()
     errors = [
         (m, n)
-        for m in model(model_type=:spineopt_operations) for n in node()
+        for m in model(model_type=:spineopt_standard) for n in node()
             if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m))) && n == members(n)
     ]
     _check(
@@ -109,7 +109,7 @@ function check_model__node__temporal_block()
     )
     error_group = [
         (m, n)
-        for m in model(model_type=:spineopt_operations) for n in node()
+        for m in model(model_type=:spineopt_standard) for n in node()
             if any(isempty, intersect(node__temporal_block(node=members(n)), model__temporal_block(model=m)))
     ]
     _check(
@@ -120,7 +120,7 @@ function check_model__node__temporal_block()
     )
     warnings = [
         (m, n)
-        for m in model(model_type=:spineopt_operations) for n in node()
+        for m in model(model_type=:spineopt_standard) for n in node()
             if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m))) && n != members(n)
     ]
     _check_warn(
@@ -141,18 +141,19 @@ This is deduced from the `model__stochastic_structure` and `node__stochastic_str
 function check_model__node__stochastic_structure()
     errors = [
         (m, n)
-        for m in model(model_type=:spineopt_operations) for n in node()
+        for m in model(model_type=:spineopt_standard) for n in node()
             if length(intersect(node__stochastic_structure(node=n), model__stochastic_structure(model=m))) != 1 &&
                n == members(n)
     ]
     errors_group = [
         (m, n)
-        for m in model(model_type=:spineopt_operations) for n in node()
-            if length(intersect(node__stochastic_structure(node=members(n)), model__stochastic_structure(model=m))) != 1
+        for m in model(model_type=:spineopt_standard) for n in node()
+            for n_mem in members(n)
+                if length(intersect(node__stochastic_structure(node=n_mem), model__stochastic_structure(model=m))) != 1
     ]
     warnings = [
         (m, n)
-        for m in model(model_type=:spineopt_operations) for n in node()
+        for m in model(model_type=:spineopt_standard) for n in node()
             if length(intersect(node__stochastic_structure(node=n), model__stochastic_structure(model=m))) != 1 &&
                n != members(n)
     ]
@@ -186,8 +187,9 @@ This is deduced from the `model__stochastic_strucutre` and `units_on__stochastic
 function check_model__unit__stochastic_structure()
     errors = [
         (m, u)
-        for m in model(model_type=:spineopt_operations) for u in unit()
-            if length(intersect(units_on__stochastic_structure(unit=u), model__stochastic_structure(model=m))) != 1
+        for m in model(model_type=:spineopt_standard) for u in unit()
+            for u_mem in members(u)
+                if length(intersect(units_on__stochastic_structure(unit=u_mem), model__stochastic_structure(model=m))) != 1
     ]
     _check(
         isempty(errors),

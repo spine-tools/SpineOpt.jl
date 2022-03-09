@@ -20,9 +20,11 @@
 function rerun_spineopt!(
     m::Model,
     ::Nothing,
+    ::Nothing,
     url_out::Union{String,Nothing};
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
+    alternative_objective=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true
@@ -31,7 +33,7 @@ function rerun_spineopt!(
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
-    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level)
+    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level,alternative_objective=alternative_objective)
     init_outputs!(m)
     k = 1
     calculate_duals = any(startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:outputs])))
@@ -256,7 +258,7 @@ end
 """
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
-function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3)
+function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3,alternative_objective=m -> nothing)
     @timelog log_level 2 "Adding variables...\n" add_variables!(
         m; add_user_variables=add_user_variables, log_level=log_level
     )
@@ -264,14 +266,14 @@ function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> no
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(
         m; add_constraints=add_constraints, log_level=log_level
     )
-    @timelog log_level 2 "Setting objective..." set_objective!(m)
+    @timelog log_level 2 "Setting objective..." set_objective!(m;alternative_objective=alternative_objective)
 end
 
 """
 Optimize the given model.
 If an optimal solution is found, save results and return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false)
+function optimize_model!(m::Model; log_level=3, calculate_duals=false, iterations=nothing)
     write_mps_file(model=m.ext[:instance]) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
@@ -287,8 +289,8 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false)
             @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
         end
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @timelog log_level 2 "Saving $(m.ext[:instance]) results..." save_model_results!(m)
-        if calculate_duals            
+        @timelog log_level 2 "Saving $(m.ext[:instance]) results..." save_model_results!(m,iterations=iterations)
+        if calculate_duals
             save_marginal_values!(m)
             save_bound_marginal_values!(m)
             if lp_solver != mip_solver
@@ -383,9 +385,21 @@ function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, ::Nothing)
     Dict(start(t) => v for (t, v) in by_time_slice_non_aggr)
 end
 
-function _save_output!(m, out, value_or_param)
+function _save_output!(m, out, value_or_param; iterations=nothing)
     by_entity_non_aggr = _value_by_entity_non_aggregated(m, value_or_param)
     for (entity, by_analysis_time_non_aggr) in by_entity_non_aggr
+        if !isnothing(iterations)
+            new_mga_name = Symbol(string("mga_it_", iterations)) ##TODO: fixme! Needs to be done, befooooore we execute solve, as we need to set objective for this solve
+            if mga_iteration(new_mga_name) == nothing
+                new_mga_i = Object(new_mga_name)
+                add_object!(mga_iteration, new_mga_i)
+            else
+                new_mga_i = mga_iteration(new_mga_name)
+            end
+            new_val = (values(entity)...,new_mga_i)
+            new_key = (keys(entity)...,:mga_iteration)
+            entity = NamedTuple{new_key}(new_val)
+        end
         for (analysis_time, by_time_slice_non_aggr) in by_analysis_time_non_aggr
             t_highest_resolution!(by_time_slice_non_aggr)
             output_time_slices_ = output_time_slices(m, output=out)
@@ -399,19 +413,19 @@ function _save_output!(m, out, value_or_param)
     end
     true
 end
-_save_output!(m, out, ::Nothing) = false
+_save_output!(m, out, ::Nothing; iterations=iterations) = false
 
 """
 Save the outputs of a model into a dictionary.
 """
-function save_outputs!(m)
+function save_outputs!(m; iterations=nothing)
     for r in model__report(model=m.ext[:instance]), out in report__output(report=r)
         value = get(m.ext[:values], out.name, nothing)
-        if _save_output!(m, out, value)
+        if _save_output!(m, out, value;iterations=iterations)
             continue
         end
         param = parameter(out.name, @__MODULE__)
-        if _save_output!(m, out, param)
+        if _save_output!(m, out, param;iterations=iterations)
             continue
         end
         @warn "can't find any values for '$(out.name)'"
@@ -421,10 +435,10 @@ end
 """
 Save a model results: first postprocess results, then save variables and objective values, and finally save outputs
 """
-function save_model_results!(m)
+function save_model_results!(m; iterations=nothing)
     save_variable_values!(m)
     save_objective_values!(m)
-    save_outputs!(m)
+    save_outputs!(m; iterations=iterations)
 end
 
 """

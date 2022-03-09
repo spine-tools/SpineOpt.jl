@@ -20,12 +20,14 @@
 function rerun_spineopt!(
     m::Model,
     mp::Model,
+    ::Nothing,
     url_out::Union{String,Nothing};
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
-    optimize=true
+    optimize=true,
+    alternative_objective=m -> nothing,
 )
     m.ext[:is_sub_problem] = true
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
@@ -41,7 +43,7 @@ function rerun_spineopt!(
     max_benders_iterations = max_iterations(model=mp.ext[:instance])
     j = 1
     while optimize
-        @log log_level 0 "Starting Benders iteration $j"
+		@log log_level 0 "Starting Benders iteration $j"
         optimize_model!(mp; log_level=log_level) || break
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(mp)
         k = 1

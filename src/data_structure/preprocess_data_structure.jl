@@ -388,7 +388,7 @@ function generate_lodf()
             for conn_cont in connection(has_ptdf=true)
         )
         for (conn_mon, lodf_trial) in ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(has_ptdf=true))
-        if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)        
+        if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
     )
     lodf_rel_cls = RelationshipClass(
         :lodf_connection__connection, [:connection, :connection], keys(lodf_values), lodf_values
@@ -413,8 +413,8 @@ function generate_network_components()
     generate_ptdf()
     generate_lodf()
     # the below needs the parameters write_ptdf_file and write_lodf_file - we can uncomment when we update the template perhaps?
-    # write_ptdf_file(model=first(model(model_type=:spineopt_operations))) == Symbol(:true) && write_ptdfs()
-    # write_lodf_file(model=first(model(model_type=:spineopt_operations))) == Symbol(:true) && write_lodfs()
+    # write_ptdf_file(model=first(model(model_type=:spineopt_standard))) == Symbol(:true) && write_ptdfs()
+    # write_lodf_file(model=first(model(model_type=:spineopt_standard))) == Symbol(:true) && write_lodfs()
 end
 
 """

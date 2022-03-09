@@ -29,8 +29,9 @@
 
 include("versions/rename_unit_constraint_to_user_constraint.jl")
 include("versions/move_connection_flow_cost.jl")
+include("versions/rename_model_types.jl")
 
-_upgrade_functions = [rename_unit_constraint_to_user_constraint, move_connection_flow_cost]
+_upgrade_functions = [rename_unit_constraint_to_user_constraint, move_connection_flow_cost,rename_model_types]
 
 """
 	current_version()
@@ -61,7 +62,7 @@ function _run_migration(url, version, log_level)
 	upgrade_fn(url, log_level) || return false
 	run_request(
 		url,
-		"import_data", 
+		"import_data",
 		(
 			Dict("object_parameters" => [("settings", "version", version + 1)]),
 			"Update SpineOpt data structure to $(version + 1)"

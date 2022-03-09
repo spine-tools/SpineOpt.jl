@@ -461,10 +461,10 @@ end
 
         object_parameter_values = [ 
             ["node", "node_b", "demand", demand],                                    
-            ["model", "instance", "model_type", "spineopt_operations"],
+            ["model", "instance", "model_type", "spineopt_standard"],
             ["model", "instance", "db_mip_solver_options", mip_solver_options],
             ["model", "instance", "db_lp_solver_options", lp_solver_options],            
-            ["model", "master_instance", "model_type", "spineopt_master"],
+            ["model", "master_instance", "model_type", "spineopt_benders_master"],
             ["model", "master_instance", "db_mip_solver_options", mip_solver_options_master],
             ["model", "master_instance", "db_lp_solver_options", lp_solver_options_master],
             ["model", "master_instance", "db_mip_solver", "Cbc.jl"],
