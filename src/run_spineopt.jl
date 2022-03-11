@@ -138,8 +138,10 @@ function run_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
-        use_direct_model=use_direct_model #FIXME: make sure that this works with solvers, possibly adapt union? + allow for conflicts if direct model is used
+        use_direct_model=use_direct_model
     )
+    # FIXME: make sure use_direct_model this works with db solvers
+    # possibly adapt union? + allow for conflicts if direct model is used
 end
 
 function rerun_spineopt(
@@ -158,7 +160,8 @@ function rerun_spineopt(
     mp = create_model(:spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
     m_mga = create_model(:spineopt_mga, mip_solver, lp_solver, use_direct_model)
 
-    rerun_spineopt!(
+    Base.invokelatest(
+        rerun_spineopt!,
         m,
         mp,
         m_mga,
@@ -203,7 +206,7 @@ function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)
     instance = first(model(model_type=model_type))
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
-    m = use_direct_model ? direct_model(mip_solver()) : Model(mip_solver)
+    m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
     m.ext[:instance] = instance
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
@@ -220,6 +223,8 @@ function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)
     m.ext[:lp_solver] = lp_solver
     m
 end
+
+_do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model(mip_solver()) : Model(mip_solver)
 
 """
 A mip solver for given model instance. If given solver is not `nothing`, just return it.
@@ -269,7 +274,8 @@ function _db_solver(f::Function, db_solver_name::Symbol, db_solver_options)
     db_solver_options_parsed = _parse_solver_options(db_solver_name, db_solver_options)
     @eval using $db_solver_mod_name
     db_solver_mod = getproperty(@__MODULE__, db_solver_mod_name)
-    Base.invokelatest(optimizer_with_attributes, db_solver_mod.Optimizer, db_solver_options_parsed...)
+    factory = () -> Base.invokelatest(db_solver_mod.Optimizer)
+    optimizer_with_attributes(factory, db_solver_options_parsed...)
 end
 _db_solver(f::Function, ::Nothing, db_solver_options) = f()
 
