@@ -172,10 +172,28 @@ function rerun_spineopt(
     )
 end
 
-rerun_spineopt!(::Nothing, mp, ::Nothing, url_out; kwargs...) = error("Model of type `spineopt_benders_master` requires the existence of a subproblem model of type `spineopt_standard`")
-rerun_spineopt!(::Nothing, mp, m_mga; kwargs...) = error("Currently the combination of Benders and mga is supported. Please make sure that you don't have a `model_type=:spineopt_benders_master` together with another model of type `:spineopt_mga`")
-rerun_spineopt!(m, ::Nothing, m_mga; kwargs...) = error("Currently the combination of models with type `spineopt_standard` and `spineopt_mga` is supported.")
-rerun_spineopt!(::Nothing, ::Nothing, ::Nothing; kwargs...) = error("At least one model object has to exist, with at least one of type `spineopt_standard` (or `spineopt_mga`)")
+function rerun_spineopt!(::Nothing, mp, ::Nothing, url_out; kwargs...)
+    error(
+        """
+        model of type `spineopt_benders_master` requires the existence of a subproblem model of type `spineopt_standard`
+        """
+    )
+end
+function rerun_spineopt!(::Nothing, mp, m_mga; kwargs...)
+    error(
+        """
+        currently the combination of Benders and mga is supported - 
+        please make sure that you don't have a `model_type=:spineopt_benders_master`
+        together with another model of type `:spineopt_mga`
+        """
+    )
+end
+function rerun_spineopt!(m, ::Nothing, m_mga; kwargs...)
+    error("currently the combination of models with type `spineopt_standard` and `spineopt_mga` is supported.")
+end
+function rerun_spineopt!(::Nothing, ::Nothing, ::Nothing; kwargs...)
+    error("at least one model object has to exist, with at least one of type `spineopt_standard` (or `spineopt_mga`)")
+end
 
 """
 A JuMP `Model` for SpineOpt.
