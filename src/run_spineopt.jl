@@ -176,26 +176,16 @@ function rerun_spineopt(
 end
 
 function rerun_spineopt!(::Nothing, mp, ::Nothing, url_out; kwargs...)
-    error(
-        """
-        model of type `spineopt_benders_master` requires the existence of a subproblem model of type `spineopt_standard`
-        """
-    )
+    error("can't run a model of type `spineopt_benders_master` without another of type `spineopt_standard`")
 end
 function rerun_spineopt!(::Nothing, mp, m_mga; kwargs...)
-    error(
-        """
-        currently the combination of Benders and mga is supported - 
-        please make sure that you don't have a `model_type=:spineopt_benders_master`
-        together with another model of type `:spineopt_mga`
-        """
-    )
+    error("can't run models of type `spineopt_benders_master` and `spineopt_mga` together")
 end
 function rerun_spineopt!(m, ::Nothing, m_mga; kwargs...)
-    error("currently the combination of models with type `spineopt_standard` and `spineopt_mga` is supported.")
+    error("can't run models of type `spineopt_standard` and `spineopt_mga` together")
 end
 function rerun_spineopt!(::Nothing, ::Nothing, ::Nothing; kwargs...)
-    error("at least one model object has to exist, with at least one of type `spineopt_standard` (or `spineopt_mga`)")
+    error("can't run without at least one model of type `spineopt_standard` or `spineopt_mga`")
 end
 
 """
