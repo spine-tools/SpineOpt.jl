@@ -355,11 +355,12 @@ end
 
 function _value_by_entity_non_aggregated(m, value::Dict)
     by_entity_non_aggr = Dict()
+    analysis_time = start(current_window(m))
     for (k, v) in value
-        end_(k.t) <= model_start(model=m.ext[:instance]) && continue
+        end_(k.t) <= analysis_time && continue
         entity = _drop_key(k, :t)
         by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
-        by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, start(current_window(m)), Dict{TimeSlice,Any}())
+        by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, analysis_time, Dict{TimeSlice,Any}())
         by_time_slice_non_aggr[k.t] = v
     end
     by_entity_non_aggr
