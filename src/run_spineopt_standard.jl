@@ -33,7 +33,13 @@ function rerun_spineopt!(
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
-    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level,alternative_objective=alternative_objective)
+    init_model!(
+        m;
+        add_user_variables=add_user_variables,
+        add_constraints=add_constraints,
+        log_level=log_level,
+        alternative_objective=alternative_objective
+    )
     init_outputs!(m)
     k = 1
     calculate_duals = any(startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:outputs])))
@@ -258,7 +264,9 @@ end
 """
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
-function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3,alternative_objective=m -> nothing)
+function init_model!(
+    m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3, alternative_objective=m -> nothing
+)
     @timelog log_level 2 "Adding variables...\n" add_variables!(
         m; add_user_variables=add_user_variables, log_level=log_level
     )
@@ -389,15 +397,16 @@ function _save_output!(m, out, value_or_param; iterations=nothing)
     by_entity_non_aggr = _value_by_entity_non_aggregated(m, value_or_param)
     for (entity, by_analysis_time_non_aggr) in by_entity_non_aggr
         if !isnothing(iterations)
-            new_mga_name = Symbol(string("mga_it_", iterations)) ##TODO: fixme! Needs to be done, befooooore we execute solve, as we need to set objective for this solve
+            # FIXME: Needs to be done, befooooore we execute solve, as we need to set objective for this solve
+            new_mga_name = Symbol(string("mga_it_", iterations))
             if mga_iteration(new_mga_name) == nothing
                 new_mga_i = Object(new_mga_name)
                 add_object!(mga_iteration, new_mga_i)
             else
                 new_mga_i = mga_iteration(new_mga_name)
             end
-            new_val = (values(entity)...,new_mga_i)
-            new_key = (keys(entity)...,:mga_iteration)
+            new_val = (values(entity)..., new_mga_i)
+            new_key = (keys(entity)..., :mga_iteration)
             entity = NamedTuple{new_key}(new_val)
         end
         for (analysis_time, by_time_slice_non_aggr) in by_analysis_time_non_aggr
@@ -421,11 +430,11 @@ Save the outputs of a model into a dictionary.
 function save_outputs!(m; iterations=nothing)
     for r in model__report(model=m.ext[:instance]), out in report__output(report=r)
         value = get(m.ext[:values], out.name, nothing)
-        if _save_output!(m, out, value;iterations=iterations)
+        if _save_output!(m, out, value; iterations=iterations)
             continue
         end
         param = parameter(out.name, @__MODULE__)
-        if _save_output!(m, out, param;iterations=iterations)
+        if _save_output!(m, out, param; iterations=iterations)
             continue
         end
         @warn "can't find any values for '$(out.name)'"
