@@ -501,4 +501,31 @@ end
         @test get_optimizer_attribute(mp, "logLevel") == "0"
         @test get_optimizer_attribute(mp, "ratioGap") == "0.016"
     end
+    @testset "fixing variables when rolling" begin
+        _load_test_data(url_in, test_data)
+        index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
+        demand_data = [10, 20, 30]
+        demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
+        unit_capacity = demand
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
+            ["unit", "unit_ab", "min_up_time", Dict("type" => "duration", "data" => "6h")],
+        ]  # NOTE: min_up_time is only so we have a history
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity]
+        ]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )        
+        m = run_spineopt(url_in, url_out; log_level=0)
+        history_end = model_end(model=m.ext[:instance]) - roll_forward(model=m.ext[:instance])
+        history_start = history_end - roll_forward(model=m.ext[:instance])
+        var_t_iterator = ((var, inds.t) for (var_key, vars) in m.ext[:variables] for (inds, var) in vars)
+        @testset for (var, t) in var_t_iterator
+            @test is_fixed(var) == (history_start <= start(t) < history_end)
+        end
+    end
 end
