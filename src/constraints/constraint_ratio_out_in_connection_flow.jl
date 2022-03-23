@@ -114,13 +114,13 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
     t0 = _analysis_time(m)
     unique(
         (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
-        for (conn, n_out, n_in) in indices(ratio_out_in) for t in t_lowest_resolution(
+        for (conn, n_out, n_in) in indices(ratio_out_in)
+        for t in t_lowest_resolution(
             x.t for x in connection_flow_indices(
-                m;
-                connection=conn,
-                node=Iterators.flatten((members(n_out), members(n_in))),
+                m; connection=conn, node=Iterators.flatten((members(n_out), members(n_in)))
             )
-        ) for path in active_stochastic_paths(
+        )
+        for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario
                 for ind in _constraint_ratio_out_in_connection_flow_indices(m, conn, n_out, n_in, t0, t)
@@ -153,7 +153,7 @@ end
 """
     _constraint_ratio_out_in_connection_flow_indices(connection, node_out, node_in, t0, t)
 
-Gather the `connection_flow` variiable indices for `add_constraint_ratio_out_in_connection_flow!`.
+Gather the `connection_flow` variable indices for `add_constraint_ratio_out_in_connection_flow!`.
 """
 function _constraint_ratio_out_in_connection_flow_indices(m, connection, node_group_out, node_group_in, t0, t)
     Iterators.flatten((
@@ -166,12 +166,9 @@ function _constraint_ratio_out_in_connection_flow_indices(m, connection, node_gr
         ),
         (connection=conn, node=n_in, direction=d, stochastic_scenario=s, t=t)
         for (conn, n_in, d, s, t1) in connection_flow_indices(
-            m;
-            connection=connection,
-            node=node_group_in,
-            direction=direction(:from_node),
-            t=t_in_t(m; t_long=t),
-        ) for (conn, n_in, d, s, t) in connection_flow_indices(
+            m; connection=connection, node=node_group_in, direction=direction(:from_node), t=t_in_t(m; t_long=t),
+        )
+        for (conn, n_in, d, s, t) in connection_flow_indices(
             m;
             connection=conn,
             node=node_group_in,
