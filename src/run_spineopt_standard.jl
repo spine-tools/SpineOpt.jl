@@ -457,7 +457,6 @@ update constraints and update objective.
 """
 function update_model!(m; update_constraints=m -> nothing, log_level=3)
     @timelog log_level 2 "Updating variables..." update_variables!(m)
-    @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
     @timelog log_level 2 "Updating user constraints..." update_constraints(m)

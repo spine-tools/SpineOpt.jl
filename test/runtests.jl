@@ -42,12 +42,11 @@ import SpineOpt:
     node_investment_dynamic_time_indices,
     rerun_spineopt!
 
-# Test code uses legacy syntax for `import_data`, so interpret here.
+# Test code uses legacy syntax for `import_data`, so interpret here
 SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_data(db_url, Dict(kwargs...), "testing")
 
 # Convenience function for resetting the test in-memory db with the `SpineOpt.template`.
 function _load_test_data(db_url, test_data)
-    SpineInterface._import_spinedb_api()
     dbh = SpineInterface._create_db_handler(db_url, false)
     dbh.close_connection()
     dbh.open_connection()
