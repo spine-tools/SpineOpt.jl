@@ -507,6 +507,8 @@ end
         demand_data = [10, 20, 30]
         demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
         unit_capacity = demand
+        objects = [["output", "constraint_nodal_balance"]]
+        relationships = [["report__output", ["report_x", "constraint_nodal_balance"]]]
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
@@ -517,13 +519,19 @@ end
         ]
         SpineInterface.import_data(
             url_in;
+            objects=objects,
+            relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )        
         m = run_spineopt(url_in, url_out; log_level=0)
+        SpineOpt.update_model!(m)  # So that history is fixed
         history_end = model_end(model=m.ext[:instance]) - roll_forward(model=m.ext[:instance])
-        history_start = history_end - roll_forward(model=m.ext[:instance])
-        var_t_iterator = ((var, inds.t) for (var_key, vars) in m.ext[:variables] for (inds, var) in vars)
+        history_start = history_end - Hour(6)
+        var_t_iterator = sort(
+            [(var, inds.t) for (var_key, vars) in m.ext[:variables] for (inds, var) in vars],
+            by=x -> (name(x[1]), x[2])
+        )
         @testset for (var, t) in var_t_iterator
             @test is_fixed(var) == (history_start <= start(t) < history_end)
         end
