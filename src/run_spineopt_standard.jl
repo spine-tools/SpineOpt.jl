@@ -286,21 +286,22 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
         mip_solver = m.ext[:mip_solver]
         lp_solver = m.ext[:lp_solver]
         if calculate_duals
-            @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
+            @log log_level 1 "Setting up final LP of $(m.ext[:instance]) to obtain duals..."
+            @timelog log_level 1 "Fixing integer variables..." relax_integer_vars(m)
             if lp_solver != mip_solver
-                @timelog log_level 0 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
+                @timelog log_level 1 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
             end
-            @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
+            @timelog log_level 1 "Optimizing final LP..." optimize!(m)
+            save_marginal_values!(m)
+            save_bound_marginal_values!(m)
         end
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving $(m.ext[:instance]) results..." save_model_results!(m,iterations=iterations)
         if calculate_duals
-            save_marginal_values!(m)
-            save_bound_marginal_values!(m)
             if lp_solver != mip_solver
-                set_optimizer(m, mip_solver)
+                @timelog log_level 1 "Switching back to MIP solver $(mip_solver)..." set_optimizer(m, mip_solver)
             end
-            @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
+            @timelog log_level 1 "Unfixing integer variables..." unrelax_integer_vars(m)
         end
         true
     else

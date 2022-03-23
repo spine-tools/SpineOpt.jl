@@ -536,4 +536,37 @@ end
             @test is_fixed(var) == (history_start <= start(t) < history_end)
         end
     end
+    @testset "dual values" begin
+        _load_test_data(url_in, test_data)
+        index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
+        demand_data = [10, 20, 30]
+        demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
+        unit_capacity = 31
+        vom_cost_data = [100, 200, 300]
+        vom_cost = Dict("type" => "time_series", "data" => PyVector(vom_cost_data), "index" => index)
+        objects = [["output", "constraint_nodal_balance"]]
+        relationships = [["report__output", ["report_x", "constraint_nodal_balance"]]]
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost]
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )        
+        m = run_spineopt(url_in, url_out; log_level=0)
+        using_spinedb(url_out, Y)
+        key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
+        @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2) - Hour(1))
+            expected = SpineOpt.vom_cost(node=node(:node_b), unit=unit(:unit_ab), direction=direction(:to_node), t=t)
+            @test Y.constraint_nodal_balance(; key..., t=t) == expected
+        end
+    end
 end
