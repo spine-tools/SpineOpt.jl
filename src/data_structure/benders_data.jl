@@ -60,10 +60,10 @@ function process_master_problem_solution(mp)
         node,
         node__benders_iteration,
         candidate_nodes,
-        nodes_invested_available_indices,
-        :nodes_invested_available,
-        :fix_nodes_invested_available,
-        :nodes_invested_available_bi
+        storages_invested_available_indices,
+        :storages_invested_available,
+        :fix_storages_invested_available,
+        :storages_invested_available_bi
     )
 end
 
@@ -89,7 +89,7 @@ function reset_fix_parameter_values()
     _reset_fix_parameter_value(unit, candidate_units, fix_name, starting_name)
     fix_name, starting_name = :fix_connections_invested_available, :starting_fix_connections_invested_available
     _reset_fix_parameter_value(connection, candidate_connections, fix_name, starting_name)
-    fix_name, starting_name = :fix_nodes_invested_available, :starting_fix_nodes_invested_available
+    fix_name, starting_name = :fix_storages_invested_available, :starting_fix_storages_invested_available
     _reset_fix_parameter_value(node, candidate_nodes, fix_name, starting_name)
 end
 
@@ -125,7 +125,7 @@ function save_sp_marginal_values(m)
     _save_marginal_value(unit__benders_iteration, candidate_units, out_name, var_name)
     out_name, var_name = :bound_connections_invested_available, :connections_invested_available_mv
     _save_marginal_value(connection__benders_iteration, candidate_connections, out_name, var_name)
-    out_name, var_name = :bound_nodes_invested_available, :nodes_invested_available_mv
+    out_name, var_name = :bound_storages_invested_available, :storages_invested_available_mv
     _save_marginal_value(node__benders_iteration, candidate_nodes, out_name, var_name)
 end
 

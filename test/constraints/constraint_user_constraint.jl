@@ -76,7 +76,7 @@
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T04:00:00")],
             ["model", "instance", "duration_unit", "hour"],
-            ["model", "instance", "model_type", "spineopt_standard"],                 
+            ["model", "instance", "model_type", "spineopt_standard"],
             ["node", "node_c", "has_state", true],
             ["node", "node_c", "node_state_cap", 100],
             ["node", "node_c", "candidate_nodes", 2],
@@ -84,10 +84,10 @@
             ["connection", "connection_bc", "candidate_connections", 1],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
-            ["temporal_block", "investments_two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],            
+            ["temporal_block", "investments_two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_four_hourly", "resolution", Dict("type" => "duration", "data" => "4h")],
             ["model", "instance", "db_mip_solver", "Cbc.jl"],
-            ["model", "instance", "db_lp_solver", "Clp.jl"],            
+            ["model", "instance", "db_lp_solver", "Clp.jl"],
         ],
         :relationship_parameter_values => [[
             "stochastic_structure__stochastic_scenario",
@@ -109,8 +109,8 @@
             connections_invested_coefficient = 8
             connections_invested_available_coefficient = 9
             node_state_coefficient = 10
-            nodes_invested_coefficient = 11
-            nodes_invested_available_coefficient = 12
+            storages_invested_coefficient = 11
+            storages_invested_available_coefficient = 12
             connection_flow_coefficient_b = 13
             connection_flow_coefficient_c = 14
 
@@ -139,8 +139,8 @@
                 [relationships[4]..., "connections_invested_coefficient", connections_invested_coefficient],
                 [relationships[4]..., "connections_invested_available_coefficient", connections_invested_available_coefficient],
                 [relationships[5]..., "node_state_coefficient", node_state_coefficient],
-                [relationships[5]..., "nodes_invested_coefficient", nodes_invested_coefficient],
-                [relationships[5]..., "nodes_invested_available_coefficient", nodes_invested_available_coefficient],
+                [relationships[5]..., "storages_invested_coefficient", storages_invested_coefficient],
+                [relationships[5]..., "storages_invested_available_coefficient", storages_invested_available_coefficient],
                 [relationships[6]..., "connection_flow_coefficient", connection_flow_coefficient_b],
                 [relationships[7]..., "connection_flow_coefficient", connection_flow_coefficient_c],
 
@@ -163,8 +163,8 @@
             var_units_invested_available = m.ext[:variables][:units_invested_available]
             var_connections_invested = m.ext[:variables][:connections_invested]
             var_connections_invested_available = m.ext[:variables][:connections_invested_available]
-            var_nodes_invested = m.ext[:variables][:nodes_invested]
-            var_nodes_invested_available = m.ext[:variables][:nodes_invested_available]
+            var_storages_invested = m.ext[:variables][:storages_invested]
+            var_storages_invested_available = m.ext[:variables][:storages_invested_available]
 
             constraint = m.ext[:constraints][:user_constraint]
 
@@ -186,14 +186,14 @@
                 + 4 * connections_invested_coefficient * var_connections_invested[connection(:connection_bc), s_parent, t4h1]
                 + 4 * connections_invested_available_coefficient * var_connections_invested_available[connection(:connection_bc), s_parent, t4h1]
 
-                + 2 * nodes_invested_coefficient * (
-                    + var_nodes_invested[node(:node_c), s_parent, t2h1]
-                    + var_nodes_invested[node(:node_c), s_parent, t2h2]
+                + 2 * storages_invested_coefficient * (
+                    + var_storages_invested[node(:node_c), s_parent, t2h1]
+                    + var_storages_invested[node(:node_c), s_parent, t2h2]
                 )
 
-                + 2 * nodes_invested_available_coefficient * (
-                    + var_nodes_invested_available[node(:node_c), s_parent, t2h1]
-                    + var_nodes_invested_available[node(:node_c), s_parent, t2h2]
+                + 2 * storages_invested_available_coefficient * (
+                    + var_storages_invested_available[node(:node_c), s_parent, t2h1]
+                    + var_storages_invested_available[node(:node_c), s_parent, t2h2]
                 )
 
                 + 2 * units_on_coefficient * (

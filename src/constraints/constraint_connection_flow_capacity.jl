@@ -55,7 +55,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
             * ((candidate_connections(connection=conn) != nothing) ?
                + expr_sum(
                 connections_invested_available[conn, s, t1]
-                - connection_decomissioned[conn, s, t1]
+                # - connection_decomissioned[conn, s, t1] #FIXME: double check this is as intended
                     for (conn, s, t1) in connections_invested_available_indices(
                     m;
                     connection=conn,

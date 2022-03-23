@@ -18,26 +18,22 @@
 #############################################################################
 
 """
-    add_constraint_units_invested_available!(m::Model)
+    add_constraint_storages_invested_available!(m::Model)
 
-Limit the units_invested_available by the number of investment candidate units.
+Limit the storages_invested by the number of investment candidate nodes.
 """
-function add_constraint_units_invested_available!(m::Model)
-    @fetch units_invested = m.ext[:variables]
+function add_constraint_storages_invested_available!(m::Model)
+    @fetch storages_invested = m.ext[:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:units_invested_available] = Dict(
-        (unit=u, stochastic_scenario=s, t=t) => @constraint(
+    m.ext[:constraints][:storages_invested_available] = Dict(
+        (node=n, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + sum(
-                units_invested[u, s, t]
-                for (u, s, t) in units_invested_available_indices(
-                    m; unit=u, stochastic_scenario=s)
-            )
+            sum(
+            + storages_invested[n, s, t]
+            for (n,s,t) in storages_invested_available_indices(m)
+                )
             <=
-            + candidate_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-        ) for (u, s, t) in units_invested_available_indices(m)
+            + candidate_nodes[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+        ) for (n, s, t) in storages_invested_available_indices(m)
     )
 end
-# TODO: units_invested_available or \sum(units_invested)?
-# Candidate units: max amount of units that can be installed over model horizon
-# or max amount of units that can be available at a time?

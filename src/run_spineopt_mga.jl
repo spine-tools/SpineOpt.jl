@@ -22,6 +22,7 @@ function rerun_spineopt!(
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m_mga)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m_mga)
+    @timelog log_level 2 "Creating economic structure..." generate_economic_structure!(m_mga)
     init_model!(m_mga; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level,alternative_objective=alternative_objective)
     init_outputs!(m_mga)
     k = 1

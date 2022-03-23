@@ -18,32 +18,16 @@
 #############################################################################
 
 """
-    units_invested_int(x)
+    add_variable_storages_decommissioned!(m::Model)
 
-Check if unit investment variable type is defined to be an integer.
+Add `storages_decommissioned` variables to model `m`.
 """
-
-units_invested_int(x) = unit_investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
-
-"""
-    add_variable_units_invested!(m::Model)
-
-Add `units_invested` variables to model `m`.
-"""
-function add_variable_units_invested!(m::Model)
-    t0 = _analysis_time(m)
+function add_variable_storages_decommissioned!(m::Model)
     add_variable!(
         m,
-        :units_invested,
-        units_invested_available_indices;
+        :storages_decommissioned,
+        storages_invested_available_indices;
         lb=x -> 0,
-        fix_value=x -> fix_units_invested(
-            unit=x.unit,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
-        int=units_invested_int,
+        int=storages_invested_available_int,
     )
 end

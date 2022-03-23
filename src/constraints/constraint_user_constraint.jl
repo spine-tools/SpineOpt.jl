@@ -23,7 +23,7 @@
 Custom constraint for `units`.
 """
 function add_constraint_user_constraint!(m::Model)
-    @fetch unit_flow_op, unit_flow, units_on, units_started_up, connection_flow, node_state, units_invested, units_invested_available, nodes_invested, nodes_invested_available, connections_invested, connections_invested_available = m.ext[:variables]
+    @fetch unit_flow_op, unit_flow, units_on, units_started_up, connection_flow, node_state, units_invested, units_invested_available, storages_invested, storages_invested_available, connections_invested, connections_invested_available = m.ext[:variables]
     t0 = _analysis_time(m)
     m.ext[:constraints][:user_constraint] = Dict(
         (user_constraint=uc, stochastic_path=s, t=t) => sense_constraint(
@@ -127,13 +127,13 @@ function add_constraint_user_constraint!(m::Model)
             )
             + expr_sum(
                 (
-                    + nodes_invested_available[n, s, t1]
-                    * nodes_invested_available_coefficient[(user_constraint=uc, node=n, stochastic_scenario=s, analysis_time=t0, t=t1)]
-                    + nodes_invested[n, s, t1]
-                    * nodes_invested_coefficient[(user_constraint=uc, node=n, stochastic_scenario=s, analysis_time=t0, t=t1)]
+                    + storages_invested_available[n, s, t1]
+                    * storages_invested_available_coefficient[(user_constraint=uc, node=n, stochastic_scenario=s, analysis_time=t0, t=t1)]
+                    + storages_invested[n, s, t1]
+                    * storages_invested_coefficient[(user_constraint=uc, node=n, stochastic_scenario=s, analysis_time=t0, t=t1)]
                 )
                 * min(duration(t1), duration(t)) for n in node__user_constraint(user_constraint=uc)
-                for (n, s, t1) in nodes_invested_available_indices(m; node=n, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
+                for (n, s, t1) in storages_invested_available_indices(m; node=n, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0,
             )
             + expr_sum(
@@ -320,14 +320,14 @@ function _constraint_user_constraint_connections_invested_indices(m, uc, t)
 end
 
 """
-    _constraint_user_constraint_nodes_invested_indices(uc, t)
+    _constraint_user_constraint_storages_invested_indices(uc, t)
 
-Gather the `nodes_invested` variable indices appearing in `add_constraint_user_constraint!`.
+Gather the `storages_invested` variable indices appearing in `add_constraint_user_constraint!`.
 """
-function _constraint_user_constraint_nodes_invested_indices(m, uc, t)
+function _constraint_user_constraint_storages_invested_indices(m, uc, t)
     (
         ind
-        for n in node__user_constraint(user_constraint=uc) for ind in nodes_invested_available_indices(m; node=n, t=t)
+        for n in node__user_constraint(user_constraint=uc) for ind in storages_invested_available_indices(m; node=n, t=t)
     )
 end
 
@@ -360,6 +360,6 @@ function _constraint_user_constraint_indices(m, uc, t=anything)
         _constraint_user_constraint_node_stochastic_time_indices(m, uc, t),
         _constraint_user_constraint_units_invested_indices(m, uc, t),
         _constraint_user_constraint_connections_invested_indices(m, uc, t),
-        _constraint_user_constraint_nodes_invested_indices(m, uc, t)
+        _constraint_user_constraint_storages_invested_indices(m, uc, t)
     ))
 end

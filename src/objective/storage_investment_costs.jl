@@ -18,24 +18,24 @@
 #############################################################################
 
 """
-    connection_investment_costs(m::Model)
+    storage_investment_costs(m::Model)
 
-Create and expression for connection investment costs.
+Create and expression for node investment costs.
 """
-function connection_investment_costs(m::Model, t1)
-    @fetch connections_invested = m.ext[:variables]
+function storage_investment_costs(m::Model, t1)
+    @fetch storages_invested = m.ext[:variables]
     t0 = _analysis_time(m)
     @expression(
         m,
         + expr_sum(
-            connections_invested[c, s, t]
-            * (1- connection_salvage_fraction[(connection=c, stochastic_scenario=s, t=t)])
-            * connection_tech_discount_factor[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * connection_conversion_to_discounted_annuities[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
+            storages_invested[n, s, t]
+            * (1- storage_salvage_fraction[(node=n, stochastic_scenario=s, t=t)])
+            * storage_tech_discount_factor[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * storage_conversion_to_discounted_annuities[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * storage_investment_cost[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * connection_investment_cost[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * connection_stochastic_scenario_weight(m; connection=c, stochastic_scenario=s)
-            for (c, s, t) in connections_invested_available_indices(m; connection=indices(connection_investment_cost))
+            * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
+            for (n, s, t) in storages_invested_available_indices(m; node=indices(storage_investment_cost))
                 if end_(t) <= t1;
             init=0,
         )

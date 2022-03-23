@@ -18,22 +18,10 @@
 #############################################################################
 
 """
-    add_constraint_nodes_invested_available!(m::Model)
+    add_variable_units_mothballed!(m::Model)
 
-Limit the nodes_invested by the number of investment candidate nodes.
+Add `units_mothballed` variables to model `m`.
 """
-function add_constraint_nodes_invested_available!(m::Model)
-    @fetch nodes_invested = m.ext[:variables]
-    t0 = _analysis_time(m)
-    m.ext[:constraints][:nodes_invested_available] = Dict(
-        (node=n, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            sum(
-            + nodes_invested[n, s, t]
-            for (n,s,t) in nodes_invested_available_indices(m)
-                )
-            <=
-            + candidate_nodes[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
-        ) for (n, s, t) in nodes_invested_available_indices(m)
-    )
+function add_variable_units_mothballed!(m::Model)
+    add_variable!(m, :units_mothballed, units_invested_available_indices; lb=x -> 0)
 end

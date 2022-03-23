@@ -33,10 +33,12 @@ function add_constraint_unit_lifetime!(m::Model)
                 for (u, s, t) in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0,
             )
-            ==
+            == #FIXME: >= for econ lifetime, <= for tech lifetime
             + sum(
                 + units_invested[u, s_past, t_past]
                 * unit_capacity_transfer_factor[(unit=u, stochastic_scenario=s_past,vintage_t=first(t_past.start),t=t)]
+                + units_demothballed[u, s_past, t_past]
+                - units_mothballed[u, s_past, t_past]
                 #TODO: can we fix this parameter call? at the moment, first() needs to be called for this to work
                 for (u, s_past, t_past) in units_invested_available_indices(
                     m;

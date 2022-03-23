@@ -314,7 +314,7 @@ end
 """
     node_investment_stochastic_time_indices(;<keyword arguments>)
 
-Stochastic time indexes for `nodes_invested` with keyword arguments that allow filtering.
+Stochastic time indexes for `storages_invested` with keyword arguments that allow filtering.
 """
 function node_investment_stochastic_time_indices(
     m::Model;

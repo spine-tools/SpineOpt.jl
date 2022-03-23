@@ -23,12 +23,12 @@
     generate_economic_structure!(m::Model)
 """
 function generate_economic_structure!(m::Model)
-    for obj in [unit,node,connection]
-        generate_capacity_transfer_factor!(m::Model,obj)
-        generate_annuity!(m::Model,obj)
-        generate_salvage_fraction!(m::Model,obj)
-        generate_tech_discount_factor!(m::Model,obj)
-        generate_discount_timeslice_duration!(m::Model,obj)
+    for (obj, name) in [(unit,:unit),(node,:storage),(connection,:connection)]
+        generate_capacity_transfer_factor!(m::Model,obj, name)
+        generate_conversion_to_discounted_annuities!(m::Model,obj, name)
+        generate_salvage_fraction!(m::Model,obj, name)
+        generate_tech_discount_factor!(m::Model,obj, name)
+        generate_discount_timeslice_duration!(m::Model,obj, name)
     end
 end
 
@@ -40,16 +40,16 @@ end
 
 Generate capacity_transfer_factor factors for units that can be invested in. The
 unit_capacity_transfer_factor is a Map parameter that holds the fraction of an investment during vintage
-year t_v in a unit u that is still available in year t.
+year t_v in a unit u that is still available in the model year t.
 """
-function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
+function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
     instance = m.ext[:instance]
     capacity_transfer_factor = Dict()
-    investment_indices = eval(Symbol("$(obj_cls)s_invested_available_indices"))
-    lead_time = eval(Symbol("$(obj_cls)_lead_time"))
-    tech_lifetime = eval(Symbol("$(obj_cls)_investment_tech_lifetime"))
-    invest_temoral_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
-    param_name = Symbol("$(obj_cls)_capacity_transfer_factor")
+    investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))
+    lead_time = eval(Symbol("$(obj_name)_lead_time"))
+    tech_lifetime = eval(Symbol("$(obj_name)_investment_tech_lifetime"))
+    invest_temporal_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
+    param_name = Symbol("$(obj_name)_capacity_transfer_factor")
     if dynamic_investments(model=instance)
         for id in members(obj_cls())
             map_stoch_indices = [] #NOTE: will hold stochastic indices
@@ -62,10 +62,11 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
                     TLIFE = tech_lifetime(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
                     vintage_t_start = start(vintage_t)
                     start_of_operation = vintage_t_start + LT
+
                     end_of_operation = vintage_t_start + LT + TLIFE
                     timeseries_val = []
                     timeseries_ind = []
-                    for t in time_slice(m; temporal_block = invest_temoral_block(;Dict(obj_cls.name=>id)...))
+                    for t in time_slice(m; temporal_block = invest_temporal_block(;Dict(obj_cls.name=>id)...))
                         t_start = start(t)
                         t_end = end_(t)
                         dur =  t_end - t_start
@@ -103,7 +104,7 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass)
         end
     else
         for u in unit()
-            investment_block = first(invest_temoral_block(;Dict(obj_cls.name=>id)...))
+            investment_block = first(invest_temporal_block(;Dict(obj_cls.name=>id)...))
             map_indices = []
             timeseries_array = []
             for vintage_t in time_slice(m; temporal_block = investment_block)
@@ -132,19 +133,23 @@ end
 
 
 """
-    generate_unit_annuity()
+    generate_conversion_to_discounted_annuities()
 
-Generate annuity factors for units that can be invested in.
+The conversion_to_discounted_annuities factor translates the overnight costs of an investment
+into discounted (to the `dicount_year`) annual payments, distributed over the total
+lifetime of the investment. Investment payments are assumed to increase linearly over the lead-time, and decrease
+linearly towards the end of the economic lifetime.
+
 """
-function generate_annuity!(m::Model, obj_cls::ObjectClass)
+function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
     instance = m.ext[:instance]
     discnt_rate = discount_rate(model=instance)
     discnt_year = discount_year(model=instance)
-    annuity = Dict()
-    investment_indices = eval(Symbol("$(obj_cls)s_invested_available_indices"))
-    lead_time = eval(Symbol("$(obj_cls)_lead_time"))
-    econ_lifetime = eval(Symbol("$(obj_cls)_investment_econ_lifetime"))
-    param_name = Symbol("$(obj_cls)_annuity")
+    conversion_to_discounted_annuities = Dict()
+    investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))
+    lead_time = eval(Symbol("$(obj_name)_lead_time"))
+    econ_lifetime = eval(Symbol("$(obj_name)_investment_econ_lifetime"))
+    param_name = Symbol("$(obj_name)_conversion_to_discounted_annuities")
     for id in obj_cls()
         stochastic_map_indices = []
         stochastic_map_vals = []
@@ -184,6 +189,11 @@ function generate_annuity!(m::Model, obj_cls::ObjectClass)
     end
 end
 
+"""
+    function capital_recovery_factor(m, discnt_rate ,ELIFE)
+
+The `captial_recovery_factor` is the ratio between constant annuities and the present value of these annuities over the economic lifetime of the investment.
+"""
 
 function capital_recovery_factor(m, discnt_rate ,ELIFE)
     if discnt_rate != 0
@@ -193,6 +203,12 @@ function capital_recovery_factor(m, discnt_rate ,ELIFE)
     end
     capital_recovery_factor
 end
+
+"""
+    function discount_factor(m,discnt_rate,year::DateTime)
+
+The discount factor discounts payments at a certain timestep `t` to the models `discount_year`
+"""
 
 function discount_factor(m,discnt_rate,year::DateTime)
     discnt_year = discount_year(model=m)
@@ -205,8 +221,10 @@ function discount_factor(m,discnt_rate,year::T) where {T<:Period}
 end
 
 """
-Fraction of the annuity for technology u with vintage year t_vintage that needs to be paid
-in payment year t. Depends on leadtime and economic lifetime of u.
+function payment_fraction(t_vintage, t, t_econ_life, t_lead)
+
+`payment_fraction` for technology u with vintage year t_vintage that needs to be paid
+in payment year t. Depends on leadtime and economic lifetime of u (assumed to increase linearly over leadtime, and decrease linearly towards the end of the economic lifetime).
 """
 function payment_fraction(t_vintage, t, t_econ_life, t_lead)
     UP = min(t_vintage + t_lead -Year(1), t)
@@ -217,20 +235,20 @@ end
 """
     generate_salvage_fraction()
 
-Generate salvage fraction for units that can be invested in.
+Generate salvage fraction of units, which exonomic lifetime exceeds the modeling horizon.
 """
-function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass)
+function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
     instance = m.ext[:instance]
     discnt_rate = discount_rate(model=instance)
     discnt_year = discount_year(model=instance)
     EOH = model_end(model=instance)
 
     salvage_fraction = Dict()
-    econ_lifetime = eval(Symbol("$(obj_cls)_investment_econ_lifetime"))
-    investment_indices = eval(Symbol("$(obj_cls)s_invested_available_indices"))
-    lead_time = eval(Symbol("$(obj_cls)_lead_time"))
-    invest_temoral_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
-    param_name = Symbol("$(obj_cls)_salvage_fraction")
+    econ_lifetime = eval(Symbol("$(obj_name)_investment_econ_lifetime"))
+    investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))
+    lead_time = eval(Symbol("$(obj_name)_lead_time"))
+    invest_temporal_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
+    param_name = Symbol("$(obj_name)_salvage_fraction")
     for id in indices(econ_lifetime)
         stochastic_map_ind = []
         stochastic_map_val = []
@@ -239,7 +257,7 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass)
             timeseries_val = []
             LT = lead_time(;Dict(obj_cls.name=>id)...)
             ELIFE = econ_lifetime(;Dict(obj_cls.name=>id)...)
-            investment_block = first(invest_temoral_block(;Dict(obj_cls.name=>id)...))
+            investment_block = first(invest_temporal_block(;Dict(obj_cls.name=>id)...))
             for vintage_t in time_slice(m; temporal_block = investment_block)
                 vintage_t_start = start(vintage_t)
                 start_of_operation = vintage_t_start + LT
@@ -292,15 +310,15 @@ end
 """
     generate_tech_discount_factor()
 
-Generate technology-specific discount factors for units that can be invested in.
+Generate technology-specific discount factors for investments (e.g., for risky investments).
 """
-function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass)
+function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
     instance = m.ext[:instance]
     discnt_rate = discount_rate(model=instance)
-    discnt_rate_tech = eval(Symbol("$(obj_cls)_discount_rate_technology_specific"))
-    econ_lifetime = eval(Symbol("$(obj_cls)_investment_econ_lifetime"))
+    discnt_rate_tech = eval(Symbol("$(obj_name)_discount_rate_technology_specific"))
+    econ_lifetime = eval(Symbol("$(obj_name)_investment_econ_lifetime"))
     invest_stoch_struct = eval(Symbol("$(obj_cls)__investment_stochastic_structure"))
-    param_name = Symbol("$(obj_cls)_tech_discount_factor")
+    param_name = Symbol("$(obj_name)_tech_discount_factor")
     for id in obj_cls()
         if id in indices(discnt_rate_tech) #Default: 0
             stoch_map_val = []
@@ -328,35 +346,47 @@ end
     generate_discount_timeslice_duration()
 
 Generate discounted duration of timeslices for each investment timeslice.
+This is used to scale and translate operational blocks according to their associated investment period, and
+discount them to the models `discount_year`.
 """
-function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass)
-    #TODO: function arguments: objects class, $(objects class)____investment_stochastic_structure, $(objects class)__investment_temporal_block
+function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
     instance = m.ext[:instance]
     discnt_rate = discount_rate(model=instance)
     discnt_year = discount_year(model=instance)
 
     discounted_duration = Dict()
     invest_stoch_struct = eval(Symbol("$(obj_cls)__investment_stochastic_structure"))
-    invest_temoral_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
-    param_name = Symbol("$(obj_cls)_discounted_duration")
+    invest_temporal_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
+    param_name = Symbol("$(obj_name)_discounted_duration")
     for id in obj_cls()
         stoch_map_val = []
         stoch_map_ind = []
         for s in stochastic_structure__stochastic_scenario(stochastic_structure=invest_stoch_struct(;Dict(obj_cls.name=>id)...))
             timeseries_ind = []
             timeseries_val = []
-            investment_block = first(invest_temoral_block(;Dict(obj_cls.name=>id)...))#TODO generalize?
-            for t in time_slice(m; temporal_block = investment_block)
-                t_start = start(t)
-                t_end = end_(t)
-                j = t_start
-                val = 0
-                while j< t_end
-                    val+= discount_factor(instance,discnt_rate,j)
-                    j+= Year(1)
+            if use_milestone_years(model=instance)
+                for investment_block in invest_temporal_block(;Dict(obj_cls.name=>id)...)
+                    #TODO: robust enough?; assumes that investment temporal_blocks of one particular unit, connection ,node don't overlap
+                    for t in time_slice(m; temporal_block = investment_block)
+                        t_start = start(t)
+                        t_end = end_(t)
+                        j = t_start
+                        val = 0
+                        while j< t_end
+                            val+= discount_factor(instance,discnt_rate,j)
+                            j+= Year(1)
+                        end
+                        push!(timeseries_ind,start(t))
+                        push!(timeseries_val,val)
+                    end
                 end
-                push!(timeseries_ind,start(t))
-                push!(timeseries_val,val)
+            else
+                for model_years in model_start(model=m.ext[:instance]):Year(1):model_end(model=m.ext[:instance])
+                    ### TODO: should this be model start OR current_window?
+                    val = discount_factor(instance,discnt_rate,model_years)
+                    push!(timeseries_ind,model_years)
+                    push!(timeseries_val,val)
+                end
             end
             push!(stoch_map_ind,s)
             push!(stoch_map_val,TimeSeries(timeseries_ind,timeseries_val,false,false))
@@ -364,6 +394,6 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass)
         obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
     end
     @eval begin
-        $(param_name) = $(Parameter(param_name), [obj_cls])
+        $(param_name) = $(Parameter(param_name, [obj_cls]))
     end
 end

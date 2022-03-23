@@ -18,24 +18,10 @@
 #############################################################################
 
 """
-    add_variable_nodes_invested!(m::Model)
+    add_variable_units_mothballed!(m::Model)
 
-Add `nodes_invested` variables to model `m`.
+Add `units_mothballed` variables to model `m`.
 """
-function add_variable_nodes_invested!(m::Model)
-    t0 = _analysis_time(m)
-    add_variable!(
-        m,
-        :nodes_invested,
-        nodes_invested_available_indices;
-        lb=x -> 0,
-        fix_value=x -> fix_nodes_invested(
-            node=x.node,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
-        int=nodes_invested_available_int,
-    )
+function add_variable_units_mothballed!(m::Model)
+    add_variable!(m, :units_mothballed, units_invested_available_indices; lb=x -> 0)
 end

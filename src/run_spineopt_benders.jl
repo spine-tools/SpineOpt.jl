@@ -36,6 +36,8 @@ function rerun_spineopt!(
     @timelog log_level 2 "Creating $(m.ext[:instance]) stochastic structure..." generate_stochastic_structure!(m)
     @timelog log_level 2 "Creating $(mp.ext[:instance]) temporal structure..." generate_temporal_structure!(mp)
     @timelog log_level 2 "Creating $(mp.ext[:instance]) stochastic structure..." generate_stochastic_structure!(mp)
+    @timelog log_level 2 "Creating economic structure..." generate_economic_structure!(m)
+    @timelog log_level 2 "Creating economic structure..." generate_economic_structure!(mp)
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
     init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
     init_outputs!(m)

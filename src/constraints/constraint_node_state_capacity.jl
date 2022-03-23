@@ -24,7 +24,7 @@ Limit the maximum value of a `node_state` variable under `node_state_cap`, if it
 """
 function add_constraint_node_state_capacity!(m::Model)
     t0 = _analysis_time(m)
-    @fetch node_state, nodes_invested_available, nodes_decommissioned = m.ext[:variables]
+    @fetch node_state, storages_invested_available, storages_decommissioned = m.ext[:variables]
     m.ext[:constraints][:node_state_capacity] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
@@ -36,9 +36,9 @@ function add_constraint_node_state_capacity!(m::Model)
             + node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)] * (
                 (candidate_nodes(node=ng) != nothing) ?
                 + expr_sum(
-                    nodes_invested_available[n, s, t1]
-                    - nodes_decommissioned[n, s, t1]
-                    for (n, s, t1) in nodes_invested_available_indices(
+                    storages_invested_available[n, s, t1]
+                    - storages_decommissioned[n, s, t1]
+                    for (n, s, t1) in storages_invested_available_indices(
                         m;
                         node=ng,
                         stochastic_scenario=s,
@@ -75,12 +75,12 @@ end
 """
     _constraint_node_state_capacity_indices(model, node, t)
 
-Gather the indices of the relevant `node_state` and `nodes_invested_available` variables.
+Gather the indices of the relevant `node_state` and `storages_invested_available` variables.
 """
 function _constraint_node_state_capacity_indices(m, node, t)
     (m, node, t)
     Iterators.flatten((
         node_state_indices(m; node=node, t=t),
-        nodes_invested_available_indices(m; node=node, t=t_in_t(m; t_short=t)),
+        storages_invested_available_indices(m; node=node, t=t_in_t(m; t_short=t)),
     ))
 end

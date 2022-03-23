@@ -18,25 +18,26 @@
 #############################################################################
 
 """
-    unit_investment_costs(m::Model)
+    add_constraint_units_invested_available!(m::Model)
 
-Create and expression for unit investment costs.
+Limit the units_invested_available by the number of investment candidate units.
 """
-function unit_investment_costs(m::Model, t1)
+function add_constraint_units_invested_available_bound!(m::Model)
     @fetch units_invested = m.ext[:variables]
     t0 = _analysis_time(m)
-    @expression(
-        m,
-        + expr_sum(
-            units_invested[u, s, t]
-            * (1- unit_salvage_fraction[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)])
-            * unit_tech_discount_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * unit_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * unit_investment_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)
-            for (u, s, t) in units_invested_available_indices(m; unit=indices(unit_investment_cost)) if end_(t) <= t1;
-            init=0,
-        )
+    m.ext[:constraints][:units_invested_available_bound] = Dict(
+        (unit=u, stochastic_scenario=s, t=t) => @constraint(
+            m,
+            + sum(
+                units_invested[u, s, t]
+                for (u, s, t) in units_invested_available_indices(
+                    m; unit=u, stochastic_scenario=s)
+            )
+            <=
+            + candidate_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+        ) for (u, s, t) in units_invested_available_indices(m)
     )
 end
+# TODO: units_invested_available or \sum(units_invested)?
+# Candidate units: max amount of units that can be installed over model horizon
+# or max amount of units that can be available at a time?

@@ -18,32 +18,20 @@
 #############################################################################
 
 """
-    units_invested_int(x)
+    add_constraint_units_invested_state_vintage!(m::Model)
 
-Check if unit investment variable type is defined to be an integer.
+Constrain units_invested_state_vintage by the investment lifetime of a unit and early decomissioning.
 """
-
-units_invested_int(x) = unit_investment_variable_type(unit=x.unit) == :unit_investment_variable_type_integer
-
-"""
-    add_variable_units_invested!(m::Model)
-
-Add `units_invested` variables to model `m`.
-"""
-function add_variable_units_invested!(m::Model)
+function add_constraint_units_invested_state_vintage!(m::Model)
+    @fetch units_invested_state_vintage, units_invested, units_early_decommissioned_vintage = m.ext[:variables]
     t0 = _analysis_time(m)
-    add_variable!(
-        m,
-        :units_invested,
-        units_invested_available_indices;
-        lb=x -> 0,
-        fix_value=x -> fix_units_invested(
-            unit=x.unit,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
-        int=units_invested_int,
+    m.ext[:constraints][:units_invested_state_vintage] = Dict(
+        (unit=u, stochastic_path=s, t_vintage=t_v, t=t) => @constraint(
+            m,
+            + units_invested_available_vintage[u, s, t_v, t]
+            ==
+            + units_invested_state_vintage[u, s, t_v, t]
+            (units_mothballing(unit=u) ? - units_mothballed_state_vintage[u, s, t_v, t] : 0)
+        ) for (u, s, t_v, t) in units_invested_available_vintage(m)
     )
 end
