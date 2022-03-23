@@ -27,7 +27,8 @@ function rerun_spineopt!(
     alternative_objective=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
-    optimize=true
+    optimize=true,
+    update_names=false
 )
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
@@ -51,7 +52,7 @@ function rerun_spineopt!(
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
             @timelog log_level 2 " ... Rolling complete\n" break
         end
-        update_model!(m; update_constraints=update_constraints, log_level=log_level)
+        update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
         k += 1
     end
     @timelog log_level 2 "Writing report..." write_report(m, url_out)
@@ -245,12 +246,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_max_node_voltage_angle]" add_constraint_max_node_voltage_angle!(m)
     @timelog log_level 3 "- [constraint_min_node_voltage_angle]" add_constraint_min_node_voltage_angle!(m)
     @timelog log_level 3 "- [constraint_user]" add_constraints(m)
-    # Name constraints
-    for (con_key, cons) in m.ext[:constraints]
-        for (inds, con) in cons
-            set_name(con, string(con_key, inds))
-        end
-    end
+    _update_constraint_names!(m)
 end
 
 function init_outputs!(m::Model)
@@ -406,9 +402,7 @@ function _save_output!(m, out, value_or_param; iterations=nothing)
             else
                 new_mga_i = mga_iteration(new_mga_name)
             end
-            new_val = (values(entity)..., new_mga_i)
-            new_key = (keys(entity)..., :mga_iteration)
-            entity = NamedTuple{new_key}(new_val)
+            entity = (; entity..., mga_iteration=new_mga_i)
         end
         for (analysis_time, by_time_slice_non_aggr) in by_analysis_time_non_aggr
             t_highest_resolution!(by_time_slice_non_aggr)
@@ -455,12 +449,32 @@ end
 Update the given model for the next window in the rolling horizon: update variables, fix the necessary variables,
 update constraints and update objective.
 """
-function update_model!(m; update_constraints=m -> nothing, log_level=3)
+function update_model!(m; update_constraints=m -> nothing, log_level=3, update_names=false)
+    if update_names
+        _update_variable_names!(m)
+        _update_constraint_names!(m)
+    end
     @timelog log_level 2 "Updating variables..." update_variables!(m)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
     @timelog log_level 2 "Updating user constraints..." update_constraints(m)
     @timelog log_level 2 "Updating objective..." update_varying_objective!(m)
+end
+
+function _update_constraint_names!(m)
+    for (con_key, cons) in m.ext[:constraints]
+        for (inds, con) in cons
+            set_name(con, string(con_key, inds))
+        end
+    end
+end
+
+function _update_variable_names!(m)
+    for (var_key, vars) in m.ext[:variables]
+        for (inds, var) in vars
+            set_name(var, _base_name(var_key, inds))
+        end
+    end
 end
 
 function relax_integer_vars(m::Model)

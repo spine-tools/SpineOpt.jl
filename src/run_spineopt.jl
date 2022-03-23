@@ -94,6 +94,7 @@ function run_spineopt(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
+    update_names=false,
     use_direct_model=false,
     filters=Dict("tool" => "object_activity_control")
 )
@@ -138,6 +139,7 @@ function run_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
+        update_names=update_names,
         use_direct_model=use_direct_model
     )
     # FIXME: make sure use_direct_model this works with db solvers
@@ -153,6 +155,7 @@ function rerun_spineopt(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
+    update_names=false,
     use_direct_model=false,
     alternative_objective=m -> nothing,
 )
@@ -171,6 +174,7 @@ function rerun_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
+        update_names=update_names,
         alternative_objective=alternative_objective
     )
 end

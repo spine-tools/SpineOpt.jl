@@ -27,6 +27,7 @@ function rerun_spineopt!(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
+    update_names=false,
     alternative_objective=m -> nothing,
 )
     m.ext[:is_sub_problem] = true
@@ -54,7 +55,7 @@ function rerun_spineopt!(
             if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
                 @timelog log_level 2 "... Rolling complete\n" break
             end
-            update_model!(m; update_constraints=update_constraints, log_level=log_level)
+            update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
             k += 1
         end
         @timelog log_level 2 "Processing subproblem solution..." process_subproblem_solution(m, mp)
@@ -71,7 +72,7 @@ function rerun_spineopt!(
         @timelog log_level 2 "Add MP cuts..." add_mp_cuts!(mp; log_level=3)
         msg = "Resetting sub problem temporal structure. Rewinding $(k - 1) times..."
         if @timelog log_level 2 msg reset_temporal_structure!(m, k - 1)
-            update_model!(m; update_constraints=update_constraints, log_level=log_level)
+            update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
         end
         j += 1
         global current_bi = add_benders_iteration(j)
