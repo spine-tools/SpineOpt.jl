@@ -45,14 +45,6 @@ function storages_invested_available_indices(
 end
 
 """
-    storages_invested_available_int(x)
-
-Check if node investment variable type is defined to be an integer.
-"""
-
-storages_invested_available_int(x) = storage_investment_variable_type(node=x.node) == :variable_type_integer
-
-"""
     fix_initial_storages_invested_available()
 
 If fix_storages_invested_available is not defined in the timeslice preceding the first rolling window
@@ -87,7 +79,6 @@ function add_variable_storages_invested_available!(m::Model)
         :storages_invested_available,
         storages_invested_available_indices;
         lb=x -> 0,
-        int=storages_invested_available_int,
         fix_value=x -> fix_storages_invested_available(
             node=x.node,
             stochastic_scenario=x.stochastic_scenario,

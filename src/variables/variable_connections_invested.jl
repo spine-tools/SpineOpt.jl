@@ -17,6 +17,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+
+"""
+    connections_invested_int(x)
+
+Check if conneciton investment variable type is defined to be an integer.
+"""
+
+function connections_invested_int(x)
+    connection_investment_variable_type(connection=x.connection) == :variable_type_integer
+end
+
 """
     add_variable_connections_invested!(m::Model)
 
@@ -36,6 +47,6 @@ function add_variable_connections_invested!(m::Model)
             t=x.t,
             _strict=false,
         ),
-        int=connections_invested_available_int,
+        int=connections_invested_int,
     )
 end

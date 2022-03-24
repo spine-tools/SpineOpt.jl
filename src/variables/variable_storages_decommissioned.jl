@@ -28,6 +28,6 @@ function add_variable_storages_decommissioned!(m::Model)
         :storages_decommissioned,
         storages_invested_available_indices;
         lb=x -> 0,
-        int=storages_invested_available_int,
+        int=storages_invested_int,
     )
 end

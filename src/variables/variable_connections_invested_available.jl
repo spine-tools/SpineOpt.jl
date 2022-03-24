@@ -47,16 +47,6 @@ function connections_invested_available_indices(
 end
 
 """
-    connections_invested_available_int(x)
-
-Check if conneciton investment variable type is defined to be an integer.
-"""
-
-function connections_invested_available_int(x)
-    connection_investment_variable_type(connection=x.connection) == :variable_type_integer
-end
-
-"""
     fix_initial_connections_invested_available()
 
 If fix_connections_invested_available is not defined in the timeslice preceding the first rolling window
@@ -91,7 +81,6 @@ function add_variable_connections_invested_available!(m::Model)
         :connections_invested_available,
         connections_invested_available_indices;
         lb=x -> 0,
-        int=connections_invested_available_int,
         fix_value=x -> fix_connections_invested_available(
             connection=x.connection,
             stochastic_scenario=x.stochastic_scenario,

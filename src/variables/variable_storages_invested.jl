@@ -18,6 +18,14 @@
 #############################################################################
 
 """
+    storages_invested_int(x)
+
+Check if node investment variable type is defined to be an integer.
+"""
+
+storages_invested_int(x) = storage_investment_variable_type(node=x.node) == :variable_type_integer
+
+"""
     add_variable_storages_invested!(m::Model)
 
 Add `storages_invested` variables to model `m`.
@@ -36,6 +44,6 @@ function add_variable_storages_invested!(m::Model)
             t=x.t,
             _strict=false,
         ),
-        int=storages_invested_available_int,
+        int=storages_invested_int,
     )
 end
