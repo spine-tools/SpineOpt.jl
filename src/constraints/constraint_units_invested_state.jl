@@ -26,7 +26,7 @@ function add_constraint_units_invested_state!(m::Model)
     @fetch units_invested_state, units_invested_state_vintage = m.ext[:variables]
     t0 = _analysis_time(m)
     m.ext[:constraints][:units_invested_state] = Dict(
-        (unit=u, stochastic_path=s, t_vintage=t_v, t=t) => @constraint(
+        (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
             + units_invested_state[u, s, t]
             ==

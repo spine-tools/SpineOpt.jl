@@ -18,7 +18,7 @@
 #############################################################################
 
 """
-    add_constraint_units_invested_available!(m::Model)
+    add_constraint_units_invested_available_bound!(m::Model)
 
 Limit the units_invested_available by the number of investment candidate units.
 """

@@ -18,10 +18,10 @@
 #############################################################################
 
 """
-    add_variable_units_mothballed!(m::Model)
+    add_variable_units_demothballed_vintage!(m::Model)
 
-Add `units_mothballed` variables to model `m`.
+Add `units_demothballed_vintage` variables to model `m`.
 """
-function add_variable_units_mothballed!(m::Model)
-    add_variable!(m, :units_mothballed, units_invested_available_indices; lb=x -> 0, int=units_invested_available_int)
+function add_variable_units_demothballed_vintage!(m::Model)
+    add_variable!(m, :units_demothballed_vintage, units_invested_available_vintage_indices; lb=x -> 0, int=units_invested_int,vintage=true)
 end

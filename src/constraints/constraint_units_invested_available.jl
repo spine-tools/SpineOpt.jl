@@ -26,7 +26,7 @@ function add_constraint_units_invested_available!(m::Model)
     @fetch units_invested_available, units_invested_available_vintage = m.ext[:variables]
     t0 = _analysis_time(m)
     m.ext[:constraints][:units_invested_available] = Dict(
-        (unit=u, stochastic_path=s, t_vintage=t_v, t=t) => @constraint(
+        (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
             + units_invested_available[u, s, t]
             ==
@@ -39,7 +39,8 @@ function add_constraint_units_invested_available!(m::Model)
                             t=t,
                             t_vintage = to_time_slice(
                                 m;
-                                t=start(t - unit_investment_tech_lifetime(unit=u)), end_(t))
+                                t=TimeSlice(start(t - unit_investment_tech_lifetime(unit=u)), end_(t))
+                                )
                                 #TODO: check that this is sufficient look back time
                             )
                 ; init=0

@@ -26,7 +26,7 @@ function add_constraint_units_decommissioned!(m::Model)
     @fetch units_decommissioned, units_decommissioned_vintage = m.ext[:variables]
     t0 = _analysis_time(m)
     m.ext[:constraints][:units_decommissioned] = Dict(
-        (unit=u, stochastic_path=s, t_vintage=t_v, t=t) => @constraint(
+        (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
             + units_decommissioned[u, s, t]
             ==
@@ -36,7 +36,11 @@ function add_constraint_units_decommissioned!(m::Model)
                             m;
                             unit=u,
                             stochastic_scenario=s,
-                            t=t
+                            t=t,
+                            t_vintage = to_time_slice(
+                                m;
+                                t=TimeSlice(start(t - unit_investment_tech_lifetime(unit=u)), end_(t))
+                                )
                             )
                 ; init=0
                 )

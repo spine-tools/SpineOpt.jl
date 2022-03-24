@@ -25,11 +25,11 @@ Constrain units_decommissioned_vintage by the difference in available invested u
 function add_constraint_units_decommissioned_vintage!(m::Model)
     @fetch units_decommissioned_vintage, units_invested_state_vintage = m.ext[:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:units_invested_state_vintage] = Dict(
-        (unit=u, stochastic_path=s, t_vintage=t_v, t=t) => @constraint(
+    m.ext[:constraints][:units_decommissioned_vintage] = Dict(
+        (unit=u, stochastic_path=s, t_vintage=t_v, t=t_after) => @constraint(
             m,
             expr_sum(
-                + units_decommissioned_vintage[u, s, t_v, t_after]
+                + units_decommissioned_vintage[u, s_after, t_v, t_after]
                 for (u, s_after, t_v, t_after) in units_invested_available_vintage_indices(m; unit=u, stochastic_scenario=s, t_vintage=t_v, t=t_after);
                 init=0
             )
@@ -38,8 +38,8 @@ function add_constraint_units_decommissioned_vintage!(m::Model)
                 + units_invested_state_vintage[u, s_before, t_v, t_before]
                 - units_invested_state_vintage[u, s_after, t_v, t_after]
                 for (u, s_after, t_v, t_after) in units_invested_available_vintage_indices(m; unit=u, stochastic_scenario=s, t_vintage=t_v, t=t_after)
-                    for (u, s_before, t_v, t_before) in units_invested_available_vintage_indices(m; unit=u, stochastic_scenario=s, t_vintage=t_v, t=t_before_t(m;t_after=t_after));
-                init=0,
+                    for (u, s_before, t_v, t_before) in units_invested_available_vintage_indices(m; unit=u, stochastic_scenario=s, t_vintage=t_v, t=t_before_t(m;t_after=t_after))
+                ;init=0,
             )
         ) for (u, s, t_v, t_after) in constraint_units_decommissioned_vintage_indices(m)
     )
@@ -72,9 +72,5 @@ end
 Gathers the `stochastic_scenario` indices of the `units_mothballed_state_vintage` variable on the current and previous time slice.
 """
 function _constraint_units_decommissioned_vintage_indices(m, u, s, t)
-    t_past_and_present = to_time_slice(
-        m;
-        t=start(t_before_t(m;t_after=t)), end_(t)),
-    )
-    unique(ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=[t_before_t(m;t_after=t),t]))
+    unique(ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=[t_before_t(m;t_after=t)...,t]))
 end

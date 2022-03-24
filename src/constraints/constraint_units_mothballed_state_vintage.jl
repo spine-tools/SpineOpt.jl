@@ -50,7 +50,7 @@ function constraint_units_mothballed_state_vintage_indices(m::Model)
     unique(
         (unit=u, stochastic_path=path, t_vintage=t_v, t=t)
         for u in unit(units_mothballing=true) for (u, s, t_v, t) in units_invested_available_vintage_indices(m; unit=u)
-        for path in active_stochastic_paths(_constraint_units_invested_state_vintage_indices(m, u, s, t))
+        for path in active_stochastic_paths(_constraint_units_mothballed_state_vintage_indices(m, u, s, t))
     )
 end
 
@@ -73,9 +73,5 @@ end
 Gathers the `stochastic_scenario` indices of the `units_mothballed_state_vintage` variable on the current and previous time slice.
 """
 function _constraint_units_mothballed_state_vintage_indices(m, u, s, t)
-    t_past_and_present = to_time_slice(
-        m;
-        t=start(t_before_t(m;t_after=t)), end_(t)),
-    )
-    unique(ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=[t_before_t(m;t_after=t),t]))
+    unique(ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=[t_before_t(m;t_after=t)...,t]))
 end

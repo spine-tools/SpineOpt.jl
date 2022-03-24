@@ -18,10 +18,10 @@
 #############################################################################
 
 """
-    add_variable_units_mothballed!(m::Model)
+    add_variable_units_invested_state!(m::Model)
 
-Add `units_mothballed` variables to model `m`.
+Add `units_invested_state` variables to model `m`.
 """
-function add_variable_units_mothballed!(m::Model)
-    add_variable!(m, :units_mothballed, units_invested_available_indices; lb=x -> 0)
+function add_variable_units_invested_state!(m::Model)
+    add_variable!(m, :units_invested_state, units_invested_available_indices; lb=x -> 0)
 end

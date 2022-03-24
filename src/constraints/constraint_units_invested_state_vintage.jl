@@ -36,10 +36,10 @@ function add_constraint_units_invested_state_vintage!(m::Model)
             ==
             #FIXME: can we fix this parameter call? Currently, first needs to be added
             + expr_sum(
-                    unit_capacity_transfer_factor[(unit=u, stochastic_scenario=s_v,vintage_t=first(t_v.start),t=t)]
-                    (+ units_invested[u, s_v, t_v]
+                    + unit_capacity_transfer_factor[(unit=u, stochastic_scenario=s_v,vintage_t=first(t_v.start),t=t)]
+                    * (units_invested[u, s_v, t_v]
                     - expr_sum(
-                        units_early_decommissioned[u, s_, t_v, t_]
+                        units_early_decommissioned_vintage[u, s_, t_v, t_]
                         for (u, s_, t_v, t_) in units_invested_available_vintage_indices(
                             m;
                             unit=u,
@@ -98,7 +98,7 @@ by the `unit_investment_tech_lifetime` parameter.
 function _constraint_units_invested_state_vintage_indices(m, u, s, t_v, t)
     t_past_and_present = to_time_slice(
         m;
-        t=start(t_v), end_(t)),
+        t=TimeSlice(start(t_v), end_(t)),
     )
     unique(ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=t_past_and_present))
 end
