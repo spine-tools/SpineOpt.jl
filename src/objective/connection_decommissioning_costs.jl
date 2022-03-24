@@ -18,30 +18,28 @@
 #############################################################################
 
 """
-    connection_investment_costs(m::Model)
+    connection_decommissioning_costs(m::Model)
 
-Create and expression for connection investment costs.
+Create and expression for connection decommissioning costs.
 """
-function connection_investment_costs(m::Model, t1)
-    @fetch connections_invested = m.ext[:variables]
+function connection_decommissioning_costs(m::Model, t1)
+    @fetch connections_decommissioned = m.ext[:variables]
     t0 = _analysis_time(m)
     @expression(
         m,
         + expr_sum(
-            connections_invested[c, s, t]
-            * (1- connection_salvage_fraction[(connection=c, stochastic_scenario=s, t=t)])
-            * connection_tech_discount_factor[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * connection_conversion_to_discounted_annuities[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
+            connections_decommissioned[c, s, t]
+            * connection_decommissioning_conversion_to_discounted_annuities[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
             * reduce(+,
                 connection_capacity[(connection=c, node=n, direction = d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for (c, n, d) in indices(use_connection_capacity_for_investment_cost_scaling; connection=c)
-                    if use_connection_capacity_for_investment_cost_scaling(connection=c, node=n, direction = d)
+                for (u, n, d) in indices(use_connection_capacity_for_investment_cost_scaling; unit=u)
+                    if use_connection_capacity_for_investment_cost_scaling(unit=u, node=n, direction = d)
                 ;init=0
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * connection_investment_cost[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * connection_decommissioning_cost[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
             * connection_stochastic_scenario_weight(m; connection=c, stochastic_scenario=s)
-            for (c, s, t) in connections_invested_available_indices(m; connection=indices(connection_investment_cost))
+            for (c, s, t) in connections_invested_available_indices(m; connection=indices(connection_decommissioning_cost))
                 if end_(t) <= t1;
             init=0,
         )

@@ -309,7 +309,16 @@ end
 
 function objective_terms(m) #FIXME: this should just be benders definind the objective function themselves, not haking into run_spineopt
     # if we have a decomposed structure, master problem costs (investments) should not be included
-    invest_terms = [:unit_investment_costs, :connection_investment_costs, :storage_investment_costs]
+    invest_terms = [
+        :unit_investment_costs,
+        :connection_investment_costs,
+        :storage_investment_costs,
+        :unit_decommissioning_costs,
+        :storage_decommissioning_costs,
+        :connection_decommissioning_costs,
+        :unit_mothballing_costs,
+        :storage_mothballing_costs,
+    ]
     op_terms = [
         :variable_om_costs,
         :fixed_om_costs,

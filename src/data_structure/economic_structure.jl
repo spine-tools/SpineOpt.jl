@@ -26,6 +26,7 @@ function generate_economic_structure!(m::Model)
     for (obj, name) in [(unit,:unit),(node,:storage),(connection,:connection)]
         generate_capacity_transfer_factor!(m::Model,obj, name)
         generate_conversion_to_discounted_annuities!(m::Model,obj, name)
+        generate_decommissioning_conversion_to_discounted_annuities!(m::Model,obj, name)
         generate_salvage_fraction!(m::Model,obj, name)
         generate_tech_discount_factor!(m::Model,obj, name)
         generate_discount_timeslice_duration!(m::Model,obj, name)
@@ -196,6 +197,9 @@ The `captial_recovery_factor` is the ratio between constant annuities and the pr
 """
 
 function capital_recovery_factor(m, discnt_rate ,ELIFE)
+    if ELIFE.value==0
+        ELIFE = Year(0)
+    end
     if discnt_rate != 0
         capital_recovery_factor =  discnt_rate * 1/(discount_factor(m,discnt_rate,ELIFE)) * 1/(1/(discount_factor(m,discnt_rate,ELIFE))-1)
     else
@@ -216,6 +220,9 @@ function discount_factor(m,discnt_rate,year::DateTime)
 end
 
 function discount_factor(m,discnt_rate,year::T) where {T<:Period}
+    if year.value == 0
+        year = Year(0)
+    end
     discnt_year = discount_year(model=m)
     discnt_factor = 1/(1+discnt_rate)^((Year(year))/Year(1))
 end
@@ -392,6 +399,51 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, o
             push!(stoch_map_val,TimeSeries(timeseries_ind,timeseries_val,false,false))
         end
         obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
+    end
+    @eval begin
+        $(param_name) = $(Parameter(param_name, [obj_cls]))
+    end
+end
+
+"""
+    generate_decommissioning_conversion_to_discounted_annuities()
+
+The decommissioning_conversion_to_discounted_annuities factor translates the overnight costs of an investment
+into discounted (to the `dicount_year`) annual payments, distributed over the decommissioning time of the investment.
+Investment payments are assumed to be constant over the decommissioning time.
+
+"""
+function generate_decommissioning_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
+    instance = m.ext[:instance]
+    discnt_rate = discount_rate(model=instance)
+    discnt_year = discount_year(model=instance)
+    decommissioning_conversion_to_discounted_annuities = Dict()
+    investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))
+    decom_time = eval(Symbol("$(obj_name)_decommissioning_time"))
+    param_name = Symbol("$(obj_name)_decommissioning_conversion_to_discounted_annuities")
+    for id in obj_cls()
+        stochastic_map_indices = []
+        stochastic_map_vals = []
+        for s in unique([x.stochastic_scenario for x in investment_indices(m)]) #NOTE: this is specific to lifetimes in years
+            timeseries_ind = []
+            timeseries_val = []
+            for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
+                DECOM_T = decom_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                vintage_t_start = start(vintage_t)
+                end_of_decommissioning = vintage_t_start + DECOM_T
+                j = vintage_t_start
+                val = 0
+                while j<= end_of_decommissioning
+                    val+= discount_factor(instance,discnt_rate,j) #payment_fraction woul always be 0
+                    j+= Year(1)
+                end
+                push!(timeseries_ind,start(vintage_t))
+                push!(timeseries_val,val*capital_recovery_factor(instance, discnt_rate,DECOM_T))
+            end
+            push!(stochastic_map_indices,s)
+            push!(stochastic_map_vals,TimeSeries(timeseries_ind,timeseries_val,false,false))
+        end
+        obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stochastic_map_indices,stochastic_map_vals))
     end
     @eval begin
         $(param_name) = $(Parameter(param_name, [obj_cls]))
