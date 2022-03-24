@@ -18,30 +18,25 @@
 #############################################################################
 
 """
-    add_constraint_storages_invested_available!(m::Model)
+    add_constraint_storages_invested_state_vintage!(m::Model)
 
 Link storages_invested_state to the sum of all storages_invested_state_vintage, i.e. all investments differentiated by their investment year that are not decomissioned.
 """
-function add_constraint_storages_invested_available!(m::Model)
-    @fetch storages_invested_available, storages_invested_available_vintage = m.ext[:variables]
+function add_constraint_storages_invested_state!(m::Model)
+    @fetch storages_invested_state, storages_invested_state_vintage = m.ext[:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:storages_invested_available] = Dict(
+    m.ext[:constraints][:storages_invested_state] = Dict(
         (node=n, stochastic_path=s, t=t) => @constraint(
             m,
-            + storages_invested_available[n, s, t]
+            + storages_invested_state[n, s, t]
             ==
             + expr_sum(
-                storages_invested_available_vintage[n, s, t_v, t]
+                storages_invested_state_vintage[n, s, t_v, t]
                 for (n, s, t_v, t) in storages_invested_available_vintage_indices(
                             m;
                             node=n,
                             stochastic_scenario=s,
-                            t=t,
-                            t_vintage = to_time_slice(
-                                m;
-                                t=TimeSlice(start(t - storage_investment_tech_lifetime(node=n)), end_(t))
-                                )
-                                #TODO: check that this is sufficient look back time
+                            t=t
                             )
                 ; init=0
                 )

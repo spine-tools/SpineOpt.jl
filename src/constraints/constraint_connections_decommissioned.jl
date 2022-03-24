@@ -18,20 +18,20 @@
 #############################################################################
 
 """
-    add_constraint_connections_invested_available!(m::Model)
+    add_constraint_connections_decommissioned_vintage!(m::Model)
 
-Link connections_invested_state to the sum of all connections_invested_available_vintage, i.e. all investments differentiated by their investment year that are not decomissioned.
+Link connections_decommissioned to the sum of all connections_decommissioned_vintage, i.e. all investments differentiated by their investment year that are not decomissioned.
 """
-function add_constraint_connections_invested_available!(m::Model)
-    @fetch connections_invested_available, connections_invested_available_vintage = m.ext[:variables]
+function add_constraint_connections_decommissioned!(m::Model)
+    @fetch connections_decommissioned, connections_decommissioned_vintage = m.ext[:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:connections_invested_available] = Dict(
+    m.ext[:constraints][:connections_decommissioned] = Dict(
         (connection=c, stochastic_path=s, t=t) => @constraint(
             m,
-            + connections_invested_available[c, s, t]
+            + connections_decommissioned[c, s, t]
             ==
             + expr_sum(
-                connections_invested_available_vintage[c, s, t_v, t]
+                connections_decommissioned_vintage[c, s, t_v, t]
                 for (c, s, t_v, t) in connections_invested_available_vintage_indices(
                             m;
                             connection=c,
@@ -41,7 +41,6 @@ function add_constraint_connections_invested_available!(m::Model)
                                 m;
                                 t=TimeSlice(start(t - connection_investment_tech_lifetime(connection=c)), end_(t))
                                 )
-                                #TODO: check that this is sufficient look back time
                             )
                 ; init=0
                 )

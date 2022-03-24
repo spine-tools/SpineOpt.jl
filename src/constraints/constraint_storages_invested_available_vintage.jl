@@ -18,10 +18,20 @@
 #############################################################################
 
 """
-    add_variable_connections_invested_state_vintage!(m::Model)
+    add_constraint_storages_invested_state_vintage!(m::Model)
 
-Add `connections_invested_state_vintage` variables to model `m`.
+Constrain storages_invested_state_vintage by the investment lifetime of a storage and early decomissioning.
 """
-function add_variable_connections_invested_state_vintage!(m::Model)
-    add_variable!(m, :connections_invested_state_vintage, connections_invested_available_vintage_indices; lb=x -> 0,vintage=true)
+function add_constraint_storages_invested_available_vintage!(m::Model)
+    @fetch storages_invested_available_vintage, storages_invested_state_vintage, storages_mothballed_state_vintage = m.ext[:variables]
+    t0 = _analysis_time(m)
+    m.ext[:constraints][:storages_invested_available_vintage] = Dict(
+        (node=n, stochastic_path=s, t_vintage=t_v, t=t) => @constraint(
+            m,
+            + storages_invested_available_vintage[n, s, t_v, t]
+            ==
+            + storages_invested_state_vintage[n, s, t_v, t]
+            - (storages_mothballing(node=n) ? storages_mothballed_state_vintage[n, s, t_v, t] : 0)
+        ) for (n, s, t_v, t) in storages_invested_available_vintage_indices(m)
+    )
 end

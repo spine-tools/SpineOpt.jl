@@ -18,33 +18,32 @@
 #############################################################################
 
 """
-    add_constraint_connections_invested_available!(m::Model)
+    add_constraint_storages_decommissioned_vintage!(m::Model)
 
-Link connections_invested_state to the sum of all connections_invested_available_vintage, i.e. all investments differentiated by their investment year that are not decomissioned.
+Link storages_decommissioned to the sum of all storages_decommissioned_vintage, i.e. all investments differentiated by their investment year that are not decomissioned.
 """
-function add_constraint_connections_invested_available!(m::Model)
-    @fetch connections_invested_available, connections_invested_available_vintage = m.ext[:variables]
+function add_constraint_storages_decommissioned!(m::Model)
+    @fetch storages_decommissioned, storages_decommissioned_vintage = m.ext[:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:connections_invested_available] = Dict(
-        (connection=c, stochastic_path=s, t=t) => @constraint(
+    m.ext[:constraints][:storages_decommissioned] = Dict(
+        (node=n, stochastic_path=s, t=t) => @constraint(
             m,
-            + connections_invested_available[c, s, t]
+            + storages_decommissioned[n, s, t]
             ==
             + expr_sum(
-                connections_invested_available_vintage[c, s, t_v, t]
-                for (c, s, t_v, t) in connections_invested_available_vintage_indices(
+                storages_decommissioned_vintage[n, s, t_v, t]
+                for (n, s, t_v, t) in storages_invested_available_vintage_indices(
                             m;
-                            connection=c,
+                            node=n,
                             stochastic_scenario=s,
                             t=t,
                             t_vintage = to_time_slice(
                                 m;
-                                t=TimeSlice(start(t - connection_investment_tech_lifetime(connection=c)), end_(t))
+                                t=TimeSlice(start(t - storage_investment_tech_lifetime(node=n)), end_(t))
                                 )
-                                #TODO: check that this is sufficient look back time
                             )
                 ; init=0
                 )
-        ) for (c, s, t) in connections_invested_available_indices(m)
+        ) for (n, s, t) in storages_invested_available_indices(m)
     )
 end
