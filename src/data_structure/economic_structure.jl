@@ -357,7 +357,7 @@ function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, o
     discounted_duration = Dict()
     invest_stoch_struct = eval(Symbol("$(obj_cls)__investment_stochastic_structure"))
     invest_temporal_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
-    param_name = Symbol("$(obj_name)_discounted_duration")
+    param_name = Symbol("$(obj_cls)_discounted_duration")
     for id in obj_cls()
         stoch_map_val = []
         stoch_map_ind = []

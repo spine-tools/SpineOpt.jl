@@ -33,7 +33,6 @@ function fixed_om_costs(m, t1)
             (
                 number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
                 +  units_invested_available[u, s, t]
-                # -  units_mothballed[u, s, t1]
             )
             * fom_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] #should be given as costs per year?
             * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
