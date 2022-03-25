@@ -321,7 +321,8 @@ function objective_terms(m) #FIXME: this should just be benders definind the obj
     ]
     op_terms = [
         :variable_om_costs,
-        :fixed_om_costs,
+        :unit_fixed_om_costs,
+        :storage_fixed_om_costs,
         :taxes,
         :fuel_costs,
         :start_up_costs,
