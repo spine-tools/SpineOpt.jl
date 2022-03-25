@@ -24,6 +24,15 @@
 """
 function generate_economic_structure!(m::Model)
     for (obj, name) in [(unit,:unit),(node,:storage),(connection,:connection)]
+        generate_discount_timeslice_duration!(m::Model,obj, name)
+    end
+    !isempty([
+        model__default_investment_temporal_block()...,
+        node__investment_temporal_block()...,
+        unit__investment_temporal_block()...,
+        connection__investment_temporal_block()...
+    ]) || return
+    for (obj, name) in [(unit,:unit),(node,:storage),(connection,:connection)]
         generate_capacity_transfer_factor!(m::Model,obj, name)
         generate_conversion_to_discounted_annuities!(m::Model,obj, name)
         generate_decommissioning_conversion_to_discounted_annuities!(m::Model,obj, name)
@@ -51,19 +60,34 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, obj_
     tech_lifetime = eval(Symbol("$(obj_name)_investment_tech_lifetime"))
     invest_temporal_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
     param_name = Symbol("$(obj_name)_capacity_transfer_factor")
-    if dynamic_investments(model=instance)
-        for id in members(obj_cls())
+    for id in invest_temporal_block(temporal_block=anything)
+        if (!isnothing(tech_lifetime(;Dict(obj_cls.name=>id)...)),
+            || !isnothing(lead_time(;Dict(obj_cls.name=>id)...)),
+            || !iszero(lead_time(;Dict(obj_cls.name=>id)...))
             map_stoch_indices = [] #NOTE: will hold stochastic indices
             map_inner = [] #NOTE: will map values inside stochastic mapping
             for s in unique([x.stochastic_scenario for x in investment_indices(m;Dict(obj_cls.name => id)...)])
                 map_indices = []
                 timeseries_array = []
-                for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name => id,stochastic_scenario.name=>s, :t => Iterators.flatten((history_time_slice(m), time_slice(m))))...)
+                for (u,s,vintage_t) in investment_indices(m;
+                        Dict(
+                            obj_cls.name => id,
+                            :stochastic_scenario=>s,
+                            :t => Iterators.flatten((history_time_slice(m), time_slice(m)))
+                            )...
+                        )
                     LT = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                    if isnothing(LT)
+                        LT = Year(0)
+                        #NOTE: In case LT is `none`, we will assume a duration of `0 Years`
+                    end
                     TLIFE = tech_lifetime(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                    if isnothing(TLIFE)
+                        max(Year(last(time_slice(m)).start.x)-Year(first(time_slice(m)).end_.x),Year(1))
+                        #NOTE: In case TLIFE is `none`, we assume that the unit exists until the end of the optimization
+                    end
                     vintage_t_start = start(vintage_t)
                     start_of_operation = vintage_t_start + LT
-
                     end_of_operation = vintage_t_start + LT + TLIFE
                     timeseries_val = []
                     timeseries_ind = []
@@ -102,27 +126,8 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, obj_
             end
             obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(map_stoch_indices,map_inner))
             #NOTE: map_indices here will be stochastic_scenarios!
-        end
-    else
-        for u in unit()
-            investment_block = first(invest_temporal_block(;Dict(obj_cls.name=>id)...))
-            map_indices = []
-            timeseries_array = []
-            for vintage_t in time_slice(m; temporal_block = investment_block)
-                timeseries_val = []
-                timeseries_ind = []
-                for t in time_slice(m; temporal_block = investment_block)
-                    t_start = start(t)
-                    val = 1
-                    #=Note: for the non dynamic case, this will always be one, i.e., as
-                    soon as a unit gets build it will be available for the rest of its lifetime =#
-                    push!(timeseries_val,val)
-                    push!(timeseries_ind,t_start)
-                end
-                push!(map_indices,start(vintage_t))
-                push!(timeseries_array,TimeSeries(timeseries_ind,timeseries_val,false,false))
-            end
-            obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(map_indices,timeseries_array))
+        else
+            obj_cls.parameter_values[id][param_name] = parameter_value(1)
         end
     end
     @eval begin
@@ -420,8 +425,9 @@ function generate_decommissioning_conversion_to_discounted_annuities!(m::Model, 
     decommissioning_conversion_to_discounted_annuities = Dict()
     investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))
     decom_time = eval(Symbol("$(obj_name)_decommissioning_time"))
+    decom_cost = eval(Symbol("$(obj_name)_decommissioning_cost"))
     param_name = Symbol("$(obj_name)_decommissioning_conversion_to_discounted_annuities")
-    for id in obj_cls()
+    for id in indices(decom_cost)
         stochastic_map_indices = []
         stochastic_map_vals = []
         for s in unique([x.stochastic_scenario for x in investment_indices(m)]) #NOTE: this is specific to lifetimes in years
@@ -429,12 +435,16 @@ function generate_decommissioning_conversion_to_discounted_annuities!(m::Model, 
             timeseries_val = []
             for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
                 DECOM_T = decom_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                if isnothing(DECOM_T)
+                    DECOM_T = Year(0)
+                    #NOTE: if decom time not defined, assumed to be 0 years.
+                end
                 vintage_t_start = start(vintage_t)
                 end_of_decommissioning = vintage_t_start + DECOM_T
                 j = vintage_t_start
                 val = 0
                 while j<= end_of_decommissioning
-                    val+= discount_factor(instance,discnt_rate,j) #payment_fraction woul always be 0
+                    val+= discount_factor(instance,discnt_rate,j) #payment_fraction would always be 1
                     j+= Year(1)
                 end
                 push!(timeseries_ind,start(vintage_t))
