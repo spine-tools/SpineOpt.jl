@@ -22,9 +22,9 @@
 """
     generate_economic_structure!(m::Model)
 """
-function generate_economic_structure!(m::Model)
+function generate_economic_structure!(m::Model;log_level=3)
     for (obj, name) in [(unit,:unit),(node,:storage),(connection,:connection)]
-        generate_discount_timeslice_duration!(m::Model,obj, name)
+        @timelog log_level 3 "- [Generated discounted durations for $(obj)s]" generate_discount_timeslice_duration!(m::Model,obj, name)
     end
     !isempty([
         model__default_investment_temporal_block()...,
@@ -33,12 +33,11 @@ function generate_economic_structure!(m::Model)
         connection__investment_temporal_block()...
     ]) || return
     for (obj, name) in [(unit,:unit),(node,:storage),(connection,:connection)]
-        generate_capacity_transfer_factor!(m::Model,obj, name)
-        generate_conversion_to_discounted_annuities!(m::Model,obj, name)
-        generate_decommissioning_conversion_to_discounted_annuities!(m::Model,obj, name)
-        generate_salvage_fraction!(m::Model,obj, name)
-        generate_tech_discount_factor!(m::Model,obj, name)
-        generate_discount_timeslice_duration!(m::Model,obj, name)
+        @timelog log_level 3 "- [Generated capacity transfer factors for $(name)s]" generate_capacity_transfer_factor!(m::Model,obj, name)
+        @timelog log_level 3 "- [Generated conversion to discounted investments of $(name)s]" generate_conversion_to_discounted_annuities!(m::Model,obj, name)
+        @timelog log_level 3 "- [Generated conversion for discounted decommissioning of $(name)s]" generate_decommissioning_conversion_to_discounted_annuities!(m::Model,obj, name)
+        @timelog log_level 3 "- [Generated salvage fraction for $(name)s]" generate_salvage_fraction!(m::Model,obj, name)
+        @timelog log_level 3 "- [Generated $(name) technology specific discount factors]" generate_tech_discount_factor!(m::Model,obj, name)
     end
 end
 
@@ -61,9 +60,9 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, obj_
     invest_temporal_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
     param_name = Symbol("$(obj_name)_capacity_transfer_factor")
     for id in invest_temporal_block(temporal_block=anything)
-        if (!isnothing(tech_lifetime(;Dict(obj_cls.name=>id)...)),
-            || !isnothing(lead_time(;Dict(obj_cls.name=>id)...)),
-            || !iszero(lead_time(;Dict(obj_cls.name=>id)...))
+        if (!isnothing(tech_lifetime(;Dict(obj_cls.name=>id)...))
+            || !isnothing(lead_time(;Dict(obj_cls.name=>id)...))
+            || !iszero(lead_time(;Dict(obj_cls.name=>id)...)))
             map_stoch_indices = [] #NOTE: will hold stochastic indices
             map_inner = [] #NOTE: will map values inside stochastic mapping
             for s in unique([x.stochastic_scenario for x in investment_indices(m;Dict(obj_cls.name => id)...)])
@@ -157,38 +156,43 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
     econ_lifetime = eval(Symbol("$(obj_name)_investment_econ_lifetime"))
     param_name = Symbol("$(obj_name)_conversion_to_discounted_annuities")
     for id in obj_cls()
-        stochastic_map_indices = []
-        stochastic_map_vals = []
-        for s in unique([x.stochastic_scenario for x in investment_indices(m)]) #NOTE: this is specific to lifetimes in years
-            timeseries_ind = []
-            timeseries_val = []
-            for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
-                LT = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
-                ELIFE = econ_lifetime(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
-                vintage_t_start = start(vintage_t)
-                end_of_operation = vintage_t_start + LT + ELIFE
-                if dynamic_investments(model=instance)
-                    j = vintage_t_start
-                    val = 0
-                    while j<= end_of_operation
-                        val+= payment_fraction(vintage_t_start, j, ELIFE, LT)*discount_factor(instance,discnt_rate,j) #1/(1+discnt_rate)^((Year(j)-Year(discnt_year))/Year(1))
-                        j+= Year(1)
+        if (discnt_rate == 0 || isnothing(discnt_rate))
+            obj_cls.parameter_values[id][param_name] = parameter_value(1)
+        else
+            stochastic_map_indices = []
+            stochastic_map_vals = []
+            for s in unique([x.stochastic_scenario for x in investment_indices(m)]) #NOTE: this is specific to lifetimes in years
+                timeseries_ind = []
+                timeseries_val = []
+                for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
+                    LT = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                    if isnothing(LT)
+                        LT = Year(0)
                     end
-                else
-                    j = vintage_t_start-LT
-                    val = 0
-                    while j<= end_of_operation-LT
-                        val+= payment_fraction(vintage_t_start, j, ELIFE, LT) *discount_factor(instance,discnt_rate,j)
-                        j+= Year(1)
+                    ELIFE = econ_lifetime(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
+                    vintage_t_start = start(vintage_t)
+                    if isnothing(econ_lifetime(;Dict(obj_cls.name=>id)...))
+                        ### if empty it should translate to discounted overnight costs
+                        val = discount_factor(m,discount_rate(model=m.ext[:instance]),vintage_t_start)
+                        push!(timeseries_ind,vintage_t_start)
+                        push!(timeseries_val,val)
+                    else
+                        end_of_operation = vintage_t_start + LT + ELIFE
+                        j = vintage_t_start
+                        val = 0
+                        while j<= end_of_operation
+                            val+= payment_fraction(vintage_t_start, j, ELIFE, LT)*discount_factor(instance,discnt_rate,j) #1/(1+discnt_rate)^((Year(j)-Year(discnt_year))/Year(1))
+                            j+= Year(1)
+                        end
                     end
+                    push!(timeseries_ind,start(vintage_t))
+                    push!(timeseries_val,val*capital_recovery_factor(instance, discnt_rate,ELIFE))
                 end
-                push!(timeseries_ind,start(vintage_t))
-                push!(timeseries_val,val*capital_recovery_factor(instance, discnt_rate,ELIFE))
+                push!(stochastic_map_indices,s)
+                push!(stochastic_map_vals,TimeSeries(timeseries_ind,timeseries_val,false,false))
             end
-            push!(stochastic_map_indices,s)
-            push!(stochastic_map_vals,TimeSeries(timeseries_ind,timeseries_val,false,false))
+            obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stochastic_map_indices,stochastic_map_vals))
         end
-        obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stochastic_map_indices,stochastic_map_vals))
     end
     @eval begin
         $(param_name) = $(Parameter(param_name, [obj_cls]))
@@ -268,40 +272,28 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, obj_name::Sy
             timeseries_ind = []
             timeseries_val = []
             LT = lead_time(;Dict(obj_cls.name=>id)...)
+            if isnothing(LT)
+                LT= Year(0)
+            end
             ELIFE = econ_lifetime(;Dict(obj_cls.name=>id)...)
             investment_block = first(invest_temporal_block(;Dict(obj_cls.name=>id)...))
             for vintage_t in time_slice(m; temporal_block = investment_block)
                 vintage_t_start = start(vintage_t)
                 start_of_operation = vintage_t_start + LT
                 end_of_operation = vintage_t_start + LT + ELIFE
-                if dynamic_investments(model=instance)
-                    j1= EOH + Year(1) #numerator +1 or not?
-                    j2 = vintage_t_start
-                    val1 = 0
-                    val2 = 0
-                    while j1<= end_of_operation
-                        ## start_of_operation!
-                        val1+= payment_fraction(vintage_t_start, j1, ELIFE, LT) *discount_factor(instance,discnt_rate,j1)
-                        j1+= Year(1)
-                    end
-                    while j2<= end_of_operation
-                        ## start_of_operation!
-                        val2+= payment_fraction(vintage_t_start, j2, ELIFE, LT) *discount_factor(instance,discnt_rate,j2)
-                        j2+= Year(1)
-                    end
-                else
-                    j1 = EOH + Year(1) #TODO: check? + Year(1)
-                    j2 = vintage_t_start-LT
-                    val1 = 0
-                    val2 = 0
-                    while j1<= end_of_operation-LT
-                        val1 += payment_fraction(vintage_t_start, j1, ELIFE, LT) *discount_factor(instance,discnt_rate,j1)
-                        j1+= Year(1)
-                    end
-                    while j2<= end_of_operation-LT
-                        val2+= payment_fraction(vintage_t_start, j2, ELIFE, LT) * discount_factor(instance,discnt_rate,j2)
-                        j2+= Year(1)
-                    end
+                j1= EOH + Year(1) #numerator +1 or not?
+                j2 = vintage_t_start
+                val1 = 0
+                val2 = 0
+                while j1<= end_of_operation
+                    ## start_of_operation!
+                    val1+= payment_fraction(vintage_t_start, j1, ELIFE, LT) *discount_factor(instance,discnt_rate,j1)
+                    j1+= Year(1)
+                end
+                while j2<= end_of_operation
+                    ## start_of_operation!
+                    val2+= payment_fraction(vintage_t_start, j2, ELIFE, LT) *discount_factor(instance,discnt_rate,j2)
+                    j2+= Year(1)
                 end
                 val = max(val1/val2,0)
                 push!(timeseries_ind,start(vintage_t))
@@ -332,7 +324,7 @@ function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass, obj_name
     invest_stoch_struct = eval(Symbol("$(obj_cls)__investment_stochastic_structure"))
     param_name = Symbol("$(obj_name)_tech_discount_factor")
     for id in obj_cls()
-        if id in indices(discnt_rate_tech) #Default: 0
+        if (discnt_rate_tech(;Dict(obj_cls.name => id)...) == 0 || isempty(discnt_rate_tech(;Dict(obj_cls.name => id)...)))
             stoch_map_val = []
             stoch_map_ind = []
             for s in stochastic_structure__stochastic_scenario(stochastic_structure=invest_stoch_struct(;Dict(obj_cls.name => id)...))
@@ -343,6 +335,8 @@ function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass, obj_name
                 push!(stoch_map_ind,s)
             end
             obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
+        else
+            obj_cls.parameter_values[id][param_name] = parameter_value(1)
         end
     end
 
