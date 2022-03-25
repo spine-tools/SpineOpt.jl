@@ -94,6 +94,7 @@ function run_spineopt(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
+    update_names=false,
     use_direct_model=false,
     filters=Dict("tool" => "object_activity_control")
 )
@@ -138,8 +139,11 @@ function run_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
-        use_direct_model=use_direct_model #FIXME: make sure that this works with solvers, possibly adapt union? + allow for conflicts if direct model is used
+        update_names=update_names,
+        use_direct_model=use_direct_model
     )
+    # FIXME: make sure use_direct_model this works with db solvers
+    # possibly adapt union? + allow for conflicts if direct model is used
 end
 
 function rerun_spineopt(
@@ -151,6 +155,7 @@ function rerun_spineopt(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
+    update_names=false,
     use_direct_model=false,
     alternative_objective=m -> nothing,
 )
@@ -158,7 +163,8 @@ function rerun_spineopt(
     mp = create_model(:spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
     m_mga = create_model(:spineopt_mga, mip_solver, lp_solver, use_direct_model)
 
-    rerun_spineopt!(
+    Base.invokelatest(
+        rerun_spineopt!,
         m,
         mp,
         m_mga,
@@ -168,14 +174,23 @@ function rerun_spineopt(
         update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
+        update_names=update_names,
         alternative_objective=alternative_objective
     )
 end
 
-rerun_spineopt!(::Nothing, mp, ::Nothing, url_out; kwargs...) = error("Model of type `spineopt_benders_master` requires the existence of a subproblem model of type `spineopt_standard`")
-rerun_spineopt!(::Nothing, mp, m_mga; kwargs...) = error("Currently the combination of Benders and mga is supported. Please make sure that you don't have a `model_type=:spineopt_benders_master` together with another model of type `:spineopt_mga`")
-rerun_spineopt!(m, ::Nothing, m_mga; kwargs...) = error("Currently the combination of models with type `spineopt_standard` and `spineopt_mga` is supported.")
-rerun_spineopt!(::Nothing, ::Nothing, ::Nothing; kwargs...) = error("At least one model object has to exist, with at least one of type `spineopt_standard` (or `spineopt_mga`)")
+function rerun_spineopt!(::Nothing, mp, ::Nothing, url_out; kwargs...)
+    error("can't run a model of type `spineopt_benders_master` without another of type `spineopt_standard`")
+end
+function rerun_spineopt!(::Nothing, mp, m_mga; kwargs...)
+    error("can't run models of type `spineopt_benders_master` and `spineopt_mga` together")
+end
+function rerun_spineopt!(m, ::Nothing, m_mga; kwargs...)
+    error("can't run models of type `spineopt_standard` and `spineopt_mga` together")
+end
+function rerun_spineopt!(::Nothing, ::Nothing, ::Nothing; kwargs...)
+    error("can't run without at least one model of type `spineopt_standard` or `spineopt_mga`")
+end
 
 """
 A JuMP `Model` for SpineOpt.
@@ -185,7 +200,7 @@ function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)
     instance = first(model(model_type=model_type))
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
-    m = use_direct_model ? direct_model(mip_solver()) : Model(mip_solver)
+    m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
     m.ext[:instance] = instance
     m.ext[:variables] = Dict{Symbol,Dict}()
     m.ext[:variables_definition] = Dict{Symbol,Dict}()
@@ -202,6 +217,8 @@ function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)
     m.ext[:lp_solver] = lp_solver
     m
 end
+
+_do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model(mip_solver()) : Model(mip_solver)
 
 """
 A mip solver for given model instance. If given solver is not `nothing`, just return it.
@@ -251,7 +268,8 @@ function _db_solver(f::Function, db_solver_name::Symbol, db_solver_options)
     db_solver_options_parsed = _parse_solver_options(db_solver_name, db_solver_options)
     @eval using $db_solver_mod_name
     db_solver_mod = getproperty(@__MODULE__, db_solver_mod_name)
-    Base.invokelatest(optimizer_with_attributes, db_solver_mod.Optimizer, db_solver_options_parsed...)
+    factory = () -> Base.invokelatest(db_solver_mod.Optimizer)
+    optimizer_with_attributes(factory, db_solver_options_parsed...)
 end
 _db_solver(f::Function, ::Nothing, db_solver_options) = f()
 

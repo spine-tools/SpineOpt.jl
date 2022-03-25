@@ -178,19 +178,17 @@ end
     end
     @testset "don't overwrite results on rolling" begin
         _load_test_data(url_in, test_data)
-        index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
         vom_cost = 1200
         demand = Dict(
-            "type" => "map", 
-            "index_type" => "date_time",
-            "data" => Dict("2000-01-01T00:00:00" => 50.0, "2000-01-01T12:00:00" => 90.0)
+            "type" => "time_series",
+            "data" => Dict("2000-01-01T00:00:00" => 50.0, "2000-01-01T12:00:00" => 90.0, "2000-01-03T00:00:00" => 90.0)
         )
         unit_capacity = demand
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "6h")],
-            ["unit", "unit_ab", "min_up_time", Dict("type" => "duration", "data" => "2h")],
-        ]  # NOTE: min_up_time is only so we have a history of two hours
+            ["temporal_block", "hourly", "block_end", Dict("type" => "duration", "data" => "9h")]
+        ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
             ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
@@ -200,10 +198,10 @@ end
             url_in;
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
+            on_conflict=:replace
         )
         m = run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
-        cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
         flow_key = (
             report=Y.report(:report_x),
             unit=Y.unit(:unit_ab),
@@ -212,17 +210,17 @@ end
             stochastic_scenario=Y.stochastic_scenario(:parent),
         )
         analysis_times = DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2) - Hour(1)
+        # For each analysis time we cover a window of ± 12 hours with `t`,
+        # and check that only `t`s within the optimisation window have a `unit_flow` value
         @testset for at in analysis_times, t in at - Hour(12):Hour(1):at + Hour(12)
-            # For each analysis time, `t` covers a window of ± 12 hours,
-            # but only `t`s within the optimisation window should have a `unit_flow` value
-            window_start = max(DateTime("2000-01-01T00:00:00"), at - Hour(2))
-            window_end = min(DateTime("2000-01-02T00:00:00"), at + Hour(6))
-            expected = if window_start <= t < window_end
-                (t < DateTime("2000-01-01T12:00:00")) ? 50 : 90
+            window_start = max(DateTime(2000, 1, 1), at)
+            window_end = min(DateTime(2000, 1, 2), at + Hour(9))
+            expected_unit_flow = if window_start <= t < window_end
+                (t < DateTime(2000, 1, 1, 12)) ? 50 : 90
             else
                 nothing
             end
-            @test Y.unit_flow(; flow_key..., analysis_time=at, t=t) == expected
+            @test Y.unit_flow(; flow_key..., analysis_time=at, t=t) == expected_unit_flow
         end
     end
     @testset "unfeasible" begin
@@ -502,5 +500,73 @@ end
         @test get_optimizer_attribute(m, "ratioGap") == "0.015"
         @test get_optimizer_attribute(mp, "logLevel") == "0"
         @test get_optimizer_attribute(mp, "ratioGap") == "0.016"
+    end
+    @testset "fixing variables when rolling" begin
+        _load_test_data(url_in, test_data)
+        index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
+        demand_data = [10, 20, 30]
+        demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
+        unit_capacity = demand
+        objects = [["output", "constraint_nodal_balance"]]
+        relationships = [["report__output", ["report_x", "constraint_nodal_balance"]]]
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
+            ["unit", "unit_ab", "min_up_time", Dict("type" => "duration", "data" => "6h")],
+        ]  # NOTE: min_up_time is only so we have a history
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity]
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )        
+        m = run_spineopt(url_in, url_out; log_level=0)
+        SpineOpt.update_model!(m)  # So that history is fixed
+        history_end = model_end(model=m.ext[:instance]) - roll_forward(model=m.ext[:instance])
+        history_start = history_end - Hour(6)
+        var_t_iterator = sort(
+            [(var, inds.t) for (var_key, vars) in m.ext[:variables] for (inds, var) in vars],
+            by=x -> (name(x[1]), x[2])
+        )
+        @testset for (var, t) in var_t_iterator
+            @test is_fixed(var) == (history_start <= start(t) < history_end)
+        end
+    end
+    @testset "dual values" begin
+        _load_test_data(url_in, test_data)
+        index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
+        demand_data = [10, 20, 30]
+        demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
+        unit_capacity = 31
+        vom_cost_data = [100, 200, 300]
+        vom_cost = Dict("type" => "time_series", "data" => PyVector(vom_cost_data), "index" => index)
+        objects = [["output", "constraint_nodal_balance"]]
+        relationships = [["report__output", ["report_x", "constraint_nodal_balance"]]]
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost]
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )        
+        m = run_spineopt(url_in, url_out; log_level=0)
+        using_spinedb(url_out, Y)
+        key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
+        @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2) - Hour(1))
+            expected = SpineOpt.vom_cost(node=node(:node_b), unit=unit(:unit_ab), direction=direction(:to_node), t=t)
+            @test Y.constraint_nodal_balance(; key..., t=t) == expected
+        end
     end
 end

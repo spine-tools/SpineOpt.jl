@@ -99,29 +99,32 @@ Check that each `node` has at least one `temporal_block` connected to it in each
 function check_model__node__temporal_block()
     errors = [
         (m, n)
-        for m in model(model_type=:spineopt_standard) for n in node()
-            if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m))) && n == members(n)
+        for m in model(model_type=:spineopt_standard)
+        for n in node()
+        if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m))) && n == members(n)
     ]
     _check(
         isempty(errors),
-        "invalid `node__temporal_block` or `model__temporal_block` definitions for `(model, node)` pair(s):
+        "invalid `node__temporal_block` or `model__temporal_block` definitions for (`model`, `node`) pair(s):
         $(join(errors, ", ", " and ")) " * "- each `node` must be related to at least one `temporal_block` per `model`",
     )
-    error_group = [
+    errors_group = [
         (m, n)
-        for m in model(model_type=:spineopt_standard) for n in node()
-            if any(isempty, intersect(node__temporal_block(node=members(n)), model__temporal_block(model=m)))
+        for m in model(model_type=:spineopt_standard)
+        for n in node()
+        if any(isempty, intersect(node__temporal_block(node=members(n)), model__temporal_block(model=m)))
     ]
     _check(
-        isempty(error_group),
+        isempty(errors_group),
         "Some nodes in the node groups don't have a `node__temporal_block` or `model__temporal_block` definitions for `(model, node)` pair(s):
-        $(join(error_group, ", ", " and ")) "
+        $(join(errors_group, ", ", " and ")) "
         * "- each `node` of the node groups must be related to at least one `temporal_block` per `model`",
     )
     warnings = [
         (m, n)
-        for m in model(model_type=:spineopt_standard) for n in node()
-            if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m))) && n != members(n)
+        for m in model(model_type=:spineopt_standard)
+        for n in node()
+        if isempty(intersect(node__temporal_block(node=n), model__temporal_block(model=m))) && n != members(n)
     ]
     _check_warn(
         isempty(warnings),
@@ -291,8 +294,8 @@ function check_rolling_branching()
                 _check(
                     cond,
                     """
-                    Branching of `stochastic_structures` before `model` `roll_forward` isn't supported!
-                    Please check the `stochastic_scenario_end` parameters of `stochastic_structure` `$(ss)`.
+                    branching of `stochastic_structure`s before `model` `roll_forward` isn't supported -
+                    please check the `stochastic_scenario_end` parameters of `stochastic_structure` `$(ss)`.
                     """,
                 )
             end

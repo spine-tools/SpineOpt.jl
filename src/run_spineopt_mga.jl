@@ -8,8 +8,9 @@ function rerun_spineopt!(
     update_constraints=m_mga -> nothing,
     log_level=3,
     optimize=true,
+    update_names=false,
     alternative_objective=m_mga -> nothing,
-    )
+)
     outputs = Dict()
     mga_iterations = 0
     max_mga_iteration = max_mga_iterations(model=m_mga.ext[:instance])
@@ -37,7 +38,7 @@ function rerun_spineopt!(
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m_mga)
             @timelog log_level 2 " ... Rolling complete\n" break
         end
-        update_model!(m_mga; update_constraints=update_constraints, log_level=log_level)
+        update_model!(m_mga; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
         k += 1
     end
     m_mga

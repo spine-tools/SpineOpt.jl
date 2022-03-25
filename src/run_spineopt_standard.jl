@@ -27,14 +27,21 @@ function rerun_spineopt!(
     alternative_objective=m -> nothing,
     update_constraints=m -> nothing,
     log_level=3,
-    optimize=true
+    optimize=true,
+    update_names=false
 )
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
     @timelog log_level 2 "Creating economic structure..." generate_economic_structure!(m)
-    init_model!(m; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level,alternative_objective=alternative_objective)
+    init_model!(
+        m;
+        add_user_variables=add_user_variables,
+        add_constraints=add_constraints,
+        log_level=log_level,
+        alternative_objective=alternative_objective
+    )
     init_outputs!(m)
     k = 1
     calculate_duals = any(startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:outputs])))
@@ -46,7 +53,7 @@ function rerun_spineopt!(
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
             @timelog log_level 2 " ... Rolling complete\n" break
         end
-        update_model!(m; update_constraints=update_constraints, log_level=log_level)
+        update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
         k += 1
     end
     @timelog log_level 2 "Writing report..." write_report(m, url_out)
@@ -271,12 +278,7 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_max_node_voltage_angle]" add_constraint_max_node_voltage_angle!(m)
     @timelog log_level 3 "- [constraint_min_node_voltage_angle]" add_constraint_min_node_voltage_angle!(m)
     @timelog log_level 3 "- [constraint_user]" add_constraints(m)
-    # Name constraints
-    for (con_key, cons) in m.ext[:constraints]
-        for (inds, con) in cons
-            set_name(con, string(con_key, inds))
-        end
-    end
+    _update_constraint_names!(m)
 end
 
 function init_outputs!(m::Model)
@@ -290,7 +292,9 @@ end
 """
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
-function init_model!(m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3,alternative_objective=m -> nothing)
+function init_model!(
+    m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3, alternative_objective=m -> nothing
+)
     @timelog log_level 2 "Adding variables...\n" add_variables!(
         m; add_user_variables=add_user_variables, log_level=log_level
     )
@@ -314,21 +318,22 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
         mip_solver = m.ext[:mip_solver]
         lp_solver = m.ext[:lp_solver]
         if calculate_duals
-            @timelog log_level 0 "Fixing integer values for final LP to obtain duals..." relax_integer_vars(m)
+            @log log_level 1 "Setting up final LP of $(m.ext[:instance]) to obtain duals..."
+            @timelog log_level 1 "Fixing integer variables..." relax_integer_vars(m)
             if lp_solver != mip_solver
-                @timelog log_level 0 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
+                @timelog log_level 1 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
             end
-            @timelog log_level 0 "Optimizing final LP of $(m.ext[:instance]) to obtain duals..." optimize!(m)
+            @timelog log_level 1 "Optimizing final LP..." optimize!(m)
+            save_marginal_values!(m)
+            save_bound_marginal_values!(m)
         end
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving $(m.ext[:instance]) results..." save_model_results!(m,iterations=iterations)
         if calculate_duals
-            save_marginal_values!(m)
-            save_bound_marginal_values!(m)
             if lp_solver != mip_solver
-                set_optimizer(m, mip_solver)
+                @timelog log_level 1 "Switching back to MIP solver $(mip_solver)..." set_optimizer(m, mip_solver)
             end
-            @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
+            @timelog log_level 1 "Unfixing integer variables..." unrelax_integer_vars(m)
         end
         true
     else
@@ -379,11 +384,12 @@ end
 
 function _value_by_entity_non_aggregated(m, value::Dict)
     by_entity_non_aggr = Dict()
+    analysis_time = start(current_window(m))
     for (k, v) in value
-        end_(k.t) <= model_start(model=m.ext[:instance]) && continue
+        end_(k.t) <= analysis_time && continue
         entity = _drop_key(k, :t)
         by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
-        by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, start(current_window(m)), Dict{TimeSlice,Any}())
+        by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, analysis_time, Dict{TimeSlice,Any}())
         by_time_slice_non_aggr[k.t] = v
     end
     by_entity_non_aggr
@@ -421,16 +427,15 @@ function _save_output!(m, out, value_or_param; iterations=nothing)
     by_entity_non_aggr = _value_by_entity_non_aggregated(m, value_or_param)
     for (entity, by_analysis_time_non_aggr) in by_entity_non_aggr
         if !isnothing(iterations)
-            new_mga_name = Symbol(string("mga_it_", iterations)) ##TODO: fixme! Needs to be done, befooooore we execute solve, as we need to set objective for this solve
+            # FIXME: Needs to be done, befooooore we execute solve, as we need to set objective for this solve
+            new_mga_name = Symbol(string("mga_it_", iterations))
             if mga_iteration(new_mga_name) == nothing
                 new_mga_i = Object(new_mga_name)
                 add_object!(mga_iteration, new_mga_i)
             else
                 new_mga_i = mga_iteration(new_mga_name)
             end
-            new_val = (values(entity)...,new_mga_i)
-            new_key = (keys(entity)...,:mga_iteration)
-            entity = NamedTuple{new_key}(new_val)
+            entity = (; entity..., mga_iteration=new_mga_i)
         end
         for (analysis_time, by_time_slice_non_aggr) in by_analysis_time_non_aggr
             t_highest_resolution!(by_time_slice_non_aggr)
@@ -453,11 +458,11 @@ Save the outputs of a model into a dictionary.
 function save_outputs!(m; iterations=nothing)
     for r in model__report(model=m.ext[:instance]), out in report__output(report=r)
         value = get(m.ext[:values], out.name, nothing)
-        if _save_output!(m, out, value;iterations=iterations)
+        if _save_output!(m, out, value; iterations=iterations)
             continue
         end
         param = parameter(out.name, @__MODULE__)
-        if _save_output!(m, out, param;iterations=iterations)
+        if _save_output!(m, out, param; iterations=iterations)
             continue
         end
         @warn "can't find any values for '$(out.name)'"
@@ -477,13 +482,32 @@ end
 Update the given model for the next window in the rolling horizon: update variables, fix the necessary variables,
 update constraints and update objective.
 """
-function update_model!(m; update_constraints=m -> nothing, log_level=3)
+function update_model!(m; update_constraints=m -> nothing, log_level=3, update_names=false)
+    if update_names
+        _update_variable_names!(m)
+        _update_constraint_names!(m)
+    end
     @timelog log_level 2 "Updating variables..." update_variables!(m)
-    @timelog log_level 2 "Setting integers and binaries..." unrelax_integer_vars(m)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
     @timelog log_level 2 "Updating user constraints..." update_constraints(m)
     @timelog log_level 2 "Updating objective..." update_varying_objective!(m)
+end
+
+function _update_constraint_names!(m)
+    for (con_key, cons) in m.ext[:constraints]
+        for (inds, con) in cons
+            set_name(con, string(con_key, inds))
+        end
+    end
+end
+
+function _update_variable_names!(m)
+    for (var_key, vars) in m.ext[:variables]
+        for (inds, var) in vars
+            set_name(var, _base_name(var_key, inds))
+        end
+    end
 end
 
 function relax_integer_vars(m::Model)
