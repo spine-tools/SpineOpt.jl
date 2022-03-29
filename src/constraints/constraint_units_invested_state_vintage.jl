@@ -71,7 +71,7 @@ function constraint_units_invested_state_vintage_indices(m::Model)
     t0 = _analysis_time(m)
     unique(
         (unit=u, stochastic_path=path, t_vintage=t_v, t=t)
-        for u in indices(unit_investment_tech_lifetime) for (u, s, t_v, t) in units_invested_available_vintage_indices(m; unit=u)
+        for (u, s, t_v, t) in units_invested_available_vintage_indices(m)
         for path in active_stochastic_paths(_constraint_units_invested_state_vintage_indices(m, u, s, t_v, t))
     )
 end

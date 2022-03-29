@@ -26,12 +26,34 @@ Check if node investment variable type is defined to be an integer.
 storages_invested_int(x) = storage_investment_variable_type(node=x.node) == :variable_type_integer
 
 """
+    fix_initial_storages_invested()
+
+If fix_storages_invested_available is not defined in the timeslice preceding the first rolling window
+then force it to be zero so that the model doesn't get free investments and the user isn't forced
+to consider this.
+"""
+function fix_initial_storages_invested(m)
+    for u in indices(candidate_storages) #FIXME: needs to also have investment temporal block
+        t = last(history_time_slice(m))
+        if fix_storages_invested(node=u, t=t, _strict=false) === nothing
+            node.parameter_values[u][:fix_storages_invested] = parameter_value(
+                TimeSeries([start(t)], [0], false, false),
+            )
+            node.parameter_values[u][:starting_fix_storages_invested] = parameter_value(
+                TimeSeries([start(t)], [0], false, false),
+            )
+        end
+    end
+end
+
+"""
     add_variable_storages_invested!(m::Model)
 
 Add `storages_invested` variables to model `m`.
 """
 function add_variable_storages_invested!(m::Model)
     t0 = _analysis_time(m)
+    fix_initial_storages_invested(m)
     add_variable!(
         m,
         :storages_invested,

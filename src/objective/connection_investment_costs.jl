@@ -36,7 +36,7 @@ function connection_investment_costs(m::Model, t1)
                 connection_capacity[(connection=c, node=n, direction = d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for (c, n, d) in indices(use_connection_capacity_for_investment_cost_scaling; connection=c)
                     if use_connection_capacity_for_investment_cost_scaling(connection=c, node=n, direction = d)
-                ;init=0
+                ;init=1
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * connection_investment_cost[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]

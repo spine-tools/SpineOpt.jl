@@ -125,7 +125,6 @@ function _set_objective_mga_iteration!(
         )
         if !isempty(mga_indices())
             t0 = _analysis_time(m).ref.x
-            @fetch units_invested = m.ext[:variables]
             mga_results = m.ext[:outputs]
             d_aux = get!(m.ext[:variables], :mga_aux_diff, Dict())
             d_bin = get!(m.ext[:variables],:mga_aux_binary, Dict())
@@ -196,7 +195,7 @@ end
 function add_mga_objective_constraint!(m::Model)
     instance = m.ext[:instance]
     m.ext[:constraints][:mga_slack_constraint] = Dict(m.ext[:instance] =>
-        @constraint(m, total_costs(m, end_(last(time_slice(m)))) <= (1+max_mga_slack(model=instance)) * objective_value_mga(model=instance))
+        @constraint(m, total_costs(m, maximum(end_.(time_slice(m)))) <= (1+max_mga_slack(model=instance)) * objective_value_mga(model=instance))
         )
 end
 

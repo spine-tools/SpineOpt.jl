@@ -54,12 +54,13 @@ then force it to be zero so that the model doesn't get free investments and the 
 to consider this.
 """
 function fix_initial_connections_invested_available(m)
-    for conn in indices(candidate_connections)
-        t = last(history_time_slice(m))
+    for conn in connection__investment_temporal_block(temporal_block=anything)
+        t = last(history_time_slice(m; temporal_block=connection__investment_temporal_block(connection=conn)))
         if fix_connections_invested_available(connection=conn, t=t, _strict=false) === nothing
             connection.parameter_values[conn][:fix_connections_invested_available] = parameter_value(
                 TimeSeries([start(t)], [0], false, false),
             )
+            @show connection.parameter_values[conn][:fix_connections_invested_available]
             connection.parameter_values[conn][:starting_fix_connections_invested_available] = parameter_value(
                 TimeSeries([start(t)], [0], false, false),
             )

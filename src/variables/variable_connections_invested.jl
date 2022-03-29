@@ -29,12 +29,34 @@ function connections_invested_int(x)
 end
 
 """
+    fix_initial_connections_invested()
+
+If fix_connections_invested_available is not defined in the timeslice preceding the first rolling window
+then force it to be zero so that the model doesn't get free investments and the user isn't forced
+to consider this.
+"""
+function fix_initial_connections_invested(m)
+    for conn in indices(candidate_connections)
+        t = last(history_time_slice(m; temporal_block=connection__investment_temporal_block(connection=conn)))
+        if fix_connections_invested(connection=conn, t=t, _strict=false) === nothing
+            connection.parameter_values[conn][:fix_connections_invested] = parameter_value(
+                TimeSeries([start(t)], [0], false, false),
+            )
+            connection.parameter_values[conn][:starting_fix_connections_invested] = parameter_value(
+                TimeSeries([start(t)], [0], false, false),
+            )
+        end
+    end
+end
+
+"""
     add_variable_connections_invested!(m::Model)
 
 Add `connections_invested` variables to model `m`.
 """
 function add_variable_connections_invested!(m::Model)
     t0 = _analysis_time(m)
+    fix_initial_connections_invested(m)
     add_variable!(
         m,
         :connections_invested,

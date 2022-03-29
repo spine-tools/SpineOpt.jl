@@ -25,7 +25,7 @@ Constrain `storages_mothballed_state_vintage` by the storages de-/mothballed dur
 function add_constraint_storages_mothballed_state_vintage!(m::Model)
     @fetch storages_mothballed_state_vintage, storages_mothballed_vintage, storages_demothballed_vintage = m.ext[:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:storages_invested_state_vintage] = Dict(
+    m.ext[:constraints][:storages_mothballed_state_vintage] = Dict(
         (node=n, stochastic_path=s, t_vintage=t_v, t=t_after) => @constraint(
             m,
             + expr_sum(

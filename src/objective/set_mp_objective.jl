@@ -51,6 +51,6 @@ function add_constraint_mp_objective!(m::Model)
             init=0,
         )
         >=
-        + total_costs(m, end_(last(time_slice(m))))
+        + total_costs(m, maximum(end_.(time_slice(m))))
     )
 end

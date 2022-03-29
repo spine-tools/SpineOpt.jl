@@ -33,11 +33,11 @@ function unit_investment_costs(m::Model, t1)
             * unit_tech_discount_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * unit_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * unit_investment_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * reduce(+,
+            * reduce(*,
                 unit_capacity[(unit=u, node=n, direction = d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for (u, n, d) in indices(use_unit_capacity_for_investment_cost_scaling; unit=u)
                     if use_unit_capacity_for_investment_cost_scaling(unit=u, node=n, direction = d)
-                ;init=0
+                ;init=1
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)

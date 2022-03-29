@@ -29,7 +29,7 @@ Unless defined otherwise this expression executed until the last time_slice
 # if multiple temporal_block end at different points in time
 function set_objective!(m::Model;alternative_objective=m -> nothing)
     if alternative_objective(m) == nothing
-        total_discounted_costs = total_costs(m, end_(last(time_slice(m))))
+        total_discounted_costs = total_costs(m, maximum(end_.(time_slice(m))))
         if !iszero(total_discounted_costs)
             @objective(m, Min, total_discounted_costs)
         else

@@ -52,8 +52,8 @@ then force it to be zero so that the model doesn't get free investments and the 
 to consider this.
 """
 function fix_initial_units_invested_available(m)
-    for u in indices(candidate_units)
-        t = last(history_time_slice(m))
+    for u in unit__investment_temporal_block(temporal_block=anything)
+        t = last(history_time_slice(m; temporal_block=unit__investment_temporal_block(unit=u)))
         if fix_units_invested_available(unit=u, t=t, _strict=false) === nothing
             unit.parameter_values[u][:fix_units_invested_available] = parameter_value(
                 TimeSeries([start(t)], [0], false, false),

@@ -34,7 +34,7 @@ function storage_decommissioning_costs(m::Model, t1)
             * reduce(+,
                 node_state_cap[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for n in node(use_storage_capacity_for_investment_cost_scaling=true)
-                ;init=0
+                ;init=1
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)

@@ -52,8 +52,8 @@ then force it to be zero so that the model doesn't get free investments and the 
 to consider this.
 """
 function fix_initial_storages_invested_available(m)
-    for n in indices(candidate_nodes)
-        t = last(history_time_slice(m))
+    for n in node__investment_temporal_block(temporal_block=anything)
+        t = last(history_time_slice(m; temporal_block=node__investment_temporal_block(node=n)))
         if fix_storages_invested_available(node=n, t=t, _strict=false) === nothing
             node.parameter_values[n][:fix_storages_invested_available] = parameter_value(
                 TimeSeries([start(t)], [0], false, false),

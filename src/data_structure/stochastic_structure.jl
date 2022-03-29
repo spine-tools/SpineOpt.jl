@@ -163,7 +163,7 @@ A `Dict` mapping `stochastic_structure` objects to dags for the given `model`s.
 """
 function _all_stochastic_dags(m::Model)
     window_start = start(current_window(m))
-    window_very_end = end_(last(time_slice(m)))
+    window_very_end = maximum(end_.(time_slice(m)))
     Dict(
         ss => _stochastic_dag(m, ss, window_start, window_very_end)
         for ss in model__stochastic_structure(model=m.ext[:instance])
