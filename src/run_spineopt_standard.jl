@@ -346,21 +346,31 @@ function save_objective_values!(m::Model)
     ind = (model=m.ext[:instance], t=current_window(m))
     for name in [objective_terms(m); :total_costs]
         func = eval(name)
-        m.ext[:values][name] = Dict(ind => _value(realize(func(m, end_(ind.t)))))
+        m.ext[:values][name] = Dict(ind => _value(realize(func(m, end_(current_window(m))))))
     end
 end
 
 function _value_by_entity_non_aggregated(m, value::Dict)
     by_entity_non_aggr = Dict()
     analysis_time = start(current_window(m))
-    for (k, v) in value
-        end_(k.t) <= analysis_time && continue
-        entity = _drop_key(k, :t)
+    for (ind, val) in value
+        t_keys = collect(_time_slice_keys(ind))
+        t = maximum(ind[k] for k in t_keys)
+        t <= analysis_time && continue
+        entity = _drop_key(ind, t_keys...)
+        entity = _flatten_stochastic_path(entity)
         by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
         by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, analysis_time, Dict{TimeSlice,Any}())
-        by_time_slice_non_aggr[k.t] = v
+        by_time_slice_non_aggr[t] = val
     end
     by_entity_non_aggr
+end
+
+function _flatten_stochastic_path(entity::NamedTuple)
+    stoch_path = get(entity, :stochastic_path, nothing)
+    stoch_path === nothing && return entity
+    flat_stoch_path = (; Dict(Symbol(:stochastic_scenario, k) => scen for (k, scen) in enumerate(stoch_path))...)
+    (; _drop_key(entity, :stochastic_path)..., flat_stoch_path...)
 end
 
 function _value_by_entity_non_aggregated(m, parameter::Parameter)
@@ -536,7 +546,9 @@ function _save_marginal_value!(m::Model, constraint_name::Symbol, output_name::S
     con = m.ext[:constraints][constraint_name]
     inds = keys(con)
     m.ext[:values][output_name] = Dict(
-        ind => JuMP.dual(con[ind]) for ind in inds if end_(ind.t) <= end_(current_window(m))
+        ind => JuMP.dual(con[ind])
+        for ind in inds
+        if maximum(ind[k] for k in _time_slice_keys(ind)) <= end_(current_window(m))
     )
 end
 
@@ -554,6 +566,7 @@ function _save_bound_marginal_value!(m::Model, variable_name::Symbol, output_nam
     indices = m.ext[:variables_definition][variable_name][:indices]
     m.ext[:values][output_name] = Dict(
         ind => JuMP.reduced_cost(var[ind])
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m))) if end_(ind.t) <= end_(current_window(m))
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+        if maximum(ind[k] for k in _time_slice_keys(ind)) <= end_(current_window(m))
     )
 end

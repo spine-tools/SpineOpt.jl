@@ -144,8 +144,8 @@ end
 Generate the `direction` `ObjectClass` and its relationships.
 """
 function generate_direction()
-    from_node = Object(:from_node)
-    to_node = Object(:to_node)
+    from_node = Object(:from_node, :direction)
+    to_node = Object(:to_node, :direction)
     direction = ObjectClass(:direction, [from_node, to_node])
     directions_by_class = Dict(
         unit__from_node => from_node,

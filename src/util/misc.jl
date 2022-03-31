@@ -103,6 +103,11 @@ function _index_in(ind::NamedTuple; kwargs...)
 end
 
 """
+An iterator over the `TimeSlice` keys in `ind`
+"""
+_time_slice_keys(ind::NamedTuple) = (k for (k, v) in pairs(ind) if v isa TimeSlice)
+
+"""
 Drop keys from a `NamedTuple`.
 """
 _drop_key(x::NamedTuple, key::Symbol...) = (; (k => v for (k, v) in pairs(x) if !(k in key))...)
