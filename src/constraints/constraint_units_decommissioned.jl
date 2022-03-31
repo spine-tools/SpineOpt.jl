@@ -39,7 +39,11 @@ function add_constraint_units_decommissioned!(m::Model)
                             t=t,
                             t_vintage = to_time_slice(
                                 m;
-                                t=TimeSlice(start(t - unit_investment_tech_lifetime(unit=u)), end_(t))
+                                t=TimeSlice(
+                                    (isnothing(unit_investment_tech_lifetime(unit=u)) ?
+                                    t0.ref.x
+                                    : start(t - unit_investment_tech_lifetime(unit=u))),
+                                            end_(t))
                                 )
                             )
                 ; init=0

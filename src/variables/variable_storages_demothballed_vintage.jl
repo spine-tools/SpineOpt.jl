@@ -23,5 +23,5 @@
 Add `storages_demothballed_vintage` variables to model `m`.
 """
 function add_variable_storages_demothballed_vintage!(m::Model)
-    add_variable!(m, :storages_demothballed_vintage, storages_invested_available_vintage_indices; lb=x -> 0, int=storages_invested_int,vintage=true)
+    add_variable!(m, :storages_demothballed_vintage, storages_mothballed_state_vintage_indices; lb=x -> 0, int=storages_invested_int,vintage=true)
 end

@@ -118,6 +118,7 @@ function _set_objective_mga_iteration!(
         m::Model,
         variable_name::Symbol,
         variable_indices_function::Function,
+        # capacity_weight_function::Function,
         scenario_weight_function::Function,
         mga_indices::Function,
         mga_variable_bigM::Parameter,

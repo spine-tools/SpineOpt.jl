@@ -603,12 +603,12 @@
     end
     @testset "constraint_node_state_capacity_investments" begin
         _load_test_data(url_in, test_data)
-        candidate_nodes = 1
+        candidate_storages = 1
         node_capacity = 400
         object_parameter_values = [
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_c", "has_state", true],
-            ["node", "node_c", "candidate_nodes", candidate_nodes],
+            ["node", "node_c", "candidate_storages", candidate_storages],
         ]
         relationships = [
             ["node__investment_temporal_block", ["node_c", "hourly"]],
@@ -639,10 +639,10 @@
     end
     @testset "constraint_storages_invested_available" begin
         _load_test_data(url_in, test_data)
-        candidate_nodes = 1
+        candidate_storages = 1
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_nodes", candidate_nodes],
+            ["node", "node_c", "candidate_storages", candidate_storages],
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_b", "has_state", true],
         ]
@@ -661,7 +661,7 @@
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (node(:node_c), s, t)
             var = var_storages_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_nodes)
+            expected_con = @build_constraint(var <= candidate_storages)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -669,10 +669,10 @@
     end
     @testset "constraint_storages_invested_available_mp" begin
         _load_test_data(url_in, test_data)
-        candidate_nodes = 7
+        candidate_storages = 7
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_nodes", candidate_nodes],
+            ["node", "node_c", "candidate_storages", candidate_storages],
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_b", "has_state", true],
             ["model", "master", "model_type", "spineopt_benders_master"],
@@ -695,7 +695,7 @@
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (node(:node_c), s, t)
             var = var_storages_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_nodes)
+            expected_con = @build_constraint(var <= candidate_storages)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -708,7 +708,7 @@
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (node(:node_c), s, t)
             var = var_storages_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_nodes)
+            expected_con = @build_constraint(var <= candidate_storages)
             con = constraint[key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -716,10 +716,10 @@
     end
     @testset "constraint_storages_invested_transition" begin
         _load_test_data(url_in, test_data)
-        candidate_nodes = 1
+        candidate_storages = 1
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_nodes", candidate_nodes],
+            ["node", "node_c", "candidate_storages", candidate_storages],
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_b", "has_state", true],
         ]
@@ -756,10 +756,10 @@
     end
     @testset "constraint_storages_invested_transition_mp" begin
         _load_test_data(url_in, test_data)
-        candidate_nodes = 1
+        candidate_storages = 1
         node_capacity = 500
         object_parameter_values = [
-            ["node", "node_c", "candidate_nodes", candidate_nodes],
+            ["node", "node_c", "candidate_storages", candidate_storages],
             ["node", "node_c", "node_state_cap", node_capacity],
             ["node", "node_b", "has_state", true],
             ["model", "master", "model_type", "spineopt_benders_master"],
@@ -823,14 +823,14 @@
         end
     end
     @testset "constraint_storage_lifetime" begin
-        candidate_nodes = 1
+        candidate_storages = 1
         node_capacity = 500
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             _load_test_data(url_in, test_data)
             node_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
-                ["node", "node_c", "candidate_nodes", candidate_nodes],
+                ["node", "node_c", "candidate_storages", candidate_storages],
                 ["node", "node_c", "node_state_cap", node_capacity],
                 ["node", "node_c", "has_state", true],
                 ["node", "node_c", "node_investment_lifetime", node_investment_lifetime],
@@ -878,14 +878,14 @@
         end
     end
     @testset "constraint_storage_lifetime_mp" begin
-        candidate_nodes = 1
+        candidate_storages = 1
         node_capacity = 500
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
             _load_test_data(url_in, test_data)
             node_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
-                ["node", "node_c", "candidate_nodes", candidate_nodes],
+                ["node", "node_c", "candidate_storages", candidate_storages],
                 ["node", "node_c", "node_state_cap", node_capacity],
                 ["node", "node_c", "has_state", true],
                 ["node", "node_c", "node_investment_lifetime", node_investment_lifetime],

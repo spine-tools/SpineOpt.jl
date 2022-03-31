@@ -54,24 +54,49 @@ function storages_invested_available_vintage_indices(
 end
 
 """
+    fix_initial_storages_invested_available_vintage()
+
+If fix_storages_invested_available_vintage is not defined in the timeslice preceding the first rolling window
+then force it to be zero so that the model doesn't get free investments and the user isn't forced
+to consider this.
+"""
+function fix_initial_storages_invested_available_vintage(m)
+    for n in indices(candidate_storages)
+        t = last(history_time_slice(m))
+        t_v = last(history_time_slice(m))
+        if fix_storages_invested_available(node=n, t_vintage=t_v, t=t, _strict=false) === nothing
+            node.parameter_values[n][:fix_storages_invested_available_vintage] = parameter_value(
+                TimeSeries([start(t)], [0], false, false),
+            )
+            node.parameter_values[n][:starting_fix_storages_invested_available_vintage] = parameter_value(
+                TimeSeries([start(t)], [0], false, false),
+            )
+        end
+    end
+end
+
+"""
     add_variable_nodes_invested_available_vintage!(m::Model)
 
 Add `storages_invested_available` variables to model `m`.
 """
 function add_variable_storages_invested_available_vintage!(m::Model)
+    # fix_initial_storages_invested_available_vintage(m)
     t0 = _analysis_time(m)
     add_variable!(
         m,
         :storages_invested_available_vintage,
         storages_invested_available_vintage_indices;
         lb=x -> 0,
-        fix_value=x -> fix_storages_invested_available_vintage(
-            node=x.node,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
+        ub=x -> candidate_storages(node=x.node), #FIXME
+        # fix_value=x -> fix_storages_invested_available_vintage(
+        #     node=x.node,
+        #     stochastic_scenario=x.stochastic_scenario,
+        #     analysis_time=t0,
+        #     t=x.t,
+        #     t_vintage=x.t_vintage,
+        #     _strict=false,
+        # ),
         vintage=true,
     )
 end

@@ -56,7 +56,7 @@ function generate_is_candidate()
     for u in indices(candidate_units)
         unit.parameter_values[u][:is_candidate] = parameter_value(true)
     end
-    for n in indices(candidate_nodes)
+    for n in indices(candidate_storages)
         node.parameter_values[n][:is_candidate] = parameter_value(true)
     end
     connection.parameter_defaults[:is_candidate] = parameter_value(false)
@@ -583,7 +583,7 @@ function expand_model__default_investment_temporal_block()
         node__investment_temporal_block,
         [
             (node=n, temporal_block=tb)
-            for n in setdiff(indices(candidate_nodes), node__investment_temporal_block(temporal_block=anything))
+            for n in setdiff(indices(candidate_storages), node__investment_temporal_block(temporal_block=anything))
             for tb in model__default_investment_temporal_block(model=anything)
         ],
     )
@@ -625,7 +625,7 @@ function expand_model__default_investment_stochastic_structure()
         node__investment_stochastic_structure,
         [
             (node=n, stochastic_structure=ss) for n in setdiff(
-                indices(candidate_nodes),
+                indices(candidate_storages),
                 node__investment_stochastic_structure(stochastic_structure=anything),
             ) for ss in model__default_investment_stochastic_structure(model=anything)
         ],
@@ -804,7 +804,7 @@ function generate_benders_structure()
     _init_benders_parameter_values(
         node,
         node__benders_iteration,
-        candidate_nodes,
+        candidate_storages,
         :storages_invested_available_bi,
         :storages_invested_available_mv,
         :fix_storages_invested_available,

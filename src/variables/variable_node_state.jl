@@ -62,5 +62,6 @@ function add_variable_node_state!(m::Model)
             t=x.t,
             _strict=false,
         ),
+        use_long_history=false,
     )
 end

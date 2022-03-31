@@ -41,8 +41,9 @@ function add_variable!(
     fix_value::Union{Function,Nothing}=nothing,
     non_anticipativity_time::Union{Function,Nothing}=nothing,
     vintage=false,
+    use_long_history=true,
 )
-    m.ext[:variables_definition][name] = Dict{Symbol,Union{Function,Nothing}}(
+    m.ext[:variables_definition][name] = Dict{Symbol,Union{Function,Nothing,Bool}}(
         :indices => indices,
         :lb => lb,
         :ub => ub,
@@ -50,17 +51,19 @@ function add_variable!(
         :int => int,
         :fix_value => fix_value,
         :non_anticipativity_time => non_anticipativity_time,
+        :vintage => vintage,
+        :use_long_history => use_long_history,
     )
     var = m.ext[:variables][name] = Dict(
         ind => _variable(m, name, ind, lb, ub, bin, int)
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+        for ind in indices(m; t=vcat(history_time_slice(m;use_long_history=use_long_history), time_slice(m)))
     )
     if vintage
         var = m.ext[:variables][name] = Dict(
             ind => _variable(m, name, ind, lb, ub, bin, int)
             for ind in indices(m;
-                    t_vintage=vcat(history_time_slice(m), time_slice(m)),
-                    t=vcat(history_time_slice(m), time_slice(m)))
+                    t_vintage=vcat(history_time_slice(m;use_long_history=use_long_history), time_slice(m)),
+                    t=vcat(history_time_slice(m;use_long_history=use_long_history), time_slice(m)))
         )
     end
     merge!(var, _representative_periods_mapping(m, var, indices))

@@ -59,5 +59,6 @@ function add_variable_node_voltage_angle!(m::Model)
             t=x.t,
             _strict=false,
         ),
+        use_long_history=false,
     )
 end

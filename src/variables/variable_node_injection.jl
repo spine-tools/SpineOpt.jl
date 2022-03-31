@@ -43,4 +43,4 @@ end
 
 Add `node_injection` variables to model `m`.
 """
-add_variable_node_injection!(m::Model) = add_variable!(m, :node_injection, node_injection_indices)
+add_variable_node_injection!(m::Model) = add_variable!(m, :node_injection, node_injection_indices,use_long_history=false)

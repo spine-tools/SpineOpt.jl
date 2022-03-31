@@ -49,7 +49,7 @@
     ],
     "object_parameters": [
         ["node", "balance_type", "balance_type_node", "balance_type_list", "A selector for how the `:nodal_balance` constraint should be handled."],
-        ["node", "candidate_nodes", null, null, "Determines the maximum number of new nodes which may be invested in"],
+        ["node", "candidate_storages", null, null, "Determines the maximum number of new nodes which may be invested in"],
         ["node", "demand", 0.0, null, "Demand for the `commodity` of a `node`. Energy gains can be represented using negative `demand`."],
         ["node", "downward_reserve", false, null, "Identifier for `node`s providing downward reserves"],
         ["node", "fix_node_state", null, null, "Fixes the corresponding `node_state` variable to the provided value. Can be used for e.g. fixing boundary conditions."],

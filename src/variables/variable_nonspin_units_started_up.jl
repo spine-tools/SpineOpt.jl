@@ -66,5 +66,6 @@ function add_variable_nonspin_units_started_up!(m::Model)
             t=x.t,
             _strict=false,
         ),
+        use_long_history=false,
     )
 end

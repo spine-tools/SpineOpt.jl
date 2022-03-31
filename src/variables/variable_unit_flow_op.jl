@@ -83,5 +83,6 @@ function add_variable_unit_flow_op!(m::Model)
             t=x.t,
             _strict=false,
         ),
+        use_long_history=false,
     )
 end

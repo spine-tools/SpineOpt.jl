@@ -73,5 +73,6 @@ function add_variable_binary_gas_connection_flow!(m::Model)
             t=x.t,
             _strict=false,
         ),
+        use_long_history=false,
     )
 end

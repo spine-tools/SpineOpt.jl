@@ -22,4 +22,4 @@
 
 Add `node_slack_neg` variables to model `m`.
 """
-add_variable_node_slack_neg!(m::Model) = add_variable!(m, :node_slack_neg, node_slack_indices; lb=x -> 0)
+add_variable_node_slack_neg!(m::Model) = add_variable!(m, :node_slack_neg, node_slack_indices; lb=x -> 0, use_long_history=false)

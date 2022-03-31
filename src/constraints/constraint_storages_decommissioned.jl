@@ -39,7 +39,11 @@ function add_constraint_storages_decommissioned!(m::Model)
                             t=t,
                             t_vintage = to_time_slice(
                                 m;
-                                t=TimeSlice(start(t - storage_investment_tech_lifetime(node=n)), end_(t))
+                                t=TimeSlice(
+                                    (isnothing(storage_investment_tech_lifetime(node=n)) ?
+                                    t0.ref.x
+                                    : start(t - storage_investment_tech_lifetime(node=n))),
+                                            end_(t))
                                 )
                             )
                 ; init=0

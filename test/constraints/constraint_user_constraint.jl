@@ -79,7 +79,7 @@
             ["model", "instance", "model_type", "spineopt_standard"],
             ["node", "node_c", "has_state", true],
             ["node", "node_c", "node_state_cap", 100],
-            ["node", "node_c", "candidate_nodes", 2],
+            ["node", "node_c", "candidate_storages", 2],
             ["unit", "unit_ab", "candidate_units", 3],
             ["connection", "connection_bc", "candidate_connections", 1],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],

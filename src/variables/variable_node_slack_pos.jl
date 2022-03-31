@@ -48,4 +48,4 @@ end
 
 Add `node_slack_pos` variables to model `m`.
 """
-add_variable_node_slack_pos!(m::Model) = add_variable!(m, :node_slack_pos, node_slack_indices; lb=x -> 0)
+add_variable_node_slack_pos!(m::Model) = add_variable!(m, :node_slack_pos, node_slack_indices; lb=x -> 0, use_long_history=false)

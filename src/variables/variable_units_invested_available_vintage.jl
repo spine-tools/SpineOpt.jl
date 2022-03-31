@@ -54,24 +54,48 @@ function units_invested_available_vintage_indices(
 end
 
 """
+    fix_initial_units_invested_available()
+
+If fix_units_invested_available is not defined in the timeslice preceding the first rolling window
+then force it to be zero so that the model doesn't get free investments and the user isn't forced
+to consider this.
+"""
+function fix_initial_units_invested_available_vintage(m)
+    for u in indices(candidate_units)
+        t = last(history_time_slice(m))
+        if fix_units_invested_available(unit=u, t=t, _strict=false) === nothing
+            unit.parameter_values[u][:fix_units_invested_available_vintage] = parameter_value(
+                Map([t.start.x],[0])
+            )
+            unit.parameter_values[u][:starting_fix_units_invested_available_vintage] = parameter_value(
+                TimeSeries([start(t)], [0], false, false),
+            )
+        end
+    end
+end
+
+"""
     add_variable_units_invested_available_vintage!(m::Model)
 
 Add `units_invested_available` variables to model `m`.
 """
 function add_variable_units_invested_available_vintage!(m::Model)
     t0 = _analysis_time(m)
+    # fix_initial_units_invested_available_vintage(m)
     add_variable!(
         m,
         :units_invested_available_vintage,
         units_invested_available_vintage_indices;
         lb=x -> 0,
-        fix_value=x -> fix_units_invested_available_vintage(
-            unit=x.unit,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
+        ub=x -> candidate_units(unit=x.unit), #FIXME
+        # fix_value=x -> fix_units_invested_available_vintage(
+        #     unit=x.unit,
+        #     stochastic_scenario=x.stochastic_scenario,
+        #     analysis_time=t0,
+        #     t = x.t,
+        #     t_vintage=x.t_vintage,
+        #     _strict=false,
+        # ),
         vintage=true,
     )
 end

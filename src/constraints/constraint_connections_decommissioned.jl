@@ -39,7 +39,12 @@ function add_constraint_connections_decommissioned!(m::Model)
                             t=t,
                             t_vintage = to_time_slice(
                                 m;
-                                t=TimeSlice(start(t - connection_investment_tech_lifetime(connection=c)), end_(t))
+                                t=TimeSlice(
+                                    isnothing(connection_investment_tech_lifetime(connection=c)) ?
+                                    t0.ref.x #FIXME: needs to look back in history
+                                    : start(t - connection_investment_tech_lifetime(connection=c) -
+                                        (iszero(connection_lead_time(connection=c).value) ? Year(0) : connection_lead_time(connection=c))),
+                                            end_(t))
                                 )
                             )
                 ; init=0

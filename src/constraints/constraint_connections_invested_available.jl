@@ -39,12 +39,17 @@ function add_constraint_connections_invested_available!(m::Model)
                             t=t,
                             t_vintage = to_time_slice(
                                 m;
-                                t=TimeSlice(start(t - connection_investment_tech_lifetime(connection=c)), end_(t))
+                                t=TimeSlice(
+                                    isnothing(connection_investment_tech_lifetime(connection=c)) ?
+                                    t0.ref.x #FIXME: needs to look back in history
+                                    : start(t - connection_investment_tech_lifetime(connection=c) -
+                                        (iszero(connection_lead_time(connection=c).value) ? Year(0) : connection_lead_time(connection=c))),
+                                            end_(t))
                                 )
                                 #TODO: check that this is sufficient look back time
                             )
                 ; init=0
                 )
-        ) for (c, s, t) in connections_invested_available_indices(m)
+        ) for (c, s, t) in connections_invested_available_indices(m;t=[t_before_t(m,t_after=time_slice(m)[1])...,time_slice(m)...])
     )
 end

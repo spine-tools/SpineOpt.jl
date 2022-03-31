@@ -39,12 +39,16 @@ function add_constraint_storages_invested_available!(m::Model)
                             t=t,
                             t_vintage = to_time_slice(
                                 m;
-                                t=TimeSlice(start(t - storage_investment_tech_lifetime(node=n)), end_(t))
+                                t=TimeSlice(
+                                    (isnothing(storage_investment_tech_lifetime(node=n)) ?
+                                    t0.ref.x
+                                    : start(t - storage_investment_tech_lifetime(node=n))),
+                                            end_(t))
                                 )
                                 #TODO: check that this is sufficient look back time
                             )
                 ; init=0
                 )
-        ) for (n, s, t) in storages_invested_available_indices(m)
+        ) for (n, s, t) in storages_invested_available_indices(m;t=[t_before_t(m,t_after=time_slice(m)[1])...,time_slice(m)...])
     )
 end

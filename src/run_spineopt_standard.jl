@@ -126,7 +126,9 @@ function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Fu
     var = m.ext[:variables][name]
     bin = m.ext[:variables_definition][name][:bin]
     int = m.ext[:variables_definition][name][:int]
-    for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+    use_long_history = m.ext[:variables_definition][name][:use_long_history]
+    ###Fix me: we can spped this up by searchin for indices of fix_value function first!
+    for ind in indices(m; t=vcat(history_time_slice(m;use_long_history=use_long_history), time_slice(m)))
         fix_value_ = _apply_function_or_nothing(fix_value, ind)
         fix_value_ != nothing && !isnan(fix_value_) && fix(var[ind], fix_value_; force=true)
     end

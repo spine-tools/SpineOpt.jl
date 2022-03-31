@@ -60,7 +60,6 @@ function fix_initial_connections_invested_available(m)
             connection.parameter_values[conn][:fix_connections_invested_available] = parameter_value(
                 TimeSeries([start(t)], [0], false, false),
             )
-            @show connection.parameter_values[conn][:fix_connections_invested_available]
             connection.parameter_values[conn][:starting_fix_connections_invested_available] = parameter_value(
                 TimeSeries([start(t)], [0], false, false),
             )
