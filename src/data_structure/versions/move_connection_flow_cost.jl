@@ -61,7 +61,6 @@ function move_connection_flow_cost(db_url, log_level)
 	end
 	if !isempty(invalid_conns)
 		error(_invalid_connections_message(invalid_conns))
-		return false
 	end
 	# Remove old_conn_flow_cost
 	pdefs = data["parameter_definition_sq"]
@@ -77,7 +76,9 @@ end
 
 function _invalid_connections_message(invalid_conns)
 	invalid_conns_str = join(invalid_conns, ", ", ", and ")
-	msg = "failed to upgrade db: "
-	msg *= "the following `connection` objects don't have any `connection__from_node` or `connection__to_node` "
-	msg *= "to associate their `connection_flow_cost`: $invalid_conns_str"
+	msg = """
+	failed to upgrade db:
+	the following `connection` objects don't have any `connection__from_node` or `connection__to_node`
+	to associate their `connection_flow_cost`: $invalid_conns_str
+	"""
 end

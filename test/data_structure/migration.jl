@@ -16,9 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
-module Y end
-
 @testset "find_version" begin
 	url = "sqlite://"
 	dbh = SpineInterface._create_db_handler(url, false)
@@ -51,7 +48,7 @@ module Y end
 	@test SpineOpt.find_version(url) == 44
     dbh.close_connection()
     # With settings class and invalid version parameter value
-	data = Dict(:object_classes => ["settings"], :object_parameters => [("settings", "version", "latest")])
+	data = Dict(:object_classes => ["settings"], :object_parameters => [("settings", "version", "invalid")])
     dbh.open_connection()
     SpineInterface.import_data(url; data...)
 	@test_throws ArgumentError SpineOpt.find_version(url)
@@ -62,6 +59,7 @@ end
 	file_path, io = mktemp()
 	url = "sqlite:///$file_path"
 	SpineOpt.run_migrations(url, 1, 0)
+	Y = Module()
 	using_spinedb(url, Y)
 	template = SpineOpt.template()
 	object_class_names = [Symbol(x[1]) for x in template["object_classes"]]
@@ -76,4 +74,53 @@ end
 	dummy = Object(:dummy, :settings)
 	add_objects!(Y.settings, [dummy])
 	@test Y.version(settings=dummy) == SpineOpt.current_version()
+end
+@testset "migration scripts" begin
+	@testset "rename_unit_constraint_to_user_constraint" begin
+	end
+	@testset "move_connection_flow_cost" begin
+		data = Dict(
+			:object_classes => ["connection", "node"],
+			:relationship_classes => [
+				("connection__from_node", ("connection", "node")), ("connection__to_node", ("connection", "node"))
+			],
+			:object_parameters => [("connection", "connection_flow_cost")],
+			:objects => [
+				("connection", "conn_ab"),
+				("connection", "conn_bc"),
+				("node", "node_a"),
+				("node", "node_b"),
+				("node", "node_c"),
+			],
+			:relationships => [
+				("connection__from_node", ("conn_ab", "node_a")),
+				("connection__from_node", ("conn_bc", "node_b")),
+				("connection__to_node", ("conn_ab", "node_b")),
+				("connection__to_node", ("conn_bc", "node_c")),
+			],
+			:object_parameter_values => [
+				("connection", "conn_ab", "connection_flow_cost", 99),
+				("connection", "conn_bc", "connection_flow_cost", -1)
+			]
+		)
+		@testset "successful" begin
+			file_path, io = mktemp()
+			url = "sqlite:///$file_path"
+			_load_test_data(url, data)
+			@test SpineOpt.move_connection_flow_cost(url, 0) === true
+			run_request(url, "call_method", ("commit_session", "move_connection_flow_cost"))
+			Y = Module()
+			using_spinedb(url, Y)
+			@test Y.connection_flow_cost(connection=Y.connection(:conn_ab), node=Y.node(:node_a)) == 99
+			@test Y.connection_flow_cost(connection=Y.connection(:conn_bc), node=Y.node(:node_b)) == -1
+		end
+		@testset "successful" begin
+			file_path, io = mktemp()
+			url = "sqlite:///$file_path"
+			push!(data[:objects], ("connection", "invalid"))
+			push!(data[:object_parameter_values], ("connection", "invalid", "connection_flow_cost", 800))
+			_load_test_data(url, data)
+			@test_throws Exception SpineOpt.move_connection_flow_cost(url, 0)
+		end
+	end
 end
