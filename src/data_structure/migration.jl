@@ -51,6 +51,7 @@ function run_migrations(url, version, log_level)
 		while _run_migration(url, version, log_level)
 			version = find_version(url)
 		end
+		run_request(url, "import_data",	(SpineOpt.template(), "Import last version of the template"))
 	finally
 		run_request(url, "close_connection")
 	end
