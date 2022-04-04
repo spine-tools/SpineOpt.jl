@@ -42,22 +42,27 @@ function rerun_spineopt!(
         k += 1
     end
     m_mga
+    write_model_file(m_mga, file_name = "first_mga_iteration")
     name_mga_obj = :objective_value_mga
-    model.parameter_values[m_mga.ext[:instance]][name_mga_obj] = parameter_value(objective_value(m_mga))
-    @eval begin
-        $(name_mga_obj) = $(Parameter(name_mga_obj, [model]))
-    end
-    mga_iterations += 1
-    add_mga_objective_constraint!(m_mga)
-    set_mga_objective!(m_mga)
-    while mga_iterations <= max_mga_iteration
-        set_objective_mga_iteration!(m_mga;iteration=mga_iteration()[end])
-        optimize_model!(m_mga;
-                    log_level=log_level,
-                    iterations=mga_iterations)  || break
-        save_mga_objective_values!(m_mga)
+    if termination_status(m_mga) == MOI.INFEASIBLE
+        m_mga
+    else
+        model.parameter_values[m_mga.ext[:instance]][name_mga_obj] = parameter_value(objective_value(m_mga))
+        @eval begin
+            $(name_mga_obj) = $(Parameter(name_mga_obj, [model]))
+        end
         mga_iterations += 1
+        add_mga_objective_constraint!(m_mga)
+        set_mga_objective!(m_mga)
+        while mga_iterations <= max_mga_iteration
+            set_objective_mga_iteration!(m_mga;iteration=mga_iteration()[end])
+            optimize_model!(m_mga;
+                        log_level=log_level,
+                        iterations=mga_iterations)  || break
+            save_mga_objective_values!(m_mga)
+            mga_iterations += 1
+        end
+        write_report(m_mga, url_out)
+        m_mga
     end
-    write_report(m_mga, url_out)
-    m_mga
 end

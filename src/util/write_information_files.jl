@@ -47,11 +47,22 @@ function print_constraint(constraint, filename="constraint_debug.txt")
 end
 
 function write_conflicts_to_file(conflicts; file_name="conflicts")
-    io = open(joinpath(@__DIR__, "$(file_name).txt"), "w")
+    all_confl = ""
     for confl in conflicts
-        print(io, confl, "\n")
+        confl = "$confl"
+        confl = replace(confl, s": -" => ":- ")
+        confl = replace(confl, s": " => ": + ")
+        confl = replace(confl, s"+ " => "\n\t+ ")
+        confl = replace(confl, s"- " => "\n\t- ")
+        confl = replace(confl, s">= " => "\n\t\t>= ")
+        confl = replace(confl, s"== " => "\n\t\t== ")
+        confl = replace(confl, s"<= " => "\n\t\t<= ")
+        all_confl = join([all_confl, confl], "\n")
     end
     close(io)
+    open(joinpath(@__DIR__, "$(file_name).txt"), "w") do file
+        write(file, all_confl)
+    end
 end
 
 """

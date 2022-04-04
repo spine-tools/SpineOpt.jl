@@ -25,7 +25,7 @@ the keyword arguments act as filters for each dimension.
 """
 function storages_mothballed_state_vintage_indices(
     m::Model;
-    node=node(storages_mothballing=true),
+    node=anything,
     stochastic_scenario=anything,
     t_vintage=anything,
     t=anything,
@@ -49,7 +49,7 @@ function storages_mothballed_state_vintage_indices(
             temporal_block=tb,
             t=t,
         )
-        if t >= t_v
+        if storages_mothballing(node=n) && t >= t_v
     ])
 end
 

@@ -295,7 +295,7 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, obj_name::Sy
                         val2+= payment_fraction(vintage_t_start, j2, ELIFE, LT) *discount_factor(instance,discnt_rate,j2)
                         j2+= Year(1)
                     end
-                    val = max(val1/val2,0)
+                    val2 == 0 ? val=0 : val = max(val1/val2,0)
                     push!(timeseries_ind,start(vintage_t))
                     push!(timeseries_val,val)
                 end

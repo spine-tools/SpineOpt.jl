@@ -71,6 +71,7 @@ function set_objective_mga_iteration!(m;iteration=nothing)
             units_invested_available_indices,
             unit_stochastic_scenario_weight,
             units_invested_mga_indices,
+            units_invested_mga_scaling_factor,
             units_invested_big_m_mga,
             iteration
         )
@@ -80,6 +81,7 @@ function set_objective_mga_iteration!(m;iteration=nothing)
             connections_invested_available_indices,
             connection_stochastic_scenario_weight,
             connections_invested_mga_indices,
+            connections_invested_mga_scaling_factor,
             connections_invested_big_m_mga,
             iteration
         )
@@ -89,6 +91,7 @@ function set_objective_mga_iteration!(m;iteration=nothing)
             storages_invested_available_indices,
             node_stochastic_scenario_weight,
             storages_invested_mga_indices,
+            storages_invested_mga_scaling_factor,
             storages_invested_big_m_mga,
             iteration
         )
@@ -98,11 +101,12 @@ function set_objective_mga_iteration!(m;iteration=nothing)
                 m,
                 mga_objective[(model = m.ext[:instance],t=current_window(m))]
                 <= sum(
-                mga_aux_diff[ind...]
+                mga_aux_diff[((ind...,mga_iteration=iteration))]
                 for ind in vcat(
-                    [storages_invested_mga_indices(iteration),
-                    connections_invested_mga_indices(iteration),
-                    units_invested_mga_indices(iteration)]
+                    [storages_invested_mga_indices(iteration)...,
+                    connections_invested_mga_indices(iteration)...,
+                    units_invested_mga_indices(iteration)...,
+                    ]
                     )
                 )
         )
@@ -118,9 +122,9 @@ function _set_objective_mga_iteration!(
         m::Model,
         variable_name::Symbol,
         variable_indices_function::Function,
-        # capacity_weight_function::Function,
         scenario_weight_function::Function,
         mga_indices::Function,
+        mga_scaling_function::Function,
         mga_variable_bigM::Parameter,
         mga_current_iteration::Object,
         )
@@ -151,6 +155,7 @@ function _set_objective_mga_iteration!(
                     variable[_ind]
                      - mga_results[variable_name][(_drop_key(_ind,:t)..., mga_iteration=mga_current_iteration)][t0][_ind.t.start.x]
                      )
+                     * mga_scaling_function(_ind)
                      * scenario_weight_function(m; _drop_key(_ind,:t)...) #fix me, can also be only node or so
                      for _ind in variable_indices_function(m; ind...)
                    )
@@ -162,6 +167,7 @@ function _set_objective_mga_iteration!(
                     sum(
                     - (variable[_ind]
                       - mga_results[variable_name][(_drop_key(_ind,:t)..., mga_iteration=mga_current_iteration)][t0][_ind.t.start.x])
+                      * mga_scaling_function(_ind)
                       * scenario_weight_function(m; _drop_key(_ind,:t)...)
                       for _ind in variable_indices_function(m; ind...)
                    )
@@ -174,6 +180,7 @@ function _set_objective_mga_iteration!(
                     sum(
                     (variable[_ind]
                       - mga_results[variable_name][(_drop_key(_ind,:t)..., mga_iteration=mga_current_iteration)][t0][_ind.t.start.x])
+                      * mga_scaling_function(_ind)
                       * scenario_weight_function(m; _drop_key(_ind,:t)...)
                        for _ind in variable_indices_function(m; ind...)
                    )
@@ -185,6 +192,7 @@ function _set_objective_mga_iteration!(
                     sum(
                     - (variable[_ind]
                       - mga_results[variable_name][(_drop_key(_ind,:t)..., mga_iteration=mga_current_iteration)][t0][_ind.t.start.x])
+                      * mga_scaling_function(_ind)
                       * scenario_weight_function(m; _drop_key(_ind,:t)...)
                        for _ind in variable_indices_function(m; ind...)
                    )

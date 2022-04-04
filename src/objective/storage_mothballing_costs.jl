@@ -39,7 +39,7 @@ function storage_mothballing_costs(m::Model, t1)
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * storage_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
-            for (n, s, t_v, t) in storages_invested_available_vintage_indices(m; node=indices(storage_mothballing_cost)) if end_(t) <= t1;
+            for (n, s, t_v, t) in storages_mothballed_state_vintage_indices(m; node=indices(storage_mothballing_cost)) if end_(t) <= t1;
             init=0,
         )
         + expr_sum(
@@ -53,7 +53,7 @@ function storage_mothballing_costs(m::Model, t1)
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * storage_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
-            for (n, s, t_v, t) in storages_invested_available_vintage_indices(m; node=indices(storage_demothballing_cost)) if end_(t) <= t1;
+            for (n, s, t_v, t) in storages_mothballed_state_vintage_indices(m; node=indices(storage_demothballing_cost)) if end_(t) <= t1;
             init=0,
         )
     )

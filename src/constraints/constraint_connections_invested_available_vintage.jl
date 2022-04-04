@@ -40,7 +40,7 @@ function add_constraint_connections_invested_available_vintage!(m::Model)
                     * (connections_invested[c, s_v, t_v]
                     - expr_sum(
                         connections_early_decommissioned_vintage[c, s_, t_v, t_]
-                        for (c, s_, t_v, t_) in connections_invested_available_vintage_indices(
+                        for (c, s_, t_v, t_) in connections_early_decommissioned_vintage_indices(
                             m;
                             connection=c,
                             stochastic_scenario=s,

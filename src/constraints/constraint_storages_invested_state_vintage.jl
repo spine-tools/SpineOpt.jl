@@ -40,7 +40,7 @@ function add_constraint_storages_invested_state_vintage!(m::Model)
                     * (storages_invested[n, s_v, t_v]
                     - expr_sum(
                         storages_early_decommissioned_vintage[n, s_, t_v, t_]
-                        for (n, s_, t_v, t_) in storages_invested_available_vintage_indices(
+                        for (n, s_, t_v, t_) in storages_early_decommissioned_vintage_indices(
                             m;
                             node=n,
                             stochastic_scenario=s,

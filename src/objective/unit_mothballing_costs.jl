@@ -40,7 +40,7 @@ function unit_mothballing_costs(m::Model, t1)
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)
-            for (u, s, t_v, t) in units_invested_available_vintage_indices(m; unit=indices(unit_mothballing_cost)) if end_(t) <= t1;
+            for (u, s, t_v, t) in units_mothballed_state_vintage_indices(m; unit=indices(unit_mothballing_cost)) if end_(t) <= t1;
             init=0,
         )
         + expr_sum(
@@ -55,7 +55,7 @@ function unit_mothballing_costs(m::Model, t1)
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * unit_stochastic_scenario_weight(m; unit=u, stochastic_scenario=s)
-            for (u, s, t_v, t) in units_invested_available_vintage_indices(m; unit=indices(unit_demothballing_cost)) if end_(t) <= t1;
+            for (u, s, t_v, t) in units_mothballed_state_vintage_indices(m; unit=indices(unit_demothballing_cost)) if end_(t) <= t1;
             init=0,
         )
     )

@@ -40,7 +40,7 @@ function add_constraint_units_invested_state_vintage!(m::Model)
                     * (units_invested[u, s_v, t_v]
                     - expr_sum(
                         units_early_decommissioned_vintage[u, s_, t_v, t_]
-                        for (u, s_, t_v, t_) in units_invested_available_vintage_indices(
+                        for (u, s_, t_v, t_) in units_early_decommissioned_vintage_indices(
                             m;
                             unit=u,
                             stochastic_scenario=s,

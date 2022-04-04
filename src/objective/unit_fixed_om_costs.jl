@@ -34,10 +34,10 @@ function unit_fixed_om_costs(m, t1)
                 number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
                 +  units_invested_available[u, s, t]
             )
-            * fom_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] #should be given as costs per year?
+            * unit_fom_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] #should be given as costs per year?
             * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
-            for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))
+            for (u, ng, d) in indices(unit_capacity; unit=indices(unit_fom_cost))
             for (u, s, t) in units_invested_available_indices(m; unit=u) if end_(t) <= t1;
             init=0,
         )

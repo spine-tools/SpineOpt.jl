@@ -25,7 +25,7 @@ the keyword arguments act as filters for each dimension.
 """
 function units_mothballed_state_vintage_indices(
     m::Model;
-    unit=unit(units_mothballing=true),
+    unit=anything,
     stochastic_scenario=anything,
     t_vintage=anything,
     t=anything,
@@ -49,7 +49,7 @@ function units_mothballed_state_vintage_indices(
             temporal_block=tb,
             t=t,
         )
-        if t >= t_v
+        if units_mothballing(unit=u) && t >= t_v #FIXME
     ])
 end
 

@@ -37,7 +37,6 @@ function add_constraint_node_state_capacity!(m::Model)
                 (candidate_storages(node=ng) != nothing) ?
                 + expr_sum(
                     storages_invested_available[n, s, t1]
-                    - storages_decommissioned[n, s, t1]
                     for (n, s, t1) in storages_invested_available_indices(
                         m;
                         node=ng,

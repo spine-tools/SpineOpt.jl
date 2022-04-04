@@ -191,9 +191,9 @@ The required length of the included history based on parameter values that impos
 function _required_history_duration(instance::Object; use_long_history=true)
     if use_long_history
         lookback_params = (
-            min_up_time,
-            min_down_time,
-            connection_flow_delay,
+            # min_up_time,
+            # min_down_time,
+            # connection_flow_delay,
             unit_investment_tech_lifetime,
             connection_investment_tech_lifetime,
             storage_investment_tech_lifetime
@@ -228,8 +228,16 @@ function _generate_time_slice!(m::Model)
     required_history_duration = _required_history_duration(instance)
     window_duration = window_end - window_start
     history_window_count = div(Minute(required_history_duration), Minute(window_duration))
-    i = findlast(t -> end_(t) <= window_end, window_time_slices)
-    history_window_time_slices = window_time_slices[1:i] .- window_duration
+    invest_blocks = intersect(
+        model__temporal_block(model=instance),unique(
+            [unit__investment_temporal_block(unit=anything)...,
+            connection__investment_temporal_block(connection=anything)...,
+            node__investment_temporal_block(node=anything)...]
+            )
+    )
+    window_time_slices_long = filter(x -> any(y in x.blocks for y in invest_blocks),window_time_slices) #only take investment blocks
+    i = findlast(t -> end_(t) <= window_end, window_time_slices_long)
+    history_window_time_slices = window_time_slices_long[1:i] .- window_duration #this should be invesment block specific!
     for k in 1:history_window_count
         prepend!(history_time_slices, history_window_time_slices)
         history_window_time_slices .-= window_duration
@@ -238,12 +246,18 @@ function _generate_time_slice!(m::Model)
     filter!(t -> end_(t) > history_start, history_window_time_slices)
     prepend!(history_time_slices, history_window_time_slices)
     m.ext[:temporal_structure][:time_slice] = TimeSliceSet(window_time_slices)
-    m.ext[:temporal_structure][:history_time_slice] = TimeSliceSet(history_time_slices)
-    m.ext[:temporal_structure][:t_history_t] = Dict(zip(history_time_slices .+ window_duration, history_time_slices))
-    #histroy t_short
+    #histroy t_short #FIXME make this more elgant
+    operational_blocks = intersect(
+        model__temporal_block(model=instance),unique(
+            [units_on__temporal_block(unit=anything)...,
+            node__temporal_block(node=anything)...,]
+            )
+    )
+    window_time_slices_short = filter(x -> any(y in x.blocks for y in operational_blocks),window_time_slices) #only take investment blocks
     required_history_duration_short = _required_history_duration(instance;use_long_history=false)
     history_window_count_short = div(Minute(required_history_duration_short), Minute(window_duration))
-    history_window_time_slices_short = window_time_slices[1:i] .- window_duration
+    i = findlast(t -> end_(t) <= window_end, window_time_slices_short)
+    history_window_time_slices_short = window_time_slices_short[1:i] .- window_duration
     history_time_slices_short = Array{TimeSlice,1}()
     for k in 1:history_window_count_short
         prepend!(history_time_slices_short, history_window_time_slices_short)
@@ -252,8 +266,11 @@ function _generate_time_slice!(m::Model)
     history_start_short = window_start - required_history_duration_short
     filter!(t -> end_(t) > history_start_short, history_window_time_slices_short)
     prepend!(history_time_slices_short, history_window_time_slices_short)
-    m.ext[:temporal_structure][:history_time_slice_short] = TimeSliceSet(history_time_slices_short)
-    m.ext[:temporal_structure][:t_history_t_short] = Dict(zip(history_time_slices_short .+ window_duration, history_time_slices_short))
+    entire_history = unique([history_time_slices...,history_time_slices_short...])
+    m.ext[:temporal_structure][:history_time_slice] = TimeSliceSet(entire_history)
+    m.ext[:temporal_structure][:t_history_t] = Dict(zip(entire_history .+ window_duration, entire_history))
+    # m.ext[:temporal_structure][:history_time_slice_short] = TimeSliceSet(history_time_slices_short)
+    # m.ext[:temporal_structure][:t_history_t_short] = Dict(zip(history_time_slices_short .+ window_duration, history_time_slices_short))
 end
 
 """
@@ -457,20 +474,25 @@ end
 
 current_window(m::Model) = m.ext[:temporal_structure][:current_window]
 time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:time_slice](; kwargs...)
-function history_time_slice(m::Model; use_long_history=true,kwargs...)
-    if use_long_history
-        m.ext[:temporal_structure][:history_time_slice](; kwargs...)
-    else
-        m.ext[:temporal_structure][:history_time_slice_short](; kwargs...)
-    end
-end
-function t_history_t(m::Model; use_long_history=true, t::TimeSlice)
-    if use_long_history
-        get(m.ext[:temporal_structure][:t_history_t], t, nothing)
-    else
-        get(m.ext[:temporal_structure][:t_history_t_short], t, nothing)
-    end
-end
+history_time_slice(m::Model; use_long_history=true,kwargs...) = m.ext[:temporal_structure][:history_time_slice](; kwargs...)
+# function history_time_slice(m::Model; use_long_history=true,kwargs...)
+#     if use_long_history
+#         unique([m.ext[:temporal_structure][:history_time_slice](; kwargs...)...,m.ext[:temporal_structure][:history_time_slice_short](; kwargs...)...])
+#         # m.ext[:temporal_structure][:history_time_slice](; kwargs...)
+#     else
+#         m.ext[:temporal_structure][:history_time_slice_short](; kwargs...)
+#     end
+# end
+t_history_t(m::Model; use_long_history=true, t::TimeSlice) = get(m.ext[:temporal_structure][:t_history_t], t, nothing)
+# function t_history_t(m::Model; use_long_history=true, t::TimeSlice)
+#     if use_long_history
+#         a = get(m.ext[:temporal_structure][:t_history_t], t, nothing)
+#         b = get(m.ext[:temporal_structure][:t_history_t_short], t, nothing)
+#         (!isnothing(a) && !isnothing(b)) ? unique([a...,b...]) : (!isnothing(a) ? a : b)
+#     else
+#         get(m.ext[:temporal_structure][:t_history_t_short], t, nothing)
+#     end
+# end
 # history_time_slice(m::Model; kwargs...) = m.ext[:temporal_structure][:history_time_slice](; kwargs...)
 # history_time_slice(m::Model; use_long_history=false, kwargs...) = m.ext[:temporal_structure][:history_time_slice_short](; kwargs...)
 # t_history_t(m::Model; t::TimeSlice) = get(m.ext[:temporal_structure][:t_history_t], t, nothing)
