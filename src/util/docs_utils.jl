@@ -118,21 +118,21 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
             # Check for conflicts in `description`, `default_value`, `parameter_value_list`, `feature`
             if !isnothing(concept[:description]) &&
                concept[:description] != entry[template_mapping[key][:description_index]]
-                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `description` across dulipcate template entries!"
+                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `description` across duplicate template entries!"
             end
             if !isnothing(concept[:default_value]) &&
                concept[:default_value] != entry[template_mapping[key][:default_value_index]]
-                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `default_value` across dulipcate template entries!"
+                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `default_value` across duplicate template entries!"
             end
             if !isnothing(concept[:parameter_value_list]) &&
                concept[:parameter_value_list] != entry[template_mapping[key][:parameter_value_list_index]]
-                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `parameter_value_list` across dulipcate template entries!"
+                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `parameter_value_list` across duplicate template entries!"
             end
             if !isnothing(concept[:possible_values]) && !isnothing(entry[template_mapping[key][:possible_values_index]])
                 unique!(push!(concept[:possible_values], entry[template_mapping[key][:possible_values_index]]))
             end                
             if !isnothing(concept[:feature]) && concept[:feature] != entry[template_mapping[key][:feature_index]]
-                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `parameter_value_list` across dulipcate template entries!"
+                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `parameter_value_list` across duplicate template entries!"
             end
             # Include all unique `concepts` into `related concepts`
             if !isempty(concept[:related_concepts])
