@@ -218,7 +218,7 @@ function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)
     m
 end
 
-_do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model(mip_solver()) : Model(mip_solver)
+_do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)
 
 """
 A mip solver for given model instance. If given solver is not `nothing`, just return it.
