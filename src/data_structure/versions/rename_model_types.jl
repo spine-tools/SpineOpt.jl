@@ -16,56 +16,34 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
 """
 	rename_model_types(db_url)
 
 Renaming `spineopt_master` to `spineopt_benders_master`, and `spineopt_operations` to `spineopt_standard`
 """
-
 function rename_model_types(db_url, log_level)
-	@log log_level 0 "Renaming `spineopt_master` to `spineopt_benders_master`, and `spineopt_operations` to `spineopt_standard`"
-	data = run_request(
-		db_url, "query", ("object_parameter_value_sq", "parameter_value_list_sq")
+	@log log_level 0 string(
+		"Renaming `spineopt_master` to `spineopt_benders_master`, and `spineopt_operations` to `spineopt_standard`"
 	)
-
-	pvals = data["object_parameter_value_sq"]
-	plists = data["parameter_value_list_sq"]
-	model_type_vals = [x for x in pvals if x["parameter_name"] == "model_type"]
-	model_type_list = [x for x in plists if x["name"] == "model_type_list"]
-	# Prepare new_data
-	new_data = Dict()
-	new_data[:object_parameter_values] = new_pvals = []
-	new_data[:parameter_value_lists] = new_plists = []
-	new_data[:object_parameters] = [
-		x for x in template()["object_parameters"] if x[2] == "model_type"
-	]
-	###
-	for pval in model_type_vals
-		model_id = pval["object_id"]
-		if pval["value"] == "spineopt_master"
-			new_pval = ["model", pval["object_name"], "model_type", "spineopt_benders_master"]
-			push!(new_pvals, new_pval)
-		elseif pval["value"] == "spineopt_operations"
-			new_pval = ["model", pval["object_name"], "model_type", "spineopt_standard"]
-			push!(new_pvals, new_pval)
-		end
+	data = run_request(db_url, "query", ("list_value_sq", "parameter_value_list_sq"))
+	model_type_list_ids = [x["id"] for x in data["parameter_value_list_sq"] if x["name"] == "model_type_list"]
+	isempty(model_type_list_ids) && return true
+	model_type_list_id = first(model_type_list_ids)
+	list_value_ids = Dict(
+		parse_db_value(x["value"], nothing) => x["id"]
+		for x in data["list_value_sq"]
+		if x["parameter_value_list_id"] == model_type_list_id
+	)
+	spineopt_master_id = get(list_value_ids, "spineopt_master", nothing)
+	spineopt_operations_id = get(list_value_ids, "spineopt_operations", nothing)
+	new_list_vals = []
+	if spineopt_master_id !== nothing
+		push!(new_list_vals, Dict("id" => spineopt_master_id, "value" => b"\"spineopt_benders_master\""))
 	end
-
-	for plist in model_type_list
-		if plist["value"] == "spineopt_master"
-			new_plist = ["model_type_list", "spineopt_benders_master"]
-			push!(new_plists, new_plist)
-		elseif plist["value"] == "spineopt_operations"
-			new_plist = ["model_type_list", "spineopt_standard"]
-			push!(new_plists, new_plist)
-		else
-			new_plist = ["model_type_list", plist["value"]]
-			push!(new_plists, new_plist)
-		end
+	if spineopt_operations_id !== nothing
+		push!(new_list_vals, Dict("id" => spineopt_operations_id, "value" => b"\"spineopt_standard\""))
 	end
-
-	# Add new data
-	run_request(db_url, "import_data", (new_data, ""))
+	isempty(new_list_vals) && return true
+	run_request(db_url, "call_method", ("update_list_values", new_list_vals...))
 	true
 end

@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
 @testset "add connection relationships" begin
     url_in = "sqlite://"
     test_data = Dict(
@@ -198,8 +197,7 @@ end
         (connection(:connection_bc), node(:node_b), node(:node_c)),
         (connection(:connection_ca), node(:node_c), node(:node_a)),
     )
-        @test connection_capacity(connection=conn, node=n_from, direction=direction(:from_node)) ==
-              capacities_dict[conn]
+        @test connection_capacity(connection=conn, node=n_from, direction=direction(:from_node)) == capacities_dict[conn]
         @test connection_capacity(connection=conn, node=n_to, direction=direction(:from_node)) == capacities_dict[conn]
         @test connection_capacity(connection=conn, node=n_from, direction=direction(:to_node)) == capacities_dict[conn]
         @test connection_capacity(connection=conn, node=n_to, direction=direction(:to_node)) == capacities_dict[conn]

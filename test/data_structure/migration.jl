@@ -20,6 +20,7 @@
 	url = "sqlite://"
 	dbh = SpineInterface._create_db_handler(url, false)
     # With no data
+    dbh.close_connection()
     dbh.open_connection()
 	@test SpineOpt.find_version(url) == 1
     dbh.close_connection()
@@ -54,7 +55,6 @@
 	@test_throws ArgumentError SpineOpt.find_version(url)
     dbh.close_connection()
 end
-
 @testset "run_migrations" begin
 	file_path, io = mktemp()
 	url = "sqlite:///$file_path"
@@ -64,10 +64,7 @@ end
 	template = SpineOpt.template()
 	object_class_names = [Symbol(x[1]) for x in template["object_classes"]]
 	relationship_class_names = [Symbol(x[1]) for x in template["relationship_classes"]]
-	parameter_names = vcat(
-		[Symbol(x[2]) for x in template["object_parameters"]],
-		[Symbol(x[2]) for x in template["relationship_parameters"]]
-	)
+	parameter_names = [Symbol(x[2]) for k in ("object_parameters", "relationship_parameters") for x in template[k]]
 	@test Set([x.name for x in object_classes(Y)]) == Set(object_class_names)
 	@test Set([x.name for x in relationship_classes(Y)]) == Set(relationship_class_names)
 	@test Set([x.name for x in parameters(Y)]) == Set(parameter_names)
@@ -104,23 +101,47 @@ end
 			]
 		)
 		@testset "successful" begin
-			file_path, io = mktemp()
-			url = "sqlite:///$file_path"
-			_load_test_data(url, data)
+			url = "sqlite://"
+			_load_test_data_without_template(url, data)
 			@test SpineOpt.move_connection_flow_cost(url, 0) === true
 			run_request(url, "call_method", ("commit_session", "move_connection_flow_cost"))
 			Y = Module()
 			using_spinedb(url, Y)
 			@test Y.connection_flow_cost(connection=Y.connection(:conn_ab), node=Y.node(:node_a)) == 99
 			@test Y.connection_flow_cost(connection=Y.connection(:conn_bc), node=Y.node(:node_b)) == -1
+			@test Y.connection_flow_cost(connection=Y.connection(:conn_ab), _strict=false) === nothing
+			@test Y.connection_flow_cost(connection=Y.connection(:conn_bc), _strict=false) === nothing
 		end
-		@testset "successful" begin
-			file_path, io = mktemp()
-			url = "sqlite:///$file_path"
+		@testset "unsuccessful" begin
+			url = "sqlite://"
 			push!(data[:objects], ("connection", "invalid"))
 			push!(data[:object_parameter_values], ("connection", "invalid", "connection_flow_cost", 800))
-			_load_test_data(url, data)
+			_load_test_data_without_template(url, data)
 			@test_throws Exception SpineOpt.move_connection_flow_cost(url, 0)
 		end
+	end
+	@testset "rename_model_types" begin
+		url = "sqlite://"
+		data = Dict(
+			:object_classes => ["model"],
+			:objects => [("model", "op"), ("model", "benders")],
+			:object_parameters => [("model", "model_type", "spineopt_other", "model_type_list")],
+			:object_parameter_values => [
+				("model", "op", "model_type", "spineopt_operations"),
+				("model", "benders", "model_type", "spineopt_master")
+			],
+			:parameter_value_lists => [
+				("model_type_list", "spineopt_master"),
+				("model_type_list", "spineopt_operations"),
+				("model_type_list", "spineopt_other")
+			]
+		)
+		_load_test_data_without_template(url, data)
+		@test SpineOpt.rename_model_types(url, 0) === true
+		run_request(url, "call_method", ("commit_session", "rename_model_types"))
+		Y = Module()
+		using_spinedb(url, Y)
+		@test Y.model_type(model=Y.model(:op)) == :spineopt_standard
+		@test Y.model_type(model=Y.model(:benders)) == :spineopt_benders_master
 	end
 end

@@ -47,12 +47,16 @@ SpineInterface.import_data(db_url::String; kwargs...) = SpineInterface.import_da
 
 # Convenience function for resetting the test in-memory db with the `SpineOpt.template`.
 function _load_test_data(db_url, test_data)
+    data = Dict(Symbol(key) => value for (key, value) in SpineOpt.template())
+    merge!(data, test_data)
+    _load_test_data_without_template(db_url, data)
+end
+
+function _load_test_data_without_template(db_url, test_data)
     dbh = SpineInterface._create_db_handler(db_url, false)
     dbh.close_connection()
     dbh.open_connection()
-    data = Dict(Symbol(key) => value for (key, value) in SpineOpt.template())
-    merge!(data, test_data)
-    SpineInterface.import_data(db_url; data...)
+    SpineInterface.import_data(db_url; test_data...)
 end
 
 _is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
