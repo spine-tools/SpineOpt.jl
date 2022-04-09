@@ -32,6 +32,6 @@ function add_constraint_storages_invested_available_vintage!(m::Model)
             ==
             + storages_invested_state_vintage[n, s, t_v, t]
             - (storages_mothballing(node=n) ? storages_mothballed_state_vintage[n, s, t_v, t] : 0)
-        ) for (n, s, t_v, t) in storages_invested_available_vintage_indices(m)
+        ) for (n, s, t_v, t) in storages_invested_available_vintage_indices(m;t=[t_before_t(m,t_after=time_slice(m)[1])...,time_slice(m)...])#,t_vintage =[history_time_slice(m)..., time_slice(m)...])
     )
 end

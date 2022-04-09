@@ -150,29 +150,34 @@ function _set_objective_mga_iteration!(
                     m,
                     mga_aux_diff[((ind...,mga_iteration=mga_current_iteration))]
                     <=
-                    sum(
-                    + (
-                    variable[_ind]
-                     - mga_results[variable_name][(_drop_key(_ind,:t)..., mga_iteration=mga_current_iteration)][t0][_ind.t.start.x]
-                     )
-                     * mga_scaling_function(;ind...)
-                     * scenario_weight_function(m; _drop_key(_ind,:t)...) #fix me, can also be only node or so
-                     for _ind in variable_indices_function(m; ind...)
-                   )
-                   + mga_variable_bigM(;ind...)*mga_aux_binary[(ind...,mga_iteration=mga_current_iteration)])
+                    (
+                        sum(
+                        + (
+                        variable[_ind]
+                         - mga_results[variable_name][(_drop_key(_ind,:t)..., mga_iteration=mga_current_iteration)][t0][_ind.t.start.x]
+                         )
+                         * mga_scaling_function(;ind...)
+                         * scenario_weight_function(m; _drop_key(_ind,:t)...) #fix me, can also be only node or so
+                         for _ind in variable_indices_function(m; ind...)
+                       )
+                       + mga_variable_bigM(;ind...)
+                       *mga_aux_binary[(ind...,mga_iteration=mga_current_iteration)])
+                   * mga_scaling_function(;ind...))
                 d_diff_ub2[(ind...,mga_current_iteration...)]= @constraint(
                     m,
                     mga_aux_diff[((ind...,mga_iteration=mga_current_iteration))]
                     <=
-                    sum(
-                    - (variable[_ind]
-                      - mga_results[variable_name][(_drop_key(_ind,:t)..., mga_iteration=mga_current_iteration)][t0][_ind.t.start.x])
-                      * mga_scaling_function(;ind...)
-                      * scenario_weight_function(m; _drop_key(_ind,:t)...)
-                      for _ind in variable_indices_function(m; ind...)
-                   )
-                  + mga_variable_bigM(;ind...)*(1-mga_aux_binary[(ind...,mga_iteration=mga_current_iteration)])
-                  )
+                    (
+                        sum(
+                        - (variable[_ind]
+                          - mga_results[variable_name][(_drop_key(_ind,:t)..., mga_iteration=mga_current_iteration)][t0][_ind.t.start.x])
+                          * mga_scaling_function(;ind...)
+                          * scenario_weight_function(m; _drop_key(_ind,:t)...)
+                          for _ind in variable_indices_function(m; ind...)
+                       )
+                  + mga_variable_bigM(;ind...)
+                  *(1-mga_aux_binary[(ind...,mga_iteration=mga_current_iteration)]))
+                  * mga_scaling_function(;ind...))
                   d_diff_lb1[(ind...,mga_current_iteration...)] = @constraint(
                     m,
                     mga_aux_diff[((ind...,mga_iteration=mga_current_iteration))]

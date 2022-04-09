@@ -71,7 +71,7 @@ function constraint_storages_invested_state_vintage_indices(m::Model)
     t0 = _analysis_time(m)
     unique(
         (node=n, stochastic_path=path, t_vintage=t_v, t=t)
-        for n in indices(storage_investment_tech_lifetime) for (n, s, t_v, t) in storages_invested_available_vintage_indices(m; node=n)
+        for n in indices(storage_investment_tech_lifetime) for (n, s, t_v, t) in storages_invested_available_vintage_indices(m; node=n, t=[t_before_t(m,t_after=time_slice(m)[1])...,time_slice(m)...])#,t_vintage =[history_time_slice(m)..., time_slice(m)...])
         for path in active_stochastic_paths(_constraint_storages_invested_state_vintage_indices(m, n, s, t_v, t))
     )
 end

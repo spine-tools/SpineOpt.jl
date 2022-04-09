@@ -38,7 +38,9 @@ function generate_economic_structure!(m::Model;log_level=3)
         @timelog log_level 3 "- [Generated conversion for discounted decommissioning of $(name)s]" generate_decommissioning_conversion_to_discounted_annuities!(m::Model,obj, name)
         @timelog log_level 3 "- [Generated salvage fraction for $(name)s]" generate_salvage_fraction!(m::Model,obj, name)
         @timelog log_level 3 "- [Generated $(name) technology specific discount factors]" generate_tech_discount_factor!(m::Model,obj, name)
+
     end
+    #@show collect(indices(unit_capacity_transfer_factor))
 end
 
 
@@ -89,7 +91,7 @@ function generate_capacity_transfer_factor!(m::Model, obj_cls::ObjectClass, obj_
                     end_of_operation = vintage_t_start + LT + TLIFE
                     timeseries_val = []
                     timeseries_ind = []
-                    for t in time_slice(m; temporal_block = invest_temporal_block(;Dict(obj_cls.name=>id)...))
+                    for t in time_slice(m; temporal_block = invest_temporal_block(;Dict(obj_cls.name=>id,)...),t = Iterators.flatten((history_time_slice(m), time_slice(m))))
                         t_start = start(t)
                         t_end = end_(t)
                         dur =  t_end - t_start

@@ -25,7 +25,7 @@ Check if conneciton investment variable type is defined to be an integer.
 """
 
 function connections_invested_int(x)
-    connection_investment_variable_type(connection=x.connection) == :variable_type_integer
+    connection_investment_variable_type(connection=x.connection) == :connection_investment_variable_type_integer
 end
 
 """
@@ -37,13 +37,13 @@ to consider this.
 """
 function fix_initial_connections_invested(m)
     for conn in indices(candidate_connections)
-        t = last(history_time_slice(m; temporal_block=connection__investment_temporal_block(connection=conn)))
-        if fix_connections_invested(connection=conn, t=t, _strict=false) === nothing
+        t = history_time_slice(m; temporal_block=connection__investment_temporal_block(connection=conn))
+        if fix_connections_invested(connection=conn, t=last(t), _strict=false) === nothing
             connection.parameter_values[conn][:fix_connections_invested] = parameter_value(
-                TimeSeries([start(t)], [0], false, false),
+                TimeSeries(start.(t), zeros(length(start.(t))), false, false),
             )
             connection.parameter_values[conn][:starting_fix_connections_invested] = parameter_value(
-                TimeSeries([start(t)], [0], false, false),
+                TimeSeries(start.(t), zeros(length(start.(t))), false, false),
             )
         end
     end

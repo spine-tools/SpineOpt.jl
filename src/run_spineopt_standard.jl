@@ -128,7 +128,13 @@ function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Fu
     int = m.ext[:variables_definition][name][:int]
     use_long_history = m.ext[:variables_definition][name][:use_long_history]
     ###Fix me: we can spped this up by searchin for indices of fix_value function first!
-    for ind in indices(m; t=vcat(history_time_slice(m;use_long_history=use_long_history), time_slice(m)))
+    use_vintage_key = m.ext[:variables_definition][name][:vintage]
+    if !use_vintage_key
+        all_inds = indices(m; t=vcat(history_time_slice(m;use_long_history=use_long_history), time_slice(m)))
+    else #FIXME: t_vintage could also be current time_slice, but then rahter fix investment variables accoridngly for optimization
+        all_inds = indices(m; t=vcat(history_time_slice(m;use_long_history=use_long_history), time_slice(m)), t_vintage = history_time_slice(m;use_long_history=use_long_history))
+    end
+    for ind in all_inds
         fix_value_ = _apply_function_or_nothing(fix_value, ind)
         fix_value_ != nothing && !isnan(fix_value_) && fix(var[ind], fix_value_; force=true)
     end
