@@ -55,7 +55,7 @@ function move_connection_flow_cost(db_url, log_level)
 			continue
 		end
 		rel = first(sort(rels, by=x -> x["class_name"] == "connection__to_node"))
-		value = parse_db_value(pval["value"], pval["type"])
+		value = (pval["value"], pval["type"])
 		new_pval = [rel["class_name"], split(rel["object_name_list"], ","), "connection_flow_cost", value]
 		push!(new_pvals, new_pval)
 	end

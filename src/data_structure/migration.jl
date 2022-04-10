@@ -104,10 +104,10 @@ function find_version(url)
 		)
 		return 1
 	end
-	_parse_version(pdefs[j]["default_value"])
+	version = parse_db_value(pdefs[j]["default_value"], pdefs[j]["default_type"])
+	_parse_version(version)
 end
 
-_parse_version(version::Vector{UInt8}) = _parse_version(JSON.parse(String(version)))
 _parse_version(version::String) = _parse_version(parse(Float64, version))
 _parse_version(version::Float64) = _parse_version(round(Int, version))
 _parse_version(version::Int) = version

@@ -38,10 +38,10 @@ function rename_model_types(db_url, log_level)
 	spineopt_operations_id = get(list_value_ids, "spineopt_operations", nothing)
 	new_list_vals = []
 	if spineopt_master_id !== nothing
-		push!(new_list_vals, Dict("id" => spineopt_master_id, "value" => b"\"spineopt_benders_master\""))
+		push!(new_list_vals, Dict("id" => spineopt_master_id, "value" => Vector{UInt8}("\"spineopt_benders_master\"")))
 	end
 	if spineopt_operations_id !== nothing
-		push!(new_list_vals, Dict("id" => spineopt_operations_id, "value" => b"\"spineopt_standard\""))
+		push!(new_list_vals, Dict("id" => spineopt_operations_id, "value" => Vector{UInt8}("\"spineopt_standard\"")))
 	end
 	isempty(new_list_vals) && return true
 	run_request(db_url, "call_method", ("update_list_values", new_list_vals...))
