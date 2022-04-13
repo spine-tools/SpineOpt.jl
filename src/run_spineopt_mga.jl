@@ -56,17 +56,17 @@ function rerun_spineopt!(
         @timelog log_level 2 "Setting mga slack-objective constraint..." add_mga_objective_constraint!(m_mga)
         @timelog log_level 2 "Setting mga objective..." set_mga_objective!(m_mga)
         while mga_iterations <= max_mga_iteration
-            @timelog log_level 2 "Adding mga differences of $(mga_iteration)..." set_objective_mga_iteration!(m_mga;iteration=mga_iteration()[end])
+            @timelog log_level 2 "Adding mga differences of $(mga_iteration()[end])..." set_objective_mga_iteration!(m_mga;iteration=mga_iteration()[end])
             #Clear output dicts here; to reduce memory
             for k in keys(m_mga.ext[:outputs])
                 m_mga.ext[:outputs][k] = Dict()
             end
-            @timelog log_level 2 "Cleaning output dictionary to reduce memory $(k)..." GC.gc()
-            @timelog log_level 2 "Solving mga iteration $(mga_iteration)..." optimize_model!(m_mga;
+            @timelog log_level 2 "Cleaning output dictionary to reduce memory after iteration $(mga_iterations)..." GC.gc()
+            @timelog log_level 2 "Solving mga iteration $(mga_iteration()[end])..." optimize_model!(m_mga;
                         log_level=log_level,
                         iterations=mga_iterations)  || break
-            @timelog log_level 2 "Saving mga objective of $(mga_iteration)..." save_mga_objective_values!(m_mga)
-            @timelog log_level 2 "Writing mga report of $(mga_iteration)..." write_report(m_mga, url_out)
+            @timelog log_level 2 "Saving mga objective of $(mga_iteration()[end])..." save_mga_objective_values!(m_mga)
+            @timelog log_level 2 "Writing mga report of $(mga_iteration()[end])..." write_report(m_mga, url_out)
             mga_iterations += 1
         end
         m_mga

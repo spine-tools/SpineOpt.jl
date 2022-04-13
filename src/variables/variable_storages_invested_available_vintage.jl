@@ -61,15 +61,15 @@ then force it to be zero so that the model doesn't get free investments and the 
 to consider this.
 """
 function fix_initial_storages_invested_available_vintage(m)
-    for n in indices(candidate_storages)
-        t = last(history_time_slice(m))
-        t_v = last(history_time_slice(m))
-        if fix_storages_invested_available(node=n, t_vintage=t_v, t=t, _strict=false) === nothing
+    for n in node__investment_temporal_block(temporal_block=anything)
+        t_vintage = history_time_slice(m; temporal_block=node__investment_temporal_block(node=n))
+        t = vcat(history_time_slice(m; temporal_block=node__investment_temporal_block(node=n)),time_slice(m; temporal_block=node__investment_temporal_block(node=n)))
+        if fix_storages_invested_available_vintage(node=n, t=last(t), _strict=false) === nothing
             node.parameter_values[n][:fix_storages_invested_available_vintage] = parameter_value(
-                TimeSeries([start(t)], [0], false, false),
+                Map(t_vintage,repeat([TimeSeries(start.(t), zeros(length(start.(t))), false, false)],length(t_vintage))),
             )
             node.parameter_values[n][:starting_fix_storages_invested_available_vintage] = parameter_value(
-                TimeSeries([start(t)], [0], false, false),
+                Map(t_vintage,repeat([TimeSeries(start.(t), zeros(length(start.(t))), false, false)],length(t_vintage))),
             )
         end
     end
@@ -81,7 +81,7 @@ end
 Add `storages_invested_available` variables to model `m`.
 """
 function add_variable_storages_invested_available_vintage!(m::Model)
-    # fix_initial_storages_invested_available_vintage(m)
+    fix_initial_storages_invested_available_vintage(m)
     t0 = _analysis_time(m)
     add_variable!(
         m,
@@ -89,14 +89,14 @@ function add_variable_storages_invested_available_vintage!(m::Model)
         storages_invested_available_vintage_indices;
         lb=x -> 0,
         ub=x -> candidate_storages(node=x.node), #FIXME
-        # fix_value=x -> fix_storages_invested_available_vintage(
-        #     node=x.node,
-        #     stochastic_scenario=x.stochastic_scenario,
-        #     analysis_time=t0,
-        #     t=x.t,
-        #     t_vintage=x.t_vintage,
-        #     _strict=false,
-        # ),
+        fix_value=x -> fix_storages_invested_available_vintage(
+            node=x.node,
+            stochastic_scenario=x.stochastic_scenario,
+            analysis_time=t0,
+            t_vintage = x.t_vintage,
+            t=x.t,
+            _strict=false,
+        ),
         vintage=true,
     )
 end

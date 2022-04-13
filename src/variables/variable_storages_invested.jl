@@ -23,7 +23,7 @@
 Check if node investment variable type is defined to be an integer.
 """
 
-storages_invested_int(x) = storage_investment_variable_type(node=x.node) == :variable_type_integer
+storages_invested_int(x) = storage_investment_variable_type(node=x.node) == :storage_investment_variable_type_integer
 
 """
     fix_initial_storages_invested()
@@ -33,14 +33,14 @@ then force it to be zero so that the model doesn't get free investments and the 
 to consider this.
 """
 function fix_initial_storages_invested(m)
-    for u in indices(candidate_storages) #FIXME: needs to also have investment temporal block
-        t = last(history_time_slice(m))
-        if fix_storages_invested(node=u, t=t, _strict=false) === nothing
-            node.parameter_values[u][:fix_storages_invested] = parameter_value(
-                TimeSeries([start(t)], [0], false, false),
+    for n in indices(candidate_storages) #FIXME: needs to also have investment temporal block
+        t = history_time_slice(m; temporal_block=node__investment_temporal_block(node=n))
+        if fix_storages_invested(node=n, t=last(t), _strict=false) === nothing
+            node.parameter_values[n][:fix_storages_invested] = parameter_value(
+                TimeSeries(start.(t), zeros(length(start.(t))), false, false),
             )
-            node.parameter_values[u][:starting_fix_storages_invested] = parameter_value(
-                TimeSeries([start(t)], [0], false, false),
+            node.parameter_values[n][:starting_fix_storages_invested] = parameter_value(
+                TimeSeries(start.(t), zeros(length(start.(t))), false, false),
             )
         end
     end

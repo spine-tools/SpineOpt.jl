@@ -59,7 +59,6 @@ function write_conflicts_to_file(conflicts; file_name="conflicts")
         confl = replace(confl, s"<= " => "\n\t\t<= ")
         all_confl = join([all_confl, confl], "\n")
     end
-    close(io)
     open(joinpath(@__DIR__, "$(file_name).txt"), "w") do file
         write(file, all_confl)
     end

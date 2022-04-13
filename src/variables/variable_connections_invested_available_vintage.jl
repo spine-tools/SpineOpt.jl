@@ -62,13 +62,14 @@ to consider this.
 """
 function fix_initial_connections_invested_available_vintage(m)
     for conn in indices(candidate_connections)
-        t = last(history_time_slice(m; temporal_block=connection__investment_temporal_block(connection=conn)))
-        if fix_connections_invested_available(connection=conn, t=t, _strict=false) === nothing
+        t_vintage = history_time_slice(m; temporal_block=connection__investment_temporal_block(connection=conn))
+        t = vcat(history_time_slice(m; temporal_block=connection__investment_temporal_block(connection=conn)),time_slice(m; temporal_block=connection__investment_temporal_block(connection=conn)))
+        if fix_connections_invested_available_vintage(connection=conn, t=last(t), _strict=false) === nothing
             connection.parameter_values[conn][:fix_connections_invested_available_vintage] = parameter_value(
-                TimeSeries([start(t)], [0], false, false),
+                Map(t_vintage,repeat([TimeSeries(start.(t), zeros(length(start.(t))), false, false)],length(t_vintage))),
             )
             connection.parameter_values[conn][:starting_fix_connections_invested_available_vintage] = parameter_value(
-                TimeSeries([start(t)], [0], false, false),
+                Map(t_vintage,repeat([TimeSeries(start.(t), zeros(length(start.(t))), false, false)],length(t_vintage))),
             )
         end
     end
@@ -80,7 +81,7 @@ end
 Add `connections_invested_available` variables to model `m`.
 """
 function add_variable_connections_invested_available_vintage!(m::Model)
-    # fix_initial_connections_invested_available_vintage(m)
+    fix_initial_connections_invested_available_vintage(m)
     t0 = _analysis_time(m)
     add_variable!(
         m,
@@ -88,14 +89,14 @@ function add_variable_connections_invested_available_vintage!(m::Model)
         connections_invested_available_vintage_indices;
         lb=x -> 0,
         ub=x -> candidate_connections(connection=x.connection),
-        # fix_value=x -> fix_connections_invested_available_vintage(
-        #     connection=x.connection,
-        #     stochastic_scenario=x.stochastic_scenario,
-        #     analysis_time=t0,
-        #     t=x.t,
-        #     t_vintage=x.t_vintage,
-        #     _strict=false,
-        # ),
+        fix_value=x -> fix_connections_invested_available_vintage(
+            connection=x.connection,
+            stochastic_scenario=x.stochastic_scenario,
+            analysis_time=t0,
+            t=x.t,
+            t_vintage=x.t_vintage,
+            _strict=false,
+        ),
         vintage=true,
     )
 end

@@ -34,13 +34,13 @@ to consider this.
 """
 function fix_initial_units_invested(m)
     for u in indices(candidate_units)
-        t = last(history_time_slice(m))
+        t = history_time_slice(m; temporal_block=unit__investment_temporal_block(unit=u))
         if fix_units_invested(unit=u, t=t, _strict=false) === nothing
             unit.parameter_values[u][:fix_units_invested] = parameter_value(
-                TimeSeries([start(t)], [0], false, false),
+                TimeSeries(start.(t), zeros(length(start.(t))), false, false),
             )
             unit.parameter_values[u][:starting_fix_units_invested] = parameter_value(
-                TimeSeries([start(t)], [0], false, false),
+                TimeSeries(start.(t), zeros(length(start.(t))), false, false),
             )
         end
     end
