@@ -72,6 +72,8 @@ function set_objective_mga_iteration!(m;iteration=nothing)
             unit_stochastic_scenario_weight,
             units_invested_mga_indices,
             units_invested_mga_scaling_factor,
+            use_unit_capacity_for_mga_scaling,
+            unit_capacity,
             units_invested_big_m_mga,
             iteration
         )
@@ -82,6 +84,8 @@ function set_objective_mga_iteration!(m;iteration=nothing)
             connection_stochastic_scenario_weight,
             connections_invested_mga_indices,
             connections_invested_mga_scaling_factor,
+            use_connection_capacity_for_mga_scaling,
+            connection_capacity,
             connections_invested_big_m_mga,
             iteration
         )
@@ -92,6 +96,8 @@ function set_objective_mga_iteration!(m;iteration=nothing)
             node_stochastic_scenario_weight,
             storages_invested_mga_indices,
             storages_invested_mga_scaling_factor,
+            use_storage_capacity_for_mga_scaling,
+            node_state_cap,
             storages_invested_big_m_mga,
             iteration
         )
@@ -125,6 +131,8 @@ function _set_objective_mga_iteration!(
         scenario_weight_function::Function,
         mga_indices::Function,
         mga_scaling_function::Parameter,
+        use_obj_capacity_for_scaling::Parameter,
+        obj_capacity::Parameter,
         mga_variable_bigM::Parameter,
         mga_current_iteration::Object,
         )
@@ -167,7 +175,7 @@ function _set_objective_mga_iteration!(
                        )
                        + mga_variable_bigM(;ind...)
                        *mga_aux_binary[(ind...,mga_iteration=mga_current_iteration)])
-                   * mga_scaling_function(;ind...))
+                       * mga_scaling_function(;ind...))
                 d_diff_ub2[(ind...,mga_current_iteration...)]= @constraint(
                     m,
                     mga_aux_diff[((ind...,mga_iteration=mga_current_iteration))]
