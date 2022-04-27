@@ -304,9 +304,10 @@ function output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
     output_value(by_analysis_time, Val(overwrite_results_on_rolling))
 end
 function output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
+    by_analysis_time_sorted = sort(by_analysis_time)
     TimeSeries(
-        [ts for by_time_stamp in values(by_analysis_time) for ts in keys(by_time_stamp)],
-        [val for by_time_stamp in values(by_analysis_time) for val in values(by_time_stamp)],
+        [ts for by_time_stamp in values(by_analysis_time_sorted) for ts in keys(by_time_stamp)],
+        [val for by_time_stamp in values(by_analysis_time_sorted) for val in values(by_time_stamp)],
         false,
         false
     )
