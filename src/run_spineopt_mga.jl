@@ -9,6 +9,7 @@ function rerun_spineopt!(
     log_level=3,
     optimize=true,
     update_names=false,
+    alternative="",
     alternative_objective=m_mga -> nothing,
 )
     outputs = Dict()
@@ -57,6 +58,6 @@ function rerun_spineopt!(
         save_mga_objective_values!(m_mga)
         mga_iterations += 1
     end
-    write_report(m_mga, url_out)
+    write_report(m_mga, url_out; alternative=alternative)
     m_mga
 end

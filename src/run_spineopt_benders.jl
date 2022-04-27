@@ -28,6 +28,7 @@ function rerun_spineopt!(
     log_level=3,
     optimize=true,
     update_names=false,
+    alternative="",
     alternative_objective=m -> nothing,
 )
     m.ext[:is_sub_problem] = true
@@ -77,7 +78,7 @@ function rerun_spineopt!(
         j += 1
         global current_bi = add_benders_iteration(j)
     end
-    @timelog log_level 2 "Writing report..." write_report(m, url_out)
+    @timelog log_level 2 "Writing report..." write_report(m, url_out; alternative=alternative)
     m, mp
 end
 

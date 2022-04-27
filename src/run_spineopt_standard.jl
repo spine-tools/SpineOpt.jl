@@ -28,7 +28,8 @@ function rerun_spineopt!(
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
-    update_names=false
+    update_names=false,
+    alternative=""
 )
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
@@ -55,7 +56,7 @@ function rerun_spineopt!(
         update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
         k += 1
     end
-    @timelog log_level 2 "Writing report..." write_report(m, url_out)
+    @timelog log_level 2 "Writing report..." write_report(m, url_out; alternative=alternative)
     m
 end
 
