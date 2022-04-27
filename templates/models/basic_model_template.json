@@ -145,7 +145,7 @@
         ["node", "node_slack_penalty", null, null, "A penalty cost for `node_slack_pos` and `node_slack_neg` variables. The slack variables won't be included in the model unless there's a cost defined for them."],
         ["node", "node_state_cap", null, null, "The maximum permitted value for a `node_state` variable."],
         ["node", "node_state_min", 0.0, null, "The minimum permitted value for a `node_state` variable."],
-        ["node", "state_coeff", 0.0, null, "Represents the `commodity` content of a `node_state` variable in respect to the `unit_flow` and `connection_flow` variables. Essentially, acts as a coefficient on the `node_state` variable in the `:node_injection` constraint."],
+        ["node", "state_coeff", 1.0, null, "Represents the `commodity` content of a `node_state` variable in respect to the `unit_flow` and `connection_flow` variables. Essentially, acts as a coefficient on the `node_state` variable in the `:node_injection` constraint."],
         ["node", "storage_investment_cost", null, null, "Determines the investment cost per unit state_cap over the investment life of a storage"],
         ["node", "storage_investment_lifetime", null, null, "Minimum lifetime for storage investment decisions."],
         ["node", "storage_investment_variable_type", "variable_type_integer", "variable_type_list", "Determines whether the storage investment variable is continuous (usually representing capacity) or integer (representing discrete units invested)"],
