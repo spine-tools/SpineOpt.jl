@@ -29,7 +29,7 @@ function unit_decommissioning_costs(m::Model, t1)
         m,
         + expr_sum(
             units_decommissioned[u, s, t]
-            * unit_decommissioning_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+            # * unit_decommissioning_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * unit_decommissioning_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * reduce(+,
                 unit_capacity[(unit=u, node=n, direction = d, stochastic_scenario=s, analysis_time=t0, t=t)]

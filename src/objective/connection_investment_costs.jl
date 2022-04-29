@@ -29,9 +29,9 @@ function connection_investment_costs(m::Model, t1)
         m,
         + expr_sum(
             connections_invested[c, s, t]
-            * (1- connection_salvage_fraction[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)])
-            * connection_tech_discount_factor[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * connection_conversion_to_discounted_annuities[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
+            # * (1- connection_salvage_fraction[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)])
+            # * connection_tech_discount_factor[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
+            # * connection_conversion_to_discounted_annuities[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
             * connection_investment_cost[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
             * reduce(*,
                 connection_capacity[(connection=c, node=n, direction = d, stochastic_scenario=s, analysis_time=t0, t=t)]

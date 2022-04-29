@@ -29,8 +29,8 @@ function unit_mothballing_costs(m::Model, t1)
         m,
         + expr_sum(
             units_mothballed_vintage[u, s, t_v, t]
-            * discount_factor(m,discount_rate(model=m.ext[:instance]),t.start)
-            * unit_mothballing_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+            # * discount_factor(m,discount_rate(model=m.ext[:instance]),t.start)
+            # * unit_mothballing_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * unit_mothballing_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * reduce(+,
                 unit_capacity[(unit=u, node=n, direction = d, stochastic_scenario=s, analysis_time=t0, t=t)]
@@ -45,7 +45,8 @@ function unit_mothballing_costs(m::Model, t1)
         )
         + expr_sum(
             units_demothballed_vintage[u, s, t_v, t]
-            * discount_factor(m,discount_rate(model=m.ext[:instance]),t.start)
+            # * discount_factor(m,discount_rate(model=m.ext[:instance]),t.start)
+            # * unit_mothballing_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * unit_demothballing_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * reduce(+,
                 unit_capacity[(unit=u, node=n, direction = d, stochastic_scenario=s, analysis_time=t0, t=t)]

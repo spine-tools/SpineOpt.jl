@@ -31,7 +31,7 @@ function connection_fixed_om_costs(m, t1)
             + connection_capacity[(connection=c, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
             * (!isnothing(candidate_connections(connection=c)) ? connections_invested_available[c, s, t] : 1)
             * connection_fom_cost[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)] #should be given as costs per year?
-            * connection_discounted_duration[(connection=c, stochastic_scenario=s,t=t)]
+            # * connection_discounted_duration[(connection=c, stochastic_scenario=s,t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             for (c, ng, d) in indices(connection_capacity; connection=indices(connection_fom_cost))
             for (c, s, t) in connections_invested_available_indices(m; connection=c) if end_(t) <= t1;

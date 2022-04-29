@@ -29,7 +29,7 @@ function connection_flow_costs(m::Model, t1)
         m,
         expr_sum(
             connection_flow[conn, n, d, s, t]
-            * connection_discounted_duration[(connection=conn, stochastic_scenario=s,t=t)]
+            # * connection_discounted_duration[(connection=conn, stochastic_scenario=s,t=t)]
             * duration(t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * connection_flow_cost[(connection=conn, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
