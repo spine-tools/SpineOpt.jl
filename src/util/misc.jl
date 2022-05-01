@@ -108,6 +108,34 @@ Drop keys from a `NamedTuple`.
 _drop_key(x::NamedTuple, key::Symbol...) = (; (k => v for (k, v) in pairs(x) if !(k in key))...)
 
 """
+Drop keys from a Dict with `NamedTuple` keys.
+"""
+function _drop_key(x::Dict, key::Symbol)
+    x_new = Dict()
+    for (i,j) in x
+       x_new[_drop_key(i,key)] = j
+       #delete!(x,i)
+   end
+   x = x_new
+end
+
+"""
+Add keys to a `NamedTuple`.
+"""
+_add_key(x::NamedTuple, key::Symbol, val::Object) = (; x..., Dict(key=>val)...)
+
+"""
+Add keys from a Dict with `NamedTuple` keys.
+"""
+function _add_key(x::Dict, key::Symbol, val::Object)
+    x_new = Dict()
+    for (i,j) in x
+       x_new[_add_key(i,key,val)] = j
+   end
+   x = x_new
+end
+
+"""
     _analysis_time(m::Model)
 
 Fetch the current analysis time for the model `m`.

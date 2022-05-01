@@ -317,7 +317,7 @@ end
 Optimize the given model.
 If an optimal solution is found, save results and return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, iterations=nothing)
+function optimize_model!(m::Model; log_level=3, calculate_duals=false, iterations=nothing, mga_alpha=nothing)
     write_mps_file(model=m.ext[:instance]) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
@@ -336,7 +336,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
             save_bound_marginal_values!(m)
         end
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @timelog log_level 2 "Saving $(m.ext[:instance]) results..." save_model_results!(m,iterations=iterations)
+        @timelog log_level 2 "Saving $(m.ext[:instance]) results..." save_model_results!(m,iterations=iterations,mga_alpha=mga_alpha)
         if calculate_duals
             if lp_solver != mip_solver
                 @timelog log_level 1 "Switching back to MIP solver $(mip_solver)..." set_optimizer(m, mip_solver)
@@ -431,7 +431,7 @@ function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, ::Nothing)
     Dict(start(t) => v for (t, v) in by_time_slice_non_aggr)
 end
 
-function _save_output!(m, out, value_or_param; iterations=nothing)
+function _save_output!(m, out, value_or_param; iterations=nothing, mga_alpha=nothing)
     by_entity_non_aggr = _value_by_entity_non_aggregated(m, value_or_param)
     for (entity, by_analysis_time_non_aggr) in by_entity_non_aggr
         if !isnothing(iterations)
@@ -458,19 +458,19 @@ function _save_output!(m, out, value_or_param; iterations=nothing)
     end
     true
 end
-_save_output!(m, out, ::Nothing; iterations=iterations) = false
+_save_output!(m, out, ::Nothing; iterations=iterations, mga_alpha=mga_alpha) = false
 
 """
 Save the outputs of a model into a dictionary.
 """
-function save_outputs!(m; iterations=nothing)
+function save_outputs!(m; iterations=nothing, mga_alpha=nothing)
     for r in model__report(model=m.ext[:instance]), out in report__output(report=r)
         value = get(m.ext[:values], out.name, nothing)
-        if _save_output!(m, out, value; iterations=iterations)
+        if _save_output!(m, out, value; iterations=iterations, mga_alpha=mga_alpha)
             continue
         end
         param = parameter(out.name, @__MODULE__)
-        if _save_output!(m, out, param; iterations=iterations)
+        if _save_output!(m, out, param; iterations=iterations, mga_alpha=mga_alpha)
             continue
         end
         @warn "can't find any values for '$(out.name)'"
@@ -480,10 +480,10 @@ end
 """
 Save a model results: first postprocess results, then save variables and objective values, and finally save outputs
 """
-function save_model_results!(m; iterations=nothing)
+function save_model_results!(m; iterations=nothing, mga_alpha=nothing)
     save_variable_values!(m)
     save_objective_values!(m)
-    save_outputs!(m; iterations=iterations)
+    save_outputs!(m; iterations=iterations, mga_alpha=mga_alpha)
 end
 
 """

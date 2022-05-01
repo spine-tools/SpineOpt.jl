@@ -62,7 +62,7 @@ function storages_invested_mga_indices(mga_iteration)
             for mga_it in mga_iteration])
 end
 
-function set_objective_mga_iteration!(m;iteration=nothing)
+function set_objective_mga_iteration!(m;iteration=nothing, mga_alpha=nothing)
     instance = m.ext[:instance]
     if !mga_diff_relative(model=instance) #FIXME: define also for relative diffs in the future
         _set_objective_mga_iteration!(
@@ -75,7 +75,7 @@ function set_objective_mga_iteration!(m;iteration=nothing)
             use_unit_capacity_for_mga_scaling,
             unit_capacity,
             units_invested_big_m_mga,
-            iteration
+            iteration,
         )
         _set_objective_mga_iteration!(
             m,
@@ -87,7 +87,7 @@ function set_objective_mga_iteration!(m;iteration=nothing)
             use_connection_capacity_for_mga_scaling,
             connection_capacity,
             connections_invested_big_m_mga,
-            iteration
+            iteration,
         )
         _set_objective_mga_iteration!(
             m,
@@ -99,23 +99,57 @@ function set_objective_mga_iteration!(m;iteration=nothing)
             use_storage_capacity_for_mga_scaling,
             node_state_cap,
             storages_invested_big_m_mga,
-            iteration
+            iteration,
         )
         @fetch mga_aux_diff, mga_objective = m.ext[:variables]
         ub_objective = get!(m.ext[:constraints],:mga_objective_ub,Dict())
-        ub_objective[iteration] = @constraint(
-                m,
-                mga_objective[(model = m.ext[:instance],t=current_window(m))]
-                <= sum(
-                mga_aux_diff[((ind...,mga_iteration=iteration))]
-                for ind in vcat(
-                    [storages_invested_mga_indices(iteration)...,
-                    connections_invested_mga_indices(iteration)...,
-                    units_invested_mga_indices(iteration)...,
-                    ]
-                    )
+        if !isnothing(mga_alpha)
+            for ind in vcat(
+                [storages_invested_mga_indices(iteration)...,
+                connections_invested_mga_indices(iteration)...,
+                units_invested_mga_indices(iteration)...,
+                ]
                 )
-        )
+                ind_mga_alpha = collect(indices(mga_alpha_step_length))[1]
+                @show ind_mga_alpha,ind
+                if ind_mga_alpha == ind[1]
+                    @show mga_alpha
+                else
+                    @show (1-mga_alpha)
+                    @show "multiplier otherwise"
+                end
+            end
+            ind_mga_alpha = collect(indices(mga_alpha_step_length))[1]#find mga_alpha #TODO add parameter!!!
+            ub_objective[iteration] = @constraint(
+                    m,
+                    mga_objective[(model = m.ext[:instance],t=current_window(m))]
+                    <= sum(
+                    mga_aux_diff[((ind...,mga_iteration=iteration))]
+                    *(ind[1] == ind_mga_alpha ? mga_alpha : (1-mga_alpha))
+                    for ind in vcat(
+                        [storages_invested_mga_indices(iteration)...,
+                        connections_invested_mga_indices(iteration)...,
+                        units_invested_mga_indices(iteration)...,
+                        ]
+                        )
+                    )
+
+            )
+        else
+            ub_objective[iteration] = @constraint(
+                    m,
+                    mga_objective[(model = m.ext[:instance],t=current_window(m))]
+                    <= sum(
+                    mga_aux_diff[((ind...,mga_iteration=iteration))]
+                    for ind in vcat(
+                        [storages_invested_mga_indices(iteration)...,
+                        connections_invested_mga_indices(iteration)...,
+                        units_invested_mga_indices(iteration)...,
+                        ]
+                        )
+                    )
+            )
+        end
         for (con_key, cons) in m.ext[:constraints]
             for (inds, con) in cons
                 set_name(con, string(con_key, inds))
