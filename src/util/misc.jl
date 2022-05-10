@@ -118,12 +118,3 @@ _drop_key(x::NamedTuple, key::Symbol...) = (; (k => v for (k, v) in pairs(x) if 
 Fetch the current analysis time for the model `m`.
 """
 _analysis_time(m::Model) = startref(current_window(m))
-
-"""
-    _apply_function_or_nothing(fn, arg)
-
-Apply given function on given argument and return the result. If the `fn` argument is `nothing`,
-just return `nothing`.
-"""
-_apply_function_or_nothing(fn::Function, arg) = fn(arg)
-_apply_function_or_nothing(::Nothing, ::Any) = nothing

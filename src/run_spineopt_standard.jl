@@ -108,7 +108,7 @@ function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Fu
     bin = m.ext[:variables_definition][name][:bin]
     int = m.ext[:variables_definition][name][:int]
     for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-        fix_value_ = _apply_function_or_nothing(fix_value, ind)
+        fix_value_ = (fix_value === nothing) ? nothing : fix_value(ind)
         fix_value_ != nothing && !isnan(fix_value_) && fix(var[ind], fix_value_; force=true)
     end
 end
@@ -155,7 +155,7 @@ function _fix_non_anticipativity_value!(m, name::Symbol, definition::Dict)
     non_anticipativity_time = definition[:non_anticipativity_time]
     window_start = start(current_window(m))
     for ind in indices(m; t=time_slice(m))
-        non_anticipativity_time_ = _apply_function_or_nothing(non_anticipativity_time, ind)
+        non_anticipativity_time_ = (non_anticipativity_time === nothing) ? nothing : non_anticipativity_time(ind)
         if non_anticipativity_time_ != nothing && start(ind.t) < window_start +  non_anticipativity_time_
             fix(var[ind], val[ind]; force=true)
         end

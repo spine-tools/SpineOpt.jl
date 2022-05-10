@@ -100,9 +100,15 @@ Create a JuMP variable with the input properties.
 """
 function _variable(m, name, ind, lb, ub, bin, int)
     var = @variable(m, base_name = _base_name(name, ind))
-    lb != nothing && set_lower_bound(var, lb(ind))
-    ub != nothing && set_upper_bound(var, ub(ind))
+    lb != nothing && _set_lower_bound(var, lb(ind))
+    ub != nothing && _set_upper_bound(var, ub(ind))
     bin != nothing && bin(ind) && set_binary(var)
     int != nothing && int(ind) && set_integer(var)
     var
 end
+
+_set_lower_bound(var, ::Nothing) = nothing
+_set_lower_bound(var, lb) = set_lower_bound(var, lb)
+
+_set_upper_bound(var, ::Nothing) = nothing
+_set_upper_bound(var, lb) = set_upper_bound(var, lb)
