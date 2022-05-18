@@ -129,11 +129,9 @@ function _update_variable!(m::Model, name::Symbol, definition::Dict)
     lb = definition[:lb]
     ub = definition[:ub]
     for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-        if is_fixed(var[ind])
-            unfix(var[ind])
-            lb != nothing && set_lower_bound(var[ind], lb(ind))
-            ub != nothing && set_upper_bound(var[ind], ub(ind))
-        end
+        is_fixed(var[ind]) && unfix(var[ind])
+        lb != nothing && _set_lower_bound(var[ind], lb(ind))
+        ub != nothing && _set_upper_bound(var[ind], ub(ind))
         history_t = t_history_t(m; t=ind.t)
         history_t === nothing && continue
         for history_ind in indices(m; ind..., t=history_t)
@@ -517,8 +515,8 @@ function unrelax_integer_vars(m::Model)
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
             is_fixed(var[ind]) && unfix(var[ind])
             # `unfix` frees the variable entirely, also bounds
-            lb != nothing && set_lower_bound(var[ind], lb(ind))
-            ub != nothing && set_upper_bound(var[ind], ub(ind))
+            lb != nothing && _set_lower_bound(var[ind], lb(ind))
+            ub != nothing && _set_upper_bound(var[ind], ub(ind))
             (bin != nothing && bin(ind)) && set_binary(var[ind])
             (int != nothing && int(ind)) && set_integer(var[ind])
         end
