@@ -48,7 +48,6 @@ function rerun_spineopt!(
     while optimize
         @log log_level 1 "Window $k: $(current_window(m))"
         optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals) || break
-        @timelog log_level 2 "Post-processing results..." postprocess_results!(m)
         @timelog log_level 2 "Fixing non-anticipativity values..." fix_non_anticipativity_values!(m)
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
             @timelog log_level 2 " ... Rolling complete\n" break
@@ -295,6 +294,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
             save_bound_marginal_values!(m)
         end
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
+        @timelog log_level 2 "Post-processing results..." postprocess_results!(m)
         @timelog log_level 2 "Saving $(m.ext[:instance]) results..." save_model_results!(m,iterations=iterations)
         if calculate_duals
             if lp_solver != mip_solver

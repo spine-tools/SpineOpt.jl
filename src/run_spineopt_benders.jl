@@ -52,7 +52,6 @@ function rerun_spineopt!(
         while true
             @log log_level 1 "Benders iteration $j - Window $k: $(current_window(m))"
             optimize_model!(m; log_level=log_level, calculate_duals=true) || break
-            @timelog log_level 2 "Post-processing results..." postprocess_results!(m)
             if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
                 @timelog log_level 2 "... Rolling complete\n" break
             end
