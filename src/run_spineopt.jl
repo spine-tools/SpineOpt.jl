@@ -69,18 +69,33 @@ A new Spine database is created at `url_out` if it doesn't exist.
 
 # Keyword arguments
 
-**`with_optimizer=with_optimizer(Cbc.Optimizer, logLevel=0)`** is the optimizer factory for building the JuMP model.
+**`upgrade::Bool=false`**: whether or not to automatically upgrade SpineOpt data structure to latest.
 
-**`cleanup=true`** tells [`run_spineopt`](@ref) whether or not convenience functors should be
-set to `nothing` after completion.
+**`mip_solver=nothing`**: a MIP solver to use if no MIP solver specified in the DB.
 
-**`add_constraints=m -> nothing`** is called with the `Model` object in the first optimization window,
-and allows adding user contraints.
+**`lp_solver=nothing`**: a LP solver to use if no LP solver specified in the DB.
 
-**`update_constraints=m -> nothing`** is called in windows 2 to the last, and allows updating contraints
-added by `add_constraints`.
+**`add_constraints=m -> nothing`**: a function that receives the `Model` object as argument
+and adds custom user constraints.
 
-**`log_level=3`** is the log level.
+**`update_constraints=m -> nothing`**: a function that receives the `Model` object as argument
+and updates custom user constraints after the model rolls.
+
+**`log_level::Int=3`**: an integer to control the log level.
+
+**`optimize::Bool=true`**: whether or not to optimise the model.
+
+**`update_names::Bool=false`**: whether or not to update variable and constraint names after the model rolls
+(expensive)
+
+** alternative::String="": if non empty, write results to the given alternative in the output DB.
+
+**`write_as_roll::Bool=false`**: whether or not to write results as the model rolls.
+
+**`use_direct_model::Bool=false`**: whether or not to use `JuMP.direct_model` to build the `Model` object.
+
+**`filters::Dict{String,String}=Dict("tool" => "object_activity_control")`: a dictionary to specify filters.
+Possible keys are "tool" and "scenario". Values should be a tool or scenario name in the input DB.
 """
 function run_spineopt(
     url_in::String,
@@ -88,7 +103,6 @@ function run_spineopt(
     upgrade=false,
     mip_solver=nothing,
     lp_solver=nothing,
-    cleanup=true,
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     update_constraints=m -> nothing,
@@ -96,6 +110,7 @@ function run_spineopt(
     optimize=true,
     update_names=false,
     alternative="",
+    write_as_roll=false,
     use_direct_model=false,
     filters=Dict("tool" => "object_activity_control")
 )
@@ -142,6 +157,7 @@ function run_spineopt(
         optimize=optimize,
         update_names=update_names,
         alternative=alternative,
+        write_as_roll=write_as_roll,
         use_direct_model=use_direct_model
     )
     # FIXME: make sure use_direct_model this works with db solvers
@@ -159,6 +175,7 @@ function rerun_spineopt(
     optimize=true,
     update_names=false,
     alternative="",
+    write_as_roll=false,
     use_direct_model=false,
     alternative_objective=m -> nothing,
 )
@@ -179,6 +196,7 @@ function rerun_spineopt(
         optimize=optimize,
         update_names=update_names,
         alternative=alternative,
+        write_as_roll=write_as_roll,
         alternative_objective=alternative_objective
     )
 end
@@ -390,7 +408,15 @@ function write_report(m, default_url, output_value=output_value; alternative="")
     end
     for (url, url_reports) in reports
         for (rpt_name, output_params) in url_reports
-            write_parameters(output_params, url; report=string(rpt_name), alternative=alternative)
+            write_parameters(output_params, url; report=string(rpt_name), alternative=alternative, on_conflict="merge")
         end
+    end
+end
+
+function clear_results!(m)
+    for out in output()
+        by_entity = get!(m.ext[:outputs], out.name, nothing)
+        by_entity === nothing && continue
+        empty!(by_entity)
     end
 end
