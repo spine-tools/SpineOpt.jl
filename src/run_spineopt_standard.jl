@@ -287,23 +287,26 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
     @timelog log_level 0 "Optimizing model $(m.ext[:instance])..." optimize!(m)
-    if termination_status(m) == MOI.OPTIMAL || termination_status(m) == MOI.TIME_LIMIT
-        mip_solver = m.ext[:mip_solver]
-        lp_solver = m.ext[:lp_solver]
+    if termination_status(m) in (MOI.OPTIMAL, MOI.TIME_LIMIT)
+        @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
+        @timelog log_level 2 "Saving $(m.ext[:instance]) results..." save_model_results!(m; iterations=iterations)
         if calculate_duals
             @log log_level 1 "Setting up final LP of $(m.ext[:instance]) to obtain duals..."
             @timelog log_level 1 "Fixing integer variables..." relax_integer_vars(m)
+            mip_solver = m.ext[:mip_solver]
+            lp_solver = m.ext[:lp_solver]
             if lp_solver != mip_solver
                 @timelog log_level 1 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
             end
             @timelog log_level 1 "Optimizing final LP..." optimize!(m)
-            save_marginal_values!(m)
-            save_bound_marginal_values!(m)
-        end
-        @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @timelog log_level 2 "Post-processing results..." postprocess_results!(m)
-        @timelog log_level 2 "Saving $(m.ext[:instance]) results..." save_model_results!(m,iterations=iterations)
-        if calculate_duals
+            if termination_status(m) in (MOI.OPTIMAL, MOI.TIME_LIMIT) && JuMP.has_duals(m)
+                @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
+                @timelog log_level 2 "Saving final $(m.ext[:instance]) results..." begin 
+                    save_marginal_values!(m)
+                    save_bound_marginal_values!(m)
+                    save_model_results!(m; iterations=iterations)
+                end
+            end
             if lp_solver != mip_solver
                 @timelog log_level 1 "Switching back to MIP solver $(mip_solver)..." set_optimizer(m, mip_solver)
             end
@@ -437,7 +440,7 @@ end
 _save_output!(m, out, ::Nothing; iterations=iterations) = false
 
 """
-Save the outputs of a model into a dictionary.
+Save the outputs of a model.
 """
 function save_outputs!(m; iterations=nothing)
     for r in model__report(model=m.ext[:instance]), out in report__output(report=r)
@@ -457,6 +460,7 @@ end
 Save a model results: first postprocess results, then save variables and objective values, and finally save outputs
 """
 function save_model_results!(m; iterations=nothing)
+    postprocess_results!(m)
     save_variable_values!(m)
     save_objective_values!(m)
     save_outputs!(m; iterations=iterations)

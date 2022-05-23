@@ -63,7 +63,7 @@ using ._Template
 """
     run_spineopt(url_in, url_out; <keyword arguments>)
 
-Run the SpineOpt from `url_in` and write report to `url_out`.
+Run SpineOpt using the contents of `url_in` and write report(s) to `url_out`.
 At least `url_in` must point to valid Spine database.
 A new Spine database is created at `url_out` if it doesn't exist.
 
