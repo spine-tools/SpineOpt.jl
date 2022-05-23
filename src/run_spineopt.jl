@@ -64,12 +64,12 @@ using ._Template
     run_spineopt(url_in, url_out; <keyword arguments>)
 
 Run SpineOpt using the contents of `url_in` and write report(s) to `url_out`.
-At least `url_in` must point to valid Spine database.
+At least `url_in` must point to a valid Spine database.
 A new Spine database is created at `url_out` if it doesn't exist.
 
 # Keyword arguments
 
-**`upgrade::Bool=false`**: whether or not to automatically upgrade SpineOpt data structure to latest.
+**`upgrade::Bool=false`**: whether or not to automatically upgrade the data structure in `url_in` to latest.
 
 **`mip_solver=nothing`**: a MIP solver to use if no MIP solver specified in the DB.
 
@@ -83,14 +83,14 @@ and updates custom user constraints after the model rolls.
 
 **`log_level::Int=3`**: an integer to control the log level.
 
-**`optimize::Bool=true`**: whether or not to optimise the model.
+**`optimize::Bool=true`**: whether or not to optimise the model (useful for running tests).
 
 **`update_names::Bool=false`**: whether or not to update variable and constraint names after the model rolls
-(expensive)
+(expensive).
 
 **`alternative::String=""`**: if non empty, write results to the given alternative in the output DB.
 
-**`write_as_roll::Bool=false`**: whether or not to write results as the model rolls.
+**`write_as_roll::Bool=false`**: whether to write results incrementeally as the model rolls or only once at the end.
 
 **`use_direct_model::Bool=false`**: whether or not to use `JuMP.direct_model` to build the `Model` object.
 
