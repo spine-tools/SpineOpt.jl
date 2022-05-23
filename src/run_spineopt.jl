@@ -88,13 +88,13 @@ and updates custom user constraints after the model rolls.
 **`update_names::Bool=false`**: whether or not to update variable and constraint names after the model rolls
 (expensive)
 
-** alternative::String="": if non empty, write results to the given alternative in the output DB.
+**`alternative::String=""`**: if non empty, write results to the given alternative in the output DB.
 
 **`write_as_roll::Bool=false`**: whether or not to write results as the model rolls.
 
 **`use_direct_model::Bool=false`**: whether or not to use `JuMP.direct_model` to build the `Model` object.
 
-**`filters::Dict{String,String}=Dict("tool" => "object_activity_control")`: a dictionary to specify filters.
+**`filters::Dict{String,String}=Dict("tool" => "object_activity_control")`**: a dictionary to specify filters.
 Possible keys are "tool" and "scenario". Values should be a tool or scenario name in the input DB.
 """
 function run_spineopt(
