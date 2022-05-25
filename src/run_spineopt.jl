@@ -65,7 +65,7 @@ using ._Template
 
 Run SpineOpt using the contents of `url_in` and write report(s) to `url_out`.
 At least `url_in` must point to a valid Spine database.
-A new Spine database is created at `url_out` if it doesn't exist.
+A new Spine database is created at `url_out` if one doesn't exist.
 
 # Keyword arguments
 
