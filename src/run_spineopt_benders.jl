@@ -30,6 +30,7 @@ function rerun_spineopt!(
     update_names=false,
     alternative="",
     alternative_objective=m -> nothing,
+    write_as_roll=0
 )
     m.ext[:is_sub_problem] = true
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)

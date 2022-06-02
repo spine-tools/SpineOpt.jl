@@ -519,7 +519,6 @@
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:variables][:connection_flow]
         constraint = m.ext[:constraints][:connection_flow_lodf]
