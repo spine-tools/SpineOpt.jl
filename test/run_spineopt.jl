@@ -138,7 +138,7 @@ end
             @test Y.unit_flow(; flow_key..., t=t) == demand
         end
     end
-    @testset "fix_non_anticipativity_values" begin
+    @testset "units_on_non_anticipativity_time" begin
         _load_test_data(url_in, test_data)
         vom_cost = 20
         demand = 200
@@ -163,17 +163,52 @@ end
             relationship_parameter_values=relationship_parameter_values,
         )        
         m = run_spineopt(url_in, url_out; log_level=0)
-        using_spinedb(url_out, Y)
-        units_on_key = (
-            report=Y.report(:report_x),
-            unit=Y.unit(:unit_ab),
-            stochastic_scenario=Y.stochastic_scenario(:parent),
-        )
         @testset for (k, t) in enumerate(time_slice(m))
             ind = first(SpineOpt.units_on_indices(m; t=t))
             var = m.ext[:variables][:units_on][ind]
             # Only first three time slices should be fixed
             @test is_fixed(var) == (k in 1:3)
+        end
+    end
+    @testset "unit_flow_non_anticipativity_time" begin
+        _load_test_data(url_in, test_data)
+        vom_cost = 20
+        demand_vals = rand(48)
+        demand_inds = collect(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 3))
+        demand = TimeSeries(demand_inds, demand_vals, false, false)
+        demand_pv = parameter_value(demand)
+        unit_capacity = 200
+        @testset for nat in 1:6
+            non_anticip_time = Dict("type" => "duration", "data" => string(nat, "h"))
+            objects = [["output", "units_on"]]
+            object_parameter_values = [
+                ["node", "node_b", "demand", unparse_db_value(demand)],
+                ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
+                ["temporal_block", "hourly", "block_end", Dict("type" => "duration", "data" => "16h")],
+            ]
+            relationships = [["report__output", ["report_x", "units_on"]]]
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
+                ["unit__to_node", ["unit_ab", "node_b"], "unit_flow_non_anticipativity_time", non_anticip_time],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )        
+            m = run_spineopt(url_in, url_out; log_level=0)
+            @testset for (k, t) in enumerate(time_slice(m))
+                ind = first(SpineOpt.unit_flow_indices(m; t=t))
+                var = m.ext[:variables][:unit_flow][ind]
+                # Only first nat time slices should be fixed
+                @test is_fixed(var) == (k in 1:nat)
+                if k in 1:nat
+                    @test fix_value(var) == demand_pv(t=t)
+                end
+            end
         end
     end
     @testset "don't overwrite results on rolling" begin

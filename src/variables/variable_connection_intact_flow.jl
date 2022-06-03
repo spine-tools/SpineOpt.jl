@@ -77,5 +77,6 @@ function add_variable_connection_intact_flow!(m::Model)
             t=x.t,
             _strict=false,
         ),
+        non_anticipativity_time=x -> connection_intact_flow_non_anticipativity_time(; x..., _strict=false),
     )
 end
