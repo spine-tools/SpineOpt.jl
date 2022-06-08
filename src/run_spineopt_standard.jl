@@ -290,27 +290,27 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
     if termination_status(m) in (MOI.OPTIMAL, MOI.TIME_LIMIT)
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving $(m.ext[:instance]) results..." save_model_results!(m; iterations=iterations)
-        if calculate_duals
+        if calculate_duals            
             @log log_level 1 "Setting up final LP of $(m.ext[:instance]) to obtain duals..."
-            @timelog log_level 1 "Fixing integer variables..." relax_integer_vars(m)
+            @timelog log_level 1 "Copying model" (m_dual_lp, ref_map) = copy_model(m)
+            @timelog log_level 1 "Fixing integer variables..." relax_integer_vars(m, ref_map)
             mip_solver = m.ext[:mip_solver]
             lp_solver = m.ext[:lp_solver]
-            if lp_solver != mip_solver
-                @timelog log_level 1 "Switching to LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
-            end
-            @timelog log_level 1 "Optimizing final LP..." optimize!(m)
-            if termination_status(m) in (MOI.OPTIMAL, MOI.TIME_LIMIT) && JuMP.has_duals(m)
-                @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-                @timelog log_level 2 "Saving final $(m.ext[:instance]) results..." begin 
-                    save_marginal_values!(m)
-                    save_bound_marginal_values!(m)
-                    save_model_results!(m; iterations=iterations)
+            
+            @timelog log_level 1 "Switching to LP solver $(lp_solver)..." set_optimizer(m_dual_lp, lp_solver)
+            
+            @timelog log_level 1 "Optimizing final LP..." begin
+                Threads.@spawn begin
+                    optimize!(m_dual_lp)
+                    if termination_status(m_dual_lp) in (MOI.OPTIMAL, MOI.TIME_LIMIT) && JuMP.has_duals(m_dual_lp)
+                        @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m_dual_lp))"
+                        @timelog log_level 2 "Saving final $(m.ext[:instance]) results..." begin
+                            save_marginal_values!(m, ref_map)
+                            save_bound_marginal_values!(m, ref_map)                       
+                        end
+                    end            
                 end
             end
-            if lp_solver != mip_solver
-                @timelog log_level 1 "Switching back to MIP solver $(mip_solver)..." set_optimizer(m, mip_solver)
-            end
-            @timelog log_level 1 "Unfixing integer variables..." unrelax_integer_vars(m)
         end
         true
     else
@@ -498,7 +498,7 @@ function _update_variable_names!(m)
     end
 end
 
-function relax_integer_vars(m::Model)
+function relax_integer_vars(m::Model, ref_map::ReferenceMap)
     save_integer_values!(m)
     for name in m.ext[:integer_variables]
         def = m.ext[:variables_definition][name]
@@ -507,9 +507,10 @@ function relax_integer_vars(m::Model)
         indices = def[:indices]
         var = m.ext[:variables][name]
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            fix(var[ind], m.ext[:values][name][ind]; force=true)
-            (bin != nothing && bin(ind)) && unset_binary(var[ind])
-            (int != nothing && int(ind)) && unset_integer(var[ind])
+            _var = ref_map[var[ind]]
+            fix(_var, m.ext[:values][name][ind]; force=true)
+            (bin != nothing && bin(ind)) && unset_binary(_var)
+            (int != nothing && int(ind)) && unset_integer(_var)
         end
     end
 end
@@ -543,39 +544,39 @@ function save_integer_values!(m::Model)
     end
 end
 
-function save_marginal_values!(m::Model)
+function save_marginal_values!(m::Model, ref_map::JuMP.ReferenceMap)
     for (constraint_name, con) in m.ext[:constraints]
         output_name = Symbol(string("constraint_", constraint_name))
         if haskey(m.ext[:outputs], output_name)
-            _save_marginal_value!(m, constraint_name, output_name)
+            _save_marginal_value!(m, constraint_name, output_name, ref_map)
         end
     end
 end
 
-function _save_marginal_value!(m::Model, constraint_name::Symbol, output_name::Symbol)
+function _save_marginal_value!(m::Model, constraint_name::Symbol, output_name::Symbol, ref_map::JuMP.ReferenceMap)
     con = m.ext[:constraints][constraint_name]
     inds = keys(con)
     m.ext[:values][output_name] = Dict(
-        ind => JuMP.dual(con[ind])
+        ind => JuMP.dual(ref_map[con[ind]])
         for ind in inds
         if maximum(ind[k] for k in _time_slice_keys(ind)) <= end_(current_window(m))
     )
 end
 
-function save_bound_marginal_values!(m::Model)
+function save_bound_marginal_values!(m::Model, ref_map::JuMP.ReferenceMap)
     for (variable_name, con) in m.ext[:variables]
         output_name = Symbol(string("bound_", variable_name))
         if haskey(m.ext[:outputs], output_name)
-            _save_bound_marginal_value!(m, variable_name, output_name)
+            _save_bound_marginal_value!(m, variable_name, output_name, ref_map)
         end
     end
 end
 
-function _save_bound_marginal_value!(m::Model, variable_name::Symbol, output_name::Symbol)
+function _save_bound_marginal_value!(m::Model, variable_name::Symbol, output_name::Symbol, ref_map::JuMP.ReferenceMap)
     var = m.ext[:variables][variable_name]
     indices = m.ext[:variables_definition][variable_name][:indices]
     m.ext[:values][output_name] = Dict(
-        ind => JuMP.reduced_cost(var[ind])
+        ind => JuMP.reduced_cost(ref_map[var[ind]])
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
         if maximum(ind[k] for k in _time_slice_keys(ind)) <= end_(current_window(m))
     )
