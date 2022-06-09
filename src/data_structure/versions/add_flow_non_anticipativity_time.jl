@@ -18,15 +18,19 @@
 #############################################################################
 
 """
-	add_min_unit_flow(db_url, log_level)
+	add_flow_non_anticipativity_time(db_url, log_level)
 
-Add min_unit_flow parameter.
+Add non-anticip-time parameters.
 """
-function add_min_unit_flow(db_url, log_level)
-	@log log_level 0 "Adding `min_unit_flow` to `unit__from_node` and `unit__to_node`... "
+function add_flow_non_anticipativity_time(db_url, log_level)
+	@log log_level 0 "Adding `unit/connection_(intact_)flow_non_anticipativity_time`..."
 	new_data = Dict()
 	new_data[:relationship_parameters] = [
-		x for x in template()["relationship_parameters"] if x[2] == "min_unit_flow"
+		x for x in template()["relationship_parameters"] if x[2] in (
+			"unit_flow_non_anticipativity_time",
+			"connection_flow_non_anticipativity_time",
+			"connection_intact_flow_non_anticipativity_time",
+		)
 	]
 	# Add new data
 	run_request(db_url, "import_data", (new_data, ""))

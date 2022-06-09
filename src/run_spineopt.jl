@@ -90,7 +90,7 @@ and updates custom user constraints after the model rolls.
 
 **`alternative::String=""`**: if non empty, write results to the given alternative in the output DB.
 
-**`write_as_roll::Bool=false`**: whether to write results incrementeally as the model rolls or only once at the end.
+**`write_as_roll::Int=0`**: if greater than 0, then write results every that many windows.
 
 **`use_direct_model::Bool=false`**: whether or not to use `JuMP.direct_model` to build the `Model` object.
 
@@ -110,7 +110,7 @@ function run_spineopt(
     optimize=true,
     update_names=false,
     alternative="",
-    write_as_roll=false,
+    write_as_roll=0,
     use_direct_model=false,
     filters=Dict("tool" => "object_activity_control")
 )
@@ -175,7 +175,7 @@ function rerun_spineopt(
     optimize=true,
     update_names=false,
     alternative="",
-    write_as_roll=false,
+    write_as_roll=0,
     use_direct_model=false,
     alternative_objective=m -> nothing,
 )

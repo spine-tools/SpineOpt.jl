@@ -11,6 +11,7 @@ function rerun_spineopt!(
     update_names=false,
     alternative="",
     alternative_objective=m_mga -> nothing,
+    write_as_roll=0
 )
     outputs = Dict()
     mga_iterations = 0

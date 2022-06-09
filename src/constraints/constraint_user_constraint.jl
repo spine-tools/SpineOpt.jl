@@ -23,7 +23,20 @@
 Custom constraint for `units`.
 """
 function add_constraint_user_constraint!(m::Model)
-    @fetch unit_flow_op, unit_flow, units_on, units_started_up, connection_flow, node_state, units_invested, units_invested_available, storages_invested, storages_invested_available, connections_invested, connections_invested_available = m.ext[:variables]
+    @fetch (
+        unit_flow_op,
+        unit_flow,
+        units_on,
+        units_started_up,
+        connection_flow,
+        node_state,
+        units_invested,
+        units_invested_available,
+        storages_invested,
+        storages_invested_available,
+        connections_invested,
+        connections_invested_available
+    ) = m.ext[:variables]
     t0 = _analysis_time(m)
     m.ext[:constraints][:user_constraint] = Dict(
         (user_constraint=uc, stochastic_path=s, t=t) => sense_constraint(

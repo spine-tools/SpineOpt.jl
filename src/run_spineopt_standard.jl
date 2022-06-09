@@ -30,7 +30,7 @@ function rerun_spineopt!(
     optimize=true,
     update_names=false,
     alternative="",
-    write_as_roll=false
+    write_as_roll=0
 )
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
@@ -49,7 +49,7 @@ function rerun_spineopt!(
     while optimize
         @log log_level 1 "Window $k: $(current_window(m))"
         optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals) || break
-        if write_as_roll
+        if write_as_roll > 0 && k % write_as_roll == 0
             @timelog log_level 2 "Writing report..." write_report(m, url_out; alternative=alternative)
             clear_results!(m)
         end
@@ -60,9 +60,7 @@ function rerun_spineopt!(
         update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
         k += 1
     end
-    if !write_as_roll
-        @timelog log_level 2 "Writing report..." write_report(m, url_out; alternative=alternative)
-    end
+    @timelog log_level 2 "Writing report..." write_report(m, url_out; alternative=alternative)
     m
 end
 
