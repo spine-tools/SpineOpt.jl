@@ -101,8 +101,8 @@ Possible keys are "tool" and "scenario". Values should be a tool or scenario nam
 
 using SpineOpt
 m = run_spineopt(
-        raw"sqlite:///C:\path\to\your\inputputdb.sqlite", 
-        raw"sqlite:///C:\path\to\your\outputdb.sqlite";
+        raw"sqlite:///C:\\path\\to\\your\\inputputdb.sqlite", 
+        raw"sqlite:///C:\\path\\to\\your\\outputdb.sqlite";
         filters=Dict("tool" => "object_activity_control", "scenario" => "scenario_to_run"),
         alternative="your_results_alternative"
 )
