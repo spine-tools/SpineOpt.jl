@@ -96,6 +96,17 @@ and updates custom user constraints after the model rolls.
 
 **`filters::Dict{String,String}=Dict("tool" => "object_activity_control")`**: a dictionary to specify filters.
 Possible keys are "tool" and "scenario". Values should be a tool or scenario name in the input DB.
+
+**Example**
+
+using SpineOpt
+m = run_spineopt(
+        raw"sqlite:///C:\path\to\your\inputputdb.sqlite", 
+        raw"sqlite:///C:\path\to\your\outputdb.sqlite";
+        filters=Dict("tool" => "object_activity_control", "scenario" => "scenario_to_run"),
+        alternative="your_results_alternative"
+)
+
 """
 function run_spineopt(
     url_in::String,
