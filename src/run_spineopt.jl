@@ -27,6 +27,7 @@ macro log(level, threshold, msg)
     quote
         if $(esc(level)) >= $(esc(threshold))
             printstyled($(esc(msg)), "\n"; bold=true)
+            yield()
         end
     end
 end
@@ -50,7 +51,9 @@ end
 macro timemsg(msg, expr)
     quote
         printstyled($(esc(msg)); bold=true)
-        @time $(esc(expr))
+        r = @time $(esc(expr))
+        yield()
+        r
     end
 end
 
@@ -94,6 +97,9 @@ and updates custom user constraints after the model rolls.
 
 **`use_direct_model::Bool=false`**: whether or not to use `JuMP.direct_model` to build the `Model` object.
 
+**`log_file_path::String=""`**: if not empty, log all console output to a file at the given path. The file
+is overwritten each time.
+
 **`filters::Dict{String,String}=Dict("tool" => "object_activity_control")`**: a dictionary to specify filters.
 Possible keys are "tool" and "scenario". Values should be a tool or scenario name in the input DB.
 
@@ -109,6 +115,94 @@ m = run_spineopt(
 
 """
 function run_spineopt(
+    url_in::String,
+    url_out::Union{String,Nothing}=url_in;
+    upgrade=false,
+    mip_solver=nothing,
+    lp_solver=nothing,
+    add_user_variables=m -> nothing,
+    add_constraints=m -> nothing,
+    update_constraints=m -> nothing,
+    log_level=3,
+    optimize=true,
+    update_names=false,
+    alternative="",
+    write_as_roll=0,
+    use_direct_model=false,
+    log_file_path="",
+    filters=Dict("tool" => "object_activity_control")
+)
+    if isempty(log_file_path)
+        return do_run_spine_opt(
+            url_in,
+            url_out;
+            upgrade=upgrade,
+            mip_solver=mip_solver,
+            lp_solver=lp_solver,
+            add_user_variables=add_user_variables,
+            add_constraints=add_constraints,
+            update_constraints=update_constraints,
+            log_level=log_level,
+            optimize=optimize,
+            update_names=update_names,
+            alternative=alternative,
+            write_as_roll=write_as_roll,
+            use_direct_model=use_direct_model,
+            filters=filters
+        )
+    end
+    done = false
+    actual_stdout = stdout
+    @async begin
+        open(log_file_path, "r") do log_file
+            while !done
+                data = read(log_file, String)
+                if !isempty(data)
+                    print(actual_stdout, data)
+                    flush(actual_stdout)
+                end
+                yield()
+            end
+        end
+    end
+    open(log_file_path, "w") do log_file
+        @async while !done
+            flush(log_file)
+            yield()
+        end
+        redirect_stdout(log_file) do
+            redirect_stderr(log_file) do
+                yield()
+                try
+                    do_run_spine_opt(
+                        url_in,
+                        url_out;
+                        upgrade=upgrade,
+                        mip_solver=mip_solver,
+                        lp_solver=lp_solver,
+                        add_user_variables=add_user_variables,
+                        add_constraints=add_constraints,
+                        update_constraints=update_constraints,
+                        log_level=log_level,
+                        optimize=optimize,
+                        update_names=update_names,
+                        alternative=alternative,
+                        write_as_roll=write_as_roll,
+                        use_direct_model=use_direct_model,
+                        filters=filters
+                    )
+                catch err
+                    showerror(log_file, err, stacktrace(catch_backtrace()))
+                    rethrow()
+                finally
+                    done = true
+                end
+            end
+        end
+    end
+end
+
+function do_run_spine_opt(
     url_in::String,
     url_out::Union{String,Nothing}=url_in;
     upgrade=false,
