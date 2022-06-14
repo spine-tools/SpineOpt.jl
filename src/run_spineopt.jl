@@ -98,7 +98,7 @@ and updates custom user constraints after the model rolls.
 **`use_direct_model::Bool=false`**: whether or not to use `JuMP.direct_model` to build the `Model` object.
 
 **`log_file_path::String=""`**: if not empty, log all console output to a file at the given path. The file
-is overwritten each time.
+is overwritten at each call.
 
 **`filters::Dict{String,String}=Dict("tool" => "object_activity_control")`**: a dictionary to specify filters.
 Possible keys are "tool" and "scenario". Values should be a tool or scenario name in the input DB.
