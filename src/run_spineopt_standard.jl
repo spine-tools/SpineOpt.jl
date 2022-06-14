@@ -311,6 +311,10 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
             end
         end
         true
+    elseif termination_status(m) == MOI.INFEASIBLE
+        @log log_level 0 "Model is infeasible. If conflicting constraints can be identified, they will be reported below"
+        report_conflicts(m)
+        false
     else
         @log log_level 0 "Unable to find solution (reason: $(termination_status(m)))"
         write_mps_file(model=m.ext[:instance]) == :write_mps_on_no_solve && write_to_file(m, "model_diagnostics.mps")
@@ -482,11 +486,23 @@ end
 
 function _update_constraint_names!(m)
     for (con_key, cons) in m.ext[:constraints]
-        for (inds, con) in cons
-            set_name(con, string(con_key, inds))
+        con_key_raw = string(con_key)
+        if occursin(r"[^\x1F-\x7F]+", con_key_raw)
+            @warn "constraint $con_key_raw has an illegal character"            
+        end
+        con_key_clean = _sanitize_constraint_name(con_key_raw)                            
+        for (inds, con) in cons        
+            constraint_name = _sanitize_constraint_name(string(con_key_clean, inds))                            
+            set_name(con, constraint_name)
         end
     end
 end
+
+function _sanitize_constraint_name(constraint_name)
+    #replace(constraint_name, r"[\+\[\]\^=\*+\-: @]|[^\x1F-\x7F]+"=>"_")
+    replace(constraint_name, r"[^\x1F-\x7F]+"=>"_")
+end
+
 
 function _update_variable_names!(m)
     for (var_key, vars) in m.ext[:variables]

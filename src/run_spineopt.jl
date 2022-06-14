@@ -431,3 +431,14 @@ function clear_results!(m)
         empty!(by_entity)
     end
 end
+
+function report_conflicts(m)
+    compute_conflict!(m)    
+    for (F, S) in list_of_constraint_types(m)
+        for con in all_constraints(m, F, S)
+            if MOI.get(m, MOI.ConstraintConflictStatus(), con) == MOI.IN_CONFLICT                
+                @log 1 1 con
+            end
+        end
+    end
+end
