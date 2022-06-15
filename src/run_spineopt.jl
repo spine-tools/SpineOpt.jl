@@ -70,48 +70,48 @@ Run SpineOpt using the contents of `url_in` and write report(s) to `url_out`.
 At least `url_in` must point to a valid Spine database.
 A new Spine database is created at `url_out` if one doesn't exist.
 
-# Keyword arguments
+# Arguments
 
-**`upgrade::Bool=false`**: whether or not to automatically upgrade the data structure in `url_in` to latest.
+- `upgrade::Bool=false`: whether or not to automatically upgrade the data structure in `url_in` to latest.
 
-**`mip_solver=nothing`**: a MIP solver to use if no MIP solver specified in the DB.
+- `mip_solver=nothing`: a MIP solver to use if no MIP solver specified in the DB.
 
-**`lp_solver=nothing`**: a LP solver to use if no LP solver specified in the DB.
+- `lp_solver=nothing`: a LP solver to use if no LP solver specified in the DB.
 
-**`add_constraints=m -> nothing`**: a function that receives the `Model` object as argument
+- `add_constraints=m -> nothing`: a function that receives the `Model` object as argument
 and adds custom user constraints.
 
-**`update_constraints=m -> nothing`**: a function that receives the `Model` object as argument
+- `update_constraints=m -> nothing`: a function that receives the `Model` object as argument
 and updates custom user constraints after the model rolls.
 
-**`log_level::Int=3`**: an integer to control the log level.
+- `log_level::Int=3`: an integer to control the log level.
 
-**`optimize::Bool=true`**: whether or not to optimise the model (useful for running tests).
+- `optimize::Bool=true`: whether or not to optimise the model (useful for running tests).
 
-**`update_names::Bool=false`**: whether or not to update variable and constraint names after the model rolls
+- `update_names::Bool=false`: whether or not to update variable and constraint names after the model rolls
 (expensive).
 
-**`alternative::String=""`**: if non empty, write results to the given alternative in the output DB.
+- `alternative::String=""`: if non empty, write results to the given alternative in the output DB.
 
-**`write_as_roll::Int=0`**: if greater than 0, then write results every that many windows.
+- `write_as_roll::Int=0`: if greater than 0, then write results every that many windows.
 
-**`use_direct_model::Bool=false`**: whether or not to use `JuMP.direct_model` to build the `Model` object.
+- `use_direct_model::Bool=false`: whether or not to use `JuMP.direct_model` to build the `Model` object.
 
-**`log_file_path::String=""`**: if not empty, log all console output to a file at the given path. The file
+- `log_file_path::String=""`: if not empty, log all console output to a file at the given path. The file
 is overwritten at each call.
 
-**`filters::Dict{String,String}=Dict("tool" => "object_activity_control")`**: a dictionary to specify filters.
+- `filters::Dict{String,String}=Dict("tool" => "object_activity_control")`: a dictionary to specify filters.
 Possible keys are "tool" and "scenario". Values should be a tool or scenario name in the input DB.
 
-**Example**
+# Example
 
-using SpineOpt
-m = run_spineopt(
+    using SpineOpt
+    m = run_spineopt(
         raw"sqlite:///C:\\path\\to\\your\\inputputdb.sqlite", 
         raw"sqlite:///C:\\path\\to\\your\\outputdb.sqlite";
         filters=Dict("tool" => "object_activity_control", "scenario" => "scenario_to_run"),
         alternative="your_results_alternative"
-)
+    )
 
 """
 function run_spineopt(
