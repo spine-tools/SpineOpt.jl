@@ -23,9 +23,9 @@
 Limit the post contingency flow on monitored connection mon to conn_emergency_capacity upon outage of connection cont.
 """
 function add_constraint_connection_flow_lodf!(m::Model)
-    @fetch connection_flow = m.ext[:variables]
+    @fetch connection_flow = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:connection_flow_lodf] = Dict(
+    m.ext[:spineopt][:constraints][:connection_flow_lodf] = Dict(
         (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=s, t=t) => @constraint(
             m,
             -1 <=

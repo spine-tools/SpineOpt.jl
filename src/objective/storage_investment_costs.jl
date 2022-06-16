@@ -23,7 +23,7 @@
 Create and expression for storage investment costs.
 """
 function storage_investment_costs(m::Model, t1)
-    @fetch storages_invested = m.ext[:variables]
+    @fetch storages_invested = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
     @expression(
         m,

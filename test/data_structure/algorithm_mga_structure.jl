@@ -178,17 +178,17 @@
             ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values)
         m=run_spineopt(url_in; log_level=1)
-        var_units_invested = m.ext[:variables][:units_invested]
-        var_unit_flow = m.ext[:variables][:unit_flow]
-        var_connections_invested = m.ext[:variables][:connections_invested]
-        var_storages_invested = m.ext[:variables][:storages_invested]
-        var_mga_aux_diff = m.ext[:variables][:mga_aux_diff]
-        var_mga_aux_binary = m.ext[:variables][:mga_aux_binary]
-        var_mga_aux_objective = m.ext[:variables][:mga_objective]
-        mga_results = m.ext[:outputs]
+        var_units_invested = m.ext[:spineopt][:variables][:units_invested]
+        var_unit_flow = m.ext[:spineopt][:variables][:unit_flow]
+        var_connections_invested = m.ext[:spineopt][:variables][:connections_invested]
+        var_storages_invested = m.ext[:spineopt][:variables][:storages_invested]
+        var_mga_aux_diff = m.ext[:spineopt][:variables][:mga_aux_diff]
+        var_mga_aux_binary = m.ext[:spineopt][:variables][:mga_aux_binary]
+        var_mga_aux_objective = m.ext[:spineopt][:variables][:mga_objective]
+        mga_results = m.ext[:spineopt][:outputs]
         t0 = SpineOpt._analysis_time(m)
         @testset "test mga_diff_ub1" begin
-            constraint = m.ext[:constraints][:mga_diff_ub1]
+            constraint = m.ext[:spineopt][:constraints][:mga_diff_ub1]
             @test length(constraint) == 6
             scenarios = (stochastic_scenario(:parent), )
             time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
@@ -244,7 +244,7 @@
              #FIXME: add for connection and node
         end
         @testset "test mga_diff_ub2" begin
-            constraint = m.ext[:constraints][:mga_diff_ub2]
+            constraint = m.ext[:spineopt][:constraints][:mga_diff_ub2]
             @test length(constraint) == 6
             scenarios = (stochastic_scenario(:parent), )
             time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
@@ -303,7 +303,7 @@
              #FIXME: add for connection and node
         end
         @testset "test mga_diff_lb1" begin
-            constraint = m.ext[:constraints][:mga_diff_lb1]
+            constraint = m.ext[:spineopt][:constraints][:mga_diff_lb1]
             @test length(constraint) == 6
             scenarios = (stochastic_scenario(:parent), )
             time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
@@ -359,7 +359,7 @@
              #FIXME: add for connection and node
         end
         @testset "test mga_diff_lb2" begin
-            constraint = m.ext[:constraints][:mga_diff_lb2]
+            constraint = m.ext[:spineopt][:constraints][:mga_diff_lb2]
             @test length(constraint) == 6
             scenarios = (stochastic_scenario(:parent), )
             time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
@@ -415,13 +415,13 @@
              #FIXME: add for connection and node
         end
         @testset "test mga_slack_constraint" begin
-            constraint = m.ext[:constraints][:mga_slack_constraint]
+            constraint = m.ext[:spineopt][:constraints][:mga_slack_constraint]
             @test length(constraint) == 1
             scenarios = (stochastic_scenario(:parent), )
             time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
             mga_first_iteration = SpineOpt.mga_iteration()[1]
             mga_current_iteration = SpineOpt.mga_iteration()[end-1]
-            first_obj_result =  m.ext[:outputs][:total_costs][(model=model(:instance),mga_iteration = mga_first_iteration)]
+            first_obj_result =  m.ext[:spineopt][:outputs][:total_costs][(model=model(:instance),mga_iteration = mga_first_iteration)]
             @testset for (s, t) in zip(scenarios, time_slices)
                  key1 = (unit(:unit_ab), s, t)
                  key2 = (unit(:unit_ab), node(:node_b), direction(:to_node), s, t)
@@ -437,11 +437,11 @@
              #FIXME: add for connection and node
         end
         @testset "test mga_objective_ub" begin
-            constraint = m.ext[:constraints][:mga_objective_ub]
+            constraint = m.ext[:spineopt][:constraints][:mga_objective_ub]
             @test length(constraint) == 2
             scenarios = (stochastic_scenario(:parent), )
             t = SpineOpt.current_window(m)
-            var_mga_objective = m.ext[:variables][:mga_objective]
+            var_mga_objective = m.ext[:spineopt][:variables][:mga_objective]
             mga_current_iteration = SpineOpt.mga_iteration()[end-1]
              key1 = (unit=unit(:unit_group_abbc),mga_iteration=mga_current_iteration)
              key2 = (connection=connection(:connection_group_abbc),mga_iteration=mga_current_iteration)

@@ -23,9 +23,9 @@
 Constrain units_invested_available by the investment lifetime of a unit.
 """
 function add_constraint_unit_lifetime!(m::Model)
-    @fetch units_invested_available, units_invested = m.ext[:variables]
+    @fetch units_invested_available, units_invested = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:unit_lifetime] = Dict(
+    m.ext[:spineopt][:constraints][:unit_lifetime] = Dict(
         (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(

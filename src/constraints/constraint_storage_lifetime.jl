@@ -23,9 +23,9 @@
 Constrain storages_invested_available by the investment lifetime of a storage.
 """
 function add_constraint_storage_lifetime!(m::Model)
-    @fetch storages_invested_available, storages_invested = m.ext[:variables]
+    @fetch storages_invested_available, storages_invested = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:storage_lifetime] = Dict(
+    m.ext[:spineopt][:constraints][:storage_lifetime] = Dict(
         (node=n, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(

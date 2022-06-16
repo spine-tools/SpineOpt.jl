@@ -24,8 +24,8 @@ Ensure consistency between the variables `connections_invested_available`, `conn
 `connections_decommissioned`.
 """
 function add_constraint_connections_invested_transition!(m::Model)
-    @fetch connections_invested_available, connections_invested, connections_decommissioned = m.ext[:variables]
-    m.ext[:constraints][:connections_invested_transition] = Dict(
+    @fetch connections_invested_available, connections_invested, connections_decommissioned = m.ext[:spineopt][:variables]
+    m.ext[:spineopt][:constraints][:connections_invested_transition] = Dict(
         (connection=conn, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             expr_sum(

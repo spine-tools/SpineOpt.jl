@@ -110,7 +110,7 @@ function save_sp_marginal_values(m)
         rel_cls::RelationshipClass, invest_param::Parameter, out_name::Symbol, var_name::Symbol
     )
         obj_scen_ts = Dict()
-        by_entity = m.ext[:outputs][out_name]
+        by_entity = m.ext[:spineopt][:outputs][out_name]
         for ((obj, scen), ts) in _output_value_by_entity(by_entity, true)
             push!(get!(obj_scen_ts, obj, Dict()), scen => ts)
         end
@@ -130,7 +130,7 @@ function save_sp_marginal_values(m)
 end
 
 function save_sp_objective_value_bi(m, mp)
-    total_sp_obj_val = reduce(+, values(m.ext[:values][:total_costs]), init=0)
+    total_sp_obj_val = reduce(+, values(m.ext[:spineopt][:values][:total_costs]), init=0)
     benders_iteration.parameter_values[current_bi] = Dict(:sp_objective_value_bi => parameter_value(total_sp_obj_val))
 
     total_mp_investment_costs = reduce(+, values(mp.ext[:values][:unit_investment_costs]); init=0)

@@ -24,9 +24,9 @@ Limit the maximum ramp of `ramp_up_unit_flow` of a `unit` or `unit_group` if the
 `ramp_up_limit`,`unit_capacity`,`unit_conv_cap_to_unit_flow` exist.
 """
 function add_constraint_ramp_up!(m::Model)
-    @fetch units_on, units_started_up, ramp_up_unit_flow = m.ext[:variables]
+    @fetch units_on, units_started_up, ramp_up_unit_flow = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:ramp_up] = Dict(
+    m.ext[:spineopt][:constraints][:ramp_up] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + sum(

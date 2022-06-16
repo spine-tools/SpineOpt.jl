@@ -26,8 +26,8 @@
 Balance equation for nodes.
 """
 function add_constraint_nodal_balance!(m::Model)
-    @fetch node_injection, connection_flow, node_slack_pos, node_slack_neg = m.ext[:variables]
-    m.ext[:constraints][:nodal_balance] = Dict(
+    @fetch node_injection, connection_flow, node_slack_pos, node_slack_neg = m.ext[:spineopt][:variables]
+    m.ext[:spineopt][:constraints][:nodal_balance] = Dict(
         (node=n, stochastic_scenario=s, t=t) => sense_constraint(
             m,
             # Net injection

@@ -23,9 +23,9 @@
 Limit the units_online by the number of available units.
 """
 function add_constraint_units_available!(m::Model)
-    @fetch units_available, units_invested_available = m.ext[:variables]
+    @fetch units_available, units_invested_available = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:units_available] = Dict(
+    m.ext[:spineopt][:constraints][:units_available] = Dict(
         (unit=u, stochastic_scenario=s, t=t) => @constraint(
             m,
             +units_available[u, s, t]

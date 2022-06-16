@@ -25,9 +25,9 @@ Limit the maximum ramp at the shut down of a unit.
 For reserves the max non-spinning reserve ramp can be defined here.
 """
 function add_constraint_max_nonspin_ramp_down!(m::Model)
-    @fetch nonspin_ramp_down_unit_flow, nonspin_units_shut_down = m.ext[:variables]
+    @fetch nonspin_ramp_down_unit_flow, nonspin_units_shut_down = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:max_nonspin_shut_down_ramp] = Dict(
+    m.ext[:spineopt][:constraints][:max_nonspin_shut_down_ramp] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + sum(

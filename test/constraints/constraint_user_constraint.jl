@@ -154,19 +154,19 @@
             )
             
             m = run_spineopt(url_in; log_level=0, optimize=false)
-            var_unit_flow = m.ext[:variables][:unit_flow]
-            var_connection_flow = m.ext[:variables][:connection_flow]
-            var_node_state = m.ext[:variables][:node_state]
-            var_units_on = m.ext[:variables][:units_on]
-            var_units_started_up = m.ext[:variables][:units_started_up]
-            var_units_invested = m.ext[:variables][:units_invested]
-            var_units_invested_available = m.ext[:variables][:units_invested_available]
-            var_connections_invested = m.ext[:variables][:connections_invested]
-            var_connections_invested_available = m.ext[:variables][:connections_invested_available]
-            var_storages_invested = m.ext[:variables][:storages_invested]
-            var_storages_invested_available = m.ext[:variables][:storages_invested_available]
+            var_unit_flow = m.ext[:spineopt][:variables][:unit_flow]
+            var_connection_flow = m.ext[:spineopt][:variables][:connection_flow]
+            var_node_state = m.ext[:spineopt][:variables][:node_state]
+            var_units_on = m.ext[:spineopt][:variables][:units_on]
+            var_units_started_up = m.ext[:spineopt][:variables][:units_started_up]
+            var_units_invested = m.ext[:spineopt][:variables][:units_invested]
+            var_units_invested_available = m.ext[:spineopt][:variables][:units_invested_available]
+            var_connections_invested = m.ext[:spineopt][:variables][:connections_invested]
+            var_connections_invested_available = m.ext[:spineopt][:variables][:connections_invested_available]
+            var_storages_invested = m.ext[:spineopt][:variables][:storages_invested]
+            var_storages_invested_available = m.ext[:spineopt][:variables][:storages_invested_available]
             
-            constraint = m.ext[:constraints][:user_constraint]
+            constraint = m.ext[:spineopt][:constraints][:user_constraint]
 
             @test length(constraint) == 2
             key_uf_a = (unit(:unit_ab), node(:node_a), direction(:from_node))

@@ -23,8 +23,8 @@
 This constraint is needed to force uni-directional flow over gas connections.
 """
 function add_constraint_connection_unitary_gas_flow!(m::Model)
-    @fetch binary_gas_connection_flow = m.ext[:variables]
-    m.ext[:constraints][:connection_unitary_gas_flow] = Dict(
+    @fetch binary_gas_connection_flow = m.ext[:spineopt][:variables]
+    m.ext[:spineopt][:constraints][:connection_unitary_gas_flow] = Dict(
         (connection=conn, node1=n1, node2=n2, stochastic_scenario=s, t=t) => @constraint(
             m,
             sum(

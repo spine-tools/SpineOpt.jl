@@ -23,7 +23,7 @@
 Create and expression for unit investment costs.
 """
 function unit_investment_costs(m::Model, t1)
-    @fetch units_invested = m.ext[:variables]
+    @fetch units_invested = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
     @expression(
         m,

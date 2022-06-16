@@ -28,8 +28,8 @@ Optionally also non spinning reserve contribution can be included, `nonspin_ramp
 This is required to enforce separate limitations on these ramp types.
 """
 function add_constraint_split_ramps!(m::Model)
-    @fetch unit_flow, ramp_down_unit_flow, shut_down_unit_flow, nonspin_ramp_down_unit_flow, ramp_up_unit_flow, start_up_unit_flow, nonspin_ramp_up_unit_flow = m.ext[:variables]
-    m.ext[:constraints][:split_ramps] = Dict(
+    @fetch unit_flow, ramp_down_unit_flow, shut_down_unit_flow, nonspin_ramp_down_unit_flow, ramp_up_unit_flow, start_up_unit_flow, nonspin_ramp_up_unit_flow = m.ext[:spineopt][:variables]
+    m.ext[:spineopt][:constraints][:split_ramps] = Dict(
         (unit=u, node=n, direction=d, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             expr_sum(

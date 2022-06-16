@@ -22,8 +22,8 @@
 Enforces cyclic constraint on node state over a temporal block.
 """
 function add_constraint_cyclic_node_state!(m::Model)
-    @fetch node_state = m.ext[:variables]
-    m.ext[:constraints][:cyclic_node_state] = Dict(
+    @fetch node_state = m.ext[:spineopt][:variables]
+    m.ext[:spineopt][:constraints][:cyclic_node_state] = Dict(
         (node=n, stochastic_scenario=s, t_start=t_start, t_end=t_end) => @constraint(
             m,
             expr_sum(

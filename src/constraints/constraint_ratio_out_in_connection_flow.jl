@@ -26,9 +26,9 @@ Note that the `<sense>_ratio_<directions>_connection_flow` parameter uses the st
 <direction>!
 """
 function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, sense)
-    @fetch connection_flow = m.ext[:variables]
+    @fetch connection_flow = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][ratio_out_in.name] = Dict(
+    m.ext[:spineopt][:constraints][ratio_out_in.name] = Dict(
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=s, t=t) => sense_constraint(
             m,
             + expr_sum(

@@ -36,9 +36,9 @@ function add_constraint_user_constraint!(m::Model)
         storages_invested_available,
         connections_invested,
         connections_invested_available
-    ) = m.ext[:variables]
+    ) = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:user_constraint] = Dict(
+    m.ext[:spineopt][:constraints][:user_constraint] = Dict(
         (user_constraint=uc, stochastic_path=s, t=t) => sense_constraint(
             m,
             + expr_sum(

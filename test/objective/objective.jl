@@ -94,7 +94,7 @@
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
         
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        unit_flow = m.ext[:variables][:unit_flow]
+        unit_flow = m.ext[:spineopt][:variables][:unit_flow]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -117,7 +117,7 @@
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
         
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        units_invested = m.ext[:variables][:units_invested]
+        units_invested = m.ext[:spineopt][:variables][:units_invested]
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         observed_obj = objective_function(m)
@@ -136,8 +136,8 @@
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        node_slack_neg = m.ext[:variables][:node_slack_neg]
-        node_slack_pos = m.ext[:variables][:node_slack_pos]
+        node_slack_neg = m.ext[:spineopt][:variables][:node_slack_neg]
+        node_slack_pos = m.ext[:spineopt][:variables][:node_slack_pos]
         n_a = node(:node_a)
         n_b = node(:node_b)
         s_parent = stochastic_scenario(:parent)
@@ -162,7 +162,7 @@
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        units_shut_down = m.ext[:variables][:units_shut_down]
+        units_shut_down = m.ext[:spineopt][:variables][:units_shut_down]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         s_parent = stochastic_scenario(:parent)
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
@@ -177,7 +177,7 @@
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        units_started_up = m.ext[:variables][:units_started_up]
+        units_started_up = m.ext[:spineopt][:variables][:units_started_up]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         s_parent = stochastic_scenario(:parent)
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
@@ -192,7 +192,7 @@
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
         
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        unit_flow = m.ext[:variables][:unit_flow]
+        unit_flow = m.ext[:spineopt][:variables][:unit_flow]
         key = (unit(:unit_ab), node(:node_b), direction(:to_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -216,7 +216,7 @@
         )
         
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        connection_flow = m.ext[:variables][:connection_flow]
+        connection_flow = m.ext[:spineopt][:variables][:connection_flow]
         key = (connection(:connection_ab), node(:node_b), direction(:to_node))
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -232,7 +232,7 @@
         object_parameter_values = [["unit", "unit_ab", "units_on_cost", units_on_cost]]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        units_on = m.ext[:variables][:units_on]        
+        units_on = m.ext[:spineopt][:variables][:units_on]        
         s_parent = stochastic_scenario(:parent)
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         observed_obj = objective_function(m)

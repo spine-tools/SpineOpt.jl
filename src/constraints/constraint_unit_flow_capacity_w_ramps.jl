@@ -29,9 +29,9 @@ Check if `unit_conv_cap_to_flow` is defined.
 function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
     return
     # FIXME: MethodError: no method matching isless(::SpineInterface.OperatorCall{typeof(-)}, ::SpineInterface.IdentityCall{Float64})
-    @fetch unit_flow, units_on, units_started_up, units_shut_down = m.ext[:variables]
+    @fetch unit_flow, units_on, units_started_up, units_shut_down = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:unit_flow_capacity_w_ramp] = constraint = Dict()
+    m.ext[:spineopt][:constraints][:unit_flow_capacity_w_ramp] = constraint = Dict()
     for (u, ng, d, s, t_before, t_after) in constraint_unit_flow_capacity_w_ramp_indices(m)
         cutout = first(
             end_(t_before) - start(t)

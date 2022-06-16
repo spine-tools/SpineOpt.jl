@@ -23,9 +23,9 @@
 Limit the minimum value of a `node_pressure` variable to be below `min_node_pressure`, if it exists.
 """
 function add_constraint_min_node_pressure!(m::Model)
-    @fetch node_pressure = m.ext[:variables]
+    @fetch node_pressure = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:min_node_pressure] = Dict(
+    m.ext[:spineopt][:constraints][:min_node_pressure] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
             + expr_sum(

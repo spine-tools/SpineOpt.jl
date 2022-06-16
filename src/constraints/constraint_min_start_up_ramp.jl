@@ -25,9 +25,9 @@ Limit the minimum ramp at the start up of a unit.
 For reserves the min non-spinning reserve ramp can be defined here.
 """
 function add_constraint_min_start_up_ramp!(m::Model)
-    @fetch units_started_up, start_up_unit_flow = m.ext[:variables]
+    @fetch units_started_up, start_up_unit_flow = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:min_start_up_ramp] = Dict(
+    m.ext[:spineopt][:constraints][:min_start_up_ramp] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + sum(

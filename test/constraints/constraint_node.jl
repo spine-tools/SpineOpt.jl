@@ -99,11 +99,11 @@
         object_parameter_values = [["node", "node_a", "node_slack_penalty", 0.5]]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_node_injection = m.ext[:variables][:node_injection]
-        var_connection_flow = m.ext[:variables][:connection_flow]
-        var_node_slack_pos = m.ext[:variables][:node_slack_pos]
-        var_node_slack_neg = m.ext[:variables][:node_slack_neg]
-        constraint = m.ext[:constraints][:nodal_balance]
+        var_node_injection = m.ext[:spineopt][:variables][:node_injection]
+        var_connection_flow = m.ext[:spineopt][:variables][:connection_flow]
+        var_node_slack_pos = m.ext[:spineopt][:variables][:node_slack_pos]
+        var_node_slack_neg = m.ext[:spineopt][:variables][:node_slack_neg]
+        constraint = m.ext[:spineopt][:constraints][:nodal_balance]
         @test length(constraint) == 5
         conn = connection(:connection_ca)
         # node_a
@@ -145,11 +145,11 @@
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_node_injection = m.ext[:variables][:node_injection]
-        var_connection_flow = m.ext[:variables][:connection_flow]
-        var_node_slack_pos = m.ext[:variables][:node_slack_pos]
-        var_node_slack_neg = m.ext[:variables][:node_slack_neg]
-        constraint = m.ext[:constraints][:nodal_balance]
+        var_node_injection = m.ext[:spineopt][:variables][:node_injection]
+        var_connection_flow = m.ext[:spineopt][:variables][:connection_flow]
+        var_node_slack_pos = m.ext[:spineopt][:variables][:node_slack_pos]
+        var_node_slack_neg = m.ext[:spineopt][:variables][:node_slack_neg]
+        constraint = m.ext[:spineopt][:constraints][:nodal_balance]
         @test length(constraint) == 3
         conn = connection(:connection_ca)
         # node_a
@@ -223,10 +223,10 @@
         )
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_node_injection = m.ext[:variables][:node_injection]
-        var_unit_flow = m.ext[:variables][:unit_flow]
-        var_node_state = m.ext[:variables][:node_state]
-        constraint = m.ext[:constraints][:node_injection]
+        var_node_injection = m.ext[:spineopt][:variables][:node_injection]
+        var_unit_flow = m.ext[:spineopt][:variables][:unit_flow]
+        var_node_state = m.ext[:spineopt][:variables][:node_state]
+        constraint = m.ext[:spineopt][:constraints][:node_injection]
         @test length(constraint) == 7
         u = unit(:unit_ab)
         # node_a
@@ -317,8 +317,8 @@
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_node_state = m.ext[:variables][:node_state]
-        constraint = m.ext[:constraints][:node_state_capacity]
+        var_node_state = m.ext[:spineopt][:variables][:node_state]
+        constraint = m.ext[:spineopt][:constraints][:node_state_capacity]
         @test length(constraint) == 4
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -352,8 +352,8 @@
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_node_state = m.ext[:variables][:node_state]
-        constraint = m.ext[:constraints][:cyclic_node_state]
+        var_node_state = m.ext[:spineopt][:variables][:node_state]
+        constraint = m.ext[:spineopt][:constraints][:cyclic_node_state]
         @test length(constraint) == 2
         scenario0 = stochastic_scenario(:parent)
         scenario1 = stochastic_scenario(:child)
@@ -399,9 +399,9 @@
         )
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_node_pressure = m.ext[:variables][:node_pressure]
-        var_node_state = m.ext[:variables][:node_state]
-        constraint = m.ext[:constraints][:storage_line_pack]
+        var_node_pressure = m.ext[:spineopt][:variables][:node_pressure]
+        var_node_state = m.ext[:spineopt][:variables][:node_state]
+        constraint = m.ext[:spineopt][:constraints][:storage_line_pack]
         @test length(constraint) == 1
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         scenario_det = stochastic_scenario(:parent)
@@ -451,8 +451,8 @@
         )
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_node_pressure = m.ext[:variables][:node_pressure]
-        constraint = m.ext[:constraints][:compression_ratio]
+        var_node_pressure = m.ext[:spineopt][:variables][:node_pressure]
+        constraint = m.ext[:spineopt][:constraints][:compression_ratio]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -487,8 +487,8 @@
         )
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_node_pressure = m.ext[:variables][:node_pressure]
-        constraint = m.ext[:constraints][:min_node_pressure]
+        var_node_pressure = m.ext[:spineopt][:variables][:node_pressure]
+        constraint = m.ext[:spineopt][:constraints][:min_node_pressure]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -519,8 +519,8 @@
         )
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_node_pressure = m.ext[:variables][:node_pressure]
-        constraint = m.ext[:constraints][:max_node_pressure]
+        var_node_pressure = m.ext[:spineopt][:variables][:node_pressure]
+        constraint = m.ext[:spineopt][:constraints][:max_node_pressure]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -551,8 +551,8 @@
         )
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_node_voltage_angle = m.ext[:variables][:node_voltage_angle]
-        constraint = m.ext[:constraints][:min_node_voltage_angle]
+        var_node_voltage_angle = m.ext[:spineopt][:variables][:node_voltage_angle]
+        constraint = m.ext[:spineopt][:constraints][:min_node_voltage_angle]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -583,8 +583,8 @@
         )
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_node_voltage_angle = m.ext[:variables][:node_voltage_angle]
-        constraint = m.ext[:constraints][:max_node_voltage_angle]
+        var_node_voltage_angle = m.ext[:spineopt][:variables][:node_voltage_angle]
+        constraint = m.ext[:spineopt][:constraints][:max_node_voltage_angle]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -617,9 +617,9 @@
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_node_state = m.ext[:variables][:node_state]
-        var_storages_invested_available = m.ext[:variables][:storages_invested_available]
-        constraint = m.ext[:constraints][:node_state_capacity]
+        var_node_state = m.ext[:spineopt][:variables][:node_state]
+        var_storages_invested_available = m.ext[:spineopt][:variables][:storages_invested_available]
+        constraint = m.ext[:spineopt][:constraints][:node_state_capacity]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         path = [stochastic_scenario(:parent), stochastic_scenario(:child)]
@@ -653,8 +653,8 @@
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_storages_invested_available = m.ext[:variables][:storages_invested_available]
-        constraint = m.ext[:constraints][:storages_invested_available]
+        var_storages_invested_available = m.ext[:spineopt][:variables][:storages_invested_available]
+        constraint = m.ext[:spineopt][:constraints][:storages_invested_available]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -687,8 +687,8 @@
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
 
         m, mp = run_spineopt(url_in; log_level=0, optimize=false)
-        var_storages_invested_available = m.ext[:variables][:storages_invested_available]
-        constraint = m.ext[:constraints][:storages_invested_available]
+        var_storages_invested_available = m.ext[:spineopt][:variables][:storages_invested_available]
+        constraint = m.ext[:spineopt][:constraints][:storages_invested_available]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -730,10 +730,10 @@
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_storages_invested_available = m.ext[:variables][:storages_invested_available]
-        var_storages_invested = m.ext[:variables][:storages_invested]
-        var_storages_decommissioned = m.ext[:variables][:storages_decommissioned]
-        constraint = m.ext[:constraints][:storages_invested_transition]
+        var_storages_invested_available = m.ext[:spineopt][:variables][:storages_invested_available]
+        var_storages_invested = m.ext[:spineopt][:variables][:storages_invested]
+        var_storages_decommissioned = m.ext[:spineopt][:variables][:storages_decommissioned]
+        constraint = m.ext[:spineopt][:constraints][:storages_invested_transition]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
@@ -774,10 +774,10 @@
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
 
         m, mp = run_spineopt(url_in; log_level=0, optimize=false)
-        var_storages_invested_available = m.ext[:variables][:storages_invested_available]
-        var_storages_invested = m.ext[:variables][:storages_invested]
-        var_storages_decommissioned = m.ext[:variables][:storages_decommissioned]
-        constraint = m.ext[:constraints][:storages_invested_transition]
+        var_storages_invested_available = m.ext[:spineopt][:variables][:storages_invested_available]
+        var_storages_invested = m.ext[:spineopt][:variables][:storages_invested]
+        var_storages_decommissioned = m.ext[:spineopt][:variables][:storages_decommissioned]
+        constraint = m.ext[:spineopt][:constraints][:storages_invested_transition]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
@@ -843,9 +843,9 @@
             SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
 
             m = run_spineopt(url_in; log_level=0, optimize=false)
-            var_storages_invested_available = m.ext[:variables][:storages_invested_available]
-            var_storages_invested = m.ext[:variables][:storages_invested]
-            constraint = m.ext[:constraints][:storage_lifetime]
+            var_storages_invested_available = m.ext[:spineopt][:variables][:storages_invested_available]
+            var_storages_invested = m.ext[:spineopt][:variables][:storages_invested]
+            constraint = m.ext[:spineopt][:constraints][:storage_lifetime]
 
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
@@ -903,9 +903,9 @@
             SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
 
             m, mp = run_spineopt(url_in; log_level=0, optimize=false)
-            var_storages_invested_available = m.ext[:variables][:storages_invested_available]
-            var_storages_invested = m.ext[:variables][:storages_invested]
-            constraint = m.ext[:constraints][:storage_lifetime]
+            var_storages_invested_available = m.ext[:spineopt][:variables][:storages_invested_available]
+            var_storages_invested = m.ext[:spineopt][:variables][:storages_invested]
+            constraint = m.ext[:spineopt][:constraints][:storage_lifetime]
 
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(

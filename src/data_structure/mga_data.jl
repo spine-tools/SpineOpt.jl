@@ -63,7 +63,7 @@ function storages_invested_mga_indices(mga_iteration)
 end
 
 function set_objective_mga_iteration!(m;iteration=nothing)
-    instance = m.ext[:instance]
+    instance = m.ext[:spineopt][:instance]
     if !mga_diff_relative(model=instance) #FIXME: define also for relative diffs in the future
         _set_objective_mga_iteration!(
             m,
@@ -92,11 +92,11 @@ function set_objective_mga_iteration!(m;iteration=nothing)
             storages_invested_big_m_mga,
             iteration
         )
-        @fetch mga_aux_diff, mga_objective = m.ext[:variables]
-        ub_objective = get!(m.ext[:constraints],:mga_objective_ub,Dict())
+        @fetch mga_aux_diff, mga_objective = m.ext[:spineopt][:variables]
+        ub_objective = get!(m.ext[:spineopt][:constraints],:mga_objective_ub,Dict())
         ub_objective[iteration] = @constraint(
                 m,
-                mga_objective[(model = m.ext[:instance],t=current_window(m))]
+                mga_objective[(model = m.ext[:spineopt][:instance],t=current_window(m))]
                 <= sum(
                 mga_aux_diff[ind...]
                 for ind in vcat(
@@ -106,7 +106,7 @@ function set_objective_mga_iteration!(m;iteration=nothing)
                     )
                 )
         )
-        for (con_key, cons) in m.ext[:constraints]
+        for (con_key, cons) in m.ext[:spineopt][:constraints]
             for (inds, con) in cons
                 set_name(con, string(con_key, inds))
             end
@@ -125,22 +125,22 @@ function _set_objective_mga_iteration!(
         )
         if !isempty(mga_indices())
             t0 = _analysis_time(m).ref.x
-            @fetch units_invested = m.ext[:variables]
-            mga_results = m.ext[:outputs]
-            d_aux = get!(m.ext[:variables], :mga_aux_diff, Dict())
-            d_bin = get!(m.ext[:variables],:mga_aux_binary, Dict())
+            @fetch units_invested = m.ext[:spineopt][:variables]
+            mga_results = m.ext[:spineopt][:outputs]
+            d_aux = get!(m.ext[:spineopt][:variables], :mga_aux_diff, Dict())
+            d_bin = get!(m.ext[:spineopt][:variables],:mga_aux_binary, Dict())
             for ind in mga_indices(mga_current_iteration)
                 d_aux[ind] = @variable(m, base_name = _base_name(:mga_aux_diff,ind), lower_bound = 0)
                 d_bin[ind] = @variable(m, base_name = _base_name(:mga_aux_binary,ind), binary=true)
             end
-            @fetch mga_aux_diff, mga_aux_binary, mga_objective = m.ext[:variables]
-            mga_results = m.ext[:outputs]
-            variable = m.ext[:variables][variable_name]
+            @fetch mga_aux_diff, mga_aux_binary, mga_objective = m.ext[:spineopt][:variables]
+            mga_results = m.ext[:spineopt][:outputs]
+            variable = m.ext[:spineopt][:variables][variable_name]
             #FIXME: don't create new dict everytime, but get existing one
-            d_diff_ub1 = get!(m.ext[:constraints],:mga_diff_ub1,Dict())
-            d_diff_ub2 = get!(m.ext[:constraints],:mga_diff_ub2,Dict())
-            d_diff_lb1 = get!(m.ext[:constraints],:mga_diff_lb1,Dict())
-            d_diff_lb2 = get!(m.ext[:constraints],:mga_diff_lb2,Dict())
+            d_diff_ub1 = get!(m.ext[:spineopt][:constraints],:mga_diff_ub1,Dict())
+            d_diff_ub2 = get!(m.ext[:spineopt][:constraints],:mga_diff_ub2,Dict())
+            d_diff_lb1 = get!(m.ext[:spineopt][:constraints],:mga_diff_lb1,Dict())
+            d_diff_lb2 = get!(m.ext[:spineopt][:constraints],:mga_diff_lb2,Dict())
             for ind in mga_indices()
                 d_diff_ub1[(ind...,mga_current_iteration...)] = @constraint(
                     m,
@@ -194,27 +194,27 @@ function _set_objective_mga_iteration!(
 end
 
 function add_mga_objective_constraint!(m::Model)
-    instance = m.ext[:instance]
-    m.ext[:constraints][:mga_slack_constraint] = Dict(m.ext[:instance] =>
+    instance = m.ext[:spineopt][:instance]
+    m.ext[:spineopt][:constraints][:mga_slack_constraint] = Dict(m.ext[:spineopt][:instance] =>
         @constraint(m, total_costs(m, end_(last(time_slice(m)))) <= (1+max_mga_slack(model=instance)) * objective_value_mga(model=instance))
         )
 end
 
 function save_mga_objective_values!(m::Model)
-    ind = (model=m.ext[:instance], t=current_window(m))
+    ind = (model=m.ext[:spineopt][:instance], t=current_window(m))
     for name in [:mga_objective,]#:mga_aux_diff]
-        for ind in keys(m.ext[:variables][name])
-            m.ext[:values][name] = Dict(ind => value(m.ext[:variables][name][ind]))
+        for ind in keys(m.ext[:spineopt][:variables][name])
+            m.ext[:spineopt][:values][name] = Dict(ind => value(m.ext[:spineopt][:variables][name][ind]))
         end
     end
 end
 
 function set_mga_objective!(m)
-    m.ext[:variables][:mga_objective] = Dict(
-               (model = m.ext[:instance],t=current_window(m)) => @variable(m, base_name = _base_name(:mga_objective,(model = m.ext[:instance],t=current_window(m))), lower_bound=0)
+    m.ext[:spineopt][:variables][:mga_objective] = Dict(
+               (model = m.ext[:spineopt][:instance],t=current_window(m)) => @variable(m, base_name = _base_name(:mga_objective,(model = m.ext[:spineopt][:instance],t=current_window(m))), lower_bound=0)
                )
     @objective(m,
             Max,
-            m.ext[:variables][:mga_objective][(model = m.ext[:instance],t=current_window(m))]
+            m.ext[:spineopt][:variables][:mga_objective][(model = m.ext[:spineopt][:instance],t=current_window(m))]
             )
 end

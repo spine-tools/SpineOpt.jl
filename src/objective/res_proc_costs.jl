@@ -23,7 +23,7 @@
 Add expression for reserve procurement costs.
 """
 function res_proc_costs(m::Model, t1)
-    @fetch unit_flow = m.ext[:variables]
+    @fetch unit_flow = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
     @expression(
         m,

@@ -234,21 +234,50 @@ function create_model(model_type, mip_solver, lp_solver, use_direct_model=false)
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
     m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
-    m.ext[:instance] = instance
-    m.ext[:variables] = Dict{Symbol,Dict}()
-    m.ext[:variables_definition] = Dict{Symbol,Dict}()
-    m.ext[:values] = Dict{Symbol,Dict}()
-    m.ext[:constraints] = Dict{Symbol,Dict}()
-    m.ext[:marginals] = Dict{Symbol,Dict}()
-    m.ext[:outputs] = Dict()
-    m.ext[:integer_variables] = []
-    m.ext[:is_subproblem] = false
-    m.ext[:objective_lower_bound] = 0.0
-    m.ext[:objective_upper_bound] = 0.0
-    m.ext[:benders_gap] = 0.0
-    m.ext[:mip_solver] = mip_solver
-    m.ext[:lp_solver] = lp_solver
+    m.ext[:spineopt] = Dict()
+    m.ext[:spineopt][:instance] = instance
+    m.ext[:spineopt][:variables] = Dict{Symbol,Dict}()
+    m.ext[:spineopt][:variables_definition] = Dict{Symbol,Dict}()
+    m.ext[:spineopt][:values] = Dict{Symbol,Dict}()
+    m.ext[:spineopt][:constraints] = Dict{Symbol,Dict}()
+    m.ext[:spineopt][:outputs] = Dict()
+    m.ext[:spineopt][:integer_variables] = []
+    m.ext[:spineopt][:is_subproblem] = false
+    m.ext[:spineopt][:objective_lower_bound] = 0.0
+    m.ext[:spineopt][:objective_upper_bound] = 0.0
+    m.ext[:spineopt][:benders_gap] = 0.0
+    m.ext[:spineopt][:mip_solver] = mip_solver
+    m.ext[:spineopt][:lp_solver] = lp_solver
     m
+end
+
+struct SpineOptExt
+    instance::Symbol
+    lp_solver
+    is_subproblem::Bool
+    variables::Dict{Symbol,Dict}
+    variables_definition::Dict{Symbol,Dict}
+    values::Dict{Symbol,Dict}
+    constraints::Dict{Symbol,Dict}
+    outputs::Dict{Symbol,Any}
+    objective_lower_bound::Float64
+    objective_upper_bound::Float64
+    benders_gap::Float64
+    function SpineOptExt(instance, lp_solver, is_subproblem)
+        new(
+            instance,
+            lp_solver,
+            is_subproblem,
+            Dict{Symbol,Dict}(),
+            Dict{Symbol,Dict}(),
+            Dict{Symbol,Dict}(),
+            Dict{Symbol,Dict}(),
+            Dict{Symbol,Any}(),
+            0.0,
+            0.0,
+            0.0,
+        )
+    end
 end
 
 _do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model(mip_solver()) : Model(mip_solver)
@@ -376,13 +405,13 @@ function objective_terms(m) #FIXME: this should just be benders definind the obj
         :ramp_costs,
         :units_on_costs,
     ]
-    if (model_type(model=m.ext[:instance]) ==:spineopt_standard || model_type(model=m.ext[:instance]) ==:spineopt_mga)
-        if m.ext[:is_subproblem]
+    if (model_type(model=m.ext[:spineopt][:instance]) ==:spineopt_standard || model_type(model=m.ext[:spineopt][:instance]) ==:spineopt_mga)
+        if m.ext[:spineopt][:is_subproblem]
             op_terms
         else
             [op_terms; invest_terms]
         end
-    elseif model_type(model=m.ext[:instance]) == :spineopt_benders_master
+    elseif model_type(model=m.ext[:spineopt][:instance]) == :spineopt_benders_master
         invest_terms
     end
 end
@@ -404,9 +433,9 @@ function write_report(m, default_url, output_value=output_value; alternative="")
     default_url === nothing && return
     reports = Dict()
     outputs = Dict()
-    for rpt in model__report(model=m.ext[:instance])
+    for rpt in model__report(model=m.ext[:spineopt][:instance])
         for out in report__output(report=rpt)
-            by_entity = get!(m.ext[:outputs], out.name, nothing)
+            by_entity = get!(m.ext[:spineopt][:outputs], out.name, nothing)
             by_entity === nothing && continue
             output_url = output_db_url(report=rpt, _strict=false)
             url = output_url !== nothing ? output_url : default_url
@@ -426,7 +455,7 @@ end
 
 function clear_results!(m)
     for out in output()
-        by_entity = get!(m.ext[:outputs], out.name, nothing)
+        by_entity = get!(m.ext[:spineopt][:outputs], out.name, nothing)
         by_entity === nothing && continue
         empty!(by_entity)
     end

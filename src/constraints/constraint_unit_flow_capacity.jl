@@ -25,9 +25,9 @@ Limit the maximum in/out `unit_flow` of a `unit` for all `unit_capacity` indices
 Check if `unit_conv_cap_to_flow` is defined.
 """
 function add_constraint_unit_flow_capacity!(m::Model)
-    @fetch unit_flow, units_on, units_started_up, units_shut_down = m.ext[:variables]
+    @fetch unit_flow, units_on, units_started_up, units_shut_down = m.ext[:spineopt][:variables]
     t0 = _analysis_time(m)
-    m.ext[:constraints][:unit_flow_capacity] = Dict(
+    m.ext[:spineopt][:constraints][:unit_flow_capacity] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             expr_sum(
