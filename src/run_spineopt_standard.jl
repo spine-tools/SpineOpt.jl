@@ -534,6 +534,14 @@ function relax_integer_vars(m::Model, ref_map::ReferenceMap)
     end
 end
 
+struct DualPromise
+    value::JuMP.ConstraintRef
+end
+
+struct ReducedCostPromise
+    value::JuMP.VariableRef
+end
+
 function save_marginal_value_promises!(m::Model, ref_map::JuMP.ReferenceMap)
     for (constraint_name, con) in m.ext[:spineopt].constraints
         output_name = Symbol(string("constraint_", constraint_name))
@@ -568,17 +576,9 @@ function _save_bound_marginal_value_promise!(m::Model, var, output_name::Symbol,
     )
 end
 
-struct DualPromise
-    value::JuMP.ConstraintRef
-end
+JuMP.dual(x::DualPromise) = has_duals(owner_model(x.value)) ? dual(x.value) : nothing
 
-struct ReducedCostPromise
-    value::JuMP.VariableRef
-end
-
-JuMP.dual(x::DualPromise) = dual(x.value)
-
-JuMP.reduced_cost(x::ReducedCostPromise) = reduced_cost(x.value)
+JuMP.reduced_cost(x::ReducedCostPromise) = has_duals(owner_model(x.value)) ? reduced_cost(x.value) : nothing
 
 function SpineInterface.unparse_db_value(x::TimeSeries{T}) where T <: DualPromise
     unparse_db_value(TimeSeries(x.indexes, JuMP.dual.(x.values), x.ignore_year, x.repeat))
