@@ -596,7 +596,8 @@ end
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )        
-        m = run_spineopt(url_in, url_out; log_level=3)
+        rm(file_path_out; force=true)
+        m = run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
         key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
         @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2) - Hour(1))

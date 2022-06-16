@@ -343,6 +343,7 @@ struct SpineOptExt
     outputs::Dict{Symbol,Union{Dict,Nothing}}
     temporal_structure::Dict
     stochastic_structure::Dict
+    dual_solves::Array{Any,1}
     objective_lower_bound::Float64
     objective_upper_bound::Float64
     benders_gap::Float64
@@ -358,6 +359,7 @@ struct SpineOptExt
             Dict{Symbol,Union{Dict,Nothing}}(),
             Dict(),
             Dict(),
+            [],
             0.0,
             0.0,
             0.0,
@@ -519,6 +521,7 @@ Write report from given model into a db.
 """
 function write_report(m, default_url, output_value=output_value; alternative="")
     default_url === nothing && return
+    wait.(m.ext[:spineopt].dual_solves)
     reports = Dict()
     outputs = Dict()
     for rpt in model__report(model=m.ext[:spineopt].instance)
@@ -549,12 +552,12 @@ function clear_results!(m)
     end
 end
 
-function report_conflicts(m)
+function compute_and_print_conflict!(m)
     compute_conflict!(m)    
-    for (F, S) in list_of_constraint_types(m)
-        for con in all_constraints(m, F, S)
+    for (f, s) in list_of_constraint_types(m)
+        for con in all_constraints(m, f, s)
             if MOI.get(m, MOI.ConstraintConflictStatus(), con) == MOI.IN_CONFLICT                
-                @log 1 1 con
+                println(con)
             end
         end
     end

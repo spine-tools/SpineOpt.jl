@@ -45,9 +45,11 @@ function rerun_spineopt!(
     )
     init_outputs!(m)
     k = 1
-    calculate_duals = any(startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:spineopt].outputs)))
+    calculate_duals = any(
+        startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:spineopt].outputs))
+    )
     while optimize
-        @log log_level 1 "Window $k: $(current_window(m))"
+        @log log_level 1 "\nWindow $k: $(current_window(m))"
         optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals) || break
         if write_as_roll > 0 && k % write_as_roll == 0
             @timelog log_level 2 "Writing report..." write_report(m, url_out; alternative=alternative)
@@ -291,27 +293,20 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
         if calculate_duals
             @log log_level 1 "Setting up final LP of $(m.ext[:spineopt].instance) to obtain duals..."
             @timelog log_level 1 "Copying model" (m_dual_lp, ref_map) = copy_model(m)
-            # Threads.@spawn begin
-            begin
-                lp_solver = m.ext[:spineopt].lp_solver
-                @timelog log_level 1 "Setting LP solver $(lp_solver)..." set_optimizer(m_dual_lp, lp_solver)
-                @timelog log_level 1 "Fixing integer variables..." relax_integer_vars(m, ref_map)
-                @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
-                if termination_status(m_dual_lp) in (MOI.OPTIMAL, MOI.TIME_LIMIT) && JuMP.has_duals(m_dual_lp)
-                    @log log_level 1 "Optimal LP solution found, objective function value: $(objective_value(m_dual_lp))"
-                    @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) LP results..." begin
-                        save_marginal_values!(m, ref_map)
-                        save_bound_marginal_values!(m, ref_map)
-                    end
-                end            
-            end
+            lp_solver = m.ext[:spineopt].lp_solver
+            @timelog log_level 1 "Setting LP solver $(lp_solver)..." set_optimizer(m_dual_lp, lp_solver)
+            @timelog log_level 1 "Fixing integer variables..." relax_integer_vars(m, ref_map)
+            save_marginal_value_promises!(m, ref_map)
+            save_bound_marginal_value_promises!(m, ref_map)
+            task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
+            push!(m.ext[:spineopt].dual_solves, task)
         end
         save_outputs!(m; iterations=iterations)
         true
     elseif termination_status(m) == MOI.INFEASIBLE
         msg = "model is infeasible - if conflicting constraints can be identified, they will be reported below\n"
         printstyled(msg; bold=true) 
-        report_conflicts(m)
+        compute_and_print_conflict!(m)
         false
     else
         @log log_level 0 "Unable to find solution (reason: $(termination_status(m)))"
@@ -539,40 +534,55 @@ function relax_integer_vars(m::Model, ref_map::ReferenceMap)
     end
 end
 
-function save_marginal_values!(m::Model, ref_map::JuMP.ReferenceMap)
+function save_marginal_value_promises!(m::Model, ref_map::JuMP.ReferenceMap)
     for (constraint_name, con) in m.ext[:spineopt].constraints
         output_name = Symbol(string("constraint_", constraint_name))
         if haskey(m.ext[:spineopt].outputs, output_name)
-            _save_marginal_value!(m, constraint_name, output_name, ref_map)
+            _save_marginal_value_promise!(m, con, output_name, ref_map)
         end
     end
 end
 
-function _save_marginal_value!(m::Model, constraint_name::Symbol, output_name::Symbol, ref_map::JuMP.ReferenceMap)
-    con = m.ext[:spineopt].constraints[constraint_name]
-    inds = keys(con)
+function _save_marginal_value_promise!(m::Model, con, output_name::Symbol, ref_map::JuMP.ReferenceMap)
     m.ext[:spineopt].values[output_name] = Dict(
-        ind => JuMP.dual(ref_map[con[ind]])
-        for ind in inds
+        ind => DualPromise(ref_map[con[ind]])
+        for ind in keys(con)
         if maximum(ind[k] for k in _time_slice_keys(ind)) <= end_(current_window(m))
     )
 end
 
-function save_bound_marginal_values!(m::Model, ref_map::JuMP.ReferenceMap)
-    for (variable_name, con) in m.ext[:spineopt].variables
+function save_bound_marginal_value_promises!(m::Model, ref_map::JuMP.ReferenceMap)
+    for (variable_name, var) in m.ext[:spineopt].variables
         output_name = Symbol(string("bound_", variable_name))
         if haskey(m.ext[:spineopt].outputs, output_name)
-            _save_bound_marginal_value!(m, variable_name, output_name, ref_map)
+            _save_bound_marginal_value_promise!(m, var, output_name, ref_map)
         end
     end
 end
 
-function _save_bound_marginal_value!(m::Model, variable_name::Symbol, output_name::Symbol, ref_map::JuMP.ReferenceMap)
-    var = m.ext[:spineopt].variables[variable_name]
-    indices = m.ext[:spineopt].variables_definition[variable_name][:indices]
+function _save_bound_marginal_value_promise!(m::Model, var, output_name::Symbol, ref_map::JuMP.ReferenceMap)
     m.ext[:spineopt].values[output_name] = Dict(
-        ind => JuMP.reduced_cost(ref_map[var[ind]])
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+        ind => ReducedCostPromise(ref_map[var[ind]])
+        for ind in keys(var)
         if maximum(ind[k] for k in _time_slice_keys(ind)) <= end_(current_window(m))
     )
+end
+
+struct DualPromise
+    value::JuMP.ConstraintRef
+end
+
+struct ReducedCostPromise
+    value::JuMP.VariableRef
+end
+
+JuMP.dual(x::DualPromise) = dual(x.value)
+
+JuMP.reduced_cost(x::ReducedCostPromise) = reduced_cost(x.value)
+
+function SpineInterface.unparse_db_value(x::TimeSeries{T}) where T <: DualPromise
+    unparse_db_value(TimeSeries(x.indexes, JuMP.dual.(x.values), x.ignore_year, x.repeat))
+end
+function SpineInterface.unparse_db_value(x::TimeSeries{T}) where T <: ReducedCostPromise
+    unparse_db_value(TimeSeries(x.indexes, JuMP.reduced_cost.(x.values), x.ignore_year, x.repeat))
 end
