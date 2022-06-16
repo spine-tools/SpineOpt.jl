@@ -190,10 +190,10 @@ function rerun_spineopt(
     use_direct_model=false,
     alternative_objective=m -> nothing,
 )
-    mp = create_model(:spineopt_benders_master, mip_solver, lp_solver; use_direct_model=use_direct_model)
+    mp = create_model(:spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
     is_subproblem = mp !== nothing
-    m = create_model(:spineopt_standard, mip_solver, lp_solver; use_direct_model=use_direct_model, is_subproblem=true)
-    m_mga = create_model(:spineopt_mga, mip_solver, lp_solver; use_direct_model=use_direct_model, is_subproblem=true)
+    m = create_model(:spineopt_standard, mip_solver, lp_solver, use_direct_model, is_subproblem)
+    m_mga = create_model(:spineopt_mga, mip_solver, lp_solver, use_direct_model, is_subproblem)
 
     Base.invokelatest(
         rerun_spineopt!,
@@ -229,7 +229,7 @@ end
 """
 A JuMP `Model` for SpineOpt.
 """
-function create_model(model_type, mip_solver, lp_solver; use_direct_model=false, is_subproblem=false)
+function create_model(model_type, mip_solver, lp_solver, use_direct_model=false, is_subproblem=false)
     isempty(model(model_type=model_type)) && return nothing
     instance = first(model(model_type=model_type))
     mip_solver = _mip_solver(instance, mip_solver)

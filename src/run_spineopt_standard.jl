@@ -288,10 +288,11 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
     if termination_status(m) in (MOI.OPTIMAL, MOI.TIME_LIMIT)
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
         @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." save_model_results!(m; iterations=iterations)
-        if calculate_duals            
+        if calculate_duals
             @log log_level 1 "Setting up final LP of $(m.ext[:spineopt].instance) to obtain duals..."
             @timelog log_level 1 "Copying model" (m_dual_lp, ref_map) = copy_model(m)
-            #= Threads.@spawn =# begin
+            # Threads.@spawn begin
+            begin
                 lp_solver = m.ext[:spineopt].lp_solver
                 @timelog log_level 1 "Setting LP solver $(lp_solver)..." set_optimizer(m_dual_lp, lp_solver)
                 @timelog log_level 1 "Fixing integer variables..." relax_integer_vars(m, ref_map)
@@ -300,11 +301,12 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
                     @log log_level 1 "Optimal LP solution found, objective function value: $(objective_value(m_dual_lp))"
                     @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) LP results..." begin
                         save_marginal_values!(m, ref_map)
-                        save_bound_marginal_values!(m, ref_map)                       
+                        save_bound_marginal_values!(m, ref_map)
                     end
                 end            
             end
         end
+        save_outputs!(m; iterations=iterations)
         true
     elseif termination_status(m) == MOI.INFEASIBLE
         msg = "model is infeasible - if conflicting constraints can be identified, they will be reported below\n"
@@ -461,7 +463,6 @@ function save_model_results!(m; iterations=nothing)
     postprocess_results!(m)
     save_variable_values!(m)
     save_objective_values!(m)
-    save_outputs!(m; iterations=iterations)
 end
 
 """
@@ -508,16 +509,30 @@ function _update_variable_names!(m)
 end
 
 function relax_integer_vars(m::Model, ref_map::ReferenceMap)
-    for (name, def) in m.ext[:spineopt].variables_definition
+    # Collect values before calling `fix` on any of the variables to avoid OptimizeNotCalled()
+    integers_definition = Dict(
+        name => def
+        for (name, def) in m.ext[:spineopt].variables_definition
+        if def[:bin] !== nothing || def[:int] !== nothing
+    )
+    values = Dict(
+        name => Dict(
+            ind => _variable_value(m.ext[:spineopt].variables[name][ind])
+            for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))
+        )
+        for (name, def) in integers_definition
+    )
+    for (name, def) in integers_definition
         bin = def[:bin]
         int = def[:int]
-        bin === int === nothing && continue
         indices = def[:indices]
         var = m.ext[:spineopt].variables[name]
+        vals = values[name]
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
             v = var[ind]
             ref_v = ref_map[v]
-            fix(ref_v, _variable_value(v); force=true)
+            val = vals[ind]
+            fix(ref_v, val; force=true)
             (bin != nothing && bin(ind)) && unset_binary(ref_v)
             (int != nothing && int(ind)) && unset_integer(ref_v)
         end

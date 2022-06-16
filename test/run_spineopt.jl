@@ -61,7 +61,6 @@ end
             ["model", "instance", "db_lp_solver", "Clp.jl"]
         ],
     )
-    #=
     @testset "rolling" begin
         _load_test_data(url_in, test_data)
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
@@ -562,7 +561,7 @@ end
         )        
         m = run_spineopt(url_in, url_out; log_level=0)
         SpineOpt.update_model!(m)  # So that history is fixed
-        history_end = model_end(model=m.ext[:spineopt][:instance]) - roll_forward(model=m.ext[:spineopt][:instance])
+        history_end = model_end(model=m.ext[:spineopt].instance) - roll_forward(model=m.ext[:spineopt].instance)
         history_start = history_end - Hour(6)
         var_t_iterator = sort(
             [(var, inds.t) for (var_key, vars) in m.ext[:spineopt].variables for (inds, var) in vars],
@@ -572,7 +571,6 @@ end
             @test is_fixed(var) == (history_start <= start(t) < history_end)
         end
     end
-    =#
     @testset "dual values" begin
         _load_test_data(url_in, test_data)
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
@@ -598,7 +596,7 @@ end
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )        
-        m = run_spineopt(url_in, url_out; log_level=0)
+        m = run_spineopt(url_in, url_out; log_level=3)
         using_spinedb(url_out, Y)
         key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
         @testset for (k, t) in enumerate(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 2) - Hour(1))
@@ -606,7 +604,6 @@ end
             @test Y.constraint_nodal_balance(; key..., t=t) == expected
         end
     end
-    #=
     @testset "dual values with two time indices" begin
         _load_test_data(url_in, test_data)
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
@@ -645,5 +642,4 @@ end
             @test Y.constraint_node_injection(; key..., t=t) == expected
         end
     end
-    =#
 end

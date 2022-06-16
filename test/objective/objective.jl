@@ -115,7 +115,6 @@
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        
         m = run_spineopt(url_in; log_level=0, optimize=false)
         units_invested = m.ext[:spineopt].variables[:units_invested]
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
