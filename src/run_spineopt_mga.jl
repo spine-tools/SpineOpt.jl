@@ -15,7 +15,7 @@ function rerun_spineopt!(
 )
     outputs = Dict()
     mga_iterations = 0
-    max_mga_iteration = max_mga_iterations(model=m_mga.ext[:instance])
+    max_mga_iteration = max_mga_iterations(model=m_mga.ext[:spineopt].instance)
     name_mga_it = :mga_iteration
     mga_iteration = SpineOpt.ObjectClass(name_mga_it, [])
     @eval begin
@@ -25,7 +25,13 @@ function rerun_spineopt!(
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m_mga)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m_mga)
-    init_model!(m_mga; add_user_variables=add_user_variables, add_constraints=add_constraints, log_level=log_level,alternative_objective=alternative_objective)
+    init_model!(
+        m_mga;
+        add_user_variables=add_user_variables,
+        add_constraints=add_constraints,
+        log_level=log_level,
+        alternative_objective=alternative_objective
+    )
     init_outputs!(m_mga)
     k = 1
     while optimize
@@ -44,7 +50,7 @@ function rerun_spineopt!(
     end
     m_mga
     name_mga_obj = :objective_value_mga
-    model.parameter_values[m_mga.ext[:instance]][name_mga_obj] = parameter_value(objective_value(m_mga))
+    model.parameter_values[m_mga.ext[:spineopt].instance][name_mga_obj] = parameter_value(objective_value(m_mga))
     @eval begin
         $(name_mga_obj) = $(Parameter(name_mga_obj, [model]))
     end

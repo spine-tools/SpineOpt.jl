@@ -23,9 +23,9 @@
 Limit the storages_invested_available by the number of investment candidate storages.
 """
 function add_constraint_storages_invested_available!(m::Model)
-    @fetch storages_invested_available = m.ext[:spineopt][:variables]
+    @fetch storages_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:storages_invested_available] = Dict(
+    m.ext[:spineopt].constraints[:storages_invested_available] = Dict(
         (node=n, stochastic_scenario=s, t=t) => @constraint(
             m,
             + storages_invested_available[n, s, t]

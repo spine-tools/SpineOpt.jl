@@ -23,8 +23,8 @@
 Ensure consistency between the variables `storages_invested_available`, `storages_invested` and `storages_decommissioned`.
 """
 function add_constraint_storages_invested_transition!(m::Model)
-    @fetch storages_invested_available, storages_invested, storages_decommissioned = m.ext[:spineopt][:variables]
-    m.ext[:spineopt][:constraints][:storages_invested_transition] = Dict(
+    @fetch storages_invested_available, storages_invested, storages_decommissioned = m.ext[:spineopt].variables
+    m.ext[:spineopt].constraints[:storages_invested_transition] = Dict(
         (node=n, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             expr_sum(

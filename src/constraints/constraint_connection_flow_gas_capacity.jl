@@ -22,8 +22,8 @@
 This constraint is needed to force uni-directional flow over gas connections.
 """
 function add_constraint_connection_flow_gas_capacity!(m::Model)
-    @fetch connection_flow, binary_gas_connection_flow = m.ext[:spineopt][:variables]
-    m.ext[:spineopt][:constraints][:connection_flow_gas_capacity] = Dict(
+    @fetch connection_flow, binary_gas_connection_flow = m.ext[:spineopt].variables
+    m.ext[:spineopt].constraints[:connection_flow_gas_capacity] = Dict(
         (connection=conn, node1=n_from, node2=n_to, stochastic_scenario=s, t=t) => @constraint(
             m,
             (
@@ -51,7 +51,7 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
             )
             / 2
             <=
-            + big_m(model=m.ext[:spineopt][:instance]) * sum(
+            + big_m(model=m.ext[:spineopt].instance) * sum(
                 binary_gas_connection_flow[conn, n_to, d, s, t] * duration(t)
                 for (conn, n_to, d, s, t) in connection_flow_indices(
                     m;

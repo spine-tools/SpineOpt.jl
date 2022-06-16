@@ -23,7 +23,7 @@
 Create an expression for curtailment costs of renewables.
 """
 function renewable_curtailment_costs(m::Model, t1)
-    @fetch unit_flow, units_available = m.ext[:spineopt][:variables]
+    @fetch unit_flow, units_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
         m,

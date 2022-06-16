@@ -23,9 +23,9 @@
 Constrain connections_invested_available by the investment lifetime of a connection.
 """
 function add_constraint_connection_lifetime!(m::Model)
-    @fetch connections_invested_available, connections_invested = m.ext[:spineopt][:variables]
+    @fetch connections_invested_available, connections_invested = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:connection_lifetime] = Dict(
+    m.ext[:spineopt].constraints[:connection_lifetime] = Dict(
         (connection=conn, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(

@@ -23,8 +23,8 @@
 Ensure consistency between the variables `units_invested_available`, `units_invested` and `units_mothballed`.
 """
 function add_constraint_units_invested_transition!(m::Model)
-    @fetch units_invested_available, units_invested, units_mothballed = m.ext[:spineopt][:variables]
-    m.ext[:spineopt][:constraints][:units_invested_transition] = Dict(
+    @fetch units_invested_available, units_invested, units_mothballed = m.ext[:spineopt].variables
+    m.ext[:spineopt].constraints[:units_invested_transition] = Dict(
         (unit=u, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             expr_sum(

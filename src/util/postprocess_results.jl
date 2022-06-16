@@ -36,8 +36,8 @@ function postprocess_results!(m::Model)
 end
 
 function save_connection_avg_throughflow!(m::Model)
-    @fetch connection_flow = m.ext[:spineopt][:variables]
-    m.ext[:spineopt][:values][:connection_avg_throughflow] = Dict(
+    @fetch connection_flow = m.ext[:spineopt].variables
+    m.ext[:spineopt].values[:connection_avg_throughflow] = Dict(
         (connection=conn, stochastic_path=stochastic_path, t=t) => 0.5 * (+ sum(
             JuMP.value(connection_flow[conn, n_to, d, s, t]) for (conn, n_to, d, s, t) in connection_flow_indices(
                 m;
@@ -100,8 +100,8 @@ function _connection_avg_throughflow_indices(m, conn, n_from, n_to, t)
 end
 
 function save_connection_avg_intact_throughflow!(m::Model)
-    @fetch connection_intact_flow = m.ext[:spineopt][:variables]
-    m.ext[:spineopt][:values][:connection_avg_intact_throughflow] = Dict(
+    @fetch connection_intact_flow = m.ext[:spineopt].variables
+    m.ext[:spineopt].values[:connection_avg_intact_throughflow] = Dict(
         (connection=conn, stochastic_path=stochastic_path, t=t) => 0.5 * (+ sum(
             JuMP.value(connection_intact_flow[conn, n_to, d, s, t])
             for (conn, n_to, d, s, t) in connection_intact_flow_indices(

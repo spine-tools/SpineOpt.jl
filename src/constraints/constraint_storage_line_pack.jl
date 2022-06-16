@@ -22,9 +22,9 @@
 Constraint for line storage dependent on line pack.
 """
 function add_constraint_storage_line_pack!(m::Model)
-    @fetch node_state, node_pressure = m.ext[:spineopt][:variables]
+    @fetch node_state, node_pressure = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:storage_line_pack] = Dict(
+    m.ext[:spineopt].constraints[:storage_line_pack] = Dict(
         (connection=conn, node1=stor, node2=ng, stochastic_path=s, t=t) => @constraint(
             m,
             sum(

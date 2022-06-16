@@ -25,9 +25,9 @@ is equal to the sum over operating point segments of `unit_flow_op` to `node_to`
 corresponding incremental_heat_rate
 """
 function add_constraint_unit_pw_heat_rate!(m::Model)
-    @fetch unit_flow, unit_flow_op, units_on, units_started_up = m.ext[:spineopt][:variables]
+    @fetch unit_flow, unit_flow_op, units_on, units_started_up = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:unit_pw_heat_rate] = Dict(
+    m.ext[:spineopt].constraints[:unit_pw_heat_rate] = Dict(
         (unit=u, node1=n_from, node2=n_to, stochastic_path=s, t=t) => @constraint(
             m,
             expr_sum(

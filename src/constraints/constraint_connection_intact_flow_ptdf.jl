@@ -23,8 +23,8 @@
 For connection networks with monitored and has_ptdf set to true, set the steady state flow based on PTDFs.
 """
 function add_constraint_connection_intact_flow_ptdf!(m::Model)
-    @fetch connection_intact_flow, node_injection = m.ext[:spineopt][:variables]
-    m.ext[:spineopt][:constraints][:connection_intact_flow_ptdf] = Dict(
+    @fetch connection_intact_flow, node_injection = m.ext[:spineopt].variables
+    m.ext[:spineopt].constraints[:connection_intact_flow_ptdf] = Dict(
         (connection=conn, node=n_to, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(

@@ -25,7 +25,7 @@ end
 
 function _model(model_type=:spineopt_standard)
     m = Model()
-    m.ext[:spineopt][:instance] = first(model(model_type=model_type))
+    m.ext[:spineopt] = SpineOpt.SpineOptExt(first(model(model_type=model_type)), nothing, false)
     m
 end
 
@@ -79,7 +79,7 @@ end
         generate_temporal_structure!(m)
         rep_blk1_ts = SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk1))
         rep_blk2_ts = SpineOpt.time_slice(m, temporal_block=temporal_block(:rep_blk2))
-        m_start = model_start(model=m.ext[:spineopt][:instance])
+        m_start = model_start(model=first(model(model_type=:spineopt_standard)))
         for t in SpineOpt.time_slice(m, temporal_block=temporal_block(:block_a))
             t_end = end_(t)
             if t_end <= m_start + Hour(4)

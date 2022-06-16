@@ -25,9 +25,9 @@ Limit the maximum ramp at the start up of a unit.
 For reserves the max non-spinning reserve ramp can be defined here.
 """
 function add_constraint_max_nonspin_ramp_up!(m::Model)
-    @fetch nonspin_ramp_up_unit_flow, nonspin_units_started_up = m.ext[:spineopt][:variables]
+    @fetch nonspin_ramp_up_unit_flow, nonspin_units_started_up = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:max_nonspin_start_up_ramp] = Dict(
+    m.ext[:spineopt].constraints[:max_nonspin_start_up_ramp] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + sum(

@@ -25,9 +25,9 @@ to be equal to connection_intact_flow if connections_invested_available is equal
 in active otherwise where contraint connection_flow_capacity will constraint the flow to zero.
 """
 function add_constraint_candidate_connection_flow_lb!(m::Model)
-    @fetch connection_flow, connection_intact_flow, connections_invested_available = m.ext[:spineopt][:variables]
+    @fetch connection_flow, connection_intact_flow, connections_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:candidate_connection_flow_lb] = Dict(
+    m.ext[:spineopt].constraints[:candidate_connection_flow_lb] = Dict(
         (connection=conn, node=n, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(

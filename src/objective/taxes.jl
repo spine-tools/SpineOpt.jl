@@ -23,7 +23,7 @@
 Create an expression for unit taxes.
 """
 function taxes(m::Model, t1)
-    @fetch unit_flow = m.ext[:spineopt][:variables]
+    @fetch unit_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
         m,

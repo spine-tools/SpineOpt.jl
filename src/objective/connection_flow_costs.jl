@@ -23,7 +23,7 @@
 Create an expression for `connection_flow` costs.
 """
 function connection_flow_costs(m::Model, t1)
-    @fetch connection_flow = m.ext[:spineopt][:variables]
+    @fetch connection_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
         m,

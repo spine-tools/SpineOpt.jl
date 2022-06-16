@@ -30,7 +30,7 @@ cost terms.
 Minimize total costs
 """
 function set_mp_objective!(m::Model)
-    @fetch mp_objective_lowerbound = m.ext[:spineopt][:variables]
+    @fetch mp_objective_lowerbound = m.ext[:spineopt].variables
     @objective(m, Min, + expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0))
 end
 
@@ -40,10 +40,10 @@ end
 Limit the units_on by the number of available units.
 """
 function add_constraint_mp_objective!(m::Model)
-    @fetch units_invested, mp_objective_lowerbound = m.ext[:spineopt][:variables]
-    constr_dict = m.ext[:spineopt][:constraints][:mp_objective] = Dict()
+    @fetch units_invested, mp_objective_lowerbound = m.ext[:spineopt].variables
+    constr_dict = m.ext[:spineopt].constraints[:mp_objective] = Dict()
     constr_dict[(
-        model=m.ext[:spineopt][:instance],
+        model=m.ext[:spineopt].instance,
     )] = @constraint(
         m,
         + expr_sum(

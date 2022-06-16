@@ -23,7 +23,7 @@
 Create an expression for unit startup costs.
 """
 function start_up_costs(m::Model, t1)
-    @fetch units_started_up = m.ext[:spineopt][:variables]
+    @fetch units_started_up = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
         m,

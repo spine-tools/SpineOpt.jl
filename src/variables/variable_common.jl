@@ -41,7 +41,7 @@ function add_variable!(
     fix_value::Union{Function,Nothing}=nothing,
     non_anticipativity_time::Union{Function,Nothing}=nothing,
 )
-    m.ext[:spineopt][:variables_definition][name] = Dict{Symbol,Union{Function,Nothing}}(
+    m.ext[:spineopt].variables_definition[name] = Dict{Symbol,Union{Function,Nothing}}(
         :indices => indices,
         :lb => lb,
         :ub => ub,
@@ -50,7 +50,7 @@ function add_variable!(
         :fix_value => fix_value,
         :non_anticipativity_time => non_anticipativity_time,
     )
-    var = m.ext[:spineopt][:variables][name] = Dict(
+    var = m.ext[:spineopt].variables[name] = Dict(
         ind => _variable(m, name, ind, lb, ub, bin, int)
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
     )

@@ -24,9 +24,9 @@ For connection investments with PTDF flow enabled, this constraint limits the fl
 to the intact_flow on that connection, which represents the flow on the line if it is invested.
 """
 function add_constraint_candidate_connection_flow_ub!(m::Model)
-    @fetch connection_flow, connection_intact_flow = m.ext[:spineopt][:variables]
+    @fetch connection_flow, connection_intact_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:candidate_connection_flow_ub] = Dict(
+    m.ext[:spineopt].constraints[:candidate_connection_flow_ub] = Dict(
         (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             connection_flow[conn, ng, d, s, t]

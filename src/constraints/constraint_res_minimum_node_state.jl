@@ -23,9 +23,9 @@
 Limit the `node_state` of a `node` if the parameters `node_state_min, res_activation_time` exist.
 """
 function add_constraint_res_minimum_node_state!(m::Model)
-    @fetch unit_flow, node_state = m.ext[:spineopt][:variables]
+    @fetch unit_flow, node_state = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:res_minimum_node_state] = Dict(
+    m.ext[:spineopt].constraints[:res_minimum_node_state] = Dict(
         (node=n_stor, stochastic_path=s, t=t_after) => @constraint(
             m,
             expr_sum(

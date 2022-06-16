@@ -26,8 +26,8 @@ if `max_cum_in_unit_flow_bound` exists.
 
 
 function add_constraint_total_cumulated_unit_flow!(m::Model, bound,sense)
-    @fetch unit_flow = m.ext[:spineopt][:variables]
-    m.ext[:spineopt][:constraints][bound.name] = Dict(
+    @fetch unit_flow = m.ext[:spineopt].variables
+    m.ext[:spineopt].constraints[bound.name] = Dict(
         (unit=ug, node= ng, stochastic_path = s) => sense_constraint( # TODO: How to turn this one into stochastical one? Path indexing over the whole `unit_group`?
             m,
             + expr_sum(#TODO check if expression sum is needed here

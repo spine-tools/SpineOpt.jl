@@ -26,9 +26,9 @@ Note that the `<sense>_ratio_<directions>_unit_flow` parameter uses the stochast
 <direction>!
 """
 function add_constraint_ratio_unit_flow!(m::Model, ratio, units_on_coefficient, sense, d1, d2)
-    @fetch unit_flow, units_on = m.ext[:spineopt][:variables]
+    @fetch unit_flow, units_on = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][ratio.name] = Dict(
+    m.ext[:spineopt].constraints[ratio.name] = Dict(
         (unit=u, node1=ng1, node2=ng2, stochastic_path=s, t=t) => sense_constraint(
             m,
             + expr_sum(

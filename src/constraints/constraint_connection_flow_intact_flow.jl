@@ -27,9 +27,9 @@ Enforces the relationship between `connection_intact_flow` (flow with all invest
 `connection_flow` is the `intact_flow` plus additional contributions from all investments not invested in.
 """
 function add_constraint_connection_flow_intact_flow!(m::Model)
-    @fetch connection_flow, connection_intact_flow = m.ext[:spineopt][:variables]
+    @fetch connection_flow, connection_intact_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:connection_flow_intact_flow] = Dict(
+    m.ext[:spineopt].constraints[:connection_flow_intact_flow] = Dict(
         (connection=conn, node=ng, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(

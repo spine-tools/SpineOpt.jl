@@ -22,9 +22,9 @@
 Outer approximation of the non-linear terms.
 """
 function add_constraint_node_voltage_angle!(m::Model)
-    @fetch node_voltage_angle, connection_flow = m.ext[:spineopt][:variables]
+    @fetch node_voltage_angle, connection_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:node_voltage_angle] = Dict(
+    m.ext[:spineopt].constraints[:node_voltage_angle] = Dict(
         (connection=conn, node1=n_to, node2=n_from, stochastic_scenario=s, t=t) => @constraint(
             m,
             sum(

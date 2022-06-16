@@ -23,9 +23,9 @@ Outer approximation of the non-linear terms.
 #Linear apprioximation around fixed pressure points
 """
 function add_constraint_fix_node_pressure_point!(m::Model)
-    @fetch node_pressure, connection_flow, binary_gas_connection_flow = m.ext[:spineopt][:variables]
+    @fetch node_pressure, connection_flow, binary_gas_connection_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:fix_node_pressure_point] = Dict(
+    m.ext[:spineopt].constraints[:fix_node_pressure_point] = Dict(
         (connection=conn, node1=n_orig, node2=n_dest, stochastic_scenario=s, t=t, i=j) => @constraint(
             m,
             (
@@ -76,7 +76,7 @@ function add_constraint_fix_node_pressure_point!(m::Model)
                 );
                 init=0
             )            
-            + big_m(model=m.ext[:spineopt][:instance]) * (expr_sum(
+            + big_m(model=m.ext[:spineopt].instance) * (expr_sum(
                 1 - binary_gas_connection_flow[conn, n_dest, direction(:to_node), s, t]
                 for (conn, n_dest, d, s, t) in connection_flow_indices(
                     m;

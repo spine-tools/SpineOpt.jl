@@ -23,9 +23,9 @@
 Limit the connections_invested_available by the number of investment candidate connections.
 """
 function add_constraint_connections_invested_available!(m::Model)
-    @fetch connections_invested_available = m.ext[:spineopt][:variables]
+    @fetch connections_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:connections_invested_available] = Dict(
+    m.ext[:spineopt].constraints[:connections_invested_available] = Dict(
         (connection=conn, stochastic_scenario=s, t=t) => @constraint(
             m,
             + connections_invested_available[conn, s, t]

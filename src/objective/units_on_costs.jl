@@ -23,7 +23,7 @@
 Create an expression for units_on cost.
 """
 function units_on_costs(m::Model, t1)
-    @fetch units_on = m.ext[:spineopt][:variables]
+    @fetch units_on = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
         m,

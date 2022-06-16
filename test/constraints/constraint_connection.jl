@@ -95,8 +95,8 @@
             [["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity]]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connection_flow = m.ext[:spineopt][:variables][:connection_flow]
-        constraint = m.ext[:spineopt][:constraints][:connection_flow_capacity]
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+        constraint = m.ext[:spineopt].constraints[:connection_flow_capacity]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -126,10 +126,10 @@
             object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connection_flow = m.ext[:spineopt][:variables][:connection_flow]
-        var_binary_flow = m.ext[:spineopt][:variables][:binary_gas_connection_flow]
-        var_pressure = m.ext[:spineopt][:variables][:node_pressure]
-        constraint = m.ext[:spineopt][:constraints][:connection_flow_gas_capacity]
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+        var_binary_flow = m.ext[:spineopt].variables[:binary_gas_connection_flow]
+        var_pressure = m.ext[:spineopt].variables[:node_pressure]
+        constraint = m.ext[:spineopt].constraints[:connection_flow_gas_capacity]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent),)
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -177,10 +177,10 @@
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connection_flow = m.ext[:spineopt][:variables][:connection_flow]
-        var_binary_flow = m.ext[:spineopt][:variables][:binary_gas_connection_flow]
-        var_node_pressure = m.ext[:spineopt][:variables][:node_pressure]
-        constraint = m.ext[:spineopt][:constraints][:fix_node_pressure_point]
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+        var_binary_flow = m.ext[:spineopt].variables[:binary_gas_connection_flow]
+        var_node_pressure = m.ext[:spineopt].variables[:node_pressure]
+        constraint = m.ext[:spineopt].constraints[:fix_node_pressure_point]
         @test length(constraint) == 12
         scenarios = (stochastic_scenario(:parent),)
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -246,8 +246,8 @@
             relationships=relationships
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_binary_flow = m.ext[:spineopt][:variables][:binary_gas_connection_flow]
-        constraint = m.ext[:spineopt][:constraints][:connection_unitary_gas_flow]
+        var_binary_flow = m.ext[:spineopt].variables[:binary_gas_connection_flow]
+        constraint = m.ext[:spineopt].constraints[:connection_unitary_gas_flow]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent),)
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -293,9 +293,9 @@
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connection_flow = m.ext[:spineopt][:variables][:connection_flow]
-        var_voltage_angle = m.ext[:spineopt][:variables][:node_voltage_angle]
-        constraint = m.ext[:spineopt][:constraints][:node_voltage_angle]
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+        var_voltage_angle = m.ext[:spineopt].variables[:node_voltage_angle]
+        constraint = m.ext[:spineopt].constraints[:node_voltage_angle]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent),)
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -350,10 +350,10 @@
         )
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connection_flow = m.ext[:spineopt][:variables][:connection_flow]
-        var_connections_invested_available = m.ext[:spineopt][:variables][:connections_invested_available]
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+        var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
 
-        constraint = m.ext[:spineopt][:constraints][:connection_flow_capacity]
+        constraint = m.ext[:spineopt].constraints[:connection_flow_capacity]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -420,9 +420,9 @@
             relationship_parameter_values=relationship_parameter_values,
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connection_flow = m.ext[:spineopt][:variables][:connection_intact_flow]
-        var_node_injection = m.ext[:spineopt][:variables][:node_injection]
-        constraint = m.ext[:spineopt][:constraints][:connection_intact_flow_ptdf]
+        var_connection_flow = m.ext[:spineopt].variables[:connection_intact_flow]
+        var_node_injection = m.ext[:spineopt].variables[:node_injection]
+        constraint = m.ext[:spineopt].constraints[:connection_intact_flow_ptdf]
         @test length(constraint) == 5
         # NOTE: always pick the second (last) node in `connection__from_node` as 'to' node
         # And they are ordered alphabetically from spinedb_api.export_functions.export_relationships
@@ -520,8 +520,8 @@
             relationship_parameter_values=relationship_parameter_values,
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connection_flow = m.ext[:spineopt][:variables][:connection_flow]
-        constraint = m.ext[:spineopt][:constraints][:connection_flow_lodf]
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+        constraint = m.ext[:spineopt].constraints[:connection_flow_lodf]
         @test length(constraint) == 3
         conn_cont = connection(:connection_ca)
         n_cont_to = node(:node_c)
@@ -611,8 +611,8 @@
                 )
 
                 m = run_spineopt(url_in; log_level=0, optimize=false)
-                var_connection_flow = m.ext[:spineopt][:variables][:connection_flow]
-                constraint = m.ext[:spineopt][:constraints][Symbol(ratio)]
+                var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+                constraint = m.ext[:spineopt].constraints[Symbol(ratio)]
                 @test length(constraint) == 2
                 conn = connection(:connection_ab)
                 n_from = node(:node_a)
@@ -663,10 +663,10 @@
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connections_invested_available = m.ext[:spineopt][:variables][:connections_invested_available]
-        var_connections_invested = m.ext[:spineopt][:variables][:connections_invested]
-        var_connections_decommissioned = m.ext[:spineopt][:variables][:connections_decommissioned]
-        constraint = m.ext[:spineopt][:constraints][:connections_invested_transition]
+        var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
+        var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
+        var_connections_decommissioned = m.ext[:spineopt].variables[:connections_decommissioned]
+        constraint = m.ext[:spineopt].constraints[:connections_invested_transition]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
@@ -708,10 +708,10 @@
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
 
         m, mp = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connections_invested_available = m.ext[:spineopt][:variables][:connections_invested_available]
-        var_connections_invested = m.ext[:spineopt][:variables][:connections_invested]
-        var_connections_decommissioned = m.ext[:spineopt][:variables][:connections_decommissioned]
-        constraint = m.ext[:spineopt][:constraints][:connections_invested_transition]
+        var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
+        var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
+        var_connections_decommissioned = m.ext[:spineopt].variables[:connections_decommissioned]
+        constraint = m.ext[:spineopt].constraints[:connections_invested_transition]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
@@ -736,10 +736,10 @@
             end
         end
 
-        var_connections_invested_available = mp.ext[:variables][:connections_invested_available]
-        var_connections_invested = mp.ext[:variables][:connections_invested]
-        var_connections_decommissioned = mp.ext[:variables][:connections_decommissioned]
-        constraint = mp.ext[:constraints][:connections_invested_transition]
+        var_connections_invested_available = mp.ext[:spineopt].variables[:connections_invested_available]
+        var_connections_invested = mp.ext[:spineopt].variables[:connections_invested]
+        var_connections_decommissioned = mp.ext[:spineopt].variables[:connections_decommissioned]
+        constraint = mp.ext[:spineopt].constraints[:connections_invested_transition]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent),)
         s0 = stochastic_scenario(:parent)
@@ -782,9 +782,9 @@
             SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
 
             m = run_spineopt(url_in; log_level=0, optimize=false)
-            var_connections_invested_available = m.ext[:spineopt][:variables][:connections_invested_available]
-            var_connections_invested = m.ext[:spineopt][:variables][:connections_invested]
-            constraint = m.ext[:spineopt][:constraints][:connection_lifetime]
+            var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
+            var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
+            constraint = m.ext[:spineopt].constraints[:connection_lifetime]
 
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
@@ -840,9 +840,9 @@
             SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
 
             m, mp = run_spineopt(url_in; log_level=0, optimize=false)
-            var_connections_invested_available = m.ext[:spineopt][:variables][:connections_invested_available]
-            var_connections_invested = m.ext[:spineopt][:variables][:connections_invested]
-            constraint = m.ext[:spineopt][:constraints][:connection_lifetime]
+            var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
+            var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
+            constraint = m.ext[:spineopt].constraints[:connection_lifetime]
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
                 stochastic_structure=stochastic_structure(:stochastic),
@@ -873,9 +873,9 @@
                 @test _is_constraint_equal(observed_con, expected_con)
             end
 
-            var_connections_invested_available = mp.ext[:variables][:connections_invested_available]
-            var_connections_invested = mp.ext[:variables][:connections_invested]
-            constraint = mp.ext[:constraints][:connection_lifetime]
+            var_connections_invested_available = mp.ext[:spineopt].variables[:connections_invested_available]
+            var_connections_invested = mp.ext[:spineopt].variables[:connections_invested]
+            constraint = mp.ext[:spineopt].constraints[:connection_lifetime]
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
                 stochastic_structure=stochastic_structure(:stochastic),
@@ -917,8 +917,8 @@
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connections_invested_available = m.ext[:spineopt][:variables][:connections_invested_available]
-        constraint = m.ext[:spineopt][:constraints][:connections_invested_available]
+        var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
+        constraint = m.ext[:spineopt].constraints[:connections_invested_available]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -948,8 +948,8 @@
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
 
         m, mp = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connections_invested_available = m.ext[:spineopt][:variables][:connections_invested_available]
-        constraint = m.ext[:spineopt][:constraints][:connections_invested_available]
+        var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
+        constraint = m.ext[:spineopt].constraints[:connections_invested_available]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
@@ -961,8 +961,8 @@
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
-        var_connections_invested_available = mp.ext[:variables][:connections_invested_available]
-        constraint = mp.ext[:constraints][:connections_invested_available]
+        var_connections_invested_available = mp.ext[:spineopt].variables[:connections_invested_available]
+        constraint = mp.ext[:spineopt].constraints[:connections_invested_available]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent),)
         time_slices = time_slice(mp; temporal_block=temporal_block(:investments_hourly))
@@ -1020,12 +1020,12 @@
             )
 
             m = run_spineopt(url_in; log_level=0, optimize=false)
-            var_unit_flow = m.ext[:spineopt][:variables][:unit_flow]
-            var_units_on = m.ext[:spineopt][:variables][:units_on]
-            var_units_started_up = m.ext[:spineopt][:variables][:units_started_up]
-            var_connection_flow = m.ext[:spineopt][:variables][:connection_flow]
-            var_node_state = m.ext[:spineopt][:variables][:node_state]
-            constraint = m.ext[:spineopt][:constraints][:user_constraint]
+            var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
+            var_units_on = m.ext[:spineopt].variables[:units_on]
+            var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
+            var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+            var_node_state = m.ext[:spineopt].variables[:node_state]
+            constraint = m.ext[:spineopt].constraints[:user_constraint]
             @test length(constraint) == 2
             key_a = (unit(:unit_c), node(:node_c), direction(:to_node))
             key_b = (connection(:connection_ab), node(:node_b), direction(:to_node))
@@ -1111,9 +1111,9 @@
         )
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        constraint = m.ext[:spineopt][:constraints][:connection_flow_intact_flow]
-        var_connection_flow = m.ext[:spineopt][:variables][:connection_flow]
-        var_connection_intact_flow = m.ext[:spineopt][:variables][:connection_intact_flow]
+        constraint = m.ext[:spineopt].constraints[:connection_flow_intact_flow]
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+        var_connection_intact_flow = m.ext[:spineopt].variables[:connection_intact_flow]
         @test length(constraint) == 2
         conn_k = connection(:connection_ab)
         n_to_k = node(:node_b)
@@ -1224,10 +1224,10 @@
         )
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        constraint = m.ext[:spineopt][:constraints][:candidate_connection_flow_lb]
-        var_connection_flow = m.ext[:spineopt][:variables][:connection_flow]
-        var_connection_intact_flow = m.ext[:spineopt][:variables][:connection_intact_flow]
-        var_connections_invested_available = m.ext[:spineopt][:variables][:connections_invested_available]
+        constraint = m.ext[:spineopt].constraints[:candidate_connection_flow_lb]
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
+        var_connection_intact_flow = m.ext[:spineopt].variables[:connection_intact_flow]
+        var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
         @test length(constraint) == 6
         conn = connection(:connection_ab)
         n_to = node(:node_b)
@@ -1342,8 +1342,8 @@
         )
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        constraint = m.ext[:spineopt][:constraints][:ratio_out_in_connection_intact_flow]
-        var_connection_intact_flow = m.ext[:spineopt][:variables][:connection_intact_flow]
+        constraint = m.ext[:spineopt].constraints[:ratio_out_in_connection_intact_flow]
+        var_connection_intact_flow = m.ext[:spineopt].variables[:connection_intact_flow]
         @test length(constraint) == 8
 
         conn = connection(:connection_ab)
@@ -1496,9 +1496,9 @@
         )
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
-        constraint = m.ext[:spineopt][:constraints][:candidate_connection_flow_ub]
-        var_connection_intact_flow = m.ext[:spineopt][:variables][:connection_intact_flow]
-        var_connection_flow = m.ext[:spineopt][:variables][:connection_flow]
+        constraint = m.ext[:spineopt].constraints[:candidate_connection_flow_ub]
+        var_connection_intact_flow = m.ext[:spineopt].variables[:connection_intact_flow]
+        var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         @test length(constraint) == 6
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]

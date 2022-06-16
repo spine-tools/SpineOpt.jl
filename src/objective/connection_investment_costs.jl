@@ -23,7 +23,7 @@
 Create and expression for connection investment costs.
 """
 function connection_investment_costs(m::Model, t1)
-    @fetch connections_invested = m.ext[:spineopt][:variables]
+    @fetch connections_invested = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
         m,

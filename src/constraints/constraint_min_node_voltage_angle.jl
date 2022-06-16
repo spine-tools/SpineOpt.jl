@@ -23,9 +23,9 @@
 Limit the minimum value of a `node_voltage_angle` variable to be above `min_voltage_angle`, if it exists.
 """
 function add_constraint_min_node_voltage_angle!(m::Model)
-    @fetch node_voltage_angle = m.ext[:spineopt][:variables]
+    @fetch node_voltage_angle = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:min_node_voltage_angle] = Dict(
+    m.ext[:spineopt].constraints[:min_node_voltage_angle] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
             + expr_sum(

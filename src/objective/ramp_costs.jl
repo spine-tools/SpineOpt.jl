@@ -24,7 +24,7 @@ Create an expression for unit ramp costs.
 """
 # TODO: this
 function ramp_costs(m::Model, t1)
-    @fetch ramp_up_unit_flow, ramp_down_unit_flow = m.ext[:spineopt][:variables]
+    @fetch ramp_up_unit_flow, ramp_down_unit_flow = m.ext[:spineopt].variables
     t0 = start(current_window(m))
     @expression(
         m,

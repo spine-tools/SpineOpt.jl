@@ -23,9 +23,9 @@
 Limit the maximum value of a `node_state` variable under `node_state_cap`, if it exists.
 """
 function add_constraint_node_state_capacity!(m::Model)
-    @fetch node_state, storages_invested_available = m.ext[:spineopt][:variables]
+    @fetch node_state, storages_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:node_state_capacity] = Dict(
+    m.ext[:spineopt].constraints[:node_state_capacity] = Dict(
         (node=ng, stochastic_scenario=s, t=t) => @constraint(
             m,
             + expr_sum(

@@ -23,10 +23,10 @@
 Ensure consistency between the variables `units_on`, `units_started_up` and `units_shut_down`.
 """
 function add_constraint_unit_state_transition!(m::Model)
-    @fetch units_on, units_started_up, units_shut_down = m.ext[:spineopt][:variables]
+    @fetch units_on, units_started_up, units_shut_down = m.ext[:spineopt].variables
     # TODO: add support for units that start_up over multiple timesteps?
     # TODO: use :integer, :binary, :linear as parameter values -> reusable for other pruposes
-    m.ext[:spineopt][:constraints][:unit_state_transition] = Dict(
+    m.ext[:spineopt].constraints[:unit_state_transition] = Dict(
         (unit=u, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             expr_sum(

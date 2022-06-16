@@ -24,9 +24,9 @@ Limit the operating point flow variables `unit_flow_op` to the difference betwee
 the capacity of the unit.
 """
 function add_constraint_operating_point_bounds!(m::Model)
-    @fetch unit_flow_op, units_available = m.ext[:spineopt][:variables]
+    @fetch unit_flow_op, units_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt][:constraints][:operating_point_bounds] = Dict(
+    m.ext[:spineopt].constraints[:operating_point_bounds] = Dict(
         (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t) => @constraint(
             m,
             + unit_flow_op[u, n, d, op, s, t]
