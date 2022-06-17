@@ -562,11 +562,7 @@ function save_marginal_value_promises!(m::Model, ref_map::JuMP.ReferenceMap)
 end
 
 function _save_marginal_value_promise!(m::Model, con, output_name::Symbol, ref_map::JuMP.ReferenceMap)
-    m.ext[:spineopt].values[output_name] = Dict(
-        ind => DualPromise(ref_map[con[ind]])
-        for ind in keys(con)
-        if maximum(ind[k] for k in _time_slice_keys(ind)) <= end_(current_window(m))
-    )
+    m.ext[:spineopt].values[output_name] = Dict(ind => DualPromise(ref_map[con[ind]]) for ind in keys(con))
 end
 
 function save_bound_marginal_value_promises!(m::Model, ref_map::JuMP.ReferenceMap)
@@ -579,11 +575,7 @@ function save_bound_marginal_value_promises!(m::Model, ref_map::JuMP.ReferenceMa
 end
 
 function _save_bound_marginal_value_promise!(m::Model, var, output_name::Symbol, ref_map::JuMP.ReferenceMap)
-    m.ext[:spineopt].values[output_name] = Dict(
-        ind => ReducedCostPromise(ref_map[var[ind]])
-        for ind in keys(var)
-        if maximum(ind[k] for k in _time_slice_keys(ind)) <= end_(current_window(m))
-    )
+    m.ext[:spineopt].values[output_name] = Dict(ind => ReducedCostPromise(ref_map[var[ind]]) for ind in keys(var))
 end
 
 JuMP.dual(x::DualPromise) = has_duals(owner_model(x.value)) ? dual(x.value) : nothing
