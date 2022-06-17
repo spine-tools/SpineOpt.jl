@@ -180,13 +180,22 @@ end
         unit_capacity = 200
         @testset for nat in 1:6
             non_anticip_time = Dict("type" => "duration", "data" => string(nat, "h"))
-            objects = [["output", "units_on"]]
+            objects = [["output", "units_on"], ["temporal_block", "quarterly"]]
             object_parameter_values = [
                 ["node", "node_b", "demand", unparse_db_value(demand)],
+                ["node", "node_b", "node_slack_penalty", 1000],
                 ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
-                ["temporal_block", "hourly", "block_end", Dict("type" => "duration", "data" => "16h")],
+                ["temporal_block", "quarterly", "resolution", Dict("type" => "duration", "data" => "15m")],
+                ["temporal_block", "quarterly", "block_end", Dict("type" => "duration", "data" => "6h")],
+                ["temporal_block", "hourly", "block_start", Dict("type" => "duration", "data" => "6h")],
+                ["temporal_block", "hourly", "block_end", Dict("type" => "duration", "data" => "18h")],
             ]
-            relationships = [["report__output", ["report_x", "units_on"]]]
+            relationships = [
+                ["report__output", ["report_x", "units_on"]],
+                ["model__temporal_block", ["instance", "quarterly"]],
+                ["node__temporal_block", ["node_b", "quarterly"]],
+                ["units_on__temporal_block", ["unit_ab", "quarterly"]]
+            ]
             relationship_parameter_values = [
                 ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
                 ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
@@ -200,12 +209,16 @@ end
                 relationship_parameter_values=relationship_parameter_values,
             )        
             m = run_spineopt(url_in, url_out; log_level=0)
-            @testset for (k, t) in enumerate(time_slice(m))
+            nat = unit_flow_non_anticipativity_time(
+                unit=unit(:unit_ab), node=node(:node_b), direction=direction(:to_node)
+            )
+            window_start = model_start(model=first(model())) + roll_forward(model=first(model()))
+            @testset for t in time_slice(m)
                 ind = first(SpineOpt.unit_flow_indices(m; t=t))
                 var = m.ext[:spineopt].variables[:unit_flow][ind]
-                # Only first nat time slices should be fixed
-                @test is_fixed(var) == (k in 1:nat)
-                if k in 1:nat
+                should_be_fixed = start(t) - window_start < nat
+                @test is_fixed(var) == should_be_fixed
+                if should_be_fixed
                     @test fix_value(var) == demand_pv(t=t)
                 end
             end

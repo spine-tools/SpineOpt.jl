@@ -55,7 +55,6 @@ function rerun_spineopt!(
             @timelog log_level 2 "Writing report..." write_report(m, url_out; alternative=alternative)
             clear_results!(m)
         end
-        @timelog log_level 2 "Fixing non-anticipativity values..." fix_non_anticipativity_values!(m)
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
             @timelog log_level 2 " ... Rolling complete\n" break
         end
@@ -158,10 +157,16 @@ function _fix_non_anticipativity_value!(m, name::Symbol, definition::Dict)
     indices = definition[:indices]
     non_anticipativity_time = definition[:non_anticipativity_time]
     window_start = start(current_window(m))
+    roll_forward_ = roll_forward(model=m.ext[:spineopt].instance)
     for ind in indices(m; t=time_slice(m))
         non_anticipativity_time_ = (non_anticipativity_time === nothing) ? nothing : non_anticipativity_time(ind)
         if non_anticipativity_time_ != nothing && start(ind.t) < window_start +  non_anticipativity_time_
-            fix(var[ind], val[ind]; force=true)
+            next_t = to_time_slice(m; t=ind.t + roll_forward_)
+            next_inds = indices(m; t=next_t)
+            if !isempty(next_inds)
+                next_ind = first(next_inds)
+                fix(var[ind], val[next_ind]; force=true)
+            end
         end
     end
 end
@@ -289,7 +294,9 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
     @timelog log_level 0 "Optimizing model $(m.ext[:spineopt].instance)..." optimize!(m)
     if termination_status(m) in (MOI.OPTIMAL, MOI.TIME_LIMIT)
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." save_model_results!(m; iterations=iterations)
+        @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." save_model_results!(
+            m; iterations=iterations
+        )
         if calculate_duals
             @log log_level 1 "Setting up final LP of $(m.ext[:spineopt].instance) to obtain duals..."
             @timelog log_level 1 "Copying model" (m_dual_lp, ref_map) = copy_model(m)
@@ -310,7 +317,9 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
         false
     else
         @log log_level 0 "Unable to find solution (reason: $(termination_status(m)))"
-        write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_on_no_solve && write_to_file(m, "model_diagnostics.mps")
+        write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_on_no_solve && write_to_file(
+            m, "model_diagnostics.mps"
+        )
         false
     end
 end
@@ -470,6 +479,7 @@ function update_model!(m; update_constraints=m -> nothing, log_level=3, update_n
         _update_constraint_names!(m)
     end
     @timelog log_level 2 "Updating variables..." update_variables!(m)
+    @timelog log_level 2 "Fixing non-anticipativity values..." fix_non_anticipativity_values!(m)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
     @timelog log_level 2 "Updating user constraints..." update_constraints(m)
