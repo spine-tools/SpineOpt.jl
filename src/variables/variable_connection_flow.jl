@@ -80,5 +80,6 @@ function add_variable_connection_flow!(m::Model)
             _strict=false,
         ),
         non_anticipativity_time=x -> connection_flow_non_anticipativity_time(; x..., _strict=false),
+        non_anticipativity_margin=x -> connection_flow_non_anticipativity_margin(; x..., _strict=false),
     )
 end
