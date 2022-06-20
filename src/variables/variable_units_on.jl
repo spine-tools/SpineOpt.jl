@@ -79,5 +79,6 @@ function add_variable_units_on!(m::Model)
             _strict=false,
         ),        
         non_anticipativity_time=x -> units_on_non_anticipativity_time(unit=x.unit, _strict=false),
+        non_anticipativity_margin=x -> units_on_non_anticipativity_margin(unit=x.unit, _strict=false),
     )
 end
