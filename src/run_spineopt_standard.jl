@@ -435,8 +435,12 @@ function _save_output!(m, out, value_or_param; iterations=nothing)
             isempty(by_time_stamp_aggr) && continue
             by_entity = get!(m.ext[:spineopt].outputs, out.name, Dict{NamedTuple,Dict}())
             by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-            by_time_stamp = get!(by_analysis_time, analysis_time, Dict{DateTime,Any}())
-            merge!(by_time_stamp, by_time_stamp_aggr)
+            by_time_stamp = get!(by_analysis_time, analysis_time, nothing)
+            if by_time_stamp === nothing
+                by_analysis_time[analysis_time] = by_time_stamp_aggr
+            else
+                merge!(by_time_stamp, by_time_stamp_aggr)
+            end
         end
     end
     true
@@ -582,9 +586,9 @@ JuMP.dual(x::DualPromise) = has_duals(owner_model(x.value)) ? dual(x.value) : no
 
 JuMP.reduced_cost(x::ReducedCostPromise) = has_duals(owner_model(x.value)) ? reduced_cost(x.value) : nothing
 
-function SpineInterface.unparse_db_value(x::TimeSeries{T}) where T <: DualPromise
-    unparse_db_value(TimeSeries(x.indexes, JuMP.dual.(x.values), x.ignore_year, x.repeat))
+function SpineInterface.db_value(x::TimeSeries{T}) where T <: DualPromise
+    db_value(TimeSeries(x.indexes, JuMP.dual.(x.values), x.ignore_year, x.repeat))
 end
-function SpineInterface.unparse_db_value(x::TimeSeries{T}) where T <: ReducedCostPromise
-    unparse_db_value(TimeSeries(x.indexes, JuMP.reduced_cost.(x.values), x.ignore_year, x.repeat))
+function SpineInterface.db_value(x::TimeSeries{T}) where T <: ReducedCostPromise
+    db_value(TimeSeries(x.indexes, JuMP.reduced_cost.(x.values), x.ignore_year, x.repeat))
 end
