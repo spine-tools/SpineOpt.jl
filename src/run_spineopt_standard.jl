@@ -156,16 +156,28 @@ function _fix_non_anticipativity_value!(m, name::Symbol, definition::Dict)
     val = m.ext[:spineopt].values[name]
     indices = definition[:indices]
     non_anticipativity_time = definition[:non_anticipativity_time]
+    non_anticipativity_margin = definition[:non_anticipativity_margin]
+
     window_start = start(current_window(m))
     roll_forward_ = roll_forward(model=m.ext[:spineopt].instance)
     for ind in indices(m; t=time_slice(m))
         non_anticipativity_time_ = (non_anticipativity_time === nothing) ? nothing : non_anticipativity_time(ind)
+        non_anticipativity_margin_ = (non_anticipativity_margin === nothing) ? nothing : non_anticipativity_margin(ind)
         if non_anticipativity_time_ != nothing && start(ind.t) < window_start +  non_anticipativity_time_
             next_t = to_time_slice(m; t=ind.t + roll_forward_)
             next_inds = indices(m; t=next_t)
             if !isempty(next_inds)
                 next_ind = first(next_inds)
-                fix(var[ind], val[next_ind]; force=true)
+                if non_anticipativity_margin_ != nothing
+                    lb = val[next_ind] - non_anticipativity_margin_
+                    lb < 0  && lb = 0
+                    set_lower_bound(var[ind], lb)
+
+                    ub = val[next_ind] + non_anticipativity_margin_
+                    set_upper_bound(var[ind], ub)
+                else                    
+                    fix(var[ind], val[next_ind]; force=true)
+                end
             end
         end
     end
