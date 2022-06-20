@@ -435,7 +435,7 @@ function _save_output!(m, out, value_or_param; iterations=nothing)
             isempty(by_time_stamp_aggr) && continue
             by_entity = get!(m.ext[:spineopt].outputs, out.name, Dict{NamedTuple,Dict}())
             by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-            by_time_stamp = get!(by_analysis_time, analysis_time, nothing)
+            by_time_stamp = get(by_analysis_time, analysis_time, nothing)
             if by_time_stamp === nothing
                 by_analysis_time[analysis_time] = by_time_stamp_aggr
             else
