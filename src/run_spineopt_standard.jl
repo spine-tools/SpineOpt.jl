@@ -170,7 +170,7 @@ function _fix_non_anticipativity_value!(m, name::Symbol, definition::Dict)
                 next_ind = first(next_inds)
                 if non_anticipativity_margin_ != nothing
                     lb = val[next_ind] - non_anticipativity_margin_
-                    lb < 0  && lb = 0
+                    (lb < 0) && (lb = 0)
                     set_lower_bound(var[ind], lb)
 
                     ub = val[next_ind] + non_anticipativity_margin_
