@@ -155,6 +155,10 @@ At line:1 char:35
 
 3. Try to install SpineOpt again.
 
+### Community
+
+To connect with other users, to identify problems and exchange experiences, we will organize monthly early-user meetings for Spine Toolbox and SpineOpt. The meetings will be held every last Wednesday of the month at 10am CEST and can be joined [here](https://teams.microsoft.com/l/meetup-join/19%3ameeting_YjlhOWNmZjYtMDUxMC00MWViLTllMGUtNGI0NWY5NzY2YTU4%40thread.v2/0?context=%7b%22Tid%22%3a%22d7ab8571-7881-415a-b0c2-b5a933c86ee8%22%2c%22Oid%22%3a%227ff67982-a736-42fa-ade6-994bb97d94a8%22%7d).
+
 ### Reporting Issues and Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)

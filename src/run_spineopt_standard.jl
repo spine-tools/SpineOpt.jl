@@ -133,7 +133,7 @@ function _update_variable!(m::Model, name::Symbol, definition::Dict)
     indices = definition[:indices]
     lb = definition[:lb]
     ub = definition[:ub]
-    for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+    for ind in indices(m; t=time_slice(m))
         is_fixed(var[ind]) && unfix(var[ind])
         lb != nothing && _set_lower_bound(var[ind], lb(ind))
         ub != nothing && _set_upper_bound(var[ind], ub(ind))
@@ -142,6 +142,11 @@ function _update_variable!(m::Model, name::Symbol, definition::Dict)
         for history_ind in indices(m; ind..., t=history_t)
             fix(var[history_ind], val[ind]; force=true)
         end
+    end
+    for ind in indices(m; t=history_time_slice(m))
+        is_fixed(var[ind]) && continue
+        lb != nothing && _set_lower_bound(var[ind], lb(ind))
+        ub != nothing && _set_upper_bound(var[ind], ub(ind))
     end
 end
 
@@ -447,8 +452,12 @@ function _save_output!(m, out, value_or_param; iterations=nothing)
             isempty(by_time_stamp_aggr) && continue
             by_entity = get!(m.ext[:spineopt].outputs, out.name, Dict{NamedTuple,Dict}())
             by_analysis_time = get!(by_entity, entity, Dict{DateTime,Any}())
-            by_time_stamp = get!(by_analysis_time, analysis_time, Dict{DateTime,Any}())
-            merge!(by_time_stamp, by_time_stamp_aggr)
+            by_time_stamp = get(by_analysis_time, analysis_time, nothing)
+            if by_time_stamp === nothing
+                by_analysis_time[analysis_time] = by_time_stamp_aggr
+            else
+                merge!(by_time_stamp, by_time_stamp_aggr)
+            end
         end
     end
     true
@@ -594,9 +603,9 @@ JuMP.dual(x::DualPromise) = has_duals(owner_model(x.value)) ? dual(x.value) : no
 
 JuMP.reduced_cost(x::ReducedCostPromise) = has_duals(owner_model(x.value)) ? reduced_cost(x.value) : nothing
 
-function SpineInterface.unparse_db_value(x::TimeSeries{T}) where T <: DualPromise
-    unparse_db_value(TimeSeries(x.indexes, JuMP.dual.(x.values), x.ignore_year, x.repeat))
+function SpineInterface.db_value(x::TimeSeries{T}) where T <: DualPromise
+    db_value(TimeSeries(x.indexes, JuMP.dual.(x.values), x.ignore_year, x.repeat))
 end
-function SpineInterface.unparse_db_value(x::TimeSeries{T}) where T <: ReducedCostPromise
-    unparse_db_value(TimeSeries(x.indexes, JuMP.reduced_cost.(x.values), x.ignore_year, x.repeat))
+function SpineInterface.db_value(x::TimeSeries{T}) where T <: ReducedCostPromise
+    db_value(TimeSeries(x.indexes, JuMP.reduced_cost.(x.values), x.ignore_year, x.repeat))
 end
