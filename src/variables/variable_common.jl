@@ -106,8 +106,11 @@ function _variable(m, name, ind, lb, ub, bin, int)
     var
 end
 
+_lower_bound(var) = has_lower_bound(var) ? lower_bound(var) : nothing
+_upper_bound(var) = has_upper_bound(var) ? upper_bound(var) : nothing
+
 _set_lower_bound(var, ::Nothing) = nothing
-_set_lower_bound(var, lb) = set_lower_bound(var, lb)
+_set_lower_bound(var, lb) = (lb != _lower_bound(var)) ? set_lower_bound(var, lb) : nothing
 
 _set_upper_bound(var, ::Nothing) = nothing
-_set_upper_bound(var, lb) = set_upper_bound(var, lb)
+_set_upper_bound(var, up) = (up != _upper_bound(var)) ? set_upper_bound(var, up) : nothing
