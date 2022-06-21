@@ -152,6 +152,10 @@ function generate_direction()
         unit__to_node => to_node,
         connection__from_node => from_node,
         connection__to_node => to_node,
+        unit__from_node__user_constraint => from_node,
+        unit__to_node__user_constraint => to_node,        
+        connection__from_node__user_constraint => from_node,
+        connection__to_node__user_constraint => to_node,        
     )
     for cls in keys(directions_by_class)
         push!(cls.object_class_names, :direction)
