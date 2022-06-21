@@ -133,7 +133,7 @@ function _update_variable!(m::Model, name::Symbol, definition::Dict)
     indices = definition[:indices]
     lb = definition[:lb]
     ub = definition[:ub]
-    for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+    for ind in indices(m; t=time_slice(m))
         is_fixed(var[ind]) && unfix(var[ind])
         lb != nothing && _set_lower_bound(var[ind], lb(ind))
         ub != nothing && _set_upper_bound(var[ind], ub(ind))
@@ -142,6 +142,11 @@ function _update_variable!(m::Model, name::Symbol, definition::Dict)
         for history_ind in indices(m; ind..., t=history_t)
             fix(var[history_ind], val[ind]; force=true)
         end
+    end
+    for ind in indices(m; t=history_time_slice(m))
+        is_fixed(var[ind]) && continue
+        lb != nothing && _set_lower_bound(var[ind], lb(ind))
+        ub != nothing && _set_upper_bound(var[ind], ub(ind))
     end
 end
 
