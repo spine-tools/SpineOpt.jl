@@ -314,6 +314,7 @@
         ["unit__from_node", "unit_conv_cap_to_flow", 1.0, null, "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."],
         ["unit__from_node", "vom_cost", null, null, "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."],
         ["unit__from_node", "unit_flow_non_anticipativity_time", null, null, "Period of time where the value of the `unit_flow` variable has to be fixed to the result from the previous window."],
+        ["unit__from_node", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["unit__from_node__user_constraint", "graph_view_position", null, null, "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."],
         ["unit__from_node__user_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `user_constraint`."],
         ["unit__node__node", "fix_ratio_in_in_unit_flow", null, null, "Fix the ratio between two `unit_flows` coming into the `unit` from the two `nodes`."],
@@ -377,6 +378,7 @@
         ["unit__to_node", "unit_conv_cap_to_flow", 1.0, null, "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."],
         ["unit__to_node", "vom_cost", null, null, "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."],
         ["unit__to_node", "unit_flow_non_anticipativity_time", null, null, "Period of time where the value of the `unit_flow` variable has to be fixed to the result from the previous window."],
+        ["unit__to_node", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["unit__to_node__user_constraint", "graph_view_position", null, null, "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."],
         ["unit__to_node__user_constraint", "unit_flow_coefficient", 0.0, null, "Coefficient of a `unit_flow` variable for a custom `user_constraint`."],
         ["unit__user_constraint", "units_on_coefficient", 0.0, null, "Coefficient of a `units_on` variable for a custom `user_constraint`."],
@@ -452,7 +454,9 @@
         ["stochastic_structure", "is_active", "boolean_value_list", "boolean_value_list"],
         ["temporal_block", "is_active", "boolean_value_list", "boolean_value_list"],
         ["unit", "is_active", "boolean_value_list", "boolean_value_list"],
-        ["user_constraint", "is_active", "boolean_value_list", "boolean_value_list"]
+        ["user_constraint", "is_active", "boolean_value_list", "boolean_value_list"],
+        ["unit__from_node", "is_active", "boolean_value_list", "boolean_value_list"],
+        ["unit__to_node", "is_active", "boolean_value_list", "boolean_value_list"]
     ],
     "tool_features": [
         ["object_activity_control", "commodity", "is_active", false],
@@ -465,7 +469,9 @@
         ["object_activity_control", "stochastic_structure", "is_active", false],
         ["object_activity_control", "temporal_block", "is_active", false],
         ["object_activity_control", "unit", "is_active", false],
-        ["object_activity_control", "user_constraint", "is_active", false]
+        ["object_activity_control", "user_constraint", "is_active", false],
+        ["object_activity_control", "unit__to_node", "is_active", false],
+        ["object_activity_control", "unit__from_node", "is_active", false]
     ],
     "tool_feature_methods": [
         ["object_activity_control", "commodity", "is_active", true],
@@ -478,6 +484,8 @@
         ["object_activity_control", "stochastic_structure", "is_active", true],
         ["object_activity_control", "temporal_block", "is_active", true],
         ["object_activity_control", "unit", "is_active", true],
-        ["object_activity_control", "user_constraint", "is_active", true]
+        ["object_activity_control", "user_constraint", "is_active", true],
+        ["object_activity_control", "unit__to_node", "is_active", true],
+        ["object_activity_control", "unit__from_node", "is_active", true]
     ]
 }
