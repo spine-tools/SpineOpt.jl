@@ -32,9 +32,9 @@ function preprocess_data_structure(; log_level=3)
     generate_report()
     generate_report__output()
     generate_model__report()
+    add_connection_relationships()
     # NOTE: generate direction before calling `generate_network_components`,
     # so calls to `connection__from_node` don't corrupt lookup cache
-    add_connection_relationships()
     generate_direction()
     process_loss_bidirectional_capacities()
     generate_network_components()
