@@ -458,7 +458,8 @@ function output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
         [ts for by_time_stamp in values(by_analysis_time_sorted) for ts in keys(by_time_stamp)],
         [val for by_time_stamp in values(by_analysis_time_sorted) for val in values(by_time_stamp)],
         false,
-        false
+        false;
+        merge_ok=true
     )
 end
 function output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
