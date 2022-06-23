@@ -44,9 +44,10 @@ function add_constraint_user_constraint!(m::Model)
             + expr_sum(
                 + unit_flow_op[u, n, d, op, s, t_short]
                 * unit_flow_coefficient[
-                    (unit=u, node=n, user_constraint=uc, i=op, stochastic_scenario=s, analysis_time=t0, t=t_short),
+                    (unit=u, node=n, user_constraint=uc, direction=d, i=op, stochastic_scenario=s, analysis_time=t0, t=t_short),
                 ]
-                * duration(t_short) for (u, n) in unit__from_node__user_constraint(user_constraint=uc)
+                * duration(t_short)
+                for (u, n) in unit__from_node__user_constraint(user_constraint=uc, direction=direction(:from_node))
                 for (u, n, d, op, s, t_short) in unit_flow_op_indices(
                     m;
                     unit=u,
@@ -60,9 +61,10 @@ function add_constraint_user_constraint!(m::Model)
             + expr_sum(
                 + unit_flow[u, n, d, s, t_short]
                 * unit_flow_coefficient[
-                    (unit=u, node=n, user_constraint=uc, i=1, stochastic_scenario=s, analysis_time=t0, t=t_short),
+                    (unit=u, node=n, user_constraint=uc, direction=d, i=1, stochastic_scenario=s, analysis_time=t0, t=t_short),
                 ]
-                * duration(t_short) for (u, n) in unit__from_node__user_constraint(user_constraint=uc)
+                * duration(t_short)
+                for (u, n) in unit__from_node__user_constraint(user_constraint=uc, direction=direction(:from_node))
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     m;
                     unit=u,
@@ -76,9 +78,10 @@ function add_constraint_user_constraint!(m::Model)
             + expr_sum(
                 + unit_flow_op[u, n, d, op, s, t_short]
                 * unit_flow_coefficient[
-                    (unit=u, node=n, user_constraint=uc, i=op, stochastic_scenario=s, analysis_time=t0, t=t_short),
+                    (unit=u, node=n, user_constraint=uc, direction=d, i=op, stochastic_scenario=s, analysis_time=t0, t=t_short),
                 ]
-                * duration(t_short) for (u, n) in unit__to_node__user_constraint(user_constraint=uc)
+                * duration(t_short)
+                for (u, n) in unit__to_node__user_constraint(user_constraint=uc, direction=direction(:to_node))
                 for (u, n, d, op, s, t_short) in unit_flow_op_indices(
                     m;
                     unit=u,
@@ -92,9 +95,10 @@ function add_constraint_user_constraint!(m::Model)
             + expr_sum(
                 + unit_flow[u, n, d, s, t_short]
                 * unit_flow_coefficient[
-                    (unit=u, node=n, user_constraint=uc, i=1, stochastic_scenario=s, analysis_time=t0, t=t_short),
+                    (unit=u, node=n, user_constraint=uc, direction=d, i=1, stochastic_scenario=s, analysis_time=t0, t=t_short),
                 ]
-                * duration(t_short) for (u, n) in unit__to_node__user_constraint(user_constraint=uc)
+                * duration(t_short)
+                for (u, n) in unit__to_node__user_constraint(user_constraint=uc, direction=direction(:to_node))
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     m;
                     unit=u,
@@ -112,7 +116,8 @@ function add_constraint_user_constraint!(m::Model)
                     + units_started_up[u, s, t1]
                     * units_started_up_coefficient[(user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)]
                 )
-                * min(duration(t1), duration(t)) for u in unit__user_constraint(user_constraint=uc)
+                * min(duration(t1), duration(t))
+                for u in unit__user_constraint(user_constraint=uc)
                 for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0,
             )            
@@ -152,9 +157,10 @@ function add_constraint_user_constraint!(m::Model)
             + expr_sum(
                 + connection_flow[c, n, d, s, t_short]
                 * connection_flow_coefficient[
-                    (connection=c, node=n, user_constraint=uc, stochastic_scenario=s, analysis_time=t0, t=t_short),
+                    (connection=c, node=n, user_constraint=uc, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_short),
                 ]
-                * duration(t_short) for (c, n) in connection__from_node__user_constraint(user_constraint=uc)
+                * duration(t_short)
+                for (c, n) in connection__from_node__user_constraint(user_constraint=uc, direction=direction(:from_node))
                 for (c, n, d, s, t_short) in connection_flow_indices(
                     m;
                     connection=c,
@@ -168,9 +174,10 @@ function add_constraint_user_constraint!(m::Model)
             + expr_sum(
                 + connection_flow[c, n, d, s, t_short]
                 * connection_flow_coefficient[
-                    (connection=c, node=n, user_constraint=uc, stochastic_scenario=s, analysis_time=t0, t=t_short),
+                    (connection=c, node=n, user_constraint=uc, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_short),
                 ]
-                * duration(t_short) for (c, n) in connection__to_node__user_constraint(user_constraint=uc)
+                * duration(t_short)
+                for (c, n) in connection__to_node__user_constraint(user_constraint=uc, direction=direction(:to_node))
                 for (c, n, d, s, t_short) in connection_flow_indices(
                     m;
                     connection=c,

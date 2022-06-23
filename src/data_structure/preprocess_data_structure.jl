@@ -32,9 +32,9 @@ function preprocess_data_structure(; log_level=3)
     generate_report()
     generate_report__output()
     generate_model__report()
+    add_connection_relationships()
     # NOTE: generate direction before calling `generate_network_components`,
     # so calls to `connection__from_node` don't corrupt lookup cache
-    add_connection_relationships()
     generate_direction()
     process_loss_bidirectional_capacities()
     generate_network_components()
@@ -152,6 +152,10 @@ function generate_direction()
         unit__to_node => to_node,
         connection__from_node => from_node,
         connection__to_node => to_node,
+        unit__from_node__user_constraint => from_node,
+        unit__to_node__user_constraint => to_node,        
+        connection__from_node__user_constraint => from_node,
+        connection__to_node__user_constraint => to_node,        
     )
     for cls in keys(directions_by_class)
         push!(cls.object_class_names, :direction)
