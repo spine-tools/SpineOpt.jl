@@ -323,7 +323,12 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
             save_marginal_value_promises!(m, ref_map)
             save_bound_marginal_value_promises!(m, ref_map)
             task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
-            push!(m.ext[:spineopt].dual_solves, task)
+            lock(m.ext[:spineopt].dual_solves_lock)
+            try
+                push!(m.ext[:spineopt].dual_solves, task)
+            finally
+                unlock(m.ext[:spineopt].dual_solves_lock)
+            end
         end
         save_outputs!(m; iterations=iterations)
         true

@@ -344,6 +344,7 @@ struct SpineOptExt
     temporal_structure::Dict
     stochastic_structure::Dict
     dual_solves::Array{Any,1}
+    dual_solves_lock::ReentrantLock
     objective_lower_bound::Float64
     objective_upper_bound::Float64
     benders_gap::Float64
@@ -360,6 +361,7 @@ struct SpineOptExt
             Dict(),
             Dict(),
             [],
+            ReentrantLock(),
             0.0,
             0.0,
             0.0,
@@ -521,7 +523,13 @@ Write report from given model into a db.
 """
 function write_report(m, default_url, output_value=output_value; alternative="")
     default_url === nothing && return
-    wait.(m.ext[:spineopt].dual_solves)
+    lock(m.ext[:spineopt].dual_solves_lock)
+    try
+        wait.(m.ext[:spineopt].dual_solves)
+        empty!(m.ext[:spineopt].dual_solves)
+    finally
+        unlock(m.ext[:spineopt].dual_solves_lock)
+    end
     reports = Dict()
     outputs = Dict()
     for rpt in model__report(model=m.ext[:spineopt].instance)
