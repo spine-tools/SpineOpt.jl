@@ -393,7 +393,7 @@
         ["unit__user_constraint", "units_started_up_coefficient", 0.0, null, "Coefficient of a `units_started_up` variable for a custom `user_constraint`."],
         ["unit__user_constraint", "units_invested_coefficient", 0.0, null, "Coefficient of the `units_invested` variable in the specified `user_constraint`."],
         ["unit__user_constraint", "units_invested_available_coefficient",0.0 , null, "Coefficient of the `units_invested_available` variable in the specified `user_constraint`."],
-        ["units_on__temporal_block", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
+        ["units_on__temporal_block", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"]
     ],
     "objects": [
         ["output","binary_gas_connection_flow", null],
