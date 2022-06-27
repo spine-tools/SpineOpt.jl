@@ -410,13 +410,14 @@ end
 
 function _value_by_entity_non_aggregated(m, parameter::Parameter)
     by_entity_non_aggr = Dict()
+    analysis_time = start(current_window(m))
     for entity in indices_as_tuples(parameter)
         for (scen, t) in stochastic_time_indices(m)
             entity = (; entity..., stochastic_scenario=scen)
-            val = parameter(; entity..., t=t, _strict=false)
+            val = parameter(; entity..., analysis_time=analysis_time, t=t, _strict=false)
             val === nothing && continue
             by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
-            by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, start(current_window(m)), Dict{TimeSlice,Any}())
+            by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, analysis_time, Dict{TimeSlice,Any}())
             by_time_slice_non_aggr[t] = val
         end
     end
