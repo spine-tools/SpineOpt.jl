@@ -161,6 +161,7 @@ Merges two values together provided it's possible depending on the type.
 """
 unique_merge!(value1::Dict, value2::Dict) = merge!(value1, value2)
 unique_merge!(value1::String, value2::String) = value1
+unique_merge!(value1::Bool, value2::Bool) = value1
 unique_merge!(value1::Array, value2::Array) = unique!(append!(value1, value2))
 unique_merge!(value1::Nothing, value2::Nothing) = nothing
 
@@ -175,8 +176,8 @@ If multiple template section names are mapped to a single `String`, the entries 
 """
 function translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, translation::Dict)
     initial_translation = Dict(
-        translation[key] => mergewith(
-            (d1, d2) -> mergewith(unique_merge!, d1, d2),
+        translation[key] => merge(
+            (d1, d2) -> merge(unique_merge!, d1, d2),
             [concept_dictionary[k] for k in key]...
         )
         for key in keys(translation)
