@@ -396,7 +396,7 @@ function _value_by_entity_non_aggregated(m, value::Dict, crop_to_window)
         t_keys = collect(_time_slice_keys(ind))
         t = maximum(ind[k] for k in t_keys)
         t <= analysis_time && continue
-        crop_to_window && t >= end_(current_window(m)) && continue
+        crop_to_window && start(t) >= end_(current_window(m)) && continue
         entity = _drop_key(ind, t_keys...)
         entity = _flatten_stochastic_path(entity)
         by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
@@ -418,7 +418,7 @@ function _value_by_entity_non_aggregated(m, parameter::Parameter, crop_to_window
     analysis_time = start(current_window(m))
     for entity in indices_as_tuples(parameter)
         for (scen, t) in stochastic_time_indices(m)
-            crop_to_window && t >= end_(current_window(m)) && continue
+            crop_to_window && start(t) >= end_(current_window(m)) && continue
             entity = (; entity..., stochastic_scenario=scen)
             val = parameter(; entity..., analysis_time=analysis_time, t=t, _strict=false)
             val === nothing && continue
