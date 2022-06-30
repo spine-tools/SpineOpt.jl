@@ -282,6 +282,7 @@
         ["node__node", "diff_coeff", 0.0, null, "Commodity diffusion coefficient between two `nodes`. Effectively, denotes the *diffusion power per unit of state* from the first `node` to the second."],
         ["node__temporal_block", "cyclic_condition", false, "boolean_value_list", "If the cyclic condition is set to true for a storage node, the `node_state` at the end of the optimization window has to be larger than or equal to the initial storage state."],
         ["node__temporal_block", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
+        ["node__stochastic_structure", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["node__user_constraint", "demand_coefficient", 0.0, null, "coefficient of the specified node's demand in the specified user constraint"],
         ["node__user_constraint", "node_state_coefficient", 0.0, null, "Coefficient of the specified node's state variable in the specified user constraint."],
         ["node__user_constraint", "storages_invested_coefficient", 0.0 , null, "Coefficient of the specified node's storage investment variable in the specified user constraint."],
@@ -393,6 +394,7 @@
         ["unit__user_constraint", "units_started_up_coefficient", 0.0, null, "Coefficient of a `units_started_up` variable for a custom `user_constraint`."],
         ["unit__user_constraint", "units_invested_coefficient", 0.0, null, "Coefficient of the `units_invested` variable in the specified `user_constraint`."],
         ["unit__user_constraint", "units_invested_available_coefficient",0.0 , null, "Coefficient of the `units_invested_available` variable in the specified `user_constraint`."],
+        ["units_on__stochastic_structure", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["units_on__temporal_block", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"]
     ],
     "objects": [
@@ -464,9 +466,11 @@
         ["temporal_block", "is_active", "boolean_value_list", "boolean_value_list"],
         ["unit", "is_active", "boolean_value_list", "boolean_value_list"],
         ["user_constraint", "is_active", "boolean_value_list", "boolean_value_list"],
+        ["node__stochastic_structure", "is_active", "boolean_value_list", "boolean_value_list"],
         ["node__temporal_block", "is_active", "boolean_value_list", "boolean_value_list"],
         ["unit__from_node", "is_active", "boolean_value_list", "boolean_value_list"],
         ["unit__to_node", "is_active", "boolean_value_list", "boolean_value_list"],
+        ["units_on__stochastic_structure", "is_active", "boolean_value_list", "boolean_value_list"],
         ["units_on__temporal_block", "is_active", "boolean_value_list", "boolean_value_list"]
     ],
     "tool_features": [
@@ -481,9 +485,11 @@
         ["object_activity_control", "temporal_block", "is_active", false],
         ["object_activity_control", "unit", "is_active", false],
         ["object_activity_control", "user_constraint", "is_active", false],
+        ["object_activity_control", "node__stochastic_structure", "is_active", false],
         ["object_activity_control", "node__temporal_block", "is_active", false],
         ["object_activity_control", "unit__to_node", "is_active", false],
         ["object_activity_control", "unit__from_node", "is_active", false],
+        ["object_activity_control", "units_on__stochastic_structure", "is_active", false],
         ["object_activity_control", "units_on__temporal_block", "is_active", false]
     ],
     "tool_feature_methods": [
@@ -498,9 +504,11 @@
         ["object_activity_control", "temporal_block", "is_active", true],
         ["object_activity_control", "unit", "is_active", true],
         ["object_activity_control", "user_constraint", "is_active", true],
+        ["object_activity_control", "node__stochastic_structure", "is_active", true],
         ["object_activity_control", "node__temporal_block", "is_active", true],
         ["object_activity_control", "unit__to_node", "is_active", true],
         ["object_activity_control", "unit__from_node", "is_active", true],
+        ["object_activity_control", "units_on__stochastic_structure", "is_active", true],
         ["object_activity_control", "units_on__temporal_block", "is_active", true]
     ]
 }
