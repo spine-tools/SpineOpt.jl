@@ -322,15 +322,19 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
             @timelog log_level 1 "Fixing integer variables..." relax_integer_vars(m, ref_map)
             save_marginal_value_promises!(m, ref_map)
             save_bound_marginal_value_promises!(m, ref_map)
-            task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
-            lock(m.ext[:spineopt].dual_solves_lock)
-            try
-                push!(m.ext[:spineopt].dual_solves, task)
-            finally
-                unlock(m.ext[:spineopt].dual_solves_lock)
+            if isdefined(Threads, Symbol("@spawn"))
+                task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
+                lock(m.ext[:spineopt].dual_solves_lock)
+                try
+                    push!(m.ext[:spineopt].dual_solves, task)
+                finally
+                    unlock(m.ext[:spineopt].dual_solves_lock)
+                end
+            else
+                @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
             end
         end
-        save_outputs!(m; iterations=iterations)
+        @timelog log_level 2 "Saving outputs..." save_outputs!(m; iterations=iterations)
         true
     elseif termination_status(m) == MOI.INFEASIBLE
         msg = "model is infeasible - if conflicting constraints can be identified, they will be reported below\n"
@@ -385,13 +389,14 @@ function save_objective_values!(m::Model)
     end
 end
 
-function _value_by_entity_non_aggregated(m, value::Dict)
+function _value_by_entity_non_aggregated(m, value::Dict, crop_to_window)
     by_entity_non_aggr = Dict()
     analysis_time = start(current_window(m))
     for (ind, val) in value
         t_keys = collect(_time_slice_keys(ind))
         t = maximum(ind[k] for k in t_keys)
         t <= analysis_time && continue
+        crop_to_window && start(t) >= end_(current_window(m)) && continue
         entity = _drop_key(ind, t_keys...)
         entity = _flatten_stochastic_path(entity)
         by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
@@ -408,11 +413,12 @@ function _flatten_stochastic_path(entity::NamedTuple)
     (; _drop_key(entity, :stochastic_path)..., flat_stoch_path...)
 end
 
-function _value_by_entity_non_aggregated(m, parameter::Parameter)
+function _value_by_entity_non_aggregated(m, parameter::Parameter, crop_to_window)
     by_entity_non_aggr = Dict()
     analysis_time = start(current_window(m))
     for entity in indices_as_tuples(parameter)
         for (scen, t) in stochastic_time_indices(m)
+            crop_to_window && start(t) >= end_(current_window(m)) && continue
             entity = (; entity..., stochastic_scenario=scen)
             val = parameter(; entity..., analysis_time=analysis_time, t=t, _strict=false)
             val === nothing && continue
@@ -437,8 +443,8 @@ function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, ::Nothing)
     Dict(start(t) => v for (t, v) in by_time_slice_non_aggr)
 end
 
-function _save_output!(m, out, value_or_param; iterations=nothing)
-    by_entity_non_aggr = _value_by_entity_non_aggregated(m, value_or_param)
+function _save_output!(m, out, value_or_param, crop_to_window; iterations=nothing)
+    by_entity_non_aggr = _value_by_entity_non_aggregated(m, value_or_param, crop_to_window)
     for (entity, by_analysis_time_non_aggr) in by_entity_non_aggr
         if !isnothing(iterations)
             # FIXME: Needs to be done, befooooore we execute solve, as we need to set objective for this solve
@@ -468,19 +474,25 @@ function _save_output!(m, out, value_or_param; iterations=nothing)
     end
     true
 end
-_save_output!(m, out, ::Nothing; iterations=iterations) = false
+_save_output!(m, out, ::Nothing, crop_to_window; iterations=iterations) = false
 
 """
 Save the outputs of a model.
 """
 function save_outputs!(m; iterations=nothing)
-    for r in model__report(model=m.ext[:spineopt].instance), out in report__output(report=r)
+    reports_by_output = Dict()
+    for rpt in model__report(model=m.ext[:spineopt].instance), out in report__output(report=rpt)
+        push!(get!(reports_by_output, out, []), rpt)
+    end
+    is_last_window = end_(current_window(m)) >= model_end(model=m.ext[:spineopt].instance)
+    for (out, rpts) in reports_by_output
         value = get(m.ext[:spineopt].values, out.name, nothing)
-        if _save_output!(m, out, value; iterations=iterations)
+        crop_to_window = !is_last_window && all(overwrite_results_on_rolling(report=rpt, output=out) for rpt in rpts)
+        if _save_output!(m, out, value, crop_to_window; iterations=iterations)
             continue
         end
         param = parameter(out.name, @__MODULE__)
-        if _save_output!(m, out, param; iterations=iterations)
+        if _save_output!(m, out, param, crop_to_window; iterations=iterations)
             continue
         end
         @warn "can't find any values for '$(out.name)'"
