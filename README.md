@@ -5,6 +5,10 @@
 
 A package to run an energy system integration model called SpineOpt.
 
+### :loudspeaker:UPDATE: Community :rocket: 
+
+To connect with other users, to identify problems and exchange experiences, we will organize monthly early-user meetings for Spine Toolbox and SpineOpt. The meetings will be held every last Wednesday of the month at 10am CEST [:calendar: ics zip](https://github.com/Spine-project/SpineOpt.jl/files/9044916/Spine.Toolbox.and.SpineOpt.Exchange.QA.Help.zip) and can be joined [here](https://teams.microsoft.com/l/meetup-join/19%3ameeting_YjlhOWNmZjYtMDUxMC00MWViLTllMGUtNGI0NWY5NzY2YTU4%40thread.v2/0?context=%7b%22Tid%22%3a%22d7ab8571-7881-415a-b0c2-b5a933c86ee8%22%2c%22Oid%22%3a%227ff67982-a736-42fa-ade6-994bb97d94a8%22%7d).
+
 ### Compatibility
 
 This package requires [Julia](https://julialang.org/) 1.2 or later.
@@ -155,9 +159,6 @@ At line:1 char:35
 
 3. Try to install SpineOpt again.
 
-### Community
-
-To connect with other users, to identify problems and exchange experiences, we will organize monthly early-user meetings for Spine Toolbox and SpineOpt. The meetings will be held every last Wednesday of the month at 10am CEST and can be joined [here](https://teams.microsoft.com/l/meetup-join/19%3ameeting_YjlhOWNmZjYtMDUxMC00MWViLTllMGUtNGI0NWY5NzY2YTU4%40thread.v2/0?context=%7b%22Tid%22%3a%22d7ab8571-7881-415a-b0c2-b5a933c86ee8%22%2c%22Oid%22%3a%227ff67982-a736-42fa-ade6-994bb97d94a8%22%7d).
 
 ### Reporting Issues and Contributing
 
@@ -173,7 +174,7 @@ SpineOpt is licensed under GNU Lesser General Public License version 3.0 or late
 <table width=500px frame="none">
 <tr>
 <td valign="middle" width=100px>
-<img src=https://europa.eu/european-union/sites/europaeu/files/docs/body/flag_yellow_low.jpg alt="EU emblem" width=100%></td>
+<img src=https://ec.europa.eu/regional_policy/images/information/logos/eu_flag.jpg alt="EU emblem" width=100%></td>
 <td valign="middle">This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 774629.</td>
 </table>
 </center>
