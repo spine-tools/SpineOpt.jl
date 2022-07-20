@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
+using Revise
 using SpineOpt
 using SpineInterface
 using Test
@@ -86,17 +86,18 @@ end
 
 @testset begin
     # include("data_structure/migration.jl") # FIXME: we should have this in the future
-    include("data_structure/check_data_structure.jl")
-    include("data_structure/preprocess_data_structure.jl")
-    include("data_structure/temporal_structure.jl")
-    include("data_structure/stochastic_structure.jl")
-    include("data_structure/algorithm_mga_structure.jl")
-    include("constraints/constraint_unit.jl")
-    include("constraints/constraint_node.jl")
-    include("constraints/constraint_connection.jl")
-    include("constraints/constraint_user_constraint.jl")
-    include("objective/objective.jl")
-    include("util/misc.jl")
-    include("util/postprocess_results.jl")
-    include("run_spineopt.jl")
+    # include("data_structure/check_data_structure.jl")
+    # include("data_structure/preprocess_data_structure.jl")
+    # include("data_structure/temporal_structure.jl")
+    # include("data_structure/stochastic_structure.jl")
+    # include("data_structure/algorithm_mga_structure.jl")
+    include("data_structure/check_economic_structure.jl")
+    # include("constraints/constraint_unit.jl")
+    # include("constraints/constraint_node.jl")
+    # include("constraints/constraint_connection.jl")
+    # include("constraints/constraint_user_constraint.jl")
+    # include("objective/objective.jl")
+    # include("util/misc.jl")
+    # include("util/postprocess_results.jl")
+    # include("run_spineopt.jl")
 end

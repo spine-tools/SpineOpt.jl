@@ -29,7 +29,7 @@ function variable_om_costs(m::Model, t1)
         m,
         expr_sum(
             + unit_flow[u, n, d, s, t]
-            # * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
+            * unit_discounted_duration[(unit=u, stochastic_scenario=s,t=t)]
             * duration(t)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * vom_cost[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]

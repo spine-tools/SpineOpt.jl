@@ -31,7 +31,7 @@ function storage_fixed_om_costs(m, t1)
             + node_state_cap[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * (!isnothing(candidate_storages(node=n)) ? storages_invested_available[n, s, t] : 1)
             * storage_fom_cost[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)] #should be given as costs per year?
-            # * node_discounted_duration[(node=n, stochastic_scenario=s,t=t)]
+            * node_discounted_duration[(node=n, stochastic_scenario=s,t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             for ng in intersect(indices(node_state_cap),indices(storage_fom_cost))
             for (n, s, t) in storages_invested_available_indices(m; node=ng) if end_(t) <= t1;

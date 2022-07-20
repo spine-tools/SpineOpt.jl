@@ -29,9 +29,9 @@ function unit_investment_costs(m::Model, t1)
         m,
         + expr_sum(
             units_invested[u, s, t]
-            # * (1- unit_salvage_fraction[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)])
-            # * unit_tech_discount_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
-            # * unit_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * (1- unit_salvage_fraction[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)])
+            * unit_tech_discount_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * unit_conversion_to_discounted_annuities[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * unit_investment_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * reduce(*,
                 unit_capacity[(unit=u, node=n, direction = d, stochastic_scenario=s, analysis_time=t0, t=t)]

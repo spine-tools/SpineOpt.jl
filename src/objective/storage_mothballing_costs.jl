@@ -29,8 +29,8 @@ function storage_mothballing_costs(m::Model, t1)
         m,
         + expr_sum(
             storages_mothballed_vintage[n, s, t_v, t]
-            # * discount_factor(m,discount_rate(model=m.ext[:instance]),t.start)
-            # * storage_mothballing_conversion_to_discounted_annuities[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * discount_factor(m,discount_rate(model=m.ext[:instance]),t.start)
+            * storage_mothballing_conversion_to_discounted_annuities[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * storage_mothballing_cost[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * reduce(+,
                 node_state_cap[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
@@ -44,8 +44,8 @@ function storage_mothballing_costs(m::Model, t1)
         )
         + expr_sum(
             storages_demothballed_vintage[n, s, t_v, t]
-            # * discount_factor(m,discount_rate(model=m.ext[:instance]),t.start)
-            # * storage_demothballing_cost[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * discount_factor(m,discount_rate(model=m.ext[:instance]),t.start)
+            * storage_demothballing_cost[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * reduce(+,
                 node_state_cap[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for n in node(use_storage_capacity_for_investment_cost_scaling=true)

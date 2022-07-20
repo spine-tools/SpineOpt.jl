@@ -29,7 +29,7 @@ function connection_decommissioning_costs(m::Model, t1)
         m,
         + expr_sum(
             connections_decommissioned[c, s, t]
-            # * connection_decommissioning_conversion_to_discounted_annuities[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * connection_decommissioning_conversion_to_discounted_annuities[(connection=c, stochastic_scenario=s, analysis_time=t0, t=t)]
             * reduce(+,
                 connection_capacity[(connection=c, node=n, direction = d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for (u, n, d) in indices(use_connection_capacity_for_investment_cost_scaling; unit=u)

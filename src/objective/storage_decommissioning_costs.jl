@@ -29,7 +29,7 @@ function storage_decommissioning_costs(m::Model, t1)
         m,
         + expr_sum(
             storages_decommissioned[n, s, t]
-            # * storage_decommissioning_conversion_to_discounted_annuities[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * storage_decommissioning_conversion_to_discounted_annuities[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * storage_decommissioning_cost[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * reduce(+,
                 node_state_cap[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]

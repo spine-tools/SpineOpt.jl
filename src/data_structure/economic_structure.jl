@@ -149,7 +149,6 @@ linearly towards the end of the economic lifetime.
 """
 function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
     instance = m.ext[:instance]
-    discnt_rate = discount_rate(model=instance)
     discnt_year = discount_year(model=instance)
     conversion_to_discounted_annuities = Dict()
     investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))
@@ -157,7 +156,7 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
     econ_lifetime = eval(Symbol("$(obj_name)_investment_econ_lifetime"))
     param_name = Symbol("$(obj_name)_conversion_to_discounted_annuities")
     for id in obj_cls()
-        if (discnt_rate == 0 || isnothing(discnt_rate))
+        if (discount_rate(model=model()[1]) == 0 || isnothing(discount_rate(model=model()[1])))
             obj_cls.parameter_values[id][param_name] = parameter_value(1)
         else
             stochastic_map_indices = []
@@ -166,6 +165,7 @@ function generate_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectC
                 timeseries_ind = []
                 timeseries_val = []
                 for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
+                    discnt_rate = discount_rate(model=instance, stichastic_scenario=s, t=vintage_t) #TODO time and stoch dependent
                     LT = lead_time(;Dict(obj_cls.name=>id,:stochastic_scenario=>s,:t=>vintage_t)...)
                     if isnothing(LT)
                         LT = Year(0)
@@ -206,7 +206,7 @@ end
 The `captial_recovery_factor` is the ratio between constant annuities and the present value of these annuities over the economic lifetime of the investment.
 """
 
-function capital_recovery_factor(m, discnt_rate ,ELIFE)
+function capital_recovery_factor(m, discnt_rate,ELIFE)
     if ELIFE.value==0
         ELIFE = Year(0)
     end
@@ -226,7 +226,9 @@ The discount factor discounts payments at a certain timestep `t` to the models `
 
 function discount_factor(m,discnt_rate,year::DateTime)
     discnt_year = discount_year(model=m)
+    @show discnt_year
     discnt_factor = 1/(1+discnt_rate)^((Year(year)-Year(discnt_year))/Year(1))
+    @show discnt_factor
 end
 
 function discount_factor(m,discnt_rate,year::T) where {T<:Period}
@@ -257,10 +259,8 @@ Generate salvage fraction of units, which exonomic lifetime exceeds the modeling
 """
 function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
     instance = m.ext[:instance]
-    discnt_rate = discount_rate(model=instance)
     discnt_year = discount_year(model=instance)
     EOH = model_end(model=instance)
-
     salvage_fraction = Dict()
     econ_lifetime = eval(Symbol("$(obj_name)_investment_econ_lifetime"))
     investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))
@@ -274,12 +274,13 @@ function generate_salvage_fraction!(m::Model, obj_cls::ObjectClass, obj_name::Sy
             for s in unique([x.stochastic_scenario for x in investment_indices(m)])
                 timeseries_ind = []
                 timeseries_val = []
-                LT = lead_time(;Dict(obj_cls.name=>id)...)
-                if isnothing(LT)
-                    LT= Year(0)
-                end
-                ELIFE = econ_lifetime(;Dict(obj_cls.name=>id)...)
                 for vintage_t in time_slice(m; temporal_block = invest_temporal_block(;Dict(obj_cls.name=>id)...))
+                    ELIFE = econ_lifetime(;Dict(obj_cls.name=>id, stochastic_scenario.name=>s,)...,t=vintage_t)
+                    LT = lead_time(;Dict(obj_cls.name=>id, stochastic_scenario.name=>s,)...,t=vintage_t)
+                    if isnothing(LT)
+                        LT= Year(0)
+                    end
+                    discnt_rate = discount_rate(model=instance, stochastic_scenario=s,t=vintage_t) #TODO! scenario dependent and time
                     vintage_t_start = start(vintage_t)
                     start_of_operation = vintage_t_start + LT
                     end_of_operation = vintage_t_start + LT + ELIFE
@@ -323,11 +324,11 @@ Generate technology-specific discount factors for investments (e.g., for risky i
 """
 function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
     instance = m.ext[:instance]
-    discnt_rate = discount_rate(model=instance)
     discnt_rate_tech = eval(Symbol("$(obj_name)_discount_rate_technology_specific"))
     econ_lifetime = eval(Symbol("$(obj_name)_investment_econ_lifetime"))
     invest_stoch_struct = eval(Symbol("$(obj_cls)__investment_stochastic_structure"))
     param_name = Symbol("$(obj_name)_tech_discount_factor")
+    investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))
     for id in obj_cls()
         if (!isnothing(discnt_rate_tech(;Dict(obj_cls.name => id)...))
             && discnt_rate_tech(;Dict(obj_cls.name => id)...) != 0
@@ -335,9 +336,12 @@ function generate_tech_discount_factor!(m::Model, obj_cls::ObjectClass, obj_name
             stoch_map_val = []
             stoch_map_ind = []
             for s in stochastic_structure__stochastic_scenario(stochastic_structure=invest_stoch_struct(;Dict(obj_cls.name => id)...))
-                ELIFE = econ_lifetime(;Dict(obj_cls.name => id, stochastic_scenario.name => s)...)
-                tech_discount_rate = discnt_rate_tech(;Dict(obj_cls.name => id, stochastic_scenario.name => s)...)
-                val = capital_recovery_factor(instance,tech_discount_rate,ELIFE)/capital_recovery_factor(instance,discnt_rate,ELIFE)
+                for (u,s,vintage_t) in investment_indices(m;Dict(obj_cls.name=>id,:stochastic_scenario=>s)...)
+                    ELIFE = econ_lifetime(;Dict(obj_cls.name => id, stochastic_scenario.name => s, t.name=>t)...)
+                    tech_discount_rate = discnt_rate_tech(;Dict(obj_cls.name => id, stochastic_scenario.name => s, t.name=>t)...)
+                    discnt_rate = discount_rate(model=instance, stochastic_scenario=s,t=t) #TODO time and stoch dependent
+                    val = capital_recovery_factor(instance,tech_discount_rate,ELIFE)/capital_recovery_factor(instance,discnt_rate,ELIFE)
+                end
                 push!(stoch_map_val,val)
                 push!(stoch_map_ind,s)
             end
@@ -364,50 +368,78 @@ discount them to the models `discount_year`.
 """
 function generate_discount_timeslice_duration!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
     instance = m.ext[:instance]
-    discnt_rate = discount_rate(model=instance)
     discnt_year = discount_year(model=instance)
     discounted_duration = Dict()
     invest_stoch_struct = eval(Symbol("$(obj_cls)__investment_stochastic_structure"))
     invest_temporal_block = eval(Symbol("$(obj_cls)__investment_temporal_block"))
     param_name = Symbol("$(obj_cls)_discounted_duration")
-    for id in obj_cls()
-        stoch_map_val = []
-        stoch_map_ind = []
-        for s in stochastic_structure__stochastic_scenario(stochastic_structure=invest_stoch_struct(;Dict(obj_cls.name=>id)...))
+    if use_milestone_years(model=instance)
+        for id in obj_cls()
+            if isempty(invest_temporal_block()) || isempty(invest_temporal_block(;Dict(obj_cls.name=>id,)...))
+                invest_temporal_block_ = model__default_investment_temporal_block(model=instance)
+                @warn "Using milestone year without investments is currently not supported; using default investment temporal block for $id"
+            else
+                invest_temporal_block_ = invest_temporal_block(;Dict(obj_cls.name=>id,)...)
+            end
+            if !isempty(invest_stoch_struct(;Dict(obj_cls.name=>id,)...))
+                @show "jumps to milestone year - with stoch indices"
+                stoch_map_val = []
+                stoch_map_ind = []
+                for (s_all,t) in stochastic_time_indices(m;temporal_block=invest_temporal_block_,stochastic_scenario=_find_children(s))
+                    timeseries_ind, timeseries_val = create_discounted_duration(m;stochastic_scenario=s, invest_temporal_block=t.block)
+                    push!(stoch_map_ind,s_all)
+                    push!(stoch_map_val,TimeSeries(timeseries_ind,timeseries_val,false,false))
+                end
+                obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
+            else
+                @show "jumps to milestone year - without stoch indices"
+                timeseries_ind, timeseries_val = create_discounted_duration(m; invest_temporal_block=invest_temporal_block_)
+                obj_cls.parameter_values[id][param_name] = parameter_value(TimeSeries(timeseries_ind,timeseries_val,false,false))
+            end
+        end
+    else
+        for id in obj_cls()
             timeseries_ind = []
             timeseries_val = []
-            if use_milestone_years(model=instance)
-                for investment_block in invest_temporal_block(;Dict(obj_cls.name=>id)...)
-                    #TODO: robust enough?; assumes that investment temporal_blocks of one particular unit, connection ,node don't overlap
-                    for t in time_slice(m; temporal_block = investment_block)
-                        t_start = start(t)
-                        t_end = end_(t)
-                        j = t_start
-                        val = 0
-                        while j< t_end
-                            val+= discount_factor(instance,discnt_rate,j)
-                            j+= Year(1)
-                        end
-                        push!(timeseries_ind,start(t))
-                        push!(timeseries_val,val)
-                    end
-                end
-            else
-                for model_years in first(time_slice(m)).start.x:Year(1):last(time_slice(m)).end_.x+Year(1)
-                    ### TODO: should this be model start OR current_window?
-                    val = discount_factor(instance,discnt_rate,model_years)
-                    push!(timeseries_ind,model_years)
-                    push!(timeseries_val,val)
-                end
+            for model_years in first(time_slice(m)).start.x:Year(1):last(time_slice(m)).end_.x+Year(1)
+                @show "jumps to no-milestone year"
+                ### How to find overlapping stochastic scenarios?
+                ### TODO: should this be model start OR current_window?
+                discnt_rate = discount_rate(model=instance , t=model_years)
+                val = discount_factor(instance,discnt_rate,model_years)
+                push!(timeseries_ind,model_years)
+                push!(timeseries_val,val)
             end
-            push!(stoch_map_ind,s)
-            push!(stoch_map_val,TimeSeries(timeseries_ind,timeseries_val,false,false))
+            obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.TimeSeries(timeseries_ind,timeseries_val,false,false))
         end
-        obj_cls.parameter_values[id][param_name] = parameter_value(SpineInterface.Map(stoch_map_ind,stoch_map_val))
     end
     @eval begin
         $(param_name) = $(Parameter(param_name, [obj_cls]))
     end
+end
+"""
+"""
+function create_discounted_duration(m;stochastic_scenario=nothing,invest_temporal_block=nothing)
+    timeseries_ind = []
+    timeseries_val = []
+    instance = m.ext[:instance]
+    last_timestep = end_(last(time_slice(m; temporal_block = invest_temporal_block)))
+    for t in Iterators.flatten((time_slice(m; temporal_block = invest_temporal_block),TimeSlice(last_timestep,last_timestep)))
+        @show invest_temporal_block,t
+        discnt_rate = discount_rate(model=instance, stochastic_scenario=stochastic_scenario, t=t)
+        t_start = start(t)
+        t_end = end_(t)
+        j = t_start
+        val = 0
+        while j< t_end
+            @show "makes it to while loop"
+            val+= discount_factor(instance,discnt_rate,j)
+            j+= Year(1)
+        end
+        push!(timeseries_ind,start(t))
+        push!(timeseries_val,val)
+    end
+    @show timeseries_ind, timeseries_val
 end
 
 """
@@ -420,7 +452,6 @@ Investment payments are assumed to be constant over the decommissioning time.
 """
 function generate_decommissioning_conversion_to_discounted_annuities!(m::Model, obj_cls::ObjectClass, obj_name::Symbol)
     instance = m.ext[:instance]
-    discnt_rate = discount_rate(model=instance)
     discnt_year = discount_year(model=instance)
     decommissioning_conversion_to_discounted_annuities = Dict()
     investment_indices = eval(Symbol("$(obj_name)s_invested_available_indices"))
@@ -443,6 +474,7 @@ function generate_decommissioning_conversion_to_discounted_annuities!(m::Model, 
                 end_of_decommissioning = vintage_t_start + DECOM_T
                 j = vintage_t_start
                 val = 0
+                discnt_rate = discount_rate(model=instance, stochastic_scenario=s) #TODO time and stoch dependent
                 while j<= end_of_decommissioning
                     val+= discount_factor(instance,discnt_rate,j) #payment_fraction would always be 1
                     j+= Year(1)

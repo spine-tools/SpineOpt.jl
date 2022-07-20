@@ -237,14 +237,16 @@ function _generate_time_slice!(m::Model)
     )
     window_time_slices_long = filter(x -> any(y in x.blocks for y in invest_blocks),window_time_slices) #only take investment blocks
     i = findlast(t -> end_(t) <= window_end, window_time_slices_long)
-    history_window_time_slices = window_time_slices_long[1:i] .- window_duration #this should be invesment block specific!
-    for k in 1:history_window_count
+    if i != nothing
+        history_window_time_slices = window_time_slices_long[1:i] .- window_duration #this should be invesment block specific!
+        for k in 1:history_window_count
+            prepend!(history_time_slices, history_window_time_slices)
+            history_window_time_slices .-= window_duration
+        end
+        history_start = window_start - required_history_duration
+        filter!(t -> end_(t) > history_start, history_window_time_slices)
         prepend!(history_time_slices, history_window_time_slices)
-        history_window_time_slices .-= window_duration
     end
-    history_start = window_start - required_history_duration
-    filter!(t -> end_(t) > history_start, history_window_time_slices)
-    prepend!(history_time_slices, history_window_time_slices)
     m.ext[:temporal_structure][:time_slice] = TimeSliceSet(window_time_slices)
     #histroy t_short #FIXME make this more elgant
     operational_blocks = intersect(

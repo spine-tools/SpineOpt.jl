@@ -29,9 +29,9 @@ function storage_investment_costs(m::Model, t1)
         m,
         + expr_sum(
             storages_invested[n, s, t]
-            # * (1- storage_salvage_fraction[(node=n, stochastic_scenario=s, t=t)])
-            # * storage_tech_discount_factor[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
-            # * storage_conversion_to_discounted_annuities[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * (1- storage_salvage_fraction[(node=n, stochastic_scenario=s, t=t)])
+            * storage_tech_discount_factor[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * storage_conversion_to_discounted_annuities[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * storage_investment_cost[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * reduce(*,
                 node_state_cap[(node=n2, stochastic_scenario=s, analysis_time=t0, t=t)]

@@ -109,3 +109,4 @@ end
 _parse_version(version::String) = _parse_version(parse(Float64, version))
 _parse_version(version::Float64) = _parse_version(round(Int, version))
 _parse_version(version::Int) = version
+_parse_version(version::Vector{UInt8}) = version[1]
