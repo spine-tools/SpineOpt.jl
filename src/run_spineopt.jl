@@ -106,7 +106,7 @@ A new Spine database is created at `url_out` if one doesn't exist.
 
 - `resume_file_path::String=nothing`: only relevant in rolling horizon optimisations with `write_as_roll` greater or
   equal than one. If the file at given path contains resume data from a previous run, start the run from that point.
-  Whenever results are written to the output database, save resume data to that same file.
+  Also, save resume data to that same file as the model rolls and results are written to the output database.
 
 # Example
 
