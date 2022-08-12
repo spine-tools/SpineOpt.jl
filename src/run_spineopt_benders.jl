@@ -30,7 +30,8 @@ function rerun_spineopt!(
     update_names=false,
     alternative="",
     alternative_objective=m -> nothing,
-    write_as_roll=0
+    write_as_roll=0,
+    resume_file_path=nothing
 )
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)

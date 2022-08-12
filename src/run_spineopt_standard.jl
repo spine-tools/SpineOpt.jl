@@ -30,7 +30,8 @@ function rerun_spineopt!(
     optimize=true,
     update_names=false,
     alternative="",
-    write_as_roll=0
+    write_as_roll=0,
+    resume_file_path=nothing
 )
     @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
     @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
@@ -44,7 +45,8 @@ function rerun_spineopt!(
         alternative_objective=alternative_objective
     )
     init_outputs!(m)
-    k = 1
+    k = _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
+    k === nothing && return m
     calculate_duals = any(
         startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:spineopt].outputs))
     )
@@ -53,6 +55,7 @@ function rerun_spineopt!(
         optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals) || break
         if write_as_roll > 0 && k % write_as_roll == 0
             @timelog log_level 2 "Writing report..." write_report(m, url_out; alternative=alternative)
+            _dump_resume_data(m, k, resume_file_path)
             clear_results!(m)
         end
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
@@ -63,6 +66,49 @@ function rerun_spineopt!(
     end
     @timelog log_level 2 "Writing report..." write_report(m, url_out; alternative=alternative)
     m
+end
+
+function _dump_resume_data(m::Model, k, ::Nothing) end
+function _dump_resume_data(m::Model, k, resume_file_path)
+    resume_data = Dict("values" => m.ext[:spineopt].values, "window" => k)
+    open(resume_file_path, "w") do f
+        JSON.print(f, resume_data, 4)
+    end
+end
+
+function _load_variable_value!(m::Model, name::Symbol, indices::Function, values)
+    m.ext[:spineopt].values[name] = Dict(
+        ind => values[string(name)][string(ind)]
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)), temporal_block=anything)
+    )
+end
+
+function _load_variable_values!(m::Model, values)
+    for (name, definition) in m.ext[:spineopt].variables_definition
+        _load_variable_value!(m, name, definition[:indices], values)
+    end
+end
+
+_resume_run!(m, ::Nothing, update_constraints, log_level, update_names) = 1
+function _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
+    !isfile(resume_file_path) && return 1
+    try
+        resume_data = JSON.parsefile(resume_file_path)
+        k, values = resume_data["window"], resume_data["values"]
+        @log log_level 1 "Using data from $resume_file_path to skip through windows 1 to $k..."
+        roll_temporal_structure!(m::Model, k - 1)
+        _load_variable_values!(m, values)
+        if !roll_temporal_structure!(m::Model)
+            @log log_level 1 "Nothing to resume - window $k was the last one"
+            nothing
+        else
+            update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
+            k + 1
+        end
+    catch err
+        @log log_level 1 "Couldn't resume run from $resume_file_path - $err"
+        1
+    end
 end
 
 """
