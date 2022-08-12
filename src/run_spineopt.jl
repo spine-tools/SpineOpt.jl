@@ -93,7 +93,8 @@ A new Spine database is created at `url_out` if one doesn't exist.
 
 - `alternative::String=""`: if non empty, write results to the given alternative in the output DB.
 
-- `write_as_roll::Int=0`: if greater than 0, then write results every that many windows.
+- `write_as_roll::Int=0`: if greater than 0 and the run has a rolling horizon, then write results every that many
+  windows.
 
 - `use_direct_model::Bool=false`: whether or not to use `JuMP.direct_model` to build the `Model` object.
 
@@ -104,8 +105,8 @@ A new Spine database is created at `url_out` if one doesn't exist.
   is overwritten at each call.
 
 - `resume_file_path::String=nothing`: only relevant in rolling horizon optimisations with `write_as_roll` greater or
-  equal than one. Whenever results are written to the output database, save information to resume the run to the file at
-  given path. If the file already has resume data, resume the run from that point.
+  equal than one. Whenever results are written to the output database, save information for resuming the run to the file
+  at given path. If the file already has resume data, resume the run from that point.
 
 # Example
 
