@@ -70,7 +70,7 @@ end
     _constraint_units_available_indices(m::Model, unit, t)
 An iterator that concatenates `units_on_indices` and `units_invested_available_indices` for the given inputs.
 """
-function _constraint_units_available_indices(m::Model, unit, node, direction, t)
+function _constraint_units_available_indices(m::Model, unit, t)
     Iterators.flatten((
         units_on_indices(m; unit=unit, t=t),
         units_invested_available_indices(m; unit=unit, t=t_overlaps_t(m; t=t)),
