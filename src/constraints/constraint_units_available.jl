@@ -26,7 +26,7 @@ function add_constraint_units_available!(m::Model)
     @fetch units_available, units_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:units_available] = Dict(
-        (unit=u, stochastic_scenario=s, t=t) => @constraint(
+        (unit=u, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
                 +units_available[u, s, t0]
