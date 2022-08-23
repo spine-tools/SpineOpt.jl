@@ -1381,9 +1381,6 @@
             var_units_on = m.ext[:spineopt].variables[:units_on]
             var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
             constraint = m.ext[:spineopt].constraints[:user_constraint]
-            @show keys(constraint)
-            @show collect(indices(unit_flow_coefficient))
-            @show collect(indices(unit_flow_coefficient); user_constraint=user_constraint(:constraint_x))
             @test length(constraint) == 2
             key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
             key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
