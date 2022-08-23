@@ -47,7 +47,7 @@ function add_constraint_user_constraint!(m::Model)
                     (unit=u, node=n, user_constraint=uc, direction=d, i=op, stochastic_scenario=s, analysis_time=t0, t=t_short),
                 ]
                 * duration(t_short)
-                for (u, n, d, uc) in indices(unit_flow_coefficient;user_constraint=uc)
+                for (u, n, uc, d) in indices(unit_flow_coefficient;user_constraint=uc)
                 for (u, n, d, op, s, t_short) in unit_flow_op_indices(
                     m;
                     unit=u,
@@ -64,7 +64,7 @@ function add_constraint_user_constraint!(m::Model)
                     (unit=u, node=n, user_constraint=uc, direction=d, i=1, stochastic_scenario=s, analysis_time=t0, t=t_short),
                 ]
                 * duration(t_short)
-                for (u, n, d, uc) in indices(unit_flow_coefficient;user_constraint=uc)
+                for (u, n, uc, d) in indices(unit_flow_coefficient;user_constraint=uc)
                 for (u, n, d, s, t_short) in unit_flow_indices(
                     m;
                     unit=u,
@@ -161,7 +161,7 @@ function add_constraint_user_constraint!(m::Model)
                     (connection=c, node=n, user_constraint=uc, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_short),
                 ]
                 * duration(t_short)
-                for (c, n, d, uc) in indices(connection_flow_coefficient;user_constraint=uc)
+                for (c, n, uc, d) in indices(connection_flow_coefficient;user_constraint=uc)
                 for (c, n, d, s, t_short) in connection_flow_indices(
                     m;
                     connection=c,
@@ -249,7 +249,7 @@ Gather the `unit_flow` variable indices appearing in `add_constraint_user_constr
 function _constraint_user_constraint_unit_flow_indices(m, uc, t)
     (
         ind
-        for (u, n, d, uc) in indices(unit_flow_coefficient;user_constraint=uc)
+        for (u, n, uc, d) in indices(unit_flow_coefficient;user_constraint=uc)
         for ind in unit_flow_indices(m; unit=u, node=n, direction=d, t=t)
     )
 end
@@ -278,7 +278,7 @@ Gather the `connection_flow` variable indices appearing in `add_constraint_user_
 function _constraint_user_constraint_connection_flow_indices(m, uc, t)
     (
         ind
-        for (conn, n, d, uc) in indices(connection_flow_coefficient;user_constraint=uc)
+        for (conn, n, uc, d) in indices(connection_flow_coefficient;user_constraint=uc)
         for ind in connection_flow_indices(m; connection=conn, node=n, direction=d, t=t)
     )
 end
