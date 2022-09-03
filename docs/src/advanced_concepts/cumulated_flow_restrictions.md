@@ -25,6 +25,24 @@ Note that the value of this parameter is expected to be given as an absolute val
 
 The main source of flexibility in the use of this constraint lies in the possibility to define the parameter for relationships that link 'node_groups' and/or 'unit_groups'. For example, by grouping multiple units that are considered renewable sources (e.g. PV, and wind), targets can be implemented across multiple renewable sources. Similarly, by defining multiple electricity nodes, generation targets can be spatially disagreggated.
 
+### Imposing a lower bound on the cumulated flows of a unit group for a specific period of time (advanced method)
+If the desired functionality is not to cap emissions over the entire modelling horizon, but rather for specific periods of time (e.g., to impose decreasing carbon caps over time), an alternative method can be used, which will be described in the following.
+
+To illustrate this functionality, we will assume that there is a ficticious cap of 100 for a period of time 2025-2030, and a cap of 50 for the period of time 2030-2035. In this simple example, we will assume that one carbon-emitting unit `carbon_unit` is present with two outgoing commodity flows, e.g. here electricity and carbon.
+
+Three nodes are required to represent this system: an `electricity` node, a `carbon_cap_1` node (with `has_state=true` and `node_state_cap=100`), and a `carbon_cap_2` node (with `has_state=true` and `node_state_cap=50`).
+
+Further we introduce the `unit__node__node` relationships between `carbon_unit__carbon_cap1__electricity` and `carbon_unit__carbon_cap2__electricity`. On these relationships, we will define the ratio between emissions and electricity production. In this fictious example, we will assume 0.5 units of emissions per unit of electricity.
+
+The `fix_ratio_out_out` parameter will now be defined as a time varying parameter in the following way (*simplified representation of TimeSeries parameter*):
+
+`fix_ratio_out_out(carbon_unit__carbon_cap1__electricity)` = [2025: 0.5; 2030: 0]
+`fix_ratio_out_out(carbon_unit__carbon_cap2__electricity)` = [2025: 0; 2030: 0.5]
+
+This way the first emission-cap node `carbon_cap1` can only be "filled" during the 2025-2030, while `carbon_cap2` can only be "filled" during the second period 2030-2035. 
+
+Note that it would also be possible to have, e.g., one node with time-varying `node_state_cap`. However, in this case, "unused" carbon emissions in the first period of time would be availble for the second period of time.
+
 ### Limiting the cumulated flow of a unit group by a share of the demand
 For convenience, we want to be able to define the [min\_total\_cumulated\_unit\_flow\_to\_node](@ref), when used to set a renewable target, as a share of the demand. At the moment an absolute lower bound needs to be provided by the user, but we want to automate this preprocessing in SpineOpt. (*to be implemented*)
 
