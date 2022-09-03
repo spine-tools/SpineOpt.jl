@@ -25,7 +25,26 @@ Note that the value of this parameter is expected to be given as an absolute val
 
 The main source of flexibility in the use of this constraint lies in the possibility to define the parameter for relationships that link 'node_groups' and/or 'unit_groups'. For example, by grouping multiple units that are considered renewable sources (e.g. PV, and wind), targets can be implemented across multiple renewable sources. Similarly, by defining multiple electricity nodes, generation targets can be spatially disagreggated.
 
-### Imposing a lower bound on the cumulated flows of a unit group for a specific period of time (advanced method)
+### Limiting the cumulated flow of a unit group by a share of the demand
+For convenience, we want to be able to define the [min\_total\_cumulated\_unit\_flow\_to\_node](@ref), when used to set a renewable target, as a share of the demand. At the moment an absolute lower bound needs to be provided by the user, but we want to automate this preprocessing in SpineOpt. (*to be implemented*)
+
+## Imposing an upper limit on carbon emissions
+### Imposing an upper limit on carbon emissions over the entire optimization horizon
+To impose a limit on overall carbon emissions over the entire optimization horizon,
+the following objects, relationships and parameters are relevant:
+
+1. **[unit](@ref)**: In this case, a unit represents a process (e.g. conversion of Gas to Electricity), where one
+  or multiple [unit\_flow](@ref)s are associated with carbon emissions
+2. **[node](@ref)**: Besides from nodes required to denote e.g. a fuel node or a supply node, at least one node should be introduced representing
+    carbon emissions.
+    (*Note: To distinguish e.g. between regions there can also be more than one carbon node*)
+3. **[unit\_\_to\_node](@ref)**: To associate carbon flows with a unit, the relationship between the unit and the carbon node needs to be imposed,
+    to trigger the generation of a carbon-[unit\_flow](@ref) variable.
+4. **[unit\_\_node\_\_node](@ref)** and **[fix\_ratio\_out\_out](@ref) **: Ratio between e.g. output and output unit flows; e.g. how carbon intensive an electricity flow of a unit is. The parameter is defined on a [unit\_\_node\_\_node](@ref) relationship, for example (gasplant, Carbon, Electricity). (*Note: For a full list of possible ratios, see also [unit\_\_node\_\_node](@ref) and associated parameters*)
+5. **[max\_total\_cumulated\_unit\_flow\_to\_node](@ref)** (and **[unit\_\_to\_node](@ref)**): This parameter triggers a limit on all flows from a unit (or a group of units), e.g. the group of all conventional generators, to a node (or node groups), e.g. considering the atmosphere as a fictive CO2 node, over the entire modelling horizon (e.g. a carbon budget). For example this could be defined on a relationship between a gasplant and a Carbon node, but can also be defined a unit group of all conventional generators and a carbon node. See also: [constraint\_total\_cumulated\_unit\_flow](@ref constraint_total_cumulated_unit_flow)
+
+
+### Imposing an upper bound on the cumulated flows of a unit group for a specific period of time (advanced method)
 If the desired functionality is not to cap emissions over the entire modelling horizon, but rather for specific periods of time (e.g., to impose decreasing carbon caps over time), an alternative method can be used, which will be described in the following.
 
 To illustrate this functionality, we will assume that there is a ficticious cap of 100 for a period of time 2025-2030, and a cap of 50 for the period of time 2030-2035. In this simple example, we will assume that one carbon-emitting unit `carbon_unit` is present with two outgoing commodity flows, e.g. here electricity and carbon.
@@ -42,23 +61,6 @@ The `fix_ratio_out_out` parameter will now be defined as a time varying paramete
 This way the first emission-cap node `carbon_cap1` can only be "filled" during the 2025-2030, while `carbon_cap2` can only be "filled" during the second period 2030-2035. 
 
 Note that it would also be possible to have, e.g., one node with time-varying `node_state_cap`. However, in this case, "unused" carbon emissions in the first period of time would be availble for the second period of time.
-
-### Limiting the cumulated flow of a unit group by a share of the demand
-For convenience, we want to be able to define the [min\_total\_cumulated\_unit\_flow\_to\_node](@ref), when used to set a renewable target, as a share of the demand. At the moment an absolute lower bound needs to be provided by the user, but we want to automate this preprocessing in SpineOpt. (*to be implemented*)
-
-## Imposing an upper limit on carbon emissions
-To impose a limit on overall carbon emissions over the entire optimization horizon,
-the following objects, relationships and parameters are relevant:
-
-1. **[unit](@ref)**: In this case, a unit represents a process (e.g. conversion of Gas to Electricity), where one
-  or multiple [unit\_flow](@ref)s are associated with carbon emissions
-2. **[node](@ref)**: Besides from nodes required to denote e.g. a fuel node or a supply node, at least one node should be introduced representing
-    carbon emissions.
-    (*Note: To distinguish e.g. between regions there can also be more than one carbon node*)
-3. **[unit\_\_to\_node](@ref)**: To associate carbon flows with a unit, the relationship between the unit and the carbon node needs to be imposed,
-    to trigger the generation of a carbon-[unit\_flow](@ref) variable.
-4. **[unit\_\_node\_\_node](@ref)** and **[fix\_ratio\_out\_out](@ref) **: Ratio between e.g. output and output unit flows; e.g. how carbon intensive an electricity flow of a unit is. The parameter is defined on a [unit\_\_node\_\_node](@ref) relationship, for example (gasplant, Carbon, Electricity). (*Note: For a full list of possible ratios, see also [unit\_\_node\_\_node](@ref) and associated parameters*)
-5. **[max\_total\_cumulated\_unit\_flow\_to\_node](@ref)** (and **[unit\_\_to\_node](@ref)**): This parameter triggers a limit on all flows from a unit (or a group of units), e.g. the group of all conventional generators, to a node (or node groups), e.g. considering the atmosphere as a fictive CO2 node, over the entire modelling horizon (e.g. a carbon budget). For example this could be defined on a relationship between a gasplant and a Carbon node, but can also be defined a unit group of all conventional generators and a carbon node. See also: [constraint\_total\_cumulated\_unit\_flow](@ref constraint_total_cumulated_unit_flow)
 
 ## Imposing a carbon tax
 To include carbon pricing in a model,
