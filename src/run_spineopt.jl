@@ -93,15 +93,20 @@ A new Spine database is created at `url_out` if one doesn't exist.
 
 - `alternative::String=""`: if non empty, write results to the given alternative in the output DB.
 
-- `write_as_roll::Int=0`: if greater than 0, then write results every that many windows.
+- `write_as_roll::Int=0`: if greater than 0 and the run has a rolling horizon, then write results every that many
+  windows.
 
 - `use_direct_model::Bool=false`: whether or not to use `JuMP.direct_model` to build the `Model` object.
 
-- `log_file_path::String=""`: if not empty, log all console output to a file at the given path. The file
-  is overwritten at each call.
-
 - `filters::Dict{String,String}=Dict("tool" => "object_activity_control")`: a dictionary to specify filters.
   Possible keys are "tool" and "scenario". Values should be a tool or scenario name in the input DB.
+
+- `log_file_path::String=nothing`: if not nothing, log all console output to a file at the given path. The file
+  is overwritten at each call.
+
+- `resume_file_path::String=nothing`: only relevant in rolling horizon optimisations with `write_as_roll` greater or
+  equal than one. If the file at given path contains resume data from a previous run, start the run from that point.
+  Also, save resume data to that same file as the model rolls and results are written to the output database.
 
 # Example
 
@@ -129,10 +134,11 @@ function run_spineopt(
     alternative="",
     write_as_roll=0,
     use_direct_model=false,
-    log_file_path="",
-    filters=Dict("tool" => "object_activity_control")
+    filters=Dict("tool" => "object_activity_control"),
+    log_file_path=nothing,
+    resume_file_path=nothing
 )
-    if isempty(log_file_path)
+    if log_file_path === nothing
         return do_run_spine_opt(
             url_in,
             url_out;
@@ -148,7 +154,8 @@ function run_spineopt(
             alternative=alternative,
             write_as_roll=write_as_roll,
             use_direct_model=use_direct_model,
-            filters=filters
+            filters=filters,
+            resume_file_path=resume_file_path
         )
     end
     done = false
@@ -189,7 +196,8 @@ function run_spineopt(
                         alternative=alternative,
                         write_as_roll=write_as_roll,
                         use_direct_model=use_direct_model,
-                        filters=filters
+                        filters=filters,
+                        resume_file_path=resume_file_path
                     )
                 catch err
                     showerror(log_file, err, stacktrace(catch_backtrace()))
@@ -217,7 +225,8 @@ function do_run_spine_opt(
     alternative="",
     write_as_roll=0,
     use_direct_model=false,
-    filters=Dict("tool" => "object_activity_control")
+    filters=Dict("tool" => "object_activity_control"),
+    resume_file_path=nothing
 )
     @log log_level 0 "Running SpineOpt for $(url_in)..."
     version = find_version(url_in)
@@ -262,6 +271,7 @@ function do_run_spine_opt(
         update_names=update_names,
         alternative=alternative,
         write_as_roll=write_as_roll,
+        resume_file_path=resume_file_path,
         use_direct_model=use_direct_model
     )
     # FIXME: make sure use_direct_model this works with db solvers
@@ -280,6 +290,7 @@ function rerun_spineopt(
     update_names=false,
     alternative="",
     write_as_roll=0,
+    resume_file_path=nothing,
     use_direct_model=false,
     alternative_objective=m -> nothing,
 )
@@ -302,6 +313,7 @@ function rerun_spineopt(
         update_names=update_names,
         alternative=alternative,
         write_as_roll=write_as_roll,
+        resume_file_path=resume_file_path,
         alternative_objective=alternative_objective
     )
 end

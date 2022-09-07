@@ -378,12 +378,13 @@ end
 
 Move the entire temporal structure ahead according to the `roll_forward` parameter.
 """
-function roll_temporal_structure!(m::Model)
+function roll_temporal_structure!(m::Model, folds=1)
     instance = m.ext[:spineopt].instance
     temp_struct = m.ext[:spineopt].temporal_structure
     end_(temp_struct[:current_window]) >= model_end(model=instance) && return false
     roll_forward_ = roll_forward(model=instance, _strict=false)
     roll_forward_ in (nothing, 0) && return false
+    roll_forward_ *= folds
     roll!(temp_struct[:current_window], roll_forward_)
     _roll_time_slice_set!(temp_struct[:time_slice], roll_forward_)
     _roll_time_slice_set!(temp_struct[:history_time_slice], roll_forward_)
