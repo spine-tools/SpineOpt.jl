@@ -38,15 +38,15 @@ export output_value
 export write_report
 
 include("run_spineopt.jl")
-include("util/docs_utils.jl")
-include("data_structure/migration.jl")
-
 include("run_spineopt_standard.jl")
 include("run_spineopt_benders.jl")
 include("run_spineopt_mga.jl")
 include("util/misc.jl")
 include("util/postprocess_results.jl")
 include("util/write_information_files.jl")
+include("util/docs_utils.jl")
+include("util/promise.jl")
+include("data_structure/migration.jl")
 include("data_structure/benders_data.jl")
 include("data_structure/mga_data.jl")
 include("data_structure/temporal_structure.jl")
