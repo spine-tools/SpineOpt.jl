@@ -462,9 +462,13 @@ A value from a SpineOpt result.
     If `false`, return a `Map` where the topmost keys are the analysis times.
 """
 function output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
-    output_value(by_analysis_time, Val(overwrite_results_on_rolling))
+    by_analysis_time_realized = Dict(
+        analysis_time => Dict(time_stamp => realize(value) for (time_stamp, value) in by_time_stamp)
+        for (analysis_time, by_time_stamp) in by_analysis_time
+    )
+    _output_value(by_analysis_time_realized, Val(overwrite_results_on_rolling))
 end
-function output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
+function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
     by_analysis_time_sorted = sort(OrderedDict(by_analysis_time))
     TimeSeries(
         [ts for by_time_stamp in values(by_analysis_time_sorted) for ts in keys(by_time_stamp)],
@@ -474,7 +478,7 @@ function output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
         merge_ok=true
     )
 end
-function output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
+function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
     Map(
         collect(keys(by_analysis_time)),
         [
@@ -486,7 +490,7 @@ end
 
 function _output_value_by_entity(by_entity, overwrite_results_on_rolling, output_value=output_value)
     Dict(
-        entity => output_value(by_analysis_time, Val(overwrite_results_on_rolling))
+        entity => output_value(by_analysis_time, overwrite_results_on_rolling)
         for (entity, by_analysis_time) in by_entity
     )
 end

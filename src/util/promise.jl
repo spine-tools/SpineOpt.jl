@@ -29,23 +29,7 @@ struct ReducedCostPromise <: AbstractPromise
     value::JuMP.VariableRef
 end
 
-realize(x::T) where T <: AbstractPromise = x.value
-
-function JuMP.dual(x::DualPromise)
-    realized = realize(x)
-    has_duals(owner_model(realized)) ? dual(realized) : nothing
-end
-
-function JuMP.reduced_cost(x::ReducedCostPromise)
-    realized = realize(x)
-    has_duals(owner_model(realized)) ? reduced_cost(realized) : nothing
-end
-
-function SpineInterface.db_value(x::TimeSeries{T}) where T <: DualPromise
-    db_value(TimeSeries(x.indexes, JuMP.dual.(x.values), x.ignore_year, x.repeat))
-end
-function SpineInterface.db_value(x::TimeSeries{T}) where T <: ReducedCostPromise
-    db_value(TimeSeries(x.indexes, JuMP.reduced_cost.(x.values), x.ignore_year, x.repeat))
-end
+realize(x::DualPromise) = has_duals(owner_model(x.value)) ? dual(x.value) : nothing
+realize(x::ReducedCostPromise) = has_duals(owner_model(x.value)) ? reduced_cost(x.value) : nothing
 
 Base.:+(x::X, y::Y) where {X<:AbstractPromise,Y<:AbstractPromise} = Call(+, x, y)

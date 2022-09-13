@@ -481,7 +481,7 @@ function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, output_time_sli
     for t_aggr in output_time_slices
         time_slices = filter(t -> iscontained(t, t_aggr), keys(by_time_slice_non_aggr))
         isempty(time_slices) && continue  # No aggregation possible
-        by_time_stamp_aggr[start(t_aggr)] = SpineInterface.mean(by_time_slice_non_aggr[t] for t in time_slices)
+        by_time_stamp_aggr[start(t_aggr)] = sum(by_time_slice_non_aggr[t] for t in time_slices) / length(time_slices)
     end
     by_time_stamp_aggr
 end

@@ -178,9 +178,7 @@ end
 
 For connections of type `:connection_type_lossless_bidirectional` if a `connection_capacity` is found
 we ensure that it appies to each of the four flow variables
-
 """
-
 function process_loss_bidirectional_capacities()
     for c in connection(connection_type=:connection_type_lossless_bidirectional)
         conn_capacity_param = nothing
@@ -223,7 +221,6 @@ function process_loss_bidirectional_capacities()
     end
 end
 
-# Network stuff
 """
     generate_node_has_ptdf()
 
@@ -682,7 +679,8 @@ end
 """
     generate_report__output()
 
-Generate the `report__output` relationship for all possible combinations of outputs and reports, only if no relationship between report and output exists.
+Generate the `report__output` relationship for all possible combinations of outputs and reports, only if no
+relationship between report and output exists.
 """
 function generate_report__output()
     isempty(report__output()) || return
@@ -695,7 +693,8 @@ end
 """
     generate_model__report()
 
-Generate the `report__output` relationship for all possible combinations of outputs and reports, only if no relationship between report and output exists.
+Generate the `report__output` relationship for all possible combinations of outputs and reports, only if no
+relationship between report and output exists.
 """
 function generate_model__report()
     isempty(model__report()) || return
