@@ -36,8 +36,11 @@ export rerun_spineopt
 export run_spineopt
 export output_value
 export write_report
+export generate_forced_availability_factor
+export forced_availability_factor_time_series
 
 include("run_spineopt.jl")
+include("generate_forced_availability_factor.jl")
 include("run_spineopt_standard.jl")
 include("run_spineopt_benders.jl")
 include("run_spineopt_mga.jl")

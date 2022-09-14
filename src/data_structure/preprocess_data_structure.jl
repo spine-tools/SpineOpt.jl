@@ -40,6 +40,7 @@ function preprocess_data_structure(; log_level=3)
     generate_network_components()
     generate_variable_indexing_support()
     generate_benders_structure()
+    apply_forced_availability_factor()
 end
 
 """
@@ -826,4 +827,23 @@ function generate_benders_structure()
         export storages_invested_available_bi
         export starting_fix_storages_invested_available
     end
+end
+
+_product(x::TimeSeries, y::Nothing) = x
+_product(x::TimeSeries, y) = x * y
+
+function _apply_forced_availability_factor(m_start, m_end, class, availability_factor)
+    for x in class()
+        forced_af = forced_availability_factor(; (class.name => x,)..., _strict=false)
+        forced_af === nothing && continue
+        af = availability_factor(; (class.name => x,)..., _strict=false)
+        class.parameter_values[x][availability_factor.name] = parameter_value(_product(forced_af, af))
+    end
+end
+
+function apply_forced_availability_factor()
+    m_start = minimum(model_start(model=m) for m in model())
+    m_end = maximum(model_end(model=m) for m in model())
+    _apply_forced_availability_factor(m_start, m_end, unit, unit_availability_factor)
+    _apply_forced_availability_factor(m_start, m_end, connection, connection_availability_factor)
 end
