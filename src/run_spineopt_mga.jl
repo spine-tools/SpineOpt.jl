@@ -22,8 +22,6 @@ function rerun_spineopt!(
     @eval begin
         mga_iteration = $mga_iteration
     end
-    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
-    @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m_mga)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m_mga)
     init_model!(
@@ -42,7 +40,7 @@ function rerun_spineopt!(
             log_level=log_level,
             iterations=mga_iterations
         ) || break
-        @timelog log_level 2 "Fixing non-anticipativity values..." fix_non_anticipativity_values!(m_mga)
+        @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m_mga)
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m_mga)
             @timelog log_level 2 " ... Rolling complete\n" break
         end

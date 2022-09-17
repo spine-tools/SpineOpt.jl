@@ -33,8 +33,6 @@ function rerun_spineopt!(
     write_as_roll=0,
     resume_file_path=nothing
 )
-    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
-    @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
     init_model!(
@@ -45,6 +43,31 @@ function rerun_spineopt!(
         alternative_objective=alternative_objective
     )
     init_outputs!(m)
+    run_spineopt_kernel!(
+        m,
+        url_out;
+        update_constraints=update_constraints,
+        log_level=log_level,
+        optimize=optimize,
+        update_names=update_names,
+        alternative=alternative,
+        write_as_roll=write_as_roll,
+        resume_file_path=resume_file_path,
+    )
+end
+
+function run_spineopt_kernel!(
+    m,
+    url_out;
+    update_constraints=m -> nothing,
+    log_level=3,
+    optimize=true,
+    update_names=false,
+    alternative="",
+    write_as_roll=0,
+    resume_file_path=nothing,
+
+)
     k = _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
     k === nothing && return m
     calculate_duals = any(
@@ -67,6 +90,7 @@ function rerun_spineopt!(
     @timelog log_level 2 "Writing report..." write_report(m, url_out; alternative=alternative)
     m
 end
+
 
 function _dump_resume_data(m::Model, k, ::Nothing) end
 function _dump_resume_data(m::Model, k, resume_file_path)
@@ -153,14 +177,24 @@ end
 """
 Fix a variable to the values specified by the `fix_value` parameter function, if any.
 """
-_fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Nothing) = nothing
-function _fix_variable!(m::Model, name::Symbol, indices::Function, fix_value::Function)
+_fix_variable!(m::Model, name::Symbol, definition::Dict, fix_value::Nothing) = nothing
+function _fix_variable!(m::Model, name::Symbol, definition::Dict, fix_value::Function)
     var = m.ext[:spineopt].variables[name]
-    bin = m.ext[:spineopt].variables_definition[name][:bin]
-    int = m.ext[:spineopt].variables_definition[name][:int]
+    indices = definition[:indices]
+    bin = definition[:bin]
+    int = definition[:int]
+    lb = definition[:lb]
+    ub = definition[:ub]
     for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-        fix_value_ = (fix_value === nothing) ? nothing : fix_value(ind)
-        fix_value_ != nothing && !isnan(fix_value_) && fix(var[ind], fix_value_; force=true)
+        fix_value_ = fix_value(ind)
+        fix_value_ === nothing && continue
+        if !isnan(fix_value_)
+            fix(var[ind], fix_value_; force=true)
+        elseif is_fixed(var[ind])
+            unfix(var[ind])
+            lb != nothing && _set_lower_bound(var[ind], lb(ind))
+            ub != nothing && _set_upper_bound(var[ind], ub(ind))
+        end
     end
 end
 
@@ -169,7 +203,7 @@ Fix all variables in the given model to the values computed by the corresponding
 """
 function fix_variables!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
-        _fix_variable!(m, name, definition[:indices], definition[:fix_value])
+        _fix_variable!(m, name, definition, definition[:fix_value])
     end
 end
 
@@ -202,13 +236,12 @@ function update_variables!(m::Model)
     end
 end
 
-function _fix_non_anticipativity_value!(m, name::Symbol, definition::Dict)
+function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict)
     var = m.ext[:spineopt].variables[name]
     val = m.ext[:spineopt].values[name]
     indices = definition[:indices]
     non_anticipativity_time = definition[:non_anticipativity_time]
     non_anticipativity_margin = definition[:non_anticipativity_margin]
-
     window_start = start(current_window(m))
     roll_forward_ = roll_forward(model=m.ext[:spineopt].instance)
     for ind in indices(m; t=time_slice(m))
@@ -234,9 +267,9 @@ function _fix_non_anticipativity_value!(m, name::Symbol, definition::Dict)
     end
 end
 
-function fix_non_anticipativity_values!(m::Model)
+function apply_non_anticipativity_constraints!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
-        _fix_non_anticipativity_value!(m, name, definition)
+        _apply_non_anticipativity_constraint!(m, name, definition)
     end
 end
 
@@ -564,10 +597,14 @@ function update_model!(m; update_constraints=m -> nothing, log_level=3, update_n
         _update_constraint_names!(m)
     end
     @timelog log_level 2 "Updating variables..." update_variables!(m)
-    @timelog log_level 2 "Fixing non-anticipativity values..." fix_non_anticipativity_values!(m)
+    @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m)
+    @timelog log_level 2 "Updating user constraints..." update_constraints(m)
+    refresh_model!(m; log_level=log_level)
+end
+
+function refresh_model!(m; log_level=3)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
-    @timelog log_level 2 "Updating user constraints..." update_constraints(m)
     @timelog log_level 2 "Updating objective..." update_varying_objective!(m)
 end
 

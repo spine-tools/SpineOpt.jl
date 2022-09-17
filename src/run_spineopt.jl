@@ -139,7 +139,7 @@ function run_spineopt(
     resume_file_path=nothing
 )
     if log_file_path === nothing
-        return do_run_spine_opt(
+        return do_run_spineopt(
             url_in,
             url_out;
             upgrade=upgrade,
@@ -181,7 +181,7 @@ function run_spineopt(
             redirect_stderr(log_file) do
                 yield()
                 try
-                    return do_run_spine_opt(
+                    return do_run_spineopt(
                         url_in,
                         url_out;
                         upgrade=upgrade,
@@ -210,7 +210,7 @@ function run_spineopt(
     end
 end
 
-function do_run_spine_opt(
+function do_run_spineopt(
     url_in::String,
     url_out::Union{String,Nothing}=url_in;
     upgrade=false,
@@ -228,7 +228,33 @@ function do_run_spine_opt(
     filters=Dict("tool" => "object_activity_control"),
     resume_file_path=nothing
 )
+    prepare_spineopt(url_in; upgrade=upgrade, log_level=log_level, filters=filters)
     @log log_level 0 "Running SpineOpt for $(url_in)..."
+    rerun_spineopt(
+        url_out;
+        mip_solver=mip_solver,
+        lp_solver=lp_solver,
+        add_user_variables=add_user_variables,
+        add_constraints=add_constraints,
+        update_constraints=update_constraints,
+        log_level=log_level,
+        optimize=optimize,
+        update_names=update_names,
+        alternative=alternative,
+        write_as_roll=write_as_roll,
+        resume_file_path=resume_file_path,
+        use_direct_model=use_direct_model
+    )
+    # FIXME: make sure use_direct_model this works with db solvers
+    # possibly adapt union? + allow for conflicts if direct model is used
+end
+
+function prepare_spineopt(
+    url_in;
+    upgrade=false,
+    log_level=3,
+    filters=Dict("tool" => "object_activity_control")
+)
     version = find_version(url_in)
     if version < current_version()
         if !upgrade
@@ -259,24 +285,9 @@ function do_run_spine_opt(
             """
         end
     end
-    rerun_spineopt(
-        url_out;
-        mip_solver=mip_solver,
-        lp_solver=lp_solver,
-        add_user_variables=add_user_variables,
-        add_constraints=add_constraints,
-        update_constraints=update_constraints,
-        log_level=log_level,
-        optimize=optimize,
-        update_names=update_names,
-        alternative=alternative,
-        write_as_roll=write_as_roll,
-        resume_file_path=resume_file_path,
-        use_direct_model=use_direct_model
-    )
-    # FIXME: make sure use_direct_model this works with db solvers
-    # possibly adapt union? + allow for conflicts if direct model is used
-end
+    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
+    @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
+end    
 
 function rerun_spineopt(
     url_out::Union{String,Nothing};
@@ -468,6 +479,7 @@ function output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
     )
     _output_value(by_analysis_time_realized, Val(overwrite_results_on_rolling))
 end
+
 function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
     by_analysis_time_sorted = sort(OrderedDict(by_analysis_time))
     TimeSeries(

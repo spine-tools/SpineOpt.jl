@@ -34,6 +34,9 @@ import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 export @fetch
 export rerun_spineopt
 export run_spineopt
+export prepare_spineopt
+export refresh_model!
+export run_spineopt_kernel!
 export output_value
 export write_report
 export generate_forced_availability_factor
