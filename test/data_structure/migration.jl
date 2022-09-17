@@ -109,8 +109,6 @@ end
 			using_spinedb(url, Y)
 			@test Y.connection_flow_cost(connection=Y.connection(:conn_ab), node=Y.node(:node_a)) == 99
 			@test Y.connection_flow_cost(connection=Y.connection(:conn_bc), node=Y.node(:node_b)) == -1
-			@test Y.connection_flow_cost(connection=Y.connection(:conn_ab), _strict=false) === nothing
-			@test Y.connection_flow_cost(connection=Y.connection(:conn_bc), _strict=false) === nothing
 		end
 		@testset "unsuccessful" begin
 			url = "sqlite://"

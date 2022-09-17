@@ -257,11 +257,11 @@ end
             direction=Y.direction(:to_node),
             stochastic_scenario=Y.stochastic_scenario(:parent),
         )
-        analysis_times = DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2) - Hour(1)
+        analysis_times = DateTime(2000, 1, 1): Hour(6) : DateTime(2000, 1, 2) - Hour(1)
         # For each analysis time we cover a window of ± 12 hours with `t`,
         # and check that only `t`s within the optimisation window have a `unit_flow` value
         @testset for at in analysis_times, t in at - Hour(12):Hour(1):at + Hour(12)
-            window_start = max(DateTime(2000, 1, 1), at)
+            window_start = max(DateTime(2000, 1, 1), at - Hour(1))
             window_end = min(DateTime(2000, 1, 2), at + Hour(9))
             expected_unit_flow = if window_start <= t < window_end
                 (t < DateTime(2000, 1, 1, 12)) ? 50 : 90
