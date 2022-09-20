@@ -842,6 +842,7 @@ function _apply_forced_availability_factor(m_start, m_end, class, availability_f
 end
 
 function apply_forced_availability_factor()
+    isempty(model()) && return
     m_start = minimum(model_start(model=m) for m in model())
     m_end = maximum(model_end(model=m) for m in model())
     _apply_forced_availability_factor(m_start, m_end, unit, unit_availability_factor)
