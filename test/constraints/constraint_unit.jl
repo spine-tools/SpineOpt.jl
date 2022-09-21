@@ -34,6 +34,8 @@
             ["unit", "unit_ab"],
             ["node", "node_a"],
             ["node", "node_b"],
+            ["node", "node_c"],
+            ["node", "node_group_bc"],
             ["stochastic_scenario", "parent"],
             ["stochastic_scenario", "child"],
         ],
@@ -48,16 +50,20 @@
             ["units_on__stochastic_structure", ["unit_ab", "stochastic"]],
             ["unit__from_node", ["unit_ab", "node_a"]],
             ["unit__to_node", ["unit_ab", "node_b"]],
+            ["unit__to_node", ["unit_ab", "node_c"]],
             ["node__temporal_block", ["node_a", "hourly"]],
             ["node__temporal_block", ["node_b", "two_hourly"]],
+            ["node__temporal_block", ["node_c", "hourly"]],
             ["node__stochastic_structure", ["node_a", "stochastic"]],
             ["node__stochastic_structure", ["node_b", "deterministic"]],
+            ["node__stochastic_structure", ["node_c", "deterministic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
             ["stochastic_structure__stochastic_scenario", ["investments_deterministic", "parent"]],
             ["stochastic_structure__stochastic_scenario", ["stochastic", "parent"]],
             ["stochastic_structure__stochastic_scenario", ["stochastic", "child"]],
             ["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "child"]],
         ],
+        :object_groups => [["node", "node_group_bc", "node_b"], ["node", "node_group_bc", "node_c"]],
         :object_parameter_values => [
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
@@ -167,7 +173,7 @@
     @testset "constraint_unit_flow_capacity" begin
         _load_test_data(url_in, test_data)
         unit_capacity = 100
-        relationship_parameter_values = [["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity]]
+        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", unit_capacity]]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -176,14 +182,20 @@
         constraint = m.ext[:spineopt].constraints[:unit_flow_capacity]
         @test length(constraint) == 2
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s, t) in zip(scenarios, time_slices)
-            var_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
-            var_u_on_key = (unit(:unit_ab), s, t)
-            var_u_flow = var_unit_flow[var_u_flow_key...]
-            var_u_on = var_units_on[var_u_on_key...]
-            con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
-            expected_con = @build_constraint(var_u_flow <= unit_capacity * var_u_on)
+        time_slices_b = time_slice(m; temporal_block=temporal_block(:two_hourly))
+        @testset for (s, t) in zip(scenarios, time_slices_b)
+            var_u_flow_key_b = (unit(:unit_ab), node(:node_b), direction(:to_node), s, t)
+            var_u_flow_key_c_1 = (unit(:unit_ab), node(:node_c), direction(:to_node), s, t_in_t_excl(m;t=t)[1])
+            var_u_flow_key_c_2 = (unit(:unit_ab), node(:node_c), direction(:to_node), s, t_in_t_excl(m;t=t)[2])
+            var_u_on_key_1 = (unit(:unit_ab), s, t_in_t_excl(m;t=t)[1])
+            var_u_on_key_2 = (unit(:unit_ab), s, t_in_t_excl(m;t=t)[2])
+            var_u_flow_b = var_unit_flow[var_u_flow_key_b...]
+            var_u_flow_c_1 = var_unit_flow[var_u_flow_key_c_1...]
+            var_u_flow_c_2 = var_unit_flow[var_u_flow_key_c_2...]
+            var_u_on_1 = var_units_on[var_u_on_key_1...]
+            var_u_on_2 = var_units_on[var_u_on_key_2...]
+            con_key = (unit(:unit_ab), node(:node_group_bc), direction(:to_node), [s], t)
+            expected_con = @build_constraint(var_u_flow_c_1 +  var_u_flow_c_2 + 2*var_u_flow_b <= unit_capacity * (var_u_on_1 +  var_u_on_1))
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
