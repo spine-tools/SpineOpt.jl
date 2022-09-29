@@ -56,7 +56,7 @@
             ["node__temporal_block", ["node_c", "hourly"]],
             ["node__stochastic_structure", ["node_a", "stochastic"]],
             ["node__stochastic_structure", ["node_b", "deterministic"]],
-            ["node__stochastic_structure", ["node_c", "deterministic"]],
+            ["node__stochastic_structure", ["node_c", "stochastic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
             ["stochastic_structure__stochastic_scenario", ["investments_deterministic", "parent"]],
             ["stochastic_structure__stochastic_scenario", ["stochastic", "parent"]],
@@ -173,29 +173,34 @@
     @testset "constraint_unit_flow_capacity" begin
         _load_test_data(url_in, test_data)
         unit_capacity = 100
+        relationships = [
+                ["unit__to_node", ["unit_ab", "node_group_bc"]],
+        ]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", unit_capacity]]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
-
+        SpineInterface.import_data(url_in; relationships=relationships,relationship_parameter_values=relationship_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_units_on = m.ext[:spineopt].variables[:units_on]
         constraint = m.ext[:spineopt].constraints[:unit_flow_capacity]
-        @test length(constraint) == 2
+        @test length(constraint) == 1
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices_b = time_slice(m; temporal_block=temporal_block(:two_hourly))
         @testset for (s, t) in zip(scenarios, time_slices_b)
+            t_short_1 = sort(SpineOpt.t_in_t_excl(m;t_long=t))[1]
+            t_short_2 = sort(SpineOpt.t_in_t_excl(m;t_long=t))[2]
+            s_child = stochastic_scenario(:child)
             var_u_flow_key_b = (unit(:unit_ab), node(:node_b), direction(:to_node), s, t)
-            var_u_flow_key_c_1 = (unit(:unit_ab), node(:node_c), direction(:to_node), s, t_in_t_excl(m;t=t)[1])
-            var_u_flow_key_c_2 = (unit(:unit_ab), node(:node_c), direction(:to_node), s, t_in_t_excl(m;t=t)[2])
-            var_u_on_key_1 = (unit(:unit_ab), s, t_in_t_excl(m;t=t)[1])
-            var_u_on_key_2 = (unit(:unit_ab), s, t_in_t_excl(m;t=t)[2])
+            var_u_flow_key_c_1 = (unit(:unit_ab), node(:node_c), direction(:to_node), s, t_short_1)
+            var_u_flow_key_c_2 = (unit(:unit_ab), node(:node_c), direction(:to_node), s_child, t_short_2)
+            var_u_on_key_1 = (unit(:unit_ab), s, t_short_1)
+            var_u_on_key_2 = (unit(:unit_ab), s_child, t_short_2)
             var_u_flow_b = var_unit_flow[var_u_flow_key_b...]
             var_u_flow_c_1 = var_unit_flow[var_u_flow_key_c_1...]
             var_u_flow_c_2 = var_unit_flow[var_u_flow_key_c_2...]
             var_u_on_1 = var_units_on[var_u_on_key_1...]
             var_u_on_2 = var_units_on[var_u_on_key_2...]
-            con_key = (unit(:unit_ab), node(:node_group_bc), direction(:to_node), [s], t)
-            expected_con = @build_constraint(var_u_flow_c_1 +  var_u_flow_c_2 + 2*var_u_flow_b <= unit_capacity * (var_u_on_1 +  var_u_on_1))
+            con_key = (unit(:unit_ab), node(:node_group_bc), direction(:to_node), [s,s_child], t)
+            expected_con = @build_constraint(var_u_flow_c_1 +  var_u_flow_c_2 + 2*var_u_flow_b <= unit_capacity * (var_u_on_1 +  var_u_on_2))
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end

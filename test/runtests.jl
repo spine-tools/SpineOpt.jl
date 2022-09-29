@@ -17,12 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+using Revise
 using SpineOpt
 using SpineInterface
 using Test
 using Dates
 using JuMP
 using PyCall
+
 
 import SpineOpt:
     time_slice,
