@@ -64,6 +64,6 @@ function rerun_spineopt!(
         save_mga_objective_values!(m_mga)
         mga_iterations += 1
     end
-    write_report(m_mga, url_out; alternative=alternative)
+    write_report(m_mga, url_out; alternative=alternative, log_level=log_level)
     m_mga
 end

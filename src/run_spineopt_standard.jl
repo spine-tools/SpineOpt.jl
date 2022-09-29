@@ -58,7 +58,7 @@ end
 
 function run_spineopt_kernel!(
     m,
-    url_out;
+    url_out::Union{String,Nothing};
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
@@ -77,9 +77,10 @@ function run_spineopt_kernel!(
         @log log_level 1 "\nWindow $k: $(current_window(m))"
         optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals) || break
         if write_as_roll > 0 && k % write_as_roll == 0
-            @timelog log_level 2 "Writing report..." write_report(m, url_out; alternative=alternative)
-            _dump_resume_data(m, k, resume_file_path)
-            clear_results!(m)
+            if write_report(m, url_out; alternative=alternative, log_level=log_level)
+                _dump_resume_data(m, k, resume_file_path)
+                clear_results!(m)
+            end
         end
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
             @timelog log_level 2 " ... Rolling complete\n" break
@@ -87,7 +88,7 @@ function run_spineopt_kernel!(
         update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
         k += 1
     end
-    @timelog log_level 2 "Writing report..." write_report(m, url_out; alternative=alternative)
+    write_report(m, url_out; alternative=alternative, log_level=log_level)
     m
 end
 

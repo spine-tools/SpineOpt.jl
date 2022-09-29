@@ -76,7 +76,7 @@ function rerun_spineopt!(
         j += 1
         global current_bi = add_benders_iteration(j)
     end
-    @timelog log_level 2 "Writing report..." write_report(m, url_out; alternative=alternative)
+    write_report(m, url_out; alternative=alternative, log_level=log_level)
     m, mp
 end
 

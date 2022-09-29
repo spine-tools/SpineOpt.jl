@@ -229,7 +229,6 @@ function do_run_spineopt(
     resume_file_path=nothing
 )
     prepare_spineopt(url_in; upgrade=upgrade, log_level=log_level, filters=filters)
-    @log log_level 0 "Running SpineOpt for $(url_in)..."
     rerun_spineopt(
         url_out;
         mip_solver=mip_solver,
@@ -255,6 +254,7 @@ function prepare_spineopt(
     log_level=3,
     filters=Dict("tool" => "object_activity_control")
 )
+    @log log_level 0 "Preparing SpineOpt for $(run_request(url_in, "get_db_url"))..."
     version = find_version(url_in)
     if version < current_version()
         if !upgrade
@@ -305,6 +305,7 @@ function rerun_spineopt(
     use_direct_model=false,
     alternative_objective=m -> nothing,
 )
+    @log log_level 0 "Running SpineOpt..."
     mp = create_model(:spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
     is_subproblem = mp !== nothing
     m = create_model(:spineopt_standard, mip_solver, lp_solver, use_direct_model, is_subproblem)
@@ -550,8 +551,8 @@ Write report from given model into a db.
 # Keyword arguments
 - `alternative::String`: an alternative to pass to `SpineInterface.write_parameters`.
 """
-function write_report(m, default_url, output_value=output_value; alternative="")
-    default_url === nothing && return
+function write_report(m, default_url, output_value=output_value; alternative="", log_level=3)
+    default_url === nothing && return false
     lock(m.ext[:spineopt].dual_solves_lock)
     try
         wait.(m.ext[:spineopt].dual_solves)
@@ -575,10 +576,13 @@ function write_report(m, default_url, output_value=output_value; alternative="")
         end
     end
     for (url, url_reports) in reports
-        for (rpt_name, output_params) in url_reports
-            write_parameters(output_params, url; report=string(rpt_name), alternative=alternative, on_conflict="merge")
+        @timelog log_level 2 "Writing report to $(run_request(url, "get_db_url"))..." for (rpt_name, output_params) in url_reports
+            write_parameters(
+                output_params, url; report=string(rpt_name), alternative=alternative, on_conflict="merge"
+            )
         end
     end
+    return true
 end
 
 function clear_results!(m)
