@@ -552,7 +552,6 @@ Write report from given model into a db.
 - `alternative::String`: an alternative to pass to `SpineInterface.write_parameters`.
 """
 function write_report(m, default_url, output_value=output_value; alternative="", log_level=3)
-    default_url === nothing && return false
     lock(m.ext[:spineopt].dual_solves_lock)
     try
         wait.(m.ext[:spineopt].dual_solves)
@@ -560,11 +559,11 @@ function write_report(m, default_url, output_value=output_value; alternative="",
     finally
         unlock(m.ext[:spineopt].dual_solves_lock)
     end
+    default_url === nothing && return false
     reports = Dict()
-    outputs = Dict()
     for rpt in model__report(model=m.ext[:spineopt].instance)
         for out in report__output(report=rpt)
-            by_entity = get!(m.ext[:spineopt].outputs, out.name, nothing)
+            by_entity = get(m.ext[:spineopt].outputs, out.name, nothing)
             by_entity === nothing && continue
             output_url = output_db_url(report=rpt, _strict=false)
             url = output_url !== nothing ? output_url : default_url
@@ -576,10 +575,12 @@ function write_report(m, default_url, output_value=output_value; alternative="",
         end
     end
     for (url, url_reports) in reports
-        @timelog log_level 2 "Writing report to $(run_request(url, "get_db_url"))..." for (rpt_name, output_params) in url_reports
-            write_parameters(
-                output_params, url; report=string(rpt_name), alternative=alternative, on_conflict="merge"
-            )
+        @timelog log_level 2 "Writing report to $(run_request(url, "get_db_url"))..." begin
+            for (rpt_name, output_params) in url_reports
+                write_parameters(
+                    output_params, url; report=string(rpt_name), alternative=alternative, on_conflict="merge"
+                )
+            end
         end
     end
     return true
