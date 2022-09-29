@@ -47,7 +47,6 @@ function rerun_spineopt!(
         update_model!(m_mga; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
         k += 1
     end
-    m_mga
     name_mga_obj = :objective_value_mga
     model.parameter_values[m_mga.ext[:spineopt].instance][name_mga_obj] = parameter_value(objective_value(m_mga))
     @eval begin
@@ -56,12 +55,42 @@ function rerun_spineopt!(
     mga_iterations += 1
     add_mga_objective_constraint!(m_mga)
     set_mga_objective!(m_mga)
+    #TODO: max_mga_iteration can be different now
+    if isnothing(max_mga_iteration)
+        u_max = !isempty(indices(units_invested_mga_weight)) ? maximum(length(units_invested_mga_weight(unit=u)) for u in indices(units_invested_mga_weight)) : 0
+        c_max = !isempty(indices(connections_invested_mga_weight)) ? maximum(length(connections_invested_mga_weight(connection=c)) for c in indices(connections_invested_mga_weight)) : 0
+        s_max = !isempty(indices(storages_invested_mga_weight)) ? maximum(length(storages_invested_mga_weight(node=s)) for s in indices(storages_invested_mga_weight)) : 0
+        max_mga_iteration = maximum([u_max, s_max, c_max])
+    end
     while mga_iterations <= max_mga_iteration
-        set_objective_mga_iteration!(m_mga;iteration=mga_iteration()[end])
+        #TODO: set_objective_mga_iteration is different now
+        set_objective_mga_iteration!(m_mga;iteration=mga_iteration()[end], iterations_num= mga_iterations)
         optimize_model!(m_mga;
                     log_level=log_level,
                     iterations=mga_iterations)  || break
         save_mga_objective_values!(m_mga)
+        #TODO: needs to clean outputs?
+        if isempty(indices(connections_invested_big_m_mga)) && isempty(indices(units_invested_big_m_mga)) && isempty(indices(storages_invested_big_m_mga)) && (mga_iterations<max_mga_iteration)
+            for cons in
+                [:mga_objective_ub,
+                :mga_diff_ub1,]
+                for k in keys(m_mga.ext[:spineopt].constraints[cons])
+                    try m_mga.ext[:spineopt].constraints[cons][k]
+                        delete(m_mga,m_mga.ext[:spineopt].constraints[cons][k])
+                    catch
+                    end
+                end
+            end
+            for vars in  [:mga_aux_diff,]
+                for k in keys(m_mga.ext[:spineopt].variables[vars])
+                    try m_mga.ext[:spineopt].constraints[cons][k]
+                        delete(m_mga,m_mga.ext[:spineopt].variables[vars][k])
+                    catch
+                    end
+                end
+            end
+        end
+        #TODO: needs to clean constraint (or simply clean within function)
         mga_iterations += 1
     end
     write_report(m_mga, url_out; alternative=alternative, log_level=log_level)
