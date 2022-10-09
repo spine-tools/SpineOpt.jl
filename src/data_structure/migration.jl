@@ -32,13 +32,15 @@ include("versions/move_connection_flow_cost.jl")
 include("versions/rename_model_types.jl")
 include("versions/add_min_unit_flow.jl")
 include("versions/add_flow_non_anticipativity_time.jl")
+include("versions/add_mga_weight_factors.jl")
 
 _upgrade_functions = [
 	rename_unit_constraint_to_user_constraint,
 	move_connection_flow_cost,
 	rename_model_types,
 	add_min_unit_flow,
-	add_flow_non_anticipativity_time
+	add_flow_non_anticipativity_time,
+	add_mga_weight_factors
 ]
 
 """
