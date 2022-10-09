@@ -18,42 +18,41 @@
 #############################################################################
 @testset "find_version" begin
 	url = "sqlite://"
-	dbh = SpineInterface._create_db_handler(url, false)
     # With no data
-    dbh.close_connection()
-    dbh.open_connection()
+    SpineInterface.close_connection(url)
+    SpineInterface.open_connection(url)
 	@test SpineOpt.find_version(url) == 1
-    dbh.close_connection()
+    SpineInterface.close_connection(url)
     # With settings class only
-    dbh.open_connection()
+    SpineInterface.open_connection(url)
 	data = Dict(:object_classes => ["settings"])
     SpineInterface.import_data(url; data...)
 	@test SpineOpt.find_version(url) == 1
-    dbh.close_connection()
+    SpineInterface.close_connection(url)
     # With settings class and integer version parameter value
 	data = Dict(:object_classes => ["settings"], :object_parameters => [("settings", "version", 8)])
-    dbh.open_connection()
+    SpineInterface.open_connection(url)
     SpineInterface.import_data(url; data...)
 	@test SpineOpt.find_version(url) == 8
-    dbh.close_connection()
+    SpineInterface.close_connection(url)
     # With settings class and string version parameter value
 	data = Dict(:object_classes => ["settings"], :object_parameters => [("settings", "version", "77")])
-    dbh.open_connection()
+    SpineInterface.open_connection(url)
     SpineInterface.import_data(url; data...)
 	@test SpineOpt.find_version(url) == 77
-    dbh.close_connection()
+    SpineInterface.close_connection(url)
     # With settings class and float version parameter value
 	data = Dict(:object_classes => ["settings"], :object_parameters => [("settings", "version", 44.0)])
-    dbh.open_connection()
+    SpineInterface.open_connection(url)
     SpineInterface.import_data(url; data...)
 	@test SpineOpt.find_version(url) == 44
-    dbh.close_connection()
+    SpineInterface.close_connection(url)
     # With settings class and invalid version parameter value
 	data = Dict(:object_classes => ["settings"], :object_parameters => [("settings", "version", "invalid")])
-    dbh.open_connection()
+    SpineInterface.open_connection(url)
     SpineInterface.import_data(url; data...)
 	@test_throws ArgumentError SpineOpt.find_version(url)
-    dbh.close_connection()
+    SpineInterface.close_connection(url)
 end
 @testset "run_migrations" begin
 	file_path, io = mktemp()
