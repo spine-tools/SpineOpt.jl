@@ -310,7 +310,6 @@ function rerun_spineopt(
     is_subproblem = mp !== nothing
     m = create_model(:spineopt_standard, mip_solver, lp_solver, use_direct_model, is_subproblem)
     m_mga = create_model(:spineopt_mga, mip_solver, lp_solver, use_direct_model, is_subproblem)
-
     Base.invokelatest(
         rerun_spineopt!,
         m,
@@ -538,6 +537,42 @@ function objective_terms(m)
     end
 end
 
+function _wait_for_dual_solves(m)
+    lock(m.ext[:spineopt].dual_solves_lock)
+    try
+        wait.(m.ext[:spineopt].dual_solves)
+        empty!(m.ext[:spineopt].dual_solves)
+    finally
+        unlock(m.ext[:spineopt].dual_solves_lock)
+    end
+end
+
+"""
+    collect_output_values(m, output_value=output_value)
+
+A Dict mapping tuples (output, overwrite results on rolling) to another Dict mapping entities to TimeSeries or Map
+parameter values.
+
+# Arguments
+- `m::Model`: a JuMP model resulting from running SpineOpt successfully.
+- `output_value`: a function to replace `SpineOpt.output_value` if needed.
+"""
+function collect_output_values(m, output_value=output_value)
+    _wait_for_dual_solves(m)
+    values = Dict()
+    for rpt in model__report(model=m.ext[:spineopt].instance)
+        for out in report__output(report=rpt)
+            by_entity = get(m.ext[:spineopt].outputs, out.name, nothing)
+            by_entity === nothing && continue
+            overwrite = overwrite_results_on_rolling(report=rpt, output=out)
+            key = (out, overwrite)
+            haskey(values, key) && continue
+            values[key] = _output_value_by_entity(by_entity, overwrite, output_value)
+        end
+    end
+    values
+end
+
 """
     write_report(m, default_url, output_value=output_value; alternative="")
 
@@ -552,38 +587,30 @@ Write report from given model into a db.
 - `alternative::String`: an alternative to pass to `SpineInterface.write_parameters`.
 """
 function write_report(m, default_url, output_value=output_value; alternative="", log_level=3)
-    lock(m.ext[:spineopt].dual_solves_lock)
-    try
-        wait.(m.ext[:spineopt].dual_solves)
-        empty!(m.ext[:spineopt].dual_solves)
-    finally
-        unlock(m.ext[:spineopt].dual_solves_lock)
-    end
     default_url === nothing && return false
-    reports = Dict()
+    values = collect_output_values(m, output_value)
+    write_report(m, default_url, values; alternative=alternative, log_level=log_level)
+end
+function write_report(m, default_url, values::Dict; alternative="", log_level=3)
+    report_values_by_url = Dict()
     for rpt in model__report(model=m.ext[:spineopt].instance)
+        vals = Dict()
         for out in report__output(report=rpt)
-            by_entity = get(m.ext[:spineopt].outputs, out.name, nothing)
-            by_entity === nothing && continue
-            output_url = output_db_url(report=rpt, _strict=false)
-            url = output_url !== nothing ? output_url : default_url
-            url_reports = get!(reports, url, Dict())
-            output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,Any}}())
-            parameter_name = out.name in objective_terms(m) ? Symbol("objective_", out.name) : out.name
             overwrite = overwrite_results_on_rolling(report=rpt, output=out)
-            output_params[parameter_name] = _output_value_by_entity(by_entity, overwrite, output_value)
+            name = out.name in objective_terms(m) ? Symbol("objective_", out.name) : out.name
+            vals[name] = values[out, overwrite]
+        end
+        output_url = output_db_url(report=rpt, _strict=false)
+        url = output_url !== nothing ? output_url : default_url
+        push!(get!(report_values_by_url, url, []), (rpt, vals))
+    end
+    for (url, report_values) in report_values_by_url
+        actual_url = run_request(url, "get_db_url")
+        @timelog log_level 2 "Writing report to $actual_url..." for (rpt, vals) in report_values
+            write_parameters(vals, url; report=string(rpt.name), alternative=alternative, on_conflict="merge")
         end
     end
-    for (url, url_reports) in reports
-        @timelog log_level 2 "Writing report to $(run_request(url, "get_db_url"))..." begin
-            for (rpt_name, output_params) in url_reports
-                write_parameters(
-                    output_params, url; report=string(rpt_name), alternative=alternative, on_conflict="merge"
-                )
-            end
-        end
-    end
-    return true
+    true
 end
 
 function clear_results!(m)

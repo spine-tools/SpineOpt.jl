@@ -39,6 +39,7 @@ export refresh_model!
 export run_spineopt_kernel!
 export output_value
 export write_report
+export collect_output_values
 export generate_forced_availability_factor
 export forced_availability_factor_time_series
 
