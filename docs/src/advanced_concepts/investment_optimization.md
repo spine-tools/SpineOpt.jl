@@ -45,7 +45,7 @@ If we have model that is not currently set up for investments and we wish to cre
  - Specify the investment period for this [unit](@ref)'s investment decision in one of two ways
    - Define a default investment period for all investment decisions in the model as follows:
      - create a [temporal\_block](@ref) with the appropriate [resolution](@ref) (say 1 year)
-     - link this to your [model]{@ref} object by creating the appropriate [model\_\_temporal\_block](@ref) relationship
+     - link this to your [model](@ref) object by creating the appropriate [model\_\_temporal\_block](@ref) relationship
      - set it as the default investment temporal block by setting [model\_\_default\_investment\_temporal\_block](@ref)
    - Or, define an investment period unique to this investment decision as follows:
      - creating a [temporal\_block](@ref) with the appropriate [resolution](@ref) (say 1 year)
