@@ -32,13 +32,15 @@ include("versions/move_connection_flow_cost.jl")
 include("versions/rename_model_types.jl")
 include("versions/add_min_unit_flow.jl")
 include("versions/add_flow_non_anticipativity_time.jl")
+include("versions/add_mga_weight_factors.jl")
 
 _upgrade_functions = [
 	rename_unit_constraint_to_user_constraint,
 	move_connection_flow_cost,
 	rename_model_types,
 	add_min_unit_flow,
-	add_flow_non_anticipativity_time
+	add_flow_non_anticipativity_time,
+	add_mga_weight_factors
 ]
 
 """
@@ -54,15 +56,10 @@ current_version() = length(_upgrade_functions) + 1
 Run migrations on the given url starting from the given version.
 """
 function run_migrations(url, version, log_level)
-	run_request(url, "open_connection")
-	try
-		while _run_migration(url, version, log_level)
-			version = find_version(url)
-		end
-		run_request(url, "import_data",	(SpineOpt.template(), "Import last version of the template"))
-	finally
-		run_request(url, "close_connection")
+	while _run_migration(url, version, log_level)
+		version = find_version(url)
 	end
+	run_request(url, "import_data",	(SpineOpt.template(), "Import last version of the template"))
 end
 
 function _run_migration(url, version, log_level)

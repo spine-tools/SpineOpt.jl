@@ -81,7 +81,7 @@ end
             url_in;
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
-        )        
+        )
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:spineopt].constraints[:unit_flow_capacity]
         using_spinedb(url_out, Y)
@@ -119,7 +119,7 @@ end
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        
+
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:spineopt].constraints[:unit_flow_capacity]
         using_spinedb(url_out, Y)
@@ -161,7 +161,7 @@ end
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
-        )        
+        )
         m = run_spineopt(url_in, url_out; log_level=0)
         @testset for (k, t) in enumerate(time_slice(m))
             ind = first(SpineOpt.units_on_indices(m; t=t))
@@ -207,7 +207,7 @@ end
                 relationships=relationships,
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values,
-            )        
+            )
             m = run_spineopt(url_in, url_out; log_level=0)
             nat = unit_flow_non_anticipativity_time(
                 unit=unit(:unit_ab), node=node(:node_b), direction=direction(:to_node)
@@ -257,7 +257,7 @@ end
             direction=Y.direction(:to_node),
             stochastic_scenario=Y.stochastic_scenario(:parent),
         )
-        analysis_times = DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2) - Hour(1)
+        analysis_times = DateTime(2000, 1, 1): Hour(6) : DateTime(2000, 1, 2) - Hour(1)
         # For each analysis time we cover a window of ± 12 hours with `t`,
         # and check that only `t`s within the optimisation window have a `unit_flow` value
         @testset for at in analysis_times, t in at - Hour(12):Hour(1):at + Hour(12)
@@ -281,18 +281,18 @@ end
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        
+
         m = run_spineopt(url_in, url_out; log_level=0)
         @test termination_status(m) != JuMP.MathOptInterface.OPTIMAL
     end
     @testset "unknown output" begin
         _load_test_data(url_in, test_data)
         demand = 100
-        vom_cost = 50        
+        vom_cost = 50
         objects = [["output", "unknown_output"]]
         relationships = [["report__output", ["report_x", "unknown_output"]]]
         object_parameter_values = [
-            ["node", "node_b", "demand", demand]          
+            ["node", "node_b", "demand", demand]
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand],
@@ -386,7 +386,7 @@ end
         logLevel = 1.0
         ratioGap = 0.015
         demand = 100
-    
+
         mip_solver_options = Dict(
             "type" => "map",
             "index_type" => "str",
@@ -396,7 +396,7 @@ end
                     "index_type" => "str",
                     "data" => Dict(
                         "ratioGap" => ratioGap,
-                        "logLevel" => logLevel,                        
+                        "logLevel" => logLevel,
                     ),
                 ),
             ),
@@ -414,12 +414,12 @@ end
                     ),
                 ),
             ),
-        )         
+        )
 
-        object_parameter_values = [ 
-            ["node", "node_b", "demand", demand],                                    
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
             ["model", "instance", "db_mip_solver_options", mip_solver_options],
-            ["model", "instance", "db_lp_solver_options", lp_solver_options]            
+            ["model", "instance", "db_lp_solver_options", lp_solver_options]
         ]
 
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand]]
@@ -428,7 +428,7 @@ end
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        
+
         m = run_spineopt(url_in, url_out; log_level=0, optimize=false)
         @test get_optimizer_attribute(m, "logLevel") == "1"
         @test get_optimizer_attribute(m, "ratioGap") == "0.015"
@@ -440,7 +440,7 @@ end
         logLevel_master = 0.0
         ratioGap_master = 0.016
         demand = 100
-    
+
         mip_solver_options = Dict(
             "type" => "map",
             "index_type" => "str",
@@ -450,7 +450,7 @@ end
                     "index_type" => "str",
                     "data" => Dict(
                         "ratioGap" => ratioGap,
-                        "logLevel" => logLevel,                        
+                        "logLevel" => logLevel,
                     ),
                 ),
             ),
@@ -468,7 +468,7 @@ end
                     ),
                 ),
             ),
-        )         
+        )
 
         mip_solver_options_master = Dict(
             "type" => "map",
@@ -479,7 +479,7 @@ end
                     "index_type" => "str",
                     "data" => Dict(
                         "ratioGap" => ratioGap_master,
-                        "logLevel" => logLevel_master,                        
+                        "logLevel" => logLevel_master,
                     ),
                 ),
             ),
@@ -502,14 +502,14 @@ end
         objects = [
             ["model", "master_instance"],
             ["temporal_block", "master_hourly"],
-            ["stochastic_structure", "master_deterministic"]            
+            ["stochastic_structure", "master_deterministic"]
         ]
 
-        object_parameter_values = [ 
-            ["node", "node_b", "demand", demand],                                    
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
             ["model", "instance", "model_type", "spineopt_standard"],
             ["model", "instance", "db_mip_solver_options", mip_solver_options],
-            ["model", "instance", "db_lp_solver_options", lp_solver_options],            
+            ["model", "instance", "db_lp_solver_options", lp_solver_options],
             ["model", "master_instance", "model_type", "spineopt_benders_master"],
             ["model", "master_instance", "db_mip_solver_options", mip_solver_options_master],
             ["model", "master_instance", "db_lp_solver_options", lp_solver_options_master],
@@ -531,7 +531,7 @@ end
             ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
             ["unit__investment_temporal_block", ["unit_ab", "master_hourly"]],
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
-            ["unit__investment_stochastic_structure", ["unit_ab", "master_deterministic"]],            
+            ["unit__investment_stochastic_structure", ["unit_ab", "master_deterministic"]],
         ]
 
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand]]
@@ -542,7 +542,7 @@ end
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        
+
         (m, mp) = run_spineopt(url_in, url_out; log_level=0, optimize=false)
         @test get_optimizer_attribute(m, "logLevel") == "1"
         @test get_optimizer_attribute(m, "ratioGap") == "0.015"
@@ -571,7 +571,7 @@ end
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
-        )        
+        )
         m = run_spineopt(url_in, url_out; log_level=0)
         SpineOpt.update_model!(m)  # So that history is fixed
         history_end = model_end(model=m.ext[:spineopt].instance) - roll_forward(model=m.ext[:spineopt].instance)
@@ -608,7 +608,7 @@ end
             relationships=relationships,
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
-        )        
+        )
         rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)

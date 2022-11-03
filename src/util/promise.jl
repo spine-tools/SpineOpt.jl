@@ -17,25 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    fuel_costs(m::Model)
+import SpineInterface: realize
 
-Create an expression for fuel costs of units.
-"""
-function fuel_costs(m::Model, t1)
-    @fetch unit_flow = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
-    @expression(
-        m,
-        expr_sum(
-            unit_flow[u, n, d, s, t]
-            * duration(t)
-            * prod(weight(temporal_block=blk) for blk in blocks(t))
-            * fuel_cost[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
-            for (u, ng, d) in indices(fuel_cost)
-            for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=ng, direction=d) if end_(t) <= t1;
-            init=0,
-        )
-    )
+abstract type AbstractPromise end
+
+struct DualPromise <: AbstractPromise
+    value::JuMP.ConstraintRef
 end
+
+struct ReducedCostPromise <: AbstractPromise
+    value::JuMP.VariableRef
+end
+
+realize(x::DualPromise) = has_duals(owner_model(x.value)) ? dual(x.value) : nothing
+realize(x::ReducedCostPromise) = has_duals(owner_model(x.value)) ? reduced_cost(x.value) : nothing
+
+Base.:+(x::X, y::Y) where {X<:AbstractPromise,Y<:AbstractPromise} = Call(+, x, y)

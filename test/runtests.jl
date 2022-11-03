@@ -24,6 +24,7 @@ using Dates
 using JuMP
 using PyCall
 
+
 import SpineOpt:
     time_slice,
     to_time_slice,
@@ -53,9 +54,8 @@ function _load_test_data(db_url, test_data)
 end
 
 function _load_test_data_without_template(db_url, test_data)
-    dbh = SpineInterface._create_db_handler(db_url, false)
-    dbh.close_connection()
-    dbh.open_connection()
+    SpineInterface.close_connection(db_url)
+    SpineInterface.open_connection(db_url)
     SpineInterface.import_data(db_url; test_data...)
 end
 

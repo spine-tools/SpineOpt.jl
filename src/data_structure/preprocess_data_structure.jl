@@ -40,6 +40,7 @@ function preprocess_data_structure(; log_level=3)
     generate_network_components()
     generate_variable_indexing_support()
     generate_benders_structure()
+    apply_forced_availability_factor()
 end
 
 """
@@ -178,9 +179,7 @@ end
 
 For connections of type `:connection_type_lossless_bidirectional` if a `connection_capacity` is found
 we ensure that it appies to each of the four flow variables
-
 """
-
 function process_loss_bidirectional_capacities()
     for c in connection(connection_type=:connection_type_lossless_bidirectional)
         conn_capacity_param = nothing
@@ -223,7 +222,6 @@ function process_loss_bidirectional_capacities()
     end
 end
 
-# Network stuff
 """
     generate_node_has_ptdf()
 
@@ -682,7 +680,8 @@ end
 """
     generate_report__output()
 
-Generate the `report__output` relationship for all possible combinations of outputs and reports, only if no relationship between report and output exists.
+Generate the `report__output` relationship for all possible combinations of outputs and reports, only if no
+relationship between report and output exists.
 """
 function generate_report__output()
     isempty(report__output()) || return
@@ -695,7 +694,8 @@ end
 """
     generate_model__report()
 
-Generate the `report__output` relationship for all possible combinations of outputs and reports, only if no relationship between report and output exists.
+Generate the `report__output` relationship for all possible combinations of outputs and reports, only if no
+relationship between report and output exists.
 """
 function generate_model__report()
     isempty(model__report()) || return
@@ -827,4 +827,24 @@ function generate_benders_structure()
         export storages_invested_available_bi
         export starting_fix_storages_invested_available
     end
+end
+
+_product(x::TimeSeries, y::Nothing) = x
+_product(x::TimeSeries, y) = x * y
+
+function _apply_forced_availability_factor(m_start, m_end, class, availability_factor)
+    for x in class()
+        forced_af = forced_availability_factor(; (class.name => x,)..., _strict=false)
+        forced_af === nothing && continue
+        af = availability_factor(; (class.name => x,)..., _strict=false)
+        class.parameter_values[x][availability_factor.name] = parameter_value(_product(forced_af, af))
+    end
+end
+
+function apply_forced_availability_factor()
+    isempty(model()) && return
+    m_start = minimum(model_start(model=m) for m in model())
+    m_end = maximum(model_end(model=m) for m in model())
+    _apply_forced_availability_factor(m_start, m_end, unit, unit_availability_factor)
+    _apply_forced_availability_factor(m_start, m_end, connection, connection_availability_factor)
 end

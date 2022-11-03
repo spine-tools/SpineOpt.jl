@@ -34,19 +34,26 @@ import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 export @fetch
 export rerun_spineopt
 export run_spineopt
+export prepare_spineopt
+export refresh_model!
+export run_spineopt_kernel!
 export output_value
 export write_report
+export collect_output_values
+export generate_forced_availability_factor
+export forced_availability_factor_time_series
 
 include("run_spineopt.jl")
-include("util/docs_utils.jl")
-include("data_structure/migration.jl")
-
+include("generate_forced_availability_factor.jl")
 include("run_spineopt_standard.jl")
 include("run_spineopt_benders.jl")
 include("run_spineopt_mga.jl")
 include("util/misc.jl")
 include("util/postprocess_results.jl")
 include("util/write_information_files.jl")
+include("util/docs_utils.jl")
+include("util/promise.jl")
+include("data_structure/migration.jl")
 include("data_structure/benders_data.jl")
 include("data_structure/mga_data.jl")
 include("data_structure/temporal_structure.jl")

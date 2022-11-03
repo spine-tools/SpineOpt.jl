@@ -139,7 +139,7 @@ function run_spineopt(
     resume_file_path=nothing
 )
     if log_file_path === nothing
-        return do_run_spine_opt(
+        return do_run_spineopt(
             url_in,
             url_out;
             upgrade=upgrade,
@@ -181,7 +181,7 @@ function run_spineopt(
             redirect_stderr(log_file) do
                 yield()
                 try
-                    return do_run_spine_opt(
+                    return do_run_spineopt(
                         url_in,
                         url_out;
                         upgrade=upgrade,
@@ -210,7 +210,7 @@ function run_spineopt(
     end
 end
 
-function do_run_spine_opt(
+function do_run_spineopt(
     url_in::String,
     url_out::Union{String,Nothing}=url_in;
     upgrade=false,
@@ -228,7 +228,33 @@ function do_run_spine_opt(
     filters=Dict("tool" => "object_activity_control"),
     resume_file_path=nothing
 )
-    @log log_level 0 "Running SpineOpt for $(url_in)..."
+    prepare_spineopt(url_in; upgrade=upgrade, log_level=log_level, filters=filters)
+    rerun_spineopt(
+        url_out;
+        mip_solver=mip_solver,
+        lp_solver=lp_solver,
+        add_user_variables=add_user_variables,
+        add_constraints=add_constraints,
+        update_constraints=update_constraints,
+        log_level=log_level,
+        optimize=optimize,
+        update_names=update_names,
+        alternative=alternative,
+        write_as_roll=write_as_roll,
+        resume_file_path=resume_file_path,
+        use_direct_model=use_direct_model
+    )
+    # FIXME: make sure use_direct_model this works with db solvers
+    # possibly adapt union? + allow for conflicts if direct model is used
+end
+
+function prepare_spineopt(
+    url_in;
+    upgrade=false,
+    log_level=3,
+    filters=Dict("tool" => "object_activity_control")
+)
+    @log log_level 0 "Preparing SpineOpt for $(run_request(url_in, "get_db_url"))..."
     version = find_version(url_in)
     if version < current_version()
         if !upgrade
@@ -259,24 +285,9 @@ function do_run_spine_opt(
             """
         end
     end
-    rerun_spineopt(
-        url_out;
-        mip_solver=mip_solver,
-        lp_solver=lp_solver,
-        add_user_variables=add_user_variables,
-        add_constraints=add_constraints,
-        update_constraints=update_constraints,
-        log_level=log_level,
-        optimize=optimize,
-        update_names=update_names,
-        alternative=alternative,
-        write_as_roll=write_as_roll,
-        resume_file_path=resume_file_path,
-        use_direct_model=use_direct_model
-    )
-    # FIXME: make sure use_direct_model this works with db solvers
-    # possibly adapt union? + allow for conflicts if direct model is used
-end
+    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
+    @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
+end    
 
 function rerun_spineopt(
     url_out::Union{String,Nothing};
@@ -294,11 +305,11 @@ function rerun_spineopt(
     use_direct_model=false,
     alternative_objective=m -> nothing,
 )
+    @log log_level 0 "Running SpineOpt..."
     mp = create_model(:spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
     is_subproblem = mp !== nothing
     m = create_model(:spineopt_standard, mip_solver, lp_solver, use_direct_model, is_subproblem)
     m_mga = create_model(:spineopt_mga, mip_solver, lp_solver, use_direct_model, is_subproblem)
-
     Base.invokelatest(
         rerun_spineopt!,
         m,
@@ -462,9 +473,14 @@ A value from a SpineOpt result.
     If `false`, return a `Map` where the topmost keys are the analysis times.
 """
 function output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
-    output_value(by_analysis_time, Val(overwrite_results_on_rolling))
+    by_analysis_time_realized = Dict(
+        analysis_time => Dict(time_stamp => realize(value) for (time_stamp, value) in by_time_stamp)
+        for (analysis_time, by_time_stamp) in by_analysis_time
+    )
+    _output_value(by_analysis_time_realized, Val(overwrite_results_on_rolling))
 end
-function output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
+
+function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
     by_analysis_time_sorted = sort(OrderedDict(by_analysis_time))
     TimeSeries(
         [ts for by_time_stamp in values(by_analysis_time_sorted) for ts in keys(by_time_stamp)],
@@ -474,7 +490,7 @@ function output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
         merge_ok=true
     )
 end
-function output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
+function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
     Map(
         collect(keys(by_analysis_time)),
         [
@@ -486,7 +502,7 @@ end
 
 function _output_value_by_entity(by_entity, overwrite_results_on_rolling, output_value=output_value)
     Dict(
-        entity => output_value(by_analysis_time, Val(overwrite_results_on_rolling))
+        entity => output_value(by_analysis_time, overwrite_results_on_rolling)
         for (entity, by_analysis_time) in by_entity
     )
 end
@@ -521,6 +537,42 @@ function objective_terms(m)
     end
 end
 
+function _wait_for_dual_solves(m)
+    lock(m.ext[:spineopt].dual_solves_lock)
+    try
+        wait.(m.ext[:spineopt].dual_solves)
+        empty!(m.ext[:spineopt].dual_solves)
+    finally
+        unlock(m.ext[:spineopt].dual_solves_lock)
+    end
+end
+
+"""
+    collect_output_values(m, output_value=output_value)
+
+A Dict mapping tuples (output, overwrite results on rolling) to another Dict mapping entities to TimeSeries or Map
+parameter values.
+
+# Arguments
+- `m::Model`: a JuMP model resulting from running SpineOpt successfully.
+- `output_value`: a function to replace `SpineOpt.output_value` if needed.
+"""
+function collect_output_values(m, output_value=output_value)
+    _wait_for_dual_solves(m)
+    values = Dict()
+    for rpt in model__report(model=m.ext[:spineopt].instance)
+        for out in report__output(report=rpt)
+            by_entity = get(m.ext[:spineopt].outputs, out.name, nothing)
+            by_entity === nothing && continue
+            overwrite = overwrite_results_on_rolling(report=rpt, output=out)
+            key = (out, overwrite)
+            haskey(values, key) && continue
+            values[key] = _output_value_by_entity(by_entity, overwrite, output_value)
+        end
+    end
+    values
+end
+
 """
     write_report(m, default_url, output_value=output_value; alternative="")
 
@@ -534,35 +586,31 @@ Write report from given model into a db.
 # Keyword arguments
 - `alternative::String`: an alternative to pass to `SpineInterface.write_parameters`.
 """
-function write_report(m, default_url, output_value=output_value; alternative="")
-    default_url === nothing && return
-    lock(m.ext[:spineopt].dual_solves_lock)
-    try
-        wait.(m.ext[:spineopt].dual_solves)
-        empty!(m.ext[:spineopt].dual_solves)
-    finally
-        unlock(m.ext[:spineopt].dual_solves_lock)
-    end
-    reports = Dict()
-    outputs = Dict()
+function write_report(m, default_url, output_value=output_value; alternative="", log_level=3)
+    default_url === nothing && return false
+    values = collect_output_values(m, output_value)
+    write_report(m, default_url, values; alternative=alternative, log_level=log_level)
+end
+function write_report(m, default_url, values::Dict; alternative="", log_level=3)
+    report_values_by_url = Dict()
     for rpt in model__report(model=m.ext[:spineopt].instance)
+        vals = Dict()
         for out in report__output(report=rpt)
-            by_entity = get!(m.ext[:spineopt].outputs, out.name, nothing)
-            by_entity === nothing && continue
-            output_url = output_db_url(report=rpt, _strict=false)
-            url = output_url !== nothing ? output_url : default_url
-            url_reports = get!(reports, url, Dict())
-            output_params = get!(url_reports, rpt.name, Dict{Symbol,Dict{NamedTuple,Any}}())
-            parameter_name = out.name in objective_terms(m) ? Symbol("objective_", out.name) : out.name
             overwrite = overwrite_results_on_rolling(report=rpt, output=out)
-            output_params[parameter_name] = _output_value_by_entity(by_entity, overwrite, output_value)
+            name = out.name in objective_terms(m) ? Symbol("objective_", out.name) : out.name
+            vals[name] = values[out, overwrite]
+        end
+        output_url = output_db_url(report=rpt, _strict=false)
+        url = output_url !== nothing ? output_url : default_url
+        push!(get!(report_values_by_url, url, []), (rpt, vals))
+    end
+    for (url, report_values) in report_values_by_url
+        actual_url = run_request(url, "get_db_url")
+        @timelog log_level 2 "Writing report to $actual_url..." for (rpt, vals) in report_values
+            write_parameters(vals, url; report=string(rpt.name), alternative=alternative, on_conflict="merge")
         end
     end
-    for (url, url_reports) in reports
-        for (rpt_name, output_params) in url_reports
-            write_parameters(output_params, url; report=string(rpt_name), alternative=alternative, on_conflict="merge")
-        end
-    end
+    true
 end
 
 function clear_results!(m)

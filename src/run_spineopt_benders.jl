@@ -33,8 +33,6 @@ function rerun_spineopt!(
     write_as_roll=0,
     resume_file_path=nothing
 )
-    @timelog log_level 2 "Preprocessing data structure..." preprocess_data_structure(; log_level=log_level)
-    @timelog log_level 2 "Checking data structure..." check_data_structure(; log_level=log_level)
     @timelog log_level 2 "Creating $(m.ext[:spineopt].instance) temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating $(m.ext[:spineopt].instance) stochastic structure..." generate_stochastic_structure!(m)
     @timelog log_level 2 "Creating $(mp.ext[:spineopt].instance) temporal structure..." generate_temporal_structure!(mp)
@@ -78,7 +76,7 @@ function rerun_spineopt!(
         j += 1
         global current_bi = add_benders_iteration(j)
     end
-    @timelog log_level 2 "Writing report..." write_report(m, url_out; alternative=alternative)
+    write_report(m, url_out; alternative=alternative, log_level=log_level)
     m, mp
 end
 
