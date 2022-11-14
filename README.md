@@ -169,6 +169,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 SpineOpt is licensed under GNU Lesser General Public License version 3.0 or later.
 
+### Citing SpineOpt
+
+Please cite [this article](https://doi.org/10.1016/j.esr.2022.100902) when referring to SpineOpt in scientific writing.
+
 ### Acknowledgements
 
 <center>
