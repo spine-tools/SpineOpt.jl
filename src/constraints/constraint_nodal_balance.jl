@@ -26,32 +26,28 @@
 Balance equation for nodes.
 """
 function add_constraint_nodal_balance!(m::Model)
-    @fetch node_injection, connection_flow, node_slack_pos, node_slack_neg = m.ext[:spineopt].variables
+    @fetch connection_flow, node_slack_pos, node_slack_neg = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:nodal_balance] = Dict(
         (node=n, stochastic_scenario=s, t=t) => sense_constraint(
             m,
             # Net injection
-            + node_injection[n, s, t]
+            + _node_injection(m, n, s, t)
             # Commodity flows from connections
             + expr_sum(
-                connection_flow[conn, n1, d, s, t] for (conn, n1, d, s, t) in connection_flow_indices(
-                    m;
-                    node=n,
-                    direction=direction(:to_node),
-                    stochastic_scenario=s,
-                    t=t,
-                ) if !issubset(_connection_nodes(conn, n), _internal_nodes(n));
+                connection_flow[conn, n1, d, s, t]
+                for (conn, n1, d, s, t) in connection_flow_indices(
+                    m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
+                )
+                if !issubset(_connection_nodes(conn, n), _internal_nodes(n));
                 init=0,
             )
             # Commodity flows to connections
             - expr_sum(
-                connection_flow[conn, n1, d, s, t] for (conn, n1, d, s, t) in connection_flow_indices(
-                    m;
-                    node=n,
-                    direction=direction(:from_node),
-                    stochastic_scenario=s,
-                    t=t,
-                ) if !issubset(_connection_nodes(conn, n), _internal_nodes(n));
+                connection_flow[conn, n1, d, s, t]
+                for (conn, n1, d, s, t) in connection_flow_indices(
+                    m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
+                )
+                if !issubset(_connection_nodes(conn, n), _internal_nodes(n));
                 init=0,
             )
             # slack variable - only exists if slack_penalty is defined
@@ -65,6 +61,19 @@ function add_constraint_nodal_balance!(m::Model)
         )
     )
 end
+
+function _node_injection(m, n, s, t)
+    @fetch node_injection = m.ext[:spineopt].variables
+    if balance_type(node=n) === :balance_type_group
+        expr_sum(
+            node_injection[n_, s_, t_] for (n_, s_, t_) in node_injection_indices(m; node=_internal_nodes(n));
+            init=0
+        )
+    else
+        node_injection[n, s, t]
+    end
+end
+
 
 _internal_nodes(n::Object) = setdiff(members(n), n)
 
