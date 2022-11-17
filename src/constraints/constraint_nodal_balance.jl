@@ -58,8 +58,11 @@ function add_constraint_nodal_balance!(m::Model)
             + get(node_slack_pos, (n, s, t), 0) - get(node_slack_neg, (n, s, t), 0),
             eval(nodal_balance_sense(node=n)),
             0,
-        ) for (n, s, t) in node_injection_indices(m)
-            if balance_type(node=n) !== :balance_type_none && all(balance_type(node=ng) !== :balance_type_group for ng in groups(n))
+        )
+        for (n, s, t) in node_injection_indices(m)
+        if balance_type(node=n) !== :balance_type_none && !any(
+            balance_type(node=ng) === :balance_type_group for ng in groups(n)
+        )
     )
 end
 
@@ -75,6 +78,6 @@ function _connection_nodes(connection, node)
         n
         for connection__node in (connection__from_node, connection__to_node)
         for n in members(connection__node(connection=connection, direction=anything))
-            if node__commodity(node=members(node)) == node__commodity(node=n)
+        if node__commodity(node=members(node)) == node__commodity(node=n)
     )
 end
