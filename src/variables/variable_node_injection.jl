@@ -30,11 +30,7 @@ function node_injection_indices(
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
     node_stochastic_time_indices(
-        m;
-        node=node,
-        stochastic_scenario=stochastic_scenario,
-        t=t,
-        temporal_block=temporal_block,
+        m; node=node, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
     )
 end
 

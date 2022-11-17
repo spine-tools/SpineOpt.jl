@@ -134,16 +134,13 @@
         end
         @test _is_constraint_equal(observed_con, expected_con)
     end
-
     @testset "constraint_nodal_balance_group" begin
         _load_test_data(url_in, test_data)
         object_parameter_values = [
             ["node", "node_a", "node_slack_penalty", 0.5],
             ["node", "node_group_bc", "balance_type", "balance_type_group"]
         ]
-
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_injection = m.ext[:spineopt].variables[:node_injection]
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
@@ -164,23 +161,18 @@
         expected_con = @build_constraint(var_n_inj + var_conn_flow + var_n_sl_pos - var_n_sl_neg == 0)
         con = constraint[node_key...]
         observed_con = constraint_object(con)
-
         @test _is_constraint_equal(observed_con, expected_con)
         # node_group_bc
-        n = node(:node_group_bc)
+        ng_bc = node(:node_group_bc)
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s, t) in zip(scenarios, time_slices)
-            var_n_inj = var_node_injection[node(:node_group_bc), s, t]
-            var_conn_flows = (
-                - var_connection_flow[connection(:connection_ca), node(:node_c), direction(:from_node), s, t]
-            )
-
-            expected_con = @build_constraint(var_n_inj + var_conn_flows == 0)
-            con = constraint[node(:node_group_bc), s, t]
-            observed_con = constraint_object(con)
-            @test _is_constraint_equal(observed_con, expected_con)
-        end
+        s, t = first(scenarios), first(time_slices)
+        var_n_inj = sum(var_node_injection[n, s, t] for (s, t) in zip(scenarios, time_slices) for n in members(ng_bc))
+        var_conn_flows = -var_connection_flow[connection(:connection_ca), node(:node_c), direction(:from_node), s, t]
+        expected_con = @build_constraint(var_n_inj + var_conn_flows == 0)
+        con = constraint[node(:node_group_bc), s, t]
+        observed_con = constraint_object(con)
+        @test _is_constraint_equal(observed_con, expected_con)
     end
     @testset "constraint_node_injection" begin
         demand_a = 100
