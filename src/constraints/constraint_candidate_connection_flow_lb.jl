@@ -95,9 +95,7 @@ function constraint_candidate_connection_flow_lb_indices(m::Model)
         for (conn, n, d, s, t) in connection_flow_indices(m; connection=connection(is_candidate=true, has_ptdf=true))
         for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=n)))
         for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario for ind in _constraint_candidate_connection_flow_lb_indices(m, conn, n, d, t)
-            ),
+            collect(_constraint_candidate_connection_flow_lb_scenarios(m, conn, n, d, t))
         )
     )
 end
@@ -123,15 +121,19 @@ function constraint_candidate_connection_flow_lb_indices_filtered(
     filter(f, constraint_candidate_connection_flow_lb_indices(m))
 end
 
-"""
-    _constraint_connection_flow_lb_indices(m; connection, node, direction, t)
-
-Gather the indices of the relevant `connection_flow` and `connections_invested_available` variables.
-"""
-function _constraint_candidate_connection_flow_lb_indices(m, connection, node, direction, t)
-    (m, connection, node, direction, t)
-    Iterators.flatten((
-        connection_flow_indices(m; connection=connection, node=node, direction=direction, t=t),
-        connections_invested_available_indices(m; connection=connection, t=t_in_t(m; t_short=t)),
-    ))
+function _constraint_candidate_connection_flow_lb_scenarios(m, connection, node, direction, t)
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(
+            connection_flow_indices(
+                m; connection=connection, node=node, direction=direction, t=t, stochastic_scenario=s
+            )
+        )
+        || !isempty(
+            connections_invested_available_indices(
+                m; connection=connection, t=t_in_t(m; t_short=t), stochastic_scenario=s
+            )
+        )
+    )
 end

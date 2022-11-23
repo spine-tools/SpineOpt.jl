@@ -94,9 +94,7 @@ function constraint_unit_pw_heat_rate_indices(m::Model)
         (unit=u, node_from=n_from, node_to=n_to, stochastic_path=path, t=t)
         for (u, n_from, n_to) in indices(unit_incremental_heat_rate)
         for t in t_lowest_resolution(x.t for x in unit_flow_indices(m; unit=u, node=[n_from, n_to]))
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_unit_pw_heat_rate_indices(m, u, n_from, n_to, t)),
-        )
+        for path in active_stochastic_paths(collect(_constraint_unit_pw_heat_rate_scenarios(m, u, n_from, n_to, t)))
     )
 end
 
@@ -120,15 +118,25 @@ function constraint_unit_pw_heat_rate_indices_filtered(
     filter(f, constraint_unit_pw_heat_rate_indices(m))
 end
 
-"""
-    _constraint_unit_pw_heat_rate_indices(unit, node_from, node_to, t)
-
-Gather the indices of the relevant `unit_flow` and `units_on` variables.
-"""
-function _constraint_unit_pw_heat_rate_indices(m, unit, node_from, node_to, t)
-    Iterators.flatten((
-        unit_flow_indices(m; unit=unit, node=node_from, direction=direction(:from_node), t=t_in_t(m; t_long=t)),
-        unit_flow_indices(m; unit=unit, node=node_to, direction=direction(:to_node), t=t_in_t(m; t_long=t)),
-        units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t)),
-    ))
+function _constraint_unit_pw_heat_rate_scenarios(m, unit, node_from, node_to, t)
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(
+            unit_flow_indices(
+                m;
+                unit=unit,
+                node=node_from,
+                direction=direction(:from_node),
+                t=t_in_t(m; t_long=t),
+                stochastic_scenario=s
+            )
+        )
+        || !isempty(
+            unit_flow_indices(
+                m; unit=unit, node=node_to, direction=direction(:to_node), t=t_in_t(m; t_long=t), stochastic_scenario=s
+            )
+        )
+        || !isempty(units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t), stochastic_scenario=s))
+    )
 end

@@ -345,7 +345,8 @@ function _ptdf_values()
     ptdf = _build_ptdf(connections, nodes)
     Dict(
         (conn, n) => Dict(:ptdf => parameter_value(ptdf[i, j]))
-        for (i, conn) in enumerate(connections) for (j, n) in enumerate(nodes)
+        for (i, conn) in enumerate(connections)
+        for (j, n) in enumerate(nodes)
     )
 end
 

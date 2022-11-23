@@ -44,7 +44,11 @@ function constraint_min_node_voltage_angle_indices(m::Model)
         (node=ng, stochastic_path=path, t=t)
         for (ng, s, t) in node_voltage_angle_indices(m; node=indices(min_voltage_angle))
         for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in node_voltage_angle_indices(m; node=ng, t=t)),
+            collect(
+                s
+                for s in stochastic_scenario()
+                if !isempty(node_voltage_angle_indices(m; node=ng, t=t, stochastic_scenario=s))
+            )
         )
     )
 end

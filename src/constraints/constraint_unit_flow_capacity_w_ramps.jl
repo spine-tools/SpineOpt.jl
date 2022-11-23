@@ -268,10 +268,7 @@ function constraint_unit_flow_capacity_w_ramp_indices(m::Model)
                 t=t_before_t(m, t_after=t_after),
             ),
         ) for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in _constraint_unit_flow_capacity_w_ramp_indices(m, u, ng, d, t_before, t_after)
-            ),
+            collect(_constraint_unit_flow_capacity_w_ramp_scenarios(m, u, ng, d, t_before, t_after))
         )
     )
 end
@@ -307,15 +304,12 @@ function constraint_unit_flow_capacity_w_ramp_indices_filtered(
     filter(f, constraint_unit_flow_capacity_w_ramp_indices(m))
 end
 
-"""
-    _constraint_unit_flow_capacity_w_ramp_indices(m::Model, unit, node, direction, t)
-
-An iterator that concatenates `unit_flow_indices` and `units_on_indices` for the given inputs.
-"""
-function _constraint_unit_flow_capacity_w_ramp_indices(m::Model, unit, node, direction, t_before, t_after)
-    Iterators.flatten((
-        unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_before),
-        units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t_before)),
-        units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t_after)),
-    ))
+function _constraint_unit_flow_capacity_w_ramp_scenarios(m::Model, unit, node, direction, t_before, t_after)
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_before, stochastic_scenario=s))
+        || !isempty(units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t_before), stochastic_scenario=s))
+        || !isempty(units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t_after), stochastic_scenario=s))
+    )
 end

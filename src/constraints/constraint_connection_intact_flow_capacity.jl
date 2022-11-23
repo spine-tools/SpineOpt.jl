@@ -77,9 +77,12 @@ function constraint_connection_intact_flow_capacity_indices(m::Model)
         for (c, ng, d) in indices(connection_capacity; connection=connection(has_ptdf=true))
         for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng))))
         for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in connection_intact_flow_indices(m; connection=c, node=ng, direction=d, t=t)
+            collect(
+                s
+                for s in stochastic_scenario()
+                if !isempty(
+                    connection_intact_flow_indices(m; connection=c, node=ng, direction=d, t=t, stochastic_scenario=s)
+                )
             ),
         )
     )

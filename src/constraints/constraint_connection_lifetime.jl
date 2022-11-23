@@ -68,7 +68,7 @@ function constraint_connection_lifetime_indices(m::Model)
         (connection=conn, stochastic_path=path, t=t)
         for conn in indices(connection_investment_lifetime)
         for (conn, s, t) in connections_invested_available_indices(m; connection=conn)
-        for path in active_stochastic_paths(_constraint_connection_lifetime_indices(m, conn, s, t0, t))
+        for path in active_stochastic_paths(collect(_constraint_connection_lifetime_scenarios(m, conn, s, t0, t)))
     )
 end
 
@@ -90,13 +90,7 @@ function constraint_connection_lifetime_indices_filtered(
     filter(f, constraint_connection_lifetime_indices(m))
 end
 
-"""
-    _constraint_connection_lifetime_indices(conn, s, t0, t)
-
-Gathers the `stochastic_scenario` indices of the `connections_invested_available` variable on past time slices determined
-by the `connection_investment_lifetime` parameter.
-"""
-function _constraint_connection_lifetime_indices(m, conn, s, t0, t)
+function _constraint_connection_lifetime_scenarios(m, conn, s, t0, t)
     t_past_and_present = to_time_slice(
         m;
         t=TimeSlice(
@@ -104,8 +98,11 @@ function _constraint_connection_lifetime_indices(m, conn, s, t0, t)
             end_(t),
         ),
     )
-    unique(
-        ind.stochastic_scenario
-        for ind in connections_invested_available_indices(m; connection=conn, t=t_past_and_present)
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(
+            connections_invested_available_indices(m; connection=conn, t=t_past_and_present, stochastic_scenario=s)
+        )
     )
 end

@@ -104,10 +104,13 @@ function constraint_split_ramps_indices(m::Model)
             )),
         ) for (n, t_before, t_after) in node_dynamic_time_indices(m; node=n, t_after=t_after)
         for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in unit_flow_indices(m; unit=u, node=n, direction=d, t=[t_before, t_after])
-            ),
+            collect(
+                s
+                for s in stochastic_scenario()
+                if !isempty(
+                    unit_flow_indices(m; unit=u, node=n, direction=d, t=[t_before, t_after], stochastic_scenario=s)
+                )
+            )
         )
     )
 end

@@ -17,14 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
-    _constraint_unit_flow_capacity_indices(m::Model, unit, node, direction, t)
-
-An iterator that concatenates `unit_flow_indices` and `units_on_indices` for the given inputs.
-"""
-function _constraint_unit_flow_capacity_indices(m::Model, unit, node, direction, t)
-    Iterators.flatten((
-        unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t),
-        units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t)),
-    ))
+function _constraint_unit_flow_capacity_scenarios(m::Model, unit, node, direction, t)
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(
+            unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t, stochastic_scenario=s)
+        )
+        || !isempty(
+            units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t), stochastic_scenario=s)
+        )
+    )
 end

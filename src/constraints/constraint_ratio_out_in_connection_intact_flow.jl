@@ -71,11 +71,9 @@ function constraint_ratio_out_in_connection_intact_flow_indices(m::Model)
                 connection=conn,
                 node=Iterators.flatten((members(n_out), members(n_in))),
             )
-        ) for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in _constraint_ratio_out_in_connection_intact_flow_indices(m, conn, n_in, n_out, t0, t)
-            ),
+        )
+        for path in active_stochastic_paths(
+            collect(_constraint_ratio_out_in_connection_intact_flow_scenarios(m, conn, n_in, n_out, t0, t))
         )
     )
 end
@@ -100,28 +98,29 @@ function constraint_ratio_out_in_connection_intact_flow_indices_filtered(
     filter(f, constraint_ratio_out_in_connection_intact_flow_indices(m))
 end
 
-"""
-    _constraint_ratio_out_in_connection_intact_flow_indices(connection, node_out, node_in, t0, t)
-
-Gather the `connection_flow` variiable indices for `add_constraint_ratio_out_in_connection_flow!`.
-"""
-
-function _constraint_ratio_out_in_connection_intact_flow_indices(m, connection, node_in, node_out, t0, t)
-    Iterators.flatten((
-        connection_intact_flow_indices(
-            m;
-            connection=connection,
-            node=node_out,
-            direction=direction(:to_node),
-            t=t_in_t(m; t_long=t),
-        ),
-        (connection=conn, node=n_in, direction=d, stochastic_scenario=s, t=t)
-        for (conn, n_in, d, s, t1) in connection_intact_flow_indices(
-            m;
-            connection=connection,
-            node=node_in,
-            direction=direction(:from_node),
-            t=t_in_t(m; t_long=t),
-        )  # `from_node` `connection_flow`s
-    ))
+function _constraint_ratio_out_in_connection_intact_flow_scenarios(m, connection, node_in, node_out, t0, t)
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(
+            connection_intact_flow_indices(
+                m;
+                connection=connection,
+                node=node_out,
+                direction=direction(:to_node),
+                t=t_in_t(m; t_long=t),
+                stochastic_scenario=s
+            )  # `to_node` `connection_flow`s
+        )
+        || !isempty(
+            connection_intact_flow_indices(
+                m;
+                connection=connection,
+                node=node_in,
+                direction=direction(:from_node),
+                t=t_in_t(m; t_long=t),
+                stochastic_scenario=s
+            )  # `from_node` `connection_flow`s
+        )
+    )
 end

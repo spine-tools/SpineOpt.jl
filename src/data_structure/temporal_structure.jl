@@ -452,7 +452,9 @@ Generate an `Array` of all valid `(node, t)` `NamedTuples` with keyword argument
 function node_time_indices(m::Model; node=anything, temporal_block=anything, t=anything)
     unique(
         (node=n, t=t1)
-        for (m_, tb) in model__temporal_block(model=m.ext[:spineopt].instance, temporal_block=temporal_block, _compact=false)
+        for (m_, tb) in model__temporal_block(
+            model=m.ext[:spineopt].instance, temporal_block=temporal_block, _compact=false
+        )
         for (n, tb) in node__temporal_block(node=node, temporal_block=tb, _compact=false)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )

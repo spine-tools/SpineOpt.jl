@@ -264,9 +264,8 @@ function constraint_ratio_unit_flow_indices(m::Model, ratio, d1, d2)
         (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (u, n1, n2) in indices(ratio) for t in t_lowest_resolution(
             x.t for x in unit_flow_indices(m; unit=u, node=Iterators.flatten((members(n1), members(n2))))
-        ) for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_ratio_unit_flow_indices(m, u, n1, d1, n2, d2, t)),
         )
+        for path in active_stochastic_paths(collect(_constraint_ratio_unit_flow_scenarios(m, u, n1, d1, n2, d2, t)))
     )
 end
 
@@ -294,15 +293,20 @@ function constraint_ratio_unit_flow_indices_filtered(
     filter(f, constraint_ratio_unit_flow_indices(m, ratio, d1, d2))
 end
 
-"""
-    _constraint_ratio_unit_flow_indices(unit, node1, direction1, node2, direction2, t)
-
-Gather the indices of the relevant `unit_flow` and `units_on` variables.
-"""
-function _constraint_ratio_unit_flow_indices(m, unit, node1, direction1, node2, direction2, t)
-    Iterators.flatten((
-        unit_flow_indices(m; unit=unit, node=node1, direction=direction1, t=t_in_t(m; t_long=t)),
-        unit_flow_indices(m; unit=unit, node=node2, direction=direction2, t=t_in_t(m; t_long=t)),
-        units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t)),
-    ))
+function _constraint_ratio_unit_flow_scenarios(m, unit, node1, direction1, node2, direction2, t)
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(
+            unit_flow_indices(
+                m; unit=unit, node=node1, direction=direction1, t=t_in_t(m; t_long=t), stochastic_scenario=s
+            )
+        )
+        || !isempty(
+            unit_flow_indices(
+                m; unit=unit, node=node2, direction=direction2, t=t_in_t(m; t_long=t), stochastic_scenario=s
+            )
+        )
+        || !isempty(units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t), stochastic_scenario=s))
+    )
 end

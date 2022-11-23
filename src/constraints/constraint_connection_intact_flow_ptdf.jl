@@ -52,11 +52,9 @@ function constraint_connection_intact_flow_ptdf_indices(m::Model)
         (connection=conn, node=n_to, stochastic_path=path, t=t)
         for conn in connection(connection_monitored=true, has_ptdf=true)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
-        for (n_to, t) in node_time_indices(m; node=n_to) for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in _constraint_connection_intact_flow_ptdf_indices(m, conn, n_to, d_to, t)
-            ),
+        for (n_to, t) in node_time_indices(m; node=n_to)
+        for path in active_stochastic_paths(
+            collect(_constraint_connection_intact_flow_ptdf_scenarios(m, conn, n_to, d_to, t))
         )
     )
 end
@@ -80,19 +78,21 @@ function constraint_connection_intact_flow_ptdf_indices_filtered(
     filter(f, constraint_connection_intact_flow_ptdf_indices(m))
 end
 
-"""
-    _constraint_connection_intact_flow_ptdf_indices(connection, node_to, direction_to, t)
-
-Gather the indices of the `connection_intact_flow` and the `node_injection` variables appearing in
-`add_constraint_connection_intact_flow_ptdf!`.
-"""
-function _constraint_connection_intact_flow_ptdf_indices(m, connection, node_to, direction_to, t)
-    Iterators.flatten((
-        connection_intact_flow_indices(m; connection=connection, node=node_to, direction=direction_to, t=t),
-        (
-            ind
-            for (conn, n_inj) in indices(ptdf; connection=connection)
-            for ind in node_stochastic_time_indices(m; node=n_inj, t=t)
-        ),  # `n_inj`
-    ))
+function _constraint_connection_intact_flow_ptdf_scenarios(m, connection, node_to, direction_to, t)
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(
+            connection_intact_flow_indices(
+                m; connection=connection, node=node_to, direction=direction_to, t=t, stochastic_scenario=s
+            )
+        )
+        || iterate(
+            (
+                ind
+                for (conn, n_inj) in indices(ptdf; connection=connection)
+                for ind in node_stochastic_time_indices(m; node=n_inj, t=t, stochastic_scenario=s)
+            )
+        ) !== nothing
+    )
 end

@@ -80,9 +80,7 @@ function constraint_connection_flow_lodf_indices(m::Model)
             abs(lodf(connection1=conn_cont, connection2=conn_mon)) >= connnection_lodf_tolerance(connection=conn_cont)
         for t in _constraint_connection_flow_lodf_lowest_resolution_t(m, conn_cont, conn_mon)
         for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario for ind in _constraint_connection_flow_lodf_indices(m, conn_cont, conn_mon, t)
-            ),
+            collect(_constraint_connection_flow_lodf_scenarios(m, conn_cont, conn_mon, t))
         )
     )
 end
@@ -128,25 +126,27 @@ function _constraint_connection_flow_lodf_lowest_resolution_t(m, conn_cont, conn
     )
 end
 
-"""
-    _constraint_connection_flow_lodf_indices(conn_cont, conn_mon, t)
-
-Gather the indices of the `connection_flow` variable for the contingency connection `conn_cont` and
-the monitored connection `conn_mon` on time slice `t`.
-"""
-function _constraint_connection_flow_lodf_indices(m, conn_cont, conn_mon, t)
-    Iterators.flatten((
-        connection_flow_indices(
-            m;
-            connection=conn_mon,
-            last(connection__from_node(connection=conn_mon))...,
-            t=t_in_t(m; t_long=t),
-        ),
-        connection_flow_indices(
-            m;
-            connection=conn_cont,
-            last(connection__from_node(connection=conn_cont))...,
-            t=t_in_t(m; t_long=t),
-        ),  # Excess flow due to outage on contingency connection
-    ))
+function _constraint_connection_flow_lodf_scenarios(m, conn_cont, conn_mon, t)
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(
+            connection_flow_indices(
+                m;
+                connection=conn_mon,
+                last(connection__from_node(connection=conn_mon))...,
+                t=t_in_t(m; t_long=t),
+                stochastic_scenario=s
+            )
+        )
+        || !isempty(
+            connection_flow_indices(
+                m;
+                connection=conn_cont,
+                last(connection__from_node(connection=conn_cont))...,
+                t=t_in_t(m; t_long=t),
+                stochastic_scenario=s
+            )  # Excess flow due to outage on contingency connection
+        )
+    )
 end

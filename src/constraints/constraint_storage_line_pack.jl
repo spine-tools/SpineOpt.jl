@@ -47,9 +47,8 @@ function constraint_storage_line_pack_indices(m::Model)
         (connection=conn, node1=n_stor, node2=ng, stochastic_path=path, t=t)
         for (conn, n_stor, ng) in indices(connection_linepack_constant) for t in t_lowest_resolution(
             time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n_stor), members(ng))))),
-        ) for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_storage_line_pack_indices(m, n_stor, ng, t)),
         )
+        for path in active_stochastic_paths(collect(_constraint_storage_line_pack_scenarios(m, n_stor, ng, t)))
     )
 end
 
@@ -57,8 +56,7 @@ end
     constraint_storage_line_pack_indices_filtered(m::Model)
 """
 function constraint_storage_line_pack_indices_filtered(
-    m::Model;
-    connection=anything,
+    m::Model; connection=anything,
     node_stor=anything,
     node1=anything,
     node2=anything,
@@ -79,12 +77,11 @@ function constraint_storage_line_pack_indices_filtered(
     filter(f, constraint_storage_line_pack_indices(m))
 end
 
-"""
-    _constraint_storage_line_pack_indices(m::Model, n_stor, ng, t)
-"""
-function _constraint_storage_line_pack_indices(m, n_stor, ng, t)
-    Iterators.flatten((
-        node_state_indices(m; node=n_stor, t=t_in_t(m; t_long=t)),
-        node_pressure_indices(m; node=ng, t=t_in_t(m; t_long=t)),
-    ))
+function _constraint_storage_line_pack_scenarios(m, n_stor, ng, t)
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(node_state_indices(m; node=n_stor, t=t_in_t(m; t_long=t), stochastic_scenario=s))
+        || !isempty(node_pressure_indices(m; node=ng, t=t_in_t(m; t_long=t), stochastic_scenario=s))
+    )
 end
