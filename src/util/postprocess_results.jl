@@ -81,22 +81,36 @@ function save_connection_avg_throughflow!(m::Model)
         ) for conn in connection(connection_monitored=true, has_ptdf=true))
         for t in t_lowest_resolution(x.t for x in connection_flow_indices(m; connection=conn, node=[n_from, n_to]))
         for stochastic_path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _connection_avg_throughflow_indices(m, conn, n_from, n_to, t)),
+            collect(_connection_avg_throughflow_scenarios(m, conn, n_from, n_to, t))
         )
     )
 end
 
-function _connection_avg_throughflow_indices(m, conn, n_from, n_to, t)
-    Iterators.flatten((
-        connection_flow_indices(m; connection=conn, node=n_to, direction=direction(:to_node), t=t_in_t(m; t_long=t)),
-        connection_flow_indices(
-            m;
-            connection=conn,
-            node=n_from,
-            direction=direction(:from_node),
-            t=t_in_t(m; t_long=t),
-        ),
-    ))
+function _connection_avg_throughflow_scenarios(m, conn, n_from, n_to, t)
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(
+            connection_flow_indices(
+                m;
+                connection=conn,
+                node=n_to,
+                direction=direction(:to_node),
+                t=t_in_t(m; t_long=t),
+                stochastic_scenario=s
+            )
+        )
+        || !isempty(
+            connection_flow_indices(
+                m;
+                connection=conn,
+                node=n_from,
+                direction=direction(:from_node),
+                t=t_in_t(m; t_long=t),
+                stochastic_scenario=s
+            )
+        )
+    )
 end
 
 function save_connection_avg_intact_throughflow!(m::Model)
@@ -149,28 +163,34 @@ function save_connection_avg_intact_throughflow!(m::Model)
         ) for conn in connection(connection_monitored=true, has_ptdf=true)) for t in t_lowest_resolution(
             x.t for x in connection_intact_flow_indices(m; connection=conn, node=[n_from, n_to])
         ) for stochastic_path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario for ind in _connection_avg_intact_throughflow_indices(m, conn, n_from, n_to, t)
-            ),
+            collect(_connection_avg_intact_throughflow_scenarios(m, conn, n_from, n_to, t))
         )
     )
 end
 
-function _connection_avg_intact_throughflow_indices(m, conn, n_from, n_to, t)
-    Iterators.flatten((
-        connection_intact_flow_indices(
-            m;
-            connection=conn,
-            node=n_to,
-            direction=direction(:to_node),
-            t=t_in_t(m; t_long=t),
-        ),
-        connection_intact_flow_indices(
-            m;
-            connection=conn,
-            node=n_from,
-            direction=direction(:from_node),
-            t=t_in_t(m; t_long=t),
-        ),
-    ))
+function _connection_avg_intact_throughflow_scenarios(m, conn, n_from, n_to, t)
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(
+            connection_intact_flow_indices(
+                m;
+                connection=conn,
+                node=n_to,
+                direction=direction(:to_node),
+                t=t_in_t(m; t_long=t),
+                stochastic_scenario=s
+            )
+        )
+        || !isempty(
+            connection_intact_flow_indices(
+                m;
+                connection=conn,
+                node=n_from,
+                direction=direction(:from_node),
+                t=t_in_t(m; t_long=t),
+                stochastic_scenario=s
+            )
+        )
+    )
 end

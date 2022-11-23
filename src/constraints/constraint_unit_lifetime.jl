@@ -57,7 +57,7 @@ function constraint_unit_lifetime_indices(m::Model)
     unique(
         (unit=u, stochastic_path=path, t=t)
         for u in indices(unit_investment_lifetime) for (u, s, t) in units_invested_available_indices(m; unit=u)
-        for path in active_stochastic_paths(_constraint_unit_lifetime_indices(m, u, s, t0, t))
+        for path in active_stochastic_paths(collect(_constraint_unit_lifetime_scenarios(m, u, s, t0, t)))
     )
 end
 
@@ -74,16 +74,14 @@ function constraint_unit_lifetime_indices_filtered(m::Model; unit=anything, stoc
     filter(f, constraint_unit_lifetime_indices(m))
 end
 
-"""
-    _constraint_unit_lifetime_indices(u, s, t0, t)
-
-Gathers the `stochastic_scenario` indices of the `units_invested_available` variable on past time slices determined
-by the `unit_investment_lifetime` parameter.
-"""
-function _constraint_unit_lifetime_indices(m, u, s, t0, t)
+function _constraint_unit_lifetime_scenarios(m, u, s, t0, t)
     t_past_and_present = to_time_slice(
         m;
         t=TimeSlice(end_(t) - unit_investment_lifetime(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)),
     )
-    unique(ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=t_past_and_present))
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(units_invested_available_indices(m; unit=u, t=t_past_and_present, stochastic_scenario=s))
+    )
 end

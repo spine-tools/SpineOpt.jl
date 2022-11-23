@@ -57,7 +57,7 @@ function constraint_storage_lifetime_indices(m::Model)
     unique(
         (node=n, stochastic_path=path, t=t)
         for n in indices(storage_investment_lifetime) for (n, s, t) in storages_invested_available_indices(m; node=n)
-        for path in active_stochastic_paths(_constraint_storage_lifetime_indices(m, n, s, t0, t))
+        for path in active_stochastic_paths(collect(_constraint_storage_lifetime_scenarios(m, n, s, t0, t)))
     )
 end
 
@@ -74,19 +74,16 @@ function constraint_storage_lifetime_indices_filtered(m::Model; node=anything, s
     filter(f, constraint_storage_lifetime_indices(m))
 end
 
-"""
-    _constraint_storage_lifetime_indices(n, s, t0, t)
-
-Gathers the `stochastic_scenario` indices of the `storages_invested_available` variable on past time slices determined
-by the `storage_investment_lifetime` parameter.
-"""
-function _constraint_storage_lifetime_indices(m, n, s, t0, t)
+function _constraint_storage_lifetime_scenarios(m, n, s, t0, t)
     t_past_and_present = to_time_slice(
         m;
         t=TimeSlice(
-            end_(t) - storage_investment_lifetime(node=n, stochastic_scenario=s, analysis_time=t0, t=t),
-            end_(t),
-        ),
+            end_(t) - storage_investment_lifetime(node=n, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)
+        )
     )
-    unique(ind.stochastic_scenario for ind in storages_invested_available_indices(m; node=n, t=t_past_and_present))
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(storages_invested_available_indices(m; node=n, t=t_past_and_present, stochastic_scenario=s))
+    )
 end

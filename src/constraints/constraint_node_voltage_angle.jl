@@ -67,12 +67,14 @@ function constraint_node_voltage_angle_indices(m::Model)
         for conn in indices(connection_reactance)
         for (conn, n_to, n_from) in indices(fix_ratio_out_in_connection_flow; connection=conn)
         for t in t_lowest_resolution(
-            time_slice(
-                m;
-                temporal_block=node__temporal_block(node=Iterators.flatten((members(n_to), members(n_from)))),
-            ),
-        ) for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in node_voltage_angle_indices(m; node=[n_to, n_from], t=t)),
+            time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n_to), members(n_from)))))
+        )
+        for path in active_stochastic_paths(
+            collect(
+                s
+                for s in stochastic_scenario()
+                if !isempty(node_voltage_angle_indices(m; node=[n_to, n_from], t=t, stochastic_scenario=s))
+            )
         )
     )
 end

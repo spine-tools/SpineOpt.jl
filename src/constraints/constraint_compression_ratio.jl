@@ -58,7 +58,11 @@ function constraint_compression_ratio_indices(m::Model)
         for (conn, n1, n2) in indices(compression_factor) for t in t_lowest_resolution(
             time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n1), members(n2))))),
         ) for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in node_pressure_indices(m; node=[n1, n2], t=t)),
+            collect(
+                s
+                for s in stochastic_scenario()
+                if !isempty(node_pressure_indices(m; node=[n1, n2], t=t, stochastic_scenario=s))
+            )
         )
     )
 end

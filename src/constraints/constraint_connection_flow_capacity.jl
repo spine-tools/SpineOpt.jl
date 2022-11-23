@@ -84,9 +84,7 @@ function constraint_connection_flow_capacity_indices(m::Model)
         (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
         for (c, ng, d) in indices(connection_capacity)
         for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_connection_flow_capacity_indices(m, c, ng, d, t)),
-        )
+        for path in active_stochastic_paths(collect(_constraint_connection_flow_capacity_scenarios(m, c, ng, d, t)))
     )
 end
 
@@ -111,15 +109,19 @@ function constraint_connection_flow_capacity_indices_filtered(
     filter(f, constraint_connection_flow_capacity_indices(m))
 end
 
-"""
-    _constraint_connection_flow_capacity_indices(connection, node, direction1, node2, direction2, t)
-
-Gather the indices of the relevant `unit_flow` and `units_on` variables.
-"""
-function _constraint_connection_flow_capacity_indices(m, connection, node, direction, t)
-    (m, connection, node, direction, t)
-    Iterators.flatten((
-        connection_flow_indices(m; connection=connection, node=node, direction=direction, t=t),
-        connections_invested_available_indices(m; connection=connection, t=t_in_t(m; t_short=t)),
-    ))
+function _constraint_connection_flow_capacity_scenarios(m, connection, node, direction, t)
+    (
+        s
+        for s in stochastic_scenario()
+        if !isempty(
+            connection_flow_indices(
+                m; connection=connection, node=node, direction=direction, t=t, stochastic_scenario=s
+            )
+        )
+        || !isempty(
+            connections_invested_available_indices(
+                m; connection=connection, t=t_in_t(m; t_short=t), stochastic_scenario=s
+            )
+        )
+    )
 end

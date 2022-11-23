@@ -116,9 +116,8 @@ function _stochastic_dag(m::Model, stochastic_structure::Object, window_start::D
     scen_start = Dict(scen => window_start for scen in scenarios)
     scen_end = Dict()
     scen_weight = Dict(
-        scen => Float64(
-            weight_relative_to_parents(stochastic_structure=stochastic_structure, stochastic_scenario=scen),
-        ) for scen in scenarios
+        scen => Float64(weight_relative_to_parents(stochastic_structure=stochastic_structure, stochastic_scenario=scen))
+        for scen in scenarios
     )
     for scen in scenarios
         scenario_duration = stochastic_scenario_end(
@@ -223,20 +222,15 @@ end
 Stochastic time indexes for `nodes` with keyword arguments that allow filtering.
 """
 function node_stochastic_time_indices(
-    m::Model;
-    node=anything,
-    stochastic_scenario=anything,
-    temporal_block=anything,
-    t=anything,
+    m::Model; node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
 )
     unique(
         (node=n, stochastic_scenario=s, t=t1)
         for (n, t1) in node_time_indices(m; node=node, temporal_block=temporal_block, t=t)
         for (m_, ss) in model__stochastic_structure(
-            model=m.ext[:spineopt].instance,
-            stochastic_structure=node__stochastic_structure(node=n),
-            _compact=false,
-        ) for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
+            model=m.ext[:spineopt].instance, stochastic_structure=node__stochastic_structure(node=n), _compact=false,
+        )
+        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
     )
 end
 
@@ -259,7 +253,8 @@ function unit_stochastic_time_indices(
             model=m.ext[:spineopt].instance,
             stochastic_structure=units_on__stochastic_structure(unit=u),
             _compact=false,
-        ) for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
+        )
+        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
     )
 end
 
@@ -282,7 +277,8 @@ function unit_investment_stochastic_time_indices(
             model=m.ext[:spineopt].instance,
             stochastic_structure=unit__investment_stochastic_structure(unit=u),
             _compact=false,
-        ) for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
+        )
+        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
     )
 end
 

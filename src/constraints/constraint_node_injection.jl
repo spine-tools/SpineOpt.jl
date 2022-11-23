@@ -108,9 +108,7 @@ function constraint_node_injection_indices(m::Model)
     unique(
         (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (n, t_before, t_after) in node_dynamic_time_indices(m)
-        for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in _constraint_node_injection_indices(m, n, t_after, t_before)),
-        )
+        for path in active_stochastic_paths(collect(_constraint_node_injection_scenarios(m, n, t_after, t_before)))
     )
 end
 
@@ -133,23 +131,29 @@ function constraint_node_injection_indices_filtered(
     filter(f, constraint_node_injection_indices(m))
 end
 
-"""
-    _constraint_node_injection_indices(m, node, t_after, t_before)
-
-Gather the current `node_stochastic_time_indices` as well as the relevant `node_state_indices` on the previous
-`time_slice` and beyond defined `node__node` relationships for `add_constraint_node_injection!`
-"""
-function _constraint_node_injection_indices(m, node, t_after, t_before)
-    Iterators.flatten((
+function _constraint_node_injection_scenarios(m, node, t_after, t_before)
+    (
+        s
+        for s in stochastic_scenario()
         # `node` on `t_after`, this needs to be included regardless of whether the `node` has a `node_state`
-        node_stochastic_time_indices(m; node=node, t=t_after),
+        if !isempty(node_stochastic_time_indices(m; node=node, t=t_after, stochastic_scenario=s))
         # `node_state` on `t_before`
-        node_state_indices(m; node=node, t=t_before),
+        || !isempty(node_state_indices(m; node=node, t=t_before, stochastic_scenario=s))
         # Diffusion to this `node`
-        (ind
-        for n1 in node__node(node2=node) for ind in node_state_indices(m; node=n1, t=t_after)),
+        || iterate(
+            (
+                ind
+                for n1 in node__node(node2=node)
+                for ind in node_state_indices(m; node=n1, t=t_after, stochastic_scenario=s)
+            )
+        ) !== nothing
         # Diffusion from this `node`
-        (ind
-        for n2 in node__node(node1=node) for ind in node_state_indices(m; node=n2, t=t_after)),
-    ))
+        || iterate(
+            (
+                ind
+                for n2 in node__node(node1=node)
+                for ind in node_state_indices(m; node=n2, t=t_after, stochastic_scenario=s)
+            )
+        ) !== nothing
+    )
 end

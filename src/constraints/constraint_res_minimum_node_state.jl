@@ -78,12 +78,12 @@ function constraint_res_minimum_node_state_indices(m::Model)
         for (u, n_aFRR, d, s, t) in unit_flow_indices(m; node=indices(minimum_reserve_activation_time))
         for (u, n_stor, d, s, t) in unit_flow_indices(m; unit=u, node=node(has_state=true), t=t)
         for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario for ind in Iterators.flatten((
-                    node_state_indices(m; node=n_stor, t=t),
-                    unit_flow_indices(m; unit=u, node=n_aFRR, direction=d, t=t),
-                ))
-            ),
+            collect(
+                s
+                for s in stochastic_scenario()
+                if !isempty(node_state_indices(m; node=n_stor, t=t, stochastic_scenario=s))
+                || !isempty(unit_flow_indices(m; unit=u, node=n_aFRR, direction=d, t=t, stochastic_scenario=s))
+            )
         )
     )
 end

@@ -71,8 +71,13 @@ function constraint_connection_flow_gas_capacity_indices(m::Model)
         (connection=conn, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (conn, n1, n2) in indices(fixed_pressure_constant_1) for t in t_lowest_resolution(
             time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n1), members(n2))))),
-        ) for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in connection_flow_indices(m; connection=conn, node=[n1, n2], t=t)),
+        )
+        for path in active_stochastic_paths(
+            collect(
+                s
+                for s in stochastic_scenario()
+                if !isempty(connection_flow_indices(m; connection=conn, node=[n1, n2], t=t, stochastic_scenario=s))
+            )
         )
     )
 end

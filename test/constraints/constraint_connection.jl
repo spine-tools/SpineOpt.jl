@@ -609,7 +609,6 @@
                     object_parameter_values=object_parameter_values,
                     relationship_parameter_values=relationship_parameter_values,
                 )
-
                 m = run_spineopt(url_in; log_level=0, optimize=false)
                 var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
                 constraint = m.ext[:spineopt].constraints[Symbol(ratio)]
@@ -633,8 +632,8 @@
                     s_set = scenarios_from[a:b]
                     t_set = time_slices_from[a:b]
                     vars_conn_flow_from = (
-                        var_connection_flow[conn, n_from, d_from, s_from, t_from] for (s_from, t_from) in
-                                                                                      zip(s_set, t_set)
+                        var_connection_flow[conn, n_from, d_from, s_from, t_from]
+                        for (s_from, t_from) in zip(s_set, t_set)
                     )
                     var_conn_flow_to = var_connection_flow[conn, n_to, d_to, s_to, t_to]
                     expected_con_ref = SpineOpt.sense_constraint(

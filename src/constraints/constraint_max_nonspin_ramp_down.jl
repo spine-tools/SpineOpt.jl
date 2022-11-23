@@ -65,12 +65,14 @@ function constraint_max_nonspin_ramp_down_indices(m::Model)
         for (u, ng, d) in indices(max_res_shutdown_ramp)
         for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
         for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario for ind in Iterators.flatten((
-                    nonspin_ramp_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t),
-                    nonspin_units_shut_down_indices(m; unit=u, node=ng, t=t),
-                ))
-            ),
+            collect(
+                s
+                for s in stochastic_scenario()
+                if !isempty(
+                    nonspin_ramp_down_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t, stochastic_scenario=s)
+                )
+                || !isempty(nonspin_units_shut_down_indices(m; unit=u, node=ng, t=t, stochastic_scenario=s))
+            )
         )
     )
 end
