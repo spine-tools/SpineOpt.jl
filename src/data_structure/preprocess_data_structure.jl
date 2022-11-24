@@ -235,7 +235,7 @@ function generate_node_has_ptdf()
         )
         node.parameter_values[n][:has_ptdf] = parameter_value(!isempty(ptdf_comms))
         node.parameter_values[n][:node_ptdf_threshold] = parameter_value(
-            reduce(max, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0.0000001),
+            reduce(max, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0.001),
         )
     end
     has_ptdf = Parameter(:has_ptdf, [node])
