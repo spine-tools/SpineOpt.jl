@@ -179,22 +179,24 @@ end
 Fix a variable to the values specified by the `fix_value` parameter function, if any.
 """
 _fix_variable!(m::Model, name::Symbol, definition::Dict, fix_value::Nothing) = nothing
-function _fix_variable!(m::Model, name::Symbol, definition::Dict, fix_value::Function)
+function _fix_variable!(m::Model, name::Symbol, definition::Dict, fix_value::Parameter)
     var = m.ext[:spineopt].variables[name]
     indices = definition[:indices]
     bin = definition[:bin]
     int = definition[:int]
     lb = definition[:lb]
     ub = definition[:ub]
-    for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-        fix_value_ = fix_value(ind)
-        fix_value_ === nothing && continue
-        if !isnan(fix_value_)
-            fix(var[ind], fix_value_; force=true)
-        elseif is_fixed(var[ind])
-            unfix(var[ind])
-            lb != nothing && _set_lower_bound(var[ind], lb(ind))
-            ub != nothing && _set_upper_bound(var[ind], ub(ind))
+    for ent in SpineInterface.indices_as_tuples(fix_value)
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)), ent...)
+            fix_value_ = fix_value(; ind..., _strict=false)
+            fix_value_ === nothing && continue
+            if !isnan(fix_value_)
+                fix(var[ind], fix_value_; force=true)
+            elseif is_fixed(var[ind])
+                unfix(var[ind])
+                lb != nothing && _set_lower_bound(var[ind], lb(ind))
+                ub != nothing && _set_upper_bound(var[ind], ub(ind))
+            end
         end
     end
 end
@@ -242,26 +244,32 @@ function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict
     val = m.ext[:spineopt].values[name]
     indices = definition[:indices]
     non_anticipativity_time = definition[:non_anticipativity_time]
+    non_anticipativity_time === nothing && return
     non_anticipativity_margin = definition[:non_anticipativity_margin]
     window_start = start(current_window(m))
     roll_forward_ = roll_forward(model=m.ext[:spineopt].instance)
-    for ind in indices(m; t=time_slice(m))
-        non_anticipativity_time_ = (non_anticipativity_time === nothing) ? nothing : non_anticipativity_time(ind)
-        non_anticipativity_margin_ = (non_anticipativity_margin === nothing) ? nothing : non_anticipativity_margin(ind)
-        if non_anticipativity_time_ != nothing && start(ind.t) < window_start +  non_anticipativity_time_
-            next_t = to_time_slice(m; t=ind.t + roll_forward_)
-            next_inds = indices(m; ind..., t=next_t)
-            if !isempty(next_inds)
-                next_ind = first(next_inds)
-                if non_anticipativity_margin_ != nothing
-                    lb = val[next_ind] - non_anticipativity_margin_
-                    (lb < 0) && (lb = 0)
-                    set_lower_bound(var[ind], lb)
-
-                    ub = val[next_ind] + non_anticipativity_margin_
-                    set_upper_bound(var[ind], ub)
-                else                    
-                    fix(var[ind], val[next_ind]; force=true)
+    for ent in SpineInterface.indices_as_tuples(non_anticipativity_time)
+        for ind in indices(m; t=time_slice(m), ent...)
+            non_ant_time = non_anticipativity_time(; ind..., _strict=false)
+            non_ant_margin = if non_anticipativity_margin === nothing
+                nothing
+            else
+                non_anticipativity_margin(; ind..., _strict=false)
+            end
+            if non_ant_time != nothing && start(ind.t) < window_start +  non_ant_time
+                next_t = to_time_slice(m; t=ind.t + roll_forward_)
+                next_inds = indices(m; ind..., t=next_t)
+                if !isempty(next_inds)
+                    next_ind = first(next_inds)
+                    if non_ant_margin != nothing
+                        lb = val[next_ind] - non_ant_margin
+                        (lb < 0) && (lb = 0)
+                        set_lower_bound(var[ind], lb)
+                        ub = val[next_ind] + non_ant_margin
+                        set_upper_bound(var[ind], ub)
+                    else                    
+                        fix(var[ind], val[next_ind]; force=true)
+                    end
                 end
             end
         end

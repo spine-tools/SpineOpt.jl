@@ -58,13 +58,6 @@ function add_variable_nonspin_units_shut_down!(m::Model)
         lb=x -> 0,
         bin=units_on_bin,
         int=units_on_int,
-        fix_value=x -> fix_nonspin_units_shut_down(
-            unit=x.unit,
-            node=x.node,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
+        fix_value=fix_nonspin_units_shut_down
     )
 end

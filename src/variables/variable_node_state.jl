@@ -55,12 +55,6 @@ function add_variable_node_state!(m::Model)
             t=x.t,
             _strict=false,
         ),
-        fix_value=x -> fix_node_state(
-            node=x.node,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
+        fix_value=fix_node_state
     )
 end

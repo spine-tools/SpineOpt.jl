@@ -39,11 +39,11 @@ function add_variable!(
     ub::Union{Function,Nothing}=nothing,
     bin::Union{Function,Nothing}=nothing,
     int::Union{Function,Nothing}=nothing,
-    fix_value::Union{Function,Nothing}=nothing,
-    non_anticipativity_time::Union{Function,Nothing}=nothing,
-    non_anticipativity_margin::Union{Function,Nothing}=nothing,
+    fix_value::Union{Parameter,Nothing}=nothing,
+    non_anticipativity_time::Union{Parameter,Nothing}=nothing,
+    non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
 )
-    m.ext[:spineopt].variables_definition[name] = Dict{Symbol,Union{Function,Nothing}}(
+    m.ext[:spineopt].variables_definition[name] = Dict{Symbol,Union{Function,Parameter,Nothing}}(
         :indices => indices,
         :lb => lb,
         :ub => ub,

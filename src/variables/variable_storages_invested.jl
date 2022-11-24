@@ -29,13 +29,7 @@ function add_variable_storages_invested!(m::Model)
         :storages_invested,
         storages_invested_available_indices;
         lb=x -> 0,
-        fix_value=x -> fix_storages_invested(
-            node=x.node,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
         int=storages_invested_available_int,
+        fix_value=fix_storages_invested
     )
 end
