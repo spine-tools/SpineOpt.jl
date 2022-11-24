@@ -501,7 +501,6 @@ function _value_by_entity_non_aggregated(m, parameter::Parameter, crop_to_window
             crop_to_window && start(t) >= end_(current_window(m)) && continue
             entity = (; entity..., stochastic_scenario=scen)
             val = parameter(; entity..., analysis_time=analysis_time, t=t, _strict=false)
-            @show parameter, entity, t, val
             val === nothing && continue
             by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
             by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, analysis_time, Dict{TimeSlice,Any}())
