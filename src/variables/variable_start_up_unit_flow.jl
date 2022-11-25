@@ -69,14 +69,6 @@ function add_variable_start_up_unit_flow!(m::Model)
         :start_up_unit_flow,
         start_up_unit_flow_indices;
         lb=x -> 0,
-        fix_value=x -> fix_start_up_unit_flow(
-            unit=x.unit,
-            node=x.node,
-            direction=x.direction,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
+        fix_value=fix_start_up_unit_flow
     )
 end

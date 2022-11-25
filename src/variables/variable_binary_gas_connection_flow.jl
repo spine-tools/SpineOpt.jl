@@ -64,14 +64,6 @@ function add_variable_binary_gas_connection_flow!(m::Model)
         :binary_gas_connection_flow,
         binary_gas_connection_flow_indices;
         bin=set_bin,
-        fix_value=x -> fix_binary_gas_connection_flow(
-            connection=x.connection,
-            node=x.node,
-            direction=x.direction,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
+        fix_value=fix_binary_gas_connection_flow
     )
 end

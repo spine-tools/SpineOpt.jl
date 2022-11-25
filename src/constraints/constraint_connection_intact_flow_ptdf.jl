@@ -38,7 +38,8 @@ function add_constraint_connection_intact_flow_ptdf!(m::Model)
                 ptdf(connection=conn, node=n) * node_injection[n, s, t]
                 for (conn, n) in indices(ptdf; connection=conn)
                 for (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t)
-                if !isapprox(ptdf(connection=conn, node=n), 0; atol=node_ptdf_threshold(node=n));
+                if !isapprox(ptdf(connection=conn, node=n), 0; atol=node_ptdf_threshold(node=n))
+                    && !(node_opf_type(node=n) == :node_opf_type_reference);
                 init=0,
             )
         ) for (conn, n_to, s, t) in constraint_connection_intact_flow_ptdf_indices(m)

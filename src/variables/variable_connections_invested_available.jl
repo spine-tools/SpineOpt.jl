@@ -92,12 +92,6 @@ function add_variable_connections_invested_available!(m::Model)
         connections_invested_available_indices;
         lb=x -> 0,
         int=connections_invested_available_int,
-        fix_value=x -> fix_connections_invested_available(
-            connection=x.connection,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
+        fix_value=fix_connections_invested_available
     )
 end
