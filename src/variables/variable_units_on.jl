@@ -67,14 +67,8 @@ function add_variable_units_on!(m::Model)
         lb=x -> 0,
         bin=units_on_bin,
         int=units_on_int,
-        fix_value=x -> fix_units_on(
-            unit=x.unit,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),        
-        non_anticipativity_time=x -> units_on_non_anticipativity_time(unit=x.unit, _strict=false),
-        non_anticipativity_margin=x -> units_on_non_anticipativity_margin(unit=x.unit, _strict=false),
+        fix_value=fix_units_on,
+        non_anticipativity_time=units_on_non_anticipativity_time,
+        non_anticipativity_margin=units_on_non_anticipativity_margin,
     )
 end

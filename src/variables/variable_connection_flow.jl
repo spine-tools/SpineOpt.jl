@@ -70,16 +70,8 @@ function add_variable_connection_flow!(m::Model)
         :connection_flow,
         connection_flow_indices;
         lb=x -> 0,
-        fix_value=x -> fix_connection_flow(
-            connection=x.connection,
-            node=x.node,
-            direction=x.direction,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
-        non_anticipativity_time=x -> connection_flow_non_anticipativity_time(; x..., _strict=false),
-        non_anticipativity_margin=x -> connection_flow_non_anticipativity_margin(; x..., _strict=false),
+        fix_value=fix_connection_flow,
+        non_anticipativity_time=connection_flow_non_anticipativity_time,
+        non_anticipativity_margin=connection_flow_non_anticipativity_margin,
     )
 end

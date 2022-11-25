@@ -77,16 +77,8 @@ function add_variable_unit_flow!(m::Model)
             t=x.t,
             _strict=false,
         ),
-        fix_value=x -> fix_unit_flow(
-            unit=x.unit,
-            node=x.node,
-            direction=x.direction,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
-        non_anticipativity_time=x -> unit_flow_non_anticipativity_time(; x..., _strict=false),
-        non_anticipativity_margin=x -> unit_flow_non_anticipativity_margin(; x..., _strict=false),
+        fix_value=fix_unit_flow,
+        non_anticipativity_time=unit_flow_non_anticipativity_time,
+        non_anticipativity_margin=unit_flow_non_anticipativity_margin,
     )
 end
