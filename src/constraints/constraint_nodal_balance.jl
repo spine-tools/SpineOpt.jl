@@ -55,7 +55,7 @@ function add_constraint_nodal_balance!(m::Model)
             eval(nodal_balance_sense(node=n)),
             0,
         )
-        for n in node(balance_type_node=true) if !any(
+        for n in node(balance_type=:balance_type_node) if !any(
             balance_type(node=ng) === :balance_type_group for ng in groups(n)
         )
         for (n, s, t) in node_injection_indices(m; node=n)        

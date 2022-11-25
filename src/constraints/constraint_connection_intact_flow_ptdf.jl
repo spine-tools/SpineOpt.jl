@@ -43,7 +43,7 @@ function add_constraint_connection_intact_flow_ptdf!(m::Model)
 
             + expr_sum(
                 ptdf(connection=conn, node=n) * connection_flow[conn1, n1, d, s, t]                                
-                for n in node(is_boundary_node=true) if ptdf(connection=conn, node=n) != nothing                
+                for n in node(is_boundary_node=true) if ptdf(connection=conn, node=n) != nothing && !isapprox(ptdf(connection=conn, node=n), 0; atol=node_ptdf_threshold(node=n)) && !(node_opf_type(node=n) == :node_opf_type_reference)
                 for (conn1, n1, d, s, t) in connection_flow_indices(
                     m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
                 ) if is_boundary_connection(connection=conn1)
@@ -53,7 +53,7 @@ function add_constraint_connection_intact_flow_ptdf!(m::Model)
 
             - expr_sum(
                 ptdf(connection=conn, node=n) * connection_flow[conn1, n1, d, s, t]                                
-                for n in node(is_boundary_node=true) if ptdf(connection=conn, node=n) != nothing                
+                for n in node(is_boundary_node=true) if ptdf(connection=conn, node=n) != nothing && !isapprox(ptdf(connection=conn, node=n), 0; atol=node_ptdf_threshold(node=n)) && !(node_opf_type(node=n) == :node_opf_type_reference)
                 for (conn1, n1, d, s, t) in connection_flow_indices(
                     m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
                 ) if is_boundary_connection(connection=conn1)
