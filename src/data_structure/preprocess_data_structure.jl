@@ -41,6 +41,7 @@ function preprocess_data_structure(; log_level=3)
     generate_variable_indexing_support()
     generate_benders_structure()
     apply_forced_availability_factor()
+    generate_is_boundary_node()  
 end
 
 """
@@ -848,4 +849,36 @@ function apply_forced_availability_factor()
     m_end = maximum(model_end(model=m) for m in model())
     _apply_forced_availability_factor(m_start, m_end, unit, unit_availability_factor)
     _apply_forced_availability_factor(m_start, m_end, connection, connection_availability_factor)
+end
+
+"""
+    generate_is_boundary_node()
+
+Generate `is_boundary_node` and `is_boundary_connection` parameters associated with the `node` and `connection` `ObjectClass`es respectively.
+"""
+function generate_is_boundary_node()
+    for (n, c) in node__commodity()
+        if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)               
+            for conn in connection__from_node(node=n, direction=direction(:from_node))
+                for remote_node = connection__to_node(connection=conn)
+                    remote_commodity = first(node__commodity(node=remote_node))
+                    if remote_commodity === nothing || remote_commodity != c
+                        node.parameter_values[n][:is_boundary_node] = parameter_value(true)
+                        (!haskey(connection.parameter_values, conn)) && (connection.parameter_values[conn]=Dict())
+                        connection.parameter_values[conn][:is_boundary_connection] = parameter_value(true)                        
+                    end
+                end
+            end
+        end                         
+    end
+    is_boundary_node = Parameter(:is_boundary_node, [node])
+    is_boundary_connection = Parameter(:is_boundary_connection, [connection])
+    node.parameter_defaults[:is_boundary_node] = parameter_value(false)
+    connection.parameter_defaults[:is_boundary_connection] = parameter_value(false)
+    @eval begin
+        is_boundary_node = $is_boundary_node
+        is_boundary_connection = $is_boundary_connection
+        export is_boundary_node
+        export is_boundary_connection
+    end
 end
