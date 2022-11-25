@@ -427,6 +427,7 @@
         ["output","storages_decommissioned", null],
         ["output","storages_invested_available", null],
         ["output","storages_invested", null],
+        ["output","unit_flow_op_active", null],
         ["output","unit_flow_op", null],
         ["output","unit_flow", null],
         ["output","units_available", null],

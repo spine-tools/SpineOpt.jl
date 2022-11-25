@@ -18,19 +18,10 @@
 #############################################################################
 
 """
-    add_constraint_operating_point_bounds!(m::Model)
+    add_variable_unit_flow_op_active!(m::Model)
 
-Limit the maximum number of each activated segment `op_active` cannot be higher than the number of online units.
+Add `unit_flow_op_active` variables to model `m`.
 """
-function add_constraint_operating_point_bounds!(m::Model)
-    @fetch unit_flow_op_active, units_on = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[:operating_point_bounds] = Dict(
-        (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            unit_flow_op_active[u, n, d, op, s, t]
-            <= 
-            units_on[u, s, t]
-        )
-        for (u, n, d, op, s, t) in unit_flow_op_indices(m)
-    )
+function add_variable_unit_flow_op_active!(m::Model)
+    add_variable!(m, :unit_flow_op_active, unit_flow_op_indices; lb=x -> 0, bin=units_on_bin, int=units_on_int)
 end

@@ -18,18 +18,24 @@
 #############################################################################
 
 """
-    add_constraint_operating_point_bounds!(m::Model)
+    add_constraint_operating_point_rank!(m::Model)
 
-Limit the maximum number of each activated segment `op_active` cannot be higher than the number of online units.
+Prioritise operating points by enforcing that the variable `op_active` of operating point `i` can only be active 
+if previous operating point `i-1` is also active
 """
-function add_constraint_operating_point_bounds!(m::Model)
-    @fetch unit_flow_op_active, units_on = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[:operating_point_bounds] = Dict(
+function add_constraint_operating_point_rank!(m::Model)
+    @fetch unit_flow_op_active = m.ext[:spineopt].variables
+    t0 = _analysis_time(m)
+    m.ext[:spineopt].constraints[:operating_point_rank] = Dict(
         (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t) => @constraint(
             m,
-            unit_flow_op_active[u, n, d, op, s, t]
-            <= 
-            units_on[u, s, t]
+            unit_flow_op_active[u, n, d, op, s, t] 
+            <=
+            (
+                (op > 1) ? 
+                unit_flow_op_active[u, n, d, op - 1, s, t] : 
+                1
+            )
         )
         for (u, n, d, op, s, t) in unit_flow_op_indices(m)
     )

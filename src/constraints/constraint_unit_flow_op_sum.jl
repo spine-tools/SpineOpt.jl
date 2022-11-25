@@ -18,14 +18,13 @@
 #############################################################################
 
 """
-    add_constraint_operating_point_sum!(m::Model)
+    add_constraint_unit_flow_op_sum!(m::Model)
 
-Limit the operating point flow variables to the difference between successive operating points
-times the capacity of the unit.
+Sum up the operating point flow variables `unit_flow_op` to the corresponding variable `unit_flow`.
 """
-function add_constraint_operating_point_sum!(m::Model)
+function add_constraint_unit_flow_op_sum!(m::Model)
     @fetch unit_flow_op, unit_flow = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[:operating_point_sum] = Dict(
+    m.ext[:spineopt].constraints[:unit_flow_op_sum] = Dict(
         (unit=u, node=n, direction=d, stochastic_scenmario=s, t=t) => @constraint(
             m,
             + unit_flow[u, n, d, s, t]
