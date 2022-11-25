@@ -20,7 +20,7 @@
 """
     add_constraint_operating_point_bounds!(m::Model)
 
-Limit the maximum number of each activated segment `op_active` cannot be higher than the number of online units.
+Limit the maximum number of each activated segment `unit_flow_op_active` cannot be higher than the number of online units.
 """
 function add_constraint_operating_point_bounds!(m::Model)
     @fetch unit_flow_op_active, units_on = m.ext[:spineopt].variables

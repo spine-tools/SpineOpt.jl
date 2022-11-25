@@ -613,6 +613,28 @@ Storage nodes can also contribute to the provision of reserves. The amount of ba
 
 ### Operating segments
 #### [Operating segments of units](@id constraint_operating_point_bounds)
+Limit the maximum number of each activated segment `unit_flow_op_active` cannot be higher than the number of online units.
+
+```math
+\begin{aligned}
+& v_{unit\_flow\_op\_active}(u,n,d,op,s,t) <= v_{units\_on}(u,s,t) \\
+& \forall (u,n,d,op,s,t) \in unit\_flow\_op\_indices \\
+\end{aligned}
+```
+
+#### [Rank operating segments as per the index of operating points](@id constraint_operating_point_rank)
+Rank operating segments by enforcing that the variable `unit_flow_op_active` of operating point `i` can only be active 
+if previous operating point `i-1` is also active.
+
+```math
+\begin{aligned}
+& v_{unit\_flow\_op\_active}(u,n,d,op,s,t) \\
+& <= v_{unit\_flow\_op\_active}(u,n,d,op-1,s,t) \\ 
+& \forall (u,n,d,op,s,t) \in unit\_flow\_op\_indices \\
+\end{aligned}
+```
+
+#### [Operating segments of units](@id unit_flow_op_bounds)
 The `unit_flow_op` operating segment variable is bounded by the difference between successive [operating\_points](@ref) adjusted for [unit_capacity](@ref)
 
 ```math
@@ -630,8 +652,29 @@ The `unit_flow_op` operating segment variable is bounded by the difference betwe
 \end{aligned}
 ```
 
+#### [Bounding operating segments to use up its own capacity for activating the next segment](@id unit_flow_op_rank)
+Enforce the operating point flow variable `unit_flow_op` at operating point `i` to use its full capacity if the subsequent operating point `i+1` is active.
 
-#### [Bounding unit flows by summing over operating segments](@id constraint_operating_point_sum)
+```math
+\begin{aligned}
+& v_{unit\_flow\_op}(u, n, op, s, t) \\
+& >= p_{unit\_capacity}(u, n, d, s, t) \\
+& \cdot p_{unit\_conv\_cap\_to\_flow}(u, n, d, s, t) \\
+ \cdot \bigg( & p_{operating\_points}(u, n, op, s, t) \\
+& - \begin{cases}       
+       0                                     & \text{if op = 1}\\
+       p_{operating\_points}(u, n, op-1, s, t) & \text{otherwise}\\
+    \end{cases} \bigg) \\
+&  \cdot \bigg( \\
+&  \begin{cases} 
+       v_{unit\_flow\_op\active}(u, n, d, op+1, s, t) & \text{if op < op_{last}}\\      
+       0                                     & \text{otherwise}\\
+    \end{cases} \bigg) \\
+& \forall (u,n,d,s,t) \in unit\_flow\_op\_indices \\
+\end{aligned}
+```
+
+#### [Bounding unit flows by summing over operating segments](@id unit_flow_op_sum)
 `unit_flow` is constrained to be the sum of all operating segment variables, `unit_flow_op`
 
 ```math
