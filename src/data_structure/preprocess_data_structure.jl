@@ -335,21 +335,60 @@ function _build_ptdf(connections, nodes)
 end
 
 """
-    _ptdf_values()
+    _ptdf_values_raw()
 
-Calculate the values of the `ptdf` parameter.
+Calculate the raw values of the `ptdf` parameter (will contain very small values).
 """
-function _ptdf_values()
+function _ptdf_values_raw()
     nodes = node(has_ptdf=true)
     isempty(nodes) && return Dict()
     connections = connection(has_ptdf=true)
-    ptdf = _build_ptdf(connections, nodes)
+    _build_ptdf(connections, nodes)    
+end
+
+"""
+_ptdf_values_unfiltered()
+
+Calculate the raw values of the `ptdf` parameter.
+"""
+function _ptdf_values_unfiltered(ptdf_values_raw)
+    nodes = node(has_ptdf=true)
+    isempty(nodes) && return Dict()
+    connections = connection(has_ptdf=true)    
     Dict(
-        (conn, n) => Dict(:ptdf => parameter_value(ptdf[i, j]))
+        (conn, n) => Dict(:ptdf_unfiltered => parameter_value(ptdf_values_raw[i, j]))
         for (i, conn) in enumerate(connections)
         for (j, n) in enumerate(nodes)
-    )
+    )    
 end
+
+"""
+    _ptdf_values()
+
+Calculate the values of the `ptdf` parameter including only those with an absolute value greater than commodity_ptdf_threshold.
+"""
+function _ptdf_values(ptdf_values_raw)
+    for c in commodity()
+        if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
+            ptdf_threshold = commodity_ptdf_threshold(commodity=c)
+            break
+        end
+    end
+
+    if ptdf_threshold === nothing || ptdf_threshold == 0
+        ptdf_threshold = 0.001
+    end
+
+    nodes = node(has_ptdf=true)
+    isempty(nodes) && return Dict()
+    connections = connection(has_ptdf=true)    
+    Dict(
+        (conn, n) => Dict(:ptdf => parameter_value(ptdf_values_raw[i, j]))
+        for (i, conn) in enumerate(connections)
+        for (j, n) in enumerate(nodes) if !isapprox(ptdf_values_raw[i, j], 0; atol=ptdf_threshold)
+    )    
+end
+
 
 """
     generate_ptdf()
@@ -357,12 +396,22 @@ end
 Generate the `ptdf` parameter.
 """
 function generate_ptdf()
-    ptdf_values = _ptdf_values()
-    ptdf_rel_cls = RelationshipClass(:ptdf_connection__node, [:connection, :node], keys(ptdf_values), ptdf_values)
-    ptdf = Parameter(:ptdf, [ptdf_rel_cls])
+    ptdf_values_raw = _ptdf_values_raw()
+    ptdf_values = _ptdf_values(ptdf_values_raw)    
+    ptdf_values_unfiltered = _ptdf_values_unfiltered(ptdf_values_raw)
+    
+    ptdf_connection__node = RelationshipClass(:ptdf_connection__node, [:connection, :node], keys(ptdf_values), ptdf_values)
+    ptdf_unfiltered_connection__node = RelationshipClass(:ptdf_unfiltered_connection__node, [:connection, :node], keys(ptdf_values_unfiltered), ptdf_values_unfiltered)
+    ptdf = Parameter(:ptdf, [ptdf_connection__node])
+    ptdf_unfiltered = Parameter(:ptdf_unfiltered, [ptdf_unfiltered_connection__node])
     @eval begin
+        ptdf_connection__node = $ptdf_connection__node
+        ptdf_unfiltered_connection__node = $ptdf_unfiltered_connection__node
         ptdf = $ptdf
-    end
+        ptdf_unfiltered = $ptdf_unfiltered
+        export ptdf
+        export ptdf_unfiltered
+    end    
 end
 
 """
@@ -376,12 +425,12 @@ function generate_lodf()
     """
     function _lodf_fn(conn_cont)
         n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
-        denom = 1 - (ptdf(connection=conn_cont, node=n_from) - ptdf(connection=conn_cont, node=n_to))
+        denom = 1 - (ptdf_unfiltered(connection=conn_cont, node=n_from) - ptdf_unfiltered(connection=conn_cont, node=n_to))
         is_tail = isapprox(denom, 0; atol=0.001)
         if is_tail
-            conn_mon -> ptdf(connection=conn_mon, node=n_to)
+            conn_mon -> ptdf_unfiltered(connection=conn_mon, node=n_to)
         else
-            conn_mon -> (ptdf(connection=conn_mon, node=n_from) - ptdf(connection=conn_mon, node=n_to)) / denom
+            conn_mon -> (ptdf_unfiltered(connection=conn_mon, node=n_from) - ptdf_unfiltered(connection=conn_mon, node=n_to)) / denom
         end
     end
 
