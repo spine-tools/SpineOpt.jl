@@ -368,24 +368,28 @@ end
 Calculate the values of the `ptdf` parameter including only those with an absolute value greater than commodity_ptdf_threshold.
 """
 function _ptdf_values(ptdf_values_raw)
-    for c in commodity()
-        if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
-            ptdf_threshold = commodity_ptdf_threshold(commodity=c)
-            break
+    comms = filter(
+        c -> commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf), commodity()
+    )
+    ptdf_threshold = if !isempty(comms)
+        c = first(comms)
+        threshold = commodity_ptdf_threshold(commodity=c, _strict=false)
+        if threshold !== nothing && !iszero(threshold)
+            threshold
+        else
+            1e-3
         end
+    else
+        1e-3
     end
-
-    if ptdf_threshold === nothing || ptdf_threshold == 0
-        ptdf_threshold = 0.001
-    end
-
     nodes = node(has_ptdf=true)
     isempty(nodes) && return Dict()
-    connections = connection(has_ptdf=true)    
+    connections = connection(has_ptdf=true)
     Dict(
         (conn, n) => Dict(:ptdf => parameter_value(ptdf_values_raw[i, j]))
         for (i, conn) in enumerate(connections)
-        for (j, n) in enumerate(nodes) if !isapprox(ptdf_values_raw[i, j], 0; atol=ptdf_threshold)
+        for (j, n) in enumerate(nodes)
+        if !isapprox(ptdf_values_raw[i, j], 0; atol=ptdf_threshold)
     )    
 end
 
@@ -399,9 +403,12 @@ function generate_ptdf()
     ptdf_values_raw = _ptdf_values_raw()
     ptdf_values = _ptdf_values(ptdf_values_raw)    
     ptdf_values_unfiltered = _ptdf_values_unfiltered(ptdf_values_raw)
-    
-    ptdf_connection__node = RelationshipClass(:ptdf_connection__node, [:connection, :node], keys(ptdf_values), ptdf_values)
-    ptdf_unfiltered_connection__node = RelationshipClass(:ptdf_unfiltered_connection__node, [:connection, :node], keys(ptdf_values_unfiltered), ptdf_values_unfiltered)
+    ptdf_connection__node = RelationshipClass(
+        :ptdf_connection__node, [:connection, :node], keys(ptdf_values), ptdf_values
+    )
+    ptdf_unfiltered_connection__node = RelationshipClass(
+        :ptdf_unfiltered_connection__node, [:connection, :node], keys(ptdf_values_unfiltered), ptdf_values_unfiltered
+    )
     ptdf = Parameter(:ptdf, [ptdf_connection__node])
     ptdf_unfiltered = Parameter(:ptdf_unfiltered, [ptdf_unfiltered_connection__node])
     @eval begin
