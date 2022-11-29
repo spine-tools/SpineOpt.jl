@@ -292,7 +292,7 @@ function generate_connection_has_lodf()
     end
 end
 
-function _build_ptdf(connections, nodes)
+function _build_ptdf(connections, nodes, unavailable_connections=Set())
     nodecount = length(nodes)
     conncount = length(connections)
     node_numbers = Dict{Object,Int32}(n => ix for (ix, n) in enumerate(nodes))
@@ -305,10 +305,11 @@ function _build_ptdf(connections, nodes)
         from_n, to_n = connection__from_node(connection=conn, direction=anything)
         A[node_numbers[from_n], ix] = 1
         A[node_numbers[to_n], ix] = -1
-        inv_X[ix, ix] = 1 / max(
-            connection_reactance(connection=conn),
-            0.00001,
-        ) * connection_reactance_base(connection=conn)
+        reactance = max(connection_reactance(connection=conn), 1e-6)
+        if conn in unavailable_connections
+            reactance *= 1e3
+        end
+        inv_X[ix, ix] = connection_reactance_base(connection=conn) / reactance
     end
 
     i = findfirst(n -> node_opf_type(node=n) == :node_opf_type_reference, nodes)
@@ -342,9 +343,27 @@ function _ptdf_values()
     nodes = node(has_ptdf=true)
     isempty(nodes) && return Dict()
     connections = connection(has_ptdf=true)
-    ptdf = _build_ptdf(connections, nodes)
+    unavailable_connections_by_ind = Dict{Any,Set}(:nothing => Set())
+    for conn in connections
+        for (ind, val) in indexed_values(connection_availability_factor(connection=conn))
+            if iszero(val)
+                push!(get!(unavailable_connections_by_ind, ind, Set()), conn)
+            end
+        end
+    end
+    ptdf_by_ind = Dict(
+        ind => _build_ptdf(connections, nodes, unavailable_connections)
+        for (ind, unavailable_connections) in unavailable_connections_by_ind
+    )
     Dict(
-        (conn, n) => Dict(:ptdf => parameter_value(ptdf[i, j]))
+        (conn, n) => Dict(
+            :ptdf => indexed_parameter_value(
+                Dict(
+                    ind => get(ptdf_by_ind, ind, ptdf_by_ind[:nothing])[i, j]
+                    for (ind, val) in indexed_values(connection_availability_factor(connection=conn))
+                )
+            )
+        )
         for (i, conn) in enumerate(connections)
         for (j, n) in enumerate(nodes)
     )
