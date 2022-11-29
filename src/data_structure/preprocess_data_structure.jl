@@ -41,6 +41,7 @@ function preprocess_data_structure(; log_level=3)
     generate_variable_indexing_support()
     generate_benders_structure()
     apply_forced_availability_factor()
+    generate_is_boundary_node()  
 end
 
 """
@@ -335,11 +336,11 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
 end
 
 """
-    _ptdf_values()
+    _ptdf_unfiltered_values()
 
-Calculate the values of the `ptdf` parameter.
+Calculate the raw values of the `ptdf_unfiltered` parameter (will contain very small values).
 """
-function _ptdf_values()
+function _ptdf_unfiltered_values()
     nodes = node(has_ptdf=true)
     isempty(nodes) && return Dict()
     connections = connection(has_ptdf=true)
@@ -357,7 +358,7 @@ function _ptdf_values()
     )
     Dict(
         (conn, n) => Dict(
-            :ptdf => indexed_parameter_value(
+            :ptdf_unfiltered => indexed_parameter_value(
                 Dict(
                     ind => get(ptdf_by_ind, ind, ptdf_by_ind[:nothing])[i, j]
                     for (ind, val) in indexed_values(connection_availability_factor(connection=conn))
@@ -370,17 +371,57 @@ function _ptdf_values()
 end
 
 """
+    _filter_ptdf_values(ptdf_values)
+
+Filter the values of the `ptdf` parameter including only those with an absolute value greater than commodity_ptdf_threshold.
+"""
+function _filter_ptdf_values(ptdf_values)
+    comms = filter(
+        c -> commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf), commodity()
+    )
+    ptdf_threshold = if !isempty(comms)
+        c = first(comms)
+        threshold = commodity_ptdf_threshold(commodity=c, _strict=false)
+        if threshold !== nothing && !iszero(threshold)
+            threshold
+        else
+            1e-3
+        end
+    else
+        1e-3
+    end
+    Dict(
+        (conn, n) => Dict(:ptdf => vals[:ptdf_unfiltered])
+        for ((conn, n), vals) in ptdf_values
+        if !isapprox(vals[:ptdf_unfiltered](), 0; atol=ptdf_threshold)
+    )
+end
+
+
+"""
     generate_ptdf()
 
 Generate the `ptdf` parameter.
 """
 function generate_ptdf()
-    ptdf_values = _ptdf_values()
-    ptdf_rel_cls = RelationshipClass(:ptdf_connection__node, [:connection, :node], keys(ptdf_values), ptdf_values)
-    ptdf = Parameter(:ptdf, [ptdf_rel_cls])
+    ptdf_unfiltered_values = _ptdf_unfiltered_values()    
+    ptdf_values = _filter_ptdf_values(ptdf_unfiltered_values)
+    ptdf_connection__node = RelationshipClass(
+        :ptdf_connection__node, [:connection, :node], keys(ptdf_values), ptdf_values
+    )
+    ptdf_unfiltered_connection__node = RelationshipClass(
+        :ptdf_unfiltered_connection__node, [:connection, :node], keys(ptdf_unfiltered_values), ptdf_unfiltered_values
+    )
+    ptdf = Parameter(:ptdf, [ptdf_connection__node])
+    ptdf_unfiltered = Parameter(:ptdf_unfiltered, [ptdf_unfiltered_connection__node])
     @eval begin
+        ptdf_connection__node = $ptdf_connection__node
+        ptdf_unfiltered_connection__node = $ptdf_unfiltered_connection__node
         ptdf = $ptdf
-    end
+        ptdf_unfiltered = $ptdf_unfiltered
+        export ptdf
+        export ptdf_unfiltered
+    end    
 end
 
 """
@@ -394,12 +435,12 @@ function generate_lodf()
     """
     function _lodf_fn(conn_cont)
         n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
-        denom = 1 - (ptdf(connection=conn_cont, node=n_from) - ptdf(connection=conn_cont, node=n_to))
+        denom = 1 - (ptdf_unfiltered(connection=conn_cont, node=n_from) - ptdf_unfiltered(connection=conn_cont, node=n_to))
         is_tail = isapprox(denom, 0; atol=0.001)
         if is_tail
-            conn_mon -> ptdf(connection=conn_mon, node=n_to)
+            conn_mon -> ptdf_unfiltered(connection=conn_mon, node=n_to)
         else
-            conn_mon -> (ptdf(connection=conn_mon, node=n_from) - ptdf(connection=conn_mon, node=n_to)) / denom
+            conn_mon -> (ptdf_unfiltered(connection=conn_mon, node=n_from) - ptdf_unfiltered(connection=conn_mon, node=n_to)) / denom
         end
     end
 
@@ -867,4 +908,36 @@ function apply_forced_availability_factor()
     m_end = maximum(model_end(model=m) for m in model())
     _apply_forced_availability_factor(m_start, m_end, unit, unit_availability_factor)
     _apply_forced_availability_factor(m_start, m_end, connection, connection_availability_factor)
+end
+
+"""
+    generate_is_boundary_node()
+
+Generate `is_boundary_node` and `is_boundary_connection` parameters associated with the `node` and `connection` `ObjectClass`es respectively.
+"""
+function generate_is_boundary_node()
+    for (n, c) in node__commodity()
+        if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)               
+            for conn in connection__from_node(node=n, direction=direction(:from_node))
+                for remote_node = connection__to_node(connection=conn)
+                    remote_commodity = first(node__commodity(node=remote_node))
+                    if remote_commodity === nothing || remote_commodity != c
+                        node.parameter_values[n][:is_boundary_node] = parameter_value(true)
+                        (!haskey(connection.parameter_values, conn)) && (connection.parameter_values[conn]=Dict())
+                        connection.parameter_values[conn][:is_boundary_connection] = parameter_value(true)                        
+                    end
+                end
+            end
+        end                         
+    end
+    is_boundary_node = Parameter(:is_boundary_node, [node])
+    is_boundary_connection = Parameter(:is_boundary_connection, [connection])
+    node.parameter_defaults[:is_boundary_node] = parameter_value(false)
+    connection.parameter_defaults[:is_boundary_connection] = parameter_value(false)
+    @eval begin
+        is_boundary_node = $is_boundary_node
+        is_boundary_connection = $is_boundary_connection
+        export is_boundary_node
+        export is_boundary_connection
+    end
 end
