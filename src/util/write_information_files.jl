@@ -69,7 +69,11 @@ function write_ptdfs()
     for conn in connection(has_ptdf=true)
         print(io, string(conn), ",")
         for n in node(has_ptdf=true)
-            print(io, ptdf(connection=conn, node=n), ",")
+            ptdf_val = ptdf(connection=conn, node=n, _strict=false)
+            if ptdf_val === nothing
+                ptdf_val = 0
+            end
+            print(io, ptdf_val, ",")
         end
         print(io, "\n")
     end
