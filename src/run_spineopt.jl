@@ -228,6 +228,8 @@ function do_run_spineopt(
     filters=Dict("tool" => "object_activity_control"),
     resume_file_path=nothing
 )
+    t_start = now()
+    @log log_level 1 "\nExecution started at $t_start"
     prepare_spineopt(url_in; upgrade=upgrade, log_level=log_level, filters=filters)
     rerun_spineopt(
         url_out;
@@ -244,6 +246,9 @@ function do_run_spineopt(
         resume_file_path=resume_file_path,
         use_direct_model=use_direct_model
     )
+    t_end = now()
+    elapsed_time_string = Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start)))    
+    @log log_level 1 "\nExecution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
     # FIXME: make sure use_direct_model this works with db solvers
     # possibly adapt union? + allow for conflicts if direct model is used
 end
