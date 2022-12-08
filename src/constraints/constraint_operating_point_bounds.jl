@@ -31,6 +31,7 @@ function add_constraint_operating_point_bounds!(m::Model)
             <= 
             units_on[u, s, t]
         )
-        for (u, n, d, op, s, t) in unit_flow_op_indices(m)
+        for (u, s, t) in units_on_indices(m)
+        for (u, n, d, op, s, t) in unit_flow_op_indices(m; unit=u, stochastic_scenario=s, t=t)
     )
 end
