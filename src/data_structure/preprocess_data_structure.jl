@@ -928,14 +928,9 @@ function generate_is_boundary_node()
     for (n, c) in node__commodity()
         if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)               
             for conn in connection__from_node(node=n, direction=direction(:from_node))
-                for remote_node = connection__to_node(connection=conn)                    
-                    comms = node__commodity(node=remote_node)
-                    if comms === nothing
-                        remote_commodity = nothing
-                    else
-                        remote_commodity = first(comms)
-                    end                    
-                    if remote_commodity === nothing || remote_commodity != c
+                for remote_node = connection__to_node(connection=conn)
+                    remote_commodities = node__commodity(node=remote_node)
+                    if isempty(remote_commodities) || first(remote_commodities) != c
                         node.parameter_values[n][:is_boundary_node] = parameter_value(true)
                         (!haskey(connection.parameter_values, conn)) && (connection.parameter_values[conn]=Dict())
                         connection.parameter_values[conn][:is_boundary_connection] = parameter_value(true)                        

@@ -22,7 +22,7 @@
 
 Create an expression for fixed operation costs of units.
 """
-function fixed_om_costs(m, t1)
+function fixed_om_costs(m, t_range)
     t0 = _analysis_time(m)
     @expression(
         m,
@@ -32,7 +32,7 @@ function fixed_om_costs(m, t1)
             * fom_cost[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * duration(t) for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for (u, s, t) in units_on_indices(m; unit=u) if end_(t) <= t1;
+            for (u, s, t) in units_on_indices(m; unit=u, t=t_range);
             init=0,
         )
     )

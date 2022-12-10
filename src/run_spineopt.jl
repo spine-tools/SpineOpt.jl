@@ -231,7 +231,7 @@ function do_run_spineopt(
     t_start = now()
     @log log_level 1 "\nExecution started at $t_start"
     prepare_spineopt(url_in; upgrade=upgrade, log_level=log_level, filters=filters)
-    rerun_spineopt(
+    m = rerun_spineopt(
         url_out;
         mip_solver=mip_solver,
         lp_solver=lp_solver,
@@ -249,6 +249,7 @@ function do_run_spineopt(
     t_end = now()
     elapsed_time_string = Dates.canonicalize(Dates.CompoundPeriod(Dates.Millisecond(t_end - t_start)))    
     @log log_level 1 "\nExecution complete. Started at $t_start, ended at $t_end, elapsed time: $elapsed_time_string"
+    m
     # FIXME: make sure use_direct_model this works with db solvers
     # possibly adapt union? + allow for conflicts if direct model is used
 end
@@ -368,6 +369,7 @@ struct SpineOptExt
     variables_definition::Dict{Symbol,Dict}
     values::Dict{Symbol,Dict}
     constraints::Dict{Symbol,Dict}
+    objective_terms::Dict{Symbol,Any}
     outputs::Dict{Symbol,Union{Dict,Nothing}}
     temporal_structure::Dict
     stochastic_structure::Dict
@@ -385,6 +387,7 @@ struct SpineOptExt
             Dict{Symbol,Dict}(),
             Dict{Symbol,Dict}(),
             Dict{Symbol,Dict}(),
+            Dict{Symbol,Any}(),
             Dict{Symbol,Union{Dict,Nothing}}(),
             Dict(),
             Dict(),
