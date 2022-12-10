@@ -183,43 +183,54 @@ we ensure that it appies to each of the four flow variables
 """
 function process_loss_bidirectional_capacities()
     for c in connection(connection_type=:connection_type_lossless_bidirectional)
-        conn_capacity_param = nothing
-        found_from = false
-        for (n, d) in connection__from_node(connection=c)
-            found_value = get(connection__from_node.parameter_values[(c, n, d)], :connection_capacity, nothing)
-            if found_value !== nothing
-                conn_capacity_param = found_value
-                found_from = true
-                for n2 in connection__from_node(connection=c, direction=d)
-                    if n2 != n
-                        connection__from_node.parameter_values[(c, n2, d)][:connection_capacity] = conn_capacity_param
-                    end
-                end
-            end
-        end
-        found_to = false
-        for (n, d) in connection__to_node(connection=c)
-            found_value = get(connection__to_node.parameter_values[(c, n, d)], :connection_capacity, nothing)
-            if found_value !== nothing
-                conn_capacity_param = found_value
-                found_to = true
-                for n2 in connection__to_node(connection=c, direction=d)
-                    if n2 != n
-                        connection__to_node.parameter_values[(c, n2, d)][:connection_capacity] = conn_capacity_param
-                    end
-                end
-            end
-        end
-        if !found_from && conn_capacity_param !== nothing
+        for (capacity_param, has_capacity_param) in [(:connection_capacity, :has_capacity), (:connection_emergency_capacity, :has_emergency_capacity)]        
+            conn_capacity_param = nothing
+            found_from = false
             for (n, d) in connection__from_node(connection=c)
-                connection__from_node.parameter_values[(c, n, d)][:connection_capacity] = conn_capacity_param
+                found_value = get(connection__from_node.parameter_values[(c, n, d)], capacity_param, nothing)
+                if found_value !== nothing
+                    conn_capacity_param = found_value
+                    found_from = true
+                    for n2 in connection__from_node(connection=c, direction=d)
+                        if n2 != n
+                            connection__from_node.parameter_values[(c, n2, d)][capacity_param] = conn_capacity_param
+                        end
+                    end
+                end
             end
-        end
-        if !found_to && conn_capacity_param !== nothing
+            found_to = false
             for (n, d) in connection__to_node(connection=c)
-                connection__to_node.parameter_values[(c, n, d)][:connection_capacity] = conn_capacity_param
+                found_value = get(connection__to_node.parameter_values[(c, n, d)], capacity_param, nothing)
+                if found_value !== nothing
+                    conn_capacity_param = found_value
+                    found_to = true
+                    for n2 in connection__to_node(connection=c, direction=d)
+                        if n2 != n
+                            connection__to_node.parameter_values[(c, n2, d)][capacity_param] = conn_capacity_param
+                        end
+                    end
+                end
             end
+            if !found_from && conn_capacity_param !== nothing
+                for (n, d) in connection__from_node(connection=c)
+                    connection__from_node.parameter_values[(c, n, d)][capacity_param] = conn_capacity_param
+                end
+            end
+            if !found_to && conn_capacity_param !== nothing
+                for (n, d) in connection__to_node(connection=c)
+                    connection__to_node.parameter_values[(c, n, d)][capacity_param] = conn_capacity_param
+                end
+            end
+            connection.parameter_values[c][has_capacity_param] = parameter_value(found_to || found_from)
         end
+    end
+    
+    has_capacity = Parameter(:has_capacity, [connection])
+    has_emergency_capacity = Parameter(:has_emergency_capacity, [connection])
+
+    @eval begin           
+        has_capacity = $has_capacity
+        has_emergency_capacity = $has_emergency_capacity
     end
 end
 
@@ -450,12 +461,13 @@ function generate_lodf()
         for (conn_mon, lodf_trial) in ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(has_ptdf=true))
         if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
     )
-    lodf_rel_cls = RelationshipClass(
+    lodf_connection__connection = RelationshipClass(
         :lodf_connection__connection, [:connection, :connection], keys(lodf_values), lodf_values
     )
-    lodf = Parameter(:lodf, [lodf_rel_cls])
+    lodf = Parameter(:lodf, [lodf_connection__connection])
     @eval begin
         lodf = $lodf
+        lodf_connection__connection = $lodf_connection__connection
     end
 end
 
@@ -916,8 +928,13 @@ function generate_is_boundary_node()
     for (n, c) in node__commodity()
         if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)               
             for conn in connection__from_node(node=n, direction=direction(:from_node))
-                for remote_node = connection__to_node(connection=conn)
-                    remote_commodity = first(node__commodity(node=remote_node))
+                for remote_node = connection__to_node(connection=conn)                    
+                    comms = node__commodity(node=remote_node)
+                    if comms === nothing
+                        remote_commodity = nothing
+                    else
+                        remote_commodity = first(comms)
+                    end                    
                     if remote_commodity === nothing || remote_commodity != c
                         node.parameter_values[n][:is_boundary_node] = parameter_value(true)
                         (!haskey(connection.parameter_values, conn)) && (connection.parameter_values[conn]=Dict())
