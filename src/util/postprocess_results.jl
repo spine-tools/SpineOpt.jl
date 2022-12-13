@@ -46,10 +46,10 @@ function save_connection_avg_intact_throughflow!(m::Model)
 end
 
 function _save_connection_avg_throughflow!(m::Model, key, connection_flow)
-    avg_throughflow = m.ext[:spineopt].values[key] = Dict()
-    connections = connection(connection_monitored=true, has_ptdf=true)
-    sizehint!(avg_throughflow, length(connections) * length(stochastic_scenario()) * length(time_slice(m)))
     m_start = model_start(model=m.ext[:spineopt].instance)
+    connections = connection(connection_monitored=true, has_ptdf=true)
+    avg_throughflow = m.ext[:spineopt].values[key] = Dict()
+    sizehint!(avg_throughflow, length(connections) * length(stochastic_scenario()) * length(time_slice(m)))
     for ((conn, n, d, s, t), value) in connection_flow
         conn in connections && start(t) >= m_start || continue
         n_from, n_to, _other_nodes... = connection__from_node(connection=conn, direction=anything)
