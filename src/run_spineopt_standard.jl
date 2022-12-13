@@ -591,9 +591,9 @@ end
 Save a model results: first postprocess results, then save variables and objective values, and finally save outputs
 """
 function save_model_results!(m; iterations=nothing)
-    postprocess_results!(m)
     save_variable_values!(m)
     save_objective_values!(m)
+    postprocess_results!(m)
 end
 
 """
