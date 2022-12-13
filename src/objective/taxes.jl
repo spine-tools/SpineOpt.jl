@@ -22,7 +22,7 @@
 
 Create an expression for unit taxes.
 """
-function taxes(m::Model, t1)
+function taxes(m::Model, t_range)
     @fetch unit_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
@@ -33,7 +33,7 @@ function taxes(m::Model, t1)
             * tax_net_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s) for (n,) in indices(tax_net_unit_flow)
-            for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:to_node)) if end_(t) <= t1;
+            for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:to_node), t=t_range);
             init=0,
         ) - expr_sum(
             + unit_flow[u, n, d, s, t]
@@ -41,7 +41,7 @@ function taxes(m::Model, t1)
             * tax_net_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s) for (n,) in indices(tax_net_unit_flow)
-            for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:from_node)) if end_(t) <= t1;
+            for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:from_node), t=t_range);
             init=0,
         )
         + expr_sum(
@@ -50,7 +50,7 @@ function taxes(m::Model, t1)
             * tax_out_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s) for (n,) in indices(tax_out_unit_flow)
-            for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:from_node)) if end_(t) <= t1;
+            for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:from_node), t=t_range);
             init=0,
         )
         + expr_sum(
@@ -59,7 +59,7 @@ function taxes(m::Model, t1)
             * tax_in_unit_flow[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s) for (n,) in indices(tax_in_unit_flow)
-            for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:to_node)) if end_(t) <= t1;
+            for (u, n, d, s, t) in unit_flow_indices(m; node=n, direction=direction(:to_node), t=t_range);
             init=0,
         )
     )

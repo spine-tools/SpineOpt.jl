@@ -18,8 +18,8 @@
 #############################################################################
 
 """
-    total_costs(m::Model, t::DateTime)
+    total_costs(m::Model, t_range::Array{TimeSlice,1})
 
 Expression corresponding to the sume of all cost terms for given model, and up until the given date time.
 """
-total_costs(m, t) = sum(eval(term)(m, t) for term in objective_terms(m))
+total_costs(m, t_range) = sum(eval(term)(m, t_range) for term in objective_terms(m))

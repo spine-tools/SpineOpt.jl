@@ -369,6 +369,7 @@ struct SpineOptExt
     variables_definition::Dict{Symbol,Dict}
     values::Dict{Symbol,Dict}
     constraints::Dict{Symbol,Dict}
+    objective_terms::Dict{Symbol,Any}
     outputs::Dict{Symbol,Union{Dict,Nothing}}
     temporal_structure::Dict
     stochastic_structure::Dict
@@ -386,6 +387,7 @@ struct SpineOptExt
             Dict{Symbol,Dict}(),
             Dict{Symbol,Dict}(),
             Dict{Symbol,Dict}(),
+            Dict{Symbol,Any}(),
             Dict{Symbol,Union{Dict,Nothing}}(),
             Dict(),
             Dict(),

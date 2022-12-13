@@ -23,7 +23,7 @@
 Create an expression for objective penalties.
 """
 # TODO: find a better name for this; objective penalities is not self-speaking
-function objective_penalties(m::Model, t1)
+function objective_penalties(m::Model, t_range)
     @fetch node_slack_pos, node_slack_neg = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
@@ -34,7 +34,7 @@ function objective_penalties(m::Model, t1)
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * node_slack_penalty[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
             * node_stochastic_scenario_weight(m; node=n, stochastic_scenario=s)
-            for (n, s, t) in node_slack_indices(m) if end_(t) <= t1;
+            for (n, s, t) in node_slack_indices(m; t=t_range);
             init=0,
         )
     )

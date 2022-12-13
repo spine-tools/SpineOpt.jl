@@ -41,11 +41,7 @@ function connection_flow_indices(
     unique(
         (connection=conn, node=n, direction=d, stochastic_scenario=s, t=t)
         for (conn, n, d, tb) in connection__node__direction__temporal_block(
-            connection=connection,
-            node=node,
-            direction=direction,
-            temporal_block=temporal_block,
-            _compact=false,
+            connection=connection, node=node, direction=direction, temporal_block=temporal_block, _compact=false,
         )
         for (n, s, t) in node_stochastic_time_indices(
             m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
