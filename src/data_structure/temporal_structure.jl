@@ -63,8 +63,8 @@ An `Array` of time slices *in the model*.
 (h::TimeSliceSet)(::Anything, ::Anything) = h.time_slices
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = h.block_time_slices[temporal_block]
 (h::TimeSliceSet)(::Anything, s) = s
-(h::TimeSliceSet)(temporal_block::Object, s) = [t for t in s if temporal_block in blocks(t)]
-(h::TimeSliceSet)(temporal_blocks::Array{T,1}, s) where {T} = [t for blk in temporal_blocks for t in h(blk, s)]
+(h::TimeSliceSet)(temporal_block::Object, s) = TimeSlice[t for t in s if temporal_block in blocks(t)]
+(h::TimeSliceSet)(temporal_blocks::Array{T,1}, s) where {T} = TimeSlice[t for blk in temporal_blocks for t in h(blk, s)]
 
 """
     (::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
@@ -468,10 +468,9 @@ Generate an `Array` of all valid `(node, t_before, t_after)` `NamedTuples` with 
 function node_dynamic_time_indices(m::Model; node=anything, t_before=anything, t_after=anything)
     unique(
         (node=n, t_before=tb, t_after=ta)
-        for (n, ta) in node_time_indices(m; node=node, t=t_after) for (n, tb) in node_time_indices(
-            m;
-            node=n,
-            t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
+        for (n, ta) in node_time_indices(m; node=node, t=t_after)
+        for (n, tb) in node_time_indices(
+            m; node=n, t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
         )
     )
 end
@@ -489,7 +488,9 @@ function unit_time_indices(
 )
     unique(
         (unit=u, t=t1)
-        for (m_, tb) in model__temporal_block(model=m.ext[:spineopt].instance, temporal_block=temporal_block, _compact=false)
+        for (m_, tb) in model__temporal_block(
+            model=m.ext[:spineopt].instance, temporal_block=temporal_block, _compact=false
+        )
         for (u, tb) in units_on__temporal_block(unit=unit, temporal_block=tb, _compact=false)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
@@ -509,7 +510,8 @@ function unit_dynamic_time_indices(
 )
     unique(
         (unit=u, t_before=tb, t_after=ta)
-        for (u, ta) in unit_time_indices(m; unit=unit, t=t_after) for (u, tb) in unit_time_indices(
+        for (u, ta) in unit_time_indices(m; unit=unit, t=t_after)
+        for (u, tb) in unit_time_indices(
             m;
             unit=u,
             t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
@@ -527,7 +529,7 @@ function unit_investment_time_indices(m::Model; unit=anything, temporal_block=an
     unique(
         (unit=u, t=t1)
         for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
-            if tb in model__temporal_block(model=m.ext[:spineopt].instance)
+        if tb in model__temporal_block(model=m.ext[:spineopt].instance)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
@@ -539,11 +541,11 @@ Generate an `Array` of all valid `(connection, t)` `NamedTuples` for `connection
 """
 function connection_investment_time_indices(m::Model; connection=anything, temporal_block=anything, t=anything)
     unique(
-        (connection=conn, t=t1) for (conn, tb) in connection__investment_temporal_block(
-            connection=connection,
-            temporal_block=temporal_block,
-            _compact=false,
-        ) if tb in model__temporal_block(model=m.ext[:spineopt].instance)
+        (connection=conn, t=t1)
+        for (conn, tb) in connection__investment_temporal_block(
+            connection=connection, temporal_block=temporal_block, _compact=false
+        )
+        if tb in model__temporal_block(model=m.ext[:spineopt].instance)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
@@ -557,7 +559,7 @@ function node_investment_time_indices(m::Model; node=anything, temporal_block=an
     unique(
         (node=n, t=t1)
         for (n, tb) in node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false)
-            if tb in model__temporal_block(model=m.ext[:spineopt].instance)
+        if tb in model__temporal_block(model=m.ext[:spineopt].instance)
         for t1 in time_slice(m; temporal_block=members(tb), t=t)
     )
 end
@@ -572,9 +574,7 @@ function unit_investment_dynamic_time_indices(m::Model; unit=anything, t_before=
         (unit=u, t_before=tb, t_after=ta)
         for (u, ta) in unit_investment_time_indices(m; unit=unit, t=t_after)
         for (u, tb) in unit_investment_time_indices(
-            m;
-            unit=u,
-            t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
+            m; unit=u, t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
         )
     )
 end
@@ -589,9 +589,7 @@ function connection_investment_dynamic_time_indices(m::Model; connection=anythin
         (connection=conn, t_before=tb, t_after=ta)
         for (conn, ta) in connection_investment_time_indices(m; connection=connection, t=t_after)
         for (conn, tb) in connection_investment_time_indices(
-            m;
-            connection=conn,
-            t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
+            m; connection=conn, t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
         )
     )
 end
@@ -606,9 +604,7 @@ function node_investment_dynamic_time_indices(m::Model; node=anything, t_before=
         (node=n, t_before=tb, t_after=ta)
         for (n, ta) in node_investment_time_indices(m; node=node, t=t_after)
         for (node, tb) in node_investment_time_indices(
-            m;
-            node=n,
-            t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false)),
+            m; node=n, t=map(t -> t.t_before, t_before_t(m; t_before=t_before, t_after=ta, _compact=false))
         )
     )
 end
