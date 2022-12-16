@@ -613,8 +613,6 @@ end
 
 function refresh_model!(m; log_level=3)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
-    @timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
-    @timelog log_level 2 "Updating objective..." update_varying_objective!(m)
 end
 
 function _update_constraint_names!(m)

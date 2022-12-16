@@ -37,13 +37,9 @@ function add_constraint_connection_flow_capacity!(m::Model)
         (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
-                connection_flow[conn, n, d, s, t] * duration(t) for (conn, n, d, s, t) in connection_flow_indices(
-                    m;
-                    connection=conn,
-                    direction=d,
-                    node=ng,
-                    stochastic_scenario=s,
-                    t=t_in_t(m; t_long=t),
+                connection_flow[conn, n, d, s, t] * duration(t)
+                for (conn, n, d, s, t) in connection_flow_indices(
+                    m; connection=conn, direction=d, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 );
                 init=0,
             )
@@ -52,35 +48,33 @@ function add_constraint_connection_flow_capacity!(m::Model)
             * connection_conv_cap_to_flow[
                 (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
             ]
-            * ((candidate_connections(connection=conn) != nothing) ?
-               + expr_sum(
-                connections_invested_available[conn, s, t1] for (conn, s, t1) in connections_invested_available_indices(
-                    m;
-                    connection=conn,
-                    stochastic_scenario=s,
-                    t=t_in_t(m; t_short=t),
-                );
-                init=0,
-            ) : 1)
+            * (
+                (candidate_connections(connection=conn) != nothing) ?
+                + expr_sum(
+                    connections_invested_available[conn, s, t1]
+                    for (conn, s, t1) in connections_invested_available_indices(
+                        m; connection=conn, stochastic_scenario=s, t=t_in_t(m; t_short=t)
+                    );
+                    init=0,
+                ) : 1
+            )
             * duration(t)
             <=
             + expr_sum(
                 connection_flow[conn, n, d_reverse, s, t] * duration(t)
                 for (conn, n, d_reverse, s, t) in connection_flow_indices(
-                    m;
-                    connection=conn,
-                    node=ng,
-                    stochastic_scenario=s,
-                    t=t_in_t(m; t_long=t),
-                ) if d_reverse != d && !is_reserve_node(node=n);
+                    m; connection=conn, node=ng, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                )
+                if d_reverse != d && !is_reserve_node(node=n);
                 init=0,
             )
-        ) for (conn, ng, d, s, t) in constraint_connection_flow_capacity_indices(m)
+        )
+        for (conn, ng, d, s, t) in constraint_connection_flow_capacity_indices(m)
     )
 end
 
 function constraint_connection_flow_capacity_indices(m::Model)
-    unique(
+    (
         (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
         for (c, ng, d) in indices(connection_capacity)
         for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))

@@ -550,26 +550,22 @@
         ###
         @testset "test mga_diff_ub1" begin
             constraint = m.ext[:spineopt].constraints[:mga_diff_ub1]
-            @test length(constraint) == 18 #TODO: should actually delete constraint...
-            scenarios = (stochastic_scenario(:parent), )
+            @test length(constraint) == 18  # TODO: should actually delete constraint...
+            scenarios = (stochastic_scenario(:parent),)
             time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
-            mga_current_iteration = SpineOpt.mga_iteration()[end-1]
+            mga_current_iteration = SpineOpt.mga_iteration()[end - 1]
             @testset for (s, t) in zip(scenarios, time_slices)
-                @show keys(constraint)
-                key = (unit=unit(:unit_group_abbc),mga_iteration=mga_current_iteration)
-                 key1 = (unit(:unit_ab), s, t)
-                 key2 = (unit(:unit_bc), s, t)
-                 var_u_inv_1 = var_units_invested[key1...]
-                 var_u_inv_2 = var_units_invested[key2...]
-                 prev_mga_results_1 = mga_results[:units_invested][(unit=unit(:unit_ab), stochastic_scenario=s, mga_iteration=mga_current_iteration)][t0.ref.x][t.start.x]
-                 prev_mga_results_2 = mga_results[:units_invested][(unit=unit(:unit_bc), stochastic_scenario=s, mga_iteration=mga_current_iteration)][t0.ref.x][t.start.x]
-                 expected_con = @build_constraint(
-                            var_mga_aux_diff[key]
-                            == (var_u_inv_1 + var_u_inv_2 ))
-                 con = constraint[key...]
-                 observed_con = constraint_object(con)
-                 @show observed_con
-                 @test _is_constraint_equal(observed_con, expected_con)
+                key = (unit=unit(:unit_group_abbc), mga_iteration=mga_current_iteration)
+                key1 = (unit(:unit_ab), s, t)
+                key2 = (unit(:unit_bc), s, t)
+                var_u_inv_1 = var_units_invested[key1...]
+                var_u_inv_2 = var_units_invested[key2...]
+                prev_mga_results_1 = mga_results[:units_invested][(unit=unit(:unit_ab), stochastic_scenario=s, mga_iteration=mga_current_iteration)][t0.ref.x][t.start.x]
+                prev_mga_results_2 = mga_results[:units_invested][(unit=unit(:unit_bc), stochastic_scenario=s, mga_iteration=mga_current_iteration)][t0.ref.x][t.start.x]
+                expected_con = @build_constraint(var_mga_aux_diff[key] == (var_u_inv_1 + var_u_inv_2 ))
+                con = constraint[key...]
+                observed_con = constraint_object(con)
+                @test _is_constraint_equal(observed_con, expected_con)
              end
         end
         ###
