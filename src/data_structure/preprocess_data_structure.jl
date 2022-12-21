@@ -41,6 +41,7 @@ function preprocess_data_structure(; log_level=3)
     generate_variable_indexing_support()
     generate_benders_structure()
     apply_forced_availability_factor()
+    generate_is_boundary_node()  
 end
 
 """
@@ -182,43 +183,54 @@ we ensure that it appies to each of the four flow variables
 """
 function process_loss_bidirectional_capacities()
     for c in connection(connection_type=:connection_type_lossless_bidirectional)
-        conn_capacity_param = nothing
-        found_from = false
-        for (n, d) in connection__from_node(connection=c)
-            found_value = get(connection__from_node.parameter_values[(c, n, d)], :connection_capacity, nothing)
-            if found_value !== nothing
-                conn_capacity_param = found_value
-                found_from = true
-                for n2 in connection__from_node(connection=c, direction=d)
-                    if n2 != n
-                        connection__from_node.parameter_values[(c, n2, d)][:connection_capacity] = conn_capacity_param
-                    end
-                end
-            end
-        end
-        found_to = false
-        for (n, d) in connection__to_node(connection=c)
-            found_value = get(connection__to_node.parameter_values[(c, n, d)], :connection_capacity, nothing)
-            if found_value !== nothing
-                conn_capacity_param = found_value
-                found_to = true
-                for n2 in connection__to_node(connection=c, direction=d)
-                    if n2 != n
-                        connection__to_node.parameter_values[(c, n2, d)][:connection_capacity] = conn_capacity_param
-                    end
-                end
-            end
-        end
-        if !found_from && conn_capacity_param !== nothing
+        for (capacity_param, has_capacity_param) in [(:connection_capacity, :has_capacity), (:connection_emergency_capacity, :has_emergency_capacity)]        
+            conn_capacity_param = nothing
+            found_from = false
             for (n, d) in connection__from_node(connection=c)
-                connection__from_node.parameter_values[(c, n, d)][:connection_capacity] = conn_capacity_param
+                found_value = get(connection__from_node.parameter_values[(c, n, d)], capacity_param, nothing)
+                if found_value !== nothing
+                    conn_capacity_param = found_value
+                    found_from = true
+                    for n2 in connection__from_node(connection=c, direction=d)
+                        if n2 != n
+                            connection__from_node.parameter_values[(c, n2, d)][capacity_param] = conn_capacity_param
+                        end
+                    end
+                end
             end
-        end
-        if !found_to && conn_capacity_param !== nothing
+            found_to = false
             for (n, d) in connection__to_node(connection=c)
-                connection__to_node.parameter_values[(c, n, d)][:connection_capacity] = conn_capacity_param
+                found_value = get(connection__to_node.parameter_values[(c, n, d)], capacity_param, nothing)
+                if found_value !== nothing
+                    conn_capacity_param = found_value
+                    found_to = true
+                    for n2 in connection__to_node(connection=c, direction=d)
+                        if n2 != n
+                            connection__to_node.parameter_values[(c, n2, d)][capacity_param] = conn_capacity_param
+                        end
+                    end
+                end
             end
+            if !found_from && conn_capacity_param !== nothing
+                for (n, d) in connection__from_node(connection=c)
+                    connection__from_node.parameter_values[(c, n, d)][capacity_param] = conn_capacity_param
+                end
+            end
+            if !found_to && conn_capacity_param !== nothing
+                for (n, d) in connection__to_node(connection=c)
+                    connection__to_node.parameter_values[(c, n, d)][capacity_param] = conn_capacity_param
+                end
+            end
+            connection.parameter_values[c][has_capacity_param] = parameter_value(found_to || found_from)
         end
+    end
+    
+    has_capacity = Parameter(:has_capacity, [connection])
+    has_emergency_capacity = Parameter(:has_emergency_capacity, [connection])
+
+    @eval begin           
+        has_capacity = $has_capacity
+        has_emergency_capacity = $has_emergency_capacity
     end
 end
 
@@ -334,21 +346,64 @@ function _build_ptdf(connections, nodes)
 end
 
 """
-    _ptdf_values()
+    _ptdf_values_raw()
 
-Calculate the values of the `ptdf` parameter.
+Calculate the raw values of the `ptdf` parameter (will contain very small values).
 """
-function _ptdf_values()
+function _ptdf_values_raw()
     nodes = node(has_ptdf=true)
     isempty(nodes) && return Dict()
     connections = connection(has_ptdf=true)
-    ptdf = _build_ptdf(connections, nodes)
+    _build_ptdf(connections, nodes)    
+end
+
+"""
+_ptdf_values_unfiltered()
+
+Calculate the raw values of the `ptdf` parameter.
+"""
+function _ptdf_values_unfiltered(ptdf_values_raw)
+    nodes = node(has_ptdf=true)
+    isempty(nodes) && return Dict()
+    connections = connection(has_ptdf=true)    
     Dict(
-        (conn, n) => Dict(:ptdf => parameter_value(ptdf[i, j]))
+        (conn, n) => Dict(:ptdf_unfiltered => parameter_value(ptdf_values_raw[i, j]))
         for (i, conn) in enumerate(connections)
         for (j, n) in enumerate(nodes)
-    )
+    )    
 end
+
+"""
+    _ptdf_values()
+
+Calculate the values of the `ptdf` parameter including only those with an absolute value greater than commodity_ptdf_threshold.
+"""
+function _ptdf_values(ptdf_values_raw)
+    comms = filter(
+        c -> commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf), commodity()
+    )
+    ptdf_threshold = if !isempty(comms)
+        c = first(comms)
+        threshold = commodity_ptdf_threshold(commodity=c, _strict=false)
+        if threshold !== nothing && !iszero(threshold)
+            threshold
+        else
+            1e-3
+        end
+    else
+        1e-3
+    end
+    nodes = node(has_ptdf=true)
+    isempty(nodes) && return Dict()
+    connections = connection(has_ptdf=true)
+    Dict(
+        (conn, n) => Dict(:ptdf => parameter_value(ptdf_values_raw[i, j]))
+        for (i, conn) in enumerate(connections)
+        for (j, n) in enumerate(nodes)
+        if !isapprox(ptdf_values_raw[i, j], 0; atol=ptdf_threshold)
+    )    
+end
+
 
 """
     generate_ptdf()
@@ -356,12 +411,25 @@ end
 Generate the `ptdf` parameter.
 """
 function generate_ptdf()
-    ptdf_values = _ptdf_values()
-    ptdf_rel_cls = RelationshipClass(:ptdf_connection__node, [:connection, :node], keys(ptdf_values), ptdf_values)
-    ptdf = Parameter(:ptdf, [ptdf_rel_cls])
+    ptdf_values_raw = _ptdf_values_raw()
+    ptdf_values = _ptdf_values(ptdf_values_raw)    
+    ptdf_values_unfiltered = _ptdf_values_unfiltered(ptdf_values_raw)
+    ptdf_connection__node = RelationshipClass(
+        :ptdf_connection__node, [:connection, :node], keys(ptdf_values), ptdf_values
+    )
+    ptdf_unfiltered_connection__node = RelationshipClass(
+        :ptdf_unfiltered_connection__node, [:connection, :node], keys(ptdf_values_unfiltered), ptdf_values_unfiltered
+    )
+    ptdf = Parameter(:ptdf, [ptdf_connection__node])
+    ptdf_unfiltered = Parameter(:ptdf_unfiltered, [ptdf_unfiltered_connection__node])
     @eval begin
+        ptdf_connection__node = $ptdf_connection__node
+        ptdf_unfiltered_connection__node = $ptdf_unfiltered_connection__node
         ptdf = $ptdf
-    end
+        ptdf_unfiltered = $ptdf_unfiltered
+        export ptdf
+        export ptdf_unfiltered
+    end    
 end
 
 """
@@ -375,12 +443,12 @@ function generate_lodf()
     """
     function _lodf_fn(conn_cont)
         n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
-        denom = 1 - (ptdf(connection=conn_cont, node=n_from) - ptdf(connection=conn_cont, node=n_to))
+        denom = 1 - (ptdf_unfiltered(connection=conn_cont, node=n_from) - ptdf_unfiltered(connection=conn_cont, node=n_to))
         is_tail = isapprox(denom, 0; atol=0.001)
         if is_tail
-            conn_mon -> ptdf(connection=conn_mon, node=n_to)
+            conn_mon -> ptdf_unfiltered(connection=conn_mon, node=n_to)
         else
-            conn_mon -> (ptdf(connection=conn_mon, node=n_from) - ptdf(connection=conn_mon, node=n_to)) / denom
+            conn_mon -> (ptdf_unfiltered(connection=conn_mon, node=n_from) - ptdf_unfiltered(connection=conn_mon, node=n_to)) / denom
         end
     end
 
@@ -393,12 +461,13 @@ function generate_lodf()
         for (conn_mon, lodf_trial) in ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(has_ptdf=true))
         if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance)
     )
-    lodf_rel_cls = RelationshipClass(
+    lodf_connection__connection = RelationshipClass(
         :lodf_connection__connection, [:connection, :connection], keys(lodf_values), lodf_values
     )
-    lodf = Parameter(:lodf, [lodf_rel_cls])
+    lodf = Parameter(:lodf, [lodf_connection__connection])
     @eval begin
         lodf = $lodf
+        lodf_connection__connection = $lodf_connection__connection
     end
 end
 
@@ -848,4 +917,36 @@ function apply_forced_availability_factor()
     m_end = maximum(model_end(model=m) for m in model())
     _apply_forced_availability_factor(m_start, m_end, unit, unit_availability_factor)
     _apply_forced_availability_factor(m_start, m_end, connection, connection_availability_factor)
+end
+
+"""
+    generate_is_boundary_node()
+
+Generate `is_boundary_node` and `is_boundary_connection` parameters associated with the `node` and `connection` `ObjectClass`es respectively.
+"""
+function generate_is_boundary_node()
+    for (n, c) in node__commodity()
+        if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)               
+            for conn in connection__from_node(node=n, direction=direction(:from_node))
+                for remote_node = connection__to_node(connection=conn)
+                    remote_commodities = node__commodity(node=remote_node)
+                    if isempty(remote_commodities) || first(remote_commodities) != c
+                        node.parameter_values[n][:is_boundary_node] = parameter_value(true)
+                        (!haskey(connection.parameter_values, conn)) && (connection.parameter_values[conn]=Dict())
+                        connection.parameter_values[conn][:is_boundary_connection] = parameter_value(true)                        
+                    end
+                end
+            end
+        end                         
+    end
+    is_boundary_node = Parameter(:is_boundary_node, [node])
+    is_boundary_connection = Parameter(:is_boundary_connection, [connection])
+    node.parameter_defaults[:is_boundary_node] = parameter_value(false)
+    connection.parameter_defaults[:is_boundary_connection] = parameter_value(false)
+    @eval begin
+        is_boundary_node = $is_boundary_node
+        is_boundary_connection = $is_boundary_connection
+        export is_boundary_node
+        export is_boundary_connection
+    end
 end

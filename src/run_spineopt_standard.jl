@@ -389,7 +389,7 @@ function init_model!(
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(
         m; add_constraints=add_constraints, log_level=log_level
     )
-    @timelog log_level 2 "Setting objective..." set_objective!(m;alternative_objective=alternative_objective)
+    @timelog log_level 2 "Setting objective..." set_objective!(m; alternative_objective=alternative_objective)
 end
 
 """
@@ -450,12 +450,9 @@ _variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, J
 """
 Save the value of a variable in a model.
 """
-function _save_variable_value!(m::Model, name::Symbol, indices::Function)
+function _save_variable_value!(m::Model, name::Symbol)
     var = m.ext[:spineopt].variables[name]
-    m.ext[:spineopt].values[name] = Dict(
-        ind => _variable_value(var[ind])
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)), temporal_block=anything)
-    )
+    m.ext[:spineopt].values[name] = Dict(ind => _variable_value(v) for (ind, v) in var)
 end
 
 """
@@ -463,7 +460,7 @@ Save the value of all variables in a model.
 """
 function save_variable_values!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
-        _save_variable_value!(m, name, definition[:indices])
+        _save_variable_value!(m, name)
     end
 end
 
@@ -475,10 +472,13 @@ Save the value of the objective terms in a model.
 """
 function save_objective_values!(m::Model)
     ind = (model=m.ext[:spineopt].instance, t=current_window(m))
-    for name in [objective_terms(m); :total_costs]
-        func = eval(name)
-        m.ext[:spineopt].values[name] = Dict(ind => _value(realize(func(m, end_(current_window(m))))))
+    for (term, (in_window, _beyond_window)) in m.ext[:spineopt].objective_terms
+        m.ext[:spineopt].values[term] = Dict(ind => _value(realize(in_window)))
     end
+    m.ext[:spineopt].values[:total_costs] = Dict(
+        ind => sum(m.ext[:spineopt].values[term][ind] for term in keys(m.ext[:spineopt].objective_terms))
+    )
+    nothing
 end
 
 function _value_by_entity_non_aggregated(m, value::Dict, crop_to_window)
@@ -595,9 +595,9 @@ end
 Save a model results: first postprocess results, then save variables and objective values, and finally save outputs
 """
 function save_model_results!(m; iterations=nothing)
-    postprocess_results!(m)
     save_variable_values!(m)
     save_objective_values!(m)
+    postprocess_results!(m)
 end
 
 """
