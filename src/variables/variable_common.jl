@@ -61,14 +61,14 @@ function add_variable!(
 end
 
 """
-    _rep_ind(ind)
+    _representative_index(ind)
 
 The representative index corresponding to the given one.
 """
-function _rep_ind(m, ind, indices)
-    rep_t = representative_time_slice(m, ind.t)
-    rep_inds = indices(m; ind..., t=rep_t)
-    first(rep_inds)
+function _representative_index(m, ind, indices)
+    representative_t = representative_time_slice(m, ind.t)
+    representative_inds = indices(m; ind..., t=representative_t)
+    first(representative_inds)
 end
 
 """
@@ -77,15 +77,15 @@ end
 A `Dict` mapping non representative indices to the variable for the representative index.
 """
 function _representative_periods_mapping(m::Model, var::Dict, indices::Function)
-    # By default, `indices` skips non-representative time slices for operational variables other than node_state,
+    # By default, `indices` skips represented time slices for operational variables other than node_state,
     # as well as for investment variables. This is done by setting the default value of the `temporal_block` argument
-    # to `temporal_block(representative_periods_mapping=nothing)` - so any block that define a mapping is ignored.
-    # To include non-representative time slices, we need to specify `temporal_block=anything`.
-    # Note that for node_state and investment variables, `non_rep_indices`, below, will be empty.
-    rep_indices = indices(m)
+    # to `temporal_block(representative_periods_mapping=nothing)` - so any blocks that define a mapping are ignored.
+    # To include represented time slices, we need to specify `temporal_block=anything`.
+    # Note that for node_state and investment variables, `represented_indices`, below, will be empty.
+    representative_indices = indices(m)
     all_indices = indices(m, temporal_block=anything)
-    non_rep_indices = setdiff(all_indices, rep_indices)
-    Dict(ind => var[_rep_ind(m, ind, indices)] for ind in non_rep_indices)
+    represented_indices = setdiff(all_indices, representative_indices)
+    Dict(ind => var[_representative_index(m, ind, indices)] for ind in represented_indices)
 end
 
 """
