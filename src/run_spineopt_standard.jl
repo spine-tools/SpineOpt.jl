@@ -444,19 +444,11 @@ The value of a JuMP variable, rounded if necessary.
 _variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value(v)) : JuMP.value(v)
 
 """
-Save the value of a variable in a model.
-"""
-function _save_variable_value!(m::Model, name::Symbol)
-    var = m.ext[:spineopt].variables[name]
-    m.ext[:spineopt].values[name] = Dict(ind => _variable_value(v) for (ind, v) in var)
-end
-
-"""
 Save the value of all variables in a model.
 """
 function save_variable_values!(m::Model)
-    for (name, definition) in m.ext[:spineopt].variables_definition
-        _save_variable_value!(m, name)
+    for (name, var) in m.ext[:spineopt].variables
+        m.ext[:spineopt].values[name] = Dict(ind => _variable_value(v) for (ind, v) in var)
     end
 end
 
