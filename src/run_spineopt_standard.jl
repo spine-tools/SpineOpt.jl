@@ -92,7 +92,6 @@ function run_spineopt_kernel!(
     m
 end
 
-
 function _dump_resume_data(m::Model, k, ::Nothing) end
 function _dump_resume_data(m::Model, k, resume_file_path)
     resume_data = Dict("values" => m.ext[:spineopt].values, "window" => k)

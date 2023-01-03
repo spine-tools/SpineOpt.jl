@@ -22,18 +22,32 @@ SpineOpt is designed to be used with [Spine Toolbox](https://github.com/Spine-pr
 
 2. Download and install the latest version of Julia for your system as described [here](https://julialang.org/downloads).
 
-3. Start the [Julia REPL](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
+3. Install SpineOpt using *one* of the below options:
 
-4. Copy/paste the following text into the julia prompt
-(it will install the SpineOpt package from the [Spine Julia Registry](https://github.com/Spine-project/SpineJuliaRegistry)):
+	a. If you want to *use* SpineOpt but not develop it,
+      we recommend installing it from the [Spine Julia Registry](https://github.com/Spine-project/SpineJuliaRegistry):
 
-	```julia
-	using Pkg
-	pkg"registry add General https://github.com/Spine-project/SpineJuliaRegistry"
-	pkg"add SpineOpt"
-	```
+      1. Start the [Julia REPL](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
+      2. Copy and paste the following text into the julia prompt:
+         ```julia
+         using Pkg
+         pkg"registry add General https://github.com/Spine-project/SpineJuliaRegistry"
+         pkg"add SpineOpt"
+         ```
 
-5. Configure Spine Toolbox to use your Julia:
+	b. If you want to both use and develop SpineOpt, we recommend installing it from sources:
+
+	   1. Git-clone this repository into your local machine.
+	   2. Git-clone the [SpineInterface repository](https://github.com/Spine-project/SpineInterface.jl) into your local machine.
+      3. Start the [Julia REPL](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
+      4. Run the following commands from the julia prompt, replacing your local SpineOpt and SpineInterface paths
+         ```julia
+         using Pkg
+         pkg"dev <path-to-your-local-SpineInterface-repository>"
+         pkg"dev <path-to-your-local-SpineOpt-repository>"
+         ```
+
+4. Configure Spine Toolbox to use your Julia:
 
 	a. Run Spine Toolbox.
 
