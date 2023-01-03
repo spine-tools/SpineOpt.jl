@@ -37,8 +37,8 @@ SpineOpt is designed to be used with [Spine Toolbox](https://github.com/Spine-pr
 
 	b. If you want to both use and develop SpineOpt, we recommend installing it from sources:
 
-	   1. Git-clone this repository into your local machine.
-	   2. Git-clone the [SpineInterface repository](https://github.com/Spine-project/SpineInterface.jl) into your local machine.
+      1. Git-clone this repository into your local machine.
+      2. Git-clone the [SpineInterface repository](https://github.com/Spine-project/SpineInterface.jl) into your local machine.
       3. Start the [Julia REPL](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
       4. Run the following commands from the julia prompt, replacing your local SpineOpt and SpineInterface paths
          ```julia
