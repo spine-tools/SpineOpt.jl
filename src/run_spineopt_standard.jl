@@ -92,7 +92,6 @@ function run_spineopt_kernel!(
     m
 end
 
-
 function _dump_resume_data(m::Model, k, ::Nothing) end
 function _dump_resume_data(m::Model, k, resume_file_path)
     resume_data = Dict("values" => m.ext[:spineopt].values, "window" => k)
@@ -448,19 +447,11 @@ The value of a JuMP variable, rounded if necessary.
 _variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value(v)) : JuMP.value(v)
 
 """
-Save the value of a variable in a model.
-"""
-function _save_variable_value!(m::Model, name::Symbol)
-    var = m.ext[:spineopt].variables[name]
-    m.ext[:spineopt].values[name] = Dict(ind => _variable_value(v) for (ind, v) in var)
-end
-
-"""
 Save the value of all variables in a model.
 """
 function save_variable_values!(m::Model)
-    for (name, definition) in m.ext[:spineopt].variables_definition
-        _save_variable_value!(m, name)
+    for (name, var) in m.ext[:spineopt].variables
+        m.ext[:spineopt].values[name] = Dict(ind => _variable_value(v) for (ind, v) in var)
     end
 end
 
@@ -617,8 +608,6 @@ end
 
 function refresh_model!(m; log_level=3)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
-    @timelog log_level 2 "Updating constraints..." update_varying_constraints!(m)
-    @timelog log_level 2 "Updating objective..." update_varying_objective!(m)
 end
 
 function _update_constraint_names!(m)

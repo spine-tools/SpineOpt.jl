@@ -35,14 +35,14 @@ function add_constraint_connection_intact_flow_ptdf!(m::Model)
             )
             ==
             + expr_sum(
-                ptdf(connection=conn, node=n) * node_injection[n, s, t]
+                ptdf[(connection=conn, node=n, t=t)] * node_injection[n, s, t]
                 for n in ptdf_connection__node(connection=conn)
                 if node_opf_type(node=n) != :node_opf_type_reference
                 for (n, s, t) in node_injection_indices(m; node=n, stochastic_scenario=s, t=t);                                  
                 init=0
             )
             + expr_sum(
-                ptdf(connection=conn, node=n) * connection_flow[conn1, n1, d, s, t]                                
+                ptdf[(connection=conn, node=n, t=t)] * connection_flow[conn1, n1, d, s, t]                                
                 for n in node(is_boundary_node=true)
                 if n in ptdf_connection__node(connection=conn)
                 && node_opf_type(node=n) != :node_opf_type_reference
@@ -53,7 +53,7 @@ function add_constraint_connection_intact_flow_ptdf!(m::Model)
                 init=0
             )
             - expr_sum(
-                ptdf(connection=conn, node=n) * connection_flow[conn1, n1, d, s, t]                                
+                ptdf[(connection=conn, node=n, t=t)] * connection_flow[conn1, n1, d, s, t]                                
                 for n in node(is_boundary_node=true)
                 if n in ptdf_connection__node(connection=conn)
                 && node_opf_type(node=n) != :node_opf_type_reference
@@ -71,7 +71,7 @@ end
 # NOTE: always pick the second (last) node in `connection__from_node` as 'to' node
 
 function constraint_connection_intact_flow_ptdf_indices(m::Model)
-    unique(
+    (
         (connection=conn, node=n_to, stochastic_path=path, t=t)
         for conn in connection(connection_monitored=true, has_ptdf=true)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)

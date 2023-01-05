@@ -304,7 +304,7 @@ function generate_connection_has_lodf()
     end
 end
 
-function _build_ptdf(connections, nodes)
+function _build_ptdf(connections, nodes, unavailable_connections=Set())
     nodecount = length(nodes)
     conncount = length(connections)
     node_numbers = Dict{Object,Int32}(n => ix for (ix, n) in enumerate(nodes))
@@ -317,10 +317,11 @@ function _build_ptdf(connections, nodes)
         from_n, to_n = connection__from_node(connection=conn, direction=anything)
         A[node_numbers[from_n], ix] = 1
         A[node_numbers[to_n], ix] = -1
-        inv_X[ix, ix] = 1 / max(
-            connection_reactance(connection=conn),
-            0.00001,
-        ) * connection_reactance_base(connection=conn)
+        reactance = max(connection_reactance(connection=conn), 1e-6)
+        if conn in unavailable_connections
+            reactance *= 1e3
+        end
+        inv_X[ix, ix] = connection_reactance_base(connection=conn) / reactance
     end
 
     i = findfirst(n -> node_opf_type(node=n) == :node_opf_type_reference, nodes)
@@ -346,39 +347,46 @@ function _build_ptdf(connections, nodes)
 end
 
 """
-    _ptdf_values_raw()
+    _ptdf_unfiltered_values()
 
-Calculate the raw values of the `ptdf` parameter (will contain very small values).
+Calculate the raw values of the `ptdf_unfiltered` parameter (will contain very small values).
 """
-function _ptdf_values_raw()
+function _ptdf_unfiltered_values()
     nodes = node(has_ptdf=true)
     isempty(nodes) && return Dict()
     connections = connection(has_ptdf=true)
-    _build_ptdf(connections, nodes)    
-end
-
-"""
-_ptdf_values_unfiltered()
-
-Calculate the raw values of the `ptdf` parameter.
-"""
-function _ptdf_values_unfiltered(ptdf_values_raw)
-    nodes = node(has_ptdf=true)
-    isempty(nodes) && return Dict()
-    connections = connection(has_ptdf=true)    
+    unavailable_connections_by_ind = Dict{Any,Set}(:nothing => Set())
+    for conn in connections
+        for (ind, val) in indexed_values(connection_availability_factor(connection=conn))
+            if iszero(val)
+                push!(get!(unavailable_connections_by_ind, ind, Set()), conn)
+            end
+        end
+    end
+    ptdf_by_ind = Dict(
+        ind => _build_ptdf(connections, nodes, unavailable_connections)
+        for (ind, unavailable_connections) in unavailable_connections_by_ind
+    )
     Dict(
-        (conn, n) => Dict(:ptdf_unfiltered => parameter_value(ptdf_values_raw[i, j]))
+        (conn, n) => Dict(
+            :ptdf_unfiltered => indexed_parameter_value(
+                Dict(
+                    ind => get(ptdf_by_ind, ind, ptdf_by_ind[:nothing])[i, j]
+                    for (ind, val) in indexed_values(connection_availability_factor(connection=conn))
+                )
+            )
+        )
         for (i, conn) in enumerate(connections)
         for (j, n) in enumerate(nodes)
-    )    
+    )
 end
 
 """
-    _ptdf_values()
+    _filter_ptdf_values(ptdf_values)
 
-Calculate the values of the `ptdf` parameter including only those with an absolute value greater than commodity_ptdf_threshold.
+Filter the values of the `ptdf` parameter including only those with an absolute value greater than commodity_ptdf_threshold.
 """
-function _ptdf_values(ptdf_values_raw)
+function _filter_ptdf_values(ptdf_values)
     comms = filter(
         c -> commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf), commodity()
     )
@@ -393,15 +401,11 @@ function _ptdf_values(ptdf_values_raw)
     else
         1e-3
     end
-    nodes = node(has_ptdf=true)
-    isempty(nodes) && return Dict()
-    connections = connection(has_ptdf=true)
     Dict(
-        (conn, n) => Dict(:ptdf => parameter_value(ptdf_values_raw[i, j]))
-        for (i, conn) in enumerate(connections)
-        for (j, n) in enumerate(nodes)
-        if !isapprox(ptdf_values_raw[i, j], 0; atol=ptdf_threshold)
-    )    
+        (conn, n) => Dict(:ptdf => vals[:ptdf_unfiltered])
+        for ((conn, n), vals) in ptdf_values
+        if !isapprox(vals[:ptdf_unfiltered](), 0; atol=ptdf_threshold)
+    )
 end
 
 
@@ -411,14 +415,13 @@ end
 Generate the `ptdf` parameter.
 """
 function generate_ptdf()
-    ptdf_values_raw = _ptdf_values_raw()
-    ptdf_values = _ptdf_values(ptdf_values_raw)    
-    ptdf_values_unfiltered = _ptdf_values_unfiltered(ptdf_values_raw)
+    ptdf_unfiltered_values = _ptdf_unfiltered_values()    
+    ptdf_values = _filter_ptdf_values(ptdf_unfiltered_values)
     ptdf_connection__node = RelationshipClass(
         :ptdf_connection__node, [:connection, :node], keys(ptdf_values), ptdf_values
     )
     ptdf_unfiltered_connection__node = RelationshipClass(
-        :ptdf_unfiltered_connection__node, [:connection, :node], keys(ptdf_values_unfiltered), ptdf_values_unfiltered
+        :ptdf_unfiltered_connection__node, [:connection, :node], keys(ptdf_unfiltered_values), ptdf_unfiltered_values
     )
     ptdf = Parameter(:ptdf, [ptdf_connection__node])
     ptdf_unfiltered = Parameter(:ptdf_unfiltered, [ptdf_unfiltered_connection__node])

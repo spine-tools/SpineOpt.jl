@@ -120,7 +120,7 @@ function _set_objective_mga_iteration!(
                 isempty(indices(storages_invested_big_m_mga))
             ]
         )
-        t0 = _analysis_time(m).ref.x
+        t0 = start(current_window(m))
         @fetch units_invested = m.ext[:spineopt].variables
         mga_results = m.ext[:spineopt].outputs
         d_aux = get!(m.ext[:spineopt].variables, :mga_aux_diff, Dict())

@@ -231,7 +231,7 @@ end
             "type" => "time_series",
             "data" => Dict("2000-01-01T00:00:00" => 50.0, "2000-01-01T12:00:00" => 90.0, "2000-01-03T00:00:00" => 90.0)
         )
-        unit_capacity = demand
+        unit_capacity = 90
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "6h")],
@@ -248,7 +248,7 @@ end
             relationship_parameter_values=relationship_parameter_values,
             on_conflict=:replace
         )
-        m = run_spineopt(url_in, url_out; log_level=0)
+        m = run_spineopt(url_in, url_out; log_level=0, update_names=true)
         using_spinedb(url_out, Y)
         flow_key = (
             report=Y.report(:report_x),
