@@ -31,28 +31,24 @@ function add_constraint_unit_flow_capacity!(m::Model)
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             expr_sum(
-                + unit_flow[u, n, d, s, t] * duration(t)
+                unit_flow[u, n, d, s, t] * duration(t)
                 for (u, n, d, s, t) in unit_flow_indices(
-                    m;
-                    unit=u,
-                    node=ng,
-                    direction=d,
-                    stochastic_scenario=s,
-                    t=t_in_t(m; t_long=t),
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 )
                 if !is_non_spinning(node=n);
                 init=0,
             )
             <=
             + expr_sum(
-                (units_on[u, s, t1])
+                units_on[u, s, t1]
                 * min(duration(t1), duration(t))
                 * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0,
             )
-        ) for (u, ng, d, s, t) in constraint_unit_flow_capacity_indices(m)
+        )
+        for (u, ng, d, s, t) in constraint_unit_flow_capacity_indices(m)
     )
 end
 
@@ -74,12 +70,7 @@ Uses stochastic path indices due to potentially different stochastic structures 
 variables. Keyword arguments can be used to filter the resulting Array.
 """
 function constraint_unit_flow_capacity_indices_filtered(
-    m::Model;
-    unit=anything,
-    node=anything,
-    direction=anything,
-    stochastic_path=anything,
-    t=anything,
+    m::Model; unit=anything, node=anything, direction=anything, stochastic_path=anything, t=anything
 )
     f(ind) = _index_in(ind; unit=unit, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_unit_flow_capacity_indices(m))
