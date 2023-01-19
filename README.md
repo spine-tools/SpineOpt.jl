@@ -5,6 +5,11 @@
 
 A package to run an energy system integration model called SpineOpt.
 
+### :exclamation: :exclamation:  **GitHub organisation has been renamed!** 
+
+New name [spine-tools](https://github.com/spine-tools), used to be spine-project (19.1.2023). Update your weblinks and git origin to all repositories (in each repository folder `git remote set-url origin https://github.com/spine-tools/repository-name`): Spine Toolbox, SpineOpt.jl, SpineInterface.jl, Spine-Database-API, spine-engine, spine-items.
+
+
 ### :loudspeaker:UPDATE: Community :rocket: 
 
 To connect with other users, to identify problems and exchange experiences, we will organize monthly early-user meetings for Spine Toolbox and SpineOpt. The meetings will be held every last Wednesday of the month at 10am CEST [:calendar: ics zip](https://github.com/Spine-project/SpineOpt.jl/files/9149471/Spine.Toolbox.and.SpineOpt.Exchange.QA.Help.zip)
