@@ -1,7 +1,7 @@
 ## SpineOpt.jl
 
 [![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-project.github.io/SpineOpt.jl/latest/index.html)
-[![codecov](https://codecov.io/gh/Spine-project/SpineOpt.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/Spine-project/SpineOpt.jl)
+[![codecov](https://codecov.io/gh/Spine-project/SpineOpt.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/Spine-project/SpineOpt.jl) [![Join the chat at https://gitter.im/spine-tools/SpineOpt](https://badges.gitter.im/spine-tools/SpineOpt.svg)](https://gitter.im/spine-tools/SpineOpt?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 A package to run an energy system integration model called SpineOpt.
 
