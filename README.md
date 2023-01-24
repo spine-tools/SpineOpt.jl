@@ -5,6 +5,11 @@
 
 A package to run an energy system integration model called SpineOpt.
 
+### :exclamation: :exclamation:  **GitHub organisation has been renamed!** 
+
+New name [spine-tools](https://github.com/spine-tools), used to be spine-project (19.1.2023). Update your weblinks and git origin to all repositories (in each repository folder `git remote set-url origin https://github.com/spine-tools/repository-name`): Spine Toolbox, SpineOpt.jl, SpineInterface.jl, Spine-Database-API, spine-engine, spine-items.
+
+
 ### :loudspeaker:UPDATE: Community :rocket: 
 
 To connect with other users, to identify problems and exchange experiences, we will organize monthly early-user meetings for Spine Toolbox and SpineOpt. The meetings will be held every last Wednesday of the month at 10am CEST [:calendar: ics zip](https://github.com/Spine-project/SpineOpt.jl/files/9149471/Spine.Toolbox.and.SpineOpt.Exchange.QA.Help.zip)
@@ -187,13 +192,19 @@ SpineOpt is licensed under GNU Lesser General Public License version 3.0 or late
 
 Please cite [this article](https://doi.org/10.1016/j.esr.2022.100902) when referring to SpineOpt in scientific writing.
 
+```Ihlemann, M., Kouveliotis-Lysikatos, I., Huang, J., Dillon, J., O'Dwyer, C., Rasku, T., Marin, M., Poncelet, K., & Kiviluoma, J. (2022). SpineOpt: A flexible open-source energy system modelling framework. Energy Strategy Reviews, 43, [100902]. https://doi.org/10.1016/j.esr.2022.100902```
+
 ### Acknowledgements
 
 <center>
 <table width=500px frame="none">
 <tr>
 <td valign="middle" width=100px>
-<img src=https://ec.europa.eu/regional_policy/images/information/logos/eu_flag.jpg alt="EU emblem" width=100%></td>
-<td valign="middle">This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 774629.</td>
+<img src=docs/src/figs/eu-emblem-low-res.jpg alt="EU emblem" width=100%></td>
+<td valign="middle">This work has been partially supported by EU project Mopo (2023-2026), which has received funding from European Climate, Infrastructure and Environment Executive Agency under the European Union’s HORIZON Research and Innovation Actions under grant agreement N°101095998.</td>
+<tr>
+<td valign="middle" width=100px>
+<img src=docs/src/figs/eu-emblem-low-res.jpg alt="EU emblem" width=100%></td>
+<td valign="middle">This work has been partially supported by EU project Spine (2017-2021), which has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 774629.</td>
 </table>
 </center>
