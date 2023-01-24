@@ -1,6 +1,6 @@
 ## SpineOpt.jl
 
-[![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-project.github.io/SpineOpt.jl/latest/index.html)
+[![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-tools.github.io/SpineOpt.jl/latest/index.html)
 [![codecov](https://codecov.io/gh/Spine-project/SpineOpt.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/Spine-project/SpineOpt.jl)
 
 A package to run an energy system integration model called SpineOpt.
@@ -86,7 +86,7 @@ please see [here](https://spine-toolbox.readthedocs.io/en/latest/case_study_a5.h
 
 ### Documentation
 
-SpineOpt documentation, including getting started guide and reference, can be found here: [Documentation](https://spine-project.github.io/SpineOpt.jl/latest/index.html).
+SpineOpt documentation, including getting started guide and reference, can be found here: [Documentation](https://spine-tools.github.io/SpineOpt.jl/latest/index.html).
 Alternatively, one can build the documentation locally, as it is bundled in with the source code.
 
 First, **navigate into the SpineOpt main folder** and activate the `docs` environment from the julia package manager:
