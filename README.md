@@ -1,13 +1,18 @@
 ## SpineOpt.jl
 
-[![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-project.github.io/SpineOpt.jl/latest/index.html)
-[![codecov](https://codecov.io/gh/Spine-project/SpineOpt.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/Spine-project/SpineOpt.jl)
+[![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://spine-tools.github.io/SpineOpt.jl/latest/index.html)
+[![codecov](https://codecov.io/gh/spine-tools/SpineOpt.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/spine-tools/SpineOpt.jl)
 
 A package to run an energy system integration model called SpineOpt.
 
+### :exclamation: :exclamation:  **GitHub organisation has been renamed!** 
+
+New name [spine-tools](https://github.com/spine-tools), used to be spine-project (19.1.2023). Update your weblinks and git origin to all repositories (in each repository folder `git remote set-url origin https://github.com/spine-tools/repository-name`): Spine Toolbox, SpineOpt.jl, SpineInterface.jl, Spine-Database-API, spine-engine, spine-items.
+
+
 ### :loudspeaker:UPDATE: Community :rocket: 
 
-To connect with other users, to identify problems and exchange experiences, we will organize monthly early-user meetings for Spine Toolbox and SpineOpt. The meetings will be held every last Wednesday of the month at 10am CEST [:calendar: ics zip](https://github.com/Spine-project/SpineOpt.jl/files/9149471/Spine.Toolbox.and.SpineOpt.Exchange.QA.Help.zip)
+To connect with other users, to identify problems and exchange experiences, we will organize monthly early-user meetings for Spine Toolbox and SpineOpt. The meetings will be held every last Wednesday of the month at 10am CEST [:calendar: ics zip](https://github.com/spine-tools/SpineOpt.jl/files/9149471/Spine.Toolbox.and.SpineOpt.Exchange.QA.Help.zip)
 ) and can be joined [here](https://teams.microsoft.com/l/meetup-join/19%3ameeting_YjlhOWNmZjYtMDUxMC00MWViLTllMGUtNGI0NWY5NzY2YTU4%40thread.v2/0?context=%7b%22Tid%22%3a%22d7ab8571-7881-415a-b0c2-b5a933c86ee8%22%2c%22Oid%22%3a%227ff67982-a736-42fa-ade6-994bb97d94a8%22%7d).
 
 ### Compatibility
@@ -16,30 +21,30 @@ This package requires [Julia](https://julialang.org/) 1.2 or later.
 
 ### Installation
 
-SpineOpt is designed to be used with [Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox).
+SpineOpt is designed to be used with [Spine Toolbox](https://github.com/spine-tools/Spine-Toolbox).
 
-1. Install Spine Toolbox as described [here](https://github.com/Spine-project/Spine-Toolbox/blob/master/README.md#installation).
+1. Install Spine Toolbox as described [here](https://github.com/spine-tools/Spine-Toolbox/blob/master/README.md#installation).
 
 2. Download and install the latest version of Julia for your system as described [here](https://julialang.org/downloads).
 
 3. Install SpineOpt using *one* of the below options:
 
 	a. If you want to *use* SpineOpt but not develop it,
-      we recommend installing it from the [Spine Julia Registry](https://github.com/Spine-project/SpineJuliaRegistry):
+      we recommend installing it from the [Spine Julia Registry](https://github.com/spine-tools/SpineJuliaRegistry):
 
-      1. Start the [Julia REPL](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
+      1. Start the [Julia REPL](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
       2. Copy and paste the following text into the julia prompt:
          ```julia
          using Pkg
-         pkg"registry add General https://github.com/Spine-project/SpineJuliaRegistry"
+         pkg"registry add General https://github.com/spine-tools/SpineJuliaRegistry"
          pkg"add SpineOpt"
          ```
 
 	b. If you want to both use and develop SpineOpt, we recommend installing it from sources:
 
       1. Git-clone this repository into your local machine.
-      2. Git-clone the [SpineInterface repository](https://github.com/Spine-project/SpineInterface.jl) into your local machine.
-      3. Start the [Julia REPL](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
+      2. Git-clone the [SpineInterface repository](https://github.com/spine-tools/SpineInterface.jl) into your local machine.
+      3. Start the [Julia REPL](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
       4. Run the following commands from the julia prompt, replacing your local SpineOpt and SpineInterface paths
          ```julia
          using Pkg
@@ -53,7 +58,7 @@ SpineOpt is designed to be used with [Spine Toolbox](https://github.com/Spine-pr
 
 	b. Go to **File** -> **Settings** -> **Tools**.
 
-	c. Under **Julia**, enter the path to your Julia executable. It should look something like [this](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/src/figs/spinetoolbox_settings_juliaexe.png).
+	c. Under **Julia**, enter the path to your Julia executable. It should look something like [this](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/spinetoolbox_settings_juliaexe.png).
 
 	d. Press **Ok**.
 
@@ -63,10 +68,10 @@ It doesn't work? See our [Troubleshooting](#troubleshooting) section.
 
 SpineOpt is constantly improving. To get the most recent version, just:
 
-1. Start the [Julia REPL](https://github.com/Spine-project/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
+1. Start the [Julia REPL](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
 
 2. Copy/paste the following text into the julia prompt
-(it will update the SpineOpt package from the [Spine Julia Registry](https://github.com/Spine-project/SpineJuliaRegistry)):
+(it will update the SpineOpt package from the [Spine Julia Registry](https://github.com/spine-tools/SpineJuliaRegistry)):
 
 	```julia
 	using Pkg
@@ -81,7 +86,7 @@ please see [here](https://spine-toolbox.readthedocs.io/en/latest/case_study_a5.h
 
 ### Documentation
 
-SpineOpt documentation, including getting started guide and reference, can be found here: [Documentation](https://spine-project.github.io/SpineOpt.jl/latest/index.html).
+SpineOpt documentation, including getting started guide and reference, can be found here: [Documentation](https://spine-tools.github.io/SpineOpt.jl/latest/index.html).
 Alternatively, one can build the documentation locally, as it is bundled in with the source code.
 
 First, **navigate into the SpineOpt main folder** and activate the `docs` environment from the julia package manager:
@@ -120,7 +125,7 @@ julia>  pkg"add SpineOpt"
    Updating registry at `C:\Users\manuelma\.julia\registries\General`
    Updating git-repo `https://github.com/JuliaRegistries/General.git`
    Updating registry at `C:\Users\manuelma\.julia\registries\SpineRegistry`
-   Updating git-repo `https://github.com/Spine-project/SpineJuliaRegistry`
+   Updating git-repo `https://github.com/spine-tools/SpineJuliaRegistry`
   Resolving package versions...
 ERROR: expected package `UUIDs [cf7118a7]` to be registered
 ...
@@ -128,7 +133,7 @@ ERROR: expected package `UUIDs [cf7118a7]` to be registered
 ```julia
 julia>  pkg"add SpineOpt"
    Updating registry at `C:\Users\manuelma\.julia\registries\SpineRegistry`
-   Updating git-repo `https://github.com/Spine-project/SpineJuliaRegistry`
+   Updating git-repo `https://github.com/spine-tools/SpineJuliaRegistry`
   Resolving package versions...
 ERROR: cannot find name corresponding to UUID f269a46b-ccf7-5d73-abea-4c690281aa53 in a registry
 ...
@@ -187,13 +192,19 @@ SpineOpt is licensed under GNU Lesser General Public License version 3.0 or late
 
 Please cite [this article](https://doi.org/10.1016/j.esr.2022.100902) when referring to SpineOpt in scientific writing.
 
+```Ihlemann, M., Kouveliotis-Lysikatos, I., Huang, J., Dillon, J., O'Dwyer, C., Rasku, T., Marin, M., Poncelet, K., & Kiviluoma, J. (2022). SpineOpt: A flexible open-source energy system modelling framework. Energy Strategy Reviews, 43, [100902]. https://doi.org/10.1016/j.esr.2022.100902```
+
 ### Acknowledgements
 
 <center>
 <table width=500px frame="none">
 <tr>
 <td valign="middle" width=100px>
-<img src=https://ec.europa.eu/regional_policy/images/information/logos/eu_flag.jpg alt="EU emblem" width=100%></td>
-<td valign="middle">This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 774629.</td>
+<img src=docs/src/figs/eu-emblem-low-res.jpg alt="EU emblem" width=100%></td>
+<td valign="middle">This work has been partially supported by EU project Mopo (2023-2026), which has received funding from European Climate, Infrastructure and Environment Executive Agency under the European Union’s HORIZON Research and Innovation Actions under grant agreement N°101095998.</td>
+<tr>
+<td valign="middle" width=100px>
+<img src=docs/src/figs/eu-emblem-low-res.jpg alt="EU emblem" width=100%></td>
+<td valign="middle">This work has been partially supported by EU project Spine (2017-2021), which has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 774629.</td>
 </table>
 </center>

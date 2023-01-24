@@ -33,11 +33,11 @@ function preprocess_data_structure(; log_level=3)
     generate_report__output()
     generate_model__report()
     add_connection_relationships()
-    # NOTE: generate direction before calling `generate_network_components`,
+    # NOTE: generate direction before calling `generate_ptdf_lodf`,
     # so calls to `connection__from_node` don't corrupt lookup cache
     generate_direction()
     process_loss_bidirectional_capacities()
-    generate_network_components()
+    generate_ptdf_lodf()
     generate_variable_indexing_support()
     generate_benders_structure()
     apply_forced_availability_factor()
@@ -269,9 +269,7 @@ function generate_connection_has_ptdf()
         to_nodes = connection__to_node(connection=conn, direction=anything)
         is_bidirectional = length(from_nodes) == 2 && isempty(symdiff(from_nodes, to_nodes))
         is_loseless = length(from_nodes) == 2 && fix_ratio_out_in_connection_flow(;
-            connection=conn,
-            zip((:node1, :node2), from_nodes)...,
-            _strict=false,
+            connection=conn, zip((:node1, :node2), from_nodes)..., _strict=false
         ) == 1
         connection.parameter_values[conn][:has_ptdf] = parameter_value(
             is_bidirectional && is_loseless && all(has_ptdf(node=n) for n in from_nodes),
@@ -288,8 +286,9 @@ Generate `has_lodf` and `connnection_lodf_tolerance` parameters associated to th
 function generate_connection_has_lodf()
     for conn in connection(has_ptdf=true)
         lodf_comms = Tuple(
-            c for c in commodity(commodity_physics=:commodity_physics_lodf)
-                if issubset(connection__from_node(connection=conn, direction=anything), node__commodity(commodity=c))
+            c
+            for c in commodity(commodity_physics=:commodity_physics_lodf)
+            if issubset(connection__from_node(connection=conn, direction=anything), node__commodity(commodity=c))
         )
         connection.parameter_values[conn][:has_lodf] = parameter_value(!isempty(lodf_comms))
         connection.parameter_values[conn][:connnection_lodf_tolerance] = parameter_value(
@@ -446,12 +445,16 @@ function generate_lodf()
     """
     function _lodf_fn(conn_cont)
         n_from, n_to = connection__from_node(connection=conn_cont, direction=anything)
-        denom = 1 - (ptdf_unfiltered(connection=conn_cont, node=n_from) - ptdf_unfiltered(connection=conn_cont, node=n_to))
+        denom = 1 - (
+            ptdf_unfiltered(connection=conn_cont, node=n_from) - ptdf_unfiltered(connection=conn_cont, node=n_to)
+        )
         is_tail = isapprox(denom, 0; atol=0.001)
         if is_tail
             conn_mon -> ptdf_unfiltered(connection=conn_mon, node=n_to)
         else
-            conn_mon -> (ptdf_unfiltered(connection=conn_mon, node=n_from) - ptdf_unfiltered(connection=conn_mon, node=n_to)) / denom
+            conn_mon -> (
+                ptdf_unfiltered(connection=conn_mon, node=n_from) - ptdf_unfiltered(connection=conn_mon, node=n_to)
+            ) / denom
         end
     end
 
@@ -475,13 +478,11 @@ function generate_lodf()
 end
 
 """
-    generate_network_components()
+    generate_ptdf_lodf()
 
-Generate different network related `parameters`.
-
-Runs a number of other functions dealing with different aspects of the network data in sequence.
+Generate ptdf and lodf parameters-
 """
-function generate_network_components()
+function generate_ptdf_lodf()
     generate_node_has_ptdf()
     generate_connection_has_ptdf()
     generate_connection_has_lodf()
