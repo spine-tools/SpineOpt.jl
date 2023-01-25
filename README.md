@@ -12,8 +12,8 @@ New name [spine-tools](https://github.com/spine-tools), used to be spine-project
 
 ### :loudspeaker:UPDATE: Community :rocket: 
 
-To connect with other users, to identify problems and exchange experiences, we will organize monthly early-user meetings for Spine Toolbox and SpineOpt. The meetings will be held every last Wednesday of the month at 10am CEST [:calendar: ics zip](https://github.com/spine-tools/SpineOpt.jl/files/9149471/Spine.Toolbox.and.SpineOpt.Exchange.QA.Help.zip)
-) and can be joined [here](https://teams.microsoft.com/l/meetup-join/19%3ameeting_YjlhOWNmZjYtMDUxMC00MWViLTllMGUtNGI0NWY5NzY2YTU4%40thread.v2/0?context=%7b%22Tid%22%3a%22d7ab8571-7881-415a-b0c2-b5a933c86ee8%22%2c%22Oid%22%3a%227ff67982-a736-42fa-ade6-994bb97d94a8%22%7d).
+To connect with other users, to identify problems and exchange experiences, we will organize monthly early-user meetings for Spine Toolbox and SpineOpt. The meetings will be held first Tuesday of every month at 3pm CEST [:calendar: ics zip](https://github.com/spine-tools/SpineOpt.jl/files/10497817/Spine.Toolbox.and.SpineOpt_.Exchange_.Q.A_.Help.zip)
+and can be joined [here](https://teams.microsoft.com/l/meetup-join/19%3ameeting_MTA4MTZmMjMtNzk0ZS00ZjFkLWFjZjEtODVhNDc3Yjg5MjBj%40thread.v2/0?context=%7b%22Tid%22%3a%22021f8f00-6328-4916-b79c-b49b9a19a7d6%22%2c%22Oid%22%3a%22f45e2eeb-78d8-4230-903d-49e42a141be3%22%7d)..
 
 ### Compatibility
 
