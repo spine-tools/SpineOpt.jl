@@ -79,8 +79,9 @@
         connection_avg_throughflow = m.ext[:spineopt].values[:connection_avg_intact_throughflow]
         @test length(connection_avg_throughflow) == 2
         t1, t2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        key1 = (connection=connection(:connection_ab), stochastic_scenario=stochastic_scenario(:parent), t=t1)
-        key2 = (connection=connection(:connection_ab), stochastic_scenario=stochastic_scenario(:child), t=t2)
+        key = (connection=connection(:connection_ab), node=node(:node_b))
+        key1 = (key..., stochastic_scenario=stochastic_scenario(:parent), t=t1)
+        key2 = (key..., stochastic_scenario=stochastic_scenario(:child), t=t2)
         @test connection_avg_throughflow[key1] == connection_avg_throughflow[key2] == 100
     end
 end

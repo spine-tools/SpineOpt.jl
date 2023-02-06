@@ -145,7 +145,7 @@ import DelimitedFiles: readdlm
         )
         using_spinedb(url_in, SpineOpt)
         SpineOpt.generate_direction()
-        SpineOpt.generate_network_components()
+        SpineOpt.generate_ptdf_lodf()
         SpineOpt.write_ptdfs()
         ptdfs = readdlm("ptdfs.csv", ',', Any, '\n')
         @test ptdfs[1, 1:(end - 1)] == ["connection", "node_a", "node_b", "node_c"]
