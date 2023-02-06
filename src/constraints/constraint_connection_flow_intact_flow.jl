@@ -54,7 +54,8 @@ function add_constraint_connection_flow_intact_flow!(m::Model)
                     - connection_intact_flow[candidate_conn, n, direction(:to_node), s, t] * duration(t)
                     - connection_flow[candidate_conn, n, direction(:from_node), s, t] * duration(t)
                     + connection_flow[candidate_conn, n, direction(:to_node), s, t] * duration(t)
-                ) for candidate_conn in _candidate_connections(conn)
+                )
+                for candidate_conn in _candidate_connections(conn)
                 for n in last(connection__from_node(connection=candidate_conn))
                 for (candidate_conn, n, d, s, t) in connection_flow_indices(
                     m;

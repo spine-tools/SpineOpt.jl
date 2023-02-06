@@ -52,16 +52,18 @@ function _save_connection_avg_throughflow!(m::Model, key, connection_flow)
     sizehint!(avg_throughflow, length(connections) * length(stochastic_scenario()) * length(time_slice(m)))
     for ((conn, n, d, s, t), value) in connection_flow
         conn in connections && start(t) >= m_start || continue
+        # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
         n_from, n_to, _other_nodes... = connection__from_node(connection=conn, direction=anything)
         if (n == n_to && d == direction(:to_node)) || (n == n_from && d == direction(:from_node))
             new_value = 0.5 * value
         elseif (n == n_from && d == direction(:to_node)) || (n == n_to && d == direction(:from_node))
-            new_value = 0.5 * value
+            new_value = -0.5 * value
         else
             continue
         end
-        current_value = get(avg_throughflow, (connection=conn, stochastic_scenario=s, t=t), 0)
-        avg_throughflow[(connection=conn, stochastic_scenario=s, t=t)] = current_value + new_value
+        key = (connection=conn, node=n_to, stochastic_scenario=s, t=t)
+        current_value = get(avg_throughflow, key, 0)
+        avg_throughflow[key] = current_value + new_value
     end
     avg_throughflow
 end
