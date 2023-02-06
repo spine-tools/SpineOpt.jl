@@ -17,7 +17,7 @@ and can be joined [here](https://teams.microsoft.com/l/meetup-join/19%3ameeting_
 
 ### Compatibility
 
-This package requires [Julia](https://julialang.org/) 1.2 or later.
+This package requires [Julia](https://julialang.org/) 1.6 or higher.
 
 ### Installation
 
