@@ -408,6 +408,7 @@
         ["output","connections_decommissioned", null],
         ["output","connections_invested_available", null],
         ["output","connections_invested", null],
+        ["output","contingency_is_binding", null],
         ["output","mp_objective_lowerbound", null],
         ["output","mga_objective", null],
         ["output","node_injection", null],
