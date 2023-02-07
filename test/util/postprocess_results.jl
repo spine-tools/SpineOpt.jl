@@ -197,8 +197,8 @@
             ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "connection_contingency", true],
-            ["node", "node_c", "demand", 120],
-            ["node", "node_b", "demand", -120],
+            ["node", "node_c", "demand", 100],
+            ["node", "node_b", "demand", -100],
         ]
         relationship_parameter_values = [
             ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
@@ -235,7 +235,7 @@
         )
         m = run_spineopt(url_in; log_level=0, optimize=true)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
-        @test !haskey(m.ext[:spineopt].constraints, :connection_flow_lodf)
+        @test haskey(m.ext[:spineopt].constraints, :connection_flow_lodf)
         contingency_is_binding = m.ext[:spineopt].values[:contingency_is_binding]
         @test length(contingency_is_binding) == 3
         conn_cont = connection(:connection_ca)

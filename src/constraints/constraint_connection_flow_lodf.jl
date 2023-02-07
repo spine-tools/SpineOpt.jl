@@ -23,15 +23,6 @@
 Limit the post contingency flow on monitored connection mon to conn_emergency_capacity upon outage of connection cont.
 """
 function add_constraint_connection_flow_lodf!(m::Model)
-    reports = join(
-        unique(report for (report, output) in report__output() if output.name === :contingency_is_binding),
-        ", ",
-        ", and "
-    )
-    if !isempty(reports)
-        @info "found output contingency_is_binding in report(s) $reports - skipping constraint_connection_flow_lodf"
-        return
-    end
     @fetch connection_flow = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:connection_flow_lodf] = Dict(
         (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=s, t=t) => @constraint(
