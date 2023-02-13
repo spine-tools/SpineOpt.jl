@@ -141,6 +141,7 @@ To compile SpineOpt into a system image just do the following:
 	a. Start julia normally.
 
 	b. Create the sysimage with PackageCompiler:
+   
 		```julia
 		using PackageCompiler
 		create_sysimage(; sysimage_path="SpineOpt.dll", precompile_statements_file="file.jl")
