@@ -450,8 +450,13 @@ end
 function _db_solver(f::Function, db_solver_name::Symbol, db_solver_options)
     db_solver_mod_name = Symbol(first(splitext(string(db_solver_name))))
     db_solver_options_parsed = _parse_solver_options(db_solver_name, db_solver_options)
-    @eval Base.Main using $db_solver_mod_name
-    db_solver_mod = getproperty(Base.Main, db_solver_mod_name)
+    db_solver_mod = try
+        @eval Base.Main using $db_solver_mod_name
+        getproperty(Base.Main, db_solver_mod_name)
+    catch
+        @eval using $db_solver_mod_name
+        getproperty(@__MODULE__, db_solver_mod_name)
+    end
     factory = () -> Base.invokelatest(db_solver_mod.Optimizer)
     optimizer_with_attributes(factory, db_solver_options_parsed...)
 end
