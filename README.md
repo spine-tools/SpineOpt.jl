@@ -58,7 +58,7 @@ SpineOpt is designed to be used with [Spine Toolbox](https://github.com/spine-to
 
 	b. Go to **File** -> **Settings** -> **Tools**.
 
-	c. Under **Julia**, enter the path to your Julia executable. It should look something like [this](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/spinetoolbox_settings_juliaexe.png).
+	c. Under **Julia**, enter the path to your Julia executable. It should look something like [this](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/spinetoolbox_settings_juliaexe.png).  In case you have multiple Julia's in your system, the path should point to the same Julia version as is in your environment PATH.
 
 	d. Press **Ok**.
 
