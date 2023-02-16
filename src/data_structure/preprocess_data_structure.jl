@@ -242,8 +242,9 @@ Generate `has_ptdf` and `node_ptdf_threshold` parameters associated to the `node
 function generate_node_has_ptdf()
     for n in node()
         ptdf_comms = Tuple(
-            c for c in node__commodity(node=n)
-                if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
+            c
+            for c in node__commodity(node=n)
+            if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
         )
         node.parameter_values[n][:has_ptdf] = parameter_value(!isempty(ptdf_comms))
         node.parameter_values[n][:node_ptdf_threshold] = parameter_value(
@@ -367,7 +368,7 @@ function _ptdf_unfiltered_values()
         (conn, n) => Dict(
             :ptdf_unfiltered => indexed_parameter_value(
                 Dict(
-                    ind => iszero(val) ? 0 : get(ptdf_by_ind, ind, ptdf_by_ind[:nothing])[i, j]
+                    ind => get(ptdf_by_ind, ind, ptdf_by_ind[:nothing])[i, j]
                     for (ind, val) in indexed_values(connection_availability_factor(connection=conn))
                 )
             )
@@ -397,15 +398,10 @@ function _filter_ptdf_values(ptdf_values)
     else
         1e-3
     end
-
-    function _ptdf_dict(ptdf_val)
-        Dict(ind => !isapprox(val, 0; atol=ptdf_threshold) ? 0 : val for (ind, val) in indexed_values(ptdf_val))
-    end
-
     Dict(
-        conn_n => Dict(:ptdf => indexed_parameter_value(d))
-        for (conn_n, d) in ((conn_n, _ptdf_dict(vals[:ptdf_unfiltered])) for (conn_n, vals) in ptdf_values)
-        if !all(iszero, values(d))
+        (conn, n) => Dict(:ptdf => vals[:ptdf_unfiltered])
+        for ((conn, n), vals) in ptdf_values
+        if !isapprox(vals[:ptdf_unfiltered](), 0; atol=ptdf_threshold)
     )
 end
 
