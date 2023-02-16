@@ -183,7 +183,9 @@ we ensure that it appies to each of the four flow variables
 """
 function process_loss_bidirectional_capacities()
     for c in connection(connection_type=:connection_type_lossless_bidirectional)
-        for (capacity_param, has_capacity_param) in [(:connection_capacity, :has_capacity), (:connection_emergency_capacity, :has_emergency_capacity)]        
+        for (capacity_param, has_capacity_param) in [
+            (:connection_capacity, :has_capacity), (:connection_emergency_capacity, :has_emergency_capacity)
+        ]
             conn_capacity_param = nothing
             found_from = false
             for (n, d) in connection__from_node(connection=c)
@@ -224,10 +226,8 @@ function process_loss_bidirectional_capacities()
             connection.parameter_values[c][has_capacity_param] = parameter_value(found_to || found_from)
         end
     end
-    
     has_capacity = Parameter(:has_capacity, [connection])
     has_emergency_capacity = Parameter(:has_emergency_capacity, [connection])
-
     @eval begin           
         has_capacity = $has_capacity
         has_emergency_capacity = $has_emergency_capacity
@@ -307,10 +307,8 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
     nodecount = length(nodes)
     conncount = length(connections)
     node_numbers = Dict{Object,Int32}(n => ix for (ix, n) in enumerate(nodes))
-
     A = zeros(Float64, nodecount, conncount)  # incidence_matrix
     inv_X = zeros(Float64, conncount, conncount)
-
     for (ix, conn) in enumerate(connections)
         # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
         n_from, n_to = connection__from_node(connection=conn, direction=anything)
@@ -322,7 +320,6 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
         end
         inv_X[ix, ix] = connection_reactance_base(connection=conn) / reactance
     end
-
     i = findfirst(n -> node_opf_type(node=n) == :node_opf_type_reference, nodes)
     if i === nothing
         error("slack node not found")
@@ -337,7 +334,7 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
     )
     B, bipiv, binfo = getrf!(B)
     if binfo < 0
-        error("illegal argument in inputs")  # FIXME: come up with a better message
+        error("illegal argument in inputs")
     elseif binfo > 0
         error("singular value in factorization, possibly there is an islanded bus")
     end
@@ -370,7 +367,7 @@ function _ptdf_unfiltered_values()
         (conn, n) => Dict(
             :ptdf_unfiltered => indexed_parameter_value(
                 Dict(
-                    ind => get(ptdf_by_ind, ind, ptdf_by_ind[:nothing])[i, j]
+                    ind => iszero(val) ? 0 : get(ptdf_by_ind, ind, ptdf_by_ind[:nothing])[i, j]
                     for (ind, val) in indexed_values(connection_availability_factor(connection=conn))
                 )
             )
@@ -400,10 +397,15 @@ function _filter_ptdf_values(ptdf_values)
     else
         1e-3
     end
+
+    _ptdf_dict(ptdf_val)
+        Dict(ind => !isapprox(val, 0; atol=ptdf_threshold) ? 0 : val for (ind, val) in indexed_values(ptdf_val))
+    end
+
     Dict(
-        (conn, n) => Dict(:ptdf => vals[:ptdf_unfiltered])
-        for ((conn, n), vals) in ptdf_values
-        if !isapprox(vals[:ptdf_unfiltered](), 0; atol=ptdf_threshold)
+        conn_n => Dict(:ptdf => indexed_parameter_value(d))
+        for (conn_n, d) in ((conn_n, _ptdf_dict(vals[:ptdf_unfiltered])) for (conn_n, vals) in ptdf_values)
+        if !all(iszero, values(d))
     )
 end
 

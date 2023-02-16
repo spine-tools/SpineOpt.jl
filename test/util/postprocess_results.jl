@@ -252,5 +252,4 @@
         # connection_bc -- t1h2
         @test observed_val = contingency_is_binding[conn_cont, conn_mon, [s_child], t1h2] == 1
     end
-
 end
