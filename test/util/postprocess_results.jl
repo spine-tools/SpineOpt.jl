@@ -235,7 +235,7 @@
         )
         m = run_spineopt(url_in; log_level=0, optimize=true)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
-        @test haskey(m.ext[:spineopt].constraints, :connection_flow_lodf)
+        @test !haskey(m.ext[:spineopt].constraints, :connection_flow_lodf)
         contingency_is_binding = m.ext[:spineopt].values[:contingency_is_binding]
         @test length(contingency_is_binding) == 3
         conn_cont = connection(:connection_ca)
