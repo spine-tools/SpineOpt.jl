@@ -398,7 +398,7 @@ function _filter_ptdf_values(ptdf_values)
         1e-3
     end
 
-    _ptdf_dict(ptdf_val)
+    function _ptdf_dict(ptdf_val)
         Dict(ind => !isapprox(val, 0; atol=ptdf_threshold) ? 0 : val for (ind, val) in indexed_values(ptdf_val))
     end
 
