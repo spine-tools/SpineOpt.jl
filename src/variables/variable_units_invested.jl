@@ -30,6 +30,7 @@ function add_variable_units_invested!(m::Model)
         units_invested_available_indices;
         lb=x -> 0,
         int=units_invested_available_int,
-        fix_value=fix_units_invested
+        fix_value=fix_units_invested,
+        init_value=init_units_invested
     )
 end

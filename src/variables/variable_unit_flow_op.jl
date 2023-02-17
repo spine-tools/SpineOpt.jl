@@ -45,18 +45,11 @@ function unit_flow_op_indices(
         (unit=u, node=n, direction=d, i=i, stochastic_scenario=s, t=t)
         for (u, n, d) in indices(operating_points, unit=unit, node=node, direction=direction)
         for (u, n, d, tb) in unit__node__direction__temporal_block(
-            unit=u,
-            node=n,
-            direction=d,
-            temporal_block=temporal_block,
-            _compact=false,
-        ) for i in intersect(i, 1:length(operating_points(unit=u, node=n, direction=d)))
+            unit=u, node=n, direction=d, temporal_block=temporal_block, _compact=false
+        )
+        for i in intersect(i, 1:length(operating_points(unit=u, node=n, direction=d)))
         for (n, s, t) in node_stochastic_time_indices(
-            m;
-            node=n,
-            stochastic_scenario=stochastic_scenario,
-            temporal_block=tb,
-            t=t,
+            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     ]
 end
@@ -68,5 +61,7 @@ Add `unit_flow_op` variables to model `m`.
 """
 function add_variable_unit_flow_op!(m::Model)
     t0 = _analysis_time(m)
-    add_variable!(m, :unit_flow_op, unit_flow_op_indices; lb=x -> 0, fix_value=fix_unit_flow_op)
+    add_variable!(
+        m, :unit_flow_op, unit_flow_op_indices; lb=x -> 0, fix_value=fix_unit_flow_op, init_value=init_unit_flow_op
+    )
 end

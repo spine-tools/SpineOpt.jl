@@ -35,11 +35,7 @@ function storages_invested_available_indices(
         (node=n, stochastic_scenario=s, t=t)
         for (n, tb) in node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false)
         for (n, s, t) in node_investment_stochastic_time_indices(
-            m;
-            node=n,
-            stochastic_scenario=stochastic_scenario,
-            temporal_block=tb,
-            t=t,
+            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     )
 end
@@ -88,6 +84,7 @@ function add_variable_storages_invested_available!(m::Model)
         storages_invested_available_indices;
         lb=x -> 0,
         int=storages_invested_available_int,
-        fix_value=fix_storages_invested_available
+        fix_value=fix_storages_invested_available,
+        init_value=init_storages_invested_available
     )
 end

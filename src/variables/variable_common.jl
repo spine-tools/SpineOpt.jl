@@ -40,6 +40,7 @@ function add_variable!(
     bin::Union{Function,Nothing}=nothing,
     int::Union{Function,Nothing}=nothing,
     fix_value::Union{Parameter,Nothing}=nothing,
+    init_value::Union{Parameter,Nothing}=nothing,
     non_anticipativity_time::Union{Parameter,Nothing}=nothing,
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
 )
@@ -50,6 +51,7 @@ function add_variable!(
         :bin => bin,
         :int => int,
         :fix_value => fix_value,
+        :init_value => init_value,
         :non_anticipativity_time => non_anticipativity_time,
         :non_anticipativity_margin => non_anticipativity_margin,
     )

@@ -198,7 +198,34 @@ function add_variables!(m; add_user_variables=m -> nothing, log_level=3)
 end
 
 """
-Fix a variable to the values specified by the `fix_value` parameter function, if any.
+Initialize a variable to the values specified by the `init_value` parameter, if any.
+"""
+_init_variable!(m::Model, name::Symbol, definition::Dict, init_value::Nothing) = nothing
+function _init_variable!(m::Model, name::Symbol, definition::Dict, init_value::Parameter)
+    var = m.ext[:spineopt].variables[name]
+    indices = definition[:indices]
+    t_end = model_start(model=m.ext[:spineopt].instance)
+    t = to_time_slice(m; t=TimeSlice(t_end - Minute(1), t_end))
+    for ent in SpineInterface.indices_as_tuples(init_value)
+        for ind in indices(m; t=t, ent...)
+            init_value_ = init_value(; ind..., _strict=false)
+            init_value_ === nothing && continue
+            fix(var[ind], fix_value_; force=true)
+        end
+    end
+end
+
+"""
+Initialize all variables in the given model to the values computed by the corresponding `init_value` parameter, if any.
+"""
+function init_variables!(m::Model)
+    for (name, definition) in m.ext[:spineopt].variables_definition
+        _init_variable!(m, name, definition, definition[:init_value])
+    end
+end
+
+"""
+Fix a variable to the values specified by the `fix_value` parameter, if any.
 """
 _fix_variable!(m::Model, name::Symbol, definition::Dict, fix_value::Nothing) = nothing
 function _fix_variable!(m::Model, name::Symbol, definition::Dict, fix_value::Parameter)
@@ -224,7 +251,7 @@ function _fix_variable!(m::Model, name::Symbol, definition::Dict, fix_value::Par
 end
 
 """
-Fix all variables in the given model to the values computed by the corresponding `fix_value` parameter function, if any.
+Fix all variables in the given model to the values computed by the corresponding `fix_value` parameter, if any.
 """
 function fix_variables!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
@@ -403,6 +430,7 @@ function init_model!(
     @timelog log_level 2 "Adding variables...\n" add_variables!(
         m; add_user_variables=add_user_variables, log_level=log_level
     )
+    @timelog log_level 2 "Initializing variable values..." init_variables!(m)
     @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" add_constraints!(
         m; add_constraints=add_constraints, log_level=log_level
