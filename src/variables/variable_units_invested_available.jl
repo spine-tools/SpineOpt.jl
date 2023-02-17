@@ -35,11 +35,7 @@ function units_invested_available_indices(
         (unit=u, stochastic_scenario=s, t=t)
         for (u, tb) in unit__investment_temporal_block(unit=unit, temporal_block=temporal_block, _compact=false)
         for (u, s, t) in unit_investment_stochastic_time_indices(
-            m;
-            unit=u,
-            stochastic_scenario=stochastic_scenario,
-            temporal_block=tb,
-            t=t,
+            m; unit=u, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     )
 end
@@ -88,6 +84,7 @@ function add_variable_units_invested_available!(m::Model)
         units_invested_available_indices;
         lb=x -> 0,
         int=units_invested_available_int,
-        fix_value=fix_units_invested_available
+        fix_value=fix_units_invested_available,
+        initial_value=initial_units_invested_available
     )
 end
