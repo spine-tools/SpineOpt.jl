@@ -210,7 +210,7 @@ function _init_variable!(m::Model, name::Symbol, definition::Dict, initial_value
         for ind in indices(m; t=t, ent...)
             initial_value_ = initial_value(; ind..., _strict=false)
             initial_value_ === nothing && continue
-            fix(var[ind], fix_value_; force=true)
+            fix(var[ind], initial_value_; force=true)
         end
     end
 end
