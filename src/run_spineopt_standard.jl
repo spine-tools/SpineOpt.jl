@@ -70,7 +70,8 @@ function run_spineopt_kernel!(
 )
     k = _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
     k === nothing && return m
-    @timelog log_level 0 "Making sure that time-indexed data covers the full horizon..." _dry_run(m) || return m
+    @timelog log_level 0 "Building last model window to make sure it's all good..." ok, err = _dry_run(m)
+    ok || throw(err)
     calculate_duals = any(
         startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:spineopt].outputs))
     )
@@ -96,22 +97,20 @@ end
 function _dry_run(m::Model)
     instance = m.ext[:spineopt].instance
     roll_forward_ = roll_forward(model=instance, _strict=false)
-    roll_forward_ in (nothing, 0) && return true
+    roll_forward_ in (nothing, 0) && return true, nothing
     current_window_end = end_(current_window(m))
     folds = 0
     while current_window_end < model_end(model=instance)
         current_window_end += roll_forward_
         folds += 1
     end
-    folds == 0 && return true
+    folds == 0 && return true, nothing
     try
         roll_temporal_structure!(m, folds)
-    catch err
-        @log 0 0 "\n$(err.msg)" 
-        false
-    else
         roll_temporal_structure!(m, -folds)
-        true
+        true, nothing
+    catch err
+        false, err
     end
 end
 
