@@ -70,6 +70,7 @@ function run_spineopt_kernel!(
 )
     k = _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
     k === nothing && return m
+    @timelog log_level 0 "Making sure that time-indexed data covers the full horizon..." _dry_run(m) || return m
     calculate_duals = any(
         startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:spineopt].outputs))
     )
@@ -91,6 +92,29 @@ function run_spineopt_kernel!(
     write_report(m, url_out; alternative=alternative, log_level=log_level)
     m
 end
+
+function _dry_run(m::Model)
+    instance = m.ext[:spineopt].instance
+    roll_forward_ = roll_forward(model=instance, _strict=false)
+    roll_forward_ in (nothing, 0) && return true
+    current_window_end = end_(current_window(m))
+    folds = 0
+    while current_window_end < model_end(model=instance)
+        current_window_end += roll_forward_
+        folds += 1
+    end
+    folds == 0 && return true
+    try
+        roll_temporal_structure!(m, folds)
+    catch err
+        @log 0 0 "\n$(err.msg)" 
+        false
+    else
+        roll_temporal_structure!(m, -folds)
+        true
+    end
+end
+
 
 function _dump_resume_data(m::Model, k, ::Nothing) end
 function _dump_resume_data(m::Model, k, resume_file_path)
