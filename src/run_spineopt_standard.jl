@@ -198,29 +198,29 @@ function add_variables!(m; add_user_variables=m -> nothing, log_level=3)
 end
 
 """
-Initialize a variable to the values specified by the `init_value` parameter, if any.
+Initialize a variable to the values specified by the `initial_value` parameter, if any.
 """
-_init_variable!(m::Model, name::Symbol, definition::Dict, init_value::Nothing) = nothing
-function _init_variable!(m::Model, name::Symbol, definition::Dict, init_value::Parameter)
+_init_variable!(m::Model, name::Symbol, definition::Dict, initial_value::Nothing) = nothing
+function _init_variable!(m::Model, name::Symbol, definition::Dict, initial_value::Parameter)
     var = m.ext[:spineopt].variables[name]
     indices = definition[:indices]
     t_end = model_start(model=m.ext[:spineopt].instance)
     t = to_time_slice(m; t=TimeSlice(t_end - Minute(1), t_end))
-    for ent in SpineInterface.indices_as_tuples(init_value)
+    for ent in SpineInterface.indices_as_tuples(initial_value)
         for ind in indices(m; t=t, ent...)
-            init_value_ = init_value(; ind..., _strict=false)
-            init_value_ === nothing && continue
+            initial_value_ = initial_value(; ind..., _strict=false)
+            initial_value_ === nothing && continue
             fix(var[ind], fix_value_; force=true)
         end
     end
 end
 
 """
-Initialize all variables in the given model to the values computed by the corresponding `init_value` parameter, if any.
+Initialize all variables in the given model to the values computed by the corresponding `initial_value` parameter, if any.
 """
 function init_variables!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
-        _init_variable!(m, name, definition, definition[:init_value])
+        _init_variable!(m, name, definition, definition[:initial_value])
     end
 end
 

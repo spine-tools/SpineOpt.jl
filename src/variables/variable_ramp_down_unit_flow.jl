@@ -63,6 +63,6 @@ function add_variable_ramp_down_unit_flow!(m::Model)
         ramp_down_unit_flow_indices;
         lb=x -> 0,
         fix_value=fix_ramp_down_unit_flow,
-        init_value=init_ramp_down_unit_flow
+        initial_value=initial_ramp_down_unit_flow
     )
 end

@@ -69,6 +69,6 @@ function add_variable_nonspin_ramp_up_unit_flow!(m::Model)
         nonspin_ramp_up_unit_flow_indices;
         lb=x -> 0,
         fix_value=fix_nonspin_ramp_up_unit_flow,
-        init_value=init_nonspin_ramp_up_unit_flow
+        initial_value=initial_nonspin_ramp_up_unit_flow
     )
 end

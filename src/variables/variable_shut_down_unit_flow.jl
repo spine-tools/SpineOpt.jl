@@ -63,6 +63,6 @@ function add_variable_shut_down_unit_flow!(m::Model)
         shut_down_unit_flow_indices;
         lb=x -> 0,
         fix_value=fix_shut_down_unit_flow´,
-        init_value=init_shut_down_unit_flow
+        initial_value=initial_shut_down_unit_flow
     )
 end

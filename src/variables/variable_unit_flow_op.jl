@@ -62,6 +62,6 @@ Add `unit_flow_op` variables to model `m`.
 function add_variable_unit_flow_op!(m::Model)
     t0 = _analysis_time(m)
     add_variable!(
-        m, :unit_flow_op, unit_flow_op_indices; lb=x -> 0, fix_value=fix_unit_flow_op, init_value=init_unit_flow_op
+        m, :unit_flow_op, unit_flow_op_indices; lb=x -> 0, fix_value=fix_unit_flow_op, initial_value=initial_unit_flow_op
     )
 end

@@ -56,6 +56,6 @@ function add_variable_nonspin_units_shut_down!(m::Model)
         bin=units_on_bin,
         int=units_on_int,
         fix_value=fix_nonspin_units_shut_down,
-        init_value=init_nonspin_units_shut_down
+        initial_value=initial_nonspin_units_shut_down
     )
 end

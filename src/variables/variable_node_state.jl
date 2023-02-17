@@ -56,6 +56,6 @@ function add_variable_node_state!(m::Model)
             _strict=false,
         ),
         fix_value=fix_node_state,
-        init_value=init_node_state
+        initial_value=initial_node_state
     )
 end
