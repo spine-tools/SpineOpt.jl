@@ -42,7 +42,6 @@ function rerun_spineopt!(
         log_level=log_level,
         alternative_objective=alternative_objective
     )
-    init_outputs!(m)
     run_spineopt_kernel!(
         m,
         url_out;
@@ -56,112 +55,28 @@ function rerun_spineopt!(
     )
 end
 
-function run_spineopt_kernel!(
-    m,
-    url_out::Union{String,Nothing};
-    update_constraints=m -> nothing,
-    log_level=3,
-    optimize=true,
-    update_names=false,
-    alternative="",
-    write_as_roll=0,
-    resume_file_path=nothing,
-
+"""
+Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
+"""
+function init_model!(
+    m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3, alternative_objective=m -> nothing
 )
-    k = _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
-    k === nothing && return m
-    @timelog log_level 0 "Building last model window to make sure it's all good..." ok, err = _dry_run(m)
-    ok || throw(err)
-    calculate_duals = any(
-        startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:spineopt].outputs))
+    @timelog log_level 2 "Adding variables...\n" _add_variables!(
+        m; add_user_variables=add_user_variables, log_level=log_level
     )
-    while optimize
-        @log log_level 1 "\nWindow $k: $(current_window(m))"
-        optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals) || break
-        if write_as_roll > 0 && k % write_as_roll == 0
-            if write_report(m, url_out; alternative=alternative, log_level=log_level)
-                _dump_resume_data(m, k, resume_file_path)
-                clear_results!(m)
-            end
-        end
-        if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
-            @timelog log_level 2 " ... Rolling complete\n" break
-        end
-        update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
-        k += 1
-    end
-    write_report(m, url_out; alternative=alternative, log_level=log_level)
-    m
-end
-
-function _dry_run(m::Model)
-    instance = m.ext[:spineopt].instance
-    roll_forward_ = roll_forward(model=instance, _strict=false)
-    roll_forward_ in (nothing, 0) && return true, nothing
-    current_window_end = end_(current_window(m))
-    folds = 0
-    while current_window_end < model_end(model=instance)
-        current_window_end += roll_forward_
-        folds += 1
-    end
-    folds == 0 && return true, nothing
-    try
-        roll_temporal_structure!(m, folds)
-        roll_temporal_structure!(m, -folds)
-        true, nothing
-    catch err
-        false, err
-    end
-end
-
-
-function _dump_resume_data(m::Model, k, ::Nothing) end
-function _dump_resume_data(m::Model, k, resume_file_path)
-    resume_data = Dict("values" => m.ext[:spineopt].values, "window" => k)
-    open(resume_file_path, "w") do f
-        JSON.print(f, resume_data, 4)
-    end
-end
-
-function _load_variable_value!(m::Model, name::Symbol, indices::Function, values)
-    m.ext[:spineopt].values[name] = Dict(
-        ind => values[string(name)][string(ind)]
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)), temporal_block=anything)
+    @timelog log_level 2 "Initializing variable values..." _init_variables!(m)
+    @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
+    @timelog log_level 2 "Adding constraints...\n" _add_constraints!(
+        m; add_constraints=add_constraints, log_level=log_level
     )
-end
-
-function _load_variable_values!(m::Model, values)
-    for (name, definition) in m.ext[:spineopt].variables_definition
-        _load_variable_value!(m, name, definition[:indices], values)
-    end
-end
-
-_resume_run!(m, ::Nothing, update_constraints, log_level, update_names) = 1
-function _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
-    !isfile(resume_file_path) && return 1
-    try
-        resume_data = JSON.parsefile(resume_file_path)
-        k, values = resume_data["window"], resume_data["values"]
-        @log log_level 1 "Using data from $resume_file_path to skip through windows 1 to $k..."
-        roll_temporal_structure!(m::Model, k - 1)
-        _load_variable_values!(m, values)
-        if !roll_temporal_structure!(m::Model)
-            @log log_level 1 "Nothing to resume - window $k was the last one"
-            nothing
-        else
-            update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
-            k + 1
-        end
-    catch err
-        @log log_level 1 "Couldn't resume run from $resume_file_path - $err"
-        1
-    end
+    @timelog log_level 2 "Setting objective..." _set_objective!(m; alternative_objective=alternative_objective)
+    _init_outputs!(m)
 end
 
 """
 Add SpineOpt variables to the given model.
 """
-function add_variables!(m; add_user_variables=m -> nothing, log_level=3)
+function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
     @timelog log_level 3 "- [variable_units_available]" add_variable_units_available!(m)
     @timelog log_level 3 "- [variable_units_on]" add_variable_units_on!(m)
     @timelog log_level 3 "- [variable_units_started_up]" add_variable_units_started_up!(m)
@@ -198,6 +113,15 @@ function add_variables!(m; add_user_variables=m -> nothing, log_level=3)
 end
 
 """
+Initialize all variables in the given model to the values computed by the corresponding `initial_value` parameter, if any.
+"""
+function _init_variables!(m::Model)
+    for (name, definition) in m.ext[:spineopt].variables_definition
+        _init_variable!(m, name, definition, definition[:initial_value])
+    end
+end
+
+"""
 Initialize a variable to the values specified by the `initial_value` parameter, if any.
 """
 _init_variable!(m::Model, name::Symbol, definition::Dict, initial_value::Nothing) = nothing
@@ -216,125 +140,9 @@ function _init_variable!(m::Model, name::Symbol, definition::Dict, initial_value
 end
 
 """
-Initialize all variables in the given model to the values computed by the corresponding `initial_value` parameter, if any.
-"""
-function init_variables!(m::Model)
-    for (name, definition) in m.ext[:spineopt].variables_definition
-        _init_variable!(m, name, definition, definition[:initial_value])
-    end
-end
-
-"""
-Fix a variable to the values specified by the `fix_value` parameter, if any.
-"""
-_fix_variable!(m::Model, name::Symbol, definition::Dict, fix_value::Nothing) = nothing
-function _fix_variable!(m::Model, name::Symbol, definition::Dict, fix_value::Parameter)
-    var = m.ext[:spineopt].variables[name]
-    indices = definition[:indices]
-    bin = definition[:bin]
-    int = definition[:int]
-    lb = definition[:lb]
-    ub = definition[:ub]
-    for ent in SpineInterface.indices_as_tuples(fix_value)
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)), ent...)
-            fix_value_ = fix_value(; ind..., _strict=false)
-            fix_value_ === nothing && continue
-            if !isnan(fix_value_)
-                fix(var[ind], fix_value_; force=true)
-            elseif is_fixed(var[ind])
-                unfix(var[ind])
-                lb != nothing && _set_lower_bound(var[ind], lb(ind))
-                ub != nothing && _set_upper_bound(var[ind], ub(ind))
-            end
-        end
-    end
-end
-
-"""
-Fix all variables in the given model to the values computed by the corresponding `fix_value` parameter, if any.
-"""
-function fix_variables!(m::Model)
-    for (name, definition) in m.ext[:spineopt].variables_definition
-        _fix_variable!(m, name, definition, definition[:fix_value])
-    end
-end
-
-function _update_variable!(m::Model, name::Symbol, definition::Dict)
-    var = m.ext[:spineopt].variables[name]
-    val = m.ext[:spineopt].values[name]
-    indices = definition[:indices]
-    lb = definition[:lb]
-    ub = definition[:ub]
-    for ind in indices(m; t=time_slice(m))
-        is_fixed(var[ind]) && unfix(var[ind])
-        lb != nothing && _set_lower_bound(var[ind], lb(ind))
-        ub != nothing && _set_upper_bound(var[ind], ub(ind))
-        history_t = t_history_t(m; t=ind.t)
-        history_t === nothing && continue
-        for history_ind in indices(m; ind..., t=history_t)
-            fix(var[history_ind], val[ind]; force=true)
-        end
-    end
-    for ind in indices(m; t=history_time_slice(m))
-        is_fixed(var[ind]) && continue
-        lb != nothing && _set_lower_bound(var[ind], lb(ind))
-        ub != nothing && _set_upper_bound(var[ind], ub(ind))
-    end
-end
-
-function update_variables!(m::Model)
-    for (name, definition) in m.ext[:spineopt].variables_definition
-        _update_variable!(m, name, definition)
-    end
-end
-
-function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict)
-    var = m.ext[:spineopt].variables[name]
-    val = m.ext[:spineopt].values[name]
-    indices = definition[:indices]
-    non_anticipativity_time = definition[:non_anticipativity_time]
-    non_anticipativity_time === nothing && return
-    non_anticipativity_margin = definition[:non_anticipativity_margin]
-    window_start = start(current_window(m))
-    roll_forward_ = roll_forward(model=m.ext[:spineopt].instance)
-    for ent in SpineInterface.indices_as_tuples(non_anticipativity_time)
-        for ind in indices(m; t=time_slice(m), ent...)
-            non_ant_time = non_anticipativity_time(; ind..., _strict=false)
-            non_ant_margin = if non_anticipativity_margin === nothing
-                nothing
-            else
-                non_anticipativity_margin(; ind..., _strict=false)
-            end
-            if non_ant_time != nothing && start(ind.t) < window_start +  non_ant_time
-                next_t = to_time_slice(m; t=ind.t + roll_forward_)
-                next_inds = indices(m; ind..., t=next_t)
-                if !isempty(next_inds)
-                    next_ind = first(next_inds)
-                    if non_ant_margin != nothing
-                        lb = val[next_ind] - non_ant_margin
-                        (lb < 0) && (lb = 0)
-                        set_lower_bound(var[ind], lb)
-                        ub = val[next_ind] + non_ant_margin
-                        set_upper_bound(var[ind], ub)
-                    else                    
-                        fix(var[ind], val[next_ind]; force=true)
-                    end
-                end
-            end
-        end
-    end
-end
-
-function apply_non_anticipativity_constraints!(m::Model)
-    for (name, definition) in m.ext[:spineopt].variables_definition
-        _apply_non_anticipativity_constraint!(m, name, definition)
-    end
-end
-
-"""
 Add SpineOpt constraints to the given model.
 """
-function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
+function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_unit_pw_heat_rate]" add_constraint_unit_pw_heat_rate!(m)
     @timelog log_level 3 "- [constraint_user_constraint]" add_constraint_user_constraint!(m)
     @timelog log_level 3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
@@ -413,7 +221,66 @@ function add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     _update_constraint_names!(m)
 end
 
-function init_outputs!(m::Model)
+function _set_objective!(m::Model; alternative_objective=m -> nothing)
+    alt_obj = alternative_objective(m)
+    if alt_obj == nothing
+        _create_objective_terms!(m)
+        total_discounted_costs = sum(
+            in_window + beyond_window
+            for (in_window, beyond_window) in values(m.ext[:spineopt].objective_terms)
+        )
+        if !iszero(total_discounted_costs)
+            @objective(m, Min, total_discounted_costs)
+        else
+            @warn "zero objective"
+        end
+    else
+        alt_obj
+    end
+end
+
+function _create_objective_terms!(m)
+    window_end = end_(current_window(m))
+    window_very_end = end_(last(time_slice(m)))
+    beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
+    in_window = collect(to_time_slice(m; t=current_window(m)))
+    filter!(t -> !(t in beyond_window), in_window)
+    for term in _objective_terms(m)
+        func = eval(term)
+        m.ext[:spineopt].objective_terms[term] = (func(m, in_window), func(m, beyond_window))
+    end
+end
+
+function _objective_terms(m)
+    # FIXME: this could just be Benders defining the objective function itself
+    # if we have a decomposed structure, master problem costs (investments) should not be included
+    invest_terms = [:unit_investment_costs, :connection_investment_costs, :storage_investment_costs]
+    op_terms = [
+        :variable_om_costs,
+        :fixed_om_costs,
+        :taxes,
+        :fuel_costs,
+        :start_up_costs,
+        :shut_down_costs,
+        :objective_penalties,
+        :connection_flow_costs,
+        :renewable_curtailment_costs,
+        :res_proc_costs,
+        :ramp_costs,
+        :units_on_costs,
+    ]
+    if model_type(model=m.ext[:spineopt].instance) in (:spineopt_standard, :spineopt_mga)
+        if m.ext[:spineopt].is_subproblem
+            op_terms
+        else
+            [op_terms; invest_terms]
+        end
+    elseif model_type(model=m.ext[:spineopt].instance) == :spineopt_benders_master
+        invest_terms
+    end
+end
+
+function _init_outputs!(m::Model)
     for r in model__report(model=m.ext[:spineopt].instance)
         for o in report__output(report=r)
             get!(m.ext[:spineopt].outputs, o.name, Dict{NamedTuple,Dict}())
@@ -421,21 +288,97 @@ function init_outputs!(m::Model)
     end
 end
 
-"""
-Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
-"""
-function init_model!(
-    m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3, alternative_objective=m -> nothing
+function run_spineopt_kernel!(
+    m,
+    url_out::Union{String,Nothing};
+    update_constraints=m -> nothing,
+    log_level=3,
+    optimize=true,
+    update_names=false,
+    alternative="",
+    write_as_roll=0,
+    resume_file_path=nothing,
+
 )
-    @timelog log_level 2 "Adding variables...\n" add_variables!(
-        m; add_user_variables=add_user_variables, log_level=log_level
+    k = _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
+    k === nothing && return m
+    @timelog log_level 0 "Building last model window to make sure it's all good..." ok, err = _dry_run(m)
+    ok || throw(err)
+    calculate_duals = any(
+        startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:spineopt].outputs))
     )
-    @timelog log_level 2 "Initializing variable values..." init_variables!(m)
-    @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
-    @timelog log_level 2 "Adding constraints...\n" add_constraints!(
-        m; add_constraints=add_constraints, log_level=log_level
+    while optimize
+        @log log_level 1 "\nWindow $k: $(current_window(m))"
+        optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals) || break
+        if write_as_roll > 0 && k % write_as_roll == 0
+            if write_report(m, url_out; alternative=alternative, log_level=log_level)
+                _dump_resume_data(m, k, resume_file_path)
+                _clear_results!(m)
+            end
+        end
+        if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
+            @timelog log_level 2 " ... Rolling complete\n" break
+        end
+        update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
+        k += 1
+    end
+    write_report(m, url_out; alternative=alternative, log_level=log_level)
+    m
+end
+
+_resume_run!(m, ::Nothing, update_constraints, log_level, update_names) = 1
+function _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
+    !isfile(resume_file_path) && return 1
+    try
+        resume_data = JSON.parsefile(resume_file_path)
+        k, values = resume_data["window"], resume_data["values"]
+        @log log_level 1 "Using data from $resume_file_path to skip through windows 1 to $k..."
+        roll_temporal_structure!(m::Model, k - 1)
+        _load_variable_values!(m, values)
+        if !roll_temporal_structure!(m::Model)
+            @log log_level 1 "Nothing to resume - window $k was the last one"
+            nothing
+        else
+            update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
+            k + 1
+        end
+    catch err
+        @log log_level 1 "Couldn't resume run from $resume_file_path - $err"
+        1
+    end
+end
+
+function _load_variable_values!(m::Model, values)
+    for (name, definition) in m.ext[:spineopt].variables_definition
+        _load_variable_value!(m, name, definition[:indices], values)
+    end
+end
+
+function _load_variable_value!(m::Model, name::Symbol, indices::Function, values)
+    m.ext[:spineopt].values[name] = Dict(
+        ind => values[string(name)][string(ind)]
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)), temporal_block=anything)
     )
-    @timelog log_level 2 "Setting objective..." set_objective!(m; alternative_objective=alternative_objective)
+end
+
+function _dry_run(m::Model)
+    instance = m.ext[:spineopt].instance
+    roll_forward_ = roll_forward(model=instance, _strict=false)
+    roll_forward_ in (nothing, 0) && return true, nothing
+    current_window_end = end_(current_window(m))
+    folds = 0
+    while current_window_end < model_end(model=instance)
+        current_window_end += roll_forward_
+        folds += 1
+    end
+    folds == 0 && return true, nothing
+    try
+        roll_temporal_structure!(m, folds)
+        roll_temporal_structure!(m, -folds)
+        true, nothing
+    catch err
+        false, err
+    end
 end
 
 """
@@ -449,7 +392,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
     @timelog log_level 0 "Optimizing model $(m.ext[:spineopt].instance)..." optimize!(m)
     if termination_status(m) in (MOI.OPTIMAL, MOI.TIME_LIMIT)
         @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." save_model_results!(
+        @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." _save_model_results!(
             m; iterations=iterations
         )
         if calculate_duals
@@ -457,9 +400,9 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
             @timelog log_level 1 "Copying model" (m_dual_lp, ref_map) = copy_model(m)
             lp_solver = m.ext[:spineopt].lp_solver
             @timelog log_level 1 "Setting LP solver $(lp_solver)..." set_optimizer(m_dual_lp, lp_solver)
-            @timelog log_level 1 "Fixing integer variables..." relax_integer_vars(m, ref_map)
-            save_marginal_value_promises!(m, ref_map)
-            save_bound_marginal_value_promises!(m, ref_map)
+            @timelog log_level 1 "Fixing integer variables..." _relax_integer_vars(m, ref_map)
+            _save_marginal_value_promises!(m, ref_map)
+            _save_bound_marginal_value_promises!(m, ref_map)
             if isdefined(Threads, Symbol("@spawn"))
                 task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
                 lock(m.ext[:spineopt].dual_solves_lock)
@@ -472,12 +415,12 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
                 @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
             end
         end
-        @timelog log_level 2 "Saving outputs..." save_outputs!(m; iterations=iterations)
+        @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
         true
     elseif termination_status(m) == MOI.INFEASIBLE
         msg = "model is infeasible - if conflicting constraints can be identified, they will be reported below\n"
         printstyled(msg; bold=true) 
-        compute_and_print_conflict!(m)
+        _compute_and_print_conflict!(m)
         false
     else
         @log log_level 0 "Unable to find solution (reason: $(termination_status(m)))"
@@ -489,26 +432,32 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
 end
 
 """
-The value of a JuMP variable, rounded if necessary.
+Save a model results: first postprocess results, then save variables and objective values, and finally save outputs
 """
-_variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value(v)) : JuMP.value(v)
+function _save_model_results!(m; iterations=nothing)
+    _save_variable_values!(m)
+    _save_objective_values!(m)
+    postprocess_results!(m)
+end
 
 """
 Save the value of all variables in a model.
 """
-function save_variable_values!(m::Model)
+function _save_variable_values!(m::Model)
     for (name, var) in m.ext[:spineopt].variables
         m.ext[:spineopt].values[name] = Dict(ind => _variable_value(v) for (ind, v) in var)
     end
 end
 
-_value(v::GenericAffExpr) = JuMP.value(v)
-_value(v) = v
+"""
+The value of a JuMP variable, rounded if necessary.
+"""
+_variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value(v)) : JuMP.value(v)
 
 """
 Save the value of the objective terms in a model.
 """
-function save_objective_values!(m::Model)
+function _save_objective_values!(m::Model)
     ind = (model=m.ext[:spineopt].instance, t=current_window(m))
     for (term, (in_window, _beyond_window)) in m.ext[:spineopt].objective_terms
         m.ext[:spineopt].values[term] = Dict(ind => _value(realize(in_window)))
@@ -519,58 +468,105 @@ function save_objective_values!(m::Model)
     nothing
 end
 
-function _value_by_entity_non_aggregated(m, value::Dict, crop_to_window)
-    by_entity_non_aggr = Dict()
-    analysis_time = start(current_window(m))
-    for (ind, val) in value
-        t_keys = collect(_time_slice_keys(ind))
-        t = maximum(ind[k] for k in t_keys)
-        t <= analysis_time && continue
-        crop_to_window && start(t) >= end_(current_window(m)) && continue
-        entity = _drop_key(ind, t_keys...)
-        entity = _flatten_stochastic_path(entity)
-        by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
-        by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, analysis_time, Dict{TimeSlice,Any}())
-        by_time_slice_non_aggr[t] = val
-    end
-    by_entity_non_aggr
-end
+_value(v::GenericAffExpr) = JuMP.value(v)
+_value(v) = v
 
-function _flatten_stochastic_path(entity::NamedTuple)
-    stoch_path = get(entity, :stochastic_path, nothing)
-    stoch_path === nothing && return entity
-    flat_stoch_path = (; Dict(Symbol(:stochastic_scenario, k) => scen for (k, scen) in enumerate(stoch_path))...)
-    (; _drop_key(entity, :stochastic_path)..., flat_stoch_path...)
-end
-
-function _value_by_entity_non_aggregated(m, parameter::Parameter, crop_to_window)
-    by_entity_non_aggr = Dict()
-    analysis_time = start(current_window(m))
-    for entity in indices_as_tuples(parameter)
-        for (scen, t) in stochastic_time_indices(m)
-            crop_to_window && start(t) >= end_(current_window(m)) && continue
-            entity = (; entity..., stochastic_scenario=scen)
-            val = parameter(; entity..., analysis_time=analysis_time, t=t, _strict=false)
-            val === nothing && continue
-            by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
-            by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, analysis_time, Dict{TimeSlice,Any}())
-            by_time_slice_non_aggr[t] = val
+function _relax_integer_vars(m::Model, ref_map::ReferenceMap)
+    # Collect values before calling `fix` on any of the variables to avoid OptimizeNotCalled()
+    integers_definition = Dict(
+        name => def
+        for (name, def) in m.ext[:spineopt].variables_definition
+        if def[:bin] !== nothing || def[:int] !== nothing
+    )
+    values = Dict(
+        name => Dict(
+            ind => _variable_value(m.ext[:spineopt].variables[name][ind])
+            for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))
+        )
+        for (name, def) in integers_definition
+    )
+    for (name, def) in integers_definition
+        bin = def[:bin]
+        int = def[:int]
+        indices = def[:indices]
+        var = m.ext[:spineopt].variables[name]
+        vals = values[name]
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
+            v = var[ind]
+            ref_v = ref_map[v]
+            val = vals[ind]
+            fix(ref_v, val; force=true)
+            (bin != nothing && bin(ind)) && unset_binary(ref_v)
+            (int != nothing && int(ind)) && unset_integer(ref_v)
         end
     end
-    by_entity_non_aggr
 end
 
-function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, output_time_slices::Array)
-    by_time_stamp_aggr = Dict()
-    for t_aggr in output_time_slices
-        time_slices = filter(t -> iscontained(t, t_aggr), keys(by_time_slice_non_aggr))
-        isempty(time_slices) && continue  # No aggregation possible
-        by_time_stamp_aggr[start(t_aggr)] = sum(by_time_slice_non_aggr[t] for t in time_slices) / length(time_slices)
+#=
+function _relax_integer_variables(model::Optimizer)
+    try
+        CPLEX
+        ret = CPLEX.CPXchgprobtype(model.env, model.lp, CPLEX.CPXPROB_FIXEDMILP)
+        if ret == 0
+            true
+        else
+            error_str = CPLEX._get_error_string(model.env, ret)
+            @warn "error while changing CPLEX problem type to fixed MIP: $error_str - falling back to manual method"
+            false
+        end    
+    catch
+        false
     end
-    by_time_stamp_aggr
 end
-function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, ::Nothing)
-    Dict(start(t) => v for (t, v) in by_time_slice_non_aggr)
+=#
+
+function _save_marginal_value_promises!(m::Model, ref_map::JuMP.ReferenceMap)
+    for (constraint_name, con) in m.ext[:spineopt].constraints
+        output_name = Symbol(string("constraint_", constraint_name))
+        if haskey(m.ext[:spineopt].outputs, output_name)
+            _save_marginal_value_promise!(m, con, output_name, ref_map)
+        end
+    end
+end
+
+function _save_marginal_value_promise!(m::Model, con, output_name::Symbol, ref_map::JuMP.ReferenceMap)
+    m.ext[:spineopt].values[output_name] = Dict(ind => DualPromise(ref_map[con[ind]]) for ind in keys(con))
+end
+
+function _save_bound_marginal_value_promises!(m::Model, ref_map::JuMP.ReferenceMap)
+    for (variable_name, var) in m.ext[:spineopt].variables
+        output_name = Symbol(string("bound_", variable_name))
+        if haskey(m.ext[:spineopt].outputs, output_name)
+            _save_bound_marginal_value_promise!(m, var, output_name, ref_map)
+        end
+    end
+end
+
+function _save_bound_marginal_value_promise!(m::Model, var, output_name::Symbol, ref_map::JuMP.ReferenceMap)
+    m.ext[:spineopt].values[output_name] = Dict(ind => ReducedCostPromise(ref_map[var[ind]]) for ind in keys(var))
+end
+
+"""
+Save the outputs of a model.
+"""
+function _save_outputs!(m; iterations=nothing)
+    reports_by_output = Dict()
+    for rpt in model__report(model=m.ext[:spineopt].instance), out in report__output(report=rpt)
+        push!(get!(reports_by_output, out, []), rpt)
+    end
+    is_last_window = end_(current_window(m)) >= model_end(model=m.ext[:spineopt].instance)
+    for (out, rpts) in reports_by_output
+        value = get(m.ext[:spineopt].values, out.name, nothing)
+        crop_to_window = !is_last_window && all(overwrite_results_on_rolling(report=rpt, output=out) for rpt in rpts)
+        if _save_output!(m, out, value, crop_to_window; iterations=iterations)
+            continue
+        end
+        param = parameter(out.name, @__MODULE__)
+        if _save_output!(m, out, param, crop_to_window; iterations=iterations)
+            continue
+        end
+        @warn "can't find any values for '$(out.name)'"
+    end
 end
 
 function _save_output!(m, out, value_or_param, crop_to_window; iterations=nothing)
@@ -606,36 +602,205 @@ function _save_output!(m, out, value_or_param, crop_to_window; iterations=nothin
 end
 _save_output!(m, out, ::Nothing, crop_to_window; iterations=iterations) = false
 
-"""
-Save the outputs of a model.
-"""
-function save_outputs!(m; iterations=nothing)
-    reports_by_output = Dict()
-    for rpt in model__report(model=m.ext[:spineopt].instance), out in report__output(report=rpt)
-        push!(get!(reports_by_output, out, []), rpt)
+function _value_by_entity_non_aggregated(m, value::Dict, crop_to_window)
+    by_entity_non_aggr = Dict()
+    analysis_time = start(current_window(m))
+    for (ind, val) in value
+        t_keys = collect(_time_slice_keys(ind))
+        t = maximum(ind[k] for k in t_keys)
+        t <= analysis_time && continue
+        crop_to_window && start(t) >= end_(current_window(m)) && continue
+        entity = _drop_key(ind, t_keys...)
+        entity = _flatten_stochastic_path(entity)
+        by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
+        by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, analysis_time, Dict{TimeSlice,Any}())
+        by_time_slice_non_aggr[t] = val
     end
-    is_last_window = end_(current_window(m)) >= model_end(model=m.ext[:spineopt].instance)
-    for (out, rpts) in reports_by_output
-        value = get(m.ext[:spineopt].values, out.name, nothing)
-        crop_to_window = !is_last_window && all(overwrite_results_on_rolling(report=rpt, output=out) for rpt in rpts)
-        if _save_output!(m, out, value, crop_to_window; iterations=iterations)
-            continue
+    by_entity_non_aggr
+end
+function _value_by_entity_non_aggregated(m, parameter::Parameter, crop_to_window)
+    by_entity_non_aggr = Dict()
+    analysis_time = start(current_window(m))
+    for entity in indices_as_tuples(parameter)
+        for (scen, t) in stochastic_time_indices(m)
+            crop_to_window && start(t) >= end_(current_window(m)) && continue
+            entity = (; entity..., stochastic_scenario=scen)
+            val = parameter(; entity..., analysis_time=analysis_time, t=t, _strict=false)
+            val === nothing && continue
+            by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
+            by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, analysis_time, Dict{TimeSlice,Any}())
+            by_time_slice_non_aggr[t] = val
         end
-        param = parameter(out.name, @__MODULE__)
-        if _save_output!(m, out, param, crop_to_window; iterations=iterations)
-            continue
+    end
+    by_entity_non_aggr
+end
+
+function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, output_time_slices::Array)
+    by_time_stamp_aggr = Dict()
+    for t_aggr in output_time_slices
+        time_slices = filter(t -> iscontained(t, t_aggr), keys(by_time_slice_non_aggr))
+        isempty(time_slices) && continue  # No aggregation possible
+        by_time_stamp_aggr[start(t_aggr)] = sum(by_time_slice_non_aggr[t] for t in time_slices) / length(time_slices)
+    end
+    by_time_stamp_aggr
+end
+function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, ::Nothing)
+    Dict(start(t) => v for (t, v) in by_time_slice_non_aggr)
+end
+
+function _flatten_stochastic_path(entity::NamedTuple)
+    stoch_path = get(entity, :stochastic_path, nothing)
+    stoch_path === nothing && return entity
+    flat_stoch_path = (; Dict(Symbol(:stochastic_scenario, k) => scen for (k, scen) in enumerate(stoch_path))...)
+    (; _drop_key(entity, :stochastic_path)..., flat_stoch_path...)
+end
+
+function _compute_and_print_conflict!(m)
+    compute_conflict!(m)    
+    for (f, s) in list_of_constraint_types(m)
+        for con in all_constraints(m, f, s)
+            if MOI.get(m, MOI.ConstraintConflictStatus(), con) == MOI.IN_CONFLICT                
+                println(con)
+            end
         end
-        @warn "can't find any values for '$(out.name)'"
     end
 end
 
 """
-Save a model results: first postprocess results, then save variables and objective values, and finally save outputs
+    write_report(m, default_url, output_value=output_value; alternative="")
+
+Write report from given model into a db.
+
+# Arguments
+- `m::Model`: a JuMP model resulting from running SpineOpt successfully.
+- `default_url::String`: a db url to write the report to.
+- `output_value`: a function to replace `SpineOpt.output_value` if needed.
+
+# Keyword arguments
+- `alternative::String`: an alternative to pass to `SpineInterface.write_parameters`.
 """
-function save_model_results!(m; iterations=nothing)
-    save_variable_values!(m)
-    save_objective_values!(m)
-    postprocess_results!(m)
+function write_report(m, default_url, output_value=output_value; alternative="", log_level=3)
+    default_url === nothing && return false
+    values = collect_output_values(m, output_value)
+    write_report(m, default_url, values; alternative=alternative, log_level=log_level)
+end
+function write_report(m, default_url, values::Dict; alternative="", log_level=3)
+    report_values_by_url = Dict()
+    for rpt in model__report(model=m.ext[:spineopt].instance)
+        vals = Dict()
+        for out in report__output(report=rpt)
+            overwrite = overwrite_results_on_rolling(report=rpt, output=out)
+            name = out.name in keys(m.ext[:spineopt].objective_terms) ? Symbol("objective_", out.name) : out.name
+            vals[name] = values[out, overwrite]
+        end
+        output_url = output_db_url(report=rpt, _strict=false)
+        url = output_url !== nothing ? output_url : default_url
+        push!(get!(report_values_by_url, url, []), (rpt, vals))
+    end
+    for (url, report_values) in report_values_by_url
+        actual_url = run_request(url, "get_db_url")
+        @timelog log_level 2 "Writing report to $actual_url..." for (rpt, vals) in report_values
+            write_parameters(vals, url; report=string(rpt.name), alternative=alternative, on_conflict="merge")
+        end
+    end
+    true
+end
+
+"""
+    collect_output_values(m, output_value=output_value)
+
+A Dict mapping tuples (output, overwrite results on rolling) to another Dict mapping entities to TimeSeries or Map
+parameter values.
+
+# Arguments
+- `m::Model`: a JuMP model resulting from running SpineOpt successfully.
+- `output_value`: a function to replace `SpineOpt.output_value` if needed.
+"""
+function collect_output_values(m, output_value=output_value)
+    _wait_for_dual_solves(m)
+    values = Dict()
+    for rpt in model__report(model=m.ext[:spineopt].instance)
+        for out in report__output(report=rpt)
+            by_entity = get(m.ext[:spineopt].outputs, out.name, nothing)
+            by_entity === nothing && continue
+            overwrite = overwrite_results_on_rolling(report=rpt, output=out)
+            key = (out, overwrite)
+            haskey(values, key) && continue
+            values[key] = _output_value_by_entity(by_entity, overwrite, output_value)
+        end
+    end
+    values
+end
+
+function _wait_for_dual_solves(m)
+    lock(m.ext[:spineopt].dual_solves_lock)
+    try
+        wait.(m.ext[:spineopt].dual_solves)
+        empty!(m.ext[:spineopt].dual_solves)
+    finally
+        unlock(m.ext[:spineopt].dual_solves_lock)
+    end
+end
+
+function _output_value_by_entity(by_entity, overwrite_results_on_rolling, output_value=output_value)
+    Dict(
+        entity => output_value(by_analysis_time, overwrite_results_on_rolling)
+        for (entity, by_analysis_time) in by_entity
+    )
+end
+
+"""
+    output_value(by_analysis_time, overwrite_results_on_rolling)
+
+A value from a SpineOpt result.
+
+# Arguments
+- `by_analysis_time::Dict`: mapping analysis times, to timestamps, to values.
+- `overwrite_results_on_rolling::Bool`: if `true`, ignore the analysis times and return a `TimeSeries`.
+    If `false`, return a `Map` where the topmost keys are the analysis times.
+"""
+function output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
+    by_analysis_time_realized = Dict(
+        analysis_time => Dict(time_stamp => realize(value) for (time_stamp, value) in by_time_stamp)
+        for (analysis_time, by_time_stamp) in by_analysis_time
+    )
+    _output_value(by_analysis_time_realized, Val(overwrite_results_on_rolling))
+end
+
+function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
+    by_analysis_time_sorted = sort(OrderedDict(by_analysis_time))
+    TimeSeries(
+        [ts for by_time_stamp in values(by_analysis_time_sorted) for ts in keys(by_time_stamp)],
+        [val for by_time_stamp in values(by_analysis_time_sorted) for val in values(by_time_stamp)],
+        false,
+        false;
+        merge_ok=true
+    )
+end
+function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
+    Map(
+        collect(keys(by_analysis_time)),
+        [
+            TimeSeries(collect(keys(by_time_stamp)), collect(values(by_time_stamp)), false, false)
+            for by_time_stamp in values(by_analysis_time)
+        ]
+    )
+end
+
+function _dump_resume_data(m::Model, k, ::Nothing) end
+function _dump_resume_data(m::Model, k, resume_file_path)
+    resume_data = Dict("values" => m.ext[:spineopt].values, "window" => k)
+    open(resume_file_path, "w") do f
+        JSON.print(f, resume_data, 4)
+    end
+end
+
+function _clear_results!(m)
+    for out in output()
+        by_entity = get!(m.ext[:spineopt].outputs, out.name, nothing)
+        by_entity === nothing && continue
+        empty!(by_entity)
+    end
 end
 
 """
@@ -647,14 +812,10 @@ function update_model!(m; update_constraints=m -> nothing, log_level=3, update_n
         _update_variable_names!(m)
         _update_constraint_names!(m)
     end
-    @timelog log_level 2 "Updating variables..." update_variables!(m)
+    @timelog log_level 2 "Updating variables..." _update_variables!(m)
     @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m)
     @timelog log_level 2 "Updating user constraints..." update_constraints(m)
     refresh_model!(m; log_level=log_level)
-end
-
-function refresh_model!(m; log_level=3)
-    @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
 end
 
 function _update_constraint_names!(m)
@@ -675,7 +836,6 @@ function _sanitize_constraint_name(constraint_name)
     replace(constraint_name, r"[^\x1F-\x7F]+" => "_")
 end
 
-
 function _update_variable_names!(m)
     for (name, var) in m.ext[:spineopt].variables
         for (inds, v) in var
@@ -684,59 +844,113 @@ function _update_variable_names!(m)
     end
 end
 
-function relax_integer_vars(m::Model, ref_map::ReferenceMap)
-    # Collect values before calling `fix` on any of the variables to avoid OptimizeNotCalled()
-    integers_definition = Dict(
-        name => def
-        for (name, def) in m.ext[:spineopt].variables_definition
-        if def[:bin] !== nothing || def[:int] !== nothing
-    )
-    values = Dict(
-        name => Dict(
-            ind => _variable_value(m.ext[:spineopt].variables[name][ind])
-            for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))
-        )
-        for (name, def) in integers_definition
-    )
-    for (name, def) in integers_definition
-        bin = def[:bin]
-        int = def[:int]
-        indices = def[:indices]
-        var = m.ext[:spineopt].variables[name]
-        vals = values[name]
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            v = var[ind]
-            ref_v = ref_map[v]
-            val = vals[ind]
-            fix(ref_v, val; force=true)
-            (bin != nothing && bin(ind)) && unset_binary(ref_v)
-            (int != nothing && int(ind)) && unset_integer(ref_v)
+function _update_variables!(m::Model)
+    for (name, definition) in m.ext[:spineopt].variables_definition
+        _update_variable!(m, name, definition)
+    end
+end
+
+function _update_variable!(m::Model, name::Symbol, definition::Dict)
+    var = m.ext[:spineopt].variables[name]
+    val = m.ext[:spineopt].values[name]
+    indices = definition[:indices]
+    lb = definition[:lb]
+    ub = definition[:ub]
+    for ind in indices(m; t=time_slice(m))
+        is_fixed(var[ind]) && unfix(var[ind])
+        lb != nothing && _set_lower_bound(var[ind], lb(ind))
+        ub != nothing && _set_upper_bound(var[ind], ub(ind))
+        history_t = t_history_t(m; t=ind.t)
+        history_t === nothing && continue
+        for history_ind in indices(m; ind..., t=history_t)
+            fix(var[history_ind], val[ind]; force=true)
+        end
+    end
+    for ind in indices(m; t=history_time_slice(m))
+        is_fixed(var[ind]) && continue
+        lb != nothing && _set_lower_bound(var[ind], lb(ind))
+        ub != nothing && _set_upper_bound(var[ind], ub(ind))
+    end
+end
+
+function apply_non_anticipativity_constraints!(m::Model)
+    for (name, definition) in m.ext[:spineopt].variables_definition
+        _apply_non_anticipativity_constraint!(m, name, definition)
+    end
+end
+
+function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict)
+    var = m.ext[:spineopt].variables[name]
+    val = m.ext[:spineopt].values[name]
+    indices = definition[:indices]
+    non_anticipativity_time = definition[:non_anticipativity_time]
+    non_anticipativity_time === nothing && return
+    non_anticipativity_margin = definition[:non_anticipativity_margin]
+    window_start = start(current_window(m))
+    roll_forward_ = roll_forward(model=m.ext[:spineopt].instance)
+    for ent in SpineInterface.indices_as_tuples(non_anticipativity_time)
+        for ind in indices(m; t=time_slice(m), ent...)
+            non_ant_time = non_anticipativity_time(; ind..., _strict=false)
+            non_ant_margin = if non_anticipativity_margin === nothing
+                nothing
+            else
+                non_anticipativity_margin(; ind..., _strict=false)
+            end
+            if non_ant_time != nothing && start(ind.t) < window_start +  non_ant_time
+                next_t = to_time_slice(m; t=ind.t + roll_forward_)
+                next_inds = indices(m; ind..., t=next_t)
+                if !isempty(next_inds)
+                    next_ind = first(next_inds)
+                    if non_ant_margin != nothing
+                        lb = val[next_ind] - non_ant_margin
+                        (lb < 0) && (lb = 0)
+                        set_lower_bound(var[ind], lb)
+                        ub = val[next_ind] + non_ant_margin
+                        set_upper_bound(var[ind], ub)
+                    else                    
+                        fix(var[ind], val[next_ind]; force=true)
+                    end
+                end
+            end
         end
     end
 end
 
-function save_marginal_value_promises!(m::Model, ref_map::JuMP.ReferenceMap)
-    for (constraint_name, con) in m.ext[:spineopt].constraints
-        output_name = Symbol(string("constraint_", constraint_name))
-        if haskey(m.ext[:spineopt].outputs, output_name)
-            _save_marginal_value_promise!(m, con, output_name, ref_map)
-        end
+function refresh_model!(m; log_level=3)
+    @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
+end
+
+"""
+Fix all variables in the given model to the values computed by the corresponding `fix_value` parameter, if any.
+"""
+function fix_variables!(m::Model)
+    for (name, definition) in m.ext[:spineopt].variables_definition
+        _fix_variable!(m, name, definition, definition[:fix_value])
     end
 end
 
-function _save_marginal_value_promise!(m::Model, con, output_name::Symbol, ref_map::JuMP.ReferenceMap)
-    m.ext[:spineopt].values[output_name] = Dict(ind => DualPromise(ref_map[con[ind]]) for ind in keys(con))
-end
-
-function save_bound_marginal_value_promises!(m::Model, ref_map::JuMP.ReferenceMap)
-    for (variable_name, var) in m.ext[:spineopt].variables
-        output_name = Symbol(string("bound_", variable_name))
-        if haskey(m.ext[:spineopt].outputs, output_name)
-            _save_bound_marginal_value_promise!(m, var, output_name, ref_map)
+"""
+Fix a variable to the values specified by the `fix_value` parameter, if any.
+"""
+_fix_variable!(m::Model, name::Symbol, definition::Dict, fix_value::Nothing) = nothing
+function _fix_variable!(m::Model, name::Symbol, definition::Dict, fix_value::Parameter)
+    var = m.ext[:spineopt].variables[name]
+    indices = definition[:indices]
+    bin = definition[:bin]
+    int = definition[:int]
+    lb = definition[:lb]
+    ub = definition[:ub]
+    for ent in SpineInterface.indices_as_tuples(fix_value)
+        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)), ent...)
+            fix_value_ = fix_value(; ind..., _strict=false)
+            fix_value_ === nothing && continue
+            if !isnan(fix_value_)
+                fix(var[ind], fix_value_; force=true)
+            elseif is_fixed(var[ind])
+                unfix(var[ind])
+                lb != nothing && _set_lower_bound(var[ind], lb(ind))
+                ub != nothing && _set_upper_bound(var[ind], ub(ind))
+            end
         end
     end
-end
-
-function _save_bound_marginal_value_promise!(m::Model, var, output_name::Symbol, ref_map::JuMP.ReferenceMap)
-    m.ext[:spineopt].values[output_name] = Dict(ind => ReducedCostPromise(ref_map[var[ind]]) for ind in keys(var))
 end
