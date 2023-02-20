@@ -245,38 +245,9 @@ function _create_objective_terms!(m)
     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
     in_window = collect(to_time_slice(m; t=current_window(m)))
     filter!(t -> !(t in beyond_window), in_window)
-    for term in _objective_terms(m)
+    for term in objective_terms(m)
         func = eval(term)
         m.ext[:spineopt].objective_terms[term] = (func(m, in_window), func(m, beyond_window))
-    end
-end
-
-function _objective_terms(m)
-    # FIXME: this could just be Benders defining the objective function itself
-    # if we have a decomposed structure, master problem costs (investments) should not be included
-    invest_terms = [:unit_investment_costs, :connection_investment_costs, :storage_investment_costs]
-    op_terms = [
-        :variable_om_costs,
-        :fixed_om_costs,
-        :taxes,
-        :fuel_costs,
-        :start_up_costs,
-        :shut_down_costs,
-        :objective_penalties,
-        :connection_flow_costs,
-        :renewable_curtailment_costs,
-        :res_proc_costs,
-        :ramp_costs,
-        :units_on_costs,
-    ]
-    if model_type(model=m.ext[:spineopt].instance) in (:spineopt_standard, :spineopt_mga)
-        if m.ext[:spineopt].is_subproblem
-            op_terms
-        else
-            [op_terms; invest_terms]
-        end
-    elseif model_type(model=m.ext[:spineopt].instance) == :spineopt_benders_master
-        invest_terms
     end
 end
 
