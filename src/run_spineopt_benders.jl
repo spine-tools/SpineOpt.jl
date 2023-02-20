@@ -38,9 +38,7 @@ function rerun_spineopt!(
     @timelog log_level 2 "Creating $(mp.ext[:spineopt].instance) temporal structure..." generate_temporal_structure!(mp)
     @timelog log_level 2 "Creating $(mp.ext[:spineopt].instance) stochastic structure..." generate_stochastic_structure!(mp)
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
-    init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
-    init_outputs!(m)
-    init_outputs!(mp)
+    _init_mp_model!(mp; add_constraints=add_constraints, log_level=log_level)
     max_benders_iterations = max_iterations(model=mp.ext[:spineopt].instance)
     j = 1
     while optimize
@@ -68,7 +66,7 @@ function rerun_spineopt!(
         if j >= max_benders_iterations
             @timelog log_level 1 "Maximum number of iterations reached ($j), terminating..." break
         end
-        @timelog log_level 2 "Add MP cuts..." add_mp_cuts!(mp; log_level=3)
+        @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(mp; log_level=3)
         msg = "Resetting sub problem temporal structure. Rewinding $(k - 1) times..."
         if @timelog log_level 2 msg roll_temporal_structure!(m, -(k - 1))
             update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
@@ -84,19 +82,19 @@ end
 Initialize the given model for SpineOpt Master Problem: add variables, fix the necessary variables,
 add constraints and set objective.
 """
-function init_mp_model!(mp; add_constraints=mp -> nothing, log_level=3)
-    @timelog log_level 2 "Adding MP variables...\n" add_mp_variables!(mp; log_level=log_level)
+function _init_mp_model!(mp; add_constraints=mp -> nothing, log_level=3)
+    @timelog log_level 2 "Adding MP variables...\n" _add_mp_variables!(mp; log_level=log_level)
     @timelog log_level 2 "Fixing MP variable values..." fix_variables!(mp)
-    @timelog log_level 2 "Adding MP constraints...\n" add_mp_constraints!(
+    @timelog log_level 2 "Adding MP constraints...\n" _add_mp_constraints!(
         mp; add_constraints=add_constraints, log_level=log_level
     )
-    @timelog log_level 2 "Setting MP objective..." set_mp_objective!(mp)
+    @timelog log_level 2 "Setting MP objective..." _set_mp_objective!(mp)
 end
 
 """
 Add SpineOpt Master Problem variables to the given model.
 """
-function add_mp_variables!(mp; log_level=3)
+function _add_mp_variables!(mp; log_level=3)
     @timelog log_level 3 "- [variable_mp_objective_lowerbound]" add_variable_mp_objective_lowerbound!(mp)
     @timelog log_level 3 "- [variable_mp_units_invested]" add_variable_units_invested!(mp)
     @timelog log_level 3 "- [variable_mp_units_invested_available]" add_variable_units_invested_available!(mp)
@@ -112,8 +110,8 @@ end
 """
 Add SpineOpt master problem constraints to the given model.
 """
-function add_mp_constraints!(mp; add_constraints=mp -> nothing, log_level=3)
-    @timelog log_level 3 "- [constraint_mp_objective]" add_constraint_mp_objective!(mp)
+function _add_mp_constraints!(mp; add_constraints=mp -> nothing, log_level=3)
+    @timelog log_level 3 "- [constraint_mp_objective]" _add_constraint_mp_objective!(mp)
     @timelog log_level 3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(mp)
     @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(mp)
     @timelog log_level 3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(mp)
@@ -132,11 +130,39 @@ function add_mp_constraints!(mp; add_constraints=mp -> nothing, log_level=3)
 end
 
 """
+    add_constraint_units_on!(m::Model, units_on, units_available)
+
+Limit the units_on by the number of available units.
+"""
+function _add_constraint_mp_objective!(m::Model)
+    @fetch units_invested, mp_objective_lowerbound = m.ext[:spineopt].variables
+    constr_dict = m.ext[:spineopt].constraints[:mp_objective] = Dict()
+    constr_dict[(model=m.ext[:spineopt].instance,)] = @constraint(
+        m,
+        + expr_sum(
+            mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m);
+            init=0,
+        )
+        >=
+        + total_costs(m, anything)
+    )
+end
+
+"""
+    _set_mp_objective!(m::Model)
+
+Minimize total costs
+"""
+function _set_mp_objective!(m::Model)
+    @fetch mp_objective_lowerbound = m.ext[:spineopt].variables
+    @objective(m, Min, + expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0))
+end
+
+"""
 Update (readd) SpineOpt master problem constraints that involve new objects (update doesn't work).
 """
-function add_mp_cuts!(mp; log_level=3)
+function _add_mp_cuts!(mp; log_level=3)
     @timelog log_level 3 " - [constraint_mp_any_invested_cuts]" add_constraint_mp_any_invested_cuts!(mp)
-
     # Name constraints
     cons = mp.ext[:spineopt].constraints[:mp_units_invested_cut]
     for (inds, con) in cons

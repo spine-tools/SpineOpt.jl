@@ -17,20 +17,41 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# override `get` and `getindex` so we can access our variable dicts with a `Tuple` instead of the actual `NamedTuple`
-function Base.get(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:RelationshipLike{J},V}
-    Base.get(d, NamedTuple{J}(key), default)
+"""
+    @log(level, threshold, msg)
+"""
+macro log(level, threshold, msg)
+    quote
+        if $(esc(level)) >= $(esc(threshold))
+            printstyled($(esc(msg)), "\n"; bold=true)
+            yield()
+        end
+    end
 end
 
-function Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V}
-    Base.getindex(d, NamedTuple{J}(key))
+"""
+    @timelog(level, threshold, msg, expr)
+"""
+macro timelog(level, threshold, msg, expr)
+    quote
+        if $(esc(level)) >= $(esc(threshold))
+            @timemsg $(esc(msg)) $(esc(expr))
+        else
+            $(esc(expr))
+        end
+    end
 end
 
-_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
-_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
-
-function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V}
-    Base.getindex(d, NamedTuple{J}(key))
+"""
+    @timemsg(msg, expr)
+"""
+macro timemsg(msg, expr)
+    quote
+        printstyled($(esc(msg)); bold=true)
+        r = @time $(esc(expr))
+        yield()
+        r
+    end
 end
 
 """
@@ -47,6 +68,22 @@ macro fetch(expr)
         :($dict[$(Expr(:quote, keys))])
     end
     esc(Expr(:(=), keys, values))
+end
+
+# override `get` and `getindex` so we can access our variable dicts with a `Tuple` instead of the actual `NamedTuple`
+function Base.get(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:RelationshipLike{J},V}
+    Base.get(d, NamedTuple{J}(key), default)
+end
+
+function Base.getindex(d::Dict{K,V}, key::ObjectLike...) where {J,K<:RelationshipLike{J},V}
+    Base.getindex(d, NamedTuple{J}(key))
+end
+
+_ObjectArrayLike = Union{ObjectLike,Array{T,1} where T<:ObjectLike}
+_RelationshipArrayLike{K} = NamedTuple{K,V} where {K,V<:Tuple{Vararg{_ObjectArrayLike}}}
+
+function Base.getindex(d::Dict{K,V}, key::_ObjectArrayLike...) where {J,K<:_RelationshipArrayLike{J},V}
+    Base.getindex(d, NamedTuple{J}(key))
 end
 
 """
