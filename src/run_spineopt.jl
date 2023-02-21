@@ -413,7 +413,11 @@ struct SpineOptExt
     objective_lower_bound::Float64
     objective_upper_bound::Float64
     benders_gap::Float64
+    arrow_results_folder::String
+    arrow_results::Dict
     function SpineOptExt(instance, lp_solver, is_subproblem)
+        arrow_results_folder = tempname(; cleanup=false)
+        mkpath(arrow_results_folder)
         new(
             instance,
             lp_solver,
@@ -431,6 +435,8 @@ struct SpineOptExt
             0.0,
             0.0,
             0.0,
+            arrow_results_folder,
+            Dict()
         )
     end
 end

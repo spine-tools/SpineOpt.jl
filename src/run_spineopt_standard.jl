@@ -42,17 +42,23 @@ function rerun_spineopt!(
         log_level=log_level,
         alternative_objective=alternative_objective
     )
-    run_spineopt_kernel!(
-        m,
-        url_out;
-        update_constraints=update_constraints,
-        log_level=log_level,
-        optimize=optimize,
-        update_names=update_names,
-        alternative=alternative,
-        write_as_roll=write_as_roll,
-        resume_file_path=resume_file_path,
-    )
+    try
+        run_spineopt_kernel!(
+            m;
+            update_constraints=update_constraints,
+            log_level=log_level,
+            optimize=optimize,
+            update_names=update_names,
+            alternative=alternative,
+            write_as_roll=write_as_roll,
+            resume_file_path=resume_file_path,
+        )
+    catch err
+        showerror(stdout, err, catch_backtrace())
+        m
+    finally
+        _write_report_from_arrow_results(m, url_out; alternative=alternative, log_level=log_level)
+    end
 end
 
 """
@@ -260,8 +266,7 @@ function _init_outputs!(m::Model)
 end
 
 function run_spineopt_kernel!(
-    m,
-    url_out::Union{String,Nothing};
+    m;
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
@@ -282,10 +287,9 @@ function run_spineopt_kernel!(
         @log log_level 1 "\nWindow $k: $(current_window(m))"
         optimize_model!(m; log_level=log_level, calculate_duals=calculate_duals) || break
         if write_as_roll > 0 && k % write_as_roll == 0
-            if write_report(m, url_out; alternative=alternative, log_level=log_level)
-                _dump_resume_data(m, k, resume_file_path)
-                _clear_results!(m)
-            end
+            _write_arrow_results(m)                
+            _dump_resume_data(m, k, resume_file_path)
+            _clear_results!(m)
         end
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
             @timelog log_level 2 " ... Rolling complete\n" break
@@ -293,7 +297,7 @@ function run_spineopt_kernel!(
         update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
         k += 1
     end
-    write_report(m, url_out; alternative=alternative, log_level=log_level)
+    _write_arrow_results(m)
     m
 end
 
@@ -582,7 +586,6 @@ function _value_by_entity_non_aggregated(m, value::Dict, crop_to_window)
         t <= analysis_time && continue
         crop_to_window && start(t) >= end_(current_window(m)) && continue
         entity = _drop_key(ind, t_keys...)
-        entity = _flatten_stochastic_path(entity)
         by_analysis_time_non_aggr = get!(by_entity_non_aggr, entity, Dict{DateTime,Any}())
         by_time_slice_non_aggr = get!(by_analysis_time_non_aggr, analysis_time, Dict{TimeSlice,Any}())
         by_time_slice_non_aggr[t] = val
@@ -619,13 +622,6 @@ function _value_by_time_stamp_aggregated(by_time_slice_non_aggr, ::Nothing)
     Dict(start(t) => v for (t, v) in by_time_slice_non_aggr)
 end
 
-function _flatten_stochastic_path(entity::NamedTuple)
-    stoch_path = get(entity, :stochastic_path, nothing)
-    stoch_path === nothing && return entity
-    flat_stoch_path = (; Dict(Symbol(:stochastic_scenario, k) => scen for (k, scen) in enumerate(stoch_path))...)
-    (; _drop_key(entity, :stochastic_path)..., flat_stoch_path...)
-end
-
 function _compute_and_print_conflict!(m)
     compute_conflict!(m)    
     for (f, s) in list_of_constraint_types(m)
@@ -635,6 +631,38 @@ function _compute_and_print_conflict!(m)
             end
         end
     end
+end
+
+_entity_name(entity::ObjectLike) = entity.name
+_entity_name(entities::Vector{T}) where {T<:ObjectLike} = [entity.name for entity in entities]
+
+function _write_arrow_results(m)
+    values = collect_output_values(m)
+    for ((out, overwrite), by_entity) in values
+        table = [
+            ((; (class => _entity_name(ent) for (class, ent) in pairs(entity))...), index, value)
+            for (entity, val) in by_entity
+            for (index, value) in indexed_values(val)
+        ]
+        isempty(table) && continue
+        file_path = joinpath(m.ext[:spineopt].arrow_results_folder, string(out.name, overwrite))
+        m.ext[:spineopt].arrow_results[out.name, overwrite] = file_path
+        Arrow.append(file_path, table)
+    end
+end
+
+function _write_report_from_arrow_results(m, default_url; alternative="", log_level=3)
+    values = Dict()
+    for ((output_name, overwrite), file_path) in m.ext[:spineopt].arrow_results
+        table = Arrow.Table(file_path)
+        by_entity = Dict()
+        for (entity, index, value) in zip(table...)
+            push!(get!(by_entity, entity, Dict{typeof(index),Any}()), index => value)
+        end
+        values[output(output_name), overwrite] = Dict(entity => indexed_value(vals) for (entity, vals) in by_entity)
+    end
+    isempty(values) || write_report(m, default_url, values; alternative=alternative, log_level=log_level)
+    rm(m.ext[:spineopt].arrow_results_folder; force=true, recursive=true)
 end
 
 """
@@ -662,7 +690,9 @@ function write_report(m, default_url, values::Dict; alternative="", log_level=3)
         for out in report__output(report=rpt)
             overwrite = overwrite_results_on_rolling(report=rpt, output=out)
             name = out.name in keys(m.ext[:spineopt].objective_terms) ? Symbol("objective_", out.name) : out.name
-            vals[name] = values[out, overwrite]
+            value = get(values, (out, overwrite), nothing)
+            value === nothing && continue
+            vals[name] = Dict(_flatten_stochastic_path(ent) => val for (ent, val) in value)
         end
         output_url = output_db_url(report=rpt, _strict=false)
         url = output_url !== nothing ? output_url : default_url
@@ -756,6 +786,13 @@ function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{false
             for by_time_stamp in values(by_analysis_time)
         ]
     )
+end
+
+function _flatten_stochastic_path(entity::NamedTuple)
+    stoch_path = get(entity, :stochastic_path, nothing)
+    stoch_path === nothing && return entity
+    flat_stoch_path = (; Dict(Symbol(:stochastic_scenario, k) => scen for (k, scen) in enumerate(stoch_path))...)
+    (; _drop_key(entity, :stochastic_path)..., flat_stoch_path...)
 end
 
 function _dump_resume_data(m::Model, k, ::Nothing) end

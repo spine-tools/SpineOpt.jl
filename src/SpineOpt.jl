@@ -27,6 +27,7 @@ using JSON
 using Printf
 using Requires
 using JuMP
+using Arrow
 import DataStructures: OrderedDict
 import Dates: CompoundPeriod
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
