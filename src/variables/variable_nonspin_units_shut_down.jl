@@ -32,14 +32,11 @@ function nonspin_units_shut_down_indices(
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
     unique(
-        (unit=u, node=n, stochastic_scenario=s, t=t) for (u, n, d, s, t) in nonspin_ramp_down_unit_flow_indices(
-            m;
-            unit=unit,
-            node=node,
-            stochastic_scenario=stochastic_scenario,
-            t=t,
-            temporal_block=temporal_block,
-        ) for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t)
+        (unit=u, node=n, stochastic_scenario=s, t=t)
+        for (u, n, d, s, t) in nonspin_ramp_down_unit_flow_indices(
+            m; unit=unit, node=node, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
+        )
+        for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t)
         # TODO: maybe retrieve s information from node to be more robust
     )
 end
@@ -58,6 +55,7 @@ function add_variable_nonspin_units_shut_down!(m::Model)
         lb=x -> 0,
         bin=units_on_bin,
         int=units_on_int,
-        fix_value=fix_nonspin_units_shut_down
+        fix_value=fix_nonspin_units_shut_down,
+        initial_value=initial_nonspin_units_shut_down
     )
 end

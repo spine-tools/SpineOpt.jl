@@ -42,17 +42,10 @@ function ramp_up_unit_flow_indices(
     unique(
         (unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
         for (u, n, d, tb) in ramp_up_unit__node__direction__temporal_block(
-            unit=unit,
-            node=node,
-            direction=direction,
-            temporal_block=temporal_block,
-            _compact=false,
-        ) for (n, s, t) in node_stochastic_time_indices(
-            m;
-            node=n,
-            stochastic_scenario=stochastic_scenario,
-            temporal_block=tb,
-            t=t,
+            unit=unit, node=node, direction=direction, temporal_block=temporal_block, _compact=false
+        )
+        for (n, s, t) in node_stochastic_time_indices(
+            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     )
 end
@@ -69,6 +62,7 @@ function add_variable_ramp_up_unit_flow!(m::Model)
         :ramp_up_unit_flow,
         ramp_up_unit_flow_indices;
         lb=x -> 0,
-        fix_value=fix_ramp_up_unit_flow
+        fix_value=fix_ramp_up_unit_flow,
+        initial_value=initial_ramp_up_unit_flow
     )
 end

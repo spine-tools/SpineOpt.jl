@@ -18,8 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# TODO: fix_units_on, fix_unit_flow
-
 @testset "user constraints" begin
     url_in = "sqlite://"
     test_data = Dict(

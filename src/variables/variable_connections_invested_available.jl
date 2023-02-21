@@ -32,16 +32,12 @@ function connections_invested_available_indices(
 )
     connection = members(connection)
     unique(
-        (connection=conn, stochastic_scenario=s, t=t) for (conn, tb) in connection__investment_temporal_block(
-            connection=connection,
-            temporal_block=temporal_block,
-            _compact=false,
-        ) for (conn, s, t) in connection_investment_stochastic_time_indices(
-            m;
-            connection=conn,
-            stochastic_scenario=stochastic_scenario,
-            temporal_block=tb,
-            t=t,
+        (connection=conn, stochastic_scenario=s, t=t)
+        for (conn, tb) in connection__investment_temporal_block(
+            connection=connection, temporal_block=temporal_block, _compact=false
+        )
+        for (conn, s, t) in connection_investment_stochastic_time_indices(
+            m; connection=conn, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     )
 end
@@ -92,6 +88,7 @@ function add_variable_connections_invested_available!(m::Model)
         connections_invested_available_indices;
         lb=x -> 0,
         int=connections_invested_available_int,
-        fix_value=fix_connections_invested_available
+        fix_value=fix_connections_invested_available,
+        initial_value=initial_connections_invested_available
     )
 end

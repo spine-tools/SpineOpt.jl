@@ -4,6 +4,7 @@ authors = ["Spine Project consortium <spine_info@vtt.fi>"]
 version = "0.6.9"
 
 [deps]
+Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
 Clp = "e2554f3b-3117-50c0-817c-e040a3ddf72d"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"

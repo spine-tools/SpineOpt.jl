@@ -71,6 +71,7 @@ function add_variable_unit_flow!(m::Model)
             _strict=false,
         ),
         fix_value=fix_unit_flow,
+        initial_value=initial_unit_flow,
         non_anticipativity_time=unit_flow_non_anticipativity_time,
         non_anticipativity_margin=unit_flow_non_anticipativity_margin,
     )

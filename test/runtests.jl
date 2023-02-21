@@ -95,6 +95,7 @@ end
     include("data_structure/temporal_structure.jl")
     include("data_structure/stochastic_structure.jl")
     include("data_structure/algorithm_mga_structure.jl")
+    include("data_structure/postprocess_results.jl")
     include("constraints/constraint_unit.jl")
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")
@@ -102,6 +103,5 @@ end
     include("objective/objective.jl")
     include("util/misc.jl")
     include("util/docs_utils.jl")
-    include("util/postprocess_results.jl")
     include("run_spineopt.jl")
 end
