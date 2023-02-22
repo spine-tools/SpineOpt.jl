@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-using Logging
+import Logging: Warn
 
 module Y
 using SpineInterface
@@ -307,12 +307,7 @@ end
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        test_logger = TestLogger()
-        with_logger(test_logger) do
-            run_spineopt(url_in, url_out; log_level=0)
-        end
-        @test test_logger.logs[1].message == "can't find any values for 'unknown_output'"
-        @test test_logger.logs[1].level == Warn
+        @test_logs min_level=Warn (:warn, "can't find any values for 'unknown_output'") run_spineopt(url_in, url_out; log_level=0)
     end
     @testset "write inputs" begin
         _load_test_data(url_in, test_data)

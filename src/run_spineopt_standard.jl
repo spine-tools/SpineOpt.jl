@@ -656,10 +656,10 @@ function _write_intermediate_results(m)
         @info """
         Intermediate results are being written to $(m.ext[:spineopt].intermediate_results_folder).
 
-        In case your run terminates unexpectedly - before these results can be written to the output DB -
-        you can rescue them by running
+        These results will be cleared automatically when written to the DB.
+        However if your run fails before this can happen, you can write them manually by running
 
-            write_report_from_intermediate_results("$(m.ext[:spineopt].intermediate_results_folder)", url_out)
+            write_report_from_intermediate_results(raw"$(m.ext[:spineopt].intermediate_results_folder)", url_out)
 
         """
         open(file_path, "w") do f
