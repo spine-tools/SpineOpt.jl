@@ -647,7 +647,7 @@ function _write_intermediate_results(m)
             for (index, value) in indexed_values(val)
         ]
         isempty(table) && continue
-        file_path = joinpath(m.ext[:spineopt].intermediate_results_folder, string(output_name, overwrite))
+        file_path = joinpath(m.ext[:spineopt].intermediate_results_folder, _output_file_name(output_name, overwrite))
         push!(tables, (file_path, table))
     end
     isempty(tables) && return
@@ -703,7 +703,6 @@ function write_report_from_intermediate_results(
         report_name_keys_by_url, default_url, values; alternative=alternative, log_level=log_level
     )
     _clear_intermediate_results(x)
-    @info "cleared intermediate results from $intermediate_results_folder - already in the DB"
 end
 
 _intermediate_results_folder(m::Model) = m.ext[:spineopt].intermediate_results_folder
@@ -717,7 +716,7 @@ end
 function _collect_values_from_intermediate_results(intermediate_results_folder, report_name_keys_by_url)
     values = Dict()
     for (output_name, overwrite) in _output_keys(report_name_keys_by_url)
-        file_path = joinpath(intermediate_results_folder, string(output_name, overwrite))
+        file_path = joinpath(intermediate_results_folder, _output_file_name(output_name, overwrite))
         isfile(file_path) || continue
         table = Arrow.Table(file_path)
         by_entity = Dict()
@@ -729,9 +728,20 @@ function _collect_values_from_intermediate_results(intermediate_results_folder, 
     values
 end
 
+_output_file_name(output_name, overwrite) = string(output_name, overwrite ? "1" : "0")
+
 _clear_intermediate_results(m::Model) = _clear_intermediate_results(m.ext[:spineopt].intermediate_results_folder)
 function _clear_intermediate_results(intermediate_results_folder::AbstractString)
-    rm(intermediate_results_folder; force=true, recursive=true)
+    function _do_clear_intermediate_results(; p=intermediate_results_folder)
+        @info "clearing intermediate results from $p - already in the DB"
+        rm(p; force=true, recursive=true)
+    end
+
+    try
+        _do_clear_intermediate_results()
+    catch
+        atexit(_do_clear_intermediate_results)
+    end
 end
 
 """
