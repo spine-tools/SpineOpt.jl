@@ -19,6 +19,7 @@ Depth = 3
 
 ```@docs
 run_spineopt
+write_report_from_intermediate_results
 generate_forced_availability_factor
 ```
 

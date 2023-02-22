@@ -24,29 +24,31 @@ Expression corresponding to the sume of all cost terms for given model, and up u
 """
 total_costs(m, t_range) = sum(eval(term)(m, t_range) for term in objective_terms(m))
 
+const invest_terms = [:unit_investment_costs, :connection_investment_costs, :storage_investment_costs]
+const op_terms = [
+    :variable_om_costs,
+    :fixed_om_costs,
+    :taxes,
+    :fuel_costs,
+    :start_up_costs,
+    :shut_down_costs,
+    :objective_penalties,
+    :connection_flow_costs,
+    :renewable_curtailment_costs,
+    :res_proc_costs,
+    :ramp_costs,
+    :units_on_costs,
+]
+const all_objective_terms = [op_terms; invest_terms]
+
 function objective_terms(m)
     # FIXME: this could just be Benders defining the objective function itself
     # if we have a decomposed structure, master problem costs (investments) should not be included
-    invest_terms = [:unit_investment_costs, :connection_investment_costs, :storage_investment_costs]
-    op_terms = [
-        :variable_om_costs,
-        :fixed_om_costs,
-        :taxes,
-        :fuel_costs,
-        :start_up_costs,
-        :shut_down_costs,
-        :objective_penalties,
-        :connection_flow_costs,
-        :renewable_curtailment_costs,
-        :res_proc_costs,
-        :ramp_costs,
-        :units_on_costs,
-    ]
     if model_type(model=m.ext[:spineopt].instance) in (:spineopt_standard, :spineopt_mga)
         if m.ext[:spineopt].is_subproblem
             op_terms
         else
-            [op_terms; invest_terms]
+            all_objective_terms
         end
     elseif model_type(model=m.ext[:spineopt].instance) == :spineopt_benders_master
         invest_terms

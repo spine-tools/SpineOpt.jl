@@ -400,6 +400,8 @@ struct SpineOptExt
     instance::Object
     lp_solver
     is_subproblem::Bool
+    intermediate_results_folder::String
+    report_name_keys_by_url::Dict
     variables::Dict{Symbol,Dict}
     variables_definition::Dict{Symbol,Dict}
     values::Dict{Symbol,Dict}
@@ -413,15 +415,24 @@ struct SpineOptExt
     objective_lower_bound::Float64
     objective_upper_bound::Float64
     benders_gap::Float64
-    arrow_results_folder::String
-    arrow_results::Dict
     function SpineOptExt(instance, lp_solver, is_subproblem)
-        arrow_results_folder = tempname(; cleanup=false)
-        mkpath(arrow_results_folder)
+        intermediate_results_folder = tempname(; cleanup=false)
+        mkpath(intermediate_results_folder)
+        report_name_keys_by_url = Dict()
+        for rpt in model__report(model=instance)
+            keys = [
+                (out.name, overwrite_results_on_rolling(report=rpt, output=out))
+                for out in report__output(report=rpt)
+            ]
+            output_url = output_db_url(report=rpt, _strict=false)
+            push!(get!(report_name_keys_by_url, output_url, []), (rpt.name, keys))
+        end
         new(
             instance,
             lp_solver,
             is_subproblem,
+            intermediate_results_folder,
+            report_name_keys_by_url,
             Dict{Symbol,Dict}(),
             Dict{Symbol,Dict}(),
             Dict{Symbol,Dict}(),
@@ -434,9 +445,7 @@ struct SpineOptExt
             ReentrantLock(),
             0.0,
             0.0,
-            0.0,
-            arrow_results_folder,
-            Dict()
+            0.0
         )
     end
 end
