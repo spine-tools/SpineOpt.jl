@@ -27,6 +27,7 @@ using JSON
 using Printf
 using Requires
 using JuMP
+using Arrow
 import DataStructures: OrderedDict
 import Dates: CompoundPeriod
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
@@ -38,8 +39,9 @@ export prepare_spineopt
 export refresh_model!
 export run_spineopt_kernel!
 export output_value
-export write_report
 export collect_output_values
+export write_report
+export write_report_from_intermediate_results
 export generate_forced_availability_factor
 export forced_availability_factor_time_series
 

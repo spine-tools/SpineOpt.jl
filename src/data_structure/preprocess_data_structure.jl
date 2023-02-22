@@ -366,10 +366,12 @@ function _ptdf_unfiltered_values()
     )
     Dict(
         (conn, n) => Dict(
-            :ptdf_unfiltered => indexed_parameter_value(
-                Dict(
-                    ind => get(ptdf_by_ind, ind, ptdf_by_ind[:nothing])[i, j]
-                    for (ind, val) in indexed_values(connection_availability_factor(connection=conn))
+            :ptdf_unfiltered => parameter_value(
+                collect_indexed_values(
+                    Dict(
+                        ind => get(ptdf_by_ind, ind, ptdf_by_ind[:nothing])[i, j]
+                        for (ind, val) in indexed_values(connection_availability_factor(connection=conn))
+                    )
                 )
             )
         )
