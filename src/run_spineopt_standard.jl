@@ -733,14 +733,32 @@ _output_file_name(output_name, overwrite) = string(output_name, overwrite ? "1" 
 _clear_intermediate_results(m::Model) = _clear_intermediate_results(m.ext[:spineopt].intermediate_results_folder)
 function _clear_intermediate_results(intermediate_results_folder::AbstractString)
     function _do_clear_intermediate_results(; p=intermediate_results_folder)
-        @info "clearing intermediate results from $p - already in the DB"
+        _prepare_for_deletion(p)
         rm(p; force=true, recursive=true)
+        @info "cleared intermediate results from $p - either empty or already in the DB"
     end
 
     try
         _do_clear_intermediate_results()
     catch
         atexit(_do_clear_intermediate_results)
+    end
+end
+
+function _prepare_for_deletion(path::AbstractString)
+    # Nothing to do for non-directories
+    if !isdir(path)
+        return
+    end
+
+    try chmod(path, filemode(path) | 0o333)
+    catch; end
+    for (root, dirs, files) in walkdir(path; onerror=x->())
+        for dir in dirs
+            dpath = joinpath(root, dir)
+            try chmod(dpath, filemode(dpath) | 0o333)
+            catch; end
+        end
     end
 end
 
