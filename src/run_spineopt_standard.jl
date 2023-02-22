@@ -769,7 +769,6 @@ function write_report(report_name_keys_by_url::Dict, default_url, values::Dict; 
                 output_name = output_name in all_objective_terms ? Symbol("objective_", output_name) : output_name
                 vals[output_name] = Dict(_flatten_stochastic_path(ent) => val for (ent, val) in value)
             end
-            @show vals
             write_parameters(vals, url; report=string(report_name), alternative=alternative, on_conflict="merge")
         end
     end
