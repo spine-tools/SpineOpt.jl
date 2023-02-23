@@ -155,3 +155,12 @@ _drop_key(x::NamedTuple, key::Symbol...) = (; (k => v for (k, v) in pairs(x) if 
 Fetch the current analysis time for the model `m`.
 """
 _analysis_time(m::Model) = startref(current_window(m))
+
+function get_module(module_name)
+    for parent_module in (Base.Main, @__MODULE__)
+        try
+            return getproperty(parent_module, module_name)
+        catch
+        end
+    end
+end
