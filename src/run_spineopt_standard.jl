@@ -44,7 +44,8 @@ function rerun_spineopt!(
     )
     try
         run_spineopt_kernel!(
-            m;
+            m,
+            url_out;
             update_constraints=update_constraints,
             log_level=log_level,
             optimize=optimize,
@@ -57,7 +58,9 @@ function rerun_spineopt!(
         showerror(stdout, err, catch_backtrace())
         m
     finally
-        write_report_from_intermediate_results(m, url_out; alternative=alternative, log_level=log_level)
+        if write_as_roll > 0
+            write_report_from_intermediate_results(m, url_out; alternative=alternative, log_level=log_level)
+        end
     end
 end
 
@@ -267,7 +270,8 @@ function _init_outputs!(m::Model)
 end
 
 function run_spineopt_kernel!(
-    m;
+    m,
+    url_out;
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
@@ -298,7 +302,11 @@ function run_spineopt_kernel!(
         update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
         k += 1
     end
-    _write_intermediate_results(m)
+    if write_as_roll > 0
+        _write_intermediate_results(m)
+    else
+        write_report(m, url_out; alternative=alternative, log_level=log_level)
+    end
     m
 end
 
