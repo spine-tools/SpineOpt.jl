@@ -598,7 +598,7 @@ end
         relationships = [["report__output", ["report_x", "constraint_nodal_balance"]]]
         object_parameter_values = [
             # Uncomment to test for a particular solver, e.g., CPLEX
-            ["model", "instance", "db_mip_solver", "CPLEX.jl"],
+            # ["model", "instance", "db_mip_solver", "CPLEX.jl"],
             ["node", "node_b", "demand", demand],
             ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "12h")],
             ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
