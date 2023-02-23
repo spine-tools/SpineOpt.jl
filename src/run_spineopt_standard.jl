@@ -44,7 +44,8 @@ function rerun_spineopt!(
     )
     try
         run_spineopt_kernel!(
-            m;
+            m,
+            url_out;
             update_constraints=update_constraints,
             log_level=log_level,
             optimize=optimize,
@@ -57,7 +58,9 @@ function rerun_spineopt!(
         showerror(stdout, err, catch_backtrace())
         m
     finally
-        write_report_from_intermediate_results(m, url_out; alternative=alternative, log_level=log_level)
+        if write_as_roll > 0
+            write_report_from_intermediate_results(m, url_out; alternative=alternative, log_level=log_level)
+        end
     end
 end
 
@@ -267,7 +270,8 @@ function _init_outputs!(m::Model)
 end
 
 function run_spineopt_kernel!(
-    m;
+    m,
+    url_out;
     update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
@@ -298,7 +302,11 @@ function run_spineopt_kernel!(
         update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
         k += 1
     end
-    _write_intermediate_results(m)
+    if write_as_roll > 0
+        _write_intermediate_results(m)
+    else
+        write_report(m, url_out; alternative=alternative, log_level=log_level)
+    end
     m
 end
 
@@ -371,26 +379,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
         @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." _save_model_results!(
             m; iterations=iterations
         )
-        if calculate_duals
-            @log log_level 1 "Setting up final LP of $(m.ext[:spineopt].instance) to obtain duals..."
-            @timelog log_level 1 "Copying model" (m_dual_lp, ref_map) = copy_model(m)
-            lp_solver = m.ext[:spineopt].lp_solver
-            @timelog log_level 1 "Setting LP solver $(lp_solver)..." set_optimizer(m_dual_lp, lp_solver)
-            @timelog log_level 1 "Fixing integer variables..." _relax_integer_vars(m, ref_map)
-            _save_marginal_value_promises!(m, ref_map)
-            _save_bound_marginal_value_promises!(m, ref_map)
-            if isdefined(Threads, Symbol("@spawn"))
-                task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
-                lock(m.ext[:spineopt].dual_solves_lock)
-                try
-                    push!(m.ext[:spineopt].dual_solves, task)
-                finally
-                    unlock(m.ext[:spineopt].dual_solves_lock)
-                end
-            else
-                @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
-            end
-        end
+        calculate_duals && _calculate_duals(m; log_level=log_level)
         @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
         true
     elseif termination_status(m) == MOI.INFEASIBLE
@@ -447,7 +436,54 @@ end
 _value(v::GenericAffExpr) = JuMP.value(v)
 _value(v) = v
 
-function _relax_integer_vars(m::Model, ref_map::ReferenceMap)
+function _calculate_duals(m; log_level=3)
+    if has_duals(m)
+        _save_marginal_values!(m)
+        _save_bound_marginal_values!(m)
+    else
+        @log log_level 1 "Obtaining duals for $(m.ext[:spineopt].instance)..."
+        _calculate_duals_cplex(m; log_level=log_level) && return
+        _calculate_duals_fallback(m; log_level=log_level)
+    end
+end
+
+function _calculate_duals_cplex(m; log_level=3)
+    CPLEX = Base.invokelatest(get_module, :CPLEX)
+    CPLEX === nothing && return false
+    model_backend = backend(m)
+    cplex_model = JuMP.mode(m) == JuMP.DIRECT ? model_backend : model_backend.optimizer.model
+    cplex_model isa CPLEX.Optimizer || return false
+    prob_type = CPLEX.CPXgetprobtype(cplex_model.env, cplex_model.lp)
+    @assert prob_type == CPLEX.CPXPROB_MILP
+    CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, CPLEX.CPXPROB_FIXEDMILP)
+    @timelog log_level 1 "Optimizing LP..." CPLEX.CPXlpopt(cplex_model.env, cplex_model.lp)
+    _save_marginal_values!(m)
+    _save_bound_marginal_values!(m)
+    CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, prob_type)
+    true
+end
+
+function _calculate_duals_fallback(m; log_level=3)
+    @timelog log_level 1 "Copying model" (m_dual_lp, ref_map) = copy_model(m)
+    lp_solver = m.ext[:spineopt].lp_solver
+    @timelog log_level 1 "Setting LP solver $(lp_solver)..." set_optimizer(m_dual_lp, lp_solver)
+    @timelog log_level 1 "Fixing integer variables..." _fix_integer_vars(m, ref_map)
+    _save_marginal_values!(m, ref_map)
+    _save_bound_marginal_values!(m, ref_map)
+    if isdefined(Threads, Symbol("@spawn"))
+        task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
+        lock(m.ext[:spineopt].dual_solves_lock)
+        try
+            push!(m.ext[:spineopt].dual_solves, task)
+        finally
+            unlock(m.ext[:spineopt].dual_solves_lock)
+        end
+    else
+        @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
+    end
+end
+
+function _fix_integer_vars(m::Model, ref_map::ReferenceMap)
     # Collect values before calling `fix` on any of the variables to avoid OptimizeNotCalled()
     integers_definition = Dict(
         name => def
@@ -478,49 +514,27 @@ function _relax_integer_vars(m::Model, ref_map::ReferenceMap)
     end
 end
 
-#=
-function _relax_integer_variables(model::Optimizer)
-    try
-        CPLEX
-        ret = CPLEX.CPXchgprobtype(model.env, model.lp, CPLEX.CPXPROB_FIXEDMILP)
-        if ret == 0
-            true
-        else
-            error_str = CPLEX._get_error_string(model.env, ret)
-            @warn "error while changing CPLEX problem type to fixed MIP: $error_str - falling back to manual method"
-            false
-        end    
-    catch
-        false
-    end
-end
-=#
-
-function _save_marginal_value_promises!(m::Model, ref_map::JuMP.ReferenceMap)
+function _save_marginal_values!(m::Model, ref_map=nothing)
     for (constraint_name, con) in m.ext[:spineopt].constraints
         output_name = Symbol(string("constraint_", constraint_name))
-        if haskey(m.ext[:spineopt].outputs, output_name)
-            _save_marginal_value_promise!(m, con, output_name, ref_map)
-        end
+        haskey(m.ext[:spineopt].outputs, output_name) || continue
+        m.ext[:spineopt].values[output_name] = Dict(ind => _dual(con[ind], ref_map) for ind in keys(con))
     end
 end
 
-function _save_marginal_value_promise!(m::Model, con, output_name::Symbol, ref_map::JuMP.ReferenceMap)
-    m.ext[:spineopt].values[output_name] = Dict(ind => DualPromise(ref_map[con[ind]]) for ind in keys(con))
-end
-
-function _save_bound_marginal_value_promises!(m::Model, ref_map::JuMP.ReferenceMap)
+function _save_bound_marginal_values!(m::Model, ref_map=nothing)
     for (variable_name, var) in m.ext[:spineopt].variables
         output_name = Symbol(string("bound_", variable_name))
-        if haskey(m.ext[:spineopt].outputs, output_name)
-            _save_bound_marginal_value_promise!(m, var, output_name, ref_map)
-        end
+        haskey(m.ext[:spineopt].outputs, output_name) || continue
+        m.ext[:spineopt].values[output_name] = Dict(ind => _reduced_cost(var[ind], ref_map) for ind in keys(var))
     end
 end
 
-function _save_bound_marginal_value_promise!(m::Model, var, output_name::Symbol, ref_map::JuMP.ReferenceMap)
-    m.ext[:spineopt].values[output_name] = Dict(ind => ReducedCostPromise(ref_map[var[ind]]) for ind in keys(var))
-end
+_dual(con, ref_map::JuMP.ReferenceMap) = DualPromise(ref_map[con])
+_dual(con, ::Nothing) = dual(con)
+
+_reduced_cost(var, ref_map::JuMP.ReferenceMap) = ReducedCostPromise(ref_map[var])
+_reduced_cost(var, ::Nothing) = reduced_cost(var)
 
 """
 Save the outputs of a model.
