@@ -384,10 +384,10 @@ _db_solver(f::Function, ::Nothing, db_solver_options) = f()
 
 function _parse_solver_options(db_solver_name, db_solver_options::Map)
     [
-        (String(key) => _parse_solver_option(val.value))
+        (String(key) => _parse_solver_option(val))
         for (solver_name, options) in db_solver_options
         if solver_name == db_solver_name
-        for (key, val) in options.value
+        for (key, val) in options
     ]
 end
 _parse_solver_options(db_solver_name, db_solver_options) = []
