@@ -66,6 +66,7 @@ function constraint_node_voltage_angle_indices(m::Model)
         (connection=conn, node1=n_to, node2=n_from, stochastic_path=path, t=t)
         for conn in indices(connection_reactance)
         for (conn, n_to, n_from) in indices(fix_ratio_out_in_connection_flow; connection=conn)
+            if has_voltage_angle(node=n_from) && has_voltage_angle(node=n_to)
         for t in t_lowest_resolution(
             time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n_to), members(n_from)))))
         )

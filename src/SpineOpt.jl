@@ -27,6 +27,7 @@ using JSON
 using Printf
 using Requires
 using JuMP
+using Arrow
 import DataStructures: OrderedDict
 import Dates: CompoundPeriod
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
@@ -38,21 +39,21 @@ export prepare_spineopt
 export refresh_model!
 export run_spineopt_kernel!
 export output_value
-export write_report
 export collect_output_values
+export write_report
+export write_report_from_intermediate_results
 export generate_forced_availability_factor
 export forced_availability_factor_time_series
 
+include("util/misc.jl")
+include("util/write_information_files.jl")
+include("util/docs_utils.jl")
+include("util/promise.jl")
 include("run_spineopt.jl")
 include("generate_forced_availability_factor.jl")
 include("run_spineopt_standard.jl")
 include("run_spineopt_benders.jl")
 include("run_spineopt_mga.jl")
-include("util/misc.jl")
-include("util/postprocess_results.jl")
-include("util/write_information_files.jl")
-include("util/docs_utils.jl")
-include("util/promise.jl")
 include("data_structure/migration.jl")
 include("data_structure/benders_data.jl")
 include("data_structure/mga_data.jl")
@@ -60,6 +61,7 @@ include("data_structure/temporal_structure.jl")
 include("data_structure/stochastic_structure.jl")
 include("data_structure/preprocess_data_structure.jl")
 include("data_structure/check_data_structure.jl")
+include("data_structure/postprocess_results.jl")
 include("variables/variable_common.jl")
 include("variables/variable_unit_flow.jl")
 include("variables/variable_unit_flow_op.jl")
@@ -95,8 +97,6 @@ include("variables/variable_node_pressure.jl")
 include("variables/variable_node_voltage_angle.jl")
 include("variables/variable_binary_gas_connection_flow.jl")
 include("variables/variable_mp_objective_lowerbound.jl")
-include("objective/set_objective.jl")
-include("objective/set_mp_objective.jl")
 include("objective/variable_om_costs.jl")
 include("objective/fixed_om_costs.jl")
 include("objective/taxes.jl")

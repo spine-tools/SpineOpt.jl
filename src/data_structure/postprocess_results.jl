@@ -24,12 +24,13 @@ Perform calculations on the model outputs and save them to the ext.values dict.
 bases on contents of report__output
 """
 function postprocess_results!(m::Model)
-    outputs = [Symbol(x[2]) for x in report__output()]
     fns! = Dict(
         :connection_avg_throughflow => save_connection_avg_throughflow!,
         :connection_avg_intact_throughflow => save_connection_avg_intact_throughflow!,
+        :contingency_is_binding => save_contingency_is_binding!
     )
-    for (_report, output) in report__output()
+    outputs = unique(output for (_report, output) in report__output())
+    for output in outputs
         fn! = get(fns!, output.name, nothing)
         fn! === nothing || fn!(m)
     end
@@ -66,4 +67,24 @@ function _save_connection_avg_throughflow!(m::Model, key, connection_flow)
         avg_throughflow[key] = current_value + new_value
     end
     avg_throughflow
+end
+
+function _contingency_is_binding(m, connection_flow, conn_cont, conn_mon, s, t)
+    ratio = abs(
+        realize(
+            connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s, t)
+            / connection_minimum_emergency_capacity(m, conn_mon, s, t)
+        )
+    )
+    isapprox(ratio, 1) || ratio >= 1 ? 1 : 0
+end
+
+function save_contingency_is_binding!(m::Model)
+    @fetch connection_flow = m.ext[:spineopt].values
+    m.ext[:spineopt].values[:contingency_is_binding] = Dict(
+        (
+            connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=s, t=t
+        ) => _contingency_is_binding(m, connection_flow, conn_cont, conn_mon, s, t)
+        for (conn_cont, conn_mon, s, t) in constraint_connection_flow_lodf_indices(m)
+    )
 end

@@ -20,43 +20,6 @@
 using Cbc
 using Clp
 
-"""
-    @log(level, threshold, msg)
-"""
-macro log(level, threshold, msg)
-    quote
-        if $(esc(level)) >= $(esc(threshold))
-            printstyled($(esc(msg)), "\n"; bold=true)
-            yield()
-        end
-    end
-end
-
-"""
-    @timelog(level, threshold, msg, expr)
-"""
-macro timelog(level, threshold, msg, expr)
-    quote
-        if $(esc(level)) >= $(esc(threshold))
-            @timemsg $(esc(msg)) $(esc(expr))
-        else
-            $(esc(expr))
-        end
-    end
-end
-
-"""
-    @timemsg(msg, expr)
-"""
-macro timemsg(msg, expr)
-    quote
-        printstyled($(esc(msg)); bold=true)
-        r = @time $(esc(expr))
-        yield()
-        r
-    end
-end
-
 module _Template
 using SpineInterface
 end
@@ -361,49 +324,6 @@ function create_model(model_type, mip_solver, lp_solver, use_direct_model=false,
     m
 end
 
-struct SpineOptExt
-    instance::Object
-    lp_solver
-    is_subproblem::Bool
-    variables::Dict{Symbol,Dict}
-    variables_definition::Dict{Symbol,Dict}
-    values::Dict{Symbol,Dict}
-    constraints::Dict{Symbol,Dict}
-    objective_terms::Dict{Symbol,Any}
-    outputs::Dict{Symbol,Union{Dict,Nothing}}
-    temporal_structure::Dict
-    stochastic_structure::Dict
-    dual_solves::Array{Any,1}
-    dual_solves_lock::ReentrantLock
-    objective_lower_bound::Float64
-    objective_upper_bound::Float64
-    benders_gap::Float64
-    function SpineOptExt(instance, lp_solver, is_subproblem)
-        new(
-            instance,
-            lp_solver,
-            is_subproblem,
-            Dict{Symbol,Dict}(),
-            Dict{Symbol,Dict}(),
-            Dict{Symbol,Dict}(),
-            Dict{Symbol,Dict}(),
-            Dict{Symbol,Any}(),
-            Dict{Symbol,Union{Dict,Nothing}}(),
-            Dict(),
-            Dict(),
-            [],
-            ReentrantLock(),
-            0.0,
-            0.0,
-            0.0,
-        )
-    end
-end
-
-JuMP.copy_extension_data(data::SpineOptExt, new_model::AbstractModel, model::AbstractModel) = nothing
-
-_do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)
-
 """
 A mip solver for given model instance. If given solver is not `nothing`, just return it.
 Otherwise create and return a solver based on db settings for instance.
@@ -450,8 +370,13 @@ end
 function _db_solver(f::Function, db_solver_name::Symbol, db_solver_options)
     db_solver_mod_name = Symbol(first(splitext(string(db_solver_name))))
     db_solver_options_parsed = _parse_solver_options(db_solver_name, db_solver_options)
-    @eval using $db_solver_mod_name
-    db_solver_mod = getproperty(@__MODULE__, db_solver_mod_name)
+    db_solver_mod = try
+        @eval Base.Main using $db_solver_mod_name
+        getproperty(Base.Main, db_solver_mod_name)
+    catch
+        @eval using $db_solver_mod_name
+        getproperty(@__MODULE__, db_solver_mod_name)
+    end
     factory = () -> Base.invokelatest(db_solver_mod.Optimizer)
     optimizer_with_attributes(factory, db_solver_options_parsed...)
 end
@@ -469,173 +394,60 @@ _parse_solver_options(db_solver_name, db_solver_options) = []
 
 _parse_solver_option(value::Number) = isinteger(value) ? convert(Int64, value) : value
 _parse_solver_option(value) = string(value)
+_do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)
 
-"""
-    output_value(by_analysis_time, overwrite_results_on_rolling)
-
-A value from a SpineOpt result.
-
-# Arguments
-- `by_analysis_time::Dict`: mapping analysis times, to timestamps, to values.
-- `overwrite_results_on_rolling::Bool`: if `true`, ignore the analysis times and return a `TimeSeries`.
-    If `false`, return a `Map` where the topmost keys are the analysis times.
-"""
-function output_value(by_analysis_time, overwrite_results_on_rolling::Bool)
-    by_analysis_time_realized = Dict(
-        analysis_time => Dict(time_stamp => realize(value) for (time_stamp, value) in by_time_stamp)
-        for (analysis_time, by_time_stamp) in by_analysis_time
-    )
-    _output_value(by_analysis_time_realized, Val(overwrite_results_on_rolling))
-end
-
-function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{true})
-    by_analysis_time_sorted = sort(OrderedDict(by_analysis_time))
-    TimeSeries(
-        [ts for by_time_stamp in values(by_analysis_time_sorted) for ts in keys(by_time_stamp)],
-        [val for by_time_stamp in values(by_analysis_time_sorted) for val in values(by_time_stamp)],
-        false,
-        false;
-        merge_ok=true
-    )
-end
-function _output_value(by_analysis_time, overwrite_results_on_rolling::Val{false})
-    Map(
-        collect(keys(by_analysis_time)),
-        [
-            TimeSeries(collect(keys(by_time_stamp)), collect(values(by_time_stamp)), false, false)
-            for by_time_stamp in values(by_analysis_time)
-        ]
-    )
-end
-
-function _output_value_by_entity(by_entity, overwrite_results_on_rolling, output_value=output_value)
-    Dict(
-        entity => output_value(by_analysis_time, overwrite_results_on_rolling)
-        for (entity, by_analysis_time) in by_entity
-    )
-end
-
-
-function objective_terms(m)
-    # FIXME: this could just be Benders defining the objective function itself
-    # if we have a decomposed structure, master problem costs (investments) should not be included
-    invest_terms = [:unit_investment_costs, :connection_investment_costs, :storage_investment_costs]
-    op_terms = [
-        :variable_om_costs,
-        :fixed_om_costs,
-        :taxes,
-        :fuel_costs,
-        :start_up_costs,
-        :shut_down_costs,
-        :objective_penalties,
-        :connection_flow_costs,
-        :renewable_curtailment_costs,
-        :res_proc_costs,
-        :ramp_costs,
-        :units_on_costs,
-    ]
-    if model_type(model=m.ext[:spineopt].instance) in (:spineopt_standard, :spineopt_mga)
-        if m.ext[:spineopt].is_subproblem
-            op_terms
-        else
-            [op_terms; invest_terms]
+struct SpineOptExt
+    instance::Object
+    lp_solver
+    is_subproblem::Bool
+    intermediate_results_folder::String
+    report_name_keys_by_url::Dict
+    variables::Dict{Symbol,Dict}
+    variables_definition::Dict{Symbol,Dict}
+    values::Dict{Symbol,Dict}
+    constraints::Dict{Symbol,Dict}
+    objective_terms::Dict{Symbol,Any}
+    outputs::Dict{Symbol,Union{Dict,Nothing}}
+    temporal_structure::Dict
+    stochastic_structure::Dict
+    dual_solves::Array{Any,1}
+    dual_solves_lock::ReentrantLock
+    objective_lower_bound::Float64
+    objective_upper_bound::Float64
+    benders_gap::Float64
+    function SpineOptExt(instance, lp_solver, is_subproblem)
+        intermediate_results_folder = tempname(; cleanup=false)
+        mkpath(intermediate_results_folder)
+        report_name_keys_by_url = Dict()
+        for rpt in model__report(model=instance)
+            keys = [
+                (out.name, overwrite_results_on_rolling(report=rpt, output=out))
+                for out in report__output(report=rpt)
+            ]
+            output_url = output_db_url(report=rpt, _strict=false)
+            push!(get!(report_name_keys_by_url, output_url, []), (rpt.name, keys))
         end
-    elseif model_type(model=m.ext[:spineopt].instance) == :spineopt_benders_master
-        invest_terms
+        new(
+            instance,
+            lp_solver,
+            is_subproblem,
+            intermediate_results_folder,
+            report_name_keys_by_url,
+            Dict{Symbol,Dict}(),
+            Dict{Symbol,Dict}(),
+            Dict{Symbol,Dict}(),
+            Dict{Symbol,Dict}(),
+            Dict{Symbol,Any}(),
+            Dict{Symbol,Union{Dict,Nothing}}(),
+            Dict(),
+            Dict(),
+            [],
+            ReentrantLock(),
+            0.0,
+            0.0,
+            0.0
+        )
     end
 end
 
-function _wait_for_dual_solves(m)
-    lock(m.ext[:spineopt].dual_solves_lock)
-    try
-        wait.(m.ext[:spineopt].dual_solves)
-        empty!(m.ext[:spineopt].dual_solves)
-    finally
-        unlock(m.ext[:spineopt].dual_solves_lock)
-    end
-end
-
-"""
-    collect_output_values(m, output_value=output_value)
-
-A Dict mapping tuples (output, overwrite results on rolling) to another Dict mapping entities to TimeSeries or Map
-parameter values.
-
-# Arguments
-- `m::Model`: a JuMP model resulting from running SpineOpt successfully.
-- `output_value`: a function to replace `SpineOpt.output_value` if needed.
-"""
-function collect_output_values(m, output_value=output_value)
-    _wait_for_dual_solves(m)
-    values = Dict()
-    for rpt in model__report(model=m.ext[:spineopt].instance)
-        for out in report__output(report=rpt)
-            by_entity = get(m.ext[:spineopt].outputs, out.name, nothing)
-            by_entity === nothing && continue
-            overwrite = overwrite_results_on_rolling(report=rpt, output=out)
-            key = (out, overwrite)
-            haskey(values, key) && continue
-            values[key] = _output_value_by_entity(by_entity, overwrite, output_value)
-        end
-    end
-    values
-end
-
-"""
-    write_report(m, default_url, output_value=output_value; alternative="")
-
-Write report from given model into a db.
-
-# Arguments
-- `m::Model`: a JuMP model resulting from running SpineOpt successfully.
-- `default_url::String`: a db url to write the report to.
-- `output_value`: a function to replace `SpineOpt.output_value` if needed.
-
-# Keyword arguments
-- `alternative::String`: an alternative to pass to `SpineInterface.write_parameters`.
-"""
-function write_report(m, default_url, output_value=output_value; alternative="", log_level=3)
-    default_url === nothing && return false
-    values = collect_output_values(m, output_value)
-    write_report(m, default_url, values; alternative=alternative, log_level=log_level)
-end
-function write_report(m, default_url, values::Dict; alternative="", log_level=3)
-    report_values_by_url = Dict()
-    for rpt in model__report(model=m.ext[:spineopt].instance)
-        vals = Dict()
-        for out in report__output(report=rpt)
-            overwrite = overwrite_results_on_rolling(report=rpt, output=out)
-            name = out.name in objective_terms(m) ? Symbol("objective_", out.name) : out.name
-            vals[name] = values[out, overwrite]
-        end
-        output_url = output_db_url(report=rpt, _strict=false)
-        url = output_url !== nothing ? output_url : default_url
-        push!(get!(report_values_by_url, url, []), (rpt, vals))
-    end
-    for (url, report_values) in report_values_by_url
-        actual_url = run_request(url, "get_db_url")
-        @timelog log_level 2 "Writing report to $actual_url..." for (rpt, vals) in report_values
-            write_parameters(vals, url; report=string(rpt.name), alternative=alternative, on_conflict="merge")
-        end
-    end
-    true
-end
-
-function clear_results!(m)
-    for out in output()
-        by_entity = get!(m.ext[:spineopt].outputs, out.name, nothing)
-        by_entity === nothing && continue
-        empty!(by_entity)
-    end
-end
-
-function compute_and_print_conflict!(m)
-    compute_conflict!(m)    
-    for (f, s) in list_of_constraint_types(m)
-        for con in all_constraints(m, f, s)
-            if MOI.get(m, MOI.ConstraintConflictStatus(), con) == MOI.IN_CONFLICT                
-                println(con)
-            end
-        end
-    end
-end
+JuMP.copy_extension_data(data::SpineOptExt, new_model::AbstractModel, model::AbstractModel) = nothing

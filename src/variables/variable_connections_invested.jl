@@ -30,6 +30,7 @@ function add_variable_connections_invested!(m::Model)
         connections_invested_available_indices;
         lb=x -> 0,
         fix_value=fix_connections_invested,
+        initial_value=initial_connections_invested,
         int=connections_invested_available_int,
     )
 end

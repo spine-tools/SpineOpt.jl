@@ -23,52 +23,21 @@
 Limit the post contingency flow on monitored connection mon to conn_emergency_capacity upon outage of connection cont.
 """
 function add_constraint_connection_flow_lodf!(m::Model)
+    rpts = join(
+        (report for (report, output) in report__output() if output.name == :contingency_is_binding), ", ", " and "
+    )
+    if !isempty(rpts)
+        @info "skipping constraint connection_flow_lodf - instead will report contingency_is_binding in $rpts"
+        return
+    end
     @fetch connection_flow = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:connection_flow_lodf] = Dict(
         (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=s, t=t) => @constraint(
             m,
             -1
             <=
-            (
-                # flow in monitored connection
-                + expr_sum(
-                    + connection_flow[conn_mon, n_mon_to, direction(:to_node), s, t_short]
-                    - connection_flow[conn_mon, n_mon_to, direction(:from_node), s, t_short]
-                    for (conn_mon, n_mon_to, d, s, t_short) in connection_flow_indices(
-                        m;
-                        connection=conn_mon,
-                        last(connection__from_node(connection=conn_mon))...,
-                        stochastic_scenario=s,
-                        t=t_in_t(m; t_long=t),
-                    ); # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
-                    init=0,
-                )
-                # excess flow due to outage on contingency connection
-                + lodf[(connection1=conn_cont, connection2=conn_mon, t=t)]
-                * expr_sum(
-                    + connection_flow[conn_cont, n_cont_to, direction(:to_node), s, t_short]
-                    - connection_flow[conn_cont, n_cont_to, direction(:from_node), s, t_short]
-                    for (conn_cont, n_cont_to, d, s, t_short) in connection_flow_indices(
-                        m;
-                        connection=conn_cont,
-                        last(connection__from_node(connection=conn_cont))...,
-                        stochastic_scenario=s,
-                        t=t_in_t(m; t_long=t),
-                    ); # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
-                    init=0,
-                )
-            )
-            / minimum(
-                + connection_emergency_capacity[
-                    (connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
-                ]
-                * connection_availability_factor[(connection=conn_mon, stochastic_scenario=s, analysis_time=t0, t=t)]
-                * connection_conv_cap_to_flow[
-                    (connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
-                ]
-                for (conn_mon, n_mon, d) in indices(connection_emergency_capacity; connection=conn_mon) for s in s
-            )
+            connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s, t, expr_sum)
+            / connection_minimum_emergency_capacity(m, conn_mon, s, t)
             <=
             +1
         )
@@ -76,7 +45,52 @@ function add_constraint_connection_flow_lodf!(m::Model)
     )
 end
 
-# NOTE: always pick the second (last) node in `connection__from_node` as 'to' node
+function connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s, t, sum=sum)
+    (
+        # flow in monitored connection
+        sum(
+            + connection_flow[conn_mon, n_mon_to, direction(:to_node), s, t_short]
+            - connection_flow[conn_mon, n_mon_to, direction(:from_node), s, t_short]
+            for (conn_mon, n_mon_to, d, s, t_short) in connection_flow_indices(
+                m;
+                connection=conn_mon,
+                last(connection__from_node(connection=conn_mon))...,
+                stochastic_scenario=s,
+                t=t_in_t(m; t_long=t),
+            ); # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
+            init=0,
+        )
+        # excess flow due to outage on contingency connection
+        + lodf[(connection1=conn_cont, connection2=conn_mon, t=t)]
+        * sum(
+            + connection_flow[conn_cont, n_cont_to, direction(:to_node), s, t_short]
+            - connection_flow[conn_cont, n_cont_to, direction(:from_node), s, t_short]
+            for (conn_cont, n_cont_to, d, s, t_short) in connection_flow_indices(
+                m;
+                connection=conn_cont,
+                last(connection__from_node(connection=conn_cont))...,
+                stochastic_scenario=s,
+                t=t_in_t(m; t_long=t),
+            ); # NOTE: always assume the second (last) node in `connection__from_node` is the 'to' node
+            init=0,
+        )
+    )
+end
+
+function connection_minimum_emergency_capacity(m, conn_mon, s, t)
+    t0 = _analysis_time(m)
+    minimum(
+        + connection_emergency_capacity[
+            (connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
+        ]
+        * connection_availability_factor[(connection=conn_mon, stochastic_scenario=s, analysis_time=t0, t=t)]
+        * connection_conv_cap_to_flow[
+            (connection=conn_mon, node=n_mon, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
+        ]
+        for (conn_mon, n_mon, d) in indices(connection_emergency_capacity; connection=conn_mon)
+        for s in s
+    )
+end
 
 function constraint_connection_flow_lodf_indices(m::Model)
     unique(

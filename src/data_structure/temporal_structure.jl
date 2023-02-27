@@ -100,8 +100,7 @@ end
 """
     _generate_current_window!(m::Model)
 
-A `TimeSlice` spanning the current optimization window from the beginning of the current solve until the beginning of
-the next solve or `model_end`, whichever is defined and sooner.
+Generate a `TimeSlice` that represents the 'current' optimisation window for given model.
 """
 function _generate_current_window!(m::Model)
     instance = m.ext[:spineopt].instance
@@ -109,11 +108,9 @@ function _generate_current_window!(m::Model)
     model_end_ = model_end(model=instance)
     roll_forward_ = roll_forward(model=instance, _strict=false)
     window_start = model_start_
-    window_end = (roll_forward_ === nothing) ? model_end_ : min(model_start_ + roll_forward_, model_end_)
+    window_end = roll_forward_ === nothing ? model_end_ : min(model_start_ + roll_forward_, model_end_)
     m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
-        window_start,
-        window_end;
-        duration_unit=_model_duration_unit(instance),
+        window_start, window_end; duration_unit=_model_duration_unit(instance)
     )
 end
 
@@ -230,7 +227,9 @@ function _generate_time_slice!(m::Model)
     prepend!(history_time_slices, history_window_time_slices)
     m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices)
     m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(history_time_slices)
-    m.ext[:spineopt].temporal_structure[:t_history_t] = Dict(zip(history_time_slices .+ window_duration, history_time_slices))
+    m.ext[:spineopt].temporal_structure[:t_history_t] = Dict(
+        zip(history_time_slices .+ window_duration, history_time_slices)
+    )
 end
 
 """
@@ -319,7 +318,9 @@ Generate a `Dict` mapping all non-representative to representative time-slices
 """
 function _generate_representative_time_slice!(m::Model)
     m.ext[:spineopt].temporal_structure[:representative_time_slice] = d = Dict()
-    model_blocks = Set(member for blk in model__temporal_block(model=m.ext[:spineopt].instance) for member in members(blk))
+    model_blocks = Set(
+        member for blk in model__temporal_block(model=m.ext[:spineopt].instance) for member in members(blk)
+    )
     for blk in indices(representative_periods_mapping)
         for (real_t_start, rep_blk_value) in representative_periods_mapping(temporal_block=blk)
             rep_blk_name = rep_blk_value()
@@ -379,32 +380,16 @@ end
 Move the entire temporal structure ahead according to the `roll_forward` parameter.
 """
 function roll_temporal_structure!(m::Model, folds=1)
+    folds == 0 && return false
     instance = m.ext[:spineopt].instance
-    temp_struct = m.ext[:spineopt].temporal_structure
-    end_(temp_struct[:current_window]) >= model_end(model=instance) && return false
     roll_forward_ = roll_forward(model=instance, _strict=false)
     roll_forward_ in (nothing, 0) && return false
+    temp_struct = m.ext[:spineopt].temporal_structure
+    folds > 0 && end_(temp_struct[:current_window]) >= model_end(model=instance) && return false
     roll_forward_ *= folds
     roll!(temp_struct[:current_window], roll_forward_)
     _roll_time_slice_set!(temp_struct[:time_slice], roll_forward_)
     _roll_time_slice_set!(temp_struct[:history_time_slice], roll_forward_)
-    true
-end
-
-"""
-    reset_temporal_structure!(m::Model, k)
-
-Rewind the temporal structure - essentially, rolling it backwards k times.
-"""
-function reset_temporal_structure!(m::Model, k)
-    instance = m.ext[:spineopt].instance
-    temp_struct = m.ext[:spineopt].temporal_structure
-    roll_forward_ = roll_forward(model=instance, _strict=false)
-    roll_forward_ in (nothing, 0) && return false
-    roll_backward = - roll_forward_ * k
-    roll!(temp_struct[:current_window], roll_backward)
-    _roll_time_slice_set!(temp_struct[:time_slice], roll_backward)
-    _roll_time_slice_set!(temp_struct[:history_time_slice], roll_backward)
     true
 end
 
@@ -430,7 +415,6 @@ function to_time_slice(m::Model; t::TimeSlice)
     )
     unique(Iterators.flatten((in_blocks, in_gaps)))
 end
-
 
 current_window(m::Model) = m.ext[:spineopt].temporal_structure[:current_window]
 time_slice(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:time_slice](; kwargs...)

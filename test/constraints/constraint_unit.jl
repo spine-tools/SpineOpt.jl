@@ -17,8 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# TODO: fix_units_on, fix_unit_flow
-
 @testset "unit-based constraints" begin
     url_in = "sqlite://"
     test_data = Dict(
@@ -87,7 +85,24 @@
             "stochastic_scenario_end",
             Dict("type" => "duration", "data" => "1h"),
         ]],
-    )
+    )    
+    @testset "initial_units_on" begin
+        _load_test_data(url_in, test_data)
+        init_units_on = 123
+        object_parameter_values = [
+            ["unit", "unit_ab", "initial_units_on", init_units_on],
+        ]
+        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_units_on = m.ext[:spineopt].variables[:units_on]
+        for key in keys(var_units_on)
+            is_history_t = start(key.t) < model_start(model=m.ext[:spineopt].instance)
+            @test is_fixed(var_units_on[key]) == is_history_t
+            if is_history_t
+                @test fix_value(var_units_on[key]) == init_units_on
+            end
+        end
+    end
     @testset "constraint_units_on" begin
         _load_test_data(url_in, test_data)
 
