@@ -164,3 +164,9 @@ function get_module(module_name)
         end
     end
 end
+
+struct Constant
+    value
+end
+
+Base.getindex(c::Constant, x...) = c.value

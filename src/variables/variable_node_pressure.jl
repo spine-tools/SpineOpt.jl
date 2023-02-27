@@ -52,6 +52,6 @@ Add `node_pressure` variables to model `m`.
 function add_variable_node_pressure!(m::Model)
     t0 = start(current_window(m))
     add_variable!(
-        m, :node_pressure, node_pressure_indices; lb=x -> 0, fix_value=fix_node_pressure, initial_value=initial_node_pressure
+        m, :node_pressure, node_pressure_indices; lb=Constant(0), fix_value=fix_node_pressure, initial_value=initial_node_pressure
     )
 end

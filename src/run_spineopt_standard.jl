@@ -73,8 +73,6 @@ function init_model!(
     @timelog log_level 2 "Adding variables...\n" _add_variables!(
         m; add_user_variables=add_user_variables, log_level=log_level
     )
-    @timelog log_level 2 "Initializing variable values..." _init_variables!(m)
-    @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
     @timelog log_level 2 "Adding constraints...\n" _add_constraints!(
         m; add_constraints=add_constraints, log_level=log_level
     )
@@ -119,34 +117,6 @@ function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
     @timelog log_level 3 "- [variable_node_voltage_angle]" add_variable_node_voltage_angle!(m)
     @timelog log_level 3 "- [variable_binary_gas_connection_flow]" add_variable_binary_gas_connection_flow!(m)
     @timelog log_level 3 "- [user_defined_variables]" add_user_variables(m)
-end
-
-"""
-Initialize all variables in the given model to the values computed by the corresponding `initial_value` parameter,
-if any.
-"""
-function _init_variables!(m::Model)
-    for (name, definition) in m.ext[:spineopt].variables_definition
-        _init_variable!(m, name, definition, definition[:initial_value])
-    end
-end
-
-"""
-Initialize a variable to the values specified by the `initial_value` parameter, if any.
-"""
-_init_variable!(m::Model, name::Symbol, definition::Dict, initial_value::Nothing) = nothing
-function _init_variable!(m::Model, name::Symbol, definition::Dict, initial_value::Parameter)
-    var = m.ext[:spineopt].variables[name]
-    indices = definition[:indices]
-    t_end = model_start(model=m.ext[:spineopt].instance)
-    t = to_time_slice(m; t=TimeSlice(t_end - Minute(1), t_end))
-    for ent in SpineInterface.indices_as_tuples(initial_value)
-        for ind in indices(m; t=t, ent...)
-            initial_value_ = initial_value(; ind..., _strict=false)
-            initial_value_ === nothing && continue
-            fix(var[ind], initial_value_; force=true)
-        end
-    end
 end
 
 """
@@ -384,8 +354,15 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
         true
     elseif termination_status(m) == MOI.INFEASIBLE
         msg = "model is infeasible - if conflicting constraints can be identified, they will be reported below\n"
-        printstyled(msg; bold=true) 
-        _compute_and_print_conflict!(m)
+        printstyled(
+            "model is infeasible - if conflicting constraints can be identified, they will be reported below\n";
+            bold=true
+        )
+        try
+            _compute_and_print_conflict!(m)
+        catch err
+            @error err.msg
+        end
         false
     else
         @log log_level 0 "Unable to find solution (reason: $(termination_status(m)))"
@@ -926,10 +903,9 @@ function update_model!(m; update_constraints=m -> nothing, log_level=3, update_n
         _update_variable_names!(m)
         _update_constraint_names!(m)
     end
-    @timelog log_level 2 "Updating variables..." _update_variables!(m)
+    @timelog log_level 2 "Fixing history..." _fix_history!(m)
     @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m)
     @timelog log_level 2 "Updating user constraints..." update_constraints(m)
-    refresh_model!(m; log_level=log_level)
 end
 
 function _update_constraint_names!(m)
@@ -958,32 +934,21 @@ function _update_variable_names!(m)
     end
 end
 
-function _update_variables!(m::Model)
+function _fix_history!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
-        _update_variable!(m, name, definition)
+        _fix_history_variable!(m, name, definition[:indices])
     end
 end
 
-function _update_variable!(m::Model, name::Symbol, definition::Dict)
+function _fix_history_variable!(m::Model, name::Symbol, indices)
     var = m.ext[:spineopt].variables[name]
     val = m.ext[:spineopt].values[name]
-    indices = definition[:indices]
-    lb = definition[:lb]
-    ub = definition[:ub]
     for ind in indices(m; t=time_slice(m))
-        is_fixed(var[ind]) && unfix(var[ind])
-        lb != nothing && _set_lower_bound(var[ind], lb(ind))
-        ub != nothing && _set_upper_bound(var[ind], ub(ind))
         history_t = t_history_t(m; t=ind.t)
         history_t === nothing && continue
         for history_ind in indices(m; ind..., t=history_t)
             fix(var[history_ind], val[ind]; force=true)
         end
-    end
-    for ind in indices(m; t=history_time_slice(m))
-        is_fixed(var[ind]) && continue
-        lb != nothing && _set_lower_bound(var[ind], lb(ind))
-        ub != nothing && _set_upper_bound(var[ind], ub(ind))
     end
 end
 
@@ -1025,45 +990,6 @@ function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict
                         fix(var[ind], val[next_ind]; force=true)
                     end
                 end
-            end
-        end
-    end
-end
-
-function refresh_model!(m; log_level=3)
-    @timelog log_level 2 "Fixing variable values..." fix_variables!(m)
-end
-
-"""
-Fix all variables in the given model to the values computed by the corresponding `fix_value` parameter, if any.
-"""
-function fix_variables!(m::Model)
-    for (name, definition) in m.ext[:spineopt].variables_definition
-        _fix_variable!(m, name, definition, definition[:fix_value])
-    end
-end
-
-"""
-Fix a variable to the values specified by the `fix_value` parameter, if any.
-"""
-_fix_variable!(m::Model, name::Symbol, definition::Dict, fix_value::Nothing) = nothing
-function _fix_variable!(m::Model, name::Symbol, definition::Dict, fix_value::Parameter)
-    var = m.ext[:spineopt].variables[name]
-    indices = definition[:indices]
-    bin = definition[:bin]
-    int = definition[:int]
-    lb = definition[:lb]
-    ub = definition[:ub]
-    for ent in SpineInterface.indices_as_tuples(fix_value)
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)), ent...)
-            fix_value_ = fix_value(; ind..., _strict=false)
-            fix_value_ === nothing && continue
-            if !isnan(fix_value_)
-                fix(var[ind], fix_value_; force=true)
-            elseif is_fixed(var[ind])
-                unfix(var[ind])
-                lb != nothing && _set_lower_bound(var[ind], lb(ind))
-                ub != nothing && _set_upper_bound(var[ind], ub(ind))
             end
         end
     end

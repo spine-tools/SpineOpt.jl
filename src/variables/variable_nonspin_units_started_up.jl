@@ -52,7 +52,7 @@ function add_variable_nonspin_units_started_up!(m::Model)
         m,
         :nonspin_units_started_up,
         nonspin_units_started_up_indices;
-        lb=x -> 0,
+        lb=Constant(0),
         bin=units_on_bin,
         int=units_on_int,
         fix_value=fix_nonspin_units_started_up,
