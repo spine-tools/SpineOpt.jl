@@ -35,8 +35,6 @@ function rerun_spineopt!(
 )
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
-    roll_count = _roll_count(m)
-    @timelog log_level 2 "Bringing model to the last window..." roll_temporal_structure!(m, roll_count)
     init_model!(
         m;
         add_user_variables=add_user_variables,
@@ -44,7 +42,6 @@ function rerun_spineopt!(
         log_level=log_level,
         alternative_objective=alternative_objective
     )
-    @timelog log_level 2 "Bringing model to the first window..." roll_temporal_structure!(m, -roll_count)
     try
         run_spineopt_kernel!(
             m,
@@ -66,20 +63,6 @@ function rerun_spineopt!(
         end
     end
 end
-
-function _roll_count(m::Model)
-    instance = m.ext[:spineopt].instance
-    roll_forward_ = roll_forward(model=instance, _strict=false)
-    roll_forward_ in (nothing, 0) && return 0
-    current_window_end = end_(current_window(m))
-    roll_count = 0
-    while current_window_end < model_end(model=instance)
-        current_window_end += roll_forward_
-        roll_count += 1
-    end
-    roll_count
-end
-
 
 """
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
@@ -300,6 +283,8 @@ function run_spineopt_kernel!(
 )
     k = _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
     k === nothing && return m
+    @timelog log_level 0 "Building last model window to make sure it's all good..." ok, err = _dry_run(m)
+    ok || throw(err)
     calculate_duals = any(
         startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:spineopt].outputs))
     )
@@ -358,6 +343,26 @@ function _load_variable_value!(m::Model, name::Symbol, indices::Function, values
         ind => values[string(name)][string(ind)]
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)), temporal_block=anything)
     )
+end
+
+function _dry_run(m::Model)
+    instance = m.ext[:spineopt].instance
+    roll_forward_ = roll_forward(model=instance, _strict=false)
+    roll_forward_ in (nothing, 0) && return true, nothing
+    current_window_end = end_(current_window(m))
+    folds = 0
+    while current_window_end < model_end(model=instance)
+        current_window_end += roll_forward_
+        folds += 1
+    end
+    folds == 0 && return true, nothing
+    try
+        roll_temporal_structure!(m, folds)
+        roll_temporal_structure!(m, -folds)
+        true, nothing
+    catch err
+        false, err
+    end
 end
 
 """
