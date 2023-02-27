@@ -103,12 +103,12 @@ Create a JuMP variable with the input properties.
 """
 function _variable(m, name, ind, bin, int, lb, ub, initial_value, fix_value)
     var = @variable(m, base_name = _base_name(name, ind))
-    lb != nothing && set_lower_bound(var, lb[(; ind..., _strict=false)])
-    ub != nothing && set_upper_bound(var, ub[(; ind..., _strict=false)])
-    initial_value_ = initial_value != nothing ? initial_value(; ind..., _strict=false) : nothing
-    initial_value_ != nothing && fix(var, initial_value_; force=true)
-    fix_value != nothing && fix(var, fix_value[(; ind..., _strict=false)]; force=true)
-    bin != nothing && bin(ind) && set_binary(var)
-    int != nothing && int(ind) && set_integer(var)
+    bin !== nothing && bin(ind) && set_binary(var)
+    int !== nothing && int(ind) && set_integer(var)
+    lb === nothing || set_lower_bound(var, lb[(; ind..., _strict=false)])
+    ub === nothing || set_upper_bound(var, ub[(; ind..., _strict=false)])
+    initial_value_ = initial_value === nothing ? nothing : initial_value(; ind..., _strict=false)
+    initial_value_ === nothing || fix(var, initial_value_; force=true)
+    fix_value === nothing || fix_or_unfix(var, fix_value[(; ind..., _strict=false)])
     var
 end
