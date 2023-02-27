@@ -51,7 +51,9 @@ function add_constraint_nodal_balance!(m::Model)
                 init=0,
             )
             # slack variable - only exists if slack_penalty is defined
-            + get(node_slack_pos, (n, s, t), 0) - get(node_slack_neg, (n, s, t), 0),
+            #+ get(node_slack_pos, (n, s, t), 0) - get(node_slack_neg, (n, s, t), 0)
+            
+            ,
             eval(nodal_balance_sense(node=n)),
             0,
         )
