@@ -38,7 +38,7 @@ function rerun_spineopt!(
     roll_count = _roll_count(m)
     @log log_level 2 """
     NOTE: We will first build the model for the last optimisation window to make sure it can roll that far.
-    Then we will bring it to the first window to start solving it.
+    Then we will bring the model to the first window to start solving it.
     """
     roll_temporal_structure!(m, roll_count)
     init_model!(
