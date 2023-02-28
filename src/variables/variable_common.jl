@@ -109,6 +109,6 @@ function _variable(m, name, ind, bin, int, lb, ub, initial_value, fix_value)
     ub === nothing || set_upper_bound(var, ub[(; ind..., _strict=false)])
     initial_value_ = initial_value === nothing ? nothing : initial_value(; ind..., _strict=false)
     initial_value_ === nothing || fix(var, initial_value_; force=true)
-    fix_value === nothing || fix_or_unfix(var, fix_value[(; ind..., _strict=false)])
+    fix_value === nothing || fix_or_free(var, fix_value[(; ind..., _strict=false)])
     var
 end
