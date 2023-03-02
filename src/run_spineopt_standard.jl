@@ -681,7 +681,7 @@ function _write_intermediate_results(m)
         end
     end
     for (file_path, table) in tables
-        Arrow.append(file_path, table)
+        isfile(file_path) ? Arrow.append(file_path, table) : Arrow.write(file_path, table; file=false)
     end
 end
 
