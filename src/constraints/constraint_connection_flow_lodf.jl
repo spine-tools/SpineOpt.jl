@@ -34,12 +34,11 @@ function add_constraint_connection_flow_lodf!(m::Model)
     m.ext[:spineopt].constraints[:connection_flow_lodf] = Dict(
         (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=s, t=t) => @constraint(
             m,
-            -1
+            - connection_minimum_emergency_capacity(m, conn_mon, s, t)
             <=
-            connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s, t, expr_sum)
-            / connection_minimum_emergency_capacity(m, conn_mon, s, t)
+            + connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s, t, expr_sum)
             <=
-            +1
+            + connection_minimum_emergency_capacity(m, conn_mon, s, t)
         )
         for (conn_cont, conn_mon, s, t) in constraint_connection_flow_lodf_indices(m)
     )
