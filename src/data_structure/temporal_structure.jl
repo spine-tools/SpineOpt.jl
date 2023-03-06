@@ -386,7 +386,7 @@ function roll_temporal_structure!(m::Model, folds=1)
     temp_struct = m.ext[:spineopt].temporal_structure
     folds > 0 && end_(temp_struct[:current_window]) >= model_end(model=instance) && return false
     roll_forward_ *= folds
-    roll!(temp_struct[:current_window], roll_forward_)
+    roll!(temp_struct[:current_window], roll_forward_; update = false)
     _roll_time_slice_set!(temp_struct[:time_slice], roll_forward_)
     _roll_time_slice_set!(temp_struct[:history_time_slice], roll_forward_)
     true
