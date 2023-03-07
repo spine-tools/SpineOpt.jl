@@ -287,7 +287,7 @@ end
             ["model", "instance", "db_lp_solver", "Clp.jl"],
         ],
     )
-    @testset "constraint_user_constraint_2" begin
+    @testset "constraint_user_constraint_must_run" begin
         _load_test_data(url_in, test_data)
         rhs = 16
         units_on_coeff = 1
