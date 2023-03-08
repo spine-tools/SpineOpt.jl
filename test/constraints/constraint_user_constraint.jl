@@ -22,12 +22,12 @@
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
-            ["model", "instance"],            
-            ["temporal_block", "hourly"],            
+            ["model", "instance"],
+            ["temporal_block", "hourly"],
             ["temporal_block", "two_hourly"],
             ["temporal_block", "investments_two_hourly"],
             ["temporal_block", "investments_four_hourly"],
-            ["stochastic_structure", "deterministic"],            
+            ["stochastic_structure", "deterministic"],
             ["stochastic_structure", "stochastic"],
             ["stochastic_structure", "investments_deterministic"],
             ["unit", "unit_ab"],
@@ -39,11 +39,11 @@
             ["stochastic_scenario", "child"],
         ],
         :relationships => [
-            ["model__temporal_block", ["instance", "hourly"]],            
+            ["model__temporal_block", ["instance", "hourly"]],
             ["model__temporal_block", ["instance", "two_hourly"]],
             ["model__temporal_block", ["instance", "investments_two_hourly"]],
-            ["model__temporal_block", ["instance", "investments_four_hourly"]],            
-            ["model__stochastic_structure", ["instance", "deterministic"]],            
+            ["model__temporal_block", ["instance", "investments_four_hourly"]],
+            ["model__stochastic_structure", ["instance", "deterministic"]],
             ["model__stochastic_structure", ["instance", "stochastic"]],
             ["model__stochastic_structure", ["instance", "investments_deterministic"]],
             ["units_on__temporal_block", ["unit_ab", "two_hourly"]],
@@ -74,18 +74,18 @@
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T04:00:00")],
             ["model", "instance", "duration_unit", "hour"],
-            ["model", "instance", "model_type", "spineopt_standard"],                 
+            ["model", "instance", "model_type", "spineopt_standard"],
             ["node", "node_c", "has_state", true],
             ["node", "node_c", "node_state_cap", 100],
             ["node", "node_c", "candidate_storages", 2],
             ["unit", "unit_ab", "candidate_units", 3],
             ["connection", "connection_bc", "candidate_connections", 1],
-            ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],            
+            ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
-            ["temporal_block", "investments_two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],            
+            ["temporal_block", "investments_two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["temporal_block", "investments_four_hourly", "resolution", Dict("type" => "duration", "data" => "4h")],
             ["model", "instance", "db_mip_solver", "Cbc.jl"],
-            ["model", "instance", "db_lp_solver", "Clp.jl"],            
+            ["model", "instance", "db_lp_solver", "Clp.jl"],
         ],
         :relationship_parameter_values => [[
             "stochastic_structure__stochastic_scenario",
@@ -140,7 +140,7 @@
                 [relationships[5]..., "storages_invested_coefficient", storages_invested_coefficient],
                 [relationships[5]..., "storages_invested_available_coefficient", storages_invested_available_coefficient],
                 [relationships[6]..., "connection_flow_coefficient", connection_flow_coefficient_b],
-                [relationships[7]..., "connection_flow_coefficient", connection_flow_coefficient_c],               
+                [relationships[7]..., "connection_flow_coefficient", connection_flow_coefficient_c],
                 
             ]
             SpineInterface.import_data(
@@ -170,12 +170,12 @@
             key_uf_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
             key_uf_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
             key_cf_b = (connection(:connection_bc), node(:node_b), direction(:from_node))
-            key_cf_c = (connection(:connection_bc), node(:node_c), direction(:to_node))            
+            key_cf_c = (connection(:connection_bc), node(:node_c), direction(:to_node))
 
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
             t1h1, t1h2, t1h3, t1h4 = time_slice(m; temporal_block=temporal_block(:hourly))
             t2h1, t2h2 = time_slice(m; temporal_block=temporal_block(:two_hourly))
-            t4h1 = time_slice(m; temporal_block=temporal_block(:investments_four_hourly))[1]           
+            t4h1 = time_slice(m; temporal_block=temporal_block(:investments_four_hourly))[1]
             
             expected_con_ref = SpineOpt.sense_constraint(
                 m,
@@ -192,7 +192,7 @@
                 + 2 * storages_invested_available_coefficient * (
                     + var_storages_invested_available[node(:node_c), s_parent, t2h1]
                     + var_storages_invested_available[node(:node_c), s_parent, t2h2]
-                )                      
+                )
                 
                 + 2 * units_on_coefficient * (
                     + var_units_on[unit(:unit_ab), s_parent, t2h1]
@@ -202,23 +202,23 @@
                 + 2 * units_started_up_coefficient * (
                     + var_units_started_up[unit(:unit_ab), s_parent, t2h1]
                     + var_units_started_up[unit(:unit_ab), s_child, t2h2] 
-                )               
+                )
                 
                 + unit_flow_coefficient_a * (
                     + var_unit_flow[key_uf_a..., s_parent, t1h1]
                     + var_unit_flow[key_uf_a..., s_child, t1h2]
                     + var_unit_flow[key_uf_a..., s_child, t1h3]
-                    + var_unit_flow[key_uf_a..., s_child, t1h4]                               
+                    + var_unit_flow[key_uf_a..., s_child, t1h4]
                 )
 
                 + 2 * unit_flow_coefficient_b * (
                     + var_unit_flow[key_uf_b..., s_parent, t2h1]
-                    + var_unit_flow[key_uf_b..., s_parent, t2h2]                                                   
+                    + var_unit_flow[key_uf_b..., s_parent, t2h2]
                 )
 
                 + 2 * connection_flow_coefficient_b * (
                     + var_connection_flow[key_cf_b..., s_parent, t2h1]
-                    + var_connection_flow[key_cf_b..., s_parent, t2h2]                                                   
+                    + var_connection_flow[key_cf_b..., s_parent, t2h2]
                 )
 
                 + connection_flow_coefficient_c * (
@@ -235,11 +235,85 @@
                     + var_node_state[node(:node_c), s_parent, t1h4]
                 ),
                 Symbol(sense),
-                rhs,
+                4 * rhs,
             )
-            expected_con = constraint_object(expected_con_ref)            
-            con_key = (user_constraint(:constraint_x), [s_parent, s_child], t4h1)            
+            expected_con = constraint_object(expected_con_ref)
+            con_key = (user_constraint(:constraint_x), [s_parent, s_child], t4h1)
             observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+    end
+end
+@testset "more user constraints" begin
+    url_in = "sqlite://"
+    test_data = Dict(
+        :objects => [
+            ["model", "instance"],
+            ["temporal_block", "6hquarterly"],
+            ["temporal_block", "18hdaily"],
+            ["temporal_block", "look_ahead"],
+            ["stochastic_structure", "deterministic"],
+            ["unit", "pwrplant"],
+            ["node", "dummy"],
+            ["stochastic_scenario", "realisation"]
+        ],
+        :relationships => [
+            ["model__temporal_block", ["instance", "6hquarterly"]],
+            ["model__temporal_block", ["instance", "18hdaily"]],
+            ["model__temporal_block", ["instance", "look_ahead"]],
+            ["model__stochastic_structure", ["instance", "deterministic"]],
+            ["model__default_temporal_block", ["instance", "6hquarterly"]],
+            ["model__default_temporal_block", ["instance", "18hdaily"]],
+            ["model__default_temporal_block", ["instance", "look_ahead"]],
+            ["model__default_stochastic_structure", ["instance", "deterministic"]],
+            ["stochastic_structure__stochastic_scenario", ["deterministic", "realisation"]],
+        ],
+        :object_parameter_values => [
+            ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
+            ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
+            #["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "6h")],
+            ["model", "instance", "duration_unit", "hour"],
+            ["model", "instance", "model_type", "spineopt_standard"],
+            ["temporal_block", "6hquarterly", "resolution", Dict("type" => "duration", "data" => "15m")],
+            ["temporal_block", "18hdaily", "resolution", Dict("type" => "duration", "data" => "1h")],
+            ["temporal_block", "look_ahead", "resolution", Dict("type" => "duration", "data" => "6h")],
+            ["temporal_block", "6hquarterly", "block_start", Dict("type" => "duration", "data" => "0m")],
+            ["temporal_block", "18hdaily", "block_start", Dict("type" => "duration", "data" => "6h")],
+            ["temporal_block", "look_ahead", "block_start", Dict("type" => "duration", "data" => "1D")],
+            ["temporal_block", "6hquarterly", "block_end", Dict("type" => "duration", "data" => "6h")],
+            ["temporal_block", "18hdaily", "block_end", Dict("type" => "duration", "data" => "1D")],
+            ["temporal_block", "look_ahead", "block_end", Dict("type" => "duration", "data" => "2D")],
+            ["model", "instance", "db_mip_solver", "Cbc.jl"],
+            ["model", "instance", "db_lp_solver", "Clp.jl"],
+        ],
+    )
+    @testset "constraint_user_constraint_must_run" begin
+        _load_test_data(url_in, test_data)
+        rhs = 16
+        units_on_coeff = 1
+        objects = [["user_constraint", "constraint_x"]]
+        relationships = [["unit__user_constraint", ["pwrplant", "constraint_x"]]]
+        object_parameter_values = [
+            ["user_constraint", "constraint_x", "constraint_sense", :>=],
+            ["user_constraint", "constraint_x", "right_hand_side", rhs],
+        ]
+        relationship_parameter_values = [
+            ["unit__user_constraint", ["pwrplant", "constraint_x"], "units_on_coefficient", units_on_coeff]
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_units_on = m.ext[:spineopt].variables[:units_on]
+        for (con_key, con) in m.ext[:spineopt].constraints[:user_constraint]
+            t_duration = duration(con_key.t)
+            var_key = (unit(:pwrplant), stochastic_scenario(:realisation), con_key.t)
+            expected_con = @build_constraint(t_duration * units_on_coeff * var_units_on[var_key...] >= t_duration * rhs)
+            observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
