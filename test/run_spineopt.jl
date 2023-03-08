@@ -89,22 +89,24 @@ end
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        m = run_spineopt(url_in, url_out; log_level=0)
-        con = m.ext[:spineopt].constraints[:unit_flow_capacity]
-        using_spinedb(url_out, Y)
-        cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
-        flow_key = (
-            report=Y.report(:report_x),
-            unit=Y.unit(:unit_ab),
-            node=Y.node(:node_b),
-            direction=Y.direction(:to_node),
-            stochastic_scenario=Y.stochastic_scenario(:parent),
-        )
-        @testset for (k, (c, d)) in enumerate(zip(vom_cost_data, demand_data))
-            t1 = DateTime(2000, 1, 1, k - 1)
-            t = TimeSlice(t1, t1 + Hour(1))
-            @test Y.objective_variable_om_costs(; cost_key..., t=t) == c * d
-            @test Y.unit_flow(; flow_key..., t=t) == d
+        @testset for write_as_roll in (0, 1, 2, 3, 5, 8, 13, 21, 24)
+            m = run_spineopt(url_in, url_out; log_level=0, write_as_roll=write_as_roll)
+            con = m.ext[:spineopt].constraints[:unit_flow_capacity]
+            using_spinedb(url_out, Y)
+            cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+            flow_key = (
+                report=Y.report(:report_x),
+                unit=Y.unit(:unit_ab),
+                node=Y.node(:node_b),
+                direction=Y.direction(:to_node),
+                stochastic_scenario=Y.stochastic_scenario(:parent),
+            )
+            @testset for (k, (c, d)) in enumerate(zip(vom_cost_data, demand_data))
+                t1 = DateTime(2000, 1, 1, k - 1)
+                t = TimeSlice(t1, t1 + Hour(1))
+                @test Y.objective_variable_om_costs(; cost_key..., t=t) == c * d
+                @test Y.unit_flow(; flow_key..., t=t) == d
+            end
         end
     end
     @testset "rolling with updating data" begin
