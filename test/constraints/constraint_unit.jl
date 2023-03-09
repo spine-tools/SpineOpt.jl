@@ -1435,7 +1435,7 @@
                     + var_units_started_up[unit(:unit_ab), s_child, t1h2]
                 ),
                 Symbol(sense),
-                rhs,
+                2 * rhs,
             )
             expected_con = constraint_object(expected_con_ref)
             con_key = (user_constraint(:constraint_x), [s_parent, s_child], t2h)
@@ -1503,7 +1503,7 @@
                     + var_units_started_up[unit(:unit_ab), s_child, t1h2]
                 ),
                 Symbol(sense),
-                rhs,
+                2 * rhs,
             )
             expected_con = constraint_object(expected_con_ref)
             con_key = (user_constraint(:constraint_x), [s_parent, s_child], t2h)

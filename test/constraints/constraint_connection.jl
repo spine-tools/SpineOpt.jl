@@ -1052,7 +1052,7 @@
                 2 * node_state_coefficient * var_node_state[node(:node_b), s_parent, t2h] +
                 2 * demand_coefficient * demand,
                 Symbol(sense),
-                rhs,
+                2 * rhs,
             )
             expected_con = constraint_object(expected_con_ref)
             con_key = (user_constraint(:constraint_x), [s_parent, s_child], t2h)
