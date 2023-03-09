@@ -164,10 +164,9 @@
         @test _is_constraint_equal(observed_con, expected_con)
         # node_group_bc
         ng_bc = node(:node_group_bc)
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        s, t = first(scenarios), first(time_slices)
-        var_n_inj = sum(var_node_injection[n, s, t] for (s, t) in zip(scenarios, time_slices) for n in members(ng_bc))
+        s, t = (stochastic_scenario(:parent), time_slice(m; temporal_block=temporal_block(:hourly))[1])
+        node_key = (ng_bc, s, t)
+        var_n_inj = var_node_injection[node_key...]
         var_conn_flows = -var_connection_flow[connection(:connection_ca), node(:node_c), direction(:from_node), s, t]
         expected_con = @build_constraint(var_n_inj + var_conn_flows == 0)
         con = constraint[node(:node_group_bc), s, t]
