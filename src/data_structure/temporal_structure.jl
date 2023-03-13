@@ -322,8 +322,7 @@ function _generate_representative_time_slice!(m::Model)
         member for blk in model__temporal_block(model=m.ext[:spineopt].instance) for member in members(blk)
     )
     for blk in indices(representative_periods_mapping)
-        for (real_t_start, rep_blk_value) in representative_periods_mapping(temporal_block=blk)
-            rep_blk_name = rep_blk_value()
+        for (real_t_start, rep_blk_name) in representative_periods_mapping(temporal_block=blk)
             rep_blk = temporal_block(rep_blk_name)
             if !(rep_blk in model_blocks)
                 error("representative temporal block $rep_blk is not included in model $(m.ext[:spineopt].instance)")
@@ -387,7 +386,7 @@ function roll_temporal_structure!(m::Model, folds=1)
     temp_struct = m.ext[:spineopt].temporal_structure
     folds > 0 && end_(temp_struct[:current_window]) >= model_end(model=instance) && return false
     roll_forward_ *= folds
-    roll!(temp_struct[:current_window], roll_forward_)
+    roll!(temp_struct[:current_window], roll_forward_; update = false)
     _roll_time_slice_set!(temp_struct[:time_slice], roll_forward_)
     _roll_time_slice_set!(temp_struct[:history_time_slice], roll_forward_)
     true
