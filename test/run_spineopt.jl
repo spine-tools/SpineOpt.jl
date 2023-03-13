@@ -32,9 +32,11 @@ end
             ["model", "instance"],
             ["temporal_block", "hourly"],
             ["stochastic_structure", "deterministic"],
+            ["stochastic_structure", "unused_structure"],
             ["unit", "unit_ab"],
             ["node", "node_b"],
             ["stochastic_scenario", "parent"],
+            ["stochastic_scenario", "unused_child"],
             ["report", "report_x"],
             ["output", "unit_flow"],
             ["output", "variable_om_costs"],
@@ -48,6 +50,9 @@ end
             ["node__temporal_block", ["node_b", "hourly"]],
             ["node__stochastic_structure", ["node_b", "deterministic"]],
             ["stochastic_structure__stochastic_scenario", ["deterministic", "parent"]],
+            ["stochastic_structure__stochastic_scenario", ["unused_structure", "parent"]],
+            ["stochastic_structure__stochastic_scenario", ["unused_structure", "unused_child"]],
+            ["parent_stochastic_scenario__child_stochastic_scenario", ["parent", "unused_child"]],
             ["report__output", ["report_x", "unit_flow"]],
             ["report__output", ["report_x", "variable_om_costs"]],
             ["model__report", ["instance", "report_x"]],
@@ -102,6 +107,115 @@ end
                 @test Y.objective_variable_om_costs(; cost_key..., t=t) == c * d
                 @test Y.unit_flow(; flow_key..., t=t) == d
             end
+        end
+    end
+    @testset "rolling with updating data" begin
+        _load_test_data(url_in, test_data)
+        inds = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
+        vom_cost_data = [100 * k for k in 0:23]
+        ts = Dict(
+            "type" => "time_series",
+            "data" => vom_cost_data,
+            "index" => inds,
+        )
+        vom_cost = Dict(
+            "type" => "map",
+            "index_type" => "str",
+            "data" => Dict(
+                "parent" => Dict(
+                    "type" => "map",
+                    "index_type" => "date_time",
+                    "data" => Dict(
+                        "2000-01-01T00:00:00" => ts,
+                        "2000-01-01T12:00:00" => vom_cost_data[12],
+                    )
+                )
+            )
+        )
+        demand_data = [2 * k for k in 0:23]
+        demand = Dict("type" => "time_series", "data" => demand_data, "index" => inds)
+        unit_capacity = demand
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1h")],
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in, url_out; log_level=0)
+        con = m.ext[:spineopt].constraints[:unit_flow_capacity]
+        using_spinedb(url_out, Y)
+        cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+        flow_key = (
+            report=Y.report(:report_x),
+            unit=Y.unit(:unit_ab),
+            node=Y.node(:node_b),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:parent),
+        )
+        realized_vom_cost_data = min.(vom_cost_data, vom_cost_data[12])
+        @testset for (k, (c, d)) in enumerate(zip(realized_vom_cost_data, demand_data))
+            t1 = DateTime(2000, 1, 1, k - 1)
+            t = TimeSlice(t1, t1 + Hour(1))
+            @test Y.objective_variable_om_costs(; cost_key..., t=t) == c * d
+            @test Y.unit_flow(; flow_key..., t=t) == d
+        end
+    end
+    @testset "rolling with unused dummy stochastic data" begin
+        _load_test_data(url_in, test_data)
+        inds = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
+        vom_cost_data = [100 * k for k in 0:23]
+        ts = Dict(
+            "type" => "time_series",
+            "data" => vom_cost_data,
+            "index" => inds,
+        )
+        vom_cost = Dict(
+            "type" => "map",
+            "index_type" => "str",
+            "data" => Dict(
+                "parent" => ts,
+                "unused_forecast" => nothing,
+            )
+        )
+        demand_data = [2 * k for k in 0:23]
+        demand = Dict("type" => "time_series", "data" => demand_data, "index" => inds)
+        unit_capacity = demand
+        object_parameter_values = [
+            ["node", "node_b", "demand", demand],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "1h")],
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", unit_capacity],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+        m = run_spineopt(url_in, url_out; log_level=0)
+        con = m.ext[:spineopt].constraints[:unit_flow_capacity]
+        using_spinedb(url_out, Y)
+        cost_key = (model=Y.model(:instance), report=Y.report(:report_x))
+        flow_key = (
+            report=Y.report(:report_x),
+            unit=Y.unit(:unit_ab),
+            node=Y.node(:node_b),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:parent),
+        )
+        @testset for (k, (c, d)) in enumerate(zip(vom_cost_data, demand_data))
+            t1 = DateTime(2000, 1, 1, k - 1)
+            t = TimeSlice(t1, t1 + Hour(1))
+            @test Y.objective_variable_om_costs(; cost_key..., t=t) == c * d
+            @test Y.unit_flow(; flow_key..., t=t) == d
         end
     end
     @testset "rolling without varying terms" begin
