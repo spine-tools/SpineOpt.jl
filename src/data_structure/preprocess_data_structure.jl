@@ -465,7 +465,7 @@ function generate_lodf()
             for conn_cont in connection(has_ptdf=true)
         )
         for (conn_mon, lodf_trial) in ((conn_mon, lodf_fn(conn_mon)) for conn_mon in connection(has_ptdf=true))
-        if conn_cont !== conn_mon && !isapprox(lodf_trial, 0; atol=tolerance) && lodf_trial !== nothing
+        if conn_cont !== conn_mon && lodf_trial !== nothing && !isapprox(lodf_trial, 0; atol=tolerance)
     )
     lodf_connection__connection = RelationshipClass(
         :lodf_connection__connection, [:connection, :connection], keys(lodf_values), lodf_values
