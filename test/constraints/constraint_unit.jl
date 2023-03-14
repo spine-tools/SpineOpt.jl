@@ -105,7 +105,12 @@
     end
     @testset "constraint_units_on" begin
         _load_test_data(url_in, test_data)
-
+        number_of_units = 5
+        units_availability_factor = 0.5
+        object_parameter_values = [
+            ["unit", "unit_ab", "units_availability_factor", units_availability_factor],
+        ]
+        
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_available = m.ext[:spineopt].variables[:units_available]
@@ -117,7 +122,7 @@
             key = (unit(:unit_ab), s, t)
             var_u_on = var_units_on[key...]
             var_u_av = var_units_available[key...]
-            expected_con = @build_constraint(var_u_on <= var_u_av)
+            expected_con = @build_constraint(var_u_on * units_availability_factor <= var_u_av)
             con_u_on = constraint[key...]
             observed_con = constraint_object(con_u_on)
             @test _is_constraint_equal(observed_con, expected_con)
