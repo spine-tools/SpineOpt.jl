@@ -157,6 +157,7 @@ function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
     @timelog log_level 3 "- [constraint_user_constraint]" add_constraint_user_constraint!(m)
     @timelog log_level 3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
     @timelog log_level 3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
+    @timelog log_level 3 "- [constraint_group_injection]" add_constraint_group_injection!(m)    
     @timelog log_level 3 "- [constraint_candidate_connection_flow_ub]" add_constraint_candidate_connection_flow_ub!(m)
     @timelog log_level 3 "- [constraint_candidate_connection_flow_lb]" add_constraint_candidate_connection_flow_lb!(m)
     @timelog log_level 3 "- [constraint_connection_intact_flow_ptdf]" add_constraint_connection_intact_flow_ptdf!(m)
@@ -531,10 +532,10 @@ function _save_bound_marginal_values!(m::Model, ref_map=nothing)
 end
 
 _dual(con, ref_map::JuMP.ReferenceMap) = DualPromise(ref_map[con])
-_dual(con, ::Nothing) = dual(con)
+_dual(con, ::Nothing) = has_duals(owner_model(con)) ? dual(con) : nothing
 
 _reduced_cost(var, ref_map::JuMP.ReferenceMap) = ReducedCostPromise(ref_map[var])
-_reduced_cost(var, ::Nothing) = reduced_cost(var)
+_reduced_cost(var, ::Nothing) = has_duals(owner_model(var)) ? reduced_cost(var) : nothing
 
 """
 Save the outputs of a model.
@@ -681,7 +682,7 @@ function _write_intermediate_results(m)
         end
     end
     for (file_path, table) in tables
-        Arrow.append(file_path, table)
+        isfile(file_path) ? Arrow.append(file_path, table) : Arrow.write(file_path, table; file=false)
     end
 end
 

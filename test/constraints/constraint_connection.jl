@@ -535,7 +535,8 @@
         conn_mon = connection(:connection_ab)
         n_mon_to = node(:node_b)
         expected_con = @build_constraint(
-            -1 <=
+            -conn_emergency_cap_ab
+            <=
             (
                 + var_connection_flow[conn_mon, n_mon_to, d_to, s_parent, t2h]
                 - var_connection_flow[conn_mon, n_mon_to, d_from, s_parent, t2h]
@@ -545,8 +546,9 @@
                     - var_connection_flow[conn_cont, n_cont_to, d_from, s_parent, t1h1]
                     - var_connection_flow[conn_cont, n_cont_to, d_from, s_child, t1h2]
                 )
-            ) / conn_emergency_cap_ab <=
-            +1
+            )
+            <=
+            conn_emergency_cap_ab
         )
         observed_con = constraint_object(constraint[conn_cont, conn_mon, [s_parent, s_child], t2h])
         @test _is_constraint_equal(observed_con, expected_con)
@@ -554,7 +556,8 @@
         conn_mon = connection(:connection_bc)
         n_mon_to = node(:node_c)
         expected_con = @build_constraint(
-            -1 <=
+            -conn_emergency_cap_bc
+            <=
             (
                 + var_connection_flow[conn_mon, n_mon_to, d_to, s_parent, t1h1]
                 - var_connection_flow[conn_mon, n_mon_to, d_from, s_parent, t1h1]
@@ -562,14 +565,16 @@
                     + var_connection_flow[conn_cont, n_cont_to, d_to, s_parent, t1h1]
                     - var_connection_flow[conn_cont, n_cont_to, d_from, s_parent, t1h1]
                 )
-            ) / conn_emergency_cap_bc <=
-            +1
+            )
+            <=
+            conn_emergency_cap_bc
         )
         observed_con = constraint_object(constraint[conn_cont, conn_mon, [s_parent], t1h1])
         @test _is_constraint_equal(observed_con, expected_con)
         # connection_bc -- t1h2
         expected_con = @build_constraint(
-            -1 <=
+            -conn_emergency_cap_bc
+            <=
             (
                 + var_connection_flow[conn_mon, n_mon_to, d_to, s_child, t1h2]
                 - var_connection_flow[conn_mon, n_mon_to, d_from, s_child, t1h2]
@@ -577,8 +582,9 @@
                     + var_connection_flow[conn_cont, n_cont_to, d_to, s_child, t1h2]
                     - var_connection_flow[conn_cont, n_cont_to, d_from, s_child, t1h2]
                 )
-            ) / conn_emergency_cap_bc <=
-            +1
+            )
+            <=
+            conn_emergency_cap_bc
         )
         observed_con = constraint_object(constraint[conn_cont, conn_mon, [s_child], t1h2])
         @test _is_constraint_equal(observed_con, expected_con)
@@ -1046,7 +1052,7 @@
                 2 * node_state_coefficient * var_node_state[node(:node_b), s_parent, t2h] +
                 2 * demand_coefficient * demand,
                 Symbol(sense),
-                rhs,
+                2 * rhs,
             )
             expected_con = constraint_object(expected_con_ref)
             con_key = (user_constraint(:constraint_x), [s_parent, s_child], t2h)
