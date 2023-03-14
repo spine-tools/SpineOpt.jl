@@ -276,19 +276,8 @@ parameters):
 - constraint on minimum up time
 - constraint on ramp rates
 
-##### [Bound on online units](@id constraint_units_on)
-The number of online units need to be restricted to the number of available units:
-
-```math
-\begin{aligned}
-&  v_{units\_on}(u,s,t) \\
-& <= v_{units\_available}(u,s,t) \\
-& \forall (u,s,t) \in units\_on\_indices
-\end{aligned}
-```
-
 ##### [Bound on available units](@id constraint_units_available)
-The number of available units itself is constrained by the parameters [unit\_availability\_factor](@ref) and [number\_of\_units](@ref), and the variable number of invested units [units\_invested\_available](@ref):
+The aggregated available units itself is constrained by the parameters [unit\_availability\_factor](@ref) and [number\_of\_units](@ref), and the variable number of invested units [units\_invested\_available](@ref):
 
 ```math
 \begin{aligned}
@@ -296,6 +285,17 @@ The number of available units itself is constrained by the parameters [unit\_ava
 & == p_{unit\_availability\_factor}(u,s,t) \\
 & \cdot (p_{number\_of\_units}(u,s,t) \\
 & + \sum_{(u,s,t) \in units\_invested\_available\_indices} v_{units\_invested\_available}(u,s,t) ) \\
+& \forall (u,s,t) \in units\_on\_indices
+\end{aligned}
+```
+
+##### [Bound on online units](@id constraint_units_on)
+The number of online units needs to be restricted to the aggregated available units with respect to the parameter [unit\_availability\_factor](@ref):
+
+```math
+\begin{aligned}
+& v_{units\_on}(u,s,t) \cdot p_{unit\_availability\_factor}(u,s,t) \\
+& <= v_{units\_available}(u,s,t) \\
 & \forall (u,s,t) \in units\_on\_indices
 \end{aligned}
 ```
