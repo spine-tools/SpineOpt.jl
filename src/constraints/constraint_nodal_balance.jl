@@ -26,7 +26,7 @@
 Balance equation for nodes.
 """
 function add_constraint_nodal_balance!(m::Model)
-    @fetch connection_flow, node_slack_pos, node_slack_neg = m.ext[:spineopt].variables
+    @fetch connection_flow = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:nodal_balance] = Dict(
         (node=n, stochastic_scenario=s, t=t) => sense_constraint(
             m,
@@ -50,9 +50,6 @@ function add_constraint_nodal_balance!(m::Model)
                 if !issubset(_connection_nodes(conn, n), _internal_nodes(n));
                 init=0,
             )
-            # slack variable - only exists if slack_penalty is defined
-            #+ get(node_slack_pos, (n, s, t), 0) - get(node_slack_neg, (n, s, t), 0)
-            
             ,
             eval(nodal_balance_sense(node=n)),
             0,
