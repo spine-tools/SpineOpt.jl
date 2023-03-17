@@ -137,15 +137,12 @@
     @testset "constraint_nodal_balance_group" begin
         _load_test_data(url_in, test_data)
         object_parameter_values = [
-            ["node", "node_a", "node_slack_penalty", 0.5],
             ["node", "node_group_bc", "balance_type", "balance_type_group"]
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_injection = m.ext[:spineopt].variables[:node_injection]
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
-        var_node_slack_pos = m.ext[:spineopt].variables[:node_slack_pos]
-        var_node_slack_neg = m.ext[:spineopt].variables[:node_slack_neg]
         constraint = m.ext[:spineopt].constraints[:nodal_balance]
         @test length(constraint) == 3
         conn = connection(:connection_ca)
@@ -155,19 +152,16 @@
         node_key = (n, key_tail...)
         conn_key = (conn, n, direction(:to_node), key_tail...)
         var_n_inj = var_node_injection[node_key...]
-        var_n_sl_pos = var_node_slack_pos[node_key...]
-        var_n_sl_neg = var_node_slack_neg[node_key...]
         var_conn_flow = var_connection_flow[conn_key...]
-        expected_con = @build_constraint(var_n_inj + var_conn_flow + var_n_sl_pos - var_n_sl_neg == 0)
+        expected_con = @build_constraint(var_n_inj + var_conn_flow == 0)
         con = constraint[node_key...]
         observed_con = constraint_object(con)
         @test _is_constraint_equal(observed_con, expected_con)
         # node_group_bc
         ng_bc = node(:node_group_bc)
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        s, t = first(scenarios), first(time_slices)
-        var_n_inj = sum(var_node_injection[n, s, t] for (s, t) in zip(scenarios, time_slices) for n in members(ng_bc))
+        s, t = (stochastic_scenario(:parent), time_slice(m; temporal_block=temporal_block(:hourly))[1])
+        node_key = (ng_bc, s, t)
+        var_n_inj = var_node_injection[node_key...]
         var_conn_flows = -var_connection_flow[connection(:connection_ca), node(:node_c), direction(:from_node), s, t]
         expected_con = @build_constraint(var_n_inj + var_conn_flows == 0)
         con = constraint[node(:node_group_bc), s, t]
@@ -190,6 +184,7 @@
         _load_test_data(url_in, test_data)
         relationships = [["node__node", ["node_b", "node_c"]], ["node__node", ["node_c", "node_b"]]]
         object_parameter_values = [
+            ["node", "node_a", "node_slack_penalty", 0.5],
             ["node", "node_a", "demand", demand_a],
             ["node", "node_b", "demand", demand_b],
             ["node", "node_c", "demand", demand_c],
@@ -218,6 +213,8 @@
         var_node_injection = m.ext[:spineopt].variables[:node_injection]
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_node_state = m.ext[:spineopt].variables[:node_state]
+        var_node_slack_pos = m.ext[:spineopt].variables[:node_slack_pos]
+        var_node_slack_neg = m.ext[:spineopt].variables[:node_slack_neg]
         constraint = m.ext[:spineopt].constraints[:node_injection]
         @test length(constraint) == 7
         u = unit(:unit_ab)
@@ -227,8 +224,10 @@
         time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
         @testset for t1 in time_slices
             var_n_inj = var_node_injection[n, s, t1]
+            var_n_sl_pos = var_node_slack_pos[n, s, t1]
+            var_n_sl_neg = var_node_slack_neg[n, s, t1]
             var_u_flow = var_unit_flow[u, node(:node_a), direction(:from_node), s, t1]
-            expected_con = @build_constraint(var_n_inj + var_u_flow + demand_a == 0)
+            expected_con = @build_constraint(var_n_inj - var_n_sl_pos + var_n_sl_neg + var_u_flow + demand_a == 0)
             @testset for (n, t0, t1) in node_dynamic_time_indices(m; node=n, t_after=t1)
                 con = constraint[n, [s], t0, t1]
                 observed_con = constraint_object(con)

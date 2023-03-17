@@ -26,19 +26,21 @@
 Balance equation for nodes.
 """
 function add_constraint_nodal_balance!(m::Model)
-    @fetch connection_flow, node_slack_pos, node_slack_neg = m.ext[:spineopt].variables
+    @fetch connection_flow, node_injection = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:nodal_balance] = Dict(
         (node=n, stochastic_scenario=s, t=t) => sense_constraint(
             m,
             # Net injection
-            + _node_injection(m, n, s, t)
+            + node_injection[n, s, t]
             # Commodity flows from connections
             + expr_sum(
                 connection_flow[conn, n1, d, s, t]
                 for (conn, n1, d, s, t) in connection_flow_indices(
                     m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
                 )
-                if !issubset(_connection_nodes(conn, n), _internal_nodes(n));
+                if !issubset(
+                    connection__from_node(connection=conn, direction=direction(:from_node)), _internal_nodes(n)
+                );
                 init=0,
             )
             # Commodity flows to connections
@@ -47,46 +49,18 @@ function add_constraint_nodal_balance!(m::Model)
                 for (conn, n1, d, s, t) in connection_flow_indices(
                     m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
                 )
-                if !issubset(_connection_nodes(conn, n), _internal_nodes(n));
+                if !issubset(connection__to_node(connection=conn, direction=direction(:to_node)), _internal_nodes(n));
                 init=0,
             )
-            # slack variable - only exists if slack_penalty is defined
-            + get(node_slack_pos, (n, s, t), 0) - get(node_slack_neg, (n, s, t), 0),
+            ,
             eval(nodal_balance_sense(node=n)),
             0,
         )
         for n in node()
         if balance_type(node=n) !== :balance_type_none
         && !any(balance_type(node=ng) === :balance_type_group for ng in groups(n))
-        for (n, s, t) in node_injection_indices(m; node=n)        
+        for (n, s, t) in node_injection_indices(m; node=n)
     )
 end
-
-function _node_injection(m, n, s, t)
-    @fetch node_injection = m.ext[:spineopt].variables
-    if balance_type(node=n) === :balance_type_group
-        expr_sum(
-            node_injection[n_, s_, t_] for (n_, s_, t_) in node_injection_indices(m; node=_internal_nodes(n));
-            init=0
-        )
-    else
-        node_injection[n, s, t]
-    end
-end
-
 
 _internal_nodes(n::Object) = setdiff(members(n), n)
-
-"""
-    _connection_nodes(connection, node)
-
-An iterator over all nodes of given `connection` that have the same commodity as given `node`.
-"""
-function _connection_nodes(connection, node)
-    (
-        n
-        for connection__node in (connection__from_node, connection__to_node)
-        for n in members(connection__node(connection=connection, direction=anything))
-        if node__commodity(node=members(node)) == node__commodity(node=n)
-    )
-end
