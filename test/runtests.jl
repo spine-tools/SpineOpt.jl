@@ -59,7 +59,9 @@ function _load_test_data_without_template(db_url, test_data)
     SpineInterface.import_data(db_url; test_data...)
 end
 
-_is_constraint_equal(con1, con2) = con1.func == con2.func && con1.set == con2.set
+function _is_constraint_equal(con1, con2)
+    con1.func == con2.func && con1.set == con2.set
+end
 
 """
     _dismember_constraint(constraint)

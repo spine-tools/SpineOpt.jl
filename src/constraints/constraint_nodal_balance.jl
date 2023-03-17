@@ -26,7 +26,7 @@
 Balance equation for nodes.
 """
 function add_constraint_nodal_balance!(m::Model)
-    @fetch node_injection, connection_flow, node_slack_pos, node_slack_neg = m.ext[:spineopt].variables
+    @fetch connection_flow, node_injection = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:nodal_balance] = Dict(
         (node=n, stochastic_scenario=s, t=t) => sense_constraint(
             m,
@@ -49,13 +49,10 @@ function add_constraint_nodal_balance!(m::Model)
                 for (conn, n1, d, s, t) in connection_flow_indices(
                     m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
                 )
-                if !issubset(
-                    connection__to_node(connection=conn, direction=direction(:to_node)), _internal_nodes(n)
-                );
+                if !issubset(connection__to_node(connection=conn, direction=direction(:to_node)), _internal_nodes(n));
                 init=0,
             )
-            # slack variable - only exists if slack_penalty is defined
-            + get(node_slack_pos, (n, s, t), 0) - get(node_slack_neg, (n, s, t), 0),
+            ,
             eval(nodal_balance_sense(node=n)),
             0,
         )
@@ -63,23 +60,6 @@ function add_constraint_nodal_balance!(m::Model)
         if balance_type(node=n) !== :balance_type_none
         && !any(balance_type(node=ng) === :balance_type_group for ng in groups(n))
         for (n, s, t) in node_injection_indices(m; node=n)
-    )
-end
-
-function add_constraint_group_injection!(m::Model)
-    @fetch node_injection = m.ext[:spineopt].variables
-    m.ext[:spineopt].constraints[:group_injection] = Dict(
-        (node=n, stochastic_scenario=s, t=t) => @constraint(
-            m,
-            node_injection[n, s, t]
-            == 
-            expr_sum(
-                node_injection[n_, s_, t_]
-                for (n_, s_, t_) in node_injection_indices(m; node=_internal_nodes(n), stochastic_scenario=s, t=t);
-                init=0
-            )
-        )
-        for (n, s, t) in node_injection_indices(m; node=node(balance_type=:balance_type_group))            
     )
 end
 
