@@ -108,9 +108,12 @@ For connections with this parameter set, only a connection__from_node and connec
 and this function creates the additional relationships on the fly.
 """
 function add_connection_relationships()
-    conn_from_to = [
-        (conn, first(connection__from_node(connection=conn)), first(connection__to_node(connection=conn)))
+    conn_from = (
+        (conn, first(connection__from_node(connection=conn)))
         for conn in connection(connection_type=:connection_type_lossless_bidirectional)
+    )
+    conn_from_to = [
+        (conn, from, first(x for x in connection__to_node(connection=conn) if x != from)) for (conn, from) in conn_from
     ]
     isempty(conn_from_to) && return
     new_connection__from_node_rels = [(connection=conn, node=n) for (conn, _n, n) in conn_from_to]
@@ -126,11 +129,9 @@ function add_connection_relationships()
     new_connection__from_node_parameter_values = Dict(
         (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__from_node_rels
     )
-
     new_connection__to_node_parameter_values = Dict(
         (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__to_node_rels
     )
-
     new_connection__node__node_parameter_values = Dict(
         (conn, n1, n2) => Dict(:fix_ratio_out_in_connection_flow => value_one)
         for (conn, n1, n2) in new_connection__node__node_rels
