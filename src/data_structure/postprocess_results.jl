@@ -69,22 +69,25 @@ function _save_connection_avg_throughflow!(m::Model, key, connection_flow)
     avg_throughflow
 end
 
-function _contingency_is_binding(m, connection_flow, conn_cont, conn_mon, s, t)
-    ratio = abs(
-        realize(
-            connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s, t)
-            / connection_minimum_emergency_capacity(m, conn_mon, s, t)
+function _contingency_is_binding_ratio!(m)
+    get!(m.ext[:spineopt].values, :contingency_is_binding_ratio) do
+        Dict(
+            (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=s, t=t) => /(
+                connection_post_contingency_flow(m, conn_cont, conn_mon, s, t),
+                connection_minimum_emergency_capacity(m, conn_mon, s, t)
+            )
+            for (conn_cont, conn_mon, s, t) in constraint_connection_flow_lodf_indices(m)
         )
-    )
-    isapprox(ratio, 1) || ratio >= 1 ? 1 : 0
+    end
+end
+
+function _contingency_is_binding(ratio)
+    realized_ratio = abs(value(realize(ratio)))
+    isapprox(realized_ratio, 1) || realized_ratio >= 1 ? 1 : 0
 end
 
 function save_contingency_is_binding!(m::Model)
-    @fetch connection_flow = m.ext[:spineopt].values
     m.ext[:spineopt].values[:contingency_is_binding] = Dict(
-        (
-            connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=s, t=t
-        ) => _contingency_is_binding(m, connection_flow, conn_cont, conn_mon, s, t)
-        for (conn_cont, conn_mon, s, t) in constraint_connection_flow_lodf_indices(m)
+        key => _contingency_is_binding(ratio) for (key, ratio) in _contingency_is_binding_ratio!(m)
     )
 end

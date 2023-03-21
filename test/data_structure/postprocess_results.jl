@@ -63,7 +63,7 @@
                 ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
                 ["node", "node_a", "demand", -100],
                 ["node", "node_b", "demand", 100],
-                ["output","connection_avg_intact_throughflow", "output_resolution", Dict("type" => "duration", "data" => "2h")],
+                ["output", "connection_avg_intact_throughflow", "output_resolution", Dict("type" => "duration", "data" => "2h")],
                 ["model", "instance", "db_mip_solver", "Cbc.jl"],
                 ["model", "instance", "db_lp_solver", "Clp.jl"],
             ],
@@ -86,6 +86,8 @@
     end
     @testset "save_contingency_is_binding" begin
         url_in = "sqlite://"
+        file_path_out = "$(@__DIR__)/test_out.sqlite"
+        url_out = "sqlite:///$file_path_out"
         test_data = Dict(
             :objects => [
                 ["model", "instance"],
@@ -132,7 +134,8 @@
             ],
             :object_parameter_values => [
                 ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
-                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
+                ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
+                ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "6h")],
                 ["model", "instance", "duration_unit", "hour"],
                 ["model", "instance", "model_type", "spineopt_standard"],
                 ["model", "master", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
@@ -151,7 +154,7 @@
                     "stochastic_structure__stochastic_scenario",
                     ["stochastic", "parent"],
                     "stochastic_scenario_end",
-                    Dict("type" => "duration", "data" => "1h")
+                    Dict("type" => "duration", "data" => "6h")
                 ]
             ],
         )
@@ -161,6 +164,9 @@
         conn_emergency_cap_ab = 80
         conn_emergency_cap_bc = 100
         conn_emergency_cap_ca = 150
+        d_timestamps = collect(DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2))
+        d_values = [100, 50, 200, 75, 100]
+        demand_ = TimeSeries(d_timestamps, d_values, false, false)
         objects = [
             ["commodity", "electricity"],
             ["report", "report_x"],
@@ -197,8 +203,8 @@
             ["commodity", "electricity", "commodity_physics", "commodity_physics_lodf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "connection_contingency", true],
-            ["node", "node_c", "demand", 100],
-            ["node", "node_b", "demand", -100],
+            ["node", "node_c", "demand", unparse_db_value(demand_)],
+            ["node", "node_b", "demand", unparse_db_value(-demand_)],
         ]
         relationship_parameter_values = [
             ["connection__node__node", ["connection_ab", "node_b", "node_a"], "fix_ratio_out_in_connection_flow", 1.0],
@@ -233,23 +239,23 @@
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        m = run_spineopt(url_in; log_level=0, optimize=true)
+        rm(file_path_out; force=true)
+        m = run_spineopt(url_in, url_out; log_level=0, optimize=true)
+        O = Module()
+        using_spinedb(url_out, O)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         @test !haskey(m.ext[:spineopt].constraints, :connection_flow_lodf)
-        contingency_is_binding = m.ext[:spineopt].values[:contingency_is_binding]
-        @test length(contingency_is_binding) == 3
         conn_cont = connection(:connection_ca)
-        s_parent = stochastic_scenario(:parent)
-        s_child = stochastic_scenario(:child)
-        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
-        # connection_ab
-        conn_mon = connection(:connection_ab)
-        @test observed_val = contingency_is_binding[conn_cont, conn_mon, [s_parent, s_child], t2h] == 0
-        # connection_bc -- t1h1
-        conn_mon = connection(:connection_bc)
-        @test observed_val = contingency_is_binding[conn_cont, conn_mon, [s_parent], t1h1] == 1
-        # connection_bc -- t1h2
-        @test observed_val = contingency_is_binding[conn_cont, conn_mon, [s_child], t1h2] == 1
+        val = O.contingency_is_binding(connection1=conn_cont, connection2=connection(:connection_ab))
+        demand_pv = parameter_value(demand_)
+        @testset for (t, obs) in val
+            exp = demand_pv(t=t) >= 200 ? 1.0 : 0.0
+            @test obs == exp
+        end
+        val = O.contingency_is_binding(connection1=conn_cont, connection2=connection(:connection_bc))
+        @testset for (t, obs) in val
+            exp = demand_pv(t=t) >= 100 ? 1.0 : 0.0
+            @test obs == exp
+        end
     end
 end
