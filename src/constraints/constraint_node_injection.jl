@@ -33,7 +33,7 @@ function add_constraint_node_injection!(m::Model)
                 + node_injection[n, s, t] + demand[
                     (node=n, stochastic_scenario=s, analysis_time=t0, t=representative_time_slice(m, t))
                 ]
-                #node slack
+                # node slack
                 - get(node_slack_pos, (n, s, t), 0) + get(node_slack_neg, (n, s, t), 0)
                 for (n, s, t) in node_injection_indices(
                     m; node=n, stochastic_scenario=s, t=t_after, temporal_block=anything
@@ -49,9 +49,7 @@ function add_constraint_node_injection!(m::Model)
                 for ng in groups(n);
                 init=0,
             )
-
             ==            
-
             + expr_sum(
                 (
                     + get(node_state, (n, s, t_before), 0)
@@ -61,7 +59,8 @@ function add_constraint_node_injection!(m::Model)
                 ) / duration(t_after)
                 # Self-discharge commodity losses
                 - get(node_state, (n, s, t_after), 0)
-                * frac_state_loss[(node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)] for s in s;
+                * frac_state_loss[(node=n, stochastic_scenario=s, analysis_time=t0, t=t_after)]
+                for s in s;
                 init=0,
             )
             # Diffusion of commodity from other nodes to this one
@@ -80,7 +79,8 @@ function add_constraint_node_injection!(m::Model)
             )
             # Commodity flows from units
             + expr_sum(
-                unit_flow[u, n, d, s, t_short] for (u, n, d, s, t_short) in unit_flow_indices(
+                unit_flow[u, n, d, s, t_short]
+                for (u, n, d, s, t_short) in unit_flow_indices(
                     m;
                     node=n,
                     direction=direction(:to_node),
@@ -92,7 +92,8 @@ function add_constraint_node_injection!(m::Model)
             )
             # Commodity flows to units
             - expr_sum(
-                unit_flow[u, n, d, s, t_short] for (u, n, d, s, t_short) in unit_flow_indices(
+                unit_flow[u, n, d, s, t_short]
+                for (u, n, d, s, t_short) in unit_flow_indices(
                     m;
                     node=n,
                     direction=direction(:from_node),
@@ -102,7 +103,8 @@ function add_constraint_node_injection!(m::Model)
                 );
                 init=0,
             )
-        ) for (n, s, t_before, t_after) in constraint_node_injection_indices(m)
+        )
+        for (n, s, t_before, t_after) in constraint_node_injection_indices(m)
     )
 end
 
