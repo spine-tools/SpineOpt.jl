@@ -69,6 +69,11 @@ function _save_connection_avg_throughflow!(m::Model, key, connection_flow)
     avg_throughflow
 end
 
+function _contingency_is_binding_indices(m)
+    contingency_is_binding = get(m.ext[:spineopt].values, :contingency_is_binding, nothing)
+    contingency_is_binding === nothing ? constraint_connection_flow_lodf_indices(m) : keys(contingency_is_binding)
+end
+
 function _contingency_is_binding(m, connection_flow, conn_cont, conn_mon, s, t)
     ratio = abs(
         realize(
@@ -85,6 +90,6 @@ function save_contingency_is_binding!(m::Model)
         (
             connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=s, t=t
         ) => _contingency_is_binding(m, connection_flow, conn_cont, conn_mon, s, t)
-        for (conn_cont, conn_mon, s, t) in constraint_connection_flow_lodf_indices(m)
+        for (conn_cont, conn_mon, s, t) in _contingency_is_binding_indices(m)
     )
 end
