@@ -30,12 +30,13 @@ function add_constraint_connection_flow_lodf!(m::Model)
         @info "skipping constraint connection_flow_lodf - instead will report contingency_is_binding in $rpts"
         return
     end
+    @fetch connection_flow = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:connection_flow_lodf] = Dict(
         (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=s, t=t) => @constraint(
             m,
             - connection_minimum_emergency_capacity(m, conn_mon, s, t)
             <=
-            + connection_post_contingency_flow(m, conn_cont, conn_mon, s, t, expr_sum)
+            + connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s, t, expr_sum)
             <=
             + connection_minimum_emergency_capacity(m, conn_mon, s, t)
         )
@@ -43,8 +44,7 @@ function add_constraint_connection_flow_lodf!(m::Model)
     )
 end
 
-function connection_post_contingency_flow(m, conn_cont, conn_mon, s, t, sum=sum)
-    @fetch connection_flow = m.ext[:spineopt].variables
+function connection_post_contingency_flow(m, connection_flow, conn_cont, conn_mon, s, t, sum=sum)
     (
         # flow in monitored connection
         sum(
