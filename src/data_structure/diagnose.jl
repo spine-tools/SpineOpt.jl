@@ -28,12 +28,13 @@ function diagnose_spineopt(url_in; upgrade=false, log_level=3, filters=Dict("too
 	prepare_spineopt(url_in; upgrade=upgrade, log_level=log_level, filters=filters)
 	_diagnose(node, _node_issue)
 	_diagnose(unit, _unit_issue)
+	_diagnose(connection, _connection_issue)
 end
 
 function _diagnose(class::ObjectClass, issue_fn)
-	issues = [string(x, "\t", issue) for (x, issue) in ((x, issue_fn(x)) for x in class()) if issue !== nothing]
+	issues = [string(x, " -- ", issue) for (x, issue) in ((x, issue_fn(x)) for x in class()) if issue !== nothing]
 	if !isempty(issues)
-		@warn string("the following $(class.name) items have issues:\n\t", join(issues, "\n\t"))
+		@warn string("the following $(class.name) items might have issues:\n\t", join(issues, "\n\t"))
 	end
 end
 
@@ -42,31 +43,65 @@ function _node_issue(n)
 		return nothing
 	end
 	if balance_type(node=n) === :balance_type_none
-		return "unbalanced - balance_type_none"
+		return "balance_type = balance_type_none"
 	end
 end
 
+function _has_cap_or_cost(indices, parameters)
+	[(x.node, any(p(; x..., _strict=false) !== nothing for p in parameters)) for x in indices]
+end
+
 function _unit_issue(u)
-	nodes_from = unit__from_node(unit=u, direction=direction(:from_node))
-	isempty(nodes_from) && return "no input flows"
-	nodes_to = unit__to_node(unit=u, direction=direction(:to_node))
-	isempty(nodes_to) && return "no output flows"
-	for n_from in nodes_from
-		for n_to in nodes_to
-			for ratio in (fix_ratio_out_in_unit_flow, max_ratio_out_in_unit_flow, min_ratio_out_in_unit_flow)
-				if ratio(unit=u, node1=n_to, node2=n_from, _strict=false) !== nothing
-					return nothing
-				end
-			end
-			for ratio in (fix_ratio_in_out_unit_flow, max_ratio_in_out_unit_flow, min_ratio_in_out_unit_flow)
-				if ratio(unit=u, node1=n_fr, node2=n_to, _strict=false) !== nothing
-					return nothing
-				end
-			end
-			if unit_incremental_heat_rate(unit=u, node1=n_fr, node2=n_to, _strict=false) !== nothing
-				return nothing
-			end
-		end
+	parameters = (unit_capacity, fuel_cost, vom_cost)
+	node_from_has_cap_or_cost = _has_cap_or_cost(unit__from_node(unit=u, _compact=false), parameters)
+	node_to_has_cap_or_cost = _has_cap_or_cost(unit__to_node(unit=u, _compact=false), parameters)
+	for (n_from, has_cap_or_cost_from) in node_from_has_cap_or_cost
+		has_cap_or_cost_from || any(
+			has_cap_or_cost_to && _are_unit_flows_related(u, n_from, n_to)
+			for (n_to, has_cap_or_cost_to) in node_to_has_cap_or_cost
+		) || "flow from $n_from is unbounded"
 	end
-	"input and output flows not related"
+	for (n_to, has_cap_or_cost_to) in node_to_has_cap_or_cost
+		has_cap_or_cost_to || any(
+			has_cap_or_cost_from && _are_unit_flows_related(u, n_from, n_to)
+			for (n_from, has_cap_or_cost_from) in node_from_has_cap_or_cost
+		) || return "flow to $n_to is unbounded"
+	end
+end
+
+function _are_unit_flows_related(u, n_from, n_to)
+	any(
+		ratio(unit=u, node1=n_to, node2=n_from, _strict=false) !== nothing
+		for ratio in (fix_ratio_out_in_unit_flow, max_ratio_out_in_unit_flow, min_ratio_out_in_unit_flow)
+	) || any(
+		ratio(unit=u, node1=n_from, node2=n_to, _strict=false) !== nothing
+		for ratio in (fix_ratio_in_out_unit_flow, max_ratio_in_out_unit_flow, min_ratio_in_out_unit_flow)
+	) || unit_incremental_heat_rate(unit=u, node1=n_from, node2=n_to, _strict=false) !== nothing
+end
+
+function _connection_issue(c)
+	parameters = (connection_capacity, connection_flow_cost)
+	node_from_has_cap_or_cost = _has_cap_or_cost(connection__from_node(connection=c, _compact=false), parameters)
+	node_to_has_cap_or_cost = _has_cap_or_cost(connection__to_node(connection=c, _compact=false), parameters)
+	for (n_from, has_cap_or_cost_from) in node_from_has_cap_or_cost
+		has_cap_or_cost_from || any(
+			has_cap_or_cost_to && _are_connection_flows_related(u, n_from, n_to)
+			for (n_to, has_cap_or_cost_to) in node_to_has_cap_or_cost
+		) || "flow from $n_from is unbounded"
+	end
+	for (n_to, has_cap_or_cost_to) in node_to_has_cap_or_cost
+		has_cap_or_cost_to || any(
+			has_cap_or_cost_from && _are_connection_flows_related(u, n_from, n_to)
+			for (n_from, has_cap_or_cost_from) in node_from_has_cap_or_cost
+		) || return "flow to $n_to is unbounded"
+	end
+end
+
+function _are_connection_flows_related(u, n_from, n_to)
+	any(
+		ratio(unit=u, node1=n_to, node2=n_from, _strict=false) !== nothing
+		for ratio in (
+			fix_ratio_out_in_connection_flow, max_ratio_out_in_connection_flow, min_ratio_out_in_connection_flow
+		)
+	)
 end
