@@ -317,7 +317,7 @@ end
 function check_model_start_smaller_than_end()
     for m in indices(model_start)
         _check(model_start(model=m) <= model_end(model=m), "The model start for $(mod) is greater than the model end")
-       end
+    end
 end
 
 function check_operating_points()
@@ -354,6 +354,7 @@ function check_ramping_parameters()
         "ramp_down_limit has to be between 0 (excl) and 1 for $(join(error_indices, ", ", " and ")) "
     )
 end
+
 function check_startup_ramps()
     # Max Startup ramp between 0 and 1
     error_indices = [
@@ -449,8 +450,10 @@ function check_shutdown_ramps()
     ]
     _check(
         isempty(error_indices),
-        "missing `ramp_down_limit` value for indices: $(join(error_indices, ", ", " and ")) "
-        * "- `ramp_down_limit` must be specified where `min_shutdown_ramp` is",
+        string(
+            "missing `ramp_down_limit` value for indices: $(join(error_indices, ", ", " and ")) ",
+            "- `ramp_down_limit` must be specified where `min_shutdown_ramp` is"
+        )
     )
 end
 
@@ -486,19 +489,24 @@ function check_res_startup_ramps()
     #TODO: Should there be checks for upward, downward, spinning, non-spinning?
     error_indices = [
         (u, n, d)
-        for (u, n, d) in union(indices(min_res_startup_ramp),indices(max_res_startup_ramp)) if !(is_reserve_node(node=n))
+        for (u, n, d) in union(indices(min_res_startup_ramp),indices(max_res_startup_ramp))
+        if !(is_reserve_node(node=n))
     ]
     _check(
         isempty(error_indices),
-        "reserve startup ramps have been defined for $(join(error_indices, ", ", " and ")), while this is not a reserve node. Please set the is_reserve_node parameter to True"
+        string(
+            "reserve startup ramps have been defined for $(join(error_indices, ", ", " and ")), ",
+            "while this is not a reserve node. Please set the is_reserve_node parameter to True"
+        )
     )
 end
 
 function check_res_shutdown_ramps()
-    #Checking that values are within normal boundaries
+    # Check that values are within normal boundaries
     error_indices = [
         (u, n, d)
-        for (u, n, d) in indices(max_res_shutdown_ramp) if !(0 < max_res_shutdown_ramp(unit=u, node=n, direction=d) <= 1)
+        for (u, n, d) in indices(max_res_shutdown_ramp)
+        if !(0 < max_res_shutdown_ramp(unit=u, node=n, direction=d) <= 1)
     ]
     _check(
         isempty(error_indices),
@@ -506,7 +514,8 @@ function check_res_shutdown_ramps()
     )
     error_indices = [
         (u, n, d)
-        for (u, n, d) in indices(min_res_shutdown_ramp) if !(0 <= min_res_shutdown_ramp(unit=u, node=n, direction=d) <= 1)
+        for (u, n, d) in indices(min_res_shutdown_ramp)
+        if !(0 <= min_res_shutdown_ramp(unit=u, node=n, direction=d) <= 1)
     ]
     _check(
         isempty(error_indices),
@@ -524,10 +533,14 @@ function check_res_shutdown_ramps()
     #Check that node is a reserve node
     error_indices = [
         (u, n, d)
-        for (u, n, d) in union(indices(min_res_shutdown_ramp),indices(max_res_shutdown_ramp)) if !(is_reserve_node(node=n))
+        for (u, n, d) in union(indices(min_res_shutdown_ramp),indices(max_res_shutdown_ramp))
+        if !(is_reserve_node(node=n))
     ]
     _check(
         isempty(error_indices),
-        "reserve shutdown ramps have been defined for $(join(error_indices, ", ", " and ")), while this is not a reserve node. Please set the is_reserve_node parameter to True"
+        string(
+            "reserve shutdown ramps have been defined for $(join(error_indices, ", ", " and ")), ",
+            "while this is not a reserve node. Please set the is_reserve_node parameter to True"
+        )
     )
 end
