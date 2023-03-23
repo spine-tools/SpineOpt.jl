@@ -17,13 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# NOTE: I see some small problem here, related to doing double work.
-# For example, checking that the stochastic dags have no loops requires to generate those dags,
-# but we can't generate them just for checking and then throw them away, can we?
-# So I propose we do that type of checks when we actually generate the corresponding structure.
-# And here, we just perform simpler checks that can be done directly on the contents of the db,
-# and don't require to build any additional structures.
-
 function diagnose_spineopt(url_in; upgrade=false, log_level=3, filters=Dict("tool" => "object_activity_control"))
 	prepare_spineopt(url_in; upgrade=upgrade, log_level=log_level, filters=filters)
 	_diagnose(node, _node_issue)
@@ -43,7 +36,7 @@ function _node_issue(n)
 		return nothing
 	end
 	if balance_type(node=n) === :balance_type_none
-		return "balance_type = balance_type_none"
+		return "balance_type is set to balance_type_none"
 	end
 end
 
@@ -59,7 +52,7 @@ function _unit_issue(u)
 		has_cap_or_cost_from || any(
 			has_cap_or_cost_to && _are_unit_flows_related(u, n_from, n_to)
 			for (n_to, has_cap_or_cost_to) in node_to_has_cap_or_cost
-		) || "flow from $n_from is unbounded"
+		) || return "flow from $n_from is unbounded"
 	end
 	for (n_to, has_cap_or_cost_to) in node_to_has_cap_or_cost
 		has_cap_or_cost_to || any(
