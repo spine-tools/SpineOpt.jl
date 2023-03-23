@@ -228,9 +228,10 @@ flows to this location in each time step. When desirable, the capacity can be sp
 \begin{aligned}
 & \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,s,t') \, \in \, (u,ng,d,s,t)}} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
 & <= p_{unit\_capacity}(u,ng,d,s,t) \\
+&  \cdot p_{unit\_availability\_factor}(u,s,t) \\
 &  \cdot p_{unit\_conv\_cap\_to\_flow}(u,ng,d,s,t) \\
 &  \cdot \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
-(u,\Delta t_{units\_on} \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
+(u,\Delta t_{units\_on}) \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
 & \cdot \min(t_{units\_on},\Delta t) \\
 & \forall (u,ng,d) \in ind(p_{unit\_capacity}), \\
 & \forall t \in time\_slices, \\
@@ -246,9 +247,10 @@ When the unit also provides non-spinning reserves to a reserve node, the corresp
 \begin{aligned}
 & \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,s,t') \, \in \, (u,ng,d,s,t)} \\ n !\in is\_non\_spinning} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
 & <= p_{unit\_capacity}(u,ng,d,s,t) \\
+&  \cdot p_{unit\_availability\_factor}(u,s,t) \\
 &  \cdot p_{unit\_conv\_cap\_to\_flow}(u,ng,d,s,t) \\
 &  \cdot \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\
-(u,\Delta t_{units\_on} \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
+(u,\Delta t_{units\_on}) \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
 & \cdot \min(t_{units\_on},\Delta t) \\
 & \forall (u,ng,d) \in ind(p_{unit\_capacity}), \\
 & \forall t \in time\_slices, \\

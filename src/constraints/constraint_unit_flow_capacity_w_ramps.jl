@@ -61,6 +61,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     * unit_capacity[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before),
                     ]
+                    * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t_before)]
                     * unit_conv_cap_to_flow[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before),
                     ] for (u, s, t_before1) in units_on_indices(
@@ -77,6 +78,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     * max_startup_ramp[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before),
                     ]
+                    * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t_before)]
                     * unit_conv_cap_to_flow[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before),
                     ]
@@ -99,6 +101,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     * unit_capacity[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_after),
                     ]
+                    * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t_after)]
                     * unit_conv_cap_to_flow[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_after),
                     ] for (u, s, t_after1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t = t_after);
@@ -130,6 +133,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     * unit_capacity[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before),
                     ]
+                    * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t_before)]
                     * unit_conv_cap_to_flow[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before),
                     ] for (u, s, t_before1) in units_on_indices(
@@ -153,6 +157,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     * unit_conv_cap_to_flow[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before),
                     ]
+                    * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t_before)]
                     * unit_capacity[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before),
                     ] for (u, s, t_before1) in units_on_indices(
@@ -171,6 +176,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     * unit_capacity[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_after),
                     ]
+                    * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t_after)]
                     * unit_conv_cap_to_flow[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_after),
                     ] for (u, s, t_after1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
@@ -199,6 +205,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                 + expr_sum(
                     (units_on[u, s, t_before1] - units_started_up[u, s, t_before1])
                     * min(duration(t_before1), duration(t_before))
+                    * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t_before)]
                     * unit_capacity[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before),
                     ]
@@ -220,6 +227,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     * unit_conv_cap_to_flow[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before),
                     ]
+                    * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t_before)]
                     * unit_capacity[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_before),
                     ] for (u, s, t_before1) in units_on_indices(
@@ -243,6 +251,7 @@ function add_constraint_unit_flow_capacity_w_ramp!(m::Model)
                     * unit_capacity[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_after),
                     ]
+                    * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t_after)]
                     * unit_conv_cap_to_flow[
                         (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_after),
                     ] for (u, s, t_after1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_after);
