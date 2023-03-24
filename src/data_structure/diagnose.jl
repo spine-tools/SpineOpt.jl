@@ -19,15 +19,20 @@
 
 function diagnose_spineopt(url_in; upgrade=false, log_level=3, filters=Dict("tool" => "object_activity_control"))
 	prepare_spineopt(url_in; upgrade=upgrade, log_level=log_level, filters=filters)
-	_diagnose(node, _node_issue)
-	_diagnose(unit, _unit_issue)
-	_diagnose(connection, _connection_issue)
+	ok = all(
+		_diagnose(class, issue_fn)
+		for (class, issue_fn) in ((node, _node_issue), (unit, _unit_issue), (connection, _connection_issue))
+	)
+	ok && @info "no issues were found"
 end
 
 function _diagnose(class::ObjectClass, issue_fn)
 	issues = [string(x, " -- ", issue) for (x, issue) in ((x, issue_fn(x)) for x in class()) if issue !== nothing]
 	if !isempty(issues)
 		@warn string("the following $(class.name) items might have issues:\n\t", join(issues, "\n\t"))
+		false
+	else
+		true
 	end
 end
 
