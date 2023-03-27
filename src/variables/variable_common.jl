@@ -35,28 +35,27 @@ function add_variable!(
     m::Model,
     name::Symbol,
     indices::Function;
-    lb::Union{Function,Nothing}=nothing,
-    ub::Union{Function,Nothing}=nothing,
     bin::Union{Function,Nothing}=nothing,
     int::Union{Function,Nothing}=nothing,
-    fix_value::Union{Parameter,Nothing}=nothing,
+    lb::Union{Constant,Parameter,Nothing}=nothing,
+    ub::Union{Constant,Parameter,Nothing}=nothing,
     initial_value::Union{Parameter,Nothing}=nothing,
+    fix_value::Union{Parameter,Nothing}=nothing,
     non_anticipativity_time::Union{Parameter,Nothing}=nothing,
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
 )
     m.ext[:spineopt].variables_definition[name] = Dict{Symbol,Union{Function,Parameter,Nothing}}(
         :indices => indices,
-        :lb => lb,
-        :ub => ub,
         :bin => bin,
         :int => int,
-        :fix_value => fix_value,
-        :initial_value => initial_value,
         :non_anticipativity_time => non_anticipativity_time,
-        :non_anticipativity_margin => non_anticipativity_margin,
+        :non_anticipativity_margin => non_anticipativity_margin
     )
+    last_history_t = last(history_time_slice(m))
     var = m.ext[:spineopt].variables[name] = Dict(
-        ind => _variable(m, name, ind, lb, ub, bin, int)
+        ind => _variable(
+            m, name, ind, bin, int, lb, ub, overlaps(ind.t, last_history_t) ? initial_value : nothing, fix_value
+        )
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
     )
     merge!(var, _representative_periods_mapping(m, var, indices))
@@ -102,20 +101,14 @@ _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 
 Create a JuMP variable with the input properties.
 """
-function _variable(m, name, ind, lb, ub, bin, int)
+function _variable(m, name, ind, bin, int, lb, ub, initial_value, fix_value)
     var = @variable(m, base_name = _base_name(name, ind))
-    lb != nothing && _set_lower_bound(var, lb(ind))
-    ub != nothing && _set_upper_bound(var, ub(ind))
-    bin != nothing && bin(ind) && set_binary(var)
-    int != nothing && int(ind) && set_integer(var)
+    bin !== nothing && bin(ind) && set_binary(var)
+    int !== nothing && int(ind) && set_integer(var)
+    initial_value_ = initial_value === nothing ? nothing : initial_value(; ind..., _strict=false)
+    initial_value_ === nothing || fix(var, initial_value_)
+    lb === nothing || set_lower_bound(var, lb[(; ind..., _strict=false)])
+    ub === nothing || set_upper_bound(var, ub[(; ind..., _strict=false)])
+    fix_value === nothing || fix(var, fix_value[(; ind..., _strict=false)])
     var
 end
-
-_lower_bound(var) = has_lower_bound(var) ? lower_bound(var) : nothing
-_upper_bound(var) = has_upper_bound(var) ? upper_bound(var) : nothing
-
-_set_lower_bound(var, ::Nothing) = nothing
-_set_lower_bound(var, lb) = (lb != _lower_bound(var)) ? set_lower_bound(var, lb) : nothing
-
-_set_upper_bound(var, ::Nothing) = nothing
-_set_upper_bound(var, up) = (up != _upper_bound(var)) ? set_upper_bound(var, up) : nothing
