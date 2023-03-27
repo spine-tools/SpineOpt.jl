@@ -71,7 +71,7 @@ function constraint_units_available_indices(m::Model)
                     units_invested_available_indices(m; unit=u, t=t_overlaps_t(m; t=t), stochastic_scenario=s)
                 )
             )
-        )
+        )  # FIXME
         for s in path
     )
 end

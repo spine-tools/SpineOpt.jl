@@ -17,19 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function _constraint_unit_flow_capacity_scenarios(m::Model, unit, node, direction, t)
-    (
-        s
-        for s in stochastic_scenario()
-        if !isempty(
-            unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t, stochastic_scenario=s)
-        )
-        || !isempty(
-            units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t), stochastic_scenario=s)
-        )
-    )
-end
-
 function t_lowest_resolution_path(indices)
     (
         (t, path)

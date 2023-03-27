@@ -58,7 +58,7 @@ function constraint_unit_lifetime_indices(m::Model)
         (unit=u, stochastic_path=path, t=t)
         for u in indices(unit_investment_lifetime) for (u, s, t) in units_invested_available_indices(m; unit=u)
         for path in active_stochastic_paths(collect(_constraint_unit_lifetime_scenarios(m, u, s, t0, t)))
-    )
+    )  # FIXME
 end
 
 """

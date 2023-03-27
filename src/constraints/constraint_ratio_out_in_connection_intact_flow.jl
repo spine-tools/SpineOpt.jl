@@ -56,7 +56,8 @@ function add_constraint_ratio_out_in_connection_intact_flow!(m::Model)
                 );
                 init=0,
             )
-        ) for (conn, ng_in, ng_out, s, t) in constraint_ratio_out_in_connection_intact_flow_indices(m)
+        )
+        for (conn, ng_in, ng_out, s, t) in constraint_ratio_out_in_connection_intact_flow_indices(m)
     )
 end
 
@@ -65,7 +66,8 @@ function constraint_ratio_out_in_connection_intact_flow_indices(m::Model)
     unique(
         (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
         for conn in connection(connection_monitored=true, has_ptdf=true)
-        for (n_in, n_out) in connection__node__node(connection=conn) for t in t_lowest_resolution(
+        for (n_in, n_out) in connection__node__node(connection=conn)
+        for t in t_lowest_resolution(
             x.t for x in connection_flow_indices(
                 m;
                 connection=conn,
@@ -74,7 +76,7 @@ function constraint_ratio_out_in_connection_intact_flow_indices(m::Model)
         )
         for path in active_stochastic_paths(
             collect(_constraint_ratio_out_in_connection_intact_flow_scenarios(m, conn, n_in, n_out, t0, t))
-        )
+        )  # FIXME
     )
 end
 

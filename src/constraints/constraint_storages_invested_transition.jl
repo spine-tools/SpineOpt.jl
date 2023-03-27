@@ -37,14 +37,12 @@ function add_constraint_storages_invested_transition!(m::Model)
             expr_sum(
                 + storages_invested_available[n, s, t_before]
                 for (n, s, t_before) in storages_invested_available_indices(
-                    m;
-                    node=n,
-                    stochastic_scenario=s,
-                    t=t_before,
+                    m; node=n, stochastic_scenario=s, t=t_before
                 );
                 init=0,
             )
-        ) for (n, s, t_before, t_after) in constraint_storages_invested_transition_indices(m)
+        )
+        for (n, s, t_before, t_after) in constraint_storages_invested_transition_indices(m)
     )
 end
 
@@ -60,7 +58,7 @@ function constraint_storages_invested_transition_indices(m::Model)
                     storages_invested_available_indices(m; node=n, t=[t_before, t_after], stochastic_scenario=s)
                 )
             )
-        )
+        ) # FIXME
     )
 end
 

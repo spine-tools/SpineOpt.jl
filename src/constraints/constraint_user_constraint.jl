@@ -124,9 +124,9 @@ function add_constraint_user_constraint!(m::Model)
                     + units_on[u, s, t1]
                     * units_on_coefficient[(user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)]
                     + units_started_up[u, s, t1]
-                    * units_started_up_coefficient[(
-                        user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1
-                    )]
+                    * units_started_up_coefficient[
+                        (user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)
+                    ]
                 )
                 * min(duration(t1), duration(t))
                 for u in unit__user_constraint(user_constraint=uc)
@@ -136,13 +136,13 @@ function add_constraint_user_constraint!(m::Model)
             + expr_sum(
                 (   
                     + units_invested_available[u, s, t1]
-                    * units_invested_available_coefficient[(
-                        user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1
-                    )]
+                    * units_invested_available_coefficient[
+                        (user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)
+                    ]
                     + units_invested[u, s, t1]
-                    * units_invested_coefficient[(
-                        user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1
-                    )]
+                    * units_invested_coefficient[
+                        (user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)
+                    ]
                 )
                 * min(duration(t1), duration(t))
                 for u in unit__user_constraint(user_constraint=uc)
@@ -154,13 +154,13 @@ function add_constraint_user_constraint!(m::Model)
             + expr_sum(
                 (   
                     + connections_invested_available[c, s, t1]
-                    * connections_invested_available_coefficient[(
-                        user_constraint=uc, connection=c, stochastic_scenario=s, analysis_time=t0, t=t1
-                    )]
+                    * connections_invested_available_coefficient[
+                        (user_constraint=uc, connection=c, stochastic_scenario=s, analysis_time=t0, t=t1)
+                    ]
                     + connections_invested[c, s, t1]
-                    * connections_invested_coefficient[(
-                        user_constraint=uc, connection=c, stochastic_scenario=s, analysis_time=t0, t=t1
-                    )]
+                    * connections_invested_coefficient[
+                        (user_constraint=uc, connection=c, stochastic_scenario=s, analysis_time=t0, t=t1)
+                    ]
                 )
                 * min(duration(t1), duration(t))
                 for c in connection__user_constraint(user_constraint=uc)
@@ -172,13 +172,13 @@ function add_constraint_user_constraint!(m::Model)
             + expr_sum(
                 (   
                     + storages_invested_available[n, s, t1]
-                    * storages_invested_available_coefficient[(
-                        user_constraint=uc, node=n, stochastic_scenario=s, analysis_time=t0, t=t1
-                    )]
+                    * storages_invested_available_coefficient[
+                        (user_constraint=uc, node=n, stochastic_scenario=s, analysis_time=t0, t=t1)
+                    ]
                     + storages_invested[n, s, t1]
-                    * storages_invested_coefficient[(
-                        user_constraint=uc, node=n, stochastic_scenario=s, analysis_time=t0, t=t1
-                    )]
+                    * storages_invested_coefficient[
+                        (user_constraint=uc, node=n, stochastic_scenario=s, analysis_time=t0, t=t1)
+                    ]
                 )
                 * min(duration(t1), duration(t))
                 for n in node__user_constraint(user_constraint=uc)
@@ -266,7 +266,7 @@ function constraint_user_constraint_indices(m::Model)
     unique(
         (user_constraint=uc, stochastic_path=path, t=t)
         for uc in user_constraint() for t in _constraint_user_constraint_lowest_resolution_t(m, uc)
-        for path in active_stochastic_paths(collect(_constraint_user_constraint_scenarios(m, uc, t)))
+        for path in active_stochastic_paths(collect(_constraint_user_constraint_scenarios(m, uc, t)))  # FIXME
     )
 end
 

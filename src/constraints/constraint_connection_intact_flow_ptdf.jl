@@ -84,7 +84,7 @@ function constraint_connection_intact_flow_ptdf_indices(m::Model)
         for (n_to, t) in node_time_indices(m; node=n_to)
         for path in active_stochastic_paths(
             collect(_constraint_connection_intact_flow_ptdf_scenarios(m, conn, n_to, d_to, t))
-        )
+        ) # FIXME
     )
 end
 

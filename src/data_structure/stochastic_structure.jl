@@ -28,7 +28,7 @@ struct StochasticPathFinder
 end
 
 struct StochasticScenarioSet
-    scenarios::Dict{Object,Dict{TimeSlice,Array{Object}}}
+    scenarios::Dict{Object,Dict{TimeSlice,Vector{Object}}}
 end
 
 """
@@ -36,7 +36,7 @@ end
 
 Find the unique combinations of `active_scenarios` along valid stochastic paths.
 """
-function (h::StochasticPathFinder)(active_scenarios::Union{Array{T,1},T}) where {T}
+function (h::StochasticPathFinder)(active_scenarios::Union{Vector{T},T}) where {T}
     # TODO: cache these
     unique(intersect(path, active_scenarios) for path in h.full_stochastic_paths)
 end
@@ -300,14 +300,15 @@ function connection_investment_stochastic_time_indices(
     t=anything,
 )
     unique(
-        (connection=conn, stochastic_scenario=s, t=t1) for (conn, t1) in connection_investment_time_indices(
-            m;
-            connection=connection,
-            temporal_block=temporal_block,
-            t=t,
+        (connection=conn, stochastic_scenario=s, t=t1)
+        for (conn, t1) in connection_investment_time_indices(
+            m; connection=connection, temporal_block=temporal_block, t=t,
         )
-        for ss in connection__investment_stochastic_structure(connection=conn)
-        if ss in model__stochastic_structure(model=m.ext[:spineopt].instance)
+        for (m_, ss) in model__stochastic_structure(
+            model=m.ext[:spineopt].instance,
+            stochastic_structure=connection__investment_stochastic_structure(connection=conn),
+            _compact=false,
+        )
         for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
     )
 end

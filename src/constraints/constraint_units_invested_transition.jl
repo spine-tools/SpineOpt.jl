@@ -39,7 +39,8 @@ function add_constraint_units_invested_transition!(m::Model)
                 for (u, s, t_before) in units_invested_available_indices(m; unit=u, stochastic_scenario=s, t=t_before);
                 init=0,
             )
-        ) for (u, s, t_before, t_after) in constraint_units_invested_transition_indices(m)
+        )
+        for (u, s, t_before, t_after) in constraint_units_invested_transition_indices(m)
     )
 end
 
@@ -53,7 +54,7 @@ function constraint_units_invested_transition_indices(m::Model)
                 for s in stochastic_scenario()
                 if !isempty(units_invested_available_indices(m; unit=u, t=[t_before, t_after], stochastic_scenario=s))
             )
-        )
+        )  # FIXME
     )
 end
 

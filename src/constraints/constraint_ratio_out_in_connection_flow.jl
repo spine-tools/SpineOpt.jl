@@ -59,7 +59,8 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
                         analysis_time=t0,
                         t=t,
                     ),
-                ) for (conn, n_in, d, s, t_short) in connection_flow_indices(
+                )
+                for (conn, n_in, d, s, t_short) in connection_flow_indices(
                     m;
                     connection=conn,
                     node=ng_in,
@@ -79,7 +80,8 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
                 );
                 init=0,
             ),
-        ) for (conn, ng_out, ng_in, s, t) in constraint_ratio_out_in_connection_flow_indices(m, ratio_out_in)
+        )
+        for (conn, ng_out, ng_in, s, t) in constraint_ratio_out_in_connection_flow_indices(m, ratio_out_in)
     )
 end
 
@@ -122,7 +124,7 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
         )
         for path in active_stochastic_paths(
             collect(_constraint_ratio_out_in_connection_flow_scenarios(m, conn, n_out, n_in, t0, t))
-        )
+        )  # FIXME
     )
 end
 

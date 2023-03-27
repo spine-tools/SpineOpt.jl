@@ -29,11 +29,9 @@ function add_constraint_connection_lifetime!(m::Model)
         (connection=conn, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
-                + connections_invested_available[conn, s, t] for (conn, s, t) in connections_invested_available_indices(
-                    m;
-                    connection=conn,
-                    stochastic_scenario=s,
-                    t=t,
+                + connections_invested_available[conn, s, t]
+                for (conn, s, t) in connections_invested_available_indices(
+                    m; connection=conn, stochastic_scenario=s, t=t
                 );
                 init=0,
             )
@@ -41,24 +39,19 @@ function add_constraint_connection_lifetime!(m::Model)
             + sum(
                 + connections_invested[conn, s_past, t_past]
                 for (conn, s_past, t_past) in connections_invested_available_indices(
-                    m;
-                    connection=conn,
-                    stochastic_scenario=s,
-                    t=to_time_slice(
+                    m; connection=conn, stochastic_scenario=s, t=to_time_slice(
                         m;
                         t=TimeSlice(
                             end_(t) - connection_investment_lifetime(
-                                connection=conn,
-                                stochastic_scenario=s,
-                                analysis_time=t0,
-                                t=t,
+                                connection=conn, stochastic_scenario=s, analysis_time=t0, t=t
                             ),
                             end_(t),
                         ),
                     ),
                 )
             )
-        ) for (conn, s, t) in constraint_connection_lifetime_indices(m)
+        )
+        for (conn, s, t) in constraint_connection_lifetime_indices(m)
     )
 end
 
@@ -67,8 +60,25 @@ function constraint_connection_lifetime_indices(m::Model)
     unique(
         (connection=conn, stochastic_path=path, t=t)
         for conn in indices(connection_investment_lifetime)
-        for (conn, s, t) in connections_invested_available_indices(m; connection=conn)
-        for path in active_stochastic_paths(collect(_constraint_connection_lifetime_scenarios(m, conn, s, t0, t)))
+        for (conn, s, t) in connection_investment_stochastic_time_indices(m; connection=conn)
+        for path in active_stochastic_paths(
+            unique(
+                ind.stochastic_scenario
+                for ind in connections_invested_available_indices(
+                    m;
+                    connection=conn,
+                    t=to_time_slice(
+                        m;
+                        t=TimeSlice(
+                            end_(t) - connection_investment_lifetime(
+                                connection=conn, analysis_time=t0, stochastic_scenario=s, t=t
+                            ),
+                            end_(t),
+                        )
+                    )
+                )
+            )
+        )  # FIXME
     )
 end
 
@@ -88,21 +98,4 @@ function constraint_connection_lifetime_indices_filtered(
 )
     f(ind) = _index_in(ind; connection=connection, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_connection_lifetime_indices(m))
-end
-
-function _constraint_connection_lifetime_scenarios(m, conn, s, t0, t)
-    t_past_and_present = to_time_slice(
-        m;
-        t=TimeSlice(
-            end_(t) - connection_investment_lifetime(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t),
-            end_(t),
-        ),
-    )
-    (
-        s
-        for s in stochastic_scenario()
-        if !isempty(
-            connections_invested_available_indices(m; connection=conn, t=t_past_and_present, stochastic_scenario=s)
-        )
-    )
 end

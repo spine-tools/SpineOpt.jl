@@ -105,20 +105,3 @@ function constraint_connection_flow_capacity_indices_filtered(
     f(ind) = _index_in(ind; connection=connection, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_connection_flow_capacity_indices(m))
 end
-
-function _constraint_connection_flow_capacity_scenarios(m, connection, node, direction, t)
-    (
-        s
-        for s in stochastic_scenario()
-        if !isempty(
-            connection_flow_indices(
-                m; connection=connection, node=node, direction=direction, t=t, stochastic_scenario=s
-            )
-        )
-        || !isempty(
-            connections_invested_available_indices(
-                m; connection=connection, t=t_in_t(m; t_short=t), stochastic_scenario=s
-            )
-        )
-    )
-end

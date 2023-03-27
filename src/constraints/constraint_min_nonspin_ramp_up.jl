@@ -31,13 +31,9 @@ function add_constraint_min_nonspin_ramp_up!(m::Model)
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + sum(
-                nonspin_ramp_up_unit_flow[u, n, d, s, t] for (u, n, d, s, t) in nonspin_ramp_up_unit_flow_indices(
-                    m;
-                    unit=u,
-                    node=ng,
-                    direction=d,
-                    stochastic_scenario=s,
-                    t=t_in_t(m; t_long=t),
+                nonspin_ramp_up_unit_flow[u, n, d, s, t]
+                for (u, n, d, s, t) in nonspin_ramp_up_unit_flow_indices(
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 )
             )
             >=
@@ -47,15 +43,12 @@ function add_constraint_min_nonspin_ramp_up!(m::Model)
                 * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for (u, n, s, t) in nonspin_units_started_up_indices(
-                    m;
-                    unit=u,
-                    node=ng,
-                    stochastic_scenario=s,
-                    t=t_overlaps_t(m; t=t),
+                    m; unit=u, node=ng, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
                 );
                 init=0,
             )
-        ) for (u, ng, d, s, t) in constraint_min_nonspin_ramp_up_indices(m)
+        )
+        for (u, ng, d, s, t) in constraint_min_nonspin_ramp_up_indices(m)
     )
 end
 
@@ -63,17 +56,10 @@ function constraint_min_nonspin_ramp_up_indices(m::Model)
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(min_res_startup_ramp)
-        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
-        for path in active_stochastic_paths(
-            collect(
-                s
-                for s in stochastic_scenario()
-                if !isempty(
-                    nonspin_ramp_up_unit_flow_indices(m; unit=u, node=ng, direction=d, t=t, stochastic_scenario=s)
-                )
-                || !isempty(
-                    nonspin_units_started_up_indices(m; unit=u, node=ng, t=t, stochastic_scenario=s)
-                )
+        for (t, path) in t_lowest_resolution_path(
+            vcat(
+                nonspin_ramp_up_unit_flow_indices(m; unit=u, node=ng, direction=d),
+                nonspin_units_started_up_indices(m; unit=u, node=ng)
             )
         )
     )

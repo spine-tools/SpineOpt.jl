@@ -37,23 +37,23 @@ function add_constraint_cyclic_node_state!(m::Model)
                 for (n, s, t_start) in node_state_indices(m; node=n, stochastic_scenario=s, t=t_start);
                 init=0,
             )
-        ) for (n, s, t_start, t_end) in constraint_cyclic_node_state_indices(m)
+        )
+        for (n, s, t_start, t_end) in constraint_cyclic_node_state_indices(m)
     )
 end
 
 function constraint_cyclic_node_state_indices(m::Model)
     unique(
         (node=n, stochastic_path=path, t_start=t_start, t_end=t_end)
-        for (n, blk) in indices(cyclic_condition) if cyclic_condition(node=n, temporal_block=blk)
-        for t_start in filter(x -> blk in blocks(x), t_before_t(m; t_after=first(time_slice(m; temporal_block=members(blk)))))
+        for (n, blk) in indices(cyclic_condition)
+        if cyclic_condition(node=n, temporal_block=blk)
+        for t_start in filter(
+            x -> blk in blocks(x), t_before_t(m; t_after=first(time_slice(m; temporal_block=members(blk))))
+        )
         for t_end in last(time_slice(m; temporal_block=members(blk)))
         for path in active_stochastic_paths(
-            collect(
-                s
-                for s in stochastic_scenario()
-                if !isempty(node_state_indices(m; node=n, t=[t_start, t_end], stochastic_scenario=s))
-            )
-        )
+            unique(x.stochastic_scenario for x in node_state_indices(m; node=n, t=[t_start, t_end]))
+        )  # FIXME
     )
 end
 
