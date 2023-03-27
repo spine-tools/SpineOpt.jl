@@ -136,7 +136,6 @@
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_available = m.ext[:spineopt].variables[:units_available]
         var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
@@ -149,7 +148,7 @@
             var_u_av = var_units_available[key...]
             var_u_inv_av = var_units_invested_available[key...]
             expected_con = @build_constraint(var_u_av - var_u_inv_av <= number_of_units)
-            con_key = (unit(:unit_ab), [s], t)
+            con_key = (unit(:unit_ab), s, t)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)

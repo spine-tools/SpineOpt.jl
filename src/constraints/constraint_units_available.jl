@@ -28,8 +28,10 @@ function add_constraint_units_available!(m::Model)
     m.ext[:spineopt].constraints[:units_available] = Dict(
         (unit=u, stochastic_scenario=s, t=t) => @constraint(
             m,
-            units_available[u, s, t]
-            # summation only necessary for stochastic_path
+            + expr_sum(
+                units_available[u, s, t] for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
+                init=0,
+            )
             <=
             + unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * (
@@ -40,7 +42,8 @@ function add_constraint_units_available!(m::Model)
                         m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t)
                     );
                     # If t_overlaps_t is chosen here, we don't predefine hierarchy; 
-                    # not crucial, as mostlikely always t_operations < t_investment but could be considered in the future
+                    # not crucial, as most likely always t_operations < t_investment
+                    # but could be considered in the future
                     init=0,
                 )
             )
@@ -51,7 +54,9 @@ end
 
 """
     constraint_units_available_indices(m::Model, unit, t)
-Creates all indices required to include units, stochastic paths and temporals for the `add_constraint_units_available!` constraint generation.
+    
+Creates all indices required to include units, stochastic paths and temporals for the `add_constraint_units_available!`
+constraint generation.
 """
 function constraint_units_available_indices(m::Model)
     unique(
