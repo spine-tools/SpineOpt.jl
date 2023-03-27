@@ -29,3 +29,11 @@ function _constraint_unit_flow_capacity_scenarios(m::Model, unit, node, directio
         )
     )
 end
+
+function t_lowest_resolution_path(indices)
+    (
+        (t, path)
+        for (t, scens) in t_lowest_resolution_sets(x.t => Set(x.stochastic_scenario) for x in indices)
+        for path in active_stochastic_paths(scens)
+    )
+end

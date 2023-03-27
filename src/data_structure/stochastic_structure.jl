@@ -38,7 +38,7 @@ Find the unique combinations of `active_scenarios` along valid stochastic paths.
 """
 function (h::StochasticPathFinder)(active_scenarios::Union{Array{T,1},T}) where {T}
     # TODO: cache these
-    unique(map(path -> intersect(path, active_scenarios), h.full_stochastic_paths))
+    unique(intersect(path, active_scenarios) for path in h.full_stochastic_paths)
 end
 
 function (h::StochasticScenarioSet)(stoch_struct::Object, t::TimeSlice, scenario)
@@ -68,7 +68,10 @@ function _find_root_scenarios(m::Model)
 end
 function _find_root_scenarios(m::Model, stochastic_structure::Object)
     all_scenarios = stochastic_structure__stochastic_scenario(
-        stochastic_structure=intersect(model__stochastic_structure(model=m.ext[:spineopt].instance), stochastic_structure),
+        stochastic_structure=intersect(
+            model__stochastic_structure(model=m.ext[:spineopt].instance),
+            stochastic_structure
+        )
     )
     setdiff(all_scenarios, _find_children(anything))
 end
@@ -189,7 +192,7 @@ end
 """
     _generate_stochastic_scenario_set(m::Model, all_stochastic_dags)
 
-Generate the `_generate_stochastic_scenario_set` for all defined `stochastic_structures`.
+Generate the `stochastic_scenario_set` for all defined `stochastic_structures`.
 """
 function _generate_stochastic_scenario_set(m::Model, all_stochastic_dags)
     m.ext[:spineopt].stochastic_structure[:stochastic_scenario_set] = StochasticScenarioSet(
@@ -209,7 +212,9 @@ function stochastic_time_indices(
 )
     unique(
         (stochastic_scenario=s, t=t)
-        for (m_, tb) in model__temporal_block(model=m.ext[:spineopt].instance, temporal_block=temporal_block, _compact=false)
+        for (m_, tb) in model__temporal_block(
+            model=m.ext[:spineopt].instance, temporal_block=temporal_block, _compact=false
+        )
         for (m_, ss) in model__stochastic_structure(model=m.ext[:spineopt].instance, _compact=false)
         for t in time_slice(m; temporal_block=members(tb), t=t)
         for s in _stochastic_scenario_set(m, ss, t, stochastic_scenario)

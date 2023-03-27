@@ -37,11 +37,11 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
                         t=t_in_t(m; t_long=t),
                         direction=direction(:from_node),
                     )
-                ) + sum(
+                )
+                + sum(
                     connection_flow[conn, n_to, d, s, t] * duration(t)
                     for (conn, n_to, d, s, t) in connection_flow_indices(
-                        m;
-                        connection=conn,
+                        m; connection=conn,
                         node=n_to,
                         stochastic_scenario=s,
                         t=t_in_t(m; t_long=t),
@@ -51,7 +51,8 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
             )
             / 2
             <=
-            + big_m(model=m.ext[:spineopt].instance) * sum(
+            + big_m(model=m.ext[:spineopt].instance)
+            * sum(
                 binary_gas_connection_flow[conn, n_to, d, s, t] * duration(t)
                 for (conn, n_to, d, s, t) in connection_flow_indices(
                     m;
@@ -62,14 +63,16 @@ function add_constraint_connection_flow_gas_capacity!(m::Model)
                     direction=direction(:to_node),
                 )
             )
-        ) for (conn, n_from, n_to, s, t) in constraint_connection_flow_gas_capacity_indices(m)
+        )
+        for (conn, n_from, n_to, s, t) in constraint_connection_flow_gas_capacity_indices(m)
     )
 end
 
 function constraint_connection_flow_gas_capacity_indices(m::Model)
     unique(
         (connection=conn, node1=n1, node2=n2, stochastic_path=path, t=t)
-        for (conn, n1, n2) in indices(fixed_pressure_constant_1) for t in t_lowest_resolution(
+        for (conn, n1, n2) in indices(fixed_pressure_constant_1)
+        for t in t_lowest_resolution(
             time_slice(m; temporal_block=node__temporal_block(node=Iterators.flatten((members(n1), members(n2))))),
         )
         for path in active_stochastic_paths(

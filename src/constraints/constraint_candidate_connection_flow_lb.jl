@@ -22,7 +22,7 @@
 
 For connection investments with PTDF flow enabled, this constrains the flow on the candidate_connection
 to be equal to connection_intact_flow if connections_invested_available is equal to 1 and is rendered
-in active otherwise where contraint connection_flow_capacity will constraint the flow to zero.
+in active, otherwise where contraint connection_flow_capacity will constraint the flow to zero.
 """
 function add_constraint_candidate_connection_flow_lb!(m::Model)
     @fetch connection_flow, connection_intact_flow, connections_invested_available = m.ext[:spineopt].variables
@@ -31,13 +31,9 @@ function add_constraint_candidate_connection_flow_lb!(m::Model)
         (connection=conn, node=n, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
-                connection_flow[conn, n, d, s, t] * duration(t) for (conn, n, d, s, t) in connection_flow_indices(
-                    m;
-                    connection=conn,
-                    direction=d,
-                    node=n,
-                    stochastic_scenario=s,
-                    t=t_in_t(m; t_long=t),
+                connection_flow[conn, n, d, s, t] * duration(t)
+                for (conn, n, d, s, t) in connection_flow_indices(
+                    m; connection=conn, direction=d, node=n, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 );
                 init=0,
             )
@@ -45,47 +41,24 @@ function add_constraint_candidate_connection_flow_lb!(m::Model)
             + expr_sum(
                 connection_intact_flow[conn, n, d, s, t] * duration(t)
                 for (conn, n, d, s, t) in connection_intact_flow_indices(
-                    m;
-                    connection=conn,
-                    direction=d,
-                    node=n,
-                    stochastic_scenario=s,
-                    t=t_in_t(m; t_long=t),
+                    m; connection=conn, direction=d, node=n, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 );
                 init=0,
             )
-            - (
-                candidate_connections(connection=conn) - expr_sum(
-                    connections_invested_available[conn, s, t1]
-                    for (conn, s, t1) in connections_invested_available_indices(
-                        m;
-                        connection=conn,
-                        stochastic_scenario=s,
-                        t=t_in_t(m; t_short=t),
-                    );
-                    init=0,
-                )
-            )
-            * ((
-                connection_capacity(
-                    connection=conn,
-                    node=n,
-                    direction=d,
-                    stochastic_scenario=s,
-                    analysis_time=t0,
-                    t=t,
-                ) == nothing
-            ) ? 1000000 :
-               connection_capacity(
-                connection=conn,
-                node=n,
-                direction=d,
-                stochastic_scenario=s,
-                analysis_time=t0,
-                t=t,
-            ))
+            - candidate_connections(connection=conn)
+            - expr_sum(
+                connections_invested_available[conn, s, t1]
+                for (conn, s, t1) in connections_invested_available_indices(
+                    m; connection=conn, stochastic_scenario=s, t=t_in_t(m; t_short=t)
+                );
+                init=0,
+            )            
+            * connection_capacity[
+                (connection=conn, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1e6)
+            ]
             * duration(t)
-        ) for (conn, n, d, s, t) in constraint_candidate_connection_flow_lb_indices(m)
+        )
+        for (conn, n, d, s, t) in constraint_candidate_connection_flow_lb_indices(m)
     )
 end
 
@@ -94,9 +67,7 @@ function constraint_candidate_connection_flow_lb_indices(m::Model)
         (connection=conn, node=n, direction=d, stochastic_path=path, t=t)
         for (conn, n, d, s, t) in connection_flow_indices(m; connection=connection(is_candidate=true, has_ptdf=true))
         for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=n)))
-        for path in active_stochastic_paths(
-            collect(_constraint_candidate_connection_flow_lb_scenarios(m, conn, n, d, t))
-        )
+        for path in active_stochastic_paths(s)  # FIXME?
     )
 end
 
@@ -119,21 +90,4 @@ function constraint_candidate_connection_flow_lb_indices_filtered(
 )
     f(ind) = _index_in(ind; connection=connection, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_candidate_connection_flow_lb_indices(m))
-end
-
-function _constraint_candidate_connection_flow_lb_scenarios(m, connection, node, direction, t)
-    (
-        s
-        for s in stochastic_scenario()
-        if !isempty(
-            connection_flow_indices(
-                m; connection=connection, node=node, direction=direction, t=t, stochastic_scenario=s
-            )
-        )
-        || !isempty(
-            connections_invested_available_indices(
-                m; connection=connection, t=t_in_t(m; t_short=t), stochastic_scenario=s
-            )
-        )
-    )
 end
