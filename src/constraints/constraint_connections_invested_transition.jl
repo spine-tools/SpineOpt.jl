@@ -58,7 +58,7 @@ function constraint_connections_invested_transition_indices(m::Model)
                 x.stochastic_scenario
                 for x in connections_invested_available_indices(m; connection=conn, t=[t_before, t_after])
             )
-        )  # FIXME
+        )
     )
 end
 

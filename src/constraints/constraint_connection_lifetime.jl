@@ -38,17 +38,7 @@ function add_constraint_connection_lifetime!(m::Model)
             >=
             + sum(
                 + connections_invested[conn, s_past, t_past]
-                for (conn, s_past, t_past) in connections_invested_available_indices(
-                    m; connection=conn, stochastic_scenario=s, t=to_time_slice(
-                        m;
-                        t=TimeSlice(
-                            end_(t) - connection_investment_lifetime(
-                                connection=conn, stochastic_scenario=s, analysis_time=t0, t=t
-                            ),
-                            end_(t),
-                        ),
-                    ),
-                )
+                for (conn, s_past, t_past) in _past_connections_invested_available_indices(m, conn, t0, s, t)
             )
         )
         for (conn, s, t) in constraint_connection_lifetime_indices(m)
@@ -62,24 +52,18 @@ function constraint_connection_lifetime_indices(m::Model)
         for conn in indices(connection_investment_lifetime)
         for (conn, s, t) in connection_investment_stochastic_time_indices(m; connection=conn)
         for path in active_stochastic_paths(
-            unique(
-                ind.stochastic_scenario
-                for ind in connections_invested_available_indices(
-                    m;
-                    connection=conn,
-                    t=to_time_slice(
-                        m;
-                        t=TimeSlice(
-                            end_(t) - connection_investment_lifetime(
-                                connection=conn, analysis_time=t0, stochastic_scenario=s, t=t
-                            ),
-                            end_(t),
-                        )
-                    )
-                )
-            )
-        )  # FIXME
+            unique(ind.stochastic_scenario
+            for ind in _past_connections_invested_available_indices(m, conn, t0, anything, t))
+        )
     )
+end
+
+function _past_connections_invested_available_indices(m, conn, t0, s, t)
+    t = TimeSlice(
+        end_(t) - connection_investment_lifetime(connection=conn, analysis_time=t0, stochastic_scenario=s, t=t),
+        end_(t),
+    )
+    connections_invested_available_indices(m; connection=conn, stochastic_scenario=s, t=to_time_slice(m; t=t))
 end
 
 """

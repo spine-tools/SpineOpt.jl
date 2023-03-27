@@ -43,23 +43,12 @@ function add_constraint_min_down_time!(m::Model)
             )
             >=
             + expr_sum(
-                + units_shut_down[u, s_past, t_past]
-                for (u, s_past, t_past) in units_on_indices(
-                    m;
-                    unit=u,
-                    stochastic_scenario=s,
-                    t=to_time_slice(
-                        m;
-                        t=TimeSlice(
-                            end_(t) - min_down_time(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)
-                        ),
-                    ),
-                    temporal_block=anything,
-                );
+                units_shut_down[u, s_past, t_past]
+                for (u, s_past, t_past) in past_units_on_indices(m, u, t0, s, t, min_down_time);
                 init=0,
             )
             + expr_sum(
-                + nonspin_units_started_up[u, n, s, t]
+                nonspin_units_started_up[u, n, s, t]
                 for (u, n, s, t) in nonspin_units_started_up_indices(
                     m; unit=u, stochastic_scenario=s, t=t, temporal_block=anything
                 );
@@ -81,22 +70,13 @@ function constraint_min_down_time_indices(m::Model)
             unique(
                 ind.stochastic_scenario
                 for ind in vcat(
-                    units_on_indices(
-                        m;
-                        unit=u,
-                        t=to_time_slice(
-                            m;
-                            t=TimeSlice(
-                                end_(t) - min_down_time(unit=u, analysis_time=t0, stochastic_scenario=s, t=t), end_(t)
-                            )
-                        )
-                    ),
+                    past_units_on_indices(m, u, t0, anything, t, min_down_time),
                     nonspin_units_started_up_indices(
                         m; unit=u, t=t_before_t(m; t_after=t), temporal_block=anything, stochastic_scenario=s
                     )
                 )
             )
-        )  # FIXME
+        )
     )
 end
 

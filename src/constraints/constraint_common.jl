@@ -24,3 +24,15 @@ function t_lowest_resolution_path(indices)
         for path in active_stochastic_paths(scens)
     )
 end
+
+function past_units_on_indices(m, u, t0, s, t, min_time)
+    units_on_indices(
+        m;
+        unit=u,
+        stochastic_scenario=s,
+        t=to_time_slice(
+            m; t=TimeSlice(end_(t) - min_time(unit=u, analysis_time=t0, stochastic_scenario=s, t=t), end_(t))
+        ),
+        temporal_block=anything
+    )    
+end
