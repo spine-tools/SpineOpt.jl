@@ -26,12 +26,10 @@ function add_constraint_units_available!(m::Model)
     @fetch units_available, units_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:units_available] = Dict(
-        (unit=u, stochastic_path=s, t=t) => @constraint(
+        (unit=u, stochastic_scenario=s, t=t) => @constraint(
             m,
-            + expr_sum(
-                units_available[u, s, t0] for (u, s, t0) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
-                init=0,
-            ) # summation only necessary for stochastic_path
+            units_available[u, s, t]
+            # summation only necessary for stochastic_path
             <=
             + unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * (
@@ -57,7 +55,7 @@ Creates all indices required to include units, stochastic paths and temporals fo
 """
 function constraint_units_available_indices(m::Model)
     unique(
-        (unit=u, stochastic_path=path, t=t)
+        (unit=u, stochastic_scenario=s, t=t)
         for (u, t) in unit_time_indices(m)
         for path in active_stochastic_paths(
             collect(
@@ -69,5 +67,6 @@ function constraint_units_available_indices(m::Model)
                 )
             )
         )
+        for s in path
     )
 end
