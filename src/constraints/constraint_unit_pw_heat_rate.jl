@@ -79,7 +79,8 @@ function add_constraint_unit_pw_heat_rate!(m::Model)
                 for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0,
             )
-        ) for (u, n_from, n_to, s, t) in constraint_unit_pw_heat_rate_indices(m)
+        )
+        for (u, n_from, n_to, s, t) in constraint_unit_pw_heat_rate_indices(m)
     )
 end
 
@@ -87,9 +88,14 @@ function constraint_unit_pw_heat_rate_indices(m::Model)
     unique(
         (unit=u, node_from=n_from, node_to=n_to, stochastic_path=path, t=t)
         for (u, n_from, n_to) in indices(unit_incremental_heat_rate)
-        for t in t_lowest_resolution(x.t for x in unit_flow_indices(m; unit=u, node=[n_from, n_to]))
-        for path in active_stochastic_paths(collect(_constraint_unit_pw_heat_rate_scenarios(m, u, n_from, n_to, t)))
-    )  # FIXME
+        for (t, path) in t_lowest_resolution_path(
+            vcat(
+                unit_flow_indices(m; unit=u, node=n_from, direction=direction(:from_node)),
+                unit_flow_indices(m; unit=u, node=n_to, direction=direction(:to_node)),
+                units_on_indices(m; unit=u)
+            )
+        )
+    )
 end
 
 """
@@ -110,27 +116,4 @@ function constraint_unit_pw_heat_rate_indices_filtered(
 )
     f(ind) = _index_in(ind; unit=unit, node_from=node_from, node_to=node_to, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_unit_pw_heat_rate_indices(m))
-end
-
-function _constraint_unit_pw_heat_rate_scenarios(m, unit, node_from, node_to, t)
-    (
-        s
-        for s in stochastic_scenario()
-        if !isempty(
-            unit_flow_indices(
-                m;
-                unit=unit,
-                node=node_from,
-                direction=direction(:from_node),
-                t=t_in_t(m; t_long=t),
-                stochastic_scenario=s
-            )
-        )
-        || !isempty(
-            unit_flow_indices(
-                m; unit=unit, node=node_to, direction=direction(:to_node), t=t_in_t(m; t_long=t), stochastic_scenario=s
-            )
-        )
-        || !isempty(units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t), stochastic_scenario=s))
-    )
 end

@@ -256,11 +256,13 @@ function constraint_ratio_unit_flow_indices(m::Model, ratio, d1, d2)
     unique(
         (unit=u, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (u, n1, n2) in indices(ratio)
-        for t in t_lowest_resolution(
-            x.t for x in unit_flow_indices(m; unit=u, node=Iterators.flatten((members(n1), members(n2))))
+        for (t, path) in t_lowest_resolution_path(
+            vcat(
+                unit_flow_indices(m; unit=u, node=n1, direction=d1),
+                unit_flow_indices(m; unit=u, node=n2, direction=d2),
+                units_on_indices(m; unit=u)
+            )
         )
-        for path in active_stochastic_paths(collect(_constraint_ratio_unit_flow_scenarios(m, u, n1, d1, n2, d2, t)))
-        # FIXME
     )
 end
 

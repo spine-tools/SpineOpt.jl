@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+# TODO: Calling `max_cum_in_unit_flow_bound[(unit=ug)]` fails´?
+
 """
     add_constraint_max_cum_in_unit_flow_bound!(m::Model)
 
@@ -44,20 +46,13 @@ function add_constraint_total_cumulated_unit_flow!(m::Model, bound, sense)
     )
 end
 
-# TODO: Calling `max_cum_in_unit_flow_bound[(unit=ug)]` fails.
-
-
 function constraint_total_cumulated_unit_flow_indices(m::Model,bound)
     unique(
         (unit=ug, node=ng, direction=d, stochastic_path=s)
         for (ug, ng, d) in indices(bound)
         for s in active_stochastic_paths(
-            collect(
-                s
-                for s in stochastic_scenario()
-                if !isempty(unit_flow_indices(m, direction=d, unit=ug, node=ng, stochastic_scenario=s))
-            )
-        )  # FIXME
+            unique(ind.stochastic_scenario for ind in unit_flow_indices(m, direction=d, unit=ug, node=ng))
+        )
     )
 end
 

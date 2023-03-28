@@ -93,26 +93,23 @@ end
 function constraint_split_ramps_indices(m::Model)
     unique(
         (unit=u, node=n, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
-        for (u, n, d, s, t_after) in unique(
-            Iterators.flatten((
+        for (u, n, d, s, t_after) in unique!(
+            vcat(
                 ramp_up_unit_flow_indices(m),
                 start_up_unit_flow_indices(m),
                 nonspin_ramp_up_unit_flow_indices(m),
                 ramp_down_unit_flow_indices(m),
                 start_up_unit_flow_indices(m),
                 nonspin_ramp_down_unit_flow_indices(m),
-            )),
+            )
         )
         for (n, t_before, t_after) in node_dynamic_time_indices(m; node=n, t_after=t_after)
         for path in active_stochastic_paths(
-            collect(
-                s
-                for s in stochastic_scenario()
-                if !isempty(
-                    unit_flow_indices(m; unit=u, node=n, direction=d, t=[t_before, t_after], stochastic_scenario=s)
-                )
+            unique(
+                ind.stochastic_scenario
+                for ind in unit_flow_indices(m; unit=u, node=n, direction=d, t=[t_before, t_after])
             )
-        )  # FIXME
+        )
     )
 end
 

@@ -67,16 +67,12 @@ function constraint_ratio_out_in_connection_intact_flow_indices(m::Model)
         (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
         for conn in connection(connection_monitored=true, has_ptdf=true)
         for (n_in, n_out) in connection__node__node(connection=conn)
-        for t in t_lowest_resolution(
-            x.t for x in connection_flow_indices(
-                m;
-                connection=conn,
-                node=Iterators.flatten((members(n_out), members(n_in))),
+        for (t, path) in t_lowest_resolution_path(
+            vcat(
+                connection_intact_flow_indices(m; connection=conn, node=n_out, direction=direction(:to_node)),
+                connection_intact_flow_indices(m; connection=conn, node=n_in, direction=direction(:from_node))
             )
         )
-        for path in active_stochastic_paths(
-            collect(_constraint_ratio_out_in_connection_intact_flow_scenarios(m, conn, n_in, n_out, t0, t))
-        )  # FIXME
     )
 end
 
@@ -98,31 +94,4 @@ function constraint_ratio_out_in_connection_intact_flow_indices_filtered(
 )
     f(ind) = _index_in(ind; connection=connection, node1=node1, node2=node2, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_ratio_out_in_connection_intact_flow_indices(m))
-end
-
-function _constraint_ratio_out_in_connection_intact_flow_scenarios(m, connection, node_in, node_out, t0, t)
-    (
-        s
-        for s in stochastic_scenario()
-        if !isempty(
-            connection_intact_flow_indices(
-                m;
-                connection=connection,
-                node=node_out,
-                direction=direction(:to_node),
-                t=t_in_t(m; t_long=t),
-                stochastic_scenario=s
-            )  # `to_node` `connection_flow`s
-        )
-        || !isempty(
-            connection_intact_flow_indices(
-                m;
-                connection=connection,
-                node=node_in,
-                direction=direction(:from_node),
-                t=t_in_t(m; t_long=t),
-                stochastic_scenario=s
-            )  # `from_node` `connection_flow`s
-        )
-    )
 end

@@ -63,15 +63,14 @@ function constraint_units_available_indices(m::Model)
         (unit=u, stochastic_scenario=s, t=t)
         for (u, t) in unit_time_indices(m)
         for path in active_stochastic_paths(
-            collect(
-                s
-                for s in stochastic_scenario()
-                if !isempty(units_on_indices(m; unit=u, t=t, stochastic_scenario=s))
-                || !isempty(
-                    units_invested_available_indices(m; unit=u, t=t_overlaps_t(m; t=t), stochastic_scenario=s)
+            unique(
+                ind.stochastic_scenario
+                for ind in vcat(
+                    units_on_indices(m; unit=u, t=t),
+                    units_invested_available_indices(m; unit=u, t=t_overlaps_t(m; t=t))
                 )
             )
-        )  # FIXME
+        )
         for s in path
     )
 end
