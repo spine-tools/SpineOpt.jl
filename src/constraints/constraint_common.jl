@@ -27,7 +27,7 @@ function t_lowest_resolution_path(indices)
     end
     (
         (t, path)
-        for (t, scens) in t_lowest_resolution_sets(scens_by_t)
+        for (t, scens) in t_lowest_resolution_sets!(scens_by_t)
         for path in active_stochastic_paths(scens)
     )
 end
