@@ -49,24 +49,14 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
                 * ratio_out_in[
                     (connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, analysis_time=t0, t=t_short),
                 ]
-                * overlap_duration(
-                    t_short,
-                    t - connection_flow_delay(
-                        connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, analysis_time=t0, t=t
-                    ),
-                )
+                * overlap_duration(t_short, _delayed_t(conn, ng_out, ng_in, t0, s, t))
                 for (conn, n_in, d, s, t_short) in connection_flow_indices(
                     m;
                     connection=conn,
                     node=ng_in,
                     direction=direction(:from_node),
                     stochastic_scenario=s,
-                    t=to_time_slice(
-                        m;
-                        t=t - connection_flow_delay(
-                            connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, analysis_time=t0, t=t
-                        ),
-                    ),
+                    t=_to_delayed_time_slice(m, conn, ng_out, ng_in, s, t)
                 );
                 init=0,
             ),
@@ -103,6 +93,43 @@ function add_constraint_min_ratio_out_in_connection_flow!(m::Model)
 end
 
 function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
+    unique(
+        (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=path, t=t)
+        for (conn, ng_out, ng_in) in indices(ratio_out_in)
+        for (t, path_out) in t_lowest_resolution_path(
+            connection_flow_indices(m; connection=conn, node=ng_out, direction=direction(:to_node))
+        )
+        for path in active_stochastic_paths(
+            unique(
+                vcat(
+                    path_out,
+                    [
+                        ind.stochastic_scenario
+                        for s in path_out
+                        for ind in connection_flow_indices(
+                            m;
+                            connection=conn,
+                            node=ng_in,
+                            direction=direction(:from_node),
+                            t=_to_delayed_time_slice(m, conn, ng_out, ng_in, s, t)
+                        )
+                    ]
+                )
+            )
+        )
+    )
+end
+
+function _to_delayed_time_slice(m, conn, ng_out, ng_in, s, t)
+    t0 = _analysis_time(m)
+    to_time_slice(m; t=_delayed_t(conn, ng_out, ng_in, t0, s, t))
+end
+
+function _delayed_t(conn, ng_out, ng_in, t0, s, t)
+    t - connection_flow_delay(connection=conn, node1=ng_out, node2=ng_in, analysis_time=t0, stochastic_scenario=s, t=t)
+end
+
+function _old_constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
     t0 = _analysis_time(m)
     unique(
         (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)

@@ -119,11 +119,19 @@
             ["connection", "connection_ca", "has_binary_gas_flow", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
         ]
-        relationship_parameter_values =
-            [["connection__node__node", ["connection_ca", "node_c","node_a"], "fixed_pressure_constant_1", fixed_pressure_constant_1_[("connection_ca", "node_c","node_a")]]]
+        relationship_parameter_values = [
+            [
+                "connection__node__node",
+                ["connection_ca", "node_c","node_a"],
+                "fixed_pressure_constant_1",
+                fixed_pressure_constant_1_[("connection_ca", "node_c","node_a")]
+            ]
+        ]
         SpineInterface.import_data(
             url_in;
-            object_parameter_values=object_parameter_values, relationship_parameter_values=relationship_parameter_values, relationships=relationships
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+            relationships=relationships
         )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
