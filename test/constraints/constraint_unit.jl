@@ -381,7 +381,6 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-
     @testset "constraint_total_cumulated_unit_flow" begin
         total_cumulated_flow_bound = 100
         senses_by_prefix = Dict("min" => >=, "max" => <=)
@@ -649,7 +648,9 @@
                 vars_u_sd = [var_units_shut_down[unit(:unit_ab), s, t] for (s, t) in zip(s_set, t_set)]
                 var_ns_su_key = (unit(:unit_ab), node(:node_a), s, t)
                 var_ns_su = var_nonspin_units_started_up[var_ns_su_key...]
-                expected_con = @build_constraint(number_of_units + var_u_inv_av - var_u_on >= sum(vars_u_sd) + var_ns_su)
+                expected_con = @build_constraint(
+                    number_of_units + var_u_inv_av - var_u_on >= sum(vars_u_sd) + var_ns_su
+                )
                 con_key = (unit(:unit_ab), path, t)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
@@ -1417,7 +1418,7 @@
             var_units_on = m.ext[:spineopt].variables[:units_on]
             var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
             constraint = m.ext[:spineopt].constraints[:user_constraint]
-            @test length(constraint) == 2
+            @test length(constraint) == 1
             key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
             key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
@@ -1483,7 +1484,7 @@
             var_units_on = m.ext[:spineopt].variables[:units_on]
             var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
             constraint = m.ext[:spineopt].constraints[:user_constraint]
-            @test length(constraint) == 2
+            @test length(constraint) == 1
             key_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
             key_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
@@ -1531,7 +1532,6 @@
             relationships=relationships,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
@@ -1546,12 +1546,13 @@
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         expected_con = @build_constraint(
-            + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2] ==
-            2 * sum(inc_hrs[i] * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3) +
-            unit_idle_heat_rate
-            * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
-            unit_start_flow * (
-                var_units_started_up[unit(:unit_ab), s_parent, t1h1]
+            + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
+            ==
+            + 2 * sum(inc_hrs[i] * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
+            + unit_idle_heat_rate
+            * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
+            + unit_start_flow * (
+                + var_units_started_up[unit(:unit_ab), s_parent, t1h1]
                 + var_units_started_up[unit(:unit_ab), s_child, t1h2]
             )
         )

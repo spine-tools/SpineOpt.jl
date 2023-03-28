@@ -18,9 +18,16 @@
 #############################################################################
 
 function t_lowest_resolution_path(indices)
+    scens_by_t = Dict()
+    for x in indices
+        scens = get!(scens_by_t, x.t) do
+            Set()
+        end
+        push!(scens, x.stochastic_scenario)
+    end
     (
         (t, path)
-        for (t, scens) in t_lowest_resolution_sets(x.t => Set(x.stochastic_scenario) for x in indices)
+        for (t, scens) in t_lowest_resolution_sets(scens_by_t)
         for path in active_stochastic_paths(scens)
     )
 end
