@@ -25,7 +25,8 @@ function t_lowest_resolution_path(indices)
     )
 end
 
-function past_units_on_indices(m, u, t0, s, t, min_time)
+function past_units_on_indices(m, u, s, t, min_time)
+    t0 = _analysis_time(m)
     units_on_indices(
         m;
         unit=u,

@@ -49,12 +49,10 @@ function constraint_units_invested_transition_indices(m::Model)
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (u, t_before, t_after) in unit_investment_dynamic_time_indices(m)
         for path in active_stochastic_paths(
-            collect(
-                s
-                for s in stochastic_scenario()
-                if !isempty(units_invested_available_indices(m; unit=u, t=[t_before, t_after], stochastic_scenario=s))
+            unique(
+                ind.stochastic_scenario for ind in units_invested_available_indices(m; unit=u, t=[t_before, t_after])
             )
-        )  # FIXME
+        )
     )
 end
 

@@ -83,8 +83,14 @@ function constraint_connection_intact_flow_ptdf_indices(m::Model)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
         for (n_to, t) in node_time_indices(m; node=n_to)
         for path in active_stochastic_paths(
-            collect(_constraint_connection_intact_flow_ptdf_scenarios(m, conn, n_to, d_to, t))
-        ) # FIXME
+            unique(
+                ind.stochastic_scenario
+                for ind in vcat(
+                    connection_intact_flow_indices(m; connection=conn, node=n_to, direction=d_to, t=t),
+                    node_stochastic_time_indices(m; node=ptdf_connection__node(connection=conn), t=t)
+                )
+            )
+        )
     )
 end
 
@@ -105,23 +111,4 @@ function constraint_connection_intact_flow_ptdf_indices_filtered(
 )
     f(ind) = _index_in(ind; connection=connection, node=node, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_connection_intact_flow_ptdf_indices(m))
-end
-
-function _constraint_connection_intact_flow_ptdf_scenarios(m, connection, node_to, direction_to, t)
-    (
-        s
-        for s in stochastic_scenario()
-        if !isempty(
-            connection_intact_flow_indices(
-                m; connection=connection, node=node_to, direction=direction_to, t=t, stochastic_scenario=s
-            )
-        )
-        || iterate(
-            (
-                ind
-                for (conn, n_inj) in indices(ptdf; connection=connection)
-                for ind in node_stochastic_time_indices(m; node=n_inj, t=t, stochastic_scenario=s)
-            )
-        ) !== nothing
-    )
 end

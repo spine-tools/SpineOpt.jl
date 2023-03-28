@@ -38,7 +38,7 @@ function add_constraint_res_minimum_node_state!(m::Model)
             >=
             + node_state_min[(node=n_stor, stochastic_scenario=s, analysis_time=t0, t=t_after)]
             + expr_sum(
-                unit_flow[u, n_res, d, s, t_after]
+                + unit_flow[u, n_res, d, s, t_after]
                 * duration(t_after)
                 * _div(
                     minimum_reserve_activation_time(node=n_res, stochastic_scenario=s, analysis_time=t0, t=t_after),
@@ -75,16 +75,21 @@ _div(x::Period, y::Period) = Minute(x) / Minute(y)
 function constraint_res_minimum_node_state_indices(m::Model)
     unique(
         (node=n_stor, stochastic_path=path, t=t)
-        for (u, n_afrr, d, s, t) in unit_flow_indices(m; node=indices(minimum_reserve_activation_time))
-        for (u, n_stor, d, s, t) in unit_flow_indices(m; unit=u, node=node(has_state=true), t=t)
+        for (u, n_res, _d, t) in unit_flow_time_indices(
+            m; node=indices(minimum_reserve_activation_time), direction=direction(:from_node)
+        )
+        for (u, n_stor, d_to, t) in unit_flow_time_indices(
+            m; unit=u, node=node(has_state=true), direction=direction(:to_node), t=t
+        )
         for path in active_stochastic_paths(
-            collect(
-                s
-                for s in stochastic_scenario()
-                if !isempty(node_state_indices(m; node=n_stor, t=t, stochastic_scenario=s))
-                || !isempty(unit_flow_indices(m; unit=u, node=n_afrr, direction=d, t=t, stochastic_scenario=s))
+            unique(
+                ind.stochastic_scenario
+                for ind in vcat(
+                    node_state_indices(m; node=n_stor, t=t),
+                    unit_flow_indices(m; unit=u, node=n_res, direction=d_to, t=t)
+                )
             )
-        )  # FIXME
+        )
     )
 end
 

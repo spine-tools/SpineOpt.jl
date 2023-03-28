@@ -44,7 +44,7 @@ function add_constraint_min_down_time!(m::Model)
             >=
             + expr_sum(
                 units_shut_down[u, s_past, t_past]
-                for (u, s_past, t_past) in past_units_on_indices(m, u, t0, s, t, min_down_time);
+                for (u, s_past, t_past) in past_units_on_indices(m, u, s, t, min_down_time);
                 init=0,
             )
             + expr_sum(
@@ -61,19 +61,16 @@ end
 
 # TODO: Does this require nonspin_units_started_up_indices() to be added here?
 function constraint_min_down_time_indices(m::Model)
-    t0 = _analysis_time(m)
     unique(
         (unit=u, stochastic_path=path, t=t)
         for u in indices(min_down_time)
-        for (u, s, t) in units_on_indices(m; unit=u)
+        for (u, t) in unit_time_indices(m; unit=u)
         for path in active_stochastic_paths(
             unique(
                 ind.stochastic_scenario
                 for ind in vcat(
-                    past_units_on_indices(m, u, t0, anything, t, min_down_time),
-                    nonspin_units_started_up_indices(
-                        m; unit=u, t=t_before_t(m; t_after=t), temporal_block=anything, stochastic_scenario=s
-                    )
+                    past_units_on_indices(m, u, anything, t, min_down_time),
+                    nonspin_units_started_up_indices(m; unit=u, t=t_before_t(m; t_after=t), temporal_block=anything)
                 )
             )
         )

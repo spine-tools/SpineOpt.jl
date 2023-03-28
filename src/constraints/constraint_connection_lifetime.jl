@@ -24,21 +24,20 @@ Constrain connections_invested_available by the investment lifetime of a connect
 """
 function add_constraint_connection_lifetime!(m::Model)
     @fetch connections_invested_available, connections_invested = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:connection_lifetime] = Dict(
         (connection=conn, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
-                + connections_invested_available[conn, s, t]
+            expr_sum(
+                connections_invested_available[conn, s, t]
                 for (conn, s, t) in connections_invested_available_indices(
                     m; connection=conn, stochastic_scenario=s, t=t
                 );
                 init=0,
             )
             >=
-            + sum(
-                + connections_invested[conn, s_past, t_past]
-                for (conn, s_past, t_past) in _past_connections_invested_available_indices(m, conn, t0, s, t)
+            sum(
+                connections_invested[conn, s_past, t_past]
+                for (conn, s_past, t_past) in _past_connections_invested_available_indices(m, conn, s, t)
             )
         )
         for (conn, s, t) in constraint_connection_lifetime_indices(m)
@@ -46,24 +45,32 @@ function add_constraint_connection_lifetime!(m::Model)
 end
 
 function constraint_connection_lifetime_indices(m::Model)
-    t0 = _analysis_time(m)
     unique(
         (connection=conn, stochastic_path=path, t=t)
         for conn in indices(connection_investment_lifetime)
-        for (conn, s, t) in connection_investment_stochastic_time_indices(m; connection=conn)
+        for (conn, t) in connection_investment_time_indices(m; connection=conn)
         for path in active_stochastic_paths(
-            unique(ind.stochastic_scenario
-            for ind in _past_connections_invested_available_indices(m, conn, t0, anything, t))
+            unique(
+                ind.stochastic_scenario for ind in _past_connections_invested_available_indices(m, conn, anything, t)
+            )
         )
     )
 end
 
-function _past_connections_invested_available_indices(m, conn, t0, s, t)
-    t = TimeSlice(
-        end_(t) - connection_investment_lifetime(connection=conn, analysis_time=t0, stochastic_scenario=s, t=t),
-        end_(t),
+function _past_connections_invested_available_indices(m, conn, s, t)
+    t0 = _analysis_time(m)
+    connections_invested_available_indices(
+        m;
+        connection=conn,
+        stochastic_scenario=s,
+        t=to_time_slice(
+            m;
+            t=TimeSlice(
+                end_(t) - connection_investment_lifetime(connection=conn, analysis_time=t0, stochastic_scenario=s, t=t),
+                end_(t)
+            )
+        )
     )
-    connections_invested_available_indices(m; connection=conn, stochastic_scenario=s, t=to_time_slice(m; t=t))
 end
 
 """
