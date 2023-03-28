@@ -52,12 +52,7 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
                 * overlap_duration(
                     t_short,
                     t - connection_flow_delay(
-                        connection=conn,
-                        node1=ng_out,
-                        node2=ng_in,
-                        stochastic_scenario=s,
-                        analysis_time=t0,
-                        t=t,
+                        connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, analysis_time=t0, t=t
                     ),
                 )
                 for (conn, n_in, d, s, t_short) in connection_flow_indices(
@@ -69,12 +64,7 @@ function add_constraint_ratio_out_in_connection_flow!(m::Model, ratio_out_in, se
                     t=to_time_slice(
                         m;
                         t=t - connection_flow_delay(
-                            connection=conn,
-                            node1=ng_out,
-                            node2=ng_in,
-                            stochastic_scenario=s,
-                            analysis_time=t0,
-                            t=t,
+                            connection=conn, node1=ng_out, node2=ng_in, stochastic_scenario=s, analysis_time=t0, t=t
                         ),
                     ),
                 );

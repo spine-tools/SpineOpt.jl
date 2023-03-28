@@ -82,15 +82,3 @@ function constraint_unit_lifetime_indices_filtered(m::Model; unit=anything, stoc
     f(ind) = _index_in(ind; unit=unit, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_unit_lifetime_indices(m))
 end
-
-function _constraint_unit_lifetime_scenarios(m, u, s, t0, t)
-    t_past_and_present = to_time_slice(
-        m;
-        t=TimeSlice(end_(t) - unit_investment_lifetime(unit=u, stochastic_scenario=s, analysis_time=t0, t=t), end_(t)),
-    )
-    (
-        s
-        for s in stochastic_scenario()
-        if !isempty(units_invested_available_indices(m; unit=u, t=t_past_and_present, stochastic_scenario=s))
-    )
-end
