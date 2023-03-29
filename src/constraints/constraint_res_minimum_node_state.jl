@@ -82,14 +82,7 @@ function constraint_res_minimum_node_state_indices(m::Model)
             m; unit=u, node=node(has_state=true), direction=direction(:to_node), t=t
         )
         for path in active_stochastic_paths(
-            m, 
-            unique(
-                ind.stochastic_scenario
-                for ind in vcat(
-                    node_state_indices(m; node=n_stor, t=t),
-                    unit_flow_indices(m; unit=u, node=n_res, direction=d_to, t=t)
-                )
-            )
+            m, [node_state_indices(m; node=n_stor, t=t); unit_flow_indices(m; unit=u, node=n_res, direction=d_to, t=t)]
         )
     )
 end

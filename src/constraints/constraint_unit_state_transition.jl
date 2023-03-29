@@ -54,11 +54,7 @@ function constraint_unit_state_transition_indices(m::Model)
         (unit=u, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (u, t_before, t_after) in unit_dynamic_time_indices(m)
         for path in active_stochastic_paths(
-            m, 
-            unique(
-                ind.stochastic_scenario
-                for ind in units_on_indices(m; unit=u, t=[t_before, t_after], temporal_block=anything)
-            )
+            m, units_on_indices(m; unit=u, t=[t_before, t_after], temporal_block=anything)
         )
     )
 end

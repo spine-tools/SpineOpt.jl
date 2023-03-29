@@ -250,13 +250,10 @@ function constraint_unit_flow_capacity_w_ramp_indices(m::Model)
         )
         for path in active_stochastic_paths(
             m, 
-            unique(
-                ind.stochastic_scenario
-                for ind in vcat(
-                    unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_before),
-                    units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t_before)),
-                    units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t_after)),
-                )
+            vcat(
+                unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t_before),
+                units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t_before)),
+                units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t_after))
             )
         )
     )

@@ -261,10 +261,22 @@ function generate_stochastic_structure!(m::Model)
     _generate_active_stochastic_paths(m)
 end
 
+function active_stochastic_paths(m, indices::Vector)
+    active_stochastic_paths(m, (x.stochastic_scenario for x in indices))
+end
 function active_stochastic_paths(m, active_scenarios)
-    active_scenarios = collect(Object, active_scenarios)
+    active_stochastic_paths(m, collect(Object, active_scenarios))
+end
+function active_stochastic_paths(m, active_scenarios::Vector{Object})
+    _active_stochastic_paths(m, unique!(active_scenarios))
+end
+function active_stochastic_paths(m, active_scenarios::Set{Object})
+    _active_stochastic_paths(m, active_scenarios)
+end
+
+function _active_stochastic_paths(m, unique_active_scenarios)
     full_stochastic_paths = m.ext[:spineopt].stochastic_structure[:full_stochastic_paths]
-    unique(intersect(path, active_scenarios) for path in full_stochastic_paths)
+    unique(intersect(path, unique_active_scenarios) for path in full_stochastic_paths)
 end
 
 function stochastic_time_indices(

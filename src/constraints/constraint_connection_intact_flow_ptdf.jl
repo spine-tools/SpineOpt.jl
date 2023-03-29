@@ -84,12 +84,9 @@ function constraint_connection_intact_flow_ptdf_indices(m::Model)
         for (n_to, t) in node_time_indices(m; node=n_to)
         for path in active_stochastic_paths(
             m,
-            unique(
-                ind.stochastic_scenario
-                for ind in vcat(
-                    connection_intact_flow_indices(m; connection=conn, node=n_to, direction=d_to, t=t),
-                    node_stochastic_time_indices(m; node=ptdf_connection__node(connection=conn), t=t)
-                )
+            vcat(
+                connection_intact_flow_indices(m; connection=conn, node=n_to, direction=d_to, t=t),
+                node_stochastic_time_indices(m; node=ptdf_connection__node(connection=conn), t=t)
             )
         )
     )

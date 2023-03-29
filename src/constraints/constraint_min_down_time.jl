@@ -67,12 +67,9 @@ function constraint_min_down_time_indices(m::Model)
         for (u, t) in unit_time_indices(m; unit=u)
         for path in active_stochastic_paths(
             m, 
-            unique(
-                ind.stochastic_scenario
-                for ind in vcat(
-                    past_units_on_indices(m, u, anything, t, min_down_time),
-                    nonspin_units_started_up_indices(m; unit=u, t=t_before_t(m; t_after=t), temporal_block=anything)
-                )
+            vcat(
+                past_units_on_indices(m, u, anything, t, min_down_time),
+                nonspin_units_started_up_indices(m; unit=u, t=t_before_t(m; t_after=t), temporal_block=anything)
             )
         )
     )

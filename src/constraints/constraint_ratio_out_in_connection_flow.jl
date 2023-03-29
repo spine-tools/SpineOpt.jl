@@ -101,21 +101,19 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
         )
         for path in active_stochastic_paths(
             m, 
-            unique(
-                vcat(
-                    path_out,
-                    [
-                        ind.stochastic_scenario
-                        for s in path_out
-                        for ind in connection_flow_indices(
-                            m;
-                            connection=conn,
-                            node=ng_in,
-                            direction=direction(:from_node),
-                            t=_to_delayed_time_slice(m, conn, ng_out, ng_in, s, t)
-                        )
-                    ]
-                )
+            vcat(
+                path_out,
+                [
+                    ind.stochastic_scenario
+                    for s in path_out
+                    for ind in connection_flow_indices(
+                        m;
+                        connection=conn,
+                        node=ng_in,
+                        direction=direction(:from_node),
+                        t=_to_delayed_time_slice(m, conn, ng_out, ng_in, s, t)
+                    )
+                ]
             )
         )
     )

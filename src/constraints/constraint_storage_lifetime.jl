@@ -48,10 +48,7 @@ function constraint_storage_lifetime_indices(m::Model)
         (node=n, stochastic_path=path, t=t)
         for n in indices(storage_investment_lifetime)
         for (n, t) in node_investment_time_indices(m; node=n)
-        for path in active_stochastic_paths(
-            m, 
-            unique(ind.stochastic_scenario for ind in _past_storages_invested_available_indices(m, n, anything, t))
-        )
+        for path in active_stochastic_paths(m, _past_storages_invested_available_indices(m, n, anything, t))
     )
 end
 
