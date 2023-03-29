@@ -234,7 +234,7 @@
             var_u_on_2 = var_units_on[var_u_on_key_2...]
             con_key = (unit(:unit_ab), node(:node_group_bc), direction(:to_node), [s,s_child], t)
             expected_con = @build_constraint(
-                var_u_flow_c_1 +  var_u_flow_c_2 + 2*var_u_flow_b <= unit_capacity * (var_u_on_1 +  var_u_on_2)
+                var_u_flow_c_1 +  var_u_flow_c_2 + 2*var_u_flow_b <= unit_capacity * unit_availability_factor * (var_u_on_1 +  var_u_on_2)
             )
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
