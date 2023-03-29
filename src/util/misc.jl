@@ -119,6 +119,19 @@ function expr_sum(iter; init::Number)
     result
 end
 
+function expr_avg(iter; init::Number)
+    result = AffExpr(init)
+    isempty(iter) && return result
+    result += first(iter)  # NOTE: This is so result has the right type, e.g., `GenericAffExpr{Call,VariableRef}`
+    k = 1
+    for item in Iterators.drop(iter, 1)
+        add_to_expression!(result, item)
+        k += 1
+    end
+    result / k
+end
+
+
 """
     _index_in(ind::NamedTuple; kwargs...)
 

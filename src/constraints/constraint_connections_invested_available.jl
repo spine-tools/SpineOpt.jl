@@ -31,7 +31,8 @@ function add_constraint_connections_invested_available!(m::Model)
             + connections_invested_available[conn, s, t]
             <=
             + candidate_connections[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)]
-        ) for (conn, s, t) in connections_invested_available_indices(m)
+        )
+        for (conn, s, t) in connections_invested_available_indices(m)
     )
 end
 # TODO: units_invested_available or \sum(units_invested)?

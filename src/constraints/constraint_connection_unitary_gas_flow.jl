@@ -27,29 +27,21 @@ function add_constraint_connection_unitary_gas_flow!(m::Model)
     m.ext[:spineopt].constraints[:connection_unitary_gas_flow] = Dict(
         (connection=conn, node1=n1, node2=n2, stochastic_scenario=s, t=t) => @constraint(
             m,
-            sum(
-                binary_gas_connection_flow[conn, n1, d, s, t] for (conn, n1, d, s, t) in connection_flow_indices(
+            expr_avg(
+                binary_gas_connection_flow[conn, n1, d, s, t]
+                for (conn, n1, d, s, t) in connection_flow_indices(
                     m;
                     connection=conn,
                     node=n1,
                     stochastic_scenario=s,
                     direction=direction(:to_node),
                     t=t_in_t(m; t_long=t),
-                )
-            )
-            / length(
-                connection_flow_indices(
-                    m;
-                    connection=conn,
-                    node=n1,
-                    stochastic_scenario=s,
-                    direction=direction(:to_node),
-                    t=t_in_t(m; t_long=t),
-                ),
+                );
+                init=0
             )
             ==
-            1
-            - sum(
+            + 1
+            - expr_avg(
                 binary_gas_connection_flow[conn, n2, direction(:to_node), s, t]
                 for (conn, n2, d, s, t) in connection_flow_indices(
                     m;
@@ -58,17 +50,10 @@ function add_constraint_connection_unitary_gas_flow!(m::Model)
                     stochastic_scenario=s,
                     direction=direction(:to_node),
                     t=t_in_t(m; t_long=t),
-                )
-            ) / length(
-                connection_flow_indices(
-                    m;
-                    connection=conn,
-                    node=n2,
-                    stochastic_scenario=s,
-                    direction=direction(:to_node),
-                    t=t_in_t(m; t_long=t),
-                ),
+                );
+                init=0
             )
-        ) for (conn, n1, n2, s, t) in constraint_connection_flow_gas_capacity_indices(m)
+        )
+        for (conn, n1, n2, s, t) in constraint_connection_flow_gas_capacity_indices(m)
     )
 end

@@ -17,15 +17,30 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function _constraint_unit_flow_capacity_scenarios(m::Model, unit, node, direction, t)
+function t_lowest_resolution_path(m, indices)
+    scens_by_t = Dict()
+    for x in indices
+        scens = get!(scens_by_t, x.t) do
+            Set{Object}()
+        end
+        push!(scens, x.stochastic_scenario)
+    end
     (
-        s
-        for s in stochastic_scenario()
-        if !isempty(
-            unit_flow_indices(m; unit=unit, node=node, direction=direction, t=t, stochastic_scenario=s)
-        )
-        || !isempty(
-            units_on_indices(m; unit=unit, t=t_in_t(m; t_long=t), stochastic_scenario=s)
-        )
+        (t, path)
+        for (t, scens) in t_lowest_resolution_sets!(scens_by_t)
+        for path in active_stochastic_paths(m, scens)
     )
+end
+
+function past_units_on_indices(m, u, s, t, min_time)
+    t0 = _analysis_time(m)
+    units_on_indices(
+        m;
+        unit=u,
+        stochastic_scenario=s,
+        t=to_time_slice(
+            m; t=TimeSlice(end_(t) - min_time(unit=u, analysis_time=t0, stochastic_scenario=s, t=t), end_(t))
+        ),
+        temporal_block=anything
+    )    
 end
