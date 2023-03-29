@@ -104,120 +104,128 @@ end
 Add SpineOpt variables to the given model.
 """
 function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
-    @timelog log_level 3 "- [variable_units_available]" add_variable_units_available!(m)
-    @timelog log_level 3 "- [variable_units_on]" add_variable_units_on!(m)
-    @timelog log_level 3 "- [variable_units_started_up]" add_variable_units_started_up!(m)
-    @timelog log_level 3 "- [variable_units_shut_down]" add_variable_units_shut_down!(m)
-    @timelog log_level 3 "- [variable_unit_flow]" add_variable_unit_flow!(m)
-    @timelog log_level 3 "- [variable_unit_flow_op]" add_variable_unit_flow_op!(m)
-    @timelog log_level 3 "- [variable_connection_flow]" add_variable_connection_flow!(m)
-    @timelog log_level 3 "- [variable_connection_intact_flow]" add_variable_connection_intact_flow!(m)
-    @timelog log_level 3 "- [variable_connections_invested]" add_variable_connections_invested!(m)
-    @timelog log_level 3 "- [variable_connections_invested_available]" add_variable_connections_invested_available!(m)
-    @timelog log_level 3 "- [variable_connections_decommissioned]" add_variable_connections_decommissioned!(m)
-    @timelog log_level 3 "- [variable_storages_invested]" add_variable_storages_invested!(m)
-    @timelog log_level 3 "- [variable_storages_invested_available]" add_variable_storages_invested_available!(m)
-    @timelog log_level 3 "- [variable_storages_decommissioned]" add_variable_storages_decommissioned!(m)
-    @timelog log_level 3 "- [variable_node_state]" add_variable_node_state!(m)
-    @timelog log_level 3 "- [variable_node_slack_pos]" add_variable_node_slack_pos!(m)
-    @timelog log_level 3 "- [variable_node_slack_neg]" add_variable_node_slack_neg!(m)
-    @timelog log_level 3 "- [variable_node_injection]" add_variable_node_injection!(m)
-    @timelog log_level 3 "- [variable_units_invested]" add_variable_units_invested!(m)
-    @timelog log_level 3 "- [variable_units_invested_available]" add_variable_units_invested_available!(m)
-    @timelog log_level 3 "- [variable_units_mothballed]" add_variable_units_mothballed!(m)
-    @timelog log_level 3 "- [variable_ramp_up_unit_flow]" add_variable_ramp_up_unit_flow!(m)
-    @timelog log_level 3 "- [variable_start_up_unit_flow]" add_variable_start_up_unit_flow!(m)
-    @timelog log_level 3 "- [variable_nonspin_units_started_up]" add_variable_nonspin_units_started_up!(m)
-    @timelog log_level 3 "- [variable_nonspin_ramp_up_unit_flow]" add_variable_nonspin_ramp_up_unit_flow!(m)
-    @timelog log_level 3 "- [variable_ramp_down_unit_flow]" add_variable_ramp_down_unit_flow!(m)
-    @timelog log_level 3 "- [variable_shut_down_unit_flow]" add_variable_shut_down_unit_flow!(m)
-    @timelog log_level 3 "- [variable_nonspin_units_shut_down]" add_variable_nonspin_units_shut_down!(m)
-    @timelog log_level 3 "- [variable_nonspin_ramp_down_unit_flow]" add_variable_nonspin_ramp_down_unit_flow!(m)
-    @timelog log_level 3 "- [variable_node_pressure]" add_variable_node_pressure!(m)
-    @timelog log_level 3 "- [variable_node_voltage_angle]" add_variable_node_voltage_angle!(m)
-    @timelog log_level 3 "- [variable_binary_gas_connection_flow]" add_variable_binary_gas_connection_flow!(m)
-    @timelog log_level 3 "- [user_defined_variables]" add_user_variables(m)
+    for (name, add_variable!) in (
+            ("units_available", add_variable_units_available!),
+            ("units_on", add_variable_units_on!),
+            ("units_started_up", add_variable_units_started_up!),
+            ("units_shut_down", add_variable_units_shut_down!),
+            ("unit_flow", add_variable_unit_flow!),
+            ("unit_flow_op", add_variable_unit_flow_op!),
+            ("connection_flow", add_variable_connection_flow!),
+            ("connection_intact_flow", add_variable_connection_intact_flow!),
+            ("connections_invested", add_variable_connections_invested!),
+            ("connections_invested_available", add_variable_connections_invested_available!),
+            ("connections_decommissioned", add_variable_connections_decommissioned!),
+            ("storages_invested", add_variable_storages_invested!),
+            ("storages_invested_available", add_variable_storages_invested_available!),
+            ("storages_decommissioned", add_variable_storages_decommissioned!),
+            ("node_state", add_variable_node_state!),
+            ("node_slack_pos", add_variable_node_slack_pos!),
+            ("node_slack_neg", add_variable_node_slack_neg!),
+            ("node_injection", add_variable_node_injection!),
+            ("units_invested", add_variable_units_invested!),
+            ("units_invested_available", add_variable_units_invested_available!),
+            ("units_mothballed", add_variable_units_mothballed!),
+            ("ramp_up_unit_flow", add_variable_ramp_up_unit_flow!),
+            ("start_up_unit_flow", add_variable_start_up_unit_flow!),
+            ("nonspin_units_started_up", add_variable_nonspin_units_started_up!),
+            ("nonspin_ramp_up_unit_flow", add_variable_nonspin_ramp_up_unit_flow!),
+            ("ramp_down_unit_flow", add_variable_ramp_down_unit_flow!),
+            ("shut_down_unit_flow", add_variable_shut_down_unit_flow!),
+            ("nonspin_units_shut_down", add_variable_nonspin_units_shut_down!),
+            ("nonspin_ramp_down_unit_flow", add_variable_nonspin_ramp_down_unit_flow!),
+            ("node_pressure", add_variable_node_pressure!),
+            ("node_voltage_angle", add_variable_node_voltage_angle!),
+            ("binary_gas_connection_flow", add_variable_binary_gas_connection_flow!),
+            ("user_defined", add_user_variables)
+        )
+        @timelog log_level 3 "- [variable_$name]" add_variable!(m)
+    end
 end
 
 """
 Add SpineOpt constraints to the given model.
 """
 function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
-    @timelog log_level 3 "- [constraint_unit_pw_heat_rate]" add_constraint_unit_pw_heat_rate!(m)
-    @timelog log_level 3 "- [constraint_user_constraint]" add_constraint_user_constraint!(m)
-    @timelog log_level 3 "- [constraint_node_injection]" add_constraint_node_injection!(m)
-    @timelog log_level 3 "- [constraint_nodal_balance]" add_constraint_nodal_balance!(m)
-    @timelog log_level 3 "- [constraint_candidate_connection_flow_ub]" add_constraint_candidate_connection_flow_ub!(m)
-    @timelog log_level 3 "- [constraint_candidate_connection_flow_lb]" add_constraint_candidate_connection_flow_lb!(m)
-    @timelog log_level 3 "- [constraint_connection_intact_flow_ptdf]" add_constraint_connection_intact_flow_ptdf!(m)
-    @timelog log_level 3 "- [constraint_connection_flow_intact_flow]" add_constraint_connection_flow_intact_flow!(m)
-    @timelog log_level 3 "- [constraint_connection_flow_lodf]" add_constraint_connection_flow_lodf!(m)
-    @timelog log_level 3 "- [constraint_connection_flow_capacity]" add_constraint_connection_flow_capacity!(m)
-    @timelog log_level 3 "- [constraint_connection_intact_flow_capacity]" add_constraint_connection_intact_flow_capacity!(m)
-    @timelog log_level 3 "- [constraint_unit_flow_capacity]" add_constraint_unit_flow_capacity!(m)
-    @timelog log_level 3 "- [constraint_connections_invested_available]" add_constraint_connections_invested_available!(m)
-    @timelog log_level 3 "- [constraint_connection_lifetime]" add_constraint_connection_lifetime!(m)
-    @timelog log_level 3 "- [constraint_connections_invested_transition]" add_constraint_connections_invested_transition!(m)
-    @timelog log_level 3 "- [constraint_storages_invested_available]" add_constraint_storages_invested_available!(m)
-    @timelog log_level 3 "- [constraint_storage_lifetime]" add_constraint_storage_lifetime!(m)
-    @timelog log_level 3 "- [constraint_storages_invested_transition]" add_constraint_storages_invested_transition!(m)
-    @timelog log_level 3 "- [constraint_operating_point_bounds]" add_constraint_operating_point_bounds!(m)
-    @timelog log_level 3 "- [constraint_operating_point_sum]" add_constraint_operating_point_sum!(m)
-    @timelog log_level 3 "- [constraint_fix_ratio_out_in_unit_flow]" add_constraint_fix_ratio_out_in_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_max_ratio_out_in_unit_flow]" add_constraint_max_ratio_out_in_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_min_ratio_out_in_unit_flow]" add_constraint_min_ratio_out_in_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_fix_ratio_out_out_unit_flow]" add_constraint_fix_ratio_out_out_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_max_ratio_out_out_unit_flow]" add_constraint_max_ratio_out_out_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_min_ratio_out_out_unit_flow]" add_constraint_min_ratio_out_out_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_fix_ratio_in_in_unit_flow]" add_constraint_fix_ratio_in_in_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_max_ratio_in_in_unit_flow]" add_constraint_max_ratio_in_in_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_min_ratio_in_in_unit_flow]" add_constraint_min_ratio_in_in_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_fix_ratio_in_out_unit_flow]" add_constraint_fix_ratio_in_out_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_max_ratio_in_out_unit_flow]" add_constraint_max_ratio_in_out_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_min_ratio_in_out_unit_flow]" add_constraint_min_ratio_in_out_unit_flow!(m)
-    @timelog log_level 3 "- [constraint_ratio_out_in_connection_intact_flow]" add_constraint_ratio_out_in_connection_intact_flow!(m)
-    @timelog log_level 3 "- [constraint_fix_ratio_out_in_connection_flow]" add_constraint_fix_ratio_out_in_connection_flow!(m)
-    @timelog log_level 3 "- [constraint_max_ratio_out_in_connection_flow]" add_constraint_max_ratio_out_in_connection_flow!(m)
-    @timelog log_level 3 "- [constraint_min_ratio_out_in_connection_flow]" add_constraint_min_ratio_out_in_connection_flow!(m)
-    @timelog log_level 3 "- [constraint_node_state_capacity]" add_constraint_node_state_capacity!(m)
-    @timelog log_level 3 "- [constraint_cyclic_node_state]" add_constraint_cyclic_node_state!(m)
-    @timelog log_level 3 "- [constraint_max_total_cumulated_unit_flow_from_node]" add_constraint_max_total_cumulated_unit_flow_from_node!(m)
-    @timelog log_level 3 "- [constraint_min_total_cumulated_unit_flow_from_node]" add_constraint_min_total_cumulated_unit_flow_from_node!(m)
-    @timelog log_level 3 "- [constraint_max_total_cumulated_unit_flow_to_node]" add_constraint_max_total_cumulated_unit_flow_to_node!(m)
-    @timelog log_level 3 "- [constraint_min_total_cumulated_unit_flow_to_node]" add_constraint_min_total_cumulated_unit_flow_to_node!(m)
-    @timelog log_level 3 "- [constraint_units_on]" add_constraint_units_on!(m)
-    @timelog log_level 3 "- [constraint_units_available]" add_constraint_units_available!(m)
-    @timelog log_level 3 "- [constraint_units_invested_available]" add_constraint_units_invested_available!(m)
-    @timelog log_level 3 "- [constraint_unit_lifetime]" add_constraint_unit_lifetime!(m)
-    @timelog log_level 3 "- [constraint_units_invested_transition]" add_constraint_units_invested_transition!(m)
-    @timelog log_level 3 "- [constraint_minimum_operating_point]" add_constraint_minimum_operating_point!(m)
-    @timelog log_level 3 "- [constraint_min_down_time]" add_constraint_min_down_time!(m)
-    @timelog log_level 3 "- [constraint_min_up_time]" add_constraint_min_up_time!(m)
-    @timelog log_level 3 "- [constraint_unit_state_transition]" add_constraint_unit_state_transition!(m)
-    @timelog log_level 3 "- [constraint_unit_flow_capacity_w_ramp]" add_constraint_unit_flow_capacity_w_ramp!(m)
-    @timelog log_level 3 "- [constraint_split_ramps]" add_constraint_split_ramps!(m)
-    @timelog log_level 3 "- [constraint_ramp_up]" add_constraint_ramp_up!(m)
-    @timelog log_level 3 "- [constraint_max_start_up_ramp]" add_constraint_max_start_up_ramp!(m)
-    @timelog log_level 3 "- [constraint_min_start_up_ramp]" add_constraint_min_start_up_ramp!(m)
-    @timelog log_level 3 "- [constraint_max_nonspin_ramp_up]" add_constraint_max_nonspin_ramp_up!(m)
-    @timelog log_level 3 "- [constraint_min_nonspin_ramp_up]" add_constraint_min_nonspin_ramp_up!(m)
-    @timelog log_level 3 "- [constraint_ramp_down]" add_constraint_ramp_down!(m)
-    @timelog log_level 3 "- [constraint_max_shut_down_ramp]" add_constraint_max_shut_down_ramp!(m)
-    @timelog log_level 3 "- [constraint_min_shut_down_ramp]" add_constraint_min_shut_down_ramp!(m)
-    @timelog log_level 3 "- [constraint_max_nonspin_ramp_down]" add_constraint_max_nonspin_ramp_down!(m)
-    @timelog log_level 3 "- [constraint_min_nonspin_ramp_down]" add_constraint_min_nonspin_ramp_down!(m)
-    @timelog log_level 3 "- [constraint_res_minimum_node_state]" add_constraint_res_minimum_node_state!(m)
-    @timelog log_level 3 "- [constraint_fix_node_pressure_point]" add_constraint_fix_node_pressure_point!(m)
-    @timelog log_level 3 "- [constraint_connection_unitary_gas_flow]" add_constraint_connection_unitary_gas_flow!(m)
-    @timelog log_level 3 "- [constraint_compression_ratio]" add_constraint_compression_ratio!(m)
-    @timelog log_level 3 "- [constraint_storage_line_pack]" add_constraint_storage_line_pack!(m)
-    @timelog log_level 3 "- [constraint_connection_flow_gas_capacity]" add_constraint_connection_flow_gas_capacity!(m)
-    @timelog log_level 3 "- [constraint_max_node_pressure]" add_constraint_max_node_pressure!(m)
-    @timelog log_level 3 "- [constraint_min_node_pressure]" add_constraint_min_node_pressure!(m)
-    @timelog log_level 3 "- [constraint_node_voltage_angle]" add_constraint_node_voltage_angle!(m)
-    @timelog log_level 3 "- [constraint_max_node_voltage_angle]" add_constraint_max_node_voltage_angle!(m)
-    @timelog log_level 3 "- [constraint_min_node_voltage_angle]" add_constraint_min_node_voltage_angle!(m)
-    @timelog log_level 3 "- [constraint_user]" add_constraints(m)
+    for (name, add_constraint!) in (
+            ("unit_pw_heat_rate", add_constraint_unit_pw_heat_rate!),
+            ("user_constraint", add_constraint_user_constraint!),
+            ("node_injection", add_constraint_node_injection!),
+            ("nodal_balance", add_constraint_nodal_balance!),
+            ("candidate_connection_flow_ub", add_constraint_candidate_connection_flow_ub!),
+            ("candidate_connection_flow_lb", add_constraint_candidate_connection_flow_lb!),
+            ("connection_intact_flow_ptdf", add_constraint_connection_intact_flow_ptdf!),
+            ("connection_flow_intact_flow", add_constraint_connection_flow_intact_flow!),
+            ("connection_flow_lodf", add_constraint_connection_flow_lodf!),
+            ("connection_flow_capacity", add_constraint_connection_flow_capacity!),
+            ("connection_intact_flow_capacity", add_constraint_connection_intact_flow_capacity!),
+            ("unit_flow_capacity", add_constraint_unit_flow_capacity!),
+            ("connections_invested_available", add_constraint_connections_invested_available!),
+            ("connection_lifetime", add_constraint_connection_lifetime!),
+            ("connections_invested_transition", add_constraint_connections_invested_transition!),
+            ("storages_invested_available", add_constraint_storages_invested_available!),
+            ("storage_lifetime", add_constraint_storage_lifetime!),
+            ("storages_invested_transition", add_constraint_storages_invested_transition!),
+            ("operating_point_bounds", add_constraint_operating_point_bounds!),
+            ("operating_point_sum", add_constraint_operating_point_sum!),
+            ("fix_ratio_out_in_unit_flow", add_constraint_fix_ratio_out_in_unit_flow!),
+            ("max_ratio_out_in_unit_flow", add_constraint_max_ratio_out_in_unit_flow!),
+            ("min_ratio_out_in_unit_flow", add_constraint_min_ratio_out_in_unit_flow!),
+            ("fix_ratio_out_out_unit_flow", add_constraint_fix_ratio_out_out_unit_flow!),
+            ("max_ratio_out_out_unit_flow", add_constraint_max_ratio_out_out_unit_flow!),
+            ("min_ratio_out_out_unit_flow", add_constraint_min_ratio_out_out_unit_flow!),
+            ("fix_ratio_in_in_unit_flow", add_constraint_fix_ratio_in_in_unit_flow!),
+            ("max_ratio_in_in_unit_flow", add_constraint_max_ratio_in_in_unit_flow!),
+            ("min_ratio_in_in_unit_flow", add_constraint_min_ratio_in_in_unit_flow!),
+            ("fix_ratio_in_out_unit_flow", add_constraint_fix_ratio_in_out_unit_flow!),
+            ("max_ratio_in_out_unit_flow", add_constraint_max_ratio_in_out_unit_flow!),
+            ("min_ratio_in_out_unit_flow", add_constraint_min_ratio_in_out_unit_flow!),
+            ("ratio_out_in_connection_intact_flow", add_constraint_ratio_out_in_connection_intact_flow!),
+            ("fix_ratio_out_in_connection_flow", add_constraint_fix_ratio_out_in_connection_flow!),
+            ("max_ratio_out_in_connection_flow", add_constraint_max_ratio_out_in_connection_flow!),
+            ("min_ratio_out_in_connection_flow", add_constraint_min_ratio_out_in_connection_flow!),
+            ("node_state_capacity", add_constraint_node_state_capacity!),
+            ("cyclic_node_state", add_constraint_cyclic_node_state!),
+            ("max_total_cumulated_unit_flow_from_node", add_constraint_max_total_cumulated_unit_flow_from_node!),
+            ("min_total_cumulated_unit_flow_from_node", add_constraint_min_total_cumulated_unit_flow_from_node!),
+            ("max_total_cumulated_unit_flow_to_node", add_constraint_max_total_cumulated_unit_flow_to_node!),
+            ("min_total_cumulated_unit_flow_to_node", add_constraint_min_total_cumulated_unit_flow_to_node!),
+            ("units_on", add_constraint_units_on!),
+            ("units_available", add_constraint_units_available!),
+            ("units_invested_available", add_constraint_units_invested_available!),
+            ("unit_lifetime", add_constraint_unit_lifetime!),
+            ("units_invested_transition", add_constraint_units_invested_transition!),
+            ("minimum_operating_point", add_constraint_minimum_operating_point!),
+            ("min_down_time", add_constraint_min_down_time!),
+            ("min_up_time", add_constraint_min_up_time!),
+            ("unit_state_transition", add_constraint_unit_state_transition!),
+            ("unit_flow_capacity_w_ramp", add_constraint_unit_flow_capacity_w_ramp!),
+            ("split_ramps", add_constraint_split_ramps!),
+            ("ramp_up", add_constraint_ramp_up!),
+            ("max_start_up_ramp", add_constraint_max_start_up_ramp!),
+            ("min_start_up_ramp", add_constraint_min_start_up_ramp!),
+            ("max_nonspin_ramp_up", add_constraint_max_nonspin_ramp_up!),
+            ("min_nonspin_ramp_up", add_constraint_min_nonspin_ramp_up!),
+            ("ramp_down", add_constraint_ramp_down!),
+            ("max_shut_down_ramp", add_constraint_max_shut_down_ramp!),
+            ("min_shut_down_ramp", add_constraint_min_shut_down_ramp!),
+            ("max_nonspin_ramp_down", add_constraint_max_nonspin_ramp_down!),
+            ("min_nonspin_ramp_down", add_constraint_min_nonspin_ramp_down!),
+            ("res_minimum_node_state", add_constraint_res_minimum_node_state!),
+            ("fix_node_pressure_point", add_constraint_fix_node_pressure_point!),
+            ("connection_unitary_gas_flow", add_constraint_connection_unitary_gas_flow!),
+            ("compression_ratio", add_constraint_compression_ratio!),
+            ("storage_line_pack", add_constraint_storage_line_pack!),
+            ("connection_flow_gas_capacity", add_constraint_connection_flow_gas_capacity!),
+            ("max_node_pressure", add_constraint_max_node_pressure!),
+            ("min_node_pressure", add_constraint_min_node_pressure!),
+            ("node_voltage_angle", add_constraint_node_voltage_angle!),
+            ("max_node_voltage_angle", add_constraint_max_node_voltage_angle!),
+            ("min_node_voltage_angle", add_constraint_min_node_voltage_angle!),
+            ("user_defined", add_constraints),
+        )
+        @timelog log_level 3 "- [constraint_$name]" add_constraint!(m)
+    end
     _update_constraint_names!(m)
 end
 
