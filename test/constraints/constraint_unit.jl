@@ -247,6 +247,7 @@
             ["unit__from_node", ["unit_ab", "node_a"], "minimum_operating_point", minimum_operating_point],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_units_on = m.ext[:spineopt].variables[:units_on]
