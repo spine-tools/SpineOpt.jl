@@ -36,7 +36,6 @@ export @fetch
 export rerun_spineopt
 export run_spineopt
 export prepare_spineopt
-export refresh_model!
 export run_spineopt_kernel!
 export output_value
 export collect_output_values
@@ -62,6 +61,7 @@ include("data_structure/stochastic_structure.jl")
 include("data_structure/preprocess_data_structure.jl")
 include("data_structure/check_data_structure.jl")
 include("data_structure/postprocess_results.jl")
+include("data_structure/diagnose.jl")
 include("variables/variable_common.jl")
 include("variables/variable_unit_flow.jl")
 include("variables/variable_unit_flow_op.jl")

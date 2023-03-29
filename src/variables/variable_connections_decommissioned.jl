@@ -27,7 +27,7 @@ function add_variable_connections_decommissioned!(m::Model)
         m,
         :connections_decommissioned,
         connections_invested_available_indices;
-        lb=x -> 0,
+        lb=Constant(0),
         int=connections_invested_available_int,
     )
 end

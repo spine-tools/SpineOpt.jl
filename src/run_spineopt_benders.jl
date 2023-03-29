@@ -84,7 +84,6 @@ add constraints and set objective.
 """
 function _init_mp_model!(mp; add_constraints=mp -> nothing, log_level=3)
     @timelog log_level 2 "Adding MP variables...\n" _add_mp_variables!(mp; log_level=log_level)
-    @timelog log_level 2 "Fixing MP variable values..." fix_variables!(mp)
     @timelog log_level 2 "Adding MP constraints...\n" _add_mp_constraints!(
         mp; add_constraints=add_constraints, log_level=log_level
     )

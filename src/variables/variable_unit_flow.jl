@@ -61,15 +61,7 @@ function add_variable_unit_flow!(m::Model)
         m,
         :unit_flow,
         unit_flow_indices;
-        lb=x -> min_unit_flow(
-            unit=x.unit,
-            node=x.node,
-            direction=x.direction,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
+        lb=min_unit_flow,
         fix_value=fix_unit_flow,
         initial_value=initial_unit_flow,
         non_anticipativity_time=unit_flow_non_anticipativity_time,
