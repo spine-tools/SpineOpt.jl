@@ -87,12 +87,14 @@
             ["model", "instance", "db_mip_solver", "Cbc.jl"],
             ["model", "instance", "db_lp_solver", "Clp.jl"],
         ],
-        :relationship_parameter_values => [[
-            "stochastic_structure__stochastic_scenario",
-            ["stochastic", "parent"],
-            "stochastic_scenario_end",
-            Dict("type" => "duration", "data" => "1h"),
-        ]],
+        :relationship_parameter_values => [
+            [
+                "stochastic_structure__stochastic_scenario",
+                ["stochastic", "parent"],
+                "stochastic_scenario_end",
+                Dict("type" => "duration", "data" => "1h"),
+            ]
+        ]
     )
     @testset "constraint_nodal_balance" begin
         _load_test_data(url_in, test_data)
@@ -472,11 +474,7 @@
             ["node", "node_b", "has_pressure", has_pressure["node_b"]],
             ["node", "node_b", "min_node_pressure", min_pressure["node_b"]]
         ]
-        SpineInterface.import_data(
-            url_in;
-            object_parameter_values=object_parameter_values
-        )
-
+        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_node_pressure = m.ext[:spineopt].variables[:node_pressure]
         constraint = m.ext[:spineopt].constraints[:min_node_pressure]

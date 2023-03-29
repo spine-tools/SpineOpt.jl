@@ -32,10 +32,7 @@ function add_constraint_connections_invested_transition!(m::Model)
                 + connections_invested_available[conn, s, t_after] - connections_invested[conn, s, t_after]
                 + connections_decommissioned[conn, s, t_after]
                 for (conn, s, t_after) in connections_invested_available_indices(
-                    m;
-                    connection=conn,
-                    stochastic_scenario=s,
-                    t=t_after,
+                    m; connection=conn, stochastic_scenario=s, t=t_after
                 );
                 init=0,
             )
@@ -43,14 +40,12 @@ function add_constraint_connections_invested_transition!(m::Model)
             expr_sum(
                 + connections_invested_available[conn, s, t_before]
                 for (conn, s, t_before) in connections_invested_available_indices(
-                    m;
-                    connection=conn,
-                    stochastic_scenario=s,
-                    t=t_before,
+                    m; connection=conn, stochastic_scenario=s, t=t_before
                 );
                 init=0,
             )
-        ) for (conn, s, t_before, t_after) in constraint_connections_invested_transition_indices(m)
+        )
+        for (conn, s, t_before, t_after) in constraint_connections_invested_transition_indices(m)
     )
 end
 
@@ -59,15 +54,7 @@ function constraint_connections_invested_transition_indices(m::Model)
         (connection=conn, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (conn, t_before, t_after) in connection_investment_dynamic_time_indices(m)
         for path in active_stochastic_paths(
-            collect(
-                s
-                for s in stochastic_scenario()
-                if !isempty(
-                    connections_invested_available_indices(
-                        m; connection=conn, t=[t_before, t_after], stochastic_scenario=s
-                    )
-                )
-            )
+            m, connections_invested_available_indices(m; connection=conn, t=[t_before, t_after])
         )
     )
 end

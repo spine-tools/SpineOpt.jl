@@ -29,19 +29,13 @@ function add_constraint_minimum_operating_point!(m::Model)
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
             + expr_sum(
-                + unit_flow[u, n, d, s, t] for (u, n, d, s, t) in unit_flow_indices(
-                    m;
-                    unit=u,
-                    node=ng,
-                    direction=d,
-                    stochastic_scenario=s,
-                    t=t_in_t(m, t_long=t),
+                + unit_flow[u, n, d, s, t]
+                for (u, n, d, s, t) in unit_flow_indices(
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m, t_long=t)
                 );
                 init=0,
             )
-            * duration(
-                t,
-            )
+            * duration(t)
             >=
             + expr_sum(
                 + units_on[u, s, t1]
@@ -54,7 +48,8 @@ function add_constraint_minimum_operating_point!(m::Model)
                 for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0,
             )
-        ) for (u, ng, d, s, t) in constraint_minimum_operating_point_indices(m)
+        )
+        for (u, ng, d, s, t) in constraint_minimum_operating_point_indices(m)
     )
 end
 
@@ -62,8 +57,9 @@ function constraint_minimum_operating_point_indices(m::Model)
     unique(
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(minimum_operating_point)
-        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
-        for path in active_stochastic_paths(collect(_constraint_unit_flow_capacity_scenarios(m, u, ng, d, t)))
+        for (t, path) in t_lowest_resolution_path(
+            m, vcat(unit_flow_indices(m; unit=u, node=ng, direction=d), units_on_indices(m; unit=u))
+        )
     )
 end
 

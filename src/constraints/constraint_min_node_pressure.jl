@@ -35,7 +35,8 @@ function add_constraint_min_node_pressure!(m::Model)
             )
             >=
             + min_node_pressure[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
-        ) for (ng, s, t) in constraint_min_node_pressure_indices(m)
+        )
+        for (ng, s, t) in constraint_min_node_pressure_indices(m)
     )
 end
 
@@ -43,13 +44,7 @@ function constraint_min_node_pressure_indices(m::Model)
     unique(
         (node=ng, stochastic_path=path, t=t)
         for (ng, s, t) in node_pressure_indices(m; node=indices(min_node_pressure))
-        for path in active_stochastic_paths(
-            collect(
-                s
-                for s in stochastic_scenario()
-                if !isempty(node_pressure_indices(m; node=ng, t=t, stochastic_scenario=s))
-            )
-        )
+        for path in active_stochastic_paths(m, s)
     )
 end
 

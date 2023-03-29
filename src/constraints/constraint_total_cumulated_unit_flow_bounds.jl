@@ -17,49 +17,40 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+# TODO: Calling `max_cum_in_unit_flow_bound[(unit=ug)]` fails´?
+
 """
     add_constraint_max_cum_in_unit_flow_bound!(m::Model)
 
 Set upperbound `max_cum_in_flow_bound `to the cumulated inflow into a `unit_group ug`
 if `max_cum_in_unit_flow_bound` exists.
 """
-
-
-function add_constraint_total_cumulated_unit_flow!(m::Model, bound,sense)
+function add_constraint_total_cumulated_unit_flow!(m::Model, bound, sense)
+    # TODO: How to turn this one into stochastical one? Path indexing over the whole `unit_group`?
     @fetch unit_flow = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[bound.name] = Dict(
-        (unit=ug, node= ng, stochastic_path = s) => sense_constraint( # TODO: How to turn this one into stochastical one? Path indexing over the whole `unit_group`?
+        (unit=ug, node= ng, stochastic_path = s) => sense_constraint(
             m,
-            + expr_sum(#TODO check if expression sum is needed here
+            + expr_sum(
                 unit_flow[u, n, d, s, t] * duration(t) # * node_stochastic_weight[(node=n, stochastic_scenario=s)]
                 for (u, n, d, s, t) in unit_flow_indices(
-                    m;
-                    unit=ug,
-                    node = ng,
-                    direction=d,
-                    stochastic_scenario = s);
-                    init = 0
+                    m; unit=ug, node = ng, direction=d, stochastic_scenario = s
+                );
+                init = 0
             ),
             sense,
-            bound(unit = ug, node = ng, direction = d)
-            #TODO Should this be time-varying, and stochastical?
-        ) for (ug,ng,d,s) in constraint_total_cumulated_unit_flow_indices(m,bound)
+            + bound(unit=ug, node=ng, direction=d)
+            # TODO Should this be time-varying, and stochastical?
+        )
+        for (ug,ng,d,s) in constraint_total_cumulated_unit_flow_indices(m,bound)
     )
 end
 
-# TODO: Calling `max_cum_in_unit_flow_bound[(unit=ug)]` fails.
-
-
 function constraint_total_cumulated_unit_flow_indices(m::Model,bound)
     unique(
-        (unit = ug, node = ng, direction=d, stochastic_path = s) for (ug,ng, d) in indices(bound)
-        for s in active_stochastic_paths(
-            collect(
-                s
-                for s in stochastic_scenario()
-                if !isempty(unit_flow_indices(m, direction=d, unit=ug, node=ng, stochastic_scenario=s))
-            )
-        )
+        (unit=ug, node=ng, direction=d, stochastic_path=s)
+        for (ug, ng, d) in indices(bound)
+        for s in active_stochastic_paths(m, unit_flow_indices(m, direction=d, unit=ug, node=ng))
     )
 end
 

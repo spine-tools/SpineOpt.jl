@@ -36,9 +36,11 @@ struct TimeSliceSet
         # Find eventual gaps in between temporal blocks
         solids = [(first(time_slices), last(time_slices)) for time_slices in values(block_time_slices)]
         sort!(solids)
-        gap_bounds = ((last_, next_first)
-                      for ((first_, last_), (next_first, next_last)) in zip(solids[1:(end - 1)], solids[2:end])
-                          if end_(last_) < start(next_first))
+        gap_bounds = (
+            (last_, next_first)
+            for ((first_, last_), (next_first, next_last)) in zip(solids[1:(end - 1)], solids[2:end])
+            if end_(last_) < start(next_first)
+        )
         gaps = [TimeSlice(end_(last_), start(next_first)) for (last_, next_first) in gap_bounds]
         # NOTE: By convention, the last time slice in the preceding block becomes the 'bridge'
         bridges = [last_ for (last_, next_first) in gap_bounds]
@@ -62,9 +64,9 @@ An `Array` of time slices *in the model*.
 (h::TimeSliceSet)(; temporal_block=anything, t=anything) = h(temporal_block, t)
 (h::TimeSliceSet)(::Anything, ::Anything) = h.time_slices
 (h::TimeSliceSet)(temporal_block::Object, ::Anything) = h.block_time_slices[temporal_block]
-(h::TimeSliceSet)(::Anything, s) = s
-(h::TimeSliceSet)(temporal_block::Object, s) = TimeSlice[t for t in s if temporal_block in blocks(t)]
-(h::TimeSliceSet)(temporal_blocks::Array{T,1}, s) where {T} = TimeSlice[t for blk in temporal_blocks for t in h(blk, s)]
+(h::TimeSliceSet)(::Anything, t) = t
+(h::TimeSliceSet)(temporal_block::Object, t) = TimeSlice[s for s in t if temporal_block in blocks(s)]
+(h::TimeSliceSet)(temporal_blocks::Array{T,1}, t) where {T} = TimeSlice[s for blk in temporal_blocks for s in h(blk, t)]
 
 """
     (::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
@@ -72,20 +74,7 @@ An `Array` of time slices *in the model*.
 A list of time slices that have some time in common with `t` or any time slice in `t`.
 """
 function (h::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
-    unique(overlapping_t
-    for s in t for overlapping_t in get(h.mapping, s, ()))
-end
-
-"""
-    _roll_time_slice_set!(t_set::TimeSliceSet, forward::Union{Period,CompoundPeriod})
-
-Roll a `TimeSliceSet` in time by a period specified by `forward`.
-"""
-function _roll_time_slice_set!(t_set::TimeSliceSet, forward::Union{Period,CompoundPeriod})
-    roll!.(t_set.time_slices, forward)
-    roll!.(values(t_set.gap_bridger.gaps), forward)
-    roll!.(values(t_set.gap_bridger.bridges), forward)
-    nothing
+    unique(overlapping_t for s in t for overlapping_t in get(h.mapping, s, ()))
 end
 
 """
@@ -291,15 +280,15 @@ function _generate_time_slice_relationships!(m::Model)
     t_follows_t_mapping = Dict(
         t => to_time_slice(m, t=TimeSlice(end_(t), end_(t) + Minute(1))) for t in all_time_slices
     )
-    t_overlaps_t_maping = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
-    t_overlaps_t_excl_mapping = Dict(t => setdiff(overlapping_t, t) for (t, overlapping_t) in t_overlaps_t_maping)
+    t_overlaps_t_mapping = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
+    t_overlaps_t_excl_mapping = Dict(t => setdiff(overlapping_t, t) for (t, overlapping_t) in t_overlaps_t_mapping)
     t_before_t_tuples = unique(
         (t_before, t_after)
         for (t_before, following) in t_follows_t_mapping for t_after in following if before(t_before, t_after)
     )
     t_in_t_tuples = unique(
         (t_short, t_long)
-        for (t_short, overlapping) in t_overlaps_t_maping for t_long in overlapping if iscontained(t_short, t_long)
+        for (t_short, overlapping) in t_overlaps_t_mapping for t_long in overlapping if iscontained(t_short, t_long)
     )
     t_in_t_excl_tuples = [(t_short, t_long) for (t_short, t_long) in t_in_t_tuples if t_short != t_long]
     # Create the function-like objects
@@ -307,7 +296,7 @@ function _generate_time_slice_relationships!(m::Model)
     temp_struct[:t_before_t] = RelationshipClass(:t_before_t, [:t_before, :t_after], t_before_t_tuples)
     temp_struct[:t_in_t] = RelationshipClass(:t_in_t, [:t_short, :t_long], t_in_t_tuples)
     temp_struct[:t_in_t_excl] = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_tuples)
-    temp_struct[:t_overlaps_t] = TOverlapsT(t_overlaps_t_maping)
+    temp_struct[:t_overlaps_t] = TOverlapsT(t_overlaps_t_mapping)
     temp_struct[:t_overlaps_t_excl] = TOverlapsT(t_overlaps_t_excl_mapping)
 end
 
@@ -357,7 +346,18 @@ function _to_time_slice(target::Array{TimeSlice,1}, source::Array{TimeSlice,1}, 
 end
 _to_time_slice(time_slices::Array{TimeSlice,1}, t::TimeSlice) = _to_time_slice(time_slices, time_slices, t)
 
-# API
+"""
+    _roll_time_slice_set!(t_set::TimeSliceSet, forward::Union{Period,CompoundPeriod})
+
+Roll a `TimeSliceSet` in time by a period specified by `forward`.
+"""
+function _roll_time_slice_set!(t_set::TimeSliceSet, forward::Union{Period,CompoundPeriod})
+    roll!.(t_set.time_slices, forward)
+    roll!.(values(t_set.gap_bridger.gaps), forward)
+    roll!.(values(t_set.gap_bridger.bridges), forward)
+    nothing
+end
+
 """
     generate_temporal_structure!(m::Model)
 

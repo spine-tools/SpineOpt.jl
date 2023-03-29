@@ -16,36 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
-"""
-    StochasticPathFinder
-
-A callable type to retrieve intersections between valid stochastic paths
-and 'active' scenarios.
-"""
-struct StochasticPathFinder
-    full_stochastic_paths::Array{Array{Object,1},1}
-end
-
-struct StochasticScenarioSet
-    scenarios::Dict{Object,Dict{TimeSlice,Array{Object}}}
-end
-
-"""
-    active_stochastic_paths(active_scenarios::Union{Array{Object,1},Object})
-
-Find the unique combinations of `active_scenarios` along valid stochastic paths.
-"""
-function (h::StochasticPathFinder)(active_scenarios::Union{Array{T,1},T}) where {T}
-    # TODO: cache these
-    unique(map(path -> intersect(path, active_scenarios), h.full_stochastic_paths))
-end
-
-function (h::StochasticScenarioSet)(stoch_struct::Object, t::TimeSlice, scenario)
-    # TODO: cache these
-    intersect(h.scenarios[stoch_struct][t], scenario)
-end
-
 """
     _find_children(parent_scenario::Union{Object,Anything})
 
@@ -68,39 +38,12 @@ function _find_root_scenarios(m::Model)
 end
 function _find_root_scenarios(m::Model, stochastic_structure::Object)
     all_scenarios = stochastic_structure__stochastic_scenario(
-        stochastic_structure=intersect(model__stochastic_structure(model=m.ext[:spineopt].instance), stochastic_structure),
+        stochastic_structure=intersect(
+            model__stochastic_structure(model=m.ext[:spineopt].instance),
+            stochastic_structure
+        )
     )
     setdiff(all_scenarios, _find_children(anything))
-end
-
-"""
-    _generate_active_stochastic_paths(m::Model)
-
-Find all unique paths through the `parent_stochastic_scenario__child_stochastic_scenario` tree
-and generate the `active_stochastic_paths` callable.
-"""
-function _generate_active_stochastic_paths(m::Model)
-    paths = [[root] for root in _find_root_scenarios(m)]
-    full_path_indices = []
-    for (i, path) in enumerate(paths)
-        children = _find_children(path[end])
-        valid_children = setdiff(children, path)
-        invalid_children = setdiff(children, valid_children)
-        if !isempty(invalid_children)
-            @warn """
-            ignoring scenarios: $(join(invalid_children, ", ", " and ")), 
-            as children of $(path[end]), since they're also its ancestors...
-            """
-        end
-        isempty(valid_children) && push!(full_path_indices, i)
-        append!(paths, [vcat(path, child) for child in valid_children])
-    end
-    # NOTE: `unique!` shouldn't be needed here since relationships are unique in the db.
-    full_stochastic_paths = paths[full_path_indices]
-    active_stochastic_paths = StochasticPathFinder(full_stochastic_paths)
-    @eval begin
-        active_stochastic_paths = $active_stochastic_paths
-    end
 end
 
 """
@@ -177,8 +120,7 @@ A `Dict` mapping `time_slice` objects to their set of active `stochastic_scenari
 function _time_slice_stochastic_scenarios(m::Model, stochastic_dag::Dict)
     # Window `time_slices`
     scenario_mapping = Dict(
-        t => [scen for (scen, spec) in stochastic_dag if spec.start <= start(t) < spec.end_]
-        for t in time_slice(m)
+        t => [scen for (scen, spec) in stochastic_dag if spec.start <= start(t) < spec.end_] for t in time_slice(m)
     )
     # History `time_slices`
     roots = _find_root_scenarios(m)
@@ -187,148 +129,21 @@ function _time_slice_stochastic_scenarios(m::Model, stochastic_dag::Dict)
 end
 
 """
-    _generate_stochastic_scenario_set(m::Model, all_stochastic_dags)
+    _generate_stochastic_scenarios(m::Model, all_stochastic_dags)
 
-Generate the `_generate_stochastic_scenario_set` for all defined `stochastic_structures`.
+Generate a mapping from stochastic structure to time slice to scenarios.
 """
-function _generate_stochastic_scenario_set(m::Model, all_stochastic_dags)
-    m.ext[:spineopt].stochastic_structure[:stochastic_scenario_set] = StochasticScenarioSet(
-        Dict(structure => _time_slice_stochastic_scenarios(m, dag) for (structure, dag) in all_stochastic_dags),
+function _generate_stochastic_scenarios(m::Model, all_stochastic_dags)
+    m.ext[:spineopt].stochastic_structure[:scenario_lookup] = Dict(
+        (structure, t) => scens
+        for (structure, dag) in all_stochastic_dags
+        for (t, scens) in _time_slice_stochastic_scenarios(m, dag)
     )
 end
 
-function _stochastic_scenario_set(m::Model, structure::Object, t::TimeSlice, scenario)
-    m.ext[:spineopt].stochastic_structure[:stochastic_scenario_set](structure, t, scenario)
-end
-
-function stochastic_time_indices(
-    m::Model;
-    stochastic_scenario=anything,
-    temporal_block=anything,
-    t=anything,
-)
-    unique(
-        (stochastic_scenario=s, t=t)
-        for (m_, tb) in model__temporal_block(model=m.ext[:spineopt].instance, temporal_block=temporal_block, _compact=false)
-        for (m_, ss) in model__stochastic_structure(model=m.ext[:spineopt].instance, _compact=false)
-        for t in time_slice(m; temporal_block=members(tb), t=t)
-        for s in _stochastic_scenario_set(m, ss, t, stochastic_scenario)
-    )
-end
-
-"""
-    node_stochastic_time_indices(m;<keyword arguments>)
-
-Stochastic time indexes for `nodes` with keyword arguments that allow filtering.
-"""
-function node_stochastic_time_indices(
-    m::Model; node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
-)
-    unique(
-        (node=n, stochastic_scenario=s, t=t1)
-        for (n, t1) in node_time_indices(m; node=node, temporal_block=temporal_block, t=t)
-        for (m_, ss) in model__stochastic_structure(
-            model=m.ext[:spineopt].instance, stochastic_structure=node__stochastic_structure(node=n), _compact=false,
-        )
-        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
-    )
-end
-
-"""
-    unit_stochastic_time_indices(;<keyword arguments>)
-
-Stochastic time indexes for `units` with keyword arguments that allow filtering.
-"""
-function unit_stochastic_time_indices(
-    m::Model;
-    unit=anything,
-    stochastic_scenario=anything,
-    temporal_block=anything,
-    t=anything,
-)
-    unique(
-        (unit=u, stochastic_scenario=s, t=t1)
-        for (u, t1) in unit_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
-        for (m_, ss) in model__stochastic_structure(
-            model=m.ext[:spineopt].instance,
-            stochastic_structure=units_on__stochastic_structure(unit=u),
-            _compact=false,
-        )
-        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
-    )
-end
-
-"""
-    unit_investment_stochastic_time_indices(;<keyword arguments>)
-
-Stochastic time indexes for `units_invested` with keyword arguments that allow filtering.
-"""
-function unit_investment_stochastic_time_indices(
-    m::Model;
-    unit=anything,
-    stochastic_scenario=anything,
-    temporal_block=anything,
-    t=anything,
-)
-    unique(
-        (unit=u, stochastic_scenario=s, t=t1)
-        for (u, t1) in unit_investment_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
-        for (m_, ss) in model__stochastic_structure(
-            model=m.ext[:spineopt].instance,
-            stochastic_structure=unit__investment_stochastic_structure(unit=u),
-            _compact=false,
-        )
-        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
-    )
-end
-
-"""
-    connection_investment_stochastic_time_indices(;<keyword arguments>)
-
-Stochastic time indexes for `connections_invested` with keyword arguments that allow filtering.
-"""
-function connection_investment_stochastic_time_indices(
-    m::Model;
-    connection=anything,
-    stochastic_scenario=anything,
-    temporal_block=anything,
-    t=anything,
-)
-    unique(
-        (connection=conn, stochastic_scenario=s, t=t1) for (conn, t1) in connection_investment_time_indices(
-            m;
-            connection=connection,
-            temporal_block=temporal_block,
-            t=t,
-        )
-        for ss in connection__investment_stochastic_structure(connection=conn)
-        if ss in model__stochastic_structure(model=m.ext[:spineopt].instance)
-        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
-    )
-end
-
-"""
-    node_investment_stochastic_time_indices(;<keyword arguments>)
-
-Stochastic time indexes for `storages_invested` with keyword arguments that allow filtering.
-"""
-function node_investment_stochastic_time_indices(
-    m::Model;
-    node=anything,
-    stochastic_scenario=anything,
-    temporal_block=anything,
-    t=anything,
-)
-    unique(
-        (node=n, stochastic_scenario=s, t=t1)
-        for (n, t1) in node_investment_time_indices(m; node=node, temporal_block=temporal_block, t=t)
-        for (m_, ss) in model__stochastic_structure(
-            model=m.ext[:spineopt].instance,
-            stochastic_structure=node__investment_stochastic_structure(node=n),
-            _compact=false,
-        )
-        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
-    )
+function _stochastic_scenarios(m::Model, stoch_struct::Object, t::TimeSlice, scenarios)
+    scenario_lookup = m.ext[:spineopt].stochastic_structure[:scenario_lookup]
+    intersect(scenario_lookup[stoch_struct, t], scenarios)
 end
 
 """
@@ -403,14 +218,30 @@ function _generate_connection_stochastic_scenario_weight(m::Model, all_stochasti
     )
 end
 
-function node_stochastic_scenario_weight(m; kwargs...)
-    m.ext[:spineopt].stochastic_structure[:node_stochastic_scenario_weight][(; kwargs...)]
-end
-function unit_stochastic_scenario_weight(m; kwargs...)
-    m.ext[:spineopt].stochastic_structure[:unit_stochastic_scenario_weight][(; kwargs...)]
-end
-function connection_stochastic_scenario_weight(m; kwargs...)
-    m.ext[:spineopt].stochastic_structure[:connection_stochastic_scenario_weight][(; kwargs...)]
+"""
+    _generate_active_stochastic_paths(m::Model)
+
+Find all unique paths through the `parent_stochastic_scenario__child_stochastic_scenario` tree
+and generate the `active_stochastic_paths` callable.
+"""
+function _generate_active_stochastic_paths(m::Model)
+    paths = [[root] for root in _find_root_scenarios(m)]
+    full_path_indices = []
+    for (i, path) in enumerate(paths)
+        children = _find_children(path[end])
+        valid_children = setdiff(children, path)
+        invalid_children = setdiff(children, valid_children)
+        if !isempty(invalid_children)
+            @warn """
+            ignoring scenarios: $(join(invalid_children, ", ", " and ")), 
+            as children of $(path[end]), since they're also its ancestors...
+            """
+        end
+        isempty(valid_children) && push!(full_path_indices, i)
+        append!(paths, [vcat(path, child) for child in valid_children])
+    end
+    # NOTE: `unique!` shouldn't be needed here since relationships are unique in the db.
+    m.ext[:spineopt].stochastic_structure[:full_stochastic_paths] = paths[full_path_indices]
 end
 
 """
@@ -420,9 +251,170 @@ Generate stochastic structure all models.
 """
 function generate_stochastic_structure!(m::Model)
     all_stochastic_dags = _all_stochastic_dags(m)
-    _generate_stochastic_scenario_set(m, all_stochastic_dags)
+    _generate_stochastic_scenarios(m, all_stochastic_dags)
     _generate_node_stochastic_scenario_weight(m, all_stochastic_dags)
     _generate_unit_stochastic_scenario_weight(m, all_stochastic_dags)
     _generate_connection_stochastic_scenario_weight(m, all_stochastic_dags)
     _generate_active_stochastic_paths(m)
+end
+
+function active_stochastic_paths(m, indices::Vector)
+    active_stochastic_paths(m, (x.stochastic_scenario for x in indices))
+end
+function active_stochastic_paths(m, active_scenarios)
+    active_stochastic_paths(m, collect(Object, active_scenarios))
+end
+function active_stochastic_paths(m, active_scenarios::Vector{Object})
+    _active_stochastic_paths(m, unique!(active_scenarios))
+end
+function active_stochastic_paths(m, active_scenarios::Set{Object})
+    _active_stochastic_paths(m, active_scenarios)
+end
+
+function _active_stochastic_paths(m, unique_active_scenarios)
+    full_stochastic_paths = m.ext[:spineopt].stochastic_structure[:full_stochastic_paths]
+    unique(intersect(path, unique_active_scenarios) for path in full_stochastic_paths)
+end
+
+function stochastic_time_indices(
+    m::Model;
+    stochastic_scenario=anything,
+    temporal_block=anything,
+    t=anything,
+)
+    unique(
+        (stochastic_scenario=s, t=t)
+        for (m_, tb) in model__temporal_block(
+            model=m.ext[:spineopt].instance, temporal_block=temporal_block, _compact=false
+        )
+        for (m_, ss) in model__stochastic_structure(model=m.ext[:spineopt].instance, _compact=false)
+        for t in time_slice(m; temporal_block=members(tb), t=t)
+        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
+    )
+end
+
+"""
+    node_stochastic_time_indices(m;<keyword arguments>)
+
+Stochastic time indexes for `nodes` with keyword arguments that allow filtering.
+"""
+function node_stochastic_time_indices(
+    m::Model; node=anything, stochastic_scenario=anything, temporal_block=anything, t=anything
+)
+    unique(
+        (node=n, stochastic_scenario=s, t=t1)
+        for (n, t1) in node_time_indices(m; node=node, temporal_block=temporal_block, t=t)
+        for (m_, ss) in model__stochastic_structure(
+            model=m.ext[:spineopt].instance, stochastic_structure=node__stochastic_structure(node=n), _compact=false,
+        )
+        for s in _stochastic_scenarios(m, ss, t1, stochastic_scenario)
+    )
+end
+
+"""
+    unit_stochastic_time_indices(;<keyword arguments>)
+
+Stochastic time indexes for `units` with keyword arguments that allow filtering.
+"""
+function unit_stochastic_time_indices(
+    m::Model;
+    unit=anything,
+    stochastic_scenario=anything,
+    temporal_block=anything,
+    t=anything,
+)
+    unique(
+        (unit=u, stochastic_scenario=s, t=t1)
+        for (u, t1) in unit_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
+        for (m_, ss) in model__stochastic_structure(
+            model=m.ext[:spineopt].instance,
+            stochastic_structure=units_on__stochastic_structure(unit=u),
+            _compact=false,
+        )
+        for s in _stochastic_scenarios(m, ss, t1, stochastic_scenario)
+    )
+end
+
+"""
+    unit_investment_stochastic_time_indices(;<keyword arguments>)
+
+Stochastic time indexes for `units_invested` with keyword arguments that allow filtering.
+"""
+function unit_investment_stochastic_time_indices(
+    m::Model;
+    unit=anything,
+    stochastic_scenario=anything,
+    temporal_block=anything,
+    t=anything,
+)
+    unique(
+        (unit=u, stochastic_scenario=s, t=t1)
+        for (u, t1) in unit_investment_time_indices(m; unit=unit, temporal_block=temporal_block, t=t)
+        for (m_, ss) in model__stochastic_structure(
+            model=m.ext[:spineopt].instance,
+            stochastic_structure=unit__investment_stochastic_structure(unit=u),
+            _compact=false,
+        )
+        for s in _stochastic_scenarios(m, ss, t1, stochastic_scenario)
+    )
+end
+
+"""
+    connection_investment_stochastic_time_indices(;<keyword arguments>)
+
+Stochastic time indexes for `connections_invested` with keyword arguments that allow filtering.
+"""
+function connection_investment_stochastic_time_indices(
+    m::Model;
+    connection=anything,
+    stochastic_scenario=anything,
+    temporal_block=anything,
+    t=anything,
+)
+    unique(
+        (connection=conn, stochastic_scenario=s, t=t1)
+        for (conn, t1) in connection_investment_time_indices(
+            m; connection=connection, temporal_block=temporal_block, t=t,
+        )
+        for (m_, ss) in model__stochastic_structure(
+            model=m.ext[:spineopt].instance,
+            stochastic_structure=connection__investment_stochastic_structure(connection=conn),
+            _compact=false,
+        )
+        for s in _stochastic_scenarios(m, ss, t1, stochastic_scenario)
+    )
+end
+
+"""
+    node_investment_stochastic_time_indices(;<keyword arguments>)
+
+Stochastic time indexes for `storages_invested` with keyword arguments that allow filtering.
+"""
+function node_investment_stochastic_time_indices(
+    m::Model;
+    node=anything,
+    stochastic_scenario=anything,
+    temporal_block=anything,
+    t=anything,
+)
+    unique(
+        (node=n, stochastic_scenario=s, t=t1)
+        for (n, t1) in node_investment_time_indices(m; node=node, temporal_block=temporal_block, t=t)
+        for (m_, ss) in model__stochastic_structure(
+            model=m.ext[:spineopt].instance,
+            stochastic_structure=node__investment_stochastic_structure(node=n),
+            _compact=false,
+        )
+        for s in _stochastic_scenarios(m, ss, t1, stochastic_scenario)
+    )
+end
+
+function node_stochastic_scenario_weight(m; kwargs...)
+    m.ext[:spineopt].stochastic_structure[:node_stochastic_scenario_weight][(; kwargs...)]
+end
+function unit_stochastic_scenario_weight(m; kwargs...)
+    m.ext[:spineopt].stochastic_structure[:unit_stochastic_scenario_weight][(; kwargs...)]
+end
+function connection_stochastic_scenario_weight(m; kwargs...)
+    m.ext[:spineopt].stochastic_structure[:connection_stochastic_scenario_weight][(; kwargs...)]
 end

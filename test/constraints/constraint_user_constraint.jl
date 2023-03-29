@@ -111,7 +111,6 @@
             storages_invested_available_coefficient = 12
             connection_flow_coefficient_b = 13
             connection_flow_coefficient_c = 14
-
             objects = [["user_constraint", "constraint_x"]]
             relationships = [
                 ["unit__from_node__user_constraint", ["unit_ab", "node_a", "constraint_x"]],
@@ -150,7 +149,6 @@
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values,
             )
-            
             m = run_spineopt(url_in; log_level=0, optimize=false)
             var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
             var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
@@ -163,71 +161,61 @@
             var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
             var_storages_invested = m.ext[:spineopt].variables[:storages_invested]
             var_storages_invested_available = m.ext[:spineopt].variables[:storages_invested_available]
-            
             constraint = m.ext[:spineopt].constraints[:user_constraint]
-
-            @test length(constraint) == 2
+            @test length(constraint) == 1
             key_uf_a = (unit(:unit_ab), node(:node_a), direction(:from_node))
             key_uf_b = (unit(:unit_ab), node(:node_b), direction(:to_node))
             key_cf_b = (connection(:connection_bc), node(:node_b), direction(:from_node))
             key_cf_c = (connection(:connection_bc), node(:node_c), direction(:to_node))
-
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
             t1h1, t1h2, t1h3, t1h4 = time_slice(m; temporal_block=temporal_block(:hourly))
             t2h1, t2h2 = time_slice(m; temporal_block=temporal_block(:two_hourly))
             t4h1 = time_slice(m; temporal_block=temporal_block(:investments_four_hourly))[1]
-            
             expected_con_ref = SpineOpt.sense_constraint(
                 m,
                 + 4 * units_invested_coefficient * var_units_invested[unit(:unit_ab), s_parent, t4h1]
-                + 4 * units_invested_available_coefficient * var_units_invested_available[unit(:unit_ab), s_parent, t4h1]
-                + 4 * connections_invested_coefficient * var_connections_invested[connection(:connection_bc), s_parent, t4h1]
-                + 4 * connections_invested_available_coefficient * var_connections_invested_available[connection(:connection_bc), s_parent, t4h1]
-                
+                + 4 * units_invested_available_coefficient
+                    * var_units_invested_available[unit(:unit_ab), s_parent, t4h1]
+                + 4 * connections_invested_coefficient
+                    * var_connections_invested[connection(:connection_bc), s_parent, t4h1]
+                + 4 * connections_invested_available_coefficient
+                    * var_connections_invested_available[connection(:connection_bc), s_parent, t4h1]
                 + 2 * storages_invested_coefficient * (
                     + var_storages_invested[node(:node_c), s_parent, t2h1]
                     + var_storages_invested[node(:node_c), s_parent, t2h2]
                 )
-
                 + 2 * storages_invested_available_coefficient * (
                     + var_storages_invested_available[node(:node_c), s_parent, t2h1]
                     + var_storages_invested_available[node(:node_c), s_parent, t2h2]
                 )
-                
                 + 2 * units_on_coefficient * (
                     + var_units_on[unit(:unit_ab), s_parent, t2h1]
                     + var_units_on[unit(:unit_ab), s_child, t2h2] 
                 )
-
                 + 2 * units_started_up_coefficient * (
                     + var_units_started_up[unit(:unit_ab), s_parent, t2h1]
                     + var_units_started_up[unit(:unit_ab), s_child, t2h2] 
                 )
-                
                 + unit_flow_coefficient_a * (
                     + var_unit_flow[key_uf_a..., s_parent, t1h1]
                     + var_unit_flow[key_uf_a..., s_child, t1h2]
                     + var_unit_flow[key_uf_a..., s_child, t1h3]
                     + var_unit_flow[key_uf_a..., s_child, t1h4]
                 )
-
                 + 2 * unit_flow_coefficient_b * (
                     + var_unit_flow[key_uf_b..., s_parent, t2h1]
                     + var_unit_flow[key_uf_b..., s_parent, t2h2]
                 )
-
                 + 2 * connection_flow_coefficient_b * (
                     + var_connection_flow[key_cf_b..., s_parent, t2h1]
                     + var_connection_flow[key_cf_b..., s_parent, t2h2]
                 )
-
                 + connection_flow_coefficient_c * (
                     + var_connection_flow[key_cf_c..., s_parent, t1h1]
                     + var_connection_flow[key_cf_c..., s_parent, t1h2]
                     + var_connection_flow[key_cf_c..., s_parent, t1h3]
                     + var_connection_flow[key_cf_c..., s_parent, t1h4]
                 )
-
                 + node_state_coefficient * (
                     + var_node_state[node(:node_c), s_parent, t1h1]
                     + var_node_state[node(:node_c), s_parent, t1h2]
@@ -271,7 +259,7 @@ end
         :object_parameter_values => [
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
-            #["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "6h")],
+            ["model", "instance", "roll_forward", Dict("type" => "duration", "data" => "6h")],
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "model_type", "spineopt_standard"],
             ["temporal_block", "6hquarterly", "resolution", Dict("type" => "duration", "data" => "15m")],

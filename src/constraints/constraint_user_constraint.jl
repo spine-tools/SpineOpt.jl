@@ -124,9 +124,9 @@ function add_constraint_user_constraint!(m::Model)
                     + units_on[u, s, t1]
                     * units_on_coefficient[(user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)]
                     + units_started_up[u, s, t1]
-                    * units_started_up_coefficient[(
-                        user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1
-                    )]
+                    * units_started_up_coefficient[
+                        (user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)
+                    ]
                 )
                 * min(duration(t1), duration(t))
                 for u in unit__user_constraint(user_constraint=uc)
@@ -136,13 +136,13 @@ function add_constraint_user_constraint!(m::Model)
             + expr_sum(
                 (   
                     + units_invested_available[u, s, t1]
-                    * units_invested_available_coefficient[(
-                        user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1
-                    )]
+                    * units_invested_available_coefficient[
+                        (user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)
+                    ]
                     + units_invested[u, s, t1]
-                    * units_invested_coefficient[(
-                        user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1
-                    )]
+                    * units_invested_coefficient[
+                        (user_constraint=uc, unit=u, stochastic_scenario=s, analysis_time=t0, t=t1)
+                    ]
                 )
                 * min(duration(t1), duration(t))
                 for u in unit__user_constraint(user_constraint=uc)
@@ -154,13 +154,13 @@ function add_constraint_user_constraint!(m::Model)
             + expr_sum(
                 (   
                     + connections_invested_available[c, s, t1]
-                    * connections_invested_available_coefficient[(
-                        user_constraint=uc, connection=c, stochastic_scenario=s, analysis_time=t0, t=t1
-                    )]
+                    * connections_invested_available_coefficient[
+                        (user_constraint=uc, connection=c, stochastic_scenario=s, analysis_time=t0, t=t1)
+                    ]
                     + connections_invested[c, s, t1]
-                    * connections_invested_coefficient[(
-                        user_constraint=uc, connection=c, stochastic_scenario=s, analysis_time=t0, t=t1
-                    )]
+                    * connections_invested_coefficient[
+                        (user_constraint=uc, connection=c, stochastic_scenario=s, analysis_time=t0, t=t1)
+                    ]
                 )
                 * min(duration(t1), duration(t))
                 for c in connection__user_constraint(user_constraint=uc)
@@ -172,13 +172,13 @@ function add_constraint_user_constraint!(m::Model)
             + expr_sum(
                 (   
                     + storages_invested_available[n, s, t1]
-                    * storages_invested_available_coefficient[(
-                        user_constraint=uc, node=n, stochastic_scenario=s, analysis_time=t0, t=t1
-                    )]
+                    * storages_invested_available_coefficient[
+                        (user_constraint=uc, node=n, stochastic_scenario=s, analysis_time=t0, t=t1)
+                    ]
                     + storages_invested[n, s, t1]
-                    * storages_invested_coefficient[(
-                        user_constraint=uc, node=n, stochastic_scenario=s, analysis_time=t0, t=t1
-                    )]
+                    * storages_invested_coefficient[
+                        (user_constraint=uc, node=n, stochastic_scenario=s, analysis_time=t0, t=t1)
+                    ]
                 )
                 * min(duration(t1), duration(t))
                 for n in node__user_constraint(user_constraint=uc)
@@ -265,8 +265,20 @@ end
 function constraint_user_constraint_indices(m::Model)
     unique(
         (user_constraint=uc, stochastic_path=path, t=t)
-        for uc in user_constraint() for t in _constraint_user_constraint_lowest_resolution_t(m, uc)
-        for path in active_stochastic_paths(collect(_constraint_user_constraint_scenarios(m, uc, t)))
+        for uc in user_constraint()
+        for (t, path) in t_lowest_resolution_path(
+            m, 
+            Iterators.flatten((
+                _constraint_user_constraint_unit_flow_indices(m, uc),
+                _constraint_user_constraint_units_on_indices(m, uc),
+                _constraint_user_constraint_connection_flow_indices(m, uc),
+                _constraint_user_constraint_node_state_indices(m, uc),
+                _constraint_user_constraint_node_stochastic_time_indices(m, uc),
+                _constraint_user_constraint_units_invested_indices(m, uc),
+                _constraint_user_constraint_connections_invested_indices(m, uc),
+                _constraint_user_constraint_storages_invested_indices(m, uc)
+            ))
+        )
     )
 end
 
@@ -288,176 +300,52 @@ function constraint_user_constraint_indices_filtered(
     filter(f, constraint_user_constraint_indices(m))
 end
 
-"""
-    _constraint_user_constraint_lowest_resolution_t(m, uc, t)
-
-Find the lowest temporal resolution amoung the `unit_flow` variables appearing in the `user_constraint`.
-"""
-function _constraint_user_constraint_lowest_resolution_t(m, uc)
-    t_lowest_resolution(ind.t for ind in _constraint_user_constraint_indices(m, uc))
-end
-
-"""
-    _constraint_user_constraint_unit_flow_indices(uc, t)
-
-Gather the `unit_flow` variable indices appearing in `add_constraint_user_constraint!`.
-"""
-function _constraint_user_constraint_unit_flow_indices(m, uc, t, s=anything)
+function _constraint_user_constraint_unit_flow_indices(m, uc)
     (
         ind
         for (unit__node__user_constraint, d) in (
             (unit__from_node__user_constraint, :from_node), (unit__to_node__user_constraint, :to_node)
         )
         for (u, n) in unit__node__user_constraint(user_constraint=uc)
-        for ind in unit_flow_indices(m; unit=u, node=n, direction=direction(d), t=t, stochastic_scenario=s)
+        for ind in unit_flow_indices(m; unit=u, node=n, direction=direction(d))
     )
 end
 
-"""
-    _constraint_user_constraint_units_on_indices(uc, t)
-
-Gather the `units_on` variable indices appearing in `add_constraint_user_constraint!`.
-"""
-function _constraint_user_constraint_units_on_indices(m, uc, t, s=anything)
-    (
-        ind
-        for u in unit__user_constraint(user_constraint=uc)
-        for ind in units_on_indices(m; unit=u, t=t, stochastic_scenario=s)
-    )
+function _constraint_user_constraint_units_on_indices(m, uc)
+    (ind for u in unit__user_constraint(user_constraint=uc) for ind in units_on_indices(m; unit=u))
 end
 
-"""
-    _constraint_user_constraint_connection_flow_indices(uc, t)
-
-Gather the `connection_flow` variable indices appearing in `add_constraint_user_constraint!`.
-"""
-function _constraint_user_constraint_connection_flow_indices(m, uc, t, s=anything)
+function _constraint_user_constraint_connection_flow_indices(m, uc)
     (
         ind
         for (connection__node__user_constraint, d) in (
             (connection__from_node__user_constraint, :from_node), (connection__to_node__user_constraint, :to_node)
         )
         for (c, n) in connection__node__user_constraint(user_constraint=uc)
-        for ind in connection_flow_indices(m; connection=c, node=n, direction=direction(d), t=t, stochastic_scenario=s)
+        for ind in connection_flow_indices(m; connection=c, node=n, direction=direction(d))
     )
 end
 
-"""
-    _constraint_user_constraint_node_state_indices(uc, t)
-
-Gather the `node_state` variable indices appearing in `add_constraint_user_constraint!`.
-"""
-function _constraint_user_constraint_node_state_indices(m, uc, t, s=anything)
-    (
-        ind
-        for n in node__user_constraint(user_constraint=uc)
-        for ind in node_state_indices(m; node=n, t=t, stochastic_scenario=s)
-    )
+function _constraint_user_constraint_node_state_indices(m, uc)
+    (ind for n in node__user_constraint(user_constraint=uc) for ind in node_state_indices(m; node=n))
 end
 
-
-
-"""
-    _constraint_user_constraint_units_invested_indices(uc, t)
-
-Gather the `units_invested` variable indices appearing in `add_constraint_user_constraint!`.
-"""
-function _constraint_user_constraint_units_invested_indices(m, uc, t, s=anything)
-    (
-        ind
-        for u in unit__user_constraint(user_constraint=uc)
-        for ind in units_invested_available_indices(m; unit=u, t=t, stochastic_scenario=s)
-    )
+function _constraint_user_constraint_units_invested_indices(m, uc)
+    (ind for u in unit__user_constraint(user_constraint=uc) for ind in units_invested_available_indices(m; unit=u))
 end
 
-
-"""
-    _constraint_user_constraint_connections_invested_indices(uc, t)
-
-Gather the `connections_invested` variable indices appearing in `add_constraint_user_constraint!`.
-"""
-function _constraint_user_constraint_connections_invested_indices(m, uc, t, s=anything)
+function _constraint_user_constraint_connections_invested_indices(m, uc)
     (
         ind
         for c in connection__user_constraint(user_constraint=uc)
-        for ind in connections_invested_available_indices(m; connection=c, t=t, stochastic_scenario=s)
+        for ind in connections_invested_available_indices(m; connection=c)
     )
 end
 
-"""
-    _constraint_user_constraint_storages_invested_indices(uc, t)
-
-Gather the `storages_invested` variable indices appearing in `add_constraint_user_constraint!`.
-"""
-function _constraint_user_constraint_storages_invested_indices(m, uc, t, s=anything)
-    (
-        ind
-        for n in node__user_constraint(user_constraint=uc)
-        for ind in storages_invested_available_indices(m; node=n, t=t, stochastic_scenario=s)
-    )
+function _constraint_user_constraint_storages_invested_indices(m, uc)
+    (ind for n in node__user_constraint(user_constraint=uc) for ind in storages_invested_available_indices(m; node=n))
 end
 
-
-"""
-    _constraint_user_constraint_node_stochastic_time_indices(m, uc, t)
-
-Gather the `node_stochastic_time_indices` indices appearing in `add_constraint_user_constraint!`.
-"""
-function _constraint_user_constraint_node_stochastic_time_indices(m, uc, t, s=anything)
-    (
-        ind
-        for n in node__user_constraint(user_constraint=uc)
-        for ind in node_stochastic_time_indices(m; node=n, t=t, stochastic_scenario=s)
-    )
-end
-
-"""
-    _constraint_user_constraint_indices(m, uc, t)
-
-Gather the `unit_flow`, `units_on`, `connection_flow`, `node_state` variables appearing in `add_constraint_user_constraint!`
-"""
-function _constraint_user_constraint_indices(m, uc, t=anything)
-    t = t_in_t(m; t_long=t)
-    Iterators.flatten((
-        _constraint_user_constraint_unit_flow_indices(m, uc, t),
-        _constraint_user_constraint_units_on_indices(m, uc, t),
-        _constraint_user_constraint_connection_flow_indices(m, uc, t),
-        _constraint_user_constraint_node_state_indices(m, uc, t),
-        _constraint_user_constraint_node_stochastic_time_indices(m, uc, t),
-        _constraint_user_constraint_units_invested_indices(m, uc, t),
-        _constraint_user_constraint_connections_invested_indices(m, uc, t),
-        _constraint_user_constraint_storages_invested_indices(m, uc, t)
-    ))
-end
-
-function _constraint_user_constraint_scenarios(m, uc, t=anything)
-    t = t_in_t(m; t_long=t)
-    (
-        s
-        for s in stochastic_scenario()
-        if !isempty(
-            _constraint_user_constraint_unit_flow_indices(m, uc, t, s)
-        )
-        || !isempty(
-            _constraint_user_constraint_units_on_indices(m, uc, t, s)
-        )
-        || !isempty(
-            _constraint_user_constraint_connection_flow_indices(m, uc, t, s)
-        )
-        || !isempty(
-            _constraint_user_constraint_node_state_indices(m, uc, t, s)
-        )
-        || !isempty(
-            _constraint_user_constraint_node_stochastic_time_indices(m, uc, t, s)
-        )
-        || !isempty(
-            _constraint_user_constraint_units_invested_indices(m, uc, t, s)
-        )
-        || !isempty(
-            _constraint_user_constraint_connections_invested_indices(m, uc, t, s)
-        )
-        || !isempty(
-            _constraint_user_constraint_storages_invested_indices(m, uc, t, s)
-        )
-    )
+function _constraint_user_constraint_node_stochastic_time_indices(m, uc)
+    (ind for n in node__user_constraint(user_constraint=uc) for ind in node_stochastic_time_indices(m; node=n))
 end

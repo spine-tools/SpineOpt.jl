@@ -31,6 +31,7 @@ function add_constraint_storages_invested_available!(m::Model)
             + storages_invested_available[n, s, t]
             <=
             + candidate_storages[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
-        ) for (n, s, t) in storages_invested_available_indices(m)
+        )
+        for (n, s, t) in storages_invested_available_indices(m)
     )
 end

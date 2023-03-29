@@ -114,7 +114,14 @@ function constraint_node_injection_indices(m::Model)
     unique(
         (node=n, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (n, t_before, t_after) in node_dynamic_time_indices(m)
-        for path in active_stochastic_paths(collect(_constraint_node_injection_scenarios(m, n, t_after, t_before)))
+        for path in active_stochastic_paths(
+            m,
+            vcat(
+                node_stochastic_time_indices(m; node=n, t=t_after),
+                node_state_indices(m; node=n, t=t_before),
+                node_state_indices(m; node=[node__node(node2=n); node__node(node1=n)], t=t_after)
+            )
+        )
     )
 end
 
@@ -135,31 +142,4 @@ function constraint_node_injection_indices_filtered(
 )
     f(ind) = _index_in(ind; node=node, stochastic_path=stochastic_path, t_before=t_before, t_after=t_after)
     filter(f, constraint_node_injection_indices(m))
-end
-
-function _constraint_node_injection_scenarios(m, node, t_after, t_before)
-    (
-        s
-        for s in stochastic_scenario()
-        # `node` on `t_after`, this needs to be included regardless of whether the `node` has a `node_state`
-        if !isempty(node_stochastic_time_indices(m; node=node, t=t_after, stochastic_scenario=s))
-        # `node_state` on `t_before`
-        || !isempty(node_state_indices(m; node=node, t=t_before, stochastic_scenario=s))
-        # Diffusion to this `node`
-        || iterate(
-            (
-                ind
-                for n1 in node__node(node2=node)
-                for ind in node_state_indices(m; node=n1, t=t_after, stochastic_scenario=s)
-            )
-        ) !== nothing
-        # Diffusion from this `node`
-        || iterate(
-            (
-                ind
-                for n2 in node__node(node1=node)
-                for ind in node_state_indices(m; node=n2, t=t_after, stochastic_scenario=s)
-            )
-        ) !== nothing
-    )
 end

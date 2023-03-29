@@ -35,7 +35,8 @@ function add_constraint_min_node_voltage_angle!(m::Model)
             )
             >=
             + min_voltage_angle[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
-        ) for (ng, s, t) in constraint_min_node_voltage_angle_indices(m)
+        )
+        for (ng, s, t) in constraint_min_node_voltage_angle_indices(m)
     )
 end
 
@@ -43,13 +44,7 @@ function constraint_min_node_voltage_angle_indices(m::Model)
     unique(
         (node=ng, stochastic_path=path, t=t)
         for (ng, s, t) in node_voltage_angle_indices(m; node=indices(min_voltage_angle))
-        for path in active_stochastic_paths(
-            collect(
-                s
-                for s in stochastic_scenario()
-                if !isempty(node_voltage_angle_indices(m; node=ng, t=t, stochastic_scenario=s))
-            )
-        )
+        for path in active_stochastic_paths(m, s)
     )
 end
 
