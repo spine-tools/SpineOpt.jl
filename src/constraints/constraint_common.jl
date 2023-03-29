@@ -21,7 +21,7 @@ function t_lowest_resolution_path(indices)
     scens_by_t = Dict()
     for x in indices
         scens = get!(scens_by_t, x.t) do
-            Set()
+            Set{Object}()
         end
         push!(scens, x.stochastic_scenario)
     end
