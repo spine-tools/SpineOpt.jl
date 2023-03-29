@@ -54,6 +54,7 @@ function constraint_connections_invested_transition_indices(m::Model)
         (connection=conn, stochastic_path=path, t_before=t_before, t_after=t_after)
         for (conn, t_before, t_after) in connection_investment_dynamic_time_indices(m)
         for path in active_stochastic_paths(
+            m, 
             unique(
                 x.stochastic_scenario
                 for x in connections_invested_available_indices(m; connection=conn, t=[t_before, t_after])

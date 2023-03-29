@@ -44,7 +44,7 @@ function constraint_min_node_pressure_indices(m::Model)
     unique(
         (node=ng, stochastic_path=path, t=t)
         for (ng, s, t) in node_pressure_indices(m; node=indices(min_node_pressure))
-        for path in active_stochastic_paths(s)
+        for path in active_stochastic_paths(m, s)
     )
 end
 

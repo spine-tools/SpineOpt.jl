@@ -63,7 +63,7 @@ function constraint_node_voltage_angle_indices(m::Model)
         for conn in indices(connection_reactance)
         for (conn, n_to, n_from) in indices(fix_ratio_out_in_connection_flow; connection=conn)
         if has_voltage_angle(node=n_from) && has_voltage_angle(node=n_to)
-        for (t, path) in t_lowest_resolution_path(node_voltage_angle_indices(m; node=[n_to, n_from]))
+        for (t, path) in t_lowest_resolution_path(m, node_voltage_angle_indices(m; node=[n_to, n_from]))
     )
 end
 

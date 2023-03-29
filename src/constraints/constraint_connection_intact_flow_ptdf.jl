@@ -83,6 +83,7 @@ function constraint_connection_intact_flow_ptdf_indices(m::Model)
         for (conn, n_to, d_to) in Iterators.drop(connection__from_node(connection=conn; _compact=false), 1)
         for (n_to, t) in node_time_indices(m; node=n_to)
         for path in active_stochastic_paths(
+            m,
             unique(
                 ind.stochastic_scenario
                 for ind in vcat(

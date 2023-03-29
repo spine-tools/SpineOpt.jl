@@ -96,10 +96,11 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
     unique(
         (connection=conn, node1=ng_out, node2=ng_in, stochastic_path=path, t=t)
         for (conn, ng_out, ng_in) in indices(ratio_out_in)
-        for (t, path_out) in t_lowest_resolution_path(
+        for (t, path_out) in t_lowest_resolution_path(m, 
             connection_flow_indices(m; connection=conn, node=ng_out, direction=direction(:to_node))
         )
         for path in active_stochastic_paths(
+            m, 
             unique(
                 vcat(
                     path_out,
@@ -129,22 +130,6 @@ function _delayed_t(conn, ng_out, ng_in, t0, s, t)
     t - connection_flow_delay(connection=conn, node1=ng_out, node2=ng_in, analysis_time=t0, stochastic_scenario=s, t=t)
 end
 
-function _old_constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
-    t0 = _analysis_time(m)
-    unique(
-        (connection=conn, node1=n_out, node2=n_in, stochastic_path=path, t=t)
-        for (conn, n_out, n_in) in indices(ratio_out_in)
-        for t in t_lowest_resolution(
-            x.t for x in connection_flow_indices(
-                m; connection=conn, node=Iterators.flatten((members(n_out), members(n_in)))
-            )
-        )
-        for path in active_stochastic_paths(
-            collect(_constraint_ratio_out_in_connection_flow_scenarios(m, conn, n_out, n_in, t0, t))
-        )  # FIXME
-    )
-end
-
 """
     constraint_ratio_out_in_connection_flow_indices_filtered(m::Model, ratio_out_in; filtering_options...)
 
@@ -164,45 +149,4 @@ function constraint_ratio_out_in_connection_flow_indices_filtered(
 )
     f(ind) = _index_in(ind; connection=connection, node1=node1, node2=node2, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_ratio_out_in_connection_flow_indices(m, ratio_out_in))
-end
-
-function _constraint_ratio_out_in_connection_flow_scenarios(m, connection, node_group_out, node_group_in, t0, t)
-    (
-        s
-        for s in stochastic_scenario()
-        if !isempty(
-            connection_flow_indices(
-                m;
-                connection=connection,
-                node=node_group_out,
-                direction=direction(:to_node),
-                t=t_in_t(m; t_long=t),
-                stochastic_scenario=s
-            )
-        )
-        || !isempty(
-            connection_flow_indices(
-                m;
-                connection=connection,
-                node=node_group_in,
-                direction=direction(:from_node),
-                t=[
-                    t_past
-                    for t_short in t_in_t(m; t_long=t)
-                    for t_past in to_time_slice(
-                        m;
-                        t=t - connection_flow_delay(
-                            connection=connection,
-                            node1=node_group_out,
-                            node2=node_group_in,
-                            stochastic_scenario=s,
-                            analysis_time=t0,
-                            t=t_short,
-                        ),
-                    )
-                ],
-                stochastic_scenario=s
-            ) # `from_node` `connection_flow`s with potential `connection_flow_delay`
-        )
-    )
 end

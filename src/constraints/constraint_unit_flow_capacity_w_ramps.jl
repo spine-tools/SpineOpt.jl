@@ -249,6 +249,7 @@ function constraint_unit_flow_capacity_w_ramp_indices(m::Model)
             )
         )
         for path in active_stochastic_paths(
+            m, 
             unique(
                 ind.stochastic_scenario
                 for ind in vcat(

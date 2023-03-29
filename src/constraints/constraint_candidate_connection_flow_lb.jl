@@ -67,7 +67,7 @@ function constraint_candidate_connection_flow_lb_indices(m::Model)
         (connection=conn, node=n, direction=d, stochastic_path=path, t=t)
         for (conn, n, d, s, t) in connection_flow_indices(m; connection=connection(is_candidate=true, has_ptdf=true))
         for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=n)))
-        for path in active_stochastic_paths(s)
+        for path in active_stochastic_paths(m, s)
     )
 end
 

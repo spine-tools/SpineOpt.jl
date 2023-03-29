@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function t_lowest_resolution_path(indices)
+function t_lowest_resolution_path(m, indices)
     scens_by_t = Dict()
     for x in indices
         scens = get!(scens_by_t, x.t) do
@@ -28,7 +28,7 @@ function t_lowest_resolution_path(indices)
     (
         (t, path)
         for (t, scens) in t_lowest_resolution_sets!(scens_by_t)
-        for path in active_stochastic_paths(scens)
+        for path in active_stochastic_paths(m, scens)
     )
 end
 

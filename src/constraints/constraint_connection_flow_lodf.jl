@@ -95,13 +95,16 @@ function constraint_connection_flow_lodf_indices(m::Model)
     unique(
         (connection_contingency=conn_cont, connection_monitored=conn_mon, stochastic_path=path, t=t)
         for (conn_cont, conn_mon) in lodf_connection__connection()
-        if all([
-            connection_contingency(connection=conn_cont) === true,
-            connection_monitored(connection=conn_mon) === true,
-            has_lodf(connection=conn_cont),
-            has_lodf(connection=conn_mon)
-        ])
+        if all(
+            [
+                connection_contingency(connection=conn_cont) === true,
+                connection_monitored(connection=conn_mon) === true,
+                has_lodf(connection=conn_cont),
+                has_lodf(connection=conn_mon)
+            ]
+        )
         for (t, path) in t_lowest_resolution_path(
+            m, 
             x
             for conn in (conn_cont, conn_mon)
             for x in connection_flow_indices(m; connection=conn, last(connection__from_node(connection=conn))...)

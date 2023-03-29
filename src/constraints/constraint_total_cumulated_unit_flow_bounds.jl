@@ -51,7 +51,7 @@ function constraint_total_cumulated_unit_flow_indices(m::Model,bound)
         (unit=ug, node=ng, direction=d, stochastic_path=s)
         for (ug, ng, d) in indices(bound)
         for s in active_stochastic_paths(
-            unique(ind.stochastic_scenario for ind in unit_flow_indices(m, direction=d, unit=ug, node=ng))
+            m, unique(ind.stochastic_scenario for ind in unit_flow_indices(m, direction=d, unit=ug, node=ng))
         )
     )
 end

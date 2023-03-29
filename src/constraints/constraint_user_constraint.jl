@@ -267,6 +267,7 @@ function constraint_user_constraint_indices(m::Model)
         (user_constraint=uc, stochastic_path=path, t=t)
         for uc in user_constraint()
         for (t, path) in t_lowest_resolution_path(
+            m, 
             Iterators.flatten((
                 _constraint_user_constraint_unit_flow_indices(m, uc),
                 _constraint_user_constraint_units_on_indices(m, uc),

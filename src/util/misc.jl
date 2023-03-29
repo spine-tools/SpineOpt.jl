@@ -70,7 +70,7 @@ macro fetch(expr)
     esc(Expr(:(=), keys, values))
 end
 
-# override `get` and `getindex` so we can access our dicts with a `Tuple` instead of the actual `NamedTuple`
+# override `get` and `getindex` so we can access our variable dicts with a `Tuple` instead of the actual `NamedTuple`
 function Base.get(d::Dict{K,V}, key::Tuple{Vararg{ObjectLike}}, default) where {J,K<:RelationshipLike{J},V}
     Base.get(d, NamedTuple{J}(key), default)
 end

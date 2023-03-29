@@ -77,7 +77,7 @@ function constraint_connection_intact_flow_capacity_indices(m::Model)
         (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
         for (c, ng, d) in indices(connection_capacity; connection=connection(has_ptdf=true))
         for (t, path) in t_lowest_resolution_path(
-            connection_intact_flow_indices(m; connection=c, node=ng, direction=d)
+            m, connection_intact_flow_indices(m; connection=c, node=ng, direction=d)
         )
     )
 end

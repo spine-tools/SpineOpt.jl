@@ -57,6 +57,7 @@ function constraint_max_nonspin_ramp_up_indices(m::Model)
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(max_res_startup_ramp)
         for (t, path) in t_lowest_resolution_path(
+            m, 
             vcat(
                 nonspin_ramp_up_unit_flow_indices(m; unit=u, node=ng, direction=d),
                 nonspin_units_started_up_indices(m; unit=u, node=ng),

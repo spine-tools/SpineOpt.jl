@@ -54,7 +54,7 @@ function constraint_compression_ratio_indices(m::Model)
     unique(
         (connection=conn, node1=n1, node2=n2, stochastic_path=path, t=t)
         for (conn, n1, n2) in indices(compression_factor)
-        for (t, path) in t_lowest_resolution_path(node_pressure_indices(m; node=[n1, n2]))
+        for (t, path) in t_lowest_resolution_path(m, node_pressure_indices(m; node=[n1, n2]))
     )
 end
 

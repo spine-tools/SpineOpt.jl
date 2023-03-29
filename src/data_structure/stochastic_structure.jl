@@ -16,34 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
-
-"""
-    StochasticPathFinder
-
-A callable type to retrieve intersections between valid stochastic paths
-and 'active' scenarios.
-"""
-struct StochasticPathFinder
-    full_stochastic_paths::Array{Array{Object,1},1}
-end
-
-struct StochasticScenarioFinder
-    scenarios::Dict{Object,Dict{TimeSlice,Vector{Object}}}
-end
-
-"""
-    active_stochastic_paths(active_scenarios::Union{Array{Object,1},Object})
-
-Find the unique combinations of `active_scenarios` along valid stochastic paths.
-"""
-function (h::StochasticPathFinder)(active_scenarios::Union{Vector{T},T}) where {T}
-    unique(intersect(path, active_scenarios) for path in h.full_stochastic_paths)
-end
-
-function (h::StochasticScenarioFinder)(stoch_struct::Object, t::TimeSlice, scenario)
-    intersect(h.scenarios[stoch_struct][t], scenario)
-end
-
 """
     _find_children(parent_scenario::Union{Object,Anything})
 
@@ -157,18 +129,21 @@ function _time_slice_stochastic_scenarios(m::Model, stochastic_dag::Dict)
 end
 
 """
-    _generate_stochastic_scenario_set(m::Model, all_stochastic_dags)
+    _generate_stochastic_scenarios(m::Model, all_stochastic_dags)
 
-Generate the `StochasticScenarioFinder` for all defined `stochastic_structures`.
+Generate a mapping from stochastic structure to time slice to scenarios.
 """
-function _generate_stochastic_scenario_set(m::Model, all_stochastic_dags)
-    m.ext[:spineopt].stochastic_structure[:stochastic_scenario_set] = StochasticScenarioFinder(
-        Dict(structure => _time_slice_stochastic_scenarios(m, dag) for (structure, dag) in all_stochastic_dags),
+function _generate_stochastic_scenarios(m::Model, all_stochastic_dags)
+    m.ext[:spineopt].stochastic_structure[:scenario_lookup] = Dict(
+        (structure, t) => scens
+        for (structure, dag) in all_stochastic_dags
+        for (t, scens) in _time_slice_stochastic_scenarios(m, dag)
     )
 end
 
-function _stochastic_scenario_set(m::Model, structure::Object, t::TimeSlice, scenario)
-    m.ext[:spineopt].stochastic_structure[:stochastic_scenario_set](structure, t, scenario)
+function _stochastic_scenarios(m::Model, stoch_struct::Object, t::TimeSlice, scenarios)
+    scenario_lookup = m.ext[:spineopt].stochastic_structure[:scenario_lookup]
+    intersect(scenario_lookup[stoch_struct, t], scenarios)
 end
 
 """
@@ -269,11 +244,7 @@ function _generate_active_stochastic_paths(m::Model)
         append!(paths, [vcat(path, child) for child in valid_children])
     end
     # NOTE: `unique!` shouldn't be needed here since relationships are unique in the db.
-    full_stochastic_paths = paths[full_path_indices]
-    active_stochastic_paths = StochasticPathFinder(full_stochastic_paths)
-    @eval begin
-        active_stochastic_paths = $active_stochastic_paths
-    end
+    m.ext[:spineopt].stochastic_structure[:full_stochastic_paths] = paths[full_path_indices]
 end
 
 """
@@ -283,11 +254,17 @@ Generate stochastic structure all models.
 """
 function generate_stochastic_structure!(m::Model)
     all_stochastic_dags = _all_stochastic_dags(m)
-    _generate_stochastic_scenario_set(m, all_stochastic_dags)
+    _generate_stochastic_scenarios(m, all_stochastic_dags)
     _generate_node_stochastic_scenario_weight(m, all_stochastic_dags)
     _generate_unit_stochastic_scenario_weight(m, all_stochastic_dags)
     _generate_connection_stochastic_scenario_weight(m, all_stochastic_dags)
     _generate_active_stochastic_paths(m)
+end
+
+function active_stochastic_paths(m, active_scenarios)
+    active_scenarios = collect(Object, active_scenarios)
+    full_stochastic_paths = m.ext[:spineopt].stochastic_structure[:full_stochastic_paths]
+    unique(intersect(path, active_scenarios) for path in full_stochastic_paths)
 end
 
 function stochastic_time_indices(
@@ -303,7 +280,7 @@ function stochastic_time_indices(
         )
         for (m_, ss) in model__stochastic_structure(model=m.ext[:spineopt].instance, _compact=false)
         for t in time_slice(m; temporal_block=members(tb), t=t)
-        for s in _stochastic_scenario_set(m, ss, t, stochastic_scenario)
+        for s in _stochastic_scenarios(m, ss, t, stochastic_scenario)
     )
 end
 
@@ -321,7 +298,7 @@ function node_stochastic_time_indices(
         for (m_, ss) in model__stochastic_structure(
             model=m.ext[:spineopt].instance, stochastic_structure=node__stochastic_structure(node=n), _compact=false,
         )
-        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
+        for s in _stochastic_scenarios(m, ss, t1, stochastic_scenario)
     )
 end
 
@@ -345,7 +322,7 @@ function unit_stochastic_time_indices(
             stochastic_structure=units_on__stochastic_structure(unit=u),
             _compact=false,
         )
-        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
+        for s in _stochastic_scenarios(m, ss, t1, stochastic_scenario)
     )
 end
 
@@ -369,7 +346,7 @@ function unit_investment_stochastic_time_indices(
             stochastic_structure=unit__investment_stochastic_structure(unit=u),
             _compact=false,
         )
-        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
+        for s in _stochastic_scenarios(m, ss, t1, stochastic_scenario)
     )
 end
 
@@ -395,7 +372,7 @@ function connection_investment_stochastic_time_indices(
             stochastic_structure=connection__investment_stochastic_structure(connection=conn),
             _compact=false,
         )
-        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
+        for s in _stochastic_scenarios(m, ss, t1, stochastic_scenario)
     )
 end
 
@@ -419,7 +396,7 @@ function node_investment_stochastic_time_indices(
             stochastic_structure=node__investment_stochastic_structure(node=n),
             _compact=false,
         )
-        for s in _stochastic_scenario_set(m, ss, t1, stochastic_scenario)
+        for s in _stochastic_scenarios(m, ss, t1, stochastic_scenario)
     )
 end
 

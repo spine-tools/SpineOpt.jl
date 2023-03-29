@@ -63,6 +63,7 @@ function constraint_units_available_indices(m::Model)
         (unit=u, stochastic_scenario=s, t=t)
         for (u, t) in unit_time_indices(m)
         for path in active_stochastic_paths(
+            m, 
             unique(
                 ind.stochastic_scenario
                 for ind in vcat(

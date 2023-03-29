@@ -44,7 +44,7 @@ function constraint_max_node_voltage_angle_indices(m::Model)
     unique(
         (node=ng, stochastic_path=path, t=t)
         for (ng, s, t) in node_voltage_angle_indices(m; node=indices(max_voltage_angle))
-        for path in active_stochastic_paths(s)
+        for path in active_stochastic_paths(m, s)
     )
 end
 
