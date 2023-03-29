@@ -778,4 +778,33 @@ end
             @test Y.constraint_node_injection(; key..., t=t) == expected
         end
     end
+    @testset "fix_unit_flow with rolling" begin
+        _load_test_data(url_in, test_data)
+        indexes = [
+            DateTime("2000-01-01T00:00:00"),
+            DateTime("2000-01-01T02:00:00"),
+            DateTime("2000-01-01T07:00:00"),
+            DateTime("2000-01-01T11:00:00"),
+            DateTime("2000-01-01T15:00:00"),
+            DateTime("2000-01-01T18:00:00")
+        ]
+        values = [1, NaN, 2, NaN, 3, NaN]
+        fix_unit_flow_ = unparse_db_value(TimeSeries(indexes, values, false, false))
+        object_parameter_values = [["node", "node_b", "balance_type", "balance_type_none"]]
+        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "fix_unit_flow", fix_unit_flow_]]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        m = run_spineopt(url_in, url_out)
+        using_spinedb(url_out, Y)
+        @testset for ind in indices(Y.unit_flow)
+            @testset for (t, v) in Y.unit_flow(; ind...)
+                i = findlast(ind -> t >= ind, indexes)
+                exp_v = isnan(values[i]) ? 0 : values[i]
+                @test exp_v == v
+            end
+        end
+    end
 end

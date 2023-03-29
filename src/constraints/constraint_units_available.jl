@@ -26,12 +26,12 @@ function add_constraint_units_available!(m::Model)
     @fetch units_available, units_invested_available = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:units_available] = Dict(
-        (unit=u, stochastic_path=s, t=t) => @constraint(
+        (unit=u, stochastic_scenario=s, t=t) => @constraint(
             m,
             + expr_sum(
-                units_available[u, s, t0] for (u, s, t0) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
+                units_available[u, s, t] for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0,
-            ) # summation only necessary for stochastic_path
+            )
             <=
             + unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * (
@@ -42,7 +42,8 @@ function add_constraint_units_available!(m::Model)
                         m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t)
                     );
                     # If t_overlaps_t is chosen here, we don't predefine hierarchy; 
-                    # not crucial, as mostlikely always t_operations < t_investment but could be considered in the future
+                    # not crucial, as most likely always t_operations < t_investment
+                    # but could be considered in the future
                     init=0,
                 )
             )
@@ -53,11 +54,13 @@ end
 
 """
     constraint_units_available_indices(m::Model, unit, t)
-Creates all indices required to include units, stochastic paths and temporals for the `add_constraint_units_available!` constraint generation.
+    
+Creates all indices required to include units, stochastic paths and temporals for the `add_constraint_units_available!`
+constraint generation.
 """
 function constraint_units_available_indices(m::Model)
     unique(
-        (unit=u, stochastic_path=path, t=t)
+        (unit=u, stochastic_scenario=s, t=t)
         for (u, t) in unit_time_indices(m)
         for path in active_stochastic_paths(
             collect(
@@ -69,5 +72,6 @@ function constraint_units_available_indices(m::Model)
                 )
             )
         )
+        for s in path
     )
 end

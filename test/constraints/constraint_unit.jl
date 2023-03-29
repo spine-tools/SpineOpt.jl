@@ -79,18 +79,21 @@
             ["model", "instance", "db_mip_solver", "Cbc.jl"],
             ["model", "instance", "db_lp_solver", "Clp.jl"],
         ],
-        :relationship_parameter_values => [[
-            "stochastic_structure__stochastic_scenario",
-            ["stochastic", "parent"],
-            "stochastic_scenario_end",
-            Dict("type" => "duration", "data" => "1h"),
-        ]],
+        :relationship_parameter_values => [
+            [
+                "stochastic_structure__stochastic_scenario",
+                ["stochastic", "parent"],
+                "stochastic_scenario_end",
+                Dict("type" => "duration", "data" => "1h"),
+            ]
+        ],
     )
     @testset "initial_units_on" begin
         _load_test_data(url_in, test_data)
         init_units_on = 123
         object_parameter_values = [
             ["unit", "unit_ab", "initial_units_on", init_units_on],
+            ["model", "instance", "roll_forward", unparse_db_value(Hour(1))],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -105,7 +108,6 @@
     end
     @testset "constraint_units_on" begin
         _load_test_data(url_in, test_data)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_available = m.ext[:spineopt].variables[:units_available]
@@ -136,7 +138,6 @@
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_available = m.ext[:spineopt].variables[:units_available]
         var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
@@ -149,7 +150,7 @@
             var_u_av = var_units_available[key...]
             var_u_inv_av = var_units_invested_available[key...]
             expected_con = @build_constraint(var_u_av - var_u_inv_av <= number_of_units)
-            con_key = (unit(:unit_ab), [s], t)
+            con_key = (unit(:unit_ab), s, t)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -159,7 +160,6 @@
         _load_test_data(url_in, test_data)
         object_parameter_values = [["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"]]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
@@ -191,8 +191,12 @@
         relationships = [
                 ["unit__to_node", ["unit_ab", "node_group_bc"]],
         ]
-        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", unit_capacity]]
-        SpineInterface.import_data(url_in; relationships=relationships,relationship_parameter_values=relationship_parameter_values)
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", unit_capacity]
+        ]
+        SpineInterface.import_data(
+            url_in; relationships=relationships,relationship_parameter_values=relationship_parameter_values
+        )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_units_on = m.ext[:spineopt].variables[:units_on]
@@ -215,7 +219,9 @@
             var_u_on_1 = var_units_on[var_u_on_key_1...]
             var_u_on_2 = var_units_on[var_u_on_key_2...]
             con_key = (unit(:unit_ab), node(:node_group_bc), direction(:to_node), [s,s_child], t)
-            expected_con = @build_constraint(var_u_flow_c_1 +  var_u_flow_c_2 + 2*var_u_flow_b <= unit_capacity * (var_u_on_1 +  var_u_on_2))
+            expected_con = @build_constraint(
+                var_u_flow_c_1 +  var_u_flow_c_2 + 2*var_u_flow_b <= unit_capacity * (var_u_on_1 +  var_u_on_2)
+            )
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
@@ -229,7 +235,6 @@
             ["unit__from_node", ["unit_ab", "node_a"], "minimum_operating_point", minimum_operating_point],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_units_on = m.ext[:spineopt].variables[:units_on]
@@ -261,8 +266,9 @@
         relationships = [
             ["unit__to_node", ["unit_ab", "node_a"]],
         ]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values, relationships=relationships)
-
+        SpineInterface.import_data(
+            url_in; relationship_parameter_values=relationship_parameter_values, relationships=relationships
+        )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_unit_flow_op_active = m.ext[:spineopt].variables[:unit_flow_op_active]
@@ -396,7 +402,6 @@
         relationship_parameter_values =
             [["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
@@ -447,11 +452,8 @@
                 [[class, relationship, ratio, flow_ratio], [class, relationship, coeff, units_on_coeff]]
             sense = senses_by_prefix[p]
             SpineInterface.import_data(
-                url_in;
-                relationships=relationships,
-                relationship_parameter_values=relationship_parameter_values,
+                url_in; relationships=relationships, relationship_parameter_values=relationship_parameter_values
             )
-
             m = run_spineopt(url_in; log_level=0, optimize=false)
             var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
             var_units_on = m.ext[:spineopt].variables[:units_on]
@@ -488,8 +490,6 @@
 
     @testset "constraint_total_cumulated_unit_flow" begin
         total_cumulated_flow_bound = 100
-        # class = "unit_$(direction)_node"
-        # relationship = ["unit_ab", "node_a", "node_b"]
         senses_by_prefix = Dict("min" => >=, "max" => <=)
         classes_by_prefix = Dict("from_node" => "unit__from_node", "to_node" => "unit__to_node")
         @testset for (p, a) in (
@@ -529,16 +529,13 @@
                 m,
                 var_u_flow_a1 + var_u_flow_a2,
                 sense,
-                total_cumulated_flow_bound ,
+                total_cumulated_flow_bound
             )
             expected_con = constraint_object(expected_con_ref)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-
-
-
     @testset "constraint_min_up_time" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_up_minutes in (60, 120, 210)
@@ -547,7 +544,6 @@
             object_parameter_values =
                 [["unit", "unit_ab", "min_up_time", min_up_time], ["model", "instance", "model_end", model_end]]
             SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-
             m = run_spineopt(url_in; log_level=0, optimize=false)
             var_units_on = m.ext[:spineopt].variables[:units_on]
             var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
@@ -557,8 +553,9 @@
                 stochastic_structure=stochastic_structure(:stochastic),
                 stochastic_scenario=stochastic_scenario(:parent),
             )
-            head_hours =
-                -(length(time_slice(m; temporal_block=temporal_block(:hourly))), round(parent_end, Hour(1)).value)
+            head_hours = -(
+                length(time_slice(m; temporal_block=temporal_block(:hourly))), round(parent_end, Hour(1)).value
+            )
             tail_hours = round(Minute(min_up_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours)
@@ -601,7 +598,6 @@
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values,
             )
-
             m = run_spineopt(url_in; log_level=0, optimize=false)
             var_units_on = m.ext[:spineopt].variables[:units_on]
             var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
@@ -612,8 +608,9 @@
                 stochastic_structure=stochastic_structure(:stochastic),
                 stochastic_scenario=stochastic_scenario(:parent),
             )
-            head_hours =
-                -(length(time_slice(m; temporal_block=temporal_block(:hourly))), round(parent_end, Hour(1)).value)
+            head_hours = -(
+                length(time_slice(m; temporal_block=temporal_block(:hourly))), round(parent_end, Hour(1)).value
+            )
             tail_hours = round(Minute(min_up_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours)
@@ -656,8 +653,9 @@
                 ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
                 ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
             ]
-            SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-
+            SpineInterface.import_data(
+                url_in; relationships=relationships, object_parameter_values=object_parameter_values
+            )
             m = run_spineopt(url_in; log_level=0, optimize=false)
             var_units_on = m.ext[:spineopt].variables[:units_on]
             var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
@@ -668,8 +666,9 @@
                 stochastic_structure=stochastic_structure(:stochastic),
                 stochastic_scenario=stochastic_scenario(:parent),
             )
-            head_hours =
-                length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            head_hours = length(
+                time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)
+            ).value
             tail_hours = round(Minute(min_down_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours)
@@ -723,7 +722,6 @@
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values,
             )
-
             m = run_spineopt(url_in; log_level=0, optimize=false)
             var_units_on = m.ext[:spineopt].variables[:units_on]
             var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
@@ -735,8 +733,9 @@
                 stochastic_structure=stochastic_structure(:stochastic),
                 stochastic_scenario=stochastic_scenario(:parent),
             )
-            head_hours =
-                length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            head_hours = length(
+                time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)
+            ).value
             tail_hours = round(Minute(min_down_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours)
@@ -772,7 +771,6 @@
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
         constraint = m.ext[:spineopt].constraints[:units_invested_available]
@@ -803,7 +801,6 @@
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-
         m, mp = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
         constraint = m.ext[:spineopt].constraints[:units_invested_available]
@@ -841,7 +838,6 @@
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
         var_units_invested = m.ext[:spineopt].variables[:units_invested]
@@ -882,7 +878,6 @@
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-
         m, mp = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
         var_units_invested = m.ext[:spineopt].variables[:units_invested]
@@ -907,7 +902,6 @@
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
-
         var_units_invested_available = mp.ext[:spineopt].variables[:units_invested_available]
         var_units_invested = mp.ext[:spineopt].variables[:units_invested]
         var_units_mothballed = mp.ext[:spineopt].variables[:units_mothballed]
@@ -947,20 +941,21 @@
                 ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
                 ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
             ]
-            SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-
+            SpineInterface.import_data(
+                url_in; relationships=relationships, object_parameter_values=object_parameter_values
+            )
             m = run_spineopt(url_in; log_level=0, optimize=false)
             var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
             var_units_invested = m.ext[:spineopt].variables[:units_invested]
             constraint = m.ext[:spineopt].constraints[:unit_lifetime]
-
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
                 stochastic_structure=stochastic_structure(:stochastic),
                 stochastic_scenario=stochastic_scenario(:parent),
             )
-            head_hours =
-                length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            head_hours = length(
+                time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)
+            ).value
             tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours)
@@ -1004,8 +999,9 @@
                 ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
                 ["unit__investment_stochastic_structure", ["unit_ab", "investments_deterministic"]],
             ]
-            SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-
+            SpineInterface.import_data(
+                url_in; relationships=relationships, object_parameter_values=object_parameter_values
+            )
             m, mp = run_spineopt(url_in; log_level=0, optimize=false)
             var_units_invested_available = m.ext[:spineopt].variables[:units_invested_available]
             var_units_invested = m.ext[:spineopt].variables[:units_invested]
@@ -1015,8 +1011,9 @@
                 stochastic_structure=stochastic_structure(:stochastic),
                 stochastic_scenario=stochastic_scenario(:parent),
             )
-            head_hours =
-                length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
+            head_hours = length(
+                time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)
+            ).value
             tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:child)], head_hours)
@@ -1038,7 +1035,6 @@
                 observed_con = constraint_object(constraint[key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
-
             var_units_invested_available = mp.ext[:spineopt].variables[:units_invested_available]
             var_units_invested = mp.ext[:spineopt].variables[:units_invested]
             constraint = mp.ext[:spineopt].constraints[:unit_lifetime]
@@ -1083,8 +1079,11 @@
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values, object_parameter_values=object_parameter_values)
-
+        SpineInterface.import_data(
+            url_in;
+            relationship_parameter_values=relationship_parameter_values,
+            object_parameter_values=object_parameter_values
+        )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_nonspin_ramp_up_unit_flow = m.ext[:spineopt].variables[:nonspin_ramp_up_unit_flow]
         var_nonspin_units_started_up = m.ext[:spineopt].variables[:nonspin_units_started_up]
@@ -1116,8 +1115,11 @@
             ["unit__from_node", ["unit_ab", "node_a"], "min_res_startup_ramp", min_res_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values, object_parameter_values=object_parameter_values)
-
+        SpineInterface.import_data(
+            url_in;
+            relationship_parameter_values=relationship_parameter_values,
+            object_parameter_values=object_parameter_values
+        )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_nonspin_ramp_up_unit_flow = m.ext[:spineopt].variables[:nonspin_ramp_up_unit_flow]
         var_nonspin_units_started_up = m.ext[:spineopt].variables[:nonspin_units_started_up]
@@ -1147,7 +1149,6 @@
             ["unit__from_node", ["unit_ab", "node_a"], "ramp_up_limit", ramp_up_limit],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_start_up_unit_flow = m.ext[:spineopt].variables[:start_up_unit_flow]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
@@ -1179,7 +1180,6 @@
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_start_up_unit_flow = m.ext[:spineopt].variables[:start_up_unit_flow]
         var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
@@ -1207,7 +1207,6 @@
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_ramp_up_unit_flow = m.ext[:spineopt].variables[:ramp_up_unit_flow]
         var_units_on = m.ext[:spineopt].variables[:units_on]
@@ -1243,7 +1242,6 @@
             ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_start_up_unit_flow = m.ext[:spineopt].variables[:start_up_unit_flow]
@@ -1293,8 +1291,11 @@
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", max_res_startup_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values, object_parameter_values =object_parameter_values)
-
+        SpineInterface.import_data(
+            url_in;
+            relationship_parameter_values=relationship_parameter_values,
+            object_parameter_values =object_parameter_values
+        )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_start_up_unit_flow = m.ext[:spineopt].variables[:start_up_unit_flow]
@@ -1337,8 +1338,11 @@
             ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", max_res_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values, object_parameter_values=object_parameter_values)
-
+        SpineInterface.import_data(
+            url_in;
+            relationship_parameter_values=relationship_parameter_values,
+            object_parameter_values=object_parameter_values
+        )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_nonspin_ramp_down_unit_flow = m.ext[:spineopt].variables[:nonspin_ramp_down_unit_flow]
         var_nonspin_units_shut_down = m.ext[:spineopt].variables[:nonspin_units_shut_down]
@@ -1371,8 +1375,11 @@
             ["unit__from_node", ["unit_ab", "node_a"], "min_res_shutdown_ramp", min_res_shutdown_ramp],
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values, object_parameter_values=object_parameter_values)
-
+        SpineInterface.import_data(
+            url_in;
+            relationship_parameter_values=relationship_parameter_values,
+            object_parameter_values=object_parameter_values
+        )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_nonspin_ramp_down_unit_flow = m.ext[:spineopt].variables[:nonspin_ramp_down_unit_flow]
         var_nonspin_units_shut_down = m.ext[:spineopt].variables[:nonspin_units_shut_down]
@@ -1402,7 +1409,6 @@
             ["unit__from_node", ["unit_ab", "node_a"], "ramp_down_limit", ramp_down_limit],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_shut_down_unit_flow = m.ext[:spineopt].variables[:shut_down_unit_flow]
         var_units_shut_down = m.ext[:spineopt].variables[:units_shut_down]
@@ -1434,7 +1440,6 @@
             ["unit__from_node", ["unit_ab", "node_a"], "ramp_down_limit", ramp_down_limit],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_shut_down_unit_flow = m.ext[:spineopt].variables[:shut_down_unit_flow]
         var_units_shut_down = m.ext[:spineopt].variables[:units_shut_down]
@@ -1462,7 +1467,6 @@
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_ramp_down_unit_flow = m.ext[:spineopt].variables[:ramp_down_unit_flow]
         var_units_on = m.ext[:spineopt].variables[:units_on]
@@ -1514,7 +1518,6 @@
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values,
             )
-
             m = run_spineopt(url_in; log_level=0, optimize=false)
             var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
             var_units_on = m.ext[:spineopt].variables[:units_on]
@@ -1581,7 +1584,6 @@
                 object_parameter_values=object_parameter_values,
                 relationship_parameter_values=relationship_parameter_values,
             )
-
             m = run_spineopt(url_in; log_level=0, optimize=false)
             var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
             var_units_on = m.ext[:spineopt].variables[:units_on]
@@ -1598,12 +1600,12 @@
                 + unit_flow_coefficient_a * sum(
                     var_unit_flow_op[key_a..., i, s_parent, t1h1] + var_unit_flow_op[key_a..., i, s_child, t1h2]
                     for i in 1:3
-                ) +
-                2 * sum(unit_flow_coefficient_b * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3) +
-                units_on_coefficient
-                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
-                units_started_up_coefficient * (
-                    var_units_started_up[unit(:unit_ab), s_parent, t1h1]
+                )
+                + 2 * sum(unit_flow_coefficient_b * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
+                + units_on_coefficient
+                * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
+                + units_started_up_coefficient * (
+                    + var_units_started_up[unit(:unit_ab), s_parent, t1h1]
                     + var_units_started_up[unit(:unit_ab), s_child, t1h2]
                 ),
                 Symbol(sense),
@@ -1682,7 +1684,6 @@
             relationships=relationships,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
@@ -1697,12 +1698,13 @@
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         expected_con = @build_constraint(
-            + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2] ==
-            2 * sum(inc_hrs * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3) +
-            unit_idle_heat_rate
-            * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
-            unit_start_flow * (
-                var_units_started_up[unit(:unit_ab), s_parent, t1h1]
+            + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
+            ==
+            + 2 * sum(inc_hrs * var_unit_flow_op[key_b..., i, s_parent, t2h] for i in 1:3)
+            + unit_idle_heat_rate
+            * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
+            + unit_start_flow * (
+                + var_units_started_up[unit(:unit_ab), s_parent, t1h1]
                 + var_units_started_up[unit(:unit_ab), s_child, t1h2]
             )
         )
@@ -1726,7 +1728,6 @@
             relationships=relationships,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
@@ -1741,12 +1742,12 @@
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         expected_con = @build_constraint(
-            + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2] ==
-            2 * inc_hrs * var_unit_flow[key_b..., s_parent, t2h] +
-            unit_idle_heat_rate
-            * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2]) +
-            unit_start_flow * (
-                var_units_started_up[unit(:unit_ab), s_parent, t1h1]
+            + var_unit_flow[key_a..., s_parent, t1h1] + var_unit_flow[key_a..., s_child, t1h2]
+            == 2 * inc_hrs * var_unit_flow[key_b..., s_parent, t2h]
+            + unit_idle_heat_rate
+            * (var_units_on[unit(:unit_ab), s_parent, t1h1] + var_units_on[unit(:unit_ab), s_child, t1h2])
+            + unit_start_flow * (
+                + var_units_started_up[unit(:unit_ab), s_parent, t1h1]
                 + var_units_started_up[unit(:unit_ab), s_child, t1h2]
             )
         )
