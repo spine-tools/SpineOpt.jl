@@ -111,6 +111,7 @@ function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
             ("units_shut_down", add_variable_units_shut_down!),
             ("unit_flow", add_variable_unit_flow!),
             ("unit_flow_op", add_variable_unit_flow_op!),
+            ("unit_flow_op_active", add_variable_unit_flow_op_active!),
             ("connection_flow", add_variable_connection_flow!),
             ("connection_intact_flow", add_variable_connection_intact_flow!),
             ("connections_invested", add_variable_connections_invested!),
