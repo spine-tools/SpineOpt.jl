@@ -67,7 +67,8 @@ function add_constraint_connection_intact_flow_capacity!(m::Model)
                 ) if d_reverse != d && !is_reserve_node(node=n);
                 init=0,
             )
-        ) for (conn, ng, d, s, t) in constraint_connection_intact_flow_capacity_indices(m)
+        )
+        for (conn, ng, d, s, t) in constraint_connection_intact_flow_capacity_indices(m)
     )
 end
 
@@ -75,15 +76,8 @@ function constraint_connection_intact_flow_capacity_indices(m::Model)
     unique(
         (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
         for (c, ng, d) in indices(connection_capacity; connection=connection(has_ptdf=true))
-        for t in t_lowest_resolution(time_slice(m; temporal_block=node__temporal_block(node=members(ng))))
-        for path in active_stochastic_paths(
-            collect(
-                s
-                for s in stochastic_scenario()
-                if !isempty(
-                    connection_intact_flow_indices(m; connection=c, node=ng, direction=d, t=t, stochastic_scenario=s)
-                )
-            ),
+        for (t, path) in t_lowest_resolution_path(
+            m, connection_intact_flow_indices(m; connection=c, node=ng, direction=d)
         )
     )
 end

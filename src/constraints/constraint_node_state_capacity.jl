@@ -33,27 +33,33 @@ function add_constraint_node_state_capacity!(m::Model)
                 init=0,
             )
             <=
-            + node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)] * (
-                (candidate_storages(node=ng) != nothing) ?
+            + node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * (
+                candidate_storages(node=ng) !== nothing ?
                 + expr_sum(
-                    storages_invested_available[n, s, t1] for (n, s, t1) in storages_invested_available_indices(
-                        m;
-                        node=ng,
-                        stochastic_scenario=s,
-                        t=t_in_t(m; t_short=t),
+                    storages_invested_available[n, s, t1]
+                    for (n, s, t1) in storages_invested_available_indices(
+                        m; node=ng, stochastic_scenario=s, t=t_in_t(m; t_short=t)
                     );
                     init=0,
                 ) : 1
             )
-        ) for (ng, s, t) in constraint_node_state_capacity_indices(m)
+        )
+        for (ng, s, t) in constraint_node_state_capacity_indices(m)
     )
 end
 
 function constraint_node_state_capacity_indices(m::Model)
     unique(
         (node=ng, stochastic_path=path, t=t)
-        for (ng, s, t) in node_state_indices(m; node=indices(node_state_cap))
-        for path in active_stochastic_paths(collect(_constraint_node_state_capacity_scenarios(m, ng, t)))
+        for (ng, t) in node_time_indices(m; node=indices(node_state_cap))
+        for path in active_stochastic_paths(
+            m,
+            vcat(
+                node_state_indices(m; node=ng, t=t),
+                storages_invested_available_indices(m; node=ng, t=t_in_t(m; t_short=t))
+            )
+        )
     )
 end
 
@@ -67,15 +73,4 @@ Uses stochastic path indices of the `node_state` variables. Keyword arguments ca
 function constraint_node_state_capacity_indices_filtered(m::Model; node=anything, stochastic_path=anything, t=anything)
     f(ind) = _index_in(ind; node=node, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_node_state_capacity_indices(m))
-end
-
-function _constraint_node_state_capacity_scenarios(m, node, t)
-    (
-        s
-        for s in stochastic_scenario()
-        if !isempty(node_state_indices(m; node=node, t=t, stochastic_scenario=s))
-        || !isempty(
-            storages_invested_available_indices(m; node=node, t=t_in_t(m; t_short=t), stochastic_scenario=s)
-        )
-    )
 end

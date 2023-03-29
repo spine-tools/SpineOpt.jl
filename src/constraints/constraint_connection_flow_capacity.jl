@@ -49,8 +49,7 @@ function add_constraint_connection_flow_capacity!(m::Model)
                 (connection=conn, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
             ]
             * (
-                (candidate_connections(connection=conn) != nothing) ?
-                + expr_sum(
+                candidate_connections(connection=conn) != nothing ? expr_sum(
                     connections_invested_available[conn, s, t1]
                     for (conn, s, t1) in connections_invested_available_indices(
                         m; connection=conn, stochastic_scenario=s, t=t_in_t(m; t_short=t)
@@ -77,8 +76,13 @@ function constraint_connection_flow_capacity_indices(m::Model)
     (
         (connection=c, node=ng, direction=d, stochastic_path=path, t=t)
         for (c, ng, d) in indices(connection_capacity)
-        for t in t_lowest_resolution(time_slice(m; temporal_block=members(node__temporal_block(node=members(ng)))))
-        for path in active_stochastic_paths(collect(_constraint_connection_flow_capacity_scenarios(m, c, ng, d, t)))
+        for (t, path) in t_lowest_resolution_path(
+            m, 
+            vcat(
+                connection_flow_indices(m; connection=c, node=ng, direction=d),
+                connections_invested_available_indices(m; connection=c)
+            )
+        )
     )
 end
 
@@ -101,21 +105,4 @@ function constraint_connection_flow_capacity_indices_filtered(
 )
     f(ind) = _index_in(ind; connection=connection, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
     filter(f, constraint_connection_flow_capacity_indices(m))
-end
-
-function _constraint_connection_flow_capacity_scenarios(m, connection, node, direction, t)
-    (
-        s
-        for s in stochastic_scenario()
-        if !isempty(
-            connection_flow_indices(
-                m; connection=connection, node=node, direction=direction, t=t, stochastic_scenario=s
-            )
-        )
-        || !isempty(
-            connections_invested_available_indices(
-                m; connection=connection, t=t_in_t(m; t_short=t), stochastic_scenario=s
-            )
-        )
-    )
 end
