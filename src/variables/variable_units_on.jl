@@ -64,7 +64,7 @@ function add_variable_units_on!(m::Model)
         m,
         :units_on,
         units_on_indices;
-        lb=x -> 0,
+        lb=Constant(0),
         bin=units_on_bin,
         int=units_on_int,
         fix_value=fix_units_on,

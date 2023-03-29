@@ -67,7 +67,8 @@ function add_constraint_connection_flow_intact_flow!(m::Model)
                 );
                 init=0,
             )
-        ) for (conn, ng, s, t) in constraint_connection_flow_intact_flow_indices(m)
+        )
+        for (conn, ng, s, t) in constraint_connection_flow_intact_flow_indices(m)
     )
 end
 
@@ -110,8 +111,9 @@ An iterator over all candidate connections that can impact the flow on the given
 """
 function _candidate_connections(conn)
     (
-        candidate_conn for candidate_conn in connection(is_candidate=true, has_ptdf=true)
-            if candidate_conn !== conn && lodf(connection1=candidate_conn, connection2=conn) !== nothing
+        candidate_conn
+        for candidate_conn in connection(is_candidate=true, has_ptdf=true)
+        if candidate_conn !== conn && lodf(connection1=candidate_conn, connection2=conn) !== nothing
     )
 end
 

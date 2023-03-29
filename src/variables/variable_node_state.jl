@@ -28,11 +28,7 @@ function node_state_indices(m::Model; node=anything, stochastic_scenario=anythin
         (node=n, stochastic_scenario=s, t=t)
         for (n, tb) in node_with_state__temporal_block(node=node, temporal_block=temporal_block, _compact=false)
         for (n, s, t) in node_stochastic_time_indices(
-            m;
-            node=n,
-            stochastic_scenario=stochastic_scenario,
-            temporal_block=tb,
-            t=t,
+            m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )
     )
 end
@@ -48,13 +44,7 @@ function add_variable_node_state!(m::Model)
         m,
         :node_state,
         node_state_indices;
-        lb=x -> node_state_min(
-            node=x.node,
-            stochastic_scenario=x.stochastic_scenario,
-            analysis_time=t0,
-            t=x.t,
-            _strict=false,
-        ),
+        lb=node_state_min,
         fix_value=fix_node_state,
         initial_value=initial_node_state
     )

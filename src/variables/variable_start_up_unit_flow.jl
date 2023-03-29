@@ -61,7 +61,7 @@ function add_variable_start_up_unit_flow!(m::Model)
         m,
         :start_up_unit_flow,
         start_up_unit_flow_indices;
-        lb=x -> 0,
+        lb=Constant(0),
         fix_value=fix_start_up_unit_flow,
         initial_value=initial_start_up_unit_flow
     )

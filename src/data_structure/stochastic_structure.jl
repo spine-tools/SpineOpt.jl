@@ -339,7 +339,7 @@ Generate the `node_stochastic_scenario_weight` parameter for the `model` for eas
 function _generate_node_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
     node_stochastic_scenario_weight_values = Dict(
         (node, scen) => Dict(:node_stochastic_scenario_weight => parameter_value(spec.weight))
-        for (node, ss) in node__stochastic_structure()
+        for (node, ss) in Iterators.flatten((node__stochastic_structure(), node__investment_stochastic_structure()))
         if ss in model__stochastic_structure(model=m.ext[:spineopt].instance)
         for (scen, spec) in all_stochastic_dags[ss]
     )
@@ -363,10 +363,7 @@ Generate the `unit_stochastic_scenario_weight` parameter for the `model` for eas
 function _generate_unit_stochastic_scenario_weight(m::Model, all_stochastic_dags::Dict)
     unit_stochastic_scenario_weight_values = Dict(
         (unit, scen) => Dict(:unit_stochastic_scenario_weight => parameter_value(param_vals.weight))
-        for (unit, ss) in Iterators.flatten((
-            units_on__stochastic_structure(),
-            unit__investment_stochastic_structure(),
-        ))
+        for (unit, ss) in Iterators.flatten((units_on__stochastic_structure(), unit__investment_stochastic_structure()))
         if ss in model__stochastic_structure(model=m.ext[:spineopt].instance)
         for (scen, param_vals) in all_stochastic_dags[ss]
     )
@@ -391,7 +388,7 @@ function _generate_connection_stochastic_scenario_weight(m::Model, all_stochasti
     connection_stochastic_scenario_weight_values = Dict(
         (connection, scen) => Dict(:connection_stochastic_scenario_weight => parameter_value(param_vals.weight))
         for (connection, ss) in connection__investment_stochastic_structure()
-            if ss in model__stochastic_structure(model=m.ext[:spineopt].instance)
+        if ss in model__stochastic_structure(model=m.ext[:spineopt].instance)
         for (scen, param_vals) in all_stochastic_dags[ss]
     )
     connection__stochastic_scenario = RelationshipClass(
