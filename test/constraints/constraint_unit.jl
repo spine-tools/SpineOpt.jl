@@ -157,7 +157,7 @@
             var_u_av = var_units_available[key...]
             var_u_inv_av = var_units_invested_available[key...]
             expected_con = @build_constraint(var_u_av <= unit_availability_factor * (number_of_units + var_u_inv_av))
-            con_key = (unit(:unit_ab), [s], t)
+            con_key = (unit(:unit_ab), s, t)
             con = constraint[con_key...]
             observed_con = constraint_object(con)
             @test _is_constraint_equal(observed_con, expected_con)
@@ -202,7 +202,9 @@
         relationships = [
             ["unit__to_node", ["unit_ab", "node_group_bc"]],
         ]
-        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", unit_capacity]]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", unit_capacity]
+        ]
         SpineInterface.import_data(
             url_in; 
             object_parameter_values=object_parameter_values, 
