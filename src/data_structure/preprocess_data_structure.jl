@@ -41,7 +41,7 @@ function preprocess_data_structure(; log_level=3)
     generate_variable_indexing_support()
     generate_benders_structure()
     apply_forced_availability_factor()
-    generate_is_boundary_node()  
+    generate_is_boundary()  
 end
 
 """
@@ -904,15 +904,16 @@ function generate_benders_structure()
     end
 end
 
-_product(x::TimeSeries, y::Nothing) = x
-_product(x::TimeSeries, y) = x * y
 
 function _apply_forced_availability_factor(m_start, m_end, class, availability_factor)
+    _product_or_nothing(x::TimeSeries, y::Nothing) = x
+    _product_or_nothing(x::TimeSeries, y) = x * y
+
     for x in class()
         forced_af = forced_availability_factor(; (class.name => x,)..., _strict=false)
         forced_af === nothing && continue
         af = availability_factor(; (class.name => x,)..., _strict=false)
-        class.parameter_values[x][availability_factor.name] = parameter_value(_product(forced_af, af))
+        class.parameter_values[x][availability_factor.name] = parameter_value(_product_or_nothing(forced_af, af))
     end
 end
 
@@ -925,24 +926,23 @@ function apply_forced_availability_factor()
 end
 
 """
-    generate_is_boundary_node()
+    generate_is_boundary()
 
-Generate `is_boundary_node` and `is_boundary_connection` parameters associated with the `node` and `connection` `ObjectClass`es respectively.
+Generate `is_boundary_node` and `is_boundary_connection` parameters
+associated with the `node` and `connection` `ObjectClass`es respectively.
 """
-function generate_is_boundary_node()
+function generate_is_boundary()
     for (n, c) in node__commodity()
-        if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)               
-            for conn in connection__from_node(node=n, direction=direction(:from_node))
-                for remote_node = connection__to_node(connection=conn)
-                    remote_commodities = node__commodity(node=remote_node)
-                    if isempty(remote_commodities) || first(remote_commodities) != c
-                        node.parameter_values[n][:is_boundary_node] = parameter_value(true)
-                        (!haskey(connection.parameter_values, conn)) && (connection.parameter_values[conn]=Dict())
-                        connection.parameter_values[conn][:is_boundary_connection] = parameter_value(true)                        
-                    end
-                end
+        commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf) || continue
+        for (conn, _d) in connection__from_node(node=n)
+            remote_commodities = unique(
+                c for (remote_n, _d) in connection__to_node(connection=conn) for c in node__commodity(node=remote_n)
+            )
+            if !(c in remote_commodities)
+                get!(node.parameter_values, n, Dict())[:is_boundary_node] = parameter_value(true)
+                get!(connection.parameter_values, conn, Dict())[:is_boundary_connection] = parameter_value(true)
             end
-        end                         
+        end
     end
     is_boundary_node = Parameter(:is_boundary_node, [node])
     is_boundary_connection = Parameter(:is_boundary_connection, [connection])
