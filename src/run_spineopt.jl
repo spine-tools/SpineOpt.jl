@@ -276,13 +276,13 @@ function rerun_spineopt(
     alternative_objective=m -> nothing,
 )
     @log log_level 0 "Running SpineOpt..."
-    m_bm = create_model(:spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
-    is_subproblem = m_bm !== nothing
+    m_mp = create_model(:spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
+    is_subproblem = m_mp !== nothing
     m = create_model(:spineopt_standard, mip_solver, lp_solver, use_direct_model, is_subproblem)
     m_mga = create_model(:spineopt_mga, mip_solver, lp_solver, use_direct_model, is_subproblem)
     rerun_spineopt!(
         m,
-        m_bm,
+        m_mp,
         m_mga,
         url_out;
         add_user_variables=add_user_variables,
@@ -298,10 +298,10 @@ function rerun_spineopt(
     )
 end
 
-function rerun_spineopt!(::Nothing, m_bm, ::Nothing, url_out; kwargs...)
+function rerun_spineopt!(::Nothing, m_mp, ::Nothing, url_out; kwargs...)
     error("can't run a model of type `spineopt_benders_master` without another of type `spineopt_standard`")
 end
-function rerun_spineopt!(::Nothing, m_bm, m_mga; kwargs...)
+function rerun_spineopt!(::Nothing, m_mp, m_mga; kwargs...)
     error("can't run models of type `spineopt_benders_master` and `spineopt_mga` together")
 end
 function rerun_spineopt!(m, ::Nothing, m_mga; kwargs...)
