@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2017 - 2020  Spine Project
 #
-# This file is part of Spine Model.
+# This file is part of SpineOpt.
 #
 # Spine Model is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
