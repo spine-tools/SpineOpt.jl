@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2018  Spine Project
+# Copyright (C) 2017 - 2023  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -102,7 +102,7 @@ function run_spineopt(
     resume_file_path=nothing
 )
     if log_file_path === nothing
-        return do_run_spineopt(
+        return _run_spineopt(
             url_in,
             url_out;
             upgrade=upgrade,
@@ -144,7 +144,7 @@ function run_spineopt(
             redirect_stderr(log_file) do
                 yield()
                 try
-                    return do_run_spineopt(
+                    return _run_spineopt(
                         url_in,
                         url_out;
                         upgrade=upgrade,
@@ -173,7 +173,7 @@ function run_spineopt(
     end
 end
 
-function do_run_spineopt(
+function _run_spineopt(
     url_in::String,
     url_out::Union{String,Nothing}=url_in;
     upgrade=false,
@@ -246,7 +246,8 @@ function prepare_spineopt(
             println()
             @warn """
             Some items are missing from the input database.
-            We'll assume sensitive defaults for any missing parameter definitions, and empty collections for any missing classes.
+            We'll assume sensitive defaults for any missing parameter definitions,
+            and empty collections for any missing classes.
             SpineOpt might still be able to run, but otherwise you'd need to check your input database.
 
             Missing item list follows:
@@ -275,14 +276,13 @@ function rerun_spineopt(
     alternative_objective=m -> nothing,
 )
     @log log_level 0 "Running SpineOpt..."
-    mp = create_model(:spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
-    is_subproblem = mp !== nothing
+    m_mp = create_model(:spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
+    is_subproblem = m_mp !== nothing
     m = create_model(:spineopt_standard, mip_solver, lp_solver, use_direct_model, is_subproblem)
     m_mga = create_model(:spineopt_mga, mip_solver, lp_solver, use_direct_model, is_subproblem)
-    Base.invokelatest(
-        rerun_spineopt!,
+    rerun_spineopt!(
         m,
-        mp,
+        m_mp,
         m_mga,
         url_out;
         add_user_variables=add_user_variables,
@@ -298,10 +298,10 @@ function rerun_spineopt(
     )
 end
 
-function rerun_spineopt!(::Nothing, mp, ::Nothing, url_out; kwargs...)
+function rerun_spineopt!(::Nothing, m_mp, ::Nothing, url_out; kwargs...)
     error("can't run a model of type `spineopt_benders_master` without another of type `spineopt_standard`")
 end
-function rerun_spineopt!(::Nothing, mp, m_mga; kwargs...)
+function rerun_spineopt!(::Nothing, m_mp, m_mga; kwargs...)
     error("can't run models of type `spineopt_benders_master` and `spineopt_mga` together")
 end
 function rerun_spineopt!(m, ::Nothing, m_mga; kwargs...)

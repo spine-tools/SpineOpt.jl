@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function process_master_problem_solution(mp)
+function process_master_problem_solution(m_mp)
     function _save_mp_values(
         obj_cls::ObjectClass, 
         rel_cls::RelationshipClass, 
@@ -30,8 +30,8 @@ function process_master_problem_solution(mp)
         for obj in indices(investment_parameter)
             # FIXME: Use Map instead of TimeSeries, to account for different stochastic scenarios
             inds_vals = [
-                (start(ind.t), mp.ext[:spineopt].values[investment_variable_name][ind])
-                for ind in variable_indices(mp; Dict(obj_cls.name => obj)...) if end_(ind.t) <= end_(current_window(mp))
+                (start(ind.t), m_mp.ext[:spineopt].values[investment_variable_name][ind])
+                for ind in variable_indices(m_mp; Dict(obj_cls.name => obj)...) if end_(ind.t) <= end_(current_window(m_mp))
             ]
             pv = parameter_value(TimeSeries(first.(inds_vals), last.(inds_vals), false, false))
             obj_cls.parameter_values[obj][fix_param_name] = pv
@@ -67,9 +67,9 @@ function process_master_problem_solution(mp)
     )
 end
 
-function process_subproblem_solution(m, mp)
+function process_subproblem_solution(m, m_mp)
     save_sp_marginal_values(m)
-    save_sp_objective_value_bi(m, mp)
+    save_sp_objective_value_bi(m, m_mp)
     reset_fix_parameter_values()
 end
 
@@ -129,14 +129,14 @@ function save_sp_marginal_values(m)
     _save_marginal_value(node__benders_iteration, candidate_storages, out_name, var_name)
 end
 
-function save_sp_objective_value_bi(m, mp)
+function save_sp_objective_value_bi(m, m_mp)
     total_sp_obj_val = reduce(+, values(m.ext[:spineopt].values[:total_costs]), init=0)
     benders_iteration.parameter_values[current_bi] = Dict(:sp_objective_value_bi => parameter_value(total_sp_obj_val))
 
-    total_mp_investment_costs = reduce(+, values(mp.ext[:spineopt].values[:unit_investment_costs]); init=0)
-    total_mp_investment_costs += reduce(+, values(mp.ext[:spineopt].values[:connection_investment_costs]); init=0)
+    total_mp_investment_costs = reduce(+, values(m_mp.ext[:spineopt].values[:unit_investment_costs]); init=0)
+    total_mp_investment_costs += reduce(+, values(m_mp.ext[:spineopt].values[:connection_investment_costs]); init=0)
 
-    obj_ub = mp.ext[:spineopt].objective_upper_bound = total_sp_obj_val + total_mp_investment_costs
-    obj_lb = mp.ext[:spineopt].objective_lower_bound = reduce(+, values(mp.ext[:spineopt].values[:mp_objective_lowerbound]); init=0)
-    mp.ext[:spineopt].benders_gap = (2 * (obj_ub - obj_lb)) / (obj_ub + obj_lb)
+    obj_ub = m_mp.ext[:spineopt].objective_upper_bound = total_sp_obj_val + total_mp_investment_costs
+    obj_lb = m_mp.ext[:spineopt].objective_lower_bound = reduce(+, values(m_mp.ext[:spineopt].values[:mp_objective_lowerbound]); init=0)
+    m_mp.ext[:spineopt].benders_gap = (2 * (obj_ub - obj_lb)) / (obj_ub + obj_lb)
 end
