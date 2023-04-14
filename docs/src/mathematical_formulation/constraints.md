@@ -490,7 +490,7 @@ The nonspinning ramp flows of a units [nonspin\_ramp\_up\_unit\_flow](@ref) are 
 \begin{aligned}
 & + \sum_{\substack{(u,n,d,s,t) \in nonspin\_ramp\_up\_unit\_flow\_indices: \\ (u,n,d)  \in (u,ng,d)}} v_{nonspin\_ramp\_up\_unit\_flow}(u,n,d,s,t)  \\
 & <= \\
-& + \sum_{\substack{(u,n,s,t) \in nonspin\_units\_started\_up\_indices: \\ (u,n)  \in (u,ng}} v_{nonspin\_units\_started\_up}(u,n,s,t)  \\
+& + \sum_{\substack{(u,n,s,t) \in nonspin\_units\_started\_up\_indices: \\ (u,n)  \in (u,ng)}} v_{nonspin\_units\_started\_up}(u,n,s,t)  \\
 & \cdot p_{max\_res\_startup\_ramp}(u,ng,d,s,t) \\
 & \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
 & \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
@@ -509,9 +509,9 @@ it is also possible to impose an upper bound on the online ramp down ability of 
 & + \sum_{\substack{(u,n,d,s,t) \in ramp\_down\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{ramp\_down\_unit\_flow}(u,n,d,s,t)  \\
 & <= \\
 & + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}}
- (v_{units\_on}(u,s,t')
- - v_{units\_started\_up}(u,s,t')) \\
-& \cdot p_{ramp\_down\_limit}(u,ng,d,s,t) \\
+ \left[ (v_{units\_on}(u,s,t') - v_{units\_started\_up}(u,s,t')) 
+& \cdot p_{ramp\_down\_limit}(u,ng,d,s,t) 
+& + v_{units\_shut\_down}(u,s,t') \right] \\
 & \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
 & \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
 & \forall (u,ng,d) \in ind(p_{ramp\_down\_limit})\\
