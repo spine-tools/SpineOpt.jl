@@ -1131,7 +1131,7 @@
             var_ru_u_flow = var_ramp_up_unit_flow[var_ru_u_flow_key...]
             var_u_on = var_units_on[var_u_on_key...]
             var_u_su = var_units_started_up[var_u_on_key...]
-            expected_con = @build_constraint(var_ru_u_flow <= unit_capacity * ramp_up_limit * (var_u_on - var_u_su))
+            expected_con = @build_constraint(var_ru_u_flow <= unit_capacity * (ramp_up_limit * (var_u_on - var_u_su) + var_u_su))
             con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)

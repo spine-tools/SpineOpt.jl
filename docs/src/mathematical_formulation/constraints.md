@@ -405,11 +405,11 @@ The maximum online ramp up ability of a unit can be constraint by the [ramp\_up\
 \begin{aligned}
 & + \sum_{\substack{(u,n,d,s,t) \in ramp\_up\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{ramp\_up\_unit\_flow}(u,n,d,s,t)  \\
 & <= \\
-& + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}}
- (v_{units\_on}(u,s,t')
- - v_{units\_started\_up}(u,s,t')) \\
-& \min(\Delta t',\Delta t) \\
-& \cdot p_{ramp\_up\_limit}(u,ng,d,s,t) \\
+& + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}} \\
+& \bigg[ (v_{units\_on}(u,s,t')
+ - v_{units\_started\_up}(u,s,t')) \cdot p_{ramp\_up\_limit}(u,ng,d,s,t) \\
+& + v_{units\_started\_up}(u,s,t') \bigg] \\
+& \cdot \min(\Delta t',\Delta t) \\
 & \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
 & \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
 & \forall (u,ng,d) \in ind(p_{ramp\_up\_limit})\\
