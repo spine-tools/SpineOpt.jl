@@ -33,6 +33,7 @@ include("versions/rename_model_types.jl")
 include("versions/add_min_unit_flow.jl")
 include("versions/add_flow_non_anticipativity_time.jl")
 include("versions/add_mga_weight_factors.jl")
+include("versions/add_ordered_unit_flow_op.jl")
 
 _upgrade_functions = [
 	rename_unit_constraint_to_user_constraint,
