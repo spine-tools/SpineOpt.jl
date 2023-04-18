@@ -31,7 +31,21 @@ function add_constraint_operating_point_bounds!(m::Model)
             <= 
             units_on[u, s, t]
         )
+        # TODO: this indices still work if units_on use a different stochastic structure, why?
         for (u, s, t) in units_on_indices(m)
         for (u, n, d, op, s, t) in unit_flow_op_indices(m; unit=u, stochastic_scenario=s, t=t)
+        if ordered_unit_flow_op(unit = u, node=n, direction=d)
+    )
+end
+
+function constraint_operating_point_bounds_indices(m::Model)
+    unique(
+        (unit=u, node=ng, direction=d, i=i, stochastic_path=path, t=t)
+        for (u, s, t) in units_on_indices(m)
+        if ordered_unit_flow_op(unit = u)
+        # TODO: may need an algorithm to unify the stochastic paths of units_on (unit_stochastic_time_indices) and unit_flow_op (node_stochastic_time_indices)
+        for (t, path) in t_lowest_resolution_path(
+            m, vcat(unit_flow_op_indices(m; unit=u, node=ng, direction=d), unit_flow_op_indices(m; unit=u, stochastic_scenario=s, t=t))
+        )
     )
 end

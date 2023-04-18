@@ -21,7 +21,7 @@
     add_constraint_operating_point_rank!(m::Model)
 
 Rank operating points by enforcing that the variable `unit_flow_op_active` of operating point `i` can only be active 
-if previous operating point `i-1` is also active.
+if previous operating point `i-1` is also active. The first segment does not need this constraint.
 """
 function add_constraint_operating_point_rank!(m::Model)
     @fetch unit_flow_op_active = m.ext[:spineopt].variables
@@ -30,12 +30,9 @@ function add_constraint_operating_point_rank!(m::Model)
             m,
             unit_flow_op_active[u, n, d, op, s, t] 
             <=
-            (
-                (op > 1) ? 
-                unit_flow_op_active[u, n, d, op - 1, s, t] : 
-                1
-            )
+            unit_flow_op_active[u, n, d, op - 1, s, t]
         )
         for (u, n, d, op, s, t) in unit_flow_op_indices(m)
+        if ordered_unit_flow_op(unit = u, node=n, direction=d) && (op > 1)
     )
 end

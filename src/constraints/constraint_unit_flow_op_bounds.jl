@@ -24,7 +24,7 @@ Limit the operating point flow variables `unit_flow_op` to the difference betwee
 the capacity of the unit.
 """
 function add_constraint_unit_flow_op_bounds!(m::Model)
-    @fetch unit_flow_op, unit_flow_op_active = m.ext[:spineopt].variables
+    @fetch units_on, unit_flow_op, unit_flow_op_active = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:unit_flow_op_bounds] = Dict(
         (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t) => @constraint(
@@ -34,15 +34,18 @@ function add_constraint_unit_flow_op_bounds!(m::Model)
             (
                 + operating_points[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op)] 
                 - (
-                    (op > 1) ?
-                    operating_points[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op - 1)] :
-                    0
+                    (op > 1) ? operating_points[
+                        (unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op - 1)
+                    ] : 0
                 )
             )
+            * (
+                ordered_unit_flow_op(unit = u, node=n, direction=d) ? 
+                unit_flow_op_active[u, n, d, op, s, t] : units_on[u, s, t]
+            )
+            * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
             * unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * unit_flow_op_active[u, n, d, op, s, t]
             * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-            # TODO: extend to investment functionality ? (is that even possible)
         ) for (u, n, d) in indices(unit_capacity)
         for (u, n, d, op, s, t) in unit_flow_op_indices(m; unit=u, node=n, direction=d)
     )

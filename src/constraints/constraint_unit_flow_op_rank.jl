@@ -21,7 +21,7 @@
     add_constraint_unit_flow_op_rank!(m::Model)
 
 Enforce the operating point flow variable `unit_flow_op` at operating point `i` to use its full capacity 
-if the subsequent operating point `i+1` is active.
+if the subsequent operating point `i+1` is active. The last segment does not need this constraint.
 """
 function add_constraint_unit_flow_op_rank!(m::Model)
     @fetch unit_flow_op, unit_flow_op_active = m.ext[:spineopt].variables
@@ -40,15 +40,12 @@ function add_constraint_unit_flow_op_rank!(m::Model)
                 )
             )
             * unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * (
-                (op < lastindex(operating_points(unit=u, node=n, direction=d))) ? 
-                unit_flow_op_active[u, n, d, op + 1, s, t] :
-                0
-                # TODO: the partial unit flow at the last operating point does not need this constraint. There might be a better way to implement this. 
-            )
             * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-            # TODO: extend to investment functionality ? (is that even possible)
+            * unit_flow_op_active[u, n, d, op + 1, s, t]
         ) for (u, n, d) in indices(unit_capacity)
+        if ordered_unit_flow_op(unit = u, node=n, direction=d)
         for (u, n, d, op, s, t) in unit_flow_op_indices(m; unit=u, node=n, direction=d)
+        if op < lastindex(operating_points(unit=u, node=n, direction=d))
+        # the partial unit flow at the last operating point does not need this constraint.
     )
 end
