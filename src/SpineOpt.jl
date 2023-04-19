@@ -43,6 +43,10 @@ export write_report
 export write_report_from_intermediate_results
 export generate_forced_availability_factor
 export forced_availability_factor_time_series
+export SpineOptExt
+export generate_temporal_structure!
+export roll_temporal_structure!
+export time_slice
 
 include("util/misc.jl")
 include("util/write_information_files.jl")
