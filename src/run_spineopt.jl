@@ -17,9 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-using Cbc
-using Clp
-
 module _Template
 using SpineInterface
 end
@@ -353,7 +350,7 @@ function _db_mip_solver(instance)
         db_mip_solver_options(model=instance, _strict=false)
     ) do
         @warn "no `db_mip_solver` parameter was found for model `$instance` - using the default instead"
-        optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 0, "ratioGap" => 0.01)
+        optimizer_with_attributes(HiGHS.Optimizer, "presolve" => "on", "output_flag" => false, "mip_rel_gap" => 0.01)
     end
 end
 
@@ -363,7 +360,7 @@ function _db_lp_solver(instance)
         db_lp_solver_options(model=instance, _strict=false)
     ) do
         @warn "no `db_lp_solver` parameter was found for model `$instance` - using the default instead"
-        optimizer_with_attributes(Clp.Optimizer, "logLevel" => 0)
+        optimizer_with_attributes(HiGHS.Optimizer, "presolve" => "on", "output_flag" => false)
     end
 end
 
@@ -392,6 +389,7 @@ function _parse_solver_options(db_solver_name, db_solver_options::Map)
 end
 _parse_solver_options(db_solver_name, db_solver_options) = []
 
+_parse_solver_option(value::Bool) = value
 _parse_solver_option(value::Number) = isinteger(value) ? convert(Int64, value) : value
 _parse_solver_option(value) = string(value)
 _do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)

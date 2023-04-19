@@ -88,7 +88,7 @@ function rerun_spineopt!(
     end
     while mga_iterations <= max_mga_iteration
         # TODO: set_objective_mga_iteration is different now
-        set_objective_mga_iteration!(m_mga;iteration=mga_iteration()[end], iterations_num=mga_iterations)
+        set_objective_mga_iteration!(m_mga; iteration=mga_iteration()[end], iterations_num=mga_iterations)
         optimize_model!(m_mga; log_level=log_level, iterations=mga_iterations)  || break
         save_mga_objective_values!(m_mga)
         # TODO: needs to clean outputs?
