@@ -415,7 +415,7 @@ struct SpineOptExt
     objective_lower_bound::Float64
     objective_upper_bound::Float64
     benders_gap::Float64
-    function SpineOptExt(instance, lp_solver, is_subproblem)
+    function SpineOptExt(instance, lp_solver=nothing, is_subproblem=false)
         intermediate_results_folder = tempname(; cleanup=false)
         mkpath(intermediate_results_folder)
         report_name_keys_by_url = Dict()
