@@ -36,6 +36,7 @@ makedocs(
 		    "Simple system" => joinpath("tutorial", "simple_system.md"),
 		    "Two hydro plants" => joinpath("tutorial", "tutorialTwoHydro.md"),
 		    "Case Study A5" => joinpath("tutorial", "case_study_a5.md")
+		],
         "Concept Reference" => Any[
             "Basics of the model structure" => joinpath("concept_reference", "the_basics.md"),
             "Object Classes" => joinpath("concept_reference", "Object Classes.md"),
