@@ -74,7 +74,7 @@ power station in the river is modelled using the following elements:
 Below is a schematic of the model. For clarity, only the Rebnis station
 is presented in full detail:
 
-<img src="figs_case_study_a5_schematic.png" class="align-center"
+<img src="tutorial/figs_a5/figs_case_study_a5_schematic.png" class="align-center"
 alt="image" />
 
 In order to run this tutorial you must first execute some preliminary
@@ -112,7 +112,7 @@ so to not mix up the Spine Toolbox projects!
     open the newly created database in the *Spine DB Editor*, looking
     similar to this:
 
-    <img src="img/case_study_a5_spine_db_editor_empty.png"
+    <img src="tutorial/figs_a5/case_study_a5_spine_db_editor_empty.png"
     class="align-center" alt="image" />
 
     <div class="note">
@@ -214,7 +214,7 @@ curve with a single segment).
         will be filled automatically with ‘unit‘. The form should now be
         looking similar to this:
 
-        <img src="img/add_power_plant_units.png" class="align-center"
+        <img src="tutorial/figs_a5/add_power_plant_units.png" class="align-center"
         alt="image" />
 
     4.  Click **Ok**.
@@ -349,7 +349,7 @@ To modify an object after you enter it, right click on it and select
         the clipboard into the table. The form should be looking like
         this:
 
-        <img src="img/case_study_a5_model_parameters.png" class="align-center"
+        <img src="tutorial/figs_a5/case_study_a5_model_parameters.png" class="align-center"
         alt="image" />
 
 2.  Specify the resolution of our temporal block `some_week` in the same
@@ -422,7 +422,7 @@ clipboard, then select all target cells and press **Ctrl+V**.
         from the clipboard into the table. The form should be looking
         like this:
 
-        <img src="img/add_pwr_plant_water_from_node.png" class="align-center"
+        <img src="tutorial/figs_a5/add_pwr_plant_water_from_node.png" class="align-center"
         alt="image" />
 
     4.  Click **Ok**.
@@ -636,7 +636,7 @@ clipboard, then select all target cells and press **Ctrl+V**.
     Importer’s connectors. Connect similarly the importer with the input
     database. Now the project should look similar to this:
 
-    <img src="img/items_connections.png" class="align-center" alt="image" />
+    <img src="tutorial/figs_a5/items_connections.png" class="align-center" alt="image" />
 
 6.  From the main menu, select **File -\> Save project**.
 
@@ -683,7 +683,7 @@ is complete.
 
 Select the output data store and open the Spine DB editor.
 
-<img src="img/case_study_a5_output.png" class="align-center"
+<img src="tutorial/figs_a5/case_study_a5_output.png" class="align-center"
 alt="image" />
 
 To checkout the flow on the electricity load (i.e., the total
@@ -694,7 +694,7 @@ double-click the first cell under <span class="title-ref">value</span>.
 The *Parameter value editor* will pop up. You should see something like
 this:
 
-<img src="img/case_study_a5_output_electricity_load_unit_flow.png"
+<img src="tutorial/figs_a5/case_study_a5_output_electricity_load_unit_flow.png"
 class="align-center" alt="image" />
 
 <div class="note">

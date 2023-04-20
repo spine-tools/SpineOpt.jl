@@ -24,7 +24,7 @@ system on Spine Toolbox and is organized as follows:
 -   The demand at the electricity node is 150 MWh.
 -   The fuel node is able to provide infinite energy.
 
-<img src="img/simple_system_schematic.png" class="align-center"
+<img src="tutorial/figs_simple_system/simple_system_schematic.png" class="align-center"
 alt="image" />
 
 ### Installation and upgrades
@@ -34,7 +34,11 @@ If you haven't yet installed the tools yet, please follow the installation guide
 - For SpineOpt: https://github.com/spine-tools/Spine-Toolbox#installation
 
 If you are not sure whether you have the latest version, please upgrade to ensure compatibility with this guide.
-- For Spine Toolbox: 
+- For Spine Toolbox:
+	- If installed with pipx, then use `python -m pipx upgrade spinetoolbox`
+	- If installed from sources using git, then<br>
+	    `git pull`<br>
+		`python -m pip install -U -r requirements.txt`<br>
 - For SpineOpt: https://github.com/spine-tools/SpineOpt.jl#upgrading
 
 ## Guide
@@ -55,7 +59,7 @@ If you are not sure whether you have the latest version, please upgrade to ensur
     open the newly created database in the *Spine DB editor*, looking
     similar to this:
 
-    <img src="img/case_study_a5_spine_db_editor_empty.png"
+    <img src="tutorial/figs_simple_system/case_study_a5_spine_db_editor_empty.png"
     class="align-center" alt="image" />
 
     <div class="note">
@@ -115,7 +119,7 @@ temporal structure.
     class="title-ref">fuel_node</span> and <span
     class="title-ref">electricity_node</span>.
 
-    <img src="img/simple_system_add_nodes.png" class="align-center"
+    <img src="tutorial/figs_simple_system/simple_system_add_nodes.png" class="align-center"
     alt="image" />
 
 4.  Right click on the <span class="title-ref">unit</span> class, and
@@ -142,7 +146,7 @@ nodes, and release energy to nodes.
     class="title-ref">power_plant_a</span> and <span
     class="title-ref">power_plant_b</span>.
 
-    <img src="img/simple_system_add_units.png" class="align-center"
+    <img src="tutorial/figs_simple_system/simple_system_add_units.png" class="align-center"
     alt="image" />
 
 <div class="note">
@@ -174,7 +178,7 @@ To modify an object after you enter it, right click on it and select
     class="title-ref">power_plant_b</span> take energy from the <span
     class="title-ref">fuel_node</span>.
 
-    <img src="img/simple_system_add_unit__from_node_relationships.png"
+    <img src="tutorial/figs_simple_system/simple_system_add_unit__from_node_relationships.png"
     class="align-center" alt="image" />
 
 4.  Right click on the <span class="title-ref">unit\_\_to_node</span>
@@ -187,7 +191,7 @@ To modify an object after you enter it, right click on it and select
     class="title-ref">power_plant_b</span> release energy into the <span
     class="title-ref">electricity_node</span>.
 
-    <img src="img/simple_system_add_unit__to_node_relationships.png"
+    <img src="tutorial/figs_simple_system/simple_system_add_unit__to_node_relationships.png"
     class="align-center" alt="image" />
 
 6.  Right click on the <span class="title-ref">report\_\_output</span>
@@ -201,7 +205,7 @@ To modify an object after you enter it, right click on it and select
     optimization variable to the output database, as part of <span
     class="title-ref">report1</span>.
 
-    <img src="img/simple_system_add_report__output_relationships.png"
+    <img src="tutorial/figs_simple_system/simple_system_add_report__output_relationships.png"
     class="align-center" alt="image" />
 
 <div class="note">
@@ -232,7 +236,7 @@ written to the output database as part of a report.
     will establish that there's a demand of '100' at the electricity
     node.
 
-    <img src="img/simple_system_electricity_demand.png" class="align-center"
+    <img src="tutorial/figs_simple_system/simple_system_electricity_demand.png" class="align-center"
     alt="image" />
 
 4.  Select <span class="title-ref">fuel_node</span> in the *Object
@@ -245,7 +249,7 @@ written to the output database as part of a report.
     below. This will establish that the fuel node is not balanced, and
     thus provide as much fuel as needed.
 
-    <img src="img/simple_system_fuel_balance_type.png" class="align-center"
+    <img src="tutorial/figs_simple_system/simple_system_fuel_balance_type.png" class="align-center"
     alt="image" />
 
 #### Specifying relationship parameter values
@@ -261,7 +265,7 @@ written to the output database as part of a report.
     image below. This will set the operating cost for <span
     class="title-ref">power_plant_a</span>.
 
-    <img src="img/simple_system_power_plant_a_vom_cost.png"
+    <img src="tutorial/figs_simple_system/simple_system_power_plant_a_vom_cost.png"
     class="align-center" alt="image" />
 
 3.  Select <span class="title-ref">power_plant_b \| fuel_node</span> in
@@ -274,7 +278,7 @@ written to the output database as part of a report.
     set the operating cost for <span
     class="title-ref">power_plant_b</span>.
 
-    <img src="img/simple_system_power_plant_b_vom_cost.png"
+    <img src="tutorial/figs_simple_system/simple_system_power_plant_b_vom_cost.png"
     class="align-center" alt="image" />
 
 5.  In *Relationship tree*, expand the <span
@@ -287,7 +291,7 @@ written to the output database as part of a report.
     class="title-ref">100</span> as seen in the image below. This will
     set the capacity for <span class="title-ref">power_plant_a</span>.
 
-    <img src="img/simple_system_power_plant_a_capacity.png"
+    <img src="tutorial/figs_simple_system/simple_system_power_plant_a_capacity.png"
     class="align-center" alt="image" />
 
 7.  Select <span class="title-ref">power_plant_b \|
@@ -299,7 +303,7 @@ written to the output database as part of a report.
     class="title-ref">200</span> as seen in the image below. This will
     set the capacity for <span class="title-ref">power_plant_b</span>.
 
-    <img src="img/simple_system_power_plant_b_capacity.png"
+    <img src="tutorial/figs_simple_system/simple_system_power_plant_b_capacity.png"
     class="align-center" alt="image" />
 
 9.  In *Relationship tree*, select the <span
@@ -320,7 +324,7 @@ written to the output database as part of a report.
     class="title-ref">0.7</span> and <span class="title-ref">0.8</span>,
     respectively. It should like the image below.
 
-    <img src="img/simple_system_fix_ratio_out_in_unit_flow.png"
+    <img src="tutorial/figs_simple_system/simple_system_fix_ratio_out_in_unit_flow.png"
     class="align-center" alt="image" />
 
 When you're ready, commit all changes to the database.
@@ -354,5 +358,5 @@ When you're ready, commit all changes to the database.
 5.  The *Pivot table* will be populated with results from the SpineOpt
     run. It will look something like the image below.
 
-<img src="img/simple_system_results_pivot_table.png"
+<img src="tutorial/figs_simple_system/simple_system_results_pivot_table.png"
 class="align-center" alt="image" />
