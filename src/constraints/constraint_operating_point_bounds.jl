@@ -25,27 +25,32 @@ Limit the maximum number of each activated segment `unit_flow_op_active` cannot 
 function add_constraint_operating_point_bounds!(m::Model)
     @fetch unit_flow_op_active, units_on = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:operating_point_bounds] = Dict(
-        (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t) => @constraint(
+        (unit=u, node=n, direction=d, i=op, stochastic_path=s, t=t) => @constraint(
             m,
-            unit_flow_op_active[u, n, d, op, s, t]
+            expr_sum(
+                unit_flow_op_active[u, n, d, op, s, t]
+                for (u, n, d, op, s, t) in unit_flow_op_active_indices(
+                    m; unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                ); init=0
+            )
             <= 
-            units_on[u, s, t]
+            expr_sum(
+                units_on[u, s, t] for (u, s, t) in units_on_indices(
+                    m; unit=u, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                ); init=0
+            )
         )
-        # TODO: this indices still work if units_on use a different stochastic structure, why?
-        for (u, s, t) in units_on_indices(m)
-        for (u, n, d, op, s, t) in unit_flow_op_indices(m; unit=u, stochastic_scenario=s, t=t)
-        if ordered_unit_flow_op(unit = u, node=n, direction=d)
+        for (u, n, d, op, s, t) in constraint_operating_point_bounds_indices(m)
     )
 end
 
 function constraint_operating_point_bounds_indices(m::Model)
     unique(
         (unit=u, node=ng, direction=d, i=i, stochastic_path=path, t=t)
-        for (u, s, t) in units_on_indices(m)
-        if ordered_unit_flow_op(unit = u)
-        # TODO: may need an algorithm to unify the stochastic paths of units_on (unit_stochastic_time_indices) and unit_flow_op (node_stochastic_time_indices)
+        for (u, ng, d, i, _s, _t) in unit_flow_op_indices(m)
+        if ordered_unit_flow_op(unit=u, node=ng, direction=d)
         for (t, path) in t_lowest_resolution_path(
-            m, vcat(unit_flow_op_indices(m; unit=u, node=ng, direction=d), unit_flow_op_indices(m; unit=u, stochastic_scenario=s, t=t))
+            m, vcat(unit_flow_op_indices(m; unit=u, node=ng, direction=d, i=i), units_on_indices(m; unit=u))
         )
     )
 end
