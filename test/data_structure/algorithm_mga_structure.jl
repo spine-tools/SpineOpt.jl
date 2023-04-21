@@ -535,7 +535,7 @@
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
-        m=run_spineopt(url_in; log_level=1)
+        m = run_spineopt(url_in; log_level=1)
         var_units_invested = m.ext[:spineopt].variables[:units_invested]
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
@@ -587,6 +587,5 @@
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
-        ###
     end
 end

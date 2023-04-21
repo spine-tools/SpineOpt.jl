@@ -64,8 +64,8 @@ end
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["output", "unit_flow", "output_resolution", Dict("type" => "duration", "data" => "1h")],
             ["output", "variable_om_costs", "output_resolution", Dict("type" => "duration", "data" => "1h")],
-            ["model", "instance", "db_mip_solver", "Cbc.jl"],
-            ["model", "instance", "db_lp_solver", "Clp.jl"]
+            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
+            ["model", "instance", "db_lp_solver", "HiGHS.jl"]
         ],
     )
     @testset "rolling" begin
@@ -501,20 +501,20 @@ end
     end
     @testset "db_solvers" begin
         _load_test_data(url_in, test_data)
-        logLevel = 1.0
-        ratioGap = 0.015
+        output_flag = true
+        mip_rel_gap = 0.015
         demand = 100
 
         mip_solver_options = Dict(
             "type" => "map",
             "index_type" => "str",
             "data" => Dict(
-                "Cbc.jl" => Dict(
+                "HiGHS.jl" => Dict(
                     "type" => "map",
                     "index_type" => "str",
                     "data" => Dict(
-                        "ratioGap" => ratioGap,
-                        "logLevel" => logLevel,
+                        "mip_rel_gap" => mip_rel_gap,
+                        "output_flag" => output_flag,
                     ),
                 ),
             ),
@@ -524,7 +524,7 @@ end
             "type" => "map",
             "index_type" => "str",
             "data" => Dict(
-                "Clp.jl" => Dict(
+                "HiGHS.jl" => Dict(
                     "type" => "map",
                     "index_type" => "str",
                     "data" => Dict(
@@ -548,27 +548,27 @@ end
         )
 
         m = run_spineopt(url_in, url_out; log_level=0, optimize=false)
-        @test get_optimizer_attribute(m, "logLevel") == "1"
-        @test get_optimizer_attribute(m, "ratioGap") == "0.015"
+        @test get_optimizer_attribute(m, "output_flag") == true
+        @test get_optimizer_attribute(m, "mip_rel_gap") == 0.015
     end
     @testset "db_solvers_multi_model" begin
         _load_test_data(url_in, test_data)
-        logLevel = 1.0
-        ratioGap = 0.015
-        logLevel_master = 0.0
-        ratioGap_master = 0.016
+        output_flag = true
+        mip_rel_gap = 0.015
+        output_flag_master = false
+        mip_rel_gap_master = 0.016
         demand = 100
 
         mip_solver_options = Dict(
             "type" => "map",
             "index_type" => "str",
             "data" => Dict(
-                "Cbc.jl" => Dict(
+                "HiGHS.jl" => Dict(
                     "type" => "map",
                     "index_type" => "str",
                     "data" => Dict(
-                        "ratioGap" => ratioGap,
-                        "logLevel" => logLevel,
+                        "mip_rel_gap" => mip_rel_gap,
+                        "output_flag" => output_flag,
                     ),
                 ),
             ),
@@ -578,7 +578,7 @@ end
             "type" => "map",
             "index_type" => "str",
             "data" => Dict(
-                "Clp.jl" => Dict(
+                "HiGHS.jl" => Dict(
                     "type" => "map",
                     "index_type" => "str",
                     "data" => Dict(
@@ -592,12 +592,12 @@ end
             "type" => "map",
             "index_type" => "str",
             "data" => Dict(
-                "Cbc.jl" => Dict(
+                "HiGHS.jl" => Dict(
                     "type" => "map",
                     "index_type" => "str",
                     "data" => Dict(
-                        "ratioGap" => ratioGap_master,
-                        "logLevel" => logLevel_master,
+                        "mip_rel_gap" => mip_rel_gap_master,
+                        "output_flag" => output_flag_master,
                     ),
                 ),
             ),
@@ -607,7 +607,7 @@ end
             "type" => "map",
             "index_type" => "str",
             "data" => Dict(
-                "Clp.jl" => Dict(
+                "HiGHS.jl" => Dict(
                     "type" => "map",
                     "index_type" => "str",
                     "data" => Dict(
@@ -631,8 +631,8 @@ end
             ["model", "master_instance", "model_type", "spineopt_benders_master"],
             ["model", "master_instance", "db_mip_solver_options", mip_solver_options_master],
             ["model", "master_instance", "db_lp_solver_options", lp_solver_options_master],
-            ["model", "master_instance", "db_mip_solver", "Cbc.jl"],
-            ["model", "master_instance", "db_lp_solver", "Clp.jl"],
+            ["model", "master_instance", "db_mip_solver", "HiGHS.jl"],
+            ["model", "master_instance", "db_lp_solver", "HiGHS.jl"],
             ["model", "master_instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
             ["model", "master_instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
             ["model", "master_instance", "duration_unit", "hour"],
@@ -662,10 +662,10 @@ end
         )
 
         (m, mp) = run_spineopt(url_in, url_out; log_level=0, optimize=false)
-        @test get_optimizer_attribute(m, "logLevel") == "1"
-        @test get_optimizer_attribute(m, "ratioGap") == "0.015"
-        @test get_optimizer_attribute(mp, "logLevel") == "0"
-        @test get_optimizer_attribute(mp, "ratioGap") == "0.016"
+        @test get_optimizer_attribute(m, "output_flag") == true
+        @test get_optimizer_attribute(m, "mip_rel_gap") == 0.015
+        @test get_optimizer_attribute(mp, "output_flag") == false
+        @test get_optimizer_attribute(mp, "mip_rel_gap") == 0.016
     end
     @testset "fixing variables when rolling" begin
         _load_test_data(url_in, test_data)
