@@ -56,8 +56,8 @@
             ["model", "instance", "duration_unit", "hour"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
-            ["model", "instance", "db_mip_solver", "Cbc.jl"],
-            ["model", "instance", "db_lp_solver", "Clp.jl"],
+            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
+            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [[
             "stochastic_structure__stochastic_scenario",

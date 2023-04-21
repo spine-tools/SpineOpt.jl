@@ -27,6 +27,7 @@ using JSON
 using Printf
 using Requires
 using JuMP
+using HiGHS
 using Arrow
 import DataStructures: OrderedDict
 import Dates: CompoundPeriod
