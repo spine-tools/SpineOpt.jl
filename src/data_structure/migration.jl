@@ -39,9 +39,7 @@ _upgrade_functions = [
 	move_connection_flow_cost,
 	rename_model_types,
 	add_min_unit_flow,
-	add_flow_non_anticipativity_time,
-	add_mga_weight_factors,
-	add_ordered_unit_flow_op
+	add_flow_non_anticipativity_time
 ]
 
 """
