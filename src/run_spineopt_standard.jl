@@ -240,7 +240,7 @@ function _set_objective!(m::Model; alternative_objective=m -> nothing)
         if !iszero(total_discounted_costs)
             @objective(m, Min, total_discounted_costs)
         else
-            @warn "zero objective"
+            @warn "no objective terms defined"
         end
     else
         alt_obj
