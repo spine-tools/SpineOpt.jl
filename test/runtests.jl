@@ -59,8 +59,9 @@ function _load_test_data_without_template(db_url, test_data)
     SpineInterface.import_data(db_url; test_data...)
 end
 
-function _is_constraint_equal(con1, con2)
-    con1.func == con2.func && con1.set == con2.set
+function _is_constraint_equal(x, y)
+    x_terms, y_terms = x.func.terms, y.func.terms
+    x.set == y.set && keys(x_terms) == keys(y_terms) && all(isapprox(x_terms[k], y_terms[k]) for k in keys(x_terms))
 end
 
 """
