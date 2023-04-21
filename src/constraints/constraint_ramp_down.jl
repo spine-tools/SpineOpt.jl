@@ -24,7 +24,7 @@ Limit the maximum ramp of `ramp_down_unit_flow` of a `unit` or `unit_group` if t
 `ramp_down_limit`,`unit_capacity`,`unit_conv_cap_to_unit_flow` exist.
 """
 function add_constraint_ramp_down!(m::Model)
-    @fetch units_on, units_started_up, ramp_down_unit_flow, nonspin_units_shut_down = m.ext[:spineopt].variables
+    @fetch units_on, units_started_up, units_shut_down, ramp_down_unit_flow, nonspin_units_shut_down = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:ramp_down] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
@@ -38,17 +38,19 @@ function add_constraint_ramp_down!(m::Model)
             <=
             + sum(
                 (
-                    + units_on[u, s, t1]
-                    - units_started_up[u, s, t1]
-                    - expr_sum(
-                        + nonspin_units_shut_down[u, n, s, t1]
-                        for (u, n, s, t1) in nonspin_units_shut_down_indices(m; unit=u, stochastic_scenario=s, t=t1)
-                        if is_reserve_node(node=n) && downward_reserve(node=n);
-                        init=0,
+                    (
+                        + units_on[u, s, t1] - units_started_up[u, s, t1]
+                        - expr_sum(
+                            + nonspin_units_shut_down[u, n, s, t1]
+                            for (u, n, s, t1) in nonspin_units_shut_down_indices(m; unit=u, stochastic_scenario=s, t=t1)
+                            if is_reserve_node(node=n) && downward_reserve(node=n);
+                            init=0,
+                        )
                     )
+                    * ramp_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+                    + units_shut_down[u, s, t1]
                 )
                 * min(duration(t), duration(t1))
-                * ramp_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t))
