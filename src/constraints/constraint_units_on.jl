@@ -24,8 +24,14 @@ Limit the units_on by the number of available units.
 """
 function add_constraint_units_on!(m::Model)
     @fetch units_on, units_available = m.ext[:spineopt].variables
+    t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:units_on] = Dict(
-        (unit=u, stochastic_scenario=s, t=t) => @constraint(m, units_on[u, s, t] <= units_available[u, s, t])
+        (unit=u, stochastic_scenario=s, t=t) => @constraint(
+            m, 
+            + units_on[u, s, t] 
+            * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
+            <= 
+            + units_available[u, s, t])
         for (u, s, t) in units_on_indices(m)
     )
 end
