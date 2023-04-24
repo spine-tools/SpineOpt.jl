@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-@testset "unit-based constraints" begin
+function _test_constraint_unit_setup()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -88,8 +88,13 @@
             ]
         ],
     )
+    _load_test_data(url_in, test_data)
+    url_in
+end
+
+function test_initial_units_on()
     @testset "initial_units_on" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         init_units_on = 123
         object_parameter_values = [
             ["unit", "unit_ab", "initial_units_on", init_units_on],
@@ -106,8 +111,11 @@
             end
         end
     end
+end
+
+function test_constraint_units_on()
     @testset "constraint_units_on" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         unit_availability_factor = 0.5
         object_parameter_values = [
             ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
@@ -130,8 +138,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_units_available()
     @testset "constraint_units_available" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         number_of_units = 4
         candidate_units = 3
         unit_availability_factor = 0.5
@@ -163,8 +174,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_unit_state_transition()
     @testset "constraint_unit_state_transition" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         object_parameter_values = [["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_integer"]]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -192,15 +206,18 @@
             end
         end
     end
+end
+
+function test_constraint_unit_flow_capacity()
     @testset "constraint_unit_flow_capacity" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         unit_capacity = 100
         unit_availability_factor = 0.5
         object_parameter_values = [
             ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
         ]
         relationships = [
-            ["unit__to_node", ["unit_ab", "node_group_bc"]],
+                ["unit__to_node", ["unit_ab", "node_group_bc"]],
         ]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", unit_capacity]
@@ -208,9 +225,9 @@
         SpineInterface.import_data(
             url_in; 
             object_parameter_values=object_parameter_values, 
-            relationships=relationships, relationship_parameter_values=relationship_parameter_values
+            relationships=relationships,
+            relationship_parameter_values=relationship_parameter_values
         )
-        
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_units_on = m.ext[:spineopt].variables[:units_on]
@@ -234,14 +251,19 @@
             var_u_on_2 = var_units_on[var_u_on_key_2...]
             con_key = (unit(:unit_ab), node(:node_group_bc), direction(:to_node), [s,s_child], t)
             expected_con = @build_constraint(
-                var_u_flow_c_1 +  var_u_flow_c_2 + 2*var_u_flow_b <= unit_capacity * unit_availability_factor * (var_u_on_1 +  var_u_on_2)
+                var_u_flow_c_1 +  var_u_flow_c_2 + 2 * var_u_flow_b
+                <=
+                unit_capacity * unit_availability_factor * (var_u_on_1 + var_u_on_2)
             )
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_minimum_operating_point()
     @testset "constraint_minimum_operating_point" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         unit_capacity = 100
         minimum_operating_point = 0.25
         relationship_parameter_values = [
@@ -249,7 +271,6 @@
             ["unit__from_node", ["unit_ab", "node_a"], "minimum_operating_point", minimum_operating_point],
         ]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_units_on = m.ext[:spineopt].variables[:units_on]
@@ -268,8 +289,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_operating_point_bounds()
     @testset "constraint_operating_point_bounds" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:length(points)]]
@@ -303,8 +327,11 @@
             end
         end
     end
+end
+
+function test_constraint_operating_point_sum()
     @testset "constraint_operating_point_sum" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
@@ -328,6 +355,9 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_ratio_unit_flow()
     @testset "constraint_ratio_unit_flow" begin
         flow_ratio = 0.8
         units_on_coeff = 0.2
@@ -349,7 +379,7 @@
             ("fix", "out", "out"),
             ("max", "out", "out"),
         )
-            _load_test_data(url_in, test_data)
+            url_in = _test_constraint_unit_setup()
             ratio = join([p, "ratio", a, b, "unit_flow"], "_")
             coeff = join([p, "units_on_coefficient", a, b], "_")
             relationships = [
@@ -396,6 +426,9 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_total_cumulated_unit_flow()
     @testset "constraint_total_cumulated_unit_flow" begin
         total_cumulated_flow_bound = 100
         senses_by_prefix = Dict("min" => >=, "max" => <=)
@@ -406,7 +439,7 @@
             ("max", "from_node"),
             ("max", "to_node"),
         )
-            _load_test_data(url_in, test_data)
+            url_in = _test_constraint_unit_setup()
             cumulated = join([p,"total" , "cumulated", "unit_flow",a], "_")
             relationships = [
                 [classes_by_prefix[a], ["unit_ab", "node_a"]],
@@ -444,10 +477,13 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_min_up_time()
     @testset "constraint_min_up_time" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_up_minutes in (60, 120, 210)
-            _load_test_data(url_in, test_data)
+            url_in = _test_constraint_unit_setup()
             min_up_time = Dict("type" => "duration", "data" => string(min_up_minutes, "m"))
             object_parameter_values =
                 [["unit", "unit_ab", "min_up_time", min_up_time], ["model", "instance", "model_end", model_end]]
@@ -487,10 +523,13 @@
             end
         end
     end
+end
+
+function test_constraint_min_up_time_with_non_spinning_reserves()
     @testset "constraint_min_up_time_with_non_spinning_reserves" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_up_minutes in (60, 120, 210)
-            _load_test_data(url_in, test_data)
+            url_in = _test_constraint_unit_setup()
             min_up_time = Dict("type" => "duration", "data" => string(min_up_minutes, "m"))
             object_parameter_values = [
                 ["unit", "unit_ab", "min_up_time", min_up_time],
@@ -544,10 +583,13 @@
             end
         end
     end
+end
+
+function test_constraint_min_down_time()
     @testset "constraint_min_down_time" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_down_minutes in (45, 150, 300)
-            _load_test_data(url_in, test_data)
+            url_in = _test_constraint_unit_setup()
             number_of_units = 4
             candidate_units = 3
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
@@ -601,10 +643,13 @@
             end
         end
     end
+end
+
+function test_constraint_min_down_time_with_non_spinning_reserves()
     @testset "constraint_min_down_time_with_non_spinning_reserves" begin
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for min_down_minutes in (90, 150, 300)  # TODO: make it work for 45, 75
-            _load_test_data(url_in, test_data)
+            url_in = _test_constraint_unit_setup()
             number_of_units = 4
             candidate_units = 3
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
@@ -672,8 +717,11 @@
             end
         end
     end
+end
+
+function test_constraint_units_invested_available()
     @testset "constraint_units_invested_available" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         candidate_units = 7
         object_parameter_values = [["unit", "unit_ab", "candidate_units", candidate_units]]
         relationships = [
@@ -696,8 +744,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_units_invested_available_mp()
     @testset "constraint_units_invested_available_mp" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         candidate_units = 7
         object_parameter_values = [
             ["unit", "unit_ab", "candidate_units", candidate_units],
@@ -739,8 +790,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_units_invested_transition()
     @testset "constraint_units_invested_transition" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         candidate_units = 4
         object_parameter_values = [["unit", "unit_ab", "candidate_units", candidate_units]]
         relationships = [
@@ -773,8 +827,11 @@
             end
         end
     end
+end
+
+function test_constraint_units_invested_transition_mp()
     @testset "constraint_units_invested_transition_mp" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         candidate_units = 4
         object_parameter_values = [
             ["unit", "unit_ab", "candidate_units", candidate_units],
@@ -836,11 +893,14 @@
             end
         end
     end
+end
+
+function test_constraint_unit_lifetime()
     @testset "constraint_unit_lifetime" begin
         candidate_units = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
-            _load_test_data(url_in, test_data)
+            url_in = _test_constraint_unit_setup()
             unit_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["unit", "unit_ab", "candidate_units", candidate_units],
@@ -889,11 +949,14 @@
             end
         end
     end
+end
+
+function test_constraint_unit_lifetime_mp()
     @testset "constraint_unit_lifetime_mp" begin
         candidate_units = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
-            _load_test_data(url_in, test_data)
+            url_in = _test_constraint_unit_setup()
             unit_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["unit", "unit_ab", "candidate_units", candidate_units],
@@ -977,8 +1040,11 @@
             end
         end
     end
+end
+
+function test_constraint_max_nonspin_start_up_ramp()
     @testset "constraint_max_nonspin_start_up_ramp" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         max_res_startup_ramp = 0.5
         unit_capacity = 200
         is_reserve_node = true
@@ -1012,8 +1078,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_min_nonspin_start_up_ramp()
     @testset "constraint_min_nonspin_start_up_ramp" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         max_res_startup_ramp = 0.5
         min_res_startup_ramp = 0.25
         unit_capacity = 200
@@ -1048,8 +1117,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_max_start_up_ramp()
     @testset "constraint_max_start_up_ramp" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         max_startup_ramp = 0.4
         unit_capacity = 200
         ramp_up_limit = 1
@@ -1077,8 +1149,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_min_start_up_ramp()
     @testset "constraint_min_start_up_ramp" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         max_startup_ramp = 0.4
         min_startup_ramp = 0.2
         unit_capacity = 200
@@ -1108,8 +1183,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_ramp_up()
     @testset "constraint_ramp_up" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         ramp_up_limit = 0.8
         unit_capacity = 200
         relationship_parameter_values = [
@@ -1137,8 +1215,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_split_ramp_up()
     @testset "constraint_split_ramp_up" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         ramp_up_limit = 0.8
         max_startup_ramp = 0.4
         unit_capacity = 200
@@ -1184,8 +1265,11 @@
             end
         end
     end
+end
+
+function test_constraint_split_ramps_with_nonspin_units()
     @testset "constraint_split_ramps_with_nonspin_units" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         max_res_startup_ramp = 0.5
         unit_capacity = 200
         ramp_up_limit = 1
@@ -1236,8 +1320,11 @@
             end
         end
     end
+end
+
+function test_constraint_max_nonspin_ramp_down_unit_flow()
     @testset "constraint_max_nonspin_ramp_down_unit_flow" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         max_res_shutdown_ramp = 0.5
         unit_capacity = 200
         is_reserve_node = true
@@ -1271,8 +1358,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_min_nonspin_shut_down_ramp()
     @testset "constraint_min_nonspin_shut_down_ramp" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         max_res_shutdown_ramp = 0.5
         min_res_shutdown_ramp = 0.25
         unit_capacity = 200
@@ -1308,8 +1398,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_max_shut_down_ramp()
     @testset "constraint_max_shut_down_ramp" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         max_shutdown_ramp = 0.4
         unit_capacity = 200
         ramp_down_limit = 1
@@ -1337,8 +1430,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_min_shut_down_ramp()
     @testset "constraint_min_shut_down_ramp" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         max_shutdown_ramp = 0.4
         min_shutdown_ramp = 0.2
         unit_capacity = 200
@@ -1368,8 +1464,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_ramp_down()
     @testset "constraint_ramp_down" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         ramp_down_limit = 0.8
         unit_capacity = 200
         relationship_parameter_values = [
@@ -1399,9 +1498,12 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_user_constraint()
     @testset "constraint_user_constraint(single unit)" begin
         @testset for sense in ("==", ">=", "<=")
-            _load_test_data(url_in, test_data)
+            url_in = _test_constraint_unit_setup()
             rhs = 40
             unit_flow_coefficient_a = 25
             unit_flow_coefficient_b = 30
@@ -1461,9 +1563,12 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_user_constraint_with_unit_operating_segments()
     @testset "constraint_user_constraint_with_unit_operating_segments" begin
         @testset for sense in ("==", ">=", "<=")
-            _load_test_data(url_in, test_data)
+            url_in = _test_constraint_unit_setup()
             rhs = 40
             unit_flow_coefficient_a = 25
             unit_flow_coefficient_b = 30
@@ -1529,8 +1634,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_pw_unit_heat_rate()
     @testset "constraint_pw_unit_heat_rate" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         unit_idle_heat_rate = 200
         unit_start_flow = 100
         points = [0.1, 0.5, 1.0]
@@ -1577,8 +1685,11 @@
         observed_con = constraint_object(constraint[con_key...])
         @test _is_constraint_equal(observed_con, expected_con)
     end
+end
+
+function test_constraint_pw_unit_heat_rate_simple()
     @testset "constraint_pw_unit_heat_rate_simple" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         unit_idle_heat_rate = 200
         unit_start_flow = 100
         points = [0.1, 0.5, 1.0]
@@ -1624,8 +1735,11 @@
         observed_con = constraint_object(constraint[con_key...])
         @test _is_constraint_equal(observed_con, expected_con)
     end
+end
+
+function test_constraint_pw_unit_heat_rate_simple2()
     @testset "constraint_pw_unit_heat_rate_simple2" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_unit_setup()
         unit_idle_heat_rate = 200
         unit_start_flow = 100
         inc_hrs = 10
@@ -1667,4 +1781,44 @@
         observed_con = constraint_object(constraint[con_key...])
         @test _is_constraint_equal(observed_con, expected_con)
     end
+end
+
+@testset "unit-based constraints" begin
+    test_initial_units_on()
+    test_constraint_units_on()
+    test_constraint_units_available()
+    test_constraint_unit_state_transition()
+    test_constraint_unit_flow_capacity()
+    test_constraint_minimum_operating_point()
+    test_constraint_operating_point_bounds()
+    test_constraint_operating_point_sum()
+    test_constraint_ratio_unit_flow()
+    test_constraint_total_cumulated_unit_flow()
+    test_constraint_min_up_time()
+    test_constraint_min_up_time_with_non_spinning_reserves()
+    test_constraint_min_down_time()
+    test_constraint_min_down_time_with_non_spinning_reserves()
+    test_constraint_units_invested_available()
+    test_constraint_units_invested_available_mp()
+    test_constraint_units_invested_transition()
+    test_constraint_units_invested_transition_mp()
+    test_constraint_unit_lifetime()
+    test_constraint_unit_lifetime_mp()
+    test_constraint_max_nonspin_start_up_ramp()
+    test_constraint_min_nonspin_start_up_ramp()
+    test_constraint_max_start_up_ramp()
+    test_constraint_min_start_up_ramp()
+    test_constraint_ramp_up()
+    test_constraint_split_ramp_up()
+    test_constraint_split_ramps_with_nonspin_units()
+    test_constraint_max_nonspin_ramp_down_unit_flow()
+    test_constraint_min_nonspin_shut_down_ramp()
+    test_constraint_max_shut_down_ramp()
+    test_constraint_min_shut_down_ramp()
+    test_constraint_ramp_down()
+    test_constraint_user_constraint()
+    test_constraint_user_constraint_with_unit_operating_segments()
+    test_constraint_pw_unit_heat_rate()
+    test_constraint_pw_unit_heat_rate_simple()
+    test_constraint_pw_unit_heat_rate_simple2()
 end
