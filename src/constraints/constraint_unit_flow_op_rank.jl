@@ -44,7 +44,7 @@ function add_constraint_unit_flow_op_rank!(m::Model)
             * unit_flow_op_active[u, n, d, op + 1, s, t]
         ) for (u, n, d) in indices(unit_capacity)
         if ordered_unit_flow_op(unit = u, node=n, direction=d)
-        for (u, n, d, op, s, t) in unit_flow_op_indices(m; unit=u, node=n, direction=d)
+        for (u, n, d, op, s, t) in unit_flow_op_active_indices(m; unit=u, node=n, direction=d)
         if op < lastindex(operating_points(unit=u, node=n, direction=d))
         # the partial unit flow at the last operating point does not need this constraint.
     )

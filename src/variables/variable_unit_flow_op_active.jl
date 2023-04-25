@@ -48,6 +48,6 @@ function unit_flow_op_active_indices(
                 t=t, 
                 temporal_block=temporal_block
             )
-            if ordered_unit_flow_op(unit = u, node=n, direction=d)
+            if ordered_unit_flow_op(unit=u, node=n, direction=d)
         ]
 end

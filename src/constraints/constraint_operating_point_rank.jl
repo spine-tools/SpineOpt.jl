@@ -32,7 +32,7 @@ function add_constraint_operating_point_rank!(m::Model)
             <=
             unit_flow_op_active[u, n, d, op - 1, s, t]
         )
-        for (u, n, d, op, s, t) in unit_flow_op_indices(m)
+        for (u, n, d, op, s, t) in unit_flow_op_active_indices(m)
         if ordered_unit_flow_op(unit = u, node=n, direction=d) && (op > 1)
     )
 end
