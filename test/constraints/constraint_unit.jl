@@ -272,22 +272,34 @@
         _load_test_data(url_in, test_data)
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
-        deltas = [points[1]; [points[i] - points[i - 1] for i in 2:length(points)]]
+        deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
-        ordered_unit_flow_op = true
-        # TODO: Do we need test for ordered_unit_flow_op = false?
         relationships = [
             ["unit__to_node", ["unit_ab", "node_a"]],
         ]
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
-            ["unit__from_node", ["unit_ab", "node_a"], "ordered_unit_flow_op", ordered_unit_flow_op]
+            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
         ]
         SpineInterface.import_data(
             url_in; 
             relationships=relationships, 
-            relationship_parameter_values=relationship_parameter_values
+            relationship_parameter_values=relationship_parameter_values 
+        )
+
+        # When the parameter ordered_unit_flow_op use its default false value,
+        # SpineOpt does not generate this consraint.
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        constraint = m.ext[:spineopt].constraints[:operating_point_bounds]
+        @test isempty(constraint)
+
+        ordered_unit_flow_op = true
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "ordered_unit_flow_op", ordered_unit_flow_op],
+        ]
+        SpineInterface.import_data(
+            url_in;  
+            relationship_parameter_values=relationship_parameter_values 
         )
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -304,7 +316,9 @@
                 var_u_flow_op_active_key = (unit(:unit_ab), node(:node_a), direction(:from_node), i, s, t)
                 var_u_flow_op_active = var_unit_flow_op_active[var_u_flow_op_active_key...]
                 expected_con = @build_constraint(var_u_flow_op_active - var_us_on <= 0)
-                observed_con = constraint_object(constraint[var_u_flow_op_active_key...])
+                observed_con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), i, [s], t)
+                # [s] for a stochastic path from the given scenario s
+                observed_con = constraint_object(constraint[observed_con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
             end
         end
@@ -313,16 +327,14 @@
         _load_test_data(url_in, test_data)
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
-        deltas = [points[1]; [points[i] - points[i - 1] for i in 2:length(points)]]
+        deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
-        ordered_unit_flow_op = true
         relationships = [
             ["unit__to_node", ["unit_ab", "node_a"]],
         ]
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
-            ["unit__from_node", ["unit_ab", "node_a"], "ordered_unit_flow_op", ordered_unit_flow_op]
+            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
         ]
         SpineInterface.import_data(
             url_in; 
@@ -330,10 +342,28 @@
             relationship_parameter_values=relationship_parameter_values 
         )
 
+        # When the parameter ordered_unit_flow_op use its default false value,
+        # SpineOpt does not generate this consraint.
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        constraint = m.ext[:spineopt].constraints[:operating_point_rank]
+        @test isempty(constraint)
+
+        ordered_unit_flow_op = true
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "ordered_unit_flow_op", ordered_unit_flow_op],
+        ]
+        SpineInterface.import_data(
+            url_in;  
+            relationship_parameter_values=relationship_parameter_values 
+        )
+        
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow_op_active = m.ext[:spineopt].variables[:unit_flow_op_active]
         constraint = m.ext[:spineopt].constraints[:operating_point_rank]
-        @test length(constraint) == 6
+        # The test system has 2 timeslices (see the definition of test database in the beginning). 
+        # The length of constraint represents the total number of generated constraints,
+        # which in this case is 2 * 2 = 4.
+        @test length(constraint) == 4
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
@@ -348,7 +378,7 @@
                     observed_con = constraint_object(constraint[var_u_flow_op_active_key...])
                     @test _is_constraint_equal(observed_con, expected_con)
                 else
-                    @test isempty(constraint[var_u_flow_op_active_key...])
+                    @test get(constraint, var_u_flow_op_active_key, nothing) === nothing
                 end
             end
         end
@@ -357,7 +387,7 @@
         _load_test_data(url_in, test_data)
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
-        deltas = [points[1]; [points[i] - points[i - 1] for i in 2:length(points)]]
+        deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
@@ -369,11 +399,13 @@
         SpineInterface.import_data(
             url_in; 
             relationships=relationships,
-            relationship_parameter_values=relationship_parameter_values, 
+            relationship_parameter_values=relationship_parameter_values
         )
 
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
+        # When the parameter ordered_unit_flow_op use its default false value,
+        # the constraint should use the variable units_on for flow bound.
         var_units_on = m.ext[:spineopt].variables[:units_on]
         constraint = m.ext[:spineopt].constraints[:unit_flow_op_bounds]
         @test length(constraint) == 6
@@ -391,8 +423,12 @@
             end
         end
 
+        # When the parameter ordered_unit_flow_op is set to true,
+        # the constraint should use the variable unit_flow_op_active for flow limit.
         ordered_unit_flow_op = true
-        relationship_parameter_values = ["unit__from_node", ["unit_ab", "node_a"], "ordered_unit_flow_op", ordered_unit_flow_op]
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "ordered_unit_flow_op", ordered_unit_flow_op],
+        ]
         SpineInterface.import_data(
             url_in;  
             relationship_parameter_values=relationship_parameter_values
@@ -420,16 +456,14 @@
         _load_test_data(url_in, test_data)
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
-        deltas = [points[1]; [points[i] - points[i - 1] for i in 2:length(points)]]
+        deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
         operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
-        ordered_unit_flow_op = true
         relationships = [
             ["unit__to_node", ["unit_ab", "node_a"]],
         ]
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", unit_capacity],
-            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
-            ["unit__from_node", ["unit_ab", "node_a"], "ordered_unit_flow_op", ordered_unit_flow_op]
+            ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points]
         ]
         SpineInterface.import_data(
             url_in; 
@@ -437,11 +471,26 @@
             relationship_parameter_values=relationship_parameter_values 
         )
 
+        # When the parameter ordered_unit_flow_op use its default false value,
+        # SpineOpt does not generate this consraint.
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        constraint = m.ext[:spineopt].constraints[:unit_flow_op_rank]
+        @test isempty(constraint)
+
+        ordered_unit_flow_op = true
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "ordered_unit_flow_op", ordered_unit_flow_op],
+        ]
+        SpineInterface.import_data(
+            url_in;  
+            relationship_parameter_values=relationship_parameter_values 
+        )
+
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow_op = m.ext[:spineopt].variables[:unit_flow_op]
         var_unit_flow_op_active = m.ext[:spineopt].variables[:unit_flow_op_active]
         constraint = m.ext[:spineopt].constraints[:unit_flow_op_rank]
-        @test length(constraint) == 6
+        @test length(constraint) == 4
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
@@ -455,7 +504,8 @@
                     observed_con = constraint_object(constraint[var_u_flow_op_key...])
                     @test _is_constraint_equal(observed_con, expected_con)
                 else
-                    @test isempty(constraint[var_u_flow_op_key...])
+                    var_u_flow_op_active_key = (unit(:unit_ab), node(:node_a), direction(:from_node), i, s, t)
+                    @test get(constraint, var_u_flow_op_active_key, nothing) === nothing
                 end
             end
         end
