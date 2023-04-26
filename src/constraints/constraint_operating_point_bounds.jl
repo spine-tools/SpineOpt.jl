@@ -20,31 +20,38 @@
 """
     add_constraint_operating_point_bounds!(m::Model)
 
-Limit the operating point flow variables `unit_flow_op` to the difference between successive operating points times
-the capacity of the unit.
+Limit the maximum number of each activated segment `unit_flow_op_active` cannot be higher than the number of online units.
 """
 function add_constraint_operating_point_bounds!(m::Model)
-    @fetch unit_flow_op, units_available = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
+    @fetch unit_flow_op_active, units_on = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:operating_point_bounds] = Dict(
-        (unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t) => @constraint(
+        (unit=u, node=n, direction=d, i=op, stochastic_path=s, t=t) => @constraint(
             m,
-            + unit_flow_op[u, n, d, op, s, t]
-            <=
-            (
-                + operating_points[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op)]
-                - (
-                    op > 1 ?
-                    operating_points[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, i=op - 1)] :
-                    0
-                )
+            expr_sum(
+                unit_flow_op_active[u, n, d, op, s, t]
+                for (u, n, d, op, s, t) in unit_flow_op_active_indices(
+                    m; unit=u, node=n, direction=d, i=op, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                ); init=0
             )
-            * unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-            * units_available[u, s, t]
-            * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-            # TODO: extend to investment functionality ? (is that even possible)
+            <= 
+            expr_sum(
+                units_on[u, s, t] for (u, s, t) in units_on_indices(
+                    m; unit=u, stochastic_scenario=s, t=t_in_t(m; t_long=t)
+                ); init=0
+            )
         )
-        for (u, n, d) in indices(unit_capacity)
-        for (u, n, d, op, s, t) in unit_flow_op_indices(m; unit=u, node=n, direction=d)
+        for (u, n, d, op, s, t) in constraint_operating_point_bounds_indices(m)
+    )
+end
+
+function constraint_operating_point_bounds_indices(m::Model)
+    unique(
+        (unit=u, node=ng, direction=d, i=i, stochastic_path=path, t=t)
+        # Note: a stochastic_path is an array consisting of stochastic scenarios, e.g. [s1, s2]
+        for (u, ng, d, i, _s, _t) in unit_flow_op_indices(m)
+        if ordered_unit_flow_op(unit=u, node=ng, direction=d)
+        for (t, path) in t_lowest_resolution_path(
+            m, vcat(unit_flow_op_indices(m; unit=u, node=ng, direction=d, i=i), units_on_indices(m; unit=u))
+        )
     )
 end

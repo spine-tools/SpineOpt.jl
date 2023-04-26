@@ -615,33 +615,77 @@ Storage nodes can also contribute to the provision of reserves. The amount of ba
 
 ### Operating segments
 #### [Operating segments of units](@id constraint_operating_point_bounds)
-The `unit_flow_op` operating segment variable is bounded by the difference between successive [operating\_points](@ref) adjusted for [unit_capacity](@ref)
+Limit the maximum number of each activated segment `unit_flow_op_active` cannot be higher than the number of online units. This constraint is activated only when parameter [ordered\_unit\_flow\_op](@ref) is set `true`.
 
 ```math
 \begin{aligned}
-& v_{unit\_flow\_op}(u, n, op, s, t) \\
-&  <= p_{unit\_capacity}(u, n, d, s, t) \\
-&  \cdot v_{units\_available}(u, s, t) \\
-&  \cdot p_{unit\_conv\_cap\_to\_flow}(u, n, d, s, t) \\
- \cdot \bigg( & p_{operating\_points}(u, n, op, s, t) \\
-& - \begin{cases}       
-       0                                     & \text{if op = 1}\\
-       p_{operating\_points}(u, n, op-1, s, t) & \text{otherwise}\\
-    \end{cases} \bigg) \\
-& \forall (u,n,d,s,t) \in unit\_flow\_op\_indices \\
+& v_{unit\_flow\_op\_active}(u,n,d,op,s,t) <= v_{units\_on}(u,s,t) \\
+& \forall (u,n,d,op,s,t) \in unit\_flow\_op\_indices \\
+& \text{if } p_{ordered\_unit\_flow\_op}(u)=true \\
 \end{aligned}
 ```
 
+#### [Rank operating segments as per the index of operating points](@id constraint_operating_point_rank)
+Rank operating segments by enforcing that the variable `unit_flow_op_active` of operating point `i` can only be active 
+if previous operating point `i-1` is also active. The first segment does not need this constraint.
 
-#### [Bounding unit flows by summing over operating segments](@id constraint_operating_point_sum)
+```math
+\begin{aligned}
+& v_{unit\_flow\_op\_active}(u,n,d,op,s,t) \\
+& <= v_{unit\_flow\_op\_active}(u,n,d,op-1,s,t) \\ 
+& \forall (u,n,d,op,s,t) \in unit\_flow\_op\_indices \\
+& \text{if } op > 1 \\
+\end{aligned}
+```
+
+#### [Operating segments of units](@id unit_flow_op_bounds)
+If the segments of a `unit_flow`, i.e. `unit_flow_op` is not ordered according to the rank of the `unit_flow`'s [operating\_points](@ref) (parameter [ordered\_unit\_flow\_op](@ref) is `false`), the operating segment variable `unit_flow_op` is only bounded by the difference between successive [operating\_points](@ref) adjusted for available capacity. If the order is enforced on the segments (parameter [ordered\_unit\_flow\_op](@ref) is `true`), `unit_flow_op` can only be active if the segment is active (variable [unit\_flow\_op\_active](@ref) is `true`) besides being bounded by the segment capacity.
+
+```math
+\begin{aligned}
+& v_{unit\_flow\_op}(u, n, d, op, s, t) \\
+&  <= p_{unit\_capacity}(u, n, d, s, t) \\
+&  \cdot p_{unit\_conv\_cap\_to\_flow}(u, n, d, s, t) \\
+&  \cdot p_{unit\_availability\_factor}(u, s, t) \\
+&  \cdot \bigg( p_{operating\_points}(u, n, op, s, t) - \begin{cases}       
+       0 & \text{if op = 1}\\
+       p_{operating\_points}(u, n, op-1, s, t) & \text{otherwise}\\
+    \end{cases} \bigg) \\
+& \cdot \begin{cases}
+            v_{unit\_flow\_op\_active}(u,n,d,op,s,t) & \text{if } p_{ordered\_unit\_flow\_op}(u)=true \\
+            v_{units\_on}(u,s,t) & \text{otherwise}\\
+        \end{cases}\\
+& \forall (u,n,d,op,s,t) \in unit\_flow\_op\_indices \\
+\end{aligned}
+```
+
+#### [Bounding operating segments to use up its own capacity for activating the next segment](@id unit_flow_op_rank)
+Enforce the operating point flow variable `unit_flow_op` at operating point `i` to use its full capacity if the subsequent operating point `i+1` is active if parameter [ordered\_unit\_flow\_op](@ref) is set `true`. The last segment does not need this constraint.
+
+```math
+\begin{aligned}
+& v_{unit\_flow\_op}(u, n, d, op, s, t) \\
+& >= p_{unit\_capacity}(u, n, d, s, t) \\
+& \cdot p_{unit\_conv\_cap\_to\_flow}(u, n, d, s, t) \\
+& \cdot \bigg(p_{operating\_points}(u, n, op, s, t) - \begin{cases}       
+       0 & \text{if } op = 1\\
+       p_{operating\_points}(u, n, op-1, s, t) & \text{otherwise}\\
+    \end{cases} \bigg) \\
+& \cdot v_{unit\_flow\_op\_active}(u, n, d, op+1, s, t) \\
+& \forall (u,n,d,op,s,t) \in unit\_flow\_op\_indices \\
+& \text{ if } op < op_{last} \text{ and } p_{ordered\_unit\_flow\_op}(u)=true \\
+\end{aligned}
+```
+
+#### [Bounding unit flows by summing over operating segments](@id unit_flow_op_sum)
 `unit_flow` is constrained to be the sum of all operating segment variables, `unit_flow_op`
 
 ```math
 \begin{aligned}
-& v_{unit\_flow}(u, n, s, t) \\
-&  = \sum_{op}  v_{unit\_flow\_op}(u, n, op, s, t) \\
+& v_{unit\_flow}(u, n, d, s, t) \\
+&  = \sum_{op}  v_{unit\_flow\_op}(u, n, d, op, s, t) \\
 & \forall (u,n,d) \in operating\_point\_indices \\
-& \forall (u,n,d,s,t) \in unit\_flow\_op\_indices \\
+& \forall (u,n,d,op,s,t) \in unit\_flow\_op\_indices \\
 \end{aligned}
 ```
 
