@@ -277,7 +277,9 @@ function rerun_spineopt(
     is_subproblem = m_mp !== nothing
     m = create_model(:spineopt_standard, mip_solver, lp_solver, use_direct_model, is_subproblem)
     m_mga = create_model(:spineopt_mga, mip_solver, lp_solver, use_direct_model, is_subproblem)
-    rerun_spineopt!(
+    # NOTE: invokelatest ensures that solver modules are available to use by JuMP
+    Base.invokelatest(        
+        rerun_spineopt!,
         m,
         m_mp,
         m_mga,
