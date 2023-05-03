@@ -27,6 +27,7 @@ using JSON
 using Printf
 using Requires
 using JuMP
+using HiGHS
 using Arrow
 import DataStructures: OrderedDict
 import Dates: CompoundPeriod
@@ -43,6 +44,10 @@ export write_report
 export write_report_from_intermediate_results
 export generate_forced_availability_factor
 export forced_availability_factor_time_series
+export SpineOptExt
+export generate_temporal_structure!
+export roll_temporal_structure!
+export time_slice
 
 include("util/misc.jl")
 include("util/write_information_files.jl")
@@ -65,6 +70,7 @@ include("data_structure/diagnose.jl")
 include("variables/variable_common.jl")
 include("variables/variable_unit_flow.jl")
 include("variables/variable_unit_flow_op.jl")
+include("variables/variable_unit_flow_op_active.jl")
 include("variables/variable_connection_flow.jl")
 include("variables/variable_connection_intact_flow.jl")
 include("variables/variable_connections_invested.jl")
@@ -117,7 +123,10 @@ include("constraints/constraint_total_cumulated_unit_flow_bounds.jl")
 include("constraints/constraint_unit_flow_capacity.jl")
 include("constraints/constraint_unit_flow_capacity_w_ramps.jl")
 include("constraints/constraint_operating_point_bounds.jl")
-include("constraints/constraint_operating_point_sum.jl")
+include("constraints/constraint_operating_point_rank.jl")
+include("constraints/constraint_unit_flow_op_bounds.jl")
+include("constraints/constraint_unit_flow_op_rank.jl")
+include("constraints/constraint_unit_flow_op_sum.jl")
 include("constraints/constraint_nodal_balance.jl")
 include("constraints/constraint_node_injection.jl")
 include("constraints/constraint_node_state_capacity.jl")

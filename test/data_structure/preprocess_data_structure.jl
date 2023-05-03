@@ -15,8 +15,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#############################################################################
-@testset "add connection relationships" begin
+###########################################################################
+@testset "process_lossless_bidirectional_connections" begin
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [["connection", "connection_ab"], ["node", "node_a"], ["node", "node_b"]],
@@ -29,7 +29,7 @@
     )
     _load_test_data(url_in, test_data)    
     using_spinedb(url_in, SpineOpt)
-    SpineOpt.add_connection_relationships()
+    SpineOpt.process_lossless_bidirectional_connections()
     conn_ab = connection(:connection_ab)
     n_a = node(:node_a)
     n_b = node(:node_b)
@@ -86,7 +86,7 @@ end
     @test all((node=n, stochastic_structure=ss) in node__stochastic_structure() for n in (ng_ab, n_a, n_b))
     @test all((unit=u, stochastic_structure=ss) in units_on__stochastic_structure() for u in (ug_ab, u_a, u_b))
 end
-@testset "constraint_process_lossless_bidirectional_capacities" begin
+@testset "lossless_bidirectional_capacities" begin
     conn_r = 0.9
     conn_x = 0.1
     conn_cap_ab = 80
@@ -169,8 +169,8 @@ end
             ["commodity", "electricity", "commodity_physics", "commodity_physics_ptdf"],
             ["node", "node_a", "node_opf_type", "node_opf_type_reference"],
             ["connection", "connection_ca", "connection_contingency", true],
-            ["model", "instance", "db_mip_solver", "Cbc.jl"],
-            ["model", "instance", "db_lp_solver", "Clp.jl"],
+            ["model", "instance", "db_mip_solver", "HiGHS.jl"],
+            ["model", "instance", "db_lp_solver", "HiGHS.jl"],
         ],
         :relationship_parameter_values => [
             ["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", conn_cap_ab],
@@ -192,14 +192,14 @@ end
         connection(:connection_bc) => conn_cap_bc,
         connection(:connection_ca) => conn_cap_ca,
     )
-    for (conn, n_from, n_to) in (
+    @testset for (conn, n1, n2) in (
         (connection(:connection_ab), node(:node_a), node(:node_b)),
         (connection(:connection_bc), node(:node_b), node(:node_c)),
         (connection(:connection_ca), node(:node_c), node(:node_a)),
     )
-        @test connection_capacity(connection=conn, node=n_from, direction=direction(:from_node)) == capacities_dict[conn]
-        @test connection_capacity(connection=conn, node=n_to, direction=direction(:from_node)) == capacities_dict[conn]
-        @test connection_capacity(connection=conn, node=n_from, direction=direction(:to_node)) == capacities_dict[conn]
-        @test connection_capacity(connection=conn, node=n_to, direction=direction(:to_node)) == capacities_dict[conn]
+        @test connection_capacity(connection=conn, node=n1, direction=direction(:from_node)) == capacities_dict[conn]
+        @test connection_capacity(connection=conn, node=n1, direction=direction(:to_node)) == capacities_dict[conn]
+        @test connection_capacity(connection=conn, node=n2, direction=direction(:from_node)) == capacities_dict[conn]
+        @test connection_capacity(connection=conn, node=n2, direction=direction(:to_node)) == capacities_dict[conn]
     end
 end

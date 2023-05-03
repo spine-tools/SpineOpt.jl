@@ -18,20 +18,23 @@
 #############################################################################
 
 """
-    add_constraint_units_on!(m::Model)
+    add_constraint_unit_flow_op_sum!(m::Model)
 
-Limit the units_on by the number of available units.
+Sum up the operating point flow variables `unit_flow_op` to the corresponding variable `unit_flow`.
 """
-function add_constraint_units_on!(m::Model)
-    @fetch units_on, units_available = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:units_on] = Dict(
-        (unit=u, stochastic_scenario=s, t=t) => @constraint(
-            m, 
-            + units_on[u, s, t] 
-            * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
-            <= 
-            + units_available[u, s, t])
-        for (u, s, t) in units_on_indices(m)
+function add_constraint_unit_flow_op_sum!(m::Model)
+    @fetch unit_flow_op, unit_flow = m.ext[:spineopt].variables
+    m.ext[:spineopt].constraints[:unit_flow_op_sum] = Dict(
+        (unit=u, node=n, direction=d, stochastic_scenmario=s, t=t) => @constraint(
+            m,
+            + unit_flow[u, n, d, s, t]
+            ==
+            + expr_sum(
+                unit_flow_op[u, n, d, op, s, t] for op in 1:length(operating_points(unit=u, node=n, direction=d));
+                init=0,
+            )
+        )
+        for (u, n, d) in indices(operating_points)
+        for (u, n, d, s, t) in unit_flow_indices(m; unit=u, node=n, direction=d)
     )
 end

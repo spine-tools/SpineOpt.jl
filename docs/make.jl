@@ -63,4 +63,4 @@ makedocs(
         "Library" => "library.md",
     ],
 )
-deploydocs(repo="github.com/Spine-project/SpineOpt.jl.git", versions=["stable" => "v^", "v#.#"])
+deploydocs(repo="github.com/spine-tools/SpineOpt.jl.git", versions=["stable" => "v^", "v#.#"])

@@ -32,16 +32,15 @@ function preprocess_data_structure(; log_level=3)
     generate_report()
     generate_report__output()
     generate_model__report()
-    add_connection_relationships()
-    # NOTE: generate direction before calling `generate_ptdf_lodf`,
-    # so calls to `connection__from_node` don't corrupt lookup cache
+    process_lossless_bidirectional_connections()
+    # NOTE: generate direction before doing anything that calls `connection__from_node` or `connection__to_node`,
+    # so we don't corrupt the lookup cache
     generate_direction()
-    process_loss_bidirectional_capacities()
     generate_ptdf_lodf()
     generate_variable_indexing_support()
     generate_benders_structure()
     apply_forced_availability_factor()
-    generate_is_boundary()  
+    generate_is_boundary()
 end
 
 """
@@ -51,19 +50,18 @@ Generate `is_candidate` for the `node`, `unit` and `connection` `ObjectClass`es.
 """
 function generate_is_candidate()
     is_candidate = Parameter(:is_candidate, [node, unit, connection])
-    for c in indices(candidate_connections)
-        connection.parameter_values[c][:is_candidate] = parameter_value(true)
-    end
-    for u in indices(candidate_units)
-        unit.parameter_values[u][:is_candidate] = parameter_value(true)
-    end
-    for n in indices(candidate_storages)
-        node.parameter_values[n][:is_candidate] = parameter_value(true)
-    end
-    connection.parameter_defaults[:is_candidate] = parameter_value(false)
-    unit.parameter_defaults[:is_candidate] = parameter_value(false)
-    node.parameter_defaults[:is_candidate] = parameter_value(false)
-
+    add_object_parameter_values!(
+        connection, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(candidate_connections))
+    )
+    add_object_parameter_values!(
+        unit, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(candidate_units))
+    )
+    add_object_parameter_values!(
+        node, Dict(x => Dict(:is_candidate => parameter_value(true)) for x in indices(candidate_storages))
+    )
+    add_object_parameter_defaults!(connection, Dict(:is_candidate => parameter_value(false)))
+    add_object_parameter_defaults!(unit, Dict(:is_candidate => parameter_value(false)))
+    add_object_parameter_defaults!(node, Dict(:is_candidate => parameter_value(false)))
     @eval begin
         is_candidate = $is_candidate
     end
@@ -78,8 +76,9 @@ function expand_node__stochastic_structure()
     add_relationships!(
         node__stochastic_structure,
         [
-            (node=n, stochastic_structure=stochastic_structure)
-            for (ng, stochastic_structure) in node__stochastic_structure() for n in members(ng)
+            (n, stochastic_structure)
+            for (ng, stochastic_structure) in node__stochastic_structure()
+            for n in members(ng)
         ],
     )
 end
@@ -93,21 +92,31 @@ function expand_units_on__stochastic_structure()
     add_relationships!(
         units_on__stochastic_structure,
         [
-            (unit=u, stochastic_structure=stochastic_structure)
-            for (ug, stochastic_structure) in units_on__stochastic_structure() for u in members(ug)
+            (u, stochastic_structure)
+            for (ug, stochastic_structure) in units_on__stochastic_structure()
+            for u in members(ug)
         ],
     )
 end
 
 """
-    add_connection_relationships()
+    process_lossless_bidirectional_connections()
 
 Add connection relationships for connection_type=:connection_type_lossless_bidirectional.
 
 For connections with this parameter set, only a connection__from_node and connection__to_node need be set
 and this function creates the additional relationships on the fly.
 """
-function add_connection_relationships()
+function process_lossless_bidirectional_connections()
+    function _connection_pvals(conn, conn_cap_pvals, conn_emergency_cap_values)
+        pvals = Dict{Symbol,Any}(:connection_conv_cap_to_flow => parameter_value(1.0))
+        conn_cap = get(conn_cap_pvals, conn, nothing)
+        conn_emergency_cap = get(conn_emergency_cap_values, conn, nothing)
+        conn_cap !== nothing && (pvals[:connection_capacity] = parameter_value(conn_cap))
+        conn_emergency_cap !== nothing && (pvals[:connection_emergency_capacity] = parameter_value(conn_emergency_cap))
+        pvals
+    end
+
     conn_from = (
         (conn, first(connection__from_node(connection=conn)))
         for conn in connection(connection_type=:connection_type_lossless_bidirectional)
@@ -116,29 +125,38 @@ function add_connection_relationships()
         (conn, from, first(x for x in connection__to_node(connection=conn) if x != from)) for (conn, from) in conn_from
     ]
     isempty(conn_from_to) && return
-    new_connection__from_node_rels = [(connection=conn, node=n) for (conn, _n, n) in conn_from_to]
-    new_connection__to_node_rels = [(connection=conn, node=n) for (conn, n, _n) in conn_from_to]
+    # New rels
+    new_connection__from_node_rels = [(conn, n) for (conn, x, y) in conn_from_to for n in (x, y)]
+    new_connection__to_node_rels = [(conn, n) for (conn, x, y) in conn_from_to for n in (x, y)]
     new_connection__node__node_rels = collect(
-        (connection=conn, node1=n1, node2=n2)
-        for (conn, x, y) in conn_from_to for (n1, n2) in ((x, y), (y, x))
+        (conn, n1, n2) for (conn, x, y) in conn_from_to for (n1, n2) in ((x, y), (y, x))
     )
-    add_relationships!(connection__from_node, new_connection__from_node_rels)
-    add_relationships!(connection__to_node, new_connection__to_node_rels)
-    add_relationships!(connection__node__node, new_connection__node__node_rels)
-    value_one = parameter_value(1.0)
+    # New pvals
+    conn_caps = (
+        (conn, connection_capacity(connection=conn, node=n, _strict=false, _raw=true))
+        for (conn, n) in Iterators.flatten((new_connection__from_node_rels, new_connection__to_node_rels))
+    )
+    conn_emergency_caps = (
+        (conn, connection_emergency_capacity(connection=conn, node=n, _strict=false, _raw=true))
+        for (conn, n) in Iterators.flatten((new_connection__from_node_rels, new_connection__to_node_rels))
+    )
+    conn_cap_pvals = Dict(conn => val for (conn, val) in conn_caps if val !== nothing)
+    conn_emergency_cap_values = Dict(conn => val for (conn, val) in conn_emergency_caps if val !== nothing)
     new_connection__from_node_parameter_values = Dict(
-        (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__from_node_rels
+        (conn, n) => _connection_pvals(conn, conn_cap_pvals, conn_emergency_cap_values)
+        for (conn, n) in new_connection__from_node_rels
     )
     new_connection__to_node_parameter_values = Dict(
-        (conn, n) => Dict(:connection_conv_cap_to_flow => value_one) for (conn, n) in new_connection__to_node_rels
+        (conn, n) => _connection_pvals(conn, conn_cap_pvals, conn_emergency_cap_values)
+        for (conn, n) in new_connection__to_node_rels
     )
     new_connection__node__node_parameter_values = Dict(
-        (conn, n1, n2) => Dict(:fix_ratio_out_in_connection_flow => value_one)
+        (conn, n1, n2) => Dict(:fix_ratio_out_in_connection_flow => parameter_value(1.0))
         for (conn, n1, n2) in new_connection__node__node_rels
     )
-    merge!(connection__from_node.parameter_values, new_connection__from_node_parameter_values)
-    merge!(connection__to_node.parameter_values, new_connection__to_node_parameter_values)
-    merge!(connection__node__node.parameter_values, new_connection__node__node_parameter_values)
+    add_relationship_parameter_values!(connection__from_node, new_connection__from_node_parameter_values)
+    add_relationship_parameter_values!(connection__to_node, new_connection__to_node_parameter_values)
+    add_relationship_parameter_values!(connection__node__node, new_connection__node__node_parameter_values)
 end
 
 """
@@ -177,81 +195,26 @@ function generate_direction()
 end
 
 """
-    process_loss_bidirectional_capacities()
-
-For connections of type `:connection_type_lossless_bidirectional` if a `connection_capacity` is found
-we ensure that it appies to each of the four flow variables
-"""
-function process_loss_bidirectional_capacities()
-    for c in connection(connection_type=:connection_type_lossless_bidirectional)
-        for (capacity_param, has_capacity_param) in [
-            (:connection_capacity, :has_capacity), (:connection_emergency_capacity, :has_emergency_capacity)
-        ]
-            conn_capacity_param = nothing
-            found_from = false
-            for (n, d) in connection__from_node(connection=c)
-                found_value = get(connection__from_node.parameter_values[(c, n, d)], capacity_param, nothing)
-                if found_value !== nothing
-                    conn_capacity_param = found_value
-                    found_from = true
-                    for n2 in connection__from_node(connection=c, direction=d)
-                        if n2 != n
-                            connection__from_node.parameter_values[(c, n2, d)][capacity_param] = conn_capacity_param
-                        end
-                    end
-                end
-            end
-            found_to = false
-            for (n, d) in connection__to_node(connection=c)
-                found_value = get(connection__to_node.parameter_values[(c, n, d)], capacity_param, nothing)
-                if found_value !== nothing
-                    conn_capacity_param = found_value
-                    found_to = true
-                    for n2 in connection__to_node(connection=c, direction=d)
-                        if n2 != n
-                            connection__to_node.parameter_values[(c, n2, d)][capacity_param] = conn_capacity_param
-                        end
-                    end
-                end
-            end
-            if !found_from && conn_capacity_param !== nothing
-                for (n, d) in connection__from_node(connection=c)
-                    connection__from_node.parameter_values[(c, n, d)][capacity_param] = conn_capacity_param
-                end
-            end
-            if !found_to && conn_capacity_param !== nothing
-                for (n, d) in connection__to_node(connection=c)
-                    connection__to_node.parameter_values[(c, n, d)][capacity_param] = conn_capacity_param
-                end
-            end
-            connection.parameter_values[c][has_capacity_param] = parameter_value(found_to || found_from)
-        end
-    end
-    has_capacity = Parameter(:has_capacity, [connection])
-    has_emergency_capacity = Parameter(:has_emergency_capacity, [connection])
-    @eval begin           
-        has_capacity = $has_capacity
-        has_emergency_capacity = $has_emergency_capacity
-    end
-end
-
-"""
     generate_node_has_ptdf()
 
 Generate `has_ptdf` and `node_ptdf_threshold` parameters associated to the `node` `ObjectClass`.
 """
 function generate_node_has_ptdf()
-    for n in node()
+    function _new_node_pvals(n)
         ptdf_comms = Tuple(
             c
             for c in node__commodity(node=n)
             if commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf)
         )
-        node.parameter_values[n][:has_ptdf] = parameter_value(!isempty(ptdf_comms))
-        node.parameter_values[n][:node_ptdf_threshold] = parameter_value(
-            reduce(max, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0.001),
+        Dict(
+            :has_ptdf => parameter_value(!isempty(ptdf_comms)),
+            :node_ptdf_threshold => parameter_value(
+                reduce(max, (commodity_ptdf_threshold(commodity=c) for c in ptdf_comms); init=0.001),
+            )
         )
     end
+
+    add_object_parameter_values!(node, Dict(n => _new_node_pvals(n) for n in node()))
     has_ptdf = Parameter(:has_ptdf, [node])
     node_ptdf_threshold = Parameter(:node_ptdf_threshold, [node])
     @eval begin
@@ -266,17 +229,19 @@ end
 Generate `has_ptdf` parameter associated to the `connection` `ObjectClass`.
 """
 function generate_connection_has_ptdf()
-    for conn in connection()
+    function _new_connection_pvals(conn)
         from_nodes = connection__from_node(connection=conn, direction=anything)
         to_nodes = connection__to_node(connection=conn, direction=anything)
         is_bidirectional = length(from_nodes) == 2 && isempty(symdiff(from_nodes, to_nodes))
         is_loseless = length(from_nodes) == 2 && fix_ratio_out_in_connection_flow(;
             connection=conn, zip((:node1, :node2), from_nodes)..., _strict=false
         ) == 1
-        connection.parameter_values[conn][:has_ptdf] = parameter_value(
-            is_bidirectional && is_loseless && all(has_ptdf(node=n) for n in from_nodes),
+        Dict(
+            :has_ptdf => parameter_value(is_bidirectional && is_loseless && all(has_ptdf(node=n) for n in from_nodes))
         )
     end
+
+    add_object_parameter_values!(connection, Dict(conn => _new_connection_pvals(conn) for conn in connection()))
     push!(has_ptdf.classes, connection)
 end
 
@@ -286,19 +251,25 @@ end
 Generate `has_lodf` and `connnection_lodf_tolerance` parameters associated to the `connection` `ObjectClass`.
 """
 function generate_connection_has_lodf()
-    for conn in connection(has_ptdf=true)
+    function _new_connection_pvals(conn)
         lodf_comms = Tuple(
             c
             for c in commodity(commodity_physics=:commodity_physics_lodf)
             if issubset(connection__from_node(connection=conn, direction=anything), node__commodity(commodity=c))
         )
-        connection.parameter_values[conn][:has_lodf] = parameter_value(!isempty(lodf_comms))
-        connection.parameter_values[conn][:connnection_lodf_tolerance] = parameter_value(
-            reduce(max, (commodity_lodf_tolerance(commodity=c) for c in lodf_comms); init=0.05),
+        Dict(
+            :has_lodf => parameter_value(!isempty(lodf_comms)),
+            :connnection_lodf_tolerance => parameter_value(
+                reduce(max, (commodity_lodf_tolerance(commodity=c) for c in lodf_comms); init=0.05),
+            )
         )
     end
+
+    add_object_parameter_values!(
+        connection, Dict(conn => _new_connection_pvals(conn) for conn in connection(has_ptdf=true))
+    )
     has_lodf = Parameter(:has_lodf, [connection])
-    connnection_lodf_tolerance = Parameter(:connnection_lodf_tolerance, [connection]) # TODO connnection with 3 `n`'s?
+    connnection_lodf_tolerance = Parameter(:connnection_lodf_tolerance, [connection])  # TODO connnection with 3 `n`'s?
     @eval begin
         has_lodf = $has_lodf
         connnection_lodf_tolerance = $connnection_lodf_tolerance
@@ -384,7 +355,8 @@ end
 """
     _filter_ptdf_values(ptdf_values)
 
-Filter the values of the `ptdf` parameter including only those with an absolute value greater than commodity_ptdf_threshold.
+Filter the values of the `ptdf` parameter including only those with an absolute value
+greater than commodity_ptdf_threshold.
 """
 function _filter_ptdf_values(ptdf_values)
     comms = filter(
@@ -619,14 +591,11 @@ If a `unit__investment_temporal_block` relationship is not defined, then create 
 if it is not already defined.
 """
 function expand_model__default_investment_temporal_block()
-    add_relationships!(
-        model__temporal_block,
-        [(model=m, temporal_block=tb) for (m, tb) in model__default_investment_temporal_block()],
-    )
+    add_relationships!(model__temporal_block, model__default_investment_temporal_block())
     add_relationships!(
         unit__investment_temporal_block,
         [
-            (unit=u, temporal_block=tb)
+            (u, tb)
             for u in setdiff(indices(candidate_units), unit__investment_temporal_block(temporal_block=anything))
             for tb in model__default_investment_temporal_block(model=anything)
         ],
@@ -634,16 +603,17 @@ function expand_model__default_investment_temporal_block()
     add_relationships!(
         connection__investment_temporal_block,
         [
-            (connection=conn, temporal_block=tb) for conn in setdiff(
-                indices(candidate_connections),
-                connection__investment_temporal_block(temporal_block=anything),
-            ) for tb in model__default_investment_temporal_block(model=anything)
+            (conn, tb)
+            for conn in setdiff(
+                indices(candidate_connections), connection__investment_temporal_block(temporal_block=anything)
+            )
+            for tb in model__default_investment_temporal_block(model=anything)
         ],
     )
     add_relationships!(
         node__investment_temporal_block,
         [
-            (node=n, temporal_block=tb)
+            (n, tb)
             for n in setdiff(indices(candidate_storages), node__investment_temporal_block(temporal_block=anything))
             for tb in model__default_investment_temporal_block(model=anything)
         ],
@@ -660,35 +630,36 @@ If a `unit__investment_stochastic_structure` relationship is not defined, then c
 relationship if it is not already defined.
 """
 function expand_model__default_investment_stochastic_structure()
-    add_relationships!(
-        model__stochastic_structure,
-        [(model=m, stochastic_structure=ss) for (m, ss) in model__default_investment_stochastic_structure()],
-    )
+    add_relationships!(model__stochastic_structure, model__default_investment_stochastic_structure())
     add_relationships!(
         unit__investment_stochastic_structure,
         [
-            (unit=u, stochastic_structure=ss) for u in setdiff(
-                indices(candidate_units),
-                unit__investment_stochastic_structure(stochastic_structure=anything),
-            ) for ss in model__default_investment_stochastic_structure(model=anything)
+            (u, ss)
+            for u in setdiff(
+                indices(candidate_units), unit__investment_stochastic_structure(stochastic_structure=anything)
+            )
+            for ss in model__default_investment_stochastic_structure(model=anything)
         ],
     )
     add_relationships!(
         connection__investment_stochastic_structure,
         [
-            (connection=conn, stochastic_structure=ss) for conn in setdiff(
+            (conn, ss)
+            for conn in setdiff(
                 indices(candidate_connections),
-                connection__investment_stochastic_structure(stochastic_structure=anything),
-            ) for ss in model__default_investment_stochastic_structure(model=anything)
+                connection__investment_stochastic_structure(stochastic_structure=anything)
+            )
+            for ss in model__default_investment_stochastic_structure(model=anything)
         ],
     )
     add_relationships!(
         node__investment_stochastic_structure,
         [
-            (node=n, stochastic_structure=ss) for n in setdiff(
-                indices(candidate_storages),
-                node__investment_stochastic_structure(stochastic_structure=anything),
-            ) for ss in model__default_investment_stochastic_structure(model=anything)
+            (n, ss)
+            for n in setdiff(
+                indices(candidate_storages), node__investment_stochastic_structure(stochastic_structure=anything)
+            )
+            for ss in model__default_investment_stochastic_structure(model=anything)
         ],
     )
 end
@@ -701,14 +672,11 @@ and `units_on` without `units_on__stochastic_structure`. Similarly, add the corr
 relationship if it not already defined.
 """
 function expand_model__default_stochastic_structure()
-    add_relationships!(
-        model__stochastic_structure,
-        [(model=m, stochastic_structure=ss) for (m, ss) in model__default_stochastic_structure()],
-    )
+    add_relationships!(model__stochastic_structure, model__default_stochastic_structure())
     add_relationships!(
         node__stochastic_structure,
         unique(
-            (node=n, stochastic_structure=ss)
+            (n, ss)
             for n in setdiff(node(), node__stochastic_structure(stochastic_structure=anything))
             for ss in model__default_stochastic_structure(model=anything)
         ),
@@ -716,7 +684,7 @@ function expand_model__default_stochastic_structure()
     add_relationships!(
         units_on__stochastic_structure,
         unique(
-            (unit=u, stochastic_structure=ss)
+            (u, ss)
             for u in setdiff(unit(), units_on__stochastic_structure(stochastic_structure=anything))
             for ss in model__default_stochastic_structure(model=anything)
         ),
@@ -730,14 +698,11 @@ Expand the `model__default_temporal_block` relationship to all `nodes` without `
 and `units_on` without `units_on_temporal_block`.
 """
 function expand_model__default_temporal_block()
-    add_relationships!(
-        model__temporal_block,
-        [(model=m, temporal_block=tb) for (m, tb) in model__default_temporal_block()],
-    )
+    add_relationships!(model__temporal_block, model__default_temporal_block())
     add_relationships!(
         node__temporal_block,
         unique(
-            (node=n, temporal_block=tb)
+            (n, tb)
             for n in setdiff(node(), node__temporal_block(temporal_block=anything))
             for tb in model__default_temporal_block(model=anything)
         ),
@@ -745,7 +710,7 @@ function expand_model__default_temporal_block()
     add_relationships!(
         units_on__temporal_block,
         unique(
-            (unit=u, temporal_block=tb)
+            (u, tb)
             for u in setdiff(unit(), units_on__temporal_block(temporal_block=anything))
             for tb in model__default_temporal_block(model=anything)
         ),
@@ -760,10 +725,7 @@ relationship between report and output exists.
 """
 function generate_report__output()
     isempty(report__output()) || return
-    add_relationships!(
-        report__output,
-        [(report=r, output=out) for r in report() for out in output()],
-    )
+    add_relationships!(report__output, [(r, out) for r in report() for out in output()])
 end
 
 """
@@ -774,10 +736,7 @@ relationship between report and output exists.
 """
 function generate_model__report()
     isempty(model__report()) || return
-    add_relationships!(
-        model__report,
-        [(model=m, report=r) for m in model() for r in report()]
-    )
+    add_relationships!(model__report, [(m, r) for m in model() for r in report()])
 end
 
 """
@@ -787,10 +746,7 @@ Generate a default `report` object, only if no report objects exist.
 """
 function generate_report()
     isempty(report()) || return
-    add_objects!(
-        report,
-        [Object(r) for r in [:default_report,]]
-    )
+    add_objects!(report, [Object(:default_report)])
 end
 
 """
@@ -800,12 +756,40 @@ Creates the `benders_iteration` object class. Master problem variables have the 
 benders iteration object is pushed on each master problem iteration.
 """
 function generate_benders_structure()
+    function _init_benders_parameter_values(
+        current_bi::Object,
+        obj_cls::ObjectClass,
+        rel_cls::RelationshipClass,
+        invest_param::Parameter,
+        fix_param::Parameter,
+        starting_param_name::Symbol,
+        avail_bi_param_name::Symbol,
+        avail_mv_param_name::Symbol,
+    )
+        for ent in indices_as_tuples(invest_param)
+            obj = ent[obj_cls.name]
+            fix_value = fix_param(; ent...)
+            if fix_value !== nothing
+                add_object_parameter_values!(obj_cls, Dict(obj => Dict(starting_param_name => fix_value)))
+            end
+            add_relationship_parameter_values!(
+                rel_cls,
+                Dict(
+                    (obj, current_bi) => Dict(
+                        avail_bi_param_name => parameter_value(0), avail_mv_param_name => parameter_value(0)
+                    )
+                )
+            )
+        end
+    end
+
     # general
     bi_name = :benders_iteration
-    current_bi = Object(Symbol(string("bi_1")))
-    benders_iteration = ObjectClass(bi_name, [current_bi])
+    current_bi = Object(:bi_1, bi_name)
+    benders_iteration = ObjectClass(
+        bi_name, [current_bi], Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(0)))
+    )
     sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])
-    benders_iteration.parameter_values[current_bi] = Dict(:sp_objective_value_bi => parameter_value(0))
     # unit
     unit__benders_iteration = RelationshipClass(:unit__benders_iteration, [:unit, bi_name], [])
     units_available_mv = Parameter(:units_available_mv, [unit__benders_iteration])
@@ -821,53 +805,35 @@ function generate_benders_structure()
     storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node__benders_iteration])
     storages_invested_available_bi = Parameter(:storages_invested_available_bi, [node__benders_iteration])
     starting_fix_storages_invested_available = Parameter(:starting_fix_storages_invested_available, [node])
-
-    function _init_benders_parameter_values(
-        obj_cls::ObjectClass,
-        rel_cls::RelationshipClass,
-        invest_param::Parameter,
-        param_name_bi::Symbol,
-        param_name_mv::Symbol,
-        fix_name::Symbol,
-        starting_name::Symbol,
-    )
-        for obj in indices(invest_param)
-            rel_cls.parameter_values[(obj, current_bi)] = Dict(
-                param_name_bi => parameter_value(0),
-                param_name_mv => parameter_value(0)
-            )
-            if haskey(obj_cls.parameter_values[obj], fix_name)
-                obj_cls.parameter_values[obj][starting_name] = obj_cls.parameter_values[u][fix_name]
-            end
-        end
-    end
-
     _init_benders_parameter_values(
+        current_bi,
         unit,
         unit__benders_iteration,
         candidate_units,
+        fix_units_invested_available,
+        :starting_fix_units_invested_available,
         :units_invested_available_bi,
         :units_available_mv,
-        :fix_units_invested_available,
-        :starting_fix_units_invested_available
     )
     _init_benders_parameter_values(
+        current_bi,
         connection,
         connection__benders_iteration,
         candidate_connections,
+        fix_connections_invested_available,
+        :starting_fix_connections_invested_available,
         :connections_invested_available_bi,
         :connections_invested_available_mv,
-        :fix_connections_invested_available,
-        :starting_fix_connections_invested_available
     )
     _init_benders_parameter_values(
+        current_bi,
         node,
         node__benders_iteration,
         candidate_storages,
+        fix_storages_invested_available,
+        :starting_fix_storages_invested_available,
         :storages_invested_available_bi,
         :storages_invested_available_mv,
-        :fix_storages_invested_available,
-        :starting_fix_storages_invested_available
     )
 
     @eval begin
@@ -905,19 +871,21 @@ function generate_benders_structure()
 end
 
 
-function _apply_forced_availability_factor(m_start, m_end, class, availability_factor)
-    _product_or_nothing(x::TimeSeries, y::Nothing) = x
-    _product_or_nothing(x::TimeSeries, y) = x * y
-
-    for x in class()
-        forced_af = forced_availability_factor(; (class.name => x,)..., _strict=false)
-        forced_af === nothing && continue
-        af = availability_factor(; (class.name => x,)..., _strict=false)
-        class.parameter_values[x][availability_factor.name] = parameter_value(_product_or_nothing(forced_af, af))
-    end
-end
-
 function apply_forced_availability_factor()
+    function _apply_forced_availability_factor(m_start, m_end, class, availability_factor)
+        _product_or_nothing(x::TimeSeries, y::Nothing) = x
+        _product_or_nothing(x::TimeSeries, y) = x * y
+
+        function _new_pvals(class, x)
+            forced_af = forced_availability_factor(; (class.name => x,)..., _strict=false)
+            forced_af === nothing && return Dict()
+            af = availability_factor(; (class.name => x,)..., _strict=false)
+            Dict(availability_factor.name => parameter_value(_product_or_nothing(forced_af, af)))
+        end
+
+        add_object_parameter_values!(class, Dict(x => _new_pvals(class, x) for x in class()))
+    end
+
     isempty(model()) && return
     m_start = minimum(model_start(model=m) for m in model())
     m_end = maximum(model_end(model=m) for m in model())
@@ -932,22 +900,28 @@ Generate `is_boundary_node` and `is_boundary_connection` parameters
 associated with the `node` and `connection` `ObjectClass`es respectively.
 """
 function generate_is_boundary()
+    is_boundary_node = Parameter(:is_boundary_node, [node])
+    is_boundary_connection = Parameter(:is_boundary_connection, [connection])
+    add_object_parameter_defaults!(node, Dict(:is_boundary_node => parameter_value(false)))
+    add_object_parameter_defaults!(connection, Dict(:is_boundary_connection => parameter_value(false)))
     for (n, c) in node__commodity()
         commodity_physics(commodity=c) in (:commodity_physics_lodf, :commodity_physics_ptdf) || continue
+        has_boundary_conn = false
         for (conn, _d) in connection__from_node(node=n)
             remote_commodities = unique(
                 c for (remote_n, _d) in connection__to_node(connection=conn) for c in node__commodity(node=remote_n)
             )
             if !(c in remote_commodities)
-                get!(node.parameter_values, n, Dict())[:is_boundary_node] = parameter_value(true)
-                get!(connection.parameter_values, conn, Dict())[:is_boundary_connection] = parameter_value(true)
+                has_boundary_conn = true
+                add_object_parameter_values!(
+                    connection, Dict(conn => Dict(:is_boundary_connection => parameter_value(true)))
+                )
             end
         end
+        if has_boundary_conn
+            add_object_parameter_values!(node, Dict(n => Dict(:is_boundary_node => parameter_value(true))))
+        end
     end
-    is_boundary_node = Parameter(:is_boundary_node, [node])
-    is_boundary_connection = Parameter(:is_boundary_connection, [connection])
-    node.parameter_defaults[:is_boundary_node] = parameter_value(false)
-    connection.parameter_defaults[:is_boundary_connection] = parameter_value(false)
     @eval begin
         is_boundary_node = $is_boundary_node
         is_boundary_connection = $is_boundary_connection
