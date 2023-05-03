@@ -1009,16 +1009,7 @@ The power transfer distribution factors are a property of the network reactances
 ## Investments
 ### Investments in units
 #### [Economic lifetime of a unit](@id constraint_unit_lifetime)
-Enforces the minimum duration of a `unit`'s investment decision. Once a `unit` has been invested-in, it must remain invested-in for `unit_investment_lifetime`.
-
-```math
-\begin{aligned}
-& v_{units\_invested\_available}(u,s,t) \\
-& >= \sum_{\substack{(u,s,t') \in units\_invested\_available\_indices: \\ t' >=t-p_{unit\_investment\_lifetime}(u,s,t), \\ t' <= t}}
-v_{units\_invested}(u,s,t') \\
-& \forall (u,s,t) \in unit\_investment\_lifetime\_indices\\
-\end{aligned}
-```
+(Comment 2023-05-03: Currently under development)
 #### Technical lifetime of a unit
 (Comment 2021-04-29: Currently under development)
 ### [Available Investment Units](@id constraint_units_invested_available)
