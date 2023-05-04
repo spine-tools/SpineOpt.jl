@@ -73,7 +73,7 @@ end
 
 function _roll_count(m::Model)
     instance = m.ext[:spineopt].instance
-    window_start = start(current_window(m))
+    window_start = model_start(model=instance)
     i = 1
     while true
         rf = roll_forward(model=instance, i=i, _strict=false)
