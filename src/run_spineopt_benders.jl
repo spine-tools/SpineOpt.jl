@@ -69,7 +69,7 @@ function rerun_spineopt!(
         end
         @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=3)
         msg = "Resetting sub problem temporal structure. Rewinding $(k - 1) times..."
-        if @timelog log_level 2 msg roll_temporal_structure!(m, 1:(k - 1), -1)
+        if @timelog log_level 2 msg roll_temporal_structure!(m, 1:(k - 1); rev=true)
             update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
         end
         j += 1

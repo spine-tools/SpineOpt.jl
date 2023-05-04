@@ -370,7 +370,7 @@ end
         t2 = TimeSlice(DateTime(2001, 7), DateTime(2001, 12))
         @test _is_time_slice_equal(to_time_slice(m; t=t1)[1], a1)
         @test _is_time_slice_equal(to_time_slice(m; t=t2)[1], a2)
-        roll_temporal_structure!(m)
+        roll_temporal_structure!(m, 1)
         t1 = TimeSlice(DateTime(2002, 1), DateTime(2002, 6))
         t2 = TimeSlice(DateTime(2002, 7), DateTime(2002, 12))
         @test _is_time_slice_equal(to_time_slice(m; t=t1)[1], a1)

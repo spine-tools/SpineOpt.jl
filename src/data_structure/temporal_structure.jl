@@ -378,18 +378,19 @@ end
 
 Move the entire temporal structure ahead according to the `roll_forward` parameter.
 """
-function roll_temporal_structure!(m::Model, i::Integer, factor=1)
+function roll_temporal_structure!(m::Model, i::Integer; rev=false)
     rf = roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false)
-    _do_roll_temporal_structure!(m, factor * rf)
+    _do_roll_temporal_structure!(m, rf, rev)
 end
-function roll_temporal_structure!(m::Model, rng::UnitRange{T}, factor=1) where T<:Integer
+function roll_temporal_structure!(m::Model, rng::UnitRange{T}; rev=false) where T<:Integer
     rfs = [roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false) for i in rng]
-    rf = any(isnothing(rf) for rf in rfs) ? nothing : sum(rfs; init=0)
-    _do_roll_temporal_structure!(m, factor * rf)
+    rf = any(isnothing(rf) for rf in rfs) ? nothing : sum(rfs; init=Minute(0))
+    _do_roll_temporal_structure!(m, rf, rev)
 end
 
-function _do_roll_temporal_structure!(m::Model, rf)
-    rf in (nothing, 0) && return false
+function _do_roll_temporal_structure!(m::Model, rf, rev)
+    rf in (nothing, Minute(0)) && return false
+    rf = rev ? -rf : rf
     temp_struct = m.ext[:spineopt].temporal_structure
     end_(temp_struct[:current_window]) >= model_end(model=m.ext[:spineopt].instance) && return false
     roll!(temp_struct[:current_window], rf; update = false)

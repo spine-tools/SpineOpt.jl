@@ -48,7 +48,7 @@ function rerun_spineopt!(
         log_level=log_level,
         alternative_objective=alternative_objective
     )
-    @timelog log_level 2 "Bringing model to the first window..." roll_temporal_structure!(m, 1:roll_count, -1)
+    @timelog log_level 2 "Bringing model to the first window..." roll_temporal_structure!(m, 1:roll_count; rev=true)
     try
         run_spineopt_kernel!(
             m,
@@ -77,7 +77,7 @@ function _roll_count(m::Model)
     i = 1
     while true
         rf = roll_forward(model=instance, i=i, _strict=false)
-        if iszero(rf) || isnothing(rf) || last_window_start + fr >= model_end(model=instance)
+        if isnothing(rf) || rf == Minute(0) || window_start + rf >= model_end(model=instance)
             break
         end
         window_start += rf
