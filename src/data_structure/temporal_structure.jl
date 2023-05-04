@@ -107,20 +107,20 @@ end
 """
     _adjuster_start(window_start, window_end, blk_start)
 
-Adjust the `window_start` based on `temporal_blocks`.
+The adjusted start of a `temporal_block`.
 """
-_adjusted_start(window_start::DateTime, ::Nothing) = window_start
-_adjusted_start(window_start::DateTime, blk_start::Union{Period,CompoundPeriod}) = window_start + blk_start
-_adjusted_start(window_start::DateTime, blk_start::DateTime) = max(window_start, blk_start)
+_adjusted_start(w_start::DateTime, _blk_start::Nothing) = w_start
+_adjusted_start(w_start::DateTime, blk_start::Union{Period,CompoundPeriod}) = w_start + blk_start
+_adjusted_start(w_start::DateTime, blk_start::DateTime) = max(w_start, blk_start)
 
 """
     _adjusted_end(window_start, window_end, blk_end)
 
-Adjust the `window_end` based on `temporal_blocks`.
+The adjusted end of a `temporal_block`.
 """
-_adjusted_end(::DateTime, window_end::DateTime, ::Nothing) = window_end
-_adjusted_end(window_start::DateTime, ::DateTime, blk_end::Union{Period,CompoundPeriod}) = window_start + blk_end
-_adjusted_end(window_start::DateTime, ::DateTime, blk_end::DateTime) = max(window_start, blk_end)
+_adjusted_end(_w_start::DateTime, w_end::DateTime, _blk_end::Nothing) = w_end
+_adjusted_end(w_start::DateTime, _w_end::DateTime, blk_end::Union{Period,CompoundPeriod}) = w_start + blk_end
+_adjusted_end(w_start::DateTime, _w_end::DateTime, blk_end::DateTime) = max(w_start, blk_end)
 
 """
     _time_interval_blocks(instance, window_start, window_end)
@@ -378,19 +378,26 @@ end
 
 Move the entire temporal structure ahead according to the `roll_forward` parameter.
 """
-function roll_temporal_structure!(m::Model, folds=1)
-    folds == 0 && return false
-    instance = m.ext[:spineopt].instance
-    roll_forward_ = roll_forward(model=instance, _strict=false)
-    roll_forward_ in (nothing, 0) && return false
+function roll_temporal_structure!(m::Model, i::Integer, factor=1)
+    rf = roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false)
+    _do_roll_temporal_structure!(m, factor * rf)
+end
+function roll_temporal_structure!(m::Model, rng::UnitRange{T}, factor=1) where T<:Integer
+    rfs = [roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false) for i in rng]
+    rf = any(isnothing(rf) for rf in rfs) ? nothing : sum(rfs; init=0)
+    _do_roll_temporal_structure!(m, factor * rf)
+end
+
+function _do_roll_temporal_structure!(m::Model, rf)
+    rf in (nothing, 0) && return false
     temp_struct = m.ext[:spineopt].temporal_structure
-    folds > 0 && end_(temp_struct[:current_window]) >= model_end(model=instance) && return false
-    roll_forward_ *= folds
-    roll!(temp_struct[:current_window], roll_forward_; update = false)
-    _roll_time_slice_set!(temp_struct[:time_slice], roll_forward_)
-    _roll_time_slice_set!(temp_struct[:history_time_slice], roll_forward_)
+    end_(temp_struct[:current_window]) >= model_end(model=m.ext[:spineopt].instance) && return false
+    roll!(temp_struct[:current_window], rf; update = false)
+    _roll_time_slice_set!(temp_struct[:time_slice], rf)
+    _roll_time_slice_set!(temp_struct[:history_time_slice], rf)
     true
 end
+
 
 """
     to_time_slice(m::Model, t::TimeSlice...)
