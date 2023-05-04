@@ -977,8 +977,8 @@ function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict
     non_anticipativity_time = definition[:non_anticipativity_time]
     non_anticipativity_time === nothing && return
     non_anticipativity_margin = definition[:non_anticipativity_margin]
-    window_start = start(current_window(m))
-    roll_forward_ = roll_forward(model=m.ext[:spineopt].instance)
+    w_start = start(current_window(m))
+    w_length = end_(current_window(m)) - w_start
     for ent in SpineInterface.indices_as_tuples(non_anticipativity_time)
         for ind in indices(m; t=time_slice(m), ent...)
             non_ant_time = non_anticipativity_time(; ind..., _strict=false)
@@ -987,8 +987,8 @@ function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict
             else
                 non_anticipativity_margin(; ind..., _strict=false)
             end
-            if non_ant_time != nothing && start(ind.t) < window_start +  non_ant_time
-                next_t = to_time_slice(m; t=ind.t + roll_forward_)
+            if non_ant_time != nothing && start(ind.t) < w_start + non_ant_time
+                next_t = to_time_slice(m; t=ind.t + w_length)
                 next_inds = indices(m; ind..., t=next_t)
                 if !isempty(next_inds)
                     next_ind = first(next_inds)

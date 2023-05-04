@@ -93,13 +93,13 @@ Generate a `TimeSlice` that represents the 'current' optimisation window for giv
 """
 function _generate_current_window!(m::Model)
     instance = m.ext[:spineopt].instance
-    model_start_ = model_start(model=instance)
-    model_end_ = model_end(model=instance)
-    roll_forward_ = roll_forward(model=instance, _strict=false)
-    window_start = model_start_
-    window_end = roll_forward_ === nothing ? model_end_ : min(model_start_ + roll_forward_, model_end_)
+    w_start = model_start(model=instance)
+    m_end = model_end(model=instance)
+    w_duration = window_duration(model=instance, _strict=false)
+    w_duration = w_duration === nothing ? roll_forward(model=instance, i=1, _strict=false) : w_duration
+    w_end = w_duration === nothing ? m_end : min(w_start + w_duration, m_end)
     m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
-        window_start, window_end; duration_unit=_model_duration_unit(instance)
+        w_start, w_end; duration_unit=_model_duration_unit(instance)
     )
 end
 
