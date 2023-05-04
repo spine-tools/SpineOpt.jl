@@ -392,7 +392,7 @@ function _do_roll_temporal_structure!(m::Model, rf, rev)
     rf in (nothing, Minute(0)) && return false
     rf = rev ? -rf : rf
     temp_struct = m.ext[:spineopt].temporal_structure
-    rf > Minute(0) && end_(temp_struct[:current_window]) >= model_end(model=m.ext[:spineopt].instance) && return false
+    !rev && end_(temp_struct[:current_window]) >= model_end(model=m.ext[:spineopt].instance) && return false
     roll!(temp_struct[:current_window], rf; update = false)
     _roll_time_slice_set!(temp_struct[:time_slice], rf)
     _roll_time_slice_set!(temp_struct[:history_time_slice], rf)
