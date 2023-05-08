@@ -95,7 +95,7 @@ function _generate_current_window!(m::Model)
     instance = m.ext[:spineopt].instance
     w_start = model_start(model=instance)
     m_end = model_end(model=instance)
-    w_duration = window_duration(model=instance, _strict=false)
+    w_duration = @isdefined(window_duration) ? window_duration(model=instance, _strict=false) : nothing
     w_duration = w_duration === nothing ? roll_forward(model=instance, i=1, _strict=false) : w_duration
     w_end = w_duration === nothing ? m_end : min(w_start + w_duration, m_end)
     m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
