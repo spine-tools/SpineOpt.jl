@@ -40,7 +40,7 @@ function preprocess_data_structure(; log_level=3)
     generate_variable_indexing_support()
     generate_benders_structure()
     apply_forced_availability_factor()
-    generate_is_boundary()  
+    generate_is_boundary()
 end
 
 """

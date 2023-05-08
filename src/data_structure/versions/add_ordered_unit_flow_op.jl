@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2017 - 2023  Spine Project
+# Copyright (C) 2017 - 2021  Spine Project
 #
 # This file is part of SpineOpt.
 #
@@ -18,20 +18,17 @@
 #############################################################################
 
 """
-    add_constraint_units_on!(m::Model)
+	add_ordered_unit_flow_op(db_url, log_level)
 
-Limit the units_on by the number of available units.
+Add ordered_unit_flow_op parameter.
 """
-function add_constraint_units_on!(m::Model)
-    @fetch units_on, units_available = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:units_on] = Dict(
-        (unit=u, stochastic_scenario=s, t=t) => @constraint(
-            m, 
-            + units_on[u, s, t] 
-            * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
-            <= 
-            + units_available[u, s, t])
-        for (u, s, t) in units_on_indices(m)
-    )
+function add_ordered_unit_flow_op(db_url, log_level)
+	@log log_level 0 "Adding `ordered_unit_flow_op` to `unit__from_node` and `unit__to_node`... "
+	new_data = Dict()
+	new_data[:relationship_parameters] = [
+		x for x in template()["relationship_parameters"] if x[2] == "ordered_unit_flow_op"
+	]
+	# Add new data
+	run_request(db_url, "import_data", (new_data, ""))
+	true
 end

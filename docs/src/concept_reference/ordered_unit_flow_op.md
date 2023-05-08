@@ -1,0 +1,3 @@
+If one defines the parameter `ordered_unit_flow_op` in a `unit__from_node` or `unit__to_node` relationship, SpineOpt will create variable `unit_flow_op_active` to order each `unit_flow_op` of the `unit_flow` according to the rank of defined [operating\_points](@ref). This setting is only necessary when the segmental `unit_flow_op`s are with increasing conversion efficiency. The numerical type of `unit_flow_op_active` (float, binary, or integer) follows that of variable `units_on` which can be set via parameter [online\_variable\_type](@ref).
+
+Note that this functionality is based on SOS2 constraints so only a MILP configuration, i.e. make variable `unit_flow_op_active` a binary or integer, guarantees correct performance.

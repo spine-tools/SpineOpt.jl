@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-@testset "connection-based constraints" begin
+function _test_constraint_connection_setup()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -88,9 +88,14 @@
             ]
         ],
     )
+    _load_test_data(url_in, test_data)
+    url_in
+end
+
+function test_constraint_connection_flow_capacity()
     @testset "constraint_connection_flow_capacity" begin
+        url_in = _test_constraint_connection_setup()
         connection_capacity = 200
-        _load_test_data(url_in, test_data)
         relationship_parameter_values =
             [["connection__from_node", ["connection_ab", "node_a"], "connection_capacity", connection_capacity]]
         SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
@@ -109,12 +114,15 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_connection_flow_gas_capacity()
     @testset "constraint_connection_flow_gas_capacity" begin
+        url_in = _test_constraint_connection_setup()
         bigm = Dict("instance" => 10000)
         binary = Dict("connection_ca" => true)
         relationships = [["connection__node__node", [ "connection_ca", "node_c", "node_a"]]]
         fixed_pressure_constant_1_ = Dict(("connection_ca", "node_c","node_a") => 0)
-        _load_test_data(url_in, test_data)
         object_parameter_values = [
             ["connection", "connection_ca", "has_binary_gas_flow", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
@@ -162,7 +170,11 @@
             end
         end
     end
+end
+
+function test_constraint_fix_node_pressure_point()
     @testset "constraint_fix_node_pressure_point" begin
+        url_in = _test_constraint_connection_setup()    
         bigm = Dict("instance" => 10000)
         binary = Dict("connection_ca" => true)
         has_pressure = Dict("node_a" => true, "node_c" => true)
@@ -179,7 +191,6 @@
                 "type" => "array", "value_type" => "float", "data" => PyVector(fixed_pressure_constant_0_raw)
             )
         )
-        _load_test_data(url_in, test_data)
         object_parameter_values = [
             ["node", "node_a", "has_pressure", has_pressure["node_a"]],
             ["node", "node_c", "has_pressure", has_pressure["node_c"]],
@@ -234,11 +245,12 @@
                             if fixed_pressure_constant_1_raw[i] !=0
                             con_key = (conn, n_from, n_to, [s], t, i)
                             expected_con = @build_constraint(
-                                (var_conn1 + var_conn2)/2 <=
-                                (fixed_pressure_constant_1_raw[i]*var_pr1)
-                                - (fixed_pressure_constant_0_raw[i]*var_pr2)
-                                + bigm * (1-var_bin)
-                                )
+                                + (var_conn1 + var_conn2) / 2
+                                <=
+                                + (fixed_pressure_constant_1_raw[i] * var_pr1)
+                                - (fixed_pressure_constant_0_raw[i] * var_pr2)
+                                + bigm * (1 - var_bin)
+                            )
                             con = constraint[con_key...]
                             observed_con = constraint_object(con)
                             @test _is_constraint_equal(observed_con, expected_con)
@@ -248,7 +260,11 @@
             end
         end
     end
+end
+
+function test_constraint_connection_unitary_gas_flow()
     @testset "constraint_connection_unitary_gas_flow" begin
+        url_in = _test_constraint_connection_setup()    
         binary = Dict("connection_ca" => true)
         bigm = Dict("instance" => 10000)
         relationships = [
@@ -256,7 +272,6 @@
             ["connection__to_node", [ "connection_ca", "node_c"]]
             ]
         fixed_pr_constant_1_ = Dict(("connection_ca", "node_c","node_a") => 0)
-        _load_test_data(url_in, test_data)
         object_parameter_values = [
             ["connection", "connection_ca", "has_binary_gas_flow", binary["connection_ca"]],
             ["model", "instance", "big_m", bigm["instance"]],
@@ -300,7 +315,11 @@
             end
         end
     end
+end
+
+function test_constraint_node_voltage_angle()
     @testset "constraint_node_voltage_angle" begin
+        url_in = _test_constraint_connection_setup()
         conn_react = Dict("connection_ca" => 0.17)
         conn_react_p_u = Dict("connection_ca" => 250)
         has_volt_ang = Dict("node_c" => true,"node_a" => true,)
@@ -323,7 +342,6 @@
                 fix_ratio_out_in[("connection_ca", "node_a","node_c")]
             ]
         ]
-        _load_test_data(url_in, test_data)
         SpineInterface.import_data(
             url_in;
             object_parameter_values=object_parameter_values,
@@ -360,10 +378,12 @@
             end
         end
     end
-    @testset "constraint_connection_flow_capacity_investments" begin
-        connection_capacity = 200
-        _load_test_data(url_in, test_data)
+end
 
+function test_constraint_connection_flow_capacity_investments()
+    @testset "constraint_connection_flow_capacity_investments" begin
+        url_in = _test_constraint_connection_setup()
+        connection_capacity = 200
         object_parameter_values = [
             ["connection", "connection_ab", "candidate_connections", 1],
             [
@@ -403,11 +423,14 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_connection_intact_flow_ptdf()
     @testset "constraint_connection_intact_flow_ptdf" begin
+        url_in = _test_constraint_connection_setup()
         # TODO: node_ptdf_threshold
         conn_r = 0.9
         conn_x = 0.1
-        _load_test_data(url_in, test_data)
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
@@ -482,13 +505,16 @@
             end
         end
     end
+end
+
+function test_constraint_connection_flow_lodf()
     @testset "constraint_connection_flow_lodf" begin
+        url_in = _test_constraint_connection_setup()
         conn_r = 0.9
         conn_x = 0.1
         conn_emergency_cap_ab = 80
         conn_emergency_cap_bc = 100
         conn_emergency_cap_ca = 150
-        _load_test_data(url_in, test_data)
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
@@ -624,6 +650,9 @@
         observed_con = constraint_object(constraint[conn_cont, conn_mon, [s_child], t1h2])
         @test _is_constraint_equal(observed_con, expected_con)
     end
+end
+
+function test_constraint_ratio_out_in_connection_flow()
     @testset "constraint_ratio_out_in_connection_flow" begin
         flow_ratio = 0.8
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T04:00:00")
@@ -637,7 +666,7 @@
             h_delay = div(conn_flow_minutes_delay, 60)
             rem_minutes_delay = (conn_flow_minutes_delay % 60) / 60
             @testset for p in ("min", "fix", "max")
-                _load_test_data(url_in, test_data)
+                url_in = _test_constraint_connection_setup()
                 sense = senses_by_prefix[p]
                 ratio = string(p, "_ratio_out_in_connection_flow")
                 relationship_parameter_values = [
@@ -692,8 +721,11 @@
             end
         end
     end
+end
+
+function test_constraint_connections_invested_transition()
     @testset "constraint_connections_invested_transition" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_connection_setup()
         candidate_connections = 1
         object_parameter_values = [["connection", "connection_ab", "candidate_connections", candidate_connections]]
         relationships = [
@@ -719,8 +751,7 @@
             @testset for (c, t0, t1) in connection_investment_dynamic_time_indices(
                 m; connection=connection(:connection_ab), t_after=t1
             )
-                var_key0 = (c, s0, t0)
-                var_c_inv_av0 = get(var_connections_invested_available, var_key0, 0)
+                var_c_inv_av0 = var_connections_invested_available[c, s0, t0]
                 con_key = (c, path, t0, t1)
                 expected_con = @build_constraint(var_c_inv_av1 - var_c_inv_1 + var_c_decom_1 == var_c_inv_av0)
                 observed_con = constraint_object(constraint[con_key...])
@@ -728,8 +759,11 @@
             end
         end
     end
+end
+
+function test_constraint_connections_invested_transition_mp()
     @testset "constraint_connections_invested_transition_mp" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_connection_setup()
         candidate_connections = 4
         object_parameter_values = [
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
@@ -761,8 +795,7 @@
             @testset for (c, t0, t1) in connection_investment_dynamic_time_indices(
                 m; connection=connection(:connection_ab), t_after=t1
             )
-                var_key0 = (c, s0, t0)
-                var_c_inv_av0 = get(var_connections_invested_available, var_key0, 0)
+                var_c_inv_av0 = var_connections_invested_available[c, s0, t0]
                 con_key = (c, path, t0, t1)
                 expected_con = @build_constraint(var_c_inv_av1 - var_c_inv_1 + var_c_decom_1 == var_c_inv_av0)
                 observed_con = constraint_object(constraint[con_key...])
@@ -786,8 +819,7 @@
             @testset for (c, t0, t1) in connection_investment_dynamic_time_indices(
                 mp; connection=connection(:connection_ab), t_after=t1
             )
-                var_key0 = (c, s0, t0)
-                var_c_inv_av0 = get(var_connections_invested_available, var_key0, 0)
+                var_c_inv_av0 = var_connections_invested_available[c, s0, t0]
                 con_key = (c, path, t0, t1)
                 expected_con = @build_constraint(var_c_inv_av1 - var_c_inv_1 + var_c_decom_1 == var_c_inv_av0)
                 observed_con = constraint_object(constraint[con_key...])
@@ -795,11 +827,14 @@
             end
         end
     end
+end
+
+function test_constraint_connection_lifetime()
     @testset "constraint_connection_lifetime" begin
         candidate_connections = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
-            _load_test_data(url_in, test_data)
+            url_in = _test_constraint_connection_setup()
             connection_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["connection", "connection_ab", "candidate_connections", candidate_connections],
@@ -848,11 +883,14 @@
             end
         end
     end
+end
+
+function test_constraint_connection_lifetime_mp()
     @testset "constraint_connection_lifetime_mp" begin
         candidate_connections = 3
         model_end = Dict("type" => "date_time", "data" => "2000-01-01T05:00:00")
         @testset for lifetime_minutes in (30, 180, 240)
-            _load_test_data(url_in, test_data)
+            url_in = _test_constraint_connection_setup()
             connection_investment_lifetime = Dict("type" => "duration", "data" => string(lifetime_minutes, "m"))
             object_parameter_values = [
                 ["connection", "connection_ab", "candidate_connections", candidate_connections],
@@ -937,8 +975,11 @@
             end
         end
     end
+end
+
+function test_constraint_connections_invested_available()
     @testset "constraint_connections_invested_available" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_connection_setup()
         candidate_connections = 7
         object_parameter_values = [["connection", "connection_ab", "candidate_connections", candidate_connections]]
         relationships = [
@@ -961,8 +1002,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_connections_invested_available_mp()
     @testset "constraint_connections_invested_available_mp" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_constraint_connection_setup()
         candidate_connections = 7
         object_parameter_values = [
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
@@ -1004,9 +1048,12 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_user_constraint_node_connection()
     @testset "constraint_user_constraint_node_connection" begin
         @testset for sense in ("==", ">=", "<=")
-            _load_test_data(url_in, test_data)
+            url_in = _test_constraint_connection_setup()
             rhs = 40
             unit_flow_coefficient = 25
             connection_flow_coefficient = 25
@@ -1082,12 +1129,15 @@
             return
         end
     end
+end
+
+function test_constraint_connection_flow_intact_flow()
     @testset "constraint_connection_flow_intact_flow" begin
+        url_in = _test_constraint_connection_setup()
         # TODO: node_ptdf_threshold
         conn_r = 0.9
         conn_x = 0.1
         candidate_connections = 1
-        _load_test_data(url_in, test_data)
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__from_node", ["connection_ab", "node_b"]],
@@ -1143,54 +1193,44 @@
         @test length(constraint) == 2
         conn_k = connection(:connection_ab)
         n_to_k = node(:node_b)
-        @testset for (conn_l, n_to_l) in
-                     ((connection(:connection_bc), node(:node_c)), (connection(:connection_ca), node(:node_a)))
+        @testset for conn_l in (connection(:connection_bc), connection(:connection_ca))
+            n_to_l = last(connection__from_node(connection=conn_l)).node
             s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
             t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
             t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
             lodf_val = SpineOpt.lodf(connection1=conn_k, connection2=conn_l)
             expected_con = @build_constraint(
-                - var_connection_flow[conn_l, n_to_l, direction(:to_node), s_parent, t1h1] +
-                var_connection_flow[conn_l, n_to_l, direction(:from_node), s_parent, t1h1] +
-                var_connection_intact_flow[conn_l, n_to_l, direction(:to_node), s_parent, t1h1]
+                - var_connection_flow[conn_l, n_to_l, direction(:to_node), s_parent, t1h1]
+                + var_connection_flow[conn_l, n_to_l, direction(:from_node), s_parent, t1h1]
+                + var_connection_intact_flow[conn_l, n_to_l, direction(:to_node), s_parent, t1h1]
                 - var_connection_intact_flow[conn_l, n_to_l, direction(:from_node), s_parent, t1h1]
-                - var_connection_flow[conn_l, n_to_l, direction(:to_node), s_child, t1h2] +
-                var_connection_flow[conn_l, n_to_l, direction(:from_node), s_child, t1h2] +
-                var_connection_intact_flow[conn_l, n_to_l, direction(:to_node), s_child, t1h2]
-                - var_connection_intact_flow[conn_l, n_to_l, direction(:from_node), s_child, t1h2] ==
-                2
+                - var_connection_flow[conn_l, n_to_l, direction(:to_node), s_child, t1h2]
+                + var_connection_flow[conn_l, n_to_l, direction(:from_node), s_child, t1h2]
+                + var_connection_intact_flow[conn_l, n_to_l, direction(:to_node), s_child, t1h2]
+                - var_connection_intact_flow[conn_l, n_to_l, direction(:from_node), s_child, t1h2]
+                ==
+                + 2
                 * lodf_val
-                * (+ var_connection_flow[
-                    conn_k,
-                    n_to_k,
-                    direction(:to_node),
-                    s_parent,
-                    t2h,
-                ] - var_connection_flow[
-                    conn_k,
-                    n_to_k,
-                    direction(:from_node),
-                    s_parent,
-                    t2h,
-                ] - var_connection_intact_flow[
-                    conn_k,
-                    n_to_k,
-                    direction(:to_node),
-                    s_parent,
-                    t2h,
-                ] + var_connection_intact_flow[conn_k, n_to_k, direction(:from_node), s_parent, t2h])
+                * (
+                    + var_connection_flow[conn_k, n_to_k, direction(:to_node), s_parent, t2h]
+                    - var_connection_flow[conn_k, n_to_k, direction(:from_node), s_parent, t2h]
+                    - var_connection_intact_flow[conn_k, n_to_k, direction(:to_node), s_parent, t2h]
+                    + var_connection_intact_flow[conn_k, n_to_k, direction(:from_node), s_parent, t2h]
+                )
             )
             observed_con = constraint_object(constraint[conn_l, n_to_l, [s_parent, s_child], t2h])
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function test_constraint_candidate_connection_lb()
     @testset "constraint_candidate_connection_lb" begin
+        url_in = _test_constraint_connection_setup()
         conn_r = 0.9
         conn_x = 0.1
         candidate_connections = 1
         connection_capacity = 100
-        _load_test_data(url_in, test_data)
-
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "two_hourly"]],
@@ -1248,67 +1288,56 @@
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:spineopt].constraints[:candidate_connection_flow_lb]
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         var_connection_intact_flow = m.ext[:spineopt].variables[:connection_intact_flow]
         var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
-        @test length(constraint) == 6
-        conn = connection(:connection_ab)
-        n_to = node(:node_b)
+        @test length(constraint) == 4
+        for k in keys(constraint) @show k end
+        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-
-        @testset for (n, d, tb) in (
-            (node(:node_a), direction(:to_node), temporal_block(:hourly)),
-            (node(:node_b), direction(:from_node), temporal_block(:two_hourly)),
-        )
-            scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-            time_slices = time_slice(m; temporal_block=tb)
-            @testset for (s, t) in zip(scenarios, time_slices)
-                expected_con = @build_constraint(
-                    + var_connection_flow[conn, n, d, s, t] * duration(t) >=
-                    + var_connection_intact_flow[conn, n, d, s, t] * duration(t)
-                    - (candidate_connections - var_connections_invested_available[conn, s_parent, t2h])
-                    * connection_capacity
-                    * duration(t)
-                )
-                s_path = (s == s_parent ? [s] : [s_parent, s_child])
-                con_key = (conn, n, d, s_path, t)
-                observed_con = constraint_object(constraint[con_key...])
-                @test _is_constraint_equal(observed_con, expected_con)
-            end
+        conn, n, s_path = connection(:connection_ab), node(:node_a), [s_parent, s_child]
+        @testset for (d, cap) in ((direction(:to_node), connection_capacity), (direction(:from_node), 1e6))
+            expected_con = @build_constraint(
+                + var_connection_flow[conn, n, d, s_parent, t1h1] * duration(t1h1)
+                + var_connection_flow[conn, n, d, s_child, t1h2] * duration(t1h2)
+                >=
+                + var_connection_intact_flow[conn, n, d, s_parent, t1h1] * duration(t1h1)
+                + var_connection_intact_flow[conn, n, d, s_child, t1h2] * duration(t1h2)
+                - (candidate_connections - var_connections_invested_available[conn, s_parent, t2h])
+                * cap
+                * duration(t2h)
+            )
+            con_key = (conn, n, d, s_path, t2h)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
         end
-        @testset for (n, d, tb) in (
-            (node(:node_a), direction(:from_node), temporal_block(:hourly)),
-            (node(:node_b), direction(:to_node), temporal_block(:two_hourly)),
-        )
-            scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-            time_slices = time_slice(m; temporal_block=tb)
-            @testset for (s, t) in zip(scenarios, time_slices)
-                expected_con = @build_constraint(
-                    + var_connection_flow[conn, n, d, s, t] * duration(t) >=
-                    + var_connection_intact_flow[conn, n, d, s, t] * duration(t)
-                    - (candidate_connections - var_connections_invested_available[conn, s_parent, t2h])
-                    * 1000000
-                    * duration(t)
-                )
-                print(expected_con)
-                s_path = (s == s_parent ? [s] : [s_parent, s_child])
-                con_key = (conn, n, d, s_path, t)
-                observed_con = constraint_object(constraint[con_key...])
-                @test _is_constraint_equal(observed_con, expected_con)
-            end
+        conn, n, s_path = connection(:connection_ab), node(:node_b), [s_parent]
+        @testset for (d, cap) in ((direction(:from_node), connection_capacity), (direction(:to_node), 1e6))
+            expected_con = @build_constraint(
+                + var_connection_flow[conn, n, d, s_parent, t2h] * duration(t2h)
+                >=
+                + var_connection_intact_flow[conn, n, d, s_parent, t2h] * duration(t2h)
+                - (candidate_connections - var_connections_invested_available[conn, s_parent, t2h])
+                * cap
+                * duration(t2h)
+            )
+            con_key = (conn, n, d, s_path, t2h)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
         end
     end
-    @testset "constraint_candidate_connection_lb" begin
+end
+
+function test_constraint_ratio_out_in_connection_intact_flow()
+    @testset "constraint_ratio_out_in_connection_intact_flow" begin
+        url_in = _test_constraint_connection_setup()
         conn_r = 0.9
         conn_x = 0.1
         candidate_connections = 1
         connection_capacity = 100
-        _load_test_data(url_in, test_data)
-
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "two_hourly"]],
@@ -1371,56 +1400,33 @@
         constraint = m.ext[:spineopt].constraints[:ratio_out_in_connection_intact_flow]
         var_connection_intact_flow = m.ext[:spineopt].variables[:connection_intact_flow]
         @test length(constraint) == 8
-
         conn = connection(:connection_ab)
         n_to = node(:node_b)
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-        @testset for (conn, n_in, n_out, tb_in, tb_out) in (
-            (
-                connection(:connection_ab),
-                node(:node_a),
-                node(:node_b),
-                temporal_block(:hourly),
-                temporal_block(:two_hourly),
-            ),
-            (
-                connection(:connection_bc),
-                node(:node_c),
-                node(:node_b),
-                temporal_block(:hourly),
-                temporal_block(:two_hourly),
-            ),
+        @testset for (conn, n_in, n_out) in (
+            (connection(:connection_ab), node(:node_a), node(:node_b)),
+            (connection(:connection_bc), node(:node_c), node(:node_b)),
         )
             expected_con = @build_constraint(
                 + var_connection_intact_flow[conn, n_in, direction(:to_node), s_parent, t1h1]
-                + var_connection_intact_flow[conn, n_in, direction(:to_node), s_child, t1h2] ==
-                +2 * var_connection_intact_flow[conn, n_out, direction(:from_node), s_parent, t2h]
+                + var_connection_intact_flow[conn, n_in, direction(:to_node), s_child, t1h2]
+                ==
+                + 2 * var_connection_intact_flow[conn, n_out, direction(:from_node), s_parent, t2h]
             )
             s_path = [s_parent, s_child]
             con_key = (conn, n_in, n_out, s_path, t2h)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
-        @testset for (conn, n_in, n_out, tb_in, tb_out) in (
-            (
-                connection(:connection_ab),
-                node(:node_b),
-                node(:node_a),
-                temporal_block(:hourly),
-                temporal_block(:two_hourly),
-            ),
-            (
-                connection(:connection_bc),
-                node(:node_b),
-                node(:node_c),
-                temporal_block(:hourly),
-                temporal_block(:two_hourly),
-            ),
+        @testset for (conn, n_in, n_out) in (
+            (connection(:connection_ab), node(:node_b), node(:node_a)),
+            (connection(:connection_bc), node(:node_b), node(:node_c)),
         )
             expected_con = @build_constraint(
-                +2 * var_connection_intact_flow[conn, n_in, direction(:to_node), s_parent, t2h] ==
+                + 2 * var_connection_intact_flow[conn, n_in, direction(:to_node), s_parent, t2h]
+                ==
                 + var_connection_intact_flow[conn, n_out, direction(:from_node), s_parent, t1h1]
                 + var_connection_intact_flow[conn, n_out, direction(:from_node), s_child, t1h2]
             )
@@ -1429,27 +1435,16 @@
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
-        @testset for (conn, n_in, n_out, tb_in, tb_out) in (
-            (
-                connection(:connection_ca),
-                node(:node_c),
-                node(:node_a),
-                temporal_block(:hourly),
-                temporal_block(:hourly),
-            ),
-            (
-                connection(:connection_ca),
-                node(:node_a),
-                node(:node_c),
-                temporal_block(:hourly),
-                temporal_block(:hourly),
-            ),
+        @testset for (conn, n_in, n_out, tb_in) in (
+            (connection(:connection_ca), node(:node_c), node(:node_a), temporal_block(:hourly)),
+            (connection(:connection_ca), node(:node_a), node(:node_c), temporal_block(:hourly)),
         )
             scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
             time_slices = time_slice(m; temporal_block=tb_in)
             @testset for (s, t) in zip(scenarios, time_slices)
                 expected_con = @build_constraint(
-                    + var_connection_intact_flow[conn, n_in, direction(:to_node), s, t] ==
+                    + var_connection_intact_flow[conn, n_in, direction(:to_node), s, t]
+                    ==
                     + var_connection_intact_flow[conn, n_out, direction(:from_node), s, t]
                 )
                 s_path = [s]
@@ -1459,12 +1454,14 @@
             end
         end
     end
+end
+
+function test_constraint_candidate_connection_ub()
     @testset "constraint_candidate_connection_ub" begin
+        url_in = _test_constraint_connection_setup()
         conn_r = 0.9
         conn_x = 0.1
         candidate_connections = 1
-        _load_test_data(url_in, test_data)
-
         objects = [["commodity", "electricity"]]
         relationships = [
             ["connection__investment_temporal_block", ["connection_ab", "two_hourly"]],
@@ -1520,16 +1517,11 @@
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:spineopt].constraints[:candidate_connection_flow_ub]
         var_connection_intact_flow = m.ext[:spineopt].variables[:connection_intact_flow]
         var_connection_flow = m.ext[:spineopt].variables[:connection_flow]
         @test length(constraint) == 6
-        t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
-        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
-        s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
-
         @testset for (c, n, d) in (
             (connection(:connection_ab), node(:node_a), direction(:from_node)),
             (connection(:connection_ab), node(:node_a), direction(:to_node)),
@@ -1538,7 +1530,7 @@
             time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
             @testset for (s, t) in zip(scenarios, time_slices)
                 expected_con = @build_constraint(
-                    + var_connection_flow[c, n, d, s, t] <= + var_connection_intact_flow[c, n, d, s, t]
+                    var_connection_flow[c, n, d, s, t] <= var_connection_intact_flow[c, n, d, s, t]
                 )
                 s_path = s
                 con_key = (c, n, d, s_path, t)
@@ -1554,7 +1546,7 @@
             time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
             @testset for (s, t) in zip(scenarios, time_slices)
                 expected_con = @build_constraint(
-                    + var_connection_flow[c, n, d, s, t] <= + var_connection_intact_flow[c, n, d, s, t]
+                    var_connection_flow[c, n, d, s, t] <= var_connection_intact_flow[c, n, d, s, t]
                 )
                 s_path = s
                 con_key = (c, n, d, s_path, t)
@@ -1563,4 +1555,27 @@
             end
         end
     end
+end
+
+@testset "connection-based constraints" begin
+    test_constraint_connection_flow_capacity()
+    test_constraint_connection_flow_gas_capacity()
+    test_constraint_fix_node_pressure_point()
+    test_constraint_connection_unitary_gas_flow()
+    test_constraint_node_voltage_angle()
+    test_constraint_connection_flow_capacity_investments()
+    test_constraint_connection_intact_flow_ptdf()
+    test_constraint_connection_flow_lodf()
+    test_constraint_ratio_out_in_connection_flow()
+    test_constraint_connections_invested_transition()
+    test_constraint_connections_invested_transition_mp()
+    test_constraint_connection_lifetime()
+    test_constraint_connection_lifetime_mp()
+    test_constraint_connections_invested_available()
+    test_constraint_connections_invested_available_mp()
+    test_constraint_user_constraint_node_connection()
+    test_constraint_connection_flow_intact_flow()
+    test_constraint_candidate_connection_lb()
+    test_constraint_ratio_out_in_connection_intact_flow()
+    test_constraint_candidate_connection_ub()
 end
