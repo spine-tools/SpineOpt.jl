@@ -366,7 +366,7 @@ This constraint can be extended to the use of nonspinning reserves. See [also](@
 
 
 #### Ramping and reserve constraints
-(Comment 2023-05-03: Currently under development)
+(Comment 2023-05-12: Currently under development)
 
 #### [Splitting unit flows into ramps](@id constraint_split_ramps)
 (Comment 2023-05-12: Currently under development)
