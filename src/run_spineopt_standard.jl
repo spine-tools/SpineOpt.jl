@@ -88,7 +88,7 @@ end
 Initialize the given model for SpineOpt: add variables, fix the necessary variables, add constraints and set objective.
 """
 function init_model!(
-    m; add_user_variables=m -> nothing, add_constraints=m -> nothing, log_level=3, alternative_objective=m -> nothing
+    m; add_user_variables=m -> nothing, add_constraints=m -> nothing, alternative_objective=m -> nothing, log_level=3
 )
     @timelog log_level 2 "Adding variables...\n" _add_variables!(
         m; add_user_variables=add_user_variables, log_level=log_level
@@ -238,8 +238,7 @@ function _set_objective!(m::Model; alternative_objective=m -> nothing)
     if alt_obj == nothing
         _create_objective_terms!(m)
         total_discounted_costs = sum(
-            in_window + beyond_window
-            for (in_window, beyond_window) in values(m.ext[:spineopt].objective_terms)
+            in_window + beyond_window for (in_window, beyond_window) in values(m.ext[:spineopt].objective_terms)
         )
         if !iszero(total_discounted_costs)
             @objective(m, Min, total_discounted_costs)
@@ -264,10 +263,8 @@ function _create_objective_terms!(m)
 end
 
 function _init_outputs!(m::Model)
-    for r in model__report(model=m.ext[:spineopt].instance)
-        for o in report__output(report=r)
-            get!(m.ext[:spineopt].outputs, o.name, Dict{NamedTuple,Dict}())
-        end
+    for out in keys(m.ext[:spineopt].reports_by_output)
+        get!(m.ext[:spineopt].outputs, out.name, Dict{NamedTuple,Dict}())
     end
 end
 
@@ -415,7 +412,7 @@ function _save_objective_values!(m::Model)
         m.ext[:spineopt].values[term] = Dict(ind => _value(realize(in_window)))
     end
     m.ext[:spineopt].values[:total_costs] = Dict(
-        ind => sum(m.ext[:spineopt].values[term][ind] for term in keys(m.ext[:spineopt].objective_terms))
+        ind => sum(m.ext[:spineopt].values[term][ind] for term in keys(m.ext[:spineopt].objective_terms); init=0)
     )
     nothing
 end
@@ -527,12 +524,8 @@ _reduced_cost(var, ::Nothing) = has_duals(owner_model(var)) ? reduced_cost(var) 
 Save the outputs of a model.
 """
 function _save_outputs!(m; iterations=nothing)
-    reports_by_output = Dict()
-    for rpt in model__report(model=m.ext[:spineopt].instance), out in report__output(report=rpt)
-        push!(get!(reports_by_output, out, []), rpt)
-    end
     is_last_window = end_(current_window(m)) >= model_end(model=m.ext[:spineopt].instance)
-    for (out, rpts) in reports_by_output
+    for (out, rpts) in m.ext[:spineopt].reports_by_output
         value = get(m.ext[:spineopt].values, out.name, nothing)
         crop_to_window = !is_last_window && all(overwrite_results_on_rolling(report=rpt, output=out) for rpt in rpts)
         if _save_output!(m, out, value, crop_to_window; iterations=iterations)
