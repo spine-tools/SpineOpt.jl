@@ -23,7 +23,7 @@ module Y
 using SpineInterface
 end
 
-@testset "run_spineopt" begin
+function _test_run_spineopt_setup()
     url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
@@ -68,8 +68,13 @@ end
             ["model", "instance", "db_lp_solver", "HiGHS.jl"]
         ],
     )
+    _load_test_data(url_in, test_data)
+    url_in, url_out, file_path_out
+end
+
+function _test_rolling()
     @testset "rolling" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
         vom_cost_data = [100 * k for k in 0:23]
         vom_cost = Dict("type" => "time_series", "data" => PyVector(vom_cost_data), "index" => index)
@@ -109,8 +114,11 @@ end
             end
         end
     end
+end
+
+function _test_rolling_with_updating_data()
     @testset "rolling with updating data" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         inds = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
         vom_cost_data = [100 * k for k in 0:23]
         ts = Dict(
@@ -167,8 +175,11 @@ end
             @test Y.unit_flow(; flow_key..., t=t) == d
         end
     end
+end
+
+function _test_rolling_with_unused_dummy_stochastic_data()
     @testset "rolling with unused dummy stochastic data" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         inds = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
         vom_cost_data = [100 * k for k in 0:23]
         ts = Dict(
@@ -218,8 +229,11 @@ end
             @test Y.unit_flow(; flow_key..., t=t) == d
         end
     end
+end
+
+function _test_rolling_without_varying_terms()
     @testset "rolling without varying terms" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
         vom_cost = 1200
         demand = 24
@@ -256,8 +270,11 @@ end
             @test Y.unit_flow(; flow_key..., t=t) == demand
         end
     end
+end
+
+function _test_units_on_non_anticipativity_time()
     @testset "units_on_non_anticipativity_time" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         vom_cost = 20
         demand = 200
         unit_capacity = demand
@@ -288,8 +305,11 @@ end
             @test is_fixed(var) == (k in 1:3)
         end
     end
+end
+
+function _test_unit_flow_non_anticipativity_time()
     @testset "unit_flow_non_anticipativity_time" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         vom_cost = 20
         demand_vals = rand(48)
         demand_inds = collect(DateTime(2000, 1, 1):Hour(1):DateTime(2000, 1, 3))
@@ -342,8 +362,11 @@ end
             end
         end
     end
+end
+
+function _test_dont_overwrite_results_on_rolling()
     @testset "don't overwrite results on rolling" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         vom_cost = 1200
         demand = Dict(
             "type" => "time_series",
@@ -389,8 +412,11 @@ end
             @test Y.unit_flow(; flow_key..., analysis_time=at, t=t) == expected_unit_flow
         end
     end
+end
+
+function _test_unfeasible()
     @testset "unfeasible" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         demand = 100
         object_parameter_values = [["node", "node_b", "demand", demand]]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand - 1]]
@@ -403,8 +429,11 @@ end
         m = run_spineopt(url_in, url_out; log_level=0)
         @test termination_status(m) != MOI.OPTIMAL
     end
+end
+
+function _test_unknown_output()
     @testset "unknown output" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         demand = 100
         vom_cost = 50
         objects = [["output", "unknown_output"]]
@@ -425,8 +454,11 @@ end
         )
         @test_logs min_level=Warn (:warn, "can't find any values for 'unknown_output'") run_spineopt(url_in, url_out; log_level=0)
     end
+end
+
+function _test_write_inputs()
     @testset "write inputs" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         demand = Dict("type" => "time_pattern", "data" => Dict("h1-6,h19-24" => 100, "h7-18" => 50))
         objects = [["output", "demand"]]
         relationships = [["report__output", ["report_x", "demand"]]]
@@ -444,8 +476,11 @@ end
             @test Y.demand(; key..., t=t) == ((7 <= k <= 18) ? 50 : 100)
         end
     end
+end
+
+function _test_write_inputs_overlapping_temporal_blocks()
     @testset "write inputs overlapping temporal blocks" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         demand = Dict("type" => "time_pattern", "data" => Dict("h1-6,h19-24" => 100, "h7-18" => 50))
         objects = [["output", "demand"], ["temporal_block", "8hourly"]]
         relationships = [
@@ -470,8 +505,11 @@ end
             @test Y.demand(; key..., t=t) == ((7 <= k <= 18) ? 50 : 100)
         end
     end
+end
+
+function _test_output_resolution_for_an_input()
     @testset "output_resolution for an input" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         demand = Dict("type" => "time_pattern", "data" => Dict("h1-6,h19-24" => 100, "h7-18" => 50))
         objects = [["output", "demand"]]
         relationships = [["report__output", ["report_x", "demand"]]]
@@ -499,12 +537,14 @@ end
             end
         end
     end
+end
+
+function _test_db_solvers()
     @testset "db_solvers" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         output_flag = true
         mip_rel_gap = 0.015
         demand = 100
-
         mip_solver_options = Dict(
             "type" => "map",
             "index_type" => "str",
@@ -519,7 +559,6 @@ end
                 ),
             ),
         )
-
         lp_solver_options = Dict(
             "type" => "map",
             "index_type" => "str",
@@ -533,32 +572,31 @@ end
                 ),
             ),
         )
-
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
             ["model", "instance", "db_mip_solver_options", mip_solver_options],
             ["model", "instance", "db_lp_solver_options", lp_solver_options]
         ]
-
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand]]
         SpineInterface.import_data(
             url_in;
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         m = run_spineopt(url_in, url_out; log_level=0, optimize=false)
         @test get_optimizer_attribute(m, "output_flag") == true
         @test get_optimizer_attribute(m, "mip_rel_gap") == 0.015
     end
+end
+
+function _test_db_solvers_multi_model()
     @testset "db_solvers_multi_model" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         output_flag = true
         mip_rel_gap = 0.015
         output_flag_master = false
         mip_rel_gap_master = 0.016
         demand = 100
-
         mip_solver_options = Dict(
             "type" => "map",
             "index_type" => "str",
@@ -573,7 +611,6 @@ end
                 ),
             ),
         )
-
         lp_solver_options = Dict(
             "type" => "map",
             "index_type" => "str",
@@ -587,7 +624,6 @@ end
                 ),
             ),
         )
-
         mip_solver_options_master = Dict(
             "type" => "map",
             "index_type" => "str",
@@ -602,7 +638,6 @@ end
                 ),
             ),
         )
-
         lp_solver_options_master = Dict(
             "type" => "map",
             "index_type" => "str",
@@ -616,13 +651,11 @@ end
                 ),
             ),
         )
-
         objects = [
             ["model", "master_instance"],
             ["temporal_block", "master_hourly"],
             ["stochastic_structure", "master_deterministic"]
         ]
-
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
             ["model", "instance", "model_type", "spineopt_standard"],
@@ -651,7 +684,6 @@ end
             ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
             ["unit__investment_stochastic_structure", ["unit_ab", "master_deterministic"]],
         ]
-
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand]]
         SpineInterface.import_data(
             url_in;
@@ -660,15 +692,17 @@ end
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
         (m, mp) = run_spineopt(url_in, url_out; log_level=0, optimize=false)
         @test get_optimizer_attribute(m, "output_flag") == true
         @test get_optimizer_attribute(m, "mip_rel_gap") == 0.015
         @test get_optimizer_attribute(mp, "output_flag") == false
         @test get_optimizer_attribute(mp, "mip_rel_gap") == 0.016
     end
+end
+
+function _test_fixing_variables_when_rolling()
     @testset "fixing variables when rolling" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
         demand_data = [10, 20, 30]
         demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
@@ -702,8 +736,11 @@ end
             @test is_fixed(var) == (history_start <= start(t) < history_end)
         end
     end
+end
+
+function _test_dual_values()
     @testset "dual values" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
         demand_data = [10, 20, 30]
         demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
@@ -739,8 +776,11 @@ end
             @test Y.constraint_nodal_balance(; key..., t=t) == expected
         end
     end
+end
+
+function _test_dual_values_with_two_time_indices()
     @testset "dual values with two time indices" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
         demand_data = [10, 20, 30]
         demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
@@ -778,8 +818,11 @@ end
             @test Y.constraint_node_injection(; key..., t=t) == expected
         end
     end
+end
+
+function _test_fix_unit_flow_with_rolling()
     @testset "fix_unit_flow with rolling" begin
-        _load_test_data(url_in, test_data)
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
         indexes = [
             DateTime("2000-01-01T00:00:00"),
             DateTime("2000-01-01T02:00:00"),
@@ -807,4 +850,25 @@ end
             end
         end
     end
+end
+
+@testset "run_spineopt" begin
+    _test_rolling()
+    _test_rolling_with_updating_data()
+    _test_rolling_with_unused_dummy_stochastic_data()
+    _test_rolling_without_varying_terms()
+    _test_units_on_non_anticipativity_time()
+    _test_unit_flow_non_anticipativity_time()
+    _test_dont_overwrite_results_on_rolling()
+    _test_unfeasible()
+    _test_unknown_output()
+    _test_write_inputs()
+    _test_write_inputs_overlapping_temporal_blocks()
+    _test_output_resolution_for_an_input()
+    _test_db_solvers()
+    _test_db_solvers_multi_model()
+    _test_fixing_variables_when_rolling()
+    _test_dual_values()
+    _test_dual_values_with_two_time_indices()
+    _test_fix_unit_flow_with_rolling()
 end

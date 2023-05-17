@@ -53,7 +53,7 @@ function rerun_spineopt!(
         @log log_level 1 "Window $k: $(current_window(m_mga))"
         optimize_model!(m_mga; log_level=log_level, iterations=mga_iterations) || break
         @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m_mga)
-        if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m_mga)
+        if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m_mga, k)
             @timelog log_level 2 " ... Rolling complete\n" break
         end
         update_model!(m_mga; update_constraints=update_constraints, log_level=log_level, update_names=update_names)

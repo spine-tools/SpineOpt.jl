@@ -29,7 +29,7 @@ function _model(model_type=:spineopt_standard)
     m
 end
 
-@testset "temporal structure" begin
+function _test_temporal_structure_setup()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -47,8 +47,13 @@ end
         :object_parameter_values =>
             [["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")]],
     )
+    _load_test_data(url_in, test_data)
+    url_in
+end
+
+function _test_representative_time_slice()
     @testset "representative_time_slice" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_temporal_structure_setup()
         representative_periods_mapping = Dict(
             "type" => "map",
             "index_type" => "date_time",
@@ -97,8 +102,11 @@ end
             end
         end
     end
+end
+
+function _test_zero_resolution()
     @testset "zero_resolution" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_temporal_structure_setup()
         object_parameter_values = [
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
             ["temporal_block", "block_a", "resolution", 0],
@@ -109,8 +117,11 @@ end
         m = _model()
         @test_throws ErrorException(err_msg) generate_temporal_structure!(m)
     end
+end
+
+function _test_block_start()
     @testset "block_start" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_temporal_structure_setup()
         objects = [["temporal_block", "block_c"]]
         relationships =
             [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
@@ -136,8 +147,11 @@ end
         @test start(first(time_slice(m; temporal_block=temporal_block(:block_b)))) == DateTime("2000-01-01T15:36:00")
         @test start(first(time_slice(m; temporal_block=temporal_block(:block_c)))) == DateTime("2000-01-01T00:00:00")
     end
+end
+
+function _test_block_end()
     @testset "block_end" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_temporal_structure_setup()
         objects = [["temporal_block", "block_c"]]
         relationships =
             [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
@@ -163,8 +177,11 @@ end
         @test end_(last(time_slice(m; temporal_block=temporal_block(:block_b)))) == DateTime("2000-01-01T15:36:00")
         @test end_(last(time_slice(m; temporal_block=temporal_block(:block_c)))) == DateTime("2000-01-03T00:00:00")
     end
+end
+
+function _test_one_two_four_even()
     @testset "one_two_four_even" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_temporal_structure_setup()
         objects = [["temporal_block", "block_c"]]
         relationships =
             [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
@@ -238,8 +255,11 @@ end
         @test _is_time_slice_set_equal(t_overlaps_t(m; t=b2), expected_t_overlaps_t_b2)
         @test _is_time_slice_set_equal(t_overlaps_t(m; t=c1), expected_t_overlaps_t_c1)
     end
+end
+
+function _test_two_three_uneven()
     @testset "two_three_uneven" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_temporal_structure_setup()
         object_parameter_values = [
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2006-01-01T00:00:00")],
             ["temporal_block", "block_a", "resolution", Dict("type" => "duration", "data" => "2Y")],
@@ -288,8 +308,11 @@ end
         @test _is_time_slice_set_equal(t_overlaps_t(m; t=b1), expected_t_overlaps_t_b1)
         @test _is_time_slice_set_equal(t_overlaps_t(m; t=b2), expected_t_overlaps_t_b2)
     end
+end
+
+function _test_gaps()
     @testset "gaps" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_temporal_structure_setup()
         objects = [["temporal_block", "block_c"]]
         relationships =
             [["model__temporal_block", ["instance", "block_c"]], ["node__temporal_block", ["only_node", "block_c"]]]
@@ -352,8 +375,11 @@ end
         @test _is_time_slice_equal(to_time_slice(m; t=bc1)[1], b2)
         @test _is_time_slice_equal(to_time_slice(m; t=bc2)[1], b2)
     end
+end
+
+function _test_to_time_slice_with_rolling()
     @testset "to_time_slice with rolling" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_temporal_structure_setup()
         object_parameter_values = [
             ["model", "instance", "model_start", Dict("type" => "date_time", "data" => "2001-01-01T00:00:00")],
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2003-01-01T00:00:00")],
@@ -370,14 +396,17 @@ end
         t2 = TimeSlice(DateTime(2001, 7), DateTime(2001, 12))
         @test _is_time_slice_equal(to_time_slice(m; t=t1)[1], a1)
         @test _is_time_slice_equal(to_time_slice(m; t=t2)[1], a2)
-        roll_temporal_structure!(m)
+        roll_temporal_structure!(m, 1)
         t1 = TimeSlice(DateTime(2002, 1), DateTime(2002, 6))
         t2 = TimeSlice(DateTime(2002, 7), DateTime(2002, 12))
         @test _is_time_slice_equal(to_time_slice(m; t=t1)[1], a1)
         @test _is_time_slice_equal(to_time_slice(m; t=t2)[1], a2)
     end
+end
+
+function _test_history()
     @testset "history" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_temporal_structure_setup()
         objects = [("unit", "unitA")]
         object_parameter_values = [
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T04:00:00")],
@@ -404,4 +433,16 @@ end
             @test te == to
         end
     end
+end
+
+@testset "temporal structure" begin
+    _test_representative_time_slice()
+    _test_zero_resolution()
+    _test_block_start()
+    _test_block_end()
+    _test_one_two_four_even()
+    _test_two_three_uneven()
+    _test_gaps()
+    _test_to_time_slice_with_rolling()
+    _test_history()
 end

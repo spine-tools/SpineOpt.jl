@@ -40,7 +40,7 @@ function rerun_spineopt!(
     NOTE: We will first build the model for the last optimisation window to make sure it can roll that far.
     Then we will bring the model to the first window to start solving it.
     """
-    roll_temporal_structure!(m, roll_count)
+    roll_temporal_structure!(m, 1:roll_count)
     init_model!(
         m;
         add_user_variables=add_user_variables,
@@ -48,7 +48,7 @@ function rerun_spineopt!(
         log_level=log_level,
         alternative_objective=alternative_objective
     )
-    @timelog log_level 2 "Bringing model to the first window..." roll_temporal_structure!(m, -roll_count)
+    @timelog log_level 2 "Bringing model to the first window..." roll_temporal_structure!(m, 1:roll_count; rev=true)
     try
         run_spineopt_kernel!(
             m,
@@ -73,15 +73,17 @@ end
 
 function _roll_count(m::Model)
     instance = m.ext[:spineopt].instance
-    roll_forward_ = roll_forward(model=instance, _strict=false)
-    roll_forward_ in (nothing, 0) && return 0
-    current_window_end = end_(current_window(m))
-    roll_count = 0
-    while current_window_end < model_end(model=instance)
-        current_window_end += roll_forward_
-        roll_count += 1
+    window_start = model_start(model=instance)
+    i = 1
+    while true
+        rf = roll_forward(model=instance, i=i, _strict=false)
+        if isnothing(rf) || rf == Minute(0) || window_start + rf >= model_end(model=instance)
+            break
+        end
+        window_start += rf
+        i += 1
     end
-    roll_count
+    i - 1
 end
 
 """
@@ -293,7 +295,7 @@ function run_spineopt_kernel!(
             _dump_resume_data(m, k, resume_file_path)
             _clear_results!(m)
         end
-        if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m)
+        if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
             @timelog log_level 2 " ... Rolling complete\n" break
         end
         update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
@@ -314,9 +316,9 @@ function _resume_run!(m, resume_file_path, update_constraints, log_level, update
         resume_data = JSON.parsefile(resume_file_path)
         k, values = resume_data["window"], resume_data["values"]
         @log log_level 1 "Using data from $resume_file_path to skip through windows 1 to $k..."
-        roll_temporal_structure!(m::Model, k - 1)
+        roll_temporal_structure!(m, 1:(k - 1))
         _load_variable_values!(m, values)
-        if !roll_temporal_structure!(m::Model)
+        if !roll_temporal_structure!(m, k)
             @log log_level 1 "Nothing to resume - window $k was the last one"
             nothing
         else
@@ -968,8 +970,8 @@ function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict
     non_anticipativity_time = definition[:non_anticipativity_time]
     non_anticipativity_time === nothing && return
     non_anticipativity_margin = definition[:non_anticipativity_margin]
-    window_start = start(current_window(m))
-    roll_forward_ = roll_forward(model=m.ext[:spineopt].instance)
+    w_start = start(current_window(m))
+    w_length = end_(current_window(m)) - w_start
     for ent in SpineInterface.indices_as_tuples(non_anticipativity_time)
         for ind in indices(m; t=time_slice(m), ent...)
             non_ant_time = non_anticipativity_time(; ind..., _strict=false)
@@ -978,8 +980,8 @@ function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict
             else
                 non_anticipativity_margin(; ind..., _strict=false)
             end
-            if non_ant_time != nothing && start(ind.t) < window_start +  non_ant_time
-                next_t = to_time_slice(m; t=ind.t + roll_forward_)
+            if non_ant_time != nothing && start(ind.t) < w_start + non_ant_time
+                next_t = to_time_slice(m; t=ind.t + w_length)
                 next_inds = indices(m; ind..., t=next_t)
                 if !isempty(next_inds)
                     next_ind = first(next_inds)
