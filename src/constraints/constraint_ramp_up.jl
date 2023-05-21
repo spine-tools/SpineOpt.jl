@@ -41,9 +41,7 @@ function add_constraint_ramp_up!(m::Model)
                     (units_on[u, s, t1] - units_started_up[u, s, t1])
                     * ramp_up_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                     + (
-                        max_startup_ramp[
-                            (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
-                        ]==nothing ? units_started_up[u, s, t1] : nothing
+                        isnothing(max_startup_ramp(unit=u, node=ng, direction=d)) ? units_started_up[u, s, t1] : 0
                     )
                     # A functional term to take care of the start up ramps 
                     # for the case where max_startup_ramp is not defined (constraint_max_start_up_ramp not in use).

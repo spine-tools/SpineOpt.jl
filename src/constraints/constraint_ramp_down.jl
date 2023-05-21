@@ -49,9 +49,7 @@ function add_constraint_ramp_down!(m::Model)
                     )
                     * ramp_down_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                     + (
-                        max_shutdown_ramp[
-                            (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)
-                        ]==nothing ? units_shut_down[u, s, t1] : nothing
+                        isnothing(max_shutdown_ramp(unit=u, node=ng, direction=d)) ? units_shut_down[u, s, t1] : 0
                     )
                     # A functional term to take care of the shut down ramps 
                     # for the case where max_shutdown_ramp is not defined (constraint_max_shut_down_ramp not in use).
