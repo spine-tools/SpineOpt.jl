@@ -1429,6 +1429,31 @@ function test_constraint_ramp_up()
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
         end
+
+        max_startup_ramp = 0.4
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "max_startup_ramp", max_startup_ramp],
+        ]
+        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_ramp_up_unit_flow = m.ext[:spineopt].variables[:ramp_up_unit_flow]
+        var_units_on = m.ext[:spineopt].variables[:units_on]
+        var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
+        constraint = m.ext[:spineopt].constraints[:ramp_up]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            var_ru_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
+            var_u_on_key = (unit(:unit_ab), s, t)
+            var_ru_u_flow = var_ramp_up_unit_flow[var_ru_u_flow_key...]
+            var_u_on = var_units_on[var_u_on_key...]
+            var_u_su = var_units_started_up[var_u_on_key...]
+            expected_con = @build_constraint(var_ru_u_flow <= unit_capacity * (ramp_up_limit * (var_u_on - var_u_su)))
+            con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
     end
 end
 
@@ -1708,6 +1733,32 @@ function test_constraint_ramp_down()
             var_u_su = var_units_started_up[var_u_on_key...]
             var_u_sd = var_units_shut_down[var_u_on_key...]
             expected_con = @build_constraint(var_rd_u_flow <= unit_capacity * (ramp_down_limit * (var_u_on - var_u_su) + var_u_sd))
+            con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
+            observed_con = constraint_object(constraint[con_key...])
+            @test _is_constraint_equal(observed_con, expected_con)
+        end
+
+        max_shutdown_ramp = 0.4
+        relationship_parameter_values = [
+            ["unit__from_node", ["unit_ab", "node_a"], "max_shutdown_ramp", max_shutdown_ramp],
+        ]
+        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_ramp_down_unit_flow = m.ext[:spineopt].variables[:ramp_down_unit_flow]
+        var_units_on = m.ext[:spineopt].variables[:units_on]
+        var_units_started_up = m.ext[:spineopt].variables[:units_started_up]
+        var_units_shut_down = m.ext[:spineopt].variables[:units_shut_down]
+        constraint = m.ext[:spineopt].constraints[:ramp_down]
+        @test length(constraint) == 2
+        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        @testset for (s, t) in zip(scenarios, time_slices)
+            var_ru_u_flow_key = (unit(:unit_ab), node(:node_a), direction(:from_node), s, t)
+            var_u_on_key = (unit(:unit_ab), s, t)
+            var_rd_u_flow = var_ramp_down_unit_flow[var_ru_u_flow_key...]
+            var_u_on = var_units_on[var_u_on_key...]
+            var_u_su = var_units_started_up[var_u_on_key...]
+            expected_con = @build_constraint(var_rd_u_flow <= unit_capacity * (ramp_down_limit * (var_u_on - var_u_su)))
             con_key = (unit(:unit_ab), node(:node_a), direction(:from_node), [s], t)
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con)
