@@ -40,7 +40,7 @@ function add_constraint_unit_flow_op_bounds!(m::Model)
                 )
             )
             * (
-                ordered_unit_flow_op(unit = u, node=n, direction=d) ? 
+                ordered_unit_flow_op(unit = u, node=n, direction=d, _default=false) ? 
                 unit_flow_op_active[u, n, d, op, s, t] : units_on[u, s, t]
             )
             * unit_availability_factor[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)]
