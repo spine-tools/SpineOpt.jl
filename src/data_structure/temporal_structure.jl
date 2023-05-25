@@ -368,11 +368,11 @@ Preprocess the temporal structure for SpineOpt from the provided input data.
 Runs a number of functions processing different aspects of the temporal structure in sequence.
 """
 function generate_temporal_structure!(m::Model)
-    _generate_current_window!(m::Model)
-    _generate_time_slice!(m::Model)
-    _generate_output_time_slices!(m::Model)
-    _generate_time_slice_relationships!(m::Model)
-    _generate_representative_time_slice!(m::Model)
+    _generate_current_window!(m)
+    _generate_time_slice!(m)
+    _generate_output_time_slices!(m)
+    _generate_time_slice_relationships!(m)
+    _generate_representative_time_slice!(m)
 end
 
 """
