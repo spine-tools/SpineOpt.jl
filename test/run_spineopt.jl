@@ -95,6 +95,7 @@ function _test_rolling()
             relationship_parameter_values=relationship_parameter_values,
         )
         @testset for write_as_roll in (0, 1, 2, 3, 5, 8, 13, 21, 24)
+            rm(file_path_out; force=true)
             m = run_spineopt(url_in, url_out; log_level=0, write_as_roll=write_as_roll)
             con = m.ext[:spineopt].constraints[:unit_flow_capacity]
             using_spinedb(url_out, Y)
@@ -156,6 +157,7 @@ function _test_rolling_with_updating_data()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
+        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:spineopt].constraints[:unit_flow_capacity]
         using_spinedb(url_out, Y)
@@ -211,6 +213,7 @@ function _test_rolling_with_unused_dummy_stochastic_data()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
+        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:spineopt].constraints[:unit_flow_capacity]
         using_spinedb(url_out, Y)
@@ -251,7 +254,7 @@ function _test_rolling_without_varying_terms()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-
+        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         con = m.ext[:spineopt].constraints[:unit_flow_capacity]
         using_spinedb(url_out, Y)
@@ -389,6 +392,7 @@ function _test_dont_overwrite_results_on_rolling()
             relationship_parameter_values=relationship_parameter_values,
             on_conflict=:replace
         )
+        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0, update_names=true)
         using_spinedb(url_out, Y)
         flow_key = (
@@ -404,12 +408,13 @@ function _test_dont_overwrite_results_on_rolling()
         @testset for at in analysis_times, t in at - Hour(12):Hour(1):at + Hour(12)
             window_start = max(DateTime(2000, 1, 1), at)
             window_end = min(DateTime(2000, 1, 2), at + Hour(9))
-            expected_unit_flow = if window_start <= t < window_end
-                (t < DateTime(2000, 1, 1, 12)) ? 50 : 90
+            obs_unit_flow = Y.unit_flow(; flow_key..., analysis_time=at, t=t)
+            if window_start <= t < window_end
+                exp_unit_flow = (t < DateTime(2000, 1, 1, 12)) ? 50 : 90
+                @test obs_unit_flow == exp_unit_flow
             else
-                nothing
+                @test isnan(obs_unit_flow)
             end
-            @test Y.unit_flow(; flow_key..., analysis_time=at, t=t) == expected_unit_flow
         end
     end
 end
@@ -469,6 +474,7 @@ function _test_write_inputs()
             relationships=relationships,
             object_parameter_values=object_parameter_values,
         )
+        rm(file_path_out; force=true)
         run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
         key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
@@ -498,6 +504,7 @@ function _test_write_inputs_overlapping_temporal_blocks()
             relationships=relationships,
             object_parameter_values=object_parameter_values,
         )
+        rm(file_path_out; force=true)
         run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
         key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
@@ -524,6 +531,7 @@ function _test_output_resolution_for_an_input()
                 relationships=relationships,
                 object_parameter_values=object_parameter_values,
             )
+            rm(file_path_out; force=true)
             run_spineopt(url_in, url_out; log_level=0, filters=Dict())
             using_spinedb(url_out, Y)
             key = (report=Y.report(:report_x), node=Y.node(:node_b), stochastic_scenario=Y.stochastic_scenario(:parent))
@@ -833,13 +841,17 @@ function _test_fix_unit_flow_with_rolling()
         ]
         values = [1, NaN, 2, NaN, 3, NaN]
         fix_unit_flow_ = unparse_db_value(TimeSeries(indexes, values, false, false))
-        object_parameter_values = [["node", "node_b", "balance_type", "balance_type_none"]]
+        object_parameter_values = [
+            ["node", "node_b", "balance_type", "balance_type_none"],
+            ["model", "instance", "roll_forward", unparse_db_value(Hour(6))],
+        ]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "fix_unit_flow", fix_unit_flow_]]
         SpineInterface.import_data(
             url_in;
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values
         )
+        rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out)
         using_spinedb(url_out, Y)
         @testset for ind in indices(Y.unit_flow)
@@ -848,6 +860,57 @@ function _test_fix_unit_flow_with_rolling()
                 exp_v = isnan(values[i]) ? 0 : values[i]
                 @test exp_v == v
             end
+        end
+    end
+end
+
+function _test_fix_node_state_using_map_with_rolling()
+    @testset "fix_node_state_using_map_with_rolling" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        rf = 2
+        look_ahead = 4  # Higher than the roll forward so it's more interesting
+        # Note that block end needs to set to Hour(look_ahead + 1) for things to work!
+        ucap = 10  # Can be anything
+        indexes = collect(DateTime("2000-01-01T00:00:00"):Hour(rf):DateTime("2000-01-01T23:00:00"))
+        values = []
+        for (k, t0) in enumerate(indexes)
+            t = t0 + Hour(look_ahead)
+            v = Hour(t - indexes[1]).value * ucap
+            val = if k == 1
+                TimeSeries([indexes[1], indexes[1] + Hour(1), t], [0, NaN, v])
+            else
+                TimeSeries([t], [v])
+            end
+            push!(values, val)
+        end
+        for (k, v) in zip(indexes, values) @show k, collect(v) end
+        fix_node_state_ = unparse_db_value(Map(indexes, values))
+        objects = [["output", "node_state"]]
+        relationships = [["report__output", ["report_x", "node_state"]]]
+        object_parameter_values = [
+            ["node", "node_b", "has_state", true],
+            ["node", "node_b", "fix_node_state", fix_node_state_],
+            ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
+            ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(look_ahead + 1))],
+        ]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap]
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        rm(file_path_out; force=true)
+        m = run_spineopt(url_in, url_out; log_level=0)
+        using_spinedb(url_out, Y)
+        n_state = Y.node_state(; node=Y.node(:node_b))
+        @test length(n_state) == 27
+        @testset for (t, v) in n_state
+            exp_v = Hour(t - indexes[1]).value * ucap
+            @test exp_v == v
         end
     end
 end
@@ -871,4 +934,5 @@ end
     _test_dual_values()
     _test_dual_values_with_two_time_indices()
     _test_fix_unit_flow_with_rolling()
+    _test_fix_node_state_using_map_with_rolling()
 end
