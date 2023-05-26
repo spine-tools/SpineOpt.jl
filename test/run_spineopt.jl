@@ -408,12 +408,13 @@ function _test_dont_overwrite_results_on_rolling()
         @testset for at in analysis_times, t in at - Hour(12):Hour(1):at + Hour(12)
             window_start = max(DateTime(2000, 1, 1), at)
             window_end = min(DateTime(2000, 1, 2), at + Hour(9))
-            expected_unit_flow = if window_start <= t < window_end
-                (t < DateTime(2000, 1, 1, 12)) ? 50 : 90
+            obs_unit_flow = Y.unit_flow(; flow_key..., analysis_time=at, t=t)
+            if window_start <= t < window_end
+                exp_unit_flow = (t < DateTime(2000, 1, 1, 12)) ? 50 : 90
+                @test obs_unit_flow == exp_unit_flow
             else
-                nothing
+                @test isnan(obs_unit_flow)
             end
-            @test Y.unit_flow(; flow_key..., analysis_time=at, t=t) == expected_unit_flow
         end
     end
 end
@@ -905,7 +906,9 @@ function _test_fix_node_state_using_map_with_rolling()
         rm(file_path_out; force=true)
         m = run_spineopt(url_in, url_out; log_level=0)
         using_spinedb(url_out, Y)
-        @testset for (t, v) in Y.node_state(; node=Y.node(:node_b))
+        n_state = Y.node_state(; node=Y.node(:node_b))
+        @test length(n_state) == 27
+        @testset for (t, v) in n_state
             exp_v = Hour(t - indexes[1]).value * ucap
             @test exp_v == v
         end
