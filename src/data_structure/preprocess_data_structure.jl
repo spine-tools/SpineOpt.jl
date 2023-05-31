@@ -770,7 +770,9 @@ function generate_benders_structure()
             obj = ent[obj_cls.name]
             fix_value = fix_param(; ent...)
             if fix_value !== nothing
-                add_object_parameter_values!(obj_cls, Dict(obj => Dict(starting_param_name => fix_value)))
+                add_object_parameter_values!(
+                    obj_cls, Dict(obj => Dict(starting_param_name => parameter_value(fix_value)))
+                )
             end
             add_relationship_parameter_values!(
                 rel_cls,

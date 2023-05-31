@@ -102,13 +102,13 @@ _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 Create a JuMP variable with the input properties.
 """
 function _variable(m, name, ind, bin, int, lb, ub, initial_value, fix_value)
+    ind = (analysis_time=_analysis_time(m), ind...)
     var = @variable(m, base_name = _base_name(name, ind))
     bin !== nothing && bin(ind) && set_binary(var)
     int !== nothing && int(ind) && set_integer(var)
-    initial_value_ = initial_value === nothing ? nothing : initial_value(; ind..., _strict=false)
-    initial_value_ === nothing || fix(var, initial_value_)
     lb === nothing || set_lower_bound(var, lb[(; ind..., _strict=false)])
     ub === nothing || set_upper_bound(var, ub[(; ind..., _strict=false)])
+    initial_value === nothing || fix(var, initial_value[(; ind..., _strict=false)])
     fix_value === nothing || fix(var, fix_value[(; ind..., _strict=false)])
     var
 end

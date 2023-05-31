@@ -130,7 +130,9 @@ A `Dict` mapping 'pre-time_slices' (i.e., (start, end) tuples) to an Array of te
 function _time_interval_blocks(instance::Object, window_start::DateTime, window_end::DateTime)
     blocks_by_time_interval = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
     # TODO: In preprocessing, remove temporal_blocks without any node__temporal_block relationships?
-    for block in members(model__temporal_block(model=instance))
+    model_blocks = members(model__temporal_block(model=instance))
+    isempty(model_blocks) && error("model $instance doesn't have any temporal_blocks")
+    for block in model_blocks
         adjusted_start = _adjusted_start(window_start, block_start(temporal_block=block, _strict=false))
         adjusted_end = _adjusted_end(window_start, window_end, block_end(temporal_block=block, _strict=false))
         time_slice_start = adjusted_start
@@ -366,11 +368,11 @@ Preprocess the temporal structure for SpineOpt from the provided input data.
 Runs a number of functions processing different aspects of the temporal structure in sequence.
 """
 function generate_temporal_structure!(m::Model)
-    _generate_current_window!(m::Model)
-    _generate_time_slice!(m::Model)
-    _generate_output_time_slices!(m::Model)
-    _generate_time_slice_relationships!(m::Model)
-    _generate_representative_time_slice!(m::Model)
+    _generate_current_window!(m)
+    _generate_time_slice!(m)
+    _generate_output_time_slices!(m)
+    _generate_time_slice_relationships!(m)
+    _generate_representative_time_slice!(m)
 end
 
 """
