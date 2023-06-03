@@ -313,7 +313,6 @@ function test_constraint_operating_point_bounds()
             relationships=relationships, 
             relationship_parameter_values=relationship_parameter_values 
         )
-
         # When the parameter ordered_unit_flow_op use its default false value,
         # SpineOpt does not generate this consraint.
         m = run_spineopt(url_in; log_level=0, optimize=false)

@@ -415,7 +415,7 @@ struct SpineOptExt
     dual_solves_lock::ReentrantLock
     objective_lower_bound::Base.RefValue{Float64}
     objective_upper_bound::Base.RefValue{Float64}
-    benders_gap::Base.RefValue{Float64}
+    benders_gaps::Vector{Float64}
     function SpineOptExt(instance, lp_solver=nothing, is_subproblem=false)
         intermediate_results_folder = tempname(; cleanup=false)
         mkpath(intermediate_results_folder)
@@ -431,12 +431,6 @@ struct SpineOptExt
         reports_by_output = Dict()
         for rpt in model__report(model=instance), out in report__output(report=rpt)
             push!(get!(reports_by_output, out, []), rpt)
-        end
-        if is_subproblem
-            for out_name in (:bound_units_on, :bound_connections_invested_available, :bound_storages_invested_available)
-                add_object!(output, Object(out_name, :output))
-                get!(reports_by_output, output(out_name), [])
-            end
         end
         new(
             instance,
@@ -457,7 +451,7 @@ struct SpineOptExt
             ReentrantLock(),
             Ref(0.0),
             Ref(0.0),
-            Ref(0.0),
+            [],
         )
     end
 end
