@@ -183,12 +183,12 @@ function test_constraint_fix_node_pressure_point()
         fixed_pressure_constant_0_raw = [53.422, 58.652, 63.456, 0.0, 32.348, 24.57, 0.0, 0.0, 35.745]
         fixed_pressure_constant_1_ = Dict(
             ("connection_ca", "node_c","node_a") => Dict(
-                "type" => "array", "value_type" => "float", "data" => PyVector(fixed_pressure_constant_1_raw)
+                "type" => "array", "value_type" => "float", "data" => fixed_pressure_constant_1_raw
             )
         )
         fixed_pressure_constant_0_ = Dict(
             ("connection_ca", "node_c","node_a") => Dict(
-                "type" => "array", "value_type" => "float", "data" => PyVector(fixed_pressure_constant_0_raw)
+                "type" => "array", "value_type" => "float", "data" => fixed_pressure_constant_0_raw
             )
         )
         object_parameter_values = [

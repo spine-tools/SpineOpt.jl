@@ -66,6 +66,7 @@ function add_variable_connections_invested_available!(m::Model)
         lb=Constant(0),
         int=connections_invested_available_int,
         fix_value=fix_connections_invested_available,
+        internal_fix_value=connections_invested_available_bi,
         initial_value=initial_connections_invested_available
     )
 end

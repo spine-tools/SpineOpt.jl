@@ -762,43 +762,49 @@ function generate_benders_structure()
         bi_name, [current_bi], Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(0)))
     )
     sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])
-    unit__benders_iteration = RelationshipClass(:unit__benders_iteration, [:unit, bi_name], [])
-    units_on_mv = Parameter(:units_on_mv, [unit__benders_iteration])
-    units_invested_available_bi = Parameter(:units_invested_available_bi, [unit__benders_iteration])
-    connection__benders_iteration = RelationshipClass(:connection__benders_iteration, [:connection, bi_name], [])
-    connections_invested_available_mv = Parameter(:connections_invested_available_mv, [connection__benders_iteration])
-    connections_invested_available_bi = Parameter(:connections_invested_available_bi, [connection__benders_iteration])
-    node__benders_iteration = RelationshipClass(:node__benders_iteration, [:node, bi_name], [])
-    storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node__benders_iteration])
-    storages_invested_available_bi = Parameter(:storages_invested_available_bi, [node__benders_iteration])
+    units_on_mv = Parameter(:units_on_mv, [unit])
+    units_invested_available_bi = Parameter(:units_invested_available_bi, [unit])
+    connections_invested_available_mv = Parameter(:connections_invested_available_mv, [connection])
+    connections_invested_available_bi = Parameter(:connections_invested_available_bi, [connection])
+    storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node])
+    storages_invested_available_bi = Parameter(:storages_invested_available_bi, [node])
+    add_object_parameter_values!(unit, _benders_initial_pvals(:units_invested_available_bi, candidate_units))
+    add_object_parameter_values!(
+        connection, _benders_initial_pvals(:connections_invested_available_bi, candidate_connections)
+    )
+    add_object_parameter_values!(node, _benders_initial_pvals(:storages_invested_available_bi, candidate_storages))
     @eval begin
         benders_iteration = $benders_iteration
         current_bi = $current_bi
         sp_objective_value_bi = $sp_objective_value_bi
-        unit__benders_iteration = $unit__benders_iteration
         units_on_mv = $units_on_mv
         units_invested_available_bi = $units_invested_available_bi
-        connection__benders_iteration = $connection__benders_iteration
         connections_invested_available_mv = $connections_invested_available_mv
         connections_invested_available_bi = $connections_invested_available_bi
-        node__benders_iteration = $node__benders_iteration
         storages_invested_available_mv = $storages_invested_available_mv
         storages_invested_available_bi = $storages_invested_available_bi
         export benders_iteration
         export current_bi
         export sp_objective_value_bi
-        export unit__benders_iteration
         export units_on_mv
         export units_invested_available_bi
-        export connection__benders_iteration
         export connections_invested_available_mv
         export connections_invested_available_bi
-        export node__benders_iteration
         export storages_invested_available_mv
         export storages_invested_available_bi
     end
 end
 
+function _benders_initial_pvals(pname, candidates)
+    scens = stochastic_scenario()
+    t = minimum(model_start(model=m) for m in model())
+    Dict(
+        obj => Dict(
+            pname => parameter_value(Map(scens, [TimeSeries([t - Hour(1), t], [0, NaN]) for _s in scens]))
+        )
+        for obj in indices(candidates)
+    )
+end
 
 function apply_forced_availability_factor()
     function _apply_forced_availability_factor(m_start, m_end, class, availability_factor)

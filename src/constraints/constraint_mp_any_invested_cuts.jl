@@ -40,9 +40,9 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
             + expr_sum(
                 (
                     + units_invested_available[u, s, t]
-                    - units_invested_available_bi(benders_iteration=bi, unit=u, stochastic_scenario=s, t=t)
+                    - units_invested_available_bi(unit=u, stochastic_scenario=s, t=t)
                 )
-                * units_on_mv(benders_iteration=bi, unit=u, stochastic_scenario=s, t=t)
+                * units_on_mv(unit=u, stochastic_scenario=s, t=t)
                 for (u, s, t) in units_invested_available_indices(m);
                 init=0,
             )
@@ -50,9 +50,9 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
             + expr_sum(
                 (
                     + connections_invested_available[c, s, t]
-                    - connections_invested_available_bi(benders_iteration=bi, connection=c, stochastic_scenario=s, t=t)
+                    - connections_invested_available_bi(connection=c, stochastic_scenario=s, t=t)
                 )
-                * connections_invested_available_mv(benders_iteration=bi, connection=c, stochastic_scenario=s, t=t)
+                * connections_invested_available_mv(connection=c, stochastic_scenario=s, t=t)
                 for (c, s, t) in connections_invested_available_indices(m);
                 init=0,
             )
@@ -60,9 +60,9 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
             + expr_sum(
                 (
                     + storages_invested_available[n, s, t]
-                    - storages_invested_available_bi(benders_iteration=bi, node=n, stochastic_scenario=s, t=t)
+                    - storages_invested_available_bi(node=n, stochastic_scenario=s, t=t)
                 )
-                * storages_invested_available_mv(benders_iteration=bi, node=n, stochastic_scenario=s, t=t)
+                * storages_invested_available_mv(node=n, stochastic_scenario=s, t=t)
                 for (n, s, t) in storages_invested_available_indices(m);
                 init=0,
             )

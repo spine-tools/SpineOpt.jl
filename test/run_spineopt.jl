@@ -77,9 +77,9 @@ function _test_rolling()
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
         vom_cost_data = [100 * k for k in 0:23]
-        vom_cost = Dict("type" => "time_series", "data" => PyVector(vom_cost_data), "index" => index)
+        vom_cost = Dict("type" => "time_series", "data" => vom_cost_data, "index" => index)
         demand_data = [2 * k for k in 0:23]
-        demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
+        demand = Dict("type" => "time_series", "data" => demand_data, "index" => index)
         unit_capacity = demand
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
@@ -713,7 +713,7 @@ function _test_fixing_variables_when_rolling()
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
         demand_data = [10, 20, 30]
-        demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
+        demand = Dict("type" => "time_series", "data" => demand_data, "index" => index)
         unit_capacity = demand
         objects = [["output", "constraint_nodal_balance"]]
         relationships = [["report__output", ["report_x", "constraint_nodal_balance"]]]
@@ -751,10 +751,10 @@ function _test_dual_values()
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
         demand_data = [10, 20, 30]
-        demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
+        demand = Dict("type" => "time_series", "data" => demand_data, "index" => index)
         unit_capacity = 31
         vom_cost_data = [100, 200, 300]
-        vom_cost = Dict("type" => "time_series", "data" => PyVector(vom_cost_data), "index" => index)
+        vom_cost = Dict("type" => "time_series", "data" => vom_cost_data, "index" => index)
         objects = [["output", "constraint_nodal_balance"]]
         relationships = [["report__output", ["report_x", "constraint_nodal_balance"]]]
         object_parameter_values = [
@@ -791,10 +791,10 @@ function _test_dual_values_with_two_time_indices()
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
         demand_data = [10, 20, 30]
-        demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
+        demand = Dict("type" => "time_series", "data" => demand_data, "index" => index)
         unit_capacity = 31
         vom_cost_data = [100, 200, 300]
-        vom_cost = Dict("type" => "time_series", "data" => PyVector(vom_cost_data), "index" => index)
+        vom_cost = Dict("type" => "time_series", "data" => vom_cost_data, "index" => index)
         objects = [["output", "constraint_node_injection"]]
         relationships = [["report__output", ["report_x", "constraint_node_injection"]]]
         object_parameter_values = [
@@ -918,7 +918,9 @@ end
 function _test_benders()
     @testset "benders" begin
         benders_gap = 1e-6  # needed so that we get the exact master problem solution
-        mip_solver_options_benders = unparse_db_value(Map(["HiGHS.jl"], [Map(["mip_rel_gap"], [benders_gap])]))
+        mip_solver_options_benders = unparse_db_value(
+            Map(["HiGHS.jl"], [Map(["mip_rel_gap", "threads"], [benders_gap, 8.0])])
+        )
         res = 6
         dem = ucap = 10
         rf = 6
@@ -994,25 +996,35 @@ function _test_benders()
             rm(file_path_out; force=true)
             run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
-            # Costs
-            @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
-                @test Y.total_costs(model=Y.model(:instance), t=t) == if should_invest
-                    if t == DateTime(2000, 1, 1)
-                        329
+            @testset "total_cost" begin
+                for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
+                    @test Y.total_costs(model=Y.model(:instance), t=t) == if should_invest
+                        if t == DateTime(2000, 1, 1)
+                            329
+                        else
+                            60
+                        end
                     else
-                        60
+                        120
                     end
-                else
-                    120
                 end
             end
-            # Investment decisions
-            @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                @test Y.units_invested(unit=Y.unit(:unit_ab_alt), t=t) == (
-                    should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
-                )
-                @test Y.units_mothballed(unit=Y.unit(:unit_ab_alt), t=t) == 0
-                @test Y.units_invested_available(unit=Y.unit(:unit_ab_alt), t=t) == (should_invest ? 1 : 0)
+            @testset "invested" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.units_invested(unit=Y.unit(:unit_ab_alt), t=t) == (
+                        should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
+                    )
+                end
+            end
+            @testset "mothballed" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)                
+                    @test Y.units_mothballed(unit=Y.unit(:unit_ab_alt), t=t) == 0
+                end
+            end
+            @testset "available" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)                
+                    @test Y.units_invested_available(unit=Y.unit(:unit_ab_alt), t=t) == (should_invest ? 1 : 0)
+                end
             end
         end
     end

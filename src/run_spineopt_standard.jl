@@ -35,11 +35,10 @@ function rerun_spineopt!(
 )
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
-    _ensure_zero_initial_investments!(m)
     roll_count = _roll_count(m)
     @log log_level 2 """
     NOTE: We will first build the model for the last optimisation window to make sure it can roll that far.
-    Then we will bring the model back to the first window to start solving it.
+    Then we will bring it back to the first window to start solving it.
     """
     roll_temporal_structure!(m, 1:roll_count)
     init_model!(
@@ -105,24 +104,6 @@ function init_model!(
     )
     @timelog log_level 2 "Setting objective..." _set_objective!(m; alternative_objective=alternative_objective)
     _init_outputs!(m)
-end
-
-function _ensure_zero_initial_investments!(m)
-    _ensure_zero_initial_investment!(m, unit, candidate_units, :fix_units_invested_available)
-    _ensure_zero_initial_investment!(m, connection, candidate_connections, :fix_connections_invested_available)
-    _ensure_zero_initial_investment!(m, node, candidate_storages, :fix_storages_invested_available)
-end
-
-function _ensure_zero_initial_investment!(m, obj_cls, candidates, fix_value)
-    scens = stochastic_scenario()
-    t = last(history_time_slice(m))
-    pvals = Dict(
-        obj => Dict(
-            fix_value => parameter_value(Map(scens, [TimeSeries([start(t), end_(t)], [0, NaN]) for _s in scens]))
-        )
-        for obj in indices(candidates)
-    )
-    add_object_parameter_values!(obj_cls, pvals; merge_values=true)
 end
 
 """

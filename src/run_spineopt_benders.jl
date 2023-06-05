@@ -38,7 +38,6 @@ function rerun_spineopt!(
     @timelog log_level 2 "Creating $m_instance stochastic structure..." generate_stochastic_structure!(m)
     @timelog log_level 2 "Creating $m_bm_instance temporal structure..." generate_temporal_structure!(m_mp)
     @timelog log_level 2 "Creating $m_bm_instance stochastic structure..." generate_stochastic_structure!(m_mp)
-    _ensure_zero_initial_investments!(m)
     sp_roll_count = _roll_count(m)
     @log log_level 2 """
     NOTE: We will first build model $(m.ext[:spineopt].instance) for the last optimisation window to make sure it can roll that far.
@@ -102,7 +101,6 @@ function rerun_spineopt!(
         j += 1
         global current_bi = add_benders_iteration(j)
     end
-    # write_report(m_mp, url_out; alternative=alternative, log_level=log_level)
     write_report(m, url_out; alternative=alternative, log_level=log_level)
     m, m_mp
 end
