@@ -38,39 +38,65 @@ function rerun_spineopt!(
     @timelog log_level 2 "Creating $m_instance stochastic structure..." generate_stochastic_structure!(m)
     @timelog log_level 2 "Creating $m_bm_instance temporal structure..." generate_temporal_structure!(m_mp)
     @timelog log_level 2 "Creating $m_bm_instance stochastic structure..." generate_stochastic_structure!(m_mp)
+    sp_roll_count = _roll_count(m)
+    @log log_level 2 """
+    NOTE: We will first build model $(m.ext[:spineopt].instance) for the last optimisation window to make sure it can roll that far.
+    We will bring it back to the first window whenever it is time to start solving it.
+    """
+    roll_temporal_structure!(m, 1:sp_roll_count)
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
     _init_mp_model!(m_mp; add_constraints=add_constraints, log_level=log_level)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
     j = 1
     while optimize
-		@log log_level 0 "Starting Benders iteration $j"
+		@log log_level 0 "\nStarting Benders iteration $j"
         optimize_model!(m_mp; log_level=log_level) || break
-        @timelog log_level 2 "Processing master problem solution" process_master_problem_solution(m_mp)
+        @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
         k = 1
+        subproblem_solved = nothing
+        @timelog log_level 2 "Bringing $(m.ext[:spineopt].instance) back to the first window..." begin
+            roll_temporal_structure!(m, 1:sp_roll_count; rev=true)
+            _update_variable_names!(m)
+            _update_constraint_names!(m)
+        end
         while true
-            @log log_level 1 "Benders iteration $j - Window $k: $(current_window(m))"
-            optimize_model!(m; log_level=log_level, calculate_duals=true) || break
+            @log log_level 1 "\nBenders iteration $j - Window $k: $(current_window(m))"
+            subproblem_solved = optimize_model!(m; log_level=log_level, calculate_duals=true)
+            subproblem_solved || break
+            @timelog log_level 2 "Processing subproblem solution..." process_subproblem_solution!(m)
             if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
-                @timelog log_level 2 "... Rolling complete\n" break
+                @log log_level 2 "... Rolling complete\n"
+                correct_sp_objective_value!(m)
+                break
             end
             update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
             k += 1
         end
-        @timelog log_level 2 "Processing subproblem solution..." process_subproblem_solution(m, m_mp)
+        subproblem_solved || break
+        @timelog log_level 2 "Computing benders gap..." save_mp_objective_bounds_and_gap!(m_mp)
         @log log_level 1 "Benders iteration $j complete"
         @log log_level 1 "Objective lower bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[])); "
         @log log_level 1 "Objective upper bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[])); "
-        @log log_level 1 "Gap: $(@sprintf("%1.4f", m_mp.ext[:spineopt].benders_gap[] * 100))%"
-        if m_mp.ext[:spineopt].benders_gap[] <= max_gap(model=m_mp.ext[:spineopt].instance)
-            @timelog log_level 1 "Benders tolerance satisfied, terminating..." break
+        gaps = m_mp.ext[:spineopt].benders_gaps
+        @log log_level 1 "Gap: $(@sprintf("%1.4f", last(gaps) * 100))%"
+        if last(gaps) <= max_gap(model=m_mp.ext[:spineopt].instance)
+            @log log_level 1 "Benders tolerance satisfied, terminating..."
+            break
+        end
+        max_stale_iters = 3
+        if length(gaps) >= max_stale_iters && all(gaps[end - i] == last(gaps) for i in 1:(max_stale_iters - 1))
+            @log log_level 1 "Benders gap not improving for $max_stale_iters consecutive iterations, terminating..."
+            break
         end
         if j >= max_benders_iterations
-            @timelog log_level 1 "Maximum number of iterations reached ($j), terminating..." break
+            @log log_level 1 "Maximum number of iterations reached ($j), terminating..."
+            break
         end
         @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=3)
         msg = "Resetting sub problem temporal structure. Rewinding $(k - 1) times..."
-        if @timelog log_level 2 msg roll_temporal_structure!(m, 1:(k - 1); rev=true)
-            update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
+        if update_names
+            _update_variable_names!(m)
+            _update_constraint_names!(m)
         end
         j += 1
         global current_bi = add_benders_iteration(j)
@@ -139,12 +165,13 @@ Limit the units_on by the number of available units.
 """
 function _add_constraint_mp_objective!(m::Model)
     @fetch units_invested, mp_objective_lowerbound = m.ext[:spineopt].variables
-    constr_dict = m.ext[:spineopt].constraints[:mp_objective] = Dict()
-    constr_dict[(model=m.ext[:spineopt].instance,)] = @constraint(
-        m,
-        + expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0)
-        >=
-        + total_costs(m, anything)
+    m.ext[:spineopt].constraints[:mp_objective] = Dict(
+        (model=m.ext[:spineopt].instance,) => @constraint(
+            m,
+            + expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0)
+            >=
+            + total_costs(m, anything)
+        )
     )
 end
 
@@ -154,7 +181,6 @@ end
 Minimize total costs
 """
 function _set_mp_objective!(m::Model)
-    _create_objective_terms!(m)
     @fetch mp_objective_lowerbound = m.ext[:spineopt].variables
     @objective(m, Min, expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0))
 end

@@ -41,6 +41,7 @@ function add_variable!(
     ub::Union{Constant,Parameter,Nothing}=nothing,
     initial_value::Union{Parameter,Nothing}=nothing,
     fix_value::Union{Parameter,Nothing}=nothing,
+    internal_fix_value::Union{Parameter,Nothing}=nothing,
     non_anticipativity_time::Union{Parameter,Nothing}=nothing,
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
 )
@@ -54,7 +55,7 @@ function add_variable!(
     last_history_t = last(history_time_slice(m))
     var = m.ext[:spineopt].variables[name] = Dict(
         ind => _variable(
-            m, name, ind, bin, int, lb, ub, overlaps(ind.t, last_history_t) ? initial_value : nothing, fix_value
+            m, name, ind, bin, int, lb, ub, initial_value, fix_value, internal_fix_value, last_history_t
         )
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
     )
@@ -89,26 +90,18 @@ function _representative_periods_mapping(m::Model, var::Dict, indices::Function)
     Dict(ind => var[_representative_index(m, ind, indices)] for ind in represented_indices)
 end
 
-"""
-    _base_name(name, ind)
-
-Create JuMP `base_name` from `name` and `ind`.
-"""
 _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 
-"""
-    _variable(m, name, ind, lb, ub, bin, int)
-
-Create a JuMP variable with the input properties.
-"""
-function _variable(m, name, ind, bin, int, lb, ub, initial_value, fix_value)
-    ind = (analysis_time=_analysis_time(m), ind...)
+function _variable(m, name, ind, bin, int, lb, ub, initial_value, fix_value, internal_fix_value, last_history_t)
     var = @variable(m, base_name = _base_name(name, ind))
+    ind = (analysis_time=_analysis_time(m), ind...)
     bin !== nothing && bin(ind) && set_binary(var)
     int !== nothing && int(ind) && set_integer(var)
     lb === nothing || set_lower_bound(var, lb[(; ind..., _strict=false)])
     ub === nothing || set_upper_bound(var, ub[(; ind..., _strict=false)])
-    initial_value === nothing || fix(var, initial_value[(; ind..., _strict=false)])
+    initial_value = overlaps(ind.t, last_history_t) ? initial_value : nothing
+    initial_value === nothing || fix(var, initial_value[(; _drop_key(ind, :t)..., _strict=false)])
     fix_value === nothing || fix(var, fix_value[(; ind..., _strict=false)])
+    internal_fix_value === nothing || fix(var, internal_fix_value[(; ind..., _strict=false)])
     var
 end
