@@ -797,7 +797,7 @@ end
 
 function _benders_initial_pvals(pname, candidates)
     scens = stochastic_scenario()
-    t = minimum(model_start(model=m) for m in model())
+    t = minimum(model_start(model=m) for m in model(); init=DateTime(0))
     Dict(
         obj => Dict(
             pname => parameter_value(Map(scens, [TimeSeries([t - Hour(1), t], [0, NaN]) for _s in scens]))
