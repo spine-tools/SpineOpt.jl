@@ -796,8 +796,9 @@ function generate_benders_structure()
 end
 
 function _benders_initial_pvals(pname, candidates)
+    isempty(model()) && return Dict()
     scens = stochastic_scenario()
-    t = minimum(model_start(model=m) for m in model(); init=DateTime(0))
+    t = minimum(model_start(model=m) for m in model())
     Dict(
         obj => Dict(
             pname => parameter_value(Map(scens, [TimeSeries([t - Hour(1), t], [0, NaN]) for _s in scens]))
