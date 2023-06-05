@@ -918,9 +918,7 @@ end
 function _test_benders()
     @testset "benders" begin
         benders_gap = 1e-6  # needed so that we get the exact master problem solution
-        mip_solver_options_benders = unparse_db_value(
-            Map(["HiGHS.jl"], [Map(["mip_rel_gap", "threads"], [benders_gap, 8.0])])
-        )
+        mip_solver_options_benders = unparse_db_value(Map(["HiGHS.jl"], [Map(["mip_rel_gap"], [benders_gap])]))
         res = 6
         dem = ucap = 10
         rf = 6
