@@ -77,9 +77,9 @@ function _test_rolling()
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "1 hour")
         vom_cost_data = [100 * k for k in 0:23]
-        vom_cost = Dict("type" => "time_series", "data" => PyVector(vom_cost_data), "index" => index)
+        vom_cost = Dict("type" => "time_series", "data" => vom_cost_data, "index" => index)
         demand_data = [2 * k for k in 0:23]
-        demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
+        demand = Dict("type" => "time_series", "data" => demand_data, "index" => index)
         unit_capacity = demand
         object_parameter_values = [
             ["node", "node_b", "demand", demand],
@@ -713,7 +713,7 @@ function _test_fixing_variables_when_rolling()
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
         demand_data = [10, 20, 30]
-        demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
+        demand = Dict("type" => "time_series", "data" => demand_data, "index" => index)
         unit_capacity = demand
         objects = [["output", "constraint_nodal_balance"]]
         relationships = [["report__output", ["report_x", "constraint_nodal_balance"]]]
@@ -751,10 +751,10 @@ function _test_dual_values()
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
         demand_data = [10, 20, 30]
-        demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
+        demand = Dict("type" => "time_series", "data" => demand_data, "index" => index)
         unit_capacity = 31
         vom_cost_data = [100, 200, 300]
-        vom_cost = Dict("type" => "time_series", "data" => PyVector(vom_cost_data), "index" => index)
+        vom_cost = Dict("type" => "time_series", "data" => vom_cost_data, "index" => index)
         objects = [["output", "constraint_nodal_balance"]]
         relationships = [["report__output", ["report_x", "constraint_nodal_balance"]]]
         object_parameter_values = [
@@ -791,10 +791,10 @@ function _test_dual_values_with_two_time_indices()
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         index = Dict("start" => "2000-01-01T00:00:00", "resolution" => "12 hours")
         demand_data = [10, 20, 30]
-        demand = Dict("type" => "time_series", "data" => PyVector(demand_data), "index" => index)
+        demand = Dict("type" => "time_series", "data" => demand_data, "index" => index)
         unit_capacity = 31
         vom_cost_data = [100, 200, 300]
-        vom_cost = Dict("type" => "time_series", "data" => PyVector(vom_cost_data), "index" => index)
+        vom_cost = Dict("type" => "time_series", "data" => vom_cost_data, "index" => index)
         objects = [["output", "constraint_node_injection"]]
         relationships = [["report__output", ["report_x", "constraint_node_injection"]]]
         object_parameter_values = [
@@ -915,6 +915,119 @@ function _test_fix_node_state_using_map_with_rolling()
     end
 end
 
+function _test_benders()
+    @testset "benders" begin
+        benders_gap = 1e-6  # needed so that we get the exact master problem solution
+        mip_solver_options_benders = unparse_db_value(Map(["HiGHS.jl"], [Map(["mip_rel_gap"], [benders_gap])]))
+        res = 6
+        dem = ucap = 10
+        rf = 6
+        look_ahead = 3
+        vom_cost_ = 2
+        vom_cost_alt = vom_cost_ / 2
+        do_not_inv_cost = ucap * vom_cost_alt * (24 + look_ahead)  # minimum cost at which investment is not profitable
+        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
+        @testset for should_invest in (true, false)
+            u_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
+            url_in, url_out, file_path_out = _test_run_spineopt_setup()
+            objects = [
+                ["unit", "unit_ab_alt"],
+                ["model", "benders"],
+                ["output", "total_costs"],
+                ["output", "units_invested"],
+                ["output", "units_on"],
+                ["output", "units_available"],
+                ["output", "units_mothballed"],
+                ["output", "units_invested_available"],
+                ["temporal_block", "investments_hourly"],
+            ]
+            relationships = [
+                ["unit__to_node", ["unit_ab_alt", "node_b"]],
+                ["units_on__temporal_block", ["unit_ab_alt", "hourly"]],
+                ["units_on__stochastic_structure", ["unit_ab_alt", "deterministic"]],
+                ["model__default_investment_temporal_block", ["instance", "hourly"]],
+                ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
+                ["model__temporal_block", ["benders", "investments_hourly"]],
+                ["model__stochastic_structure", ["benders", "deterministic"]],
+                ["model__default_temporal_block", ["benders", "investments_hourly"]],
+                ["model__default_stochastic_structure", ["benders", "deterministic"]],
+                ["model__default_investment_temporal_block", ["benders", "investments_hourly"]],
+                ["model__default_investment_stochastic_structure", ["benders", "deterministic"]],
+                ["model__report", ["benders", "report_x"]],
+                ["report__output", ["report_x", "units_invested_available"]],
+                ["report__output", ["report_x", "units_mothballed"]],
+                ["report__output", ["report_x", "units_invested"]],
+                ["report__output", ["report_x", "total_costs"]],
+            ]
+            object_parameter_values = [
+                ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
+                ["model", "benders", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
+                ["model", "benders", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
+                ["model", "benders", "duration_unit", "hour"],
+                ["model", "benders", "model_type", "spineopt_benders_master"],
+                ["model", "benders", "max_iterations", 10],
+                ["model", "benders", "db_mip_solver_options", mip_solver_options_benders],
+                ["node", "node_b", "demand", dem],
+                ["unit", "unit_ab_alt", "number_of_units", 0],
+                ["unit", "unit_ab_alt", "candidate_units", 1],
+                ["unit", "unit_ab_alt", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
+                ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
+                ["unit", "unit_ab_alt", "unit_investment_cost", u_inv_cost],
+                ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
+                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
+                ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
+                ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
+            ]
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost_],
+                ["unit__to_node", ["unit_ab_alt", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab_alt", "node_b"], "vom_cost", vom_cost_alt],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values
+            )
+            rm(file_path_out; force=true)
+            run_spineopt(url_in, url_out; log_level=0)
+            using_spinedb(url_out, Y)
+            @testset "total_cost" begin
+                for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
+                    @test Y.total_costs(model=Y.model(:instance), t=t) == if should_invest
+                        if t == DateTime(2000, 1, 1)
+                            329
+                        else
+                            60
+                        end
+                    else
+                        120
+                    end
+                end
+            end
+            @testset "invested" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.units_invested(unit=Y.unit(:unit_ab_alt), t=t) == (
+                        should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
+                    )
+                end
+            end
+            @testset "mothballed" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)                
+                    @test Y.units_mothballed(unit=Y.unit(:unit_ab_alt), t=t) == 0
+                end
+            end
+            @testset "available" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)                
+                    @test Y.units_invested_available(unit=Y.unit(:unit_ab_alt), t=t) == (should_invest ? 1 : 0)
+                end
+            end
+        end
+    end
+end
+
 @testset "run_spineopt" begin
     _test_rolling()
     _test_rolling_with_updating_data()
@@ -935,4 +1048,5 @@ end
     _test_dual_values_with_two_time_indices()
     _test_fix_unit_flow_with_rolling()
     _test_fix_node_state_using_map_with_rolling()
+    _test_benders()
 end

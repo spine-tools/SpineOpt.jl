@@ -38,7 +38,7 @@ function rerun_spineopt!(
     roll_count = _roll_count(m)
     @log log_level 2 """
     NOTE: We will first build the model for the last optimisation window to make sure it can roll that far.
-    Then we will bring the model back to the first window to start solving it.
+    Then we will bring it back to the first window to start solving it.
     """
     roll_temporal_structure!(m, 1:roll_count)
     init_model!(
@@ -48,9 +48,11 @@ function rerun_spineopt!(
         log_level=log_level,
         alternative_objective=alternative_objective
     )
-    @timelog log_level 2 "Bringing model to the first window..." roll_temporal_structure!(m, 1:roll_count; rev=true)
-    _update_variable_names!(m)
-    _update_constraint_names!(m)
+    @timelog log_level 2 "Bringing model to the first window..." begin
+        roll_temporal_structure!(m, 1:roll_count; rev=true)
+        _update_variable_names!(m)
+        _update_constraint_names!(m)
+    end
     try
         run_spineopt_kernel!(
             m,
@@ -505,16 +507,14 @@ end
 function _save_marginal_values!(m::Model, ref_map=nothing)
     for (constraint_name, con) in m.ext[:spineopt].constraints
         output_name = Symbol(string("constraint_", constraint_name))
-        haskey(m.ext[:spineopt].outputs, output_name) || continue
-        m.ext[:spineopt].values[output_name] = Dict(ind => _dual(con[ind], ref_map) for ind in keys(con))
+        m.ext[:spineopt].values[output_name] = Dict(i => _dual(c, ref_map) for (i, c) in con)
     end
 end
 
 function _save_bound_marginal_values!(m::Model, ref_map=nothing)
     for (variable_name, var) in m.ext[:spineopt].variables
         output_name = Symbol(string("bound_", variable_name))
-        haskey(m.ext[:spineopt].outputs, output_name) || continue
-        m.ext[:spineopt].values[output_name] = Dict(ind => _reduced_cost(var[ind], ref_map) for ind in keys(var))
+        m.ext[:spineopt].values[output_name] = Dict(i => _reduced_cost(v, ref_map) for (i, v) in var)
     end
 end
 

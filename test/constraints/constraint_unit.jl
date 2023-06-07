@@ -300,7 +300,7 @@ function test_constraint_operating_point_bounds()
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
-        operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
+        operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
         relationships = [
             ["unit__to_node", ["unit_ab", "node_a"]],
         ]
@@ -313,7 +313,6 @@ function test_constraint_operating_point_bounds()
             relationships=relationships, 
             relationship_parameter_values=relationship_parameter_values 
         )
-
         # When the parameter ordered_unit_flow_op use its default false value,
         # SpineOpt does not generate this consraint.
         m = run_spineopt(url_in; log_level=0, optimize=false)
@@ -358,7 +357,7 @@ function test_constraint_operating_point_rank()
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
-        operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
+        operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
         relationships = [
             ["unit__to_node", ["unit_ab", "node_a"]],
         ]
@@ -419,7 +418,7 @@ function test_constraint_unit_flow_op_bounds()
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
-        operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
+        operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
         relationships = [
             ["unit__to_node", ["unit_ab", "node_a"]],
         ]
@@ -488,7 +487,7 @@ function test_constraint_unit_flow_op_rank()
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:lastindex(points)]]
-        operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
+        operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
         relationships = [
             ["unit__to_node", ["unit_ab", "node_a"]],
         ]
@@ -548,7 +547,7 @@ function test_constraint_unit_flow_op_sum()
         url_in = _test_constraint_unit_setup()
         unit_capacity = 100
         points = [0.1, 0.5, 1.0]
-        operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
+        operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "operating_points", operating_points],
         ]
@@ -1841,7 +1840,7 @@ function test_constraint_user_constraint_with_unit_operating_segments()
             units_on_coefficient = 20
             units_started_up_coefficient = 35
             points = [0.1, 0.5, 1.0]
-            operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
+            operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
             objects = [["user_constraint", "constraint_x"]]
             relationships = [
                 ["unit__from_node__user_constraint", ["unit_ab", "node_a", "constraint_x"]],
@@ -1909,8 +1908,8 @@ function test_constraint_pw_unit_heat_rate()
         unit_start_flow = 100
         points = [0.1, 0.5, 1.0]
         inc_hrs = [10, 20, 30]
-        operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
-        unit_incremental_heat_rate = Dict("type" => "array", "value_type" => "float", "data" => PyVector(inc_hrs))
+        operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
+        unit_incremental_heat_rate = Dict("type" => "array", "value_type" => "float", "data" => inc_hrs)
         relationships = [["unit__node__node", ["unit_ab", "node_a", "node_b"]]]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
@@ -1960,7 +1959,7 @@ function test_constraint_pw_unit_heat_rate_simple()
         unit_start_flow = 100
         points = [0.1, 0.5, 1.0]
         inc_hrs = 10
-        operating_points = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
+        operating_points = Dict("type" => "array", "value_type" => "float", "data" => points)
         relationships = [["unit__node__node", ["unit_ab", "node_a", "node_b"]]]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_b"], "operating_points", operating_points],
