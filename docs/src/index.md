@@ -25,6 +25,10 @@ but for more information, you will probably need to consult the **Concept Refere
 
 We learn a lot from examples and that is what you will find in the tutorial chapter. The tutorials come in different shapes: videos, written text and example files. The *SpineOpt.jl* repository includes a folder `examples` for ready-made example models. Each example is its own sub-folder, where the input data is provided as `.json` or `.sqlite` files. This way, you can easily get a feel for how SpineOpt works with pre-made datasets, either through [Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox), or directly from the Julia REPL.
 
+## How to
+
+The other parts of the documentation are good as a reference when you know what you are looking for but this chapter adds explanations on how to do specific high-level things that might involve multiple elements (e.g. how to print the model).
+
 ## Concept Reference
 
 This chapter lists and explains all the important *data and model structure related concepts*

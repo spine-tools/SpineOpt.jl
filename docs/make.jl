@@ -37,6 +37,11 @@ makedocs(
 		    "Two hydro plants" => joinpath("tutorial", "tutorialTwoHydro.md"),
 		    "Case Study A5" => joinpath("tutorial", "case_study_a5.md")
 		],
+        "How to" => Any[
+            "change the solver" => joinpath("howto", "change_the_solver.md"),
+            "define an efficiency" => joinpath("howto", "define_an_efficiency.md"),
+            "print the model" => joinpath("howto", "print_the_model.md")
+        ],
         "Concept Reference" => Any[
             "Basics of the model structure" => joinpath("concept_reference", "the_basics.md"),
             "Object Classes" => joinpath("concept_reference", "Object Classes.md"),
