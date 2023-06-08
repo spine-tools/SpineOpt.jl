@@ -28,11 +28,11 @@ makedocs(
             "Installation" => joinpath("getting_started", "installation.md"),
             "Setting up a workflow" => joinpath("getting_started", "setup_workflow.md"),
             "Creating Your Own Model" => joinpath("getting_started", "creating_your_own_model.md"),
-            "Example Models" => joinpath("getting_started", "example_models.md"),
             "Archetypes" => joinpath("getting_started", "archetypes.md"),
             "Managing Outputs" => joinpath("getting_started", "output_data.md")
         ],
 		"Tutorials" => Any[
+            "Webinars" => joinpath("tutorial", "webinars.md"),
 		    "Simple system" => joinpath("tutorial", "simple_system.md"),
 		    "Two hydro plants" => joinpath("tutorial", "tutorialTwoHydro.md"),
 		    "Case Study A5" => joinpath("tutorial", "case_study_a5.md")
