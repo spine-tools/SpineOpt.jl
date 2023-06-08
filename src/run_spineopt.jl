@@ -402,6 +402,7 @@ struct SpineOptExt
     is_subproblem::Bool
     intermediate_results_folder::String
     report_name_keys_by_url::Dict
+    reports_by_output::Dict
     variables::Dict{Symbol,Dict}
     variables_definition::Dict{Symbol,Dict}
     values::Dict{Symbol,Dict}
@@ -412,9 +413,9 @@ struct SpineOptExt
     stochastic_structure::Dict
     dual_solves::Array{Any,1}
     dual_solves_lock::ReentrantLock
-    objective_lower_bound::Float64
-    objective_upper_bound::Float64
-    benders_gap::Float64
+    objective_lower_bound::Base.RefValue{Float64}
+    objective_upper_bound::Base.RefValue{Float64}
+    benders_gaps::Vector{Float64}
     function SpineOptExt(instance, lp_solver=nothing, is_subproblem=false)
         intermediate_results_folder = tempname(; cleanup=false)
         mkpath(intermediate_results_folder)
@@ -427,12 +428,17 @@ struct SpineOptExt
             output_url = output_db_url(report=rpt, _strict=false)
             push!(get!(report_name_keys_by_url, output_url, []), (rpt.name, keys))
         end
+        reports_by_output = Dict()
+        for rpt in model__report(model=instance), out in report__output(report=rpt)
+            push!(get!(reports_by_output, out, []), rpt)
+        end
         new(
             instance,
             lp_solver,
             is_subproblem,
             intermediate_results_folder,
             report_name_keys_by_url,
+            reports_by_output,
             Dict{Symbol,Dict}(),
             Dict{Symbol,Dict}(),
             Dict{Symbol,Dict}(),
@@ -443,9 +449,9 @@ struct SpineOptExt
             Dict(),
             [],
             ReentrantLock(),
-            0.0,
-            0.0,
-            0.0
+            Ref(0.0),
+            Ref(0.0),
+            [],
         )
     end
 end

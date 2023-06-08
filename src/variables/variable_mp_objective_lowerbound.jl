@@ -22,5 +22,5 @@ function add_variable_mp_objective_lowerbound!(m::Model)
 end
 
 function mp_objective_lowerbound_indices(m::Model; t=anything, temporal_block=anything)
-    ((t=first(time_slice(m)),),)
+    [(t=first(time_slice(m)),)]
 end

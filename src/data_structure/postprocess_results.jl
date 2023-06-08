@@ -62,9 +62,9 @@ function _save_connection_avg_throughflow!(m::Model, key, connection_flow)
         else
             continue
         end
-        key = (connection=conn, node=n_to, stochastic_scenario=s, t=t)
-        current_value = get(avg_throughflow, key, 0)
-        avg_throughflow[key] = current_value + new_value
+        inner_key = (connection=conn, node=n_to, stochastic_scenario=s, t=t)
+        current_value = get(avg_throughflow, inner_key, 0)
+        avg_throughflow[inner_key] = current_value + new_value
     end
     avg_throughflow
 end

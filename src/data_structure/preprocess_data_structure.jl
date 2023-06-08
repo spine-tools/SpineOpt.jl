@@ -756,120 +756,56 @@ Creates the `benders_iteration` object class. Master problem variables have the 
 benders iteration object is pushed on each master problem iteration.
 """
 function generate_benders_structure()
-    function _init_benders_parameter_values(
-        current_bi::Object,
-        obj_cls::ObjectClass,
-        rel_cls::RelationshipClass,
-        invest_param::Parameter,
-        fix_param::Parameter,
-        starting_param_name::Symbol,
-        avail_bi_param_name::Symbol,
-        avail_mv_param_name::Symbol,
-    )
-        for ent in indices_as_tuples(invest_param)
-            obj = ent[obj_cls.name]
-            fix_value = fix_param(; ent...)
-            if fix_value !== nothing
-                add_object_parameter_values!(obj_cls, Dict(obj => Dict(starting_param_name => fix_value)))
-            end
-            add_relationship_parameter_values!(
-                rel_cls,
-                Dict(
-                    (obj, current_bi) => Dict(
-                        avail_bi_param_name => parameter_value(0), avail_mv_param_name => parameter_value(0)
-                    )
-                )
-            )
-        end
-    end
-
-    # general
     bi_name = :benders_iteration
     current_bi = Object(:bi_1, bi_name)
     benders_iteration = ObjectClass(
         bi_name, [current_bi], Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(0)))
     )
     sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])
-    # unit
-    unit__benders_iteration = RelationshipClass(:unit__benders_iteration, [:unit, bi_name], [])
-    units_available_mv = Parameter(:units_available_mv, [unit__benders_iteration])
-    units_invested_available_bi = Parameter(:units_invested_available_bi, [unit__benders_iteration])
-    starting_fix_units_invested_available = Parameter(:starting_fix_units_invested_available, [unit])
-    # connection
-    connection__benders_iteration = RelationshipClass(:connection__benders_iteration, [:connection, bi_name], [])
-    connections_invested_available_mv = Parameter(:connections_invested_available_mv, [connection__benders_iteration])
-    connections_invested_available_bi = Parameter(:connections_invested_available_bi, [connection__benders_iteration])
-    starting_fix_connections_invested_available = Parameter(:starting_fix_connections_invested_available, [connection])
-    # node (storage)
-    node__benders_iteration = RelationshipClass(:node__benders_iteration, [:node, bi_name], [])
-    storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node__benders_iteration])
-    storages_invested_available_bi = Parameter(:storages_invested_available_bi, [node__benders_iteration])
-    starting_fix_storages_invested_available = Parameter(:starting_fix_storages_invested_available, [node])
-    _init_benders_parameter_values(
-        current_bi,
-        unit,
-        unit__benders_iteration,
-        candidate_units,
-        fix_units_invested_available,
-        :starting_fix_units_invested_available,
-        :units_invested_available_bi,
-        :units_available_mv,
+    units_on_mv = Parameter(:units_on_mv, [unit])
+    units_invested_available_bi = Parameter(:units_invested_available_bi, [unit])
+    connections_invested_available_mv = Parameter(:connections_invested_available_mv, [connection])
+    connections_invested_available_bi = Parameter(:connections_invested_available_bi, [connection])
+    storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node])
+    storages_invested_available_bi = Parameter(:storages_invested_available_bi, [node])
+    add_object_parameter_values!(unit, _benders_initial_pvals(:units_invested_available_bi, candidate_units))
+    add_object_parameter_values!(
+        connection, _benders_initial_pvals(:connections_invested_available_bi, candidate_connections)
     )
-    _init_benders_parameter_values(
-        current_bi,
-        connection,
-        connection__benders_iteration,
-        candidate_connections,
-        fix_connections_invested_available,
-        :starting_fix_connections_invested_available,
-        :connections_invested_available_bi,
-        :connections_invested_available_mv,
-    )
-    _init_benders_parameter_values(
-        current_bi,
-        node,
-        node__benders_iteration,
-        candidate_storages,
-        fix_storages_invested_available,
-        :starting_fix_storages_invested_available,
-        :storages_invested_available_bi,
-        :storages_invested_available_mv,
-    )
-
+    add_object_parameter_values!(node, _benders_initial_pvals(:storages_invested_available_bi, candidate_storages))
     @eval begin
         benders_iteration = $benders_iteration
         current_bi = $current_bi
         sp_objective_value_bi = $sp_objective_value_bi
-        unit__benders_iteration = $unit__benders_iteration
-        units_available_mv = $units_available_mv
+        units_on_mv = $units_on_mv
         units_invested_available_bi = $units_invested_available_bi
-        starting_fix_units_invested_available = $starting_fix_units_invested_available
-        connection__benders_iteration = $connection__benders_iteration
         connections_invested_available_mv = $connections_invested_available_mv
         connections_invested_available_bi = $connections_invested_available_bi
-        starting_fix_connections_invested_available = $starting_fix_connections_invested_available
-        node__benders_iteration = $node__benders_iteration
         storages_invested_available_mv = $storages_invested_available_mv
         storages_invested_available_bi = $storages_invested_available_bi
-        starting_fix_storages_invested_available = $starting_fix_storages_invested_available
-        export current_bi
         export benders_iteration
+        export current_bi
         export sp_objective_value_bi
-        export unit__benders_iteration
-        export units_available_mv
+        export units_on_mv
         export units_invested_available_bi
-        export starting_fix_units_invested_available
-        export connection__benders_iteration
         export connections_invested_available_mv
         export connections_invested_available_bi
-        export starting_fix_connections_invested_available
-        export node__benders_iteration
         export storages_invested_available_mv
         export storages_invested_available_bi
-        export starting_fix_storages_invested_available
     end
 end
 
+function _benders_initial_pvals(pname, candidates)
+    isempty(model()) && return Dict()
+    scens = stochastic_scenario()
+    t = minimum(model_start(model=m) for m in model())
+    Dict(
+        obj => Dict(
+            pname => parameter_value(Map(scens, [TimeSeries([t - Hour(1), t], [0, NaN]) for _s in scens]))
+        )
+        for obj in indices(candidates)
+    )
+end
 
 function apply_forced_availability_factor()
     function _apply_forced_availability_factor(m_start, m_end, class, availability_factor)

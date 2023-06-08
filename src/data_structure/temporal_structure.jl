@@ -93,13 +93,13 @@ Generate a `TimeSlice` that represents the 'current' optimisation window for giv
 """
 function _generate_current_window!(m::Model)
     instance = m.ext[:spineopt].instance
-    model_start_ = model_start(model=instance)
-    model_end_ = model_end(model=instance)
-    roll_forward_ = roll_forward(model=instance, _strict=false)
-    window_start = model_start_
-    window_end = roll_forward_ === nothing ? model_end_ : min(model_start_ + roll_forward_, model_end_)
+    w_start = model_start(model=instance)
+    m_end = model_end(model=instance)
+    w_duration = @isdefined(window_duration) ? window_duration(model=instance, _strict=false) : nothing
+    w_duration = w_duration === nothing ? roll_forward(model=instance, i=1, _strict=false) : w_duration
+    w_end = w_duration === nothing ? m_end : min(w_start + w_duration, m_end)
     m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
-        window_start, window_end; duration_unit=_model_duration_unit(instance)
+        w_start, w_end; duration_unit=_model_duration_unit(instance)
     )
 end
 
@@ -107,20 +107,20 @@ end
 """
     _adjuster_start(window_start, window_end, blk_start)
 
-Adjust the `window_start` based on `temporal_blocks`.
+The adjusted start of a `temporal_block`.
 """
-_adjusted_start(window_start::DateTime, ::Nothing) = window_start
-_adjusted_start(window_start::DateTime, blk_start::Union{Period,CompoundPeriod}) = window_start + blk_start
-_adjusted_start(window_start::DateTime, blk_start::DateTime) = max(window_start, blk_start)
+_adjusted_start(w_start::DateTime, _blk_start::Nothing) = w_start
+_adjusted_start(w_start::DateTime, blk_start::Union{Period,CompoundPeriod}) = w_start + blk_start
+_adjusted_start(w_start::DateTime, blk_start::DateTime) = max(w_start, blk_start)
 
 """
     _adjusted_end(window_start, window_end, blk_end)
 
-Adjust the `window_end` based on `temporal_blocks`.
+The adjusted end of a `temporal_block`.
 """
-_adjusted_end(::DateTime, window_end::DateTime, ::Nothing) = window_end
-_adjusted_end(window_start::DateTime, ::DateTime, blk_end::Union{Period,CompoundPeriod}) = window_start + blk_end
-_adjusted_end(window_start::DateTime, ::DateTime, blk_end::DateTime) = max(window_start, blk_end)
+_adjusted_end(_w_start::DateTime, w_end::DateTime, _blk_end::Nothing) = w_end
+_adjusted_end(w_start::DateTime, _w_end::DateTime, blk_end::Union{Period,CompoundPeriod}) = w_start + blk_end
+_adjusted_end(w_start::DateTime, _w_end::DateTime, blk_end::DateTime) = max(w_start, blk_end)
 
 """
     _time_interval_blocks(instance, window_start, window_end)
@@ -130,7 +130,9 @@ A `Dict` mapping 'pre-time_slices' (i.e., (start, end) tuples) to an Array of te
 function _time_interval_blocks(instance::Object, window_start::DateTime, window_end::DateTime)
     blocks_by_time_interval = Dict{Tuple{DateTime,DateTime},Array{Object,1}}()
     # TODO: In preprocessing, remove temporal_blocks without any node__temporal_block relationships?
-    for block in members(model__temporal_block(model=instance))
+    model_blocks = members(model__temporal_block(model=instance))
+    isempty(model_blocks) && error("model $instance doesn't have any temporal_blocks")
+    for block in model_blocks
         adjusted_start = _adjusted_start(window_start, block_start(temporal_block=block, _strict=false))
         adjusted_end = _adjusted_end(window_start, window_end, block_end(temporal_block=block, _strict=false))
         time_slice_start = adjusted_start
@@ -366,11 +368,11 @@ Preprocess the temporal structure for SpineOpt from the provided input data.
 Runs a number of functions processing different aspects of the temporal structure in sequence.
 """
 function generate_temporal_structure!(m::Model)
-    _generate_current_window!(m::Model)
-    _generate_time_slice!(m::Model)
-    _generate_output_time_slices!(m::Model)
-    _generate_time_slice_relationships!(m::Model)
-    _generate_representative_time_slice!(m::Model)
+    _generate_current_window!(m)
+    _generate_time_slice!(m)
+    _generate_output_time_slices!(m)
+    _generate_time_slice_relationships!(m)
+    _generate_representative_time_slice!(m)
 end
 
 """
@@ -378,17 +380,24 @@ end
 
 Move the entire temporal structure ahead according to the `roll_forward` parameter.
 """
-function roll_temporal_structure!(m::Model, folds=1)
-    folds == 0 && return false
-    instance = m.ext[:spineopt].instance
-    roll_forward_ = roll_forward(model=instance, _strict=false)
-    roll_forward_ in (nothing, 0) && return false
+function roll_temporal_structure!(m::Model, i::Integer; rev=false)
+    rf = roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false)
+    _do_roll_temporal_structure!(m, rf, rev)
+end
+function roll_temporal_structure!(m::Model, rng::UnitRange{T}; rev=false) where T<:Integer
+    rfs = [roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false) for i in rng]
+    rf = any(isnothing(rf) for rf in rfs) ? nothing : sum(rfs; init=Minute(0))
+    _do_roll_temporal_structure!(m, rf, rev)
+end
+
+function _do_roll_temporal_structure!(m::Model, rf, rev)
+    rf in (nothing, Minute(0)) && return false
+    rf = rev ? -rf : rf
     temp_struct = m.ext[:spineopt].temporal_structure
-    folds > 0 && end_(temp_struct[:current_window]) >= model_end(model=instance) && return false
-    roll_forward_ *= folds
-    roll!(temp_struct[:current_window], roll_forward_; update = false)
-    _roll_time_slice_set!(temp_struct[:time_slice], roll_forward_)
-    _roll_time_slice_set!(temp_struct[:history_time_slice], roll_forward_)
+    !rev && end_(temp_struct[:current_window]) >= model_end(model=m.ext[:spineopt].instance) && return false
+    roll!(temp_struct[:current_window], rf; update=false)
+    _roll_time_slice_set!(temp_struct[:time_slice], rf)
+    _roll_time_slice_set!(temp_struct[:history_time_slice], rf)
     true
 end
 
