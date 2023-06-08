@@ -72,7 +72,7 @@ makedocs(
         ],
         "Implementation details" => Any[
             "Documentation" => joinpath("implementation_details", "documentation.md"),
-            "Parameter type" => joinpath("implementation_details", "parametertype.md")
+            "Parameter type" => joinpath("implementation_details", "parameter_type.md")
         ],
         "Library" => "library.md",
     ],
