@@ -2020,46 +2020,12 @@ function test_unit_online_variable_type_none()
             var_u_av = var_units_available[key...]
             expected_con = @build_constraint(realize(var_u_on) * unit_availability_factor <= realize(var_u_av))
             con_u_on = constraint[key...]
-            # @test con_u_on === nothing
-            @show owner_model(con_u_on) === m
-            @test !is_valid(owner_model(con_u_on), con_u_on)
-        end
-    end
-end
-
-function test_unit_online_variable_type_none_with_rolling()
-    @testset "unit_online_variable_type_none_with_rolling" begin
-        url_in = _test_constraint_unit_setup()
-        unit_availability_factor = 0.5
-        object_parameter_values = [
-            ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
-            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_none"],
-        ]
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0, optimize=true)
-        println(m)
-        var_units_on = m.ext[:spineopt].variables[:units_on]
-        var_units_available = m.ext[:spineopt].variables[:units_available]
-        constraint = m.ext[:spineopt].constraints[:units_on]
-        @test length(constraint) == 2
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s, t) in zip(scenarios, time_slices)
-            key = (unit(:unit_ab), s, t)
-            var_u_on = var_units_on[key...]
-            var_u_av = var_units_available[key...]
-            expected_con = @build_constraint(realize(var_u_on) * unit_availability_factor <= realize(var_u_av))
-            con_u_on = constraint[key...]
             @test con_u_on === nothing
-            #@show owner_model(con_u_on) === m
-            #@test !is_valid(owner_model(con_u_on), con_u_on)
         end
     end
 end
 
 @testset "unit-based constraints" begin
-    test_unit_online_variable_type_none()
-    #=
     test_initial_units_on()
     test_constraint_units_on()
     test_constraint_units_available()
@@ -2100,5 +2066,5 @@ end
     test_constraint_pw_unit_heat_rate()
     test_constraint_pw_unit_heat_rate_simple()
     test_constraint_pw_unit_heat_rate_simple2()
-    =#
+    test_unit_online_variable_type_none()
 end

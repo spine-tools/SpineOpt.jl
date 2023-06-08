@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-@testset "algorithm strucutre" begin
+function _test_algorithm_strucutre_setup()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -125,8 +125,13 @@
 
         ],
     )
+    _load_test_data(url_in, test_data)
+    url_in
+end
+
+function _test_test_mga_algorithm()
     @testset "test mga algorithm" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_algorithm_strucutre_setup()
         candidate_units = 1
         candidate_connections = 1
         candidate_storages = 1
@@ -162,7 +167,7 @@
             ["model", "instance", "model_type", "spineopt_mga"],
             ["model", "instance", "max_mga_slack", mga_slack],
             ["model", "instance", "max_mga_iterations", 2],
-            # ["node", "node_a", "demand",1],
+            # ["node", "node_a", "demand", 1],
             ["node", "node_b", "demand", 1],
             ["node", "node_c", "demand", 1],
         ]
@@ -479,8 +484,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function _test_test_mga_algorithm_2()
     @testset "test mga algorithm 2" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_algorithm_strucutre_setup()
         candidate_units = 1
         candidate_connections = 1
         candidate_storages = 1
@@ -591,4 +599,9 @@
             end
         end
     end
+end
+
+@testset "algorithm strucutre" begin
+    _test_test_mga_algorithm()
+    _test_test_mga_algorithm_2()
 end
