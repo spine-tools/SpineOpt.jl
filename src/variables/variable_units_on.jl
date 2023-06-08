@@ -53,6 +53,23 @@ Check if unit online variable type is defined as an integer.
 """
 units_on_int(x) = online_variable_type(unit=x.unit) == :unit_online_variable_type_integer
 
+function units_on_replacement_value(ind)
+    if online_variable_type(unit=ind.unit) == :unit_online_variable_type_none
+        number_of_units[(; ind...)]
+    else
+        nothing
+    end
+end
+
+function units_switched_replacement_value(ind)
+    if online_variable_type(unit=ind.unit) == :unit_online_variable_type_none
+        Call(0)
+    else
+        nothing
+    end
+end
+
+
 """
     add_variable_units_on!(m::Model)
 
@@ -69,6 +86,7 @@ function add_variable_units_on!(m::Model)
         int=units_on_int,
         fix_value=fix_units_on,
         initial_value=initial_units_on,
+        replacement_value=units_on_replacement_value,
         non_anticipativity_time=units_on_non_anticipativity_time,
         non_anticipativity_margin=units_on_non_anticipativity_margin,
     )

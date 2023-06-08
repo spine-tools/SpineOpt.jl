@@ -80,6 +80,7 @@
         ["unit_online_variable_type_list", "unit_online_variable_type_binary"],
         ["unit_online_variable_type_list", "unit_online_variable_type_integer"],
         ["unit_online_variable_type_list", "unit_online_variable_type_linear"],
+        ["unit_online_variable_type_list", "unit_online_variable_type_none"],
         ["variable_type_list", "variable_type_binary"],
         ["variable_type_list", "variable_type_continuous"],
         ["variable_type_list", "variable_type_integer"],
