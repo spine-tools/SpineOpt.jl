@@ -2004,23 +2004,28 @@ function test_unit_online_variable_type_none()
         object_parameter_values = [
             ["unit", "unit_ab", "unit_availability_factor", unit_availability_factor],
             ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_none"],
+            ["model", "instance", "roll_forward", unparse_db_value(Hour(1))],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=true)
-        println(m)
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_units_available = m.ext[:spineopt].variables[:units_available]
-        constraint = m.ext[:spineopt].constraints[:units_on]
-        @test length(constraint) == 2
+        constraint_u_on = m.ext[:spineopt].constraints[:units_on]
+        constraint_u_avail = m.ext[:spineopt].constraints[:units_available]
         scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
         @testset for (s, t) in zip(scenarios, time_slices)
             key = (unit(:unit_ab), s, t)
             var_u_on = var_units_on[key...]
-            var_u_av = var_units_available[key...]
-            expected_con = @build_constraint(realize(var_u_on) * unit_availability_factor <= realize(var_u_av))
-            con_u_on = constraint[key...]
+            var_u_avail = var_units_available[key...]
+            con_u_on = constraint_u_on[key...]
+            con_u_avail = constraint_u_avail[key...]
+            @test var_u_on isa Call
+            @test var_u_avail isa Call
+            @test realize(var_u_on) == 1
+            @test realize(var_u_avail) == 0.5
             @test con_u_on === nothing
+            @test con_u_avail === nothing
         end
     end
 end
