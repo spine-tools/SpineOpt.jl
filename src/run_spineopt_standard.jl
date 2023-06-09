@@ -408,6 +408,7 @@ end
 The value of a JuMP variable, rounded if necessary.
 """
 _variable_value(v::VariableRef) = (is_integer(v) || is_binary(v)) ? round(Int, JuMP.value(v)) : JuMP.value(v)
+_variable_value(x::Call) = realize(x)
 
 """
 Save the value of the objective terms in a model.
@@ -924,7 +925,7 @@ function _update_constraint_names!(m)
         con_key_clean = _sanitize_constraint_name(con_key_raw)                            
         for (inds, con) in cons        
             constraint_name = _sanitize_constraint_name(string(con_key_clean, inds))                            
-            set_name(con, constraint_name)
+            _set_name(con, constraint_name)
         end
     end
 end
@@ -936,10 +937,13 @@ end
 function _update_variable_names!(m)
     for (name, var) in m.ext[:spineopt].variables
         for (inds, v) in var
-            set_name(v, _base_name(name, inds))
+            _set_name(v, _base_name(name, inds))
         end
     end
 end
+
+_set_name(x::Union{VariableRef,ConstraintRef}, name) = set_name(x, name)
+_set_name(::Union{Call,Nothing}, name) = nothing
 
 function _fix_history!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
@@ -954,10 +958,13 @@ function _fix_history_variable!(m::Model, name::Symbol, indices)
         history_t = t_history_t(m; t=ind.t)
         history_t === nothing && continue
         for history_ind in indices(m; ind..., t=history_t)
-            fix(var[history_ind], val[ind]; force=true)
+            _fix(var[history_ind], val[ind]; force=true)
         end
     end
 end
+
+_fix(v::VariableRef, x; kwargs...) = fix(v, x; kwargs...)
+_fix(::Call, x; kwargs...) = nothing
 
 function apply_non_anticipativity_constraints!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition

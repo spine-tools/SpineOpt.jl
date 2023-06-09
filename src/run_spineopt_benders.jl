@@ -193,6 +193,6 @@ function _add_mp_cuts!(m; log_level=3)
     # Name constraints
     cons = m.ext[:spineopt].constraints[:mp_units_invested_cut]
     for (inds, con) in cons
-        set_name(con, string(:mp_units_invested_cut, inds))
+        _set_name(con, string(:mp_units_invested_cut, inds))
     end
 end
