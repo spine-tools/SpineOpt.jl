@@ -943,7 +943,7 @@ function _update_variable_names!(m)
 end
 
 _set_name(x::Union{VariableRef,ConstraintRef}, name) = set_name(x, name)
-_set_name(x, name) = nothing
+_set_name(::Union{Call,Nothing}, name) = nothing
 
 function _fix_history!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
