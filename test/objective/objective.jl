@@ -81,9 +81,12 @@
         )
         
         m = run_spineopt(url_in; log_level=0, optimize=false)
+        var_units_available = m.ext[:spineopt].variables[:units_available]
+        s_parent = stochastic_scenario(:parent)
+        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         t_count = length(time_slice(m; temporal_block=temporal_block(:two_hourly)))
         duration = 2
-        expected_obj = AffExpr(unit_capacity * number_of_units * fom_cost * duration * t_count)
+        expected_obj = AffExpr(unit_capacity * var_units_available[unit(:unit_ab), s_parent, t2h] * fom_cost * duration * t_count)
         observed_obj = objective_function(m)
         @test observed_obj == expected_obj
     end
