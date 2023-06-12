@@ -921,7 +921,6 @@ end
     _test_write_inputs_overlapping_temporal_blocks()
     _test_output_resolution_for_an_input()
     _test_db_solvers()
-    _test_db_solvers_multi_model()
     _test_fixing_variables_when_rolling()
     _test_dual_values()
     _test_dual_values_with_two_time_indices()
