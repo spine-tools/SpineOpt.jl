@@ -69,7 +69,7 @@
         ["constraint_sense_list", ">="],
         ["duration_unit_list", "hour"],
         ["duration_unit_list", "minute"],
-        ["model_type_list", "spineopt_benders_master"],
+        ["model_type_list", "spineopt_benders"],
         ["model_type_list", "spineopt_standard"],
         ["model_type_list", "spineopt_other"],
         ["model_type_list", "spineopt_mga"],

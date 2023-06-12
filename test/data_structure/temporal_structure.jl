@@ -23,9 +23,9 @@ function _is_time_slice_set_equal(ts_a, ts_b)
     length(ts_a) == length(ts_b) && all(_is_time_slice_equal(a, b) for (a, b) in zip(sort(ts_a), sort(ts_b)))
 end
 
-function _model(model_type=:spineopt_standard)
+function _model()
     m = Model()
-    m.ext[:spineopt] = SpineOpt.SpineOptExt(first(model(model_type=model_type)), nothing, false)
+    m.ext[:spineopt] = SpineOpt.SpineOptExt(first(model()), nothing)
     m
 end
 

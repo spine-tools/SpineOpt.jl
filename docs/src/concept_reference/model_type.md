@@ -1,3 +1,8 @@
-This parameter is used, generally, to control [model](@ref) dependent functionality and specify [model](@ref)-level parameters for different [model](@ref)s. Currently, the main use is to identify the [model](@ref) objects that represent the master and operational sub problems within a decomposed investment problem structure. To trigger the decomposed structure, a [model](@ref) object with `model_type`=`:spineopt_benders_master` must exist and another with `model_type`=`:spineopt_standard` must also be present. To deactivate the decomposition functionality, the `model_type` of the master problem can be set to `:spineopt_other`.
+This parameter controls the low-level algorithm that SpineOpt uses to solve the underlying optimization problem.
+Currently three values are possible:
 
-See also [Decomposition](@ref).
+`spineopt_standard` uses the standard algorithm.
+
+`spineopt_benders` uses the Benders decomposition algorithm (see [Decomposition](@ref decomposition).
+
+`spineopt_mga` uses the Model to Generate Alternatives algorithm.

@@ -17,10 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function rerun_spineopt!(
+function rerun_spineopt_benders!(
     m::Model,
-    m_mp::Model,
-    ::Nothing,
     url_out::Union{String,Nothing};
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
@@ -33,11 +31,15 @@ function rerun_spineopt!(
     write_as_roll=0,
     resume_file_path=nothing
 )
-    m_instance, m_bm_instance = m.ext[:spineopt].instance, m_mp.ext[:spineopt].instance
-    @timelog log_level 2 "Creating $m_instance temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating $m_instance stochastic structure..." generate_stochastic_structure!(m)
-    @timelog log_level 2 "Creating $m_bm_instance temporal structure..." generate_temporal_structure!(m_mp)
-    @timelog log_level 2 "Creating $m_bm_instance stochastic structure..." generate_stochastic_structure!(m_mp)
+    m_mp = master_problem_model(m)
+    @timelog log_level 2 "Creating temporal structure..." begin
+        generate_temporal_structure!(m)
+        generate_temporal_structure!(m_mp; rolling=false)
+    end
+    @timelog log_level 2 "Creating stochastic structure..." begin
+        generate_stochastic_structure!(m)
+        generate_stochastic_structure!(m_mp)
+    end
     sp_roll_count = _roll_count(m)
     @log log_level 2 """
     NOTE: We will first build model $(m.ext[:spineopt].instance) for the last optimisation window to make sure it can roll that far.
@@ -102,7 +104,7 @@ function rerun_spineopt!(
         global current_bi = add_benders_iteration(j)
     end
     write_report(m, url_out; alternative=alternative, log_level=log_level)
-    m, m_mp
+    m
 end
 
 """
@@ -170,7 +172,7 @@ function _add_constraint_mp_objective!(m::Model)
             m,
             + expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0)
             >=
-            + total_costs(m, anything)
+            + total_costs(m, anything; invesments_only=true)
         )
     )
 end

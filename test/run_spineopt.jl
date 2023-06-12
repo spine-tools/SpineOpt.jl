@@ -597,117 +597,6 @@ function _test_db_solvers()
     end
 end
 
-function _test_db_solvers_multi_model()
-    @testset "db_solvers_multi_model" begin
-        url_in, url_out, file_path_out = _test_run_spineopt_setup()
-        output_flag = true
-        mip_rel_gap = 0.015
-        output_flag_master = false
-        mip_rel_gap_master = 0.016
-        demand = 100
-        mip_solver_options = Dict(
-            "type" => "map",
-            "index_type" => "str",
-            "data" => Dict(
-                "HiGHS.jl" => Dict(
-                    "type" => "map",
-                    "index_type" => "str",
-                    "data" => Dict(
-                        "mip_rel_gap" => mip_rel_gap,
-                        "output_flag" => output_flag,
-                    ),
-                ),
-            ),
-        )
-        lp_solver_options = Dict(
-            "type" => "map",
-            "index_type" => "str",
-            "data" => Dict(
-                "HiGHS.jl" => Dict(
-                    "type" => "map",
-                    "index_type" => "str",
-                    "data" => Dict(
-                        "LogLevel" => 1.0,
-                    ),
-                ),
-            ),
-        )
-        mip_solver_options_master = Dict(
-            "type" => "map",
-            "index_type" => "str",
-            "data" => Dict(
-                "HiGHS.jl" => Dict(
-                    "type" => "map",
-                    "index_type" => "str",
-                    "data" => Dict(
-                        "mip_rel_gap" => mip_rel_gap_master,
-                        "output_flag" => output_flag_master,
-                    ),
-                ),
-            ),
-        )
-        lp_solver_options_master = Dict(
-            "type" => "map",
-            "index_type" => "str",
-            "data" => Dict(
-                "HiGHS.jl" => Dict(
-                    "type" => "map",
-                    "index_type" => "str",
-                    "data" => Dict(
-                        "LogLevel" => 0.0,
-                    ),
-                ),
-            ),
-        )
-        objects = [
-            ["model", "master_instance"],
-            ["temporal_block", "master_hourly"],
-            ["stochastic_structure", "master_deterministic"]
-        ]
-        object_parameter_values = [
-            ["node", "node_b", "demand", demand],
-            ["model", "instance", "model_type", "spineopt_standard"],
-            ["model", "instance", "db_mip_solver_options", mip_solver_options],
-            ["model", "instance", "db_lp_solver_options", lp_solver_options],
-            ["model", "master_instance", "model_type", "spineopt_benders_master"],
-            ["model", "master_instance", "db_mip_solver_options", mip_solver_options_master],
-            ["model", "master_instance", "db_lp_solver_options", lp_solver_options_master],
-            ["model", "master_instance", "db_mip_solver", "HiGHS.jl"],
-            ["model", "master_instance", "db_lp_solver", "HiGHS.jl"],
-            ["model", "master_instance", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
-            ["model", "master_instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
-            ["model", "master_instance", "duration_unit", "hour"],
-            ["model", "master_instance", "max_gap", 0.05],
-            ["model", "master_instance", "max_iterations", 1],
-            ["temporal_block", "master_hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
-            ["unit", "unit_ab", "candidate_units", 1],
-        ]
-
-        relationships = [
-            ["model__temporal_block", ["master_instance", "master_hourly"]],
-            ["model__stochastic_structure", ["master_instance", "master_deterministic"]],
-            ["stochastic_structure__stochastic_scenario", ["master_deterministic", "parent"]],
-            ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
-            ["unit__investment_temporal_block", ["unit_ab", "master_hourly"]],
-            ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
-            ["unit__investment_stochastic_structure", ["unit_ab", "master_deterministic"]],
-        ]
-        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", demand]]
-        SpineInterface.import_data(
-            url_in;
-            objects=objects,
-            relationships=relationships,
-            object_parameter_values=object_parameter_values,
-            relationship_parameter_values=relationship_parameter_values,
-        )
-        (m, mp) = run_spineopt(url_in, url_out; log_level=0, optimize=false)
-        @test get_optimizer_attribute(m, "output_flag") == true
-        @test get_optimizer_attribute(m, "mip_rel_gap") == 0.015
-        @test get_optimizer_attribute(mp, "output_flag") == false
-        @test get_optimizer_attribute(mp, "mip_rel_gap") == 0.016
-    end
-end
-
 function _test_fixing_variables_when_rolling()
     @testset "fixing variables when rolling" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
@@ -932,7 +821,6 @@ function _test_benders()
             url_in, url_out, file_path_out = _test_run_spineopt_setup()
             objects = [
                 ["unit", "unit_ab_alt"],
-                ["model", "benders"],
                 ["output", "total_costs"],
                 ["output", "units_invested"],
                 ["output", "units_on"],
@@ -945,15 +833,9 @@ function _test_benders()
                 ["unit__to_node", ["unit_ab_alt", "node_b"]],
                 ["units_on__temporal_block", ["unit_ab_alt", "hourly"]],
                 ["units_on__stochastic_structure", ["unit_ab_alt", "deterministic"]],
-                ["model__default_investment_temporal_block", ["instance", "hourly"]],
+                ["model__temporal_block", ["instance", "investments_hourly"]],
+                ["model__default_investment_temporal_block", ["instance", "investments_hourly"]],
                 ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
-                ["model__temporal_block", ["benders", "investments_hourly"]],
-                ["model__stochastic_structure", ["benders", "deterministic"]],
-                ["model__default_temporal_block", ["benders", "investments_hourly"]],
-                ["model__default_stochastic_structure", ["benders", "deterministic"]],
-                ["model__default_investment_temporal_block", ["benders", "investments_hourly"]],
-                ["model__default_investment_stochastic_structure", ["benders", "deterministic"]],
-                ["model__report", ["benders", "report_x"]],
                 ["report__output", ["report_x", "units_invested_available"]],
                 ["report__output", ["report_x", "units_mothballed"]],
                 ["report__output", ["report_x", "units_invested"]],
@@ -961,12 +843,9 @@ function _test_benders()
             ]
             object_parameter_values = [
                 ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
-                ["model", "benders", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
-                ["model", "benders", "model_end", Dict("type" => "date_time", "data" => "2000-01-02T00:00:00")],
-                ["model", "benders", "duration_unit", "hour"],
-                ["model", "benders", "model_type", "spineopt_benders_master"],
-                ["model", "benders", "max_iterations", 10],
-                ["model", "benders", "db_mip_solver_options", mip_solver_options_benders],
+                ["model", "instance", "model_type", "spineopt_benders"],
+                ["model", "instance", "max_iterations", 10],
+                ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
                 ["node", "node_b", "demand", dem],
                 ["unit", "unit_ab_alt", "number_of_units", 0],
                 ["unit", "unit_ab_alt", "candidate_units", 1],
