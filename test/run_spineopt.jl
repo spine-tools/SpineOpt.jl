@@ -772,7 +772,6 @@ function _test_fix_node_state_using_map_with_rolling()
             end
             push!(values, val)
         end
-        for (k, v) in zip(indexes, values) @show k, collect(v) end
         fix_node_state_ = unparse_db_value(Map(indexes, values))
         objects = [["output", "node_state"]]
         relationships = [["report__output", ["report_x", "node_state"]]]
