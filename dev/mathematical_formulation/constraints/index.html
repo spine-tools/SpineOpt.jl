@@ -169,12 +169,150 @@ v_{node\_state}(n2,s,t)\\
 &amp; &gt;= \sum_{\substack{(u,s,t&#39;) \in units\_on\_indices: \\ t&#39; &gt;=t-p_{min\_down\_time}(u,s,t) \quad t&#39; &lt;= t}}
 v_{units\_shut\_down}(u,s,t&#39;) \\
 &amp; \forall (u,s,t) \in units\_on\_indices\\
-\end{aligned}\]</p><p>Note that for the use reserves the generated minimum down time constraint will include <a href="mathematical_formulation/@ref constraint_min_down_time2">startups for non-spinning reserves</a>.</p><h5 id="constraint_min_up_time"><a class="docs-heading-anchor" href="#constraint_min_up_time">Minimum up time (basic version)</a><a id="constraint_min_up_time-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_min_up_time" title="Permalink"></a></h5><p>Similarly to the <a href="#constraint_min_down_time">minimum down time constraint</a>, a minimum time that a unit needs to remain online after a startup can be imposed by defining the <a href="../../concept_reference/Parameters/#min_up_time">min_up_time</a> parameter. This will trigger the generation of the following constraint:</p><p class="math-container">\[\begin{aligned}
+\end{aligned}\]</p><p>Note that for the use reserves the generated minimum down time constraint will include <a href="#constraint_min_down_time2">startups for non-spinning reserves</a>.</p><h5 id="constraint_min_up_time"><a class="docs-heading-anchor" href="#constraint_min_up_time">Minimum up time (basic version)</a><a id="constraint_min_up_time-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_min_up_time" title="Permalink"></a></h5><p>Similarly to the <a href="#constraint_min_down_time">minimum down time constraint</a>, a minimum time that a unit needs to remain online after a startup can be imposed by defining the <a href="../../concept_reference/Parameters/#min_up_time">min_up_time</a> parameter. This will trigger the generation of the following constraint:</p><p class="math-container">\[\begin{aligned}
 &amp; v_{units\_on}(u,s,t) \\
 &amp; &gt;= \sum_{\substack{(u,s,t&#39;) \in units\_on\_indices: \\ t&#39; &gt;=t-p_{min\_up\_time}(u,s,t), \\ t&#39; &lt;= t}}
 v_{units\_started\_up}(u,s,t&#39;) \\
 &amp; \forall (u,s,t) \in units\_on\_indices\\
-\end{aligned}\]</p><p>This constraint can be extended to the use of nonspinning reserves. See <a href="mathematical_formulation/@ref constraint_min_up_time2">also</a>.</p><h4 id="Ramping-and-reserve-constraints"><a class="docs-heading-anchor" href="#Ramping-and-reserve-constraints">Ramping and reserve constraints</a><a id="Ramping-and-reserve-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Ramping-and-reserve-constraints" title="Permalink"></a></h4><p>(Comment 2023-05-12: Currently under development)</p><h4 id="constraint_split_ramps"><a class="docs-heading-anchor" href="#constraint_split_ramps">Splitting unit flows into ramps</a><a id="constraint_split_ramps-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_split_ramps" title="Permalink"></a></h4><p>(Comment 2023-05-12: Currently under development)</p><h4 id="constraint_min_nonspin_ramp_down"><a class="docs-heading-anchor" href="#constraint_min_nonspin_ramp_down">Lower bound on the nonspinning downward reserve provision</a><a id="constraint_min_nonspin_ramp_down-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_min_nonspin_ramp_down" title="Permalink"></a></h4><p>(Comment 2023-05-12: Currently under development)</p><h4 id="constraint_max_nonspin_ramp_down"><a class="docs-heading-anchor" href="#constraint_max_nonspin_ramp_down">Upper bound on the nonspinning downward reserve provision</a><a id="constraint_max_nonspin_ramp_down-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_max_nonspin_ramp_down" title="Permalink"></a></h4><p>(Comment 2023-05-12: Currently under development)</p><h4 id="constraint_unit_flow_capacity_w_ramps"><a class="docs-heading-anchor" href="#constraint_unit_flow_capacity_w_ramps">Bounds on the unit capacity including ramping constraints</a><a id="constraint_unit_flow_capacity_w_ramps-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_unit_flow_capacity_w_ramps" title="Permalink"></a></h4><p>(Comment 2021-04-29: Currently under development)</p><h3 id="Operating-segments"><a class="docs-heading-anchor" href="#Operating-segments">Operating segments</a><a id="Operating-segments-1"></a><a class="docs-heading-anchor-permalink" href="#Operating-segments" title="Permalink"></a></h3><h4 id="constraint_operating_point_bounds"><a class="docs-heading-anchor" href="#constraint_operating_point_bounds">Operating segments of units</a><a id="constraint_operating_point_bounds-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_operating_point_bounds" title="Permalink"></a></h4><p>Limit the maximum number of each activated segment <code>unit_flow_op_active</code> cannot be higher than the number of online units. This constraint is activated only when parameter <a href="../../concept_reference/Parameters/#ordered_unit_flow_op">ordered_unit_flow_op</a> is set <code>true</code>.</p><p class="math-container">\[\begin{aligned}
+\end{aligned}\]</p><p>This constraint can be extended to the use of nonspinning reserves. See <a href="#constraint_min_up_time2">also</a>.</p><h4 id="Ramping-and-reserve-constraints"><a class="docs-heading-anchor" href="#Ramping-and-reserve-constraints">Ramping and reserve constraints</a><a id="Ramping-and-reserve-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Ramping-and-reserve-constraints" title="Permalink"></a></h4><p>The current documentation on ramping and reserves is presented in a way that is aligned with the SpineOpt modeling logic and data structure, which may sometimes seem counterintuitive for users who are not familiar with this logic and the data structure. For example, in the current documentation the upward and downward reserves appear in the same equation; however, they will not be activated simultaneously given the modeling logic and data structure of SpineOpt. We are currently improving the formulation to make it more computationally efficient and the documentation clearer. We appreciate your patience as we strive to provide clearer and more helpful information.</p><p>To include ramping and reserve constraints, it is a pre requisite that <a href="#constraint_minimum_operating_point">minimum operating points</a> and <a href="#constraint_unit_flow_capacity">maximum capacity constraints</a> are enforced as described.</p><p>For dispatchable units, additional ramping constraints can be introduced. For setting up ramping characteristics of units see <a href="../../advanced_concepts/ramping_and_reserves/#Ramping-and-Reserves">Ramping and Reserves</a>. First, the unit flows are split into their online, start-up, shut-down and non-spinning ramping contributions.</p><h4 id="constraint_split_ramps"><a class="docs-heading-anchor" href="#constraint_split_ramps">Splitting unit flows into ramps</a><a id="constraint_split_ramps-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_split_ramps" title="Permalink"></a></h4><p class="math-container">\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t_{after}) \in unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})\\ !p_{is\_reserve}(n)}} v_{unit\_flow}(u,n,d,s,t_{after}) \\
+&amp; + \sum_{\substack{(u,n,d,s,t_{after}) \in unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})\\ p_{is\_reserve(n)} \\ p_{upward\_reserve}(n)}} v_{unit\_flow}(u,n,d,s,t_{after}) \\
+&amp; - \sum_{\substack{(u,n,d,s,t_{after}) \in unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})\\ p_{is\_reserve(n)} \\ p_{downward\_reserve}(n)}} v_{unit\_flow}(u,n,d,s,t_{after}) \\
+&amp; - \sum_{\substack{(u,n,d,s,t_{before}) \in unit\_flow\_indices: \\ (u,n,d,t_{before}) \, \in \, (u,n,d,t_{before})\\ !p_{is\_reserve}(n)}} v_{unit\_flow}(u,n,d,s,t_{before}) \\
+&amp; ==  \\
+&amp; + \sum_{\substack{(u,n,d,s,t_{after}) \in ramp\_up\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{ramp\_up\_unit\_flow}(u,n,d,s,t_{after})  \\
+&amp; + \sum_{\substack{(u,n,d,s,t_{after}) \in start\_up\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{start\_up\_unit\_flow}(u,n,d,s,t_{after}) \\
+&amp; + \sum_{\substack{(u,n,d,s,t_{after}) \in nonspin\_ramp\_up\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{nonspin\_ramp\_up\_unit\_flow}(u,n,d,s,t_{after}) \\
+&amp; - \sum_{\substack{(u,n,d,s,t_{after}) \in ramp\_down\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{ramp\_down\_unit\_flow}(u,n,d,s,t_{after}) \\
+&amp; - \sum_{\substack{(u,n,d,s,t_{after}) \in shut\_down\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{shut\_down\_unit\_flow}(u,n,d,s,t_{after}) \\
+&amp; - \sum_{\substack{(u,n,d,s,t_{after}) \in nonspin\_ramp\_down\_unit\_flow\_indices: \\ (u,n,d,t_{after}) \, \in \, (u,n,d,t_{after})}} v_{nonspin\_ramp\_down\_unit\_flow}(u,n,d,s,t_{after}) \\
+&amp; \forall (u,n,d,s,t_{after}) \in (\\
+&amp; ramp\_up\_unit\_flow\_indices,\\
+&amp; start\_up\_unit\_flow\_indices,\\
+&amp; nonspin\_ramp\_up\_unit\_flow\_indices, \\
+&amp; ramp\_down\_unit\_flow\_indices,\\
+&amp; shut\_down\_unit\_flow\_indices,\\
+&amp; nonspin\_ramp\_down\_unit\_flow\_indices) \\
+&amp; \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in unit\_flow\_indices \\
+\end{aligned}\]</p><p>Note that each <em>individual</em> tuple of the <code>unit_flow_indices</code> is split into its ramping contributions, if any of the ramping variables exist for this tuple. How to set-up ramps for units is described in <a href="../../advanced_concepts/ramping_and_reserves/#Ramping-and-Reserves">Ramping and Reserves</a>.</p><h5 id="constraint_ramp_up"><a class="docs-heading-anchor" href="#constraint_ramp_up">Constraint on spinning upwards ramp_up</a><a id="constraint_ramp_up-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_ramp_up" title="Permalink"></a></h5><p>The maximum online ramp up ability of a unit can be constraint by the <a href="../../concept_reference/Parameters/#ramp_up_limit">ramp_up_limit</a>, expressed as a share of the <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a>. With this constraint, online (i.e. spinning) ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced.</p><p class="math-container">\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in ramp\_up\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{ramp\_up\_unit\_flow}(u,n,d,s,t)  \\
+&amp; &lt;= \\
+&amp; + \sum_{\substack{(u,s,t&#39;) \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t&#39;\in t\_overlap\_t(t)}}
+ (v_{units\_on}(u,s,t&#39;)
+ - v_{units\_started\_up}(u,s,t&#39;)) \\
+&amp; \min(\Delta t&#39;,\Delta t) \\
+&amp; \cdot p_{ramp\_up\_limit}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+&amp; \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+&amp; \forall (u,ng,d) \in ind(p_{ramp\_up\_limit})\\
+&amp; \forall s \in stochastic\_path, \forall t \in time\_slice
+\end{aligned}\]</p><p>Note that only online units that are not started up during this timestep are considered.</p><h5 id="constraint_min_start_up_ramp"><a class="docs-heading-anchor" href="#constraint_min_start_up_ramp">Constraint on minimum upward start up ramp_up</a><a id="constraint_min_start_up_ramp-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_min_start_up_ramp" title="Permalink"></a></h5><p>To enforce a lower bound on the ramp of a unit during start-up, the <a href="../../concept_reference/Parameters/#min_startup_ramp">min_startup_ramp</a> given as a share of the <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a> needs to be defined, which triggers the constraint below. Usually, only non-reserve commodities can have a start-up ramp. However, it is possible to include them, by adding them to the ramp defining node <code>ng</code>.</p><p class="math-container">\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in start\_up\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{start\_up\_unit\_flow}(u,n,d,s,t)  \\
+&amp; &gt;= \\
+&amp; + \sum_{\substack{(u,s,t&#39;) \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t&#39;\in t\_overlap\_t(t)}} v_{units_started\_up}(u,s,t) \\
+&amp; \cdot p_{min\_startup\_ramp}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+&amp; \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+&amp; \forall (u,ng,d) \in ind(p_{min\_startup\_ramp})\\
+&amp; \forall s \in stochastic\_path, \forall t \in time\_slice
+\end{aligned}\]</p><h5 id="constraint_max_start_up_ramp"><a class="docs-heading-anchor" href="#constraint_max_start_up_ramp">Constraint on maximum upward start up ramp_up</a><a id="constraint_max_start_up_ramp-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_max_start_up_ramp" title="Permalink"></a></h5><p>This constraint enforces a upper limit on the unit ramp during startup process, triggered by the existence of the <a href="../../concept_reference/Parameters/#max_startup_ramp">max_startup_ramp</a>, which should be given as a share of the <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a>. Typically, only  ramp flows to non-reserve nodes are considered during the start-up process. However, it is possible to include them, by adding them to the ramp defining node <code>ng</code>.</p><p class="math-container">\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in start\_up\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{start\_up\_unit\_flow}(u,n,d,s,t)  \\
+&amp; &lt;= \\
+&amp; + \sum_{\substack{(u,s,t&#39;) \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t&#39;\in t\_overlap\_t(t)}} v_{units_started\_up}(u,s,t) \\
+&amp; \cdot p_{max\_startup\_ramp}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+&amp; \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+&amp; \forall (u,ng,d) \in ind(p_{max\_startup\_ramp})\\
+&amp; \forall s \in stochastic\_path, \forall t \in time\_slice
+\end{aligned}\]</p><h5 id="constraint_min_down_time2"><a class="docs-heading-anchor" href="#constraint_min_down_time2">Constraint on upward non-spinning start ups</a><a id="constraint_min_down_time2-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_min_down_time2" title="Permalink"></a></h5><p>For non-spinning reserve provision, offline units can be scheduled to provide nonspinning reserves, if they have recovered their minimum down time. If nonspinning reserves are used for a unit, the minimum down-time constraint takes the following form:</p><p class="math-container">\[\begin{aligned}
+&amp; v_{units\_available}(u,s,t) \\
+&amp; - v_{units\_on}(u,s,t) \\
+&amp; &gt;= \sum_{\substack{(u,s,t&#39;) \in units\_on\_indices: \\ t&#39; &gt;t-p_{min\_down\_time}(u,s,t) \\ t&#39; &lt;= t}}
+v_{units\_shut\_down}(u,s,t&#39;) \\
+&amp; + \sum_{\substack{(u&#39;,n&#39;,s&#39;,t&#39;) \in nonspin\_units\_started\_up\_indices:\\ (u&#39;,s&#39;,t&#39;) \in (u,s,t)}}
+  v_{nonspin\_units\_started\_up}(u&#39;,n&#39;,s&#39;,t&#39;) \\
+&amp; \forall (u,s,t) \in units\_on\_indices:\\
+&amp; (u,n,s,t) \in nonspin\_units\_started\_up\_indices
+\end{aligned}\]</p><h5 id="constraint_min_nonspin_ramp_up"><a class="docs-heading-anchor" href="#constraint_min_nonspin_ramp_up">Minimum nonspinning ramp up</a><a id="constraint_min_nonspin_ramp_up-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_min_nonspin_ramp_up" title="Permalink"></a></h5><p>The nonspinning ramp flows of a units <a href="../variables/#nonspin_ramp_up_unit_flow">nonspin_ramp_up_unit_flow</a> are dependent on the units holding available for nonspinning reserve provision, i.e. <a href="../variables/#nonspin_units_started_up">nonspin_units_started_up</a>. A lower bound on these nonspinning reserves can be enforced by defining the <a href="../../concept_reference/Parameters/#min_res_startup_ramp">min_res_startup_ramp</a> parameter (given as a fraction of the <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a>).</p><p class="math-container">\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in nonspin\_ramp\_up\_unit\_flow\_indices: \\ (u,n,d)  \in (u,ng,d)}} v_{nonspin\_ramp\_up\_unit\_flow}(u,n,d,s,t)  \\
+&amp; &gt;= \\
+&amp; + \sum_{\substack{(u,n,s,t) \in nonspin\_units\_started\_up\_indices: \\ (u,n)  \in (u,ng}} v_{nonspin\_units\_started\_up}(u,n,s,t)  \\
+&amp; \cdot p_{min\_res\_startup\_ramp}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+&amp; \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+&amp; \forall (u,ng,d) \in ind(p_{min\_res\_startup\_ramp})\\
+&amp; \forall s \in stochastic\_path, \forall t \in time\_slice
+\end{aligned}\]</p><h5 id="constraint_max_nonspin_ramp_up"><a class="docs-heading-anchor" href="#constraint_max_nonspin_ramp_up">Maximum nonspinning ramp up</a><a id="constraint_max_nonspin_ramp_up-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_max_nonspin_ramp_up" title="Permalink"></a></h5><p>The nonspinning ramp flows of a units <a href="../variables/#nonspin_ramp_up_unit_flow">nonspin_ramp_up_unit_flow</a> are dependent on the units holding available for nonspinning reserve provision, i.e. <a href="../variables/#nonspin_units_started_up">nonspin_units_started_up</a>. An upper bound on these nonspinning reserves can be enforced by defining the <a href="../../concept_reference/Parameters/#max_res_startup_ramp">max_res_startup_ramp</a> parameter (given as a fraction of the <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a>).</p><p class="math-container">\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in nonspin\_ramp\_up\_unit\_flow\_indices: \\ (u,n,d)  \in (u,ng,d)}} v_{nonspin\_ramp\_up\_unit\_flow}(u,n,d,s,t)  \\
+&amp; &lt;= \\
+&amp; + \sum_{\substack{(u,n,s,t) \in nonspin\_units\_started\_up\_indices: \\ (u,n)  \in (u,ng}} v_{nonspin\_units\_started\_up}(u,n,s,t)  \\
+&amp; \cdot p_{max\_res\_startup\_ramp}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+&amp; \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+&amp; \forall (u,ng,d) \in ind(p_{max\_res\_startup\_ramp})\\
+&amp; \forall s \in stochastic\_path, \forall t \in time\_slice
+\end{aligned}\]</p><h5 id="constraint_ramp_down"><a class="docs-heading-anchor" href="#constraint_ramp_down">Constraint on spinning downward ramps</a><a id="constraint_ramp_down-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_ramp_down" title="Permalink"></a></h5><p>Similarly to the online <a href="#constraint_ramp_up">ramp up capbility</a> of a unit, it is also possible to impose an upper bound on the online ramp down ability of unit by defining a <a href="../../concept_reference/Parameters/#ramp_down_limit">ramp_down_limit</a>, expressed as a share of the <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a>.</p><p class="math-container">\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in ramp\_down\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{ramp\_down\_unit\_flow}(u,n,d,s,t)  \\
+&amp; &lt;= \\
+&amp; + \sum_{\substack{(u,s,t&#39;) \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t&#39;\in t\_overlap\_t(t)}}
+ (v_{units\_on}(u,s,t&#39;)
+ - v_{units\_started\_up}(u,s,t&#39;)) \\
+&amp; \cdot p_{ramp\_down\_limit}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+&amp; \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+&amp; \forall (u,ng,d) \in ind(p_{ramp\_down\_limit})\\
+&amp; \forall s \in stochastic\_path, \forall t \in time\_slice
+\end{aligned}\]</p><h5 id="constraint_min_shut_down_ramp"><a class="docs-heading-anchor" href="#constraint_min_shut_down_ramp">Lower bound on downward shut-down ramps</a><a id="constraint_min_shut_down_ramp-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_min_shut_down_ramp" title="Permalink"></a></h5><p>This constraint enforces a lower bound on the unit ramp during shutdown process. Usually, units will only provide shutdown ramps to non-reserve nodes. However, it is possible to include them, by adding them to the ramp defining node <code>ng</code>. The constraint is triggered by the existence of the <a href="../../concept_reference/Parameters/#min_shutdown_ramp">min_shutdown_ramp</a> parameter.</p><p class="math-container">\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in shut\_down\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{shut\_down\_unit\_flow}(u,n,d,s,t)  \\
+&amp; &lt;= \\
+&amp; + \sum_{\substack{(u,s,t&#39;) \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t&#39;\in t\_overlap\_t(t)}} v_{units\_shut\_down}(u,s,t&#39;) \\
+&amp; \cdot p_{min\_shutdown\_ramp}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+&amp; \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+&amp; \forall (u,ng,d) \in ind(p_{min\_shutdown\_ramp})\\
+&amp; \forall s \in stochastic\_path, \forall t \in time\_slice
+\end{aligned}\]</p><h5 id="constraint_max_shut_down_ramp"><a class="docs-heading-anchor" href="#constraint_max_shut_down_ramp">Upper bound on downward shut-down ramps</a><a id="constraint_max_shut_down_ramp-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_max_shut_down_ramp" title="Permalink"></a></h5><p>This constraint enforces an upper bound on the unit ramp during shutdown process. Usually, units will only provide shutdown ramps to non-reserve nodes. However, it is possible to include them, by adding them to the ramp defining node <code>ng</code>. The constraint is triggered by the existence of the <a href="../../concept_reference/Parameters/#max_shutdown_ramp">max_shutdown_ramp</a> parameter.</p><p class="math-container">\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in shut\_down\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{shut\_down\_unit\_flow}(u,n,d,s,t)  \\
+&amp; &lt;= \\
+&amp; + \sum_{\substack{(u,s,t&#39;) \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t&#39;\in t\_overlap\_t(t)}} v_{units\_shut\_down}(u,s,t&#39;) \\
+&amp; \cdot p_{max\_shutdown\_ramp}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+&amp; \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+&amp; \forall (u,ng,d) \in ind(p_{max\_shutdown\_ramp})\\
+&amp; \forall s \in stochastic\_path, \forall t \in time\_slice
+\end{aligned}\]</p><h5 id="constraint_min_up_time2"><a class="docs-heading-anchor" href="#constraint_min_up_time2">Constraint on upward non-spinning shut-downs</a><a id="constraint_min_up_time2-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_min_up_time2" title="Permalink"></a></h5><p>For non-spinning downward reserves, online units can be scheduled for reserve provision through shut down if they have recovered their minimum up time. If nonspinning reserves are used the minimum up-time constraint becomes:</p><p class="math-container">\[\begin{aligned}
+&amp; v_{units\_on}(u,s,t) \\
+&amp; &gt;= \sum_{\substack{(u,s,t&#39;) \in units\_on\_indices: \\ t&#39; &gt;t-p_{min\_up\_time}(u,s,t) \quad t&#39; &lt;= t}}
+v_{units\_started\_up}(u,s,t&#39;) \\
+&amp; + \sum_{\substack{(u&#39;,n&#39;,s&#39;,t&#39;) \in nonspin\_units\_shut\_down\_indices: \\ (u&#39;,s&#39;,t&#39;) \in (u,s,t)}}
+  v_{nonspin\_units\_shut\_down}(u&#39;,n&#39;,s&#39;,t&#39;) \\
+&amp; \forall (u,s,t) \in units\_on\_indices:\\
+&amp; u \in nonspin\_units\_started\_up\_indices
+\end{aligned}\]</p><h4 id="constraint_min_nonspin_ramp_down"><a class="docs-heading-anchor" href="#constraint_min_nonspin_ramp_down">Lower bound on the nonspinning downward reserve provision</a><a id="constraint_min_nonspin_ramp_down-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_min_nonspin_ramp_down" title="Permalink"></a></h4><p>A lower bound on the nonspinning reserve provision of a unit can be imposed by defining the <a href="../../concept_reference/Parameters/#min_res_shutdown_ramp">min_res_shutdown_ramp</a> parameter, which leads to the creation of the following constraint in the model:</p><p class="math-container">\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in nonspin\_ramp\_down\_unit\_flow\_indices: \\ (u,n,d,s,t)  \in (u,n,d,s,t)}} v_{nonspin\_ramp\_down\_unit\_flow}(u,n,d,s,t)  \\
+&amp; &lt;= \\
+&amp; + \sum_{\substack{(u,n,s,t) \in nonspin\_units\_shut\_down\_indices: \\ (u,n,s,t)  \in (u,n,s,t)}} v_{nonspin\_units\_shut\_down}(u,n,s,t)  \\
+&amp; \cdot p_{min\_res\_shutdown\_ramp}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+&amp; \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+&amp; \forall (u,ng,d) \in ind(p_{min\_res\_shutdown\_ramp})\\
+&amp; \forall s \in stochastic\_path, \forall t \in time\_slice
+\end{aligned}\]</p><h4 id="constraint_max_nonspin_ramp_down"><a class="docs-heading-anchor" href="#constraint_max_nonspin_ramp_down">Upper bound on the nonspinning downward reserve provision</a><a id="constraint_max_nonspin_ramp_down-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_max_nonspin_ramp_down" title="Permalink"></a></h4><p>An upper limit on the nonspinning reserve provision of a unit can be imposed by defining the <a href="../../concept_reference/Parameters/#max_res_shutdown_ramp">max_res_shutdown_ramp</a> parameter, which leads to the creation of the following constraint in the model:</p><p class="math-container">\[\begin{aligned}
+&amp; + \sum_{\substack{(u,n,d,s,t) \in nonspin\_ramp\_down\_unit\_flow\_indices: \\ (u,n,d,s,t)  \in (u,n,d,s,t)}} v_{nonspin\_ramp\_down\_unit\_flow}(u,n,d,s,t)  \\
+&amp; &lt;= \\
+&amp; + \sum_{\substack{(u,n,s,t) \in nonspin\_units\_shut\_down\_indices: \\ (u,n,s,t)  \in (u,n,s,t)}} v_{nonspin\_units\_shut\_down}(u,n,s,t)  \\
+&amp; \cdot p_{max\_res\_shutdown\_ramp}(u,ng,d,s,t) \\
+&amp; \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
+&amp; \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+&amp; \forall (u,ng,d) \in ind(p_{max\_res\_shutdown\_ramp})\\
+&amp; \forall s \in stochastic\_path, \forall t \in time\_slice
+\end{aligned}\]</p><h5 id="constraint_res_minimum_node_state"><a class="docs-heading-anchor" href="#constraint_res_minimum_node_state">Constraint on minimum node state for reserve provision</a><a id="constraint_res_minimum_node_state-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_res_minimum_node_state" title="Permalink"></a></h5><p>Storage nodes can also contribute to the provision of reserves. The amount of balancing contributions is limited by the ramps of the storage unit (see above) and by the node state:</p><p class="math-container">\[\begin{aligned}
+&amp; v_{node\_state}(n_{stor}, s, t)\\
+&amp; &gt;= p_{node\_state\_min}(n_{stor}, s, t) \\
+&amp; + \sum_{\substack{(u,n_{res},d,s,t) \in unit\_flow\_indices: \\ u \in unit\_flow\_indices;n=n_{stor}) \\ p_{is\_reserve\_node}(n_{res}) }} v_{unit\_flow}(u,n_{res},d,s,t)  \\
+&amp; \cdot p_{minimum\_reserve\_activation\_time}(n_{res}) \\
+&amp; \forall (n_{stor},s,t) \in node\_stochastic\_time\_indices : p_{has\_state}(n)\\
+\end{aligned}\]</p><h4 id="constraint_unit_flow_capacity_w_ramps"><a class="docs-heading-anchor" href="#constraint_unit_flow_capacity_w_ramps">Bounds on the unit capacity including ramping constraints</a><a id="constraint_unit_flow_capacity_w_ramps-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_unit_flow_capacity_w_ramps" title="Permalink"></a></h4><p>(Comment 2021-04-29: Currently under development)</p><h3 id="Operating-segments"><a class="docs-heading-anchor" href="#Operating-segments">Operating segments</a><a id="Operating-segments-1"></a><a class="docs-heading-anchor-permalink" href="#Operating-segments" title="Permalink"></a></h3><h4 id="constraint_operating_point_bounds"><a class="docs-heading-anchor" href="#constraint_operating_point_bounds">Operating segments of units</a><a id="constraint_operating_point_bounds-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_operating_point_bounds" title="Permalink"></a></h4><p>Limit the maximum number of each activated segment <code>unit_flow_op_active</code> cannot be higher than the number of online units. This constraint is activated only when parameter <a href="../../concept_reference/Parameters/#ordered_unit_flow_op">ordered_unit_flow_op</a> is set <code>true</code>.</p><p class="math-container">\[\begin{aligned}
 &amp; v_{unit\_flow\_op\_active}(u,n,d,op,s,t) &lt;= v_{units\_on}(u,s,t) \\
 &amp; \forall (u,n,d,op,s,t) \in unit\_flow\_op\_indices \\
 &amp; \text{if } p_{ordered\_unit\_flow\_op}(u)=true \\
@@ -520,4 +658,4 @@ Z \ge&amp; + \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)
   \end{cases}\\
 &amp;+p_{right\_hand\_side}(uc,t,s)\\
 &amp;\forall uc,t,s \in constraint\_user\_constraint\_indices\\
-\end{aligned}\]</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../variables/">« Variables</a><a class="docs-footer-nextpage" href="../objective_function/">Objective »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Thursday 15 June 2023 12:52">Thursday 15 June 2023</span>. Using Julia version 1.9.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+\end{aligned}\]</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../variables/">« Variables</a><a class="docs-footer-nextpage" href="../objective_function/">Objective »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Friday 16 June 2023 20:17">Friday 16 June 2023</span>. Using Julia version 1.9.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
