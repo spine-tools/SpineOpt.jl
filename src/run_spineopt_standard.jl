@@ -17,10 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function rerun_spineopt!(
+function rerun_spineopt_standard!(
     m::Model,
-    ::Nothing,
-    ::Nothing,
     url_out::Union{String,Nothing};
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,

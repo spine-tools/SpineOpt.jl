@@ -39,13 +39,8 @@ const all_objective_terms = [op_terms; invest_terms]
 
 Expression corresponding to the sume of all cost terms for given model, and up until the given date time.
 """
-total_costs(m, t_range) = sum(eval(term)(m, t_range) for term in objective_terms(m))
-
-function objective_terms(m)
-    # FIXME: this could just be Benders defining the objective function itself
-    if model_type(model=m.ext[:spineopt].instance) in (:spineopt_standard, :spineopt_mga)
-        all_objective_terms
-    elseif model_type(model=m.ext[:spineopt].instance) == :spineopt_benders_master
-        invest_terms
-    end
+function total_costs(m, t_range; invesments_only=false)
+    sum(eval(term)(m, t_range) for term in objective_terms(m; invesments_only=invesments_only))
 end
+
+objective_terms(m; invesments_only=false) = invesments_only ? invest_terms : all_objective_terms

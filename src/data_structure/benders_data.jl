@@ -85,6 +85,8 @@ function save_sp_objective_value!(m)
 end
 
 function correct_sp_objective_value!(m)
+    # subtract the current total costs (which include only the in-window costs)
+    # and then add the total costs also including the beyond-window part
     total_sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0)
     total_sp_obj_val -= sum(values(m.ext[:spineopt].values[:total_costs]), init=0)
     total_sp_obj_val += value(realize(total_costs(m, anything)))

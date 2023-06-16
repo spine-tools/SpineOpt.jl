@@ -91,12 +91,16 @@ end
 
 Generate a `TimeSlice` that represents the 'current' optimisation window for given model.
 """
-function _generate_current_window!(m::Model)
+function _generate_current_window!(m::Model; rolling=true)
     instance = m.ext[:spineopt].instance
     w_start = model_start(model=instance)
     m_end = model_end(model=instance)
-    w_duration = @isdefined(window_duration) ? window_duration(model=instance, _strict=false) : nothing
-    w_duration = w_duration === nothing ? roll_forward(model=instance, i=1, _strict=false) : w_duration
+    w_duration = if rolling
+        w_duration = @isdefined(window_duration) ? window_duration(model=instance, _strict=false) : nothing
+        w_duration !== nothing ? w_duration : roll_forward(model=instance, i=1, _strict=false)
+    else
+        nothing
+    end
     w_end = w_duration === nothing ? m_end : min(w_start + w_duration, m_end)
     m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
         w_start, w_end; duration_unit=_model_duration_unit(instance)
@@ -367,8 +371,8 @@ Preprocess the temporal structure for SpineOpt from the provided input data.
 
 Runs a number of functions processing different aspects of the temporal structure in sequence.
 """
-function generate_temporal_structure!(m::Model)
-    _generate_current_window!(m)
+function generate_temporal_structure!(m::Model; rolling=true)
+    _generate_current_window!(m; rolling=rolling)
     _generate_time_slice!(m)
     _generate_output_time_slices!(m)
     _generate_time_slice_relationships!(m)

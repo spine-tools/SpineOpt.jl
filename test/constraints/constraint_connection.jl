@@ -22,7 +22,6 @@ function _test_constraint_connection_setup()
     test_data = Dict(
         :objects => [
             ["model", "instance"],
-            ["model", "master"],
             ["temporal_block", "hourly"],
             ["temporal_block", "investments_hourly"],
             ["temporal_block", "two_hourly"],
@@ -41,10 +40,10 @@ function _test_constraint_connection_setup()
         :relationships => [
             ["model__temporal_block", ["instance", "hourly"]],
             ["model__temporal_block", ["instance", "two_hourly"]],
-            ["model__temporal_block", ["master", "investments_hourly"]],
+            ["model__temporal_block", ["instance", "investments_hourly"]],
             ["model__stochastic_structure", ["instance", "deterministic"]],
             ["model__stochastic_structure", ["instance", "stochastic"]],
-            ["model__stochastic_structure", ["master", "investments_deterministic"]],
+            ["model__stochastic_structure", ["instance", "investments_deterministic"]],
             ["connection__from_node", ["connection_ab", "node_a"]],
             ["connection__to_node", ["connection_ab", "node_b"]],
             ["connection__from_node", ["connection_bc", "node_b"]],
@@ -68,12 +67,8 @@ function _test_constraint_connection_setup()
             ["model", "instance", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
             ["model", "instance", "duration_unit", "hour"],
             ["model", "instance", "model_type", "spineopt_standard"],
-            ["model", "master", "model_start", Dict("type" => "date_time", "data" => "2000-01-01T00:00:00")],
-            ["model", "master", "model_end", Dict("type" => "date_time", "data" => "2000-01-01T02:00:00")],
-            ["model", "master", "duration_unit", "hour"],
-            ["model", "master", "model_type", "spineopt_other"],
-            ["model", "master", "max_gap", "0.05"],
-            ["model", "master", "max_iterations", "2"],
+            ["model", "instance", "max_gap", "0.05"],
+            ["model", "instance", "max_iterations", "2"],
             ["temporal_block", "hourly", "resolution", Dict("type" => "duration", "data" => "1h")],
             ["temporal_block", "two_hourly", "resolution", Dict("type" => "duration", "data" => "2h")],
             ["model", "instance", "db_mip_solver", "HiGHS.jl"],
@@ -767,57 +762,30 @@ function test_constraint_connections_invested_transition_mp()
         candidate_connections = 4
         object_parameter_values = [
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["model", "master", "model_type", "spineopt_benders_master"],
-            ["model", "instance", "model_type", "spineopt_standard"],
+            ["model", "instance", "model_type", "spineopt_benders"],
         ]
         relationships = [
-            ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
             ["connection__investment_temporal_block", ["connection_ab", "investments_hourly"]],
             ["connection__investment_stochastic_structure", ["connection_ab", "investments_deterministic"]],
-            ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        m, mp = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
-        var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
-        var_connections_decommissioned = m.ext[:spineopt].variables[:connections_decommissioned]
-        constraint = m.ext[:spineopt].constraints[:connections_invested_transition]
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        m_mp = master_problem_model(m)
+        var_connections_invested_available = m_mp.ext[:spineopt].variables[:connections_invested_available]
+        var_connections_invested = m_mp.ext[:spineopt].variables[:connections_invested]
+        var_connections_decommissioned = m_mp.ext[:spineopt].variables[:connections_decommissioned]
+        constraint = m_mp.ext[:spineopt].constraints[:connections_invested_transition]
         @test length(constraint) == 2
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
         s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s1, t1) in zip(scenarios, time_slices)
-            path = unique([s0, s1])
-            var_key1 = (connection(:connection_ab), s1, t1)
+        time_slices = time_slice(m_mp; temporal_block=temporal_block(:investments_hourly))
+        @testset for t1 in time_slices
+            path = [s0]
+            var_key1 = (connection(:connection_ab), s0, t1)
             var_c_inv_av1 = var_connections_invested_available[var_key1...]
             var_c_inv_1 = var_connections_invested[var_key1...]
             var_c_decom_1 = var_connections_decommissioned[var_key1...]
             @testset for (c, t0, t1) in connection_investment_dynamic_time_indices(
-                m; connection=connection(:connection_ab), t_after=t1
-            )
-                var_c_inv_av0 = var_connections_invested_available[c, s0, t0]
-                con_key = (c, path, t0, t1)
-                expected_con = @build_constraint(var_c_inv_av1 - var_c_inv_1 + var_c_decom_1 == var_c_inv_av0)
-                observed_con = constraint_object(constraint[con_key...])
-                @test _is_constraint_equal(observed_con, expected_con)
-            end
-        end
-        var_connections_invested_available = mp.ext[:spineopt].variables[:connections_invested_available]
-        var_connections_invested = mp.ext[:spineopt].variables[:connections_invested]
-        var_connections_decommissioned = mp.ext[:spineopt].variables[:connections_decommissioned]
-        constraint = mp.ext[:spineopt].constraints[:connections_invested_transition]
-        @test length(constraint) == 2
-        scenarios = (stochastic_scenario(:parent),)
-        s0 = stochastic_scenario(:parent)
-        time_slices = time_slice(mp; temporal_block=temporal_block(:investments_hourly))
-        @testset for (s1, t1) in zip(scenarios, time_slices)
-            path = unique([s0, s1])
-            var_key1 = (connection(:connection_ab), s1, t1)
-            var_c_inv_av1 = var_connections_invested_available[var_key1...]
-            var_c_inv_1 = var_connections_invested[var_key1...]
-            var_c_decom_1 = var_connections_decommissioned[var_key1...]
-            @testset for (c, t0, t1) in connection_investment_dynamic_time_indices(
-                mp; connection=connection(:connection_ab), t_after=t1
+                m_mp; connection=connection(:connection_ab), t_after=t1
             )
                 var_c_inv_av0 = var_connections_invested_available[c, s0, t0]
                 con_key = (c, path, t0, t1)
@@ -896,69 +864,34 @@ function test_constraint_connection_lifetime_mp()
                 ["connection", "connection_ab", "candidate_connections", candidate_connections],
                 ["connection", "connection_ab", "connection_investment_lifetime", connection_investment_lifetime],
                 ["model", "instance", "model_end", model_end],
-                ["model", "master", "model_end", model_end],
-                ["model", "master", "model_type", "spineopt_benders_master"],
-                ["model", "instance", "model_type", "spineopt_standard"],
+                ["model", "instance", "model_type", "spineopt_benders"],
             ]
             relationships = [
-                ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
                 ["connection__investment_temporal_block", ["connection_ab", "investments_hourly"]],
-                ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
                 ["connection__investment_stochastic_structure", ["connection_ab", "investments_deterministic"]],
             ]
             SpineInterface.import_data(
                 url_in; relationships=relationships, object_parameter_values=object_parameter_values
             )
-            m, mp = run_spineopt(url_in; log_level=0, optimize=false)
-            var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
-            var_connections_invested = m.ext[:spineopt].variables[:connections_invested]
-            constraint = m.ext[:spineopt].constraints[:connection_lifetime]
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            m_mp = master_problem_model(m)
+            var_connections_invested_available = m_mp.ext[:spineopt].variables[:connections_invested_available]
+            var_connections_invested = m_mp.ext[:spineopt].variables[:connections_invested]
+            constraint = m_mp.ext[:spineopt].constraints[:connection_lifetime]
             @test length(constraint) == 5
             parent_end = stochastic_scenario_end(
                 stochastic_structure=stochastic_structure(:stochastic),
                 stochastic_scenario=stochastic_scenario(:parent),
             )
-            head_hours =
-                length(time_slice(m; temporal_block=temporal_block(:hourly))) - round(parent_end, Hour(1)).value
-            tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
-            scenarios = [
-                repeat([stochastic_scenario(:child)], head_hours)
-                repeat([stochastic_scenario(:parent)], tail_hours)
-            ]
-            time_slices = [
-                reverse(time_slice(m; temporal_block=temporal_block(:hourly)))
-                reverse(history_time_slice(m; temporal_block=temporal_block(:hourly)))
-            ][1:(head_hours + tail_hours)]
-            @testset for h in 1:length(constraint)
-                s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
-                s, t = s_set[1], t_set[1]
-                path = reverse(unique(s_set))
-                key = (connection(:connection_ab), path, t)
-                var_c_inv_av_key = (connection(:connection_ab), s, t)
-                var_c_inv_av = var_connections_invested_available[var_c_inv_av_key...]
-                vars_c_inv =
-                    [var_connections_invested[connection(:connection_ab), s, t] for (s, t) in zip(s_set, t_set)]
-                expected_con = @build_constraint(var_c_inv_av >= sum(vars_c_inv))
-                observed_con = constraint_object(constraint[key...])
-                @test _is_constraint_equal(observed_con, expected_con)
-            end
-            var_connections_invested_available = mp.ext[:spineopt].variables[:connections_invested_available]
-            var_connections_invested = mp.ext[:spineopt].variables[:connections_invested]
-            constraint = mp.ext[:spineopt].constraints[:connection_lifetime]
-            @test length(constraint) == 5
-            parent_end = stochastic_scenario_end(
-                stochastic_structure=stochastic_structure(:stochastic),
-                stochastic_scenario=stochastic_scenario(:parent),
-            )
-            head_hours = length(time_slice(mp; temporal_block=temporal_block(:investments_hourly))) - Hour(1).value
+            head_hours = length(time_slice(m_mp; temporal_block=temporal_block(:investments_hourly))) - Hour(1).value
             tail_hours = round(Minute(lifetime_minutes), Hour(1)).value
             scenarios = [
                 repeat([stochastic_scenario(:parent)], head_hours)
                 repeat([stochastic_scenario(:parent)], tail_hours)
             ]
             time_slices = [
-                reverse(time_slice(mp; temporal_block=temporal_block(:investments_hourly)))
-                reverse(history_time_slice(mp; temporal_block=temporal_block(:investments_hourly)))
+                reverse(time_slice(m_mp; temporal_block=temporal_block(:investments_hourly)))
+                reverse(history_time_slice(m_mp; temporal_block=temporal_block(:investments_hourly)))
             ][1:(head_hours + tail_hours)]
             @testset for h in 1:length(constraint)
                 s_set, t_set = scenarios[h:(h + tail_hours - 1)], time_slices[h:(h + tail_hours - 1)]
@@ -1010,37 +943,21 @@ function test_constraint_connections_invested_available_mp()
         candidate_connections = 7
         object_parameter_values = [
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
-            ["model", "master", "model_type", "spineopt_benders_master"],
-            ["model", "instance", "model_type", "spineopt_standard"],
+            ["model", "instance", "model_type", "spineopt_benders"],
         ]
         relationships = [
-            ["connection__investment_temporal_block", ["connection_ab", "hourly"]],
             ["connection__investment_temporal_block", ["connection_ab", "investments_hourly"]],
             ["connection__investment_stochastic_structure", ["connection_ab", "investments_deterministic"]],
-            ["connection__investment_stochastic_structure", ["connection_ab", "stochastic"]],
         ]
         SpineInterface.import_data(url_in; relationships=relationships, object_parameter_values=object_parameter_values)
-        m, mp = run_spineopt(url_in; log_level=0, optimize=false)
-        var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
-        constraint = m.ext[:spineopt].constraints[:connections_invested_available]
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        m_mp = master_problem_model(m)
+        var_connections_invested_available = m_mp.ext[:spineopt].variables[:connections_invested_available]
+        constraint = m_mp.ext[:spineopt].constraints[:connections_invested_available]
         @test length(constraint) == 2
-        scenarios = (stochastic_scenario(:parent), stochastic_scenario(:child))
-        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
-        @testset for (s, t) in zip(scenarios, time_slices)
-            key = (connection(:connection_ab), s, t)
-            var = var_connections_invested_available[key...]
-            expected_con = @build_constraint(var <= candidate_connections)
-            con = constraint[key...]
-            observed_con = constraint_object(con)
-            @test _is_constraint_equal(observed_con, expected_con)
-        end
-        var_connections_invested_available = mp.ext[:spineopt].variables[:connections_invested_available]
-        constraint = mp.ext[:spineopt].constraints[:connections_invested_available]
-        @test length(constraint) == 2
-        scenarios = (stochastic_scenario(:parent),)
-        time_slices = time_slice(mp; temporal_block=temporal_block(:investments_hourly))
-        @testset for (s, t) in zip(scenarios, time_slices)
-            key = (connection(:connection_ab), s, t)
+        time_slices = time_slice(m_mp; temporal_block=temporal_block(:investments_hourly))
+        @testset for t in time_slices
+            key = (connection(:connection_ab), stochastic_scenario(:parent), t)
             var = var_connections_invested_available[key...]
             expected_con = @build_constraint(var <= candidate_connections)
             con = constraint[key...]
@@ -1294,7 +1211,6 @@ function test_constraint_candidate_connection_lb()
         var_connection_intact_flow = m.ext[:spineopt].variables[:connection_intact_flow]
         var_connections_invested_available = m.ext[:spineopt].variables[:connections_invested_available]
         @test length(constraint) == 4
-        for k in keys(constraint) @show k end
         t1h1, t1h2 = time_slice(m; temporal_block=temporal_block(:hourly))
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         s_parent, s_child = stochastic_scenario(:parent), stochastic_scenario(:child)
