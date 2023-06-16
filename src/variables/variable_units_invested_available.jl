@@ -63,7 +63,7 @@ function add_variable_units_invested_available!(m::Model)
         int=units_invested_available_int,
         replacement_value=units_on_replacement_value,
         fix_value=fix_units_invested_available,
-        internal_fix_value=units_invested_available_bi,
+        internal_fix_value=internal_fix_units_invested_available,
         initial_value=initial_units_invested_available
     )
 end

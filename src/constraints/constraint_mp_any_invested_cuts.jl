@@ -40,7 +40,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
             + expr_sum(
                 (
                     + units_invested_available[u, s, t]
-                    - units_invested_available_bi(unit=u, stochastic_scenario=s, t=t)
+                    - internal_fix_units_invested_available(unit=u, stochastic_scenario=s, t=t)
                 )
                 * units_on_mv(unit=u, stochastic_scenario=s, t=t)
                 for (u, s, t) in units_invested_available_indices(m);
@@ -50,7 +50,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
             + expr_sum(
                 (
                     + connections_invested_available[c, s, t]
-                    - connections_invested_available_bi(connection=c, stochastic_scenario=s, t=t)
+                    - internal_fix_connections_invested_available(connection=c, stochastic_scenario=s, t=t)
                 )
                 * connections_invested_available_mv(connection=c, stochastic_scenario=s, t=t)
                 for (c, s, t) in connections_invested_available_indices(m);
@@ -60,7 +60,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
             + expr_sum(
                 (
                     + storages_invested_available[n, s, t]
-                    - storages_invested_available_bi(node=n, stochastic_scenario=s, t=t)
+                    - internal_fix_storages_invested_available(node=n, stochastic_scenario=s, t=t)
                 )
                 * storages_invested_available_mv(node=n, stochastic_scenario=s, t=t)
                 for (n, s, t) in storages_invested_available_indices(m);

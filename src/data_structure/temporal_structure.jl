@@ -38,7 +38,7 @@ struct TimeSliceSet
         sort!(solids)
         gap_bounds = (
             (last_, next_first)
-            for ((first_, last_), (next_first, next_last)) in zip(solids[1:(end - 1)], solids[2:end])
+            for ((first_, last_), (next_first, next_last)) in zip(solids[1 : end - 1], solids[2:end])
             if end_(last_) < start(next_first)
         )
         gaps = [TimeSlice(end_(last_), start(next_first)) for (last_, next_first) in gap_bounds]
@@ -87,37 +87,28 @@ function _model_duration_unit(instance::Object)
 end
 
 """
-    _generate_current_window!(m::Model; <keyword arguments>)
+    _rolling_window!(m::Model)
 
-Generate a `TimeSlice` that represents the 'current' optimisation window for given model.
-
-# Arguments
-
-- `rolling::Bool=true`: whether or not the current window will roll.
-    Otherwise it should cover the entire model horizon.
-
+The bounds of the first rolling optimisation window for given model.
 """
-function _generate_current_window!(m::Model; rolling=true)
+function _rolling_window!(m::Model)
     instance = m.ext[:spineopt].instance
     w_start = model_start(model=instance)
     m_end = model_end(model=instance)
-    last_w_start = w_start
-    if !rolling
-        i = 1
-        while true
-            rf = roll_forward(model=instance, i=i, _strict=false)
-            rf in (nothing, Minute(0)) && break
-            last_w_start + rf < m_end || break
-            last_w_start += rf
-            i += 1
-        end
-    end
     w_duration = @isdefined(window_duration) ? window_duration(model=instance, _strict=false) : nothing
     w_duration = w_duration !== nothing ? w_duration : roll_forward(model=instance, i=1, _strict=false)
-    w_end = w_duration === nothing ? m_end : min(last_w_start + w_duration, m_end)
-    m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
-        w_start, w_end; duration_unit=_model_duration_unit(instance)
-    )
+    w_end = w_duration === nothing ? m_end : min(w_start + w_duration, m_end)
+    w_start, w_end
+end
+
+"""
+    _full_window!(m::Model)
+
+The bounds of the full optimisation window for given model.
+"""
+function _full_window!(m::Model)
+    instance = m.ext[:spineopt].instance
+    model_start(model=instance), model_end(model=instance)
 end
 
 # Adjuster functions, in case blocks specify their own start and end
@@ -163,9 +154,7 @@ function _time_interval_blocks(instance::Object, window_start::DateTime, window_
             time_slice_end = time_slice_start + duration
             if time_slice_end > adjusted_end
                 time_slice_end = adjusted_end
-                # TODO: Try removing this to a once-off check as if true, this warning appears each time a timeslice is
-                # created
-                @warn("the last time slice of temporal block $block has been cut to fit within the optimisation window")
+                @info "the last time slice of temporal block $block has been cut to fit within the block"
             end
             push!(get!(blocks_by_time_interval, (time_slice_start, time_slice_end), Array{Object,1}()), block)
             time_slice_start = time_slice_end
@@ -220,10 +209,20 @@ function _generate_time_slice!(m::Model)
     window_start = start(window)
     window_end = end_(window)
     window_time_slices = _window_time_slices(instance, window_start, window_end)
+    temp_struct_end = end_(last(window_time_slices))
+    if temp_struct_end < window_end
+        blocks = model__temporal_block(model=instance)
+        padding_t = TimeSlice(temp_struct_end, window_end, blocks...; duration_unit=_model_duration_unit(instance))
+        push!(window_time_slices, padding_t)
+        @info string(
+            "an artificial time slice $padding_t has been added ",
+            "so that the temporal structure covers the optimisation window ",
+        )
+    end
     history_time_slices = Array{TimeSlice,1}()
-    required_history_duration = _required_history_duration(instance)
     window_duration = window_end - window_start
-    history_window_count = div(Minute(required_history_duration), Minute(window_duration))
+    required_history_duration = _required_history_duration(instance)
+    history_window_count = div(Minute(required_history_duration), Minute(window_duration), RoundUp)
     i = findlast(t -> end_(t) <= window_end, window_time_slices)
     history_window_time_slices = window_time_slices[1:i] .- window_duration
     for k in 1:history_window_count
@@ -231,8 +230,7 @@ function _generate_time_slice!(m::Model)
         history_window_time_slices .-= window_duration
     end
     history_start = window_start - required_history_duration
-    filter!(t -> end_(t) > history_start, history_window_time_slices)
-    prepend!(history_time_slices, history_window_time_slices)
+    filter!(t -> end_(t) > history_start, history_time_slices)
     m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices)
     m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(history_time_slices)
     m.ext[:spineopt].temporal_structure[:t_history_t] = Dict(
@@ -380,12 +378,13 @@ end
 """
     generate_temporal_structure!(m::Model)
 
-Preprocess the temporal structure for SpineOpt from the provided input data.
-
-Runs a number of functions processing different aspects of the temporal structure in sequence.
+Creates the temporal structure for SpineOpt from the input database.
 """
-function generate_temporal_structure!(m::Model; rolling=true)
-    _generate_current_window!(m; rolling=rolling)
+function generate_temporal_structure!(m::Model; rolling_window=true)
+    w_start, w_end = rolling_window ? _rolling_window!(m) : _full_window!(m)
+    m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
+        w_start, w_end; duration_unit=_model_duration_unit(m.ext[:spineopt].instance)
+    )
     _generate_time_slice!(m)
     _generate_output_time_slices!(m)
     _generate_time_slice_relationships!(m)
@@ -393,7 +392,7 @@ function generate_temporal_structure!(m::Model; rolling=true)
 end
 
 """
-    roll_temporal_structure!(m::Model)
+    roll_temporal_structure!(m::Model, window_number)
 
 Move the entire temporal structure ahead according to the `roll_forward` parameter.
 """
@@ -403,7 +402,8 @@ function roll_temporal_structure!(m::Model, i::Integer; rev=false)
 end
 function roll_temporal_structure!(m::Model, rng::UnitRange{T}; rev=false) where T<:Integer
     rfs = [roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false) for i in rng]
-    rf = any(isnothing(rf) for rf in rfs) ? nothing : sum(rfs; init=Minute(0))
+    filter!(!isnothing, rfs)
+    rf = sum(rfs; init=Minute(0))
     _do_roll_temporal_structure!(m, rf, rev)
 end
 
