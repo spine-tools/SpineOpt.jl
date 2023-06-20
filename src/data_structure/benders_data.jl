@@ -72,7 +72,7 @@ end
 
 function _save_sp_marginal_values!(m, var_name, benders_param_name, obj_cls)
     win_start = start(current_window(m))
-    @show window_values = Dict(k => v for (k, v) in m.ext[:spineopt].values[var_name] if start(k.t) >= win_start)
+    window_values = Dict(k => v for (k, v) in m.ext[:spineopt].values[var_name] if start(k.t) >= win_start)
     pval_by_ent = _pval_by_entity(window_values)
     pvals = Dict(only(ent) => Dict(benders_param_name => pval) for (ent, pval) in pval_by_ent)
     add_object_parameter_values!(obj_cls, pvals; merge_values=true)
