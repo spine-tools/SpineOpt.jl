@@ -305,7 +305,9 @@ function _generate_time_slice_relationships!(m::Model)
     t_overlaps_t_mapping = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
     t_overlaps_t_excl_mapping = Dict(t => setdiff(overlapping_t, t) for (t, overlapping_t) in t_overlaps_t_mapping)
     t_before_t_tuples = unique(
-        (t_before, t_after) for (t_before, following) in t_follows_t_mapping for t_after in following
+        (t_before, t_after)
+        for (t_before, following) in t_follows_t_mapping for t_after in following
+        if end_(t_before) <= start(t_after)
     )
     t_in_t_tuples = unique(
         (t_short, t_long)
