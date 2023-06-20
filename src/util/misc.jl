@@ -182,4 +182,4 @@ struct Constant
     value
 end
 
-Base.getindex(c::Constant, x...) = Call(c.value)
+Base.getindex(c::Constant, _x) = Call(c.value)

@@ -17,9 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-# TODO: fix_units_on, fix_unit_flow
-
-@testset "algorithm strucutre" begin
+function _test_algorithm_strucutre_setup()
     url_in = "sqlite://"
     test_data = Dict(
         :objects => [
@@ -42,7 +40,7 @@
             ["connection", "connection_group_abbc"],
             ["stochastic_scenario", "parent"],
             ["stochastic_scenario", "child"],
-            #FIXME: maybe nicer way rahter than outputs?
+            # FIXME: maybe nicer way rather than outputs?
             ["output","units_invested"],
             ["output","connections_invested"],
             ["output","storages_invested"],
@@ -127,8 +125,13 @@
 
         ],
     )
+    _load_test_data(url_in, test_data)
+    url_in
+end
+
+function _test_test_mga_algorithm()
     @testset "test mga algorithm" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_algorithm_strucutre_setup()
         candidate_units = 1
         candidate_connections = 1
         candidate_storages = 1
@@ -164,7 +167,7 @@
             ["model", "instance", "model_type", "spineopt_mga"],
             ["model", "instance", "max_mga_slack", mga_slack],
             ["model", "instance", "max_mga_iterations", 2],
-            # ["node", "node_a", "demand",1],
+            # ["node", "node_a", "demand", 1],
             ["node", "node_b", "demand", 1],
             ["node", "node_c", "demand", 1],
         ]
@@ -284,8 +287,9 @@
                 var_u_inv_2 = var_connections_invested[key2...]
                 t0 = start(SpineOpt.current_window(m))
                 tail = (stochastic_scenario=s, mga_iteration=mga_current_iteration)
-                prev_mga_results_1 = mga_results[:connections_invested][(connection=connection(:connection_ab), tail...)][t0][start(t)]
-                prev_mga_results_2 = mga_results[:connections_invested][(connection=connection(:connection_bc), tail...)][t0][start(t)]
+                conns_invested = mga_results[:connections_invested]
+                prev_mga_results_1 = conns_invested[(connection=connection(:connection_ab), tail...)][t0][start(t)]
+                prev_mga_results_2 = conns_invested[(connection=connection(:connection_bc), tail...)][t0][start(t)]
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key]
                     <= -(var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
@@ -346,8 +350,9 @@
                 var_u_inv_2 = var_connections_invested[key2...]
                 t0 = start(SpineOpt.current_window(m))
                 tail = (stochastic_scenario=s, mga_iteration=mga_current_iteration)
-                prev_mga_results_1 = mga_results[:connections_invested][(connection=connection(:connection_ab), tail...)][t0][start(t)]
-                prev_mga_results_2 = mga_results[:connections_invested][(connection=connection(:connection_bc), tail...)][t0][start(t)]
+                conns_invested = mga_results[:connections_invested]
+                prev_mga_results_1 = conns_invested[(connection=connection(:connection_ab), tail...)][t0][start(t)]
+                prev_mga_results_2 = conns_invested[(connection=connection(:connection_bc), tail...)][t0][start(t)]
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key] >= (var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
                 )
@@ -405,8 +410,9 @@
                 var_u_inv_2 = var_connections_invested[key2...]
                 t0 = start(SpineOpt.current_window(m))
                 tail = (stochastic_scenario=s, mga_iteration=mga_current_iteration)
-                prev_mga_results_1 = mga_results[:connections_invested][(connection=connection(:connection_ab), tail...)][t0][start(t)]
-                prev_mga_results_2 = mga_results[:connections_invested][(connection=connection(:connection_bc), tail...)][t0][start(t)]
+                conns_invested = mga_results[:connections_invested]
+                prev_mga_results_1 = conns_invested[(connection=connection(:connection_ab), tail...)][t0][start(t)]
+                prev_mga_results_2 = conns_invested[(connection=connection(:connection_bc), tail...)][t0][start(t)]
                 expected_con = @build_constraint(
                     var_mga_aux_diff[key] >= -(var_u_inv_1 - prev_mga_results_1 + var_u_inv_2 - prev_mga_results_2)
                 )
@@ -440,7 +446,9 @@
             time_slices = time_slice(m; temporal_block=temporal_block(:two_hourly))
             mga_first_iteration = SpineOpt.mga_iteration()[1]
             mga_current_iteration = SpineOpt.mga_iteration()[end - 1]
-            first_obj_result = m.ext[:spineopt].outputs[:total_costs][(model=model(:instance), mga_iteration=mga_first_iteration)]
+            first_obj_result = m.ext[:spineopt].outputs[:total_costs][
+                (model=model(:instance), mga_iteration=mga_first_iteration)
+            ]
             @testset for (s, t) in zip(scenarios, time_slices)
                 key1 = (unit(:unit_ab), s, t)
                 key2 = (unit(:unit_ab), node(:node_b), direction(:to_node), s, t)
@@ -476,8 +484,11 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+end
+
+function _test_test_mga_algorithm_2()
     @testset "test mga algorithm 2" begin
-        _load_test_data(url_in, test_data)
+        url_in = _test_algorithm_strucutre_setup()
         candidate_units = 1
         candidate_connections = 1
         candidate_storages = 1
@@ -485,10 +496,10 @@
         mga_slack = 0.05
         points = [0, -0.5, -1, 1, 0.5, 0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:length(points)]]
-        mga_weights_1 = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
+        mga_weights_1 = Dict("type" => "array", "value_type" => "float", "data" => points)
         points = [0, -0.5, -1, 1, 0.5, 0]
         deltas = [points[1]; [points[i] - points[i - 1] for i in 2:length(points)]]
-        mga_weights_2 = Dict("type" => "array", "value_type" => "float", "data" => PyVector(points))
+        mga_weights_2 = Dict("type" => "array", "value_type" => "float", "data" => points)
         object_parameter_values = [
             ["unit", "unit_ab", "candidate_units", candidate_units],
             ["unit", "unit_bc", "candidate_units", candidate_units],
@@ -497,18 +508,18 @@
             ["unit", "unit_group_abbc", "units_invested_mga", true],
             ["unit", "unit_group_abbc", "units_invested__mga_weight", mga_weights_1],
             ["unit", "unit_ab", "unit_investment_cost", 1],
-            ["unit", "unit_ab", "unit_investment_lifetime", Dict("type" => "duration", "data" => "2h")],
-            ["unit", "unit_bc", "unit_investment_lifetime", Dict("type" => "duration", "data" => "2h")],
+            ["unit", "unit_ab", "unit_investment_lifetime", unparse_db_value(Hour(2))],
+            ["unit", "unit_bc", "unit_investment_lifetime", unparse_db_value(Hour(2))],
             ["connection", "connection_ab", "candidate_connections", candidate_connections],
             ["connection", "connection_bc", "candidate_connections", candidate_connections],
-            ["connection", "connection_ab", "connection_investment_lifetime", Dict("type" => "duration", "data" => "2h")],
-            ["connection", "connection_bc", "connection_investment_lifetime", Dict("type" => "duration", "data" => "2h")],
+            ["connection", "connection_ab", "connection_investment_lifetime", unparse_db_value(Hour(2))],
+            ["connection", "connection_bc", "connection_investment_lifetime", unparse_db_value(Hour(2))],
             ["connection", "connection_group_abbc", "connections_invested_mga", true],
             ["connection", "connection_group_abbc", "connections_invested_mga_weight",mga_weights_2],
             ["node", "node_b", "candidate_storages", candidate_storages],
             ["node", "node_c", "candidate_storages", candidate_storages],
-            ["node", "node_b", "storage_investment_lifetime", Dict("type" => "duration", "data" => "2h")],
-            ["node", "node_c", "storage_investment_lifetime", Dict("type" => "duration", "data" => "2h")],
+            ["node", "node_b", "storage_investment_lifetime", unparse_db_value(Hour(2))],
+            ["node", "node_c", "storage_investment_lifetime", unparse_db_value(Hour(2))],
             ["node", "node_a", "balance_type", :balance_type_none],
             ["node", "node_b", "has_state", true],
             ["node", "node_c", "has_state", true],
@@ -588,4 +599,9 @@
             end
         end
     end
+end
+
+@testset "algorithm strucutre" begin
+    _test_test_mga_algorithm()
+    _test_test_mga_algorithm_2()
 end

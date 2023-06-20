@@ -273,14 +273,16 @@ function rerun_spineopt(
     alternative_objective=m -> nothing,
 )
     @log log_level 0 "Running SpineOpt..."
-    m_mp = create_model(:spineopt_benders_master, mip_solver, lp_solver, use_direct_model)
-    is_subproblem = m_mp !== nothing
-    m = create_model(:spineopt_standard, mip_solver, lp_solver, use_direct_model, is_subproblem)
-    m_mga = create_model(:spineopt_mga, mip_solver, lp_solver, use_direct_model, is_subproblem)
-    rerun_spineopt!(
+    m = create_model(mip_solver, lp_solver, use_direct_model)
+    rerun_spineopt! = Dict(
+        :spineopt_standard => rerun_spineopt_standard!,
+        :spineopt_benders => rerun_spineopt_benders!,
+        :spineopt_mga => rerun_spineopt_mga!
+    )[model_type(model=m.ext[:spineopt].instance)]
+    # NOTE: invokelatest ensures that solver modules are available to use by JuMP
+    Base.invokelatest(        
+        rerun_spineopt!,
         m,
-        m_mp,
-        m_mga,
         url_out;
         add_user_variables=add_user_variables,
         add_constraints=add_constraints,
@@ -295,29 +297,20 @@ function rerun_spineopt(
     )
 end
 
-function rerun_spineopt!(::Nothing, m_mp, ::Nothing, url_out; kwargs...)
-    error("can't run a model of type `spineopt_benders_master` without another of type `spineopt_standard`")
-end
-function rerun_spineopt!(::Nothing, m_mp, m_mga; kwargs...)
-    error("can't run models of type `spineopt_benders_master` and `spineopt_mga` together")
-end
-function rerun_spineopt!(m, ::Nothing, m_mga; kwargs...)
-    error("can't run models of type `spineopt_standard` and `spineopt_mga` together")
-end
-function rerun_spineopt!(::Nothing, ::Nothing, ::Nothing; kwargs...)
-    error("can't run without at least one model of type `spineopt_standard` or `spineopt_mga`")
-end
-
 """
 A JuMP `Model` for SpineOpt.
 """
-function create_model(model_type, mip_solver, lp_solver, use_direct_model=false, is_subproblem=false)
-    isempty(model(model_type=model_type)) && return nothing
-    instance = first(model(model_type=model_type))
+function create_model(mip_solver, lp_solver, use_direct_model=false)
+    instance = first(model())
     mip_solver = _mip_solver(instance, mip_solver)
     lp_solver = _lp_solver(instance, lp_solver)
     m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
-    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, is_subproblem)
+    m_mp = if model_type(model=instance) === :spineopt_benders
+        m_mp = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
+        m_mp.ext[:spineopt] = SpineOptExt(instance, lp_solver)
+        m_mp
+    end
+    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp)
     m
 end
 
@@ -397,9 +390,10 @@ _do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model
 struct SpineOptExt
     instance::Object
     lp_solver
-    is_subproblem::Bool
+    master_problem_model::Union{Model,Nothing}
     intermediate_results_folder::String
     report_name_keys_by_url::Dict
+    reports_by_output::Dict
     variables::Dict{Symbol,Dict}
     variables_definition::Dict{Symbol,Dict}
     values::Dict{Symbol,Dict}
@@ -410,10 +404,10 @@ struct SpineOptExt
     stochastic_structure::Dict
     dual_solves::Array{Any,1}
     dual_solves_lock::ReentrantLock
-    objective_lower_bound::Float64
-    objective_upper_bound::Float64
-    benders_gap::Float64
-    function SpineOptExt(instance, lp_solver=nothing, is_subproblem=false)
+    objective_lower_bound::Base.RefValue{Float64}
+    objective_upper_bound::Base.RefValue{Float64}
+    benders_gaps::Vector{Float64}
+    function SpineOptExt(instance, lp_solver=nothing, master_problem_model=nothing)
         intermediate_results_folder = tempname(; cleanup=false)
         mkpath(intermediate_results_folder)
         report_name_keys_by_url = Dict()
@@ -425,12 +419,17 @@ struct SpineOptExt
             output_url = output_db_url(report=rpt, _strict=false)
             push!(get!(report_name_keys_by_url, output_url, []), (rpt.name, keys))
         end
+        reports_by_output = Dict()
+        for rpt in model__report(model=instance), out in report__output(report=rpt)
+            push!(get!(reports_by_output, out, []), rpt)
+        end
         new(
             instance,
             lp_solver,
-            is_subproblem,
+            master_problem_model,
             intermediate_results_folder,
             report_name_keys_by_url,
+            reports_by_output,
             Dict{Symbol,Dict}(),
             Dict{Symbol,Dict}(),
             Dict{Symbol,Dict}(),
@@ -441,11 +440,13 @@ struct SpineOptExt
             Dict(),
             [],
             ReentrantLock(),
-            0.0,
-            0.0,
-            0.0
+            Ref(0.0),
+            Ref(0.0),
+            [],
         )
     end
 end
 
 JuMP.copy_extension_data(data::SpineOptExt, new_model::AbstractModel, model::AbstractModel) = nothing
+
+master_problem_model(m) = m.ext[:spineopt].master_problem_model

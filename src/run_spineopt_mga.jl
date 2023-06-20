@@ -17,32 +17,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function rerun_spineopt!(
-    ::Nothing,
-    ::Nothing,
-    m_mga::Model,
+function rerun_spineopt_mga!(
+    m::Model,
     url_out::Union{String,Nothing};
-    add_user_variables=m_mga -> nothing,
-    add_constraints=m_mga -> nothing,
-    update_constraints=m_mga -> nothing,
+    add_user_variables=m -> nothing,
+    add_constraints=m -> nothing,
+    update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
     update_names=false,
     alternative="",
-    alternative_objective=m_mga -> nothing,
+    alternative_objective=m -> nothing,
     write_as_roll=0,
     resume_file_path=nothing
 )
     outputs = Dict()
     mga_iterations = 0
-    max_mga_iteration = max_mga_iterations(model=m_mga.ext[:spineopt].instance)
-    name_mga_it = :mga_iteration
-    mga_iteration = SpineOpt.ObjectClass(name_mga_it, [])
+    max_mga_iteration = max_mga_iterations(model=m.ext[:spineopt].instance)
+    mga_iteration = ObjectClass(:mga_iteration, [])
     @eval mga_iteration = $mga_iteration
-    @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m_mga)
-    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m_mga)
+    @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
+    @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
     init_model!(
-        m_mga;
+        m;
         add_user_variables=add_user_variables,
         add_constraints=add_constraints,
         log_level=log_level,
@@ -50,21 +47,21 @@ function rerun_spineopt!(
     )
     k = 1
     while optimize
-        @log log_level 1 "Window $k: $(current_window(m_mga))"
-        optimize_model!(m_mga; log_level=log_level, iterations=mga_iterations) || break
-        @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m_mga)
-        if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m_mga)
+        @log log_level 1 "Window $k: $(current_window(m))"
+        optimize_model!(m; log_level=log_level, iterations=mga_iterations) || break
+        @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m)
+        if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
             @timelog log_level 2 " ... Rolling complete\n" break
         end
-        update_model!(m_mga; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
+        update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
         k += 1
     end
-    name_mga_obj = :objective_value_mga
-    model.parameter_values[m_mga.ext[:spineopt].instance][name_mga_obj] = parameter_value(objective_value(m_mga))
-    @eval $(name_mga_obj) = $(Parameter(name_mga_obj, [model]))
+    objective_value_mga = :objective_value_mga
+    model.parameter_values[m.ext[:spineopt].instance][objective_value_mga] = parameter_value(objective_value(m))
+    @eval $(objective_value_mga) = $(Parameter(objective_value_mga, [model]))
     mga_iterations += 1
-    add_mga_objective_constraint!(m_mga)
-    set_mga_objective!(m_mga)
+    add_mga_objective_constraint!(m)
+    set_mga_objective!(m)
     # TODO: max_mga_iteration can be different now
     if isnothing(max_mga_iteration)
         u_max = if !isempty(indices(units_invested_mga_weight))
@@ -88,9 +85,9 @@ function rerun_spineopt!(
     end
     while mga_iterations <= max_mga_iteration
         # TODO: set_objective_mga_iteration is different now
-        set_objective_mga_iteration!(m_mga; iteration=mga_iteration()[end], iterations_num=mga_iterations)
-        optimize_model!(m_mga; log_level=log_level, iterations=mga_iterations)  || break
-        save_mga_objective_values!(m_mga)
+        set_objective_mga_iteration!(m; iteration=mga_iteration()[end], iterations_num=mga_iterations)
+        optimize_model!(m; log_level=log_level, iterations=mga_iterations)  || break
+        save_mga_objective_values!(m)
         # TODO: needs to clean outputs?
         if (
             isempty(indices(connections_invested_big_m_mga))
@@ -101,17 +98,17 @@ function rerun_spineopt!(
             for cons in
                 [:mga_objective_ub,
                 :mga_diff_ub1,]
-                for k in keys(m_mga.ext[:spineopt].constraints[cons])
-                    try m_mga.ext[:spineopt].constraints[cons][k]
-                        delete(m_mga,m_mga.ext[:spineopt].constraints[cons][k])
+                for k in keys(m.ext[:spineopt].constraints[cons])
+                    try m.ext[:spineopt].constraints[cons][k]
+                        delete(m, m.ext[:spineopt].constraints[cons][k])
                     catch
                     end
                 end
             end
             for vars in  [:mga_aux_diff,]
-                for k in keys(m_mga.ext[:spineopt].variables[vars])
-                    try m_mga.ext[:spineopt].constraints[cons][k]
-                        delete(m_mga,m_mga.ext[:spineopt].variables[vars][k])
+                for k in keys(m.ext[:spineopt].variables[vars])
+                    try m.ext[:spineopt].constraints[cons][k]
+                        delete(m, m.ext[:spineopt].variables[vars][k])
                     catch
                     end
                 end
@@ -120,6 +117,6 @@ function rerun_spineopt!(
         # TODO: needs to clean constraint (or simply clean within function)
         mga_iterations += 1
     end
-    write_report(m_mga, url_out; alternative=alternative, log_level=log_level)
-    m_mga
+    write_report(m, url_out; alternative=alternative, log_level=log_level)
+    m
 end

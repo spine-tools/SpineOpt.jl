@@ -367,6 +367,8 @@ This constraint can be extended to the use of nonspinning reserves. See [also](@
 
 #### Ramping and reserve constraints
 
+The current documentation on ramping and reserves is presented in a way that is aligned with the SpineOpt modeling logic and data structure, which may sometimes seem counterintuitive for users who are not familiar with this logic and the data structure. For example, in the current documentation the upward and downward reserves appear in the same equation; however, they will not be activated simultaneously given the modeling logic and data structure of SpineOpt. We are currently improving the formulation to make it more computationally efficient and the documentation clearer. We appreciate your patience as we strive to provide clearer and more helpful information.
+
 To include ramping and reserve constraints, it is a pre requisite that [minimum operating points](@ref constraint_minimum_operating_point) and [maximum capacity constraints](@ref constraint_unit_flow_capacity) are enforced as described.
 
 For dispatchable units, additional ramping constraints can be introduced. For setting up ramping characteristics of units see [Ramping and Reserves](@ref).
@@ -405,11 +407,11 @@ The maximum online ramp up ability of a unit can be constraint by the [ramp\_up\
 \begin{aligned}
 & + \sum_{\substack{(u,n,d,s,t) \in ramp\_up\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{ramp\_up\_unit\_flow}(u,n,d,s,t)  \\
 & <= \\
-& + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}} \\
-& \bigg[ (v_{units\_on}(u,s,t')
- - v_{units\_started\_up}(u,s,t')) \cdot p_{ramp\_up\_limit}(u,ng,d,s,t) \\
-& + v_{units\_started\_up}(u,s,t') \bigg] \\
-& \cdot \min(\Delta t',\Delta t) \\
+& + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}}
+ (v_{units\_on}(u,s,t')
+ - v_{units\_started\_up}(u,s,t')) \\
+& \min(\Delta t',\Delta t) \\
+& \cdot p_{ramp\_up\_limit}(u,ng,d,s,t) \\
 & \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
 & \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
 & \forall (u,ng,d) \in ind(p_{ramp\_up\_limit})\\
@@ -490,7 +492,7 @@ The nonspinning ramp flows of a units [nonspin\_ramp\_up\_unit\_flow](@ref) are 
 \begin{aligned}
 & + \sum_{\substack{(u,n,d,s,t) \in nonspin\_ramp\_up\_unit\_flow\_indices: \\ (u,n,d)  \in (u,ng,d)}} v_{nonspin\_ramp\_up\_unit\_flow}(u,n,d,s,t)  \\
 & <= \\
-& + \sum_{\substack{(u,n,s,t) \in nonspin\_units\_started\_up\_indices: \\ (u,n)  \in (u,ng)}} v_{nonspin\_units\_started\_up}(u,n,s,t)  \\
+& + \sum_{\substack{(u,n,s,t) \in nonspin\_units\_started\_up\_indices: \\ (u,n)  \in (u,ng}} v_{nonspin\_units\_started\_up}(u,n,s,t)  \\
 & \cdot p_{max\_res\_startup\_ramp}(u,ng,d,s,t) \\
 & \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
 & \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
@@ -509,9 +511,9 @@ it is also possible to impose an upper bound on the online ramp down ability of 
 & + \sum_{\substack{(u,n,d,s,t) \in ramp\_down\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{ramp\_down\_unit\_flow}(u,n,d,s,t)  \\
 & <= \\
 & + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}}
- \left[ (v_{units\_on}(u,s,t') - v_{units\_started\_up}(u,s,t')) 
-& \cdot p_{ramp\_down\_limit}(u,ng,d,s,t) 
-& + v_{units\_shut\_down}(u,s,t') \right] \\
+ (v_{units\_on}(u,s,t')
+ - v_{units\_started\_up}(u,s,t')) \\
+& \cdot p_{ramp\_down\_limit}(u,ng,d,s,t) \\
 & \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
 & \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
 & \forall (u,ng,d) \in ind(p_{ramp\_down\_limit})\\
@@ -565,6 +567,7 @@ v_{units\_started\_up}(u,s,t') \\
 & u \in nonspin\_units\_started\_up\_indices
 \end{aligned}
 ```
+
 #### [Lower bound on the nonspinning downward reserve provision](@id constraint_min_nonspin_ramp_down)
 
 A lower bound on the nonspinning reserve provision of a unit can be imposed by defining the [min\_res\_shutdown\_ramp](@ref) parameter, which leads to the creation of the following constraint in the model:
@@ -1055,18 +1058,10 @@ The power transfer distribution factors are a property of the network reactances
 ## Investments
 ### Investments in units
 #### [Economic lifetime of a unit](@id constraint_unit_lifetime)
-Enforces the minimum duration of a `unit`'s investment decision. Once a `unit` has been invested-in, it must remain invested-in for `unit_investment_lifetime`.
-
-```math
-\begin{aligned}
-& v_{units\_invested\_available}(u,s,t) \\
-& >= \sum_{\substack{(u,s,t') \in units\_invested\_available\_indices: \\ t' >=t-p_{unit\_investment\_lifetime}(u,s,t), \\ t' <= t}}
-v_{units\_invested}(u,s,t') \\
-& \forall (u,s,t) \in unit\_investment\_lifetime\_indices\\
-\end{aligned}
-```
+(Comment 2023-05-03: Currently under development)
 #### Technical lifetime of a unit
 (Comment 2021-04-29: Currently under development)
+
 ### [Available Investment Units](@id constraint_units_invested_available)
 The number of available invested-in units at any point in time is less than the number of investment candidate units.
 
@@ -1199,18 +1194,10 @@ For candidate connections with PTDF-based poweflow, together with [constraint\_c
 ```
 
 #### [Economic lifetime of a connection](@id constraint_connection_lifetime)
-Enforces the minimum duration of a `connection`'s investment decision. Once a `connection` has been invested-in, it must remain invested-in for `connection_investment_lifetime`.
-
-```math
-\begin{aligned}
-& v_{connections\_invested\_available}(c,s,t) \\
-& >= \sum_{\substack{(c,s,t') \in connections\_invested\_available\_indices: \\ t' >=t-p_{connection\_investment\_lifetime}(c,s,t), \\ t' <= t}}
-v_{connections\_invested}(c,s,t') \\
-& \forall (c,s,t) \in connection\_investment\_lifetime\_indices\\
-\end{aligned}
-```
+(Comment 2023-05-12: Currently under development)
 #### Technical lifetime of a connection
 (Comment 2021-04-29: Currently under development)
+
 ### Investments in storages
 Note: can we actually invest in nodes that are not storages? (e.g. new location)
 #### [Available invested storages](@id constraint_storages_invested_available)
@@ -1239,16 +1226,8 @@ The number of available invested-in storages at node n at any point in time is l
 \end{aligned}
 ```
 #### [Economic lifetime of a storage](@id constraint_storage_lifetime)
-Enforces the minimum duration of a `storage` investment decision at [node](@ref) n. Once a `storage` has been invested-in, it must remain invested-in for `storage_investment_lifetime`.
+(Comment 2023-05-12: Currently under development)
 
-```math
-\begin{aligned}
-& v_{storages\_invested\_available}(n,s,t) \\
-& >= \sum_{\substack{(n,s,t') \in storages\_invested\_available\_indices: \\ t' >=t-p_{storage\_investment\_lifetime}(n,s,t), \\ t' <= t}}
-v_{storages\_invested}(n,s,t') \\
-& \forall (n,s,t) \in storage\_investment\_lifetime\_indices\\
-\end{aligned}
-```
 #### Technical lifetime of a storage
 (Comment 2021-04-29: Currently under development)
 ### Capacity transfer
