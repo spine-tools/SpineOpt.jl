@@ -33,17 +33,15 @@ struct TimeSliceSet
                 push!(get!(block_time_slices, block, []), t)
             end
         end
-        # Find eventual gaps in between temporal blocks
-        solids = [(first(time_slices), last(time_slices)) for time_slices in values(block_time_slices)]
-        sort!(solids)
+        # Find eventual gaps in between time slices
         gap_bounds = (
-            (last_, next_first)
-            for ((first_, last_), (next_first, next_last)) in zip(solids[1 : end - 1], solids[2:end])
-            if end_(last_) < start(next_first)
+            (t1, t2)
+            for (t1, t2) in zip(time_slices[1 : end - 1], time_slices[2:end])
+            if end_(t1) < start(t2)
         )
-        gaps = [TimeSlice(end_(last_), start(next_first)) for (last_, next_first) in gap_bounds]
-        # NOTE: By convention, the last time slice in the preceding block becomes the 'bridge'
-        bridges = [last_ for (last_, next_first) in gap_bounds]
+        gaps = [TimeSlice(end_(t1), start(t2)) for (t1, t2) in gap_bounds]
+        # NOTE: By convention, the first time slice in the next block becomes the 'bridge'
+        bridges = [t2 for (t1, t2) in gap_bounds]
         gap_bridger = GapBridger(gaps, bridges)
         new(time_slices, block_time_slices, gap_bridger)
     end
@@ -87,18 +85,20 @@ function _model_duration_unit(instance::Object)
 end
 
 """
-    _rolling_window!(m::Model)
+    _generate_current_window!(m::Model)
 
-The bounds of the first rolling optimisation window for given model.
+Generate the current window TimeSlice for given model.
 """
-function _rolling_window!(m::Model)
+function _generate_current_window!(m::Model)
     instance = m.ext[:spineopt].instance
     w_start = model_start(model=instance)
     m_end = model_end(model=instance)
     w_duration = @isdefined(window_duration) ? window_duration(model=instance, _strict=false) : nothing
     w_duration = w_duration !== nothing ? w_duration : roll_forward(model=instance, i=1, _strict=false)
     w_end = w_duration === nothing ? m_end : min(w_start + w_duration, m_end)
-    w_start, w_end
+    m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
+        w_start, w_end; duration_unit=_model_duration_unit(m.ext[:spineopt].instance)
+    )
 end
 
 """
@@ -209,6 +209,11 @@ function _generate_time_slice!(m::Model)
     window_start = start(window)
     window_end = end_(window)
     window_time_slices = _window_time_slices(instance, window_start, window_end)
+    _do_generate_time_slice!(m, window_start, window_end, window_time_slices)
+end
+
+function _do_generate_time_slice!(m, window_start, window_end, window_time_slices)
+    instance = m.ext[:spineopt].instance
     temp_struct_end = end_(last(window_time_slices))
     if temp_struct_end < window_end
         blocks = model__temporal_block(model=instance)
@@ -300,8 +305,7 @@ function _generate_time_slice_relationships!(m::Model)
     t_overlaps_t_mapping = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
     t_overlaps_t_excl_mapping = Dict(t => setdiff(overlapping_t, t) for (t, overlapping_t) in t_overlaps_t_mapping)
     t_before_t_tuples = unique(
-        (t_before, t_after)
-        for (t_before, following) in t_follows_t_mapping for t_after in following if before(t_before, t_after)
+        (t_before, t_after) for (t_before, following) in t_follows_t_mapping for t_after in following
     )
     t_in_t_tuples = unique(
         (t_short, t_long)
@@ -378,17 +382,45 @@ end
 """
     generate_temporal_structure!(m::Model)
 
-Creates the temporal structure for SpineOpt from the input database.
+Create the temporal structure for SpineOpt from the input database.
 """
-function generate_temporal_structure!(m::Model; rolling_window=true)
-    w_start, w_end = rolling_window ? _rolling_window!(m) : _full_window!(m)
-    m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
-        w_start, w_end; duration_unit=_model_duration_unit(m.ext[:spineopt].instance)
-    )
+function generate_temporal_structure!(m::Model)
+    _generate_current_window!(m)
     _generate_time_slice!(m)
     _generate_output_time_slices!(m)
     _generate_time_slice_relationships!(m)
     _generate_representative_time_slice!(m)
+end
+
+"""
+    generate_master_temporal_structure!(m::Model, m_mp::Model)
+
+Create the master problem temporal structure for SpineOpt benders.
+Roll the subproblem to the last window and return the number of windows rolled.
+"""
+function generate_master_temporal_structure!(m::Model, m_mp::Model)
+    mp_time_slices = TimeSlice[]
+    k = 1
+    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+    while true
+        append!(
+            mp_time_slices,
+            (
+                TimeSlice(start(t), end_(t), blocks(t)...; duration_unit=dur_unit)
+                for t in time_slice(m)
+                if end_(t) <= end_(current_window(m))
+            )
+        )
+        roll_temporal_structure!(m, k) || break
+        k += 1
+    end
+    unique!(sort!(mp_time_slices))
+    mp_start, mp_end = start(first(mp_time_slices)), end_(last(mp_time_slices))
+    m_mp.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(mp_start, mp_end, duration_unit=dur_unit)
+    _do_generate_time_slice!(m_mp, mp_start, mp_end, mp_time_slices)
+    _generate_output_time_slices!(m_mp)
+    _generate_time_slice_relationships!(m_mp)
+    k - 1
 end
 
 """
@@ -432,12 +464,15 @@ function to_time_slice(m::Model; t::TimeSlice)
         for time_slices in values(t_set.block_time_slices)
         for s in _to_time_slice(time_slices, t)
     )
-    in_gaps = !isempty(indices(representative_periods_mapping)) ?
-        [] : (
-        s
-        for t_set in t_sets
-        for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t)
-    )
+    in_gaps = if !isempty(indices(representative_periods_mapping))
+        ()
+    else
+        (
+            s
+            for t_set in t_sets
+            for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t)
+        )
+    end
     unique(Iterators.flatten((in_blocks, in_gaps)))
 end
 

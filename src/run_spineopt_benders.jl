@@ -33,18 +33,9 @@ function rerun_spineopt_benders!(
 )
     m_mp = master_problem_model(m)
     @timelog log_level 2 "Creating subproblem temporal structure..." generate_temporal_structure!(m)
-    sp_roll_count = _roll_count(m)
-    roll_temporal_structure!(m, 1:sp_roll_count)
-    if end_(current_window(m)) < model_end(model=m_mp.ext[:spineopt].instance)
-        error(
-            "Benders rolling subproblem doesn't cover the entire model horizon - ",
-            "the former stops at $(end_(current_window(m))), ",
-            "the latter spans till $(model_end(model=m_mp.ext[:spineopt].instance))"
-        )
+    @timelog log_level 2 "Creating master problem temporal structure..." sp_roll_count = begin
+        generate_master_temporal_structure!(m, m_mp)
     end
-    @timelog log_level 2 "Creating master temporal structure..." generate_temporal_structure!(
-        m_mp; rolling_window=false
-    )
     @timelog log_level 2 "Creating subproblem stochastic structure..." generate_stochastic_structure!(m)
     @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure!(m_mp)
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
