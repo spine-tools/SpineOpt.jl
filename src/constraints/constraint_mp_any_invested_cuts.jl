@@ -43,7 +43,8 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                     - internal_fix_units_invested_available(unit=u, stochastic_scenario=s, t=t)
                 )
                 * units_on_mv(unit=u, stochastic_scenario=s, t=t)
-                for (u, s, t) in units_invested_available_indices(m);
+                for (u, s, t) in units_invested_available_indices(m)
+                if !isnan(units_on_mv(unit=u, stochastic_scenario=s, t=t));
                 init=0,
             )
             # operating cost benefit from investments in connections
@@ -54,6 +55,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                 )
                 * connections_invested_available_mv(connection=c, stochastic_scenario=s, t=t)
                 for (c, s, t) in connections_invested_available_indices(m);
+                if !isnan(connections_invested_available_mv(connection=c, stochastic_scenario=s, t=t));
                 init=0,
             )
             # operating cost benefit from investments in storages
@@ -64,6 +66,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                 )
                 * storages_invested_available_mv(node=n, stochastic_scenario=s, t=t)
                 for (n, s, t) in storages_invested_available_indices(m);
+                if !isnan(storages_invested_available_mv(node=n, stochastic_scenario=s, t=t));
                 init=0,
             )
         )
