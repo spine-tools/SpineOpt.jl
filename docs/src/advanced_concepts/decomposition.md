@@ -38,7 +38,7 @@ on that variable, one can add an output object with the variable name prepended 
 ## Using Decomposition
 Assuming one has set up a conventional investments problem as described in [Investment Optimization](@ref) the following additional steps are required to utilise the decomposition framework:
   - Set the [model\_type](@ref) parameter for your `model` to `spineopt_benders`.
-  - Specify [max_\gap](@ref) parameter for your `model` - This determines the master problem convergence criterion for the relative benders gap. A value of 0.05 will represent a relative benders gap of 5%.
+  - Specify [max\_gap](@ref) parameter for your `model` - This determines the master problem convergence criterion for the relative benders gap. A value of 0.05 will represent a relative benders gap of 5%.
   - Specify the [max\_iterations](@ref) parameter for your `model` - This determines the master problem convergence criterion for the number of iterations. A value of 10 could be appropriate but this is highly dependent on the size and nature of the problem.
 
 Once the above is set, all investment decisions in the model are automatically decomposed and optimised in a Benders master problem. This behaviour may change in the future to allow some investment decisions to be optimised in the operations problem and some optimised in the master problem as desired.

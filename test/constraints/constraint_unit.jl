@@ -1057,10 +1057,6 @@ function test_constraint_units_invested_transition_mp()
                 expected_con = @build_constraint(var_u_inv_av1 - var_u_inv_1 + var_u_moth_1 == var_u_inv_av0)
                 observed_con = constraint_object(constraint[con_key...])
                 @test _is_constraint_equal(observed_con, expected_con)
-                if !_is_constraint_equal(observed_con, expected_con)
-                    @show expected_con
-                    @show observed_con
-                end
             end
         end
     end
