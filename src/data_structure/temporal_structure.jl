@@ -33,17 +33,15 @@ struct TimeSliceSet
                 push!(get!(block_time_slices, block, []), t)
             end
         end
-        # Find eventual gaps in between temporal blocks
-        solids = [(first(time_slices), last(time_slices)) for time_slices in values(block_time_slices)]
-        sort!(solids)
+        # Find eventual gaps in between time slices
         gap_bounds = (
-            (last_, next_first)
-            for ((first_, last_), (next_first, next_last)) in zip(solids[1:(end - 1)], solids[2:end])
-            if end_(last_) < start(next_first)
+            (t1, t2)
+            for (t1, t2) in zip(time_slices[1 : end - 1], time_slices[2:end])
+            if end_(t1) < start(t2)
         )
-        gaps = [TimeSlice(end_(last_), start(next_first)) for (last_, next_first) in gap_bounds]
-        # NOTE: By convention, the last time slice in the preceding block becomes the 'bridge'
-        bridges = [last_ for (last_, next_first) in gap_bounds]
+        gaps = [TimeSlice(end_(t1), start(t2)) for (t1, t2) in gap_bounds]
+        # NOTE: By convention, the first time slice in the next block becomes the 'bridge'
+        bridges = [t2 for (t1, t2) in gap_bounds]
         gap_bridger = GapBridger(gaps, bridges)
         new(time_slices, block_time_slices, gap_bridger)
     end
@@ -89,22 +87,28 @@ end
 """
     _generate_current_window!(m::Model)
 
-Generate a `TimeSlice` that represents the 'current' optimisation window for given model.
+Generate the current window TimeSlice for given model.
 """
-function _generate_current_window!(m::Model; rolling=true)
+function _generate_current_window!(m::Model)
     instance = m.ext[:spineopt].instance
     w_start = model_start(model=instance)
     m_end = model_end(model=instance)
-    w_duration = if rolling
-        w_duration = @isdefined(window_duration) ? window_duration(model=instance, _strict=false) : nothing
-        w_duration !== nothing ? w_duration : roll_forward(model=instance, i=1, _strict=false)
-    else
-        nothing
-    end
+    w_duration = @isdefined(window_duration) ? window_duration(model=instance, _strict=false) : nothing
+    w_duration = w_duration !== nothing ? w_duration : roll_forward(model=instance, i=1, _strict=false)
     w_end = w_duration === nothing ? m_end : min(w_start + w_duration, m_end)
     m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
-        w_start, w_end; duration_unit=_model_duration_unit(instance)
+        w_start, w_end; duration_unit=_model_duration_unit(m.ext[:spineopt].instance)
     )
+end
+
+"""
+    _full_window!(m::Model)
+
+The bounds of the full optimisation window for given model.
+"""
+function _full_window!(m::Model)
+    instance = m.ext[:spineopt].instance
+    model_start(model=instance), model_end(model=instance)
 end
 
 # Adjuster functions, in case blocks specify their own start and end
@@ -150,9 +154,7 @@ function _time_interval_blocks(instance::Object, window_start::DateTime, window_
             time_slice_end = time_slice_start + duration
             if time_slice_end > adjusted_end
                 time_slice_end = adjusted_end
-                # TODO: Try removing this to a once-off check as if true, this warning appears each time a timeslice is
-                # created
-                @warn("the last time slice of temporal block $block has been cut to fit within the optimisation window")
+                @info "the last time slice of temporal block $block has been cut to fit within the block"
             end
             push!(get!(blocks_by_time_interval, (time_slice_start, time_slice_end), Array{Object,1}()), block)
             time_slice_start = time_slice_end
@@ -207,10 +209,25 @@ function _generate_time_slice!(m::Model)
     window_start = start(window)
     window_end = end_(window)
     window_time_slices = _window_time_slices(instance, window_start, window_end)
+    _do_generate_time_slice!(m, window_start, window_end, window_time_slices)
+end
+
+function _do_generate_time_slice!(m, window_start, window_end, window_time_slices)
+    instance = m.ext[:spineopt].instance
+    temp_struct_end = end_(last(window_time_slices))
+    if temp_struct_end < window_end
+        blocks = model__temporal_block(model=instance)
+        padding_t = TimeSlice(temp_struct_end, window_end, blocks...; duration_unit=_model_duration_unit(instance))
+        push!(window_time_slices, padding_t)
+        @info string(
+            "an artificial time slice $padding_t has been added ",
+            "so that the temporal structure covers the optimisation window ",
+        )
+    end
     history_time_slices = Array{TimeSlice,1}()
-    required_history_duration = _required_history_duration(instance)
     window_duration = window_end - window_start
-    history_window_count = div(Minute(required_history_duration), Minute(window_duration))
+    required_history_duration = _required_history_duration(instance)
+    history_window_count = div(Minute(required_history_duration), Minute(window_duration), RoundUp)
     i = findlast(t -> end_(t) <= window_end, window_time_slices)
     history_window_time_slices = window_time_slices[1:i] .- window_duration
     for k in 1:history_window_count
@@ -218,8 +235,7 @@ function _generate_time_slice!(m::Model)
         history_window_time_slices .-= window_duration
     end
     history_start = window_start - required_history_duration
-    filter!(t -> end_(t) > history_start, history_window_time_slices)
-    prepend!(history_time_slices, history_window_time_slices)
+    filter!(t -> end_(t) > history_start, history_time_slices)
     m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices)
     m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(history_time_slices)
     m.ext[:spineopt].temporal_structure[:t_history_t] = Dict(
@@ -290,7 +306,8 @@ function _generate_time_slice_relationships!(m::Model)
     t_overlaps_t_excl_mapping = Dict(t => setdiff(overlapping_t, t) for (t, overlapping_t) in t_overlaps_t_mapping)
     t_before_t_tuples = unique(
         (t_before, t_after)
-        for (t_before, following) in t_follows_t_mapping for t_after in following if before(t_before, t_after)
+        for (t_before, following) in t_follows_t_mapping for t_after in following
+        if end_(t_before) <= start(t_after)
     )
     t_in_t_tuples = unique(
         (t_short, t_long)
@@ -367,12 +384,10 @@ end
 """
     generate_temporal_structure!(m::Model)
 
-Preprocess the temporal structure for SpineOpt from the provided input data.
-
-Runs a number of functions processing different aspects of the temporal structure in sequence.
+Create the temporal structure for SpineOpt from the input database.
 """
-function generate_temporal_structure!(m::Model; rolling=true)
-    _generate_current_window!(m; rolling=rolling)
+function generate_temporal_structure!(m::Model)
+    _generate_current_window!(m)
     _generate_time_slice!(m)
     _generate_output_time_slices!(m)
     _generate_time_slice_relationships!(m)
@@ -380,7 +395,38 @@ function generate_temporal_structure!(m::Model; rolling=true)
 end
 
 """
-    roll_temporal_structure!(m::Model)
+    generate_master_temporal_structure!(m::Model, m_mp::Model)
+
+Create the master problem temporal structure for SpineOpt benders.
+Roll the subproblem to the last window and return the number of windows rolled.
+"""
+function generate_master_temporal_structure!(m::Model, m_mp::Model)
+    mp_time_slices = TimeSlice[]
+    k = 1
+    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+    while true
+        append!(
+            mp_time_slices,
+            (
+                TimeSlice(start(t), end_(t), blocks(t)...; duration_unit=dur_unit)
+                for t in time_slice(m)
+                if end_(t) <= end_(current_window(m))
+            )
+        )
+        roll_temporal_structure!(m, k) || break
+        k += 1
+    end
+    unique!(sort!(mp_time_slices))
+    mp_start, mp_end = start(first(mp_time_slices)), end_(last(mp_time_slices))
+    m_mp.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(mp_start, mp_end, duration_unit=dur_unit)
+    _do_generate_time_slice!(m_mp, mp_start, mp_end, mp_time_slices)
+    _generate_output_time_slices!(m_mp)
+    _generate_time_slice_relationships!(m_mp)
+    k - 1
+end
+
+"""
+    roll_temporal_structure!(m::Model, window_number)
 
 Move the entire temporal structure ahead according to the `roll_forward` parameter.
 """
@@ -390,7 +436,8 @@ function roll_temporal_structure!(m::Model, i::Integer; rev=false)
 end
 function roll_temporal_structure!(m::Model, rng::UnitRange{T}; rev=false) where T<:Integer
     rfs = [roll_forward(model=m.ext[:spineopt].instance, i=i, _strict=false) for i in rng]
-    rf = any(isnothing(rf) for rf in rfs) ? nothing : sum(rfs; init=Minute(0))
+    filter!(!isnothing, rfs)
+    rf = sum(rfs; init=Minute(0))
     _do_roll_temporal_structure!(m, rf, rev)
 end
 
@@ -419,12 +466,15 @@ function to_time_slice(m::Model; t::TimeSlice)
         for time_slices in values(t_set.block_time_slices)
         for s in _to_time_slice(time_slices, t)
     )
-    in_gaps = !isempty(indices(representative_periods_mapping)) ?
-        [] : (
-        s
-        for t_set in t_sets
-        for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t)
-    )
+    in_gaps = if !isempty(indices(representative_periods_mapping))
+        ()
+    else
+        (
+            s
+            for t_set in t_sets
+            for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t)
+        )
+    end
     unique(Iterators.flatten((in_blocks, in_gaps)))
 end
 

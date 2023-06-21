@@ -32,20 +32,12 @@ function rerun_spineopt_benders!(
     resume_file_path=nothing
 )
     m_mp = master_problem_model(m)
-    @timelog log_level 2 "Creating temporal structure..." begin
-        generate_temporal_structure!(m)
-        generate_temporal_structure!(m_mp; rolling=false)
+    @timelog log_level 2 "Creating subproblem temporal structure..." generate_temporal_structure!(m)
+    @timelog log_level 2 "Creating master problem temporal structure..." sp_roll_count = begin
+        generate_master_temporal_structure!(m, m_mp)
     end
-    @timelog log_level 2 "Creating stochastic structure..." begin
-        generate_stochastic_structure!(m)
-        generate_stochastic_structure!(m_mp)
-    end
-    sp_roll_count = _roll_count(m)
-    @log log_level 2 """
-    NOTE: We will first build model $(m.ext[:spineopt].instance) for the last optimisation window to make sure it can roll that far.
-    We will bring it back to the first window whenever it is time to start solving it.
-    """
-    roll_temporal_structure!(m, 1:sp_roll_count)
+    @timelog log_level 2 "Creating subproblem stochastic structure..." generate_stochastic_structure!(m)
+    @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure!(m_mp)
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
     _init_mp_model!(m_mp; add_constraints=add_constraints, log_level=log_level)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
@@ -68,7 +60,7 @@ function rerun_spineopt_benders!(
             @timelog log_level 2 "Processing subproblem solution..." process_subproblem_solution!(m)
             if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
                 @log log_level 2 "... Rolling complete\n"
-                correct_sp_objective_value!(m)
+                save_sp_objective_value_tail!(m)
                 break
             end
             update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
@@ -94,7 +86,7 @@ function rerun_spineopt_benders!(
             @log log_level 1 "Maximum number of iterations reached ($j), terminating..."
             break
         end
-        @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=3)
+        @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
         msg = "Resetting sub problem temporal structure. Rewinding $(k - 1) times..."
         if update_names
             _update_variable_names!(m)
