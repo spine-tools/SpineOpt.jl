@@ -813,7 +813,9 @@ function _test_benders()
         look_ahead = 3
         vom_cost_ = 2
         vom_cost_alt = vom_cost_ / 2
-        do_not_inv_cost = ucap * vom_cost_alt * (24 + look_ahead)  # minimum cost at which investment is not profitable
+        op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
+        op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
         do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
         @testset for should_invest in (true, false)
             u_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
