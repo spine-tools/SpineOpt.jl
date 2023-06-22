@@ -27,7 +27,7 @@ The keys in the result are the keys of the input, without the stochastic_scenari
 The values are `ParameterValue{Map}`s mapping the `stochastic_scenario` of the variable key,
 to a `TimeSeries` mapping the `t` of the key, to the 'realized' variable value.
 """
-function _pval_by_entity(vals)
+function _pval_by_entity(vals, weight=1.0)
     by_ent = Dict()
     for (ind, val) in vals
         ent = _drop_key(ind, :stochastic_scenario, :t)
@@ -37,7 +37,10 @@ function _pval_by_entity(vals)
     end
     Dict(
         ent => parameter_value(
-            Map(collect(keys(by_s)), [TimeSeries(start.(keys(by_t)), collect(values(by_t))) for by_t in values(by_s)])
+            Map(
+                collect(keys(by_s)),
+                [TimeSeries(start.(keys(by_t)), weight * collect(values(by_t))) for by_t in values(by_s)]
+            )
         )
         for (ent, by_s) in by_ent
     )
@@ -56,32 +59,36 @@ function _save_mp_values!(m_mp, var_name, obj_cls)
     add_object_parameter_values!(obj_cls, pvals; merge_values=true)
 end
 
-function process_subproblem_solution!(m)
-    _save_sp_marginal_values!(m)
-    _save_sp_objective_value!(m)
+function process_subproblem_solution!(m, win_weight)
+    _save_sp_marginal_values!(m, win_weight)
+    _save_sp_objective_value!(m, win_weight)
 end
 
-save_sp_objective_value_tail!(m) = _save_sp_objective_value!(m, true)
+function save_sp_objective_value_tail!(m, win_weight)
+    _save_sp_objective_value!(m, win_weight, true)
+end
 
-function _save_sp_marginal_values!(m)
+function _save_sp_marginal_values!(m, win_weight)
     _wait_for_dual_solves(m)
-    _save_sp_marginal_values!(m, :bound_units_on, :units_on_mv, unit)
-    _save_sp_marginal_values!(m, :bound_connections_invested_available, :connections_invested_available_mv, connection)
-    _save_sp_marginal_values!(m, :bound_storages_invested_available, :storages_invested_available_mv, node)
+    _save_sp_marginal_values!(m, :bound_units_on, :units_on_mv, unit, win_weight)
+    _save_sp_marginal_values!(
+        m, :bound_connections_invested_available, :connections_invested_available_mv, connection, win_weight
+    )
+    _save_sp_marginal_values!(m, :bound_storages_invested_available, :storages_invested_available_mv, node, win_weight)
 end
 
-function _save_sp_marginal_values!(m, var_name, benders_param_name, obj_cls)
+function _save_sp_marginal_values!(m, var_name, benders_param_name, obj_cls, win_weight)
     win_start = start(current_window(m))
     window_values = Dict(k => v for (k, v) in m.ext[:spineopt].values[var_name] if start(k.t) >= win_start)
-    pval_by_ent = _pval_by_entity(window_values)
+    pval_by_ent = _pval_by_entity(window_values, win_weight)
     pvals = Dict(only(ent) => Dict(benders_param_name => pval) for (ent, pval) in pval_by_ent)
     add_object_parameter_values!(obj_cls, pvals; merge_values=true)
 end
 
-function _save_sp_objective_value!(m, tail=false)
+function _save_sp_objective_value!(m, win_weight, tail=false)
     in_window_obj_val = sum(values(m.ext[:spineopt].values[:total_costs]), init=0)
     increment = tail ? value(realize(total_costs(m, anything))) - in_window_obj_val : in_window_obj_val
-    total_sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0) + increment
+    total_sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0) + win_weight * increment
     add_object_parameter_values!(
         benders_iteration, Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(total_sp_obj_val)))
     )
