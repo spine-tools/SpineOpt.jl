@@ -35,16 +35,17 @@ function fixed_om_costs(m, t_range)
                 + expr_sum(
                     units_invested_available[u, s, t1]
                     for (u, s, t1) in units_invested_available_indices(
-                        m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t)
+                        m; unit=u, t=t_overlaps_t(m; t)
+                        # m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t)
                     );
-                    # Same approach as in constraint_units_available.jl;
+                    # Resemble constraint_units_available.jl, lift restriction on stochastic_scenario;
                     init=0,
                 )
             )
             * prod(weight(temporal_block=blk) for blk in blocks(t))
             * duration(t) for (u, ng, d) in indices(unit_capacity; unit=indices(fom_cost))
-            for (u, s, t) in units_invested_available_indices(m; unit=u, t=t_range);
-            # for (u, s, t) in units_on_indices(m; unit=u, t=t_range);
+            # for (u, s, t) in units_invested_available_indices(m; unit=u, t=t_range);
+            for (u, s, t) in units_on_indices(m; unit=u, t=t_range);
             init=0,
         )
     )
