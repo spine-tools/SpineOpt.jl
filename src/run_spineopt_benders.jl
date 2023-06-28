@@ -58,7 +58,7 @@ function rerun_spineopt_benders!(
             @log log_level 1 "\nBenders iteration $j - Window $k: $(current_window(m))"
             subproblem_solved = optimize_model!(m; log_level=log_level, calculate_duals=true)
             subproblem_solved || break
-            win_weight = @isdefined(window_weight) ? window_weight(model=m.ext[:spineopt].instance, i=k) : nothing
+            win_weight = window_weight(model=m.ext[:spineopt].instance, i=k, _strict=false)
             win_weight = win_weight !== nothing ? win_weight : 1.0
             @timelog log_level 2 "Processing subproblem solution..." process_subproblem_solution!(m, win_weight)
             if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
