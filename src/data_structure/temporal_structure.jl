@@ -405,13 +405,15 @@ function generate_master_temporal_structure!(m::Model, m_mp::Model)
     k = 1
     dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
     while true
+        blocks_by_interval = Dict()
+        for t in time_slice(m)
+            t_start, t_end = start(t), min(end_(t), end_(current_window(m)))
+            t_start < t_end || continue
+            union!(get!(blocks_by_interval, (t_start, t_end), Set()), blocks(t))
+        end
         append!(
             mp_time_slices,
-            (
-                TimeSlice(start(t), end_(t), blocks(t)...; duration_unit=dur_unit)
-                for t in time_slice(m)
-                if end_(t) <= end_(current_window(m))
-            )
+            (TimeSlice(interval..., blocks...; duration_unit=dur_unit) for (interval, blocks) in blocks_by_interval)
         )
         roll_temporal_structure!(m, k) || break
         k += 1
