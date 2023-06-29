@@ -443,9 +443,27 @@ function _calculate_duals_cplex(m; log_level=3)
     CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, CPLEX.CPXPROB_FIXEDMILP)
     @timelog log_level 1 "Optimizing LP..." CPLEX.CPXlpopt(cplex_model.env, cplex_model.lp)
     _save_marginal_values!(m)
-    _save_bound_marginal_values!(m)
+    _save_bound_marginal_values!(m, v -> _reduced_cost_cplex(v, cplex_model, CPLEX))
     CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, prob_type)
     true
+end
+
+function _reduced_cost_cplex(v::VariableRef, cplex_model, CPLEX)
+    m = owner_model(v)
+    has_duals(m) || return nothing
+    # If v is not integer nor binary, it is ok to use JuMP.reduced_cost
+    is_integer(v) || is_binary(v) || return reduced_cost(v)
+    # Otherwise, we can't use JuMP.reduced_cost because it wouldn't know that the variable is actually fixed
+    # and will return the wrong result.
+    # The thing is, CPLEX.CPXchgprobtype(..., CPLEX.CPXPROB_FIXEDMILP) doesn't change the *JuMP* variable type to fixed;
+    # it just fixes the variable *inside* CPLEX.
+    # The below computation correctly accounts for the fact that the variable is fixed.
+    sign = objective_sense(m) == MIN_SENSE ? 1.0 : -1.0
+    col = Cint(CPLEX.column(cplex_model, index(v)) - 1)
+    p = Ref{Cdouble}()
+    CPLEX.CPXgetdj(cplex_model.env, cplex_model.lp, p, col, col)
+    rc = p[]
+    sign * rc
 end
 
 function _calculate_duals_fallback(m; log_level=3)
@@ -453,8 +471,10 @@ function _calculate_duals_fallback(m; log_level=3)
     lp_solver = m.ext[:spineopt].lp_solver
     @timelog log_level 1 "Setting LP solver $(lp_solver)..." set_optimizer(m_dual_lp, lp_solver)
     @timelog log_level 1 "Fixing integer variables..." _fix_integer_vars(m, ref_map)
-    _save_marginal_values!(m, ref_map)
-    _save_bound_marginal_values!(m, ref_map)
+    dual_fallback(con) = DualPromise(ref_map[con])
+    reduced_cost_fallback(var) = ReducedCostPromise(ref_map[var])
+    _save_marginal_values!(m, dual_fallback)
+    _save_bound_marginal_values!(m, reduced_cost_fallback)
     if isdefined(Threads, Symbol("@spawn"))
         task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
         lock(m.ext[:spineopt].dual_solves_lock)
@@ -499,25 +519,23 @@ function _fix_integer_vars(m::Model, ref_map::ReferenceMap)
     end
 end
 
-function _save_marginal_values!(m::Model, ref_map=nothing)
+function _save_marginal_values!(m::Model, dual=_dual)
     for (constraint_name, con) in m.ext[:spineopt].constraints
         output_name = Symbol(string("constraint_", constraint_name))
-        m.ext[:spineopt].values[output_name] = Dict(i => _dual(c, ref_map) for (i, c) in con)
+        m.ext[:spineopt].values[output_name] = Dict(i => dual(c) for (i, c) in con)
     end
 end
 
-function _save_bound_marginal_values!(m::Model, ref_map=nothing)
+function _save_bound_marginal_values!(m::Model, reduced_cost=_reduced_cost)
     for (variable_name, var) in m.ext[:spineopt].variables
         output_name = Symbol(string("bound_", variable_name))
-        m.ext[:spineopt].values[output_name] = Dict(i => _reduced_cost(v, ref_map) for (i, v) in var)
+        m.ext[:spineopt].values[output_name] = Dict(i => reduced_cost(v) for (i, v) in var)
     end
 end
 
-_dual(con, ref_map::JuMP.ReferenceMap) = DualPromise(ref_map[con])
-_dual(con, ::Nothing) = has_duals(owner_model(con)) ? dual(con) : nothing
+_dual(con) = has_duals(owner_model(con)) ? dual(con) : nothing
 
-_reduced_cost(var, ref_map::JuMP.ReferenceMap) = ReducedCostPromise(ref_map[var])
-_reduced_cost(var, ::Nothing) = has_duals(owner_model(var)) ? reduced_cost(var) : nothing
+_reduced_cost(var) = has_duals(owner_model(var)) ? reduced_cost(var) : nothing
 
 """
 Save the outputs of a model.
@@ -975,7 +993,7 @@ function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict
     non_anticipativity_margin = definition[:non_anticipativity_margin]
     w_start = start(current_window(m))
     w_length = end_(current_window(m)) - w_start
-    for ent in SpineInterface.indices_as_tuples(non_anticipativity_time)
+    for ent in indices_as_tuples(non_anticipativity_time)
         for ind in indices(m; t=time_slice(m), ent...)
             non_ant_time = non_anticipativity_time(; ind..., _strict=false)
             non_ant_margin = if non_anticipativity_margin === nothing
