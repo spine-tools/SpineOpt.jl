@@ -194,14 +194,18 @@ v_{units\_started\_up}(u,s,t&#39;) \\
 &amp; shut\_down\_unit\_flow\_indices,\\
 &amp; nonspin\_ramp\_down\_unit\_flow\_indices) \\
 &amp; \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in unit\_flow\_indices \\
-\end{aligned}\]</p><p>Note that each <em>individual</em> tuple of the <code>unit_flow_indices</code> is split into its ramping contributions, if any of the ramping variables exist for this tuple. How to set-up ramps for units is described in <a href="../../advanced_concepts/ramping_and_reserves/#Ramping-and-Reserves">Ramping and Reserves</a>.</p><h5 id="constraint_ramp_up"><a class="docs-heading-anchor" href="#constraint_ramp_up">Constraint on spinning upwards ramp_up</a><a id="constraint_ramp_up-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_ramp_up" title="Permalink"></a></h5><p>The maximum online ramp up ability of a unit can be constraint by the <a href="../../concept_reference/Parameters/#ramp_up_limit">ramp_up_limit</a>, expressed as a share of the <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a>. With this constraint, online (i.e. spinning) ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced.</p><p class="math-container">\[\begin{aligned}
+\end{aligned}\]</p><p>Note that each <em>individual</em> tuple of the <code>unit_flow_indices</code> is split into its ramping contributions, if any of the ramping variables exist for this tuple. How to set-up ramps for units is described in <a href="../../advanced_concepts/ramping_and_reserves/#Ramping-and-Reserves">Ramping and Reserves</a>.</p><h5 id="constraint_ramp_up"><a class="docs-heading-anchor" href="#constraint_ramp_up">Constraint on spinning upwards ramp_up</a><a id="constraint_ramp_up-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_ramp_up" title="Permalink"></a></h5><p>The maximum online ramp up ability of a unit can be constraint by the <a href="../../concept_reference/Parameters/#ramp_up_limit">ramp_up_limit</a>, expressed as a share of the <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a>. With this constraint, online (i.e. spinning) ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced. In case the <a href="../../concept_reference/Parameters/#max_startup_ramp">max_startup_ramp</a> is not explicitly defined (its default value is <code>None</code> in the template), this formulation would still include the started up units by using the variable <code>units_started_up</code>, which is equivalent to what the constraint <code>constraint_max_start_up_ramp</code> does with the parameter <code>max_startup_ramp</code> being 1.</p><p class="math-container">\[\begin{aligned}
 &amp; + \sum_{\substack{(u,n,d,s,t) \in ramp\_up\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{ramp\_up\_unit\_flow}(u,n,d,s,t)  \\
 &amp; &lt;= \\
 &amp; + \sum_{\substack{(u,s,t&#39;) \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t&#39;\in t\_overlap\_t(t)}}
- (v_{units\_on}(u,s,t&#39;)
- - v_{units\_started\_up}(u,s,t&#39;)) \\
-&amp; \min(\Delta t&#39;,\Delta t) \\
+\Big[ \\ 
+&amp; \Big((v_{units\_on}(u,s,t&#39;) - v_{units\_started\_up}(u,s,t&#39;) \Big) \\
 &amp; \cdot p_{ramp\_up\_limit}(u,ng,d,s,t) \\
+&amp; + \begin{cases}       
+       0 &amp; \text{if } p_{max\_startup\_ramp}(u, ng, d) = \textit{None} \\
+       v_{units\_started\_up}(u, s, t&#39;) &amp; \text{otherwise} \\
+    \end{cases} \Big] \\
+&amp; \cdot \min(\Delta t&#39;,\Delta t) \\
 &amp; \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
 &amp; \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
 &amp; \forall (u,ng,d) \in ind(p_{ramp\_up\_limit})\\
@@ -251,12 +255,20 @@ v_{units\_shut\_down}(u,s,t&#39;) \\
 &amp; \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
 &amp; \forall (u,ng,d) \in ind(p_{max\_res\_startup\_ramp})\\
 &amp; \forall s \in stochastic\_path, \forall t \in time\_slice
-\end{aligned}\]</p><h5 id="constraint_ramp_down"><a class="docs-heading-anchor" href="#constraint_ramp_down">Constraint on spinning downward ramps</a><a id="constraint_ramp_down-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_ramp_down" title="Permalink"></a></h5><p>Similarly to the online <a href="#constraint_ramp_up">ramp up capbility</a> of a unit, it is also possible to impose an upper bound on the online ramp down ability of unit by defining a <a href="../../concept_reference/Parameters/#ramp_down_limit">ramp_down_limit</a>, expressed as a share of the <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a>.</p><p class="math-container">\[\begin{aligned}
+\end{aligned}\]</p><h5 id="constraint_ramp_down"><a class="docs-heading-anchor" href="#constraint_ramp_down">Constraint on spinning downward ramps</a><a id="constraint_ramp_down-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_ramp_down" title="Permalink"></a></h5><p>Similarly to the online <a href="#constraint_ramp_up">ramp up capbility</a> of a unit, it is also possible to impose an upper bound on the online ramp down ability of unit by defining a <a href="../../concept_reference/Parameters/#ramp_down_limit">ramp_down_limit</a>, expressed as a share of the <a href="../../concept_reference/Parameters/#unit_capacity">unit_capacity</a>. In case the <a href="../../concept_reference/Parameters/#max_shutdown_ramp">max_shutdown_ramp</a> is not explicitly defined (its default value is <code>None</code> in the template), this formulation would still include the shutdown units by using the variable <code>units_shut_down</code>, which is equivalent to what the constraint <code>constraint_max_shut_down_ramp</code> does with the parameter <code>max_shutdown_ramp</code> being 1.</p><p class="math-container">\[\begin{aligned}
 &amp; + \sum_{\substack{(u,n,d,s,t) \in ramp\_down\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{ramp\_down\_unit\_flow}(u,n,d,s,t)  \\
 &amp; &lt;= \\
-&amp; + \sum_{\substack{(u,s,t&#39;) \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t&#39;\in t\_overlap\_t(t)}}
- (v_{units\_on}(u,s,t&#39;)
- - v_{units\_started\_up}(u,s,t&#39;)) \\
+&amp; + \sum_{\substack{(u,s,t&#39;) \in units\_on\_indices: \\ (u,s) \in (u,s), \\ t&#39;\in t\_overlap\_t(t)}}
+\Big[ \\
+&amp; \Big( v_{units\_on}(u,s,t&#39;) - v_{units\_started\_up}(u,s,t&#39;) \\
+&amp; - \sum_{\substack{(u,s,t&#39;) \in nonspin\_units\_shut\_down\_indices: \\ 
+(u,s,t&#39;) \in (u,s,t&#39;), \\ 
+\text{if } is\_reserve\_node(n) \text{ and } downward\_reserve(n)}} v_{nonspin\_units\_shut\_down}(u, n, s, t&#39;) \Big) \\
+&amp; \cdot p_{ramp\_down\_limit}(u,ng,d,s,t) \\
+&amp; + \begin{cases}       
+       0 &amp; \text{if } p_{max\_shutdown\_ramp}(u, ng, d) = \textit{None} \\
+       v_{units\_shut\_down}(u, s, t&#39;) &amp; \text{otherwise} \\
+    \end{cases} \Big] \\
 &amp; \cdot p_{ramp\_down\_limit}(u,ng,d,s,t) \\
 &amp; \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
 &amp; \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
@@ -658,4 +670,4 @@ Z \ge&amp; + \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)
   \end{cases}\\
 &amp;+p_{right\_hand\_side}(uc,t,s)\\
 &amp;\forall uc,t,s \in constraint\_user\_constraint\_indices\\
-\end{aligned}\]</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../variables/">« Variables</a><a class="docs-footer-nextpage" href="../objective_function/">Objective »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Friday 30 June 2023 10:05">Friday 30 June 2023</span>. Using Julia version 1.9.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+\end{aligned}\]</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../variables/">« Variables</a><a class="docs-footer-nextpage" href="../objective_function/">Objective »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Friday 30 June 2023 14:17">Friday 30 June 2023</span>. Using Julia version 1.9.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
