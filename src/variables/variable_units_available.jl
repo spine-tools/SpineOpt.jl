@@ -17,11 +17,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
+function units_available_replacement_value(ind)
+    if online_variable_type(unit=ind.unit) == :unit_online_variable_type_none
+        number_of_units[(; ind...)] * unit_availability_factor[(; ind...)]
+    else
+        nothing
+    end
+end
+
 """
     add_variable_units_available!(m::Model)
 
 Add `units_available` variables to model `m`.
 """
 function add_variable_units_available!(m::Model)
-    add_variable!(m, :units_available, units_on_indices; lb=Constant(0), bin=units_on_bin, int=units_on_int)
+    add_variable!(
+        m,
+        :units_available,
+        units_on_indices;
+        lb=Constant(0),
+        bin=units_on_bin,
+        int=units_on_int,
+        replacement_value=units_available_replacement_value,
+    )
 end

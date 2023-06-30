@@ -23,9 +23,9 @@ function _is_time_slice_set_equal(ts_a, ts_b)
     length(ts_a) == length(ts_b) && all(_is_time_slice_equal(a, b) for (a, b) in zip(sort(ts_a), sort(ts_b)))
 end
 
-function _model(model_type=:spineopt_standard)
+function _model()
     m = Model()
-    m.ext[:spineopt] = SpineOpt.SpineOptExt(first(model(model_type=model_type)), nothing, false)
+    m.ext[:spineopt] = SpineOpt.SpineOptExt(first(model()), nothing)
     m
 end
 
@@ -349,9 +349,9 @@ function _test_gaps()
         b1, b2 = observed_ts_b
         c1, c2 = observed_ts_c
         @test _is_time_slice_set_equal(t_before_t(m; t_before=a1), [a2])
-        @test _is_time_slice_set_equal(t_before_t(m; t_before=a2), [])
+        @test _is_time_slice_set_equal(t_before_t(m; t_before=a2), [b1])
         @test _is_time_slice_set_equal(t_before_t(m; t_before=b1), [b2])
-        @test _is_time_slice_set_equal(t_before_t(m; t_before=b2), [])
+        @test _is_time_slice_set_equal(t_before_t(m; t_before=b2), [c1])
         @test _is_time_slice_set_equal(t_before_t(m; t_before=c1), [c2])
         @test _is_time_slice_set_equal(t_before_t(m; t_before=c2), [])
         @test _is_time_slice_set_equal(t_in_t(m; t_short=a1), [a1])
@@ -368,12 +368,12 @@ function _test_gaps()
         @test _is_time_slice_set_equal(t_overlaps_t(m; t=c2), [c2])
         ab1 = TimeSlice(DateTime(2002), DateTime(2003))
         ab2 = TimeSlice(DateTime(2003), DateTime(2004))
-        @test _is_time_slice_equal(to_time_slice(m; t=ab1)[1], a2)
-        @test _is_time_slice_equal(to_time_slice(m; t=ab2)[1], a2)
+        @test _is_time_slice_equal(to_time_slice(m; t=ab1)[1], b1)
+        @test _is_time_slice_equal(to_time_slice(m; t=ab2)[1], b1)
         bc1 = TimeSlice(DateTime(2006), DateTime(2007))
         bc2 = TimeSlice(DateTime(2007), DateTime(2008))
-        @test _is_time_slice_equal(to_time_slice(m; t=bc1)[1], b2)
-        @test _is_time_slice_equal(to_time_slice(m; t=bc2)[1], b2)
+        @test _is_time_slice_equal(to_time_slice(m; t=bc1)[1], c1)
+        @test _is_time_slice_equal(to_time_slice(m; t=bc2)[1], c1)
     end
 end
 

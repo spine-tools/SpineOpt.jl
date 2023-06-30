@@ -38,7 +38,7 @@ function add_constraint_nodal_balance!(m::Model)
                 for (conn, n1, d, s, t) in connection_flow_indices(
                     m; node=n, direction=direction(:to_node), stochastic_scenario=s, t=t
                 )
-                if !issubset(
+                if !_issubset(
                     connection__from_node(connection=conn, direction=direction(:from_node)), _internal_nodes(n)
                 );
                 init=0,
@@ -49,7 +49,7 @@ function add_constraint_nodal_balance!(m::Model)
                 for (conn, n1, d, s, t) in connection_flow_indices(
                     m; node=n, direction=direction(:from_node), stochastic_scenario=s, t=t
                 )
-                if !issubset(connection__to_node(connection=conn, direction=direction(:to_node)), _internal_nodes(n));
+                if !_issubset(connection__to_node(connection=conn, direction=direction(:to_node)), _internal_nodes(n));
                 init=0,
             )
             ,
@@ -64,3 +64,6 @@ function add_constraint_nodal_balance!(m::Model)
 end
 
 _internal_nodes(n::Object) = setdiff(members(n), n)
+
+# NOTE: connections that don't have any nodes on the other side need the below to work
+_issubset(x, y) = !isempty(x) && issubset(x, y)

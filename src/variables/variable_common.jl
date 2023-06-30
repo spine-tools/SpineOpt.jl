@@ -42,6 +42,7 @@ function add_variable!(
     initial_value::Union{Parameter,Nothing}=nothing,
     fix_value::Union{Parameter,Nothing}=nothing,
     internal_fix_value::Union{Parameter,Nothing}=nothing,
+    replacement_value::Union{Function,Nothing}=nothing,
     non_anticipativity_time::Union{Parameter,Nothing}=nothing,
     non_anticipativity_margin::Union{Parameter,Nothing}=nothing,
 )
@@ -55,7 +56,17 @@ function add_variable!(
     last_history_t = last(history_time_slice(m))
     var = m.ext[:spineopt].variables[name] = Dict(
         ind => _variable(
-            m, name, ind, bin, int, lb, ub, initial_value, fix_value, internal_fix_value, last_history_t
+            m,
+            name,
+            ind,
+            bin,
+            int,
+            lb,
+            ub,
+            overlaps(ind.t, last_history_t) ? initial_value : nothing,
+            fix_value,
+            internal_fix_value,
+            replacement_value
         )
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
     )
@@ -92,14 +103,20 @@ end
 
 _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 
-function _variable(m, name, ind, bin, int, lb, ub, initial_value, fix_value, internal_fix_value, last_history_t)
+function _variable(m, name, ind, bin, int, lb, ub, initial_value, fix_value, internal_fix_value, replacement_value)
+    if replacement_value !== nothing
+        ind = (analysis_time=_analysis_time(m), ind...)
+        value = replacement_value(ind)
+        if value !== nothing
+            return value
+        end
+    end
     var = @variable(m, base_name = _base_name(name, ind))
     ind = (analysis_time=_analysis_time(m), ind...)
     bin !== nothing && bin(ind) && set_binary(var)
     int !== nothing && int(ind) && set_integer(var)
     lb === nothing || set_lower_bound(var, lb[(; ind..., _strict=false)])
     ub === nothing || set_upper_bound(var, ub[(; ind..., _strict=false)])
-    initial_value = overlaps(ind.t, last_history_t) ? initial_value : nothing
     initial_value === nothing || fix(var, initial_value[(; _drop_key(ind, :t)..., _strict=false)])
     fix_value === nothing || fix(var, fix_value[(; ind..., _strict=false)])
     internal_fix_value === nothing || fix(var, internal_fix_value[(; ind..., _strict=false)])

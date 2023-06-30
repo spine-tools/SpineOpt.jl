@@ -17,10 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function rerun_spineopt!(
+function rerun_spineopt_benders!(
     m::Model,
-    m_mp::Model,
-    ::Nothing,
     url_out::Union{String,Nothing};
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
@@ -33,17 +31,13 @@ function rerun_spineopt!(
     write_as_roll=0,
     resume_file_path=nothing
 )
-    m_instance, m_bm_instance = m.ext[:spineopt].instance, m_mp.ext[:spineopt].instance
-    @timelog log_level 2 "Creating $m_instance temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating $m_instance stochastic structure..." generate_stochastic_structure!(m)
-    @timelog log_level 2 "Creating $m_bm_instance temporal structure..." generate_temporal_structure!(m_mp)
-    @timelog log_level 2 "Creating $m_bm_instance stochastic structure..." generate_stochastic_structure!(m_mp)
-    sp_roll_count = _roll_count(m)
-    @log log_level 2 """
-    NOTE: We will first build model $(m.ext[:spineopt].instance) for the last optimisation window to make sure it can roll that far.
-    We will bring it back to the first window whenever it is time to start solving it.
-    """
-    roll_temporal_structure!(m, 1:sp_roll_count)
+    m_mp = master_problem_model(m)
+    @timelog log_level 2 "Creating subproblem temporal structure..." generate_temporal_structure!(m)
+    @timelog log_level 2 "Creating master problem temporal structure..." sp_roll_count = begin
+        generate_master_temporal_structure!(m, m_mp)
+    end
+    @timelog log_level 2 "Creating subproblem stochastic structure..." generate_stochastic_structure!(m)
+    @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure!(m_mp)
     init_model!(m; add_constraints=add_constraints, log_level=log_level)
     _init_mp_model!(m_mp; add_constraints=add_constraints, log_level=log_level)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
@@ -60,13 +54,16 @@ function rerun_spineopt!(
             _update_constraint_names!(m)
         end
         while true
+            m.ext[:spineopt].temporal_structure[:current_window_number] = k
             @log log_level 1 "\nBenders iteration $j - Window $k: $(current_window(m))"
             subproblem_solved = optimize_model!(m; log_level=log_level, calculate_duals=true)
             subproblem_solved || break
-            @timelog log_level 2 "Processing subproblem solution..." process_subproblem_solution!(m)
+            win_weight = window_weight(model=m.ext[:spineopt].instance, i=k, _strict=false)
+            win_weight = win_weight !== nothing ? win_weight : 1.0
+            @timelog log_level 2 "Processing subproblem solution..." process_subproblem_solution!(m, win_weight)
             if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
                 @log log_level 2 "... Rolling complete\n"
-                correct_sp_objective_value!(m)
+                save_sp_objective_value_tail!(m, win_weight)
                 break
             end
             update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
@@ -92,7 +89,7 @@ function rerun_spineopt!(
             @log log_level 1 "Maximum number of iterations reached ($j), terminating..."
             break
         end
-        @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=3)
+        @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
         msg = "Resetting sub problem temporal structure. Rewinding $(k - 1) times..."
         if update_names
             _update_variable_names!(m)
@@ -102,7 +99,7 @@ function rerun_spineopt!(
         global current_bi = add_benders_iteration(j)
     end
     write_report(m, url_out; alternative=alternative, log_level=log_level)
-    m, m_mp
+    m
 end
 
 """
@@ -170,7 +167,7 @@ function _add_constraint_mp_objective!(m::Model)
             m,
             + expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0)
             >=
-            + total_costs(m, anything)
+            + total_costs(m, anything; invesments_only=true)
         )
     )
 end
@@ -193,6 +190,6 @@ function _add_mp_cuts!(m; log_level=3)
     # Name constraints
     cons = m.ext[:spineopt].constraints[:mp_units_invested_cut]
     for (inds, con) in cons
-        set_name(con, string(:mp_units_invested_cut, inds))
+        _set_name(con, string(:mp_units_invested_cut, inds))
     end
 end

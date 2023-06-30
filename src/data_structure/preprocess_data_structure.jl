@@ -38,6 +38,7 @@ function preprocess_data_structure(; log_level=3)
     generate_direction()
     generate_ptdf_lodf()
     generate_variable_indexing_support()
+    generate_internal_fix_investments()
     generate_benders_structure()
     apply_forced_availability_factor()
     generate_is_boundary()
@@ -752,7 +753,7 @@ end
 """
     generate_benders_structure()
 
-Creates the `benders_iteration` object class. Master problem variables have the Benders iteration as an index. A new
+Creates the `benders_iteration` object class. Benders cuts have the Benders iteration as an index. A new
 benders iteration object is pushed on each master problem iteration.
 """
 function generate_benders_structure()
@@ -763,48 +764,53 @@ function generate_benders_structure()
     )
     sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])
     units_on_mv = Parameter(:units_on_mv, [unit])
-    units_invested_available_bi = Parameter(:units_invested_available_bi, [unit])
     connections_invested_available_mv = Parameter(:connections_invested_available_mv, [connection])
-    connections_invested_available_bi = Parameter(:connections_invested_available_bi, [connection])
     storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node])
-    storages_invested_available_bi = Parameter(:storages_invested_available_bi, [node])
-    add_object_parameter_values!(unit, _benders_initial_pvals(:units_invested_available_bi, candidate_units))
-    add_object_parameter_values!(
-        connection, _benders_initial_pvals(:connections_invested_available_bi, candidate_connections)
-    )
-    add_object_parameter_values!(node, _benders_initial_pvals(:storages_invested_available_bi, candidate_storages))
     @eval begin
         benders_iteration = $benders_iteration
         current_bi = $current_bi
         sp_objective_value_bi = $sp_objective_value_bi
         units_on_mv = $units_on_mv
-        units_invested_available_bi = $units_invested_available_bi
         connections_invested_available_mv = $connections_invested_available_mv
-        connections_invested_available_bi = $connections_invested_available_bi
         storages_invested_available_mv = $storages_invested_available_mv
-        storages_invested_available_bi = $storages_invested_available_bi
         export benders_iteration
         export current_bi
         export sp_objective_value_bi
         export units_on_mv
-        export units_invested_available_bi
         export connections_invested_available_mv
-        export connections_invested_available_bi
         export storages_invested_available_mv
-        export storages_invested_available_bi
     end
 end
 
-function _benders_initial_pvals(pname, candidates)
-    isempty(model()) && return Dict()
+"""
+    generate_internal_fix_investments()
+
+Creates parameters to be used as `internal_fix_value` for investment variables.
+The value is set to zero for one hour before the model starts, so the model doesn't create free investments
+during the history.
+
+The benders algorithm also uses these parameters to fix the subproblem investment variables to the master problem
+solution.
+"""
+function generate_internal_fix_investments()
+    isempty(model()) && return
     scens = stochastic_scenario()
     t = minimum(model_start(model=m) for m in model())
-    Dict(
-        obj => Dict(
-            pname => parameter_value(Map(scens, [TimeSeries([t - Hour(1), t], [0, NaN]) for _s in scens]))
+    for (pname, class, candidates) in (
+            (:internal_fix_units_invested_available, unit, candidate_units),
+            (:internal_fix_connections_invested_available, connection, candidate_connections),
+            (:internal_fix_storages_invested_available, node, candidate_storages),
         )
-        for obj in indices(candidates)
-    )
+        parameter = Parameter(pname, [class])
+        pvals = Dict(
+            obj => Dict(
+                pname => parameter_value(Map(scens, [TimeSeries([t - Hour(1), t], [0, NaN]) for _s in scens]))
+            )
+            for obj in indices(candidates)
+        )
+        add_object_parameter_values!(class, pvals)
+        @eval $pname = $parameter
+    end
 end
 
 function apply_forced_availability_factor()
