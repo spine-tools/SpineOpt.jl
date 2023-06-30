@@ -23,7 +23,6 @@ function rerun_spineopt_standard!(
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     alternative_objective=m -> nothing,
-    update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
     update_names=false,
@@ -39,8 +38,8 @@ function rerun_spineopt_standard!(
         m;
         add_user_variables=add_user_variables,
         add_constraints=add_constraints,
+        alternative_objective=alternative_objective,
         log_level=log_level,
-        alternative_objective=alternative_objective
     )
     @timelog log_level 2 "Bringing model to the first window..." begin
         roll_temporal_structure!(m, 1:roll_count; rev=true)
@@ -51,7 +50,6 @@ function rerun_spineopt_standard!(
         run_spineopt_kernel!(
             m,
             url_out;
-            update_constraints=update_constraints,
             log_level=log_level,
             optimize=optimize,
             update_names=update_names,
@@ -256,7 +254,7 @@ function _create_objective_terms!(m)
     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
     in_window = collect(to_time_slice(m; t=current_window(m)))
     filter!(t -> !(t in beyond_window), in_window)
-    for term in objective_terms(m)
+    for term in objective_terms(m; operations=true, investments=master_problem_model(m) === nothing)
         func = eval(term)
         m.ext[:spineopt].objective_terms[term] = (func(m, in_window), func(m, beyond_window))
     end
@@ -271,7 +269,6 @@ end
 function run_spineopt_kernel!(
     m,
     url_out;
-    update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
     update_names=false,
@@ -279,7 +276,7 @@ function run_spineopt_kernel!(
     write_as_roll=0,
     resume_file_path=nothing,
 )
-    k = _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
+    k = _resume_run!(m, resume_file_path, log_level, update_names)
     k === nothing && return m
     calculate_duals = any(
         startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:spineopt].outputs))
@@ -295,7 +292,7 @@ function run_spineopt_kernel!(
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
             @timelog log_level 2 " ... Rolling complete\n" break
         end
-        update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
+        update_model!(m; log_level=log_level, update_names=update_names)
         k += 1
     end
     if write_as_roll > 0
@@ -306,8 +303,8 @@ function run_spineopt_kernel!(
     m
 end
 
-_resume_run!(m, ::Nothing, update_constraints, log_level, update_names) = 1
-function _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
+_resume_run!(m, ::Nothing, log_level, update_names) = 1
+function _resume_run!(m, resume_file_path, log_level, update_names)
     !isfile(resume_file_path) && return 1
     try
         resume_data = JSON.parsefile(resume_file_path)
@@ -319,7 +316,7 @@ function _resume_run!(m, resume_file_path, update_constraints, log_level, update
             @log log_level 1 "Nothing to resume - window $k was the last one"
             nothing
         else
-            update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
+            update_model!(m; log_level=log_level, update_names=update_names)
             k + 1
         end
     catch err
@@ -917,14 +914,13 @@ end
 Update the given model for the next window in the rolling horizon: update variables, fix the necessary variables,
 update constraints and update objective.
 """
-function update_model!(m; update_constraints=m -> nothing, log_level=3, update_names=false)
+function update_model!(m; log_level=3, update_names=false)
     if update_names
         _update_variable_names!(m)
         _update_constraint_names!(m)
     end
     @timelog log_level 2 "Fixing history..." _fix_history!(m)
     @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m)
-    @timelog log_level 2 "Updating user constraints..." update_constraints(m)
 end
 
 function _update_constraint_names!(m)

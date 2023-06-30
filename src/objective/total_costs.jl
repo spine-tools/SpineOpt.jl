@@ -39,8 +39,13 @@ const all_objective_terms = [op_terms; invest_terms]
 
 Expression corresponding to the sume of all cost terms for given model, and up until the given date time.
 """
-function total_costs(m, t_range; invesments_only=false)
-    sum(eval(term)(m, t_range) for term in objective_terms(m; invesments_only=invesments_only))
+function total_costs(m, t_range; investments=true, operations=true)
+    sum(eval(term)(m, t_range) for term in objective_terms(m; investments=investments, operations=operations))
 end
 
-objective_terms(m; invesments_only=false) = invesments_only ? invest_terms : all_objective_terms
+function objective_terms(m; investments=true, operations=true)
+    obj_terms = []
+    investments && append!(obj_terms, invest_terms)
+    operations && append!(obj_terms, op_terms)
+    obj_terms
+end
