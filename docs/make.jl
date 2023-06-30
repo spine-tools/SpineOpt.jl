@@ -109,10 +109,10 @@ pages=[
         "Imposing renewable energy targets" => joinpath("advanced_concepts", "cumulated_flow_restrictions.md"),
         "Modelling to generate alternatives" => joinpath("advanced_concepts", "mga.md"),
     ],
-    "Implementation details" => Any[
+    "Implementation details" => nothing #=Any[
         "Documentation" => joinpath("implementation_details", "documentation.md"),
         "Parameter type" => joinpath("implementation_details", "parameter_type.md")
-    ],
+    ]=#,
     "Library" => "library.md",
 ]
 newpages=drag_and_drop(pages,path)
