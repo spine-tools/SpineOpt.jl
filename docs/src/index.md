@@ -72,4 +72,4 @@ and [Representative days with seasonal storages](@ref), explain various use-case
 
 ## Implementation details
 
-For those who are interested in how things work under the hood, this chapter explains some parts of the code. Note that chapter is particularly sensitive to changes in the code and as such might get out of sync. If you do notice a discrepancy, please create an [issue in github](https://github.com/spine-tools/SpineOpt.jl/issues). That is also the place to be if you don't find what you are looking for in this documentation.
+For those who are interested in how things work under the hood, this chapter explains some parts of the code. Note that this chapter is particularly sensitive to changes in the code and as such might get out of sync. If you do notice a discrepancy, please create an [issue in github](https://github.com/spine-tools/SpineOpt.jl/issues). That is also the place to be if you don't find what you are looking for in this documentation.
