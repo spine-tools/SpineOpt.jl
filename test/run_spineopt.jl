@@ -876,15 +876,7 @@ function _test_benders()
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
                 for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
-                    @test Y.total_costs(model=Y.model(:instance), t=t) == if should_invest
-                        if t == DateTime(2000, 1, 1)
-                            329
-                        else
-                            60
-                        end
-                    else
-                        120
-                    end
+                    @test Y.total_costs(model=Y.model(:instance), t=t) == (should_invest ? 60 : 120)
                 end
             end
             @testset "invested" begin

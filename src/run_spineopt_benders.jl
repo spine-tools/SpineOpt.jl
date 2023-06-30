@@ -22,12 +22,11 @@ function rerun_spineopt_benders!(
     url_out::Union{String,Nothing};
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
-    update_constraints=m -> nothing,
+    alternative_objective=m -> nothing,
     log_level=3,
     optimize=true,
     update_names=false,
     alternative="",
-    alternative_objective=m -> nothing,
     write_as_roll=0,
     resume_file_path=nothing
 )
@@ -38,8 +37,14 @@ function rerun_spineopt_benders!(
     end
     @timelog log_level 2 "Creating subproblem stochastic structure..." generate_stochastic_structure!(m)
     @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure!(m_mp)
-    init_model!(m; add_constraints=add_constraints, log_level=log_level)
-    _init_mp_model!(m_mp; add_constraints=add_constraints, log_level=log_level)
+    init_model!(
+        m;
+        add_user_variables=add_user_variables,
+        add_constraints=add_constraints,
+        alternative_objective=alternative_objective,
+        log_level=log_level
+    )
+    _init_mp_model!(m_mp; log_level=log_level)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
     j = 1
     while optimize
@@ -70,7 +75,7 @@ function rerun_spineopt_benders!(
                 save_sp_objective_value_tail!(m, win_weight)
                 break
             end
-            update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
+            update_model!(m; log_level=log_level, update_names=update_names)
             k += 1
         end
         subproblem_solved || break
@@ -105,11 +110,9 @@ end
 Initialize the given model for SpineOpt Master Problem: add variables, fix the necessary variables,
 add constraints and set objective.
 """
-function _init_mp_model!(m; add_constraints=m -> nothing, log_level=3)
+function _init_mp_model!(m; log_level=3)
     @timelog log_level 2 "Adding MP variables...\n" _add_mp_variables!(m; log_level=log_level)
-    @timelog log_level 2 "Adding MP constraints...\n" _add_mp_constraints!(
-        m; add_constraints=add_constraints, log_level=log_level
-    )
+    @timelog log_level 2 "Adding MP constraints...\n" _add_mp_constraints!(m; log_level=log_level)
     @timelog log_level 2 "Setting MP objective..." _set_mp_objective!(m)
 end
 
@@ -136,7 +139,7 @@ end
 """
 Add SpineOpt master problem constraints to the given model.
 """
-function _add_mp_constraints!(m; add_constraints=m -> nothing, log_level=3)
+function _add_mp_constraints!(m; log_level=3)
     for (name, add_constraint!) in (
             ("constraint_mp_objective", _add_constraint_mp_objective!),
             ("constraint_unit_lifetime", add_constraint_unit_lifetime!),
@@ -166,7 +169,7 @@ function _add_constraint_mp_objective!(m::Model)
             m,
             + expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0)
             >=
-            + total_costs(m, anything; invesments_only=true)
+            + total_costs(m, anything; operations=false)
         )
     )
 end
@@ -178,11 +181,16 @@ Minimize total costs
 """
 function _set_mp_objective!(m::Model)
     @fetch mp_objective_lowerbound = m.ext[:spineopt].variables
-    @objective(m, Min, expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0))
+    @objective(
+        m,
+        Min,
+        + expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0)
+        + total_costs(m, anything; operations=false)
+    )
 end
 
 """
-Update (readd) SpineOpt master problem constraints that involve new objects (update doesn't work).
+Add benders cuts to master problem.
 """
 function _add_mp_cuts!(m; log_level=3)
     @timelog log_level 3 " - [constraint_mp_any_invested_cuts]" add_constraint_mp_any_invested_cuts!(m)

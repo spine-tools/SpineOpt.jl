@@ -411,18 +411,31 @@ function generate_master_temporal_structure!(m::Model, m_mp::Model)
     k = 1
     dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
     while true
-        blocks_by_interval = Dict()
-        for t in time_slice(m)
-            t_start, t_end = start(t), min(end_(t), end_(current_window(m)))
-            t_start < t_end || continue
-            union!(get!(blocks_by_interval, (t_start, t_end), Set()), blocks(t))
+        start_end_blocks = [(start(t), end_(t), blocks(t)) for t in time_slice(m)]
+        window_end = end_(current_window(m))
+        if roll_temporal_structure!(m, k)
+            # Make sure time-slices do not overlap with the ones to be added in the next window
+            blocks_by_interval = Dict()
+            for (t_start, t_end, blocks) in start_end_blocks
+                t_end = min(t_end, window_end)
+                t_start < t_end || continue
+                union!(get!(blocks_by_interval, (t_start, t_end), Set()), blocks)
+            end
+            append!(
+                mp_time_slices,
+                (TimeSlice(interval..., blocks...; duration_unit=dur_unit) for (interval, blocks) in blocks_by_interval)
+            )
+            k += 1
+        else
+            append!(
+                mp_time_slices,
+                (
+                    TimeSlice(t_start, t_end, blocks...; duration_unit=dur_unit)
+                    for (t_start, t_end, blocks) in start_end_blocks
+                )
+            )
+            break
         end
-        append!(
-            mp_time_slices,
-            (TimeSlice(interval..., blocks...; duration_unit=dur_unit) for (interval, blocks) in blocks_by_interval)
-        )
-        roll_temporal_structure!(m, k) || break
-        k += 1
     end
     unique!(sort!(mp_time_slices))
     mp_start, mp_end = start(first(mp_time_slices)), end_(last(mp_time_slices))
