@@ -278,7 +278,6 @@ function run_spineopt_kernel!(
     alternative="",
     write_as_roll=0,
     resume_file_path=nothing,
-
 )
     k = _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
     k === nothing && return m
