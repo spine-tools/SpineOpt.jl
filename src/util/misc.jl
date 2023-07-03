@@ -183,3 +183,7 @@ struct Constant
 end
 
 Base.getindex(c::Constant, _x) = Call(c.value)
+
+_value(v::GenericAffExpr) = JuMP.value(v)
+_value(v) = v
+

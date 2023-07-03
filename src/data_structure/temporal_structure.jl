@@ -438,7 +438,8 @@ function generate_master_temporal_structure!(m::Model, m_mp::Model)
         end
     end
     unique!(sort!(mp_time_slices))
-    mp_start, mp_end = start(first(mp_time_slices)), end_(last(mp_time_slices))
+    mp_start = start(first(mp_time_slices))
+    mp_end = end_(current_window(m))
     m_mp.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(mp_start, mp_end, duration_unit=dur_unit)
     _do_generate_time_slice!(m_mp, mp_start, mp_end, mp_time_slices)
     _generate_output_time_slices!(m_mp)
