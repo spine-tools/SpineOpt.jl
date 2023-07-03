@@ -414,9 +414,6 @@ function _save_objective_values!(m::Model)
     nothing
 end
 
-_value(v::GenericAffExpr) = JuMP.value(v)
-_value(v) = v
-
 function _calculate_duals(m; log_level=3)
     if has_duals(m)
         _save_marginal_values!(m)
