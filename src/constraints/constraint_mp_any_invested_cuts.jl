@@ -81,7 +81,6 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                     );
                     init=0
                 )
-                * storages_invested_available_mv(node=n, stochastic_scenario=s, t=t)
                 for (n, s, t) in storages_invested_available_indices(m)
                 init=0,
             )
