@@ -172,7 +172,6 @@ function _test_benders_storage()
         res = 6
         dem = ucap = 10
         fixuflow = 2 * dem
-        fixuflow_ts = TimeSeries([DateTime(2000, 1, 1), DateTime(2000, 1, 2)], [fixuflow, 0])
         rf = 6
         look_ahead = 3
         penalty = 100
@@ -231,7 +230,7 @@ function _test_benders_storage()
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
             relationship_parameter_values = [
-                ["unit__to_node", ["unit_a", "node_a"], "fix_unit_flow", unparse_db_value(fixuflow)],
+                ["unit__to_node", ["unit_a", "node_a"], "fix_unit_flow", fixuflow],
                 ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", 1.0],
                 ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
             ]
@@ -243,7 +242,7 @@ function _test_benders_storage()
                 relationship_parameter_values=relationship_parameter_values
             )
             rm(file_path_out; force=true)
-            m = run_spineopt(url_in, url_out; log_level=3, update_names=true)
+            m = run_spineopt(url_in, url_out; log_level=0)
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
                 for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
@@ -281,7 +280,165 @@ function _test_benders_storage()
     end
 end
 
+function _test_benders_unit_storage()
+    @testset "benders_unit_storage" begin
+        benders_gap = 1e-6  # needed so that we get the exact master problem solution
+        mip_solver_options_benders = unparse_db_value(Map(["HiGHS.jl"], [Map(["mip_rel_gap"], [benders_gap])]))
+        res = 6
+        dem = ucap = 10
+        ucap2 = 2 * dem
+        mop = 0.9
+        rf = 6
+        look_ahead = 3
+        penalty = 100
+        u_inv_cost = 180
+        op_cost_no_inv = (mop * ucap2 - dem) * penalty * (24 + look_ahead)
+        op_cost_inv = 0
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
+        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
+        @testset for should_invest in (true,)
+            s_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
+            url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
+            objects = [
+                ["unit", "unit_a"],
+                ["node", "node_a"],
+                ["output", "total_costs"],
+                ["output", "units_invested"],
+                ["output", "units_mothballed"],
+                ["output", "units_invested_available"],
+                ["output", "storages_invested"],
+                ["output", "storages_decommissioned"],
+                ["output", "storages_invested_available"],
+                ["output", "node_state"],
+                ["output", "node_slack_neg"],
+                ["temporal_block", "investments_hourly"],
+            ]
+            relationships = [
+                ["unit__to_node", ["unit_a", "node_a"]],
+                ["unit__from_node", ["unit_ab", "node_a"]],
+                ["unit__node__node", ["unit_ab", "node_b", "node_a"]],
+                ["units_on__temporal_block", ["unit_a", "hourly"]],
+                ["units_on__stochastic_structure", ["unit_a", "deterministic"]],
+                ["units_on__stochastic_structure", ["unit_ab", "deterministic"]],
+                ["node__temporal_block", ["node_a", "hourly"]],
+                ["node__stochastic_structure", ["node_a", "deterministic"]],
+                ["model__temporal_block", ["instance", "investments_hourly"]],
+                ["model__default_investment_temporal_block", ["instance", "investments_hourly"]],
+                ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
+                ["report__output", ["report_x", "total_costs"]],
+                ["report__output", ["report_x", "units_invested"]],
+                ["report__output", ["report_x", "units_mothballed"]],
+                ["report__output", ["report_x", "units_invested_available"]],
+                ["report__output", ["report_x", "storages_invested"]],
+                ["report__output", ["report_x", "storages_decommissioned"]],
+                ["report__output", ["report_x", "storages_invested_available"]],
+                ["report__output", ["report_x", "node_slack_neg"]],
+                ["report__output", ["report_x", "node_state"]],
+            ]
+            object_parameter_values = [
+                ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
+                ["model", "instance", "model_type", "spineopt_benders"],
+                ["model", "instance", "max_iterations", 100],
+                ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
+                ["unit", "unit_a", "number_of_units", 0],
+                ["unit", "unit_a", "candidate_units", 1],
+                ["unit", "unit_a", "unit_investment_cost", u_inv_cost],
+                ["unit", "unit_a", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
+                ["unit", "unit_a", "online_variable_type", "unit_online_variable_type_integer"],
+                ["node", "node_a", "has_state", true],
+                ["node", "node_a", "node_state_cap", 1000],
+                ["node", "node_a", "initial_node_state", 0],
+                ["node", "node_a", "candidate_storages", 1],
+                ["node", "node_a", "storage_investment_cost", s_inv_cost],
+                ["node", "node_a", "storage_investment_variable_type", "variable_type_integer"],
+                ["node", "node_b", "demand", dem],
+                ["node", "node_a", "node_slack_penalty", penalty],
+                ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
+                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
+                ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
+                ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
+            ]
+            relationship_parameter_values = [
+                ["unit__node__node", ["unit_ab", "node_b", "node_a"], "fix_ratio_out_in_unit_flow", 1.0],
+                ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_a", "node_a"], "unit_capacity", ucap2],
+                ["unit__to_node", ["unit_a", "node_a"], "minimum_operating_point", mop],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values
+            )
+            rm(file_path_out; force=true)
+            m = run_spineopt(url_in, url_out; log_level=0)
+            using_spinedb(url_out, Y)
+            @testset "total_cost" begin
+                for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
+                    @test Y.total_costs(model=Y.model(:instance), t=t) == (should_invest ? 0 : 6000.0)
+                end
+            end
+            @testset "units_invested" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.units_invested(unit=Y.unit(:unit_a), t=t) == (
+                        should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
+                    )
+                end
+            end
+            @testset "units_mothballed" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.units_mothballed(unit=Y.unit(:unit_a), t=t) == 0
+                end
+            end
+            @testset "units_invested_available" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.units_invested_available(unit=Y.unit(:unit_a), t=t) == (should_invest ? 1 : 0)
+                end
+            end
+            @testset "storages_invested" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.storages_invested(node=Y.node(:node_a), t=t) == (
+                        should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
+                    )
+                end
+            end
+            @testset "storages_decommissioned" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.storages_decommissioned(node=Y.node(:node_a), t=t) == 0
+                end
+            end
+            @testset "storages_invested_available" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.storages_invested_available(node=Y.node(:node_a), t=t) == (should_invest ? 1 : 0)
+                end
+            end
+            @testset "node_slack_neg" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.node_slack_neg(node=Y.node(:node_a), t=t) == (should_invest ? 0 : 10)
+                end
+            end
+            @testset "node_state" begin
+                state = 0
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    len = t < DateTime(2000, 1, 2) ? rf : rf / 2
+                    if state < dem * len
+                        # store
+                        incr = (mop * ucap2 - dem)  # 8
+                        state += incr * len
+                    else
+                        # release
+                        state -= dem * len
+                    end
+                    @test Y.node_state(node=Y.node(:node_a), t=t) == (should_invest ? state : 0)
+                end
+            end
+        end
+    end
+end
+
 @testset "run_spineopt_benders" begin
-    #_test_benders_unit()
+    _test_benders_unit()
     _test_benders_storage()
+    _test_benders_unit_storage()
 end

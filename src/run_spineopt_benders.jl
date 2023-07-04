@@ -89,11 +89,6 @@ function rerun_spineopt_benders!(
             @log log_level 1 "Benders tolerance satisfied, terminating..."
             break
         end
-        max_stale_iters = 3
-        if length(gaps) >= max_stale_iters && all(gaps[end - i] == last(gaps) for i in 1:(max_stale_iters - 1))
-            @log log_level 1 "Benders gap not improving for $max_stale_iters consecutive iterations, terminating..."
-            break
-        end
         if j >= max_benders_iterations
             @log log_level 1 "Maximum number of iterations reached ($j), terminating..."
             break
