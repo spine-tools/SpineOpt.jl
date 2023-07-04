@@ -421,14 +421,14 @@ function _test_benders_unit_storage()
             @testset "node_state" begin
                 state = 0
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    len = t < DateTime(2000, 1, 2) ? rf : rf / 2
-                    if state < dem * len
+                    hour_count = t < DateTime(2000, 1, 2) ? rf : rf / 2
+                    if state < dem * hour_count
                         # store
                         incr = (mop * ucap2 - dem)  # 8
-                        state += incr * len
+                        state += incr * hour_count
                     else
                         # release
-                        state -= dem * len
+                        state -= dem * hour_count
                     end
                     @test Y.node_state(node=Y.node(:node_a), t=t) == (should_invest ? state : 0)
                 end
