@@ -122,7 +122,7 @@ Add SpineOpt Master Problem variables to the given model.
 """
 function _add_mp_variables!(m; log_level=3)
     for (name, add_variable!) in (
-            ("mp_objective_lowerbound", add_variable_mp_objective_lowerbound!),
+            ("sp_objective_upperbound", add_variable_sp_objective_upperbound!),
             ("mp_units_invested", add_variable_units_invested!),
             ("mp_units_invested_available", add_variable_units_invested_available!),
             ("mp_units_mothballed", add_variable_units_mothballed!),
@@ -164,11 +164,11 @@ end
 Limit the units_on by the number of available units.
 """
 function _add_constraint_mp_objective!(m::Model)
-    @fetch units_invested, mp_objective_lowerbound = m.ext[:spineopt].variables
+    @fetch sp_objective_upperbound = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:mp_objective] = Dict(
         (model=m.ext[:spineopt].instance,) => @constraint(
             m,
-            + expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0)
+            + expr_sum(sp_objective_upperbound[t] for (t,) in sp_objective_upperbound_indices(m); init=0)
             >=
             + 1e-6
         )
@@ -181,11 +181,11 @@ end
 Minimize total costs
 """
 function _set_mp_objective!(m::Model)
-    @fetch mp_objective_lowerbound = m.ext[:spineopt].variables
+    @fetch sp_objective_upperbound = m.ext[:spineopt].variables
     @objective(
         m,
         Min,
-        + expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0)
+        + expr_sum(sp_objective_upperbound[t] for (t,) in sp_objective_upperbound_indices(m); init=0)
         + total_costs(m, anything; operations=false)
     )
 end
