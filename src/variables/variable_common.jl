@@ -53,7 +53,6 @@ function add_variable!(
         :non_anticipativity_time => non_anticipativity_time,
         :non_anticipativity_margin => non_anticipativity_margin
     )
-    last_history_t = last(history_time_slice(m))
     var = m.ext[:spineopt].variables[name] = Dict(
         ind => _variable(
             m,
@@ -63,13 +62,25 @@ function add_variable!(
             int,
             lb,
             ub,
-            overlaps(ind.t, last_history_t) ? initial_value : nothing,
             fix_value,
             internal_fix_value,
             replacement_value
         )
         for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
     )
+    # Apply initial value, but make sure it updates itself by using a TimeSeries Call
+    if initial_value !== nothing
+        last_history_t = last(history_time_slice(m))
+        t = model_start(model=m.ext[:spineopt].instance)
+        dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+        for (ind, v) in var
+            overlaps(ind.t, last_history_t) || continue
+            val = initial_value(; ind..., _strict=false)
+            val === nothing && continue
+            initial_value_ts = parameter_value(TimeSeries([t - dur_unit(1), t], [val, NaN]))
+            fix(v, Call(initial_value_ts, (t=ind.t,)))
+        end
+    end
     merge!(var, _representative_periods_mapping(m, var, indices))
 end
 
@@ -103,7 +114,7 @@ end
 
 _base_name(name, ind) = string(name, "[", join(ind, ", "), "]")
 
-function _variable(m, name, ind, bin, int, lb, ub, initial_value, fix_value, internal_fix_value, replacement_value)
+function _variable(m, name, ind, bin, int, lb, ub, fix_value, internal_fix_value, replacement_value)
     if replacement_value !== nothing
         ind = (analysis_time=_analysis_time(m), ind...)
         value = replacement_value(ind)
@@ -117,7 +128,6 @@ function _variable(m, name, ind, bin, int, lb, ub, initial_value, fix_value, int
     int !== nothing && int(ind) && set_integer(var)
     lb === nothing || set_lower_bound(var, lb[(; ind..., _strict=false)])
     ub === nothing || set_upper_bound(var, ub[(; ind..., _strict=false)])
-    initial_value === nothing || fix(var, initial_value[(; _drop_key(ind, :t)..., _strict=false)])
     fix_value === nothing || fix(var, fix_value[(; ind..., _strict=false)])
     internal_fix_value === nothing || fix(var, internal_fix_value[(; ind..., _strict=false)])
     var

@@ -89,16 +89,12 @@ function rerun_spineopt_benders!(
             @log log_level 1 "Benders tolerance satisfied, terminating..."
             break
         end
-        max_stale_iters = 3
-        if length(gaps) >= max_stale_iters && all(gaps[end - i] == last(gaps) for i in 1:(max_stale_iters - 1))
-            @log log_level 1 "Benders gap not improving for $max_stale_iters consecutive iterations, terminating..."
-            break
-        end
         if j >= max_benders_iterations
             @log log_level 1 "Maximum number of iterations reached ($j), terminating..."
             break
         end
         @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
+        _unfix_history!(m)
         j += 1
         global current_bi = add_benders_iteration(j)
     end
@@ -121,7 +117,7 @@ Add SpineOpt Master Problem variables to the given model.
 """
 function _add_mp_variables!(m; log_level=3)
     for (name, add_variable!) in (
-            ("mp_objective_lowerbound", add_variable_mp_objective_lowerbound!),
+            ("sp_objective_upperbound", add_variable_sp_objective_upperbound!),
             ("mp_units_invested", add_variable_units_invested!),
             ("mp_units_invested_available", add_variable_units_invested_available!),
             ("mp_units_mothballed", add_variable_units_mothballed!),
@@ -163,13 +159,13 @@ end
 Limit the units_on by the number of available units.
 """
 function _add_constraint_mp_objective!(m::Model)
-    @fetch units_invested, mp_objective_lowerbound = m.ext[:spineopt].variables
+    @fetch sp_objective_upperbound = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:mp_objective] = Dict(
         (model=m.ext[:spineopt].instance,) => @constraint(
             m,
-            + expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0)
+            + expr_sum(sp_objective_upperbound[t] for (t,) in sp_objective_upperbound_indices(m); init=0)
             >=
-            + total_costs(m, anything; operations=false)
+            + 1e-6
         )
     )
 end
@@ -180,11 +176,11 @@ end
 Minimize total costs
 """
 function _set_mp_objective!(m::Model)
-    @fetch mp_objective_lowerbound = m.ext[:spineopt].variables
+    @fetch sp_objective_upperbound = m.ext[:spineopt].variables
     @objective(
         m,
         Min,
-        + expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0)
+        + expr_sum(sp_objective_upperbound[t] for (t,) in sp_objective_upperbound_indices(m); init=0)
         + total_costs(m, anything; operations=false)
     )
 end
@@ -200,3 +196,16 @@ function _add_mp_cuts!(m; log_level=3)
         _set_name(con, string(:mp_any_invested_cut, inds))
     end
 end
+
+function _unfix_history!(m::Model)
+    for (name, definition) in m.ext[:spineopt].variables_definition
+        var = m.ext[:spineopt].variables[name]
+        indices = definition[:indices]
+        for history_ind in indices(m; t=history_time_slice(m))
+            _unfix(var[history_ind])
+        end
+    end
+end
+
+_unfix(v::VariableRef) = unfix(v)
+_unfix(::Call) = nothing

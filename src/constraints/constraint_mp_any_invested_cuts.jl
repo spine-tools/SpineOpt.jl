@@ -25,7 +25,7 @@ cost improvement that is possible for an increase in the number of units availab
 """
 function add_constraint_mp_any_invested_cuts!(m::Model)
     @fetch (
-        mp_objective_lowerbound,
+        sp_objective_upperbound,
         units_invested_available,
         connections_invested_available,
         storages_invested_available
@@ -33,7 +33,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
     m.ext[:spineopt].constraints[:mp_any_invested_cut] = Dict(
         (benders_iteration=bi, t=t1) => @constraint(
             m,
-            + mp_objective_lowerbound[t1]
+            + sp_objective_upperbound[t1]
             >=
             + sp_objective_value_bi(benders_iteration=bi)
             # operating cost benefit from investments in units
@@ -86,6 +86,6 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
             )
         )
         for bi in last(benders_iteration())
-        for (t1,) in mp_objective_lowerbound_indices(m)
+        for (t1,) in sp_objective_upperbound_indices(m)
     )
 end
