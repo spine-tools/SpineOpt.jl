@@ -962,13 +962,13 @@ function _fix_history_variable!(m::Model, name::Symbol, indices)
         history_t = t_history_t(m; t=ind.t)
         history_t === nothing && continue
         for history_ind in indices(m; ind..., t=history_t)
-            _fix(var[history_ind], val[ind]; force=true)
+            _fix(var[history_ind], val[ind])
         end
     end
 end
 
-_fix(v::VariableRef, x; kwargs...) = fix(v, x; kwargs...)
-_fix(::Call, x; kwargs...) = nothing
+_fix(v::VariableRef, x) = fix(v, x; force=true)
+_fix(::Call, x) = nothing
 
 function apply_non_anticipativity_constraints!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition

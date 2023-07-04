@@ -99,6 +99,7 @@ function rerun_spineopt_benders!(
             break
         end
         @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
+        _unfix_history!(m)
         j += 1
         global current_bi = add_benders_iteration(j)
     end
@@ -169,7 +170,7 @@ function _add_constraint_mp_objective!(m::Model)
             m,
             + expr_sum(mp_objective_lowerbound[t] for (t,) in mp_objective_lowerbound_indices(m); init=0)
             >=
-            + total_costs(m, anything; operations=false)
+            + 1e-6
         )
     )
 end
@@ -200,3 +201,16 @@ function _add_mp_cuts!(m; log_level=3)
         _set_name(con, string(:mp_any_invested_cut, inds))
     end
 end
+
+function _unfix_history!(m::Model)
+    for (name, definition) in m.ext[:spineopt].variables_definition
+        var = m.ext[:spineopt].variables[name]
+        indices = definition[:indices]
+        for history_ind in indices(m; t=history_time_slice(m))
+            _unfix(var[history_ind])
+        end
+    end
+end
+
+_unfix(v::VariableRef) = unfix(v)
+_unfix(::Call) = nothing
