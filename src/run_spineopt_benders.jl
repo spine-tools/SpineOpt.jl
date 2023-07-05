@@ -49,9 +49,13 @@ function rerun_spineopt_benders!(
         k = 1
         subproblem_solved = nothing
         @timelog log_level 2 "Bringing $(m.ext[:spineopt].instance) back to the first window..." begin
-            roll_temporal_structure!(m, 1:sp_roll_count; rev=true)
-            _update_variable_names!(m)
-            _update_constraint_names!(m)
+            if sp_roll_count > 0
+                roll_temporal_structure!(m, 1:sp_roll_count; rev=true)
+                _update_variable_names!(m)
+                _update_constraint_names!(m)
+            else
+                refresh_temporal_structure!(m)
+            end
         end
         while true
             m.ext[:spineopt].temporal_structure[:current_window_number] = k
@@ -90,11 +94,6 @@ function rerun_spineopt_benders!(
             break
         end
         @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
-        msg = "Resetting sub problem temporal structure. Rewinding $(k - 1) times..."
-        if update_names
-            _update_variable_names!(m)
-            _update_constraint_names!(m)
-        end
         j += 1
         global current_bi = add_benders_iteration(j)
     end
@@ -188,8 +187,8 @@ Update (readd) SpineOpt master problem constraints that involve new objects (upd
 function _add_mp_cuts!(m; log_level=3)
     @timelog log_level 3 " - [constraint_mp_any_invested_cuts]" add_constraint_mp_any_invested_cuts!(m)
     # Name constraints
-    cons = m.ext[:spineopt].constraints[:mp_units_invested_cut]
+    cons = m.ext[:spineopt].constraints[:mp_any_invested_cut]
     for (inds, con) in cons
-        _set_name(con, string(:mp_units_invested_cut, inds))
+        _set_name(con, string(:mp_any_invested_cut, inds))
     end
 end

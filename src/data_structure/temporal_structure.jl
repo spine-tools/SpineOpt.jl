@@ -224,15 +224,15 @@ function _do_generate_time_slice!(m, window_start, window_end, window_time_slice
             "so that the temporal structure covers the optimisation window ",
         )
     end
-    history_time_slices = Array{TimeSlice,1}()
     window_duration = window_end - window_start
     required_history_duration = _required_history_duration(instance)
     history_window_count = div(Minute(required_history_duration), Minute(window_duration), RoundUp)
     i = findlast(t -> end_(t) <= window_end, window_time_slices)
-    history_window_time_slices = window_time_slices[1:i] .- window_duration
+    history_window_time_slices = window_time_slices[1:i]
+    history_time_slices = Array{TimeSlice,1}()
     for k in 1:history_window_count
-        prepend!(history_time_slices, history_window_time_slices)
         history_window_time_slices .-= window_duration
+        prepend!(history_time_slices, history_window_time_slices)
     end
     history_start = window_start - required_history_duration
     filter!(t -> end_(t) > history_start, history_time_slices)
@@ -381,6 +381,12 @@ function _roll_time_slice_set!(t_set::TimeSliceSet, forward::Union{Period,Compou
     nothing
 end
 
+function _refresh_time_slice_set!(t_set::TimeSliceSet)
+    refresh!.(t_set.time_slices)
+    refresh!.(values(t_set.gap_bridger.gaps))
+    refresh!.(values(t_set.gap_bridger.bridges))
+end
+
 """
     generate_temporal_structure!(m::Model)
 
@@ -448,10 +454,16 @@ function _do_roll_temporal_structure!(m::Model, rf, rev)
     rf = rev ? -rf : rf
     temp_struct = m.ext[:spineopt].temporal_structure
     !rev && end_(temp_struct[:current_window]) >= model_end(model=m.ext[:spineopt].instance) && return false
-    roll!(temp_struct[:current_window], rf; update=false)
+    roll!(temp_struct[:current_window], rf; refresh=false)
     _roll_time_slice_set!(temp_struct[:time_slice], rf)
     _roll_time_slice_set!(temp_struct[:history_time_slice], rf)
     true
+end
+
+function refresh_temporal_structure!(m::Model)
+    temp_struct = m.ext[:spineopt].temporal_structure
+    _refresh_time_slice_set!(temp_struct[:time_slice])
+    _refresh_time_slice_set!(temp_struct[:history_time_slice])
 end
 
 """
