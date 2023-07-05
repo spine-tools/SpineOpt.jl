@@ -95,10 +95,10 @@ function _save_sp_objective_value!(m, win_weight, tail=false)
 end
 
 function save_mp_objective_bounds_and_gap!(m_mp)
-    total_sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0)
     obj_lb = m_mp.ext[:spineopt].objective_lower_bound[] = sum(
         values(m_mp.ext[:spineopt].values[:mp_objective_lowerbound]); init=0
     )
+    total_sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0)
     obj_ub = m_mp.ext[:spineopt].objective_upper_bound[] = total_sp_obj_val
     gap = 2 * (obj_ub - obj_lb) / (obj_ub + obj_lb)
     push!(m_mp.ext[:spineopt].benders_gaps, gap)
