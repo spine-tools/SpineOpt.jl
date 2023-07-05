@@ -107,7 +107,24 @@ Add connection relationships for connection_type=:connection_type_lossless_bidir
 For connections with this parameter set, only a connection__from_node and connection__to_node need be set
 and this function creates the additional relationships on the fly.
 """
-function add_connection_relationships()
+function add_connection_relationships()   
+           
+    conns_with_no_from_node = [
+        conn.name
+        for conn in connection(connection_type=:connection_type_lossless_bidirectional)
+        if length(connection__from_node(connection=conn)) == 0
+    ]
+
+    length(conns_with_no_from_node) > 0 && @warn "The following bi-drectional connections have no from_node specified $conns_with_no_from_node"
+
+    conns_with_no_to_node = [
+        conn.name
+        for conn in connection(connection_type=:connection_type_lossless_bidirectional)
+        if length(connection__to_node(connection=conn)) == 0
+    ]
+
+    length(conns_with_no_to_node) > 0 && @warn "The following bi-directional connections have no to_node specified $conns_with_no_to_node"
+
     conn_from = (
         (conn, first(connection__from_node(connection=conn)))
         for conn in connection(connection_type=:connection_type_lossless_bidirectional)
