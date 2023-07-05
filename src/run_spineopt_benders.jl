@@ -207,5 +207,5 @@ function _unfix_history!(m::Model)
     end
 end
 
-_unfix(v::VariableRef) = unfix(v)
+_unfix(v::VariableRef) = is_fixed(v) && unfix(v)
 _unfix(::Call) = nothing
