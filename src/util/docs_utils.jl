@@ -327,30 +327,30 @@ The code assumes a specific structure.
 
 Developer note: An alternative approach for this code could be to automatically go over all folders and files (removing the need for a specific structure) and instead use a list "exclude" which indicates which folders and files should be skipped. To deal with folders in folders we could use walkdir() instead of readdir()
 """
-function drag_and_drop(pages,path)
+function drag_and_drop(pages, path)
     # collect folders as chapters and markdownfiles as pages
-    chaptex=Dict()
+    chaptex = Dict()
     for dir in readdir(path)
         if isdir(path*"/"*dir)
-            chaptex[dir]=[rd for rd in readdir(path*"/"*dir) if !isdir(path*"/"*dir*"/"*rd) && (rd[end-1:end]=="md" || rd[end-1:end]=="MD")]
+            chaptex[dir] = [rd for rd in readdir(path*"/"*dir) if !isdir(path*"/"*dir*"/"*rd) && (rd[end-1:end] == "md" || rd[end-1:end] == "MD")]
         end
     end
 
     # replace all empty chapters with the 'drag and drop' files
-    newpages=[]
+    newpages = []
     for page in pages
-        chapname=page.first
-        chapfile=lowercase(replace(chapname," "=>"_"))
-        if chapfile in keys(chaptex) && page.second==nothing
-            texlist=Any[]
+        chapname = page.first
+        chapfile = lowercase(replace(chapname, " " => "_"))
+        if chapfile in keys(chaptex) && page.second == nothing
+            texlist = Any[]
             for texfile in chaptex[chapfile]
-                texname=split(texfile,".")[1]
-                texname=uppercasefirst(replace(texname,"_"=>" "))
-                push!(texlist,texname => joinpath(chapfile,texfile))
+                texname = split(texfile, ".")[1]
+                texname = uppercasefirst(replace(texname, "_" => " "))
+                push!(texlist, texname => joinpath(chapfile, texfile))
             end
-            push!(newpages,chapname => texlist)
+            push!(newpages, chapname => texlist)
         else
-            push!(newpages,page)
+            push!(newpages, page)
         end
     end
     return newpages
