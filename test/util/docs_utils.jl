@@ -39,4 +39,8 @@
         end
     end
 	@test SpineOpt.write_concept_reference_files(concept_dictionary, path) == 0
+
+	pages=["Util" => nothing]
+	testpages=["Util" => Any["Docs utils" => joinpath("util", "docs_utils.md")]]
+	@test SpineOpt.drag_and_drop(pages,dirname(@__DIR__)) == testpages
 end

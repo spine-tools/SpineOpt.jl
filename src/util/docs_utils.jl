@@ -330,9 +330,9 @@ Developer note: An alternative approach for this code could be to automatically 
 function drag_and_drop(pages,path)
     # collect folders as chapters and markdownfiles as pages
     chaptex=Dict()
-    for dir in readdir(path*"/src")
-        if isdir(path*"/src/"*dir)
-            chaptex[dir]=[rd for rd in readdir(path*"/src/"*dir) if !isdir(path*"/src/"*dir*"/"*rd) && (rd[end-1:end]=="md" || rd[end-1:end]=="MD")]
+    for dir in readdir(path)
+        if isdir(path*"/"*dir)
+            chaptex[dir]=[rd for rd in readdir(path*"/"*dir) if !isdir(path*"/"*dir*"/"*rd) && (rd[end-1:end]=="md" || rd[end-1:end]=="MD")]
         end
     end
 

@@ -74,7 +74,7 @@ pages=[
     ]=#,
     "Library" => "library.md",
 ]
-newpages=SpineOpt.drag_and_drop(pages,path)
+newpages=SpineOpt.drag_and_drop(pages,path*"/src")
 
 # Create and deploy the documentation
 makedocs(
