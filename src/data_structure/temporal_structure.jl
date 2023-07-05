@@ -227,8 +227,17 @@ function _do_generate_time_slice!(m, window_start, window_end, window_time_slice
     window_duration = window_end - window_start
     required_history_duration = _required_history_duration(instance)
     history_window_count = div(Minute(required_history_duration), Minute(window_duration), RoundUp)
-    i = findlast(t -> end_(t) <= window_end, window_time_slices)
-    history_window_time_slices = window_time_slices[1:i]
+    blocks_by_history_interval = Dict()
+    for t in window_time_slices
+        t_start, t_end = start(t), min(end_(t), window_end)
+        t_start < t_end || continue
+        union!(get!(blocks_by_history_interval, (t_start, t_end), Set()), SpineInterface.blocks(t))
+    end
+    history_window_time_slices = [
+        TimeSlice(interval..., blocks...; duration_unit=_model_duration_unit(instance))
+        for (interval, blocks) in blocks_by_history_interval
+    ]
+    sort!(history_window_time_slices)
     history_time_slices = Array{TimeSlice,1}()
     for k in 1:history_window_count
         history_window_time_slices .-= window_duration
