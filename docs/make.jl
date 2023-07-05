@@ -1,49 +1,7 @@
 using Documenter
 using SpineOpt
 
-#the function below needs to be moved to src/util/docs_utils but src/util is currently in development in another branch
-"""
-    drag_and_drop(pages, path)
-
-Reads the folder and file structure to automatically create the documentation, effectively creating a drag and drop feature for select chapters. The functionality is activated for empty chapters ("chapter name" => nothing).
-
-The code assumes a specific structure.
-+ All chapters and corresponding markdownfiles are in the "docs/src folder".
-+ folder names need to be lowercase with underscores because folder names are derived from the page names
-+ markdown file names can have uppercases and can have underscores but don't need to because the page names are derived from file names
-
-An alternative approach for this code could be to automatically go over all folders and files (removing the need for a specific structure) and instead use a list "exclude" which indicates which folders and files should be skipped. To deal with folders in folders we could use walkdir() instead of readdir()
-"""
-function drag_and_drop(pages,path)
-    # collect folders as chapters and markdownfiles as pages
-    chaptex=Dict()
-    for dir in readdir(path*"/src")
-        if isdir(path*"/src/"*dir)
-            chaptex[dir]=[rd for rd in readdir(path*"/src/"*dir) if !isdir(path*"/src/"*dir*"/"*rd) && (rd[end-1:end]=="md" || rd[end-1:end]=="MD")]
-        end
-    end
-
-    # replace all empty chapters with the 'drag and drop' files
-    newpages=[]
-    for page in pages
-        chapname=page.first
-        chapfile=lowercase(replace(chapname," "=>"_"))
-        if chapfile in keys(chaptex) && page.second==nothing
-            texlist=Any[]
-            for texfile in chaptex[chapfile]
-                texname=split(texfile,".")[1]
-                texname=uppercasefirst(replace(texname,"_"=>" "))
-                push!(texlist,texname => joinpath(chapfile,texfile))
-            end
-            push!(newpages,chapname => texlist)
-        else
-            push!(newpages,page)
-        end
-    end
-    return newpages
-end
-
-## Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
+# Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
 # Actual descriptions are fetched separately from `src/concept_reference/concepts/`
 path = @__DIR__
 default_translation = Dict(
@@ -60,7 +18,8 @@ concept_dictionary = SpineOpt.add_cross_references!(
 )
 SpineOpt.write_concept_reference_files(concept_dictionary, path)
 
-## Generate the documentation pages
+# Generate the documentation pages
+# Replace the Any[...] with nothing if you want to activate the drag and drop feature
 pages=[
     "Introduction" => "index.md",
     "Getting Started" => Any[
@@ -115,9 +74,9 @@ pages=[
     ]=#,
     "Library" => "library.md",
 ]
-newpages=drag_and_drop(pages,path)
+newpages=SpineOpt.drag_and_drop(pages,path)
 
-## Create and deploy the documentation
+# Create and deploy the documentation
 makedocs(
     sitename="SpineOpt.jl",
     #format=Documenter.HTML(prettyurls=get(ENV, "CI", nothing) == "true"),
