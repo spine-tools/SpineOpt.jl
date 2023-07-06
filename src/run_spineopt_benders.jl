@@ -103,8 +103,7 @@ function rerun_spineopt_benders!(
 end
 
 """
-Initialize the given model for SpineOpt Master Problem: add variables, fix the necessary variables,
-add constraints and set objective.
+Initialize the given model for SpineOpt Master Problem: add variables, add constraints and set objective.
 """
 function _init_mp_model!(m; log_level=3)
     @timelog log_level 2 "Adding MP variables...\n" _add_mp_variables!(m; log_level=log_level)
@@ -163,7 +162,7 @@ end
 """
     _set_mp_objective!(m::Model)
 
-Minimize total costs
+Minimize total investment costs plus upperbound on subproblem objective.
 """
 function _set_mp_objective!(m::Model)
     @fetch sp_objective_upperbound = m.ext[:spineopt].variables
