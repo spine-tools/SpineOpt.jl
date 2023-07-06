@@ -192,18 +192,18 @@ function _roll_and_collect_time_slices!(m::Model)
     mp_time_slices = TimeSlice[]
     k = 1
     while true
-        # Group intervals by block before rolling
+        # Collect intervals by block before rolling
         intervals_by_block = Dict()
         for t in time_slice(m)
             for block in blocks(t)
-                push!(get!(intervals_by_block, block, []), (start(t), end_(t)))
+                push!(get!(intervals_by_block, block, []), (start=start(t), end_=end_(t)))
             end
         end
         # Fill gaps at the beginning of each block
         win_start = start(current_window(m))
         for (block, intervals) in intervals_by_block
-            block_start, _x = first(intervals)
-            win_start < block_start && pushfirst!(intervals, (win_start, block_start))
+            block_start = first(intervals).start
+            win_start < block_start && pushfirst!(intervals, (start=win_start, end_=block_start))
         end
         # Roll
         roll_successful = roll_temporal_structure!(m, k)
@@ -211,16 +211,16 @@ function _roll_and_collect_time_slices!(m::Model)
             # Fill gaps at the end of each block
             next_win_start = start(current_window(m))
             for (block, intervals) in intervals_by_block
-                _x, block_end = last(intervals)
-                block_end < next_win_start && push!(intervals, (block_end, next_win_start))
+                block_end = last(intervals).end_
+                block_end < next_win_start && push!(intervals, (start=block_end, end_=next_win_start))
             end
             # Make sure time slices do not drip over the next window
             for (block, intervals) in intervals_by_block
-                map!(x -> (x[1], min(x[2], next_win_start)), intervals, intervals)
-                filter!(x -> x[1] < x[2], intervals)
+                map!(i -> (start=i.start, end_=min(i.end_, next_win_start)), intervals, intervals)
+                filter!(i -> i.start < i.end_, intervals)
             end
         end
-        # Group blocks by interval
+        # Create and append TimeSlices
         blocks_by_interval = Dict()
         for (block, intervals) in intervals_by_block
             for (t_start, t_end) in intervals
