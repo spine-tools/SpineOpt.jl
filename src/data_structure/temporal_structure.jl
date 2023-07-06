@@ -17,33 +17,33 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-struct GapBridger
-    gaps::Array{TimeSlice,1}
-    bridges::Array{TimeSlice,1}
-end
-
 struct TimeSliceSet
     time_slices::Array{TimeSlice,1}
     block_time_slices::Dict{Object,Array{TimeSlice,1}}
-    gap_bridger::GapBridger
-    function TimeSliceSet(time_slices)
+    gaps::Array{TimeSlice,1}
+    bridges::Array{TimeSlice,1}
+    function TimeSliceSet(time_slices, dur_unit)
         block_time_slices = Dict{Object,Array{TimeSlice,1}}()
         for t in time_slices
             for block in blocks(t)
                 push!(get!(block_time_slices, block, []), t)
             end
         end
-        # Find eventual gaps in between time slices
+        # Bridge gaps in between temporal blocks
+        solids = [(first(time_slices), last(time_slices)) for time_slices in values(block_time_slices)]
+        sort!(solids)
         gap_bounds = (
-            (t1, t2)
-            for (t1, t2) in zip(time_slices[1 : end - 1], time_slices[2:end])
-            if end_(t1) < start(t2)
+            (prec_last, succ_first)
+            for ((_pf, prec_last), (succ_first, _sl)) in zip(solids[1 : end - 1], solids[2:end])
+            if end_(prec_last) < start(succ_first)
         )
-        gaps = [TimeSlice(end_(t1), start(t2)) for (t1, t2) in gap_bounds]
-        # NOTE: By convention, the first time slice in the next block becomes the 'bridge'
-        bridges = [t2 for (t1, t2) in gap_bounds]
-        gap_bridger = GapBridger(gaps, bridges)
-        new(time_slices, block_time_slices, gap_bridger)
+        gaps = [
+            TimeSlice(end_(prec_last), start(succ_first); duration_unit=dur_unit)
+            for (prec_last, succ_first) in gap_bounds
+        ]
+        # NOTE: By convention, the first time slice in the succeeding block becomes the 'bridge'
+        bridges = [succ_first for (_pl, succ_first) in gap_bounds]
+        new(time_slices, block_time_slices, gaps, bridges)
     end
 end
 
@@ -180,43 +180,69 @@ function _add_padding_time_slice!(instance, window_end, window_time_slices)
     end
 end
 
-function _master_window_and_time_slices(m::Model, m_mp::Model)
+"""
+    _roll_and_collect_time_slices!(m::Model)
+
+Roll the temporal structure of `m` till the very end, while collecting `TimeSlice`s from each window.
+Return the collected `TimeSlice`s and the number of rolls performed.
+"""
+function _roll_and_collect_time_slices!(m::Model)
     instance = m.ext[:spineopt].instance
     dur_unit = _model_duration_unit(instance)
     mp_time_slices = TimeSlice[]
     k = 1
     while true
-        start_end_blocks = [(start(t), end_(t), blocks(t)) for t in time_slice(m)]
-        window_end = end_(current_window(m))
-        if roll_temporal_structure!(m, k)
-            # Make sure time-slices do not overlap with the ones to be added in the next window
-            blocks_by_interval = Dict()
-            for (t_start, t_end, blocks) in start_end_blocks
-                t_end = min(t_end, window_end)
-                t_start < t_end || continue
-                union!(get!(blocks_by_interval, (t_start, t_end), Set()), blocks)
+        # Group intervals by block before rolling
+        intervals_by_block = Dict()
+        for t in time_slice(m)
+            for block in blocks(t)
+                push!(get!(intervals_by_block, block, []), (start(t), end_(t)))
             end
-            window_time_slices = [
-                TimeSlice(interval..., blocks...; duration_unit=dur_unit) for (interval, blocks) in blocks_by_interval
-            ]
-            _add_padding_time_slice!(instance, window_end, window_time_slices)
-            append!(mp_time_slices, window_time_slices)
-            k += 1
-        else
+        end
+        # Fill gaps at the beginning of each block
+        win_start = start(current_window(m))
+        for (block, intervals) in intervals_by_block
+            block_start, _x = first(intervals)
+            win_start < block_start && pushfirst!(intervals, (win_start, block_start))
+        end
+        if roll_temporal_structure!(m, k)
+            # Fill gaps at the end of each block
+            next_win_start = start(current_window(m))
+            for (block, intervals) in intervals_by_block
+                _x, block_end = last(intervals)
+                block_end < next_win_start && push!(intervals, (block_end, next_win_start))
+            end
+            # Group blocks by interval, but make sure time slices do not drip over the next window
+            blocks_by_interval = Dict()
+            for (block, intervals) in intervals_by_block
+                for (t_start, t_end) in intervals
+                    t_end = min(t_end, next_win_start)
+                    t_start < t_end && push!(get!(blocks_by_interval, (t_start, t_end), Set()), block)
+                end
+            end
+            # Create and append time slices
             append!(
                 mp_time_slices,
-                (
-                    TimeSlice(t_start, t_end, blocks...; duration_unit=dur_unit)
-                    for (t_start, t_end, blocks) in start_end_blocks
-                )
+                (TimeSlice(interval..., blocks...; duration_unit=dur_unit) for (interval, blocks) in blocks_by_interval)
+            )
+            k += 1
+        else
+            # Group blocks by interval
+            blocks_by_interval = Dict()
+            for (block, intervals) in intervals_by_block
+                for (t_start, t_end) in intervals
+                    push!(get!(blocks_by_interval, (t_start, t_end), Set()), block)
+                end
+            end
+            # Create and append time slices
+            append!(
+                mp_time_slices,
+                (TimeSlice(interval..., blocks...; duration_unit=dur_unit) for (interval, blocks) in blocks_by_interval)
             )
             break
         end
     end
-    unique!(sort!(mp_time_slices))
-    mp_start = start(first(mp_time_slices))
-    mp_end = end_(current_window(m))
-    mp_start, mp_end, mp_time_slices, k
+    unique!(sort!(mp_time_slices)), k - 1
 end
 
 """
@@ -267,8 +293,9 @@ function _history_time_slices!(instance, window_start, window_end, window_time_s
 end
 
 function _do_generate_time_slice!(m, window_time_slices, history_time_slices, t_history_t)
-    m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices)
-    m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(history_time_slices)
+    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+    m.ext[:spineopt].temporal_structure[:time_slice] = TimeSliceSet(window_time_slices, dur_unit)
+    m.ext[:spineopt].temporal_structure[:history_time_slice] = TimeSliceSet(history_time_slices, dur_unit)
     m.ext[:spineopt].temporal_structure[:t_history_t] = t_history_t
 end
 
@@ -291,13 +318,16 @@ function _generate_time_slice!(m::Model)
 end
 
 function _generate_master_window_and_time_slice!(m::Model, m_mp::Model)
-    mp_start, mp_end, mp_time_slices, k = _master_window_and_time_slices(m, m_mp)
     instance = m.ext[:spineopt].instance
-    dur_unit = _model_duration_unit(instance)
-    m_mp.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(mp_start, mp_end, duration_unit=dur_unit)
+    mp_time_slices, roll_count = _roll_and_collect_time_slices!(m)
+    mp_start = start(first(mp_time_slices))
+    mp_end = end_(current_window(m))
+    m_mp.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
+        mp_start, mp_end, duration_unit=_model_duration_unit(instance)
+    )
     history_time_slices, t_history_t = _history_time_slices!(instance, mp_start, mp_end, mp_time_slices)
     _do_generate_time_slice!(m_mp, mp_time_slices, history_time_slices, t_history_t)
-    k
+    roll_count
 end
 
 """
@@ -433,15 +463,15 @@ Roll a `TimeSliceSet` in time by a period specified by `forward`.
 """
 function _roll_time_slice_set!(t_set::TimeSliceSet, forward::Union{Period,CompoundPeriod})
     roll!.(t_set.time_slices, forward)
-    roll!.(values(t_set.gap_bridger.gaps), forward)
-    roll!.(values(t_set.gap_bridger.bridges), forward)
+    roll!.(values(t_set.gaps), forward)
+    roll!.(values(t_set.bridges), forward)
     nothing
 end
 
 function _refresh_time_slice_set!(t_set::TimeSliceSet)
     refresh!.(t_set.time_slices)
-    refresh!.(values(t_set.gap_bridger.gaps))
-    refresh!.(values(t_set.gap_bridger.bridges))
+    refresh!.(values(t_set.gaps))
+    refresh!.(values(t_set.bridges))
 end
 
 """
@@ -464,10 +494,10 @@ Create the master problem temporal structure for SpineOpt benders.
 Roll the subproblem to the last window and return the number of windows rolled.
 """
 function generate_master_temporal_structure!(m::Model, m_mp::Model)
-    k = _generate_master_window_and_time_slice!(m, m_mp)
+    roll_count = _generate_master_window_and_time_slice!(m, m_mp)
     _generate_output_time_slices!(m_mp)
     _generate_time_slice_relationships!(m_mp)
-    k - 1
+    roll_count
 end
 
 """
@@ -523,7 +553,7 @@ function to_time_slice(m::Model; t::TimeSlice)
         (
             s
             for t_set in t_sets
-            for s in _to_time_slice(t_set.gap_bridger.bridges, t_set.gap_bridger.gaps, t)
+            for s in _to_time_slice(t_set.bridges, t_set.gaps, t)
         )
     end
     unique(Iterators.flatten((in_blocks, in_gaps)))
@@ -539,7 +569,9 @@ t_in_t_excl(m::Model; kwargs...) = m.ext[:spineopt].temporal_structure[:t_in_t_e
 t_overlaps_t(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t](t)
 t_overlaps_t_excl(m::Model; t::TimeSlice) = m.ext[:spineopt].temporal_structure[:t_overlaps_t_excl](t)
 representative_time_slice(m, t) = get(m.ext[:spineopt].temporal_structure[:representative_time_slice], t, t)
-output_time_slices(m::Model; output::Object) = get(m.ext[:spineopt].temporal_structure[:output_time_slices], output, nothing)
+function output_time_slices(m::Model; output::Object)
+    get(m.ext[:spineopt].temporal_structure[:output_time_slices], output, nothing)
+end
 
 """
     node_time_indices(m::Model;<keyword arguments>)
