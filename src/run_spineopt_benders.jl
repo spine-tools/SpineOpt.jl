@@ -137,7 +137,7 @@ Add SpineOpt master problem constraints to the given model.
 """
 function _add_mp_constraints!(m; log_level=3)
     for (name, add_constraint!) in (
-            ("constraint_mp_objective", _add_constraint_mp_objective!),
+            ("constraint_sp_objective_upperbound", _add_constraint_sp_objective_upperbound!),
             ("constraint_unit_lifetime", add_constraint_unit_lifetime!),
             ("constraint_units_invested_transition", add_constraint_units_invested_transition!),
             ("constraint_units_invested_available", add_constraint_units_invested_available!),
@@ -153,20 +153,10 @@ function _add_mp_constraints!(m; log_level=3)
     _update_constraint_names!(m)
 end
 
-"""
-    add_constraint_units_on!(m::Model, units_on, units_available)
-
-Limit the units_on by the number of available units.
-"""
-function _add_constraint_mp_objective!(m::Model)
+function _add_constraint_sp_objective_upperbound!(m::Model)
     @fetch sp_objective_upperbound = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:mp_objective] = Dict(
-        (model=m.ext[:spineopt].instance,) => @constraint(
-            m,
-            + expr_sum(sp_objective_upperbound[t] for (t,) in sp_objective_upperbound_indices(m); init=0)
-            >=
-            + 1e-6
-        )
+        (t=t,) => @constraint(m, sp_objective_upperbound[t] >= 0) for (t,) in sp_objective_upperbound_indices(m)
     )
 end
 
