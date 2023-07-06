@@ -179,7 +179,7 @@ function _test_benders_storage()
         op_cost_inv = 0
         do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
         do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
-        @testset for should_invest in (false, true)
+        @testset for should_invest in (true, false)
             s_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
             objects = [
@@ -296,7 +296,7 @@ function _test_benders_unit_storage()
         op_cost_inv = 0
         do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
         do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
-        @testset for should_invest in (true,)
+        @testset for should_invest in (true, false)
             s_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
             objects = [
@@ -376,14 +376,12 @@ function _test_benders_unit_storage()
             using_spinedb(url_out, Y)
             @testset "total_cost" begin
                 for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
-                    @test Y.total_costs(model=Y.model(:instance), t=t) == (should_invest ? 0 : 6000.0)
+                    @test Y.total_costs(model=Y.model(:instance), t=t) == (should_invest ? 0 : 4800.0)
                 end
             end
             @testset "units_invested" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_invested(unit=Y.unit(:unit_a), t=t) == (
-                        should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
-                    )
+                    @test Y.units_invested(unit=Y.unit(:unit_a), t=t) == (t == DateTime(2000, 1, 1) ? 1 : 0)
                 end
             end
             @testset "units_mothballed" begin
@@ -393,7 +391,7 @@ function _test_benders_unit_storage()
             end
             @testset "units_invested_available" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_invested_available(unit=Y.unit(:unit_a), t=t) == (should_invest ? 1 : 0)
+                    @test Y.units_invested_available(unit=Y.unit(:unit_a), t=t) == 1
                 end
             end
             @testset "storages_invested" begin
@@ -415,7 +413,7 @@ function _test_benders_unit_storage()
             end
             @testset "node_slack_neg" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.node_slack_neg(node=Y.node(:node_a), t=t) == (should_invest ? 0 : 10)
+                    @test Y.node_slack_neg(node=Y.node(:node_a), t=t) == (should_invest ? 0 : 8)
                 end
             end
             @testset "node_state" begin
