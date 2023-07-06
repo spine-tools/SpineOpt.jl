@@ -205,42 +205,34 @@ function _roll_and_collect_time_slices!(m::Model)
             block_start, _x = first(intervals)
             win_start < block_start && pushfirst!(intervals, (win_start, block_start))
         end
-        if roll_temporal_structure!(m, k)
+        # Roll
+        roll_successful = roll_temporal_structure!(m, k)
+        if roll_successful
             # Fill gaps at the end of each block
             next_win_start = start(current_window(m))
             for (block, intervals) in intervals_by_block
                 _x, block_end = last(intervals)
                 block_end < next_win_start && push!(intervals, (block_end, next_win_start))
             end
-            # Group blocks by interval, but make sure time slices do not drip over the next window
-            blocks_by_interval = Dict()
+            # Make sure time slices do not drip over the next window
             for (block, intervals) in intervals_by_block
-                for (t_start, t_end) in intervals
-                    t_end = min(t_end, next_win_start)
-                    t_start < t_end && push!(get!(blocks_by_interval, (t_start, t_end), Set()), block)
-                end
+                map!(x -> (x[1], min(x[2], next_win_start)), intervals, intervals)
+                filter!(x -> x[1] < x[2], intervals)
             end
-            # Create and append time slices
-            append!(
-                mp_time_slices,
-                (TimeSlice(interval..., blocks...; duration_unit=dur_unit) for (interval, blocks) in blocks_by_interval)
-            )
-            k += 1
-        else
-            # Group blocks by interval
-            blocks_by_interval = Dict()
-            for (block, intervals) in intervals_by_block
-                for (t_start, t_end) in intervals
-                    push!(get!(blocks_by_interval, (t_start, t_end), Set()), block)
-                end
-            end
-            # Create and append time slices
-            append!(
-                mp_time_slices,
-                (TimeSlice(interval..., blocks...; duration_unit=dur_unit) for (interval, blocks) in blocks_by_interval)
-            )
-            break
         end
+        # Group blocks by interval
+        blocks_by_interval = Dict()
+        for (block, intervals) in intervals_by_block
+            for (t_start, t_end) in intervals
+                push!(get!(blocks_by_interval, (t_start, t_end), Set()), block)
+            end
+        end
+        append!(
+            mp_time_slices,
+            (TimeSlice(interval..., blocks...; duration_unit=dur_unit) for (interval, blocks) in blocks_by_interval)
+        )
+        roll_successful || break
+        k += 1
     end
     unique!(sort!(mp_time_slices)), k - 1
 end
