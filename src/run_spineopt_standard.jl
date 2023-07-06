@@ -347,16 +347,22 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
     @timelog log_level 0 "Optimizing model $(m.ext[:spineopt].instance)..." optimize!(m)
-    if termination_status(m) in (MOI.OPTIMAL, MOI.TIME_LIMIT)
-        @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." _save_model_results!(
-            m; iterations=iterations
-        )
-        calculate_duals && _calculate_duals(m; log_level=log_level)
-        @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
+    termination_st = termination_status(m)
+    if termination_st in (MOI.OPTIMAL, MOI.TIME_LIMIT)
+        if result_count(m) > 0
+            solution_type = termination_st == MOI.OPTIMAL ? "Optimal" : "Feasible"
+            @log log_level 1 "$solution_type solution found, objective function value: $(objective_value(m))"
+            @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." _save_model_results!(
+                m; iterations=iterations
+            )
+            calculate_duals && _calculate_duals(m; log_level=log_level)
+            @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
+        else
+            window = current_window(m)
+            @warn "no solution available for window $window - moving on..."
+        end
         true
-    elseif termination_status(m) == MOI.INFEASIBLE
-        msg = "model is infeasible - if conflicting constraints can be identified, they will be reported below\n"
+    elseif termination_st == MOI.INFEASIBLE
         printstyled(
             "model is infeasible - if conflicting constraints can be identified, they will be reported below\n";
             bold=true
@@ -364,7 +370,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
         try
             _compute_and_print_conflict!(m)
         catch err
-            @error err.msg
+            @info err.msg
         end
         false
     else
