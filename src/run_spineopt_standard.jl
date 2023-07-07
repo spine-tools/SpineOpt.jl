@@ -316,7 +316,7 @@ function _resume_run!(m, resume_file_path, log_level, update_names)
             @log log_level 1 "Nothing to resume - window $k was the last one"
             nothing
         else
-            update_model!(m; log_level=log_level, update_names=update_names)
+            update_model!(m; log_level=log_level, update_names=update_names, force=true)
             k + 1
         end
     catch err
@@ -412,7 +412,7 @@ Save the value of the objective terms in a model.
 function _save_objective_values!(m::Model)
     ind = (model=m.ext[:spineopt].instance, t=current_window(m))
     for (term, (in_window, _beyond_window)) in m.ext[:spineopt].objective_terms
-        m.ext[:spineopt].values[term] = Dict(ind => _value(realize(in_window)))
+        m.ext[:spineopt].values[term] = Dict(ind => JuMP.value(realize(in_window)))
     end
     m.ext[:spineopt].values[:total_costs] = Dict(
         ind => sum(m.ext[:spineopt].values[term][ind] for term in keys(m.ext[:spineopt].objective_terms); init=0)
@@ -452,7 +452,7 @@ function _reduced_cost_cplex(v::VariableRef, cplex_model, CPLEX)
     has_duals(m) || return nothing
     # If v is not integer nor binary, it is ok to use JuMP.reduced_cost
     is_integer(v) || is_binary(v) || return reduced_cost(v)
-    # Otherwise, we can't use JuMP.reduced_cost because it wouldn't know that the variable is actually fixed
+    # ...otherwise, we can't use JuMP.reduced_cost because it wouldn't know that the variable is actually fixed
     # and will return the wrong result.
     # The thing is, CPLEX.CPXchgprobtype(..., CPLEX.CPXPROB_FIXEDMILP) doesn't change the *JuMP* variable type to fixed;
     # it just fixes the variable *inside* CPLEX.
@@ -917,37 +917,35 @@ end
 Update the given model for the next window in the rolling horizon: update variables, fix the necessary variables,
 update constraints and update objective.
 """
-function update_model!(m; log_level=3, update_names=false)
+function update_model!(m; log_level=3, update_names=false, force=false)
     if update_names
         _update_variable_names!(m)
         _update_constraint_names!(m)
     end
+    result_count(m) > 0 || force || return
     @timelog log_level 2 "Fixing history..." _fix_history!(m)
     @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m)
 end
 
 function _update_constraint_names!(m)
-    for (con_key, cons) in m.ext[:spineopt].constraints
-        con_key_raw = string(con_key)
-        if occursin(r"[^\x1F-\x7F]+", con_key_raw)
-            @warn "constraint $con_key_raw has an illegal character"            
-        end
-        con_key_clean = _sanitize_constraint_name(con_key_raw)                            
-        for (inds, con) in cons        
-            constraint_name = _sanitize_constraint_name(string(con_key_clean, inds))                            
+    for (key, cons) in m.ext[:spineopt].constraints                        
+        for (ind, con) in cons        
+            constraint_name = _sanitize_constraint_name(string(key, ind))                            
             _set_name(con, constraint_name)
         end
     end
 end
 
 function _sanitize_constraint_name(constraint_name)
-    replace(constraint_name, r"[^\x1F-\x7F]+" => "_")
+    pattern = r"[^\x1F-\x7F]+"
+    occursin(pattern, constraint_name) && @warn "constraint $constraint_name has an illegal character"
+    replace(constraint_name, pattern => "_")
 end
 
 function _update_variable_names!(m)
     for (name, var) in m.ext[:spineopt].variables
-        for (inds, v) in var
-            _set_name(v, _base_name(name, inds))
+        for (ind, v) in var
+            _set_name(v, _base_name(name, ind))
         end
     end
 end

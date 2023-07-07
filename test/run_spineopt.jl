@@ -816,7 +816,10 @@ function _test_time_limit()
                 "HiGHS.jl" => Dict("type" => "map", "index_type" => "str", "data" => Dict("time_limit" => eps(Float64)))
             ),
         )
-        object_parameter_values = [["model", "instance", "db_mip_solver_options", mip_solver_options]]
+        object_parameter_values = [
+            ["model", "instance", "db_mip_solver_options", mip_solver_options],
+            ["model", "instance", "roll_forward", unparse_db_value(Hour(6))]
+        ]
         relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 1000]]
         SpineInterface.import_data(
             url_in;
@@ -824,8 +827,9 @@ function _test_time_limit()
             relationship_parameter_values=relationship_parameter_values
         )
         rm(file_path_out; force=true)
-        msg = "no solution available for window 2000-01-01T00:00~>2000-01-02T00:00 - moving on..."
-        @test_logs min_level=Warn (:warn, msg) run_spineopt(url_in, url_out; log_level=0)
+        windows = [TimeSlice(t, t + Hour(6)) for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 18)]
+        msgs = ["no solution available for window $w - moving on..." for w in windows]
+        @test_logs(min_level=Warn, ((:warn, msg) for msg in msgs)..., run_spineopt(url_in, url_out; log_level=0))
     end
 end
 
