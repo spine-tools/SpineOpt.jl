@@ -20,8 +20,9 @@
 """
     add_constraint_mp_units_invested_cut!(m::Model)
 
-Adds Benders optimality cuts for the units_available constraint. This tells the master problem the mp_objective
-cost improvement that is possible for an increase in the number of units available for a unit and so on.
+Adds Benders optimality cuts.
+This tells the master problem the improvement of the subproblem objective value that is possible for an increase
+in the number of investments.
 """
 function add_constraint_mp_any_invested_cuts!(m::Model)
     @fetch (
