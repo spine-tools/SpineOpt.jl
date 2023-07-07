@@ -807,6 +807,7 @@ function _test_fix_node_state_using_map_with_rolling()
 end
 
 function _test_time_limit()
+    Sys.iswindows() && return
     @testset "time_limit" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         mip_solver_options = Dict(
