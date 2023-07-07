@@ -454,13 +454,6 @@ end
 function _reduced_cost_cplex(v::VariableRef, cplex_model, CPLEX)
     m = owner_model(v)
     has_duals(m) || return nothing
-    # If v is not integer nor binary, it is ok to use JuMP.reduced_cost
-    is_integer(v) || is_binary(v) || return reduced_cost(v)
-    # ...otherwise, we can't use JuMP.reduced_cost because it wouldn't know that the variable is actually fixed
-    # and will return the wrong result.
-    # The thing is, CPLEX.CPXchgprobtype(..., CPLEX.CPXPROB_FIXEDMILP) doesn't change the *JuMP* variable type to fixed;
-    # it just fixes the variable *inside* CPLEX.
-    # The below computation correctly accounts for the fact that the variable is fixed.
     sign = objective_sense(m) == MIN_SENSE ? 1.0 : -1.0
     col = Cint(CPLEX.column(cplex_model, index(v)) - 1)
     p = Ref{Cdouble}()
