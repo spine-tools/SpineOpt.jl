@@ -184,6 +184,8 @@ end
 
 Base.getindex(c::Constant, _x) = Call(c.value)
 
+name_from_fn(fn) = split(split(string(fn), "add_")[2], "!")[1]
+
 function print_model_and_solution(m, variable_patterns...)
     println(m)
     print_solution(m, variable_patterns...)

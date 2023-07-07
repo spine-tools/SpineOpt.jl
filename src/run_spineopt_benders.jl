@@ -115,19 +115,20 @@ end
 Add SpineOpt Master Problem variables to the given model.
 """
 function _add_mp_variables!(m; log_level=3)
-    for (name, add_variable!) in (
-            ("sp_objective_upperbound", add_variable_sp_objective_upperbound!),
-            ("mp_units_invested", add_variable_units_invested!),
-            ("mp_units_invested_available", add_variable_units_invested_available!),
-            ("mp_units_mothballed", add_variable_units_mothballed!),
-            ("mp_connections_invested", add_variable_connections_invested!),
-            ("mp_connections_invested_available", add_variable_connections_invested_available!),
-            ("mp_connections_decommissioned", add_variable_connections_decommissioned!),
-            ("mp_storages_invested", add_variable_storages_invested!),
-            ("mp_storages_invested_available", add_variable_storages_invested_available!),
-            ("mp_storages_decommissioned", add_variable_storages_decommissioned!),
+    for add_variable! in (
+            add_variable_sp_objective_upperbound!,
+            add_variable_units_invested!,
+            add_variable_units_invested_available!,
+            add_variable_units_mothballed!,
+            add_variable_connections_invested!,
+            add_variable_connections_invested_available!,
+            add_variable_connections_decommissioned!,
+            add_variable_storages_invested!,
+            add_variable_storages_invested_available!,
+            add_variable_storages_decommissioned!,
         )
-        @timelog log_level 3 "- [variable_$name]" add_variable!(m)
+        name = name_from_fn(add_variable!)
+        @timelog log_level 3 "- [$name]" add_variable!(m)
     end
 end
 
@@ -135,19 +136,20 @@ end
 Add SpineOpt master problem constraints to the given model.
 """
 function _add_mp_constraints!(m; log_level=3)
-    for (name, add_constraint!) in (
-            ("constraint_sp_objective_upperbound", _add_constraint_sp_objective_upperbound!),
-            ("constraint_unit_lifetime", add_constraint_unit_lifetime!),
-            ("constraint_units_invested_transition", add_constraint_units_invested_transition!),
-            ("constraint_units_invested_available", add_constraint_units_invested_available!),
-            ("constraint_connection_lifetime", add_constraint_connection_lifetime!),
-            ("constraint_connections_invested_transition", add_constraint_connections_invested_transition!),
-            ("constraint_connections_invested_available", add_constraint_connections_invested_available!),
-            ("constraint_storage_lifetime", add_constraint_storage_lifetime!),
-            ("constraint_storages_invested_transition", add_constraint_storages_invested_transition!),
-            ("constraint_storages_invested_available", add_constraint_storages_invested_available!),
+    for add_constraint! in (
+            _add_constraint_sp_objective_upperbound!,
+            add_constraint_unit_lifetime!,
+            add_constraint_units_invested_transition!,
+            add_constraint_units_invested_available!,
+            add_constraint_connection_lifetime!,
+            add_constraint_connections_invested_transition!,
+            add_constraint_connections_invested_available!,
+            add_constraint_storage_lifetime!,
+            add_constraint_storages_invested_transition!,
+            add_constraint_storages_invested_available!,
         )
-        @timelog log_level 3 "- [constraint_$name]" add_constraint!(m)
+        name = name_from_fn(add_constraint!)
+        @timelog log_level 3 "- [$name]" add_constraint!(m)
     end
     _update_constraint_names!(m)
 end
