@@ -460,8 +460,8 @@ function _test_master_temporal_structure()
         generate_temporal_structure!(m)
         SpineOpt.generate_master_temporal_structure!(m, m_mp)
         obs_time_slices = time_slice(m_mp)
-        ab_starts = m_start : res : m_end - res - a_gap
-        b_starts = m_end - res : res : m_end - res + b_look_ahead
+        ab_starts = m_start : res : m_end - a_gap
+        b_starts = m_end: res : m_end - res + b_look_ahead
         block_a, block_b = temporal_block(:block_a), temporal_block(:block_b)
         exp_time_slices = vcat(
             [TimeSlice(st, st + res, block_a, block_b) for st in ab_starts],

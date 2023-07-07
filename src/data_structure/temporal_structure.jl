@@ -168,13 +168,15 @@ function _window_time_slices(instance::Object, window_start::DateTime, window_en
 end
 
 function _add_padding_time_slice!(instance, window_end, window_time_slices)
-    temp_struct_end = maximum(end_.(window_time_slices))
+    last_t = window_time_slices[argmax(end_.(window_time_slices))]
+    temp_struct_end = end_(last_t)
     if temp_struct_end < window_end
-        blocks = model__temporal_block(model=instance)
-        padding_t = TimeSlice(temp_struct_end, window_end, blocks...; duration_unit=_model_duration_unit(instance))
+        padding_t = TimeSlice(
+            temp_struct_end, window_end, blocks(last_t)...; duration_unit=_model_duration_unit(instance)
+        )
         push!(window_time_slices, padding_t)
         @info string(
-            "an artificial time slice $padding_t has been added ",
+            "an artificial time slice $padding_t has been added to blocks $(blocks(padding_t)), ",
             "so that the temporal structure fills the optimisation window ",
         )
     end
@@ -190,6 +192,7 @@ function _roll_and_collect_time_slices!(m::Model)
     instance = m.ext[:spineopt].instance
     dur_unit = _model_duration_unit(instance)
     mp_time_slices = TimeSlice[]
+    win_start = start(current_window(m))
     k = 1
     while true
         # Collect intervals by block before rolling
@@ -199,24 +202,20 @@ function _roll_and_collect_time_slices!(m::Model)
                 push!(get!(intervals_by_block, block, []), (start=start(t), end_=end_(t)))
             end
         end
-        # Fill gaps at the beginning of each block
-        win_start = start(current_window(m))
+        # Fill gaps at the beginning and end of each block
+        win_end = end_(current_window(m))
         for (block, intervals) in intervals_by_block
             block_start = first(intervals).start
+            block_end = last(intervals).end_
             win_start < block_start && pushfirst!(intervals, (start=win_start, end_=block_start))
+            block_end < win_end && push!(intervals, (start=block_end, end_=win_end))
         end
         # Roll
         roll_successful = roll_temporal_structure!(m, k)
         if roll_successful
-            # Fill gaps at the end of each block
-            next_win_start = start(current_window(m))
-            for (block, intervals) in intervals_by_block
-                block_end = last(intervals).end_
-                block_end < next_win_start && push!(intervals, (start=block_end, end_=next_win_start))
-            end
             # Make sure time slices do not drip over the next window
             for (block, intervals) in intervals_by_block
-                map!(i -> (start=i.start, end_=min(i.end_, next_win_start)), intervals, intervals)
+                map!(i -> (start=i.start, end_=min(i.end_, win_end)), intervals, intervals)
                 filter!(i -> i.start < i.end_, intervals)
             end
         end
@@ -232,6 +231,7 @@ function _roll_and_collect_time_slices!(m::Model)
             (TimeSlice(interval..., blocks...; duration_unit=dur_unit) for (interval, blocks) in blocks_by_interval)
         )
         roll_successful || break
+        win_start = win_end
         k += 1
     end
     unique!(sort!(mp_time_slices)), k - 1
