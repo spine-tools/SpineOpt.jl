@@ -202,7 +202,6 @@ function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
             add_constraint_min_down_time!,
             add_constraint_min_up_time!,
             add_constraint_unit_state_transition!,
-            add_constraint_unit_flow_capacity_w_ramp!,
             add_constraint_split_ramps!,
             add_constraint_ramp_up!,
             add_constraint_max_start_up_ramp!,
