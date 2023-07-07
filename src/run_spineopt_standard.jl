@@ -316,7 +316,7 @@ function _resume_run!(m, resume_file_path, log_level, update_names)
             @log log_level 1 "Nothing to resume - window $k was the last one"
             nothing
         else
-            update_model!(m; log_level=log_level, update_names=update_names, force=true)
+            update_model!(m; log_level=log_level, update_names=update_names)
             k + 1
         end
     catch err
@@ -329,6 +329,7 @@ function _load_variable_values!(m::Model, values)
     for (name, definition) in m.ext[:spineopt].variables_definition
         _load_variable_value!(m, name, definition[:indices], values)
     end
+    m.ext[:spineopt].has_results[] = true
 end
 
 function _load_variable_value!(m::Model, name::Symbol, indices::Function, values)
@@ -352,14 +353,15 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
         if result_count(m) > 0
             solution_type = termination_st == MOI.OPTIMAL ? "Optimal" : "Feasible"
             @log log_level 1 "$solution_type solution found, objective function value: $(objective_value(m))"
+            m.ext[:spineopt].has_results[] = true
             @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." _save_model_results!(
                 m; iterations=iterations
             )
             calculate_duals && _calculate_duals(m; log_level=log_level)
             @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
         else
-            window = current_window(m)
-            @warn "no solution available for window $window - moving on..."
+            m.ext[:spineopt].has_results[] = false
+            @warn "no solution available for window $(current_window(m)) - moving on..."
         end
         true
     elseif termination_st == MOI.INFEASIBLE
@@ -917,12 +919,12 @@ end
 Update the given model for the next window in the rolling horizon: update variables, fix the necessary variables,
 update constraints and update objective.
 """
-function update_model!(m; log_level=3, update_names=false, force=false)
+function update_model!(m; log_level=3, update_names=false)
     if update_names
         _update_variable_names!(m)
         _update_constraint_names!(m)
     end
-    result_count(m) > 0 || force || return
+    m.ext[:spineopt].has_results[] || return
     @timelog log_level 2 "Fixing history..." _fix_history!(m)
     @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m)
 end

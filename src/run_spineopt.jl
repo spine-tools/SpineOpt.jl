@@ -397,6 +397,7 @@ struct SpineOptExt
     objective_lower_bound::Base.RefValue{Float64}
     objective_upper_bound::Base.RefValue{Float64}
     benders_gaps::Vector{Float64}
+    has_results::Base.RefValue{Bool}
     function SpineOptExt(instance, lp_solver=nothing, master_problem_model=nothing)
         intermediate_results_folder = tempname(; cleanup=false)
         mkpath(intermediate_results_folder)
@@ -433,6 +434,7 @@ struct SpineOptExt
             Ref(0.0),  # objective_lower_bound
             Ref(0.0),  # objective_upper_bound
             [],  # benders_gaps
+            Ref(false),  # has_results
         )
     end
 end
