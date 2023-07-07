@@ -39,7 +39,7 @@ function add_constraint_units_available!(m::Model)
                 + expr_sum(
                     units_invested_available[u, s, t1]
                     for (u, s, t1) in units_invested_available_indices(
-                        m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t)
+                        m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
                     );
                     # If t_overlaps_t is chosen here, we don't predefine hierarchy; 
                     # not crucial, as most likely always t_operations < t_investment

@@ -184,6 +184,17 @@ end
 
 Base.getindex(c::Constant, _x) = Call(c.value)
 
-_value(v::GenericAffExpr) = JuMP.value(v)
-_value(v) = v
+function print_model_and_solution(m, variable_patterns...)
+    println(m)
+    print_solution(m, variable_patterns...)
+end
 
+function print_solution(m, variable_patterns...)
+    println("Results")
+    println("objective value = ", objective_value(m))
+    for v in all_variables(m)
+        isempty(variable_patterns) || all(occursin(pattern, name(v)) for pattern in variable_patterns) || continue
+        println(v, " = ", value(v))
+    end
+    println()
+end

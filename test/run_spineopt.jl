@@ -457,7 +457,8 @@ function _test_unknown_output()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        @test_logs min_level=Warn (:warn, "can't find any values for 'unknown_output'") run_spineopt(url_in, url_out; log_level=0)
+        msg = "can't find any values for 'unknown_output'"
+        @test_logs min_level=Warn (:warn, msg) run_spineopt(url_in, url_out; log_level=0)
     end
 end
 
@@ -805,6 +806,34 @@ function _test_fix_node_state_using_map_with_rolling()
     end
 end
 
+function _test_time_limit()
+    Sys.iswindows() && return
+    @testset "time_limit" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        mip_solver_options = Dict(
+            "type" => "map",
+            "index_type" => "str",
+            "data" => Dict(
+                "HiGHS.jl" => Dict("type" => "map", "index_type" => "str", "data" => Dict("time_limit" => eps(Float64)))
+            ),
+        )
+        object_parameter_values = [
+            ["model", "instance", "db_mip_solver_options", mip_solver_options],
+            ["model", "instance", "roll_forward", unparse_db_value(Hour(6))]
+        ]
+        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 1000]]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        rm(file_path_out; force=true)
+        windows = [TimeSlice(t, t + Hour(6)) for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 18)]
+        msgs = ["no solution available for window $w - moving on..." for w in windows]
+        @test_logs(min_level=Warn, ((:warn, msg) for msg in msgs)..., run_spineopt(url_in, url_out; log_level=0))
+    end
+end
+
 @testset "run_spineopt" begin
     _test_rolling()
     _test_rolling_with_updating_data()
@@ -824,4 +853,5 @@ end
     _test_dual_values_with_two_time_indices()
     _test_fix_unit_flow_with_rolling()
     _test_fix_node_state_using_map_with_rolling()
+    _test_time_limit()
 end

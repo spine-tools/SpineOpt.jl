@@ -87,7 +87,10 @@ end
 
 function _save_sp_objective_value!(m, win_weight, tail=false)
     increment = if tail
-        sum(_value(realize(beyond_window)) for (_iw, beyond_window) in values(m.ext[:spineopt].objective_terms); init=0)
+        sum(
+            JuMP.value(realize(beyond_window)) for (_iw, beyond_window) in values(m.ext[:spineopt].objective_terms);
+            init=0
+        )
     else
         sum(values(m.ext[:spineopt].values[:total_costs]); init=0)
     end

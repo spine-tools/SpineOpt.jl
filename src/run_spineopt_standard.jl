@@ -329,6 +329,7 @@ function _load_variable_values!(m::Model, values)
     for (name, definition) in m.ext[:spineopt].variables_definition
         _load_variable_value!(m, name, definition[:indices], values)
     end
+    m.ext[:spineopt].has_results[] = true
 end
 
 function _load_variable_value!(m::Model, name::Symbol, indices::Function, values)
@@ -347,16 +348,23 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
     @timelog log_level 0 "Optimizing model $(m.ext[:spineopt].instance)..." optimize!(m)
-    if termination_status(m) in (MOI.OPTIMAL, MOI.TIME_LIMIT)
-        @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." _save_model_results!(
-            m; iterations=iterations
-        )
-        calculate_duals && _calculate_duals(m; log_level=log_level)
-        @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
+    termination_st = termination_status(m)
+    if termination_st in (MOI.OPTIMAL, MOI.TIME_LIMIT)
+        if result_count(m) > 0
+            solution_type = termination_st == MOI.OPTIMAL ? "Optimal" : "Feasible"
+            @log log_level 1 "$solution_type solution found, objective function value: $(objective_value(m))"
+            m.ext[:spineopt].has_results[] = true
+            @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." _save_model_results!(
+                m; iterations=iterations
+            )
+            calculate_duals && _calculate_duals(m; log_level=log_level)
+            @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
+        else
+            m.ext[:spineopt].has_results[] = false
+            @warn "no solution available for window $(current_window(m)) - moving on..."
+        end
         true
-    elseif termination_status(m) == MOI.INFEASIBLE
-        msg = "model is infeasible - if conflicting constraints can be identified, they will be reported below\n"
+    elseif termination_st == MOI.INFEASIBLE
         printstyled(
             "model is infeasible - if conflicting constraints can be identified, they will be reported below\n";
             bold=true
@@ -364,7 +372,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
         try
             _compute_and_print_conflict!(m)
         catch err
-            @error err.msg
+            @info err.msg
         end
         false
     else
@@ -406,7 +414,7 @@ Save the value of the objective terms in a model.
 function _save_objective_values!(m::Model)
     ind = (model=m.ext[:spineopt].instance, t=current_window(m))
     for (term, (in_window, _beyond_window)) in m.ext[:spineopt].objective_terms
-        m.ext[:spineopt].values[term] = Dict(ind => _value(realize(in_window)))
+        m.ext[:spineopt].values[term] = Dict(ind => JuMP.value(realize(in_window)))
     end
     m.ext[:spineopt].values[:total_costs] = Dict(
         ind => sum(m.ext[:spineopt].values[term][ind] for term in keys(m.ext[:spineopt].objective_terms); init=0)
@@ -446,7 +454,7 @@ function _reduced_cost_cplex(v::VariableRef, cplex_model, CPLEX)
     has_duals(m) || return nothing
     # If v is not integer nor binary, it is ok to use JuMP.reduced_cost
     is_integer(v) || is_binary(v) || return reduced_cost(v)
-    # Otherwise, we can't use JuMP.reduced_cost because it wouldn't know that the variable is actually fixed
+    # ...otherwise, we can't use JuMP.reduced_cost because it wouldn't know that the variable is actually fixed
     # and will return the wrong result.
     # The thing is, CPLEX.CPXchgprobtype(..., CPLEX.CPXPROB_FIXEDMILP) doesn't change the *JuMP* variable type to fixed;
     # it just fixes the variable *inside* CPLEX.
@@ -916,32 +924,30 @@ function update_model!(m; log_level=3, update_names=false)
         _update_variable_names!(m)
         _update_constraint_names!(m)
     end
+    m.ext[:spineopt].has_results[] || return
     @timelog log_level 2 "Fixing history..." _fix_history!(m)
     @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m)
 end
 
 function _update_constraint_names!(m)
-    for (con_key, cons) in m.ext[:spineopt].constraints
-        con_key_raw = string(con_key)
-        if occursin(r"[^\x1F-\x7F]+", con_key_raw)
-            @warn "constraint $con_key_raw has an illegal character"            
-        end
-        con_key_clean = _sanitize_constraint_name(con_key_raw)                            
-        for (inds, con) in cons        
-            constraint_name = _sanitize_constraint_name(string(con_key_clean, inds))                            
+    for (key, cons) in m.ext[:spineopt].constraints                        
+        for (ind, con) in cons        
+            constraint_name = _sanitize_constraint_name(string(key, ind))                            
             _set_name(con, constraint_name)
         end
     end
 end
 
 function _sanitize_constraint_name(constraint_name)
-    replace(constraint_name, r"[^\x1F-\x7F]+" => "_")
+    pattern = r"[^\x1F-\x7F]+"
+    occursin(pattern, constraint_name) && @warn "constraint $constraint_name has an illegal character"
+    replace(constraint_name, pattern => "_")
 end
 
 function _update_variable_names!(m)
     for (name, var) in m.ext[:spineopt].variables
-        for (inds, v) in var
-            _set_name(v, _base_name(name, inds))
+        for (ind, v) in var
+            _set_name(v, _base_name(name, ind))
         end
     end
 end
