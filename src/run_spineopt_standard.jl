@@ -414,11 +414,17 @@ Save the value of the objective terms in a model.
 """
 function _save_objective_values!(m::Model)
     ind = (model=m.ext[:spineopt].instance, t=current_window(m))
-    for (term, (in_window, _beyond_window)) in m.ext[:spineopt].objective_terms
+    for (term, (in_window, _bw)) in m.ext[:spineopt].objective_terms
         m.ext[:spineopt].values[term] = Dict(ind => JuMP.value(realize(in_window)))
     end
     m.ext[:spineopt].values[:total_costs] = Dict(
         ind => sum(m.ext[:spineopt].values[term][ind] for term in keys(m.ext[:spineopt].objective_terms); init=0)
+    )
+    m.ext[:spineopt].values[:total_costs_tail] = Dict(
+        ind => sum(
+            JuMP.value(realize(beyond_window)) for (_iw, beyond_window) in values(m.ext[:spineopt].objective_terms);
+            init=0
+        )
     )
     nothing
 end
@@ -443,16 +449,17 @@ function _calculate_duals_cplex(m; log_level=3)
     prob_type = CPLEX.CPXgetprobtype(cplex_model.env, cplex_model.lp)
     @assert prob_type == CPLEX.CPXPROB_MILP
     CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, CPLEX.CPXPROB_FIXEDMILP)
-    @timelog log_level 1 "Optimizing LP..." CPLEX.CPXlpopt(cplex_model.env, cplex_model.lp)
-    _save_marginal_values!(m)
-    _save_bound_marginal_values!(m, v -> _reduced_cost_cplex(v, cplex_model, CPLEX))
+    @timelog log_level 1 "Optimizing LP..." ret = CPLEX.CPXlpopt(cplex_model.env, cplex_model.lp)
+    if ret == 0
+        _save_marginal_values!(m)
+        _save_bound_marginal_values!(m, v -> _reduced_cost_cplex(v, cplex_model, CPLEX))
+    end
     CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, prob_type)
-    true
+    ret == 0
 end
 
 function _reduced_cost_cplex(v::VariableRef, cplex_model, CPLEX)
     m = owner_model(v)
-    has_duals(m) || return nothing
     sign = objective_sense(m) == MIN_SENSE ? 1.0 : -1.0
     col = Cint(CPLEX.column(cplex_model, index(v)) - 1)
     p = Ref{Cdouble}()
@@ -465,7 +472,7 @@ function _calculate_duals_fallback(m; log_level=3)
     @timelog log_level 1 "Copying model" (m_dual_lp, ref_map) = copy_model(m)
     lp_solver = m.ext[:spineopt].lp_solver
     @timelog log_level 1 "Setting LP solver $(lp_solver)..." set_optimizer(m_dual_lp, lp_solver)
-    @timelog log_level 1 "Fixing integer variables..." _fix_integer_vars(m, ref_map)
+    @timelog log_level 1 "Fixing integer variables..." _fix_integer_vars!(m, ref_map)
     dual_fallback(con) = DualPromise(ref_map[con])
     reduced_cost_fallback(var) = ReducedCostPromise(ref_map[var])
     _save_marginal_values!(m, dual_fallback)
@@ -483,54 +490,36 @@ function _calculate_duals_fallback(m; log_level=3)
     end
 end
 
-function _fix_integer_vars(m::Model, ref_map::ReferenceMap)
-    # Collect values before calling `fix` on any of the variables to avoid OptimizeNotCalled()
-    integers_definition = Dict(
-        name => def
-        for (name, def) in m.ext[:spineopt].variables_definition
-        if def[:bin] !== nothing || def[:int] !== nothing
-    )
-    values = Dict(
-        name => Dict(
-            ind => _variable_value(m.ext[:spineopt].variables[name][ind])
-            for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))
-        )
-        for (name, def) in integers_definition
-    )
-    for (name, def) in integers_definition
-        bin = def[:bin]
-        int = def[:int]
-        indices = def[:indices]
-        var = m.ext[:spineopt].variables[name]
-        vals = values[name]
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            v = var[ind]
+function _fix_integer_vars!(m::Model, ref_map::ReferenceMap)
+    for (name, var) in m.ext[:spineopt].variables
+        for (i, v) in var
             ref_v = ref_map[v]
-            val = vals[ind]
+            if is_binary(ref_v)
+                unset_binary(ref_v)
+            elseif is_integer(ref_v)
+                unset_integer(ref_v)
+            else
+                continue
+            end
+            val = _variable_value(v)
             fix(ref_v, val; force=true)
-            (bin != nothing && bin(ind)) && unset_binary(ref_v)
-            (int != nothing && int(ind)) && unset_integer(ref_v)
         end
     end
 end
 
-function _save_marginal_values!(m::Model, dual=_dual)
+function _save_marginal_values!(m::Model, dual=JuMP.dual)
     for (constraint_name, con) in m.ext[:spineopt].constraints
-        output_name = Symbol(string("constraint_", constraint_name))
-        m.ext[:spineopt].values[output_name] = Dict(i => dual(c) for (i, c) in con)
+        name = Symbol(string("constraint_", constraint_name))
+        m.ext[:spineopt].values[name] = Dict(i => dual(c) for (i, c) in con)
     end
 end
 
-function _save_bound_marginal_values!(m::Model, reduced_cost=_reduced_cost)
+function _save_bound_marginal_values!(m::Model, reduced_cost=JuMP.reduced_cost)
     for (variable_name, var) in m.ext[:spineopt].variables
-        output_name = Symbol(string("bound_", variable_name))
-        m.ext[:spineopt].values[output_name] = Dict(i => reduced_cost(v) for (i, v) in var)
+        name = Symbol(string("bound_", variable_name))
+        m.ext[:spineopt].values[name] = Dict(i => reduced_cost(v) for (i, v) in var)
     end
 end
-
-_dual(con) = has_duals(owner_model(con)) ? dual(con) : nothing
-
-_reduced_cost(var) = has_duals(owner_model(var)) ? reduced_cost(var) : nothing
 
 """
 Save the outputs of a model.

@@ -86,14 +86,8 @@ function _save_sp_marginal_values!(m, var_name, benders_param_name, obj_cls, win
 end
 
 function _save_sp_objective_value!(m, win_weight, tail=false)
-    increment = if tail
-        sum(
-            JuMP.value(realize(beyond_window)) for (_iw, beyond_window) in values(m.ext[:spineopt].objective_terms);
-            init=0
-        )
-    else
-        sum(values(m.ext[:spineopt].values[:total_costs]); init=0)
-    end
+    key = tail ? :total_costs_tail : :total_costs
+    increment = sum(values(m.ext[:spineopt].values[key]); init=0)
     total_sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0) + win_weight * increment
     add_object_parameter_values!(
         benders_iteration, Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(total_sp_obj_val)))
