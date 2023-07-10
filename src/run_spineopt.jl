@@ -297,10 +297,10 @@ function create_model(mip_solver, lp_solver, use_direct_model=false)
     m = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
     m_mp = if model_type(model=instance) === :spineopt_benders
         m_mp = Base.invokelatest(_do_create_model, mip_solver, use_direct_model)
-        m_mp.ext[:spineopt] = SpineOptExt(instance, lp_solver)
+        m_mp.ext[:spineopt] = SpineOptExt(instance, mip_solver, lp_solver)
         m_mp
     end
-    m.ext[:spineopt] = SpineOptExt(instance, lp_solver, m_mp)
+    m.ext[:spineopt] = SpineOptExt(instance, mip_solver, lp_solver, m_mp)
     m
 end
 
@@ -379,6 +379,7 @@ _do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model
 
 struct SpineOptExt
     instance::Object
+    mip_solver
     lp_solver
     master_problem_model::Union{Model,Nothing}
     intermediate_results_folder::String
@@ -392,13 +393,11 @@ struct SpineOptExt
     outputs::Dict{Symbol,Union{Dict,Nothing}}
     temporal_structure::Dict
     stochastic_structure::Dict
-    dual_solves::Array{Any,1}
-    dual_solves_lock::ReentrantLock
     objective_lower_bound::Base.RefValue{Float64}
     objective_upper_bound::Base.RefValue{Float64}
     benders_gaps::Vector{Float64}
     has_results::Base.RefValue{Bool}
-    function SpineOptExt(instance, lp_solver=nothing, master_problem_model=nothing)
+    function SpineOptExt(instance, mip_solver=nothing, lp_solver=nothing, master_problem_model=nothing)
         intermediate_results_folder = tempname(; cleanup=false)
         mkpath(intermediate_results_folder)
         report_name_keys_by_url = Dict()
@@ -416,6 +415,7 @@ struct SpineOptExt
         end
         new(
             instance,
+            mip_solver,
             lp_solver,
             master_problem_model,
             intermediate_results_folder,
@@ -429,8 +429,6 @@ struct SpineOptExt
             Dict{Symbol,Union{Dict,Nothing}}(),  # outputs
             Dict(),  # temporal_structure
             Dict(),  # stochastic_structure
-            [],  # dual_solves
-            ReentrantLock(),  # dual_solves_lock
             Ref(0.0),  # objective_lower_bound
             Ref(0.0),  # objective_upper_bound
             [],  # benders_gaps

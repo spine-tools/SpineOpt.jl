@@ -69,7 +69,6 @@ function save_sp_objective_value_tail!(m, win_weight)
 end
 
 function _save_sp_marginal_values!(m, win_weight)
-    _wait_for_dual_solves(m)
     _save_sp_marginal_values!(m, :bound_units_on, :units_on_mv, unit, win_weight)
     _save_sp_marginal_values!(
         m, :bound_connections_invested_available, :connections_invested_available_mv, connection, win_weight

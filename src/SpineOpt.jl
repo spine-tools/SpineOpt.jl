@@ -53,7 +53,6 @@ export @fetch
 include("util/misc.jl")
 include("util/write_information_files.jl")
 include("util/docs_utils.jl")
-include("util/promise.jl")
 include("run_spineopt.jl")
 include("generate_forced_availability_factor.jl")
 include("run_spineopt_standard.jl")

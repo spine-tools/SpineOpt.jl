@@ -462,56 +462,18 @@ function _reduced_cost_cplex(v::VariableRef, cplex_model, CPLEX)
 end
 
 function _calculate_duals_fallback(m; log_level=3)
-    @timelog log_level 1 "Copying model" (m_dual_lp, ref_map) = copy_model(m)
-    lp_solver = m.ext[:spineopt].lp_solver
-    @timelog log_level 1 "Setting LP solver $(lp_solver)..." set_optimizer(m_dual_lp, lp_solver)
-    @timelog log_level 1 "Fixing integer variables..." _fix_integer_vars(m, ref_map)
-    dual_fallback(con) = DualPromise(ref_map[con])
-    reduced_cost_fallback(var) = ReducedCostPromise(ref_map[var])
-    _save_marginal_values!(m, dual_fallback)
-    _save_bound_marginal_values!(m, reduced_cost_fallback)
-    if isdefined(Threads, Symbol("@spawn"))
-        task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
-        lock(m.ext[:spineopt].dual_solves_lock)
-        try
-            push!(m.ext[:spineopt].dual_solves, task)
-        finally
-            unlock(m.ext[:spineopt].dual_solves_lock)
-        end
+    lp_solver, mip_solver = m.ext[:spineopt].lp_solver, m.ext[:spineopt].mip_solver
+    @timelog log_level 1 "Relaxing integrality..." undo_relax_integrality = relax_integrality(m)
+    @timelog log_level 1 "Setting LP solver $(lp_solver)..." set_optimizer(m, lp_solver)
+    @timelog log_level 1 "Optimizing LP..." optimize!(m)
+    if has_duals(m)
+        _save_marginal_values!(m)
+        _save_bound_marginal_values!(m)
     else
-        @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
+        @warn "no dual solution available for window $(current_window(m)) - moving on..."
     end
-end
-
-function _fix_integer_vars(m::Model, ref_map::ReferenceMap)
-    # Collect values before calling `fix` on any of the variables to avoid OptimizeNotCalled()
-    integers_definition = Dict(
-        name => def
-        for (name, def) in m.ext[:spineopt].variables_definition
-        if def[:bin] !== nothing || def[:int] !== nothing
-    )
-    values = Dict(
-        name => Dict(
-            ind => _variable_value(m.ext[:spineopt].variables[name][ind])
-            for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))
-        )
-        for (name, def) in integers_definition
-    )
-    for (name, def) in integers_definition
-        bin = def[:bin]
-        int = def[:int]
-        indices = def[:indices]
-        var = m.ext[:spineopt].variables[name]
-        vals = values[name]
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            v = var[ind]
-            ref_v = ref_map[v]
-            val = vals[ind]
-            fix(ref_v, val; force=true)
-            (bin != nothing && bin(ind)) && unset_binary(ref_v)
-            (int != nothing && int(ind)) && unset_integer(ref_v)
-        end
-    end
+    @timelog log_level 1 "Restablishing integrality..." undo_relax_integrality()
+    @timelog log_level 1 "Setting MIP solver $(mip_solver)..." set_optimizer(m, mip_solver)
 end
 
 function _save_marginal_values!(m::Model, dual=_dual)
@@ -819,7 +781,6 @@ parameter values.
 - `output_value`: a function to replace `SpineOpt.output_value` if needed.
 """
 function collect_output_values(m, output_value=output_value)
-    _wait_for_dual_solves(m)
     values = Dict()
     for (output_name, overwrite) in _output_keys(m.ext[:spineopt].report_name_keys_by_url)
         by_entity = get(m.ext[:spineopt].outputs, output_name, nothing)
@@ -829,16 +790,6 @@ function collect_output_values(m, output_value=output_value)
         values[key] = _output_value_by_entity(by_entity, overwrite, output_value)
     end
     values
-end
-
-function _wait_for_dual_solves(m)
-    lock(m.ext[:spineopt].dual_solves_lock)
-    try
-        wait.(m.ext[:spineopt].dual_solves)
-        empty!(m.ext[:spineopt].dual_solves)
-    finally
-        unlock(m.ext[:spineopt].dual_solves_lock)
-    end
 end
 
 function _output_value_by_entity(by_entity, overwrite_results_on_rolling, output_value=output_value)
