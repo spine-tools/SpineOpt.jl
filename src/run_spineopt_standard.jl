@@ -492,7 +492,9 @@ end
 
 function _fix_integer_vars!(m::Model, ref_map::ReferenceMap)
     for (name, var) in m.ext[:spineopt].variables
-        benders_must_fix = name in (:units_on, :connections_invested_available, :storages_invested_available)
+        benders_must_fix = master_problem_model(m) !== nothing && name in (
+            :units_on, :connections_invested_available, :storages_invested_available
+        )
         def = m.ext[:spineopt].variables_definition[name]
         def[:bin] === def[:int] === nothing && !benders_must_fix && continue
         for v in values(var)
@@ -501,7 +503,7 @@ function _fix_integer_vars!(m::Model, ref_map::ReferenceMap)
                 unset_binary(ref_v)
             elseif is_integer(ref_v)
                 unset_integer(ref_v)
-            elseif master_problem_model(m) === nothing && !benders_must_fix
+            elseif !benders_must_fix
                 continue
             end
             val = _variable_value(v)
