@@ -48,7 +48,7 @@ struct TimeSliceSet
 end
 
 struct TOverlapsT
-    overlapping_t_by_t::Dict{TimeSlice,Array{TimeSlice,1}}
+    overlapping_time_slices::Dict{TimeSlice,Array{TimeSlice,1}}
 end
 
 """
@@ -73,7 +73,7 @@ An `Array` of time slices *in the model*.
 An array of time slices that overlap with `t` or with any time slice in `t`.
 """
 function (h::TOverlapsT)(t::Union{TimeSlice,Array{TimeSlice,1}})
-    unique(overlapping_t for s in t for overlapping_t in get(h.overlapping_t_by_t, s, ()))
+    unique(overlapping_t for s in t for overlapping_t in get(h.overlapping_time_slices, s, ()))
 end
 
 """
@@ -379,26 +379,28 @@ function _generate_time_slice_relationships!(m::Model)
     instance = m.ext[:spineopt].instance
     all_time_slices = Iterators.flatten((history_time_slice(m), time_slice(m)))
     duration_unit = _model_duration_unit(instance)
-    succeeding_t_by_t = Dict(
+    succeeding_time_slices = Dict(
         t => to_time_slice(m, t=TimeSlice(end_(t), end_(t) + Minute(1))) for t in all_time_slices
     )
-    succeeding_t_by_history_t = Dict(
+    succeeding_time_slices_hist = Dict(
         last(history_time_slices) => [first(time_slice(m; temporal_block=blk))]
         for (blk, history_time_slices) in m.ext[:spineopt].temporal_structure[:history_time_slice].block_time_slices
     )
-    merge!(append!, succeeding_t_by_t, succeeding_t_by_history_t)
-    overlapping_t_by_t = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
-    overlapping_t_by_t_excl = Dict(t => setdiff(overlapping_t, t) for (t, overlapping_t) in overlapping_t_by_t)
+    merge!(append!, succeeding_time_slices, succeeding_time_slices_hist)
+    overlapping_time_slices = Dict(t => to_time_slice(m, t=t) for t in all_time_slices)
+    overlapping_time_slices_excl = Dict(
+        t => setdiff(time_slices, t) for (t, time_slices) in overlapping_time_slices
+    )
     t_before_t_tuples = unique(
         (t_before, t_after)
-        for (t_before, succeeding_t) in succeeding_t_by_t
-        for t_after in succeeding_t
+        for (t_before, time_slices) in succeeding_time_slices
+        for t_after in time_slices
         if end_(t_before) <= start(t_after)
     )
     t_in_t_tuples = unique(
         (t_short, t_long)
-        for (t_short, overlapping_t) in overlapping_t_by_t
-        for t_long in overlapping_t
+        for (t_short, time_slices) in overlapping_time_slices
+        for t_long in time_slices
         if iscontained(t_short, t_long)
     )
     t_in_t_excl_tuples = [(t_short, t_long) for (t_short, t_long) in t_in_t_tuples if t_short != t_long]
@@ -407,8 +409,8 @@ function _generate_time_slice_relationships!(m::Model)
     temp_struct[:t_before_t] = RelationshipClass(:t_before_t, [:t_before, :t_after], t_before_t_tuples)
     temp_struct[:t_in_t] = RelationshipClass(:t_in_t, [:t_short, :t_long], t_in_t_tuples)
     temp_struct[:t_in_t_excl] = RelationshipClass(:t_in_t_excl, [:t_short, :t_long], t_in_t_excl_tuples)
-    temp_struct[:t_overlaps_t] = TOverlapsT(overlapping_t_by_t)
-    temp_struct[:t_overlaps_t_excl] = TOverlapsT(overlapping_t_by_t_excl)
+    temp_struct[:t_overlaps_t] = TOverlapsT(overlapping_time_slices)
+    temp_struct[:t_overlaps_t_excl] = TOverlapsT(overlapping_time_slices_excl)
 end
 
 """
