@@ -17,9 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-using Cbc
-using Clp
-
 module _Template
 using SpineInterface
 end
