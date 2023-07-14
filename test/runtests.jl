@@ -107,4 +107,5 @@ end
     include("util/misc.jl")
     include("util/docs_utils.jl")
     include("run_spineopt.jl")
+    include("run_spineopt_benders.jl")
 end

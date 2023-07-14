@@ -41,9 +41,6 @@ A new Spine database is created at `url_out` if one doesn't exist.
 - `add_constraints=m -> nothing`: a function that receives the `Model` object as argument
   and adds custom user constraints.
 
-- `update_constraints=m -> nothing`: a function that receives the `Model` object as argument
-  and updates custom user constraints after the model rolls.
-
 - `log_level::Int=3`: an integer to control the log level.
 
 - `optimize::Bool=true`: whether or not to optimise the model (useful for running tests).
@@ -87,7 +84,6 @@ function run_spineopt(
     lp_solver=nothing,
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
-    update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
     update_names=false,
@@ -107,7 +103,6 @@ function run_spineopt(
             lp_solver=lp_solver,
             add_user_variables=add_user_variables,
             add_constraints=add_constraints,
-            update_constraints=update_constraints,
             log_level=log_level,
             optimize=optimize,
             update_names=update_names,
@@ -149,7 +144,6 @@ function run_spineopt(
                         lp_solver=lp_solver,
                         add_user_variables=add_user_variables,
                         add_constraints=add_constraints,
-                        update_constraints=update_constraints,
                         log_level=log_level,
                         optimize=optimize,
                         update_names=update_names,
@@ -178,7 +172,6 @@ function _run_spineopt(
     lp_solver=nothing,
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
-    update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
     update_names=false,
@@ -197,7 +190,6 @@ function _run_spineopt(
         lp_solver=lp_solver,
         add_user_variables=add_user_variables,
         add_constraints=add_constraints,
-        update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
         update_names=update_names,
@@ -262,7 +254,7 @@ function rerun_spineopt(
     lp_solver=nothing,
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
-    update_constraints=m -> nothing,
+    alternative_objective=m -> nothing,
     log_level=3,
     optimize=true,
     update_names=false,
@@ -270,7 +262,6 @@ function rerun_spineopt(
     write_as_roll=0,
     resume_file_path=nothing,
     use_direct_model=false,
-    alternative_objective=m -> nothing,
 )
     @log log_level 0 "Running SpineOpt..."
     m = create_model(mip_solver, lp_solver, use_direct_model)
@@ -286,7 +277,6 @@ function rerun_spineopt(
         url_out;
         add_user_variables=add_user_variables,
         add_constraints=add_constraints,
-        update_constraints=update_constraints,
         log_level=log_level,
         optimize=optimize,
         update_names=update_names,
@@ -407,6 +397,7 @@ struct SpineOptExt
     objective_lower_bound::Base.RefValue{Float64}
     objective_upper_bound::Base.RefValue{Float64}
     benders_gaps::Vector{Float64}
+    has_results::Base.RefValue{Bool}
     function SpineOptExt(instance, lp_solver=nothing, master_problem_model=nothing)
         intermediate_results_folder = tempname(; cleanup=false)
         mkpath(intermediate_results_folder)
@@ -430,19 +421,20 @@ struct SpineOptExt
             intermediate_results_folder,
             report_name_keys_by_url,
             reports_by_output,
-            Dict{Symbol,Dict}(),
-            Dict{Symbol,Dict}(),
-            Dict{Symbol,Dict}(),
-            Dict{Symbol,Dict}(),
-            Dict{Symbol,Any}(),
-            Dict{Symbol,Union{Dict,Nothing}}(),
-            Dict(),
-            Dict(),
-            [],
-            ReentrantLock(),
-            Ref(0.0),
-            Ref(0.0),
-            [],
+            Dict{Symbol,Dict}(),  # variables
+            Dict{Symbol,Dict}(),  # variables_definition
+            Dict{Symbol,Dict}(),  # values
+            Dict{Symbol,Dict}(),  # constraints
+            Dict{Symbol,Any}(),  # objective_terms
+            Dict{Symbol,Union{Dict,Nothing}}(),  # outputs
+            Dict(),  # temporal_structure
+            Dict(),  # stochastic_structure
+            [],  # dual_solves
+            ReentrantLock(),  # dual_solves_lock
+            Ref(0.0),  # objective_lower_bound
+            Ref(0.0),  # objective_upper_bound
+            [],  # benders_gaps
+            Ref(false),  # has_results
         )
     end
 end

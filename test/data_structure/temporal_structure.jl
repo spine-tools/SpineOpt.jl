@@ -422,15 +422,53 @@ function _test_history()
         block_a = temporal_block(:block_a)
         block_b = temporal_block(:block_b)
         expected_history_time_slice = [
-            TimeSlice(DateTime(1999, 12, 31, 20), DateTime(1999, 12, 31, 21), block_a, block_b; duration_unit=Hour),
+            TimeSlice(DateTime(1999, 12, 31, 20), DateTime(1999, 12, 31, 21), block_b, block_a; duration_unit=Hour),
             TimeSlice(DateTime(1999, 12, 31, 21), DateTime(1999, 12, 31, 22), block_a; duration_unit=Hour),
             TimeSlice(DateTime(1999, 12, 31, 21), DateTime(1999, 12, 31, 23), block_b; duration_unit=Hour),
             TimeSlice(DateTime(1999, 12, 31, 22), DateTime(1999, 12, 31, 23), block_a; duration_unit=Hour),
-            TimeSlice(DateTime(1999, 12, 31, 23), DateTime(2000, 1, 1, 00), block_a, block_b; duration_unit=Hour),
+            TimeSlice(DateTime(1999, 12, 31, 23), DateTime(2000, 1, 1, 00), block_b, block_a; duration_unit=Hour),
         ]
         @test length(history_time_slice(m)) === 5
         @testset for (te, to) in zip(expected_history_time_slice, history_time_slice(m))
             @test te == to
+        end
+    end
+end
+
+function _test_master_temporal_structure()
+    @testset "master_temporal_structure" begin
+        url_in = _test_temporal_structure_setup()
+        res = Hour(6)
+        m_start, m_end = DateTime(2001, 1, 1), DateTime(2001, 1, 7)
+        rf = Hour(24)
+        a_gap = Hour(6)
+        b_look_ahead = Hour(12)
+        object_parameter_values = [
+            ["model", "instance", "model_start", unparse_db_value(m_start)],
+            ["model", "instance", "model_end", unparse_db_value(m_end)],
+            ["model", "instance", "roll_forward", unparse_db_value(rf)],
+            ["temporal_block", "block_a", "resolution", unparse_db_value(res)],
+            ["temporal_block", "block_b", "resolution", unparse_db_value(res)],
+            ["temporal_block", "block_a", "block_start", unparse_db_value(a_gap)],
+            ["temporal_block", "block_a", "block_end", unparse_db_value(rf - a_gap)],
+            ["temporal_block", "block_b", "block_end", unparse_db_value(rf + b_look_ahead)],
+        ]
+        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
+        using_spinedb(url_in, SpineOpt)
+        m = _model()
+        m_mp = _model()
+        generate_temporal_structure!(m)
+        SpineOpt.generate_master_temporal_structure!(m, m_mp)
+        obs_time_slices = time_slice(m_mp)
+        ab_starts = m_start : res : m_end - a_gap
+        b_starts = m_end: res : m_end - res + b_look_ahead
+        block_a, block_b = temporal_block(:block_a), temporal_block(:block_b)
+        exp_time_slices = vcat(
+            [TimeSlice(st, st + res, block_a, block_b) for st in ab_starts],
+            [TimeSlice(st, st + res, block_b) for st in b_starts],
+        )
+        @testset for (obs, exp) in zip(obs_time_slices, exp_time_slices)
+            @test obs == exp
         end
     end
 end
@@ -445,4 +483,5 @@ end
     _test_gaps()
     _test_to_time_slice_with_rolling()
     _test_history()
+    _test_master_temporal_structure()
 end

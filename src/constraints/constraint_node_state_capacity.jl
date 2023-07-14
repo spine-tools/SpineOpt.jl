@@ -36,7 +36,7 @@ function add_constraint_node_state_capacity!(m::Model)
             + node_state_cap[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
             * (
                 candidate_storages(node=ng) !== nothing ?
-                + expr_sum(
+                expr_sum(
                     storages_invested_available[n, s, t1]
                     for (n, s, t1) in storages_invested_available_indices(
                         m; node=ng, stochastic_scenario=s, t=t_in_t(m; t_short=t)

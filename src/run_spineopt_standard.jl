@@ -23,7 +23,6 @@ function rerun_spineopt_standard!(
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
     alternative_objective=m -> nothing,
-    update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
     update_names=false,
@@ -39,8 +38,8 @@ function rerun_spineopt_standard!(
         m;
         add_user_variables=add_user_variables,
         add_constraints=add_constraints,
+        alternative_objective=alternative_objective,
         log_level=log_level,
-        alternative_objective=alternative_objective
     )
     @timelog log_level 2 "Bringing model to the first window..." begin
         roll_temporal_structure!(m, 1:roll_count; rev=true)
@@ -51,7 +50,6 @@ function rerun_spineopt_standard!(
         run_spineopt_kernel!(
             m,
             url_out;
-            update_constraints=update_constraints,
             log_level=log_level,
             optimize=optimize,
             update_names=update_names,
@@ -104,132 +102,133 @@ end
 Add SpineOpt variables to the given model.
 """
 function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
-    for (name, add_variable!) in (
-            ("units_available", add_variable_units_available!),
-            ("units_on", add_variable_units_on!),
-            ("units_started_up", add_variable_units_started_up!),
-            ("units_shut_down", add_variable_units_shut_down!),
-            ("unit_flow", add_variable_unit_flow!),
-            ("unit_flow_op", add_variable_unit_flow_op!),
-            ("unit_flow_op_active", add_variable_unit_flow_op_active!),
-            ("connection_flow", add_variable_connection_flow!),
-            ("connection_intact_flow", add_variable_connection_intact_flow!),
-            ("connections_invested", add_variable_connections_invested!),
-            ("connections_invested_available", add_variable_connections_invested_available!),
-            ("connections_decommissioned", add_variable_connections_decommissioned!),
-            ("storages_invested", add_variable_storages_invested!),
-            ("storages_invested_available", add_variable_storages_invested_available!),
-            ("storages_decommissioned", add_variable_storages_decommissioned!),
-            ("node_state", add_variable_node_state!),
-            ("node_slack_pos", add_variable_node_slack_pos!),
-            ("node_slack_neg", add_variable_node_slack_neg!),
-            ("node_injection", add_variable_node_injection!),
-            ("units_invested", add_variable_units_invested!),
-            ("units_invested_available", add_variable_units_invested_available!),
-            ("units_mothballed", add_variable_units_mothballed!),
-            ("ramp_up_unit_flow", add_variable_ramp_up_unit_flow!),
-            ("start_up_unit_flow", add_variable_start_up_unit_flow!),
-            ("nonspin_units_started_up", add_variable_nonspin_units_started_up!),
-            ("nonspin_ramp_up_unit_flow", add_variable_nonspin_ramp_up_unit_flow!),
-            ("ramp_down_unit_flow", add_variable_ramp_down_unit_flow!),
-            ("shut_down_unit_flow", add_variable_shut_down_unit_flow!),
-            ("nonspin_units_shut_down", add_variable_nonspin_units_shut_down!),
-            ("nonspin_ramp_down_unit_flow", add_variable_nonspin_ramp_down_unit_flow!),
-            ("node_pressure", add_variable_node_pressure!),
-            ("node_voltage_angle", add_variable_node_voltage_angle!),
-            ("binary_gas_connection_flow", add_variable_binary_gas_connection_flow!),
-            ("user_defined", add_user_variables)
+    for add_variable! in (
+            add_variable_units_available!,
+            add_variable_units_on!,
+            add_variable_units_started_up!,
+            add_variable_units_shut_down!,
+            add_variable_unit_flow!,
+            add_variable_unit_flow_op!,
+            add_variable_unit_flow_op_active!,
+            add_variable_connection_flow!,
+            add_variable_connection_intact_flow!,
+            add_variable_connections_invested!,
+            add_variable_connections_invested_available!,
+            add_variable_connections_decommissioned!,
+            add_variable_storages_invested!,
+            add_variable_storages_invested_available!,
+            add_variable_storages_decommissioned!,
+            add_variable_node_state!,
+            add_variable_node_slack_pos!,
+            add_variable_node_slack_neg!,
+            add_variable_node_injection!,
+            add_variable_units_invested!,
+            add_variable_units_invested_available!,
+            add_variable_units_mothballed!,
+            add_variable_ramp_up_unit_flow!,
+            add_variable_start_up_unit_flow!,
+            add_variable_nonspin_units_started_up!,
+            add_variable_nonspin_ramp_up_unit_flow!,
+            add_variable_ramp_down_unit_flow!,
+            add_variable_shut_down_unit_flow!,
+            add_variable_nonspin_units_shut_down!,
+            add_variable_nonspin_ramp_down_unit_flow!,
+            add_variable_node_pressure!,
+            add_variable_node_voltage_angle!,
+            add_variable_binary_gas_connection_flow!,
         )
-        @timelog log_level 3 "- [variable_$name]" add_variable!(m)
+        name = name_from_fn(add_variable!)
+        @timelog log_level 3 "- [$name]" add_variable!(m)
     end
+    @timelog log_level 3 "- [user_defined]" add_user_variables(m)
 end
 
 """
 Add SpineOpt constraints to the given model.
 """
 function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
-    for (name, add_constraint!) in (
-            ("unit_pw_heat_rate", add_constraint_unit_pw_heat_rate!),
-            ("user_constraint", add_constraint_user_constraint!),
-            ("node_injection", add_constraint_node_injection!),
-            ("nodal_balance", add_constraint_nodal_balance!),
-            ("candidate_connection_flow_ub", add_constraint_candidate_connection_flow_ub!),
-            ("candidate_connection_flow_lb", add_constraint_candidate_connection_flow_lb!),
-            ("connection_intact_flow_ptdf", add_constraint_connection_intact_flow_ptdf!),
-            ("connection_flow_intact_flow", add_constraint_connection_flow_intact_flow!),
-            ("connection_flow_lodf", add_constraint_connection_flow_lodf!),
-            ("connection_flow_capacity", add_constraint_connection_flow_capacity!),
-            ("connection_intact_flow_capacity", add_constraint_connection_intact_flow_capacity!),
-            ("unit_flow_capacity", add_constraint_unit_flow_capacity!),
-            ("connections_invested_available", add_constraint_connections_invested_available!),
-            ("connection_lifetime", add_constraint_connection_lifetime!),
-            ("connections_invested_transition", add_constraint_connections_invested_transition!),
-            ("storages_invested_available", add_constraint_storages_invested_available!),
-            ("storage_lifetime", add_constraint_storage_lifetime!),
-            ("storages_invested_transition", add_constraint_storages_invested_transition!),
-            ("operating_point_bounds", add_constraint_operating_point_bounds!),
-            ("operating_point_rank", add_constraint_operating_point_rank!),
-            ("unit_flow_op_bounds", add_constraint_unit_flow_op_bounds!),
-            ("unit_flow_op_rank", add_constraint_unit_flow_op_rank!),
-            ("unit_flow_op_sum", add_constraint_unit_flow_op_sum!),
-            ("fix_ratio_out_in_unit_flow", add_constraint_fix_ratio_out_in_unit_flow!),
-            ("max_ratio_out_in_unit_flow", add_constraint_max_ratio_out_in_unit_flow!),
-            ("min_ratio_out_in_unit_flow", add_constraint_min_ratio_out_in_unit_flow!),
-            ("fix_ratio_out_out_unit_flow", add_constraint_fix_ratio_out_out_unit_flow!),
-            ("max_ratio_out_out_unit_flow", add_constraint_max_ratio_out_out_unit_flow!),
-            ("min_ratio_out_out_unit_flow", add_constraint_min_ratio_out_out_unit_flow!),
-            ("fix_ratio_in_in_unit_flow", add_constraint_fix_ratio_in_in_unit_flow!),
-            ("max_ratio_in_in_unit_flow", add_constraint_max_ratio_in_in_unit_flow!),
-            ("min_ratio_in_in_unit_flow", add_constraint_min_ratio_in_in_unit_flow!),
-            ("fix_ratio_in_out_unit_flow", add_constraint_fix_ratio_in_out_unit_flow!),
-            ("max_ratio_in_out_unit_flow", add_constraint_max_ratio_in_out_unit_flow!),
-            ("min_ratio_in_out_unit_flow", add_constraint_min_ratio_in_out_unit_flow!),
-            ("ratio_out_in_connection_intact_flow", add_constraint_ratio_out_in_connection_intact_flow!),
-            ("fix_ratio_out_in_connection_flow", add_constraint_fix_ratio_out_in_connection_flow!),
-            ("max_ratio_out_in_connection_flow", add_constraint_max_ratio_out_in_connection_flow!),
-            ("min_ratio_out_in_connection_flow", add_constraint_min_ratio_out_in_connection_flow!),
-            ("node_state_capacity", add_constraint_node_state_capacity!),
-            ("cyclic_node_state", add_constraint_cyclic_node_state!),
-            ("max_total_cumulated_unit_flow_from_node", add_constraint_max_total_cumulated_unit_flow_from_node!),
-            ("min_total_cumulated_unit_flow_from_node", add_constraint_min_total_cumulated_unit_flow_from_node!),
-            ("max_total_cumulated_unit_flow_to_node", add_constraint_max_total_cumulated_unit_flow_to_node!),
-            ("min_total_cumulated_unit_flow_to_node", add_constraint_min_total_cumulated_unit_flow_to_node!),
-            ("units_on", add_constraint_units_on!),
-            ("units_available", add_constraint_units_available!),
-            ("units_invested_available", add_constraint_units_invested_available!),
-            ("unit_lifetime", add_constraint_unit_lifetime!),
-            ("units_invested_transition", add_constraint_units_invested_transition!),
-            ("minimum_operating_point", add_constraint_minimum_operating_point!),
-            ("min_down_time", add_constraint_min_down_time!),
-            ("min_up_time", add_constraint_min_up_time!),
-            ("unit_state_transition", add_constraint_unit_state_transition!),
-            ("unit_flow_capacity_w_ramp", add_constraint_unit_flow_capacity_w_ramp!),
-            ("split_ramps", add_constraint_split_ramps!),
-            ("ramp_up", add_constraint_ramp_up!),
-            ("max_start_up_ramp", add_constraint_max_start_up_ramp!),
-            ("min_start_up_ramp", add_constraint_min_start_up_ramp!),
-            ("max_nonspin_ramp_up", add_constraint_max_nonspin_ramp_up!),
-            ("min_nonspin_ramp_up", add_constraint_min_nonspin_ramp_up!),
-            ("ramp_down", add_constraint_ramp_down!),
-            ("max_shut_down_ramp", add_constraint_max_shut_down_ramp!),
-            ("min_shut_down_ramp", add_constraint_min_shut_down_ramp!),
-            ("max_nonspin_ramp_down", add_constraint_max_nonspin_ramp_down!),
-            ("min_nonspin_ramp_down", add_constraint_min_nonspin_ramp_down!),
-            ("res_minimum_node_state", add_constraint_res_minimum_node_state!),
-            ("fix_node_pressure_point", add_constraint_fix_node_pressure_point!),
-            ("connection_unitary_gas_flow", add_constraint_connection_unitary_gas_flow!),
-            ("compression_ratio", add_constraint_compression_ratio!),
-            ("storage_line_pack", add_constraint_storage_line_pack!),
-            ("connection_flow_gas_capacity", add_constraint_connection_flow_gas_capacity!),
-            ("max_node_pressure", add_constraint_max_node_pressure!),
-            ("min_node_pressure", add_constraint_min_node_pressure!),
-            ("node_voltage_angle", add_constraint_node_voltage_angle!),
-            ("max_node_voltage_angle", add_constraint_max_node_voltage_angle!),
-            ("min_node_voltage_angle", add_constraint_min_node_voltage_angle!),
-            ("user_defined", add_constraints),
+    for add_constraint! in (
+            add_constraint_unit_pw_heat_rate!,
+            add_constraint_user_constraint!,
+            add_constraint_node_injection!,
+            add_constraint_nodal_balance!,
+            add_constraint_candidate_connection_flow_ub!,
+            add_constraint_candidate_connection_flow_lb!,
+            add_constraint_connection_intact_flow_ptdf!,
+            add_constraint_connection_flow_intact_flow!,
+            add_constraint_connection_flow_lodf!,
+            add_constraint_connection_flow_capacity!,
+            add_constraint_connection_intact_flow_capacity!,
+            add_constraint_unit_flow_capacity!,
+            add_constraint_connections_invested_available!,
+            add_constraint_connection_lifetime!,
+            add_constraint_connections_invested_transition!,
+            add_constraint_storages_invested_available!,
+            add_constraint_storage_lifetime!,
+            add_constraint_storages_invested_transition!,
+            add_constraint_operating_point_bounds!,
+            add_constraint_operating_point_rank!,
+            add_constraint_unit_flow_op_bounds!,
+            add_constraint_unit_flow_op_rank!,
+            add_constraint_unit_flow_op_sum!,
+            add_constraint_fix_ratio_out_in_unit_flow!,
+            add_constraint_max_ratio_out_in_unit_flow!,
+            add_constraint_min_ratio_out_in_unit_flow!,
+            add_constraint_fix_ratio_out_out_unit_flow!,
+            add_constraint_max_ratio_out_out_unit_flow!,
+            add_constraint_min_ratio_out_out_unit_flow!,
+            add_constraint_fix_ratio_in_in_unit_flow!,
+            add_constraint_max_ratio_in_in_unit_flow!,
+            add_constraint_min_ratio_in_in_unit_flow!,
+            add_constraint_fix_ratio_in_out_unit_flow!,
+            add_constraint_max_ratio_in_out_unit_flow!,
+            add_constraint_min_ratio_in_out_unit_flow!,
+            add_constraint_ratio_out_in_connection_intact_flow!,
+            add_constraint_fix_ratio_out_in_connection_flow!,
+            add_constraint_max_ratio_out_in_connection_flow!,
+            add_constraint_min_ratio_out_in_connection_flow!,
+            add_constraint_node_state_capacity!,
+            add_constraint_cyclic_node_state!,
+            add_constraint_max_total_cumulated_unit_flow_from_node!,
+            add_constraint_min_total_cumulated_unit_flow_from_node!,
+            add_constraint_max_total_cumulated_unit_flow_to_node!,
+            add_constraint_min_total_cumulated_unit_flow_to_node!,
+            add_constraint_units_on!,
+            add_constraint_units_available!,
+            add_constraint_units_invested_available!,
+            add_constraint_unit_lifetime!,
+            add_constraint_units_invested_transition!,
+            add_constraint_minimum_operating_point!,
+            add_constraint_min_down_time!,
+            add_constraint_min_up_time!,
+            add_constraint_unit_state_transition!,
+            add_constraint_split_ramps!,
+            add_constraint_ramp_up!,
+            add_constraint_max_start_up_ramp!,
+            add_constraint_min_start_up_ramp!,
+            add_constraint_max_nonspin_ramp_up!,
+            add_constraint_min_nonspin_ramp_up!,
+            add_constraint_ramp_down!,
+            add_constraint_max_shut_down_ramp!,
+            add_constraint_min_shut_down_ramp!,
+            add_constraint_max_nonspin_ramp_down!,
+            add_constraint_min_nonspin_ramp_down!,
+            add_constraint_res_minimum_node_state!,
+            add_constraint_fix_node_pressure_point!,
+            add_constraint_connection_unitary_gas_flow!,
+            add_constraint_compression_ratio!,
+            add_constraint_storage_line_pack!,
+            add_constraint_connection_flow_gas_capacity!,
+            add_constraint_max_node_pressure!,
+            add_constraint_min_node_pressure!,
+            add_constraint_node_voltage_angle!,
+            add_constraint_max_node_voltage_angle!,
+            add_constraint_min_node_voltage_angle!,
         )
-        @timelog log_level 3 "- [constraint_$name]" add_constraint!(m)
+        name = name_from_fn(add_constraint!)
+        @timelog log_level 3 "- [$name]" add_constraint!(m)
     end
+    @timelog log_level 3 "- [user_defined]" add_constraints(m)
     _update_constraint_names!(m)
 end
 
@@ -256,7 +255,7 @@ function _create_objective_terms!(m)
     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
     in_window = collect(to_time_slice(m; t=current_window(m)))
     filter!(t -> !(t in beyond_window), in_window)
-    for term in objective_terms(m)
+    for term in objective_terms(m; operations=true, investments=master_problem_model(m) === nothing)
         func = eval(term)
         m.ext[:spineopt].objective_terms[term] = (func(m, in_window), func(m, beyond_window))
     end
@@ -271,16 +270,14 @@ end
 function run_spineopt_kernel!(
     m,
     url_out;
-    update_constraints=m -> nothing,
     log_level=3,
     optimize=true,
     update_names=false,
     alternative="",
     write_as_roll=0,
     resume_file_path=nothing,
-
 )
-    k = _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
+    k = _resume_run!(m, resume_file_path, log_level, update_names)
     k === nothing && return m
     calculate_duals = any(
         startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:spineopt].outputs))
@@ -296,7 +293,7 @@ function run_spineopt_kernel!(
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
             @timelog log_level 2 " ... Rolling complete\n" break
         end
-        update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
+        update_model!(m; log_level=log_level, update_names=update_names)
         k += 1
     end
     if write_as_roll > 0
@@ -307,8 +304,8 @@ function run_spineopt_kernel!(
     m
 end
 
-_resume_run!(m, ::Nothing, update_constraints, log_level, update_names) = 1
-function _resume_run!(m, resume_file_path, update_constraints, log_level, update_names)
+_resume_run!(m, ::Nothing, log_level, update_names) = 1
+function _resume_run!(m, resume_file_path, log_level, update_names)
     !isfile(resume_file_path) && return 1
     try
         resume_data = JSON.parsefile(resume_file_path)
@@ -320,7 +317,7 @@ function _resume_run!(m, resume_file_path, update_constraints, log_level, update
             @log log_level 1 "Nothing to resume - window $k was the last one"
             nothing
         else
-            update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
+            update_model!(m; log_level=log_level, update_names=update_names)
             k + 1
         end
     catch err
@@ -333,6 +330,7 @@ function _load_variable_values!(m::Model, values)
     for (name, definition) in m.ext[:spineopt].variables_definition
         _load_variable_value!(m, name, definition[:indices], values)
     end
+    m.ext[:spineopt].has_results[] = true
 end
 
 function _load_variable_value!(m::Model, name::Symbol, indices::Function, values)
@@ -351,16 +349,23 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
     @timelog log_level 0 "Optimizing model $(m.ext[:spineopt].instance)..." optimize!(m)
-    if termination_status(m) in (MOI.OPTIMAL, MOI.TIME_LIMIT)
-        @log log_level 1 "Optimal solution found, objective function value: $(objective_value(m))"
-        @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." _save_model_results!(
-            m; iterations=iterations
-        )
-        calculate_duals && _calculate_duals(m; log_level=log_level)
-        @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
+    termination_st = termination_status(m)
+    if termination_st in (MOI.OPTIMAL, MOI.TIME_LIMIT)
+        if result_count(m) > 0
+            solution_type = termination_st == MOI.OPTIMAL ? "Optimal" : "Feasible"
+            @log log_level 1 "$solution_type solution found, objective function value: $(objective_value(m))"
+            m.ext[:spineopt].has_results[] = true
+            @timelog log_level 2 "Saving $(m.ext[:spineopt].instance) results..." _save_model_results!(
+                m; iterations=iterations
+            )
+            calculate_duals && _calculate_duals(m; log_level=log_level)
+            @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
+        else
+            m.ext[:spineopt].has_results[] = false
+            @warn "no solution available for window $(current_window(m)) - moving on..."
+        end
         true
-    elseif termination_status(m) == MOI.INFEASIBLE
-        msg = "model is infeasible - if conflicting constraints can be identified, they will be reported below\n"
+    elseif termination_st == MOI.INFEASIBLE
         printstyled(
             "model is infeasible - if conflicting constraints can be identified, they will be reported below\n";
             bold=true
@@ -368,7 +373,7 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
         try
             _compute_and_print_conflict!(m)
         catch err
-            @error err.msg
+            @info err.msg
         end
         false
     else
@@ -409,17 +414,20 @@ Save the value of the objective terms in a model.
 """
 function _save_objective_values!(m::Model)
     ind = (model=m.ext[:spineopt].instance, t=current_window(m))
-    for (term, (in_window, _beyond_window)) in m.ext[:spineopt].objective_terms
-        m.ext[:spineopt].values[term] = Dict(ind => _value(realize(in_window)))
+    for (term, (in_window, _bw)) in m.ext[:spineopt].objective_terms
+        m.ext[:spineopt].values[term] = Dict(ind => JuMP.value(realize(in_window)))
     end
     m.ext[:spineopt].values[:total_costs] = Dict(
         ind => sum(m.ext[:spineopt].values[term][ind] for term in keys(m.ext[:spineopt].objective_terms); init=0)
     )
+    m.ext[:spineopt].values[:total_costs_tail] = Dict(
+        ind => sum(
+            JuMP.value(realize(beyond_window)) for (_iw, beyond_window) in values(m.ext[:spineopt].objective_terms);
+            init=0
+        )
+    )
     nothing
 end
-
-_value(v::GenericAffExpr) = JuMP.value(v)
-_value(v) = v
 
 function _calculate_duals(m; log_level=3)
     if has_duals(m)
@@ -441,20 +449,34 @@ function _calculate_duals_cplex(m; log_level=3)
     prob_type = CPLEX.CPXgetprobtype(cplex_model.env, cplex_model.lp)
     @assert prob_type == CPLEX.CPXPROB_MILP
     CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, CPLEX.CPXPROB_FIXEDMILP)
-    @timelog log_level 1 "Optimizing LP..." CPLEX.CPXlpopt(cplex_model.env, cplex_model.lp)
-    _save_marginal_values!(m)
-    _save_bound_marginal_values!(m)
+    @timelog log_level 1 "Optimizing LP..." ret = CPLEX.CPXlpopt(cplex_model.env, cplex_model.lp)
+    if ret == 0
+        _save_marginal_values!(m)
+        _save_bound_marginal_values!(m, v -> _reduced_cost_cplex(v, cplex_model, CPLEX))
+    end
     CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, prob_type)
-    true
+    ret == 0
+end
+
+function _reduced_cost_cplex(v::VariableRef, cplex_model, CPLEX)
+    m = owner_model(v)
+    sign = objective_sense(m) == MIN_SENSE ? 1.0 : -1.0
+    col = Cint(CPLEX.column(cplex_model, index(v)) - 1)
+    p = Ref{Cdouble}()
+    CPLEX.CPXgetdj(cplex_model.env, cplex_model.lp, p, col, col)
+    rc = p[]
+    sign * rc
 end
 
 function _calculate_duals_fallback(m; log_level=3)
     @timelog log_level 1 "Copying model" (m_dual_lp, ref_map) = copy_model(m)
     lp_solver = m.ext[:spineopt].lp_solver
     @timelog log_level 1 "Setting LP solver $(lp_solver)..." set_optimizer(m_dual_lp, lp_solver)
-    @timelog log_level 1 "Fixing integer variables..." _fix_integer_vars(m, ref_map)
-    _save_marginal_values!(m, ref_map)
-    _save_bound_marginal_values!(m, ref_map)
+    @timelog log_level 1 "Fixing integer variables..." _fix_integer_vars!(m, ref_map)
+    dual_fallback(con) = DualPromise(ref_map[con])
+    reduced_cost_fallback(var) = ReducedCostPromise(ref_map[var])
+    _save_marginal_values!(m, dual_fallback)
+    _save_bound_marginal_values!(m, reduced_cost_fallback)
     if isdefined(Threads, Symbol("@spawn"))
         task = Threads.@spawn @timelog log_level 1 "Optimizing LP..." optimize!(m_dual_lp)
         lock(m.ext[:spineopt].dual_solves_lock)
@@ -468,56 +490,41 @@ function _calculate_duals_fallback(m; log_level=3)
     end
 end
 
-function _fix_integer_vars(m::Model, ref_map::ReferenceMap)
-    # Collect values before calling `fix` on any of the variables to avoid OptimizeNotCalled()
-    integers_definition = Dict(
-        name => def
-        for (name, def) in m.ext[:spineopt].variables_definition
-        if def[:bin] !== nothing || def[:int] !== nothing
-    )
-    values = Dict(
-        name => Dict(
-            ind => _variable_value(m.ext[:spineopt].variables[name][ind])
-            for ind in def[:indices](m; t=vcat(history_time_slice(m), time_slice(m)))
+function _fix_integer_vars!(m::Model, ref_map::ReferenceMap)
+    for (name, var) in m.ext[:spineopt].variables
+        benders_must_fix = master_problem_model(m) !== nothing && name in (
+            :units_on, :connections_invested_available, :storages_invested_available
         )
-        for (name, def) in integers_definition
-    )
-    for (name, def) in integers_definition
-        bin = def[:bin]
-        int = def[:int]
-        indices = def[:indices]
-        var = m.ext[:spineopt].variables[name]
-        vals = values[name]
-        for ind in indices(m; t=vcat(history_time_slice(m), time_slice(m)))
-            v = var[ind]
+        def = m.ext[:spineopt].variables_definition[name]
+        def[:bin] === def[:int] === nothing && !benders_must_fix && continue
+        for v in values(var)
             ref_v = ref_map[v]
-            val = vals[ind]
+            if is_binary(ref_v)
+                unset_binary(ref_v)
+            elseif is_integer(ref_v)
+                unset_integer(ref_v)
+            elseif !benders_must_fix
+                continue
+            end
+            val = _variable_value(v)
             fix(ref_v, val; force=true)
-            (bin != nothing && bin(ind)) && unset_binary(ref_v)
-            (int != nothing && int(ind)) && unset_integer(ref_v)
         end
     end
 end
 
-function _save_marginal_values!(m::Model, ref_map=nothing)
+function _save_marginal_values!(m::Model, dual=JuMP.dual)
     for (constraint_name, con) in m.ext[:spineopt].constraints
-        output_name = Symbol(string("constraint_", constraint_name))
-        m.ext[:spineopt].values[output_name] = Dict(i => _dual(c, ref_map) for (i, c) in con)
+        name = Symbol(string("constraint_", constraint_name))
+        m.ext[:spineopt].values[name] = Dict(i => dual(c) for (i, c) in con)
     end
 end
 
-function _save_bound_marginal_values!(m::Model, ref_map=nothing)
+function _save_bound_marginal_values!(m::Model, reduced_cost=JuMP.reduced_cost)
     for (variable_name, var) in m.ext[:spineopt].variables
-        output_name = Symbol(string("bound_", variable_name))
-        m.ext[:spineopt].values[output_name] = Dict(i => _reduced_cost(v, ref_map) for (i, v) in var)
+        name = Symbol(string("bound_", variable_name))
+        m.ext[:spineopt].values[name] = Dict(i => reduced_cost(v) for (i, v) in var)
     end
 end
-
-_dual(con, ref_map::JuMP.ReferenceMap) = DualPromise(ref_map[con])
-_dual(con, ::Nothing) = has_duals(owner_model(con)) ? dual(con) : nothing
-
-_reduced_cost(var, ref_map::JuMP.ReferenceMap) = ReducedCostPromise(ref_map[var])
-_reduced_cost(var, ::Nothing) = has_duals(owner_model(var)) ? reduced_cost(var) : nothing
 
 """
 Save the outputs of a model.
@@ -900,38 +907,35 @@ end
 Update the given model for the next window in the rolling horizon: update variables, fix the necessary variables,
 update constraints and update objective.
 """
-function update_model!(m; update_constraints=m -> nothing, log_level=3, update_names=false)
+function update_model!(m; log_level=3, update_names=false)
     if update_names
         _update_variable_names!(m)
         _update_constraint_names!(m)
     end
+    m.ext[:spineopt].has_results[] || return
     @timelog log_level 2 "Fixing history..." _fix_history!(m)
     @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m)
-    @timelog log_level 2 "Updating user constraints..." update_constraints(m)
 end
 
 function _update_constraint_names!(m)
-    for (con_key, cons) in m.ext[:spineopt].constraints
-        con_key_raw = string(con_key)
-        if occursin(r"[^\x1F-\x7F]+", con_key_raw)
-            @warn "constraint $con_key_raw has an illegal character"            
-        end
-        con_key_clean = _sanitize_constraint_name(con_key_raw)                            
-        for (inds, con) in cons        
-            constraint_name = _sanitize_constraint_name(string(con_key_clean, inds))                            
+    for (key, cons) in m.ext[:spineopt].constraints                        
+        for (ind, con) in cons        
+            constraint_name = _sanitize_constraint_name(string(key, ind))                            
             _set_name(con, constraint_name)
         end
     end
 end
 
 function _sanitize_constraint_name(constraint_name)
-    replace(constraint_name, r"[^\x1F-\x7F]+" => "_")
+    pattern = r"[^\x1F-\x7F]+"
+    occursin(pattern, constraint_name) && @warn "constraint $constraint_name has an illegal character"
+    replace(constraint_name, pattern => "_")
 end
 
 function _update_variable_names!(m)
     for (name, var) in m.ext[:spineopt].variables
-        for (inds, v) in var
-            _set_name(v, _base_name(name, inds))
+        for (ind, v) in var
+            _set_name(v, _base_name(name, ind))
         end
     end
 end
@@ -952,13 +956,13 @@ function _fix_history_variable!(m::Model, name::Symbol, indices)
         history_t = t_history_t(m; t=ind.t)
         history_t === nothing && continue
         for history_ind in indices(m; ind..., t=history_t)
-            _fix(var[history_ind], val[ind]; force=true)
+            _fix(var[history_ind], val[ind])
         end
     end
 end
 
-_fix(v::VariableRef, x; kwargs...) = fix(v, x; kwargs...)
-_fix(::Call, x; kwargs...) = nothing
+_fix(v::VariableRef, x) = fix(v, x; force=true)
+_fix(::Call, x) = nothing
 
 function apply_non_anticipativity_constraints!(m::Model)
     for (name, definition) in m.ext[:spineopt].variables_definition
@@ -975,7 +979,7 @@ function _apply_non_anticipativity_constraint!(m, name::Symbol, definition::Dict
     non_anticipativity_margin = definition[:non_anticipativity_margin]
     w_start = start(current_window(m))
     w_length = end_(current_window(m)) - w_start
-    for ent in SpineInterface.indices_as_tuples(non_anticipativity_time)
+    for ent in indices_as_tuples(non_anticipativity_time)
         for ind in indices(m; t=time_slice(m), ent...)
             non_ant_time = non_anticipativity_time(; ind..., _strict=false)
             non_ant_margin = if non_anticipativity_margin === nothing

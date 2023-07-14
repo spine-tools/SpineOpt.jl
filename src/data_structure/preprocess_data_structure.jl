@@ -793,9 +793,13 @@ The benders algorithm also uses these parameters to fix the subproblem investmen
 solution.
 """
 function generate_internal_fix_investments()
-    isempty(model()) && return
+    models = model()
+    isempty(models) && return
+    starts = [model_start(model=m) for m in models]
+    instance = models[argmin(starts)]
+    t = model_start(model=instance)
+    dur_unit = _model_duration_unit(instance)
     scens = stochastic_scenario()
-    t = minimum(model_start(model=m) for m in model())
     for (pname, class, candidates) in (
             (:internal_fix_units_invested_available, unit, candidate_units),
             (:internal_fix_connections_invested_available, connection, candidate_connections),
@@ -804,7 +808,7 @@ function generate_internal_fix_investments()
         parameter = Parameter(pname, [class])
         pvals = Dict(
             obj => Dict(
-                pname => parameter_value(Map(scens, [TimeSeries([t - Hour(1), t], [0, NaN]) for _s in scens]))
+                pname => parameter_value(Map(scens, [TimeSeries([t - dur_unit(1), t], [0.0, NaN]) for _s in scens]))
             )
             for obj in indices(candidates)
         )

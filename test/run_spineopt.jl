@@ -457,7 +457,8 @@ function _test_unknown_output()
             object_parameter_values=object_parameter_values,
             relationship_parameter_values=relationship_parameter_values,
         )
-        @test_logs min_level=Warn (:warn, "can't find any values for 'unknown_output'") run_spineopt(url_in, url_out; log_level=0)
+        msg = "can't find any values for 'unknown_output'"
+        @test_logs min_level=Warn (:warn, msg) run_spineopt(url_in, url_out; log_level=0)
     end
 end
 
@@ -488,10 +489,12 @@ function _test_write_inputs_overlapping_temporal_blocks()
     @testset "write inputs overlapping temporal blocks" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
         demand = Dict("type" => "time_pattern", "data" => Dict("h1-6,h19-24" => 100, "h7-18" => 50))
-        objects = [["output", "demand"], ["temporal_block", "8hourly"]]
+        objects = [["output", "demand"], ["temporal_block", "8hourly"], ["node", "node_a"]]
         relationships = [
+            ["unit__from_node", ["unit_ab", "node_a"]],
             ["model__temporal_block", ["instance", "8hourly"]],
             ["node__temporal_block", ["node_a", "8hourly"]],  # NOTE: 8hourly is associated to the *non*-demand node
+            ["node__stochastic_structure", ["node_a", "deterministic"]],
             ["report__output", ["report_x", "demand"]]
         ]
         object_parameter_values = [
@@ -803,106 +806,31 @@ function _test_fix_node_state_using_map_with_rolling()
     end
 end
 
-function _test_benders()
-    @testset "benders" begin
-        benders_gap = 1e-6  # needed so that we get the exact master problem solution
-        mip_solver_options_benders = unparse_db_value(Map(["HiGHS.jl"], [Map(["mip_rel_gap"], [benders_gap])]))
-        res = 6
-        dem = ucap = 10
-        rf = 6
-        look_ahead = 3
-        vom_cost_ = 2
-        vom_cost_alt = vom_cost_ / 2
-        do_not_inv_cost = ucap * vom_cost_alt * (24 + look_ahead)  # minimum cost at which investment is not profitable
-        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
-        @testset for should_invest in (true, false)
-            u_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
-            url_in, url_out, file_path_out = _test_run_spineopt_setup()
-            objects = [
-                ["unit", "unit_ab_alt"],
-                ["output", "total_costs"],
-                ["output", "units_invested"],
-                ["output", "units_on"],
-                ["output", "units_available"],
-                ["output", "units_mothballed"],
-                ["output", "units_invested_available"],
-                ["temporal_block", "investments_hourly"],
-            ]
-            relationships = [
-                ["unit__to_node", ["unit_ab_alt", "node_b"]],
-                ["units_on__temporal_block", ["unit_ab_alt", "hourly"]],
-                ["units_on__stochastic_structure", ["unit_ab_alt", "deterministic"]],
-                ["model__temporal_block", ["instance", "investments_hourly"]],
-                ["model__default_investment_temporal_block", ["instance", "investments_hourly"]],
-                ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
-                ["report__output", ["report_x", "units_invested_available"]],
-                ["report__output", ["report_x", "units_mothballed"]],
-                ["report__output", ["report_x", "units_invested"]],
-                ["report__output", ["report_x", "total_costs"]],
-            ]
-            object_parameter_values = [
-                ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
-                ["model", "instance", "model_type", "spineopt_benders"],
-                ["model", "instance", "max_iterations", 10],
-                ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
-                ["node", "node_b", "demand", dem],
-                ["unit", "unit_ab_alt", "number_of_units", 0],
-                ["unit", "unit_ab_alt", "candidate_units", 1],
-                ["unit", "unit_ab_alt", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
-                ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
-                ["unit", "unit_ab_alt", "unit_investment_cost", u_inv_cost],
-                ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
-                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
-                ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
-                ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
-            ]
-            relationship_parameter_values = [
-                ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
-                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost_],
-                ["unit__to_node", ["unit_ab_alt", "node_b"], "unit_capacity", ucap],
-                ["unit__to_node", ["unit_ab_alt", "node_b"], "vom_cost", vom_cost_alt],
-            ]
-            SpineInterface.import_data(
-                url_in;
-                objects=objects,
-                relationships=relationships,
-                object_parameter_values=object_parameter_values,
-                relationship_parameter_values=relationship_parameter_values
-            )
-            rm(file_path_out; force=true)
-            run_spineopt(url_in, url_out; log_level=0)
-            using_spinedb(url_out, Y)
-            @testset "total_cost" begin
-                for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
-                    @test Y.total_costs(model=Y.model(:instance), t=t) == if should_invest
-                        if t == DateTime(2000, 1, 1)
-                            329
-                        else
-                            60
-                        end
-                    else
-                        120
-                    end
-                end
-            end
-            @testset "invested" begin
-                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
-                    @test Y.units_invested(unit=Y.unit(:unit_ab_alt), t=t) == (
-                        should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
-                    )
-                end
-            end
-            @testset "mothballed" begin
-                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)                
-                    @test Y.units_mothballed(unit=Y.unit(:unit_ab_alt), t=t) == 0
-                end
-            end
-            @testset "available" begin
-                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)                
-                    @test Y.units_invested_available(unit=Y.unit(:unit_ab_alt), t=t) == (should_invest ? 1 : 0)
-                end
-            end
-        end
+function _test_time_limit()
+    Sys.iswindows() && return
+    @testset "time_limit" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        mip_solver_options = Dict(
+            "type" => "map",
+            "index_type" => "str",
+            "data" => Dict(
+                "HiGHS.jl" => Dict("type" => "map", "index_type" => "str", "data" => Dict("time_limit" => eps(Float64)))
+            ),
+        )
+        object_parameter_values = [
+            ["model", "instance", "db_mip_solver_options", mip_solver_options],
+            ["model", "instance", "roll_forward", unparse_db_value(Hour(6))]
+        ]
+        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 1000]]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        rm(file_path_out; force=true)
+        windows = [TimeSlice(t, t + Hour(6)) for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 18)]
+        msgs = ["no solution available for window $w - moving on..." for w in windows]
+        @test_logs(min_level=Warn, ((:warn, msg) for msg in msgs)..., run_spineopt(url_in, url_out; log_level=0))
     end
 end
 
@@ -925,5 +853,5 @@ end
     _test_dual_values_with_two_time_indices()
     _test_fix_unit_flow_with_rolling()
     _test_fix_node_state_using_map_with_rolling()
-    _test_benders()
+    _test_time_limit()
 end

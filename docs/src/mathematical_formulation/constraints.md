@@ -401,17 +401,21 @@ First, the unit flows are split into their online, start-up, shut-down and non-s
 Note that each *individual* tuple of the `unit_flow_indices` is split into its ramping contributions, if any of the ramping variables exist for this tuple. How to set-up ramps for units is described in [Ramping and Reserves](@ref).
 
 ##### [Constraint on spinning upwards ramp_up](@id constraint_ramp_up)
-The maximum online ramp up ability of a unit can be constraint by the [ramp\_up\_limit](@ref), expressed as a share of the [unit\_capacity](@ref). With this constraint, online (i.e. spinning) ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced.
+The maximum online ramp up ability of a unit can be constraint by the [ramp\_up\_limit](@ref), expressed as a share of the [unit\_capacity](@ref). With this constraint, online (i.e. spinning) ramps can be applied to groups of commodities (e.g. electricity + balancing capacity). Moreover, balancing product might have specific ramping requirements, which can herewith also be enforced. In case the [max\_startup\_ramp](@ref) is not explicitly defined (its default value is `None` in the template), this formulation would still include the started up units by using the variable `units_started_up`, which is equivalent to what the constraint `constraint_max_start_up_ramp` does with the parameter `max_startup_ramp` being 1.
 
 ```math
 \begin{aligned}
 & + \sum_{\substack{(u,n,d,s,t) \in ramp\_up\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{ramp\_up\_unit\_flow}(u,n,d,s,t)  \\
 & <= \\
 & + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}}
- (v_{units\_on}(u,s,t')
- - v_{units\_started\_up}(u,s,t')) \\
-& \min(\Delta t',\Delta t) \\
+\Big[ \\ 
+& \Big((v_{units\_on}(u,s,t') - v_{units\_started\_up}(u,s,t') \Big) \\
 & \cdot p_{ramp\_up\_limit}(u,ng,d,s,t) \\
+& + \begin{cases}       
+       0 & \text{if } p_{max\_startup\_ramp}(u, ng, d) = \textit{None} \\
+       v_{units\_started\_up}(u, s, t') & \text{otherwise} \\
+    \end{cases} \Big] \\
+& \cdot \min(\Delta t',\Delta t) \\
 & \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
 & \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
 & \forall (u,ng,d) \in ind(p_{ramp\_up\_limit})\\
@@ -504,15 +508,23 @@ The nonspinning ramp flows of a units [nonspin\_ramp\_up\_unit\_flow](@ref) are 
 ##### [Constraint on spinning downward ramps](@id constraint_ramp_down)
 
 Similarly to the online [ramp up capbility](@ref constraint_ramp_up) of a unit,
-it is also possible to impose an upper bound on the online ramp down ability of unit by defining a [ramp\_down\_limit](@ref), expressed as a share of the [unit\_capacity](@ref).
+it is also possible to impose an upper bound on the online ramp down ability of unit by defining a [ramp\_down\_limit](@ref), expressed as a share of the [unit\_capacity](@ref). In case the [max\_shutdown\_ramp](@ref) is not explicitly defined (its default value is `None` in the template), this formulation would still include the shutdown units by using the variable `units_shut_down`, which is equivalent to what the constraint `constraint_max_shut_down_ramp` does with the parameter `max_shutdown_ramp` being 1.
 
 ```math
 \begin{aligned}
 & + \sum_{\substack{(u,n,d,s,t) \in ramp\_down\_unit\_flow\_indices: \\ (u,n,d) \, \in \, (u,ng,d)}} v_{ramp\_down\_unit\_flow}(u,n,d,s,t)  \\
 & <= \\
-& + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s) \\ t'\in t\_overlap\_t(t)}}
- (v_{units\_on}(u,s,t')
- - v_{units\_started\_up}(u,s,t')) \\
+& + \sum_{\substack{(u,s,t') \in units\_on\_indices: \\ (u,s) \in (u,s), \\ t'\in t\_overlap\_t(t)}}
+\Big[ \\
+& \Big( v_{units\_on}(u,s,t') - v_{units\_started\_up}(u,s,t') \\
+& - \sum_{\substack{(u,s,t') \in nonspin\_units\_shut\_down\_indices: \\ 
+(u,s,t') \in (u,s,t'), \\ 
+\text{if } is\_reserve\_node(n) \text{ and } downward\_reserve(n)}} v_{nonspin\_units\_shut\_down}(u, n, s, t') \Big) \\
+& \cdot p_{ramp\_down\_limit}(u,ng,d,s,t) \\
+& + \begin{cases}       
+       0 & \text{if } p_{max\_shutdown\_ramp}(u, ng, d) = \textit{None} \\
+       v_{units\_shut\_down}(u, s, t') & \text{otherwise} \\
+    \end{cases} \Big] \\
 & \cdot p_{ramp\_down\_limit}(u,ng,d,s,t) \\
 & \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
 & \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\

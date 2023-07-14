@@ -29,7 +29,7 @@ struct ReducedCostPromise <: AbstractPromise
     value::JuMP.VariableRef
 end
 
-realize(x::DualPromise) = has_duals(owner_model(x.value)) ? dual(x.value) : nothing
-realize(x::ReducedCostPromise) = has_duals(owner_model(x.value)) ? reduced_cost(x.value) : nothing
+realize(x::DualPromise) = has_duals(owner_model(x.value)) ? dual(x.value) : 0.0
+realize(x::ReducedCostPromise) = has_duals(owner_model(x.value)) ? reduced_cost(x.value) : 0.0
 
 Base.:+(x::X, y::Y) where {X<:AbstractPromise,Y<:AbstractPromise} = Call(+, x, y)

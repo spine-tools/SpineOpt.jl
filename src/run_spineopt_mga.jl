@@ -22,12 +22,11 @@ function rerun_spineopt_mga!(
     url_out::Union{String,Nothing};
     add_user_variables=m -> nothing,
     add_constraints=m -> nothing,
-    update_constraints=m -> nothing,
+    alternative_objective=m -> nothing,
     log_level=3,
     optimize=true,
     update_names=false,
     alternative="",
-    alternative_objective=m -> nothing,
     write_as_roll=0,
     resume_file_path=nothing
 )
@@ -42,8 +41,8 @@ function rerun_spineopt_mga!(
         m;
         add_user_variables=add_user_variables,
         add_constraints=add_constraints,
+        alternative_objective=alternative_objective,
         log_level=log_level,
-        alternative_objective=alternative_objective
     )
     k = 1
     while optimize
@@ -53,7 +52,7 @@ function rerun_spineopt_mga!(
         if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
             @timelog log_level 2 " ... Rolling complete\n" break
         end
-        update_model!(m; update_constraints=update_constraints, log_level=log_level, update_names=update_names)
+        update_model!(m; log_level=log_level, update_names=update_names)
         k += 1
     end
     objective_value_mga = :objective_value_mga
