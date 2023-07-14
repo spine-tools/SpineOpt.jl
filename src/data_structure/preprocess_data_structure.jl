@@ -763,20 +763,20 @@ function generate_benders_structure()
         bi_name, [current_bi], Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(0)))
     )
     sp_objective_value_bi = Parameter(:sp_objective_value_bi, [benders_iteration])
-    units_on_mv = Parameter(:units_on_mv, [unit])
+    units_invested_available_mv = Parameter(:units_invested_available_mv, [unit])
     connections_invested_available_mv = Parameter(:connections_invested_available_mv, [connection])
     storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node])
     @eval begin
         benders_iteration = $benders_iteration
         current_bi = $current_bi
         sp_objective_value_bi = $sp_objective_value_bi
-        units_on_mv = $units_on_mv
+        units_invested_available_mv = $units_invested_available_mv
         connections_invested_available_mv = $connections_invested_available_mv
         storages_invested_available_mv = $storages_invested_available_mv
         export benders_iteration
         export current_bi
         export sp_objective_value_bi
-        export units_on_mv
+        export units_invested_available_mv
         export connections_invested_available_mv
         export storages_invested_available_mv
     end

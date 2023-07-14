@@ -433,10 +433,13 @@ function _calculate_duals(m; log_level=3)
     if has_duals(m)
         _save_marginal_values!(m)
         _save_bound_marginal_values!(m)
-    else
+    elseif master_problem_model(m) === nothing
         @log log_level 1 "Obtaining duals for $(m.ext[:spineopt].instance)..."
         _calculate_duals_cplex(m; log_level=log_level) && return
         _calculate_duals_fallback(m; log_level=log_level)
+    else
+        @log log_level 1 "Obtaining duals for $(m.ext[:spineopt].instance) to generate Benders cuts..."
+        _calculate_duals_fallback(m; log_level=log_level, for_benders=true)
     end
 end
 
@@ -468,11 +471,15 @@ function _reduced_cost_cplex(v::VariableRef, cplex_model, CPLEX)
     sign * rc
 end
 
-function _calculate_duals_fallback(m; log_level=3)
+function _calculate_duals_fallback(m; log_level=3, for_benders=false)
     @timelog log_level 1 "Copying model" (m_dual_lp, ref_map) = copy_model(m)
     lp_solver = m.ext[:spineopt].lp_solver
     @timelog log_level 1 "Setting LP solver $(lp_solver)..." set_optimizer(m_dual_lp, lp_solver)
-    @timelog log_level 1 "Fixing integer variables..." _fix_integer_vars!(m, ref_map)
+    if for_benders
+        @timelog log_level 1 "Relaxing discrete variables..." _relax_discrete_vars!(m, ref_map)
+    else
+        @timelog log_level 1 "Fixing discrete variables..." _relax_discrete_vars!(m, ref_map; and_fix=true)
+    end
     dual_fallback(con) = DualPromise(ref_map[con])
     reduced_cost_fallback(var) = ReducedCostPromise(ref_map[var])
     _save_marginal_values!(m, dual_fallback)
@@ -490,24 +497,23 @@ function _calculate_duals_fallback(m; log_level=3)
     end
 end
 
-function _fix_integer_vars!(m::Model, ref_map::ReferenceMap)
+function _relax_discrete_vars!(m::Model, ref_map::ReferenceMap; and_fix=false)
     for (name, var) in m.ext[:spineopt].variables
-        benders_must_fix = master_problem_model(m) !== nothing && name in (
-            :units_on, :connections_invested_available, :storages_invested_available
-        )
         def = m.ext[:spineopt].variables_definition[name]
-        def[:bin] === def[:int] === nothing && !benders_must_fix && continue
+        def[:bin] === def[:int] === nothing && continue
         for v in values(var)
             ref_v = ref_map[v]
             if is_binary(ref_v)
                 unset_binary(ref_v)
             elseif is_integer(ref_v)
                 unset_integer(ref_v)
-            elseif !benders_must_fix
+            else
                 continue
             end
-            val = _variable_value(v)
-            fix(ref_v, val; force=true)
+            if and_fix
+                val = _variable_value(v)
+                fix(ref_v, val; force=true)
+            end
         end
     end
 end
