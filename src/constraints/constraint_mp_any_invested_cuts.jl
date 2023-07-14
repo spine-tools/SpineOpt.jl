@@ -45,7 +45,8 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                 )
                 * sum(
                     Iterators.filter(
-                        !isnan, units_on_mv(unit=u, stochastic_scenario=s, t=t) for t in t_overlaps_t(m; t=t)
+                        !isnan,
+                        units_invested_available_mv(unit=u, stochastic_scenario=s, t=t) for t in t_overlaps_t(m; t=t)
                     );
                     init=0
                 )
