@@ -235,7 +235,7 @@
         ["unit", "initial_units_invested", null, null, "Initialize the value of the `units_invested` variable."],
         ["unit", "initial_units_invested_available", null, null, "Initialize the value of the `units_invested_available` variable"],
         ["unit", "initial_units_on", null, null, "Initialize the value of the `units_on` variable."],
-        ["unit", "fom_cost", null, null, "Fixed operation and maintenance costs of a `unit`. Essentially, a cost coefficient on the `number_of_units` and `unit_capacity` parameters. E.g. EUR/MWh"],
+        ["unit", "fom_cost", null, null, "Fixed operation and maintenance costs of a `unit`. Essentially, a cost coefficient on the existing units (incl. `number_of_units` and `units_invested_available`) and `unit_capacity` parameters. E.g. EUR/MWh"],
         ["unit", "graph_view_position", null, null, "An optional setting for tweaking the position of the different elements when drawing them via Spine Toolbox Graph View."],
         ["unit", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["unit", "min_down_time", null, null, "Minimum downtime of a `unit` after it shuts down."],

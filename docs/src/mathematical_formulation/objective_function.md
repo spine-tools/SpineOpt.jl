@@ -60,10 +60,13 @@ The total fixed O&M costs can be expressed as:
 ```math
 \begin{aligned}
 & v_{fixed\_om\_costs} \\
-& = \sum_{\substack{(u,n,d) \in ind(p_{unit\_capacity}):\\ u \in ind(p_{fom\_cost})}}
+& = 
 \sum_{\substack{(u,s,t)  \in  units\_on\_indices}}
- p_{unit\_capacity}(u,n,d,s,t) \cdot p_{number\_of\_units}(u,s,t)\cdot
- p_{fom\_cost}(u,s,t)\cdot p_{weight}(t) \cdot
+\text{ } \sum_{\substack{(u,n,d) \in ind(p_{unit\_capacity}):\\ u \in ind(p_{fom\_cost})}} \\
+ & \left[p_{number\_of\_units}(u,s,t) + \sum_{\substack{(u,s,t') \in units\_invested\_available\_indices:\\ t' \in t\_overlaps\_t(t)}} v_{units\_invested\_available}(u, s, t') \right] \\
+ & \cdot p_{unit\_capacity}(u,n,d,s,t)
+ \cdot p_{fom\_cost}(u,s,t)
+ p_{weight}(t) \cdot
  p_{duration}(t)\\
 \end{aligned}
 ```
