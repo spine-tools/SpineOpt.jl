@@ -127,6 +127,7 @@
         ["commodity", "commodity_lodf_tolerance", 0.1, null, "The minimum absolute value of the line outage distribution factor (LODF) that is considered meaningful."],
         ["commodity", "commodity_physics", "commodity_physics_none", "commodity_physics_list", "Defines if the `commodity` follows lodf or ptdf physics."],
         ["commodity", "commodity_ptdf_threshold", 0.001, null, "The minimum absolute value of the power transfer distribution factor (PTDF) that is considered meaningful."],
+        ["commodity", "mp_min_res_gen_to_demand_ratio", null, null, "Minimum ratio of renewable generation to demand for this commodity - used in the minimum renewable generation constraint within the Benders master problem"],
         ["commodity", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["connection", "candidate_connections", null, null, "The number of connections that may be invested in"],
         ["connection", "forced_availability_factor", null, null, "Availability factor due to outages/deratings."],
@@ -255,6 +256,7 @@
         ["unit", "units_invested_big_m_mga", null, null, "big_m_mga should be chosen as small as possible but sufficiently large. For units_invested_mga an appropriate big_m_mga would be twice the candidate units."],
         ["unit", "units_invested_mga", false, "boolean_value_list", "Defines whether a certain variable (here: units_invested) will be considered in the maximal-differences of the mga objective"],
         ["unit", "units_invested_mga_weight", 1, null, "Used to scale mga variables. For weightd sum mga method, the length of this weight given as an Array will determine the number of iterations."],
+        ["unit", "is_renewable", false, "boolean_value_list", "Whether the unit is renewable - used in the minimum renewable generation constraint within the Benders master problem"],
         ["user_constraint", "constraint_sense", "==", "constraint_sense_list", "A selector for the sense of the `user_constraint`."],
         ["user_constraint", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["user_constraint", "right_hand_side", 0.0, null, "The right-hand side, constant term in a `user_constraint`. Can be time-dependent and used e.g. for complicated efficiency approximations."]

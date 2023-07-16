@@ -49,6 +49,9 @@ function rerun_spineopt_benders!(
     j = 1
     while optimize
 		@log log_level 0 "\nStarting Benders iteration $j"
+        @timelog log_level 2 "Adding MP renewing constraints...\n" _add_mp_renewing_constraints!(
+            m_mp; log_level=log_level
+        )
         optimize_model!(m_mp; log_level=log_level) || break
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
         k = 1
@@ -153,6 +156,17 @@ function _add_mp_constraints!(m; log_level=3)
     end
     _update_constraint_names!(m)
 end
+
+function _add_mp_renewing_constraints!(m; log_level=3)
+    for add_constraint! in (
+            add_constraint_mp_min_res_gen_to_demand_ratio!,
+        )
+        name = name_from_fn(add_constraint!)
+        @timelog log_level 3 "- [$name]" add_constraint!(m)
+    end
+    _update_constraint_names!(m)
+end
+
 
 function _add_constraint_sp_objective_upperbound!(m::Model)
     @fetch sp_objective_upperbound = m.ext[:spineopt].variables

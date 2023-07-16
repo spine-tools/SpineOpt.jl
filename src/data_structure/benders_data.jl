@@ -62,6 +62,7 @@ end
 function process_subproblem_solution!(m, win_weight)
     _save_sp_marginal_values!(m, win_weight)
     _save_sp_objective_value!(m, win_weight)
+    _save_sp_unit_flow!(m, win_weight)
 end
 
 function save_sp_objective_value_tail!(m, win_weight)
@@ -92,6 +93,18 @@ function _save_sp_objective_value!(m, win_weight, tail=false)
     add_object_parameter_values!(
         benders_iteration, Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(total_sp_obj_val)))
     )
+end
+
+function _save_sp_unit_flow!(m, win_weight, tail=false)
+    pval_by_ent = _pval_by_entity(m.ext[:spineopt].values[:unit_flow])
+    pvals_to_node = Dict(
+        ent => Dict(:sp_unit_flow => pval) for (ent, pval) in pval_by_ent if ent.direction == direction(:to_node)
+    )
+    pvals_from_node = Dict(
+        ent => Dict(:sp_unit_flow => pval) for (ent, pval) in pval_by_ent if ent.direction == direction(:from_node)
+    )
+    add_relationship_parameter_values!(unit__to_node, pvals_to_node; merge_values=true)
+    add_relationship_parameter_values!(unit__from_node, pvals_from_node; merge_values=true)
 end
 
 function save_mp_objective_bounds_and_gap!(m_mp)
