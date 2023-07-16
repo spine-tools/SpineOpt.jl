@@ -21,10 +21,10 @@
     add_constraint_mp_min_res_gen_to_demand_ratio!(m::Model)
 
 sum (
-    + res_generation from subproblem
+    + res generation from subproblem
     + (units_invested_available - units_invested_available from last iteration)
-    * unit_availability_factor * unit_capacity
-) >= 0.8 * total demand
+    * unit_availability_factor * unit_capacity * unit_conv_cap_to_flow
+) >= mp_min_res_gen_to_demand_ratio * total demand
 """
 function add_constraint_mp_min_res_gen_to_demand_ratio!(m::Model)
     @fetch units_invested_available = m.ext[:spineopt].variables
@@ -35,7 +35,7 @@ function add_constraint_mp_min_res_gen_to_demand_ratio!(m::Model)
         end
     end
     m.ext[:spineopt].constraints[:mp_min_res_gen_to_demand_ratio] = Dict(
-        (commodity=comm,) => @show @constraint(
+        (commodity=comm,) => @constraint(
             m,
             + sum(
                 Iterators.filter(
