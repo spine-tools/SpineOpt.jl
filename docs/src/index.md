@@ -21,6 +21,14 @@ The [Creating Your Own Model](@ref) section explains how to create a new model f
 This includes a list of the necessary [Object Classes](@ref) and [Relationship Classes](@ref),
 but for more information, you will probably need to consult the **Concept Reference** chapter.
 
+## Tutorials
+
+We learn a lot from examples and that is what you will find in the tutorial chapter. The tutorials come in different shapes: videos, written text and example files. The *SpineOpt.jl* repository includes a folder `examples` for ready-made example models. Each example is its own sub-folder, where the input data is provided as `.json` or `.sqlite` files. This way, you can easily get a feel for how SpineOpt works with pre-made datasets, either through [Spine Toolbox](https://github.com/Spine-project/Spine-Toolbox), or directly from the Julia REPL.
+
+## How to
+
+The other parts of the documentation are good as a reference when you know what you are looking for but this chapter adds explanations on how to do specific high-level things that might involve multiple elements (e.g. how to print the model).
+
 ## Concept Reference
 
 This chapter lists and explains all the important *data and model structure related concepts*
@@ -61,3 +69,7 @@ as well as how to use it.
 The remaining sections, namely [PTDF-Based Powerflow](@ref ptdf-based-powerflow),
 [Pressure driven gas transfer](@ref pressure-driven-gas-transfer), [Lossless nodal DC power flows](@ref),
 and [Representative days with seasonal storages](@ref), explain various use-case specific modelling approaches supported by *SpineOpt.jl*.
+
+## Implementation details
+
+For those who are interested in how things work under the hood, this chapter explains some parts of the code. Note that this chapter is particularly sensitive to changes in the code and as such might get out of sync. If you do notice a discrepancy, please create an [issue in github](https://github.com/spine-tools/SpineOpt.jl/issues). That is also the place to be if you don't find what you are looking for in this documentation.
