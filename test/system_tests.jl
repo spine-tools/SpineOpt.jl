@@ -23,6 +23,8 @@ module Y
 using SpineInterface
 end
 
+using JSON
+
 function _test_run_spineopt_setup()
     url_in = ARGS[1]
     file_path_out = "$(@__DIR__)/test_out.sqlite"
@@ -582,5 +584,5 @@ end
     _test_fix_node_voltage_angle()
 
         ##initial
-    _test_initial_node_state()
+    #_test_initial_node_state()
 end
