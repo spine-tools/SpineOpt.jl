@@ -93,7 +93,7 @@ end
 
 @testset begin
     #include("data_structure/migration.jl")
-    include("data_structure/check_data_structure.jl")
+    #include("data_structure/check_data_structure.jl")
     #include("data_structure/preprocess_data_structure.jl")
     #include("data_structure/temporal_structure.jl")
     #include("data_structure/stochastic_structure.jl")
@@ -105,8 +105,8 @@ end
     #include("constraints/constraint_user_constraint.jl")
     #include("objective/objective.jl")
     #include("util/misc.jl")
-    include("util/docs_utils.jl")
+    #include("util/docs_utils.jl")
     #include("run_spineopt.jl")
     #include("run_spineopt_benders.jl")
-    #include("system_tests.jl")
+    include("system_tests.jl")
 end

@@ -26,9 +26,12 @@ end
 using JSON
 
 function _test_run_spineopt_setup()
-    url_in = ARGS[1]
+    url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
+    data_from_json = JSON.parsefile("$(@__DIR__)/6unit-system.json")
+    test_data = Dict(Symbol(key) => data_from_json[key] for key in keys(data_from_json))
+    _load_test_data(url_in, test_data)
     url_in, url_out, file_path_out
 end
 
