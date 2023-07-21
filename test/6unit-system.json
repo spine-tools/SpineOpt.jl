@@ -4171,20 +4171,6 @@
         [
             "model",
             "backbone",
-            "db_lp_solver",
-            "HiGHS.jl",
-            "Base"
-        ],
-        [
-            "model",
-            "backbone",
-            "db_mip_solver",
-            "HiGHS.jl",
-            "Base"
-        ],
-        [
-            "model",
-            "backbone",
             "model_end",
             {
                 "type": "date_time",
@@ -39273,20 +39259,6 @@
         [
             "node",
             "A",
-            "fix_node_voltage_angle",
-            1,
-            "Base"
-        ],
-        [
-            "node",
-            "A",
-            "has_voltage_angle",
-            true,
-            "Base"
-        ],
-        [
-            "node",
-            "A",
             "node_slack_penalty",
             10000,
             "Base"
@@ -39296,20 +39268,6 @@
             "B",
             "balance_type",
             "balance_type_node",
-            "Base"
-        ],
-        [
-            "node",
-            "B",
-            "fix_node_voltage_angle",
-            2,
-            "Base"
-        ],
-        [
-            "node",
-            "B",
-            "has_voltage_angle",
-            true,
             "Base"
         ],
         [
@@ -39331,13 +39289,6 @@
             "battery",
             "balance_type",
             "balance_type_node",
-            "Base"
-        ],
-        [
-            "node",
-            "battery",
-            "fix_node_state",
-            50,
             "Base"
         ],
         [
@@ -39385,13 +39336,6 @@
         [
             "node",
             "biomass",
-            "fix_node_state",
-            500000,
-            "Base"
-        ],
-        [
-            "node",
-            "biomass",
             "has_state",
             true,
             "Base"
@@ -39400,7 +39344,7 @@
             "node",
             "biomass",
             "initial_node_state",
-            400000.0,
+            500000,
             "Base"
         ],
         [
@@ -48207,20 +48151,6 @@
             "heat_node",
             "node_slack_penalty",
             10000,
-            "Base"
-        ],
-        [
-            "node",
-            "natural_gas",
-            "fix_node_pressure",
-            10.0,
-            "Base"
-        ],
-        [
-            "node",
-            "natural_gas",
-            "has_pressure",
-            true,
             "Base"
         ],
         [
