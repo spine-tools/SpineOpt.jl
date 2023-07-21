@@ -36,14 +36,18 @@ function postprocess_results!(m::Model)
     end
 end
 
-function save_connection_avg_throughflow!(m::Model)
-    @fetch connection_flow = m.ext[:spineopt].values
-    _save_connection_avg_throughflow!(m, :connection_avg_throughflow, connection_flow)
+function save_connection_avg_throughflow!(m::Model)    
+    if haskey(m.ext[:spineopt].values, :connection_flow)
+        @fetch connection_flow = m.ext[:spineopt].values
+        _save_connection_avg_throughflow!(m, :connection_avg_throughflow, connection_flow)
+    end
 end
 
 function save_connection_avg_intact_throughflow!(m::Model)
-    @fetch connection_intact_flow = m.ext[:spineopt].values
-    _save_connection_avg_throughflow!(m, :connection_avg_intact_throughflow, connection_intact_flow)
+    if haskey(m.ext[:spineopt].values, :connection_intact_flow)
+        @fetch connection_intact_flow = m.ext[:spineopt].values
+        _save_connection_avg_throughflow!(m, :connection_avg_intact_throughflow, connection_intact_flow)    
+    end
 end
 
 function _save_connection_avg_throughflow!(m::Model, key, connection_flow)
