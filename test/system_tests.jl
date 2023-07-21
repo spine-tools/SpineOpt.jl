@@ -648,28 +648,151 @@ function _test_initial_node_voltage_angle()
     end
 end
 
-@testset "unit_test on 6-unit system" begin
-    @testset "unit parameters" begin
-        _test_min_down_time()
-        _test_min_up_time()
+function _test_emissions_node_state_cap()
+    @testset "emissions using node_state_cap" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        SpineInterface.import_data(url_in; :alternatives => ["emissions test using node_state_cap"])
+
+        object_parameter_values = [
+            ["node", "CO2_emission", "node_state_cap", 0., "emissions test using node_state_cap"],
+            ["node", "SO2_emission", "node_state_cap", 0., "emissions test using node_state_cap"],
+        ]
+
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values
+        )
+
+        rm(file_path_out; force=true)
+        run_spineopt(url_in, url_out)
+        using_spinedb(url_out, Y)
+
+        flow_key_ocgt1 = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_ocgt1),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        flow_key_ocgt2 = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_ocgt2),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        flow_key_ccgt = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_ccgt),
+            node=Y.node(:B),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+
+        unit_flow_ocgt1 = Y.unit_flow(; flow_key_ocgt1...).values
+        max_unit_flow_ocgt1 = maximum(unit_flow_ocgt1)
+        unit_flow_ocgt2 = Y.unit_flow(; flow_key_ocgt2...).values
+        max_unit_flow_ocgt2 = maximum(unit_flow_ocgt2)
+        unit_flow_ccgt = Y.unit_flow(; flow_key_ccgt...).values
+        max_unit_flow_ccgt = maximum(unit_flow_ccgt)
+
+        @test max_unit_flow_ocgt1 == 0.
+        @test max_unit_flow_ocgt2 == 0.
+        @test max_unit_flow_ccgt == 0.
     end
-    
-    @testset "node parameters" begin
-        _test_max_node_pressure()
-        _test_min_node_pressure()
+end
 
-        _test_node_state_cap()
-        _test_node_state_min()
+function _test_emissions_node_slack_penalty()
+    @testset "emissions using node_slack_penalty" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        SpineInterface.import_data(url_in; :alternatives => ["emissions test using node_slack_penalty"])
 
-        _test_min_voltage_angle()
-        _test_max_voltage_angle()
+        object_parameter_values = [
+            ["node", "CO2_emission", "node_slack_penalty", 10000000., "emissions test using node_slack_penalty"],
+            ["node", "SO2_emission", "node_slack_penalty", 10000000., "emissions test using node_slack_penalty"],
+        ]
 
-        _test_fix_node_pressure()
-        _test_fix_node_state()
-        _test_fix_node_voltage_angle()
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values
+        )
 
-        _test_initial_node_state()
-        _test_initial_node_pressure()
-        _test_initial_node_voltage_angle()
+        rm(file_path_out; force=true)
+        run_spineopt(url_in, url_out)
+        using_spinedb(url_out, Y)
+
+        flow_key_ocgt1 = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_ocgt1),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        flow_key_ocgt2 = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_ocgt2),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        flow_key_ccgt = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_ccgt),
+            node=Y.node(:B),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+
+        unit_flow_ocgt1 = Y.unit_flow(; flow_key_ocgt1...).values
+        max_unit_flow_ocgt1 = maximum(unit_flow_ocgt1)
+        unit_flow_ocgt2 = Y.unit_flow(; flow_key_ocgt2...).values
+        max_unit_flow_ocgt2 = maximum(unit_flow_ocgt2)
+        unit_flow_ccgt = Y.unit_flow(; flow_key_ccgt...).values
+        max_unit_flow_ccgt = maximum(unit_flow_ccgt)
+
+        @test max_unit_flow_ocgt1 == 0.
+        @test max_unit_flow_ocgt2 == 0.
+        @test max_unit_flow_ccgt == 0.
+    end
+end
+
+@testset "unit_test on 6-unit system" begin
+    @testset "unit tests" begin
+        @testset "unit parameters" begin
+            _test_min_down_time()
+            _test_min_up_time()
+        end
+        
+        @testset "node parameters" begin
+            _test_max_node_pressure()
+            _test_min_node_pressure()
+
+            _test_node_state_cap()
+            _test_node_state_min()
+
+            _test_min_voltage_angle()
+            _test_max_voltage_angle()
+
+            _test_fix_node_pressure()
+            _test_fix_node_state()
+            _test_fix_node_voltage_angle()
+
+            _test_initial_node_state()
+            _test_initial_node_pressure()
+            _test_initial_node_voltage_angle()
+        end
+    end
+
+    @testset "system tests" begin
+        @testset "emissions" begin
+            _test_emissions_node_state_cap()
+            _test_emissions_node_slack_penalty()
+        end
     end
 end
