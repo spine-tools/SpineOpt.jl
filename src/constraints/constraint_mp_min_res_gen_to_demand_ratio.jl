@@ -80,15 +80,25 @@ function add_constraint_mp_min_res_gen_to_demand_ratio!(m::Model)
                 for (u, s, t) in units_invested_available_indices(m; unit=unit(is_renewable=true));
                 init=0,
             )
-            >=
+            <=
             + mp_min_res_gen_to_demand_ratio(commodity=comm)
-            * sum(
-                demand(node=n, stochastic_scenario=s, t=t, _default=0)
-                for (n, s, t) in node_stochastic_time_indices(
-                    m; node=intersect(indices(demand), node__commodity(commodity=comm))
-                );
-                init=0
-            )
+            *   (
+                    sum(
+                        demand(node=n, stochastic_scenario=s, t=t, _default=0)
+                        for (n, s, t) in node_stochastic_time_indices(
+                            m; node=intersect(indices(demand), node__commodity(commodity=comm))
+                        );
+                        init=0
+                    )
+                    + sum( fractional_demand(node=n, stochastic_scenario=s, t=t, _default=0)
+                        * demand(node=ng, stochastic_scenario=s, t=t)
+                        for (n, s, t) in node_stochastic_time_indices(
+                            m; node=intersect(indices(fractional_demand), node__commodity(commodity=comm))
+                        )
+                        for ng in groups(n);
+                    )
+            )   
+
         )
         for comm in indices(mp_min_res_gen_to_demand_ratio)
     )
