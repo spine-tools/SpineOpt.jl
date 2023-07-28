@@ -19,17 +19,23 @@
 
 import Logging: Warn
 
+module X
+using SpineInterface
+end
+
 module Y
 using SpineInterface
 end
 
 using JSON
 
+EPSILON = 0.000000001
+
 function _test_run_spineopt_setup()
-    url_in = "sqlite:///C:/Users/lflouis/OneDrive - Teknologian Tutkimuskeskus VTT/Documents/SpineToolbox_Projects/Backbone_hand_translated/empty.sqlite"
+    url_in = "sqlite:///C:/Users/lflouis/OneDrive - Teknologian Tutkimuskeskus VTT/Documents/SpineToolbox_Projects/Backbone_hand_translated/empty2.sqlite"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
-    data_from_json = JSON.parsefile("$(@__DIR__)/6unit-system.json")
+    data_from_json = JSON.parsefile("$(@__DIR__)/specialFeaturesDisabled.json")
     test_data = Dict(Symbol(key) => data_from_json[key] for key in keys(data_from_json))
     _load_test_data(url_in, test_data)
     url_in, url_out, file_path_out
@@ -715,9 +721,14 @@ function _test_emissions_node_slack_penalty()
             ["node", "SO2_emission", "node_slack_penalty", 10000000., "emissions test using node_slack_penalty"],
         ]
 
+        relationship_parameter_values = [
+            ["unit__to_node", "U_ccgt", "B", "vom_cost", 150., "emissions test using node_slack_penalty"],
+        ]
+
         SpineInterface.import_data(
             url_in;
-            object_parameter_values=object_parameter_values
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
         )
 
         rm(file_path_out; force=true)
@@ -762,6 +773,493 @@ function _test_emissions_node_slack_penalty()
     end
 end
 
+function _test_gas_high_node_slack_penalty()
+    @testset "gas using high node_slack_penalty" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        SpineInterface.import_data(url_in; :alternatives => ["gas test using high node_slack_penalty"])
+
+        object_parameter_values = [
+            ["node", "gas", "node_slack_penalty", 10000000., "gas test using high node_slack_penalty"],
+        ]
+
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values
+        )
+
+        rm(file_path_out; force=true)
+        run_spineopt(url_in, url_out)
+        using_spinedb(url_out, Y)
+
+        flow_key_ocgt1 = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_ocgt1),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        flow_key_ocgt2 = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_ocgt2),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        flow_key_ccgt = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_ccgt),
+            node=Y.node(:B),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_flow_ocgt1 = Y.unit_flow(; flow_key_ocgt1...).values
+        max_unit_flow_ocgt1 = maximum(unit_flow_ocgt1)
+        unit_flow_ocgt2 = Y.unit_flow(; flow_key_ocgt2...).values
+        max_unit_flow_ocgt2 = maximum(unit_flow_ocgt2)
+        unit_flow_ccgt = Y.unit_flow(; flow_key_ccgt...).values
+        max_unit_flow_ccgt = maximum(unit_flow_ccgt)
+
+        @test max_unit_flow_ocgt1 == 0.
+        @test max_unit_flow_ocgt2 == 0.
+        @test max_unit_flow_ccgt == 0.
+    end
+end
+
+function _test_gas_null_node_slack_penalty()
+    @testset "gas using null node_slack_penalty" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        SpineInterface.import_data(url_in; :alternatives => ["gas test using null node_slack_penalty"])
+
+        object_parameter_values = [
+            ["node", "gas", "node_slack_penalty", 0., "gas test using null node_slack_penalty"],
+        ]
+
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values
+        )
+
+        rm(file_path_out; force=true)
+        run_spineopt(url_in, url_out)
+        using_spinedb(url_out, Y)
+
+        flow_key_wind = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_wind),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        flow_key_nuclear = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_nuclear),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        flow_key_chp = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_chp),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_flow_wind = Y.unit_flow(; flow_key_wind...).values
+        max_unit_flow_wind = maximum(unit_flow_wind)
+        unit_flow_nuclear = Y.unit_flow(; flow_key_nuclear...).values
+        max_unit_flow_nuclear = maximum(unit_flow_nuclear)
+        unit_flow_chp = Y.unit_flow(; flow_key_chp...).values
+        max_unit_flow_chp = maximum(unit_flow_chp)
+
+        @test max_unit_flow_wind == 0.
+        @test max_unit_flow_nuclear == 0.
+        @test max_unit_flow_chp == 0.
+    end
+end
+
+function _test_biomass_high_node_slack_penalty_no_heat_demand()
+    @testset "biomass using high node_slack_penalty without heat_node demand" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        SpineInterface.import_data(url_in; :alternatives => ["biomass test using high node_slack_penalty without heat_node demand"])
+
+        object_parameter_values = [
+            ["node", "biomass", "node_slack_penalty", 1000000., "biomass test using high node_slack_penalty without heat_node demand"],
+            ["node", "heat_node", "demand", 0., "biomass test using high node_slack_penalty without heat_node demand"],
+        ]
+
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values
+        )
+
+        rm(file_path_out; force=true)
+        run_spineopt(url_in, url_out)
+        using_spinedb(url_out, Y)
+
+        flow_key_chp_A = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_chp),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        flow_key_chp_heat = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_chp),
+            node=Y.node(:heat_node),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_key = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_chp),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_flow_chp_A = Y.unit_flow(; flow_key_chp_A...).values
+        max_unit_flow_chp_A = maximum(unit_flow_chp_A)
+        unit_flow_chp_heat = Y.unit_flow(; flow_key_chp_heat...).values
+        max_unit_flow_chp_heat = maximum(unit_flow_chp_heat)
+        unit_on = Y.units_on(; unit_key...).values
+        max_unit_on = maximum(unit_on)
+
+        @test max_unit_flow_chp_A == 0.
+        @test max_unit_flow_chp_heat == 0.
+        @test max_unit_on < 0. + EPSILON
+    end
+end
+
+function _test_nuclear_high_node_slack_penalty()
+    @testset "nuclear using high node_slack_penalty" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        SpineInterface.import_data(url_in; :alternatives => ["nuclear test using high node_slack_penalty"])
+
+        object_parameter_values = [
+            ["node", "nuclear", "node_slack_penalty", 1000000., "nuclear test using high node_slack_penalty"],
+        ]
+
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values
+        )
+
+        rm(file_path_out; force=true)
+        run_spineopt(url_in, url_out)
+        using_spinedb(url_out, Y)
+
+        flow_key_nuclear_A = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_nuclear),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_key = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_nuclear),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_flow_nuclear_A = Y.unit_flow(; flow_key_nuclear_A...).values
+        max_unit_flow_nuclear_A = maximum(unit_flow_nuclear_A)
+        unit_on = Y.units_on(; unit_key...).values
+        max_unit_on = maximum(unit_on)
+
+        @test max_unit_flow_nuclear_A == 0.
+        @test max_unit_on < 0. + EPSILON
+    end
+end
+
+function _test_nuclear_unit_high_vom_cost()
+    @testset "nuclear unit using high vom_cost" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        SpineInterface.import_data(url_in; :alternatives => ["nuclear unit using high vom_cost"])
+
+        relationship_parameter_values = [
+            ["unit__to_node", "U_nuclear", "A", "vom_cost", 1000000., "nuclear unit using high vom_cost"],
+        ]
+
+        SpineInterface.import_data(
+            url_in;
+            relationship_parameter_values=relationship_parameter_values
+        )
+
+        rm(file_path_out; force=true)
+        run_spineopt(url_in, url_out)
+        using_spinedb(url_out, Y)
+
+        flow_key_nuclear_A = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_nuclear),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_key = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_nuclear),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_flow_nuclear_A = Y.unit_flow(; flow_key_nuclear_A...).values
+        max_unit_flow_nuclear_A = maximum(unit_flow_nuclear_A)
+        unit_on = Y.units_on(; unit_key...).values
+        max_unit_on = maximum(unit_on)
+
+        @test max_unit_flow_nuclear_A == 0.
+        @test max_unit_on < 0. + EPSILON
+    end
+end
+
+function _test_wind_unit_high_vom_cost()
+    @testset "wind unit using high vom_cost" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        SpineInterface.import_data(url_in; :alternatives => ["wind unit using high vom_cost"])
+
+        relationship_parameter_values = [
+            ["unit__to_node", "U_wind", "A", "vom_cost", 1000000., "wind unit using high vom_cost"],
+        ]
+
+        SpineInterface.import_data(
+            url_in;
+            relationship_parameter_values=relationship_parameter_values
+        )
+
+        rm(file_path_out; force=true)
+        run_spineopt(url_in, url_out; alternative="wind unit using high vom_cost")
+        using_spinedb(url_out, Y)
+
+        flow_key_wind_A = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_wind),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_key = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_wind),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_flow_wind_A = Y.unit_flow(; flow_key_wind_A...).values
+        max_unit_flow_wind_A = maximum(unit_flow_wind_A)
+        unit_on = Y.units_on(; unit_key...).values
+        max_unit_on = maximum(unit_on)
+
+        @test max_unit_flow_wind_A == 0.
+        @test max_unit_on < 0. + EPSILON
+    end
+end
+
+function _test_chp_unit_high_vom_cost()
+    @testset "chp unit using high vom_cost" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        SpineInterface.import_data(url_in; :alternatives => ["chp unit using high vom_cost"])
+
+        relationship_parameter_values = [
+            ["unit__to_node", "U_chp", "A", "vom_cost", 1000000., "chp unit using high vom_cost"],
+        ]
+
+        SpineInterface.import_data(
+            url_in;
+            relationship_parameter_values=relationship_parameter_values
+        )
+
+        rm(file_path_out; force=true)
+        run_spineopt(url_in, url_out)
+        using_spinedb(url_out, Y)
+
+        flow_key_chp_A = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_chp),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_key = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_chp),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_flow_chp_A = Y.unit_flow(; flow_key_chp_A...).values
+        max_unit_flow_chp_A = maximum(unit_flow_chp_A)
+        unit_on = Y.units_on(; unit_key...).values
+        max_unit_on = maximum(unit_on)
+
+        @test max_unit_flow_chp_A == 0.
+        @test max_unit_on < 0. + EPSILON
+    end
+end
+
+function _test_ccgt_unit_high_vom_cost()
+    @testset "ccgt unit using high vom_cost" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        SpineInterface.import_data(url_in; :alternatives => ["ccgt unit using high vom_cost"])
+
+        relationship_parameter_values = [
+            ["unit__to_node", "U_ccgt", "B", "vom_cost", 1000000., "ccgt unit using high vom_cost"],
+        ]
+
+        SpineInterface.import_data(
+            url_in;
+            relationship_parameter_values=relationship_parameter_values
+        )
+
+        rm(file_path_out; force=true)
+        run_spineopt(url_in, url_out)
+        using_spinedb(url_out, Y)
+
+        flow_key_ccgt_B = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_ccgt),
+            node=Y.node(:B),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_key = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_chp),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_flow_ccgt_B = Y.unit_flow(; flow_key_ccgt_B...).values
+        max_unit_flow_ccgt_B = maximum(unit_flow_ccgt_B)
+        unit_on = Y.units_on(; unit_key...).values
+        max_unit_on = maximum(unit_on)
+
+        @test max_unit_flow_ccgt_B == 0.
+        @test max_unit_on < 0. + EPSILON
+    end
+end
+
+function _test_ocgt1_unit_high_vom_cost()
+    @testset "ocgt1 unit using high vom_cost" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        SpineInterface.import_data(url_in; :alternatives => ["ocgt1 unit using high vom_cost"])
+
+        relationship_parameter_values = [
+            ["unit__to_node", "U_ocgt1", "A", "vom_cost", 1000000., "ocgt1 unit using high vom_cost"],
+        ]
+
+        SpineInterface.import_data(
+            url_in;
+            relationship_parameter_values=relationship_parameter_values
+        )
+
+        rm(file_path_out; force=true)
+        run_spineopt(url_in, url_out)
+        using_spinedb(url_out, Y)
+
+        flow_key_ocgt1_A = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_ocgt1),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_key = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_ocgt1),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_flow_ocgt1_A = Y.unit_flow(; flow_key_ocgt1_A...).values
+        max_unit_flow_ocgt1_A = maximum(unit_flow_ocgt1_A)
+        unit_on = Y.units_on(; unit_key...).values
+        max_unit_on = maximum(unit_on)
+
+        @test max_unit_flow_ocgt1_A == 0.
+        @test max_unit_on < 0. + EPSILON
+    end
+end
+
+function _test_ocgt2_unit_high_vom_cost()
+    @testset "ocgt2 unit using high vom_cost" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        SpineInterface.import_data(url_in; :alternatives => ["ocgt2 unit using high vom_cost"])
+
+        relationship_parameter_values = [
+            ["unit__to_node", "U_ocgt2", "A", "vom_cost", 1000000., "ocgt2 unit using high vom_cost"],
+        ]
+
+        SpineInterface.import_data(
+            url_in;
+            relationship_parameter_values=relationship_parameter_values
+        )
+
+        rm(file_path_out; force=true)
+        run_spineopt(url_in, url_out)
+        using_spinedb(url_out, Y)
+
+        flow_key_ocgt2_A = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_ocgt2),
+            node=Y.node(:A),
+            direction=Y.direction(:to_node),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_key = (
+            report=Y.report(:report),
+            unit=Y.unit(:U_ocgt2),
+            stochastic_scenario=Y.stochastic_scenario(:scenario),
+        )
+
+        unit_flow_ocgt2_A = Y.unit_flow(; flow_key_ocgt2_A...).values
+        max_unit_flow_ocgt2_A = maximum(unit_flow_ocgt2_A)
+        unit_on = Y.units_on(; unit_key...).values
+        max_unit_on = maximum(unit_on)
+
+        @test max_unit_flow_ocgt2_A == 0.
+        @test max_unit_on < 0. + EPSILON
+    end
+end
+
+"""function _test_heat_node_high_demand()
+    @testset "heat node using high demand" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        SpineInterface.import_data(url_in; :alternatives => ["heat node using high demand"])
+
+        relationship_parameter_values = [
+            ["node", "heat_node", "demand", 1000000., "heat node using high demand"],
+        ]
+
+        SpineInterface.import_data(
+            url_in;
+            relationship_parameter_values=relationship_parameter_values
+        )
+
+        rm(file_path_out; force=true)
+        run_spineopt(url_in, url_out)
+        using_spinedb(url_out, Y)
+        using_spinedb(url_in, X)
+
+        unit__to_node_key = (
+            unit = X.unit(:U_chp),
+            node = X.node(:heat_node),
+        )
+
+        #unit_capacity = X.unit_capacity(unit__to_node=unit__to_node_key)
+        @warn X.unit_capacity()
+    end
+end"""
+
 @testset "unit_test on 6-unit system" begin
     @testset "unit tests" begin
         @testset "unit parameters" begin
@@ -794,5 +1292,28 @@ end
             _test_emissions_node_state_cap()
             _test_emissions_node_slack_penalty()
         end
+        @testset "input nodes" begin
+            _test_gas_high_node_slack_penalty()
+            _test_gas_null_node_slack_penalty()
+            _test_biomass_high_node_slack_penalty_no_heat_demand()
+            _test_nuclear_high_node_slack_penalty()
+        end
+        @testset "units" begin
+            
+            _test_chp_unit_high_vom_cost()
+            _test_ccgt_unit_high_vom_cost()
+            _test_ocgt1_unit_high_vom_cost()
+            _test_ocgt2_unit_high_vom_cost()
+        end
+        _test_nuclear_unit_high_vom_cost()
+        _test_wind_unit_high_vom_cost()
+        @testset "output nodes" begin
+            #_test_A_no_demand()
+            #_test_A_high_demand()
+            #_test_max_use_B_branch()
+            #_test_only_use_B_branch()
+        end
+        #_test_only_use_B_branch()
+        #_test_heat_node_high_demand()
     end
 end
