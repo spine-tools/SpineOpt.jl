@@ -344,7 +344,7 @@ end
 Optimize the given model.
 If an optimal solution is found, save results and return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, iterations=nothing)
+function optimize_model!(m::Model; log_level=3, calculate_duals=false, save_outputs=true, iterations=nothing)
     write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
@@ -359,7 +359,10 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, iteration
                 m; iterations=iterations
             )
             calculate_duals && _calculate_duals(m; log_level=log_level)
-            @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
+            if save_outputs
+                @timelog log_level 2 "Postprocessing results..." postprocess_results!(m)
+                @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
+            end
         else
             m.ext[:spineopt].has_results[] = false
             @warn "no solution available for window $(current_window(m)) - moving on..."
@@ -391,7 +394,6 @@ Save a model results: first postprocess results, then save variables and objecti
 function _save_model_results!(m; iterations=nothing)
     _save_variable_values!(m)
     _save_objective_values!(m)
-    postprocess_results!(m)
 end
 
 """
@@ -555,7 +557,7 @@ function _save_output!(m, out, value_or_param, crop_to_window; iterations=nothin
     by_entity_non_aggr = _value_by_entity_non_aggregated(m, value_or_param, crop_to_window)
     for (entity, by_analysis_time_non_aggr) in by_entity_non_aggr
         if !isnothing(iterations)
-            # FIXME: Needs to be done, befooooore we execute solve, as we need to set objective for this solve
+            # FIXME: Needs to be done before we solve, as we need to set objective for this solve
             new_mga_name = Symbol(string("mga_it_", iterations))
             if mga_iteration(new_mga_name) == nothing
                 new_mga_i = Object(new_mga_name)
