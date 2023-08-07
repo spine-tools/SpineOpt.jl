@@ -32,6 +32,7 @@ function preprocess_data_structure(; log_level=3)
     generate_report()
     generate_report__output()
     generate_model__report()
+    add_required_outputs()
     process_lossless_bidirectional_connections()
     # NOTE: generate direction before doing anything that calls `connection__from_node` or `connection__to_node`,
     # so we don't corrupt the lookup cache
@@ -748,6 +749,23 @@ Generate a default `report` object, only if no report objects exist.
 function generate_report()
     isempty(report()) || return
     add_objects!(report, [Object(:default_report)])
+end
+
+"""
+    add_required_outputs()
+
+Add outputs that are required for calculating other outputs.
+"""
+function add_required_outputs()
+    required_outputs = Dict(
+        :connection_avg_throughflow => :connection_flow,
+        :connection_avg_intact_throughflow => :connection_intact_flow,
+    )
+    for r in report()
+        new_outs = (get(required_outputs, out, nothing) for out in report__output(report=r))
+        new_rels = [(r, out) for out in new_outs if out !== nothing]
+        add_relationships!(report__output, new_rels)
+    end
 end
 
 """
