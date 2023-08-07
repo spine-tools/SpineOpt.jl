@@ -360,8 +360,8 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, save_outp
             )
             calculate_duals && _calculate_duals(m; log_level=log_level)
             if save_outputs
-                @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
                 @timelog log_level 2 "Postprocessing results..." postprocess_results!(m)
+                @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
             end
         else
             m.ext[:spineopt].has_results[] = false
