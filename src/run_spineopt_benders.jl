@@ -49,7 +49,7 @@ function rerun_spineopt_benders!(
     j = 1
     while optimize
 		@log log_level 0 "\nStarting Benders iteration $j"
-        optimize_model!(m_mp; log_level=log_level) || break
+        optimize_model!(m_mp; log_level=log_level, save_outputs=false) || break
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
         k = 1
         subproblem_solved = nothing
