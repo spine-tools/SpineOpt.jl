@@ -764,7 +764,7 @@ function add_required_outputs()
     for r in report()
         new_outs = (get(required_outputs, out, nothing) for out in report__output(report=r))
         new_rels = [(r, out) for out in new_outs if out !== nothing]
-        add_relationships!(report__output, new_rels)
+        isempty(new_rels) || add_relationships!(report__output, new_rels)
     end
 end
 
