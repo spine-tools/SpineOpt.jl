@@ -748,7 +748,7 @@ Generate a default `report` object, only if no report objects exist.
 """
 function generate_report()
     isempty(report()) || return
-    add_objects!(report, [Object(:default_report)])
+    add_objects!(report, [Object(:default_report, :report)])
 end
 
 """
@@ -757,14 +757,16 @@ end
 Add outputs that are required for calculating other outputs.
 """
 function add_required_outputs()
-    required_outputs = Dict(
+    required_output_names = Dict(
         :connection_avg_throughflow => :connection_flow,
         :connection_avg_intact_throughflow => :connection_intact_flow,
     )
     for r in report()
-        new_outs = (get(required_outputs, out, nothing) for out in report__output(report=r))
-        new_rels = [(r, out) for out in new_outs if out !== nothing]
-        isempty(new_rels) || add_relationships!(report__output, new_rels)
+        new_output_names = (get(required_output_names, out.name, nothing) for out in report__output(report=r))
+        new_output_names = [n for n in new_output_names if n !== nothing]
+        isempty(new_output_names) && continue
+        add_objects!(output, [Object(n, :output) for n in new_output_names])
+        add_relationships!(report__output, [(r, output(n)) for n in new_output_names])
     end
 end
 
