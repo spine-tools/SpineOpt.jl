@@ -23,6 +23,7 @@
 Limit the post contingency flow on monitored connection mon to conn_emergency_capacity upon outage of connection cont.
 """
 function add_constraint_connection_flow_lodf!(m::Model)
+    t0 = _analysis_time(m)
     rpts = join(
         (report for (report, output) in report__output() if output.name == :contingency_is_binding), ", ", " and "
     )
