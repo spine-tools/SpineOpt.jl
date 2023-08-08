@@ -47,7 +47,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                     Iterators.filter(
                         !isnan,
                         units_invested_available_mv(unit=u, stochastic_scenario=s, t=t)
-                        for t in t_highest_resolution(t_in_t(m; t_long=t))
+                        for t in t_highest_resolution(t_overlaps_t(m; t))
                     );
                     init=0
                 )
@@ -64,7 +64,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                     Iterators.filter(
                         !isnan,
                         connections_invested_available_mv(connection=c, stochastic_scenario=s, t=t)
-                        for t in t_highest_resolution(t_in_t(m; t_long=t))
+                        for t in t_highest_resolution(t_overlaps_t(m; t))
                     );
                     init=0
                 )
@@ -81,7 +81,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                     Iterators.filter(
                         !isnan,
                         storages_invested_available_mv(node=n, stochastic_scenario=s, t=t)
-                        for t in t_highest_resolution(t_in_t(m; t_long=t))
+                        for t in t_highest_resolution(t_overlaps_t(m; t))
                     );
                     init=0
                 )

@@ -44,19 +44,19 @@ end
 """
     _window_time_series(by_t, weight)
 
-A `TimeSeries` from the given `Dict` mapping `TimeSlice` to `Float64`, with an explicit zero (0.0) at the end.
-The zero is there because we want to merge marginal values from different windows of the Benders subproblem
+A `TimeSeries` from the given `Dict` mapping `TimeSlice` to `Float64`, with an explicit NaN at the end.
+The NaN is there because we want to merge marginal values from different windows of the Benders subproblem
 into one `TimeSeries`.
 
-Without the zero, the last value of one window would apply until the next window, which wouldn't be correct
+Without the NaN, the last value of one window would apply until the next window, which wouldn't be correct
 if there were gaps between the windows (as in rolling representative periods Benders).
-With the zero, the marginal value on the gap is zero as it should be.
+With the NaN, the gap is skipped in the Benders cuts.
 """
 function _window_time_series(by_t, weight)
     time_slices, vals = collect(keys(by_t)), collect(values(by_t))
     inds = start.(time_slices)
     push!(inds, maximum(end_.(time_slices)))
-    push!(vals, 0.0)
+    push!(vals, NaN)
     TimeSeries(inds, weight * vals)
 end
 
