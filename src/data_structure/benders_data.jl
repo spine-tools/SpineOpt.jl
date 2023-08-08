@@ -36,14 +36,28 @@ function _pval_by_entity(vals, weight=1.0)
         by_t[ind.t] = realize(val)
     end
     Dict(
-        ent => parameter_value(
-            Map(
-                collect(keys(by_s)),
-                [TimeSeries(start.(keys(by_t)), weight * collect(values(by_t))) for by_t in values(by_s)]
-            )
-        )
+        ent => parameter_value(Map(collect(keys(by_s)), [_window_time_series(by_t, weight) for by_t in values(by_s)]))
         for (ent, by_s) in by_ent
     )
+end
+
+"""
+    _window_time_series(by_t, weight)
+
+A `TimeSeries` from the given `Dict` mapping `TimeSlice` to `Float64`, with an explicit zero (0.0) at the end.
+The zero is there because we want to merge marginal values from different windows of the Benders subproblem
+into one `TimeSeries`.
+
+Without the zero, the last value of one window would apply until the next window, which wouldn't be correct
+if there were gaps between the windows (as in rolling representative periods Benders).
+With the zero, the marginal value on the gap is zero as it should be.
+"""
+function _window_time_series(by_t, weight)
+    time_slices, vals = collect(keys(by_t)), collect(values(by_t))
+    inds = start.(time_slices)
+    push!(inds, maximum(end_.(time_slices)))
+    push!(vals, 0.0)
+    TimeSeries(inds, weight * vals)
 end
 
 function process_master_problem_solution!(m_mp)
@@ -78,11 +92,13 @@ function _save_sp_marginal_values!(m, win_weight)
     _save_sp_marginal_values!(m, :bound_storages_invested_available, :storages_invested_available_mv, node, win_weight)
 end
 
-function _save_sp_marginal_values!(m, var_name, benders_param_name, obj_cls, win_weight)
-    win_start = start(current_window(m))
-    window_values = Dict(k => v for (k, v) in m.ext[:spineopt].values[var_name] if start(k.t) >= win_start)
+function _save_sp_marginal_values!(m, var_name, param_name, obj_cls, win_weight)
+    win_start, win_end = start(current_window(m)), end_(current_window(m))
+    window_values = Dict(
+        k => v for (k, v) in m.ext[:spineopt].values[var_name] if start(k.t) >= win_start && end_(k.t) <= win_end
+    )
     pval_by_ent = _pval_by_entity(window_values, win_weight)
-    pvals = Dict(only(ent) => Dict(benders_param_name => pval) for (ent, pval) in pval_by_ent)
+    pvals = Dict(only(ent) => Dict(param_name => pval) for (ent, pval) in pval_by_ent)
     add_object_parameter_values!(obj_cls, pvals; merge_values=true)
 end
 

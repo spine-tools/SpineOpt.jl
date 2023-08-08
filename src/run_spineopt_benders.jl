@@ -104,7 +104,7 @@ function rerun_spineopt_benders!(
         global current_bi = add_benders_iteration(j)
     end
     write_report(m, url_out; alternative=alternative, log_level=log_level)
-    (m_mp, m)
+    m
 end
 
 """
