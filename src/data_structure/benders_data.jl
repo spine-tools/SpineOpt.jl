@@ -50,7 +50,7 @@ into one `TimeSeries`.
 
 Without the NaN, the last value of one window would apply until the next window, which wouldn't be correct
 if there were gaps between the windows (as in rolling representative periods Benders).
-With the NaN, the gap is skipped in the Benders cuts.
+With the NaN, the gap is correctly skipped in the Benders cuts.
 """
 function _window_time_series(by_t, weight)
     time_slices, vals = collect(keys(by_t)), collect(values(by_t))

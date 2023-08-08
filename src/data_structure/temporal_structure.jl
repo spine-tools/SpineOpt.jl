@@ -184,61 +184,6 @@ function _add_padding_time_slice!(instance, window_end, window_time_slices)
 end
 
 """
-    _roll_and_collect_time_slices!(m::Model)
-
-Roll the temporal structure of `m` till the very end, while collecting `TimeSlice`s from each window.
-Return the collected `TimeSlice`s and the number of rolls performed.
-"""
-function _roll_and_collect_time_slices!(m::Model)
-    instance = m.ext[:spineopt].instance
-    dur_unit = _model_duration_unit(instance)
-    mp_time_slices = TimeSlice[]
-    win_start = start(current_window(m))
-    k = 1
-    while true
-        # Collect intervals by block before rolling
-        intervals_by_block = Dict()
-        for t in time_slice(m)
-            for block in blocks(t)
-                push!(get!(intervals_by_block, block, []), (start=start(t), end_=end_(t)))
-            end
-        end
-        # Fill gaps at the beginning and end of each block
-        win_end = end_(current_window(m))
-        for (block, intervals) in intervals_by_block
-            block_start = first(intervals).start
-            block_end = last(intervals).end_
-            win_start < block_start && pushfirst!(intervals, (start=win_start, end_=block_start))
-            block_end < win_end && push!(intervals, (start=block_end, end_=win_end))
-        end
-        # Roll
-        roll_successful = roll_temporal_structure!(m, k)
-        if roll_successful
-            # Make sure time slices do not drip over the next window
-            for (block, intervals) in intervals_by_block
-                map!(i -> (start=i.start, end_=min(i.end_, win_end)), intervals, intervals)
-                filter!(i -> i.start < i.end_, intervals)
-            end
-        end
-        # Create and append TimeSlices
-        blocks_by_interval = Dict()
-        for (block, intervals) in intervals_by_block
-            for (t_start, t_end) in intervals
-                push!(get!(blocks_by_interval, (t_start, t_end), Set()), block)
-            end
-        end
-        append!(
-            mp_time_slices,
-            (TimeSlice(interval..., blocks...; duration_unit=dur_unit) for (interval, blocks) in blocks_by_interval)
-        )
-        roll_successful || break
-        win_start = win_end
-        k += 1
-    end
-    unique!(sort!(mp_time_slices)), k - 1
-end
-
-"""
     _required_history_duration(m::Model)
 
 The required length of the included history based on parameter values that impose delays as a `Dates.Period`.
@@ -312,15 +257,15 @@ end
 
 function _generate_master_window_and_time_slice!(m::Model, m_mp::Model)
     instance = m.ext[:spineopt].instance
-    mp_time_slices, roll_count = _roll_and_collect_time_slices!(m)
-    mp_start = start(first(mp_time_slices))
-    mp_end = end_(current_window(m))
+    mp_start = model_start(model=instance)
+    mp_end = model_end(model=instance)
     m_mp.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
         mp_start, mp_end, duration_unit=_model_duration_unit(instance)
     )
+    mp_time_slices = _window_time_slices(instance, mp_start, mp_end)
+    _add_padding_time_slice!(instance, mp_end, mp_time_slices)
     history_time_slices, t_history_t = _history_time_slices!(instance, mp_start, mp_end, mp_time_slices)
     _do_generate_time_slice!(m_mp, mp_time_slices, history_time_slices, t_history_t)
-    roll_count
 end
 
 """
@@ -497,10 +442,9 @@ Create the master problem temporal structure for SpineOpt benders.
 Roll the subproblem to the last window and return the number of windows rolled.
 """
 function generate_master_temporal_structure!(m::Model, m_mp::Model)
-    roll_count = _generate_master_window_and_time_slice!(m, m_mp)
+    _generate_master_window_and_time_slice!(m, m_mp)
     _generate_output_time_slices!(m_mp)
     _generate_time_slice_relationships!(m_mp)
-    roll_count
 end
 
 """
