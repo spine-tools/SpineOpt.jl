@@ -45,14 +45,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                         + units_invested_available[u, s, t]
                         - internal_fix_units_invested_available(unit=u, stochastic_scenario=s, t=t)
                     )
-                    * sum(
-                        Iterators.filter(
-                            !isnan,
-                            units_invested_available_mv(unit=u, stochastic_scenario=s, t=t)
-                            for t in t_highest_resolution(t_overlaps_t(m; t))
-                        );
-                        init=0
-                    )
+                    * window_sum(units_invested_available_mv(unit=u, stochastic_scenario=s), t)
                     for (u, s, t) in units_invested_available_indices(m)
                     init=0,
                 )
@@ -62,14 +55,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                         + connections_invested_available[c, s, t]
                         - internal_fix_connections_invested_available(connection=c, stochastic_scenario=s, t=t)
                     )
-                    * sum(
-                        Iterators.filter(
-                            !isnan,
-                            connections_invested_available_mv(connection=c, stochastic_scenario=s, t=t)
-                            for t in t_highest_resolution(t_overlaps_t(m; t))
-                        );
-                        init=0
-                    )
+                    * window_sum(connections_invested_available_mv(connection=c, stochastic_scenario=s))
                     for (c, s, t) in connections_invested_available_indices(m)
                     init=0,
                 )
@@ -79,14 +65,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                         + storages_invested_available[n, s, t]
                         - internal_fix_storages_invested_available(node=n, stochastic_scenario=s, t=t)
                     )
-                    * sum(
-                        Iterators.filter(
-                            !isnan,
-                            storages_invested_available_mv(node=n, stochastic_scenario=s, t=t)
-                            for t in t_highest_resolution(t_overlaps_t(m; t))
-                        );
-                        init=0
-                    )
+                    * window_sum(storages_invested_available_mv(node=n, stochastic_scenario=s))
                     for (n, s, t) in storages_invested_available_indices(m)
                     init=0,
                 )
