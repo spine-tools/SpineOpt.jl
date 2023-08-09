@@ -112,7 +112,11 @@ function _save_sp_objective_value!(m, win_weight, tail=false)
 end
 
 function _save_sp_unit_flow!(m, win_weight, tail=false)
-    pval_by_ent = _pval_by_entity(m.ext[:spineopt].values[:unit_flow])
+    win_start, win_end = start(current_window(m)), end_(current_window(m))
+    window_values = Dict(
+        k => v for (k, v) in m.ext[:spineopt].values[:unit_flow] if start(k.t) >= win_start && end_(k.t) <= win_end
+    )
+    pval_by_ent = _pval_by_entity(window_values, win_weight)
     pvals_to_node = Dict(
         ent => Dict(:sp_unit_flow => pval) for (ent, pval) in pval_by_ent if ent.direction == direction(:to_node)
     )
