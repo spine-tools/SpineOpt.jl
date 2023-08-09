@@ -49,11 +49,6 @@ function rerun_spineopt_benders!(
     j = 1
     while optimize
 		@log log_level 0 "\nStarting Benders iteration $j"
-        if j > 1
-            @timelog log_level 2 "Adding MP renewing constraints...\n" _add_mp_renewing_constraints!(
-                m_mp; log_level=log_level
-            )
-        end
         optimize_model!(m_mp; log_level=log_level, save_outputs=false) || break
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
         k = 1
@@ -99,6 +94,9 @@ function rerun_spineopt_benders!(
             break
         end
         @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
+        @timelog log_level 2 "Adding MP renewing constraints...\n" _add_mp_renewing_constraints!(
+            m_mp; log_level=log_level
+        )
         _unfix_history!(m)
         j += 1
         global current_bi = add_benders_iteration(j)
