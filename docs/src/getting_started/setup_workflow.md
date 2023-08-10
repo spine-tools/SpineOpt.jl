@@ -60,4 +60,4 @@ julia> SpineOpt.import_data("copied URL address, inside these quotes", SpineOpt.
 
 ![image](https://user-images.githubusercontent.com/40472544/114977877-171aa200-9e91-11eb-89e0-9896f6cc1fab.png)
 
-SpineOpt would be ready to run, but for the *Input DB*, which is empty of content (it's just a template that contains a SpineOpt specific data structure). The [next step](https://spine-project.github.io/SpineOpt.jl/latest/getting_started/creating_your_own_model/) goes through setting up and running a simple toy model.
+SpineOpt would be ready to run, but for the *Input DB*, which is empty of content (it's just a template that contains a SpineOpt specific data structure). The [next step](https://spine-tools.github.io/SpineOpt.jl/latest/getting_started/creating_your_own_model/) goes through setting up and running a simple toy model.
