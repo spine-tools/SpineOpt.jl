@@ -38,67 +38,48 @@ function add_constraint_mp_min_res_gen_to_demand_ratio!(m::Model)
         (commodity=comm,) => @constraint(
             m,
             + sum(
-                Iterators.filter(
-                    !isnan,
-                    sp_unit_flow(unit=u, node=n, direction=d, stochastic_scenario=s, t=t, _default=0)
-                    for (u, n, d, s, t) in unit_flow_indices(
-                        m;
-                        unit=unit(is_renewable=true),
-                        node=node__commodity(commodity=comm),
-                        direction=direction(:to_node)
-                    )
-                );
+                window_sum(sp_unit_flow(unit=u, node=n, direction=d, stochastic_scenario=s), current_window(m))
+                for (u, s) in unit_stochastic_indices(m; unit=unit(is_renewable=true))
+                for (u, n, d) in unit__to_node(unit=u, node=node__commodity(commodity=comm), _compact=false);
                 init=0
             )
             + sum(
                 (
                     + units_invested_available[u, s, t]
-                    - sum(
-                        Iterators.filter(
-                            !isnan,
-                            internal_fix_units_invested_available(unit=u, stochastic_scenario=s, t=t, _default=0)
-                        )
-                    )
+                    - internal_fix_units_invested_available(unit=u, stochastic_scenario=s, t=t, _default=0)
                 )
-                * sum(
-                    Iterators.filter(
-                        !isnan,
-                        + unit_availability_factor(unit=u, stochastic_scenario=s, t=t_short)
-                        * unit_capacity(unit=u, node=n, direction=d, stochastic_scenario=s, t=t_short)
-                        * unit_conv_cap_to_flow(unit=u, node=n, direction=d, stochastic_scenario=s, t=t_short)
-                        for (u, n, d, s, t_short) in unit_flow_indices(
-                            m;
-                            unit=u,
-                            node=node__commodity(commodity=comm),
-                            direction=direction(:to_node),
-                            stochastic_scenario=s,
-                            t=t_in_t(m; t_long=t)
-                        )
+                * window_sum(
+                    + unit_availability_factor(unit=u, stochastic_scenario=s)
+                    * unit_capacity(unit=u, node=n, direction=d, stochastic_scenario=s)
+                    * unit_conv_cap_to_flow(unit=u, node=n, direction=d, stochastic_scenario=s),
+                    t
+                )
+                for (u, s, t) in units_invested_available_indices(m; unit=unit(is_renewable=true))
+                for (u, n, d) in unit__to_node(unit=u, node=node__commodity(commodity=comm), _compact=false);
+                init=0,
+            )
+            >=
+            + mp_min_res_gen_to_demand_ratio(commodity=comm)
+            * (
+                sum(
+                    window_sum(demand(node=n, stochastic_scenario=s), current_window(m))
+                    for (n, s) in node_stochastic_indices(
+                        m; node=intersect(indices(demand), node__commodity(commodity=comm))
                     );
                     init=0
                 )
-                for (u, s, t) in units_invested_available_indices(m; unit=unit(is_renewable=true));
-                init=0,
+                + sum(
+                    window_sum(
+                        fractional_demand(node=n, stochastic_scenario=s) * demand(node=ng, stochastic_scenario=s),
+                        current_window(m)
+                    )
+                    for (n, s) in node_stochastic_indices(
+                        m; node=intersect(indices(fractional_demand), node__commodity(commodity=comm))
+                    )
+                    for ng in groups(n);
+                    init=0
+                )
             )
-            <=
-            + mp_min_res_gen_to_demand_ratio(commodity=comm)
-            *   (
-                    sum(
-                        demand(node=n, stochastic_scenario=s, t=t, _default=0)
-                        for (n, s, t) in node_stochastic_time_indices(
-                            m; node=intersect(indices(demand), node__commodity(commodity=comm))
-                        );
-                        init=0
-                    )
-                    + sum( fractional_demand(node=n, stochastic_scenario=s, t=t, _default=0)
-                        * demand(node=ng, stochastic_scenario=s, t=t)
-                        for (n, s, t) in node_stochastic_time_indices(
-                            m; node=intersect(indices(fractional_demand), node__commodity(commodity=comm))
-                        )
-                        for ng in groups(n);
-                    )
-            )   
-
         )
         for comm in indices(mp_min_res_gen_to_demand_ratio)
     )

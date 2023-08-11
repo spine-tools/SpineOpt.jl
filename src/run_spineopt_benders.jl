@@ -32,11 +32,11 @@ function rerun_spineopt_benders!(
 )
     m_mp = master_problem_model(m)
     @timelog log_level 2 "Creating subproblem temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating master problem temporal structure..." sp_roll_count = begin
-        generate_master_temporal_structure!(m, m_mp)
-    end
+    @timelog log_level 2 "Creating master problem temporal structure..." generate_master_temporal_structure!(m, m_mp)
     @timelog log_level 2 "Creating subproblem stochastic structure..." generate_stochastic_structure!(m)
     @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure!(m_mp)
+    sp_roll_count = _roll_count(m)
+    roll_temporal_structure!(m, 1:sp_roll_count)
     init_model!(
         m;
         add_user_variables=add_user_variables,
@@ -49,12 +49,7 @@ function rerun_spineopt_benders!(
     j = 1
     while optimize
 		@log log_level 0 "\nStarting Benders iteration $j"
-        if j > 1
-            @timelog log_level 2 "Adding MP renewing constraints...\n" _add_mp_renewing_constraints!(
-                m_mp; log_level=log_level
-            )
-        end
-        optimize_model!(m_mp; log_level=log_level) || break
+        optimize_model!(m_mp; log_level=log_level, save_outputs=false) || break
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
         k = 1
         subproblem_solved = nothing
@@ -99,12 +94,15 @@ function rerun_spineopt_benders!(
             break
         end
         @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
+        @timelog log_level 2 "Adding MP renewing constraints...\n" _add_mp_renewing_constraints!(
+            m_mp; log_level=log_level
+        )
         _unfix_history!(m)
         j += 1
         global current_bi = add_benders_iteration(j)
     end
     write_report(m, url_out; alternative=alternative, log_level=log_level)
-    (m_mp, m)
+    m
 end
 
 """
@@ -146,7 +144,6 @@ function _add_mp_constraints!(m; log_level=3)
             add_constraint_unit_lifetime!,
             add_constraint_units_invested_transition!,
             add_constraint_units_invested_available!,
-            add_constraint_units_invested_available_equal!,
             add_constraint_connection_lifetime!,
             add_constraint_connections_invested_transition!,
             add_constraint_connections_invested_available!,
