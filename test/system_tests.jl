@@ -32,7 +32,7 @@ using JSON
 EPSILON = 0.000000001
 
 function _test_run_spineopt_setup()
-    url_in = "sqlite:///C:/Users/lflouis/OneDrive - Teknologian Tutkimuskeskus VTT/Documents/SpineToolbox_Projects/Backbone_hand_translated/empty2.sqlite"
+    url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
     data_from_json = JSON.parsefile("$(@__DIR__)/specialFeaturesDisabled.json")
@@ -57,7 +57,7 @@ function _test_min_down_time()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="min_down_time test")
         using_spinedb(url_out, Y)
 
         flow_key = (
@@ -113,7 +113,7 @@ function _test_min_up_time()
         )
         
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="min_up_time test")
         using_spinedb(url_out, Y)
 
         flow_key = (
@@ -173,7 +173,7 @@ function _test_max_node_pressure()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="max_node_pressure test")
         using_spinedb(url_out, Y)
 
         node_key = (
@@ -206,7 +206,7 @@ function _test_min_node_pressure()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="min_node_pressure test")
         using_spinedb(url_out, Y)
 
         node_key = (
@@ -238,7 +238,7 @@ function _test_node_state_cap()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="node_state_cap test")
         using_spinedb(url_out, Y)
 
         node_key = (
@@ -273,7 +273,7 @@ function _test_node_state_min()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="node_state_min test")
         using_spinedb(url_out, Y)
 
         node_key_battery = (
@@ -320,7 +320,7 @@ function _test_max_voltage_angle()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="max_voltage_angle test")
         using_spinedb(url_out, Y)
 
         node_key_A = (
@@ -367,7 +367,7 @@ function _test_min_voltage_angle()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="min_voltage_angle test")
         using_spinedb(url_out, Y)
 
         node_key_A = (
@@ -412,7 +412,7 @@ function _test_fix_node_pressure()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="fix_node_pressure test")
         using_spinedb(url_out, Y)
 
         node_key = (
@@ -448,7 +448,7 @@ function _test_fix_node_state()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="fix_node_state test")
         using_spinedb(url_out, Y)
 
         node_key_battery = (
@@ -510,7 +510,7 @@ function _test_fix_node_voltage_angle()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="fix_node_voltage_angle test")
         using_spinedb(url_out, Y)
 
         node_key_A = (
@@ -556,7 +556,7 @@ function _test_initial_node_state()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="initial_node_state test")
         using_spinedb(url_out, Y)
 
         node_key_battery = (
@@ -596,7 +596,7 @@ function _test_initial_node_pressure()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="initial_node_pressure test")
         using_spinedb(url_out, Y)
 
         node_key = (
@@ -631,7 +631,7 @@ function _test_initial_node_voltage_angle()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="initial_node_voltage_angle test")
         using_spinedb(url_out, Y)
 
         node_key_A = (
@@ -670,7 +670,7 @@ function _test_emissions_node_state_cap()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="emissions test using node_state_cap")
         using_spinedb(url_out, Y)
 
         flow_key_ocgt1 = (
@@ -732,7 +732,7 @@ function _test_emissions_node_slack_penalty()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="emissions test using node_slack_penalty")
         using_spinedb(url_out, Y)
 
         flow_key_ocgt1 = (
@@ -788,7 +788,7 @@ function _test_gas_high_node_slack_penalty()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="gas test using high node_slack_penalty")
         using_spinedb(url_out, Y)
 
         flow_key_ocgt1 = (
@@ -843,7 +843,7 @@ function _test_gas_null_node_slack_penalty()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="gas test using null node_slack_penalty")
         using_spinedb(url_out, Y)
 
         flow_key_wind = (
@@ -899,7 +899,7 @@ function _test_biomass_high_node_slack_penalty_no_heat_demand()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="biomass test using high node_slack_penalty without heat_node demand")
         using_spinedb(url_out, Y)
 
         flow_key_chp_A = (
@@ -952,7 +952,7 @@ function _test_nuclear_high_node_slack_penalty()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="nuclear test using high node_slack_penalty")
         using_spinedb(url_out, Y)
 
         flow_key_nuclear_A = (
@@ -994,7 +994,7 @@ function _test_nuclear_unit_high_vom_cost()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="nuclear unit using high vom_cost")
         using_spinedb(url_out, Y)
 
         flow_key_nuclear_A = (
@@ -1078,7 +1078,7 @@ function _test_chp_unit_high_vom_cost()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="chp unit using high vom_cost")
         using_spinedb(url_out, Y)
 
         flow_key_chp_A = (
@@ -1120,7 +1120,7 @@ function _test_ccgt_unit_high_vom_cost()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="ccgt unit using high vom_cost")
         using_spinedb(url_out, Y)
 
         flow_key_ccgt_B = (
@@ -1162,7 +1162,7 @@ function _test_ocgt1_unit_high_vom_cost()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="ocgt1 unit using high vom_cost")
         using_spinedb(url_out, Y)
 
         flow_key_ocgt1_A = (
@@ -1204,7 +1204,7 @@ function _test_ocgt2_unit_high_vom_cost()
         )
 
         rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
+        run_spineopt(url_in, url_out; alternative="ocgt2 unit using high vom_cost")
         using_spinedb(url_out, Y)
 
         flow_key_ocgt2_A = (
@@ -1260,7 +1260,102 @@ end
     end
 end"""
 
-@testset "unit_test on 6-unit system" begin
+function _format_object_inputs(object_inputs,alternative_name)
+    object_inputs_formatted = []
+    for (param_name, param_dict) in object_inputs
+        print("\n\n tjrs ouais")
+        push!(object_inputs_formatted, [param_dict["object_class"], param_dict["object_name"], param_dict["parameter_name"], param_dict["parameter_value"],alternative_name])
+    end
+    return object_inputs_formatted
+end
+
+function generic_test_function(test_name, object_inputs, outputs, tests)
+    url_in, url_out, file_path_out = _test_run_spineopt_setup()
+    SpineInterface.import_data(url_in; :alternatives => [test_name])
+
+    print(object_inputs)
+    print(test_name)
+    print(_format_object_inputs)
+
+    object_inputs_formatted = _format_object_inputs(object_inputs, test_name)
+
+    SpineInterface.import_data(url_in; object_parameter_values=object_inputs_formatted)
+    rm(file_path_out; force=true)
+    run_spineopt(url_in, url_out; alternative=test_name)
+    using_spinedb(url_out, Y)
+    
+    global output = Dict()
+    for (key,value) in outputs;
+        global report_key_dict = Dict()
+        for (param_name,param_value) in value
+            if param_name!="parameter_name"
+                global param_name_g = param_name
+                global param_value_g = param_value
+                left_part = eval(Meta.parse(":"*param_name_g))
+                right_part = eval(Meta.parse("Y."*param_name_g*"(:"*param_value_g*")"))
+                report_key_dict[left_part] = right_part
+            end
+        end
+        global output_key = key
+        global report_key = (; report_key_dict...)
+        global used_param = value["parameter_name"]
+        eval(Meta.parse("output[output_key]=Y."*used_param*"(; report_key...).values"))
+    end
+    for test in tests
+        eval(Meta.parse("@test "*test))
+    end
+end
+
+object_inputs = Dict(
+    "fix_voltage_angle_A" => Dict(
+        "object_class" => "node",
+        "object_name" => "A",
+        "parameter_name" => "fix_node_voltage_angle",
+        "parameter_value" => 1
+    ),
+    "has_voltage_angle_A" => Dict(
+        "object_class" => "node",
+        "object_name" => "A",
+        "parameter_name" => "has_voltage_angle",
+        "parameter_value" => true
+    ),
+    "fix_voltage_angle_B" => Dict(
+        "object_class" => "node",
+        "object_name" => "B",
+        "parameter_name" => "fix_node_voltage_angle",
+        "parameter_value" => 2
+    ),
+    "has_voltage_angle_B" => Dict(
+        "object_class" => "node",
+        "object_name" => "B",
+        "parameter_name" => "has_voltage_angle",
+        "parameter_value" => true
+    ),
+)
+
+outputs = Dict(
+    "voltage_angle_A" => Dict(
+        "parameter_name" => "node_voltage_angle",
+        "report" => "report",
+        "node" => "A",
+        "stochastic_scenario" => "scenario"
+    ), 
+    "voltage_angle_B" => Dict(
+        "parameter_name" => "node_voltage_angle",
+        "report" => "report",
+        "node" => "B",
+        "stochastic_scenario" => "scenario"
+    )
+)
+
+tests = [
+    "minimum(output[\"voltage_angle_A\"]) >= 1 && minimum(output[\"voltage_angle_A\"]) <= 1",
+    "minimum(output[\"voltage_angle_B\"]) >= 2 && minimum(output[\"voltage_angle_B\"]) <= 2"
+]
+
+generic_test_function("", object_inputs, outputs, tests)
+
+"""@testset "unit_test on 6-unit system" begin
     @testset "unit tests" begin
         @testset "unit parameters" begin
             _test_min_down_time()
@@ -1279,7 +1374,7 @@ end"""
 
             _test_fix_node_pressure()
             _test_fix_node_state()
-            _test_fix_node_voltage_angle()
+            test_fix_node_voltage_angle()
 
             _test_initial_node_state()
             _test_initial_node_pressure()
@@ -1316,4 +1411,4 @@ end"""
         #_test_only_use_B_branch()
         #_test_heat_node_high_demand()
     end
-end
+end"""
