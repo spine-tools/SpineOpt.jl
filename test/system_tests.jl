@@ -489,6 +489,8 @@ function _test_fix_node_state()
     end
 end
 
+using Base
+
 function _test_fix_node_voltage_angle()
     @testset "fix_node_voltage_angle" begin
         url_in, url_out, file_path_out = _test_run_spineopt_setup()
@@ -1263,46 +1265,49 @@ end"""
 function _format_object_inputs(object_inputs,alternative_name)
     object_inputs_formatted = []
     for (param_name, param_dict) in object_inputs
-        print("\n\n tjrs ouais")
         push!(object_inputs_formatted, [param_dict["object_class"], param_dict["object_name"], param_dict["parameter_name"], param_dict["parameter_value"],alternative_name])
     end
     return object_inputs_formatted
 end
 
-function generic_test_function(test_name, object_inputs, outputs, tests)
+
+function generic_test_function(test_name, outputs, tests, object_inputs=nothing, relationship_inputs=nothing)
     url_in, url_out, file_path_out = _test_run_spineopt_setup()
     SpineInterface.import_data(url_in; :alternatives => [test_name])
-
-    print(object_inputs)
-    print(test_name)
-    print(_format_object_inputs)
-
-    object_inputs_formatted = _format_object_inputs(object_inputs, test_name)
-
-    SpineInterface.import_data(url_in; object_parameter_values=object_inputs_formatted)
-    rm(file_path_out; force=true)
-    run_spineopt(url_in, url_out; alternative=test_name)
-    using_spinedb(url_out, Y)
     
-    global output = Dict()
-    for (key,value) in outputs;
-        global report_key_dict = Dict()
-        for (param_name,param_value) in value
-            if param_name!="parameter_name"
-                global param_name_g = param_name
-                global param_value_g = param_value
-                left_part = eval(Meta.parse(":"*param_name_g))
-                right_part = eval(Meta.parse("Y."*param_name_g*"(:"*param_value_g*")"))
-                report_key_dict[left_part] = right_part
-            end
-        end
-        global output_key = key
-        global report_key = (; report_key_dict...)
-        global used_param = value["parameter_name"]
-        eval(Meta.parse("output[output_key]=Y."*used_param*"(; report_key...).values"))
+    if object_inputs != nothing
+        SpineInterface.import_data(url_in; object_parameter_values=object_inputs_formatted)
+        object_inputs_formatted = _format_object_inputs(object_inputs, test_name)
     end
-    for test in tests
-        eval(Meta.parse("@test "*test))
+    if relationship_inputs !== nothing
+        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_inputs)
+    end
+
+    if (object_inputs != nothing) || (relationship_inputs != nothing)
+        rm(file_path_out; force=true)
+        run_spineopt(url_in, url_out; alternative=test_name)
+        using_spinedb(url_out, Y)
+
+        global output_system_test = Dict()
+        for (key,value) in outputs;
+            report_key_dict = Dict()
+            for (param_name,param_value) in value
+                if param_name!="parameter_name"
+                    param_name_g = param_name
+                    param_value_g = param_value
+                    left_part = eval(Meta.parse(":$param_name_g"))
+                    right_part = Meta.parse("Y.$param_name_g(:$param_value_g)")
+                    report_key_dict[left_part] = eval(right_part)
+                end
+            end
+            global report_key = (; report_key_dict...)
+            used_param = value["parameter_name"]
+            output_system_test[key] = eval(Meta.parse("Y.$used_param(; report_key...).values"))
+        end
+
+        for test in tests
+            eval(Meta.parse("@test "*replace(test, "output" => "output_system_test")))
+        end
     end
 end
 
@@ -1338,7 +1343,7 @@ outputs = Dict(
         "parameter_name" => "node_voltage_angle",
         "report" => "report",
         "node" => "A",
-        "stochastic_scenario" => "scenario"
+        "stochastic_scenario" => "scenario",
     ), 
     "voltage_angle_B" => Dict(
         "parameter_name" => "node_voltage_angle",
@@ -1353,7 +1358,35 @@ tests = [
     "minimum(output[\"voltage_angle_B\"]) >= 2 && minimum(output[\"voltage_angle_B\"]) <= 2"
 ]
 
-generic_test_function("", object_inputs, outputs, tests)
+relationship_inputs = [
+    ["unit__to_node", "U_ocgt2", "A", "vom_cost", 1000000., "ocgt2 unit using high vom_cost"],
+]
+
+outputs2 = Dict(
+    "flow_key_ocgt2_A" => Dict(
+        "parameter_name" => "unit_flow",
+        "report" => "report",
+        "node" => "A",
+        "stochastic_scenario" => "scenario",
+        "direction" => "to_node",
+        "unit" => "U_ocgt2"
+    ), 
+    "units_on_ocgt2" => Dict(
+        "parameter_name" => "units_on",
+        "report" => "report",
+        "unit" => "U_ocgt2",
+        "stochastic_scenario" => "scenario"
+    )
+)
+
+tests2 = [
+    "maximum(output[\"flow_key_ocgt2_A\"]) == 0.",
+    "maximum(output[\"units_on_ocgt2\"]) < 0. + EPSILON"
+]
+
+
+generic_test_function("test", outputs2, tests2, nothing, relationship_inputs)
+#_test_ocgt2_unit_high_vom_cost()
 
 """@testset "unit_test on 6-unit system" begin
     @testset "unit tests" begin
@@ -1412,3 +1445,8 @@ generic_test_function("", object_inputs, outputs, tests)
         #_test_heat_node_high_demand()
     end
 end"""
+
+
+
+
+
