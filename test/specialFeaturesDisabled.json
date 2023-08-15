@@ -864,7 +864,7 @@
         [
             "model",
             "db_lp_solver",
-            "Clp.jl",
+            "HiGHS.jl",
             "db_lp_solver_list",
             "Solver for MIP problems. Solver package must be added and pre-configured in Julia. Overrides lp_solver RunSpineOpt kwarg"
         ],
@@ -913,7 +913,7 @@
         [
             "model",
             "db_mip_solver",
-            "Cbc.jl",
+            "HiGHS.jl",
             "db_mip_solver_list",
             "Solver for MIP problems. Solver package must be added and pre-configured in Julia. Overrides mip_solver RunSpineOpt kwarg"
         ],
