@@ -75,8 +75,8 @@ SpineOpt is constantly improving. To get the most recent version, just:
 
 ### Usage
 
-For an example of how to use SpineOpt in your Spine Toolbox projects,
-please see [here](https://spine-toolbox.readthedocs.io/en/latest/case_study_a5.html).
+For how to use SpineOpt in your Spine Toolbox projects,
+please start from [here](https://spine-tools.github.io/SpineOpt.jl/latest/getting_started/setup_workflow/).
 (We apologize for the lengthiness of that example. We're currently working on a minimal example that will get you started faster.)
 
 ### Documentation

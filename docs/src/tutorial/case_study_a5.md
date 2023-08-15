@@ -85,7 +85,7 @@ yourself with Spine.
 
 ### Importing the SpineOpt database template
 
--   Download [the SpineOpt database template](../../../../../templates/spineopt_template.json) (right click on the link, then select *Save link as...*)
+-   Download [the SpineOpt database template](../../../templates/spineopt_template.json) (right click on the link, then select *Save link as...*)
 -   Select the *input* Data Store item in the *Design View*.
 -   Go to *Data Store Properties* and hit **Open editor**. This will open the newly created database in the *Spine DB Editor*, looking similar to image below.
     ![image](../figs_a5/case_study_a5_spine_db_editor_empty.png)
