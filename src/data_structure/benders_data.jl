@@ -77,6 +77,7 @@ function process_subproblem_solution!(m, win_weight)
     _save_sp_marginal_values!(m, win_weight)
     _save_sp_objective_value!(m, win_weight)
     _save_sp_unit_flow!(m, win_weight)
+    _save_sp_solution!(m)
 end
 
 function save_sp_objective_value_tail!(m, win_weight)
@@ -126,6 +127,21 @@ function _save_sp_unit_flow!(m, win_weight, tail=false)
     add_relationship_parameter_values!(unit__to_node, pvals_to_node; merge_values=true)
     add_relationship_parameter_values!(unit__from_node, pvals_from_node; merge_values=true)
 end
+
+
+function _save_sp_solution!(m)    
+    m.ext[:spineopt].sp_values[m.ext[:spineopt].temporal_structure[:current_window_number]] = copy(m.ext[:spineopt].values)    
+end
+
+
+function _set_sp_solution!(m)
+    for (name, var) in m.ext[:spineopt].variables    
+        for (ind, v) in var
+            set_start_value(v, m.ext[:spineopt].sp_values[m.ext[:spineopt].temporal_structure[:current_window_number]][name][ind]) 
+        end
+    end
+end
+
 
 function save_mp_objective_bounds_and_gap!(m_mp)
     obj_lb = m_mp.ext[:spineopt].objective_lower_bound[] = objective_value(m_mp)

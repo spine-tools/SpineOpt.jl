@@ -27,7 +27,7 @@ sum (
 ) >= mp_min_res_gen_to_demand_ratio * total demand
 """
 function add_constraint_mp_min_res_gen_to_demand_ratio!(m::Model)
-    @fetch units_invested_available = m.ext[:spineopt].variables
+    @fetch units_invested_available, mp_min_res_gen_to_demand_ratio_slack = m.ext[:spineopt].variables
     current_constraint = pop!(m.ext[:spineopt].constraints, :mp_min_res_gen_to_demand_ratio, nothing)
     if current_constraint !== nothing
         for con_ref in values(current_constraint)
@@ -58,6 +58,13 @@ function add_constraint_mp_min_res_gen_to_demand_ratio!(m::Model)
                 for (u, n, d) in unit__to_node(unit=u, node=node__commodity(commodity=comm), _compact=false);
                 init=0,
             )
+            + sum(
+                + mp_min_res_gen_to_demand_ratio_slack[comm1, t1]
+                for (comm1, t1) in mp_min_res_gen_to_demand_ratio_slack_indices(m)
+                if comm1 == comm;
+                init=0
+            )          
+            
             >=
             + mp_min_res_gen_to_demand_ratio(commodity=comm)
             * (
