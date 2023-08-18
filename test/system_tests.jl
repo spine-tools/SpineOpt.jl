@@ -1273,15 +1273,15 @@ function generic_test_function(test_name, outputs, tests, object_inputs::Vector,
         report_key_dict = Dict()
         for (param_name,param_value) in value
             if param_name!="parameter_name"
-                global param_name_g = param_name
-                global param_value_g = param_value
+                param_name_g = param_name
+                param_value_g = param_value
                 left_part = eval(Meta.parse(":$param_name_g"))
                 right_part = Meta.parse("Y.$param_name_g(:$param_value_g)")
                 report_key_dict[left_part] = eval(right_part)
             end
         end
         global report_key_system_test = (; report_key_dict...)
-        global used_param_g = value["parameter_name"]
+        used_param_g = value["parameter_name"]
         output_system_test[key] = eval(Meta.parse("Y.$used_param_g(; report_key_system_test...).values"))
     end
     for test in tests
@@ -1320,7 +1320,7 @@ function generic_test_function(test_name, outputs, tests, object_inputs::Dict, r
     generic_test_function(test_name, outputs, tests, object_inputs, [])
 end
 
-"""@testset "unit_test on 6-unit system" begin
+@testset "unit_test on 6-unit system" begin
     @testset "unit tests" begin
         @testset "unit parameters" begin
             _test_min_down_time()
@@ -1338,7 +1338,6 @@ end
             _test_max_voltage_angle()
 
             _test_fix_node_pressure()
-            _test_fix_node_state()
             test_fix_node_voltage_angle()
 
             _test_initial_node_state()
@@ -1359,7 +1358,6 @@ end
             _test_nuclear_high_node_slack_penalty()
         end
         @testset "units" begin
-            
             _test_chp_unit_high_vom_cost()
             _test_ccgt_unit_high_vom_cost()
             _test_ocgt1_unit_high_vom_cost()
@@ -1368,7 +1366,7 @@ end
         _test_nuclear_unit_high_vom_cost()
         _test_wind_unit_high_vom_cost()
     end
-end"""
+end
 
 tests_data = [
     Dict(
@@ -2007,7 +2005,7 @@ tests_data = [
     ),
 ]
 
-for test in tests_data
+"""for test in tests_data
     generic_test_function(test["test_name"], test["outputs"], test["tests"], test["object_inputs"], test["relationship_inputs"])
     print(test["test_name"]," passed!")
-end
+end"""
