@@ -28,7 +28,7 @@ using JSON
 EPSILON = 0.000001
 
 function _test_run_spineopt_setup()
-    url_in = "sqlite:///C:/Users/lflouis/OneDrive - Teknologian Tutkimuskeskus VTT/Documents/SpineToolbox_Projects/Backbone_hand_translated/empty.sqlite"
+    url_in = "sqlite://"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
     data_from_json = JSON.parsefile("$(@__DIR__)/specialFeaturesDisabled.json")
@@ -39,7 +39,7 @@ end
 
 """
 Some tests are defined below. They do not use the generic function, and are not actually executed: their execution is commented out afterwards. 
-They have been kept because they are undoubtedly easier to understand than the generic function. 
+They have been kept as examples because they are probably easier to understand than the generic function. 
 The version coded with the generic function can be found at the end. 
 """
 
@@ -1319,135 +1319,6 @@ end
 function generic_test_function(test_name, outputs, tests, object_inputs::Dict, relationship_inputs::Nothing)
     generic_test_function(test_name, outputs, tests, object_inputs, [])
 end
-
-object_inputs = Dict(
-    "fix_voltage_angle_A" => Dict(
-        "object_class" => "node",
-        "object_name" => "A",
-        "parameter_name" => "fix_node_voltage_angle",
-        "parameter_value" => 3
-    ),
-    "has_voltage_angle_A" => Dict(
-        "object_class" => "node",
-        "object_name" => "A",
-        "parameter_name" => "has_voltage_angle",
-        "parameter_value" => true
-    ),
-    "fix_voltage_angle_B" => Dict(
-        "object_class" => "node",
-        "object_name" => "B",
-        "parameter_name" => "fix_node_voltage_angle",
-        "parameter_value" => 4
-    ),
-    "has_voltage_angle_B" => Dict(
-        "object_class" => "node",
-        "object_name" => "B",
-        "parameter_name" => "has_voltage_angle",
-        "parameter_value" => true
-    ),
-)
-
-outputs = Dict(
-    "voltage_angle_A" => Dict(
-        "parameter_name" => "node_voltage_angle",
-        "report" => "report",
-        "node" => "A",
-        "stochastic_scenario" => "scenario",
-    ), 
-    "voltage_angle_B" => Dict(
-        "parameter_name" => "node_voltage_angle",
-        "report" => "report",
-        "node" => "B",
-        "stochastic_scenario" => "scenario"
-    )
-)
-
-tests = [
-    "minimum(output[\"voltage_angle_A\"]) >= 1 && minimum(output[\"voltage_angle_A\"]) <= 1",
-    "minimum(output[\"voltage_angle_B\"]) >= 2 && minimum(output[\"voltage_angle_B\"]) <= 2"
-]
-
-relationship_inputs = [
-    ["unit__to_node", ["U_ocgt2", "A"], "vom_cost", 0., "test"],
-]
-
-relationship_inputs2 = Dict(
-    "relationship" => Dict(
-        "relationship_class" => "unit__to_node",
-        "relationship_objects" => ["U_ocgt2","A"],
-        "parameter_name" => "vom_cost",
-        "parameter_value" => 1000000.
-    )
-)
-    
-outputs2 = Dict(
-    "flow_key_ocgt2_A" => Dict(
-        "parameter_name" => "unit_flow",
-        "report" => "report",
-        "node" => "A",
-        "stochastic_scenario" => "scenario",
-        "direction" => "to_node",
-        "unit" => "U_ocgt2"
-    ), 
-    "units_on_ocgt2" => Dict(
-        "parameter_name" => "units_on",
-        "report" => "report",
-        "unit" => "U_ocgt2",
-        "stochastic_scenario" => "scenario"
-    )
-)
-
-tests2 = [
-    "maximum(output[\"flow_key_ocgt2_A\"]) == 0.",
-    "maximum(output[\"units_on_ocgt2\"]) < 0. + EPSILON"
-]
-
-
-object_parameter_values_emissions = [
-    ["node", "CO2_emission", "node_slack_penalty", 10000000., "emissions test using node_slack_penalty"],
-    ["node", "SO2_emission", "node_slack_penalty", 10000000., "emissions test using node_slack_penalty"],
-]
-
-relationship_parameter_values_emissions = [
-    ["unit__to_node", "U_ccgt", "B", "vom_cost", 150., "emissions test using node_slack_penalty"],
-]
-
-outputs_emissions = Dict(
-    "flow_key_ocgt1" => Dict(
-        "parameter_name" => "unit_flow",
-        "report" => "report",
-        "node" => "A",
-        "stochastic_scenario" => "scenario",
-        "direction" => "to_node",
-        "unit" => "U_ocgt1"
-    ),
-    "flow_key_ocgt2" => Dict(
-        "parameter_name" => "unit_flow",
-        "report" => "report",
-        "node" => "A",
-        "stochastic_scenario" => "scenario",
-        "direction" => "to_node",
-        "unit" => "U_ocgt2"
-    ),
-    "flow_key_ccgt" => Dict(
-        "parameter_name" => "unit_flow",
-        "report" => "report",
-        "node" => "B",
-        "stochastic_scenario" => "scenario",
-        "direction" => "to_node",
-        "unit" => "U_ccgt"
-    ),
-)
-
-tests_emissions = [
-    "maximum(output[\"flow_key_ocgt1\"]) == 0.",
-    "maximum(output[\"flow_key_ocgt2\"]) == 0.",
-    "maximum(output[\"flow_key_ccgt\"]) == 0."
-]
-
-#_test_emissions_node_slack_penalty()
-#generic_test_function("test", outputs_emissions, tests_emissions, object_parameter_values_emissions, relationship_parameter_values_emissions)
-#_test_ocgt2_unit_high_vom_cost()
 
 @testset "unit_test on 6-unit system" begin
     @testset "unit tests" begin
