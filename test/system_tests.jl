@@ -1320,7 +1320,7 @@ function generic_test_function(test_name, outputs, tests, object_inputs::Dict, r
     generic_test_function(test_name, outputs, tests, object_inputs, [])
 end
 
-@testset "unit_test on 6-unit system" begin
+"""@testset "unit_test on 6-unit system" begin
     @testset "unit tests" begin
         @testset "unit parameters" begin
             _test_min_down_time()
@@ -1368,7 +1368,7 @@ end
         _test_nuclear_unit_high_vom_cost()
         _test_wind_unit_high_vom_cost()
     end
-end
+end"""
 
 tests_data = [
     Dict(
@@ -2007,7 +2007,7 @@ tests_data = [
     ),
 ]
 
-"""for test in tests_data
+for test in tests_data
     generic_test_function(test["test_name"], test["outputs"], test["tests"], test["object_inputs"], test["relationship_inputs"])
     print(test["test_name"]," passed!")
-end"""
+end
