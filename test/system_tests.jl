@@ -19,20 +19,16 @@
 
 import Logging: Warn
 
-module X
-using SpineInterface
-end
-
 module Y
 using SpineInterface
 end
 
 using JSON
 
-EPSILON = 0.000000001
+EPSILON = 0.000001
 
 function _test_run_spineopt_setup()
-    url_in = "sqlite://"
+    url_in = "sqlite:///C:/Users/lflouis/OneDrive - Teknologian Tutkimuskeskus VTT/Documents/SpineToolbox_Projects/Backbone_hand_translated/empty.sqlite"
     file_path_out = "$(@__DIR__)/test_out.sqlite"
     url_out = "sqlite:///$file_path_out"
     data_from_json = JSON.parsefile("$(@__DIR__)/specialFeaturesDisabled.json")
@@ -40,6 +36,12 @@ function _test_run_spineopt_setup()
     _load_test_data(url_in, test_data)
     url_in, url_out, file_path_out
 end
+
+"""
+Some tests are defined below. They do not use the generic function, and are not actually executed: their execution is commented out afterwards. 
+They have been kept because they are undoubtedly easier to understand than the generic function. 
+The version coded with the generic function can be found at the end. 
+"""
 
 function _test_min_down_time()
     @testset "min_down_time" begin
@@ -1199,6 +1201,7 @@ function _test_ocgt2_unit_high_vom_cost()
         relationship_parameter_values = [
             ["unit__to_node", "U_ocgt2", "A", "vom_cost", 1000000., "ocgt2 unit using high vom_cost"],
         ]
+        print("\n\n\nrelationship_parameter_values = ",relationship_parameter_values,"\n\n\n")
 
         SpineInterface.import_data(
             url_in;
@@ -1233,82 +1236,88 @@ function _test_ocgt2_unit_high_vom_cost()
     end
 end
 
-"""function _test_heat_node_high_demand()
-    @testset "heat node using high demand" begin
-        url_in, url_out, file_path_out = _test_run_spineopt_setup()
-        SpineInterface.import_data(url_in; :alternatives => ["heat node using high demand"])
-
-        relationship_parameter_values = [
-            ["node", "heat_node", "demand", 1000000., "heat node using high demand"],
-        ]
-
-        SpineInterface.import_data(
-            url_in;
-            relationship_parameter_values=relationship_parameter_values
-        )
-
-        rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out)
-        using_spinedb(url_out, Y)
-        using_spinedb(url_in, X)
-
-        unit__to_node_key = (
-            unit = X.unit(:U_chp),
-            node = X.node(:heat_node),
-        )
-
-        #unit_capacity = X.unit_capacity(unit__to_node=unit__to_node_key)
-        @warn X.unit_capacity()
-    end
-end"""
-
 function _format_object_inputs(object_inputs,alternative_name)
-    object_inputs_formatted = []
+    entity_class = "object_class"
+    entity_name = "object_name"
+    entity_inputs_formatted = []
     for (param_name, param_dict) in object_inputs
-        push!(object_inputs_formatted, [param_dict["object_class"], param_dict["object_name"], param_dict["parameter_name"], param_dict["parameter_value"],alternative_name])
+        push!(entity_inputs_formatted, [param_dict[entity_class], param_dict[entity_name], param_dict["parameter_name"], param_dict["parameter_value"],alternative_name])
     end
-    return object_inputs_formatted
+    return entity_inputs_formatted
 end
 
+function _format_relationship_inputs(relationship_inputs,alternative_name)
+    entity_class = "relationship_class"
+    entity_name = "relationship_objects"
+    entity_inputs_formatted = []
+    for (param_name, param_dict) in relationship_inputs
+        push!(entity_inputs_formatted, [param_dict[entity_class], param_dict[entity_name], param_dict["parameter_name"], param_dict["parameter_value"],alternative_name])
+    end
+    print("\n\n\n entity_inputs_formatted = ",entity_inputs_formatted, "\n\n\n")
+    return entity_inputs_formatted
+end
 
-function generic_test_function(test_name, outputs, tests, object_inputs=nothing, relationship_inputs=nothing)
+function generic_test_function(test_name, outputs, tests, object_inputs::Vector, relationship_inputs::Vector)
     url_in, url_out, file_path_out = _test_run_spineopt_setup()
     SpineInterface.import_data(url_in; :alternatives => [test_name])
     
-    if object_inputs != nothing
-        SpineInterface.import_data(url_in; object_parameter_values=object_inputs_formatted)
-        object_inputs_formatted = _format_object_inputs(object_inputs, test_name)
-    end
-    if relationship_inputs !== nothing
-        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_inputs)
-    end
+    SpineInterface.import_data(url_in; object_parameter_values=object_inputs)
+    SpineInterface.import_data(url_in; relationship_parameter_values=relationship_inputs)
 
-    if (object_inputs != nothing) || (relationship_inputs != nothing)
-        rm(file_path_out; force=true)
-        run_spineopt(url_in, url_out; alternative=test_name)
-        using_spinedb(url_out, Y)
+    rm(file_path_out; force=true)
+    run_spineopt(url_in, url_out; alternative=test_name)
+    using_spinedb(url_out, Y)
 
-        global output_system_test = Dict()
-        for (key,value) in outputs;
-            report_key_dict = Dict()
-            for (param_name,param_value) in value
-                if param_name!="parameter_name"
-                    param_name_g = param_name
-                    param_value_g = param_value
-                    left_part = eval(Meta.parse(":$param_name_g"))
-                    right_part = Meta.parse("Y.$param_name_g(:$param_value_g)")
-                    report_key_dict[left_part] = eval(right_part)
-                end
+    global output_system_test = Dict()
+    for (key,value) in outputs;
+        report_key_dict = Dict()
+        for (param_name,param_value) in value
+            if param_name!="parameter_name"
+                global param_name_g = param_name
+                global param_value_g = param_value
+                left_part = eval(Meta.parse(":$param_name_g"))
+                right_part = Meta.parse("Y.$param_name_g(:$param_value_g)")
+                report_key_dict[left_part] = eval(right_part)
             end
-            global report_key = (; report_key_dict...)
-            used_param = value["parameter_name"]
-            output_system_test[key] = eval(Meta.parse("Y.$used_param(; report_key...).values"))
         end
-
-        for test in tests
-            eval(Meta.parse("@test "*replace(test, "output" => "output_system_test")))
-        end
+        global report_key_system_test = (; report_key_dict...)
+        global used_param_g = value["parameter_name"]
+        output_system_test[key] = eval(Meta.parse("Y.$used_param_g(; report_key_system_test...).values"))
     end
+    for test in tests
+        eval(Meta.parse("@test "*replace(test, "output" => "output_system_test")))
+    end
+end
+
+function generic_test_function(test_name, outputs, tests, object_inputs::Dict, relationship_inputs)
+    object_inputs_formatted = _format_object_inputs(object_inputs, test_name)
+    generic_test_function(test_name, outputs, tests, object_inputs_formatted, relationship_inputs)
+end
+
+function generic_test_function(test_name, outputs, tests, object_inputs, relationship_inputs::Dict)
+    relationship_inputs_formatted = _format_relationship_inputs(relationship_inputs, test_name)
+    generic_test_function(test_name, outputs, tests, object_inputs, relationship_inputs_formatted)
+end
+
+function generic_test_function(test_name, outputs, tests, object_inputs::Dict, relationship_inputs::Dict)
+    object_inputs_formatted = _format_object_inputs(object_inputs, test_name)
+    generic_test_function(test_name, outputs, tests, object_inputs_formatted, relationship_inputs)
+end
+
+function generic_test_function(test_name, outputs, tests, object_inputs::Nothing, relationship_inputs)
+    generic_test_function(test_name, outputs, tests, [], relationship_inputs)
+end
+
+function generic_test_function(test_name, outputs, tests, object_inputs::Nothing, relationship_inputs::Dict)
+    generic_test_function(test_name, outputs, tests, [], relationship_inputs)
+end
+
+function generic_test_function(test_name, outputs, tests, object_inputs, relationship_inputs::Nothing)
+    generic_test_function(test_name, outputs, tests, object_inputs, [])
+end
+
+function generic_test_function(test_name, outputs, tests, object_inputs::Dict, relationship_inputs::Nothing)
+    generic_test_function(test_name, outputs, tests, object_inputs, [])
 end
 
 object_inputs = Dict(
@@ -1316,7 +1325,7 @@ object_inputs = Dict(
         "object_class" => "node",
         "object_name" => "A",
         "parameter_name" => "fix_node_voltage_angle",
-        "parameter_value" => 1
+        "parameter_value" => 3
     ),
     "has_voltage_angle_A" => Dict(
         "object_class" => "node",
@@ -1328,7 +1337,7 @@ object_inputs = Dict(
         "object_class" => "node",
         "object_name" => "B",
         "parameter_name" => "fix_node_voltage_angle",
-        "parameter_value" => 2
+        "parameter_value" => 4
     ),
     "has_voltage_angle_B" => Dict(
         "object_class" => "node",
@@ -1359,9 +1368,18 @@ tests = [
 ]
 
 relationship_inputs = [
-    ["unit__to_node", "U_ocgt2", "A", "vom_cost", 1000000., "ocgt2 unit using high vom_cost"],
+    ["unit__to_node", ["U_ocgt2", "A"], "vom_cost", 0., "test"],
 ]
 
+relationship_inputs2 = Dict(
+    "relationship" => Dict(
+        "relationship_class" => "unit__to_node",
+        "relationship_objects" => ["U_ocgt2","A"],
+        "parameter_name" => "vom_cost",
+        "parameter_value" => 1000000.
+    )
+)
+    
 outputs2 = Dict(
     "flow_key_ocgt2_A" => Dict(
         "parameter_name" => "unit_flow",
@@ -1385,10 +1403,53 @@ tests2 = [
 ]
 
 
-generic_test_function("test", outputs2, tests2, nothing, relationship_inputs)
+object_parameter_values_emissions = [
+    ["node", "CO2_emission", "node_slack_penalty", 10000000., "emissions test using node_slack_penalty"],
+    ["node", "SO2_emission", "node_slack_penalty", 10000000., "emissions test using node_slack_penalty"],
+]
+
+relationship_parameter_values_emissions = [
+    ["unit__to_node", "U_ccgt", "B", "vom_cost", 150., "emissions test using node_slack_penalty"],
+]
+
+outputs_emissions = Dict(
+    "flow_key_ocgt1" => Dict(
+        "parameter_name" => "unit_flow",
+        "report" => "report",
+        "node" => "A",
+        "stochastic_scenario" => "scenario",
+        "direction" => "to_node",
+        "unit" => "U_ocgt1"
+    ),
+    "flow_key_ocgt2" => Dict(
+        "parameter_name" => "unit_flow",
+        "report" => "report",
+        "node" => "A",
+        "stochastic_scenario" => "scenario",
+        "direction" => "to_node",
+        "unit" => "U_ocgt2"
+    ),
+    "flow_key_ccgt" => Dict(
+        "parameter_name" => "unit_flow",
+        "report" => "report",
+        "node" => "B",
+        "stochastic_scenario" => "scenario",
+        "direction" => "to_node",
+        "unit" => "U_ccgt"
+    ),
+)
+
+tests_emissions = [
+    "maximum(output[\"flow_key_ocgt1\"]) == 0.",
+    "maximum(output[\"flow_key_ocgt2\"]) == 0.",
+    "maximum(output[\"flow_key_ccgt\"]) == 0."
+]
+
+#_test_emissions_node_slack_penalty()
+#generic_test_function("test", outputs_emissions, tests_emissions, object_parameter_values_emissions, relationship_parameter_values_emissions)
 #_test_ocgt2_unit_high_vom_cost()
 
-"""@testset "unit_test on 6-unit system" begin
+@testset "unit_test on 6-unit system" begin
     @testset "unit tests" begin
         @testset "unit parameters" begin
             _test_min_down_time()
@@ -1435,18 +1496,647 @@ generic_test_function("test", outputs2, tests2, nothing, relationship_inputs)
         end
         _test_nuclear_unit_high_vom_cost()
         _test_wind_unit_high_vom_cost()
-        @testset "output nodes" begin
-            #_test_A_no_demand()
-            #_test_A_high_demand()
-            #_test_max_use_B_branch()
-            #_test_only_use_B_branch()
-        end
-        #_test_only_use_B_branch()
-        #_test_heat_node_high_demand()
     end
+end
+
+tests_data = [
+    Dict(
+        "test_name" => "min_node_pressure test",
+        "object_inputs" => [
+            ["node", "natural_gas", "has_pressure", true, "min_node_pressure test"],
+            ["node", "natural_gas", "min_node_pressure", 10.0, "min_node_pressure test"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "parameter_name" => "node_pressure",
+                "report" => "report",
+                "node" => "natural_gas",
+                "stochastic_scenario" => "scenario"
+            )
+        ),
+        "tests" => [
+            "maximum(output[1]) <= 10. + EPSILON",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "node_state_cap test",
+        "object_inputs" => [
+            ["node", "battery", "node_state_cap", 400, "node_state_cap test"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "node" => "battery",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "node_state"
+            ),
+        ),
+        "tests" => [
+            "maximum(output[1]) <= 400 + EPSILON",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "node_state_min test",
+        "object_inputs" => [
+            ["node", "battery", "node_state_min", 60, "node_state_min test"],
+            ["node", "biomass", "node_state_min", 496000, "node_state_min test"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "node" => "battery",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "node_state",
+            ),
+            2 => Dict(
+                "report" => "report",
+                "node" => "biomass",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "node_state",
+            ),
+        ),        
+        "tests" => [
+            "minimum(output[1]) >= 60 - EPSILON",
+            "minimum(output[2]) >= 496000 - EPSILON",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "max_voltage_angle test",
+        "object_inputs" => [
+            ["node", "A", "has_voltage_angle", true, "max_voltage_angle test"],
+            ["node", "A", "max_voltage_angle", 1, "max_voltage_angle test"],
+            ["node", "B", "has_voltage_angle", true, "max_voltage_angle test"],
+            ["node", "B", "max_voltage_angle", 2, "max_voltage_angle test"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "node" => "A",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "node_voltage_angle"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "node" => "B",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "node_voltage_angle"
+            )
+        ),        
+        "tests" => [
+            "maximum(output[1]) <= 1 + EPSILON",
+            "maximum(output[2]) <= 2 + EPSILON",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "min_voltage_angle test",
+        "object_inputs" => [
+            ["node", "A", "has_voltage_angle", true, "min_voltage_angle test"],
+            ["node", "A", "min_voltage_angle", 1, "min_voltage_angle test"],
+            ["node", "B", "has_voltage_angle", true, "min_voltage_angle test"],
+            ["node", "B", "min_voltage_angle", 2, "min_voltage_angle test"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "node" => "A",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "node_voltage_angle"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "node" => "B",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "node_voltage_angle"
+            )
+        ),        
+        "tests" => [
+            "minimum(output[1]) >= 1 - EPSILON",
+            "minimum(output[2]) >= 2 - EPSILON",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "fix_node_pressure test",
+        "object_inputs" => [
+            ["node", "natural_gas", "has_pressure", true, "fix_node_pressure test"],
+            ["node", "natural_gas", "fix_node_pressure", 10., "fix_node_pressure test"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "node" => "natural_gas",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "node_pressure"
+            ),
+        ),        
+        "tests" => [
+            "maximum(output[1]) <= 10. + EPSILON  && minimum(output[1]) >= 10. - EPSILON",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "fix_node_voltage_angle test",
+        "object_inputs" => [
+            ["node", "A", "has_voltage_angle", true,"fix_node_voltage_angle test"],
+            ["node", "A", "fix_node_voltage_angle", 1, "fix_node_voltage_angle test"],
+            ["node", "B", "has_voltage_angle", true, "fix_node_voltage_angle test"],
+            ["node", "B", "fix_node_voltage_angle", 2, "fix_node_voltage_angle test"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "node" => "A",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "node_voltage_angle"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "node" => "B",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "node_voltage_angle"
+            )
+        ),        
+        "tests" => [
+            "minimum(output[1]) >= 1 - EPSILON && maximum(output[1]) <= 1 + EPSILON",
+            "minimum(output[2]) >= 2 - EPSILON && maximum(output[2]) <= 2 + EPSILON",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "initial_node_state test",
+        "object_inputs" => [
+            ["node", "biomass", "initial_node_state", 400000., "initial_node_state test"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "node" => "biomass",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "node_state"
+            ),
+        ),        
+        "tests" => [
+            "output[1][1] == 400000.",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "initial_node_pressure test",
+        "object_inputs" => [
+            ["node", "natural_gas", "has_pressure", true, "initial_node_pressure test"],
+            ["node", "natural_gas", "initial_node_pressure", 10.0, "initial_node_pressure test"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "node" => "natural_gas",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "node_pressure"
+            ),
+        ),        
+        "tests" => [
+            "output[1][1] == 10.",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "initial_node_voltage_angle test",
+        "object_inputs" => [
+            ["node", "A", "has_voltage_angle", true, "initial_node_voltage_angle test"],
+            ["node", "A", "initial_node_voltage_angle", 1, "initial_node_voltage_angle test"],
+            ["node", "B", "has_voltage_angle", true, "initial_node_voltage_angle test"],
+            ["node", "B", "initial_node_voltage_angle", 2, "initial_node_voltage_angle test"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "node" => "A",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "node_voltage_angle"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "node" => "B",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "node_voltage_angle"
+            ),
+        ),        
+        "tests" => [
+            "output[1][1] == 1",
+            "output[2][1] == 2",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "emissions test using node_state_cap",
+        "object_inputs" => [
+            ["node", "CO2_emission", "node_state_cap", 0., "emissions test using node_state_cap"],
+            ["node", "SO2_emission", "node_state_cap", 0., "emissions test using node_state_cap"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "unit" => "U_ocgt1",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "unit" => "U_ocgt2",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            3 => Dict(
+                "report" => "report",
+                "unit" => "U_ccgt",
+                "node" => "B",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+        ),        
+        "tests" => [
+            "maximum(output[1]) <= 0. + EPSILON",
+            "maximum(output[2]) <= 0. + EPSILON",
+            "maximum(output[3]) <= 0. + EPSILON"
+        ],
+    ),
+
+    Dict(
+        "test_name" => "emissions test using node_slack_penalty",
+        "object_inputs" => [
+            ["node", "CO2_emission", "node_slack_penalty", 10000000., "emissions test using node_slack_penalty"],
+            ["node", "SO2_emission", "node_slack_penalty", 10000000., "emissions test using node_slack_penalty"],
+        ],
+        "relationship_inputs" => [
+            ["unit__to_node", "U_ccgt", "B", "vom_cost", 150., "emissions test using node_slack_penalty"],
+        ],
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "unit" => "U_ocgt1",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "unit" => "U_ocgt2",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            3 => Dict(
+                "report" => "report",
+                "unit" => "U_ccgt",
+                "node" => "B",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+        ),        
+        "tests" => [
+            "maximum(output[1]) <= 0. + EPSILON",
+            "maximum(output[2]) <= 0. + EPSILON",
+            "maximum(output[3]) <= 0. + EPSILON"
+        ],
+    ),
+
+    Dict(
+        "test_name" => "gas test using high node_slack_penalty",
+        "object_inputs" => [
+            ["node", "gas", "node_slack_penalty", 10000000., "gas test using high node_slack_penalty"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "unit" => "U_ocgt1",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "unit" => "U_ocgt2",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            3 => Dict(
+                "report" => "report",
+                "unit" => "U_ccgt",
+                "node" => "B",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+        ),        
+        "tests" => [
+            "maximum(output[1]) <= 0. + EPSILON",
+            "maximum(output[2]) <= 0. + EPSILON",
+            "maximum(output[3]) <= 0. + EPSILON"
+        ],
+    ),
+
+    Dict(
+        "test_name" => "gas test using null node_slack_penalty",
+        "object_inputs" => [
+            ["node", "gas", "node_slack_penalty", 0., "gas test using null node_slack_penalty"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "unit" => "U_wind",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "unit" => "U_nuclear",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            3 => Dict(
+                "report" => "report",
+                "unit" => "U_chp",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+        ),        
+        "tests" => [
+            "maximum(output[1]) <= 0. + EPSILON",
+            "maximum(output[2]) <= 0. + EPSILON",
+            "maximum(output[3]) <= 0. + EPSILON"
+        ],
+    ),
+
+    Dict(
+        "test_name" => "biomass test using high node_slack_penalty without heat_node demand",
+        "object_inputs" => [
+            ["node", "biomass", "node_slack_penalty", 1000000., "biomass test using high node_slack_penalty without heat_node demand"],
+            ["node", "heat_node", "demand", 0., "biomass test using high node_slack_penalty without heat_node demand"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "unit" => "U_chp",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "unit" => "U_chp",
+                "node" => "heat_node",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            3 => Dict(
+                "report" => "report",
+                "unit" => "U_chp",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "units_on"
+            ),
+        ),        
+        "tests" => [
+            "maximum(output[1]) <= 0. + EPSILON",
+            "maximum(output[2]) <= 0. + EPSILON",
+            "maximum(output[3]) <= 0. + EPSILON",
+        ],
+    ),
+    
+    Dict(
+        "test_name" => "nuclear test using high node_slack_penalty",
+        "object_inputs" => [
+            ["node", "nuclear", "node_slack_penalty", 1000000., "nuclear test using high node_slack_penalty"],
+        ],
+        "relationship_inputs" => nothing,
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "unit" => "U_nuclear",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "unit" => "U_nuclear",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "units_on"
+            ),
+        ),        
+        "tests" => [
+            "maximum(output[1]) <= 0. + EPSILON",
+            "maximum(output[2]) <= 0. + EPSILON",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "nuclear unit using high vom_cost",
+        "object_inputs" => nothing,
+        "relationship_inputs" => [
+            ["unit__to_node", "U_nuclear", "A", "vom_cost", 1000000., "nuclear unit using high vom_cost"],
+        ],
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "unit" => "U_nuclear",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "unit" => "U_nuclear",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "units_on"
+            ),
+        ),        
+        "tests" => [
+            "maximum(output[1]) <= 0. + EPSILON",
+            "maximum(output[2]) <= 0. + EPSILON",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "wind unit using high vom_cost",
+        "object_inputs" => nothing,
+        "relationship_inputs" => [
+            ["unit__to_node", "U_wind", "A", "vom_cost", 1000000., "wind unit using high vom_cost"],
+        ],
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "unit" => "U_wind",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "unit" => "U_wind",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "units_on"
+            ),
+        ),        
+        "tests" => [
+            "maximum(output[1]) <= 0. + EPSILON",
+            "maximum(output[2]) <= 0. + EPSILON",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "chp unit using high vom_cost",
+        "object_inputs" => nothing,
+        "relationship_inputs" => [
+            ["unit__to_node", "U_chp", "A", "vom_cost", 1000000., "chp unit using high vom_cost"],
+        ],
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "unit" => "U_chp",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "unit" => "U_chp",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "units_on"
+            ),
+        ),        
+        "tests" => [
+            "maximum(output[1]) <= 0. + EPSILON",
+            "maximum(output[2]) <= 0. + EPSILON",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "ccgt unit using high vom_cost",
+        "object_inputs" => nothing,
+        "relationship_inputs" => [
+            ["unit__to_node", "U_ccgt", "B", "vom_cost", 1000000., "ccgt unit using high vom_cost"],
+        ],
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "unit" => "U_ccgt",
+                "node" => "B",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "unit" => "U_chp",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "units_on"
+            ),
+        ),        
+        "tests" => [
+            "maximum(output[1]) <= 0. + EPSILON",
+            "maximum(output[2]) <= 0. + EPSILON",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "ocgt1 unit using high vom_cost",
+        "object_inputs" => nothing,
+        "relationship_inputs" => [
+            ["unit__to_node", "U_ocgt1", "A", "vom_cost", 1000000., "ocgt1 unit using high vom_cost"],
+        ],
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "unit" => "U_ocgt1",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "unit" => "U_ocgt1",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "units_on"
+            ),
+        ),        
+        "tests" => [
+            "maximum(output[1]) <= 0. + EPSILON",
+            "maximum(output[2]) <= 0. + EPSILON",
+        ],
+    ),
+
+    Dict(
+        "test_name" => "ocgt2 unit using high vom_cost",
+        "object_inputs" => nothing,
+        "relationship_inputs" => [
+            ["unit__to_node", "U_ocgt2", "A", "vom_cost", 1000000., "ocgt2 unit using high vom_cost"],
+        ],
+        "outputs" => Dict(
+            1 => Dict(
+                "report" => "report",
+                "unit" => "U_ocgt2",
+                "node" => "A",
+                "direction" => "to_node",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "unit_flow"
+            ),
+            2 => Dict(
+                "report" => "report",
+                "unit" => "U_ocgt2",
+                "stochastic_scenario" => "scenario",
+                "parameter_name" => "units_on"
+            ),
+        ),        
+        "tests" => [
+            "maximum(output[1]) <= 0. + EPSILON",
+            "maximum(output[2]) <= 0. + EPSILON",
+        ],
+    ),
+]
+
+"""for test in tests_data
+    generic_test_function(test["test_name"], test["outputs"], test["tests"], test["object_inputs"], test["relationship_inputs"])
+    print(test["test_name"]," passed!")
 end"""
-
-
-
-
-
