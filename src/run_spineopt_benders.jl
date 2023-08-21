@@ -83,9 +83,9 @@ function rerun_spineopt_benders!(
         @log log_level 1 "Benders iteration $j complete"
         @log log_level 1 "Objective lower bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[])); "
         @log log_level 1 "Objective upper bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[])); "
-        gaps = m_mp.ext[:spineopt].benders_gaps
-        @log log_level 1 "Gap: $(@sprintf("%1.4f", last(gaps) * 100))%"
-        if last(gaps) <= max_gap(model=m_mp.ext[:spineopt].instance)
+        gap = last(m_mp.ext[:spineopt].benders_gaps)
+        @log log_level 1 "Gap: $(@sprintf("%1.4f", gap * 100))%"
+        if gap <= max_gap(model=m_mp.ext[:spineopt].instance)
             @log log_level 1 "Benders tolerance satisfied, terminating..."
             break
         end

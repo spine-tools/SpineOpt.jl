@@ -401,18 +401,15 @@ Save the value of the objective terms in a model.
 """
 function _save_objective_values!(m::Model)
     ind = (model=m.ext[:spineopt].instance, t=current_window(m))
-    for (term, (in_window, _bw)) in m.ext[:spineopt].objective_terms
-        m.ext[:spineopt].values[term] = Dict(ind => JuMP.value(realize(in_window)))
+    total_costs = total_costs_tail = 0
+    for (term, (in_window, beyond_window)) in m.ext[:spineopt].objective_terms
+        cost, cost_tail = JuMP.value(realize(in_window)), JuMP.value(realize(beyond_window))
+        total_costs += cost
+        total_costs_tail += cost_tail
+        m.ext[:spineopt].values[term] = Dict(ind => cost)
     end
-    m.ext[:spineopt].values[:total_costs] = Dict(
-        ind => sum(m.ext[:spineopt].values[term][ind] for term in keys(m.ext[:spineopt].objective_terms); init=0)
-    )
-    m.ext[:spineopt].values[:total_costs_tail] = Dict(
-        ind => sum(
-            JuMP.value(realize(beyond_window)) for (_iw, beyond_window) in values(m.ext[:spineopt].objective_terms);
-            init=0
-        )
-    )
+    m.ext[:spineopt].values[:total_costs] = Dict(ind => total_costs)
+    m.ext[:spineopt].values[:total_costs_tail] = Dict(ind => total_costs_tail)
     nothing
 end
 
