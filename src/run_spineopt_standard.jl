@@ -32,7 +32,7 @@ function rerun_spineopt_standard!(
 )
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
-    roll_count = _roll_count(m)
+    roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:roll_count)
     init_model!(
         m;
@@ -65,21 +65,6 @@ function rerun_spineopt_standard!(
             write_report_from_intermediate_results(m, url_out; alternative=alternative, log_level=log_level)
         end
     end
-end
-
-function _roll_count(m::Model)
-    instance = m.ext[:spineopt].instance
-    window_start = model_start(model=instance)
-    i = 1
-    while true
-        rf = roll_forward(model=instance, i=i, _strict=false)
-        if isnothing(rf) || rf == Minute(0) || window_start + rf >= model_end(model=instance)
-            break
-        end
-        window_start += rf
-        i += 1
-    end
-    i - 1
 end
 
 """

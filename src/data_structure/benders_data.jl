@@ -27,7 +27,7 @@ The keys in the result are the keys of the input, without the stochastic_scenari
 The values are `ParameterValue{Map}`s mapping the `stochastic_scenario` of the variable key,
 to a `TimeSeries` mapping the `t` of the key, to the 'realized' variable value.
 """
-function _pval_by_entity(vals, weight=1.0)
+function _pval_by_entity(vals)
     by_ent = Dict()
     for (ind, val) in vals
         ent = _drop_key(ind, :stochastic_scenario, :t)
@@ -36,13 +36,13 @@ function _pval_by_entity(vals, weight=1.0)
         by_t[ind.t] = realize(val)
     end
     Dict(
-        ent => parameter_value(Map(collect(keys(by_s)), [_window_time_series(by_t, weight) for by_t in values(by_s)]))
+        ent => parameter_value(Map(collect(keys(by_s)), [_window_time_series(by_t) for by_t in values(by_s)]))
         for (ent, by_s) in by_ent
     )
 end
 
 """
-    _window_time_series(by_t, weight)
+    _window_time_series(by_t)
 
 A `TimeSeries` from the given `Dict` mapping `TimeSlice` to `Float64`, with an explicit NaN at the end.
 The NaN is there because we want to merge marginal values from different windows of the Benders subproblem
@@ -52,12 +52,12 @@ Without the NaN, the last value of one window would apply until the next window,
 if there were gaps between the windows (as in rolling representative periods Benders).
 With the NaN, the gap is correctly skipped in the Benders cuts.
 """
-function _window_time_series(by_t, weight)
+function _window_time_series(by_t)
     time_slices, vals = collect(keys(by_t)), collect(values(by_t))
     inds = start.(time_slices)
     push!(inds, maximum(end_.(time_slices)))
     push!(vals, NaN)
-    TimeSeries(inds, weight * vals)
+    TimeSeries(inds, vals)
 end
 
 function process_master_problem_solution!(m_mp)
@@ -80,10 +80,6 @@ function process_subproblem_solution!(m, win_weight)
     _save_sp_solution!(m)
 end
 
-function save_sp_objective_value_tail!(m, win_weight)
-    _save_sp_objective_value!(m, win_weight, true)
-end
-
 function _save_sp_marginal_values!(m, win_weight)
     _wait_for_dual_solves(m)
     _save_sp_marginal_values!(m, :bound_units_invested_available, :units_invested_available_mv, unit, win_weight)
@@ -93,31 +89,45 @@ function _save_sp_marginal_values!(m, win_weight)
     _save_sp_marginal_values!(m, :bound_storages_invested_available, :storages_invested_available_mv, node, win_weight)
 end
 
+function _is_last_window(m)
+    m.ext[:spineopt].temporal_structure[:current_window_number] == m.ext[:spineopt].temporal_structure[:window_count]
+end
+
 function _save_sp_marginal_values!(m, var_name, param_name, obj_cls, win_weight)
-    win_start, win_end = start(current_window(m)), end_(current_window(m))
-    window_values = Dict(
-        k => v for (k, v) in m.ext[:spineopt].values[var_name] if start(k.t) >= win_start && end_(k.t) <= win_end
+    values = Dict(
+        k => win_weight * realize(v)
+        for (k, v) in m.ext[:spineopt].values[var_name]
+        if iscontained(k.t, current_window(m))
     )
-    pval_by_ent = _pval_by_entity(window_values, win_weight)
+    if _is_last_window(m)
+        merge!(
+            values,
+            Dict(
+                k => realize(v) for (k, v) in m.ext[:spineopt].values[var_name] if start(k.t) >= end_(current_window(m))
+            )
+        )
+    end
+    pval_by_ent = _pval_by_entity(values)
     pvals = Dict(only(ent) => Dict(param_name => pval) for (ent, pval) in pval_by_ent)
     add_object_parameter_values!(obj_cls, pvals; merge_values=true)
 end
 
-function _save_sp_objective_value!(m, win_weight, tail=false)
-    key = tail ? :total_costs_tail : :total_costs
-    increment = sum(values(m.ext[:spineopt].values[key]); init=0)
-    total_sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0) + win_weight * increment
+function _save_sp_objective_value!(m, win_weight)
+    increment = win_weight * sum(values(m.ext[:spineopt].values[:total_costs]); init=0)
+    if _is_last_window(m)
+        increment += sum(values(m.ext[:spineopt].values[:total_costs_tail]); init=0)
+    end
+    total_sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0) + increment
     add_object_parameter_values!(
         benders_iteration, Dict(current_bi => Dict(:sp_objective_value_bi => parameter_value(total_sp_obj_val)))
     )
 end
 
 function _save_sp_unit_flow!(m, win_weight, tail=false)
-    win_start, win_end = start(current_window(m)), end_(current_window(m))
     window_values = Dict(
-        k => v for (k, v) in m.ext[:spineopt].values[:unit_flow] if start(k.t) >= win_start && end_(k.t) <= win_end
+        k => win_weight * v for (k, v) in m.ext[:spineopt].values[:unit_flow] if iscontained(k.t, current_window(m))
     )
-    pval_by_ent = _pval_by_entity(window_values, win_weight)
+    pval_by_ent = _pval_by_entity(window_values)
     pvals_to_node = Dict(
         ent => Dict(:sp_unit_flow => pval) for (ent, pval) in pval_by_ent if ent.direction == direction(:to_node)
     )
