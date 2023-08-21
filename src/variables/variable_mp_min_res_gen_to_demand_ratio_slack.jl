@@ -23,16 +23,8 @@ mp_min_res_gen_to_demand_ratio_slack_indices(commodity=anything, temporal_block=
 A list of `NamedTuple`s corresponding to indices of the `mp_min_res_gen_to_demand_ratio_slack` variable where the keyword arguments act as filters
 for each dimension.
 """
-function mp_min_res_gen_to_demand_ratio_slack_indices(
-    m::Model;
-    commodity=anything,
-    temporal_block=anything,
-    t=anything,
-)
-    unique(
-        (commodity=comm, t=first(time_slice(m)))
-        for comm in indices(mp_min_res_gen_to_demand_ratio_slack_penalty)        
-    )
+function mp_min_res_gen_to_demand_ratio_slack_indices(m::Model; commodity=anything, kwargs...)
+    collect(indices_as_tuples(mp_min_res_gen_to_demand_ratio_slack_penalty; commodity=commodity))
 end
 
 """
@@ -40,4 +32,8 @@ end
 
 Add `units_on` variables to model `m`.
 """
-add_variable_mp_min_res_gen_to_demand_ratio_slack!(m::Model) = add_variable!(m, :mp_min_res_gen_to_demand_ratio_slack, mp_min_res_gen_to_demand_ratio_slack_indices; lb=Constant(0))
+function add_variable_mp_min_res_gen_to_demand_ratio_slack!(m::Model)
+    add_variable!(
+        m, :mp_min_res_gen_to_demand_ratio_slack, mp_min_res_gen_to_demand_ratio_slack_indices; lb=Constant(0)
+    )
+end

@@ -32,10 +32,10 @@ function rerun_spineopt_benders!(
 )
     m_mp = master_problem_model(m)
     @timelog log_level 2 "Creating subproblem temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating master problem temporal structure..." generate_master_temporal_structure!(m, m_mp)
+    @timelog log_level 2 "Creating master problem temporal structure..." generate_master_temporal_structure!(m_mp)
     @timelog log_level 2 "Creating subproblem stochastic structure..." generate_stochastic_structure!(m)
     @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure!(m_mp)
-    sp_roll_count = _roll_count(m)
+    sp_roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:sp_roll_count)
     init_model!(
         m;
@@ -73,7 +73,6 @@ function rerun_spineopt_benders!(
             @timelog log_level 2 "Processing subproblem solution..." process_subproblem_solution!(m, win_weight)
             if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
                 @log log_level 2 "... Rolling complete\n"
-                save_sp_objective_value_tail!(m, win_weight)                
                 break
             end
             update_model!(m; log_level=log_level, update_names=update_names)
@@ -84,9 +83,9 @@ function rerun_spineopt_benders!(
         @log log_level 1 "Benders iteration $j complete"
         @log log_level 1 "Objective lower bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[])); "
         @log log_level 1 "Objective upper bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[])); "
-        gaps = m_mp.ext[:spineopt].benders_gaps
-        @log log_level 1 "Gap: $(@sprintf("%1.4f", last(gaps) * 100))%"
-        if last(gaps) <= max_gap(model=m_mp.ext[:spineopt].instance)
+        gap = last(m_mp.ext[:spineopt].benders_gaps)
+        @log log_level 1 "Gap: $(@sprintf("%1.4f", gap * 100))%"
+        if gap <= max_gap(model=m_mp.ext[:spineopt].instance)
             @log log_level 1 "Benders tolerance satisfied, terminating..."
             break
         end
@@ -192,7 +191,6 @@ function _set_mp_objective!(m::Model)
         Min,
         + expr_sum(sp_objective_upperbound[t] for (t,) in sp_objective_upperbound_indices(m); init=0)
         + total_costs(m, anything; operations=false)
-        + mp_objective_penalties(m, anything)
     )
 end
 

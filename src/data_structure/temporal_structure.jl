@@ -102,6 +102,21 @@ function _generate_current_window!(m::Model)
     )
 end
 
+function _generate_window_count!(m::Model)
+    instance = m.ext[:spineopt].instance
+    window_start = model_start(model=instance)
+    i = 1
+    while true
+        rf = roll_forward(model=instance, i=i, _strict=false)
+        if isnothing(rf) || rf == Minute(0) || window_start + rf >= model_end(model=instance)
+            break
+        end
+        window_start += rf
+        i += 1
+    end
+    m.ext[:spineopt].temporal_structure[:window_count] = i
+end
+
 # Adjuster functions, in case blocks specify their own start and end
 """
     _adjuster_start(window_start, window_end, blk_start)
@@ -255,8 +270,8 @@ function _generate_time_slice!(m::Model)
     _do_generate_time_slice!(m, window_time_slices, history_time_slices, t_history_t)
 end
 
-function _generate_master_window_and_time_slice!(m::Model, m_mp::Model)
-    instance = m.ext[:spineopt].instance
+function _generate_master_window_and_time_slice!(m_mp::Model)
+    instance = m_mp.ext[:spineopt].instance
     mp_start = model_start(model=instance)
     mp_end = model_end(model=instance)
     m_mp.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
@@ -429,6 +444,7 @@ Create the temporal structure for SpineOpt from the input database.
 """
 function generate_temporal_structure!(m::Model)
     _generate_current_window!(m)
+    _generate_window_count!(m)
     _generate_time_slice!(m)
     _generate_output_time_slices!(m)
     _generate_time_slice_relationships!(m)
@@ -436,13 +452,12 @@ function generate_temporal_structure!(m::Model)
 end
 
 """
-    generate_master_temporal_structure!(m::Model, m_mp::Model)
+    generate_master_temporal_structure!( m_mp::Model)
 
 Create the master problem temporal structure for SpineOpt benders.
-Roll the subproblem to the last window and return the number of windows rolled.
 """
-function generate_master_temporal_structure!(m::Model, m_mp::Model)
-    _generate_master_window_and_time_slice!(m, m_mp)
+function generate_master_temporal_structure!(m_mp::Model)
+    _generate_master_window_and_time_slice!(m_mp)
     _generate_output_time_slices!(m_mp)
     _generate_time_slice_relationships!(m_mp)
 end
