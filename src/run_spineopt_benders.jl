@@ -191,7 +191,6 @@ function _set_mp_objective!(m::Model)
         Min,
         + expr_sum(sp_objective_upperbound[t] for (t,) in sp_objective_upperbound_indices(m); init=0)
         + total_costs(m, anything; operations=false)
-        + mp_objective_penalties(m, anything)
     )
 end
 
