@@ -58,13 +58,7 @@ function add_constraint_mp_min_res_gen_to_demand_ratio!(m::Model)
                 for (u, n, d) in unit__to_node(unit=u, node=node__commodity(commodity=comm), _compact=false);
                 init=0,
             )
-            + sum(
-                + mp_min_res_gen_to_demand_ratio_slack[comm1, t1]
-                for (comm1, t1) in mp_min_res_gen_to_demand_ratio_slack_indices(m)
-                if comm1 == comm;
-                init=0
-            )          
-            
+            + get(mp_min_res_gen_to_demand_ratio_slack, (comm,), 0)
             >=
             + mp_min_res_gen_to_demand_ratio(commodity=comm)
             * (

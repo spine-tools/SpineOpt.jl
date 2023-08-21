@@ -128,6 +128,7 @@
         ["commodity", "commodity_physics", "commodity_physics_none", "commodity_physics_list", "Defines if the `commodity` follows lodf or ptdf physics."],
         ["commodity", "commodity_ptdf_threshold", 0.001, null, "The minimum absolute value of the power transfer distribution factor (PTDF) that is considered meaningful."],
         ["commodity", "mp_min_res_gen_to_demand_ratio", null, null, "Minimum ratio of renewable generation to demand for this commodity - used in the minimum renewable generation constraint within the Benders master problem"],
+        ["commodity", "mp_min_res_gen_to_demand_ratio_slack_penalty", null, null, "Penalty for violating the minimum renewable generation to demand ratio."],
         ["commodity", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["connection", "candidate_connections", null, null, "The number of connections that may be invested in"],
         ["connection", "forced_availability_factor", null, null, "Availability factor due to outages/deratings."],
