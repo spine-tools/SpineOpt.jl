@@ -135,12 +135,10 @@ end
 
 
 function _set_sp_solution!(m)
-    for (name, var) in m.ext[:spineopt].variables
-        if !occursin(string(name), "invested")
-            for (ind, v) in var
-                set_start_value(v, m.ext[:spineopt].sp_values[m.ext[:spineopt].temporal_structure[:current_window_number]][name][ind]) 
-            end
-        end
+    for (name, var) in m.ext[:spineopt].variables        
+        for (ind, v) in var
+            set_start_value(v, m.ext[:spineopt].sp_values[m.ext[:spineopt].temporal_structure[:current_window_number]][name][ind]) 
+        end        
     end
 end
 
