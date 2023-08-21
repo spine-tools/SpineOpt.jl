@@ -138,20 +138,24 @@ function _save_sp_unit_flow!(m, win_weight, tail=false)
     add_relationship_parameter_values!(unit__from_node, pvals_from_node; merge_values=true)
 end
 
-
-function _save_sp_solution!(m)    
-    m.ext[:spineopt].sp_values[m.ext[:spineopt].temporal_structure[:current_window_number]] = copy(m.ext[:spineopt].values)    
+function _save_sp_solution!(m)
+    cwn = m.ext[:spineopt].temporal_structure[:current_window_number]
+    m.ext[:spineopt].sp_values[cwn] = Dict(
+        name => copy(m.ext[:spineopt].values[name])
+        for name in keys(m.ext[:spineopt].variables)
+        if !occursin("invested", string(name))
+    )
 end
-
 
 function _set_sp_solution!(m)
-    for (name, var) in m.ext[:spineopt].variables        
-        for (ind, v) in var
-            set_start_value(v, m.ext[:spineopt].sp_values[m.ext[:spineopt].temporal_structure[:current_window_number]][name][ind]) 
-        end        
+    cwn = m.ext[:spineopt].temporal_structure[:current_window_number]
+    for (name, vals) in m.ext[:spineopt].sp_values[cwn]
+        var = m.ext[:spineopt].variables[name]
+        for (ind, val) in vals
+            set_start_value(var[ind], val)
+        end
     end
 end
-
 
 function save_mp_objective_bounds_and_gap!(m_mp)
     obj_lb = m_mp.ext[:spineopt].objective_lower_bound[] = objective_value(m_mp)
