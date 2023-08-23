@@ -152,8 +152,7 @@ function _add_mp_constraints!(m; log_level=3)
             add_constraint_storage_lifetime!,
             add_constraint_storages_invested_transition!,
             add_constraint_storages_invested_available!,
-            add_constraint_unit_investment_group!,
-            add_constraint_node_investment_group!,
+            add_constraint_entity_investment_group!,
         )
         name = name_from_fn(add_constraint!)
         @timelog log_level 3 "- [$name]" add_constraint!(m)

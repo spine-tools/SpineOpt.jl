@@ -2,6 +2,7 @@
     "object_classes": [
         ["commodity", "A good or product that can be consumed, produced, traded. E.g., electricity, oil, gas, water...", 281473533932880],
         ["connection", "A transfer of commodities between nodes. E.g. electricity line, gas pipeline...", 280378317271233],
+        ["investment_group", "A group of investments that need to be done together.", 281105609585860],
         ["model", "An instance of SpineOpt, that specifies general parameters such as the temporal horizon.", 281107035648412],
         ["node", "A universal aggregator of commodify flows over units and connections, with storage capabilities.", 280740554077951],
         ["output", "A variable name from SpineOpt that can be included in a report.", 280743406202948],
@@ -49,6 +50,9 @@
         ["unit__to_node__user_constraint", ["unit", "node", "user_constraint"], "Defines which output `unit_flows` are included in the `user_constraint`, and holds their parameters."],
         ["unit__user_constraint", ["unit", "user_constraint"], "Defines which `units_on` variables are included in the `user_constraint`, and holds their parameters."],
         ["units_on__stochastic_structure", ["unit", "stochastic_structure"], "Defines which specific `stochastic_structure` is used for the `units_on` variable of the `unit`. Only one `stochastic_structure` is permitted per `unit`."],
+        ["unit__investment_group", ["unit", "investment_group"], "Indicates that a `unit` belongs in an `investment_group`."],
+        ["connection__investment_group", ["connection", "investment_group"], "Indicates that a `connection` belongs in an `investment_group`."],
+        ["node__investment_group", ["node", "investment_group"], "Indicates that a `node` belongs in a `investment_group`."],
         ["units_on__temporal_block", ["unit", "temporal_block"], "Defines which specific `temporal_blocks` are used by the `units_on` variable of the `unit`."]
     ],
     "parameter_value_lists": [

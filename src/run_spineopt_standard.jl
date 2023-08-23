@@ -210,6 +210,7 @@ function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
             add_constraint_node_voltage_angle!,
             add_constraint_max_node_voltage_angle!,
             add_constraint_min_node_voltage_angle!,
+            add_constraint_entity_investment_group!,
         )
         name = name_from_fn(add_constraint!)
         @timelog log_level 3 "- [$name]" add_constraint!(m)

@@ -184,9 +184,7 @@ include("constraints/constraint_node_voltage_angle.jl")
 include("constraints/constraint_connection_unitary_gas_flow.jl")
 include("constraints/constraint_mp_any_invested_cuts.jl")
 include("constraints/constraint_mp_min_res_gen_to_demand_ratio.jl")
-
-include("constraints/constraint_unit_investment_group.jl")
-include("constraints/constraint_node_investment_group.jl")
+include("constraints/constraint_entity_investment_group.jl")
 
 
 export unit_flow_indices
