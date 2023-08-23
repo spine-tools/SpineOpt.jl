@@ -47,11 +47,10 @@ end
 
 function _save_connection_avg_throughflow!(m::Model, key, connection_flow)
     m_start = model_start(model=m.ext[:spineopt].instance)
-    connections = connection(connection_monitored=true, has_ptdf=true)
     avg_throughflow = m.ext[:spineopt].values[key] = Dict()
-    sizehint!(avg_throughflow, length(connections) * length(stochastic_scenario()) * length(time_slice(m)))
+    sizehint!(avg_throughflow, length(connection()) * length(stochastic_scenario()) * length(time_slice(m)))
     for ((conn, n, d, s, t), value) in connection_flow
-        conn in connections && start(t) >= m_start || continue
+        start(t) >= m_start || continue
         # NOTE: always assume that the flow goes from the first to the second node in `connection__from_node`
         n_from, n_to, _other_nodes... = connection__from_node(connection=conn, direction=anything)
         if (n == n_to && d == direction(:to_node)) || (n == n_from && d == direction(:from_node))
