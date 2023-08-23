@@ -121,7 +121,6 @@ function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
             add_variable_node_pressure!,
             add_variable_node_voltage_angle!,
             add_variable_binary_gas_connection_flow!,
-            add_variable_mp_min_res_gen_to_demand_ratio_slack!,
         )
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
