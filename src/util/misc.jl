@@ -200,3 +200,6 @@ function print_solution(m, variable_patterns...)
     end
     println()
 end
+
+window_sum(ts::TimeSeries, window; init=0) = sum(v for (t, v) in ts if iscontained(t, window) && !isnan(v); init=init)
+window_sum(x::Number, window; init=0) = x + init

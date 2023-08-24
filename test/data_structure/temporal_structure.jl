@@ -439,8 +439,9 @@ function _test_master_temporal_structure()
     @testset "master_temporal_structure" begin
         url_in = _test_temporal_structure_setup()
         res = Hour(6)
-        m_start, m_end = DateTime(2001, 1, 1), DateTime(2001, 1, 7)
+        m_start = DateTime(2001, 1, 1)
         rf = Hour(24)
+        m_end = m_start + rf
         a_gap = Hour(6)
         b_look_ahead = Hour(12)
         object_parameter_values = [
@@ -455,18 +456,13 @@ function _test_master_temporal_structure()
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
         using_spinedb(url_in, SpineOpt)
-        m = _model()
         m_mp = _model()
-        generate_temporal_structure!(m)
-        SpineOpt.generate_master_temporal_structure!(m, m_mp)
+        SpineOpt.generate_master_temporal_structure!(m_mp)
         obs_time_slices = time_slice(m_mp)
-        ab_starts = m_start : res : m_end - a_gap
-        b_starts = m_end: res : m_end - res + b_look_ahead
         block_a, block_b = temporal_block(:block_a), temporal_block(:block_b)
-        exp_time_slices = vcat(
-            [TimeSlice(st, st + res, block_a, block_b) for st in ab_starts],
-            [TimeSlice(st, st + res, block_b) for st in b_starts],
-        )
+        starts = m_start : res : m_end - res + b_look_ahead
+        blocks_ = [(m_start + a_gap <= st < m_start + rf - a_gap) ? (block_a, block_b) : (block_b,) for st in starts]
+        exp_time_slices = [TimeSlice(st, st + res, blks...) for (st, blks) in zip(starts, blocks_)]
         @testset for (obs, exp) in zip(obs_time_slices, exp_time_slices)
             @test obs == exp
         end

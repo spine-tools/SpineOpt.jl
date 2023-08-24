@@ -786,6 +786,7 @@ function generate_benders_structure()
     units_invested_available_mv = Parameter(:units_invested_available_mv, [unit])
     connections_invested_available_mv = Parameter(:connections_invested_available_mv, [connection])
     storages_invested_available_mv = Parameter(:storages_invested_available_mv, [node])
+    sp_unit_flow = Parameter(:sp_unit_flow, [unit__to_node, unit__from_node])
     @eval begin
         benders_iteration = $benders_iteration
         current_bi = $current_bi
@@ -793,12 +794,14 @@ function generate_benders_structure()
         units_invested_available_mv = $units_invested_available_mv
         connections_invested_available_mv = $connections_invested_available_mv
         storages_invested_available_mv = $storages_invested_available_mv
+        sp_unit_flow = $sp_unit_flow
         export benders_iteration
         export current_bi
         export sp_objective_value_bi
         export units_invested_available_mv
         export connections_invested_available_mv
         export storages_invested_available_mv
+        export sp_unit_flow
     end
 end
 

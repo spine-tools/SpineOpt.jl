@@ -276,6 +276,30 @@ function _active_stochastic_paths(m, unique_active_scenarios)
     unique(intersect(path, unique_active_scenarios) for path in full_stochastic_paths)
 end
 
+function node_stochastic_indices(m::Model; node=anything, stochastic_scenario=anything)
+    unique(
+        (node=n, stochastic_scenario=s)
+        for n in intersect(SpineOpt.node(), node)
+        for (m_, ss) in model__stochastic_structure(
+            model=m.ext[:spineopt].instance, stochastic_structure=node__stochastic_structure(node=n), _compact=false,
+        )
+        for s in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
+    )
+end
+
+function unit_stochastic_indices(m::Model; unit=anything, stochastic_scenario=anything)
+    unique(
+        (unit=u, stochastic_scenario=s)
+        for u in intersect(SpineOpt.unit(), unit)
+        for (m_, ss) in model__stochastic_structure(
+            model=m.ext[:spineopt].instance,
+            stochastic_structure=units_on__stochastic_structure(unit=u),
+            _compact=false,
+        )
+        for s in stochastic_structure__stochastic_scenario(stochastic_structure=ss)
+    )
+end
+
 function stochastic_time_indices(
     m::Model;
     stochastic_scenario=anything,

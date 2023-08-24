@@ -17,7 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-const invest_terms = [:unit_investment_costs, :connection_investment_costs, :storage_investment_costs]
+const invest_terms = [
+    :unit_investment_costs, :connection_investment_costs, :storage_investment_costs, :mp_objective_penalties
+]
 const op_terms = [
     :variable_om_costs,
     :fixed_om_costs,

@@ -32,11 +32,11 @@ function rerun_spineopt_benders!(
 )
     m_mp = master_problem_model(m)
     @timelog log_level 2 "Creating subproblem temporal structure..." generate_temporal_structure!(m)
-    @timelog log_level 2 "Creating master problem temporal structure..." sp_roll_count = begin
-        generate_master_temporal_structure!(m, m_mp)
-    end
+    @timelog log_level 2 "Creating master problem temporal structure..." generate_master_temporal_structure!(m_mp)
     @timelog log_level 2 "Creating subproblem stochastic structure..." generate_stochastic_structure!(m)
     @timelog log_level 2 "Creating master problem stochastic structure..." generate_stochastic_structure!(m_mp)
+    sp_roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
+    roll_temporal_structure!(m, 1:sp_roll_count)
     init_model!(
         m;
         add_user_variables=add_user_variables,
@@ -65,6 +65,7 @@ function rerun_spineopt_benders!(
         while true
             m.ext[:spineopt].temporal_structure[:current_window_number] = k
             @log log_level 1 "\nBenders iteration $j - Window $k: $(current_window(m))"
+            j > 1 && @timelog log_level 2 "Warmstarting subproblem..." _set_sp_solution!(m)
             subproblem_solved = optimize_model!(m; log_level=log_level, calculate_duals=true)
             subproblem_solved || break
             win_weight = window_weight(model=m.ext[:spineopt].instance, i=k, _strict=false)
@@ -72,7 +73,6 @@ function rerun_spineopt_benders!(
             @timelog log_level 2 "Processing subproblem solution..." process_subproblem_solution!(m, win_weight)
             if @timelog log_level 2 "Rolling temporal structure...\n" !roll_temporal_structure!(m, k)
                 @log log_level 2 "... Rolling complete\n"
-                save_sp_objective_value_tail!(m, win_weight)
                 break
             end
             update_model!(m; log_level=log_level, update_names=update_names)
@@ -83,9 +83,9 @@ function rerun_spineopt_benders!(
         @log log_level 1 "Benders iteration $j complete"
         @log log_level 1 "Objective lower bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_lower_bound[])); "
         @log log_level 1 "Objective upper bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[])); "
-        gaps = m_mp.ext[:spineopt].benders_gaps
-        @log log_level 1 "Gap: $(@sprintf("%1.4f", last(gaps) * 100))%"
-        if last(gaps) <= max_gap(model=m_mp.ext[:spineopt].instance)
+        gap = last(m_mp.ext[:spineopt].benders_gaps)
+        @log log_level 1 "Gap: $(@sprintf("%1.4f", gap * 100))%"
+        if gap <= max_gap(model=m_mp.ext[:spineopt].instance)
             @log log_level 1 "Benders tolerance satisfied, terminating..."
             break
         end
@@ -94,6 +94,9 @@ function rerun_spineopt_benders!(
             break
         end
         @timelog log_level 2 "Add MP cuts..." _add_mp_cuts!(m_mp; log_level=log_level)
+        @timelog log_level 2 "Adding MP renewing constraints...\n" _add_mp_renewing_constraints!(
+            m_mp; log_level=log_level
+        )
         _unfix_history!(m)
         j += 1
         global current_bi = add_benders_iteration(j)
@@ -108,6 +111,7 @@ Initialize the given model for SpineOpt Master Problem: add variables, add const
 function _init_mp_model!(m; log_level=3)
     @timelog log_level 2 "Adding MP variables...\n" _add_mp_variables!(m; log_level=log_level)
     @timelog log_level 2 "Adding MP constraints...\n" _add_mp_constraints!(m; log_level=log_level)
+    #@timelog log_level 2 "Adding MP renewing constraints...\n" _add_mp_renewing_constraints!(m; log_level=log_level)
     @timelog log_level 2 "Setting MP objective..." _set_mp_objective!(m)
 end
 
@@ -126,6 +130,7 @@ function _add_mp_variables!(m; log_level=3)
             add_variable_storages_invested!,
             add_variable_storages_invested_available!,
             add_variable_storages_decommissioned!,
+            add_variable_mp_min_res_gen_to_demand_ratio_slack!,
         )
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
@@ -147,12 +152,24 @@ function _add_mp_constraints!(m; log_level=3)
             add_constraint_storage_lifetime!,
             add_constraint_storages_invested_transition!,
             add_constraint_storages_invested_available!,
+            add_constraint_entity_investment_group!,
         )
         name = name_from_fn(add_constraint!)
         @timelog log_level 3 "- [$name]" add_constraint!(m)
     end
     _update_constraint_names!(m)
 end
+
+function _add_mp_renewing_constraints!(m; log_level=3)
+    for add_constraint! in (
+            add_constraint_mp_min_res_gen_to_demand_ratio!,
+        )
+        name = name_from_fn(add_constraint!)
+        @timelog log_level 3 "- [$name]" add_constraint!(m)
+    end
+    _update_constraint_names!(m)
+end
+
 
 function _add_constraint_sp_objective_upperbound!(m::Model)
     @fetch sp_objective_upperbound = m.ext[:spineopt].variables
