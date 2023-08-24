@@ -355,3 +355,147 @@ function drag_and_drop(pages, path)
     end
     return newpages
 end
+
+"""
+    alldocstrings(m)
+
+Return all docstrings from the provided module m as a dictionary.
+"""
+function alldocstrings(m)
+    #allbindings(m) = [ [y[2].data[:binding] for y in x[2].docs] for x in Base.eval(m,Base.Docs.META) ]
+    bindings = []
+    for x in Base.eval(m,Base.Docs.META)
+        for y in x[2].docs
+            push!(bindings,[y[2].data[:binding]])
+        end
+    end
+    alldocs = Dict()
+    for binding in bindings
+        dockey = split(string(binding[1]),".")[2]
+        docvalue = Base.Docs.doc(binding[1])
+        alldocs[dockey] = docvalue
+    end
+    return alldocs
+end
+
+"""
+    findregions()
+
+Finds specific regions within a docstring and return them as a single string.
+"""
+function findregions(docstring; regions=["formulation","description"], title="", fieldtitle=false, sep="\n\n", debugmode=false)
+    md = ""
+    if !isempty(title)
+        md *= title * sep
+    end
+    for region in regions
+        try
+            sf1 = findfirst("#region $region",string(docstring))[end]+2
+            sf2 = findfirst("#endregion $region",string(docstring))[1]-2
+            sf = SubString(string(docstring),sf1,sf2)
+            if fieldtitle
+                md *= region * sep
+            end
+            md *= sf * sep
+            if debugmode
+                println(sf)
+            end
+        catch
+            if debugmode
+                @warn "Cannot find #(end)region $region"
+                #the error could also be because there is no docstring for constraint but that is a very rare case as there is often at least a dynamic docstring
+            end
+        end
+    end
+    return md
+end
+
+"""
+    docs_from_instructionlist(alldocs, instructionlist)
+
+Create a string from all docstrings in a module with the instructions from the instructionlist.
+
+The instructions currently accept 3 types (see example below):
++ regular strings: these are simply printed to the string
++ instruction strings: strings in between region instruction, intended for use in markdown files
++ instruction tuple: tuple with the same instructions, more directly related to the findregions function
+
+The instruction consists of a function name and a list of regions in the docstring of that function.
+If the function name is 'alldocstrings' then it will search all docstrings for the given regions.
+
+Each instruction is separated by two end of line characters.
+
+'''julia
+alldocs = alldocstrings(SpineOpt)
+instrulist = [
+    "# Constraints",
+    "## Auto constraint",
+    "#region instruction",
+    "add_constraint_node_state_capacity!",
+    "formulation",
+    "#endregion instruction",
+    ("add_constraint_node_state_capacity!",["formulation","description"])
+]
+markdownstring = docs_from_instructionlist(alldocs, instrulist)
+'''
+"""
+function docs_from_instructionlist(alldocs, instructionlist)
+    md = ""
+    
+    function interpret_instruction(functionname,functionfields)
+        if functionname == "alldocstrings"
+            for (dockey, docvalue) in alldocs
+                title = ""
+                if occursin("add_constraint", dockey)
+                    # remove add_constraint_ as well as !
+                    title = "### " * replace(uppercasefirst(dockey[16:end-1]), "_" => " ")
+                end
+                md *= findregions(docvalue; regions=functionfields, title=title)
+            end
+        else
+            md *= findregions(alldocs[functionname]; regions=functionfields)
+        end
+    end
+
+    instructionarray = [] #needs to be empty
+    for instruction in instructionlist
+        if isa(instruction, String)
+            if occursin("#region instruction", instruction)
+                instructionarray = ["findfields"]
+            elseif occursin("#endregion instruction", instruction)
+                functionname = instructionarray[2]
+                functionfields = instructionarray[3:end]
+                interpret_instruction(functionname,functionfields)
+                instructionarray = []
+            elseif !isempty(instructionarray)
+                push!(instructionarray, instruction)
+            else
+                md *= instruction * "\n"
+            end
+        elseif isa(instruction,Tuple)
+            functionname = instruction[1]
+            functionfields = instruction[2]
+            interpret_instruction(functionname,functionfields)
+        end
+    end
+    return fix_documenter_behavior(md)
+end
+
+"""
+    fix_documenter_behavior(md)
+
+Documenter converts ```math X ``` to \$\$ X \$\$ but then cannot read it anymore so we'll have to convert it back -_- 
+"""
+function fix_documenter_behavior(md)
+    split_md = split(md, "\n")
+    toggle = true
+    fixed_md = []
+    for smd in split_md
+        if smd == "\$\$"
+            smd = "```" * "math"^Int(toggle)
+            toggle = !toggle
+        end
+        push!(fixed_md,smd)
+    end
+    return join(fixed_md, "\n")
+end

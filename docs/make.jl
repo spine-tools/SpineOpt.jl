@@ -18,6 +18,15 @@ concept_dictionary = SpineOpt.add_cross_references!(
 )
 SpineOpt.write_concept_reference_files(concept_dictionary, path)
 
+# Automatically write the 'Constraints' file using the 'constraintinstructions' file and content from docstrings
+mathpath = joinpath(path, "src", "mathematical_formulation")
+alldocs = SpineOpt.alldocstrings(SpineOpt)
+instructionlist = readlines(joinpath(mathpath, "constraintinstructions.md"))
+markdownstring = SpineOpt.docs_from_instructionlist(alldocs, instructionlist)
+open(joinpath(mathpath, "constraints.md"), "w") do file
+    write(file, markdownstring)
+end
+
 # Generate the documentation pages
 # Replace the Any[...] with nothing if you want to activate the drag and drop feature
 pages=[
