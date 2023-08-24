@@ -38,7 +38,7 @@ In sum, without the brackets, the constraint would be `lhs == value1` (and it wo
 
 And the above is valid not only for rhs, but also for any coefficient in any constraint or objective, and for any variable bound.
 
-To learn more about all this, we suggest you to look at the code of SpineInterface.
+To see how all this is actually implemented, we suggest you to look at the code of SpineInterface.
 The starting point is the implementation of `Base.getindex` for the `Parameter` type so that writing, e.g., `demand[...arguments...]` returns a `Call` that remembers the arguments.
 From then, we proceed to implement `JuMP.build_constraint` and `JuMP.add_constraint` to handle our `Call` objects.
 The last bit is the most complex, and consists in storing callbacks inside `TimeSlice` objects whenever they are used to call a `ParameterValue` to generate a model.
