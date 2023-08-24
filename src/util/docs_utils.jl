@@ -478,24 +478,5 @@ function docs_from_instructionlist(alldocs, instructionlist)
             interpret_instruction(functionname,functionfields)
         end
     end
-    return fix_documenter_behavior(md)
-end
-
-"""
-    fix_documenter_behavior(md)
-
-Documenter converts ```math X ``` to \$\$ X \$\$ but then cannot read it anymore so we'll have to convert it back -_- 
-"""
-function fix_documenter_behavior(md)
-    split_md = split(md, "\n")
-    toggle = true
-    fixed_md = []
-    for smd in split_md
-        if smd == "\$\$"
-            smd = "```" * "math"^Int(toggle)
-            toggle = !toggle
-        end
-        push!(fixed_md,smd)
-    end
-    return join(fixed_md, "\n")
+    return md
 end
