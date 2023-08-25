@@ -15,8 +15,8 @@ Also, imagine you have a `node` where the `demand` is a time-series defined as f
 To simplify things, let's say the nodal balance constraint in SpineOpt has the following form:
 
 ```
-sum of inflows minus sum of outflows into the node during time t == node's demand at time t,
-for each t in the current window
+sum of flows entering the node - sum of flows leaving the node == node's demand
+(for each t in the current window)
 ```
 
 You would expect the rhs of this constraint to be 5 for the first window, and 10 for the second window.
