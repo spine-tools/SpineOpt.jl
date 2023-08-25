@@ -8,8 +8,8 @@ Also, imagine you have a `node` where the `demand` is a time-series defined as f
 
 | timestamp | value |
 | --- | --- |
-|`2023-01-01` | 5 |
-|`2023-01-02` | 10 |
+|2023-01-01 | 5 |
+|2023-01-02 | 10 |
 
 
 To simplify things, let's say the nodal balance constraint in SpineOpt has the following form:
