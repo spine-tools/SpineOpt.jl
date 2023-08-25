@@ -316,7 +316,7 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
 end
 
 """
-    expand_empty_chapters!(pages, path)
+    populate_empty_chapters!(pages, path)
 
 Expand `pages` in-place so that empty chapters are populated with the entire list of .md files
 in the associated folder.
@@ -332,7 +332,7 @@ Developer note: An alternative approach would be to automatically go over all fo
 which indicates which folders and files should be skipped.
 To deal with folders in folders we could use walkdir() instead of readdir()
 """
-function expand_empty_chapters!(pages, path)
+function populate_empty_chapters!(pages, path)
     for (chapname, chapcontent) in pages
         isempty(chapcontent) || continue
         chapdir = lowercase(replace(chapname, " " => "_"))

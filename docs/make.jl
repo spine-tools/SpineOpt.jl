@@ -68,7 +68,7 @@ pages = [
     "Implementation details" => [],
     "Library" => "library.md",
 ]
-SpineOpt.expand_empty_chapters!(pages, joinpath(path, "src"))
+SpineOpt.populate_empty_chapters!(pages, joinpath(path, "src"))
 
 # Create and deploy the documentation
 makedocs(
