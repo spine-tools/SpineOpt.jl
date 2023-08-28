@@ -87,6 +87,15 @@ SpineOpt is constantly improving. To get the most recent version, upgrade SpineO
 
 	b. Git-pull the latest master from the [SpineInterface repository](https://github.com/spine-tools/SpineInterface.jl).
 
+	c. Start the [Julia REPL](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
+
+	d. Copy/paste the following text into the julia prompt:
+
+	```julia
+	using Pkg
+	pkg"up SpineOpt"
+	```
+
 ### Usage
 
 For how to use SpineOpt in your Spine Toolbox projects,
