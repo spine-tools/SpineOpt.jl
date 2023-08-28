@@ -64,19 +64,28 @@ SpineOpt is designed to be used with [Spine Toolbox](https://github.com/spine-to
 
 It doesn't work? See our [Troubleshooting](#troubleshooting) section.
 
+If you want to run SpineOpt outside Spine Toolbox, you need to configure SpineInterface PyCall using the instructions at the end of [SpineInterface installation instructions](https://github.com/spine-tools/SpineInterface.jl#installation).
+
 ### Upgrading
 
-SpineOpt is constantly improving. To get the most recent version, just:
+SpineOpt is constantly improving. To get the most recent version, upgrade SpineOpt using one of the following methods, depending on how you have installed it.
 
-1. Start the [Julia REPL](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
+1. If you have installed SpineOpt from the registry:
 
-2. Copy/paste the following text into the julia prompt
-(it will update the SpineOpt package from the [Spine Julia Registry](https://github.com/spine-tools/SpineJuliaRegistry)):
+	a. Start the [Julia REPL](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
+
+	b. Copy/paste the following text into the julia prompt (it will update the SpineOpt package from the [Spine Julia Registry](https://github.com/spine-tools/SpineJuliaRegistry)):
 
 	```julia
 	using Pkg
 	pkg"up SpineOpt"
 	```
+
+2. If you have installed SpineOpt from the sources:
+
+	a. Git-pull the latest master from this repository.
+
+	b. Git-pull the latest master from the [SpineInterface repository](https://github.com/spine-tools/SpineInterface.jl).
 
 ### Usage
 
