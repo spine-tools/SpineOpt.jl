@@ -23,42 +23,56 @@
 Limit the maximum in/out `unit_flow` of a `unit` if the parameters `unit_capacity, number_of_unit, unit_conv_cap_to_flow, unit_availability_factor` exist.
 """
 function add_constraint_minimum_operating_point!(m::Model)
-    @fetch unit_flow, units_on = m.ext[:spineopt].variables
+    @fetch unit_flow, units_on, nonspin_units_shut_down = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:minimum_operating_point] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            + expr_sum(
-                + unit_flow[u, n, d, s, t]
-                for (u, n, d, s, t) in unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m, t_long=t)
-                );
+            +expr_sum(
+                +unit_flow[u, n, d, s, t] * duration(t) for (u, n, d, s, t) in unit_flow_indices(
+                    m;
+                    unit=u,
+                    node=ng,
+                    direction=d,
+                    stochastic_scenario=s,
+                    t=t_in_t(m, t_long=t),
+                ) if !is_reserve_node(node=n);
+                init=0,
+            ) - expr_sum(
+                +unit_flow[u, n, d, s, t] * duration(t) for (u, n, d, s, t) in unit_flow_indices(
+                    m;
+                    unit=u,
+                    node=ng,
+                    direction=d,
+                    stochastic_scenario=s,
+                    t=t_in_t(m, t_long=t),
+                ) if is_reserve_node(node=n) && downward_reserve(node=n);
+                init=0,
+            ) >=
+            +expr_sum(
+                (
+                    units_on[u, s, t1] - expr_sum(
+                        nonspin_units_shut_down[u, n, s, t1] for (u, n, s, t1) in
+                        nonspin_units_shut_down_indices(m; unit=u, node=ng, stochastic_scenario=s, t=t1);
+                        init=0,
+                    )
+                ) *
+                min(duration(t), duration(t1)) *
+                minimum_operating_point[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),] *
+                unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] *
+                unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)] for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
                 init=0,
             )
-            * duration(t)
-            >=
-            + expr_sum(
-                + units_on[u, s, t1]
-                * min(duration(t), duration(t1))
-                * minimum_operating_point[
-                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t),
-                ]
-                * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t));
-                init=0,
-            )
-        )
-        for (u, ng, d, s, t) in constraint_minimum_operating_point_indices(m)
+        ) for (u, ng, d, s, t) in constraint_minimum_operating_point_indices(m)
     )
 end
 
 function constraint_minimum_operating_point_indices(m::Model)
     unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(minimum_operating_point)
-        for (t, path) in t_lowest_resolution_path(
-            m, vcat(unit_flow_indices(m; unit=u, node=ng, direction=d), units_on_indices(m; unit=u))
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t) for (u, ng, d) in indices(minimum_operating_point) for
+        (t, path) in t_lowest_resolution_path(
+            m,
+            vcat(unit_flow_indices(m; unit=u, node=ng, direction=d), units_on_indices(m; unit=u)),
         )
     )
 end
