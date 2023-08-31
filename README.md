@@ -35,9 +35,9 @@ SpineOpt is designed to be used with [Spine Toolbox](https://github.com/spine-to
       1. Start the [Julia REPL](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
       2. Copy and paste the following text into the julia prompt:
          ```julia
-         using Pkg
-         pkg"registry add General https://github.com/spine-tools/SpineJuliaRegistry"
-         pkg"add SpineOpt"
+         using Pkg									# Use the package manager. Alternatively, use `]` in REPL
+         pkg"registry add General https://github.com/spine-tools/SpineJuliaRegistry"	# Add SpineJuliaRegistry as an available registry for your Julia
+         pkg"add SpineOpt"								# Install SpineOpt from the SpineJuliaRegistry
          ```
 
 	b. If you want to both use and develop SpineOpt, we recommend installing it from sources:
@@ -47,10 +47,22 @@ SpineOpt is designed to be used with [Spine Toolbox](https://github.com/spine-to
       3. Start the [Julia REPL](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
       4. Run the following commands from the julia prompt, replacing your local SpineOpt and SpineInterface paths
          ```julia
-         using Pkg
-         pkg"dev <path-to-your-local-SpineInterface-repository>"
-         pkg"dev <path-to-your-local-SpineOpt-repository>"
+         using Pkg							# Use the package manager. Alternatively, use `]` in REPL
+         pkg"dev <path-to-your-local-SpineInterface-repository>"	# Installs the local version of SpineInterface
+         pkg"dev <path-to-your-local-SpineOpt-repository>"		# Installs the local version of SpineOpt
          ```
+      5. If you want your local SpineOpt to use your local SpineInterface, you also need to `develop` the SpineInterface dependency manually:
+         ```julia
+         using Pkg							# Use the package manager. Alternatively, use `]` in REPL
+         pkg"activate <path-to-your-local-SpineOpt-repository>"		# Activate the local SpineOpt environment
+         pkg"dev <path-to-your-local-SpineInterface-repository>"	# Install the local SpineInterface into the local SpineOpt environment
+         ```
+      6. Lastly, you should probably make sure all the required dependencies are installed using the `instantiate` command:
+	```julia
+ 	using Pkg							# Use the package manager. Alternatively, use `]` in REPL			
+ 	pkg"instantiate <path-to-your-local-SpineInterface-repository>"	# Install SpineInteface dependencies
+ 	pkg"instantiate <path-to-your-local-SpineOpt-repository>"	# Install SpineOpt dependencies (SpineInterface installed locally in previous step)
+ 	```
 
 4. Configure Spine Toolbox to use your Julia:
 
