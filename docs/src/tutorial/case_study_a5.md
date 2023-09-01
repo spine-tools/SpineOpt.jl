@@ -70,11 +70,13 @@ is presented in full detail:
 
 ![image](../figs_a5/case_study_a5_schematic.png)
 
+### Preliminary steps
+
 In order to run this tutorial you must first execute some preliminary
-steps from the [Simple System](../../simple_system/) tutorial.
+steps from the [Simple System tutorial](@ref).
 Specifically, execute all steps from the
-[guide](../../simple_system/index.html#guide), up to and including the step of
-[importing the spineopt database template](../../simple_system/index.html#importing-the-spineopt-database-template).
+[Guide](@ref), up to and including the step of
+[Importing the SpineOpt database template](@ref).
 It is advisable to go through the whole tutorial in order to familiarise
 yourself with Spine.
 
@@ -82,25 +84,6 @@ yourself with Spine.
     Just remember to give a different name for the Spine Project of the
     hydropower tutorial (e.g., ‘Case Study A5’) in the corresponding step,
     so to not mix up the Spine Toolbox projects!
-
-### Importing the SpineOpt database template
-
--   Download [the SpineOpt database template](../../../templates/spineopt_template.json) (right click on the link, then select *Save link as...*)
--   Select the *input* Data Store item in the *Design View*.
--   Go to *Data Store Properties* and hit **Open editor**. This will open the newly created database in the *Spine DB Editor*, looking similar to image below.
-    ![image](../figs_a5/case_study_a5_spine_db_editor_empty.png)
-!!! note
-    The Spine DB editor is a dedicated interface within Spine Toolbox for visualizing and managing Spine databases.
--   Press **Alt + F** to display the editor menu, select **File -> Import...**, 
-    and then select the template file you previously
-    downloaded (in case it is not displayed in the folder where you
-    saved it, double-check that you selected). The contents of that file
-    will be imported into the current database, and you should then see
-    classes like ‘commodity’, ‘connection’ and ‘model’ under the root
-    node in the *Object tree* (on the left).
--   From the editor menu (Alt + F), select **Session -> Commit**. Enter
-    ‘Import SpineOpt template’ as message in the popup dialog, and click
-    **Commit**.
 
 !!! note
     The SpineOpt template contains the fundamental object and relationship
@@ -115,44 +98,63 @@ yourself with Spine.
 !!! note
 
     There are two options in this tutorial to enter data in the Database.
-    The first one is to enter data manually and the second to
-    [use the importer](../index.html#Using-the-Importer) functionality. These are described in the
+    The first one is to
+    [enter data manually](@ref tutorial_a5_entering_data_manually)
+    and the second to
+    [use the importer](@ref tutorial_a5_using_the_importer)
+    functionality. These are described in the
     next two subsections respectively and produce similar models. The model
     created when using the importer creates a model with two-segments
     efficiency curves for converting water to electricity (while the model
     created when entering the data manually assumes a simplified efficiency
     curve with a single segment).
 
-### Entering data manually
+### [Option 1: Entering data manually](@id tutorial_a5_entering_data_manually)
+
+You can skip this section and move to
+[Option 2](@ref tutorial_a5_using_the_importer)
+if you want to use the importer to import the data.
 
 #### Creating objects
 
-- To add power plants to the model, stay in the *Spine DB Editor* and create objects of class `unit` as follows:
-    -   Select the list of plant names from the text-box below and copy it to the clipboard (**Ctrl+C**)
-            
-            Rebnis_pwr_plant
-            Sadva_pwr_plant
-            Bergnäs_pwr_plant
-            Slagnäs_pwr_plant
-            Bastusel_pwr_plant
-            Grytfors_pwr_plant
-            Gallejaur_pwr_plant
-            Vargfors_pwr_plant
-            Rengård_pwr_plant
-            Båtfors_pwr_plant
-            Finnfors_pwr_plant
-            Granfors_pwr_plant
-            Krångfors_pwr_plant
-            Selsfors_pwr_plant
-            Kvistforsen_pwr_plant
-    - Go to *Object tree* (on the top left of the window, usually), right-click on `unit` and select **Add objects** from the context menu. This will open the *Add objects* dialog.
-    - Select the first cell under the **object name** column and press **Ctrl+V**. This will paste the list of plant names from the clipboard into that column; the **object class name** column will be filled automatically with ‘unit‘. The form should now be looking similar to this:
-        ![image](../figs_a5/add_power_plant_units.png)
-    - Click **Ok**.
-    - Back in the *Spine DB Editor*, under *Object tree*, double click on `unit` to confirm that the objects are effectively there.
-    - Commit changes with the message ‘Add power plants’.
+- To add power plants to the model, stay in the *Spine DB Editor* and create
+  objects of class `unit` as follows:
+  - Select the list of plant names from the text-box below and copy it to the
+    clipboard (**Ctrl+C**)
+    ```
+    Rebnis_pwr_plant
+    Sadva_pwr_plant
+    Bergnäs_pwr_plant
+    Slagnäs_pwr_plant
+    Bastusel_pwr_plant
+    Grytfors_pwr_plant
+    Gallejaur_pwr_plant
+    Vargfors_pwr_plant
+    Rengård_pwr_plant
+    Båtfors_pwr_plant
+    Finnfors_pwr_plant
+    Granfors_pwr_plant
+    Krångfors_pwr_plant
+    Selsfors_pwr_plant
+    Kvistforsen_pwr_plant
+    ```
+  - Go to *Object tree* (on the top left of the window, usually), right-click
+    on `unit` and select **Add objects** from the context menu. This will open
+    the *Add objects* dialog.
+  - Select the first cell under the **object name** column and press
+    **Ctrl+V**. This will paste the list of plant
+    names from the clipboard into that column; the **object class name**
+    column will be filled automatically with
+    `unit‘. The form should now be looking similar to this:
+    ![image](../figs_a5/add_power_plant_units.png)
+  - Click **Ok**.
+  - Back in the *Spine DB Editor*, under *Object tree*, double click on
+    `unit` to confirm that the objects are
+    effectively there.
+  -   Commit changes with the message ‘Add power plants’.
 
-- Add discharge and spillway connections by creating objects of class `connection` with the following names:
+-   Add discharge and spillway connections by creating objects of class
+    `connection` with the following names:
 
     Rebnis_to_Bergnäs_disch
     Sadva_to_Bergnäs_disch
@@ -185,7 +187,8 @@ yourself with Spine.
     Selsfors_to_Kvistforsen_spill
     Kvistforsen_to_downstream_spill
 
-- Add water nodes by creating objects of class `node` with the following names:
+-   Add water nodes by creating objects of class `node` with the following
+    names:
 
     Rebnis_upper
     Sadva_upper
@@ -218,7 +221,7 @@ yourself with Spine.
     Selsfors_lower
     Kvistforsen_lower
 
-- Next, create the following objects (all names in **lower-case**):
+-   Next, create the following objects (all names in **lower-case**):
     - `instance` of class `model`.
     - `water` and `electricity` of class `commodity`.
     - `electricity_node` of class `node`.
@@ -227,9 +230,9 @@ yourself with Spine.
     - `deterministic` of class `stochastic_structure`.
     - `realization` of class `stochastic_scenario`.
 
-- Finally, create the following objects to get results back from SpineOpt (again, all names in **lower-case**):
+-   Finally, create the following object to get results back from SpineOpt
+    (again, all names in **lower-case**):
     -  `my_report` of class `report`.
-    -  `unit_flow`, `connection_flow`, and `node_state` of class `output`.
 
 !!! note
     To modify an object after you enter it, right click on it and select
@@ -239,12 +242,21 @@ yourself with Spine.
 
 -   To specify the general behaviour of our model, stay in the *Spine DB
     Editor* and enter model parameter values as follows:
-    - Select the model parameter value data (i.e. select all, **Ctrl+A**) from the file below and copy it to the clipboard (**Ctrl+C**):
+    -   Select the model parameter value data (i.e. select all, **Ctrl+A**)
+        from the file below and copy it to the
+        clipboard (**Ctrl+C**):
         [cs-a5-model-parameter-values.txt](../../data/cs-a5-model-parameter-values.txt)
-    - Select `instance` in the *Object tree* and inspect the table in *Object parameter value* (on the top-center of the window, usually). Make sure that the columns in the table are ordered as follows (drag and drop columns if you need to change their order): 
-    
+    -   Select `instance` in the *Object tree* and inspect the table in
+        *Object parameter value* (on the top-center of
+        the window, usually). Make sure that the columns in the table are
+        ordered as follows (drag and drop columns if
+        you need to change their order):
+        
         object_class_name | object_name | parameter_name | alternative_name | value | database
-    - Select the first cell under `object_class_name` and press **Ctrl+V**. This will paste the model parameter value data from the clipboard into the table. The form should be looking like this:
+    -   Select the first cell under `object_class_name` and press **Ctrl+V**.
+        This will paste the model parameter value
+        data from the clipboard into the table. The form should be looking like
+        this:
         ![image](../figs_a5/case_study_a5_model_parameters.png)
         
 -   Specify the resolution of our temporal block `some_week` in the same
@@ -257,10 +269,11 @@ yourself with Spine.
         beginning and the end).
     -   `has_state` indicates whether or not the node is a reservoir
         (true for all the upper nodes).
-    -   `state_coeff` is the reservoir 'efficienty' (always 1, meaning
-        that there aren't any loses).
+    -   `state_coeff` is the reservoir 'efficiency' (always 1, meaning
+        that there aren't any losses).
     -   `node_state_cap` is the maximum level of the reservoirs.
-    To do this in one single step, simply select `node` in the *Object tree* and paste the following values in the first empty cell: 
+    To do this in one single step, simply select `node` in the *Object tree*
+    and paste the following values in the first cell under `object_class_name`:
     [cs-a5-node-parameter-values.txt](../../data/cs-a5-node-parameter-values.txt)
 
 #### Establishing relationships
@@ -284,7 +297,7 @@ yourself with Spine.
         **Ctrl+V**. This will paste the list of plant and node names
         from the clipboard into the table. The form should be looking
         like this:
-        ![image](../figs_a5/add_pwr_plant_water_from_node.png) 
+        ![image](../figs_a5/add_pwr_plant_water_from_node.png)
     -   Click **Ok**.
     -   Back in the *Spine DB Editor*, under *Relationship tree*, double
         click on `unit__from_node` to confirm that the relationships are
@@ -308,7 +321,7 @@ yourself with Spine.
     unit, where the water from one node is turned into electricty for
     another node. And for this purpose, we use a relationship parameter
     value on the `unit__node__node` relationships (see
-    `Specifying relationship parameter values`).
+    [Specifying relationship parameter values](@ref tutorial_a5_specifying_parameter_values_of_the_relationships)).
 
 -   Create relationships of the class `connection__from_node` to
     represent that water can be either discharged or spilled. If
@@ -331,27 +344,27 @@ yourself with Spine.
     addition to topology, we also need to represent the *delay* in the
     river branches. And for this purpose, we use a relationship
     parameter value on the `connection__node__node` relationships (see
-    `Specifying relationship parameter values`).
+    [Specifying relationship parameter values](@ref tutorial_a5_specifying_parameter_values_of_the_relationships)).
 
--  Create relationships of the class `node__commodity` to represent
+-   Create relationships of the class `node__commodity` to represent
     that each node has to be in balance, for water nodes with respect to
     water, for electricity nodes with respect to electricity. This way,
     you link all nodes to either the commocity `water` or the commodity
     `electricity`. Use the following data and do as before:
     [cs-a5-node__commodity.txt](../../data/cs-a5-node__commodity.txt)
 
--  Define that all nodes in our model have to be balanced at each time
-    step. To do this, you create a relationship of the class
+-   Define that all nodes in our model have to be balanced at each time
+    step. To do this, create a relationship of the class
     `model__default_temporal_block` between the model `instance` and the
-    temporal_block `some_week` in the same way as before.
--  Define that our model is deterministic. To do this, you create a
+    temporal block `some_week` in the same way as before.
+-   Define that our model is deterministic. To do this, create a
     relationship of the class `model__default_stochastic_structure`
     between the model `instance` and the stochastic structure
     `deterministic`, as well as a relationship of class
-    `stochastic_structure__stochastic_scenario` between the stochastid
+    `stochastic_structure__stochastic_scenario` between the stochastic
     structure `deterministic` and the stochastic scenario `realization`
     in the same way as before.
--   In order to get the results from running Spine Opt written to the
+-   In order to get the results from running SpineOpt written to the
     ouput database, create relationships of the class `report__output`
     between the report `my_report` and each of the following `output`
     objects: `unit_flow`, `connection_flow`, and `node_state`. In
@@ -359,39 +372,72 @@ yourself with Spine.
     `model__report` between the model `instance` and the report
     `my_report`.
 
-#### Specifying parameter values of the relationships
+#### [Specifying parameter values of the relationships](@id tutorial_a5_specifying_parameter_values_of_the_relationships)
 
--   Finally, the values of all parameters have to be entered. Specify the capacity of all hydropower plants, and
-    their respective variable operating cost by entering `unit__from_node` parameter values as follows:
-    - Select the data from the text-box below and copy it to the clipboard (**Ctrl+C**): [cs-a5-unit__from_node-relationship-parameter-values.txt](../../data/cs-a5-unit__from_node-relationship-parameter-values.txt)
-    - In the *Spine DB Editor*, go to *Relationship tree* (on the bottom left of the window, usually), and click on `unit__from_node`. Then, go to *Relationship parameter value* (on the bottom-center of the window, usually). Make sure that the columns in the table are ordered as follows (drag and drop columns if you need to change their order): 
-    
+-   Finally, the values of all parameters have to be entered. Specify the
+    capacity of all hydropower plants, and
+    their respective variable operating cost by entering `unit__from_node`
+    parameter values as follows:
+    -   Select the data from the text-box below and copy it to the clipboard
+        (**Ctrl+C**):
+        [cs-a5-unit__from_node-relationship-parameter-values.txt](../../data/cs-a5-unit__from_node-relationship-parameter-values.txt)
+    -   In the *Spine DB Editor*, go to *Relationship tree* (on the bottom left
+        of the window, usually), and click on
+        `unit__from_node`. Then, go to *Relationship parameter value* (on the
+        bottom-center of the window, usually).
+        Make sure that the columns in the table are ordered as follows (drag
+        and drop columns if you need to change
+        their order):
+        
         relationship_class_name | object_name_list | parameter_name | alternative_name | value | database
-    - Select the first cell under `relationship_class_name` and press **Ctrl+V**. This will paste the parameter value data from the clipboard into the table.
+    -   Select the first cell under `relationship_class_name` and press
+        **Ctrl+V**. This will paste the parameter value data from the
+        clipboard into the table.
 
--   Specify the conversion ratio between discharged water and generated electricity for each hydropower station as well as a similar conversion rate (set to 1) to represent that water cannot be lost between upper and lower water nodes. Use the following data to enter the parameter values `unit__from_node`:
+-   Specify the conversion ratio between discharged water and generated
+    electricity for each hydropower station as well as a similar conversion
+    rate (set to 1) to represent that water cannot be lost between upper and
+    lower water nodes. Use the following data to enter the parameter values to
+    `unit__node__node`:
     [cs-a5-unit\_\_node\_\_node-relationship-parameter-values.txt](../../data/cs-a5-unit__node__node-relationship-parameter-values.txt)
 
--   Specify the average discharge and spillage in the first hours of the simulation. Use the following data to enter the parameter values `connection__from_node`:
+-   Specify the average discharge and spillage in the first hours of the
+    simulation. Use the following data to enter the parameter values to
+    `connection__from_node`:
     [cs-a5-connection__from_node-relationship-parameter-values.txt](../../data/cs-a5-connection__from_node-relationship-parameter-values.txt)
 
--   Finally, specify the delay (the time it takes for the water to run between water nodes) and the transfer ratio (being equal to 1) of different water connections. Use the following data to enter the parameter values `connection__node_node`:
+-   Finally, specify the delay (the time it takes for the water to run between
+    water nodes) and the transfer ratio (being equal to 1) of different water
+    connections. Use the following data to enter the parameter values to
+    `connection__node__node`:
     [cs-a5-connection\_\_node\_\_node-relationship-parameter-values.txt](../../data/cs-a5-connection__node__node-relationship-parameter-values.txt)
+    and
+    [cs-a5-connection\_\_node\_\_node-relationship-parameter-values2.txt](../../data/cs-a5-connection__node__node-relationship-parameter-values2.txt).
+    First copy-paste the first dataset as before and then copy and paste the second
+    dataset to the first empty row below the previously entered data, on top of
+    the `connection__node__node` text.
 
 -   When you're ready, commit all changes to the database via the main
     menu (**Alt + F**).
 
-### Using the Importer
+### [Option 2: Using the Importer](@id tutorial_a5_using_the_importer)
+
+You can skip this section and move to
+[Executing the workflow](@ref tutorial_a5_executing_the_workflow) if you
+have entered data manually by following the steps in
+[Option 1](@ref tutorial_a5_entering_data_manually).
 
 #### Additional Steps for Project Setup
 
--   Drag the Data Connection icon ![image](../figs_a5/file-alt.png) from the tool bar and drop it into the
-    Design View. This will open the *Add Data connection dialogue*. Type
-    in ‘Data Connection’ and click on **Ok**.
+-   Drag the Data Connection icon ![image](../figs_a5/file-alt.png) from the
+    tool bar and drop it into the Design View. This will open the
+    *Add Data connection dialogue*. Type in ‘Data Connection’ and click on
+    **Ok**.
 -   To import the model into the Spine database, you need to create an
     *Import specification*. Create an *Import specification* by clicking
     on the small arrow next to the Importer item (in the Main section of
-    the toolbar) and press **New**. The *Importer specification editor*
+    the toolbar) and press **New**. A window will pop up to select the connector.
+-   Select ‘Excel’ and click on **Ok**. The *Importer specification editor*
     will pop-up.
 -   Type ‘Import Model’ as the name of the specification. Save the
     specification by using **Ctrl+S** and close the window.
@@ -411,12 +457,20 @@ yourself with Spine.
 -   Download [the data](../../data/a5.xlsx)
     and [the accompanying mapping](../../data/A5_importer_specification.json)
     (right click on the links, then select *Save link as...*).
--   Add a reference to the file containing the model.
-    -   Select the *Data Connection item* in the *Design View* to show the *Data Connection properties* window (on the right side of the window usually).
-    -   In *Data Connection Properties*, click on , click on the icon furthest to the left **Add file references** and select the previously downloaded Excel file.
-    -   Next, double click on the *Import model* in the *Design view*. A window called *Select connector* for *Import Model* will pop-up, select Excel and klick **OK**. Next, still in the *Importer specification editor*, click on the main menu icon in the top right (or Press **Alt + F** to automatically display it) and import the mappings previously downloaded (by clicking on **Import mappings**). Finally, save by clicking **Ctrl+S** and exit the *Importer specification editor*.
+-   Add a reference to the file containing the model as follows:
+    -   Select the *Data Connection item* in the *Design View* to show the
+        *Data Connection properties* window (on the right side of the window
+        usually).
+    -   In *Data Connection Properties*, click on the green plus icon next to
+        *File paths* and select the previously downloaded Excel file.
+    -   Next, double click on the *Import model* in the *Design view*. The
+        *Importer specification editor* will pop-up. Click on the main menu
+        icon in the top right (or Press **Alt + F** to automatically display
+        it) and import the mappings previously downloaded (by clicking on
+        **Import mappings**). Finally, save by clicking **Ctrl+S** and exit
+        the *Importer specification editor*.
 
-## Executing the workflow
+## [Executing the workflow](@id tutorial_a5_executing_the_workflow)
 
 Once the workflow is defined and input data is in place, the project is
 ready to be executed. Hit the **Execute project** button ![image](../figs_a5/play-circle.png)
@@ -447,5 +501,11 @@ this:
 
 
 !!! note
-    If you have used the importer to instantiate the model you can easily modify the parameters in the **model** worksheet, run the project and observe the differences in the results. If you need to make changes directly to the input database, in order for the importer not to overwrite them, you will need to dissassociate the importer from the input DB (right click in the connecting yellow arrow between the two items and click on **remove**).
+    If you have used the importer to instantiate the model you can easily
+    modify the parameters in the **model** worksheet, run the project and
+    observe the differences in the results. If you need to make changes
+    directly to the input database, in order for the importer not to overwrite
+    them, you will need to dissassociate the importer from the input DB (right
+    click in the connecting yellow arrow between the two items and click on
+    **remove**).
 
