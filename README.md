@@ -60,8 +60,10 @@ SpineOpt is designed to be used with [Spine Toolbox](https://github.com/spine-to
       6. Lastly, you should probably make sure all the required dependencies are installed using the `instantiate` command:
 	```julia
  	using Pkg							# Use the package manager. Alternatively, use `]` in REPL			
- 	pkg"instantiate <path-to-your-local-SpineInterface-repository>"	# Install SpineInteface dependencies
- 	pkg"instantiate <path-to-your-local-SpineOpt-repository>"	# Install SpineOpt dependencies (SpineInterface installed locally in previous step)
+ 	pkg"activate <path-to-your-local-SpineInterface-repository>"	# Activate the local SpineInterface environment
+ 	pkg"instantiate"						# Install SpineInterface dependencies
+ 	pkg"activate <path-to-your-local-SpineOpt-repository>"		# Activate the local SpineOpt environment
+ 	pkg"instantiate"						# Install SpineOpt dependencies (SpineInterface already installed locally in step 5)
  	```
 
 4. Configure Spine Toolbox to use your Julia:
