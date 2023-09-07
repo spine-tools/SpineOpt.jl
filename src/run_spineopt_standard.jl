@@ -439,8 +439,14 @@ function _calculate_duals_cplex(m; log_level=3)
     CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, CPLEX.CPXPROB_FIXEDMILP)
     @timelog log_level 1 "Optimizing LP..." ret = CPLEX.CPXlpopt(cplex_model.env, cplex_model.lp)
     if ret == 0
-        _save_marginal_values!(m)
-        _save_bound_marginal_values!(m, v -> _reduced_cost_cplex(v, cplex_model, CPLEX))
+        try
+            _save_marginal_values!(m)
+            _save_bound_marginal_values!(m, v -> _reduced_cost_cplex(v, cplex_model, CPLEX))
+        catch err
+            @error err
+            CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, prob_type)
+            return false
+        end
     end
     CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, prob_type)
     ret == 0
