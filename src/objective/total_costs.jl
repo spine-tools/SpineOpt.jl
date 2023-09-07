@@ -18,8 +18,13 @@
 #############################################################################
 
 const invest_terms = [
-    :unit_investment_costs, :connection_investment_costs, :storage_investment_costs, :mp_objective_penalties
+    :unit_investment_costs, :connection_investment_costs, :storage_investment_costs
 ]
+
+const benders_terms = [
+    :mp_objective_penalties
+]
+
 const op_terms = [
     :variable_om_costs,
     :fixed_om_costs,
@@ -41,13 +46,14 @@ const all_objective_terms = [op_terms; invest_terms]
 
 Expression corresponding to the sume of all cost terms for given model, and up until the given date time.
 """
-function total_costs(m, t_range; investments=true, operations=true)
-    sum(eval(term)(m, t_range) for term in objective_terms(m; investments=investments, operations=operations))
+function total_costs(m, t_range; investments=true, operations=true, benders=false)
+    sum(eval(term)(m, t_range) for term in objective_terms(m; investments=investments, operations=operations, benders=benders))
 end
 
-function objective_terms(m; investments=true, operations=true)
+function objective_terms(m; investments=true, operations=true, benders=false)
     obj_terms = []
     investments && append!(obj_terms, invest_terms)
-    operations && append!(obj_terms, op_terms)
+    benders && append!(obj_terms, benders_terms)
+    operations && append!(obj_terms, op_terms)    
     obj_terms
 end

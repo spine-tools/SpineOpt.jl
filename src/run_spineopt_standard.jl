@@ -240,7 +240,7 @@ function _create_objective_terms!(m)
     beyond_window = collect(to_time_slice(m; t=TimeSlice(window_end, window_very_end)))
     in_window = collect(to_time_slice(m; t=current_window(m)))
     filter!(t -> !(t in beyond_window), in_window)
-    for term in objective_terms(m; operations=true, investments=master_problem_model(m) === nothing)
+    for term in objective_terms(m; operations=true, investments=master_problem_model(m) === nothing, benders=master_problem_model(m) !== nothing)
         func = eval(term)
         m.ext[:spineopt].objective_terms[term] = (func(m, in_window), func(m, beyond_window))
     end
