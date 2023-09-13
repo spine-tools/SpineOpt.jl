@@ -40,8 +40,10 @@ function add_constraint_connection_flow_reactive!(m::Model)
            # if the node is an "in" node for the connection the summed value is multiplied by -1
            # because the direction is taken account in node balance equations
            - expr_sum(
-                0.0 * (node_voltage_squared[n1, s, t] - node_voltageproduct_cosine[n1, n2, s, t] )
-                - 5.0 * node_voltageproduct_sine[n1, n2, s, t]
+                connection_susceptance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] * 
+                (node_voltage_squared[n1, s, t] - node_voltageproduct_cosine[n1, n2, s, t] )
+                - connection_conductance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] 
+                * node_voltageproduct_sine[n1, n2, s, t]
                 for (n1, n2, s, t) in node_voltageproduct_indices(
                     m; node1_=ng, connection=conn, stochastic_scenario=s, t=t)
                 ;
@@ -50,8 +52,10 @@ function add_constraint_connection_flow_reactive!(m::Model)
 
             # if the node is an "out" node for the connection
             + expr_sum(
-                0.0 * (node_voltage_squared[n2, s, t] - node_voltageproduct_cosine[n1, n2, s, t])
-                + 5.0 * node_voltageproduct_sine[n1, n2, s, t]
+                connection_susceptance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] 
+                * (node_voltage_squared[n2, s, t] - node_voltageproduct_cosine[n1, n2, s, t])
+                + connection_conductance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] 
+                * node_voltageproduct_sine[n1, n2, s, t]
                 for (n1, n2, s, t) in node_voltageproduct_indices(
                     m; node2_=ng, connection=conn, stochastic_scenario=s, t=t)
                 ;
@@ -82,12 +86,14 @@ function add_constraint_connection_flow_real!(m::Model)
             + connection_flow[conn, ng, d, s, t] 
                 
            ==
-
+            
            # if the node is an "in" node for the connection, the value is multiplied by -1
            # because the direction is taken account in node balance equations
            - expr_sum(
-                5.0 * (node_voltageproduct_cosine[n1, n2, s, t] - node_voltage_squared[n1, s, t]) 
-                - 0.0 * node_voltageproduct_sine[n1, n2, s, t]
+                connection_conductance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] * 
+                    (node_voltageproduct_cosine[n1, n2, s, t] - node_voltage_squared[n1, s, t]) 
+                - connection_susceptance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] 
+                * node_voltageproduct_sine[n1, n2, s, t]
                 for (n1, n2, s, t) in node_voltageproduct_indices(
                     m; node1_=ng, connection=conn, stochastic_scenario=s, t=t)
                 ;
@@ -96,8 +102,10 @@ function add_constraint_connection_flow_real!(m::Model)
 
             # if the node is an "out" node for the connection
             + expr_sum(
-                5.0 * (node_voltageproduct_cosine[n1, n2, s, t] - node_voltage_squared[n2, s, t]) 
-                + 0.0 * node_voltageproduct_sine[n1, n2, s, t]
+                connection_conductance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] * 
+                    (node_voltageproduct_cosine[n1, n2, s, t] - node_voltage_squared[n2, s, t]) 
+                + connection_susceptance[(connection=conn, stochastic_scenario=s, analysis_time=t0, t=t)] 
+                * node_voltageproduct_sine[n1, n2, s, t]
                 for (n1, n2, s, t) in node_voltageproduct_indices(
                     m; node2_=ng, connection=conn, stochastic_scenario=s, t=t)
                 ;
