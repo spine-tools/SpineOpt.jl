@@ -43,6 +43,7 @@ function preprocess_data_structure(; log_level=3)
     generate_benders_structure()
     apply_forced_availability_factor()
     generate_is_boundary()
+    generate_connection_admittance()
 end
 
 """
@@ -896,5 +897,43 @@ function generate_is_boundary()
         is_boundary_connection = $is_boundary_connection
         export is_boundary_node
         export is_boundary_connection
+    end
+end
+
+function generate_connection_admittance()
+    connection_conductance = Parameter(:connection_conductance, [connection])
+    connection_susceptance = Parameter(:connection_susceptance, [connection])
+    
+    add_object_parameter_values!(
+        connection, 
+        Dict(conn => Dict(:connection_conductance => 
+                parameter_value(connection_resistance(connection = conn)/
+                            (connection_resistance(connection = conn)^2 +
+                            connection_reactance(connection = conn)^2) ) ) 
+                for conn in connection()
+                    if !isnothing(connection_resistance(connection = conn)) && 
+                        !isnothing(connection_reactance(connection = conn))
+        )
+    )
+    
+    add_object_parameter_defaults!(connection, Dict(:connection_conductance => parameter_value(0.0)))
+    
+    add_object_parameter_values!(
+        connection, 
+        Dict(conn => Dict(:connection_susceptance => 
+                parameter_value(-connection_reactance(connection = conn)/
+                            (connection_resistance(connection = conn)^2 +
+                            connection_reactance(connection = conn)^2) ) ) 
+                for conn in connection()
+                    if !isnothing(connection_resistance(connection = conn)) && 
+                        !isnothing(connection_reactance(connection = conn))
+        )
+    )
+
+    add_object_parameter_defaults!(connection, Dict(:connection_susceptance => parameter_value(0.0)))
+    
+    @eval begin
+        connection_conductance = $connection_conductance
+        connection_susceptance = $connection_susceptance
     end
 end

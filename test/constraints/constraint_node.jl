@@ -156,6 +156,8 @@ function test_constraint_nodal_balance_reactive()
             ["node", "node_c", "min_voltage", 0.7],
             ["node", "node_c", "demand", 0.0],
             ["node", "node_c", "demand_reactive", 0.2],
+            ["connection","connection_bc","connection_resistance",0.2],
+            ["connection","connection_bc","connection_reactance",0.0]
 
         ]
         relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
@@ -207,6 +209,12 @@ function test_constraint_nodal_balance_reactive()
                         direction(:to_node), 
                         stochastic_scenario(:parent), time_slices[1]] ) )
 
+        println("conductance")
+        println(SpineOpt.connection_conductance(connection = connection(:connection_bc)))
+        println(SpineOpt.connection_conductance(connection = connection(:connection_ca)))
+        println("susceptance")
+        println(SpineOpt.connection_susceptance(connection = connection(:connection_bc)))
+        println(SpineOpt.connection_susceptance(connection = connection(:connection_ca)))
         #=
         var_unit_flow_reactive = m.ext[:spineopt].variables[:unit_flow_reactive]
         var_conn_flow_reactive = m.ext[:spineopt].variables[:connection_flow_reactive]

@@ -77,7 +77,7 @@ function add_constraint_connection_flow_real!(m::Model)
         node_voltageproduct_sine, node_voltage_squared = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:connection_flow_real] = Dict(
-        (connection=conn, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
+        (connection=conn, node=ng, direction=d, stochastic_scenario=s, t=t) => @constraint(
             m,
             + connection_flow[conn, ng, d, s, t] 
                 
