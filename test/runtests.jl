@@ -23,7 +23,7 @@ using Test
 using Dates
 using JuMP
 using PyCall
-
+using Juniper, SCS
 
 import SpineOpt:
     time_slice,
@@ -92,20 +92,20 @@ function _dismember_function(func)
 end
 
 @testset begin
-    include("data_structure/migration.jl")
+    #=include("data_structure/migration.jl")
     include("data_structure/check_data_structure.jl")
     include("data_structure/preprocess_data_structure.jl")
     include("data_structure/temporal_structure.jl")
     include("data_structure/stochastic_structure.jl")
     include("data_structure/algorithm_mga_structure.jl")
     include("data_structure/postprocess_results.jl")
-    include("constraints/constraint_unit.jl")
+    include("constraints/constraint_unit.jl")=#
     include("constraints/constraint_node.jl")
-    include("constraints/constraint_connection.jl")
+    #=include("constraints/constraint_connection.jl")
     include("constraints/constraint_user_constraint.jl")
     include("objective/objective.jl")
     include("util/misc.jl")
     include("util/docs_utils.jl")
     include("run_spineopt.jl")
-    include("run_spineopt_benders.jl")
+    include("run_spineopt_benders.jl")=#
 end

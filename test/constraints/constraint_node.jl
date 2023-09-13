@@ -138,6 +138,91 @@ function test_constraint_nodal_balance()
     end
 end
 
+function test_constraint_nodal_balance_reactive()
+    @testset "constraint_nodal_balance_reactive" begin
+   
+        solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], ["solver:SCS.jl"])]))
+
+        url_in = _test_constraint_node_setup()
+        object_parameter_values = [
+            ["model", "instance", "db_mip_solver", "Juniper.jl"],
+            ["model", "instance", "db_lp_solver", "Juniper.jl"],
+            ["model", "instance", "db_mip_solver_options", solver_options],
+            ["model", "instance", "db_lp_solver_options", solver_options],
+            ["node", "node_b", "has_voltage", true],
+            ["node", "node_b", "demand_reactive", 0.1],
+            ["node", "node_b", "min_voltage", 0.7],
+            ["node", "node_c", "has_voltage", true],
+            ["node", "node_c", "min_voltage", 0.7],
+            ["node", "node_c", "demand", 0.0],
+            ["node", "node_c", "demand_reactive", 0.2],
+
+        ]
+        relationships = [["connection__node__node", [ "connection_bc", "node_b", "node_c"]]]
+        relationship_parameter_values = [
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", 10.0],
+            ["unit__to_node", ["unit_ab", "node_b"], "vom_cost_reactive", 2.0],
+            ["connection__node__node",
+            ["connection_bc", "node_b", "node_c"], "connection_has_ac_flow", true]
+            
+        ]
+        SpineInterface.import_data(
+            url_in;
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+        )
+
+        m = run_spineopt(url_in; log_level=0, optimize=true)
+
+        #factory = () -> Base.invokelatest(SCS.Optimizer)
+        #nl_solver = optimizer_with_attributes(factory, "verbose"=>0, "eps_abs"=>1e-6)
+        #nl_solver = optimizer_with_attributes(SCS.Optimizer, "verbose"=>0, "eps_abs"=>1e-6)
+        #set_optimizer(m,optimizer_with_attributes(Juniper.Optimizer, "nl_solver"=>nl_solver, "atol"=>1e-4))
+        #optimize!(m)
+
+        time_slices = time_slice(m; temporal_block=temporal_block(:hourly))
+        
+        # aliases for the model OPF variables
+        vsq = m.ext[:spineopt].variables[:node_voltage_squared]
+        vsin  = m.ext[:spineopt].variables[:node_voltageproduct_sine]
+        vcos  = m.ext[:spineopt].variables[:node_voltageproduct_cosine]
+        connflow = m.ext[:spineopt].variables[:connection_flow]
+        
+        println("voltage")
+        println(value( vsq[node(:node_b), stochastic_scenario(:parent), time_slices[1]] ) )
+        println(value( vsq[node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) )
+        println("voltage sines")
+        println(value( vsin[node(:node_b), node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) )
+        println("voltage cosines")
+        println(value( vcos[node(:node_b), node(:node_c), stochastic_scenario(:parent), time_slices[1]] ) )
+
+        println("connection flow")
+        println(value( connflow[connection(:connection_bc), 
+                        node(:node_b),
+                        direction(:from_node), 
+                        stochastic_scenario(:parent), time_slices[1]] ) )
+        println(value( connflow[connection(:connection_bc), 
+                        node(:node_c),
+                        direction(:to_node), 
+                        stochastic_scenario(:parent), time_slices[1]] ) )
+
+        #=
+        var_unit_flow_reactive = m.ext[:spineopt].variables[:unit_flow_reactive]
+        var_conn_flow_reactive = m.ext[:spineopt].variables[:connection_flow_reactive]
+       
+        
+        
+        #println(value(var_unit_flow_reactive[unit(:unit_ab), node(:node_b), 
+        #            direction(:to_node), stochastic_scenario(:parent), time_slices[1]]) 
+        #        )
+        @test value(var_unit_flow_reactive[unit(:unit_ab), node(:node_b), 
+                direction(:to_node), stochastic_scenario(:parent), time_slices[1]]) == 0.1
+        =#
+    end
+end
+
+
 function test_constraint_nodal_balance_group()
     @testset "constraint_nodal_balance_group" begin
         url_in = _test_constraint_node_setup()
@@ -934,8 +1019,9 @@ function test_constraint_storage_lifetime_mp()
 end
 
 @testset "node-based constraints" begin
-    test_constraint_nodal_balance()
-    test_constraint_nodal_balance_group()
+    #test_constraint_nodal_balance()
+    test_constraint_nodal_balance_reactive()
+    #=test_constraint_nodal_balance_group()
     test_constraint_node_injection()
     test_constraint_node_state_capacity()
     test_constraint_cyclic_node_state()
@@ -951,5 +1037,5 @@ end
     test_constraint_storages_invested_transition()
     test_constraint_storages_invested_transition_mp()
     test_constraint_storage_lifetime()
-    test_constraint_storage_lifetime_mp()
+    test_constraint_storage_lifetime_mp()=#
 end

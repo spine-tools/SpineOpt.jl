@@ -69,6 +69,26 @@ function unit_flow_time_indices(
     )
 end
 
+function unit_flow_reactive_indices(
+    m::Model;
+    unit=anything,
+    node=anything,
+    direction=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing),
+)
+    [(unit=u, node=n, direction=d, stochastic_scenario=s, t=t)
+        for (u, n, d, s, t) in unit_flow_indices(m; unit = unit, 
+                                    node = intersect(members(node), SpineOpt.node(has_voltage=true)), 
+                                    direction=direction, 
+                                    stochastic_scenario = stochastic_scenario, 
+                                    t=t, temporal_block = temporal_block)
+        
+    
+    ]
+end
+
 """
     add_variable_unit_flow!(m::Model)
 
@@ -85,5 +105,15 @@ function add_variable_unit_flow!(m::Model)
         initial_value=initial_unit_flow,
         non_anticipativity_time=unit_flow_non_anticipativity_time,
         non_anticipativity_margin=unit_flow_non_anticipativity_margin,
+    )
+end
+
+function add_variable_unit_flow_reactive!(m::Model)
+    t0 = _analysis_time(m)
+    add_variable!(
+        m,
+        :unit_flow_reactive,
+        unit_flow_reactive_indices
+      
     )
 end

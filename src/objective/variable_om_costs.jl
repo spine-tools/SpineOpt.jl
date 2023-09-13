@@ -23,7 +23,7 @@
 Create an expression for unit_flow variable operation costs.
 """
 function variable_om_costs(m::Model, t_range)
-    @fetch unit_flow = m.ext[:spineopt].variables
+    @fetch unit_flow, unit_flow_reactive = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     @expression(
         m,
@@ -35,6 +35,17 @@ function variable_om_costs(m::Model, t_range)
             * node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
             for (ug, ng, d) in indices(vom_cost)
             for (u, n, d, s, t) in unit_flow_indices(m; unit=ug, node=ng, direction=d, t=t_range);
+            init=0,
+        )
+        # reactive power production cost (TBC how reactive power consumption is charged?)
+        + expr_sum(
+            + unit_flow_reactive[u, n, d, s, t]
+            * duration(t)
+            * prod(weight(temporal_block=blk) for blk in blocks(t))
+            * vom_cost_reactive[(unit=ug, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+            * node_stochastic_scenario_weight(m; node=ng, stochastic_scenario=s)
+            for (ug, ng, d) in indices(vom_cost_reactive)
+            for (u, n, d, s, t) in unit_flow_reactive_indices(m; unit=ug, node=ng, direction=d, t=t_range);
             init=0,
         )
     )

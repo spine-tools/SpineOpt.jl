@@ -49,6 +49,23 @@ function connection_flow_indices(
     )
 end
 
+function connection_reactive_flow_indices(
+    m::Model;
+    connection=anything,
+    node=anything,
+    direction=anything,
+    stochastic_scenario=anything,
+    t=anything,
+    temporal_block=temporal_block(representative_periods_mapping=nothing))
+
+    connection_flow_indices(m, connection=connection,
+        node=intersect(node, SpineOpt.node(has_voltage=true)),
+        direction=direction,
+        stochastic_scenario=stochastic_scenario,
+        t=t,
+        temporal_block=temporal_block )
+end
+
 """
     add_variable_connection_flow!(m::Model)
 
@@ -65,5 +82,15 @@ function add_variable_connection_flow!(m::Model)
         initial_value=initial_connection_flow,
         non_anticipativity_time=connection_flow_non_anticipativity_time,
         non_anticipativity_margin=connection_flow_non_anticipativity_margin,
+    )
+end
+
+function add_variable_connection_flow_reactive!(m::Model)
+    t0 = _analysis_time(m)
+    add_variable!(
+        m,
+        :connection_flow_reactive,
+        connection_reactive_flow_indices
+        
     )
 end

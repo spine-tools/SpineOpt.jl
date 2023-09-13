@@ -272,7 +272,7 @@ function rerun_spineopt(
     )[model_type(model=m.ext[:spineopt].instance)]
     # NOTE: invokelatest ensures that solver modules are available to use by JuMP
     Base.invokelatest(        
-        rerun_spineopt!,
+    rerun_spineopt!,
         m,
         url_out;
         add_user_variables=add_user_variables,
@@ -374,7 +374,22 @@ _parse_solver_options(db_solver_name, db_solver_options) = []
 
 _parse_solver_option(value::Bool) = value
 _parse_solver_option(value::Number) = isinteger(value) ? convert(Int64, value) : value
-_parse_solver_option(value) = string(value)
+
+#_parse_solver_option(value) = string(value)
+
+function _parse_solver_option(value)
+    #check if the option value contains "solver:"
+    if occursin(r"^solver:", string(value))
+        
+        solvername = replace(string(value), r"solver:" => "")
+        return _db_solver(x->x, Symbol(solvername), [])
+    else
+        return string(value)
+    end
+
+end
+
+
 _do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)
 
 struct SpineOptExt
