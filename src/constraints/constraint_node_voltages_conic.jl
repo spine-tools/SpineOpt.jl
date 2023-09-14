@@ -20,14 +20,13 @@
 """
 add_constraint_node_voltages_conic!(m::Model)
 
-Bind the voltage products together with a second order conic constraint.
-
+Binds the different voltage products together with a second order conic constraint. This is a
+relaxation of the original constraint which is an equality constraint.
 
 """
 function add_constraint_node_voltages_conic!(m::Model)
     @fetch node_voltage_squared, node_voltageproduct_cosine, 
         node_voltageproduct_sine = m.ext[:spineopt].variables
-    t0 = _analysis_time(m)
     
     m.ext[:spineopt].constraints[:node_voltages_conic] = Dict(
         (node1=n1, node2=n2, stochastic_path=s, t=t) => @constraint(
@@ -41,8 +40,6 @@ function add_constraint_node_voltages_conic!(m::Model)
 
         for (n1, n2, s, t) in node_voltageproduct_indices(m)
     )
- 
-     print(connection__from_node() )
 end
 
 

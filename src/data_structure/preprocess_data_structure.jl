@@ -900,6 +900,14 @@ function generate_is_boundary()
     end
 end
 
+"""
+    generate_connection_admittance()
+
+Generate `connection_conductance` and `connection_susceptance` Parameters
+associated with the and `connection` `ObjectClass`. They are derived from
+resistance and reactance which the user is expected to give as input. Default
+values are set to zero.
+"""
 function generate_connection_admittance()
     connection_conductance = Parameter(:connection_conductance, [connection])
     connection_susceptance = Parameter(:connection_susceptance, [connection])

@@ -20,8 +20,8 @@
 """
     node_voltageproduct_indices(    )
 
-A list of `NamedTuple`s corresponding to indices of the `node_voltageproduct_cosine` variable.
-node1 is the source node and node2 the destination node.
+A list of `NamedTuple`s corresponding to indices for the `node_voltageproduct_cosine` and `node_voltageproduct_sine` variables.
+
 """
 function node_voltageproduct_indices(
     m::Model;
@@ -31,7 +31,6 @@ function node_voltageproduct_indices(
     stochastic_scenario=anything,
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing)
-    
 )
 
     ind = unique(
@@ -48,8 +47,7 @@ function node_voltageproduct_indices(
     )
     
      
-   
-    # filter the index set
+    # filter the index set with respect to other indices
     f(ind) = _index_in(ind; node1=node1_, node2=node2_, stochastic_scenario=stochastic_scenario, t=t)
     filter(f, ind)
                     
@@ -83,7 +81,14 @@ end
 """
 add_variable_node_voltageproduct_cosine!(m::Model)
 
-Add `node_voltageproduct_cosine` variables to model `m`.
+Add `node_voltageproduct_cosine` variables to model `m`. 
+
+This variable has been defined for connections and node pairs within the connection 
+which have been marked as `connection_has_ac_flow`, i.e. AC flow is simulated for that connection 
+and specific pair of nodes. The variable is defined as the dot product of the voltage 
+phasors, in other words cos(theta)*V(node1)*V(node2), where theta is the angle between
+the voltage phasors and V is the voltage magnitude. node1 corresponds to the "from node" and 
+node2 the "to node".
 """
 function add_variable_node_voltageproduct_cosine!(m::Model)
     t0 = _analysis_time(m)
@@ -98,6 +103,15 @@ end
 add_variable_node_voltageproduct_sine!(m::Model)
 
 Add `node_voltageproduct_sine` variables to model `m`.
+
+This variable has been defined for connections and node pairs within the connection 
+which have been marked as `connection_has_ac_flow`, i.e. AC flow is simulated for that connection 
+and specific pair of nodes. The variable is defined as the dot product of the voltage 
+phasors, in other words sin(theta)*V(node1)*V(node2), where theta is the angle between
+the voltage phasors and V is the voltage magnitude. node1 corresponds to the "from node" and 
+node2 the "to node". theta is positive when the voltage phasor of node2 is ahead of that of
+node1.
+
 """
 function add_variable_node_voltageproduct_sine!(m::Model)
     t0 = _analysis_time(m)
@@ -112,6 +126,8 @@ end
 add_variable_node_squared!(m::Model)
 
 Add `add_variable_node_squared` variables to model `m`.
+
+The variable is defined as the square of voltage magnitude in the node.
 """
 function add_variable_node_voltage_squared!(m::Model)
     t0 = _analysis_time(m)
