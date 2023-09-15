@@ -362,6 +362,7 @@
         ["unit__from_node", "unit_capacity", null, null, "Maximum `unit_flow` capacity of a single 'sub_unit' of the `unit`."],
         ["unit__from_node", "unit_conv_cap_to_flow", 1.0, null, "Optional coefficient for `unit_capacity` unit conversions in the case the `unit_capacity` value is incompatible with the desired `unit_flow` units."],
         ["unit__from_node", "vom_cost", null, null, "Variable operating costs of a `unit_flow` variable. E.g. EUR/MWh."],
+        ["unit__from_node", "vom_cost_reactive", null, null, "Variable operating costs of a `unit_flow_reactive` variable (reactive power absorption). E.g. EUR/MVArh."],
         ["unit__from_node", "unit_flow_non_anticipativity_time", null, null, "Period of time where the value of the `unit_flow` variable has to be fixed to the result from the previous window."],
         ["unit__from_node", "unit_flow_non_anticipativity_margin", null, null, "Margin by which `unit_flow` variable can differ from the value in the previous window during `non_anticipativity_time`."],
         ["unit__from_node", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],

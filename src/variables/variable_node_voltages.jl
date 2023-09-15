@@ -58,6 +58,7 @@ end
 
 A list of `NamedTuple`s corresponding to indices of the `node_voltage_squared` variable.
 
+Any filtering options can be specified for `node`, `s`, and `t`.
 """
 function node_voltage_squared_indices(
     m::Model;

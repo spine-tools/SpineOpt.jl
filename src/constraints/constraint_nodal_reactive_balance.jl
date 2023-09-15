@@ -33,7 +33,7 @@ function add_constraint_nodal_reactive_balance!(m::Model)
         (node=n, stochastic_scenario=s, t=t1) => @constraint(
             m,
            
-            # Commodity flows from connections
+            # Reactive power flows from connections (can be negative)
             + expr_sum(
                 connection_flow_reactive[conn, n1, d, s, t]
                 for (conn, n1, d, s, t) in connection_flow_indices(
@@ -44,7 +44,7 @@ function add_constraint_nodal_reactive_balance!(m::Model)
                 );
                 init=0,
             )
-            # Commodity flows to connections
+            # Reactive power to connections (can be negative)
             - expr_sum(
                 connection_flow_reactive[conn, n1, d, s, t]
                 for (conn, n1, d, s, t) in connection_flow_indices(
@@ -67,7 +67,7 @@ function add_constraint_nodal_reactive_balance!(m::Model)
                 );
                 init=0,
             )
-            # Flows to units
+            # Flows to units  (i.e. reactive power absorption)
             - expr_sum(
                 unit_flow_reactive[u, n, d, s, t_short]
                 for (u, n, d, s, t_short) in unit_flow_reactive_indices(

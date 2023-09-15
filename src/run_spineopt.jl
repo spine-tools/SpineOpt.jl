@@ -347,9 +347,17 @@ function _db_lp_solver(instance)
     end
 end
 
+"""
+    function _db_solver(f::Function, db_solver_name::Symbol, db_solver_options)
+
+Creates the solver constructor for `db_solver_name`. `db_solver_options` is
+assumed to be a Map with a key equal to db_solver_name, which points
+to another Map, containing the actual options. 
+"""
 function _db_solver(f::Function, db_solver_name::Symbol, db_solver_options)
     db_solver_mod_name = Symbol(first(splitext(string(db_solver_name))))
     db_solver_options_parsed = _parse_solver_options(db_solver_name, db_solver_options)
+   
     db_solver_mod = try
         @eval Base.Main using $db_solver_mod_name
         getproperty(Base.Main, db_solver_mod_name)
@@ -375,8 +383,9 @@ _parse_solver_options(db_solver_name, db_solver_options) = []
 _parse_solver_option(value::Bool) = value
 _parse_solver_option(value::Number) = isinteger(value) ? convert(Int64, value) : value
 
-#_parse_solver_option(value) = string(value)
+_parse_solver_option(value) = string(value)
 
+#=
 function _parse_solver_option(value)
     #check if the option value contains "solver:"
     if occursin(r"^solver:", string(value))
@@ -386,9 +395,20 @@ function _parse_solver_option(value)
     else
         return string(value)
     end
-
 end
+=#
 
+"""
+    function _parse_solver_option(value::Map)
+
+    When solver option is of the Map type, assume that the option means another solver.
+    Whose fields are "solver" and "options", where "options" points to another Map.
+"""
+function _parse_solver_option(value::Map)
+    
+    return _db_solver(x->x, Symbol(value[:solver]), 
+        Map([Symbol(value[:solver])], [value[:options]]) )
+end
 
 _do_create_model(mip_solver, use_direct_model) = use_direct_model ? direct_model(mip_solver) : Model(mip_solver)
 

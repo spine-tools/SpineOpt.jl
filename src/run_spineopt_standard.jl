@@ -155,6 +155,7 @@ function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
             add_constraint_connection_flow_real!,
             add_constraint_connection_intact_flow_capacity!,
             add_constraint_unit_flow_capacity!,
+            add_constraint_unit_flow_capacity_reactive!,
             add_constraint_connections_invested_available!,
             add_constraint_connection_lifetime!,
             add_constraint_connections_invested_transition!,

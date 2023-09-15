@@ -108,12 +108,18 @@ function add_variable_unit_flow!(m::Model)
     )
 end
 
+"""
+    add_variable_unit_flow!(m::Model)
+
+Add `unit_flow_reactive` variables to model `m`. The reactive power flow from unit to node
+(injection of reactive power) or from node to unit (absorption of reactive power).
+"""
 function add_variable_unit_flow_reactive!(m::Model)
     t0 = _analysis_time(m)
     add_variable!(
         m,
         :unit_flow_reactive,
-        unit_flow_reactive_indices
-      
+        unit_flow_reactive_indices;
+        lb=Constant(0)
     )
 end

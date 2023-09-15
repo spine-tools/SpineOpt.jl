@@ -141,7 +141,10 @@ end
 function test_constraint_nodal_balance_reactive()
     @testset "constraint_nodal_balance_reactive" begin
    
-        solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], ["solver:SCS.jl"])]))
+        nl_solver_options = Map(["solver", "options"], ["SCS.jl", Map(["verbose"],[0])] )
+        
+        #solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], ["solver:SCS.jl"])]))
+        solver_options = unparse_db_value(Map(["Juniper.jl"], [Map(["nl_solver"], [nl_solver_options])]))
 
         url_in = _test_constraint_node_setup()
         object_parameter_values = [
