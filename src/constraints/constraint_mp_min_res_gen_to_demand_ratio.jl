@@ -38,7 +38,9 @@ function add_constraint_mp_min_res_gen_to_demand_ratio!(m::Model)
         (commodity=comm,) => @constraint(
             m,
             + sum(
-                window_sum(sp_unit_flow(unit=u, node=n, direction=d, stochastic_scenario=s), current_window(m))
+                window_sum_duration(
+                    m, sp_unit_flow(unit=u, node=n, direction=d, stochastic_scenario=s), current_window(m)
+                )
                 for (u, s) in unit_stochastic_indices(m; unit=unit(is_renewable=true))
                 for (u, n, d) in unit__to_node(unit=u, node=node__commodity(commodity=comm), _compact=false);
                 init=0
@@ -48,7 +50,8 @@ function add_constraint_mp_min_res_gen_to_demand_ratio!(m::Model)
                     + units_invested_available[u, s, t]
                     - internal_fix_units_invested_available(unit=u, stochastic_scenario=s, t=t, _default=0)
                 )
-                * window_sum(
+                * window_sum_duration(
+                    m,
                     + unit_availability_factor(unit=u, stochastic_scenario=s)
                     * unit_capacity(unit=u, node=n, direction=d, stochastic_scenario=s)
                     * unit_conv_cap_to_flow(unit=u, node=n, direction=d, stochastic_scenario=s),
@@ -63,14 +66,15 @@ function add_constraint_mp_min_res_gen_to_demand_ratio!(m::Model)
             + mp_min_res_gen_to_demand_ratio(commodity=comm)
             * (
                 sum(
-                    window_sum(demand(node=n, stochastic_scenario=s), current_window(m))
+                    window_sum_duration(m, demand(node=n, stochastic_scenario=s), current_window(m))
                     for (n, s) in node_stochastic_indices(
                         m; node=intersect(indices(demand), node__commodity(commodity=comm))
                     );
                     init=0
                 )
                 + sum(
-                    window_sum(
+                    window_sum_duration(
+                        m,
                         fractional_demand(node=n, stochastic_scenario=s) * demand(node=ng, stochastic_scenario=s),
                         current_window(m)
                     )

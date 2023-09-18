@@ -289,7 +289,7 @@ function _build_ptdf(connections, nodes, unavailable_connections=Set())
         n_from, n_to = connection__from_node(connection=conn, direction=anything)
         A[node_numbers[n_from], ix] = 1
         A[node_numbers[n_to], ix] = -1
-        reactance = max(connection_reactance(connection=conn), 1e-6)
+        reactance = max(connection_reactance(connection=conn, _default=0), 1e-6)
         if conn in unavailable_connections
             reactance *= 1e3
         end

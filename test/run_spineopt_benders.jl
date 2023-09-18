@@ -354,7 +354,7 @@ function _test_benders_unit_storage()
                 ["node", "node_b", "demand", dem],
                 ["node", "node_a", "node_slack_penalty", penalty],
                 ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
-                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
+                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
                 ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
@@ -699,9 +699,10 @@ function _test_benders_mp_min_res_gen_to_demand_ratio()
             @test length(cons) == 1
             observed_con = constraint_object(only(values(cons)))
             expected_con = @build_constraint(
-                ucap * sum(v for (k, v) in invest_vars if start(k.t) >= DateTime(2000)) + only(values(slack_vars))
+                + ucap * sum(duration(k.t) * v for (k, v) in invest_vars if start(k.t) >= DateTime(2000))
+                + only(values(slack_vars))
                 >=
-                dem * mrg2d_ratio
+                + 24 * dem * mrg2d_ratio
             )
             @test _is_constraint_equal(observed_con, expected_con)
             using_spinedb(url_out, Y)
