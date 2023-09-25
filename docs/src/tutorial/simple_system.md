@@ -90,7 +90,7 @@ into the input database, run the workflow and view the results in the output dat
     go to *Data Store Properties* and hit **Open editor**). 
     This will open the newly created database in the *Spine DB editor*,
      looking similar to this:
-![image](../figs_a5/case_study_a5_spine_db_editor_empty.png)
+![image](../figs_simple_system/simple_system_toolbox_empty.png)
 
 !!! note
     The *Spine DB editor* is a dedicated interface within Spine Toolbox
@@ -311,7 +311,7 @@ When you're ready, commit all changes to the database.
 ### Executing the workflow
 
 -   Go back to Spine Toolbox's main window, and hit the **Execute
-    project** button ![image](../figs_a5/play-circle.png) from the tool bar. 
+    project** button ![image](../figs_simple_system/play-circle.png) from the tool bar. 
     You should see 'Executing All Directed Acyclic Graphs' printed in
     the *Event log* (at the bottom left by default).
 
