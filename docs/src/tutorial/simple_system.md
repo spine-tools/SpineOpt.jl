@@ -51,7 +51,10 @@ but there are some things that configured:
 -   The arrows in the Toolbox view are only the available items (databases).
     To let SpineOpt know we want to use these items, we need to go to the 
     properties panel of Run SpineOpt and drag the available items to the 
-    tool arguments (first the input, then the output).
+    tool arguments. The order of the items is first the input, then the output.
+    See below for how the property window should look like.
+
+![image](../figs_simple_system/simple_system_spinetoolbox_run_spineopt.png)
 
 -   (optional) The Spine data stores are quite generic. In order for SpineOpt to be able 
     to read the input database, we need to change its format from the Spine format 
@@ -97,18 +100,14 @@ into the input database, run the workflow and view the results in the output dat
     graph button. The graph view only shows what you select in the root menu 
     and what your selected objects or relationships are connected to.
 
--   Click the hamburger menu (or press **Alt + F**) to display the main menu, 
+-   Click the hamburger menu (or press **Alt + F**), 
     select **File -> Import...**, and then select the template file you previously
     downloaded (*spineopt\_template.json*). The contents of that file will be 
     imported into the current database, and you should then see classes like 
     'commodity', 'connection' and 'model' under the root node in the *Object tree*
      (on the left). Then import the second file (*basic\_model\_template.json*).
 
-!!! note
-    If nothing happens you might want to check which file extension you are importing.
-    (e.g. change *all file types* to *json*)
-
--   From the main menu, select **Session -> Commit**. Enter 'Import
+-   From the hamburger menu, select **Session -> Commit**. Enter 'Import
     SpineOpt template' as message in the popup dialog, and click
     **Commit**.
 
@@ -226,7 +225,7 @@ into the input database, run the workflow and view the results in the output dat
 -   In the *Object parameter* table (typically at the top-center),
     select the *demand* parameter and the *Base*
     alternative, and enter the value *150* as seen in the
-    image below. This will establish that there's a demand of '100'
+    image below. This will establish that there's a demand of '150'
     at the electricity node.
 ![image](../figs_simple_system/simple_system_electricity_demand.png)
 
@@ -324,7 +323,7 @@ When you're ready, commit all changes to the database.
 -   Select the output data store and open the Spine DB editor.
     You can already inspect the fields in the displayed tables 
     or use a pivot table.
--   For the pivot table, press **Alt + F** to display the main menu,
+-   For the pivot table, press **Alt + F** for the shortcut to the hamburger menu,
     and select **Pivot -> Index**.
 -   Select
     *report\_\_unit\_\_node\_\_direction\_\_stochastic\_scenario*
