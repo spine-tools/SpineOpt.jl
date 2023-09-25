@@ -33,6 +33,9 @@ import DataStructures: OrderedDict
 import Dates: CompoundPeriod
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 
+# Resolve JuMP and SpineInterface `Parameter` and `parameter_value` conflicts.
+import SpineInterface: Parameter, parameter_value
+
 export run_spineopt
 export rerun_spineopt
 export run_spineopt_kernel!
