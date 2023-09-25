@@ -153,6 +153,7 @@ function _blocks_by_time_interval(instance::Object, window_start::DateTime, wind
         i = 1
         while time_slice_start < adjusted_end
             duration = resolution(temporal_block=block, i=i)
+            duration !== nothing || break
             if iszero(duration)
                 # TODO: Try to move this to a check...
                 error("`resolution` of temporal block `$(block)` cannot be zero!")
