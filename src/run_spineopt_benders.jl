@@ -49,7 +49,7 @@ function rerun_spineopt_benders!(
     j = 1
     while optimize
 		@log log_level 0 "\nStarting Benders iteration $j"
-        optimize_model!(m_mp; log_level=log_level, save_outputs=false) || break
+        optimize_model!(m_mp; log_level=log_level) || break
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
         k = 1
         subproblem_solved = nothing
@@ -101,6 +101,7 @@ function rerun_spineopt_benders!(
         j += 1
         global current_bi = add_benders_iteration(j)
     end
+    write_report(m_mp, url_out; alternative=alternative, log_level=log_level)
     write_report(m, url_out; alternative=alternative, log_level=log_level)
     m
 end
@@ -111,8 +112,8 @@ Initialize the given model for SpineOpt Master Problem: add variables, add const
 function _init_mp_model!(m; log_level=3)
     @timelog log_level 2 "Adding MP variables...\n" _add_mp_variables!(m; log_level=log_level)
     @timelog log_level 2 "Adding MP constraints...\n" _add_mp_constraints!(m; log_level=log_level)
-    #@timelog log_level 2 "Adding MP renewing constraints...\n" _add_mp_renewing_constraints!(m; log_level=log_level)
     @timelog log_level 2 "Setting MP objective..." _set_mp_objective!(m)
+    _init_outputs!(m)
 end
 
 """
@@ -174,7 +175,7 @@ end
 function _add_constraint_sp_objective_upperbound!(m::Model)
     @fetch sp_objective_upperbound = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:mp_objective] = Dict(
-        (t=t,) => @constraint(m, sp_objective_upperbound[t] >= 0) for (t,) in sp_objective_upperbound_indices(m)
+        (model=i,) => @constraint(m, sp_objective_upperbound[i] >= 0) for (i,) in sp_objective_upperbound_indices(m)
     )
 end
 
@@ -185,12 +186,21 @@ Minimize total investment costs plus upperbound on subproblem objective.
 """
 function _set_mp_objective!(m::Model)
     @fetch sp_objective_upperbound = m.ext[:spineopt].variables
+    _create_mp_objective_terms!(m)
+    investment_costs = sum(in_window for (in_window, _bw) in values(m.ext[:spineopt].objective_terms))
     @objective(
         m,
         Min,
-        + expr_sum(sp_objective_upperbound[t] for (t,) in sp_objective_upperbound_indices(m); init=0)
-        + total_costs(m, anything; operations=false)
+        + expr_sum(sp_objective_upperbound[i] for (i,) in sp_objective_upperbound_indices(m); init=0)
+        + investment_costs
     )
+end
+
+function _create_mp_objective_terms!(m)
+    for term in objective_terms(m; operations=false)
+        func = eval(term)
+        m.ext[:spineopt].objective_terms[term] = (func(m, anything), 0)
+    end
 end
 
 """

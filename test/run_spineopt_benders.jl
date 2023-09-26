@@ -93,6 +93,7 @@ function _test_benders_unit()
                 ["output", "units_invested"],
                 ["output", "units_mothballed"],
                 ["output", "units_invested_available"],
+                ["output", "unit_investment_costs"],
                 ["temporal_block", "investments_hourly"],
             ]
             relationships = [
@@ -106,6 +107,7 @@ function _test_benders_unit()
                 ["report__output", ["report_x", "units_invested"]],
                 ["report__output", ["report_x", "units_mothballed"]],
                 ["report__output", ["report_x", "units_invested_available"]],
+                ["report__output", ["report_x", "unit_investment_costs"]],
             ]
             object_parameter_values = [
                 ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
@@ -143,6 +145,11 @@ function _test_benders_unit()
                 for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
                     @test Y.total_costs(model=Y.model(:instance), t=t) == (should_invest ? 60 : 120)
                 end
+            end
+            @testset "unit_investment_costs" begin
+                @test Y.objective_unit_investment_costs(model=Y.model(:instance), t=DateTime(2000, 1, 1)) == (
+                    should_invest ? u_inv_cost : 0
+                )
             end
             @testset "invested" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
@@ -643,6 +650,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio()
                 ["output", "units_invested"],
                 ["output", "units_mothballed"],
                 ["output", "units_invested_available"],
+                ["output", "mp_min_res_gen_to_demand_ratio_slack"],
                 ["temporal_block", "investments_hourly"],
             ]
             relationships = [
@@ -657,6 +665,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio()
                 ["report__output", ["report_x", "units_invested"]],
                 ["report__output", ["report_x", "units_mothballed"]],
                 ["report__output", ["report_x", "units_invested_available"]],
+                ["report__output", ["report_x", "mp_min_res_gen_to_demand_ratio_slack"]],
             ]
             object_parameter_values = [
                 ["commodity", "electricity", "mp_min_res_gen_to_demand_ratio", mrg2d_ratio],
@@ -691,7 +700,7 @@ function _test_benders_mp_min_res_gen_to_demand_ratio()
                 relationship_parameter_values=relationship_parameter_values
             )
             rm(file_path_out; force=true)
-            m = run_spineopt(url_in, url_out; log_level=3)
+            m = run_spineopt(url_in, url_out; log_level=0)
             m_mp = master_problem_model(m)
             cons = m_mp.ext[:spineopt].constraints[:mp_min_res_gen_to_demand_ratio]
             invest_vars = m_mp.ext[:spineopt].variables[:units_invested_available]
@@ -728,6 +737,8 @@ function _test_benders_mp_min_res_gen_to_demand_ratio()
                     @test Y.units_invested_available(unit=Y.unit(:unit_ab_alt), t=t) == (should_invest ? 1 : 0)
                 end
             end
+            t0 = DateTime(2000, 1, 1)
+            @test Y.mp_min_res_gen_to_demand_ratio_slack(commodity=Y.commodity(:electricity), t=t0) == 0
         end
     end
 end
