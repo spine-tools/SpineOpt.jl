@@ -125,7 +125,8 @@ end
 
 function _save_sp_unit_flow!(m, win_weight, tail=false)
     window_values = Dict(
-        k => win_weight * v for (k, v) in m.ext[:spineopt].values[:unit_flow] if iscontained(k.t, current_window(m))
+        #k => win_weight * v for (k, v) in m.ext[:spineopt].values[:unit_flow] if iscontained(k.t, current_window(m))
+        k => v for (k, v) in m.ext[:spineopt].values[:unit_flow] if iscontained(k.t, current_window(m))
     )
     pval_by_ent = _pval_by_entity(window_values)
     pvals_to_node = Dict(
