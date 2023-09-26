@@ -175,7 +175,7 @@ end
 function _add_constraint_sp_objective_upperbound!(m::Model)
     @fetch sp_objective_upperbound = m.ext[:spineopt].variables
     m.ext[:spineopt].constraints[:mp_objective] = Dict(
-        (model=i,) => @constraint(m, sp_objective_upperbound[i] >= 0) for (i,) in sp_objective_upperbound_indices(m)
+        (t=t,) => @constraint(m, sp_objective_upperbound[t] >= 0) for (t,) in sp_objective_upperbound_indices(m)
     )
 end
 
@@ -191,7 +191,7 @@ function _set_mp_objective!(m::Model)
     @objective(
         m,
         Min,
-        + expr_sum(sp_objective_upperbound[i] for (i,) in sp_objective_upperbound_indices(m); init=0)
+        + expr_sum(sp_objective_upperbound[t] for (t,) in sp_objective_upperbound_indices(m); init=0)
         + investment_costs
     )
 end

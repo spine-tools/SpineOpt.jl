@@ -834,6 +834,35 @@ function _test_time_limit()
     end
 end
 
+function _test_only_linear_model_has_duals()
+    objects = [["output", "bound_units_on"]]
+    relationships = [["report__output", ["report_x", "bound_units_on"]]]
+    @testset "linear_model_has_duals" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        SpineInterface.import_data(url_in; objects=objects, relationships=relationships)
+        rm(file_path_out; force=true)
+        m = run_spineopt(url_in, url_out; log_level=0)
+        @test has_duals(m)
+    end
+    object_parameter_values = [
+        ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
+    ]
+    @testset "integer_model_doesnt_have_duals" begin
+        url_in, url_out, file_path_out = _test_run_spineopt_setup()
+        objects = [["output", "bound_units_on"]]
+        relationships = [["report__output", ["report_x", "bound_units_on"]]]
+        object_parameter_values = [
+            ["unit", "unit_ab", "online_variable_type", "unit_online_variable_type_binary"]
+        ]
+        SpineInterface.import_data(
+            url_in; objects=objects, relationships=relationships, object_parameter_values=object_parameter_values
+        )
+        rm(file_path_out; force=true)
+        m = run_spineopt(url_in, url_out; log_level=0)
+        @test !has_duals(m)
+    end
+end
+
 @testset "run_spineopt" begin
     _test_rolling()
     _test_rolling_with_updating_data()
@@ -854,4 +883,5 @@ end
     _test_fix_unit_flow_with_rolling()
     _test_fix_node_state_using_map_with_rolling()
     _test_time_limit()
+    _test_only_linear_model_has_duals()
 end
