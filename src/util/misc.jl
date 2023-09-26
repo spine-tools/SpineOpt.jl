@@ -204,8 +204,7 @@ end
 function window_sum_duration(m, ts::TimeSeries, window; init=0)
     dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
     time_slice_value_iter = (
-        (TimeSlice(t1, t2; duration_unit=dur_unit), v)
-        for (t1, t2, v) in zip(ts.indexes, ts.indexes[2:end], ts.values)
+        (TimeSlice(t1, t2; duration_unit=dur_unit), v) for (t1, t2, v) in zip(ts.indexes, ts.indexes[2:end], ts.values)
     )
     sum(v * duration(t) for (t, v) in time_slice_value_iter if iscontained(start(t), window) && !isnan(v); init=init)
 end
