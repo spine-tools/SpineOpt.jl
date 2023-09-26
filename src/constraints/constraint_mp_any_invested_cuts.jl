@@ -34,9 +34,9 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
     merge!(
         get!(m.ext[:spineopt].constraints, :mp_any_invested_cut, Dict()),
             Dict(
-            (benders_iteration=bi, t=t1) => @constraint(
+            (benders_iteration=bi, model=i) => @constraint(
                 m,
-                + sp_objective_upperbound[t1]
+                + sp_objective_upperbound[i]
                 >=
                 + sp_objective_value_bi(benders_iteration=bi)
                 # operating cost benefit from investments in units
@@ -71,7 +71,7 @@ function add_constraint_mp_any_invested_cuts!(m::Model)
                 )
             )
             for bi in last(benders_iteration())
-            for (t1,) in sp_objective_upperbound_indices(m)
+            for (i,) in sp_objective_upperbound_indices(m)
         )
     )
 end
