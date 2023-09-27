@@ -85,6 +85,21 @@ function _model_duration_unit(instance::Object)
     get(Dict(:minute => Minute, :hour => Hour), duration_unit(model=instance, _strict=false), Minute)
 end
 
+function _model_window_duration(instance)
+    m_start = model_start(model=instance)
+    m_end = model_end(model=instance)
+    m_duration = m_end - m_start
+    w_duration = window_duration(model=instance, _strict=false)
+    if w_duration === nothing
+        w_duration = roll_forward(model=instance, i=1, _strict=false)
+    end
+    if w_duration === nothing
+        m_duration
+    else
+        min(w_duration, m_duration)
+    end
+end
+
 """
     _generate_current_window!(m::Model)
 
@@ -93,12 +108,9 @@ Generate the current window TimeSlice for given model.
 function _generate_current_window!(m::Model)
     instance = m.ext[:spineopt].instance
     w_start = model_start(model=instance)
-    m_end = model_end(model=instance)
-    w_duration = window_duration(model=instance, _strict=false)
-    w_duration = w_duration !== nothing ? w_duration : roll_forward(model=instance, i=1, _strict=false)
-    w_end = w_duration === nothing ? m_end : min(w_start + w_duration, m_end)
+    w_end = w_start + _model_window_duration(instance)
     m.ext[:spineopt].temporal_structure[:current_window] = TimeSlice(
-        w_start, w_end; duration_unit=_model_duration_unit(m.ext[:spineopt].instance)
+        w_start, w_end; duration_unit=_model_duration_unit(instance)
     )
 end
 
@@ -407,6 +419,25 @@ function _generate_representative_time_slice!(m::Model)
     end
 end
 
+function _generate_sp_windows!(m::Model)
+    instance = m.ext[:spineopt].instance
+    w_start = model_start(model=instance)
+    w_duration = _model_window_duration(instance)
+    w_end = w_start + w_duration
+    m.ext[:spineopt].temporal_structure[:sp_windows] = windows = []
+    push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
+    i = 1
+    while true
+        rf = roll_forward(model=instance, i=i, _strict=false)
+        rf in (nothing, Minute(0)) && break
+        w_end >= model_end(model=instance) && break
+        w_start += w_duration
+        w_end += w_duration
+        push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
+        i += 1
+    end
+end
+
 """
 Find indices in `source` that overlap `t` and return values for those indices in `target`.
 Used by `to_time_slice`.
@@ -459,6 +490,7 @@ Create the master problem temporal structure for SpineOpt benders.
 """
 function generate_master_temporal_structure!(m_mp::Model)
     _generate_master_window_and_time_slice!(m_mp)
+    _generate_sp_windows!(m_mp)
     _generate_output_time_slices!(m_mp)
     _generate_time_slice_relationships!(m_mp)
 end
