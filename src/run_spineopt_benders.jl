@@ -47,8 +47,14 @@ function rerun_spineopt_benders!(
     _init_mp_model!(m_mp; log_level=log_level)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
     j = 1
+    undo_force_starting_investments! = nothing
     while optimize
 		@log log_level 0 "\nStarting Benders iteration $j"
+        if j == 1
+            undo_force_starting_investments! = _force_starting_investments!(m_mp)
+        elseif j == 2
+            undo_force_starting_investments!()
+        end
         optimize_model!(m_mp; log_level=log_level) || break
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
         k = 1
@@ -227,3 +233,40 @@ end
 
 _unfix(v::VariableRef) = is_fixed(v) && unfix(v)
 _unfix(::Call) = nothing
+
+"""
+Force starting investments and return a function to be called without arguments to undo the operation.
+"""
+function _force_starting_investments!(m::Model)
+    callbacks = vcat(
+        _do_force_starting_investments!(m, :units_invested_available, benders_starting_units_invested),
+        _do_force_starting_investments!(m, :connections_invested_available, benders_starting_connections_invested),
+        _do_force_starting_investments!(m, :storages_invested_available, benders_starting_storages_invested),
+    )
+    () -> for c in callbacks c() end
+end
+
+function _do_force_starting_investments!(m::Model, variable_name::Symbol, benders_starting_invested::Parameter)
+    callbacks = []
+    for (ind, var) in m.ext[:spineopt].variables[variable_name]
+        start(ind.t) >= start(current_window(m)) || continue
+        starting_invested = benders_starting_invested(; ind..., _strict=false)
+        starting_invested === nothing && continue
+        push!(callbacks, () -> unfix(var))
+        if has_lower_bound(var)
+            x = lower_bound(var)
+            push!(callbacks, () -> set_lower_bound(var, x))
+        end
+        if has_upper_bound(var)
+            x = upper_bound(var)
+            push!(callbacks, () -> set_upper_bound(var, x))
+        end
+        if is_fixed(var)
+            x = fix_value(var)
+            push!(callbacks, () -> fix(var, x; force=true))
+        end
+        fix(var, starting_invested; force=true)
+    end
+    callbacks
+end
+
