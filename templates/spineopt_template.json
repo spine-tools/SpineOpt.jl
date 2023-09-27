@@ -160,6 +160,7 @@
         ["model", "duration_unit", "hour", "duration_unit_list", "Defines the base temporal unit of the `model`. Currently supported values are either an `hour` or a `minute`."],
         ["model", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
         ["model", "max_gap", 0.05, null, "Specifies the maximum optimality gap for the model. Currently only used for the master problem within a decomposed structure"],
+        ["model", "min_iterations", 1.0, null, "Specifies the minimum number of iterations for the model. Currently only used for the master problem within a decomposed structure"],
         ["model", "max_iterations", 10.0, null, "Specifies the maximum number of iterations for the model. Currently only used for the master problem within a decomposed structure"],
         ["model", "max_mga_iterations", null, null, "Define the number of mga iterations, i.e. how many alternative solutions will be generated."],
         ["model", "max_mga_slack", 0.05, null, "Defines the maximum slack by which the alternative solution may differ from the original solution (e.g. 5% more than initial objective function value)"],
