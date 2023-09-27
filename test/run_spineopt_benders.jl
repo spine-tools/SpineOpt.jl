@@ -708,7 +708,9 @@ function _test_benders_mp_min_res_gen_to_demand_ratio()
             @test length(cons) == 1
             observed_con = constraint_object(only(values(cons)))
             expected_con = @build_constraint(
-                + ucap * sum(duration(k.t) * v for (k, v) in invest_vars if start(k.t) >= DateTime(2000))
+                + ucap * sum(
+                    duration(k.t) * v for (k, v) in invest_vars if DateTime(2000) <= start(k.t) < DateTime(2000, 1, 2)
+                )
                 + only(values(slack_vars))
                 >=
                 + 24 * dem * mrg2d_ratio

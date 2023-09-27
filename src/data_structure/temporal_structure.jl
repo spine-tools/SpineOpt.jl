@@ -93,10 +93,10 @@ function _model_window_duration(instance)
     if w_duration === nothing
         w_duration = roll_forward(model=instance, i=1, _strict=false)
     end
-    if w_duration === nothing
+    if w_duration === nothing || m_start + w_duration > m_end
         m_duration
     else
-        min(w_duration, m_duration)
+        w_duration
     end
 end
 
