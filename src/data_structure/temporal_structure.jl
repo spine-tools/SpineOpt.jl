@@ -431,8 +431,8 @@ function _generate_sp_windows!(m::Model)
         rf = roll_forward(model=instance, i=i, _strict=false)
         rf in (nothing, Minute(0)) && break
         w_end >= model_end(model=instance) && break
-        w_start += w_duration
-        w_end += w_duration
+        w_start += rf
+        w_end += rf
         push!(windows, TimeSlice(w_start, w_end; duration_unit=_model_duration_unit(instance)))
         i += 1
     end
