@@ -45,11 +45,18 @@ function rerun_spineopt_benders!(
         log_level=log_level
     )
     _init_mp_model!(m_mp; log_level=log_level)
+    min_benders_iterations = min_iterations(model=m_mp.ext[:spineopt].instance)
     max_benders_iterations = max_iterations(model=m_mp.ext[:spineopt].instance)
     j = 1
+    undo_force_starting_investments! = nothing
     while optimize
 		@log log_level 0 "\nStarting Benders iteration $j"
-        optimize_model!(m_mp; log_level=log_level, save_outputs=false) || break
+        if j == 1
+            undo_force_starting_investments! = _force_starting_investments!(m_mp)
+        elseif j == 2
+            undo_force_starting_investments!()
+        end
+        optimize_model!(m_mp; log_level=log_level) || break
         @timelog log_level 2 "Processing master problem solution" process_master_problem_solution!(m_mp)
         k = 1
         subproblem_solved = nothing
@@ -85,7 +92,7 @@ function rerun_spineopt_benders!(
         @log log_level 1 "Objective upper bound: $(@sprintf("%.5e", m_mp.ext[:spineopt].objective_upper_bound[])); "
         gap = last(m_mp.ext[:spineopt].benders_gaps)
         @log log_level 1 "Gap: $(@sprintf("%1.4f", gap * 100))%"
-        if gap <= max_gap(model=m_mp.ext[:spineopt].instance)
+        if gap <= max_gap(model=m_mp.ext[:spineopt].instance) && j >= min_benders_iterations
             @log log_level 1 "Benders tolerance satisfied, terminating..."
             break
         end
@@ -101,6 +108,7 @@ function rerun_spineopt_benders!(
         j += 1
         global current_bi = add_benders_iteration(j)
     end
+    write_report(m_mp, url_out; alternative=alternative, log_level=log_level)
     write_report(m, url_out; alternative=alternative, log_level=log_level)
     m
 end
@@ -111,8 +119,8 @@ Initialize the given model for SpineOpt Master Problem: add variables, add const
 function _init_mp_model!(m; log_level=3)
     @timelog log_level 2 "Adding MP variables...\n" _add_mp_variables!(m; log_level=log_level)
     @timelog log_level 2 "Adding MP constraints...\n" _add_mp_constraints!(m; log_level=log_level)
-    #@timelog log_level 2 "Adding MP renewing constraints...\n" _add_mp_renewing_constraints!(m; log_level=log_level)
     @timelog log_level 2 "Setting MP objective..." _set_mp_objective!(m)
+    _init_outputs!(m)
 end
 
 """
@@ -185,12 +193,21 @@ Minimize total investment costs plus upperbound on subproblem objective.
 """
 function _set_mp_objective!(m::Model)
     @fetch sp_objective_upperbound = m.ext[:spineopt].variables
+    _create_mp_objective_terms!(m)
+    investment_costs = sum(in_window for (in_window, _bw) in values(m.ext[:spineopt].objective_terms))
     @objective(
         m,
         Min,
         + expr_sum(sp_objective_upperbound[t] for (t,) in sp_objective_upperbound_indices(m); init=0)
-        + total_costs(m, anything; operations=false)
+        + investment_costs
     )
+end
+
+function _create_mp_objective_terms!(m)
+    for term in objective_terms(m; operations=false)
+        func = eval(term)
+        m.ext[:spineopt].objective_terms[term] = (func(m, anything), 0)
+    end
 end
 
 """
@@ -217,3 +234,40 @@ end
 
 _unfix(v::VariableRef) = is_fixed(v) && unfix(v)
 _unfix(::Call) = nothing
+
+"""
+Force starting investments and return a function to be called without arguments to undo the operation.
+"""
+function _force_starting_investments!(m::Model)
+    callbacks = vcat(
+        _do_force_starting_investments!(m, :units_invested_available, benders_starting_units_invested),
+        _do_force_starting_investments!(m, :connections_invested_available, benders_starting_connections_invested),
+        _do_force_starting_investments!(m, :storages_invested_available, benders_starting_storages_invested),
+    )
+    () -> for c in callbacks c() end
+end
+
+function _do_force_starting_investments!(m::Model, variable_name::Symbol, benders_starting_invested::Parameter)
+    callbacks = []
+    for (ind, var) in m.ext[:spineopt].variables[variable_name]
+        start(ind.t) >= start(current_window(m)) || continue
+        starting_invested = benders_starting_invested(; ind..., _strict=false)
+        starting_invested === nothing && continue
+        push!(callbacks, () -> unfix(var))
+        if has_lower_bound(var)
+            x = lower_bound(var)
+            push!(callbacks, () -> set_lower_bound(var, x))
+        end
+        if has_upper_bound(var)
+            x = upper_bound(var)
+            push!(callbacks, () -> set_upper_bound(var, x))
+        end
+        if is_fixed(var)
+            x = fix_value(var)
+            push!(callbacks, () -> fix(var, x; force=true))
+        end
+        fix(var, starting_invested; force=true)
+    end
+    callbacks
+end
+

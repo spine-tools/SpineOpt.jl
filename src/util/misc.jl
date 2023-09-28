@@ -201,5 +201,14 @@ function print_solution(m, variable_patterns...)
     println()
 end
 
+function window_sum_duration(m, ts::TimeSeries, window; init=0)
+    dur_unit = _model_duration_unit(m.ext[:spineopt].instance)
+    time_slice_value_iter = (
+        (TimeSlice(t1, t2; duration_unit=dur_unit), v) for (t1, t2, v) in zip(ts.indexes, ts.indexes[2:end], ts.values)
+    )
+    sum(v * duration(t) for (t, v) in time_slice_value_iter if iscontained(start(t), window) && !isnan(v); init=init)
+end
+window_sum_duration(m, x::Number, window; init=0) = x * duration(window) + init
+
 window_sum(ts::TimeSeries, window; init=0) = sum(v for (t, v) in ts if iscontained(t, window) && !isnan(v); init=init)
 window_sum(x::Number, window; init=0) = x + init

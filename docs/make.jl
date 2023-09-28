@@ -73,7 +73,8 @@ SpineOpt.populate_empty_chapters!(pages, joinpath(path, "src"))
 # Create and deploy the documentation
 makedocs(
     sitename="SpineOpt.jl",
-    format=Documenter.HTML(prettyurls=get(ENV, "CI", nothing) == "true"),  # uncomment to deploy locally
+    format=Documenter.HTML(prettyurls=get(ENV, "CI", nothing) == "true", size_threshold=409600),  # uncomment to deploy locally
     pages=pages,
+    warnonly=true
 )
 deploydocs(repo="github.com/spine-tools/SpineOpt.jl.git", versions=["stable" => "v^", "v#.#"])

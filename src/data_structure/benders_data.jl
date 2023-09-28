@@ -76,7 +76,7 @@ end
 function process_subproblem_solution!(m, win_weight)
     _save_sp_marginal_values!(m, win_weight)
     _save_sp_objective_value!(m, win_weight)
-    _save_sp_unit_flow!(m, win_weight)
+    _save_sp_unit_flow!(m)
     _save_sp_solution!(m)
 end
 
@@ -123,9 +123,9 @@ function _save_sp_objective_value!(m, win_weight)
     )
 end
 
-function _save_sp_unit_flow!(m, win_weight, tail=false)
+function _save_sp_unit_flow!(m, tail=false)
     window_values = Dict(
-        k => win_weight * v for (k, v) in m.ext[:spineopt].values[:unit_flow] if iscontained(k.t, current_window(m))
+        k => v for (k, v) in m.ext[:spineopt].values[:unit_flow] if iscontained(k.t, current_window(m))
     )
     pval_by_ent = _pval_by_entity(window_values)
     pvals_to_node = Dict(
@@ -162,7 +162,7 @@ function save_mp_objective_bounds_and_gap!(m_mp)
     sp_obj_val = sp_objective_value_bi(benders_iteration=current_bi, _default=0)
     invest_costs = value(realize(total_costs(m_mp, anything; operations=false)))
     obj_ub = m_mp.ext[:spineopt].objective_upper_bound[] = sp_obj_val + invest_costs
-    gap = 2 * (obj_ub - obj_lb) / (obj_ub + obj_lb)
+    gap = (obj_ub == obj_lb) ? 0 : 2 * (obj_ub - obj_lb) / (obj_ub + obj_lb)
     push!(m_mp.ext[:spineopt].benders_gaps, gap)
 end
 

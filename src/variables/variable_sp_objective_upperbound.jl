@@ -21,6 +21,6 @@ function add_variable_sp_objective_upperbound!(m::Model)
 	add_variable!(m, :sp_objective_upperbound, sp_objective_upperbound_indices)
 end
 
-function sp_objective_upperbound_indices(m::Model; t=anything, temporal_block=anything)
-    [(t=first(time_slice(m)),)]
+function sp_objective_upperbound_indices(m::Model; kwargs...)
+    [(t=current_window(m),)]
 end
