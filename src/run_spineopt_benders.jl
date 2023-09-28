@@ -160,7 +160,11 @@ function _add_mp_constraints!(m; log_level=3)
             add_constraint_storage_lifetime!,
             add_constraint_storages_invested_transition!,
             add_constraint_storages_invested_available!,
-            add_constraint_entity_investment_group!,
+            add_constraint_investment_group_equal_investments!,
+            add_constraint_investment_group_minimum_entities_invested_available!,
+            add_constraint_investment_group_maximum_entities_invested_available!,
+            add_constraint_investment_group_minimum_capacity_invested_available!,
+            add_constraint_investment_group_maximum_capacity_invested_available!,
         )
         name = name_from_fn(add_constraint!)
         @timelog log_level 3 "- [$name]" add_constraint!(m)
