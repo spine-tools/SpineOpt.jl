@@ -99,12 +99,9 @@ end
 function _test_equal_investments()
     @testset "equal_investments" begin
         url_in = _test_constraint_investment_group_setup()
-        unit_availability_factor = 0.5
-        object_parameter_values = [
-            ["investment_group", "ig", "equal_investments", true],
-        ]
+        object_parameter_values = [["investment_group", "ig", "equal_investments", true]]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0, optimize=true)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:spineopt].constraints[:investment_group_equal_investments]
         unit_ab = unit(:unit_ab)
         connection_bc = connection(:connection_bc)
@@ -129,15 +126,15 @@ function _test_equal_investments()
     end
 end
 
-function _test_minimum_entities_invested_available()
-    @testset "minimum_entities_invested_available" begin
+function _test_min_max_entities_invested_available()
+    @testset "min_max_entities_invested_available" begin
         url_in = _test_constraint_investment_group_setup()
-        unit_availability_factor = 0.5
         object_parameter_values = [
             ["investment_group", "ig", "minimum_entities_invested_available", 3],
+            ["investment_group", "ig", "maximum_entities_invested_available", 8],
         ]
         SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0, optimize=true)
+        m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:spineopt].constraints[:investment_group_minimum_entities_invested_available]
         unit_ab = unit(:unit_ab)
         connection_bc = connection(:connection_bc)
@@ -151,42 +148,63 @@ function _test_minimum_entities_invested_available()
             m.ext[:spineopt].variables[:storages_invested_available][node_c, parent, t]
             for t in time_slice(m; temporal_block=temporal_block(:investments_two_hourly))
         ]
-        observed_con = constraint_object(constraint[con_key])
+        observed_con = constraint_object(
+            m.ext[:spineopt].constraints[:investment_group_minimum_entities_invested_available][con_key]
+        )
         expected_con = @build_constraint(u_ab_inv_avail + conn_bc_inv_avail + sum(node_c_inv_avail) >= 3)
         @test _is_constraint_equal(observed_con, expected_con)
-    end
-end
-
-function _test_maximum_entities_invested_available()
-    @testset "maximum_entities_invested_available" begin
-        url_in = _test_constraint_investment_group_setup()
-        unit_availability_factor = 0.5
-        object_parameter_values = [
-            ["investment_group", "ig", "maximum_entities_invested_available", 8],
-        ]
-        SpineInterface.import_data(url_in; object_parameter_values=object_parameter_values)
-        m = run_spineopt(url_in; log_level=0, optimize=true)
-        constraint = m.ext[:spineopt].constraints[:investment_group_maximum_entities_invested_available]
-        unit_ab = unit(:unit_ab)
-        connection_bc = connection(:connection_bc)
-        node_c = node(:node_c)
-        parent = stochastic_scenario(:parent)
-        t4h = first(time_slice(m; temporal_block=temporal_block(:investments_four_hourly)))
-        con_key = (investment_group=investment_group(:ig), stochastic_scenario=parent, t=t4h)
-        u_ab_inv_avail = m.ext[:spineopt].variables[:units_invested_available][unit_ab, parent, t4h]
-        conn_bc_inv_avail = m.ext[:spineopt].variables[:connections_invested_available][connection_bc, parent, t4h]
-        node_c_inv_avail = [
-            m.ext[:spineopt].variables[:storages_invested_available][node_c, parent, t]
-            for t in time_slice(m; temporal_block=temporal_block(:investments_two_hourly))
-        ]
-        observed_con = constraint_object(constraint[con_key])
+        observed_con = constraint_object(
+            m.ext[:spineopt].constraints[:investment_group_maximum_entities_invested_available][con_key]
+        )
         expected_con = @build_constraint(u_ab_inv_avail + conn_bc_inv_avail + sum(node_c_inv_avail) <= 8)
         @test _is_constraint_equal(observed_con, expected_con)
     end
 end
 
+function _test_min_max_capacity_invested_available()
+    @testset "min_max_capacity_invested_available" begin
+        url_in = _test_constraint_investment_group_setup()
+        object_parameter_values = [
+            ["investment_group", "ig", "minimum_capacity_invested_available", 300],
+            ["investment_group", "ig", "maximum_capacity_invested_available", 800],
+        ]
+        relationships = [
+            ("unit__from_node__investment_group", ("unit_ab", "node_a", "ig")),
+            ("connection__to_node__investment_group", ("connection_bc", "node_c", "ig")),
+        ]
+        relationship_parameter_values = [
+            ("unit__from_node", ("unit_ab", "node_a"), "unit_capacity", 150),
+            ("connection__to_node", ("connection_bc", "node_c"), "connection_capacity", 250),
+        ]
+        SpineInterface.import_data(
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values,
+            relationships=relationships,
+        )
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        unit_ab = unit(:unit_ab)
+        connection_bc = connection(:connection_bc)
+        parent = stochastic_scenario(:parent)
+        t4h = first(time_slice(m; temporal_block=temporal_block(:investments_four_hourly)))
+        con_key = (investment_group=investment_group(:ig), stochastic_scenario=parent, t=t4h)
+        u_ab_inv_avail = m.ext[:spineopt].variables[:units_invested_available][unit_ab, parent, t4h]
+        conn_bc_inv_avail = m.ext[:spineopt].variables[:connections_invested_available][connection_bc, parent, t4h]
+        observed_con = constraint_object(
+            m.ext[:spineopt].constraints[:investment_group_minimum_capacity_invested_available][con_key]
+        )
+        expected_con = @build_constraint(150 * u_ab_inv_avail + 250 * conn_bc_inv_avail >= 300)
+        @test _is_constraint_equal(observed_con, expected_con)
+        observed_con = constraint_object(
+            m.ext[:spineopt].constraints[:investment_group_maximum_capacity_invested_available][con_key]
+        )
+        expected_con = @build_constraint(150 * u_ab_inv_avail + 250 * conn_bc_inv_avail <= 800)
+        @test _is_constraint_equal(observed_con, expected_con)
+    end
+end
+
 @testset "investment_group" begin
-    # _test_equal_investments()
-    _test_minimum_entities_invested_available()
-    _test_maximum_entities_invested_available()
+    _test_equal_investments()
+    _test_min_max_entities_invested_available()
+    _test_min_max_capacity_invested_available()
 end
