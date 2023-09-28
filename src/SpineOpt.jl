@@ -34,6 +34,9 @@ import DataStructures: OrderedDict
 import Dates: CompoundPeriod
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
 
+# Resolve JuMP and SpineInterface `Parameter` and `parameter_value` conflicts.
+import SpineInterface: Parameter, parameter_value
+
 export run_spineopt
 export rerun_spineopt
 export run_spineopt_kernel!
@@ -104,6 +107,7 @@ include("variables/variable_node_pressure.jl")
 include("variables/variable_node_voltage_angle.jl")
 include("variables/variable_binary_gas_connection_flow.jl")
 include("variables/variable_sp_objective_upperbound.jl")
+include("variables/variable_mp_min_res_gen_to_demand_ratio_slack.jl")
 include("objective/variable_om_costs.jl")
 include("objective/fixed_om_costs.jl")
 include("objective/taxes.jl")
@@ -120,6 +124,7 @@ include("objective/connection_flow_costs.jl")
 include("objective/res_proc_costs.jl")
 include("objective/ramp_costs.jl")
 include("objective/units_on_costs.jl")
+include("objective/mp_objective_penalties.jl")
 include("constraints/constraint_common.jl")
 include("constraints/constraint_total_cumulated_unit_flow_bounds.jl")
 include("constraints/constraint_unit_flow_capacity.jl")
@@ -182,6 +187,8 @@ include("constraints/constraint_min_node_voltage_angle.jl")
 include("constraints/constraint_node_voltage_angle.jl")
 include("constraints/constraint_connection_unitary_gas_flow.jl")
 include("constraints/constraint_mp_any_invested_cuts.jl")
+include("constraints/constraint_mp_min_res_gen_to_demand_ratio.jl")
+include("constraints/constraint_entity_investment_group.jl")
 
 
 export unit_flow_indices

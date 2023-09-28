@@ -68,13 +68,13 @@ power station in the river is modelled using the following elements:
 Below is a schematic of the model. For clarity, only the Rebnis station
 is presented in full detail:
 
-![image](../figs_a5/case_study_a5_schematic.png)
+![image](figs_a5/case_study_a5_schematic.png)
 
 In order to run this tutorial you must first execute some preliminary
-steps from the [Simple System](../../simple_system/) tutorial.
+steps from the [Simple System](simple_system.md) tutorial.
 Specifically, execute all steps from the
-[guide](../../simple_system/index.html#guide), up to and including the step of
-[importing the spineopt database template](../../simple_system/index.html#importing-the-spineopt-database-template).
+[guide](simple_system.md#guide), up to and including the step of
+[importing the spineopt database template](simple_system.md#importing-the-spineopt-database-template).
 It is advisable to go through the whole tutorial in order to familiarise
 yourself with Spine.
 
@@ -85,10 +85,10 @@ yourself with Spine.
 
 ### Importing the SpineOpt database template
 
--   Download [the SpineOpt database template](../../../templates/spineopt_template.json) (right click on the link, then select *Save link as...*)
+-   Download [the SpineOpt database template](https://raw.githubusercontent.com/spine-tools/SpineOpt.jl/master/templates/spineopt_template.json) (right click on the link, then select *Save link as...*)
 -   Select the *input* Data Store item in the *Design View*.
 -   Go to *Data Store Properties* and hit **Open editor**. This will open the newly created database in the *Spine DB Editor*, looking similar to image below.
-    ![image](../figs_a5/case_study_a5_spine_db_editor_empty.png)
+    ![image](figs_a5/case_study_a5_spine_db_editor_empty.png)
 !!! note
     The Spine DB editor is a dedicated interface within Spine Toolbox for visualizing and managing Spine databases.
 -   Press **Alt + F** to display the editor menu, select **File -> Import...**, 
@@ -116,7 +116,7 @@ yourself with Spine.
 
     There are two options in this tutorial to enter data in the Database.
     The first one is to enter data manually and the second to
-    [use the importer](../index.html#Using-the-Importer) functionality. These are described in the
+    [use the importer](../index.md#Using-the-Importer) functionality. These are described in the
     next two subsections respectively and produce similar models. The model
     created when using the importer creates a model with two-segments
     efficiency curves for converting water to electricity (while the model
@@ -147,7 +147,7 @@ yourself with Spine.
             Kvistforsen_pwr_plant
     - Go to *Object tree* (on the top left of the window, usually), right-click on `unit` and select **Add objects** from the context menu. This will open the *Add objects* dialog.
     - Select the first cell under the **object name** column and press **Ctrl+V**. This will paste the list of plant names from the clipboard into that column; the **object class name** column will be filled automatically with ‘unit‘. The form should now be looking similar to this:
-        ![image](../figs_a5/add_power_plant_units.png)
+        ![image](figs_a5/add_power_plant_units.png)
     - Click **Ok**.
     - Back in the *Spine DB Editor*, under *Object tree*, double click on `unit` to confirm that the objects are effectively there.
     - Commit changes with the message ‘Add power plants’.
@@ -240,16 +240,16 @@ yourself with Spine.
 -   To specify the general behaviour of our model, stay in the *Spine DB
     Editor* and enter model parameter values as follows:
     - Select the model parameter value data (i.e. select all, **Ctrl+A**) from the file below and copy it to the clipboard (**Ctrl+C**):
-        [cs-a5-model-parameter-values.txt](../../data/cs-a5-model-parameter-values.txt)
+        [cs-a5-model-parameter-values.txt](data/cs-a5-model-parameter-values.txt)
     - Select `instance` in the *Object tree* and inspect the table in *Object parameter value* (on the top-center of the window, usually). Make sure that the columns in the table are ordered as follows (drag and drop columns if you need to change their order): 
     
         object_class_name | object_name | parameter_name | alternative_name | value | database
     - Select the first cell under `object_class_name` and press **Ctrl+V**. This will paste the model parameter value data from the clipboard into the table. The form should be looking like this:
-        ![image](../figs_a5/case_study_a5_model_parameters.png)
+        ![image](figs_a5/case_study_a5_model_parameters.png)
         
 -   Specify the resolution of our temporal block `some_week` in the same
     way using the data below:
-    [cs-a5-temporal_block-parameter-values.txt](../../data/cs-a5-temporal_block-parameter-values.txt)
+    [cs-a5-temporal_block-parameter-values.txt](data/cs-a5-temporal_block-parameter-values.txt)
 
 -   Specify the behaviour of all system nodes with the data below, where:
     -   `demand` represents the local inflow (negative in most cases).
@@ -261,7 +261,7 @@ yourself with Spine.
         that there aren't any loses).
     -   `node_state_cap` is the maximum level of the reservoirs.
     To do this in one single step, simply select `node` in the *Object tree* and paste the following values in the first empty cell: 
-    [cs-a5-node-parameter-values.txt](../../data/cs-a5-node-parameter-values.txt)
+    [cs-a5-node-parameter-values.txt](data/cs-a5-node-parameter-values.txt)
 
 #### Establishing relationships
 
@@ -275,7 +275,7 @@ yourself with Spine.
     common electricity node. Both the power plants and the electricity
     load belong to the class `unit`.
     -   Select the list of unit and node names from below and copy it to the clipboard (**Ctrl+C**).
-        [cs-a5-unit__from_node.txt](../../data/cs-a5-unit__from_node.txt)
+        [cs-a5-unit__from_node.txt](data/cs-a5-unit__from_node.txt)
     -   In the *Spine DB Editor*, go to *Relationship tree* (on the
         bottom left of the window, usually), right-click on
         `unit__from_node` and select **Add relationships** from the
@@ -284,7 +284,7 @@ yourself with Spine.
         **Ctrl+V**. This will paste the list of plant and node names
         from the clipboard into the table. The form should be looking
         like this:
-        ![image](../figs_a5/add_pwr_plant_water_from_node.png) 
+        ![image](figs_a5/add_pwr_plant_water_from_node.png) 
     -   Click **Ok**.
     -   Back in the *Spine DB Editor*, under *Relationship tree*, double
         click on `unit__from_node` to confirm that the relationships are
@@ -297,7 +297,7 @@ yourself with Spine.
     a power plant releases water to the station's lower water node, and
     that the power plants supply electricity to the common electricity
     node. Use the following data and do as before:
-    [cs-a5-unit__to_node.txt](../../data/cs-a5-unit__to_node.txt)
+    [cs-a5-unit__to_node.txt](data/cs-a5-unit__to_node.txt)
 
 !!! note
     At this point, you might be wondering what's the purpose of the
@@ -315,13 +315,13 @@ yourself with Spine.
     discharged, it is taken from the *lower* water node of the station,
     if spilled it is taken from the *upper* water node of the station.
     Use the following data and do as before:
-    [cs-a5-connection__from_node.txt](../../data/cs-a5-connection__from_node.txt)
+    [cs-a5-connection__from_node.txt](data/cs-a5-connection__from_node.txt)
 
 -   Create relationships of the class `connection__to_node` to represent
     that both discharge and spill are released into the *upper* node of
     the next downstream station. Use the following data and do as
     before:
-    [cs-a5-connection__to_node.txt](../../data/cs-a5-connection__to_node.txt)
+    [cs-a5-connection__to_node.txt](data/cs-a5-connection__to_node.txt)
 
 !!! note
     At this point, you might be wondering what's the purpose of the
@@ -338,7 +338,7 @@ yourself with Spine.
     water, for electricity nodes with respect to electricity. This way,
     you link all nodes to either the commocity `water` or the commodity
     `electricity`. Use the following data and do as before:
-    [cs-a5-node__commodity.txt](../../data/cs-a5-node__commodity.txt)
+    [cs-a5-node__commodity.txt](data/cs-a5-node__commodity.txt)
 
 -  Define that all nodes in our model have to be balanced at each time
     step. To do this, you create a relationship of the class
@@ -363,20 +363,20 @@ yourself with Spine.
 
 -   Finally, the values of all parameters have to be entered. Specify the capacity of all hydropower plants, and
     their respective variable operating cost by entering `unit__from_node` parameter values as follows:
-    - Select the data from the text-box below and copy it to the clipboard (**Ctrl+C**): [cs-a5-unit__from_node-relationship-parameter-values.txt](../../data/cs-a5-unit__from_node-relationship-parameter-values.txt)
+    - Select the data from the text-box below and copy it to the clipboard (**Ctrl+C**): [cs-a5-unit__from_node-relationship-parameter-values.txt](data/cs-a5-unit__from_node-relationship-parameter-values.txt)
     - In the *Spine DB Editor*, go to *Relationship tree* (on the bottom left of the window, usually), and click on `unit__from_node`. Then, go to *Relationship parameter value* (on the bottom-center of the window, usually). Make sure that the columns in the table are ordered as follows (drag and drop columns if you need to change their order): 
     
         relationship_class_name | object_name_list | parameter_name | alternative_name | value | database
     - Select the first cell under `relationship_class_name` and press **Ctrl+V**. This will paste the parameter value data from the clipboard into the table.
 
 -   Specify the conversion ratio between discharged water and generated electricity for each hydropower station as well as a similar conversion rate (set to 1) to represent that water cannot be lost between upper and lower water nodes. Use the following data to enter the parameter values `unit__from_node`:
-    [cs-a5-unit\_\_node\_\_node-relationship-parameter-values.txt](../../data/cs-a5-unit__node__node-relationship-parameter-values.txt)
+    [cs-a5-unit\_\_node\_\_node-relationship-parameter-values.txt](data/cs-a5-unit__node__node-relationship-parameter-values.txt)
 
 -   Specify the average discharge and spillage in the first hours of the simulation. Use the following data to enter the parameter values `connection__from_node`:
-    [cs-a5-connection__from_node-relationship-parameter-values.txt](../../data/cs-a5-connection__from_node-relationship-parameter-values.txt)
+    [cs-a5-connection__from_node-relationship-parameter-values.txt](data/cs-a5-connection__from_node-relationship-parameter-values.txt)
 
 -   Finally, specify the delay (the time it takes for the water to run between water nodes) and the transfer ratio (being equal to 1) of different water connections. Use the following data to enter the parameter values `connection__node_node`:
-    [cs-a5-connection\_\_node\_\_node-relationship-parameter-values.txt](../../data/cs-a5-connection__node__node-relationship-parameter-values.txt)
+    [cs-a5-connection\_\_node\_\_node-relationship-parameter-values.txt](data/cs-a5-connection__node__node-relationship-parameter-values.txt)
 
 -   When you're ready, commit all changes to the database via the main
     menu (**Alt + F**).
@@ -385,7 +385,7 @@ yourself with Spine.
 
 #### Additional Steps for Project Setup
 
--   Drag the Data Connection icon ![image](../figs_a5/file-alt.png) from the tool bar and drop it into the
+-   Drag the Data Connection icon ![image](figs_a5/file-alt.png) from the tool bar and drop it into the
     Design View. This will open the *Add Data connection dialogue*. Type
     in ‘Data Connection’ and click on **Ok**.
 -   To import the model into the Spine database, you need to create an
@@ -395,7 +395,7 @@ yourself with Spine.
     will pop-up.
 -   Type ‘Import Model’ as the name of the specification. Save the
     specification by using **Ctrl+S** and close the window.
--   Drag the newly created Import Model Importer item icon ![image](../figs_a5/database-import.png)
+-   Drag the newly created Import Model Importer item icon ![image](figs_a5/database-import.png)
     from the tool bar and drop it into
     the *Design View*. This will open the Add Importer dialogue. Type in
     ‘Import Model’ and click on **Ok**.
@@ -403,13 +403,13 @@ yourself with Spine.
     one of the Data Connection’s connectors and then on one of the
     Importer’s connectors. Connect similarly the importer with the input
     database. Now the project should look similar to this:
-    ![image](../figs_a5/items_connections.png)
+    ![image](figs_a5/items_connections.png)
 -   From the main menu, select **File -> Save project**.
 
 #### Importing the model
 
--   Download [the data](../../data/a5.xlsx)
-    and [the accompanying mapping](../../data/A5_importer_specification.json)
+-   Download [the data](data/a5.xlsx)
+    and [the accompanying mapping](data/A5_importer_specification.json)
     (right click on the links, then select *Save link as...*).
 -   Add a reference to the file containing the model.
     -   Select the *Data Connection item* in the *Design View* to show the *Data Connection properties* window (on the right side of the window usually).
@@ -419,7 +419,7 @@ yourself with Spine.
 ## Executing the workflow
 
 Once the workflow is defined and input data is in place, the project is
-ready to be executed. Hit the **Execute project** button ![image](../figs_a5/play-circle.png)
+ready to be executed. Hit the **Execute project** button ![image](figs_a5/play-circle.png)
 on the tool bar.
 
 You should see ‘Executing All Directed Acyclic Graphs’ printed in the
@@ -432,7 +432,7 @@ is complete.
 
 Select the output data store and open the Spine DB editor.
 
-![image](../figs_a5/case_study_a5_output.png)
+![image](figs_a5/case_study_a5_output.png)
 
 
 To checkout the flow on the electricity load (i.e., the total
@@ -443,7 +443,7 @@ double-click the first cell under `value`.
 The *Parameter value editor* will pop up. You should see something like
 this:
 
-![image](../figs_a5/case_study_a5_output_electricity_load_unit_flow.png)
+![image](figs_a5/case_study_a5_output_electricity_load_unit_flow.png)
 
 
 !!! note

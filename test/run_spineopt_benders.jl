@@ -82,8 +82,8 @@ function _test_benders_unit()
         vom_cost_alt = vom_cost_ / 2
         op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
         op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
-        do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
-        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable, 270.0
+        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable, 269.0
         @testset for should_invest in (true, false)
             u_inv_cost = should_invest ? do_inv_cost : do_not_inv_cost
             url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
@@ -93,6 +93,7 @@ function _test_benders_unit()
                 ["output", "units_invested"],
                 ["output", "units_mothballed"],
                 ["output", "units_invested_available"],
+                ["output", "unit_investment_costs"],
                 ["temporal_block", "investments_hourly"],
             ]
             relationships = [
@@ -106,6 +107,7 @@ function _test_benders_unit()
                 ["report__output", ["report_x", "units_invested"]],
                 ["report__output", ["report_x", "units_mothballed"]],
                 ["report__output", ["report_x", "units_invested_available"]],
+                ["report__output", ["report_x", "unit_investment_costs"]],
             ]
             object_parameter_values = [
                 ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
@@ -119,7 +121,7 @@ function _test_benders_unit()
                 ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
                 ["unit", "unit_ab_alt", "unit_investment_cost", u_inv_cost],
                 ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
-                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
+                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
                 ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
@@ -143,6 +145,11 @@ function _test_benders_unit()
                 for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
                     @test Y.total_costs(model=Y.model(:instance), t=t) == (should_invest ? 60 : 120)
                 end
+            end
+            @testset "unit_investment_costs" begin
+                @test Y.objective_unit_investment_costs(model=Y.model(:instance), t=DateTime(2000, 1, 1)) == (
+                    should_invest ? u_inv_cost : 0
+                )
             end
             @testset "invested" begin
                 @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
@@ -225,7 +232,7 @@ function _test_benders_storage()
                 ["node", "node_b", "demand", dem],
                 ["node", "node_a", "node_slack_penalty", penalty],
                 ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
-                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
+                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
                 ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
@@ -354,7 +361,7 @@ function _test_benders_unit_storage()
                 ["node", "node_b", "demand", dem],
                 ["node", "node_a", "node_slack_penalty", penalty],
                 ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
-                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
+                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
                 ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
                 ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
             ]
@@ -535,9 +542,317 @@ function _test_benders_rolling_representative_periods()
     end
 end
 
+function _test_benders_rolling_representative_periods_yearly_investments_multiple_units()
+    @testset "benders_rolling_representative_periods_yearly_investments_multiple_units" begin
+        benders_gap = 1e-6  # needed so that we get the exact master problem solution
+        mip_solver_options_benders = unparse_db_value(Map(["HiGHS.jl"], [Map(["mip_rel_gap"], [benders_gap])]))
+        candidates = [string("investments_candidate_", k) for k in 1:10]
+        dem = 7
+        url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
+        objects = [
+            ["output", "total_costs"],
+            ["output", "units_invested"],
+            ["output", "units_on"],
+            ["output", "units_available"],
+            ["output", "units_mothballed"],
+            ["output", "units_invested_available"],
+            ["temporal_block", "investments_yearly"],
+        ]
+        append!(objects, [["unit", c] for c in candidates])
+        relationships = [
+            ["model__temporal_block", ["instance", "investments_yearly"]],
+            ["model__default_investment_temporal_block", ["instance", "investments_yearly"]],
+            ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
+            ["report__output", ["report_x", "units_invested_available"]],
+            ["report__output", ["report_x", "units_mothballed"]],
+            ["report__output", ["report_x", "units_invested"]],
+            ["report__output", ["report_x", "total_costs"]],
+        ]
+        append!(relationships, [["unit__to_node", [c, "node_b"]] for c in candidates])
+        append!(relationships, [["units_on__temporal_block", [c, "hourly"]] for c in candidates])
+        append!(relationships, [["units_on__stochastic_structure", [c, "deterministic"]] for c in candidates])
+        object_parameter_values = [
+            ["model", "instance", "model_start", unparse_db_value(DateTime(2000))],
+            ["model", "instance", "model_end", unparse_db_value(DateTime(2001))],
+            ["model", "instance", "window_duration", unparse_db_value(Day(1))],
+            ["model", "instance", "roll_forward", unparse_db_value([Day(14) for k in 1:23])],
+            ["model", "instance", "window_weight", unparse_db_value([14.0 for k in 1:24])],
+            ["model", "instance", "model_type", "spineopt_benders"],
+            ["model", "instance", "max_iterations", 10],
+            ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
+            ["node", "node_b", "demand", dem],
+            ["node", "node_b", "node_slack_penalty", 10000],
+            ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(36))],
+            ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(6))],
+            ["temporal_block", "investments_yearly", "resolution", unparse_db_value(Year(1))],
+        ]
+        append!(object_parameter_values, [["unit", c, "number_of_units", 0] for c in candidates])
+        append!(object_parameter_values, [["unit", c, "candidate_units", 1] for c in candidates])
+        append!(
+            object_parameter_values,
+            [["unit", c, "unit_investment_variable_type", "unit_investment_variable_type_integer"] for c in candidates]
+        )
+        append!(
+            object_parameter_values,
+            [["unit", c, "online_variable_type", "unit_online_variable_type_integer"] for c in candidates]
+        )
+        append!(
+            object_parameter_values,
+            [["unit", c, "unit_investment_cost", 20 * k] for (k, c) in enumerate(candidates)]
+        )
+        relationship_parameter_values = [["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", 0]]
+        append!(
+            relationship_parameter_values, [["unit__to_node", [c, "node_b"], "unit_capacity", 1] for c in candidates]
+        )
+        append!(
+            relationship_parameter_values,
+            [["unit__to_node", [c, "node_b"], "vom_cost", 10] for c in candidates]
+        )
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+            relationship_parameter_values=relationship_parameter_values
+        )
+        rm(file_path_out; force=true)
+        m = run_spineopt(url_in, url_out; log_level=0)
+        m_mp = master_problem_model(m)
+        using_spinedb(url_out, Y)
+        @testset for (k, c) in enumerate(candidates)
+            @test first(values(Y.units_invested(unit=Y.unit(c)))) == (k <= dem ? 1 : 0)
+        end
+    end
+end
+
+function _test_benders_mp_min_res_gen_to_demand_ratio()
+    @testset "benders_mp_min_res_gen_to_demand_ratio" begin
+        benders_gap = 1e-6  # needed so that we get the exact master problem solution
+        mip_solver_options_benders = unparse_db_value(Map(["HiGHS.jl"], [Map(["mip_rel_gap"], [benders_gap])]))
+        res = 6
+        dem = ucap = 10
+        rf = 6
+        look_ahead = 3
+        vom_cost_ = 2
+        vom_cost_alt = vom_cost_ / 2
+        op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
+        op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable
+        do_inv_cost = do_not_inv_cost - 1  # maximum cost at which investment is profitable
+        u_inv_cost = do_not_inv_cost
+        @testset for should_invest in (true, false)
+            mrg2d_ratio = should_invest ? 0.1 : 0.0
+            url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
+            objects = [
+                ["commodity", "electricity"],
+                ["unit", "unit_ab_alt"],
+                ["output", "total_costs"],
+                ["output", "units_invested"],
+                ["output", "units_mothballed"],
+                ["output", "units_invested_available"],
+                ["output", "mp_min_res_gen_to_demand_ratio_slack"],
+                ["temporal_block", "investments_hourly"],
+            ]
+            relationships = [
+                ["node__commodity", ["node_b", "electricity"]],
+                ["unit__to_node", ["unit_ab_alt", "node_b"]],
+                ["units_on__temporal_block", ["unit_ab_alt", "hourly"]],
+                ["units_on__stochastic_structure", ["unit_ab_alt", "deterministic"]],
+                ["model__temporal_block", ["instance", "investments_hourly"]],
+                ["model__default_investment_temporal_block", ["instance", "investments_hourly"]],
+                ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
+                ["report__output", ["report_x", "total_costs"]],
+                ["report__output", ["report_x", "units_invested"]],
+                ["report__output", ["report_x", "units_mothballed"]],
+                ["report__output", ["report_x", "units_invested_available"]],
+                ["report__output", ["report_x", "mp_min_res_gen_to_demand_ratio_slack"]],
+            ]
+            object_parameter_values = [
+                ["commodity", "electricity", "mp_min_res_gen_to_demand_ratio", mrg2d_ratio],
+                ["commodity", "electricity", "mp_min_res_gen_to_demand_ratio_slack_penalty", 10000],
+                ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
+                ["model", "instance", "model_type", "spineopt_benders"],
+                ["model", "instance", "max_iterations", 10],
+                ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
+                ["node", "node_b", "demand", dem],
+                ["unit", "unit_ab_alt", "is_renewable", true],
+                ["unit", "unit_ab_alt", "number_of_units", 0],
+                ["unit", "unit_ab_alt", "candidate_units", 1],
+                ["unit", "unit_ab_alt", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
+                ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
+                ["unit", "unit_ab_alt", "unit_investment_cost", u_inv_cost],
+                ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
+                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
+                ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
+                ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
+            ]
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost_],
+                ["unit__to_node", ["unit_ab_alt", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab_alt", "node_b"], "vom_cost", vom_cost_alt],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values
+            )
+            rm(file_path_out; force=true)
+            m = run_spineopt(url_in, url_out; log_level=0)
+            m_mp = master_problem_model(m)
+            cons = m_mp.ext[:spineopt].constraints[:mp_min_res_gen_to_demand_ratio]
+            invest_vars = m_mp.ext[:spineopt].variables[:units_invested_available]
+            slack_vars = m_mp.ext[:spineopt].variables[:mp_min_res_gen_to_demand_ratio_slack]
+            @test length(cons) == 1
+            observed_con = constraint_object(only(values(cons)))
+            expected_con = @build_constraint(
+                + ucap * sum(
+                    duration(k.t) * v for (k, v) in invest_vars if DateTime(2000) <= start(k.t) < DateTime(2000, 1, 2)
+                )
+                + only(values(slack_vars))
+                >=
+                + 24 * dem * mrg2d_ratio
+            )
+            @test _is_constraint_equal(observed_con, expected_con)
+            using_spinedb(url_out, Y)
+            @testset "total_cost" begin
+                for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
+                    @test Y.total_costs(model=Y.model(:instance), t=t) == (should_invest ? 60 : 120)
+                end
+            end
+            @testset "invested" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.units_invested(unit=Y.unit(:unit_ab_alt), t=t) == (
+                        should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
+                    )
+                end
+            end
+            @testset "mothballed" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.units_mothballed(unit=Y.unit(:unit_ab_alt), t=t) == 0
+                end
+            end
+            @testset "available" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.units_invested_available(unit=Y.unit(:unit_ab_alt), t=t) == (should_invest ? 1 : 0)
+                end
+            end
+            t0 = DateTime(2000, 1, 1)
+            @test Y.mp_min_res_gen_to_demand_ratio_slack(commodity=Y.commodity(:electricity), t=t0) == 0
+        end
+    end
+end
+
+function _test_benders_starting_units_invested()
+    @testset "benders_starting_units_invested" begin
+        benders_gap = 1e-6  # needed so that we get the exact master problem solution
+        mip_solver_options_benders = unparse_db_value(Map(["HiGHS.jl"], [Map(["mip_rel_gap"], [benders_gap])]))
+        res = 6
+        dem = ucap = 10
+        rf = 6
+        look_ahead = 3
+        vom_cost_ = 2
+        vom_cost_alt = vom_cost_ / 2
+        op_cost_no_inv = ucap * vom_cost_ * (24 + look_ahead)
+        op_cost_inv = ucap * vom_cost_alt * (24 + look_ahead)
+        do_not_inv_cost = op_cost_no_inv - op_cost_inv  # minimum cost at which investment is not profitable, 270.0
+        u_inv_cost = do_not_inv_cost + 1  # needed, not sure why
+        @testset for (max_iters, should_invest) in ((10, false), (1, true))
+            url_in, url_out, file_path_out = _test_run_spineopt_benders_setup()
+            objects = [
+                ["unit", "unit_ab_alt"],
+                ["output", "total_costs"],
+                ["output", "units_invested"],
+                ["output", "units_mothballed"],
+                ["output", "units_invested_available"],
+                ["output", "unit_investment_costs"],
+                ["temporal_block", "investments_hourly"],
+            ]
+            relationships = [
+                ["unit__to_node", ["unit_ab_alt", "node_b"]],
+                ["units_on__temporal_block", ["unit_ab_alt", "hourly"]],
+                ["units_on__stochastic_structure", ["unit_ab_alt", "deterministic"]],
+                ["model__temporal_block", ["instance", "investments_hourly"]],
+                ["model__default_investment_temporal_block", ["instance", "investments_hourly"]],
+                ["model__default_investment_stochastic_structure", ["instance", "deterministic"]],
+                ["report__output", ["report_x", "total_costs"]],
+                ["report__output", ["report_x", "units_invested"]],
+                ["report__output", ["report_x", "units_mothballed"]],
+                ["report__output", ["report_x", "units_invested_available"]],
+                ["report__output", ["report_x", "unit_investment_costs"]],
+            ]
+            object_parameter_values = [
+                ["model", "instance", "roll_forward", unparse_db_value(Hour(rf))],
+                ["model", "instance", "model_type", "spineopt_benders"],
+                ["model", "instance", "max_iterations", max_iters],
+                ["model", "instance", "db_mip_solver_options", mip_solver_options_benders],
+                ["node", "node_b", "demand", dem],
+                ["unit", "unit_ab_alt", "number_of_units", 0],
+                ["unit", "unit_ab_alt", "candidate_units", 1],
+                ["unit", "unit_ab_alt", "benders_starting_units_invested", 1],
+                ["unit", "unit_ab_alt", "unit_investment_variable_type", "unit_investment_variable_type_integer"],
+                ["unit", "unit_ab_alt", "online_variable_type", "unit_online_variable_type_integer"],
+                ["unit", "unit_ab_alt", "unit_investment_cost", u_inv_cost],
+                ["temporal_block", "hourly", "block_end", unparse_db_value(Hour(rf + look_ahead))],
+                ["temporal_block", "investments_hourly", "block_end", unparse_db_value(Hour(24 + look_ahead))],
+                ["temporal_block", "hourly", "resolution", unparse_db_value(Hour(res))],
+                ["temporal_block", "investments_hourly", "resolution", unparse_db_value(Hour(res))],
+            ]
+            relationship_parameter_values = [
+                ["unit__to_node", ["unit_ab", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab", "node_b"], "vom_cost", vom_cost_],
+                ["unit__to_node", ["unit_ab_alt", "node_b"], "unit_capacity", ucap],
+                ["unit__to_node", ["unit_ab_alt", "node_b"], "vom_cost", vom_cost_alt],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values
+            )
+            rm(file_path_out; force=true)
+            run_spineopt(url_in, url_out; log_level=0)
+            using_spinedb(url_out, Y)
+            @testset "total_cost" begin
+                for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 1, 23)
+                    @test Y.total_costs(model=Y.model(:instance), t=t) == (should_invest ? 60 : 120)
+                end
+            end
+            @testset "unit_investment_costs" begin
+                @test Y.objective_unit_investment_costs(model=Y.model(:instance), t=DateTime(2000, 1, 1)) == (
+                    should_invest ? u_inv_cost : 0
+                )
+            end
+            @testset "invested" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.units_invested(unit=Y.unit(:unit_ab_alt), t=t) == (
+                        should_invest && t == DateTime(2000, 1, 1) ? 1 : 0
+                    )
+                end
+            end
+            @testset "mothballed" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.units_mothballed(unit=Y.unit(:unit_ab_alt), t=t) == 0
+                end
+            end
+            @testset "available" begin
+                @testset for t in DateTime(2000, 1, 1):Hour(6):DateTime(2000, 1, 2)
+                    @test Y.units_invested_available(unit=Y.unit(:unit_ab_alt), t=t) == (should_invest ? 1 : 0)
+                end
+            end
+        end
+    end
+end
+
 @testset "run_spineopt_benders" begin
     _test_benders_unit()
     _test_benders_storage()
-    # FIXME: _test_benders_unit_storage()
     _test_benders_rolling_representative_periods()
+    _test_benders_rolling_representative_periods_yearly_investments_multiple_units()
+    _test_benders_mp_min_res_gen_to_demand_ratio()
+    _test_benders_starting_units_invested()
+    # FIXME: _test_benders_unit_storage()
 end

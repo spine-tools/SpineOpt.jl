@@ -32,7 +32,7 @@ function rerun_spineopt_standard!(
 )
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
-    roll_count = _roll_count(m)
+    roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:roll_count)
     init_model!(
         m;
@@ -65,21 +65,6 @@ function rerun_spineopt_standard!(
             write_report_from_intermediate_results(m, url_out; alternative=alternative, log_level=log_level)
         end
     end
-end
-
-function _roll_count(m::Model)
-    instance = m.ext[:spineopt].instance
-    window_start = model_start(model=instance)
-    i = 1
-    while true
-        rf = roll_forward(model=instance, i=i, _strict=false)
-        if isnothing(rf) || rf == Minute(0) || window_start + rf >= model_end(model=instance)
-            break
-        end
-        window_start += rf
-        i += 1
-    end
-    i - 1
 end
 
 """
@@ -224,6 +209,7 @@ function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
             add_constraint_node_voltage_angle!,
             add_constraint_max_node_voltage_angle!,
             add_constraint_min_node_voltage_angle!,
+            add_constraint_entity_investment_group!,
         )
         name = name_from_fn(add_constraint!)
         @timelog log_level 3 "- [$name]" add_constraint!(m)
@@ -344,7 +330,7 @@ end
 Optimize the given model.
 If an optimal solution is found, save results and return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, save_outputs=true, iterations=nothing)
+function optimize_model!(m::Model; log_level=3, calculate_duals=false, iterations=nothing)
     write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
@@ -359,10 +345,8 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, save_outp
                 m; iterations=iterations
             )
             calculate_duals && _calculate_duals(m; log_level=log_level)
-            if save_outputs
-                @timelog log_level 2 "Postprocessing results..." postprocess_results!(m)
-                @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
-            end
+            @timelog log_level 2 "Postprocessing results..." postprocess_results!(m)
+            @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
         else
             m.ext[:spineopt].has_results[] = false
             @warn "no solution available for window $(current_window(m)) - moving on..."
@@ -416,18 +400,15 @@ Save the value of the objective terms in a model.
 """
 function _save_objective_values!(m::Model)
     ind = (model=m.ext[:spineopt].instance, t=current_window(m))
-    for (term, (in_window, _bw)) in m.ext[:spineopt].objective_terms
-        m.ext[:spineopt].values[term] = Dict(ind => JuMP.value(realize(in_window)))
+    total_costs = total_costs_tail = 0
+    for (term, (in_window, beyond_window)) in m.ext[:spineopt].objective_terms
+        cost, cost_tail = JuMP.value(realize(in_window)), JuMP.value(realize(beyond_window))
+        total_costs += cost
+        total_costs_tail += cost_tail
+        m.ext[:spineopt].values[term] = Dict(ind => cost)
     end
-    m.ext[:spineopt].values[:total_costs] = Dict(
-        ind => sum(m.ext[:spineopt].values[term][ind] for term in keys(m.ext[:spineopt].objective_terms); init=0)
-    )
-    m.ext[:spineopt].values[:total_costs_tail] = Dict(
-        ind => sum(
-            JuMP.value(realize(beyond_window)) for (_iw, beyond_window) in values(m.ext[:spineopt].objective_terms);
-            init=0
-        )
-    )
+    m.ext[:spineopt].values[:total_costs] = Dict(ind => total_costs)
+    m.ext[:spineopt].values[:total_costs_tail] = Dict(ind => total_costs_tail)
     nothing
 end
 
@@ -456,8 +437,14 @@ function _calculate_duals_cplex(m; log_level=3)
     CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, CPLEX.CPXPROB_FIXEDMILP)
     @timelog log_level 1 "Optimizing LP..." ret = CPLEX.CPXlpopt(cplex_model.env, cplex_model.lp)
     if ret == 0
-        _save_marginal_values!(m)
-        _save_bound_marginal_values!(m, v -> _reduced_cost_cplex(v, cplex_model, CPLEX))
+        try
+            _save_marginal_values!(m)
+            _save_bound_marginal_values!(m, v -> _reduced_cost_cplex(v, cplex_model, CPLEX))
+        catch err
+            @error err
+            CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, prob_type)
+            return false
+        end
     end
     CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, prob_type)
     ret == 0
@@ -591,7 +578,7 @@ function _value_by_entity_non_aggregated(m, value::Dict, crop_to_window)
     analysis_time = start(current_window(m))
     for (ind, val) in value
         t_keys = collect(_time_slice_keys(ind))
-        t = maximum(ind[k] for k in t_keys)
+        t = !isempty(t_keys) ? maximum(ind[k] for k in t_keys) : current_window(m)
         t <= analysis_time && continue
         crop_to_window && start(t) >= end_(current_window(m)) && continue
         entity = _drop_key(ind, t_keys...)

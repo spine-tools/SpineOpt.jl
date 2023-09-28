@@ -17,10 +17,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function add_variable_sp_objective_upperbound!(m::Model)
-	add_variable!(m, :sp_objective_upperbound, sp_objective_upperbound_indices)
-end
+"""
+    objective_penalties(m::Model)
 
-function sp_objective_upperbound_indices(m::Model; kwargs...)
-    [(t=current_window(m),)]
+Create an expression for objective penalties.
+"""
+# TODO: find a better name for this; objective penalities is not self-speaking
+function mp_objective_penalties(m::Model, t_range)
+    mp_min_res_gen_to_demand_ratio_slack = get(
+        m.ext[:spineopt].variables, :mp_min_res_gen_to_demand_ratio_slack, nothing
+    )  # Currently, mp_min_res_gen_to_demand_ratio_slack is only for the benders master problem
+    mp_min_res_gen_to_demand_ratio_slack === nothing && return 0
+    @expression(
+        m,
+        expr_sum(
+            mp_min_res_gen_to_demand_ratio_slack_penalty(commodity=comm) * mp_min_res_gen_to_demand_ratio_slack[comm]
+            for (comm,) in mp_min_res_gen_to_demand_ratio_slack_indices(m);
+            init=0,
+        )
+    )
 end

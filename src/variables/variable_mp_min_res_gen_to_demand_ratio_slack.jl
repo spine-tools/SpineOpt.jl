@@ -17,10 +17,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-function add_variable_sp_objective_upperbound!(m::Model)
-	add_variable!(m, :sp_objective_upperbound, sp_objective_upperbound_indices)
+"""
+mp_min_res_gen_to_demand_ratio_slack_indices(commodity=anything, temporal_block=anything, t=anything)
+
+A list of `NamedTuple`s corresponding to indices of the `mp_min_res_gen_to_demand_ratio_slack` variable where the keyword arguments act as filters
+for each dimension.
+"""
+function mp_min_res_gen_to_demand_ratio_slack_indices(m::Model; commodity=anything, kwargs...)
+    collect(indices_as_tuples(mp_min_res_gen_to_demand_ratio_slack_penalty; commodity=commodity))
 end
 
-function sp_objective_upperbound_indices(m::Model; kwargs...)
-    [(t=current_window(m),)]
+"""
+    add_variable_units_on!(m::Model)
+
+Add `units_on` variables to model `m`.
+"""
+function add_variable_mp_min_res_gen_to_demand_ratio_slack!(m::Model)
+    add_variable!(
+        m, :mp_min_res_gen_to_demand_ratio_slack, mp_min_res_gen_to_demand_ratio_slack_indices; lb=Constant(0)
+    )
 end
