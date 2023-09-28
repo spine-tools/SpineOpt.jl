@@ -105,6 +105,7 @@ end
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")
     include("constraints/constraint_user_constraint.jl")
+    include("constraints/constraint_investment_group.jl")
     include("objective/objective.jl")
     include("util/misc.jl")
     include("util/docs_utils.jl")
