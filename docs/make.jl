@@ -18,12 +18,12 @@ concept_dictionary = SpineOpt.add_cross_references!(
 )
 SpineOpt.write_concept_reference_files(concept_dictionary, path)
 
-# Automatically write the 'Constraints' file using the 'constraintinstructions' file and content from docstrings
+# Automatically write the 'constraints_automatically_generated_file' file using the 'constraints' file and content from docstrings
 mathpath = joinpath(path, "src", "mathematical_formulation")
 alldocs = SpineOpt.alldocstrings(SpineOpt)
-instructionlist = readlines(joinpath(mathpath, "constraintinstructions.md"))
+instructionlist = readlines(joinpath(mathpath, "constraints.md"))
 markdownstring = SpineOpt.docs_from_instructionlist(alldocs, instructionlist)
-open(joinpath(mathpath, "constraints.md"), "w") do file
+open(joinpath(mathpath, "constraints_automatically_generated_file.md"), "w") do file
     write(file, markdownstring)
 end
 
@@ -54,7 +54,7 @@ pages = [
     ],
     "Mathematical Formulation" => Any[
         "Variables" => joinpath("mathematical_formulation", "variables.md"),
-        "Constraints" => joinpath("mathematical_formulation", "constraints.md"),
+        "Constraints" => joinpath("mathematical_formulation", "constraints_automatically_generated_file.md"),
         "Objective" => joinpath("mathematical_formulation", "objective_function.md"),
     ],
     "Advanced Concepts" => Any[
