@@ -27,11 +27,24 @@ In this tutorial, you will learn how to add a new reserve node to the Simple Sys
 
 ![image](../figs_reserves/aaa.png)
 
+- Right click on the *node* class, and select *Add object group* from the context menu. The *Add object group* dialog will pop up. In the *Group name* field write *upward\_reserve\_group* to refer to this group. Then, add as a members of the group the nodes *electricity\_node* and *upward\_reserve\_node*, as shown in the image below; then press *Ok*.
+
+!!! note
+In SpineOpt, groups of nodes allow the user to create constraints that involve variables from its members. Later in this tutorial, the group named *upward\_reserve\_group* will help to link the flow variables for electricity production and reserve provision.
+
+![image](../figs_reserves/aaa.png)
+
 #### Establishing relationships
 
 - Always in the Spine DB editor, locate the *Relationship tree* (typically at the bottom-left). Expand the *root* element if not expanded.
 - Right click on the *unit\_\_to_node* class, and select *Add relationships* from the context menu. The *Add relationships* dialog will pop up.
 - Select the names of the two units and their **receiving** nodes, as seen in the image below; then press *Ok*. This will establish that both *power\_plant\_a* and *power\_plant\_b* release energy into the *upward\_reserve\_node*.
+
+![image](../figs_reserves/aaa.png)
+
+- Right click on the *report\_\_output* class, and select *Add relationships* from the context menu. The *Add relationships* dialog will pop up.
+
+- Enter *report1* under *report*, and *variable\_om\_costs* under *output*. Repete the same procedure in the second line to add the *res\_proc\_costs* under *output* as seen in the image below; then press *Ok*. This will write the total *vom\_cost* and *procurement reserve cost* values in the objective function to the output database as a part of *report1*.
 
 ![image](../figs_reserves/aaa.png)
 
@@ -49,7 +62,20 @@ In this tutorial, you will learn how to add a new reserve node to the Simple Sys
 
 #### Specifying relationship parameter values
 
-TBD
+- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_a | upward\_reserve\_node*.
+
+- In the *Relationship parameter* table (typically at the bottom-center), select the *unit\_capacity* parameter and the *Base* alternative, and enter the value *100* as seen in the image below. This will set the capacity to provide reserve for *power\_plant\_a*.
+
+!!! note
+The value is equal to the unit capacity defined for the electricity node. However, the value can be lower if the unit cannot provide reserves with its total capacity.
+
+![image](../figs_reserves/aaa.png)
+
+- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_b | upward\_reserve\_node*.
+
+- In the *Relationship parameter* table (typically at the bottom-center), select the *unit\_capacity* parameter and the *Base* alternative, and enter the value *200* as seen in the image below. This will set the capacity to provide reserve for *power\_plant\_b*.
+
+![image](../figs_reserves/aaa.png)
 
 When you're ready, commit all changes to the database.
 
