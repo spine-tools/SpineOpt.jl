@@ -30,7 +30,7 @@ In this tutorial, you will learn how to add a new reserve node to the Simple Sys
 - Right click on the *node* class, and select *Add object group* from the context menu. The *Add object group* dialog will pop up. In the *Group name* field write *upward\_reserve\_group* to refer to this group. Then, add as a members of the group the nodes *electricity\_node* and *upward\_reserve\_node*, as shown in the image below; then press *Ok*.
 
 !!! note
-In SpineOpt, groups of nodes allow the user to create constraints that involve variables from its members. Later in this tutorial, the group named *upward\_reserve\_group* will help to link the flow variables for electricity production and reserve provision.
+In SpineOpt, groups of nodes allow the user to create constraints that involve variables from its members. Later in this tutorial, the group named *upward\_reserve\_group* will help to link the flow variables for electricity production and reserve procurement.
 
 ![image](../figs_reserves/aaa.png)
 
@@ -38,7 +38,7 @@ In SpineOpt, groups of nodes allow the user to create constraints that involve v
 
 - Always in the Spine DB editor, locate the *Relationship tree* (typically at the bottom-left). Expand the *root* element if not expanded.
 - Right click on the *unit\_\_to_node* class, and select *Add relationships* from the context menu. The *Add relationships* dialog will pop up.
-- Select the names of the two units and their **receiving** nodes, as seen in the image below; then press *Ok*. This will establish that both *power\_plant\_a* and *power\_plant\_b* release energy into the *upward\_reserve\_node*.
+- Select the names of the two units and their **receiving** nodes, as seen in the image below; then press *Ok*. This will establish that both *power\_plant\_a* and *power\_plant\_b* release energy into both the *upward\_reserve\_node* and the *upward\_reserve\_group*.
 
 ![image](../figs_reserves/aaa.png)
 
@@ -56,7 +56,13 @@ In SpineOpt, groups of nodes allow the user to create constraints that involve v
   - *demand* parameter and the *Base* alternative, and enter the value *20*. This will establish that there's a demand of '20' at the reverse node.
   - *is_reserve_node* parameter and the *Base* alternative, and enter the value *True*. This will establish that it is a reverse node.
   - *upward_reserve* parameter and the *Base* alternative, and enter the value *True*. This will establish the direction of the reserve is upwards.
-  - *nodal_balance_sense* parameter and the *Base* alternative, and enter the value $\geq$. This will establish that the total reserve provision must be greater or equal than the reserve demand.
+  - *nodal_balance_sense* parameter and the *Base* alternative, and enter the value $\geq$. This will establish that the total reserve procurement must be greater or equal than the reserve demand.
+
+![image](../figs_reserves/aaa.png)
+
+- Select *upward\_reserve\_group* in the *Object tree*.
+
+- In the *Object parameter* table, select the *balance\_type* parameter and the *Base* alternative, and enter the value *balance\_type\_none* as seen in the image below. This will establish that there is no need create an extra balance between the members of the group.
 
 ![image](../figs_reserves/aaa.png)
 
@@ -77,12 +83,75 @@ The value is equal to the unit capacity defined for the electricity node. Howeve
 
 ![image](../figs_reserves/aaa.png)
 
+- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_a | upward\_reserve\_group*.
+
+- In the *Relationship parameter* table (typically at the bottom-center), select the following parameter as seen in the image below:
+  - *unit\_capacity* parameter and the *Base* alternative, and enter the value *100*. This will set the total capacity for *power\_plant\_a* in the group.
+  - *ramp\_up\_limit* parameter and the *Base* alternative, and enter the value *1*. This will set the ramping up capacity to 100% of the unit capacity for *power\_plant\_a*.
+
+!!! note
+The *ramp\_up\_limit* parameter triggers the [Splitting unit flows into ramps]@(ref) constraint, which links the unit's flow and reserve variables.
+
+![image](../figs_reserves/aaa.png)
+
+- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_b | upward\_reserve\_group*.
+
+- In the *Relationship parameter* table (typically at the bottom-center), select the following parameter as seen in the image below:
+  - *unit\_capacity* parameter and the *Base* alternative, and enter the value *200*. This will set the total capacity for *power\_plant\_b* in the group.
+  - *ramp\_up\_limit* parameter and the *Base* alternative, and enter the value *1*. This will set the ramping up capacity to 100% of the unit capacity for *power\_plant\_b*.
+
 When you're ready, commit all changes to the database.
 
 ### Executing the workflow
 
-TBD
+- Go back to Spine Toolbox's main window, and hit the **Execute project** button ![image](../figs_simple_system/play-circle.png) from the tool bar. You should see 'Executing All Directed Acyclic Graphs' printed in the *Event log* (at the bottom left by default).
+
+- Select the 'Run SpineOpt' Tool. You should see the output from SpineOpt in the *Julia Console* after clicking the *object activity control*.
 
 ### Examining the results
 
-TBD
+- Select the output data store and open the Spine DB editor. You can already inspect the fields in the displayed tables or use a pivot table.
+
+- For the pivot table, press **Alt + F** for the shortcut to the hamburger menu, and select **Pivot -> Index**.
+
+- Select *report\_\_unit\_\_node\_\_direction\_\_stochastic\_scenario* under **Relationship tree**, and the first cell under **alternative** in the *Frozen table*.
+
+- Under alternative in the Frozen table, you can choose results from different runs. Pick the run you want to view. If the workflow has been run several times, the most recent run will usually be found at the bottom.
+
+- The *Pivot table* will be populated with results from the SpineOpt run. It will look something like the image below.
+
+![image](../figs_reserves/aaa.png)
+
+As anticipated, the *power\_plant\_b* is supplying the necessary reserve due to its surplus capacity, while *power\_plant\_a* is operating at full capacity. Additionally, in this model, we have not allocated a cost for reserve procurement. One way to double-check it is by selecting *report\_\_model* under **Relationship tree** and look at the costs the *Pivot table*, see image below.
+
+![image](../figs_reserves/aaa.png)
+
+So, is it possible to assign costs to this reserve procurement in SpineOpt? Yes, it is indeed possible.
+
+#### Specifying a reserve procurement cost value
+
+- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_a | upward\_reserve\_node*.
+
+- In the *Relationship parameter* table (typically at the bottom-center), select the *reserve\_procurement\_cost* parameter and the *Base* alternative, and enter the value *5* as seen in the image below. This will set the cost of providing reserve for *power\_plant\_a*.
+
+![image](../figs_reserves/aaa.png)
+
+- In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_b | upward\_reserve\_node*.
+
+- In the *Relationship parameter* table (typically at the bottom-center), select the *reserve\_procurement\_cost* parameter and the *Base* alternative, and enter the value *35* as seen in the image below. This will set the cost of providing reserve for *power\_plant\_b*.
+
+![image](../figs_reserves/aaa.png)
+
+**Don't forget to commit the new changes to the database!**
+
+#### Executing the worflow and examining the results again
+
+- Go back to Spine Toolbox's main window, and hit again the **Execute project** button as before.
+
+- Select the output data store and open the Spine DB editor. You can inspect results as before, which should look like the image below.
+
+![image](../figs_reserves/aaa.png)
+
+Since the cost of reserve procurement is way cheaper in *power\_plant\_a* than in *power\_plant\_b*, then the optimal solution is to reduce the production of electricity in *power\_plant\_a* to provide reserve with this unit rather than *power\_plant\_b* as before. By looking at the total costs, we can see that the reserve procurement costs are no longer zero.
+
+![image](../figs_reserves/aaa.png)
