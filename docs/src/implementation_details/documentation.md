@@ -25,6 +25,8 @@ The current list of fields for constraints:
 + description: describes the formulation of the constraint in words
 + formulation: describes the formulation of the constraints in latex formulas
 
+There is also a special instruction specifically for getting the same field (or fields) from all constraint functions; instead of specifying the function name you can write `alldocstrings`. It will also automatically generate titles in between corresponding to the constraint.
+
 An example for how the docstring looks:
 
 ```
