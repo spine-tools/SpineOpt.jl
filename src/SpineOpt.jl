@@ -25,6 +25,7 @@ using Dates
 using SpineInterface
 using JSON
 using Printf
+using Documenter
 using Requires
 using JuMP
 using HiGHS
