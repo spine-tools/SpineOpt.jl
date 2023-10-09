@@ -39,8 +39,9 @@ The workflow for this tutorial is quite simple: A SpineOpt tool that
 reads data from an input database, executes the simulation/optimization 
 and writes the results to an output database.
 
-It is almost as simple as dragging these items (i.e. Data Store and Run SpineOpt) 
-to the *Design View* and connecting them by dragging arrows between the blocks 
+To create the workflow, it is almost as simple as dragging these items
+(i.e. Data Store and Run SpineOpt) to the *Design View* and
+connecting them by dragging arrows between the blocks 
 but there are some things that need to be configured:
 -   The databases need to be initialised. Once you select a database
     you see the properties panel. Select the dialect of the database.
@@ -48,7 +49,9 @@ but there are some things that need to be configured:
     create and save the database on your computer 
     (Spine Toolbox will suggest a good folder).
 
--   The arrows in the Toolbox view are only the available items (databases).
+-   Connecting tools with (yellow) arrows in the Toolbox does not mean that 
+    the tools will use these items.
+    The arrows in the Toolbox view make items (databases) available.
     To let SpineOpt know we want to use these items, we need to go to the 
     properties panel of Run SpineOpt and drag the available items to the 
     tool arguments. The order of the items is first the input, then the output.
@@ -100,16 +103,16 @@ into the input database, run the workflow and view the results in the output dat
     graph button. The graph view only shows what you select in the root menu 
     and what your selected objects or relationships are connected to.
 
--   Click the hamburger menu (or press **Alt + F**), 
+-   To import the templates to the database, click the hamburger menu (or press **Alt + F**), 
     select **File -> Import...**, and then select the template file you previously
     downloaded (*spineopt\_template.json*). The contents of that file will be 
     imported into the current database, and you should then see classes like 
     'commodity', 'connection' and 'model' under the root node in the *Object tree*
      (on the left). Then import the second file (*basic\_model\_template.json*).
 
--   From the hamburger menu, select **Session -> Commit**. Enter 'Import
-    SpineOpt template' as message in the popup dialog, and click
-    **Commit**.
+-   To save our changes, go again to the hamburger menu and select **Session -> Commit**.
+    Enter a commit message, e.g. 'Import SpineOpt template', in the popup dialog
+    and click **Commit**.
 
 !!! note
     The SpineOpt template contains the fundamental entity classes
@@ -162,9 +165,11 @@ into the input database, run the workflow and view the results in the output dat
 
 !!! note
     Alternatively right click the objects in the graph view and 
-    *add relationships* will show the available relationships. 
-    If your relationship relies on nodes and units they both need 
-    to be visible in the graph for the relationship to become available.
+    *add relationships* will show the available relationships.
+    Note that this only works when the involved units/nodes/... are visible
+    in the graph view. To make an object visible, simply click on the object
+    in the list of objects/object classes. You can select multiple objects with
+    ctrl or shift.
 
 -   Select the names of the two units and their **sending** nodes, as
     seen in the image below; then press *Ok*. This will establish that
@@ -193,7 +198,7 @@ into the input database, run the workflow and view the results in the output dat
 ![image](figs_simple_system/simple_system_add_unit__node__node.png)
 
 !!! note
-    The *unit\_\_node\_\_node* relationship is necessary to bind the flow 
+    The *unit\_\_node\_\_node* relationship is necessary to limit the flow 
     (flows are unbound by default) and to define an efficiency.
     The order of the nodes is important for that definition (see later on).
     It may seem unintuitive to define an efficiency through a three-way 
@@ -306,7 +311,7 @@ into the input database, run the workflow and view the results in the output dat
     parameter. If you have swapped the nodes or inverted the efficiency values, 
     the Run SpineOpt tool will run into errors.
 
-When you're ready, commit all changes to the database.
+When you're ready, save/commit all changes to the database.
 
 ### Executing the workflow
 
