@@ -41,7 +41,7 @@ and writes the results to an output database.
 
 It is almost as simple as dragging these items (i.e. Data Store and Run SpineOpt) 
 to the *Design View* and connecting them by dragging arrows between the blocks 
-but there are some things that configured:
+but there are some things that need to be configured:
 -   The databases need to be initialised. Once you select a database
     you see the properties panel. Select the dialect of the database.
     Here we choose sqlite. Then press the button 'new spine db' to 
@@ -52,7 +52,7 @@ but there are some things that configured:
     To let SpineOpt know we want to use these items, we need to go to the 
     properties panel of Run SpineOpt and drag the available items to the 
     tool arguments. The order of the items is first the input, then the output.
-    See below for how the property window should look like.
+    See below for how the property window should look.
 
 ![image](../figs_simple_system/simple_system_spinetoolbox_run_spineopt.png)
 
@@ -61,14 +61,14 @@ but there are some things that configured:
     to the SpineOpt format. Luckily we can use templates for this. One of those 
     templates is made available as an item in Spine Toolbox: Load template. 
     The other option is to load templates into the database using the db editor. 
-    The templates can also be used to already populate the database with some basic 
-    components as well. Here we briefly explain the use of the Load template 
+    The templates can also be used to pre-populate the database with some basic 
+    components. Here we briefly explain the use of the Load template 
     block and later we show how to import a template and basic components with the 
     spine db editor. To use the Load template block, drag it to the view and connect 
     it to the input database. Just like the Run SpineOpt block we need to drag the 
     available input database to the tool argument.
 
-The result could look like this (+/- the Load template block):
+The result should look similar to this (+/- the Load template block):
 
 ![image](../figs_simple_system/simple_system_workflow.png)
 
@@ -197,8 +197,8 @@ into the input database, run the workflow and view the results in the output dat
     (flows are unbound by default) and to define an efficiency.
     The order of the nodes is important for that definition (see later on).
     It may seem unintuitive to define an efficiency through a three-way 
-    relationship instead of a property of a unit, but this approach allows 
-    to define efficiencies between any flow coming in and out of the unit (e.g. CHP). 
+    relationship instead of a property of a unit, but this approach allows you
+    to define efficiencies between any flow(s) coming in and out of the unit (e.g. CHP). 
 
 -   Right click on the *report\_\_output* class, and select
     *Add relationships* from the context menu. The *Add relationships*
@@ -298,7 +298,7 @@ into the input database, run the workflow and view the results in the output dat
     under *value*. This will set the conversion ratio from fuel to
     electricity for *power\_plant\_a* and
     *power\_plant\_b* to *0.7* and
-    *0.8*, respectively. It should like the image below.
+    *0.8*, respectively. It should look like the image below.
 ![image](../figs_simple_system/simple_system_fix_ratio_out_in_unit_flow.png)
 
 !!! note
