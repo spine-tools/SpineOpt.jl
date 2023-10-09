@@ -1,0 +1,103 @@
+#############################################################################
+# Copyright (C) 2017 - 2023  Spine Project
+#
+# This file is part of SpineOpt.
+#
+# Spine Model is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Spine Model is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#############################################################################
+
+"""
+    add_constraint_investment_group_minimum_entities_invested_available!(m::Model)
+
+Force number of entities invested available in a group to be greater than the minimum.
+"""
+function add_constraint_investment_group_minimum_entities_invested_available!(m::Model)
+    t0 = _analysis_time(m)
+    m.ext[:spineopt].constraints[:investment_group_minimum_entities_invested_available] = Dict(
+        (investment_group=ig, stochastic_scenario=s, t=t) => @constraint(
+            m,
+            _group_entities_invested_available(m, ig, s, t)
+            >=
+            minimum_entities_invested_available[(investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)]
+        )
+        for ig in indices(minimum_entities_invested_available)
+        for (s, t) in _entities_invested_available_s_t(m)
+    )
+end
+
+"""
+    add_constraint_investment_group_maximum_entities_invested_available!(m::Model)
+
+Force number of entities invested available in a group to be lower than the maximum.
+"""
+function add_constraint_investment_group_maximum_entities_invested_available!(m::Model)
+    t0 = _analysis_time(m)
+    m.ext[:spineopt].constraints[:investment_group_maximum_entities_invested_available] = Dict(
+        (investment_group=ig, stochastic_scenario=s, t=t) => @constraint(
+            m,
+            _group_entities_invested_available(m, ig, s, t)
+            <=
+            maximum_entities_invested_available[(investment_group=ig, stochastic_scenario=s, analysis_time=t0, t=t)]
+        )
+        for ig in indices(maximum_entities_invested_available)
+        for (s, t) in _entities_invested_available_s_t(m)
+    )
+end
+
+function _entities_invested_available_s_t(m)
+    [
+        (stochastic_scenario=s, t=t)
+        for (t, path) in t_lowest_resolution_path(
+            m,
+            vcat(
+                units_invested_available_indices(m),
+                connections_invested_available_indices(m),
+                storages_invested_available_indices(m)
+            )
+        )
+        for s in path
+    ]
+end
+
+function _group_entities_invested_available(m, ig, s, t)
+    @fetch (
+        units_invested_available, connections_invested_available, storages_invested_available
+    ) = m.ext[:spineopt].variables
+    (
+        + expr_sum(
+            units_invested_available[u, s, t]
+            for (u, s, t) in units_invested_available_indices(
+                m; unit=unit__investment_group(investment_group=ig), stochastic_scenario=s, t=t_in_t(m; t_long=t)
+            );
+            init=0
+        )
+        + expr_sum(
+            connections_invested_available[conn, s, t]
+            for (conn, s, t) in connections_invested_available_indices(
+                m;
+                connection=connection__investment_group(investment_group=ig),
+                stochastic_scenario=s,
+                t=t_in_t(m; t_long=t)
+            );
+            init=0
+        )
+        + expr_sum(
+            storages_invested_available[n, s, t]
+            for (n, s, t) in storages_invested_available_indices(
+                m; node=node__investment_group(investment_group=ig), stochastic_scenario=s, t=t_in_t(m; t_long=t)
+            );
+            init=0
+        )
+    )
+end

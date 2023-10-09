@@ -25,6 +25,7 @@ using Dates
 using SpineInterface
 using JSON
 using Printf
+using Documenter
 using Requires
 using JuMP
 using HiGHS
@@ -32,6 +33,9 @@ using Arrow
 import DataStructures: OrderedDict
 import Dates: CompoundPeriod
 import LinearAlgebra: BLAS.gemm, LAPACK.getri!, LAPACK.getrf!
+
+# Resolve JuMP and SpineInterface `Parameter` and `parameter_value` conflicts.
+import SpineInterface: Parameter, parameter_value
 
 export run_spineopt
 export rerun_spineopt
@@ -184,7 +188,9 @@ include("constraints/constraint_node_voltage_angle.jl")
 include("constraints/constraint_connection_unitary_gas_flow.jl")
 include("constraints/constraint_mp_any_invested_cuts.jl")
 include("constraints/constraint_mp_min_res_gen_to_demand_ratio.jl")
-include("constraints/constraint_entity_investment_group.jl")
+include("constraints/constraint_investment_group_equal_investments.jl")
+include("constraints/constraint_investment_group_entities_invested_available.jl")
+include("constraints/constraint_investment_group_capacity_invested_available.jl")
 
 
 export unit_flow_indices

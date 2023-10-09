@@ -24,6 +24,8 @@ using Dates
 using JuMP
 using PyCall
 
+# Resolve JuMP and SpineInterface `Parameter` and `parameter_value` conflicts.
+import SpineInterface: Parameter, parameter_value
 
 import SpineOpt:
     time_slice,
@@ -103,6 +105,7 @@ end
     include("constraints/constraint_node.jl")
     include("constraints/constraint_connection.jl")
     include("constraints/constraint_user_constraint.jl")
+    include("constraints/constraint_investment_group.jl")
     include("objective/objective.jl")
     include("util/misc.jl")
     include("util/docs_utils.jl")

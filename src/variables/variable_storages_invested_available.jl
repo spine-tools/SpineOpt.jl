@@ -33,7 +33,9 @@ function storages_invested_available_indices(
     node=members(node)
     unique(
         (node=n, stochastic_scenario=s, t=t)
-        for (n, tb) in node__investment_temporal_block(node=node, temporal_block=temporal_block, _compact=false)
+        for (n, tb) in node__investment_temporal_block(
+            node=intersect(indices(candidate_storages), node), temporal_block=temporal_block, _compact=false
+        )
         for (n, s, t) in node_investment_stochastic_time_indices(
             m; node=n, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t
         )

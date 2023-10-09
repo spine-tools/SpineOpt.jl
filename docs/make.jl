@@ -18,6 +18,15 @@ concept_dictionary = SpineOpt.add_cross_references!(
 )
 SpineOpt.write_concept_reference_files(concept_dictionary, path)
 
+# Automatically write the 'constraints_automatically_generated_file' file using the 'constraints' file and content from docstrings
+mathpath = joinpath(path, "src", "mathematical_formulation")
+alldocs = SpineOpt.alldocstrings(SpineOpt)
+instructionlist = readlines(joinpath(mathpath, "constraints.md"))
+markdownstring = SpineOpt.docs_from_instructionlist(alldocs, instructionlist)
+open(joinpath(mathpath, "constraints_automatically_generated_file.md"), "w") do file
+    write(file, markdownstring)
+end
+
 # Generate the documentation pages
 # Replace the Any[...] with just Any[] if you want to collect content automatically via `expand_empty_chapters!`
 pages = [
@@ -45,7 +54,7 @@ pages = [
     ],
     "Mathematical Formulation" => Any[
         "Variables" => joinpath("mathematical_formulation", "variables.md"),
-        "Constraints" => joinpath("mathematical_formulation", "constraints.md"),
+        "Constraints" => joinpath("mathematical_formulation", "constraints_automatically_generated_file.md"),
         "Objective" => joinpath("mathematical_formulation", "objective_function.md"),
     ],
     "Advanced Concepts" => Any[
@@ -73,7 +82,8 @@ SpineOpt.populate_empty_chapters!(pages, joinpath(path, "src"))
 # Create and deploy the documentation
 makedocs(
     sitename="SpineOpt.jl",
-    format=Documenter.HTML(prettyurls=get(ENV, "CI", nothing) == "true"),  # uncomment to deploy locally
+    format=Documenter.HTML(prettyurls=get(ENV, "CI", nothing) == "true", size_threshold=409600),  # uncomment to deploy locally
     pages=pages,
+    warnonly=true
 )
 deploydocs(repo="github.com/spine-tools/SpineOpt.jl.git", versions=["stable" => "v^", "v#.#"])

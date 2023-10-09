@@ -32,15 +32,15 @@ function add_constraint_units_available!(m::Model)
                 units_available[u, s, t] for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t);
                 init=0,
             )
-            <=
-            + number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
-            + expr_sum(
+            - expr_sum(
                 units_invested_available[u, s, t1]
                 for (u, s, t1) in units_invested_available_indices(
                     m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
                 );
                 init=0,
             )
+            <=
+            number_of_units[(unit=u, stochastic_scenario=s, analysis_time=t0, t=t)] 
         )
         for (u, s, t) in constraint_units_available_indices(m)
     )

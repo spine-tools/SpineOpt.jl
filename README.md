@@ -15,6 +15,12 @@ and can be joined [here](https://teams.microsoft.com/l/meetup-join/19%3ameeting_
 3. [Discussion forum](https://github.com/spine-tools/SpineOpt.jl/discussions/categories/support) (support section) can be used when you don't know how to get something done or you don't quite know why something isn't working. It's highly appreciated if other users can contribute by helping each other (developers are short on time).
 4. [Issue tracker](https://github.com/spine-tools/SpineOpt.jl/issues) should be used only when there is a missing feature or something should work but it's not working. Update your tools and test with latest software before submitting an issue. In case of new feature, make sure there is no existing issue. Issues reporting bugs should provide sufficient information to enable locating and fixing the bug.
 
+### Citing SpineOpt
+
+Please cite [this article](https://doi.org/10.1016/j.esr.2022.100902) when referring to SpineOpt in scientific writing.
+
+```Ihlemann, M., Kouveliotis-Lysikatos, I., Huang, J., Dillon, J., O'Dwyer, C., Rasku, T., Marin, M., Poncelet, K., & Kiviluoma, J. (2022). SpineOpt: A flexible open-source energy system modelling framework. Energy Strategy Reviews, 43, [100902]. https://doi.org/10.1016/j.esr.2022.100902```
+
 ### Compatibility
 
 This package requires [Julia](https://julialang.org/) 1.6 or higher.
@@ -35,9 +41,9 @@ SpineOpt is designed to be used with [Spine Toolbox](https://github.com/spine-to
       1. Start the [Julia REPL](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
       2. Copy and paste the following text into the julia prompt:
          ```julia
-         using Pkg
-         pkg"registry add General https://github.com/spine-tools/SpineJuliaRegistry"
-         pkg"add SpineOpt"
+         using Pkg									# Use the package manager. Alternatively, use `]` in REPL
+         pkg"registry add General https://github.com/spine-tools/SpineJuliaRegistry"	# Add SpineJuliaRegistry as an available registry for your Julia
+         pkg"add SpineOpt"								# Install SpineOpt from the SpineJuliaRegistry
          ```
 
 	b. If you want to both use and develop SpineOpt, we recommend installing it from sources:
@@ -47,10 +53,24 @@ SpineOpt is designed to be used with [Spine Toolbox](https://github.com/spine-to
       3. Start the [Julia REPL](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
       4. Run the following commands from the julia prompt, replacing your local SpineOpt and SpineInterface paths
          ```julia
-         using Pkg
-         pkg"dev <path-to-your-local-SpineInterface-repository>"
-         pkg"dev <path-to-your-local-SpineOpt-repository>"
+         using Pkg							# Use the package manager. Alternatively, use `]` in REPL
+         pkg"dev <path-to-your-local-SpineInterface-repository>"	# Installs the local version of SpineInterface
+         pkg"dev <path-to-your-local-SpineOpt-repository>"		# Installs the local version of SpineOpt
          ```
+      5. If you want your local SpineOpt to use your local SpineInterface, you also need to `develop` the SpineInterface dependency manually:
+         ```julia
+         using Pkg							# Use the package manager. Alternatively, use `]` in REPL
+         pkg"activate <path-to-your-local-SpineOpt-repository>"		# Activate the local SpineOpt environment
+         pkg"dev <path-to-your-local-SpineInterface-repository>"	# Install the local SpineInterface into the local SpineOpt environment
+         ```
+      6. Lastly, you should probably make sure all the required dependencies are installed using the `instantiate` command:
+	```julia
+ 	using Pkg							# Use the package manager. Alternatively, use `]` in REPL			
+ 	pkg"activate <path-to-your-local-SpineInterface-repository>"	# Activate the local SpineInterface environment
+ 	pkg"instantiate"						# Install SpineInterface dependencies
+ 	pkg"activate <path-to-your-local-SpineOpt-repository>"		# Activate the local SpineOpt environment
+ 	pkg"instantiate"						# Install SpineOpt dependencies (SpineInterface already installed locally in step 5)
+ 	```
 
 4. Configure Spine Toolbox to use your Julia:
 
@@ -64,14 +84,32 @@ SpineOpt is designed to be used with [Spine Toolbox](https://github.com/spine-to
 
 It doesn't work? See our [Troubleshooting](#troubleshooting) section.
 
+If you want to run SpineOpt outside Spine Toolbox, you need to configure SpineInterface PyCall using the instructions at the end of [SpineInterface installation instructions](https://github.com/spine-tools/SpineInterface.jl#installation).
+
 ### Upgrading
 
-SpineOpt is constantly improving. To get the most recent version, just:
+SpineOpt is constantly improving. To get the most recent version, upgrade SpineOpt using one of the following methods, depending on how you have installed it.
 
-1. Start the [Julia REPL](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
+1. If you have installed SpineOpt from the registry:
 
-2. Copy/paste the following text into the julia prompt
-(it will update the SpineOpt package from the [Spine Julia Registry](https://github.com/spine-tools/SpineJuliaRegistry)):
+	a. Start the [Julia REPL](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
+
+	b. Copy/paste the following text into the julia prompt (it will update the SpineOpt package from the [Spine Julia Registry](https://github.com/spine-tools/SpineJuliaRegistry)):
+
+	```julia
+	using Pkg
+	pkg"up SpineOpt"
+	```
+
+2. If you have installed SpineOpt from the sources:
+
+	a. Git-pull the latest master from this repository.
+
+	b. Git-pull the latest master from the [SpineInterface repository](https://github.com/spine-tools/SpineInterface.jl).
+
+	c. Start the [Julia REPL](https://github.com/spine-tools/SpineOpt.jl/raw/master/docs/src/figs/win_run_julia.png).
+
+	d. Copy/paste the following text into the julia prompt:
 
 	```julia
 	using Pkg
@@ -222,12 +260,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 ### License
 
 SpineOpt is licensed under GNU Lesser General Public License version 3.0 or later.
-
-### Citing SpineOpt
-
-Please cite [this article](https://doi.org/10.1016/j.esr.2022.100902) when referring to SpineOpt in scientific writing.
-
-```Ihlemann, M., Kouveliotis-Lysikatos, I., Huang, J., Dillon, J., O'Dwyer, C., Rasku, T., Marin, M., Poncelet, K., & Kiviluoma, J. (2022). SpineOpt: A flexible open-source energy system modelling framework. Energy Strategy Reviews, 43, [100902]. https://doi.org/10.1016/j.esr.2022.100902```
 
 ### Acknowledgements
 
