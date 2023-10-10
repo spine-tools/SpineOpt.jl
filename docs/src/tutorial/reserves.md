@@ -17,7 +17,12 @@ Welcome to our tutorial, where we will walk you through the process of adding a 
 
 ### Entering input data
 
-In this tutorial, you will learn how to add a new reserve node to the Simple System. To begin, please launch the Spine Toolbox and select **File** and then **Open Project** or use the keyboard shortcut **Alt + O** to open the desired project. Afterwards, locate the folder that you saved in the Simple System tutorial and click *Ok*. This will prompt the Simple System workflow to appear in the *Design View* section for you to start working on.
+- Launch the Spine Toolbox and select **File** and then **Open Project** or use the keyboard shortcut **Alt + O** to open the desired project.
+- Locate the folder that you saved in the Simple System tutorial and click *Ok*. This will prompt the Simple System workflow to appear in the *Design View* section for you to start working on.
+- Select the 'input' Data Store item in the *Design View*.
+- Go to *Data Store Properties* and hit **Open editor**. This will open the database in the *Spine DB editor*.
+
+In this tutorial, you will learn how to add a new reserve node to the Simple System.
 
 #### Creating objects
 
@@ -54,9 +59,9 @@ In SpineOpt, groups of nodes allow the user to create constraints that involve v
 - Locate the *Object parameter* table (typically at the top-center).
 - In the *Object parameter* table (typically at the top-center), select the following parameter as seen in the image below:
   - *demand* parameter and the *Base* alternative, and enter the value *20*. This will establish that there's a demand of '20' at the reverse node.
-  - *is_reserve_node* parameter and the *Base* alternative, and enter the value *True*. This will establish that it is a reverse node.
-  - *upward_reserve* parameter and the *Base* alternative, and enter the value *True*. This will establish the direction of the reserve is upwards.
-  - *nodal_balance_sense* parameter and the *Base* alternative, and enter the value $\geq$. This will establish that the total reserve procurement must be greater or equal than the reserve demand.
+  - *is\_reserve\_node* parameter and the *Base* alternative, and enter the value *True*. This will establish that it is a reverse node.
+  - *upward\_reserve* parameter and the *Base* alternative, and enter the value *True*. This will establish the direction of the reserve is upwards.
+  - *nodal\_balance\_sense* parameter and the *Base* alternative, and enter the value $\geq$. This will establish that the total reserve procurement must be greater or equal than the reserve demand.
 
 ![image](figs_reserves/reserves_tutorial_reserve_node_parameters.png)
 
