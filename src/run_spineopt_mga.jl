@@ -102,14 +102,6 @@ function rerun_spineopt_mga!(
                     end
                 end
             end
-            for name in (:mga_aux_diff,)
-                for var in values(m.ext[:spineopt].variables[name])
-                    try
-                        delete(m, var)
-                    catch
-                    end
-                end
-            end
         end
         # TODO: needs to clean constraint (or simply clean within function)
         mga_iterations += 1
