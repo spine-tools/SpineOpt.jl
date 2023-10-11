@@ -270,7 +270,7 @@ function run_spineopt_kernel!(
     k = _resume_run!(m, resume_file_path, log_level, update_names)
     k === nothing && return m
     calculate_duals = any(
-        startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:spineopt].outputs))
+        startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
     )
     while optimize
         @log log_level 1 "\nWindow $k: $(current_window(m))"
@@ -381,6 +381,7 @@ Save a model results: first postprocess results, then save variables and objecti
 """
 function _save_model_results!(m; iterations=nothing)
     _save_variable_values!(m)
+    _save_constraint_values!(m)
     _save_objective_values!(m)
 end
 
@@ -390,6 +391,17 @@ Save the value of all variables in a model.
 function _save_variable_values!(m::Model)
     for (name, var) in m.ext[:spineopt].variables
         m.ext[:spineopt].values[name] = Dict(ind => _variable_value(v) for (ind, v) in var)
+    end
+end
+
+"""
+Save the value of all constraints if the user wants to report it.
+"""
+function _save_constraint_values!(m::Model)
+    for (name, con) in m.ext[:spineopt].constraints
+        name = Symbol(:value_constraint_, name)
+        name in keys(m.ext[:spineopt].outputs) || continue
+        m.ext[:spineopt].values[name] = Dict(ind => JuMP.value(c) for (ind, c) in con)
     end
 end
 
@@ -916,10 +928,19 @@ function update_model!(m; log_level=3, update_names=false)
     @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m)
 end
 
-function _update_constraint_names!(m)
-    for (key, cons) in m.ext[:spineopt].constraints                        
-        for (ind, con) in cons        
-            constraint_name = _sanitize_constraint_name(string(key, ind))                            
+function _update_variable_names!(m, names=keys(m.ext[:spineopt].variables))
+    for name in names   
+        var = m.ext[:spineopt].variables[name]
+        for (ind, v) in var
+            _set_name(v, _base_name(name, ind))
+        end
+    end
+end
+
+function _update_constraint_names!(m, names=keys(m.ext[:spineopt].constraints))
+    for name in names   
+        for (ind, con) in m.ext[:spineopt].constraints[name]        
+            constraint_name = _sanitize_constraint_name(string(name, ind))                            
             _set_name(con, constraint_name)
         end
     end
@@ -929,14 +950,6 @@ function _sanitize_constraint_name(constraint_name)
     pattern = r"[^\x1F-\x7F]+"
     occursin(pattern, constraint_name) && @warn "constraint $constraint_name has an illegal character"
     replace(constraint_name, pattern => "_")
-end
-
-function _update_variable_names!(m)
-    for (name, var) in m.ext[:spineopt].variables
-        for (ind, v) in var
-            _set_name(v, _base_name(name, ind))
-        end
-    end
 end
 
 _set_name(x::Union{VariableRef,ConstraintRef}, name) = set_name(x, name)
