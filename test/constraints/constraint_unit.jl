@@ -313,16 +313,11 @@ function test_constraint_operating_point_bounds()
         m = run_spineopt(url_in; log_level=0, optimize=false)
         constraint = m.ext[:spineopt].constraints[:operating_point_bounds]
         @test isempty(constraint)
-
         ordered_unit_flow_op = true
         relationship_parameter_values = [
             ["unit__from_node", ["unit_ab", "node_a"], "ordered_unit_flow_op", ordered_unit_flow_op],
         ]
-        SpineInterface.import_data(
-            url_in;  
-            relationship_parameter_values=relationship_parameter_values 
-        )
-
+        SpineInterface.import_data(url_in; relationship_parameter_values=relationship_parameter_values)
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_units_on = m.ext[:spineopt].variables[:units_on]
         var_unit_flow_op_active = m.ext[:spineopt].variables[:unit_flow_op_active]
