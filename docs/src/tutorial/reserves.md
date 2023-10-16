@@ -60,7 +60,7 @@ In SpineOpt, groups of nodes allow the user to create constraints that involve v
 - In the *Object parameter* table (typically at the top-center), select the following parameter as seen in the image below:
   - *demand* parameter and the *Base* alternative, and enter the value *20*. This will establish that there's a demand of '20' at the reverse node.
   - *is\_reserve\_node* parameter and the *Base* alternative, and enter the value *True*. This will establish that it is a reverse node.
-  - *upward\_reserve* parameter and the *Base* alternative, and enter the value *True*. This will establish the direction of the reserve is upwards.
+  - *upward\_reserve* parameter and the *Base* alternative, then right-click on the value cell and then, in the context menu, select 'Edit...' and select the option *True*. This will establish the direction of the reserve is upwards.
   - *nodal\_balance\_sense* parameter and the *Base* alternative, and enter the value $\geq$. This will establish that the total reserve procurement must be greater or equal than the reserve demand.
 
 ![image](figs_reserves/reserves_tutorial_reserve_node_parameters.png)
