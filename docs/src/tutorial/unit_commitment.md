@@ -34,7 +34,7 @@ In this tutorial, you will learn how to add unit commitment constraints to the S
 - Locate the *Object parameter* table (typically at the top-center).
 - In the *Object parameter* table, identify the *demand* parameter which should have a 150 value from the Simple System first run.
 - Right click on the value cell and then select *edit* from the context menu. The *Edit value* dialog will pop up.
-- Change the *Parameter type* to *Time series fixed resolution*, *Resolution* to *1h*, and the demand values to the time series as in the image below.
+- Change the *Parameter type* to *Time series fixed resolution*, *Resolution* to *1h*, and the demand values to the time series as in the image below. You can copy and paste the values from the file: [uc_electricity_node_demand.csv](figs_unit_commitment/uc_electricity_node_demand.csv)
 - Finish by pressing *OK* in the *Edit value* menu. In the *Object parameter* table you will see that the value of the *demand* has changed to *Time series*.
 
 ![image](figs_unit_commitment/uc_electricity_demand.png)
