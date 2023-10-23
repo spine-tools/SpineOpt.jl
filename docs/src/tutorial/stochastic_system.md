@@ -1,4 +1,4 @@
-# Stochastic System tutorial
+# Stochastic system tutorial
 
 Welcome to Spine Toolbox's Stochastic System tutorial.
 
@@ -6,8 +6,8 @@ This tutorial provides a step-by-step guide to get started with the stochastic s
 More information can be found in the [documentation on the stochastic structure](@ref stochastic_framework).
 It is recommended to make sure you are able to get the simple system tutorial working first.
 
-In this tutorial we will take a look at independent scenarios, DAG stochastic structures
-and specific different stochastic structures in different parts of the energy system.
+In this tutorial we will take a look at independent scenarios, stochastic paths
+and different stochastic paths in different parts of the energy system.
 
 ## Setup starting from simple system tutorial
 
@@ -74,11 +74,89 @@ Now we can use these labels in the values for the energy system.
 
 ![image](figs_stochastic/stochastic_system_independent_map.png)
 
-That is it! We can now run the model and the output database will show the results for both scenarios.
+That is it!
+We can now run the model and the output database will show the results for both scenarios.
 In the realization scenario power plant b produces an output of 50.
 In the independent scenario power plant b does not produce anything
 as the demand is low enough for power plant a to produce all the necessary energy.
 
-## DAG stochastic structures
+## Stochastic path
+SpineOpt always works with stochastic paths.
+The stochastic path describes which scenario is active at each time step.
+There can be multiple stochastic paths in parallel.
+The stochastic structure collects the stochastic paths in a direct acyclic graph (DAG).
+
+But let's make that more clear with an example.
+We can continue from the previous structure,
+but let's rename the structure and scenarios. (optional step)
+- Right click the object (either in the tree view or the graph view) and select *edit*
+- Rename the stochastic structure from *deterministic* to *DAG*
+- Rename the *realization* scenario to *base*
+- Rename the *independent* scenario to *forecast1*
+
+Perhaps from the name you already guessed it, we are going to add some scenarios.
+- Add two scenario objects *forecast2* and *forecast3*
+- Connect the two scenarios to stochastic structure
+
+And we need to adjust the map for the electricity demand accordingly.
+- Edit the map and provide a value for each scenario
+(see image below)
+
+![image](figs_stochastic/stochastic_system_dag_map.png)
+
+All these scenarios are independently available to the stochastic structure
+but now we want to define the underlying relationships to make a stochastic path.
+In particular, we want to start from a base scenario and later
+split in the forecast scenarios.
+For SpineOpt that means that the base scenario is the parent scenario
+and the following forecast scenarios are the child scenarios.
+- add the *parent\_stochastic\_structure\_\_child\_stochastic\_structure*
+for each forecast scenario and select the base scenario as its parent
+(the first scenario is the parent scenario and the second scenario is its child)
+
+![image](figs_stochastic/stochastic_system_dag_parent_child.png)
+
+We also need to tell SpineOpt what the probability is that we end up in a certain child.
+That information is stored in the stochastic structure so you'll find the corresponding parameter
+in the *stochastic\_structure\_\_stochastic\_scenario* relationship.
+Here we assume that each forecast is equally likely to happen.
+- for each DAG | forecast relationship, add a value for
+the *weight\_relative\_to\_parent* parameter;
+the sum needs to be equal to 1
+
+![image](figs_stochastic/stochastic_system_dag_weight.png)
+
+That results in the stochastic structure below.
+
+![image](figs_stochastic/stochastic_system_dag.png)
+
+We can run the SpineOpt tool on this database but we will only see the values for the base scenario.
+That is because SpineOpt assumes that a scenario runs forever.
+So, we need to tell SpineOpt when the base scenario ends.
+- The current resolution of the system is 1D
+but we need a higher resolution if we want to switch scenarios.
+So, set the resolution parameter of the temporal block flat to 1h.
+- To end the base structure after 6 h,
+we go to the DAG | base relationship and set the parameter
+*stochastic\_scenario\_end* to a 6h duration value
+(to obtain a duration value we need to right click the value field
+and select the parameter type duration)
+
+Do not forget to save/commit from time to time.
+
+When we run the model now, we will obtain values for all scenarios.
+
+!!! note
+    For the sake of completion we will also tell you what to do
+    when you want converge the forecasts into an end scenario.
+    - add a scenario called *end*
+    - map the end scenario for the electricity demand to the value 200.0
+    - connect the end scenario to the stochastic structure
+    - connect the end scenario to each of the forecasts,
+    where the forecasts are considered as the parents
+    - set the weight of the end scenario to 1
+    - let the forecasts scenarios end after a duration of 4 hours
+
+    ![image](figs_stochastic/stochastic_system_dag_converge.png)
 
 ## Different stochastic structures
