@@ -155,8 +155,13 @@ When we run the model now, we will obtain values for all scenarios.
     - connect the end scenario to each of the forecasts,
     where the forecasts are considered as the parents
     - set the weight of the end scenario to 1
-    - let the forecasts scenarios end after a duration of 4 hours
+    - let the forecasts scenarios end after a duration of 16 hours
 
     ![image](figs_stochastic/stochastic_system_dag_converge.png)
+
+!!! warning
+    The *stochastic\_scenario\_end* parameter starts counting from the start of the simulation!
+    In the examples above, when the base scenario has a duration of 6h and the forecast scenarios have a duration of 16h,
+    the forecast scenarios will only be active for 10 hours between hour 6 and hour 16!
 
 ## Different stochastic structures
