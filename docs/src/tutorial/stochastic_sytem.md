@@ -1,4 +1,4 @@
-# Simple System tutorial
+# Stochastic System tutorial
 
 Welcome to Spine Toolbox's Stochastic System tutorial.
 
