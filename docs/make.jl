@@ -41,6 +41,7 @@ pages = [
     "Tutorials" => Any[
         "Webinars" => joinpath("tutorial", "webinars.md"),
         "Simple system" => joinpath("tutorial", "simple_system.md"),
+        "Stochastic system" => joinpath("tutorial", "stochastic_system.md"),
         "Two hydro plants" => joinpath("tutorial", "tutorialTwoHydro.md"),
         "Case Study A5" => joinpath("tutorial", "case_study_a5.md")
     ],
