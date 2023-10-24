@@ -361,7 +361,8 @@ function _generate_time_slice_relationships!(m::Model)
         # When that's the case, there is a gap on the window boundary
         # that would result in 'transition' constraints not being properly enforced
         # (and thus, for instance, free units started at the beginning of each window)
-        # Here we bridge that gap in t_before_t
+        # Here we bridge that gap by making the last time slice of the previous window
+        # be 'before' the fist one of the current window.
         succeeding_time_slices_hist = Dict(
             last(history_time_slices) => [first(time_slice(m; temporal_block=blk))]
             for (blk, history_time_slices) in m.ext[:spineopt].temporal_structure[:history_time_slice].block_time_slices
