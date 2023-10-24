@@ -30,7 +30,8 @@ function add_constraint_node_injection!(m::Model)
         (node=n, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             + expr_sum(
-                + node_injection[n, s, t] + demand[
+                + node_injection[n, s, t]
+                + demand[
                     (node=n, stochastic_scenario=s, analysis_time=t0, t=representative_time_slice(m, t))
                 ]
                 # node slack
@@ -41,8 +42,8 @@ function add_constraint_node_injection!(m::Model)
                 init=0,
             )
             + expr_sum(
-                fractional_demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=t)]
-                * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=t)]
+                fractional_demand[(node=n, stochastic_scenario=s, analysis_time=t0, t=representative_time_slice(m, t))]
+                * demand[(node=ng, stochastic_scenario=s, analysis_time=t0, t=representative_time_slice(m, t))]
                 for (n, s, t) in node_injection_indices(
                     m; node=n, stochastic_scenario=s, t=t_after, temporal_block=anything
                 )
