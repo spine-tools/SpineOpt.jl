@@ -933,8 +933,10 @@ end
 
 function _update_variable_names!(m)
     for (name, var) in m.ext[:spineopt].variables
-        for (ind, v) in var
-            _set_name(v, _base_name(name, ind))
+        # NOTE: only update names for the representative variables
+        # This is achieved by using the indices function from the variable definition
+        for ind in m.ext[:spineopt].variables_definition[name][:indices](m)
+            _set_name(var[ind], _base_name(name, ind))
         end
     end
 end
