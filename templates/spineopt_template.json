@@ -277,7 +277,8 @@
         ["unit", "is_renewable", false, "boolean_value_list", "Whether the unit is renewable - used in the minimum renewable generation constraint within the Benders master problem"],
         ["user_constraint", "constraint_sense", "==", "constraint_sense_list", "A selector for the sense of the `user_constraint`."],
         ["user_constraint", "is_active", true, "boolean_value_list", "If false, the object is excluded from the model if the tool filter object activity control is specified"],
-        ["user_constraint", "right_hand_side", 0.0, null, "The right-hand side, constant term in a `user_constraint`. Can be time-dependent and used e.g. for complicated efficiency approximations."]
+        ["user_constraint", "right_hand_side", 0.0, null, "The right-hand side, constant term in a `user_constraint`. Can be time-dependent and used e.g. for complicated efficiency approximations."],
+        ["user_constraint", "user_constraint_slack_penalty", null, null, "A penalty for violating a user constraint."]
     ],
     "relationship_parameters": [
         ["connection__from_node", "connection_capacity", null, null, "Limits the `connection_flow` variable from the `from_node`. `from_node` can be a group of `nodes`, in which case the sum of the `connection_flow` is constrained."],

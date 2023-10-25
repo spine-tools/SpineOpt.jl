@@ -140,7 +140,6 @@
                 [relationships[5]..., "storages_invested_available_coefficient", storages_invested_available_coefficient],
                 [relationships[6]..., "connection_flow_coefficient", connection_flow_coefficient_b],
                 [relationships[7]..., "connection_flow_coefficient", connection_flow_coefficient_c],
-                
             ]
             SpineInterface.import_data(
                 url_in;
@@ -231,7 +230,58 @@
             @test _is_constraint_equal(observed_con, expected_con)
         end
     end
+    @testset "constraint_user_constraint_slack_penalty" begin
+        rhs = 10
+        node_state_coefficient = 10
+        penalty = 1000
+        @testset for sense in ("==", ">=", "<=")
+            _load_test_data(url_in, test_data)
+            objects = [["user_constraint", "constraint_x"]]
+            relationships = [["node__user_constraint", ["node_c", "constraint_x"]]]
+            object_parameter_values = [
+                ["user_constraint", "constraint_x", "user_constraint_slack_penalty", penalty],
+                ["user_constraint", "constraint_x", "constraint_sense", Symbol(sense)],
+                ["user_constraint", "constraint_x", "right_hand_side", rhs],
+            ]
+            relationship_parameter_values = [
+                [relationships[1]..., "node_state_coefficient", node_state_coefficient],
+            ]
+            SpineInterface.import_data(
+                url_in;
+                objects=objects,
+                relationships=relationships,
+                object_parameter_values=object_parameter_values,
+                relationship_parameter_values=relationship_parameter_values,
+            )
+            m = run_spineopt(url_in; log_level=0, optimize=false)
+            constraint = m.ext[:spineopt].constraints[:user_constraint]
+            @test length(constraint) == 2
+            t1h1, t1h2, t1h3, t1h4 = time_slice(m; temporal_block=temporal_block(:hourly))
+            t2h1, t2h2 = time_slice(m; temporal_block=temporal_block(:two_hourly))
+            t1h_arr_by_t2h = Dict(t2h1 => [t1h1, t1h2], t2h2 => [t1h3, t1h4])
+            ucx = user_constraint(:constraint_x)
+            parent = stochastic_scenario(:parent)
+            var_n_state = m.ext[:spineopt].variables[:node_state]
+            var_uc_slack_pos = m.ext[:spineopt].variables[:user_constraint_slack_pos]
+            var_uc_slack_neg = m.ext[:spineopt].variables[:user_constraint_slack_neg]
+            node_c = node(:node_c)
+            for (t2h, t1h_arr) in t1h_arr_by_t2h
+                obs_con = constraint_object(constraint[(user_constraint=ucx, stochastic_path=[parent], t=t2h)])
+                expected_con_ref = SpineOpt.sense_constraint(
+                    m,
+                    node_state_coefficient * sum(var_n_state[node_c, parent, t1h] for t1h in t1h_arr)
+                    + var_uc_slack_pos[ucx, parent, t2h] - var_uc_slack_neg[ucx, parent, t2h]
+                    ,
+                    Symbol(sense),
+                    2 * rhs,
+                )
+                exp_con = constraint_object(expected_con_ref)
+                @test _is_constraint_equal(obs_con, exp_con)
+            end
+        end
+    end
 end
+
 @testset "more user constraints" begin
     url_in = "sqlite://"
     test_data = Dict(
