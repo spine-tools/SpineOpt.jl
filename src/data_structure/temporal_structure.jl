@@ -355,7 +355,7 @@ function _generate_time_slice_relationships!(m::Model)
     succeeding_time_slices = Dict(
         t => to_time_slice(m, t=TimeSlice(end_(t), end_(t) + Minute(1))) for t in all_time_slices
     )
-    if m.ext[:spineopt].temporal_structure[:window_count] > 1
+    if get(m.ext[:spineopt].temporal_structure, :window_count, 1) > 1
         # Ensure continuity on the window boundary.
         # This is needed in case a block ends before the window, or starts after the window.
         # When that's the case, there is a gap on the window boundary
