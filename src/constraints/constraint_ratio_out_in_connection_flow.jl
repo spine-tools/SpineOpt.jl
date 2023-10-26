@@ -103,7 +103,7 @@ function constraint_ratio_out_in_connection_flow_indices(m::Model, ratio_out_in)
             m, 
             vcat(
                 path_out,
-                [
+                Object[
                     ind.stochastic_scenario
                     for s in path_out
                     for ind in connection_flow_indices(
