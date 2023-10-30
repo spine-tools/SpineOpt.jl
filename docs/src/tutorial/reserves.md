@@ -94,20 +94,15 @@ The value is equal to the unit capacity defined for the electricity node. Howeve
 
 - In the *Relationship parameter* table (typically at the bottom-center), select the following parameter as seen in the image below:
   - *unit\_capacity* parameter and the *Base* alternative, and enter the value *100*. This will set the total capacity for *power\_plant\_a* in the group.
-  - *ramp\_up\_limit* parameter and the *Base* alternative, and enter the value *1*. This will set the ramping up capacity to 100% of the unit capacity for *power\_plant\_a*.
 
-!!! note
-The *ramp\_up\_limit* parameter triggers the [Splitting unit flows into ramps]@(ref) constraint, which links the unit's flow and reserve variables.
-
-![image](figs_reserves/reserves_tutorial_power_plant_a_ramp_up_limit.png)
+![image](figs_reserves/reserves_tutorial_power_plant_a_unit_capacity_reserve_group.png)
 
 - In *Relationship tree*, expand the *unit\_\_to\_node* class and select *power\_plant\_b | upward\_reserve\_group*.
 
 - In the *Relationship parameter* table (typically at the bottom-center), select the following parameter as seen in the image below:
   - *unit\_capacity* parameter and the *Base* alternative, and enter the value *200*. This will set the total capacity for *power\_plant\_b* in the group.
-  - *ramp\_up\_limit* parameter and the *Base* alternative, and enter the value *1*. This will set the ramping up capacity to 100% of the unit capacity for *power\_plant\_b*.
 
-![image](figs_reserves/reserves_tutorial_power_plant_b_ramp_up_limit.png)
+![image](figs_reserves/reserves_tutorial_power_plant_a_unit_capacity_reserve_group.png)
 
 When you're ready, save/commit all changes to the database.
 
