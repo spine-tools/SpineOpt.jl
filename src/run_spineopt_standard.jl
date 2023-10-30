@@ -385,6 +385,7 @@ function _save_model_results!(m; iterations=nothing)
     _save_variable_values!(m)
     _save_constraint_values!(m)
     _save_objective_values!(m)
+    _save_other_values!(m)
 end
 
 """
@@ -394,6 +395,12 @@ function _save_variable_values!(m::Model)
     for (name, var) in m.ext[:spineopt].variables
         m.ext[:spineopt].values[name] = Dict(ind => _variable_value(v) for (ind, v) in var)
     end
+end
+
+function _save_other_values!(m::Model)
+    m.ext[:spineopt].values[:relative_optimality_gap] = Dict(
+        (model=m.ext[:spineopt].instance, t=current_window(m),) => JuMP.MOI.get(m, JuMP.MOI.RelativeGap())
+    )
 end
 
 """
