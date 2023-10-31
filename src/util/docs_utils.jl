@@ -290,9 +290,9 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
                 end
             end
             # If features are defined, include those into the preamble
-            #if !isnothing(concept_dictionary[filename][concept][:feature])
+            # if !isnothing(concept_dictionary[filename][concept][:feature])
             #    section *= "Uses [Features](@ref): $(join(replace(concept_dictionary[filename][concept][:feature], "_" => "\\_"), ", ", " and "))\n\n"
-            #end
+            # end
             # Try to fetch the description from the corresponding .md filename.
             description_path = joinpath(makedocs_path, "src", "concept_reference", "$(concept).md")
             try
@@ -316,42 +316,160 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
 end
 
 """
-    drag_and_drop(pages, path)
+    populate_empty_chapters!(pages, path)
 
-Reads the folder and file structure to automatically create the documentation, effectively creating a drag and drop feature for select chapters. The functionality is activated for empty chapters ("chapter name" => nothing).
+Expand `pages` in-place so that empty chapters are populated with the entire list of .md files
+in the associated folder.
 
 The code assumes a specific structure.
 + All chapters and corresponding markdownfiles are in the "docs/src folder".
 + folder names need to be lowercase with underscores because folder names are derived from the page names
-+ markdown file names can have uppercases and can have underscores but don't need to because the page names are derived from file names
++ markdown file names can have uppercases and can have underscores but don't need to
+  because the page names are derived from file names
 
-Developer note: An alternative approach for this code could be to automatically go over all folders and files (removing the need for a specific structure) and instead use a list "exclude" which indicates which folders and files should be skipped. To deal with folders in folders we could use walkdir() instead of readdir()
+Developer note: An alternative approach would be to automatically go over all folders and files
+(removing the need for a specific structure), and instead use a list parameter called, e.g., `exclude`,
+which indicates which folders and files should be skipped.
+To deal with folders in folders we could use walkdir() instead of readdir()
 """
-function drag_and_drop(pages, path)
-    # collect folders as chapters and markdownfiles as pages
-    chaptex = Dict()
-    for dir in readdir(path)
-        if isdir(path*"/"*dir)
-            chaptex[dir] = [rd for rd in readdir(path*"/"*dir) if !isdir(path*"/"*dir*"/"*rd) && (rd[end-1:end] == "md" || rd[end-1:end] == "MD")]
+function populate_empty_chapters!(pages, path)
+    for (chapname, chapcontent) in pages
+        isempty(chapcontent) || continue
+        chapdir = lowercase(replace(chapname, " " => "_"))
+        fullchapdir = joinpath(path, chapdir)
+        isdir(fullchapdir) || continue
+        append!(
+            chapcontent,
+            [
+                uppercasefirst(replace(splitext(mdfile)[1], "_" => " ")) => joinpath(chapdir, mdfile)
+                for mdfile in readdir(fullchapdir)
+                if isfile(joinpath(fullchapdir, mdfile)) && lowercase(splitext(mdfile)[2]) == ".md"
+            ]
+        )
+    end
+end
+
+"""
+    alldocstrings(m)
+
+Return all docstrings from the provided module m as a dictionary.
+"""
+function alldocstrings(m)
+    #allbindings(m) = [ [y[2].data[:binding] for y in x[2].docs] for x in Base.eval(m,Base.Docs.META) ]
+    bindings = []
+    for x in Base.eval(m,Base.Docs.META)
+        for y in x[2].docs
+            push!(bindings,[y[2].data[:binding]])
+        end
+    end
+    alldocs = Dict()
+    for binding in bindings
+        dockey = split(string(binding[1]),".")[2]
+        docvalue = Base.Docs.doc(binding[1])
+        alldocs[dockey] = docvalue
+    end
+    return alldocs
+end
+
+"""
+    findregions()
+
+Finds specific regions within a docstring and return them as a single string.
+"""
+function findregions(docstring; regions=["formulation","description"], title="", fieldtitle=false, sep="\n\n", debugmode=false)
+    md = ""
+    if !isempty(title)
+        md *= title * sep
+    end
+    for region in regions
+        try
+            sf1 = findfirst("#region $region",string(docstring))[end]+2
+            sf2 = findfirst("#endregion $region",string(docstring))[1]-2
+            sf = SubString(string(docstring),sf1,sf2)
+            if fieldtitle
+                md *= region * sep
+            end
+            md *= sf * sep
+            if debugmode
+                println(sf)
+            end
+        catch
+            if debugmode
+                @warn "Cannot find #(end)region $region"
+                #the error could also be because there is no docstring for constraint but that is a very rare case as there is often at least a dynamic docstring
+            end
+        end
+    end
+    return md
+end
+
+"""
+    docs_from_instructionlist(alldocs, instructionlist)
+
+Create a string from all docstrings in a module with the instructions from the instructionlist.
+
+The instructions currently accept 3 types (see example below):
++ regular strings: these are simply printed to the string
++ instruction strings: strings in between region instruction, intended for use in markdown files
++ instruction tuple: tuple with the same instructions, more directly related to the findregions function
+
+The instruction consists of a function name and a list of regions in the docstring of that function.
+If the function name is 'alldocstrings' then it will search all docstrings for the given regions.
+
+Each instruction is separated by two end of line characters.
+
+'''julia
+alldocs = alldocstrings(SpineOpt)
+instrulist = [
+    "# Constraints",
+    "## Auto constraint",
+    "#region instruction",
+    "add_constraint_node_state_capacity!",
+    "formulation",
+    "#endregion instruction",
+    ("add_constraint_node_state_capacity!",["formulation","description"])
+]
+markdownstring = docs_from_instructionlist(alldocs, instrulist)
+'''
+"""
+function docs_from_instructionlist(alldocs, instructionlist)
+    md = ""
+    
+    function interpret_instruction(functionname,functionfields)
+        if functionname == "alldocstrings"
+            for (dockey, docvalue) in alldocs
+                title = ""
+                if occursin("add_constraint", dockey)
+                    # remove add_constraint_ as well as !
+                    title = "### " * replace(uppercasefirst(dockey[16:end-1]), "_" => " ")
+                end
+                md *= findregions(docvalue; regions=functionfields, title=title)
+            end
+        else
+            md *= findregions(alldocs[functionname]; regions=functionfields)
         end
     end
 
-    # replace all empty chapters with the 'drag and drop' files
-    newpages = []
-    for page in pages
-        chapname = page.first
-        chapfile = lowercase(replace(chapname, " " => "_"))
-        if chapfile in keys(chaptex) && page.second == nothing
-            texlist = Any[]
-            for texfile in chaptex[chapfile]
-                texname = split(texfile, ".")[1]
-                texname = uppercasefirst(replace(texname, "_" => " "))
-                push!(texlist, texname => joinpath(chapfile, texfile))
+    instructionarray = [] #needs to be empty
+    for instruction in instructionlist
+        if isa(instruction, String)
+            if occursin("#region instruction", instruction)
+                instructionarray = ["findfields"]
+            elseif occursin("#endregion instruction", instruction)
+                functionname = instructionarray[2]
+                functionfields = instructionarray[3:end]
+                interpret_instruction(functionname,functionfields)
+                instructionarray = []
+            elseif !isempty(instructionarray)
+                push!(instructionarray, instruction)
+            else
+                md *= instruction * "\n"
             end
-            push!(newpages, chapname => texlist)
-        else
-            push!(newpages, page)
+        elseif isa(instruction,Tuple)
+            functionname = instruction[1]
+            functionfields = instruction[2]
+            interpret_instruction(functionname,functionfields)
         end
     end
-    return newpages
+    return md
 end

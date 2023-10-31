@@ -32,7 +32,7 @@ function rerun_spineopt_standard!(
 )
     @timelog log_level 2 "Creating temporal structure..." generate_temporal_structure!(m)
     @timelog log_level 2 "Creating stochastic structure..." generate_stochastic_structure!(m)
-    roll_count = _roll_count(m)
+    roll_count = m.ext[:spineopt].temporal_structure[:window_count] - 1
     roll_temporal_structure!(m, 1:roll_count)
     init_model!(
         m;
@@ -65,21 +65,6 @@ function rerun_spineopt_standard!(
             write_report_from_intermediate_results(m, url_out; alternative=alternative, log_level=log_level)
         end
     end
-end
-
-function _roll_count(m::Model)
-    instance = m.ext[:spineopt].instance
-    window_start = model_start(model=instance)
-    i = 1
-    while true
-        rf = roll_forward(model=instance, i=i, _strict=false)
-        if isnothing(rf) || rf == Minute(0) || window_start + rf >= model_end(model=instance)
-            break
-        end
-        window_start += rf
-        i += 1
-    end
-    i - 1
 end
 
 """
@@ -136,6 +121,8 @@ function _add_variables!(m; add_user_variables=m -> nothing, log_level=3)
             add_variable_node_pressure!,
             add_variable_node_voltage_angle!,
             add_variable_binary_gas_connection_flow!,
+            add_variable_user_constraint_slack_pos!,
+            add_variable_user_constraint_slack_neg!,
         )
         name = name_from_fn(add_variable!)
         @timelog log_level 3 "- [$name]" add_variable!(m)
@@ -224,6 +211,11 @@ function _add_constraints!(m; add_constraints=m -> nothing, log_level=3)
             add_constraint_node_voltage_angle!,
             add_constraint_max_node_voltage_angle!,
             add_constraint_min_node_voltage_angle!,
+            add_constraint_investment_group_equal_investments!,
+            add_constraint_investment_group_minimum_entities_invested_available!,
+            add_constraint_investment_group_maximum_entities_invested_available!,
+            add_constraint_investment_group_minimum_capacity_invested_available!,
+            add_constraint_investment_group_maximum_capacity_invested_available!,
         )
         name = name_from_fn(add_constraint!)
         @timelog log_level 3 "- [$name]" add_constraint!(m)
@@ -280,7 +272,7 @@ function run_spineopt_kernel!(
     k = _resume_run!(m, resume_file_path, log_level, update_names)
     k === nothing && return m
     calculate_duals = any(
-        startswith(lowercase(name), r"bound_|constraint_") for name in String.(keys(m.ext[:spineopt].outputs))
+        startswith(name, r"bound_|constraint_") for name in lowercase.(string.(keys(m.ext[:spineopt].outputs)))
     )
     while optimize
         @log log_level 1 "\nWindow $k: $(current_window(m))"
@@ -344,7 +336,7 @@ end
 Optimize the given model.
 If an optimal solution is found, save results and return `true`, otherwise return `false`.
 """
-function optimize_model!(m::Model; log_level=3, calculate_duals=false, save_outputs=true, iterations=nothing)
+function optimize_model!(m::Model; log_level=3, calculate_duals=false, iterations=nothing)
     write_mps_file(model=m.ext[:spineopt].instance) == :write_mps_always && write_to_file(m, "model_diagnostics.mps")
     # NOTE: The above results in a lot of Warning: Variable connection_flow[...] is mentioned in BOUNDS,
     # but is not mentioned in the COLUMNS section.
@@ -359,10 +351,8 @@ function optimize_model!(m::Model; log_level=3, calculate_duals=false, save_outp
                 m; iterations=iterations
             )
             calculate_duals && _calculate_duals(m; log_level=log_level)
-            if save_outputs
-                @timelog log_level 2 "Postprocessing results..." postprocess_results!(m)
-                @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
-            end
+            @timelog log_level 2 "Postprocessing results..." postprocess_results!(m)
+            @timelog log_level 2 "Saving outputs..." _save_outputs!(m; iterations=iterations)
         else
             m.ext[:spineopt].has_results[] = false
             @warn "no solution available for window $(current_window(m)) - moving on..."
@@ -393,7 +383,9 @@ Save a model results: first postprocess results, then save variables and objecti
 """
 function _save_model_results!(m; iterations=nothing)
     _save_variable_values!(m)
+    _save_constraint_values!(m)
     _save_objective_values!(m)
+    _save_other_values!(m)
 end
 
 """
@@ -402,6 +394,23 @@ Save the value of all variables in a model.
 function _save_variable_values!(m::Model)
     for (name, var) in m.ext[:spineopt].variables
         m.ext[:spineopt].values[name] = Dict(ind => _variable_value(v) for (ind, v) in var)
+    end
+end
+
+function _save_other_values!(m::Model)
+    m.ext[:spineopt].values[:relative_optimality_gap] = Dict(
+        (model=m.ext[:spineopt].instance, t=current_window(m),) => JuMP.MOI.get(m, JuMP.MOI.RelativeGap())
+    )
+end
+
+"""
+Save the value of all constraints if the user wants to report it.
+"""
+function _save_constraint_values!(m::Model)
+    for (name, con) in m.ext[:spineopt].constraints
+        name = Symbol(:value_constraint_, name)
+        name in keys(m.ext[:spineopt].outputs) || continue
+        m.ext[:spineopt].values[name] = Dict(ind => JuMP.value(c) for (ind, c) in con)
     end
 end
 
@@ -416,18 +425,15 @@ Save the value of the objective terms in a model.
 """
 function _save_objective_values!(m::Model)
     ind = (model=m.ext[:spineopt].instance, t=current_window(m))
-    for (term, (in_window, _bw)) in m.ext[:spineopt].objective_terms
-        m.ext[:spineopt].values[term] = Dict(ind => JuMP.value(realize(in_window)))
+    total_costs = total_costs_tail = 0
+    for (term, (in_window, beyond_window)) in m.ext[:spineopt].objective_terms
+        cost, cost_tail = JuMP.value(realize(in_window)), JuMP.value(realize(beyond_window))
+        total_costs += cost
+        total_costs_tail += cost_tail
+        m.ext[:spineopt].values[term] = Dict(ind => cost)
     end
-    m.ext[:spineopt].values[:total_costs] = Dict(
-        ind => sum(m.ext[:spineopt].values[term][ind] for term in keys(m.ext[:spineopt].objective_terms); init=0)
-    )
-    m.ext[:spineopt].values[:total_costs_tail] = Dict(
-        ind => sum(
-            JuMP.value(realize(beyond_window)) for (_iw, beyond_window) in values(m.ext[:spineopt].objective_terms);
-            init=0
-        )
-    )
+    m.ext[:spineopt].values[:total_costs] = Dict(ind => total_costs)
+    m.ext[:spineopt].values[:total_costs_tail] = Dict(ind => total_costs_tail)
     nothing
 end
 
@@ -456,8 +462,14 @@ function _calculate_duals_cplex(m; log_level=3)
     CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, CPLEX.CPXPROB_FIXEDMILP)
     @timelog log_level 1 "Optimizing LP..." ret = CPLEX.CPXlpopt(cplex_model.env, cplex_model.lp)
     if ret == 0
-        _save_marginal_values!(m)
-        _save_bound_marginal_values!(m, v -> _reduced_cost_cplex(v, cplex_model, CPLEX))
+        try
+            _save_marginal_values!(m)
+            _save_bound_marginal_values!(m, v -> _reduced_cost_cplex(v, cplex_model, CPLEX))
+        catch err
+            @error err
+            CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, prob_type)
+            return false
+        end
     end
     CPLEX.CPXchgprobtype(cplex_model.env, cplex_model.lp, prob_type)
     ret == 0
@@ -591,7 +603,7 @@ function _value_by_entity_non_aggregated(m, value::Dict, crop_to_window)
     analysis_time = start(current_window(m))
     for (ind, val) in value
         t_keys = collect(_time_slice_keys(ind))
-        t = maximum(ind[k] for k in t_keys)
+        t = !isempty(t_keys) ? maximum(ind[k] for k in t_keys) : current_window(m)
         t <= analysis_time && continue
         crop_to_window && start(t) >= end_(current_window(m)) && continue
         entity = _drop_key(ind, t_keys...)
@@ -925,10 +937,21 @@ function update_model!(m; log_level=3, update_names=false)
     @timelog log_level 2 "Applying non-anticipativity constraints..." apply_non_anticipativity_constraints!(m)
 end
 
-function _update_constraint_names!(m)
-    for (key, cons) in m.ext[:spineopt].constraints                        
-        for (ind, con) in cons        
-            constraint_name = _sanitize_constraint_name(string(key, ind))                            
+function _update_variable_names!(m, names=keys(m.ext[:spineopt].variables))
+    for name in names   
+        var = m.ext[:spineopt].variables[name]
+        # NOTE: only update names for the representative variables
+        # This is achieved by using the indices function from the variable definition
+        for ind in m.ext[:spineopt].variables_definition[name][:indices](m)
+            _set_name(var[ind], _base_name(name, ind))
+        end
+    end
+end
+
+function _update_constraint_names!(m, names=keys(m.ext[:spineopt].constraints))
+    for name in names   
+        for (ind, con) in m.ext[:spineopt].constraints[name]        
+            constraint_name = _sanitize_constraint_name(string(name, ind))                            
             _set_name(con, constraint_name)
         end
     end
@@ -938,14 +961,6 @@ function _sanitize_constraint_name(constraint_name)
     pattern = r"[^\x1F-\x7F]+"
     occursin(pattern, constraint_name) && @warn "constraint $constraint_name has an illegal character"
     replace(constraint_name, pattern => "_")
-end
-
-function _update_variable_names!(m)
-    for (name, var) in m.ext[:spineopt].variables
-        for (ind, v) in var
-            _set_name(v, _base_name(name, ind))
-        end
-    end
 end
 
 _set_name(x::Union{VariableRef,ConstraintRef}, name) = set_name(x, name)

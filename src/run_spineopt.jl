@@ -387,6 +387,7 @@ struct SpineOptExt
     variables::Dict{Symbol,Dict}
     variables_definition::Dict{Symbol,Dict}
     values::Dict{Symbol,Dict}
+    sp_values::Dict{Int64,Dict}
     constraints::Dict{Symbol,Dict}
     objective_terms::Dict{Symbol,Any}
     outputs::Dict{Symbol,Union{Dict,Nothing}}
@@ -424,7 +425,8 @@ struct SpineOptExt
             Dict{Symbol,Dict}(),  # variables
             Dict{Symbol,Dict}(),  # variables_definition
             Dict{Symbol,Dict}(),  # values
-            Dict{Symbol,Dict}(),  # constraints
+            Dict{Int64,Dict}(),  # sp_values
+            Dict{Symbol,Dict}(),  # constraints            
             Dict{Symbol,Any}(),  # objective_terms
             Dict{Symbol,Union{Dict,Nothing}}(),  # outputs
             Dict(),  # temporal_structure

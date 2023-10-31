@@ -20,7 +20,7 @@ system on Spine Toolbox.
 -   The demand at the electricity node is 150 MWh.
 -   The fuel node is able to provide infinite energy.
 
-![image](../figs_simple_system/simple_system_schematic.png)
+![image](figs_simple_system/simple_system_schematic.png)
 
 ### Installation and upgrades
 
@@ -53,7 +53,7 @@ If you are not sure whether you have the latest version, please upgrade to ensur
 -   Go to *Data Store Properties* and hit **Open editor**. This will
     open the newly created database in the *Spine DB editor*, looking
     similar to this:
-![image](../figs_a5/case_study_a5_spine_db_editor_empty.png)
+![image](figs_a5/case_study_a5_spine_db_editor_empty.png)
 
 !!! note
     The *Spine DB editor* is a dedicated interface within Spine Toolbox
@@ -91,7 +91,7 @@ If you are not sure whether you have the latest version, please upgrade to ensur
     then press *Ok*. This will create two objects of class
     *node*, called *fuel\_node* and
     *electricity\_node*.
-![image](../figs_simple_system/simple_system_add_nodes.png)
+![image](figs_simple_system/simple_system_add_nodes.png)
 
 -   Right click on the *unit* class, and select *Add
     objects* from the context menu. The *Add objects* dialog will pop
@@ -106,7 +106,7 @@ If you are not sure whether you have the latest version, please upgrade to ensur
     then press *Ok*. This will create two objects of class
     *unit*, called *power\_plant\_a* and
     *power\_plant\_b*.
-![image](../figs_simple_system/simple_system_add_units.png)
+![image](figs_simple_system/simple_system_add_units.png)
 
 !!! note
     To modify an object after you enter it, right click on it and select
@@ -126,7 +126,7 @@ If you are not sure whether you have the latest version, please upgrade to ensur
     seen in the image below; then press *Ok*. This will establish that
     both *power\_plant\_a* and *power\_plant\_b*
     take energy from the *fuel\_node*.
-![image](../figs_simple_system/simple_system_add_unit__from_node_relationships.png)
+![image](figs_simple_system/simple_system_add_unit__from_node_relationships.png)
 
 -   Right click on the *unit\_\_to_node* class, and select
     *Add relationships* from the context menu. The *Add relationships*
@@ -136,7 +136,7 @@ If you are not sure whether you have the latest version, please upgrade to ensur
     seen in the image below; then press *Ok*. This will establish that
     both *power\_plant\_a* and *power\_plant\_b*
     release energy into the *electricity\_node*.
-![image](../figs_simple_system/simple_system_add_unit__to_node_relationships.png)
+![image](figs_simple_system/simple_system_add_unit__to_node_relationships.png)
 
 -   Right click on the *report\_\_output* class, and select
     *Add relationships* from the context menu. The *Add relationships*
@@ -147,7 +147,7 @@ If you are not sure whether you have the latest version, please upgrade to ensur
     then press *Ok*. This will tell SpineOpt to write the value of the
     *unit\_flow* optimization variable to the output
     database, as part of *report1*.
-![image](../figs_simple_system/simple_system_add_report__output_relationships.png)
+![image](figs_simple_system/simple_system_add_report__output_relationships.png)
 
 !!! note
     In SpineOpt, outputs represent optimization variables that can be
@@ -165,7 +165,7 @@ If you are not sure whether you have the latest version, please upgrade to ensur
     alternative, and enter the value *100* as seen in the
     image below. This will establish that there's a demand of '100'
     at the electricity node.
-![image](../figs_simple_system/simple_system_electricity_demand.png)
+![image](figs_simple_system/simple_system_electricity_demand.png)
 
 -   Select *fuel\_node* in the *Object tree*.
 
@@ -174,7 +174,7 @@ If you are not sure whether you have the latest version, please upgrade to ensur
     alternative, and enter the value *balance\_type\_none* as
     seen in the image below. This will establish that the fuel node is
     not balanced, and thus provide as much fuel as needed.
-![image](../figs_simple_system/simple_system_fuel_balance_type.png)
+![image](figs_simple_system/simple_system_fuel_balance_type.png)
 
 #### Specifying relationship parameter values 
 
@@ -186,7 +186,7 @@ If you are not sure whether you have the latest version, please upgrade to ensur
     *Base* alternative, and enter the value *25*
     as seen in the image below. This will set the operating cost for
     *power\_plant\_a*.
-![image](../figs_simple_system/simple_system_power_plant_a_vom_cost.png)
+![image](figs_simple_system/simple_system_power_plant_a_vom_cost.png)
 
 -   Select *power\_plant\_b | fuel\_node* in the *Relationship
     tree*.
@@ -196,7 +196,7 @@ If you are not sure whether you have the latest version, please upgrade to ensur
     alternative, and enter the value *50* as seen in the
     image below. This will set the operating cost for
     *power\_plant\_b*.
-![image](../figs_simple_system/simple_system_power_plant_b_vom_cost.png)
+![image](figs_simple_system/simple_system_power_plant_b_vom_cost.png)
 
 -   In *Relationship tree*, expand the *unit\_\_to_node*
     class and select *power\_plant\_a | electricity\_node*.
@@ -206,7 +206,7 @@ If you are not sure whether you have the latest version, please upgrade to ensur
     alternative, and enter the value *100* as seen in the
     image below. This will set the capacity for
     *power\_plant\_a*.
-![image](../figs_simple_system/simple_system_power_plant_a_capacity.png)
+![image](figs_simple_system/simple_system_power_plant_a_capacity.png)
 
 -   Select *power\_plant\_b | electricity\_node* in the
     *Relationship tree*.
@@ -216,7 +216,7 @@ If you are not sure whether you have the latest version, please upgrade to ensur
     alternative, and enter the value *200* as seen in the
     image below. This will set the capacity for
     *power\_plant\_b*.
-![image](../figs_simple_system/simple_system_power_plant_b_capacity.png)
+![image](figs_simple_system/simple_system_power_plant_b_capacity.png)
 
 -   In *Relationship tree*, select the
     *unit\_\_node\_\_node* class, and come back to the
@@ -232,14 +232,14 @@ If you are not sure whether you have the latest version, please upgrade to ensur
     electricity for *power\_plant\_a* and
     *power\_plant\_b* to *0.7* and
     *0.8*, respectively. It should like the image below.
-![image](../figs_simple_system/simple_system_fix_ratio_out_in_unit_flow.png)
+![image](figs_simple_system/simple_system_fix_ratio_out_in_unit_flow.png)
 
 When you're ready, commit all changes to the database.
 
 ### Executing the workflow
 
 -   Go back to Spine Toolbox's main window, and hit the **Execute
-    project** button ![image](../figs_a5/play-circle.png) from the tool bar. 
+    project** button ![image](figs_a5/play-circle.png) from the tool bar. 
     You should see 'Executing All Directed Acyclic Graphs' printed in
     the *Event log* (at the bottom left by default).
 
@@ -261,4 +261,4 @@ When you're ready, commit all changes to the database.
     the bottom.
 -   The *Pivot table* will be populated with results from the SpineOpt
     run. It will look something like the image below.
-![image](../figs_simple_system/simple_system_results_pivot_table.png)
+![image](figs_simple_system/simple_system_results_pivot_table.png)

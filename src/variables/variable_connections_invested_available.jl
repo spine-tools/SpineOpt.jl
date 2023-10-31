@@ -34,7 +34,9 @@ function connections_invested_available_indices(
     unique(
         (connection=conn, stochastic_scenario=s, t=t)
         for (conn, tb) in connection__investment_temporal_block(
-            connection=connection, temporal_block=temporal_block, _compact=false
+            connection=intersect(indices(candidate_connections), connection),
+            temporal_block=temporal_block,
+            _compact=false
         )
         for (conn, s, t) in connection_investment_stochastic_time_indices(
             m; connection=conn, stochastic_scenario=stochastic_scenario, temporal_block=tb, t=t

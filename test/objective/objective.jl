@@ -145,7 +145,7 @@
             (unit_investment_cost * sum(units_invested[unit(:unit_ab), s, t] for (s, t) in zip(scenarios, time_slices)))
         @test observed_obj == expected_obj
     end
-    @testset "objective_penalties" begin
+    @testset "node_slack_penalty" begin
         _load_test_data(url_in, test_data)
         node_a_slack_penalty = 0.6
         node_b_slack_penalty = 0.4
@@ -166,12 +166,40 @@
         t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
         observed_obj = objective_function(m)
         expected_obj = (
-            +2 * node_a_slack_penalty * node_slack_neg[n_a, s_parent, t2h] +
-            2 * node_a_slack_penalty * node_slack_pos[n_a, s_parent, t2h] +
-            node_b_slack_penalty * node_slack_neg[n_b, s_parent, t1h1] +
-            node_b_slack_penalty * node_slack_pos[n_b, s_parent, t1h1] +
-            node_b_slack_penalty * node_slack_neg[n_b, s_child, t1h2] +
-            node_b_slack_penalty * node_slack_pos[n_b, s_child, t1h2]
+            + 2 * node_a_slack_penalty * node_slack_neg[n_a, s_parent, t2h]
+            + 2 * node_a_slack_penalty * node_slack_pos[n_a, s_parent, t2h]
+            + node_b_slack_penalty * node_slack_neg[n_b, s_parent, t1h1]
+            + node_b_slack_penalty * node_slack_pos[n_b, s_parent, t1h1]
+            + node_b_slack_penalty * node_slack_neg[n_b, s_child, t1h2]
+            + node_b_slack_penalty * node_slack_pos[n_b, s_child, t1h2]
+        )
+        @test observed_obj == expected_obj
+    end
+    @testset "user_constraint_slack_penalty" begin
+        _load_test_data(url_in, test_data)
+        uc_slack_penalty = 0.6
+        objects = [["user_constraint", "ucx"]]
+        relationships = [["node__user_constraint", ["node_a", "ucx"]]]
+        object_parameter_values = [
+            [objects[1]..., "user_constraint_slack_penalty", uc_slack_penalty],
+        ]
+        SpineInterface.import_data(
+            url_in;
+            objects=objects,
+            relationships=relationships,
+            object_parameter_values=object_parameter_values,
+        )
+        
+        m = run_spineopt(url_in; log_level=0, optimize=false)
+        uc_slack_neg = m.ext[:spineopt].variables[:user_constraint_slack_neg]
+        uc_slack_pos = m.ext[:spineopt].variables[:user_constraint_slack_pos]
+        ucx = user_constraint(:ucx)
+        s_parent = stochastic_scenario(:parent)
+        t2h = time_slice(m; temporal_block=temporal_block(:two_hourly))[1]
+        observed_obj = objective_function(m)
+        expected_obj = (
+            + 2 * uc_slack_penalty * uc_slack_neg[ucx, s_parent, t2h]
+            + 2 * uc_slack_penalty * uc_slack_pos[ucx, s_parent, t2h]
         )
         @test observed_obj == expected_obj
     end

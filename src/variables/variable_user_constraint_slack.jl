@@ -18,28 +18,36 @@
 #############################################################################
 
 """
-    node_state_indices(filtering_options...)
+    user_constraint_slack_indices(filtering_options...)
 """
-function node_slack_indices(
+function user_constraint_slack_indices(
     m::Model;
-    node=anything,
+    user_constraint=anything,
     stochastic_scenario=anything,
     t=anything,
     temporal_block=temporal_block(representative_periods_mapping=nothing),
 )
-    inds = NamedTuple{(:node, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
-        (node=n, stochastic_scenario=s, t=t)
-        for n in intersect(node_with_slack_penalty(), node)
-        for (n, s, t) in node_stochastic_time_indices(
-            m; node=n, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
+    inds = NamedTuple{(:user_constraint, :stochastic_scenario, :t),Tuple{Object,Object,TimeSlice}}[
+        (user_constraint=uc, stochastic_scenario=ind.stochastic_scenario, t=ind.t)
+        for uc in indices(user_constraint_slack_penalty; user_constraint=user_constraint)
+        for inds in user_constraint_all_indices(
+            m; user_constraint=uc, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
         )
+        for ind in inds
     ]
     unique!(inds)
 end
 
 """
-    add_variable_node_slack_pos!(m::Model)
-
-Add `node_slack_pos` variables to model `m`.
+    add_variable_user_constraint_slack_pos!(m::Model)
 """
-add_variable_node_slack_pos!(m::Model) = add_variable!(m, :node_slack_pos, node_slack_indices; lb=Constant(0))
+function add_variable_user_constraint_slack_pos!(m::Model)
+    add_variable!(m, :user_constraint_slack_pos, user_constraint_slack_indices; lb=Constant(0))
+end
+
+"""
+    add_variable_user_constraint_slack_neg!(m::Model)
+"""
+function add_variable_user_constraint_slack_neg!(m::Model)
+    add_variable!(m, :user_constraint_slack_neg, user_constraint_slack_indices; lb=Constant(0))
+end
