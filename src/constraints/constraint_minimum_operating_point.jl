@@ -71,10 +71,10 @@ end
 
 function constraint_minimum_operating_point_indices(m::Model)
     unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t) for (u, ng, d) in indices(minimum_operating_point) for
-        (t, path) in t_lowest_resolution_path(
-            m,
-            vcat(unit_flow_indices(m; unit=u, node=ng, direction=d), units_on_indices(m; unit=u)),
+        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
+        for (u, ng, d) in indices(minimum_operating_point)
+        for (t, path) in t_lowest_resolution_path(
+            m, vcat(unit_flow_indices(m; unit=u, node=ng, direction=d), units_on_indices(m; unit=u))
         )
     )
 end
