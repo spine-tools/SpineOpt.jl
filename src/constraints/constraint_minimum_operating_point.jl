@@ -32,7 +32,7 @@ function add_constraint_minimum_operating_point!(m::Model)
             + expr_sum(
                 + unit_flow[u, n, d, s, t] * duration(t)
                 for (u, n, d, s, t) in unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m, t_long=t),
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m, t_long=t)
                 )
                 if !is_reserve_node(node=n);
                 init=0,
@@ -40,7 +40,7 @@ function add_constraint_minimum_operating_point!(m::Model)
             - expr_sum(
                 + unit_flow[u, n, d, s, t] * duration(t)
                 for (u, n, d, s, t) in unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m, t_long=t),
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m, t_long=t)
                 )
                 if is_reserve_node(node=n) && downward_reserve(node=n);
                 init=0,

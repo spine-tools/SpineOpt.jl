@@ -264,16 +264,12 @@ function test_constraint_minimum_operating_point()
         url_in = _test_constraint_unit_setup()
         unit_capacity = 100
         minimum_operating_point = 0.25
-        is_reserve_node = true
-        downward_reserve = true
         object_parameter_values = [
-            ["node", "node_b", "is_reserve_node", !is_reserve_node],
-            ["node", "node_c", "is_reserve_node", is_reserve_node],
-            ["node", "node_c", "downward_reserve", downward_reserve],
+            ["node", "node_b", "is_reserve_node", false],
+            ["node", "node_c", "is_reserve_node", true],
+            ["node", "node_c", "downward_reserve", true],
         ]        
-        relationships = [
-                ["unit__to_node", ["unit_ab", "node_group_bc"]],
-        ]
+        relationships = [["unit__to_node", ["unit_ab", "node_group_bc"]]]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", unit_capacity],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", minimum_operating_point],
@@ -281,11 +277,11 @@ function test_constraint_minimum_operating_point()
             ["unit__to_node", ["unit_ab", "node_c"], "unit_capacity", unit_capacity],    
         ]
         SpineInterface.import_data(
-                url_in;
-                object_parameter_values=object_parameter_values,
-                relationships=relationships,
-                relationship_parameter_values=relationship_parameter_values,
-            )
+            url_in;
+            object_parameter_values=object_parameter_values,
+            relationships=relationships,
+            relationship_parameter_values=relationship_parameter_values,
+        )
         m = run_spineopt(url_in; log_level=0, optimize=false)
         var_unit_flow = m.ext[:spineopt].variables[:unit_flow]
         var_units_on = m.ext[:spineopt].variables[:units_on]
@@ -317,7 +313,7 @@ function test_constraint_minimum_operating_point()
                 2 * var_u_flow_b - var_u_flow_c_1 - var_u_flow_c_2 
                 >= 
                 minimum_operating_point * unit_capacity * (var_u_on_1 + var_u_on_2 - var_ns_sd_1 - var_ns_sd_2)
-                )
+            )
             observed_con = constraint_object(constraint[con_key...])
             @test _is_constraint_equal(observed_con, expected_con) 
         end
