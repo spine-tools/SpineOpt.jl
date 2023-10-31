@@ -141,15 +141,20 @@ v_{node\_state}(n2,s,t)\\
 &amp; \forall (u,s,t_{after}) \in units\_on\_indices, \\
 &amp; \forall t_{before} \in t\_before\_t(t\_after=t_{after}) : t_{before} \in units\_on\_indices\\
 \end{aligned}\]</p><h5 id="constraint_minimum_operating_point"><a class="docs-heading-anchor" href="#constraint_minimum_operating_point">Constraint on minimum operating point</a><a id="constraint_minimum_operating_point-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_minimum_operating_point" title="Permalink"></a></h5><p>The minimum operating point of a unit can be based on the <a href="../variables/#unit_flow">unit_flow</a>s of input or output nodes/node groups ng:</p><p class="math-container">\[\begin{aligned}
-&amp; \sum_{\substack{(u,n,d,s,t&#39;) \in unit\_flow\_indices: \\ (u,n,d,t&#39;) \, \in \, (u,ng,d,t)}} v_{unit\_flow}(u,n,d,s,t&#39;) \cdot \Delta t&#39; \\
+&amp; \sum_{\substack{(u,n,d,s,t&#39;) \in unit\_flow\_indices: \\ (u,n,d,t&#39;) \, \in \, (u,ng,d,t)} \color{red} 
+!p_{is\_reserve}(n)} v_{unit\_flow}(u,n,d,s,t&#39;) \cdot \Delta t&#39;   \\
+&amp; \color{red} - \sum_{\substack{(u,n,d,s,t&#39;) \in unit\_flow\_indices: \\ (u,n,d,t&#39;) \, \in \, (u,ng,d,t)} p_{is\_reserve}(n) p_{downward\_reserve}(n) } v_{unit\_flow}(u,n,d,s,t&#39;) \cdot \Delta t&#39; \\
 &amp; &gt;= p_{minimum\_operating\_point}(u,ng,d,s,t) \\
 &amp; \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
 &amp;  \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
-&amp;  \cdot \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ (u,\Delta t_{units\_on} \in (u,t)}} v_{units\_on}(u,s,t_{units\_on}) \\
+&amp;  \cdot \color{red}( \normalcolor \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ (u,\Delta t_{units\_on} \in (u,t))}} v_{units\_on}(u,s,t_{units\_on}) \\
+&amp; \color{red} - \sum_{\substack{(u&#39;,n&#39;,s&#39;,t&#39;) \in nonspin\_units\_shut\_down\_indices: \\ (u&#39;,s&#39;,t&#39;) \in (u,s,t)}}
+  v_{nonspin\_units\_shut\_down}(u&#39;,n&#39;,s&#39;,t&#39;) )  \\
 &amp; \cdot \min(\Delta t_{units\_on},\Delta t) \\
 &amp; \forall (u,ng,d) \in ind(p_{minimum\_operating\_point}), \\
 &amp; \forall t \in t\_lowest\_resolution(node\_\_temporal\_block(node=members(ng))),\\
 &amp;  \forall s \in stochastic\_path
+\end{aligned}
 \end{aligned}\]</p><p>Note that this constraint is always generated for the lowest resolution of all involved members of the node group <code>ng</code>, i.e. the lowest resolution of the involved units flows. This is also why the term <span>$\min(\Delta t_{units\_on},\Delta t)$</span> is added for the units on variable, in order to dis-/aggregate the units on resolution to the resolution of the unit flows.</p><h5 id="constraint_min_down_time"><a class="docs-heading-anchor" href="#constraint_min_down_time">Minimum down time (basic version)</a><a id="constraint_min_down_time-1"></a><a class="docs-heading-anchor-permalink" href="#constraint_min_down_time" title="Permalink"></a></h5><p>In order to impose a minimum offline time of a unit, before it can be started up again, the <a href="../../concept_reference/Parameters/#min_down_time">min_down_time</a> parameter needs to be defined, which triggers the generation of the following constraint:</p><p class="math-container">\[\begin{aligned}
 &amp; v_{units\_available}(u,s,t) \\
 &amp; - v_{units\_on}(u,s,t) \\
@@ -657,4 +662,4 @@ Z \ge&amp; + \sum_u p_{unit\_investment\_cost}(u) \cdot v_{units\_invested}(u,t)
   \end{cases}\\
 &amp;+p_{right\_hand\_side}(uc,t,s)\\
 &amp;\forall uc,t,s \in constraint\_user\_constraint\_indices\\
-\end{aligned}\]</p></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.1.2 on <span class="colophon-date" title="Tuesday 31 October 2023 09:43">Tuesday 31 October 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+\end{aligned}\]</p></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.1.2 on <span class="colophon-date" title="Tuesday 31 October 2023 10:59">Tuesday 31 October 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
