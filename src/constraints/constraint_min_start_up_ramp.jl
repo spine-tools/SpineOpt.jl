@@ -54,7 +54,7 @@ function constraint_min_start_up_ramp_indices(m::Model)
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(min_startup_ramp)
         for (t, path) in t_lowest_resolution_path(
-            m, vcat(units_on_indices(m; unit=u), start_up_unit_flow_indices(m; unit=u, node=ng))
+            m, vcat(units_on_indices(m; unit=u), start_up_unit_flow_indices(m; unit=u, node=ng, direction=d))
         )
     )
 end

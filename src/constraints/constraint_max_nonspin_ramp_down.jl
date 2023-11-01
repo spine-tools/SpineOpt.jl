@@ -33,7 +33,7 @@ function add_constraint_max_nonspin_ramp_down!(m::Model)
             + sum(
                 nonspin_ramp_down_unit_flow[u, n, d, s, t]
                 for (u, n, d, s, t) in nonspin_ramp_down_unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m; t_long=t),
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_in_t(m; t_long=t)
                 )
             )
             <=
@@ -43,7 +43,7 @@ function add_constraint_max_nonspin_ramp_down!(m::Model)
                 * unit_conv_cap_to_flow[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 * unit_capacity[(unit=u, node=n, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
                 for (u, n, s, t) in nonspin_units_shut_down_indices(
-                    m; unit=u, node=ng, stochastic_scenario=s, t=t_overlaps_t(m; t=t),
+                    m; unit=u, node=ng, stochastic_scenario=s, t=t_overlaps_t(m; t=t)
                 );
                 init=0,
             )
