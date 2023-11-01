@@ -398,9 +398,13 @@ function _save_variable_values!(m::Model)
 end
 
 function _save_other_values!(m::Model)
-    m.ext[:spineopt].values[:relative_optimality_gap] = Dict(
-        (model=m.ext[:spineopt].instance, t=current_window(m),) => JuMP.MOI.get(m, JuMP.MOI.RelativeGap())
-    )
+    try
+        m.ext[:spineopt].values[:relative_optimality_gap] = Dict(
+            (model=m.ext[:spineopt].instance, t=current_window(m),) => JuMP.MOI.get(m, JuMP.MOI.RelativeGap())
+        )
+    catch err
+        err isa JuMP.MOI.UnsupportedAttribute || rethrow(err)
+    end
 end
 
 """
