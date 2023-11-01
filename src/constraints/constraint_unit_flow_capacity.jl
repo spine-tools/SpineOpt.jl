@@ -147,7 +147,7 @@ function _subpaths(path, u, t_flow)
         mut_gt_dur = min_up_time(unit=u, analysis_time=t0, stochastic_scenario=s, t=t_flow) > duration(t_flow)
         if last_mut_gt_dur !== nothing && mut_gt_dur !== last_mut_gt_dur
             # Outcome change, store current subpath and start a new one
-            case = mut_gt_dur ? 1 : 2  # Case 1 is min_up_time > dur, case 2 is the opposite
+            case = last_mut_gt_dur ? 1 : 2  # Case 1 is min_up_time > dur, case 2 is the opposite
             push!(all_subpaths, (current_subpath, case))
             current_subpath = [s]
         else
