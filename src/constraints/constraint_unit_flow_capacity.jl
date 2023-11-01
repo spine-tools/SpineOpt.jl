@@ -126,7 +126,7 @@ function constraint_unit_flow_capacity_indices(m::Model)
                 )
             ]
         )
-        for (subpath, case) in _subpaths(path, u, t_flow)
+        for (subpath, case) in _subpaths(path, u, _analysis_time(m), t_flow)
         for part in 1:case  # Case 1 has only one part, case 2 has two parts
     )
 end
@@ -137,14 +137,14 @@ end
 Split the given stochastic path into subpaths of successive scenarios where the outcome
 of min_up_time(...) > duration(t_flow) is the same.
 """
-function _subpaths(path, u, t_flow)
+function _subpaths(path, u, t0, t_flow)
     isempty(path) && return ()
-    t0 = _analysis_time(m)
     all_subpaths = []
     current_subpath = []
     last_mut_gt_dur = nothing
     for s in path
-        mut_gt_dur = min_up_time(unit=u, analysis_time=t0, stochastic_scenario=s, t=t_flow) > duration(t_flow)
+        mut = min_up_time(unit=u, analysis_time=t0, stochastic_scenario=s, t=t_flow, _default=nothing)
+        mut_gt_dur = mut === nothing || mut > duration(t_flow)
         if last_mut_gt_dur !== nothing && mut_gt_dur !== last_mut_gt_dur
             # Outcome change, store current subpath and start a new one
             case = last_mut_gt_dur ? 1 : 2  # Case 1 is min_up_time > dur, case 2 is the opposite
