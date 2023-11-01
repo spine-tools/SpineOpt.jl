@@ -309,20 +309,19 @@ input or output nodes/node groups ng:
 
 ```math
 \begin{aligned}
-& \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)} \color{red} 
+& \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)}  
 !p_{is\_reserve}(n)} v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t'   \\
-& \color{red} - \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)} p_{is\_reserve}(n) p_{downward\_reserve}(n) } v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
+& - \sum_{\substack{(u,n,d,s,t') \in unit\_flow\_indices: \\ (u,n,d,t') \, \in \, (u,ng,d,t)} p_{is\_reserve}(n) p_{downward\_reserve}(n) } v_{unit\_flow}(u,n,d,s,t') \cdot \Delta t' \\
 & >= p_{minimum\_operating\_point}(u,ng,d,s,t) \\
 & \cdot p_{unit\_capacity}(u,ng,d,s,t) \\
-&  \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
-&  \cdot \color{red}( \normalcolor \sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ (u,\Delta t_{units\_on} \in (u,t))}} v_{units\_on}(u,s,t_{units\_on}) \\
-& \color{red} - \sum_{\substack{(u',n',s',t') \in nonspin\_units\_shut\_down\_indices: \\ (u',s',t') \in (u,s,t)}}
+& \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t) \\
+& \cdot (\sum_{\substack{(u,s,t_{units\_on}) \in units\_on\_indices:\\ (u,\Delta t_{units\_on} \in (u,t))}} v_{units\_on}(u,s,t_{units\_on}) \\
+& - \sum_{\substack{(u',n',s',t') \in nonspin\_units\_shut\_down\_indices: \\ (u',s',t') \in (u,s,t)}}
   v_{nonspin\_units\_shut\_down}(u',n',s',t') )  \\
 & \cdot \min(\Delta t_{units\_on},\Delta t) \\
 & \forall (u,ng,d) \in ind(p_{minimum\_operating\_point}), \\
 & \forall t \in t\_lowest\_resolution(node\_\_temporal\_block(node=members(ng))),\\
-&  \forall s \in stochastic\_path
-\end{aligned}
+& \forall s \in stochastic\_path
 \end{aligned}
 ```
 Note that this constraint is always generated for the lowest resolution of all involved members of the node group `ng`, i.e. the lowest resolution of the involved units flows. This is also why the term ``\min(\Delta t_{units\_on},\Delta t)`` is added for the units on variable, in order to dis-/aggregate the units on resolution to the resolution of the unit flows.
