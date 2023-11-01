@@ -126,7 +126,7 @@ function constraint_unit_flow_capacity_indices(m::Model)
                 )
             ]
         )
-        for (subpath, case) in _subpaths(path)
+        for (subpath, case) in _subpaths(path, u, t_flow)
         for part in 1:case  # Case 1 has only one part, case 2 has two parts
     )
 end
