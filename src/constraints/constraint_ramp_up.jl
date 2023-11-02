@@ -24,50 +24,86 @@ Limit the maximum ramp of `ramp_up_unit_flow` of a `unit` or `unit_group` if the
 `ramp_up_limit`,`unit_capacity`,`unit_conv_cap_to_unit_flow` exist.
 """
 function add_constraint_ramp_up!(m::Model)
-    @fetch units_on, units_started_up, ramp_up_unit_flow = m.ext[:spineopt].variables
+    @fetch units_on, units_started_up, unit_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:ramp_up] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t) => @constraint(
             m,
-            + sum(
-                ramp_up_unit_flow[u, n, d, s, t] * duration(t)
-                for (u, n, d, s, t) in ramp_up_unit_flow_indices(
-                    m; unit=u, node=ng, direction=d, t=t_in_t(m; t_long=t), stochastic_scenario=s
+            expr_sum(
+                + unit_flow[u, n, d, s, t]
+                for (u, n, d, s, t) in unit_flow_indices(
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_after
                 )
+                if !is_reserve_node(node=n);
+                init=0,
+            )
+            - expr_sum(
+                + unit_flow[u, n, d, s, t]
+                for (u, n, d, s, t) in unit_flow_indices(
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_before
+                )
+                if !is_reserve_node(node=n);
+                init=0,
+            )
+            + expr_sum(
+                + unit_flow[u, n, d, s, t]
+                for (u, n, d, s, t) in unit_flow_indices(
+                    m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_after
+                )
+                if is_reserve_node(node=n) && upward_reserve(node=n);
+                init=0,
             )
             <=
-            + sum(
-                (
-                    (units_on[u, s, t1] - units_started_up[u, s, t1])
-                    * ramp_up_limit[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                    + (
-                        isnothing(
-                            max_startup_ramp(
-                                unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t1
-                            )
-                        ) ? units_started_up[u, s, t1] : 0
-                    )
-                    # A functional term to take care of the start up ramps 
-                    # for the case where max_startup_ramp is not defined (constraint_max_start_up_ramp not in use).
-                    # Cautions must be kept that it simulates constraint_max_start_up_ramp with max_startup_ramp=1.
+            + expr_sum(
+                + (
+                    + start_up_limit[
+                        (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=default)
+                    ]
+                    - minimum_operating_point[
+                        (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=default)
+                    ]
+                    - ramp_up_limit[
+                        (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=default)
+                    ]
                 )
-                * min(duration(t), duration(t1))
-                * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                * unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
-                for (u, s, t1) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t))
+                * units_started_up[u, s, t]
+                + (
+                    + minimum_operating_point[
+                        (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=default)
+                    ]
+                    + ramp_up_limit[
+                        (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=default)
+                    ]
+                )
+                * units_on[u, s, t]
+                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_after));
+                init=0
             )
-            * duration(t) ## [ramp_up_limit]=MW/h
+            - expr_sum(
+                + minimum_operating_point[
+                    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=default)
+                ]
+                * units_on[u, s, t]
+                for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
+                init=0
+            )
+
         )
-        for (u, ng, d, s, t) in constraint_ramp_up_indices(m)
+        for (u, ng, d, s, t_before, t_after) in constraint_ramp_up_indices(m)
     )
 end
 
 function constraint_ramp_up_indices(m::Model)
     unique(
-        (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
-        for (u, ng, d) in indices(ramp_up_limit)
-        for (t, path) in t_lowest_resolution_path(
-            m, vcat(units_on_indices(m; unit=u), ramp_up_unit_flow_indices(m; unit=u, node=ng, direction=d))
+        (unit=u, node=ng, direction=d, stochastic_path=path, t_before=t_before, t_after=t_after)
+        for (u, ng, d) in Iterators.flatten((indices(ramp_up_limit), indices(start_up_limit)))
+        for (ng, t_before, t_after) in node_dynamic_time_indices(m; node=ng, t_after=t_after)
+        for path in active_stochastic_paths(
+            m,
+            [
+                unit_flow_indices(m; unit=u, node=ng, direction=d, t=[t_before, t_after]);
+                units_on_indices(m; unit=u, t=[t_before, t_after])
+            ]
         )
     )
 end
@@ -86,8 +122,20 @@ function constraint_ramp_up_indices_filtered(
     node=anything,
     direction=anything,
     stochastic_path=anything,
-    t=anything,
+    t_before=anything,
+    t_after=anything,
 )
-    f(ind) = _index_in(ind; unit=unit, node=node, direction=direction, stochastic_path=stochastic_path, t=t)
+    function f(ind)
+        _index_in(
+            ind;
+            unit=unit,
+            node=node,
+            direction=direction,
+            stochastic_path=stochastic_path,
+            t_before=t_before,
+            t_after=t_after,
+        )
+    end
+
     filter(f, constraint_ramp_up_indices(m))
 end
