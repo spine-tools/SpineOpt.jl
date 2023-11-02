@@ -12,8 +12,8 @@ The ramping constraint limit refers to the maximum rate at which a power unit ca
 
 This tutorial is built on top of the Simple System. The main changes to that system are:
 
-- The demand at *electricity\_node* is a 2-hour time series instead of a unique value
-- The *power\_plant\_a* has ramp limit of 10%
+- The demand at *electricity\_node* is a 3-hour time series instead of a unique value
+- The *power\_plant\_a* has ramp limit of 10% for both up and down
 
 This tutorial includes a step-by-step guide to include the parameters to help analyze the results in SpineOpt and the ramping constraints concepts.
 
@@ -40,7 +40,7 @@ In this tutorial, you will learn how to add ramping constraints to the Simple Sy
 
 ![image](figs_ramping/ramping_electricity_demand.png)
 
-Notice that there is only demand values for `2000-01-01T00:00:00` and `2000-01-01T01:00:00`. Therefore, we need to update the start and end of the model. But first, let's change the temporal block.
+Notice that there is only demand values for `2000-01-01T00:00:00` and `2000-01-01T02:00:00`. Therefore, we need to update the start and end of the model. But first, let's change the temporal block.
 
 ### Editing the temporal block
 
@@ -66,7 +66,7 @@ Since the default resolution of the Simple System was *1D*, the start and end da
 
 ![image](figs_ramping/ramping_model_start.png)
 
-- Repeat the procedure for the *model\_end* parameter, but now the value is `2000-01-01T02:00:00`. Notice that since the demand goes until `2000-01-01T01:00:00` the model must finish in the second hour to properly account for the first hour. The final values should look like that the image below.
+- Repeat the procedure for the *model\_end* parameter, but now the value is `2000-01-01T03:00:00`. Notice that since the demand goes until `2000-01-01T02:00:00` the model must finish in the second hour to properly account for the first hour. The final values should look like that the image below.
 
 ![image](figs_ramping/ramping_model_start_and_end.png)
 
@@ -96,25 +96,35 @@ The image above shows the electricity flow results for both power plants. As exp
 
 ## Step 2 - Include the ramping limit
 
-Let's consider the input data where the *power\_plant\_a* has a ramping limit of *10%*, meaning that the change between two time steps can't be greater than *10MW* (since the plant 'a' has a unit capacity of *100MW*).
+Let's consider the input data where the *power\_plant\_a* has a ramping limit of *10%* in both directions (i.e., up and down), meaning that the change between two time steps can't be greater than *10MW* (since the plant 'a' has a unit capacity of *100MW*).
 
 ### Adding the ramping limit
 
 - In *Relationship tree*, expand the *unit\_\_to_node* class and select *power\_plant\_a | electricity\_node*.
 
-- In the *Relationship parameter* table, select the *ramp\_up\_limit* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping limit for *power\_plant\_a*.
+- In the *Relationship parameter* table, select the *ramp\_up\_limit* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping up limit for *power\_plant\_a*.
 
-![image](figs_ramping/ramping_plant_a_ramp_up_limit.png)
+- In the *Relationship parameter* table, select the *ramp\_down\_limit* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping up limit for *power\_plant\_a*.
+
+![image](figs_ramping/ramping_plant_a_ramp_limits.png)
+
+The current version of SpineOpt utilizes two additional parameters to limit the ramps during the start-up and the shutdown of the unit. Therefore, you must configure these parameters as follows:
+
+- In the *Relationship parameter* table, select the *max\_startup\_ramp* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping up limit for *power\_plant\_a*.
+
+- In the *Relationship parameter* table, select the *max\_shutdown\_ramp* parameter and the *Base* alternative, and enter the value *0.1* as seen in the image below. This will set the ramping up limit for *power\_plant\_a*.
+
+![image](figs_ramping/ramping_plant_a_ramp_limits_startup_shutdown.png)
 
 When you're ready, save/commit all changes to the database.
 
-### Executing the workflow with ramp up limit
+### Executing the workflow with ramp limits
 
 - Go back to Spine Toolbox's main window, and hit the **Execute project** button ![image](figs_simple_system/play-circle.png) from the tool bar. You should see 'Executing All Directed Acyclic Graphs' printed in the *Event log* (at the bottom left by default).
 
 - Select the 'Run SpineOpt' Tool. You should see the output from SpineOpt in the *Julia Console* after clicking the *object activity control*.
 
-### Examining the results with ramp up limit
+### Examining the results with ramp limits
 
 - Select the output data store and open the Spine DB editor. You can already inspect the fields in the displayed tables or use a pivot table.
 
@@ -126,6 +136,36 @@ When you're ready, save/commit all changes to the database.
 
 - The *Pivot table* will be populated with results from the SpineOpt run. It will look something like the image below.
 
-![image](figs_ramping/ramping_results_no_ramping_constraint.png)
+![image](figs_ramping/ramping_results_ramping_constraint.png)
 
-The image above shows the electricity flow results for both power plants. As expected, the *power\_plant\_a* (i.e., the cheapest unit) output is limited to it ramp up limit, therefore it can't go from *50MW* to *100MW* and therefore, the *power\_plant\_b* (i.e., the more expensive unit) must produce *40MW* to cover the demand that plant 'a' can't. As shown here, the ramping limits might lead to a higher costs in power systems.
+The image above shows the electricity flow results for both power plants. As expected, the *power\_plant\_a* (i.e., the cheapest unit) output is limited to its ramp up and down limits, therefore it can't follow the demand changes as before. Therefore, the *power\_plant\_b* (i.e., the more expensive unit) must produce to cover the demand that plant 'a' can't due to its ramping limitations. As shown here, the ramping limits might lead to a higher costs in power systems.
+
+*But...something is more here...Can you tell what?* :anguished:
+
+It is important to note that the optimal solution we have calculated assumes that the unit 'a' was already producing electricity before the *model\_start* parameter. This is because we have not defined an initial condition for the flow of the unit. Therefore, the flow at the first hour is the most cost-effective solution under this assumption. However, what if we changed this assumption and assumed that the unit had not produced any flow before the *model\_start* parameter? If you are curious to know the answer, join me in the next section.
+
+## Step 3 - Include a initial condition to the flow
+
+### Adding the initial flow
+
+- In *Relationship tree*, expand the *unit\_\_to_node* class and select *power\_plant\_a | electricity\_node*.
+
+- In the *Relationship parameter* table, select the *initial\_unit\_flow* parameter and the *Base* alternative, and enter the value *0.0* as seen in the image below. This will set the initial flow for *power\_plant\_a*.
+
+![image](figs_ramping/ramping_plant_a_initial_flow.png)
+
+When you're ready, save/commit all changes to the database.
+
+### Executing the workflow with ramp limits with initial conditions
+
+You know the drill! :wink:
+
+### Examining the results with ramp limits with initial conditions
+
+Create a the *Pivot table* with the latest results. It will look something like the image below.
+
+![image](figs_ramping/ramping_results_ramping_constraint_ini_cond.png)
+
+Here, we can see the impact of the initial condition; no longer can the unit have a flow change than its ramp-up limit for the first hour. Therefore, the optimal solution under this assumption changes compared to the previous section.
+
+This example highlights the importance of considering initial conditions as a crucial assumption in energy system modelling optimization.
