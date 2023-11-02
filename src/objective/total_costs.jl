@@ -31,7 +31,6 @@ const op_terms = [
     :connection_flow_costs,
     :renewable_curtailment_costs,
     :res_proc_costs,
-    :ramp_costs,
     :units_on_costs,
 ]
 const all_objective_terms = [op_terms; invest_terms]

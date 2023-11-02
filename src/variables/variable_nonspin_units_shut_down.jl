@@ -33,11 +33,10 @@ function nonspin_units_shut_down_indices(
 )
     unique(
         (unit=u, node=n, stochastic_scenario=s, t=t)
-        for (u, n, d, s, t) in nonspin_ramp_down_unit_flow_indices(
+        for (u, n, d, s, t) in unit_flow_indices(
             m; unit=unit, node=node, stochastic_scenario=stochastic_scenario, t=t, temporal_block=temporal_block
         )
-        for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t)
-        # TODO: maybe retrieve s information from node to be more robust
+        if d == direction(:to_node) && is_non_spinning(node=n)
     )
 end
 
