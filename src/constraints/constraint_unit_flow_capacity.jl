@@ -25,7 +25,7 @@ Limit the maximum in/out `unit_flow` of a `unit` for all `unit_capacity` indices
 Check if `unit_conv_cap_to_flow` is defined.
 """
 function add_constraint_unit_flow_capacity!(m::Model)
-    @fetch unit_flow, units_on, units_shut_down, nonspin_units_shut_down = m.ext[:spineopt].variables
+    @fetch unit_flow, units_on, units_started_up, units_shut_down, nonspin_units_shut_down = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
     m.ext[:spineopt].constraints[:unit_flow_capacity] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t=t_flow, case=case, part=part) => @constraint(
@@ -64,7 +64,8 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 )
                 - _third_rhs_coeff(u, ng, d, s, t0, t_flow, t_on, case, part)
                 * units_started_up[u, s, t_on] * min(duration(t_on), duration(t_flow))
-                for (u, s, t_on) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_flow))
+                for (u, s, t_on) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_flow));
+                init=0
             )
         )
         for (u, ng, d, s, t_flow, case, part) in constraint_unit_flow_capacity_indices(m)
@@ -78,37 +79,31 @@ function _flow_upper_bound(u, ng, d, s, t0, t_flow)
     )
 end
 
+function _max_startup_ramp(u, ng, d, s, t0, t_on)
+    max_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on, _default=0)]
+end
+
+function _max_shutdown_ramp(u, ng, d, s, t0, t_on)
+    max_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on, _default=0)]
+end
+
 function _second_rhs_coeff(u, ng, d, s, t0, t_flow, t_on, case, part)
     if part == 1
         # (F - SD)
-        + _flow_upper_bound(u, ng, d, s, t0, t_flow)
-        - max_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on)]
+        _flow_upper_bound(u, ng, d, s, t0, t_flow) - _max_shutdown_ramp(u, ng, d, s, t0, t_on)
     else
         # max(SU - SD, 0)
-        max(
-            (
-                + max_startup_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on)]
-                - max_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on)]
-            ),
-            0
-        )
+        max(_max_startup_ramp(u, ng, d, s, t0, t_on) - _max_shutdown_ramp(u, ng, d, s, t0, t_on), 0)
     end
 end
 
 function _third_rhs_coeff(u, ng, d, s, t0, t_flow, t_on, case, part)
     if case == 2 && part == 1
         # max(SD - SU, 0)
-        max(
-            (
-                + max_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on)]
-                - max_startup_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on)]
-            ),
-            0
-        )
+        max(_max_shutdown_ramp(u, ng, d, s, t0, t_on) - _max_startup_ramp(u, ng, d, s, t0, t_on), 0)
     else
         # (F - SU)
-        + _flow_upper_bound(u, ng, d, s, t0, t_flow)
-        - max_startup_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on)]
+        _flow_upper_bound(u, ng, d, s, t0, t_flow) - _max_startup_ramp(u, ng, d, s, t0, t_on)
     end
 end
 
@@ -148,8 +143,7 @@ function _subpaths(path, u, t0, t_flow)
         mut_gt_dur = mut === nothing || mut > t_flow_duration
         if last_mut_gt_dur !== nothing && mut_gt_dur !== last_mut_gt_dur
             # Outcome change, store current subpath and start a new one
-            case = last_mut_gt_dur ? 1 : 2  # Case 1 is min_up_time > dur, case 2 is the opposite
-            push!(all_subpaths, (current_subpath, case))
+            push!(all_subpaths, (current_subpath, _case(last_mut_gt_dur)))
             current_subpath = [s]
         else
             # No change, just extend the current subpath
@@ -157,8 +151,13 @@ function _subpaths(path, u, t0, t_flow)
         end
         last_mut_gt_dur = mut_gt_dur
     end
+    if !isempty(current_subpath)
+        push!(all_subpaths, (current_subpath, _case(last_mut_gt_dur)))
+    end
     all_subpaths
 end
+
+_case(last_mut_gt_dur) = last_mut_gt_dur ? 1 : 2  # Case 1 is min_up_time > dur, case 2 is the opposite
 
 """
     constraint_unit_flow_capacity_indices_filtered(m::Model; filtering_options...)
