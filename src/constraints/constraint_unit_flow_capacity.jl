@@ -72,19 +72,20 @@ function add_constraint_unit_flow_capacity!(m::Model)
     )
 end
 
+function _nt(u, ng, d, s, t0, t, default=nothing)
+    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=default)
+end
+
 function _flow_upper_bound(u, ng, d, s, t0, t_flow)
-    (
-        + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_flow)]
-        * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_flow)]
-    )
+    unit_capacity[_nt(u, ng, d, s, t0, t_flow)] * unit_conv_cap_to_flow[_nt(u, ng, d, s, t0, t_flow)]
 end
 
 function _max_startup_ramp(u, ng, d, s, t0, t_on)
-    max_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on, _default=0)]
+    max_shutdown_ramp[_nt(u, ng, d, s, t0, t_on, 0)]
 end
 
 function _max_shutdown_ramp(u, ng, d, s, t0, t_on)
-    max_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on, _default=0)]
+    max_shutdown_ramp[_nt(u, ng, d, s, t0, t_on, 0)]
 end
 
 function _second_rhs_coeff(u, ng, d, s, t0, t_flow, t_on, case, part)
@@ -151,9 +152,7 @@ function _subpaths(path, u, t0, t_flow)
         end
         last_mut_gt_dur = mut_gt_dur
     end
-    if !isempty(current_subpath)
-        push!(all_subpaths, (current_subpath, _case(last_mut_gt_dur)))
-    end
+    push!(all_subpaths, (current_subpath, _case(last_mut_gt_dur)))
     all_subpaths
 end
 
