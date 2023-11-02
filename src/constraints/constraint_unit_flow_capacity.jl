@@ -45,7 +45,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
                 + _flow_upper_bound(u, ng, d, s, t0, t_flow)
                 * units_on[u, s, t_on]
                 * min(duration(t_on), duration(t_flow))
-                - _second_rhs_coeff(u, ng, d, s, t0, t_flow, t_on, case, part)
+                - _shutdown_margin(u, ng, d, s, t0, t_flow, t_on, case, part)
                 * (
                     + expr_sum(
                         units_shut_down[u, s, t_on_after] * min(duration(t_on_after), duration(t_flow))
@@ -62,7 +62,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
                         init=0
                     )
                 )
-                - _third_rhs_coeff(u, ng, d, s, t0, t_flow, t_on, case, part)
+                - _startup_margin(u, ng, d, s, t0, t_flow, t_on, case, part)
                 * units_started_up[u, s, t_on] * min(duration(t_on), duration(t_flow))
                 for (u, s, t_on) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_flow));
                 init=0
@@ -72,7 +72,7 @@ function add_constraint_unit_flow_capacity!(m::Model)
     )
 end
 
-function _nt(u, ng, d, s, t0, t, default=nothing)
+function _nt(u, ng, d, s, t0, t, default=Inf)
     (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=default)
 end
 
@@ -81,30 +81,32 @@ function _flow_upper_bound(u, ng, d, s, t0, t_flow)
 end
 
 function _max_startup_ramp(u, ng, d, s, t0, t_on)
-    max_shutdown_ramp[_nt(u, ng, d, s, t0, t_on, 0)]
+    max_shutdown_ramp[_nt(u, ng, d, s, t0, t_on)]
 end
 
 function _max_shutdown_ramp(u, ng, d, s, t0, t_on)
-    max_shutdown_ramp[_nt(u, ng, d, s, t0, t_on, 0)]
+    max_shutdown_ramp[_nt(u, ng, d, s, t0, t_on)]
 end
 
-function _second_rhs_coeff(u, ng, d, s, t0, t_flow, t_on, case, part)
+_max_finite(args...) = max((a for a in args if isfinite(a))...)
+
+function _shutdown_margin(u, ng, d, s, t0, t_flow, t_on, case, part)
     if part == 1
         # (F - SD)
-        _flow_upper_bound(u, ng, d, s, t0, t_flow) - _max_shutdown_ramp(u, ng, d, s, t0, t_on)
+        _max_finite(_flow_upper_bound(u, ng, d, s, t0, t_flow) - _max_shutdown_ramp(u, ng, d, s, t0, t_on), 0)
     else
         # max(SU - SD, 0)
-        max(_max_startup_ramp(u, ng, d, s, t0, t_on) - _max_shutdown_ramp(u, ng, d, s, t0, t_on), 0)
+        _max_finite(_max_startup_ramp(u, ng, d, s, t0, t_on) - _max_shutdown_ramp(u, ng, d, s, t0, t_on), 0)
     end
 end
 
-function _third_rhs_coeff(u, ng, d, s, t0, t_flow, t_on, case, part)
+function _startup_margin(u, ng, d, s, t0, t_flow, t_on, case, part)
     if case == 2 && part == 1
         # max(SD - SU, 0)
-        max(_max_shutdown_ramp(u, ng, d, s, t0, t_on) - _max_startup_ramp(u, ng, d, s, t0, t_on), 0)
+        _max_finite(_max_shutdown_ramp(u, ng, d, s, t0, t_on) - _max_startup_ramp(u, ng, d, s, t0, t_on), 0)
     else
         # (F - SU)
-        _flow_upper_bound(u, ng, d, s, t0, t_flow) - _max_startup_ramp(u, ng, d, s, t0, t_on)
+        _max_finite(_flow_upper_bound(u, ng, d, s, t0, t_flow) - _max_startup_ramp(u, ng, d, s, t0, t_on), 0)
     end
 end
 
