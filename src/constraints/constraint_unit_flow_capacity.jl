@@ -75,20 +75,22 @@ end
 function _flow_upper_bound(u, ng, d, s, t0, t_flow)
     (
         + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_flow)]
-        * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_flow)]
+        * unit_conv_cap_to_flow[
+            (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_flow)
+        ]
     )
 end
 
 function _max_startup_ramp(u, ng, d, s, t0, t_flow, t_on)
     (
-        + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_flow)]
+        + _flow_upper_bound(u, ng, d, s, t0, t_flow)
         * max_startup_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on, _default=1)]
     )
 end
 
 function _max_shutdown_ramp(u, ng, d, s, t0, t_flow, t_on)
     (
-        + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_flow)]
+        + _flow_upper_bound(u, ng, d, s, t0, t_flow)
         * max_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on, _default=1)]
     )
 end
