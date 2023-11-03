@@ -268,12 +268,12 @@ function test_constraint_minimum_operating_point()
             ["node", "node_b", "is_reserve_node", false],
             ["node", "node_c", "is_reserve_node", true],
             ["node", "node_c", "downward_reserve", true],
+            ["node", "node_c", "is_non_spinning", true],
         ]        
         relationships = [["unit__to_node", ["unit_ab", "node_group_bc"]]]
         relationship_parameter_values = [
             ["unit__to_node", ["unit_ab", "node_group_bc"], "unit_capacity", unit_capacity],
             ["unit__to_node", ["unit_ab", "node_group_bc"], "minimum_operating_point", minimum_operating_point],
-            ["unit__to_node", ["unit_ab", "node_c"], "max_res_shutdown_ramp", 1],  
             ["unit__to_node", ["unit_ab", "node_c"], "unit_capacity", unit_capacity],    
         ]
         SpineInterface.import_data(
@@ -775,9 +775,9 @@ function test_constraint_min_up_time_with_non_spinning_reserves()
                 ["unit", "unit_ab", "min_up_time", min_up_time],
                 ["model", "instance", "model_end", model_end],
                 ["node", "node_a", "is_reserve_node", true],
+                ["node", "node_a", "is_non_spinning", true],
             ]
             relationship_parameter_values = [
-                ["unit__from_node", ["unit_ab", "node_a"], "max_res_shutdown_ramp", 1],
                 ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0],
             ]
             SpineInterface.import_data(
@@ -893,20 +893,19 @@ function test_constraint_min_down_time_with_non_spinning_reserves()
             number_of_units = 4
             candidate_units = 3
             min_down_time = Dict("type" => "duration", "data" => string(min_down_minutes, "m"))
-            is_reserve_node=true
             object_parameter_values = [
                 ["unit", "unit_ab", "candidate_units", candidate_units],
                 ["unit", "unit_ab", "number_of_units", number_of_units],
                 ["unit", "unit_ab", "min_down_time", min_down_time],
                 ["model", "instance", "model_end", model_end],
-                ["node", "node_a", "is_reserve_node", is_reserve_node],
+                ["node", "node_a", "is_reserve_node", true],
+                ["node", "node_a", "is_non_spinning", true],
             ]
             relationships = [
                 ["unit__investment_temporal_block", ["unit_ab", "hourly"]],
                 ["unit__investment_stochastic_structure", ["unit_ab", "stochastic"]],
             ]
             relationship_parameter_values = [
-                ["unit__from_node", ["unit_ab", "node_a"], "max_res_startup_ramp", 1],
                 ["unit__from_node", ["unit_ab", "node_a"], "unit_capacity", 0],
             ]
             SpineInterface.import_data(
