@@ -140,7 +140,7 @@ When you're ready, save/commit all changes to the database.
 
 The image above shows the electricity flow results for both power plants. As expected, the *power\_plant\_a* (i.e., the cheapest unit) output is limited to its ramp up and down limits, therefore it can't follow the demand changes as before. Therefore, the *power\_plant\_b* (i.e., the more expensive unit) must produce to cover the demand that plant 'a' can't due to its ramping limitations. As shown here, the ramping limits might lead to a higher costs in power systems.
 
-*But...something is more here...Can you tell what?* :anguished:
+*But...there is something more here...Can you tell what?* :anguished:
 
 It is important to note that the optimal solution we have calculated assumes that the unit 'a' was already producing electricity before the *model\_start* parameter. This is because we have not defined an initial condition for the flow of the unit. Therefore, the flow at the first hour is the most cost-effective solution under this assumption. However, what if we changed this assumption and assumed that the unit had not produced any flow before the *model\_start* parameter? If you are curious to know the answer, join me in the next section.
 
