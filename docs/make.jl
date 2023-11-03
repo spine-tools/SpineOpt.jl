@@ -20,13 +20,13 @@ concept_dictionary = add_cross_references!(
 )
 write_concept_reference_files(concept_dictionary, path)
 
-# Automatically write the 'constraints_automatically_generated_file' file using the 'constraints' file
+# Automatically write the 'constraints_automatically_generated' file using the 'constraints' file
 # and content from docstrings
 mathpath = joinpath(path, "src", "mathematical_formulation")
 alldocs = alldocstrings(SpineOpt)
 instructionlist = readlines(joinpath(mathpath, "constraints.md"))
 markdownstring = docs_from_instructionlist(alldocs, instructionlist)
-open(joinpath(mathpath, "constraints_automatically_generated_file.md"), "w") do file
+open(joinpath(mathpath, "constraints_automatically_generated.md"), "w") do file
     write(file, markdownstring)
 end
 
@@ -59,7 +59,7 @@ pages = [
     ],
     "Mathematical Formulation" => Any[
         "Variables" => joinpath("mathematical_formulation", "variables.md"),
-        "Constraints" => joinpath("mathematical_formulation", "constraints_automatically_generated_file.md"),
+        "Constraints" => joinpath("mathematical_formulation", "constraints_automatically_generated.md"),
         "Objective" => joinpath("mathematical_formulation", "objective_function.md"),
     ],
     "Advanced Concepts" => Any[
