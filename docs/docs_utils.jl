@@ -19,7 +19,7 @@
 using CSV
 using DataFrames
 
-function write_documentation_sets_variables(mathpath)
+function write_sets_and_variables(mathpath)
     variables = DataFrame(CSV.File(joinpath(mathpath, "variables.csv")))
     variables.variable_name_latex = replace.(variables.variable_name, r"_" => "\\_")
     variables.variable_name_latex .= "``v_{" .* variables.variable_name_latex .* "} ``"
@@ -59,18 +59,6 @@ The optional `translation` keyword can be used to aggregate and translate the ou
 """
 function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
     # Define mapping of template entries, where each attribute of interest is.
-
-    template_keys = [
-        "object_classes",
-        "relationship_classes",
-        "parameter_value_lists",
-        "object_parameters",
-        "relationship_parameters",
-        "tools",
-        "features",
-        "tool_features"
-        ]
-
     template_mapping = Dict(
         "object_classes" => Dict(:name_index => 1, :description_index => 2),
         "relationship_classes" => Dict(
@@ -115,64 +103,60 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
     # Initialize the concept dictionary based on the template (only preserves the last entry, if overlaps)
     concept_dictionary = Dict(
         key => Dict(
-            entry[template_mapping[key][:name_index]] => Dict(
-                :description => isnothing(get(template_mapping[key], :description_index, nothing)) ? nothing :
-                                entry[template_mapping[key][:description_index]],
-                :default_value => isnothing(get(template_mapping[key], :default_value_index, nothing)) ? nothing :
-                                  entry[template_mapping[key][:default_value_index]],
-                :parameter_value_list => isnothing(get(template_mapping[key], :parameter_value_list_index, nothing)) ?
-                                         nothing : entry[template_mapping[key][:parameter_value_list_index]],
-                :possible_values => isnothing(get(template_mapping[key], :possible_values_index, nothing)) ? nothing :
-                                    [entry[template_mapping[key][:possible_values_index]]],
-                :feature => isnothing(get(template_mapping[key], :feature_index, nothing)) ? nothing :
-                            entry[template_mapping[key][:feature_index]],
-                :related_concepts => isnothing(get(template_mapping[key], :related_concept_index, nothing)) ? Dict() :
-                                     Dict(
-                    template_mapping[key][:related_concept_type] => (isa(
-                        entry[template_mapping[key][:related_concept_index]],
-                        Array,
-                    ) ? (unique([
-                        entry[template_mapping[key][:related_concept_index]]...,
-                    ])) : [
-                        entry[template_mapping[key][:related_concept_index]],
-                    ]),
-                ),
-            ) for entry in template[key] 
-        ) for key in template_keys
+            entry[indices[:name_index]] => Dict(
+                :description => get(entry, get(indices, :description_index, -1), nothing),
+                :default_value => get(entry, get(indices, :default_value_index, -1), nothing),
+                :parameter_value_list => get(entry, get(indices, :parameter_value_list_index, -1), nothing),
+                :possible_values => if haskey(indices, :possible_values_index)
+                    [entry[indices[:possible_values_index]]]
+                else
+                    nothing
+                end,
+                :feature => get(entry, get(indices, :feature_index, -1), nothing),
+                :related_concepts => if haskey(indices, :related_concept_index)
+                    Dict(
+                        indices[:related_concept_type] => if entry[indices[:related_concept_index]] isa Array
+                            unique(entry[indices[:related_concept_index]])
+                        else
+                            [entry[indices[:related_concept_index]]]
+                        end
+                    )
+                else
+                    Dict()
+                end
+            )
+            for entry in template[key] 
+        )
+        for (key, indices) in template_mapping
     )
     # Perform a second pass to cover overlapping entries and throw warnings for conflicts
-    for key in template_keys
+    for (key, indices) in template_mapping
         for entry in template[key]
-            concept = concept_dictionary[key][entry[template_mapping[key][:name_index]]]
+            concept = concept_dictionary[key][entry[indices[:name_index]]]
             # Check for conflicts in `description`, `default_value`, `parameter_value_list`, `feature`
-            if !isnothing(concept[:description]) &&
-               concept[:description] != entry[template_mapping[key][:description_index]]
-                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `description` across duplicate template entries!"
+            if !isnothing(concept[:description]) && concept[:description] != entry[indices[:description_index]]
+                @warn "`$(entry[indices[:name_index]])` has conflicting `description` across duplicate template entries!"
             end
-            if !isnothing(concept[:default_value]) &&
-               concept[:default_value] != entry[template_mapping[key][:default_value_index]]
-                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `default_value` across duplicate template entries!"
+            if !isnothing(concept[:default_value]) && concept[:default_value] != entry[indices[:default_value_index]]
+                @warn "`$(entry[indices[:name_index]])` has conflicting `default_value` across duplicate template entries!"
             end
-            if !isnothing(concept[:parameter_value_list]) &&
-               concept[:parameter_value_list] != entry[template_mapping[key][:parameter_value_list_index]]
-                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `parameter_value_list` across duplicate template entries!"
+            if !isnothing(concept[:parameter_value_list]) && concept[:parameter_value_list] != entry[indices[:parameter_value_list_index]]
+                @warn "`$(entry[indices[:name_index]])` has conflicting `parameter_value_list` across duplicate template entries!"
             end
-            if !isnothing(concept[:possible_values]) && !isnothing(entry[template_mapping[key][:possible_values_index]])
-                unique!(push!(concept[:possible_values], entry[template_mapping[key][:possible_values_index]]))
+            if !isnothing(concept[:possible_values]) && !isnothing(entry[indices[:possible_values_index]])
+                unique!(push!(concept[:possible_values], entry[indices[:possible_values_index]]))
             end                
-            if !isnothing(concept[:feature]) && concept[:feature] != entry[template_mapping[key][:feature_index]]
-                @warn "`$(entry[template_mapping[key][:name_index]])` has conflicting `parameter_value_list` across duplicate template entries!"
+            if !isnothing(concept[:feature]) && concept[:feature] != entry[indices[:feature_index]]
+                @warn "`$(entry[indices[:name_index]])` has conflicting `parameter_value_list` across duplicate template entries!"
             end
             # Include all unique `concepts` into `related concepts`
             if !isempty(concept[:related_concepts])
-                if isa(entry[template_mapping[key][:related_concept_index]], Array)
-                    related_concepts = unique([entry[template_mapping[key][:related_concept_index]]...])
+                related_concepts = if entry[indices[:related_concept_index]] isa Array
+                    unique([entry[indices[:related_concept_index]]...])
                 else
-                    related_concepts = [entry[template_mapping[key][:related_concept_index]]]
+                    [entry[indices[:related_concept_index]]]
                 end
-                unique!(
-                    append!(concept[:related_concepts][template_mapping[key][:related_concept_type]], related_concepts),
-                )
+                unique!(append!(concept[:related_concepts][indices[:related_concept_type]], related_concepts))
             end
         end
     end
@@ -180,7 +164,7 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
     if !isempty(translation)
         concept_dictionary = translate_and_aggregate_concept_dictionary(concept_dictionary, translation)
     end
-    return concept_dictionary
+    concept_dictionary
 end
 
 """
@@ -205,10 +189,7 @@ If multiple template section names are mapped to a single `String`, the entries 
 """
 function translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, translation::Dict)
     initial_translation = Dict(
-        translation[key] => merge(
-            (d1, d2) -> merge(unique_merge!, d1, d2),
-            [concept_dictionary[k] for k in key]...
-        )
+        translation[key] => merge((d1, d2) -> merge(unique_merge!, d1, d2), [concept_dictionary[k] for k in key]...)
         for key in keys(translation)
     )
     translated_concept_dictionary = deepcopy(initial_translation)
@@ -220,11 +201,12 @@ function translate_and_aggregate_concept_dictionary(concept_dictionary::Dict, tr
                         initial_translation[concept_type][concept][:related_concepts][k]
                         for k in key if k in keys(initial_translation[concept_type][concept][:related_concepts])
                     ]...,
-                ) for key in keys(translation)
+                )
+                for key in keys(translation)
             )
         end
     end
-    return translated_concept_dictionary
+    translated_concept_dictionary
 end
 
 """
@@ -260,7 +242,7 @@ function add_cross_references!(concept_dictionary::Dict)
             end
         end
     end
-    return concept_dictionary
+    concept_dictionary
 end
 
 """
@@ -428,7 +410,7 @@ function findregions(
             end
         end
     end
-    return md
+    md
 end
 
 """
@@ -499,5 +481,5 @@ function docs_from_instructionlist(alldocs, instructionlist)
             interpret_instruction(functionname,functionfields)
         end
     end
-    return md
+    md
 end
