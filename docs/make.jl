@@ -1,31 +1,36 @@
 using Documenter
 using SpineOpt
 
+include("docs_utils.jl")
+
 # Automatically write the `Concept Reference` files using the `spineopt_template.json` as a basis.
 # Actual descriptions are fetched separately from `src/concept_reference/concepts/`
 path = @__DIR__
 default_translation = Dict(
-    #["tool_features"] => "Tool Features",
+    # ["tool_features"] => "Tool Features",
     ["relationship_classes"] => "Relationship Classes",
     ["parameter_value_lists"] => "Parameter Value Lists",
-    #["features"] => "Features",
-    #["tools"] => "Tools",
+    # ["features"] => "Features",
+    # ["tools"] => "Tools",
     ["object_parameters", "relationship_parameters"] => "Parameters",
     ["object_classes"] => "Object Classes",
 )
-concept_dictionary = SpineOpt.add_cross_references!(
-    SpineOpt.initialize_concept_dictionary(SpineOpt.template(); translation=default_translation),
+concept_dictionary = add_cross_references!(
+    initialize_concept_dictionary(SpineOpt.template(); translation=default_translation),
 )
-SpineOpt.write_concept_reference_files(concept_dictionary, path)
+write_concept_reference_files(concept_dictionary, path)
 
-# Automatically write the 'constraints_automatically_generated_file' file using the 'constraints' file and content from docstrings
+# Automatically write the 'constraints_automatically_generated_file' file using the 'constraints' file
+# and content from docstrings
 mathpath = joinpath(path, "src", "mathematical_formulation")
-alldocs = SpineOpt.alldocstrings(SpineOpt)
+alldocs = alldocstrings(SpineOpt)
 instructionlist = readlines(joinpath(mathpath, "constraints.md"))
-markdownstring = SpineOpt.docs_from_instructionlist(alldocs, instructionlist)
+markdownstring = docs_from_instructionlist(alldocs, instructionlist)
 open(joinpath(mathpath, "constraints_automatically_generated_file.md"), "w") do file
     write(file, markdownstring)
 end
+
+write_documentation_sets_variables(mathpath)
 
 # Generate the documentation pages
 # Replace the Any[...] with just Any[] if you want to collect content automatically via `expand_empty_chapters!`
@@ -77,7 +82,7 @@ pages = [
     "Implementation details" => [],
     "Library" => "library.md",
 ]
-SpineOpt.populate_empty_chapters!(pages, joinpath(path, "src"))
+populate_empty_chapters!(pages, joinpath(path, "src"))
 
 # Create and deploy the documentation
 makedocs(

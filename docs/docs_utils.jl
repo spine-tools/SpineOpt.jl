@@ -16,6 +16,35 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
+using CSV
+using DataFrames
+
+function write_documentation_sets_variables(mathpath)
+    variables = DataFrame(CSV.File(joinpath(mathpath, "variables.csv")))
+    variables.variable_name_latex = replace.(variables.variable_name, r"_" => "\\_")
+    variables.variable_name_latex .= "``v_{" .* variables.variable_name_latex .* "} ``"
+    variables.indices .= replace.(variables.indices, r"_" => "\\_")
+    variable_string = "# Variables \n"
+    for i in 1:size(variables, 1)
+        variable_string = string(variable_string, "## `$(variables.variable_name[i])` \n\n")
+        variable_string = string(variable_string, " > **Math symbol:** $(variables.variable_name_latex[i]) \n\n")
+        variable_string = string(variable_string, " > **Indices:** $(variables.index[i]) \n\n")
+        variable_string = string(variable_string, " > **Indices function:** $(variables.indices[i]) \n\n")
+        variable_string = string(variable_string, "$(variables.description[i]) \n\n")
+    end
+    sets = dropmissing(DataFrame(CSV.File(joinpath(mathpath, "sets.csv"))))
+    set_string = "# Sets \n"
+    for i in 1:size(sets, 1)
+            set_string = string(set_string, "## `$(sets.indices[i])` \n\n")
+            set_string = string(set_string, "$(sets.Description[i]) \n\n")
+    end
+    open(joinpath(mathpath, "variables.md"), "w") do io
+        write(io, variable_string)
+    end
+    open(joinpath(mathpath, "sets.md"), "w") do io
+        write(io, set_string)
+    end
+end
 
 """
     initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
@@ -352,23 +381,19 @@ end
 """
     alldocstrings(m)
 
-Return all docstrings from the provided module m as a dictionary.
+A Dict mapping function name to its docstring for given Module.
 """
 function alldocstrings(m)
-    #allbindings(m) = [ [y[2].data[:binding] for y in x[2].docs] for x in Base.eval(m,Base.Docs.META) ]
-    bindings = []
-    for x in Base.eval(m,Base.Docs.META)
-        for y in x[2].docs
-            push!(bindings,[y[2].data[:binding]])
+    alldocs = Dict()
+    for multidoc in values(Base.eval(m, Base.Docs.META))
+        for doc_str in values(multidoc.docs)
+            binding = doc_str.data[:binding]
+            key = split(string(binding), ".")[2]
+            value = Base.Docs.doc(binding)
+            alldocs[key] = value
         end
     end
-    alldocs = Dict()
-    for binding in bindings
-        dockey = split(string(binding[1]),".")[2]
-        docvalue = Base.Docs.doc(binding[1])
-        alldocs[dockey] = docvalue
-    end
-    return alldocs
+    alldocs
 end
 
 """
@@ -376,7 +401,9 @@ end
 
 Finds specific regions within a docstring and return them as a single string.
 """
-function findregions(docstring; regions=["formulation","description"], title="", fieldtitle=false, sep="\n\n", debugmode=false)
+function findregions(
+    docstring; regions=["formulation","description"], title="", fieldtitle=false, sep="\n\n", debugmode=false
+)
     md = ""
     if !isempty(title)
         md *= title * sep
@@ -396,7 +423,8 @@ function findregions(docstring; regions=["formulation","description"], title="",
         catch
             if debugmode
                 @warn "Cannot find #(end)region $region"
-                #the error could also be because there is no docstring for constraint but that is a very rare case as there is often at least a dynamic docstring
+                # the error could also be because there is no docstring for constraint but that is a very rare case
+                # as there is often at least a dynamic docstring
             end
         end
     end
