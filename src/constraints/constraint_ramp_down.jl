@@ -26,7 +26,7 @@ to the `shut_down_limit` and `ramp_down_limit` parameter values.
 function add_constraint_ramp_down!(m::Model)
     @fetch units_on, units_shut_down, unit_flow = m.ext[:spineopt].variables
     t0 = _analysis_time(m)
-    m.ext[:spineopt].constraints[:ramp_up] = Dict(
+    m.ext[:spineopt].constraints[:ramp_down] = Dict(
         (unit=u, node=ng, direction=d, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             + expr_sum(
@@ -63,7 +63,7 @@ function add_constraint_ramp_down!(m::Model)
                             - _ramp_down_limit(u, ng, d, s, t0, t_after)
                         )
                         * units_shut_down[u, s, t]
-                        - minimum_operating_point(u, ng, d, s, t0, t_after)
+                        - _minimum_operating_point(u, ng, d, s, t0, t_after)
                         * units_on[u, s, t]
                     )
                     * min(duration(t), duration(t_after))
@@ -71,7 +71,7 @@ function add_constraint_ramp_down!(m::Model)
                     init=0
                 )
                 + expr_sum(
-                    + (minimum_operating_point(u, ng, d, s, t0, t_after) + _ramp_down_limit(u, ng, d, s, t0, t_after))
+                    + (_minimum_operating_point(u, ng, d, s, t0, t_after) + _ramp_down_limit(u, ng, d, s, t0, t_after))
                     * units_on[u, s, t] * min(duration(t), duration(t_before))
                     for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
                     init=0
