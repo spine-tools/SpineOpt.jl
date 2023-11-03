@@ -72,39 +72,44 @@ function add_constraint_unit_flow_capacity!(m::Model)
     )
 end
 
-function _nt(u, ng, d, s, t0, t, default=nothing)
-    (unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=default)
-end
-
 function _flow_upper_bound(u, ng, d, s, t0, t_flow)
-    unit_capacity[_nt(u, ng, d, s, t0, t_flow)] * unit_conv_cap_to_flow[_nt(u, ng, d, s, t0, t_flow)]
+    (
+        + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_flow)]
+        * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_flow)]
+    )
 end
 
-function _max_startup_ramp(u, ng, d, s, t0, t_on)
-    max_shutdown_ramp[_nt(u, ng, d, s, t0, t_on, Inf)]
+function _max_startup_ramp(u, ng, d, s, t0, t_flow, t_on)
+    (
+        + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_flow)]
+        * max_startup_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on, _default=1)]
+    )
 end
 
-function _max_shutdown_ramp(u, ng, d, s, t0, t_on)
-    max_shutdown_ramp[_nt(u, ng, d, s, t0, t_on, Inf)]
+function _max_shutdown_ramp(u, ng, d, s, t0, t_flow, t_on)
+    (
+        + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_flow)]
+        * max_shutdown_ramp[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t_on, _default=1)]
+    )
 end
 
 function _shutdown_margin(u, ng, d, s, t0, t_flow, t_on, case, part)
     if part == 1
         # (F - SD)
-        max(_flow_upper_bound(u, ng, d, s, t0, t_flow) - _max_shutdown_ramp(u, ng, d, s, t0, t_on), 0)
+        _flow_upper_bound(u, ng, d, s, t0, t_flow) - _max_shutdown_ramp(u, ng, d, s, t0, t_flow, t_on)
     else
         # max(SU - SD, 0)
-        max(_max_startup_ramp(u, ng, d, s, t0, t_on) - _max_shutdown_ramp(u, ng, d, s, t0, t_on), 0)
+        max(_max_startup_ramp(u, ng, d, s, t0, t_flow, t_on) - _max_shutdown_ramp(u, ng, d, s, t0, t_flow, t_on), 0)
     end
 end
 
 function _startup_margin(u, ng, d, s, t0, t_flow, t_on, case, part)
     if case == 2 && part == 1
         # max(SD - SU, 0)
-        max(_max_shutdown_ramp(u, ng, d, s, t0, t_on) - _max_startup_ramp(u, ng, d, s, t0, t_on), 0)
+        max(_max_shutdown_ramp(u, ng, d, s, t0, t_flow, t_on) - _max_startup_ramp(u, ng, d, s, t0, t_flow, t_on), 0)
     else
         # (F - SU)
-        max(_flow_upper_bound(u, ng, d, s, t0, t_flow) - _max_startup_ramp(u, ng, d, s, t0, t_on), 0)
+        _flow_upper_bound(u, ng, d, s, t0, t_flow) - _max_startup_ramp(u, ng, d, s, t0, t_flow, t_on)
     end
 end
 
