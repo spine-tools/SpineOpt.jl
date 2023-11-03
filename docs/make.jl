@@ -30,7 +30,7 @@ open(joinpath(mathpath, "constraints_automatically_generated_file.md"), "w") do 
     write(file, markdownstring)
 end
 
-write_documentation_sets_variables(mathpath)
+write_sets_and_variables(mathpath)
 
 # Generate the documentation pages
 # Replace the Any[...] with just Any[] if you want to collect content automatically via `expand_empty_chapters!`
