@@ -44,3 +44,14 @@ function past_units_on_indices(m, u, s, t, min_time)
         temporal_block=anything
     )    
 end
+
+function _minimum_operating_point(u, ng, d, s, t0, t)
+    minimum_operating_point[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t, _default=1)]
+end
+
+function _unit_flow_capacity(u, ng, d, s, t0, t)
+    (
+        + unit_capacity[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+        * unit_conv_cap_to_flow[(unit=u, node=ng, direction=d, stochastic_scenario=s, analysis_time=t0, t=t)]
+    )
+end
