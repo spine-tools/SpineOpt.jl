@@ -71,12 +71,12 @@ mathpath = joinpath(path, "src", "mathematical_formulation")
 alldocs = SpineOpt.alldocstrings(SpineOpt)
 instructionlist = readlines(joinpath(mathpath, "constraints.md"))
 markdownstring = SpineOpt.docs_from_instructionlist(alldocs, instructionlist)
-open(joinpath(mathpath, "constraints_automatically_generated_file.md"), "w") do file
+open(joinpath(mathpath, "constraints_automatically_generated.md"), "w") do file
     write(file, markdownstring)
 end
 instructionlist = readlines(joinpath(mathpath, "objective_function.md"))
 markdownstring = SpineOpt.docs_from_instructionlist(alldocs, instructionlist)
-open(joinpath(mathpath, "objective_function_automatically_generated_file.md"), "w") do file
+open(joinpath(mathpath, "objective_function_automatically_generated.md"), "w") do file
     write(file, markdownstring)
 end
 ```
