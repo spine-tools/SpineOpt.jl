@@ -51,7 +51,7 @@ function constraint_operating_point_bounds_indices(m::Model)
         for (u, ng, d, i, _s, _t) in unit_flow_op_indices(m)
         if ordered_unit_flow_op(unit=u, node=ng, direction=d, _default=false)
         for (t, path) in t_lowest_resolution_path(
-            m, vcat(unit_flow_op_indices(m; unit=u, node=ng, direction=d, i=i), units_on_indices(m; unit=u))
+            m, unit_flow_op_indices(m; unit=u, node=ng, direction=d, i=i), units_on_indices(m; unit=u)
         )
     )
 end
