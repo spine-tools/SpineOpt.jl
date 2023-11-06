@@ -135,19 +135,32 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
             concept = concept_dictionary[key][entry[indices[:name_index]]]
             # Check for conflicts in `description`, `default_value`, `parameter_value_list`, `feature`
             if !isnothing(concept[:description]) && concept[:description] != entry[indices[:description_index]]
-                @warn "`$(entry[indices[:name_index]])` has conflicting `description` across duplicate template entries!"
+                @warn(
+                    "`$(entry[indices[:name_index]])` has conflicting `description` across duplicate template entries"
+                )
             end
             if !isnothing(concept[:default_value]) && concept[:default_value] != entry[indices[:default_value_index]]
-                @warn "`$(entry[indices[:name_index]])` has conflicting `default_value` across duplicate template entries!"
+                @warn(
+                    "`$(entry[indices[:name_index]])` has conflicting `default_value` across duplicate template entries"
+                )
             end
-            if !isnothing(concept[:parameter_value_list]) && concept[:parameter_value_list] != entry[indices[:parameter_value_list_index]]
-                @warn "`$(entry[indices[:name_index]])` has conflicting `parameter_value_list` across duplicate template entries!"
+            if (
+                    !isnothing(concept[:parameter_value_list])
+                    && concept[:parameter_value_list] != entry[indices[:parameter_value_list_index]]
+                )
+                @warn(
+                    "`$(entry[indices[:name_index]])` has conflicting `parameter_value_list` ",
+                    "across duplicate template entries"
+                )
             end
             if !isnothing(concept[:possible_values]) && !isnothing(entry[indices[:possible_values_index]])
                 unique!(push!(concept[:possible_values], entry[indices[:possible_values_index]]))
             end                
             if !isnothing(concept[:feature]) && concept[:feature] != entry[indices[:feature_index]]
-                @warn "`$(entry[indices[:name_index]])` has conflicting `parameter_value_list` across duplicate template entries!"
+                @warn(
+                    "`$(entry[indices[:name_index]])` has conflicting `parameter_value_list` ",
+                    "across duplicate template entries"
+                )
             end
             # Include all unique `concepts` into `related concepts`
             if !isempty(concept[:related_concepts])
@@ -220,24 +233,9 @@ function add_cross_references!(concept_dictionary::Dict)
         for concept in keys(concept_dictionary[class])
             for related_concept_class in keys(concept_dictionary[class][concept][:related_concepts])
                 for related_concept in concept_dictionary[class][concept][:related_concepts][related_concept_class]
-                    if !isnothing(
-                        get(
-                            concept_dictionary[related_concept_class][related_concept][:related_concepts],
-                            class,
-                            nothing,
-                        ),
-                    )
-                        if concept in concept_dictionary[related_concept_class][related_concept][:related_concepts][class]
-                            nothing
-                        else
-                            push!(
-                                concept_dictionary[related_concept_class][related_concept][:related_concepts][class],
-                                concept,
-                            )
-                        end
-                    else
-                        concept_dictionary[related_concept_class][related_concept][:related_concepts][class] = [concept]
-                    end
+                    related_concepts = concept_dictionary[related_concept_class][related_concept][:related_concepts]
+                    concepts = get!(related_concepts, class, [])
+                    concept in concepts || push!(concepts, concept)
                 end
             end
         end
@@ -278,7 +276,10 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
             end
             # If parameter value lists are defined, include those into the preamble
             if !isnothing(concept_dictionary[filename][concept][:parameter_value_list])
-                refstring = "[$(replace(concept_dictionary[filename][concept][:parameter_value_list], "_" => "\\_"))](@ref)"
+                refstring = string(
+                    "[$(replace(concept_dictionary[filename][concept][:parameter_value_list], "_" => "\\_"))]",
+                    "(@ref)"
+                )
                 section *= ">**Uses [Parameter Value Lists](@ref):** $(refstring)\n\n"
             end
             # If possible parameter values are defined, include those into the preamble
@@ -296,14 +297,22 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
                             "[$(replace(c, "_" => "\\_"))](@ref)"
                             for c in concept_dictionary[filename][concept][:related_concepts][related_concept_type]
                         ]
-                        section *= ">**Related [$(replace(related_concept_type, "_" => "\\_"))](@ref):** $(join(sort!(refstrings), ", ", " and "))\n\n"
+                        section *= string(
+                            ">**Related [$(replace(related_concept_type, "_" => "\\_"))](@ref):** ",
+                            "$(join(sort!(refstrings), ", ", " and "))\n\n"
+                        )
                     end
                 end
             end
             # If features are defined, include those into the preamble
-            # if !isnothing(concept_dictionary[filename][concept][:feature])
-            #    section *= "Uses [Features](@ref): $(join(replace(concept_dictionary[filename][concept][:feature], "_" => "\\_"), ", ", " and "))\n\n"
-            # end
+            #=
+            if !isnothing(concept_dictionary[filename][concept][:feature])
+                section *= string(
+                    "Uses [Features](@ref): ",
+                    "$(join(replace(concept_dictionary[filename][concept][:feature], "_" => "\\_"), ", ", " and "))\n\n"
+                )
+            end
+            =#
             # Try to fetch the description from the corresponding .md filename.
             description_path = joinpath(makedocs_path, "src", "concept_reference", "$(concept).md")
             try
