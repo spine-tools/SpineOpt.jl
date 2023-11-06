@@ -370,11 +370,11 @@ function populate_empty_chapters!(pages, path)
 end
 
 """
-    alldocstrings(m)
+    all_docstrings(m)
 
 A Dict mapping function name to its docstring for given Module.
 """
-function alldocstrings(m)
+function all_docstrings(m)
     alldocs = Dict()
     for multidoc in values(Base.eval(m, Base.Docs.META))
         for doc_str in values(multidoc.docs)
@@ -388,107 +388,101 @@ function alldocstrings(m)
 end
 
 """
-    findregions()
+    _find_fields()
 
-Finds specific regions within a docstring and return them as a single string.
+Finds specific fields within a docstring and return them as a single string.
 """
-function findregions(
-    docstring; regions=["formulation","description"], title="", fieldtitle=false, sep="\n\n", debugmode=false
+function _find_fields(
+    docstring; fields=["formulation", "description"], title="", field_title=false, sep="\n\n", debug_mode=false
 )
-    md = ""
+    parts = []
     if !isempty(title)
-        md *= title * sep
+        push!(parts, title)
     end
-    for region in regions
+    for field in fields
+        if field_title
+            push!(parts, field)
+        end
         try
-            sf1 = findfirst("#region $region",string(docstring))[end]+2
-            sf2 = findfirst("#endregion $region",string(docstring))[1]-2
-            sf = SubString(string(docstring),sf1,sf2)
-            if fieldtitle
-                md *= region * sep
-            end
-            md *= sf * sep
-            if debugmode
+            sf1 = findfirst("#$field", string(docstring))[end] + 2
+            sf2 = findfirst("#end $field", string(docstring))[1] - 2
+            sf = SubString(string(docstring), sf1, sf2)
+            push!(parts, sf)
+            if debug_mode
                 println(sf)
             end
         catch
-            if debugmode
-                @warn "Cannot find #(end)region $region"
+            if debug_mode
+                @warn "Cannot find $field"
                 # the error could also be because there is no docstring for constraint but that is a very rare case
                 # as there is often at least a dynamic docstring
             end
         end
     end
-    md
+    join(parts, sep)
 end
 
 """
-    docs_from_instructionlist(alldocs, instructionlist)
+    expand_instructions!(lines, docstrings)
 
-Create a string from all docstrings in a module with the instructions from the instructionlist.
+Expand `lines` in place by replacing instructions with appropriate content from given `docstrings`,
+which must be a `Dict` mapping function names to their docstring.
 
-The instructions currently accept 3 types (see example below):
-+ regular strings: these are simply printed to the string
-+ instruction strings: strings in between region instruction, intended for use in markdown files
-+ instruction tuple: tuple with the same instructions, more directly related to the findregions function
+The lines can either be:
++ regular strings: these aren't touched
++ instruction strings: strings within an instruction block, these are replaced by specific content from a docstring.
 
-The instruction consists of a function name and a list of regions in the docstring of that function.
-If the function name is 'alldocstrings' then it will search all docstrings for the given regions.
+The instruction block consists of a function name and a list of fields in the docstring of that function.
+If the function name is 'all_functions' then it will search all docstrings for the given fields.
 
 Each instruction is separated by two end of line characters.
 
 '''julia
-alldocs = alldocstrings(SpineOpt)
-instrulist = [
+docstrings = all_docstrings(SpineOpt)
+lines = [
     "# Constraints",
     "## Auto constraint",
-    "#region instruction",
+    "#instruction",
     "add_constraint_node_state_capacity!",
     "formulation",
-    "#endregion instruction",
-    ("add_constraint_node_state_capacity!",["formulation","description"])
-]
-markdownstring = docs_from_instructionlist(alldocs, instrulist)
+    "#end instruction"
+)
+expand_instructions!(lines, docstrings)
 '''
 """
-function docs_from_instructionlist(alldocs, instructionlist)
-    md = ""
-    
-    function interpret_instruction(functionname,functionfields)
-        if functionname == "alldocstrings"
-            for (dockey, docvalue) in alldocs
+function expand_instructions!(lines, docstrings)
+    function interpret_instruction(function_name, function_fields)
+        if function_name == "all_functions"
+            for (doc_key, doc_value) in docstrings
                 title = ""
-                if occursin("add_constraint", dockey)
+                if occursin("add_constraint_", doc_key)
                     # remove add_constraint_ as well as !
-                    title = "### " * replace(uppercasefirst(dockey[16:end-1]), "_" => " ")
+                    name = split(doc_key, "add_constraint_")[2][end - 1]
+                    title = "### " * replace(uppercasefirst(name), "_" => " ")
                 end
-                md *= findregions(docvalue; regions=functionfields, title=title)
+                md *= _find_fields(doc_value; fields=function_fields, title=title)
             end
         else
-            md *= findregions(alldocs[functionname]; regions=functionfields)
+            _find_fields(docstrings[function_name]; fields=function_fields)
         end
     end
 
-    instructionarray = [] #needs to be empty
-    for instruction in instructionlist
-        if isa(instruction, String)
-            if occursin("#region instruction", instruction)
-                instructionarray = ["findfields"]
-            elseif occursin("#endregion instruction", instruction)
-                functionname = instructionarray[2]
-                functionfields = instructionarray[3:end]
-                interpret_instruction(functionname,functionfields)
-                instructionarray = []
-            elseif !isempty(instructionarray)
-                push!(instructionarray, instruction)
-            else
-                md *= instruction * "\n"
-            end
-        elseif isa(instruction,Tuple)
-            functionname = instruction[1]
-            functionfields = instruction[2]
-            interpret_instruction(functionname,functionfields)
+    replacement_lines = Dict()
+    instructions = []
+    for (k, line) in enumerate(lines)
+        if occursin("#instruction", line)
+            push!(instructions, k)
+        elseif occursin("#end instruction", line)
+            from_ind, function_name, function_fields... = instructions
+            to_ind = k
+            replacement_lines[from_ind:to_ind] = interpret_instruction(function_name, function_fields)
+            empty!(instructions)
+        elseif !isempty(instructions)
+            push!(instructions, line)
         end
     end
-    md
+    replacement_lines
+    for (rng, line) in replacement_lines
+        splice!(lines, rng, [line])
+    end
 end
