@@ -23,11 +23,11 @@ write_concept_reference_files(concept_dictionary, path)
 # Automatically write the 'constraints_automatically_generated' file using the 'constraints' file
 # and content from docstrings
 mathpath = joinpath(path, "src", "mathematical_formulation")
-alldocs = alldocstrings(SpineOpt)
-instructionlist = readlines(joinpath(mathpath, "constraints.md"))
-markdownstring = docs_from_instructionlist(alldocs, instructionlist)
+docstrings = all_docstrings(SpineOpt)
+constraints_lines = readlines(joinpath(mathpath, "constraints.md"))
+expand_instructions!(constraints_lines, docstrings)
 open(joinpath(mathpath, "constraints_automatically_generated.md"), "w") do file
-    write(file, markdownstring)
+    write(file, join(constraints_lines, "\n"))
 end
 
 write_sets_and_variables(mathpath)

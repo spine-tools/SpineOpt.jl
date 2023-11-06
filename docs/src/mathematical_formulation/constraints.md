@@ -3,11 +3,11 @@
 ## Balance constraint
 
 ### [Nodal balance](@id constraint_nodal_balance)
-#region instruction
+#instruction
 add_constraint_nodal_balance!
 description
 formulation
-#endregion instruction
+#end instruction
 
 The constraint consists of the [node injections](@ref constraint_node_injection), the net [connection\_flow](@ref)s and [node slack variables](@ref Variables).
 

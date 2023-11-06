@@ -135,19 +135,32 @@ function initialize_concept_dictionary(template::Dict; translation::Dict=Dict())
             concept = concept_dictionary[key][entry[indices[:name_index]]]
             # Check for conflicts in `description`, `default_value`, `parameter_value_list`, `feature`
             if !isnothing(concept[:description]) && concept[:description] != entry[indices[:description_index]]
-                @warn "`$(entry[indices[:name_index]])` has conflicting `description` across duplicate template entries!"
+                @warn(
+                    "`$(entry[indices[:name_index]])` has conflicting `description` across duplicate template entries"
+                )
             end
             if !isnothing(concept[:default_value]) && concept[:default_value] != entry[indices[:default_value_index]]
-                @warn "`$(entry[indices[:name_index]])` has conflicting `default_value` across duplicate template entries!"
+                @warn(
+                    "`$(entry[indices[:name_index]])` has conflicting `default_value` across duplicate template entries"
+                )
             end
-            if !isnothing(concept[:parameter_value_list]) && concept[:parameter_value_list] != entry[indices[:parameter_value_list_index]]
-                @warn "`$(entry[indices[:name_index]])` has conflicting `parameter_value_list` across duplicate template entries!"
+            if (
+                    !isnothing(concept[:parameter_value_list])
+                    && concept[:parameter_value_list] != entry[indices[:parameter_value_list_index]]
+                )
+                @warn(
+                    "`$(entry[indices[:name_index]])` has conflicting `parameter_value_list` ",
+                    "across duplicate template entries"
+                )
             end
             if !isnothing(concept[:possible_values]) && !isnothing(entry[indices[:possible_values_index]])
                 unique!(push!(concept[:possible_values], entry[indices[:possible_values_index]]))
             end                
             if !isnothing(concept[:feature]) && concept[:feature] != entry[indices[:feature_index]]
-                @warn "`$(entry[indices[:name_index]])` has conflicting `parameter_value_list` across duplicate template entries!"
+                @warn(
+                    "`$(entry[indices[:name_index]])` has conflicting `parameter_value_list` ",
+                    "across duplicate template entries"
+                )
             end
             # Include all unique `concepts` into `related concepts`
             if !isempty(concept[:related_concepts])
@@ -220,24 +233,9 @@ function add_cross_references!(concept_dictionary::Dict)
         for concept in keys(concept_dictionary[class])
             for related_concept_class in keys(concept_dictionary[class][concept][:related_concepts])
                 for related_concept in concept_dictionary[class][concept][:related_concepts][related_concept_class]
-                    if !isnothing(
-                        get(
-                            concept_dictionary[related_concept_class][related_concept][:related_concepts],
-                            class,
-                            nothing,
-                        ),
-                    )
-                        if concept in concept_dictionary[related_concept_class][related_concept][:related_concepts][class]
-                            nothing
-                        else
-                            push!(
-                                concept_dictionary[related_concept_class][related_concept][:related_concepts][class],
-                                concept,
-                            )
-                        end
-                    else
-                        concept_dictionary[related_concept_class][related_concept][:related_concepts][class] = [concept]
-                    end
+                    related_concepts = concept_dictionary[related_concept_class][related_concept][:related_concepts]
+                    concepts = get!(related_concepts, class, [])
+                    concept in concepts || push!(concepts, concept)
                 end
             end
         end
@@ -278,7 +276,10 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
             end
             # If parameter value lists are defined, include those into the preamble
             if !isnothing(concept_dictionary[filename][concept][:parameter_value_list])
-                refstring = "[$(replace(concept_dictionary[filename][concept][:parameter_value_list], "_" => "\\_"))](@ref)"
+                refstring = string(
+                    "[$(replace(concept_dictionary[filename][concept][:parameter_value_list], "_" => "\\_"))]",
+                    "(@ref)"
+                )
                 section *= ">**Uses [Parameter Value Lists](@ref):** $(refstring)\n\n"
             end
             # If possible parameter values are defined, include those into the preamble
@@ -296,14 +297,22 @@ function write_concept_reference_files(concept_dictionary::Dict, makedocs_path::
                             "[$(replace(c, "_" => "\\_"))](@ref)"
                             for c in concept_dictionary[filename][concept][:related_concepts][related_concept_type]
                         ]
-                        section *= ">**Related [$(replace(related_concept_type, "_" => "\\_"))](@ref):** $(join(sort!(refstrings), ", ", " and "))\n\n"
+                        section *= string(
+                            ">**Related [$(replace(related_concept_type, "_" => "\\_"))](@ref):** ",
+                            "$(join(sort!(refstrings), ", ", " and "))\n\n"
+                        )
                     end
                 end
             end
             # If features are defined, include those into the preamble
-            # if !isnothing(concept_dictionary[filename][concept][:feature])
-            #    section *= "Uses [Features](@ref): $(join(replace(concept_dictionary[filename][concept][:feature], "_" => "\\_"), ", ", " and "))\n\n"
-            # end
+            #=
+            if !isnothing(concept_dictionary[filename][concept][:feature])
+                section *= string(
+                    "Uses [Features](@ref): ",
+                    "$(join(replace(concept_dictionary[filename][concept][:feature], "_" => "\\_"), ", ", " and "))\n\n"
+                )
+            end
+            =#
             # Try to fetch the description from the corresponding .md filename.
             description_path = joinpath(makedocs_path, "src", "concept_reference", "$(concept).md")
             try
@@ -361,11 +370,11 @@ function populate_empty_chapters!(pages, path)
 end
 
 """
-    alldocstrings(m)
+    all_docstrings(m)
 
 A Dict mapping function name to its docstring for given Module.
 """
-function alldocstrings(m)
+function all_docstrings(m)
     alldocs = Dict()
     for multidoc in values(Base.eval(m, Base.Docs.META))
         for doc_str in values(multidoc.docs)
@@ -379,107 +388,101 @@ function alldocstrings(m)
 end
 
 """
-    findregions()
+    _find_fields()
 
-Finds specific regions within a docstring and return them as a single string.
+Finds specific fields within a docstring and return them as a single string.
 """
-function findregions(
-    docstring; regions=["formulation","description"], title="", fieldtitle=false, sep="\n\n", debugmode=false
+function _find_fields(
+    docstring; fields=["formulation", "description"], title="", field_title=false, sep="\n\n", debug_mode=false
 )
-    md = ""
+    parts = []
     if !isempty(title)
-        md *= title * sep
+        push!(parts, title)
     end
-    for region in regions
+    for field in fields
+        if field_title
+            push!(parts, field)
+        end
         try
-            sf1 = findfirst("#region $region",string(docstring))[end]+2
-            sf2 = findfirst("#endregion $region",string(docstring))[1]-2
-            sf = SubString(string(docstring),sf1,sf2)
-            if fieldtitle
-                md *= region * sep
-            end
-            md *= sf * sep
-            if debugmode
+            sf1 = findfirst("#$field", string(docstring))[end] + 2
+            sf2 = findfirst("#end $field", string(docstring))[1] - 2
+            sf = SubString(string(docstring), sf1, sf2)
+            push!(parts, sf)
+            if debug_mode
                 println(sf)
             end
         catch
-            if debugmode
-                @warn "Cannot find #(end)region $region"
+            if debug_mode
+                @warn "Cannot find $field"
                 # the error could also be because there is no docstring for constraint but that is a very rare case
                 # as there is often at least a dynamic docstring
             end
         end
     end
-    md
+    join(parts, sep)
 end
 
 """
-    docs_from_instructionlist(alldocs, instructionlist)
+    expand_instructions!(lines, docstrings)
 
-Create a string from all docstrings in a module with the instructions from the instructionlist.
+Expand `lines` in place by replacing instructions with appropriate content from given `docstrings`,
+which must be a `Dict` mapping function names to their docstring.
 
-The instructions currently accept 3 types (see example below):
-+ regular strings: these are simply printed to the string
-+ instruction strings: strings in between region instruction, intended for use in markdown files
-+ instruction tuple: tuple with the same instructions, more directly related to the findregions function
+The lines can either be:
++ regular strings: these aren't touched
++ instruction strings: strings within an instruction block, these are replaced by specific content from a docstring.
 
-The instruction consists of a function name and a list of regions in the docstring of that function.
-If the function name is 'alldocstrings' then it will search all docstrings for the given regions.
+The instruction block consists of a function name and a list of fields in the docstring of that function.
+If the function name is 'all_functions' then it will search all docstrings for the given fields.
 
 Each instruction is separated by two end of line characters.
 
 '''julia
-alldocs = alldocstrings(SpineOpt)
-instrulist = [
+docstrings = all_docstrings(SpineOpt)
+lines = [
     "# Constraints",
     "## Auto constraint",
-    "#region instruction",
+    "#instruction",
     "add_constraint_node_state_capacity!",
     "formulation",
-    "#endregion instruction",
-    ("add_constraint_node_state_capacity!",["formulation","description"])
-]
-markdownstring = docs_from_instructionlist(alldocs, instrulist)
+    "#end instruction"
+)
+expand_instructions!(lines, docstrings)
 '''
 """
-function docs_from_instructionlist(alldocs, instructionlist)
-    md = ""
-    
-    function interpret_instruction(functionname,functionfields)
-        if functionname == "alldocstrings"
-            for (dockey, docvalue) in alldocs
+function expand_instructions!(lines, docstrings)
+    function interpret_instruction(function_name, function_fields)
+        if function_name == "all_functions"
+            for (doc_key, doc_value) in docstrings
                 title = ""
-                if occursin("add_constraint", dockey)
+                if occursin("add_constraint_", doc_key)
                     # remove add_constraint_ as well as !
-                    title = "### " * replace(uppercasefirst(dockey[16:end-1]), "_" => " ")
+                    name = split(doc_key, "add_constraint_")[2][end - 1]
+                    title = "### " * replace(uppercasefirst(name), "_" => " ")
                 end
-                md *= findregions(docvalue; regions=functionfields, title=title)
+                md *= _find_fields(doc_value; fields=function_fields, title=title)
             end
         else
-            md *= findregions(alldocs[functionname]; regions=functionfields)
+            _find_fields(docstrings[function_name]; fields=function_fields)
         end
     end
 
-    instructionarray = [] #needs to be empty
-    for instruction in instructionlist
-        if isa(instruction, String)
-            if occursin("#region instruction", instruction)
-                instructionarray = ["findfields"]
-            elseif occursin("#endregion instruction", instruction)
-                functionname = instructionarray[2]
-                functionfields = instructionarray[3:end]
-                interpret_instruction(functionname,functionfields)
-                instructionarray = []
-            elseif !isempty(instructionarray)
-                push!(instructionarray, instruction)
-            else
-                md *= instruction * "\n"
-            end
-        elseif isa(instruction,Tuple)
-            functionname = instruction[1]
-            functionfields = instruction[2]
-            interpret_instruction(functionname,functionfields)
+    replacement_lines = Dict()
+    instructions = []
+    for (k, line) in enumerate(lines)
+        if occursin("#instruction", line)
+            push!(instructions, k)
+        elseif occursin("#end instruction", line)
+            from_ind, function_name, function_fields... = instructions
+            to_ind = k
+            replacement_lines[from_ind:to_ind] = interpret_instruction(function_name, function_fields)
+            empty!(instructions)
+        elseif !isempty(instructions)
+            push!(instructions, line)
         end
     end
-    md
+    replacement_lines
+    for (rng, line) in replacement_lines
+        splice!(lines, rng, [line])
+    end
 end
