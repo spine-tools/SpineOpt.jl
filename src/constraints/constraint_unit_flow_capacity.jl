@@ -58,7 +58,7 @@ function constraint_unit_flow_capacity_indices(m::Model)
         (unit=u, node=ng, direction=d, stochastic_path=path, t=t)
         for (u, ng, d) in indices(unit_capacity)
         for (t, path) in t_lowest_resolution_path(
-            m, vcat(unit_flow_indices(m; unit=u, node=ng, direction=d), units_on_indices(m; unit=u))
+            m, unit_flow_indices(m; unit=u, node=ng, direction=d), units_on_indices(m; unit=u)
         )
     )
 end
