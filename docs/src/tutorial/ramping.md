@@ -26,7 +26,7 @@ This tutorial includes a step-by-step guide to include the parameters to help an
 - Select the 'input' Data Store item in the *Design View*.
 - Go to *Data Store Properties* and hit **Open editor**. This will open the database in the *Spine DB editor*.
 
-In this tutorial, you will learn how to add ramping constraints to the Simple System using the *Spine DB editor*, but first let's start by updating the electricity demand from a single value to a 2-hour time series.
+In this tutorial, you will learn how to add ramping constraints to the Simple System using the *Spine DB editor*, but first let's start by updating the electricity demand from a single value to a 3-hour time series.
 
 ### Editing demand value
 
@@ -66,9 +66,11 @@ Since the default resolution of the Simple System was *1D*, the start and end da
 
 ![image](figs_ramping/ramping_model_start.png)
 
-- Repeat the procedure for the *model\_end* parameter, but now the value is `2000-01-01T03:00:00`. Notice that since the demand goes until `2000-01-01T02:00:00` the model must finish in the second hour to properly account for the first hour. The final values should look like that the image below.
+- Repeat the procedure for the *model\_end* parameter, but now the value is `2000-01-01T03:00:00`. The final values should look like that the image below.
 
 ![image](figs_ramping/ramping_model_start_and_end.png)
+
+> It's important to note that the model must finish in the third hour to account for all the periods of demand in input data, which goes until `2000-01-01T02:00:00`.
 
 When you're ready, save/commit all changes to the database.
 
@@ -138,7 +140,7 @@ When you're ready, save/commit all changes to the database.
 
 ![image](figs_ramping/ramping_results_ramping_constraint.png)
 
-The image above shows the electricity flow results for both power plants. As expected, the *power\_plant\_a* (i.e., the cheapest unit) output is limited to its ramp up and down limits, therefore it can't follow the demand changes as before. Therefore, the *power\_plant\_b* (i.e., the more expensive unit) must produce to cover the demand that plant 'a' can't due to its ramping limitations. As shown here, the ramping limits might lead to a higher costs in power systems.
+The image above shows the electricity flow results for both power plants. As expected, the *power\_plant\_a* (i.e., the cheapest unit) output is limited to its ramps limits, therefore it can't follow the demand changes as before. For instance, the unit's power output is 45MW in the first hour, which is lower than the previous result of 50MW in the same hour. This is because the unit needs to gradually decrease its power output and reach 25MW in the last hour. However, due to the imposed ramp-down limit of 10MW, it cannot start from 50MW as before. Therefore, the *power\_plant\_b* (i.e., the more expensive unit) must produce to cover the demand that plant 'a' can't due to its ramping limitations. As shown here, the ramping limits might lead to a higher costs in power systems compared to the previous case.
 
 *But...there is something more here...Can you tell what?* :anguished:
 
