@@ -19,7 +19,7 @@ Reserves refer to the capacity or energy that is kept as a backup to ensure the 
 
 ### Entering input data
 
-- Launch the Spine Toolbox and select **File** and then **Open Project** or use the keyboard shortcut **Alt + O** to open the desired project.
+- Launch the Spine Toolbox and select **File** and then **Open Project** or use the keyboard shortcut **Ctrl + O** to open the desired project.
 - Locate the folder that you saved in the Simple System tutorial and click *Ok*. This will prompt the Simple System workflow to appear in the *Design View* section for you to start working on.
 - Select the 'input' Data Store item in the *Design View*.
 - Go to *Data Store Properties* and hit **Open editor**. This will open the database in the *Spine DB editor*.
