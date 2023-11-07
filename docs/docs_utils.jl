@@ -467,7 +467,7 @@ function expand_instructions!(lines, docstrings)
         end
     end
 
-    replacement_lines = Dict()
+    replacement_lines = []
     instructions = []
     for (k, line) in enumerate(lines)
         if occursin("#instruction", line)
@@ -475,14 +475,14 @@ function expand_instructions!(lines, docstrings)
         elseif occursin("#end instruction", line)
             from_ind, function_name, function_fields... = instructions
             to_ind = k
-            replacement_lines[from_ind:to_ind] = interpret_instruction(function_name, function_fields)
+            push!(replacement_lines, (from_ind:to_ind, interpret_instruction(function_name, function_fields)))
             empty!(instructions)
         elseif !isempty(instructions)
             push!(instructions, line)
         end
     end
     replacement_lines
-    for (rng, line) in replacement_lines
+    for (rng, line) in Iterators.reverse(replacement_lines)
         splice!(lines, rng, [line])
     end
 end
