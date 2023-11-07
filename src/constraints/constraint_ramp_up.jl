@@ -30,7 +30,7 @@ function add_constraint_ramp_up!(m::Model)
         (unit=u, node=ng, direction=d, stochastic_path=s, t_before=t_before, t_after=t_after) => @constraint(
             m,
             + expr_sum(
-                + unit_flow[u, n, d, s, t] * duration(t)
+                + unit_flow[u, n, d, s, t]
                 for (u, n, d, s, t) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_after
                 )
@@ -38,7 +38,7 @@ function add_constraint_ramp_up!(m::Model)
                 init=0,
             )
             - expr_sum(
-                + unit_flow[u, n, d, s, t] * duration(t)
+                + unit_flow[u, n, d, s, t]
                 for (u, n, d, s, t) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_before
                 )
@@ -46,7 +46,7 @@ function add_constraint_ramp_up!(m::Model)
                 init=0,
             )
             + expr_sum(
-                + unit_flow[u, n, d, s, t] * duration(t)
+                + unit_flow[u, n, d, s, t]
                 for (u, n, d, s, t) in unit_flow_indices(
                     m; unit=u, node=ng, direction=d, stochastic_scenario=s, t=t_after
                 )
@@ -57,27 +57,25 @@ function add_constraint_ramp_up!(m::Model)
             + (
                 + expr_sum(
                     + (
-                        + (
-                            + _start_up_limit(u, ng, d, s, t0, t_after)
-                            - _minimum_operating_point(u, ng, d, s, t0, t_after)
-                            - _ramp_up_limit(u, ng, d, s, t0, t_after)
-                        )
-                        * units_started_up[u, s, t]
-                        + (_minimum_operating_point(u, ng, d, s, t0, t_after) + _ramp_up_limit(u, ng, d, s, t0, t_after))
-                        * units_on[u, s, t]
+                        + _start_up_limit(u, ng, d, s, t0, t_after)
+                        - _minimum_operating_point(u, ng, d, s, t0, t_after)
+                        - _ramp_up_limit(u, ng, d, s, t0, t_after)
                     )
-                    * min(duration(t), duration(t_after))
+                    * units_started_up[u, s, t]
+                    + (_minimum_operating_point(u, ng, d, s, t0, t_after) + _ramp_up_limit(u, ng, d, s, t0, t_after))
+                    * units_on[u, s, t]
                     for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_after));
                     init=0
                 )
                 - expr_sum(
                     + _minimum_operating_point(u, ng, d, s, t0, t_after)
-                    * units_on[u, s, t] * min(duration(t), duration(t_before))
+                    * units_on[u, s, t]
                     for (u, s, t) in units_on_indices(m; unit=u, stochastic_scenario=s, t=t_overlaps_t(m; t=t_before));
                     init=0
                 )
             )
             * _unit_flow_capacity(u, ng, d, s, t0, t_after)
+            * duration(t_after)
         )
         for (u, ng, d, s, t_before, t_after) in constraint_ramp_up_indices(m)
     )
