@@ -378,7 +378,7 @@ description
 formulation
 #end instruction
 
-##### Reserve constraints
+#### Reserve constraints
 
 ##### [Constraint on minimum node state for reserve provision](@id constraint_res_minimum_node_state)
 Storage nodes can also contribute to the provision of reserves. The amount of balancing contributions is limited by the ramps of the storage unit (see above) and by the node state:
