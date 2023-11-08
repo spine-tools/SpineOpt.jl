@@ -388,7 +388,7 @@ function _save_other_values!(m::Model)
             (model=m.ext[:spineopt].instance, t=current_window(m),) => JuMP.MOI.get(m, JuMP.MOI.RelativeGap())
         )
     catch err
-        err isa (JuMP.MOI.UnsupportedAttribute, JuMP.MOI.GetAttributeNotAllowed) || rethrow(err)
+        err isa JuMP.MOI.UnsupportedAttribute || err isa JuMP.MOI.GetAttributeNotAllowed || rethrow(err)
     end
 end
 
