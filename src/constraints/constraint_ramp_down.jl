@@ -17,11 +17,67 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 
-"""
+@doc raw"""
     add_constraint_ramp_down!(m::Model)
 
-Limit the decrease of `unit_flow` between consecutive time steps according
-to the `shut_down_limit` and `ramp_down_limit` parameter values.
+    #description
+    Limit the decrease of `unit_flow` over a time period of one `duration_unit` according
+    to the `shut_down_limit` and `ramp_down_limit` parameter values.
+    #end description
+
+    #formulation
+    ```math
+    \begin{aligned}
+    & \sum_{
+        \substack{
+            (u,n,d,s,t) \in unit\_flow\_indices \\
+            n \in ng, \, s \in s_{path}, \, t = t_{before} \\
+            !p_{is\_reserve}(n)
+        }
+    }
+    v_{unit\_flow}(u,n,d,s,t) \\
+    & - \sum_{
+        \substack{
+            (u,n,d,s,t) \in unit\_flow\_indices \\
+            n \in ng, \, s \in s_{path}, \, t = t_{after} \\
+            !p_{is\_reserve}(n)
+        }
+    }
+    v_{unit\_flow}(u,n,d,s,t) \\
+    & + \sum_{
+        \substack{
+            (u,n,d,s,t) \in unit\_flow\_indices \\
+            n \in ng, \, s \in s_{path}, \, t = t_{after} \\
+            p_{is\_reserve}(n), \, p_{downward\_reserve}(n)
+        }
+    }
+    v_{unit\_flow}(u,n,d,s,t) \\
+    & <= ( \\
+    & \sum_{
+        \substack{
+            (u,s,t) \in units\_on\_indices \\ s \in s_{path}, \, t = t_{after}
+        }
+    }
+    (p_{shut\_down\_limit}(u,ng,d,s,t) - p_{minimum\_operating\_point}(u,ng,d,s,t) - p_{ramp\_down\_limit}(u,ng,d,s,t)) \cdot v_{units\_shut\_down}(u,s,t) \\
+    & + \sum_{
+        \substack{
+            (u,s,t) \in units\_on\_indices \\ s \in s_{path}, \, t = t_{before}
+        }
+    }
+    (p_{minimum\_operating\_point}(u,ng,d,s,t) + p_{ramp\_down\_limit}(u,ng,d,s,t)) \cdot v_{units\_on}(u,s,t) \\
+    & - \sum_{
+        \substack{
+            (u,s,t) \in units\_on\_indices \\ s \in s_{path}, \, t = t_{after}
+        }
+    }
+    p_{minimum\_operating\_point}(u,ng,d,s,t) \cdot v_{units\_on}(u,s,t) \\
+    & ) \cdot p_{unit\_capacity}(u,ng,d,s,t_{after}) \cdot p_{conv\_cap\_to\_flow}(u,ng,d,s,t_{after}) \cdot \Delta t_{after} \\
+    & \forall (u,ng,d) \in ind(p_{ramp\_down\_limit}) \cup ind(p_{shut\_down\_limit}), \\
+    & \forall (ng,t_{before},t_{after}) \in node\_dynamic\_time\_indices(ng), \\
+    & \forall s_{path} \in stochastic\_paths(t_{before},t_{after})
+    \end{aligned}
+    ```
+    #end formulation
 """
 function add_constraint_ramp_down!(m::Model)
     @fetch units_on, units_shut_down, unit_flow = m.ext[:spineopt].variables
