@@ -403,7 +403,7 @@ function _save_other_values!(m::Model)
             (model=m.ext[:spineopt].instance, t=current_window(m),) => JuMP.MOI.get(m, JuMP.MOI.RelativeGap())
         )
     catch err
-        @error err
+        @warn err
     end
 end
 
