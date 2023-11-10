@@ -34,7 +34,7 @@ A spine unit can represent multiple members. This can be incorporated in a model
 And we link the unit to a certain `node_1` with a [unit\_\_to\_node](@ref) relationship.
 * `unit_1_to__node_1`
 
-The single spine unit defined here, now represents two members. This means that a single [unit_flow](@ref Variables) variable will be created for this unit, but the restrictions as imposed by the [Ramping and Reserves](@ref) framework will be adapted to reflect the fact that there are two members present, thus doubling the total capacity.
+The single Spine unit defined here, now represents two members. This means that a single [unit_flow](@ref Variables) variable will be created for this unit, but the restrictions as imposed by the [Ramping](@ref) and [Reserves](@ref) framework will be adapted to reflect the fact that there are two members present, thus doubling the total capacity.
 
 ### Step 2: choosing the online\_variable\_type
 Next, we have to decide the [online\_variable\_type](@ref) for this unit, which will restrict the kind of values that the [units_on](@ref Variables) variable can take. This basically comes down to deciding if we are working in a classical UC framework (`unit_online_variable_type_binary`), a clustered UC framework (`unit_online_variable_type_integer`), or a relaxed clustered UC framework (`unit_online_variable_type_linear`), in which a non-integer number of units can be online.

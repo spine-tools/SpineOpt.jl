@@ -108,7 +108,6 @@ end
     include("constraints/constraint_investment_group.jl")
     include("objective/objective.jl")
     include("util/misc.jl")
-    include("util/docs_utils.jl")
     include("run_spineopt.jl")
     include("run_spineopt_benders.jl")
 end

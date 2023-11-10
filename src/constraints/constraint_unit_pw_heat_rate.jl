@@ -90,6 +90,7 @@ function constraint_unit_pw_heat_rate_indices(m::Model)
         for (u, n_from, n_to) in indices(unit_incremental_heat_rate)
         for (t, path) in t_lowest_resolution_path(
             m, 
+            unit_flow_indices(m; unit=u, node=[n_from; n_to]),
             vcat(
                 unit_flow_indices(m; unit=u, node=n_from, direction=direction(:from_node)),
                 unit_flow_indices(m; unit=u, node=n_to, direction=direction(:to_node)),

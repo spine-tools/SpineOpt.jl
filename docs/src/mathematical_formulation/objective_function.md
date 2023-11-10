@@ -6,7 +6,7 @@ The objective function of SpineOpt expresses the minimization of the total syste
 \begin{aligned}
 & \min obj = v_{unit\_investment\_costs} + v_{connection\_investment\_costs} + v_{storage\_investment\_costs}\\
 & + v_{fixed\_om\_costs} + v_{variable\_om\_costs} + v_{fuel\_costs}  +  v_{start\_up\_costs} \\
-& + v_{shut\_down\_costs} + v_{ramp\_costs} + v_{res\_proc\_costs} \\
+& + v_{shut\_down\_costs} + v_{res\_proc\_costs} \\
 & + v_{renewable\_curtailment\_costs} + v_{connection\_flow\_costs} +  v_{taxes} +
 v_{objective\_penalties}\\
 \end{aligned}
@@ -127,20 +127,6 @@ Shut down costs associated with a specific unit can be included by defining the 
 v_{units\_shut\_down}(u,s,t) \cdot p_{start\_up\_cost}(u,s,t)\cdot p_{weight}(u,s,t)\\
 \end{aligned}
 ```
-
-# Ramping costs
-To account for the ramping costs (up and down) associated with a specific unit, the parameters [ramp\_up\_cost](@ref) and [ramp\_down\_cost](@ref) can be defined. For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the sets `ramp_up_unit_flow_indices` and `ramp_down_unit_flow_indices` for which [ramp\_up\_cost](@ref) and [ramp\_down\_cost](@ref) are  defined, respectively, a ramping cost term is added to the objective function. The total ramping costs can be expressed as:
-
-```math
-\begin{aligned}
-& v_{ramp\_costs} \\
-& = \sum_{\substack{(u,n,d,s,t) \in ramp\_up\_unit\_flow\_indices: \\ (u,n,d) \in ind(p_{ramp\_up\_cost})}}
-v_{ramp\_up\_unit\_flow}(u, n, d, s, t)\cdot p_{ramp\_up\_cost}(u,n,d,s,t)\cdot p_{weight}(n,s,t)\cdot p_{duration}(t)\\
- & + \sum_{\substack{(u,n,d,s,t) \in ramp\_down\_unit\_flow\_indices: \\ (u,n,d) \in ind(p_{ramp\_down\_cost})}}
-  v_{ramp\_down\_unit\_flow}(u, n, d, s, t) \cdot p_{ramp\_down\_cost}(u,n,d,s,t)\cdot p_{weight}(n,s,t) \cdot p_{duration}(t)\\
-\end{aligned}
-```
-
 
 # Reserve procurement costs
 The procurement costs for reserves provided by a specific unit can be accounted for by defining the [reserve\_procurement\_cost](@ref) parameter. For all tuples of (unit, {node,node\_group}, direction, scenario, timestep) in the set `unit_flow_indices` for which this parameter is defined, a reserve procurement cost term is added to the objective function. The total reserve procurement costs can be expressed as:

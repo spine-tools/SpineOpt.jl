@@ -6,7 +6,7 @@ a commodity flow of a unit *to* or *from* a specific node, respectively.
 Various parameters can be defined on the [unit\_\_from\_node](@ref) relationship, in order to
 constrain the associated unit flows. In most cases a [unit\_capacity](@ref) will be defined for
 an upper bound on the commodity flows. Apart from that, ramping abilities of a unit can be
-defined. For further details on ramps see [Ramping and Reserves](@ref).
+defined. For further details on ramps see [Ramping](@ref).
 
 To associate costs with a certain commodity flows, cost terms, such as [fuel\_cost](@ref)s and [vom\_cost](@ref)s,
 can be included for the [unit\_\_from\_node](@ref) relationship.

@@ -72,7 +72,7 @@ function constraint_candidate_connection_flow_lb_indices(m::Model)
             m,
             vcat(
                 connection_flow_indices(m; connection=conn, node=n, direction=d),
-                connections_invested_available_indices(m; connection=conn)
+                connections_invested_available_indices(m; connection=conn),
             )
         )
     )
